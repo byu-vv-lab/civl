@@ -1,0 +1,32 @@
+# All dependencies for the ABC project are defined here.
+
+# Cobertura is a test coverage analysis tool for Java.
+# Donwload from here: http://cobertura.sourceforge.net/download.html
+# Unpack, place the directory somewhere, and set the directory path here: 
+cobertura.lib.dir=/VSL/Tools/lib/cobertura
+
+# JUnit is a well-known automated unit testing framework
+# for Java.  Download the JUnit jar file from
+# https://github.com/KentBeck/junit/downloads
+# All you need is the basic jar, e.g., "junit-4.10.jar".
+# Set the path to it here:
+junit.jar=/VSL/Tools/lib/junit.jar
+
+# ANTLR is needed to build the parsers from the grammars,
+# and in addition the runtime components are needed to
+# compile and execute the ABC code. Best to just download
+# the "complete" java binaries jar from 
+# http://www.antlr.org/download.html
+# and then set this path:
+antlr.jar=/VSL/Tools/src/antlr/antlr-3.4/lib/antlr-3.4-complete.jar
+
+# The ANTLR runtime library classes are incorporated into
+# the final JAR of the ABC project (abc.jar).  While in theory
+# those could be extracted from the complete ANTLR jar above,
+# it is easier to just have a pointer to the runtime class files.
+# I just downloaded the runtime-only source from the ANTLR site
+# and compiled it into a separate directory.
+# This directory should contain the "org" directory,
+# whose subdirectories eventually contain all the .class files
+# in the ANTLR runtime.
+antlr.runtime.bin=/VSL/Tools/bin/antlr-3.4-runtime
