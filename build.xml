@@ -16,7 +16,7 @@
 
 	<property file="build.properties" />
 	<property name="src.dir" value="${basedir}/src" />
-	<property name="real.src.dir" value="${src.dir}/edu/udel/cis/vsl/civl" />
+	<property name="real.src.dir" value="${src.dir}/edu/udel/cis/vsl/civl/civlc" />
 	<property name="bin.dir" value="${basedir}/bin" />
 	<property name="grammar.dir" value="${basedir}/grammar" />
 	<property name="javadoc.dir" value="${basedir}/doc/javadoc" />
@@ -154,7 +154,7 @@
 		<jar destfile="${jar-path}">
 			<fileset dir="${bin.dir}" />
 			<fileset dir="${antlr.runtime.bin}" />
-			<fileset dir="${basedir}/text" />
+			<fileset dir="${basedir}/lib" />
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Main-Class" value="${main-class}" />
@@ -305,6 +305,8 @@
 		<delete file="${cob.ser.file}" />
 		<delete file="${cob.log.file}" />
 		<delete file="${manifest-file}" />
+		<delete file="${grammar.dir}/CivlCParser.tokens" />
+		<delete file="${real.src.dir}/CivlCParser.java" />
 		<delete file="${grammar.dir}/PreprocessorLexer.tokens" />
 		<delete file="${real.src.dir}/preproc/PreprocessorLexer.java" />
 		<delete file="${grammar.dir}/PreprocessorParser.tokens" />

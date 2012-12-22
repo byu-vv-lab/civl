@@ -96,11 +96,11 @@ scope DeclarationScope {
 
 @header
 {
-package edu.udel.cis.vsl.abc.parse.common;
+package edu.udel.cis.vsl.civl.civlc.parse.common;
 
 import java.util.Set;
 import java.util.HashSet;
-import edu.udel.cis.vsl.abc.parse.IF.RuntimeParseException;
+import edu.udel.cis.vsl.civl.civlc.parse.IF.RuntimeParseException;
 }
 
 @members {

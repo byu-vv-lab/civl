@@ -31,7 +31,7 @@ tokens {
 
 @header
 {
-package edu.udel.cis.vsl.abc.preproc.common;
+package edu.udel.cis.vsl.civl.civlc.preproc.common;
 }
 
 @members{
@@ -195,7 +195,7 @@ c_keyword	:	AUTO | BREAK | CASE | CHAR | CONST | CONTINUE | DEFAULT
 		|	ATOMIC | BOOL | COMPLEX | GENERIC | IMAGINARY | NORETURN
 		|	STATICASSERT | THREADLOCAL
 		|	ASSERT | ASSUME | CHOOSE | COLLECTIVE | INPUT | INVARIANT
-		|	OUTPUT | PROC | SPAWN | WAIT | WHEN | COLLECTIVE
+		|	OUTPUT | PROC | SPAWN | WAIT | WHEN
 		;
 
 punctuator	:	nonPoundPunctuator | HASH ;
