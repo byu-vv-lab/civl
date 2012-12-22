@@ -1,0 +1,11 @@
+
+void f(int n) {
+  for (int i=0; i<n; i++) ;
+}
+
+void main() {
+  _proc p = _spawn f(3);
+  _proc q = _spawn f(10000);
+  _wait p;
+  _wait q;
+}

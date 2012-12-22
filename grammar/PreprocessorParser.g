@@ -209,6 +209,7 @@ nonPoundPunctuator
 		|	AND
 		|	ARROW
 		|	ASSIGN
+		|	AT
 		|	BITANDEQ
 		|	BITOR
 		|	BITOREQ

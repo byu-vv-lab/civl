@@ -5,6 +5,8 @@ the inputs to the Root procedure.
 
 Syntactic changes from C:
 
+a type _proc
+
 _input int n; // type modifier: global variable is input
 _output double y; // ditto
 
@@ -65,5 +67,4 @@ assert \collective(procs) i==procs[pid+1]@i ;
 
 Elements not added to grammar:
 
-_proc : process type
 _self : constant of type _proc indicating "me"

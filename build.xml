@@ -22,7 +22,10 @@
 	<property name="javadoc.dir" value="${basedir}/doc/javadoc" />
 	<property name="jar-name" value="civl.jar" />
 	<property name="jar-path" value="${basedir}/${jar-name}" />
+<!--
 	<property name="main-class" value="edu.udel.cis.vsl.civl.CIVL" />
+ -->
+	<property name="main-class" value="edu.udel.cis.vsl.civl.civlc.CIVLC" />
 
 	<!-- Junit: automated unit tester Properties  -->
 

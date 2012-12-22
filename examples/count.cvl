@@ -1,0 +1,10 @@
+
+_input int n;
+_output int s = 0;
+
+void main() {
+  _assume n>0;
+  for (int i=0; i<n; i++) _invariant (i<=n) {
+    s += i;
+  }
+}

@@ -1,0 +1,13 @@
+
+int n;
+float x;
+
+void main() {
+l1:
+  _choose {
+    _when (n>2) { x=2; goto l2; }
+    _when (n>1) { x=1; goto l2; }
+    default: {x=0; goto l2; }
+  }
+l2: ;
+}

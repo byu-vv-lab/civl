@@ -127,7 +127,7 @@ COLLECTIVE	:	'\\collective';
 INPUT		:	'_input';
 INVARIANT	:	'_invariant';
 OUTPUT		:	'_output';
-PROC		:	'\\proc';
+PROC		:	'_proc';
 SPAWN		:	'_spawn';
 WAIT		:	'_wait';
 WHEN		:	'_when';

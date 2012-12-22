@@ -165,8 +165,6 @@ primaryExpression
 	| LPAREN expression RPAREN 
 	  -> ^(PARENTHESIZED_EXPRESSION LPAREN expression RPAREN)
 	| genericSelection
-	| PROC LSQUARE expression RSQUARE DOT IDENTIFIER
-	  -> ^(PROC expression IDENTIFIER)
 	;
 
 /* 6.5.1.1 */
@@ -428,11 +426,17 @@ assignmentOperator
  * Child 1.0: arg0
  * Child 1.1: arg1
  */
-expression
+commaExpression
 	: ( x=assignmentExpression -> assignmentExpression)
 	  ( COMMA y=assignmentExpression
 	    -> ^(OPERATOR COMMA ^(ARGUMENT_LIST $x $y))
 	  )*
+	;
+
+expression
+	: COLLECTIVE LPAREN commaExpression RPAREN commaExpression
+	  -> ^(COLLECTIVE commaExpression commaExpression)
+	| commaExpression
 	;
 
 /* 6.6 */
@@ -547,6 +551,7 @@ storageClassSpecifier
 typeSpecifier
 	: VOID | CHAR | SHORT | INT | LONG | FLOAT | DOUBLE
 	| SIGNED | UNSIGNED | BOOL | COMPLEX
+	| PROC
 	| atomicTypeSpecifier
 	| structOrUnionSpecifier
 	| enumSpecifier
@@ -1158,9 +1163,10 @@ blockItemList
 
 /* 6.8.2 */
 blockItem
-    : declaration
+    : (declarationSpecifiers declarator declarationList_opt LCURLY)=>
+      functionDefinition
+    | declaration
     | statement
-    | functionDefinition
     ;
 
 /* 6.8.3
