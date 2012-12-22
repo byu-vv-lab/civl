@@ -1,0 +1,69 @@
+The CIVL-C code will not have an explicit "Root" procedure.
+Instead, a Root procedure will be implicitly wrapped around
+the enitre code.   The global input variables will become
+the inputs to the Root procedure.
+
+Syntactic changes from C:
+
+_input int n; // type modifier: global variable is input
+_output double y; // ditto
+
+function definitions in any scope
+
+_spawn f(...);  /* this is an expression with side-effects */
+
+_wait expr; /* this is a statement */
+
+_assert expr; /* statement */
+
+_assume expr; /* statement */
+
+_when (expr) stmt; /* guarded command */
+
+/* nondeterministic choice: */
+_choose {
+  stmt1;
+  stmt2;
+  ...
+  default: stmt
+}
+
+the "default" clause is optional.
+
+example: this shows how to encode "low-level" CIVL:
+
+l1: _choose {
+  _when (x>0) {x--; goto l2;}
+  _when (x==0) {y=1; goto l3;}
+  default: {z=1; goto l4;}
+}
+
+loop invariants: each loop construct has an optional invariant
+clause as follows:
+
+while (expr) _invariant (expr) stmt
+
+for (e1; e2; e3) _invariant (expr) stmt
+
+do stmt while (expr) _invariant (expr) ;
+
+optional elements preceding procedure decls:
+
+requires expr ;
+ensures expr ;
+
+expressions:
+  expr@x : refer to variable in other process, e.g., procs[i]@x
+  \collective(array-expression) e : collective assertion over
+    set of processes in array
+  
+example:
+
+_proc procs[N];
+...
+assert \collective(procs) i==procs[pid+1]@i ;
+
+Elements not added to grammar:
+
+_proc : process type
+_self : constant of type _proc indicating "me"
