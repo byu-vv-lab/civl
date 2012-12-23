@@ -25,7 +25,7 @@
 <!--
 	<property name="main-class" value="edu.udel.cis.vsl.civl.CIVL" />
  -->
-	<property name="main-class" value="edu.udel.cis.vsl.civl.civlc.CIVLC" />
+	<property name="main-class" value="edu.udel.cis.vsl.civl.civlc.antlr2ast.Antlr2AST" />
 
 	<!-- Junit: automated unit tester Properties  -->
 
