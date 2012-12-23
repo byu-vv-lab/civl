@@ -6,8 +6,8 @@ import org.antlr.runtime.tree.CommonTree;
 import edu.udel.cis.vsl.civl.civlc.parse.common.CivlCParser;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.CTokenSource;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.Preprocessor;
-import edu.udel.cis.vsl.civl.civlc.token.IF.Source;
-import edu.udel.cis.vsl.civl.civlc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.token.IF.Source;
+import edu.udel.cis.vsl.civl.token.IF.SyntaxException;
 
 public interface CParser {
 

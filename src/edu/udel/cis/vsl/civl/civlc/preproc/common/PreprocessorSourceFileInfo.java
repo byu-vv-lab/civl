@@ -4,7 +4,7 @@ import java.io.File;
 
 import org.antlr.runtime.tree.Tree;
 
-import edu.udel.cis.vsl.civl.civlc.token.IF.Formation;
+import edu.udel.cis.vsl.civl.token.IF.Formation;
 
 /**
  * This class would be better named CppSourceFileInfo or something like that.

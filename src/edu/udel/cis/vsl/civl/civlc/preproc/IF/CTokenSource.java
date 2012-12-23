@@ -4,9 +4,9 @@ import java.util.Map;
 
 import org.antlr.runtime.TokenSource;
 
-import edu.udel.cis.vsl.civl.civlc.token.IF.CToken;
-import edu.udel.cis.vsl.civl.civlc.token.IF.Macro;
-import edu.udel.cis.vsl.civl.civlc.token.IF.TokenFactory;
+import edu.udel.cis.vsl.civl.token.IF.CToken;
+import edu.udel.cis.vsl.civl.token.IF.Macro;
+import edu.udel.cis.vsl.civl.token.IF.TokenFactory;
 
 /**
  * Extends ANTLR's TokenSource interface but adding some additional

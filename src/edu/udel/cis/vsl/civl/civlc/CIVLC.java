@@ -15,7 +15,7 @@ import edu.udel.cis.vsl.civl.civlc.preproc.Preprocess;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorFactory;
-import edu.udel.cis.vsl.civl.civlc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.token.IF.SyntaxException;
 
 public class CIVLC {
 

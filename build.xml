@@ -309,13 +309,13 @@
 		<delete file="${cob.log.file}" />
 		<delete file="${manifest-file}" />
 		<delete file="${grammar.dir}/CivlCParser.tokens" />
-		<delete file="${real.src.dir}/CivlCParser.java" />
+		<delete file="${real.src.dir}/parse/common/CivlCParser.java" />
 		<delete file="${grammar.dir}/PreprocessorLexer.tokens" />
-		<delete file="${real.src.dir}/preproc/PreprocessorLexer.java" />
+		<delete file="${real.src.dir}/preproc/common/PreprocessorLexer.java" />
 		<delete file="${grammar.dir}/PreprocessorParser.tokens" />
-		<delete file="${real.src.dir}/preproc/PreprocessorParser.java" />
+		<delete file="${real.src.dir}/preproc/common/PreprocessorParser.java" />
 		<delete file="${grammar.dir}/PreprocessorExpressionParser.tokens" />
-		<delete file="${real.src.dir}/preproc/expr/PreprocessorExpressionParser.java" />
+		<delete file="${real.src.dir}/preproc/common/PreprocessorExpressionParser.java" />
 	</target>
 
 	<!-- Do everything -->

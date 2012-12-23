@@ -12,7 +12,7 @@ import org.antlr.runtime.tree.CommonTree;
 
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorExpressionException;
-import edu.udel.cis.vsl.civl.civlc.token.IF.CToken;
+import edu.udel.cis.vsl.civl.token.IF.CToken;
 import edu.udel.cis.vsl.civl.civlc.util.ANTLRUtils;
 
 public class PreprocessorUtils {

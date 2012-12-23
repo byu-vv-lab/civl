@@ -18,11 +18,11 @@ import edu.udel.cis.vsl.civl.civlc.preproc.IF.CTokenSource;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorFactory;
-import edu.udel.cis.vsl.civl.civlc.token.IF.CToken;
-import edu.udel.cis.vsl.civl.civlc.token.IF.Source;
-import edu.udel.cis.vsl.civl.civlc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.civlc.token.IF.TokenFactory;
-import edu.udel.cis.vsl.civl.civlc.token.common.CommonCToken;
+import edu.udel.cis.vsl.civl.token.IF.CToken;
+import edu.udel.cis.vsl.civl.token.IF.Source;
+import edu.udel.cis.vsl.civl.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.token.IF.TokenFactory;
+import edu.udel.cis.vsl.civl.token.common.CommonCToken;
 import edu.udel.cis.vsl.civl.civlc.util.ANTLRUtils;
 
 public class CommonCParser implements CParser {

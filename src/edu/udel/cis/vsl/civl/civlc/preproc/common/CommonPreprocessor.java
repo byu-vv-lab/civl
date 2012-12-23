@@ -16,9 +16,9 @@ import org.antlr.runtime.tree.Tree;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.civl.civlc.preproc.common.PreprocessorParser.file_return;
-import edu.udel.cis.vsl.civl.civlc.token.Tokens;
-import edu.udel.cis.vsl.civl.civlc.token.IF.Macro;
-import edu.udel.cis.vsl.civl.civlc.token.IF.TokenFactory;
+import edu.udel.cis.vsl.civl.token.Tokens;
+import edu.udel.cis.vsl.civl.token.IF.Macro;
+import edu.udel.cis.vsl.civl.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.civlc.util.ANTLRUtils;
 
 /**

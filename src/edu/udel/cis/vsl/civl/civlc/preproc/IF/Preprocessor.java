@@ -7,7 +7,7 @@ import java.io.PrintStream;
 import org.antlr.runtime.Lexer;
 import org.antlr.runtime.Parser;
 
-import edu.udel.cis.vsl.civl.civlc.token.IF.TokenFactory;
+import edu.udel.cis.vsl.civl.token.IF.TokenFactory;
 
 public interface Preprocessor {
 
