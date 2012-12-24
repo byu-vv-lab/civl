@@ -29,6 +29,7 @@ tokens
 	GENERIC_ASSOCIATION;  // a generic association
 	ENUMERATION_CONSTANT; // use of enumeration constant
 	COMPOUND_LITERAL;     // literal for structs, etc.
+	CONTRACT;             // procedure contracts
 	CALL;                 // function call
 	INDEX;                // array subscript operator
 	ARGUMENT_LIST;        // list of arguments to an operator
@@ -149,6 +150,7 @@ constant
 	| INTEGER_CONSTANT
 	| FLOATING_CONSTANT
 	| CHARACTER_CONSTANT
+	| SELF | TRUE | FALSE | RESULT
 	;
 
 enumerationConstant
@@ -474,11 +476,11 @@ scope DeclarationScope;
 }
 	: d=declarationSpecifiers
 	  ( 
-	    i=initDeclaratorList
-	    -> ^(DECLARATION $d $i)
-	  | -> ^(DECLARATION $d ABSENT)
+	    i=initDeclaratorList contract_opt SEMI
+	    -> ^(DECLARATION $d $i contract_opt)
+	  | SEMI
+	    -> ^(DECLARATION $d ABSENT)
 	  )
-	  SEMI
 	| staticAssertDeclaration
 	;
 
@@ -1346,7 +1348,8 @@ scope DeclarationScope; // just to have an outermost one with isTypedef false
  * are in a function definition.
  */
 externalDeclaration
-    : (declarationSpecifiers declarator declarationList_opt LCURLY)=>
+    : (declarationSpecifiers declarator 
+       contract_opt declarationList_opt LCURLY)=>
       functionDefinition
     | declaration
     | pragma
@@ -1360,10 +1363,10 @@ scope Symbols; // "function scope"
     $Symbols::enumerationConstants = new HashSet<String>();
     $Symbols::isFunctionDefinition = true;
 }
-	: declarationSpecifiers declarator
+	: declarationSpecifiers declarator contract_opt
 	  declarationList_opt compoundStatement
 	  -> ^(FUNCTION_DEFINITION declarationSpecifiers declarator
-	       declarationList_opt compoundStatement)
+	       declarationList_opt compoundStatement contract_opt)
 	;
 
 
@@ -1373,4 +1376,13 @@ scope Symbols; // "function scope"
  */
 declarationList_opt
 	: declaration* -> ^(DECLARATION_LIST declaration*)
+	;
+
+contractItem
+	: REQUIRES expression SEMI -> ^(REQUIRES expression)
+	| ENSURES expression SEMI -> ^(ENSURES expression)
+	;
+
+contract_opt
+	: contractItem* -> ^(CONTRACT contractItem*)
 	;

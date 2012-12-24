@@ -1,6 +1,6 @@
 
-_input int n;
-_output double d=0;
+\input int n;
+\output double d=0;
 
 void main() {
   for (int i=0; i<n; i++) {

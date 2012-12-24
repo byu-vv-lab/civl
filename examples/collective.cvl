@@ -1,18 +1,16 @@
 
-_input int n;
+\input int n;
 
-_proc procs[n];
-
+\proc procs[n];
 
 void f(int pid) {
   for (int i=0; i<n; i++) {
-    _assert \collective(procs) i==procs[(i+1)%n]@i ;
+    \assert \collective(procs) i==procs[(i+1)%n]@i ;
   }
 }
 
 void main() {
-  _assume n>0;
-  for (int i=0; i<n; i++) procs[i] = _spawn f(i);
-  for (int i=0; i<n; i++) _wait procs[i];
+  \assume n>0;
+  for (int i=0; i<n; i++) procs[i] = \spawn f(i);
+  for (int i=0; i<n; i++) \wait procs[i];
 }
-

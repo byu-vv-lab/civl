@@ -117,20 +117,26 @@ STATICASSERT	:	'_Static_assert';
 THREADLOCAL	:	'_Thread_local';
 
 
-/* Additional keywords in CIVL-C */
+/* Additional keywords and symbols used in CIVL-C */
 
-ASSERT		:	'_assert';
-ASSUME		:	'_assume';
+ASSERT		:	'\\assert';
+ASSUME		:	'\\assume';
 AT		:	'@';
-CHOOSE		:	'_choose';
+CHOOSE		:	'\\choose';
 COLLECTIVE	:	'\\collective';
-INPUT		:	'_input';
-INVARIANT	:	'_invariant';
-OUTPUT		:	'_output';
-PROC		:	'_proc';
-SPAWN		:	'_spawn';
-WAIT		:	'_wait';
-WHEN		:	'_when';
+ENSURES		:	'\\ensures';
+FALSE		:	'\\false';
+INPUT		:	'\\input';
+INVARIANT	:	'\\invariant';
+OUTPUT		:	'\\output';
+PROC		:	'\\proc';
+REQUIRES	:	'\\requires';
+RESULT		:	'\\result';
+SELF		:	'\\self';
+SPAWN		:	'\\spawn';
+TRUE		:	'\\true';
+WAIT		:	'\\wait';
+WHEN		:	'\\when';
 
 
 
