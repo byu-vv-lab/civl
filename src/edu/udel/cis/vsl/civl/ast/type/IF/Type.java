@@ -38,7 +38,8 @@ public interface Type {
 		FUNCTION,
 		POINTER,
 		ATOMIC,
-		QUALIFIED
+		QUALIFIED,
+		PROCESS
 	};
 
 	/**

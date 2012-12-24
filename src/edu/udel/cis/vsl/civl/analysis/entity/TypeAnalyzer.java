@@ -174,9 +174,9 @@ public class TypeAnalyzer {
 				Value value;
 				Enumerator enumerator;
 
-				// TODO: none should be null.  Add 1 using value factory.
-				// implement plus.  What is type?  some integer type?
-				
+				// TODO: none should be null. Add 1 using value factory.
+				// implement plus. What is type? some integer type?
+
 				if (constantNode == null) {
 					value = null;
 				} else {
@@ -206,7 +206,7 @@ public class TypeAnalyzer {
 				unqualifiedType = typeFactory.atomicType(unqualifiedType);
 			if (constQ || volatileQ)
 				return typeFactory.qualifiedType(unqualifiedType, constQ,
-						volatileQ, false);
+						volatileQ, false, false, false);
 			return unqualifiedType;
 		}
 	}
@@ -305,7 +305,7 @@ public class TypeAnalyzer {
 				unqualifiedType = typeFactory.atomicType(unqualifiedType);
 			if (constQ || volatileQ)
 				return typeFactory.qualifiedType(unqualifiedType, constQ,
-						volatileQ, false);
+						volatileQ, false, false, false);
 			return unqualifiedType;
 		}
 	}
@@ -325,14 +325,16 @@ public class TypeAnalyzer {
 				.getBasicTypeKind());
 		boolean constQ = node.isConstQualified();
 		boolean volatileQ = node.isVolatileQualified();
+		boolean inputQ = node.isInputQualified();
+		boolean outputQ = node.isOutputQualified();
 
 		if (node.isRestrictQualified())
 			throw error("restrict qualifier used with basic type", node);
 		if (node.isAtomicQualified())
 			unqualifiedType = typeFactory.atomicType(unqualifiedType);
-		if (constQ || volatileQ)
+		if (constQ || volatileQ || inputQ || outputQ)
 			return typeFactory.qualifiedType(unqualifiedType, constQ,
-					volatileQ, false);
+					volatileQ, false, inputQ, outputQ);
 		else
 			return unqualifiedType;
 	}
@@ -357,6 +359,9 @@ public class TypeAnalyzer {
 		boolean constQ = node.isConstQualified();
 		boolean volatileQ = node.isVolatileQualified();
 		boolean restrictQ = node.isRestrictQualified();
+		boolean inputQ = node.isInputQualified();
+		boolean outputQ = node.isOutputQualified();
+		ObjectType result;
 
 		if (!(tempElementType instanceof ObjectType))
 			throw error("Non-object type used for element type of array type",
@@ -374,7 +379,7 @@ public class TypeAnalyzer {
 		// "If the specification of an array type includes any type qualifiers,
 		// the element type is so-qualified, not the array type."
 		elementType = typeFactory.qualify(elementType, constQ, volatileQ,
-				restrictQ);
+				restrictQ, false, false);
 		if (restrictQ
 				&& elementType instanceof QualifiedObjectType
 				&& ((QualifiedObjectType) elementType).getBaseType().kind() != TypeKind.POINTER)
@@ -386,30 +391,47 @@ public class TypeAnalyzer {
 
 			return typeFactory.qualify(unqualifiedType,
 					node.hasConstInBrackets(), node.hasVolatileInBrackets(),
-					node.hasRestrictInBrackets());
+					node.hasRestrictInBrackets(), false, false);
 		}
 		if (node.hasAtomicInBrackets() || node.hasConstInBrackets()
 				|| node.hasVolatileInBrackets() || node.hasRestrictInBrackets())
 			throw error("Type qualifiers in [...] in an array declarator "
 					+ "can only appear in a parameter declaration",
 					elementTypeNode);
-		if (node.hasUnspecifiedVariableLength()) // "*"
-			return typeFactory.unspecifiedVariableLengthArrayType(elementType);
-		sizeExpression = node.getExtent();
-		if (sizeExpression == null)
-			return typeFactory.incompleteArrayType(elementType);
-		entityAnalyzer.expressionAnalyzer.processExpression(sizeExpression);
-		if (sizeExpression.isConstantExpression()) {
-			Value size = nodeFactory.getConstantValue(sizeExpression);
-
-			return typeFactory.arrayType(elementType, size);
+		if (node.hasUnspecifiedVariableLength()) { // "*"
+			result = typeFactory
+					.unspecifiedVariableLengthArrayType(elementType);
+		} else {
+			sizeExpression = node.getExtent();
+			if (sizeExpression == null) {
+				result = typeFactory.incompleteArrayType(elementType);
+			} else {
+				entityAnalyzer.expressionAnalyzer
+						.processExpression(sizeExpression);
+				if (sizeExpression.isConstantExpression()) {
+					result = typeFactory.arrayType(elementType,
+							nodeFactory.getConstantValue(sizeExpression));
+				} else {
+					// C11 6.7.6.2(5): "If the size is an expression that is not
+					// an
+					// integer
+					// constant expression: if it occurs in a declaration at
+					// function
+					// prototype scope, it is treated as if it were replaced by
+					// *"
+					if (node.getScope().getScopeKind() == ScopeKind.FUNCTION_PROTOTYPE)
+						result = typeFactory
+								.unspecifiedVariableLengthArrayType(elementType);
+					else
+						result = typeFactory.variableLengthArrayType(
+								elementType, sizeExpression);
+				}
+			}
 		}
-		// C11 6.7.6.2(5): "If the size is an expression that is not an integer
-		// constant expression: if it occurs in a declaration at function
-		// prototype scope, it is treated as if it were replaced by *"
-		if (node.getScope().getScopeKind() == ScopeKind.FUNCTION_PROTOTYPE)
-			return typeFactory.unspecifiedVariableLengthArrayType(elementType);
-		return typeFactory.variableLengthArrayType(elementType, sizeExpression);
+		if (inputQ || outputQ)
+			result = typeFactory.qualify(result, false, false, false, inputQ,
+					outputQ);
+		return result;
 	}
 
 	private Type processPointerType(PointerTypeNode node)
@@ -422,7 +444,8 @@ public class TypeAnalyzer {
 		if (node.isAtomicQualified())
 			unqualifiedType = typeFactory.atomicType(unqualifiedType);
 		return typeFactory.qualify(unqualifiedType, node.isConstQualified(),
-				node.isVolatileQualified(), node.isRestrictQualified());
+				node.isVolatileQualified(), node.isRestrictQualified(),
+				node.isInputQualified(), node.isOutputQualified());
 	}
 
 	private Type processAtomicType(AtomicTypeNode node) throws SyntaxException {

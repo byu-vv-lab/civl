@@ -18,6 +18,10 @@ public abstract class CommonTypeNode extends CommonASTNode implements TypeNode {
 
 	private boolean atomicQualified = false;
 
+	private boolean inputQualified = false;
+
+	private boolean outputQualified = false;
+
 	private Type type;
 
 	public CommonTypeNode(Source source, TypeNodeKind kind) {
@@ -79,6 +83,26 @@ public abstract class CommonTypeNode extends CommonASTNode implements TypeNode {
 	@Override
 	public void setAtomicQualified(boolean value) {
 		this.atomicQualified = value;
+	}
+
+	@Override
+	public boolean isInputQualified() {
+		return inputQualified;
+	}
+
+	@Override
+	public void setInputQualified(boolean value) {
+		this.inputQualified = value;
+	}
+
+	@Override
+	public boolean isOutputQualified() {
+		return outputQualified;
+	}
+
+	@Override
+	public void setOutputQualified(boolean value) {
+		this.outputQualified = value;
 	}
 
 	@Override

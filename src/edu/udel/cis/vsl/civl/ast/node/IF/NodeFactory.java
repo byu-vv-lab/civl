@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.AlignOfNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ArrowNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CharacterConstantNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.CollectiveExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CompoundLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.DotNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.EnumerationConstantNode;
@@ -28,13 +29,18 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.RemoteExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.SizeableNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.SizeofNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.SpawnNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.StringLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.SwitchLabelNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.AssertNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.ChooseStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ForLoopInitializerNode;
@@ -47,6 +53,8 @@ import edu.udel.cis.vsl.civl.ast.node.IF.statement.LoopNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.SwitchNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.WaitNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.AtomicTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.BasicTypeNode;
@@ -225,6 +233,8 @@ public interface NodeFactory {
 
 	CompoundLiteralNode newCompoundLiteralNode(Source source,
 			TypeNode typeNode, CompoundInitializerNode initializerList);
+	
+	
 
 	// Other Expressions...
 
@@ -255,6 +265,41 @@ public interface NodeFactory {
 			List<ExpressionNode> arguments);
 
 	SizeofNode newSizeofNode(Source source, SizeableNode argument);
+
+	SpawnNode newSpawnNode(Source source, FunctionCallNode callNode);
+
+	/**
+	 * A remote expression node, representing an expression of the form
+	 * "proc_expr@x". This refers to a variable in the process p referenced by
+	 * the expression proc_expr. The static variable x can be determined
+	 * statically now. Later it will be evaluated in a dynamic state in p's
+	 * context.
+	 */
+	RemoteExpressionNode newRemoteExpressionNode(Source source,
+			ExpressionNode left, IdentifierExpressionNode right);
+
+	/**
+	 * Creates a new collective expression node. This expression can be used in
+	 * an assertion to form a collective assertion. It can also be used in an
+	 * assume statement, a loop invariant, or a procedure contract.
+	 * 
+	 * The set of processes over which this collective expression spans is
+	 * specified by an array whose elements have type \proc.
+	 * 
+	 * @param source
+	 *            the source code elements
+	 * @param processPointerExpression
+	 *            a pointer to the first element of an array of process
+	 *            references
+	 * @param lengthExpression
+	 *            the number of processes in the array
+	 * @param body
+	 *            the expression to be interpreted in the collective context
+	 * @return the new collective expression node with given children
+	 */
+	CollectiveExpressionNode newCollectiveExpressionNode(Source source,
+			ExpressionNode processPointerExpression,
+			ExpressionNode lengthExpression, ExpressionNode body);
 
 	// Declarations...
 
@@ -407,6 +452,17 @@ public interface NodeFactory {
 
 	SwitchNode newSwitchNode(Source source, ExpressionNode condition,
 			StatementNode body);
+
+	WaitNode newWaitNode(Source source, ExpressionNode expression);
+
+	AssertNode newAssertNode(Source source, ExpressionNode expression);
+
+	AssumeNode newAssumeNode(Source source, ExpressionNode expression);
+
+	WhenNode newWhenNode(Source source, ExpressionNode guard, StatementNode body);
+
+	ChooseStatementNode newChooseStatementNode(Source source,
+			List<StatementNode> statements);
 
 	// misc. nodes ...
 

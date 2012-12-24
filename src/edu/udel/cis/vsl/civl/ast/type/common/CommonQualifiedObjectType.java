@@ -17,9 +17,14 @@ public class CommonQualifiedObjectType extends CommonObjectType implements
 
 	private boolean restrictQualified = false;
 
+	private boolean inputQualified = false;
+
+	private boolean outputQualified = false;
+
 	public CommonQualifiedObjectType(UnqualifiedObjectType baseType,
 			boolean constQualified, boolean volatileQualified,
-			boolean restrictQualified) {
+			boolean restrictQualified, boolean inputQualified,
+			boolean outputQualified) {
 		super(TypeKind.QUALIFIED);
 		if (!constQualified && !volatileQualified && !restrictQualified)
 			throw new RuntimeException("No qualifiers used in qualified type: "
@@ -28,6 +33,8 @@ public class CommonQualifiedObjectType extends CommonObjectType implements
 		this.constQualified = constQualified;
 		this.volatileQualified = volatileQualified;
 		this.restrictQualified = restrictQualified;
+		this.inputQualified = inputQualified;
+		this.outputQualified = outputQualified;
 	}
 
 	@Override
@@ -46,6 +53,16 @@ public class CommonQualifiedObjectType extends CommonObjectType implements
 	}
 
 	@Override
+	public boolean isInputQualified() {
+		return inputQualified;
+	}
+
+	@Override
+	public boolean isOutputQualified() {
+		return outputQualified;
+	}
+
+	@Override
 	public boolean compatibleWith(Type type) {
 		if (type instanceof QualifiedObjectType) {
 			QualifiedObjectType that = (QualifiedObjectType) type;
@@ -53,6 +70,8 @@ public class CommonQualifiedObjectType extends CommonObjectType implements
 			return constQualified == that.isConstQualified()
 					&& volatileQualified == that.isVolatileQualified()
 					&& restrictQualified == that.isRestrictQualified()
+					&& inputQualified == that.isInputQualified()
+					&& outputQualified == that.isOutputQualified()
 					&& baseType.compatibleWith(that.getBaseType());
 		}
 		return false;
@@ -83,6 +102,10 @@ public class CommonQualifiedObjectType extends CommonObjectType implements
 			result += 5;
 		if (restrictQualified)
 			result += 7;
+		if (inputQualified)
+			result += 11;
+		if (outputQualified)
+			result += 13;
 		return result;
 	}
 
@@ -96,6 +119,8 @@ public class CommonQualifiedObjectType extends CommonObjectType implements
 			return constQualified == that.isConstQualified()
 					&& volatileQualified == that.isVolatileQualified()
 					&& restrictQualified == that.isRestrictQualified()
+					&& inputQualified == that.isInputQualified()
+					&& outputQualified == that.isOutputQualified()
 					&& baseType.equals(that.getBaseType());
 		}
 		return false;
@@ -106,6 +131,14 @@ public class CommonQualifiedObjectType extends CommonObjectType implements
 		String seperator = "";
 
 		out.print("QualifiedType[");
+		if (inputQualified) {
+			out.print(seperator + "_input");
+			seperator = ", ";
+		}
+		if (outputQualified) {
+			out.print(seperator + "_output");
+			seperator = ", ";
+		}
 		if (constQualified) {
 			out.print(seperator + "const");
 			seperator = ", ";

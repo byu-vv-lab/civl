@@ -1,3 +1,10 @@
+Need to add:
+  self
+  true
+  false
+  result
+  contracts: ensures requires: part of function decl
+
 ABC: front end for C
   ast: this will have library functions and state like
     MPI_Send, blah blah blah

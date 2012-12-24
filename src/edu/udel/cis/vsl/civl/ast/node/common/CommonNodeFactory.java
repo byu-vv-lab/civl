@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.AlignOfNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ArrowNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CharacterConstantNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.CollectiveExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CompoundLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.DotNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.EnumerationConstantNode;
@@ -37,13 +38,18 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.RemoteExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.SizeableNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.SizeofNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.SpawnNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.StringLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.SwitchLabelNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.AssertNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.ChooseStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ForLoopInitializerNode;
@@ -58,6 +64,8 @@ import edu.udel.cis.vsl.civl.ast.node.IF.statement.LoopNode.LoopKind;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.SwitchNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.WaitNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.AtomicTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.BasicTypeNode;
@@ -551,6 +559,59 @@ public class CommonNodeFactory implements NodeFactory {
 			commonNode.setConstantValue(value);
 			return value;
 		}
+	}
+
+	@Override
+	public SpawnNode newSpawnNode(Source source, FunctionCallNode callNode) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public RemoteExpressionNode newRemoteExpressionNode(Source source,
+			ExpressionNode left, IdentifierExpressionNode right) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public CollectiveExpressionNode newCollectiveExpressionNode(Source source,
+			ExpressionNode processPointerExpression,
+			ExpressionNode lengthExpression, ExpressionNode body) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public WaitNode newWaitNode(Source source, ExpressionNode expression) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public AssertNode newAssertNode(Source source, ExpressionNode expression) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public AssumeNode newAssumeNode(Source source, ExpressionNode expression) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public WhenNode newWhenNode(Source source, ExpressionNode guard,
+			StatementNode body) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ChooseStatementNode newChooseStatementNode(Source source,
+			List<StatementNode> statements) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

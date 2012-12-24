@@ -202,7 +202,7 @@ public class ExpressionAnalyzer {
 		identifier.setEntity(field);
 		fieldType = field.getType();
 		type = typeFactory.qualify(fieldType, atomicQ, constQ, volatileQ,
-				restrictQ);
+				restrictQ, false, false);
 		node.setInitialType(type);
 	}
 
@@ -312,7 +312,7 @@ public class ExpressionAnalyzer {
 		identifier.setEntity(field);
 		fieldType = field.getType();
 		type = typeFactory.qualify(fieldType, atomicQ, constQ, volatileQ,
-				restrictQ);
+				restrictQ, false, false);
 		node.setInitialType(type);
 	}
 
@@ -659,7 +659,7 @@ public class ExpressionAnalyzer {
 			if (atomicQ)
 				type = typeFactory.atomicType((PointerType) type);
 			type = typeFactory.qualify((ObjectType) type, constQ, volatileQ,
-					restrictQ);
+					restrictQ, false, false);
 		} else {
 			throw error(
 					"Incompatible types for second and third arguments of conditional operator:\n"

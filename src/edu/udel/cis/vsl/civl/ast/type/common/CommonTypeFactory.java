@@ -58,6 +58,8 @@ public class CommonTypeFactory implements TypeFactory {
 
 	private ObjectType voidType = null;
 
+	private ObjectType processType = null;
+
 	private UnsignedIntegerType size_t = null, char16_t = null,
 			char32_t = null;
 
@@ -236,8 +238,7 @@ public class CommonTypeFactory implements TypeFactory {
 	}
 
 	@Override
-	public ArrayType arrayType(ObjectType elementType,
-			Value constantSize) {
+	public ArrayType arrayType(ObjectType elementType, Value constantSize) {
 		return (ArrayType) canonicalize(new CommonArrayType(elementType,
 				constantSize));
 	}
@@ -399,14 +400,17 @@ public class CommonTypeFactory implements TypeFactory {
 	@Override
 	public QualifiedObjectType qualifiedType(UnqualifiedObjectType baseType,
 			boolean constQualified, boolean volatileQualified,
-			boolean restrictQualified) {
+			boolean restrictQualified, boolean inputQualified,
+			boolean outputQualified) {
 		return (QualifiedObjectType) canonicalize(new CommonQualifiedObjectType(
-				baseType, constQualified, volatileQualified, restrictQualified));
+				baseType, constQualified, volatileQualified, restrictQualified,
+				inputQualified, outputQualified));
 	}
 
 	@Override
 	public ObjectType qualify(ObjectType startType, boolean constQualified,
-			boolean volatileQualified, boolean restrictQualified) {
+			boolean volatileQualified, boolean restrictQualified,
+			boolean inputQualified, boolean outputQualified) {
 		if (!constQualified && !volatileQualified && !restrictQualified)
 			return startType;
 		if (startType.kind() == TypeKind.QUALIFIED) {
@@ -416,16 +420,20 @@ public class CommonTypeFactory implements TypeFactory {
 			return qualifiedType(unqualifiedType, constQualified
 					|| qualifiedType.isConstQualified(), volatileQualified
 					|| qualifiedType.isVolatileQualified(), restrictQualified
-					|| qualifiedType.isRestrictQualified());
+					|| qualifiedType.isRestrictQualified(), inputQualified
+					|| qualifiedType.isInputQualified(), outputQualified
+					|| qualifiedType.isOutputQualified());
 		}
 		return qualifiedType((UnqualifiedObjectType) startType, constQualified,
-				volatileQualified, restrictQualified);
+				volatileQualified, restrictQualified, inputQualified,
+				outputQualified);
 	}
 
 	@Override
 	public ObjectType qualify(ObjectType startType, boolean atomic,
 			boolean constQualified, boolean volatileQualified,
-			boolean restrictQualified) {
+			boolean restrictQualified, boolean inputQualified,
+			boolean outputQualified) {
 		boolean change = false;
 		UnqualifiedObjectType baseType;
 
@@ -445,6 +453,14 @@ public class CommonTypeFactory implements TypeFactory {
 				restrictQualified = true;
 			else if (restrictQualified)
 				change = true;
+			if (qualifiedType.isInputQualified())
+				inputQualified = true;
+			else if (inputQualified)
+				change = true;
+			if (qualifiedType.isOutputQualified())
+				outputQualified = true;
+			else if (outputQualified)
+				change = true;
 		} else {
 			baseType = (UnqualifiedObjectType) startType;
 			change = constQualified || volatileQualified || restrictQualified;
@@ -457,7 +473,7 @@ public class CommonTypeFactory implements TypeFactory {
 			return startType;
 		if (constQualified || restrictQualified || volatileQualified)
 			return qualifiedType(baseType, constQualified, volatileQualified,
-					restrictQualified);
+					restrictQualified, inputQualified, outputQualified);
 		return baseType;
 	}
 
@@ -800,6 +816,15 @@ public class CommonTypeFactory implements TypeFactory {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public ObjectType processType() {
+		if (processType == null) {
+			processType = new CommonProcessType();
+			insert(processType);
+		}
+		return processType;
 	}
 
 }

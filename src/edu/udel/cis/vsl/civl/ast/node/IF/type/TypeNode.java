@@ -80,6 +80,14 @@ public interface TypeNode extends SizeableNode {
 
 	void setAtomicQualified(boolean value);
 
+	boolean isInputQualified();
+
+	void setInputQualified(boolean value);
+
+	boolean isOutputQualified();
+
+	void setOutputQualified(boolean value);
+
 	/**
 	 * Returns the conceptual C type associated to this type node.
 	 * 

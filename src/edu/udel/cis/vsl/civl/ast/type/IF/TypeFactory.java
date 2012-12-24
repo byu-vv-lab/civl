@@ -277,11 +277,16 @@ public interface TypeFactory {
 	 *            should the resulting type be "volatile" qualified?
 	 * @param restrictQualified
 	 *            should the resulting type be "restrict" qualified?
+	 * @param inputQualified
+	 *            should the result type be "_input" qualified?
+	 * @param outputQualified
+	 *            should the resulting type be "_output" qualified?
 	 * @return qualified version of given unqualified type
 	 */
 	QualifiedObjectType qualifiedType(UnqualifiedObjectType baseType,
 			boolean constQualified, boolean volatileQualified,
-			boolean restrictQualified);
+			boolean restrictQualified, boolean inputQualified,
+			boolean outputQualified);
 
 	/**
 	 * A more general algorithm for qualifying a type: for each true-valued
@@ -299,11 +304,16 @@ public interface TypeFactory {
 	 *            should the resulting type be "volatile" qualified?
 	 * @param restrictQualified
 	 *            should the resulting type be "restrict" qualified?
+	 * @param inputQualified
+	 *            should the result type be "_input" qualified?
+	 * @param outputQualified
+	 *            should the resulting type be "_output" qualified?
 	 * @return the correct object type properly qualified, possibly the original
 	 *         type as given.
 	 */
 	ObjectType qualify(ObjectType startType, boolean constQualified,
-			boolean volatileQualified, boolean restrictQualified);
+			boolean volatileQualified, boolean restrictQualified,
+			boolean inputQualified, boolean outputQualified);
 
 	/**
 	 * Given two compatible types, returns the "composite type" obtained by
@@ -549,6 +559,9 @@ public interface TypeFactory {
 	 */
 	FloatingType floatingType(FloatKind kind, boolean isReal);
 
+	/** Returns the process type. */
+	ObjectType processType();
+
 	/************************* Conversions *****************************/
 
 	/**
@@ -637,7 +650,8 @@ public interface TypeFactory {
 	 */
 	ObjectType qualify(ObjectType startType, boolean atomic,
 			boolean constQualified, boolean volatileQualified,
-			boolean restrictQualified);
+			boolean restrictQualified, boolean inputQualified,
+			boolean outputQualified);
 
 	/*
 	 * TODO maybe add "low-level" operations that expose symbolic expressions:
