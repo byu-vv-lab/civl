@@ -19,12 +19,15 @@ Summary of new keywords:
   \spawn : create a new process running procedure
   \wait : wait for a process to terminate
   \assert : check something holds
+  \true : boolean value true, used in assertions
+  \false: boolean value false, used in assertions
   \assume : assume something holds
   \when : guarded statement
   \choose : nondeterministic choice statement
   \invariant : declare a loop invariant
   \requires : procedure precondition
   \ensures : procedure postcondition
+  \result : refers to result returned by procedure in contracts
   @ : refer to variable in other process, e.g., p@x
   \collective : a collective expression
 
@@ -99,6 +102,9 @@ richer syntax than C expressions.  During verification, the
 assertion is checked.  If it does not hold, a violation is reported.
 
 \assert expr;
+
+Boolean values \true and \false may be used in assertions
+and assumptions.
 
 ------------------------------------------------------------------------
 
@@ -212,8 +218,14 @@ The invariant is used by certain verification techniques.
 ------------------------------------------------------------------------
 
 Procedure contracts: \requires and \ensures.  There are optional
-elements preceding procedure declaration:
+elements that may occur in a procedure declaration or definition:
 
+T f(...)
+  \requires expr;
+  \ensures expr;
+;
+
+or
 
 T f(...)
   \requires expr ;
@@ -221,6 +233,9 @@ T f(...)
   {
     ...
   }
+
+The value \result may be used in post-conditions to refer
+to the result returned by a procedure.
 
 ------------------------------------------------------------------------
 
