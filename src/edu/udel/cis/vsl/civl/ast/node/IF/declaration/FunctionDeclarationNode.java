@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.ast.node.IF.declaration;
 
 import edu.udel.cis.vsl.civl.ast.entity.IF.Function;
+import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
 
 public interface FunctionDeclarationNode extends OrdinaryDeclarationNode {
 	
@@ -30,5 +31,10 @@ public interface FunctionDeclarationNode extends OrdinaryDeclarationNode {
 	boolean hasNoreturnFunctionSpecifier();
 
 	void setNoreturnFunctionSpecifier(boolean value);
+	
+	SequenceNode<ContractNode> getContract();
+	
+	void setContract(SequenceNode<ContractNode> contract);
+	
 
 }

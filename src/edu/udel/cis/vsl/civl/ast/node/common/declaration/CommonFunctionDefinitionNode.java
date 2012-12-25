@@ -3,6 +3,8 @@ package edu.udel.cis.vsl.civl.ast.node.common.declaration;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.ast.node.IF.IdentifierNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.TypeNode;
@@ -13,8 +15,8 @@ public class CommonFunctionDefinitionNode extends CommonFunctionDeclarationNode
 
 	public CommonFunctionDefinitionNode(Source source,
 			IdentifierNode identifier, TypeNode type,
-			CompoundStatementNode statement) {
-		super(source, identifier, type);
+			SequenceNode<ContractNode> contract, CompoundStatementNode statement) {
+		super(source, identifier, type, contract);
 		addChild(statement);
 	}
 

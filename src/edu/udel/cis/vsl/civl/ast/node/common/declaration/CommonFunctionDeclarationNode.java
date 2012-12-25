@@ -4,6 +4,8 @@ import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.ast.entity.IF.Function;
 import edu.udel.cis.vsl.civl.ast.node.IF.IdentifierNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.civl.token.IF.Source;
@@ -16,8 +18,10 @@ public class CommonFunctionDeclarationNode extends
 	private boolean noreturnFunctionSpecifier = false;
 
 	public CommonFunctionDeclarationNode(Source source,
-			IdentifierNode identifier, TypeNode type) {
+			IdentifierNode identifier, TypeNode type,
+			SequenceNode<ContractNode> contract) {
 		super(source, identifier, type);
+		addChild(contract); // child 2
 	}
 
 	@Override
@@ -76,6 +80,18 @@ public class CommonFunctionDeclarationNode extends
 		}
 		if (needSeparator)
 			out.print("]");
+	}
+
+	@Override
+	public SequenceNode<ContractNode> getContract() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setContract(SequenceNode<ContractNode> contract) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

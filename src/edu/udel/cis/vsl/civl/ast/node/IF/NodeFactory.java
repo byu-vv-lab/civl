@@ -4,14 +4,17 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ArrayDesignatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.CompoundInitializerNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.DesignationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.DesignatorNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.EnsuresNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.EnumeratorDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FieldDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FieldDesignatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.InitializerNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.RequiresNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.AlignOfNode;
@@ -162,6 +165,8 @@ public interface NodeFactory {
 	BasicTypeNode newBasicTypeNode(Source source, BasicTypeKind kind);
 
 	TypeNode newVoidTypeNode(Source source);
+
+	TypeNode newProcessTypeNode(Source source);
 
 	EnumerationTypeNode newEnumerationTypeNode(Source source,
 			IdentifierNode tag,
@@ -363,7 +368,8 @@ public interface NodeFactory {
 	 * @return
 	 */
 	FunctionDeclarationNode newFunctionDeclarationNode(Source source,
-			IdentifierNode name, TypeNode type);
+			IdentifierNode name, TypeNode type,
+			SequenceNode<ContractNode> contract);
 
 	EnumeratorDeclarationNode newEnumeratorDeclarationNode(Source source,
 			IdentifierNode name, ExpressionNode value);
@@ -500,10 +506,15 @@ public interface NodeFactory {
 	PragmaNode newPragmaNode(Source source, IdentifierNode identifier,
 			List<CToken> body, CToken newlineToken);
 
+	RequiresNode newRequiresNode(Source source, ExpressionNode expression);
+
+	EnsuresNode newEnsuresNode(Source source, ExpressionNode expression);
+
 	// external definitions...
 
 	FunctionDefinitionNode newFunctionDefinitionNode(Source source,
-			IdentifierNode name, TypeNode type, CompoundStatementNode body);
+			IdentifierNode name, TypeNode type,
+			SequenceNode<ContractNode> contract, CompoundStatementNode body);
 
 	ASTNode newTranslationUnitNode(Source source,
 			List<ExternalDefinitionNode> definitions);

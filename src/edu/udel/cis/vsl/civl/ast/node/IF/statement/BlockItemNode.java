@@ -13,9 +13,9 @@ import edu.udel.cis.vsl.civl.ast.node.IF.ASTNode;
  * <li>EnumerationTypeNode</li>
  * <li>StaticAssertionNode</li>
  * <li>VariableDeclarationNode</li>
- * <li>FunctionDeclarationNode</li> (but not a FunctionDefinitionNode)
+ * <li>FunctionDeclarationNode</li>
  * <li>TypedefDeclarationNode</li>
- * <li> 
+ * <li>FunctionDefinitionNode</li>
  * </ul>
  * 
  * @author siegel

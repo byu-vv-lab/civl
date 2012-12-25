@@ -20,11 +20,13 @@ import edu.udel.cis.vsl.civl.ast.node.IF.PragmaNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.StaticAssertionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.CompoundInitializerNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.DesignationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.DesignatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.EnumeratorDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FieldDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDeclarationNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CharacterConstantNode;
@@ -475,11 +477,8 @@ public class ASTBuilder {
 		case SELF:
 			return nodeFactory.newSelfNode(source);
 		case SPAWN: {
-			CommonTree callTree = (CommonTree) expressionTree.getChild(0);
-			Source callSource = newSource(callTree);
-
 			return nodeFactory.newSpawnNode(source,
-					translateCall(callSource, callTree, scope));
+					translateCall(source, expressionTree, scope));
 		}
 		case TRUE:
 			return translateTrue(source);
@@ -768,6 +767,8 @@ public class ASTBuilder {
 				.getChild(0);
 		CommonTree initDeclaratorList = (CommonTree) declarationTree
 				.getChild(1);
+		CommonTree contractTree = (CommonTree) declarationTree.getChild(2);
+		SequenceNode<ContractNode> contract = getContract(contractTree, scope);
 		SpecifierAnalysis analysis = newSpecifierAnalysis(declarationSpecifiers);
 		int numDeclarators = initDeclaratorList.getChildCount();
 		ArrayList<ExternalDefinitionNode> definitionList = new ArrayList<ExternalDefinitionNode>();
@@ -816,7 +817,7 @@ public class ASTBuilder {
 			} else if (isFunction(data.type, scope)) {
 				FunctionDeclarationNode declaration = nodeFactory
 						.newFunctionDeclarationNode(source, data.identifier,
-								data.type);
+								data.type, contract);
 
 				setFunctionSpecifiers(declaration, analysis);
 				setStorageSpecifiers(declaration, analysis, scope);
@@ -871,6 +872,10 @@ public class ASTBuilder {
 		case ATOMIC:
 			result = translateAtomicType(analysis.typeSpecifierNode, scope);
 			break;
+		case PROCESS:
+			result = nodeFactory
+					.newProcessTypeNode(newSource(analysis.typeSpecifierNode));
+			break;
 		default:
 			throw new RuntimeException("Should not happen.");
 		}
@@ -882,6 +887,10 @@ public class ASTBuilder {
 			result.setRestrictQualified(true);
 		if (analysis.atomicQualifier)
 			result.setAtomicQualified(true);
+		if (analysis.inputQualifier)
+			result.setInputQualified(true);
+		if (analysis.outputQualifier)
+			result.setOutputQualified(true);
 		return result;
 	}
 
@@ -1666,7 +1675,7 @@ public class ASTBuilder {
 							loopScope),
 					translateStatement((CommonTree) statementTree.getChild(1),
 							new SimpleScope(loopScope)),
-					translateExpression((CommonTree) statementTree.getChild(2),
+					getInvariant((CommonTree) statementTree.getChild(2),
 							loopScope));
 		}
 		case DO: {
@@ -1678,7 +1687,7 @@ public class ASTBuilder {
 							loopScope),
 					translateStatement((CommonTree) statementTree.getChild(0),
 							new SimpleScope(loopScope)),
-					translateExpression((CommonTree) statementTree.getChild(2),
+					getInvariant((CommonTree) statementTree.getChild(2),
 							loopScope));
 		}
 		case FOR: {
@@ -1714,7 +1723,7 @@ public class ASTBuilder {
 							loopScope),
 					translateStatement((CommonTree) statementTree.getChild(3),
 							new SimpleScope(loopScope)),
-					translateExpression((CommonTree) statementTree.getChild(4),
+					getInvariant((CommonTree) statementTree.getChild(4),
 							loopScope));
 		}
 		case GOTO:
@@ -1763,6 +1772,19 @@ public class ASTBuilder {
 		}
 	}
 
+	private ExpressionNode getInvariant(CommonTree invariantTree,
+			SimpleScope scope) throws SyntaxException {
+		if (invariantTree == null)
+			return null;
+		if (invariantTree.getType() == ABSENT)
+			return null;
+		else {
+			CommonTree exprTree = (CommonTree) invariantTree.getChild(0);
+
+			return translateExpression(exprTree, scope);
+		}
+	}
+
 	private PragmaNode translatePragma(Source source, CommonTree pragmaTree,
 			SimpleScope scope) {
 		CommonTree identifierTree = (CommonTree) pragmaTree.getChild(0);
@@ -1807,6 +1829,8 @@ public class ASTBuilder {
 					items.add((BlockItemNode) declaration);
 			} else if (kind == STATICASSERT) {
 				items.add(translateStaticAssertion(childTree, newScope));
+			} else if (kind == FUNCTION_DEFINITION) {
+				items.add(translateFunctionDefinition(childTree, newScope));
 			} else {
 				items.add(translateStatement(childTree, newScope));
 			}
@@ -1857,7 +1881,7 @@ public class ASTBuilder {
 	 * @return
 	 * @throws SyntaxException
 	 */
-	private ExternalDefinitionNode translateFunctionDefinition(
+	private FunctionDefinitionNode translateFunctionDefinition(
 			CommonTree functionDefinitionTree, SimpleScope scope)
 			throws SyntaxException {
 		// two different ways of declaring parameters:
@@ -1870,11 +1894,14 @@ public class ASTBuilder {
 				.getChild(2);
 		CommonTree compoundStatementTree = (CommonTree) functionDefinitionTree
 				.getChild(3);
+		CommonTree contractTree = (CommonTree) functionDefinitionTree
+				.getChild(4);
 		SpecifierAnalysis analysis = newSpecifierAnalysis(specifiers);
 		TypeNode baseType = newSpecifierType(analysis, newScope);
 		DeclaratorData data = processDeclarator(declarator, baseType, newScope);
 		FunctionTypeNode functionType = (FunctionTypeNode) data.type;
 		CompoundStatementNode body;
+		FunctionDefinitionNode result;
 
 		if (functionType.hasIdentifierList()) {
 			SequenceNode<VariableDeclarationNode> formalSequenceNode = functionType
@@ -1948,10 +1975,58 @@ public class ASTBuilder {
 			}
 		}
 		body = translateCompoundStatement(compoundStatementTree, newScope);
-		return nodeFactory.newFunctionDefinitionNode(
+		result = nodeFactory.newFunctionDefinitionNode(
 				newSource(functionDefinitionTree), data.identifier,
-				functionType, body);
+				functionType, getContract(contractTree, newScope), body);
+		return result;
+	}
 
+	private SequenceNode<ContractNode> getContract(CommonTree contractTree,
+			SimpleScope scope) throws SyntaxException {
+		SequenceNode<ContractNode> contract;
+
+		if (contractTree == null)
+			contract = null;
+		else {
+			int kind = contractTree.getType();
+
+			if (kind == ABSENT)
+				contract = null;
+			else {
+				int numItems = contractTree.getChildCount();
+				List<ContractNode> items = new LinkedList<ContractNode>();
+
+				if (numItems == 0) {
+					contract = null;
+				} else {
+					for (int i = 0; i < numItems; i++) {
+						CommonTree itemTree = (CommonTree) contractTree
+								.getChild(i);
+						int itemKind = itemTree.getType();
+						CommonTree exprTree = (CommonTree) itemTree.getChild(0);
+						ExpressionNode expr = translateExpression(exprTree,
+								scope);
+						ContractNode contractNode;
+						Source source = newSource(itemTree);
+
+						if (itemKind == ENSURES) {
+							contractNode = nodeFactory.newEnsuresNode(source,
+									expr);
+						} else if (itemKind == REQUIRES) {
+							contractNode = nodeFactory.newRequiresNode(source,
+									expr);
+						} else {
+							throw error("Unknown kind of contract item: "
+									+ itemTree, itemTree);
+						}
+						items.add(contractNode);
+					}
+					contract = nodeFactory.newSequenceNode(
+							newSource(contractTree), "Contract", items);
+				}
+			}
+		}
+		return contract;
 	}
 
 	/**

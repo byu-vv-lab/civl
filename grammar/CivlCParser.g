@@ -270,7 +270,8 @@ unaryExpression
 spawnExpression
 	: SPAWN postfixExpressionRoot LPAREN 
 	  argumentExpressionList RPAREN
-	  -> ^(SPAWN postfixExpressionRoot argumentExpressionList)
+	  -> ^(SPAWN LPAREN postfixExpressionRoot
+	       argumentExpressionList RPAREN)
 	;
 
 
@@ -481,7 +482,7 @@ scope DeclarationScope;
 	    i=initDeclaratorList contract_opt SEMI
 	    -> ^(DECLARATION $d $i contract_opt)
 	  | SEMI
-	    -> ^(DECLARATION $d ABSENT)
+	    -> ^(DECLARATION $d ABSENT ABSENT)
 	  )
 	| staticAssertDeclaration
 	;

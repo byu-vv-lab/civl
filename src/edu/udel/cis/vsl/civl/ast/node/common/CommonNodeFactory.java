@@ -13,14 +13,17 @@ import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.StaticAssertionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ArrayDesignatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.CompoundInitializerNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.DesignationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.DesignatorNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.EnsuresNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.EnumeratorDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FieldDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FieldDesignatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.InitializerNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.RequiresNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.AlignOfNode;
@@ -79,11 +82,13 @@ import edu.udel.cis.vsl.civl.ast.node.IF.type.TypedefNameNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonArrayDesignatorNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonCompoundInitializerNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonDesignationNode;
+import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonEnsuresNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonEnumeratorDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonFieldDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonFieldDesignatorNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonFunctionDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonFunctionDefinitionNode;
+import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonRequiresNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonTypedefDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.common.declaration.CommonVariableDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonAlignOfNode;
@@ -129,6 +134,7 @@ import edu.udel.cis.vsl.civl.ast.node.common.type.CommonBasicTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonEnumerationTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonFunctionTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonPointerTypeNode;
+import edu.udel.cis.vsl.civl.ast.node.common.type.CommonProcessTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonStructureOrUnionTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonTypedefNameNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonVoidTypeNode;
@@ -371,8 +377,9 @@ public class CommonNodeFactory implements NodeFactory {
 
 	@Override
 	public FunctionDeclarationNode newFunctionDeclarationNode(Source source,
-			IdentifierNode name, TypeNode type) {
-		return new CommonFunctionDeclarationNode(source, name, type);
+			IdentifierNode name, TypeNode type,
+			SequenceNode<ContractNode> contract) {
+		return new CommonFunctionDeclarationNode(source, name, type, contract);
 	}
 
 	@Override
@@ -561,8 +568,10 @@ public class CommonNodeFactory implements NodeFactory {
 
 	@Override
 	public FunctionDefinitionNode newFunctionDefinitionNode(Source source,
-			IdentifierNode name, TypeNode type, CompoundStatementNode body) {
-		return new CommonFunctionDefinitionNode(source, name, type, body);
+			IdentifierNode name, TypeNode type,
+			SequenceNode<ContractNode> contract, CompoundStatementNode body) {
+		return new CommonFunctionDefinitionNode(source, name, type, contract,
+				body);
 	}
 
 	@Override
@@ -655,6 +664,21 @@ public class CommonNodeFactory implements NodeFactory {
 	@Override
 	public ExpressionNode newResultNode(Source source) {
 		return new CommonResultNode(source);
+	}
+
+	@Override
+	public TypeNode newProcessTypeNode(Source source) {
+		return new CommonProcessTypeNode(source);
+	}
+
+	@Override
+	public RequiresNode newRequiresNode(Source source, ExpressionNode expression) {
+		return new CommonRequiresNode(source, expression);
+	}
+
+	@Override
+	public EnsuresNode newEnsuresNode(Source source, ExpressionNode expression) {
+		return new CommonEnsuresNode(source, expression);
 	}
 
 }
