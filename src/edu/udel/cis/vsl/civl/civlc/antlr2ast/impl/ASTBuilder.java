@@ -1617,12 +1617,11 @@ public class ASTBuilder {
 			return translateCompoundStatement(statementTree, scope);
 		case EXPRESSION_STATEMENT: {
 			CommonTree expression = (CommonTree) statementTree.getChild(0);
-			Source source = newSource(expression);
 			ExpressionNode expressionNode = translateExpression(expression,
 					scope);
 
 			if (expressionNode == null)
-				return nodeFactory.newNullStatementNode(source);
+				return nodeFactory.newNullStatementNode(statementSource);
 			else
 				return nodeFactory.newExpressionStatementNode(expressionNode);
 		}
