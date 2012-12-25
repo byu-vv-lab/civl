@@ -436,9 +436,10 @@ commaExpression
 	;
 
 expression
-	: COLLECTIVE LPAREN proc=commaExpression
-	  COMMA int=commaExpression RPAREN body=commaExpression
-	  -> ^(COLLECTIVE $proc $int $body)
+	: COLLECTIVE LPAREN proc=conditionalExpression
+	  COMMA intExpr=conditionalExpression RPAREN
+	  body=conditionalExpression
+	  -> ^(COLLECTIVE $proc $intExpr $body)
 	| commaExpression
 	;
 
