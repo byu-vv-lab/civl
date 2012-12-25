@@ -13,8 +13,9 @@ public class CommonLoopNode extends CommonASTNode implements LoopNode {
 	private LoopKind loopKind;
 
 	public CommonLoopNode(Source source, LoopKind loopKind,
-			ExpressionNode condition, StatementNode body) {
-		super(source, condition, body);
+			ExpressionNode condition, StatementNode body,
+			ExpressionNode invariant) {
+		super(source, condition, body, invariant);
 		this.loopKind = loopKind;
 	}
 
@@ -26,6 +27,10 @@ public class CommonLoopNode extends CommonASTNode implements LoopNode {
 	@Override
 	public StatementNode getBody() {
 		return (StatementNode) child(1);
+	}
+
+	public ExpressionNode getInvariant() {
+		return (ExpressionNode) child(2);
 	}
 
 	@Override

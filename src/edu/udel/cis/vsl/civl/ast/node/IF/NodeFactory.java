@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CharacterConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CollectiveExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CompoundLiteralNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.DotNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.EnumerationConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ExpressionNode;
@@ -233,8 +234,32 @@ public interface NodeFactory {
 
 	CompoundLiteralNode newCompoundLiteralNode(Source source,
 			TypeNode typeNode, CompoundInitializerNode initializerList);
-	
-	
+
+	/**
+	 * "\true" or "\false".
+	 * 
+	 * @param source
+	 * @param value
+	 *            true for "\true", false for "\false"
+	 * @return
+	 */
+	ConstantNode newBooleanConstantNode(Source source, boolean value);
+
+	/**
+	 * "\self"
+	 * 
+	 * @param source
+	 * @return
+	 */
+	ExpressionNode newSelfNode(Source source);
+
+	/**
+	 * "\result"
+	 * 
+	 * @param source
+	 * @return
+	 */
+	ExpressionNode newResultNode(Source source);
 
 	// Other Expressions...
 
@@ -396,20 +421,23 @@ public interface NodeFactory {
 	 * @param condition
 	 * @param incrementer
 	 * @param body
+	 * @param invariant
+	 *            loop invariant: may be null
 	 * @return
 	 */
 	ForLoopNode newForLoopNode(Source source,
 			ForLoopInitializerNode initializer, ExpressionNode condition,
-			ExpressionNode incrementer, StatementNode body);
+			ExpressionNode incrementer, StatementNode body,
+			ExpressionNode invariant);
 
 	ForLoopInitializerNode newForLoopInitializerNode(Source source,
 			List<VariableDeclarationNode> declarations);
 
 	LoopNode newWhileLoopNode(Source source, ExpressionNode condition,
-			StatementNode body);
+			StatementNode body, ExpressionNode invariant);
 
 	LoopNode newDoLoopNode(Source source, ExpressionNode condition,
-			StatementNode body);
+			StatementNode body, ExpressionNode invariant);
 
 	GotoNode newGotoNode(Source source, IdentifierNode label);
 

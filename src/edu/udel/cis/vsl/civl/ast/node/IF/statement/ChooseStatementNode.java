@@ -16,4 +16,8 @@ import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
 public interface ChooseStatementNode extends StatementNode,
 		SequenceNode<StatementNode> {
 
+	LabeledStatementNode getDefaultCase();
+
+	void setDefaultCase(LabeledStatementNode statement);
+
 }

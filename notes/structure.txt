@@ -1,9 +1,13 @@
-Need to add:
+Need to add (interfaces, classes, factory methods):
   self
   true
   false
   result
   contracts: ensures requires: part of function decl
+
+Need to implement all new expressions, statements.
+
+--
 
 ABC: front end for C
   ast: this will have library functions and state like

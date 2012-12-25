@@ -29,6 +29,7 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CharacterConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CollectiveExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CompoundLiteralNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.DotNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.EnumerationConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ExpressionNode;
@@ -89,17 +90,26 @@ import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonAlignOfNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonArrowNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonCastNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonCharacterConstantNode;
+import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonCollectiveExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonCompoundLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonDotNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonEnumerationConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonFunctionCallNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonIdentifierExpressionNode;
+import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonIntegerConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonOperatorNode;
+import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonRemoteExpressionNode;
+import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonResultNode;
+import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonSelfNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonSizeofNode;
+import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonSpawnNode;
 import edu.udel.cis.vsl.civl.ast.node.common.expression.CommonStringLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.common.label.CommonOrdinaryLabelNode;
 import edu.udel.cis.vsl.civl.ast.node.common.label.CommonSwitchLabelNode;
+import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonAssertNode;
+import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonAssumeNode;
+import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonChooseStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonCompoundStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonDeclarationListNode;
 import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonExpressionStatementNode;
@@ -112,6 +122,7 @@ import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonLoopNode;
 import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonNullStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonReturnNode;
 import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonSwitchNode;
+import edu.udel.cis.vsl.civl.ast.node.common.statement.CommonWaitNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonArrayTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonAtomicTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonBasicTypeNode;
@@ -121,9 +132,13 @@ import edu.udel.cis.vsl.civl.ast.node.common.type.CommonPointerTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonStructureOrUnionTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonTypedefNameNode;
 import edu.udel.cis.vsl.civl.ast.node.common.type.CommonVoidTypeNode;
+import edu.udel.cis.vsl.civl.ast.type.IF.ObjectType;
 import edu.udel.cis.vsl.civl.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.civl.ast.type.IF.StandardUnsignedIntegerType;
+import edu.udel.cis.vsl.civl.ast.type.IF.StandardUnsignedIntegerType.UnsignedIntKind;
 import edu.udel.cis.vsl.civl.ast.type.IF.TypeFactory;
 import edu.udel.cis.vsl.civl.ast.value.IF.CharacterValue;
+import edu.udel.cis.vsl.civl.ast.value.IF.IntegerValue;
 import edu.udel.cis.vsl.civl.ast.value.IF.StringValue;
 import edu.udel.cis.vsl.civl.ast.value.IF.Value;
 import edu.udel.cis.vsl.civl.ast.value.IF.ValueFactory;
@@ -144,11 +159,18 @@ public class CommonNodeFactory implements NodeFactory {
 
 	private TypeFactory typeFactory;
 
+	private StandardUnsignedIntegerType booleanType;
+
+	private ObjectType processType;
+
 	public CommonNodeFactory(TypeFactory typeFactory, ValueFactory valueFactory) {
 		this.literalInterpreter = new LiteralInterpreter(typeFactory,
 				valueFactory);
 		this.typeFactory = typeFactory;
 		this.valueFactory = valueFactory;
+		this.booleanType = typeFactory
+				.unsignedIntegerType(UnsignedIntKind.BOOL);
+		this.processType = typeFactory.processType();
 	}
 
 	@Override
@@ -451,9 +473,10 @@ public class CommonNodeFactory implements NodeFactory {
 	@Override
 	public ForLoopNode newForLoopNode(Source source,
 			ForLoopInitializerNode initializer, ExpressionNode condition,
-			ExpressionNode incrementer, StatementNode body) {
+			ExpressionNode incrementer, StatementNode body,
+			ExpressionNode invariant) {
 		return new CommonForLoopNode(source, condition, body, initializer,
-				incrementer);
+				incrementer, invariant);
 	}
 
 	@Override
@@ -464,14 +487,16 @@ public class CommonNodeFactory implements NodeFactory {
 
 	@Override
 	public LoopNode newWhileLoopNode(Source source, ExpressionNode condition,
-			StatementNode body) {
-		return new CommonLoopNode(source, LoopKind.WHILE, condition, body);
+			StatementNode body, ExpressionNode invariant) {
+		return new CommonLoopNode(source, LoopKind.WHILE, condition, body,
+				invariant);
 	}
 
 	@Override
 	public LoopNode newDoLoopNode(Source source, ExpressionNode condition,
-			StatementNode body) {
-		return new CommonLoopNode(source, LoopKind.DO_WHILE, condition, body);
+			StatementNode body, ExpressionNode invariant) {
+		return new CommonLoopNode(source, LoopKind.DO_WHILE, condition, body,
+				invariant);
 	}
 
 	@Override
@@ -563,55 +588,73 @@ public class CommonNodeFactory implements NodeFactory {
 
 	@Override
 	public SpawnNode newSpawnNode(Source source, FunctionCallNode callNode) {
-		// TODO Auto-generated method stub
-		return null;
+		return new CommonSpawnNode(source, callNode);
 	}
 
 	@Override
 	public RemoteExpressionNode newRemoteExpressionNode(Source source,
 			ExpressionNode left, IdentifierExpressionNode right) {
-		// TODO Auto-generated method stub
-		return null;
+		return new CommonRemoteExpressionNode(source, left, right);
 	}
 
 	@Override
 	public CollectiveExpressionNode newCollectiveExpressionNode(Source source,
 			ExpressionNode processPointerExpression,
 			ExpressionNode lengthExpression, ExpressionNode body) {
-		// TODO Auto-generated method stub
-		return null;
+		return new CommonCollectiveExpressionNode(source,
+				processPointerExpression, lengthExpression, body);
 	}
 
 	@Override
 	public WaitNode newWaitNode(Source source, ExpressionNode expression) {
-		// TODO Auto-generated method stub
-		return null;
+		return new CommonWaitNode(source, expression);
 	}
 
 	@Override
 	public AssertNode newAssertNode(Source source, ExpressionNode expression) {
-		// TODO Auto-generated method stub
-		return null;
+		return new CommonAssertNode(source, expression);
 	}
 
 	@Override
 	public AssumeNode newAssumeNode(Source source, ExpressionNode expression) {
-		// TODO Auto-generated method stub
-		return null;
+		return new CommonAssumeNode(source, expression);
 	}
 
 	@Override
 	public WhenNode newWhenNode(Source source, ExpressionNode guard,
 			StatementNode body) {
-		// TODO Auto-generated method stub
-		return null;
+		return new CommonWhenNode(source, guard, body);
 	}
 
 	@Override
 	public ChooseStatementNode newChooseStatementNode(Source source,
 			List<StatementNode> statements) {
-		// TODO Auto-generated method stub
-		return null;
+		return new CommonChooseStatementNode(source, statements);
+	}
+
+	@Override
+	public ConstantNode newBooleanConstantNode(Source source, boolean value) {
+		IntegerValue theValue;
+		String representation;
+
+		if (value) {
+			representation = "\\true";
+			theValue = valueFactory.integerValue(booleanType, 1);
+		} else {
+			representation = "\\false";
+			theValue = valueFactory.integerValue(booleanType, 0);
+		}
+		return new CommonIntegerConstantNode(source, representation, theValue);
+	}
+
+	@Override
+	public ExpressionNode newSelfNode(Source source) {
+		return new CommonSelfNode(source, processType);
+	}
+
+	@Override
+	public ExpressionNode newResultNode(Source source) {
+		return new CommonResultNode(source);
 	}
 
 }

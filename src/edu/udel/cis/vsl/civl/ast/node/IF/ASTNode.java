@@ -73,7 +73,21 @@ public interface ASTNode {
 		FUNCTION_TYPE,
 		POINTER_TYPE,
 		STRUCT_OR_UNION_TYPE,
-		TYPEDEF_NAME
+		TYPEDEF_NAME,
+		PROCESS_TYPE,
+		SELF,
+		SPAWN,
+		WAIT,
+		ASSERT,
+		ASSUME,
+		WHEN,
+		CHOOSE,
+		INVARIANT,
+		ENSURES,
+		REQUIRES,
+		COLLECTIVE,
+		RESULT,
+		REMOTE_REFERENCE
 	};
 
 	/** ID number unique within the AST to which this node belongs. */

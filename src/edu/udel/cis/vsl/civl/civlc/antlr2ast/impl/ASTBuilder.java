@@ -29,6 +29,7 @@ import edu.udel.cis.vsl.civl.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CharacterConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CompoundLiteralNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.FloatingConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.FunctionCallNode;
@@ -41,6 +42,7 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.StringLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.SwitchLabelNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.ChooseStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.StatementNode;
@@ -235,6 +237,27 @@ public class ASTBuilder {
 	static final int TYPE_NAME = CivlCParser.TYPE_NAME;
 	static final int TYPE_QUALIFIER_LIST = CivlCParser.TYPE_QUALIFIER_LIST;
 
+	// added for CIVL-C...
+
+	static final int PROC = CivlCParser.PROC;
+	static final int SELF = CivlCParser.SELF;
+	static final int INPUT = CivlCParser.INPUT;
+	static final int OUTPUT = CivlCParser.OUTPUT;
+	static final int SPAWN = CivlCParser.SPAWN;
+	static final int WAIT = CivlCParser.WAIT;
+	static final int ASSERT = CivlCParser.ASSERT;
+	static final int TRUE = CivlCParser.TRUE;
+	static final int FALSE = CivlCParser.FALSE;
+	static final int ASSUME = CivlCParser.ASSUME;
+	static final int WHEN = CivlCParser.WHEN;
+	static final int CHOOSE = CivlCParser.CHOOSE;
+	static final int INVARIANT = CivlCParser.INVARIANT;
+	static final int REQUIRES = CivlCParser.REQUIRES;
+	static final int ENSURES = CivlCParser.ENSURES;
+	static final int RESULT = CivlCParser.RESULT;
+	static final int AT = CivlCParser.AT;
+	static final int COLLECTIVE = CivlCParser.COLLECTIVE;
+
 	// Instance fields...
 
 	private CParser parser;
@@ -365,6 +388,14 @@ public class ASTBuilder {
 				characterConstant.getText(), token.getExecutionCharacter());
 	}
 
+	private ConstantNode translateTrue(Source source) {
+		return nodeFactory.newBooleanConstantNode(source, true);
+	}
+
+	private ConstantNode translateFalse(Source source) {
+		return nodeFactory.newBooleanConstantNode(source, false);
+	}
+
 	private StringLiteralNode translateStringLiteral(Source source,
 			CommonTree stringLiteral) throws SyntaxException {
 		StringToken token = (StringToken) stringLiteral.getToken();
@@ -441,6 +472,40 @@ public class ASTBuilder {
 							scope),
 					translateExpression(
 							(CommonTree) expressionTree.getChild(1), scope));
+		case SELF:
+			return nodeFactory.newSelfNode(source);
+		case SPAWN: {
+			CommonTree callTree = (CommonTree) expressionTree.getChild(0);
+			Source callSource = newSource(callTree);
+
+			return nodeFactory.newSpawnNode(source,
+					translateCall(callSource, callTree, scope));
+		}
+		case TRUE:
+			return translateTrue(source);
+		case FALSE:
+			return translateFalse(source);
+		case RESULT:
+			return nodeFactory.newResultNode(source);
+		case AT: {
+			CommonTree procExprTree = (CommonTree) expressionTree.getChild(0);
+			CommonTree identifierTree = (CommonTree) expressionTree.getChild(1);
+			ExpressionNode procExpr = translateExpression(procExprTree, scope);
+			IdentifierNode identifierNode = translateIdentifier(identifierTree);
+
+			return nodeFactory.newRemoteExpressionNode(source, procExpr,
+					nodeFactory.newIdentifierExpressionNode(
+							newSource(identifierTree), identifierNode));
+		}
+		case COLLECTIVE:
+			return nodeFactory.newCollectiveExpressionNode(
+					source,
+					translateExpression(
+							(CommonTree) expressionTree.getChild(0), scope),
+					translateExpression(
+							(CommonTree) expressionTree.getChild(1), scope),
+					translateExpression(
+							(CommonTree) expressionTree.getChild(2), scope));
 		default:
 			throw error("Unknown expression kind", expressionTree);
 		}
@@ -1601,7 +1666,9 @@ public class ASTBuilder {
 					translateExpression((CommonTree) statementTree.getChild(0),
 							loopScope),
 					translateStatement((CommonTree) statementTree.getChild(1),
-							new SimpleScope(loopScope)));
+							new SimpleScope(loopScope)),
+					translateExpression((CommonTree) statementTree.getChild(2),
+							loopScope));
 		}
 		case DO: {
 			SimpleScope loopScope = new SimpleScope(scope);
@@ -1611,7 +1678,9 @@ public class ASTBuilder {
 					translateExpression((CommonTree) statementTree.getChild(1),
 							loopScope),
 					translateStatement((CommonTree) statementTree.getChild(0),
-							new SimpleScope(loopScope)));
+							new SimpleScope(loopScope)),
+					translateExpression((CommonTree) statementTree.getChild(2),
+							loopScope));
 		}
 		case FOR: {
 			SimpleScope loopScope = new SimpleScope(scope);
@@ -1645,7 +1714,9 @@ public class ASTBuilder {
 					translateExpression((CommonTree) statementTree.getChild(2),
 							loopScope),
 					translateStatement((CommonTree) statementTree.getChild(3),
-							new SimpleScope(loopScope)));
+							new SimpleScope(loopScope)),
+					translateExpression((CommonTree) statementTree.getChild(4),
+							loopScope));
 		}
 		case GOTO:
 			return nodeFactory
@@ -1663,6 +1734,31 @@ public class ASTBuilder {
 							scope));
 		case PRAGMA:
 			return translatePragma(statementSource, statementTree, scope);
+		case WAIT:
+			return nodeFactory.newWaitNode(
+					statementSource,
+					translateExpression((CommonTree) statementTree.getChild(0),
+							scope));
+		case ASSERT:
+			return nodeFactory.newAssertNode(
+					statementSource,
+					translateExpression((CommonTree) statementTree.getChild(0),
+							scope));
+
+		case ASSUME:
+			return nodeFactory.newAssumeNode(
+					statementSource,
+					translateExpression((CommonTree) statementTree.getChild(0),
+							scope));
+		case WHEN:
+			return nodeFactory.newWhenNode(
+					statementSource,
+					translateExpression((CommonTree) statementTree.getChild(0),
+							scope),
+					translateStatement((CommonTree) statementTree.getChild(1),
+							scope));
+		case CHOOSE:
+			return translateChooseStatement(statementTree, scope);
 		default:
 			throw error("Unknown statement type", statementTree);
 		}
@@ -1717,6 +1813,23 @@ public class ASTBuilder {
 			}
 		}
 		return nodeFactory.newCompoundStatementNode(source, items);
+	}
+
+	private ChooseStatementNode translateChooseStatement(
+			CommonTree chooseStatementTree, SimpleScope scope)
+			throws SyntaxException {
+		int numChildren = chooseStatementTree.getChildCount();
+		List<StatementNode> statements = new LinkedList<StatementNode>();
+
+		for (int i = 0; i < numChildren; i++) {
+			CommonTree statementTree = (CommonTree) chooseStatementTree
+					.getChild(i);
+			StatementNode statement = translateStatement(statementTree, scope);
+
+			statements.add(statement);
+		}
+		return nodeFactory.newChooseStatementNode(
+				newSource(chooseStatementTree), statements);
 	}
 
 	/**

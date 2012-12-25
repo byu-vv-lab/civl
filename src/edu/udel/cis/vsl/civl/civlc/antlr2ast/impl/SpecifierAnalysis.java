@@ -105,11 +105,14 @@ public class SpecifierAnalysis {
 	int unionTypeCount = 0;
 	int enumTypeCount = 0;
 	int typedefNameCount = 0;
+	int processTypeCount = 0;
 	// qualifiers:
 	boolean constQualifier = false;
 	boolean restrictQualifier = false;
 	boolean volatileQualifier = false;
 	boolean atomicQualifier = false; // _Atomic: has 0 children
+	boolean inputQualifier = false;
+	boolean outputQualifier = false;
 	// storage class specifiers
 	int typedefCount = 0;
 	int externCount = 0;
@@ -202,6 +205,11 @@ public class SpecifierAnalysis {
 				setTypeNameKind(TypeNodeKind.TYPEDEF_NAME);
 				setTypeSpecifierNode(node);
 				break;
+			case CivlCParser.PROC:
+				processTypeCount++;
+				setTypeNameKind(TypeNodeKind.PROCESS);
+				setTypeSpecifierNode(node);
+				break;
 			case CivlCParser.CONST:
 				constQualifier = true;
 				break;
@@ -210,6 +218,12 @@ public class SpecifierAnalysis {
 				break;
 			case CivlCParser.VOLATILE:
 				volatileQualifier = true;
+				break;
+			case CivlCParser.INPUT:
+				inputQualifier = true;
+				break;
+			case CivlCParser.OUTPUT:
+				outputQualifier = true;
 				break;
 			case CivlCParser.TYPEDEF:
 				typedefCount++;

@@ -1,6 +1,9 @@
 package edu.udel.cis.vsl.civl.ast.entity.IF;
 
+import java.util.Iterator;
+
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.civl.ast.type.IF.FunctionType;
 
 /**
@@ -32,6 +35,14 @@ public interface Function extends OrdinaryEntity {
 	 * @return the function scope associated to this function
 	 */
 	Scope getScope();
+	
+	Iterator<ExpressionNode> getPreconditions();
+	
+	Iterator<ExpressionNode> getPostconditions();
+	
+	void addPrecondition(ExpressionNode expression);
+	
+	void addPostcondition(ExpressionNode expression);
 
 	// TODO: perhaps more information is needed. About each parameter:
 	// does it have static extent? What is the extent (constant

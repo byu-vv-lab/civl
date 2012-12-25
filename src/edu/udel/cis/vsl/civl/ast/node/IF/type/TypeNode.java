@@ -17,7 +17,8 @@ public interface TypeNode extends SizeableNode {
 		FUNCTION,
 		POINTER,
 		ATOMIC,
-		TYPEDEF_NAME
+		TYPEDEF_NAME,
+		PROCESS
 	};
 
 	/**
