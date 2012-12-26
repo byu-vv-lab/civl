@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.ast.entity.IF.Scope.ScopeKind;
 import edu.udel.cis.vsl.civl.ast.entity.IF.StructureOrUnion;
 import edu.udel.cis.vsl.civl.ast.entity.IF.TaggedEntity;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Typedef;
+import edu.udel.cis.vsl.civl.ast.entity.IF.Variable;
 import edu.udel.cis.vsl.civl.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.NodeFactory;
 import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
@@ -545,14 +546,17 @@ public class TypeAnalyzer {
 				while (parameterIter.hasNext()) {
 					VariableDeclarationNode decl = parameterIter.next();
 					TypeNode parameterTypeNode;
-
-					entityAnalyzer.declarationAnalyzer
+					Variable variable = entityAnalyzer.declarationAnalyzer
 							.processVariableDeclaration(decl, true);
+
 					parameterTypeNode = decl.getTypeNode();
 					if (parameterTypeNode == null)
 						throw error("No type specified for function parameter",
 								decl);
 					// TODO: check alignment specifiers, storage specifiers.
+					//decl.setEntity(variable);
+					// add to scope...?
+					//decl.getScope().\
 					parameterTypes
 							.add((ObjectType) parameterTypeNode.getType());
 				}

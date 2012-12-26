@@ -7,7 +7,7 @@ import edu.udel.cis.vsl.civl.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDeclarationNode;
-import edu.udel.cis.vsl.civl.ast.node.IF.type.TypeNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.civl.token.IF.Source;
 
 public class CommonFunctionDeclarationNode extends
@@ -18,7 +18,7 @@ public class CommonFunctionDeclarationNode extends
 	private boolean noreturnFunctionSpecifier = false;
 
 	public CommonFunctionDeclarationNode(Source source,
-			IdentifierNode identifier, TypeNode type,
+			IdentifierNode identifier, FunctionTypeNode type,
 			SequenceNode<ContractNode> contract) {
 		super(source, identifier, type);
 		addChild(contract); // child 2
@@ -91,6 +91,11 @@ public class CommonFunctionDeclarationNode extends
 	@Override
 	public void setContract(SequenceNode<ContractNode> contract) {
 		setChild(2, contract);
+	}
+
+	@Override
+	public FunctionTypeNode getTypeNode() {
+		return (FunctionTypeNode) super.getTypeNode();
 	}
 
 }

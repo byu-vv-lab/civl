@@ -8,6 +8,8 @@ import edu.udel.cis.vsl.civl.ast.entity.IF.Scope;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Scope.ScopeKind;
 import edu.udel.cis.vsl.civl.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ContractNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.OrdinaryLabelNode;
@@ -16,7 +18,6 @@ import edu.udel.cis.vsl.civl.ast.node.IF.statement.IfNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.LoopNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.FunctionTypeNode;
-import edu.udel.cis.vsl.civl.ast.node.common.type.CommonFunctionTypeNode;
 import edu.udel.cis.vsl.civl.ast.unit.IF.TranslationUnit;
 import edu.udel.cis.vsl.civl.token.IF.SyntaxException;
 
@@ -59,18 +60,23 @@ public class ScopeAnalyzer implements Analyzer {
 		} else if (node instanceof FunctionDefinitionNode) {
 			FunctionDefinitionNode funcNode = (FunctionDefinitionNode) node;
 			CompoundStatementNode body = funcNode.getBody();
-			FunctionTypeNode funcTypeNode;
-			Scope blockScope;
-			SequenceNode<VariableDeclarationNode> paramsNode;
+			SequenceNode<ContractNode> contract = funcNode.getContract();
+			FunctionTypeNode funcTypeNode = (FunctionTypeNode) funcNode
+					.getTypeNode();
+			SequenceNode<VariableDeclarationNode> paramsNode = funcTypeNode
+					.getParameters();
 
 			functionScope = parentScope = scopeFactory.newScope(
 					ScopeKind.FUNCTION, parentScope, node);
-			processNode(body, parentScope, functionScope);
-			blockScope = body.getScope();
-			funcTypeNode = (FunctionTypeNode) funcNode.getTypeNode();
-			paramsNode = funcTypeNode.getParameters();
 			if (paramsNode != null)
-				processNode(paramsNode, blockScope, functionScope);
+				processNode(paramsNode, functionScope, functionScope);
+			if (contract != null) {
+				Scope contractScope = scopeFactory.newScope(ScopeKind.CONTRACT,
+						functionScope, node);
+
+				processNode(contract, contractScope, functionScope);
+			}
+			processNode(body, parentScope, functionScope);
 		} else if (node instanceof CompoundStatementNode) {
 			parentScope = scopeFactory.newScope(ScopeKind.BLOCK, parentScope,
 					node);
@@ -108,14 +114,32 @@ public class ScopeAnalyzer implements Analyzer {
 			bodyScope = scopeFactory.newScope(ScopeKind.BLOCK, parentScope,
 					body);
 			processChildren(body, bodyScope, functionScope);
-		} else if (node instanceof FunctionTypeNode
-				&& !((FunctionTypeNode) node).hasIdentifierList()) {
-			ASTNode parameters = ((CommonFunctionTypeNode) node)
-					.getParameters();
-			Scope prototypeScope = scopeFactory.newScope(
-					ScopeKind.FUNCTION_PROTOTYPE, parentScope, parameters);
+		} else if (node instanceof FunctionDeclarationNode) {
+			// children: ident, type, contract.
+			// type children: returnType, parameters
+			// put ident type return type in current scope
+			// create child scope prototypescope.
+			// put parameters in prototype scope.
+			// create child of prototypescope contract scope.
+			// put contract in there.
+			FunctionDeclarationNode declNode = (FunctionDeclarationNode) node;
+			FunctionTypeNode typeNode = declNode.getTypeNode();
+			ASTNode parameters = typeNode.getParameters();
+			SequenceNode<ContractNode> contract = declNode.getContract();
 
-			processChildren(parameters, prototypeScope, functionScope);
+			if (parameters != null || contract != null) {
+				Scope prototypeScope = scopeFactory.newScope(
+						ScopeKind.FUNCTION_PROTOTYPE, parentScope, parameters);
+
+				if (parameters != null)
+					processNode(parameters, prototypeScope, functionScope);
+				if (contract != null) {
+					Scope contractScope = scopeFactory.newScope(
+							ScopeKind.CONTRACT, prototypeScope, contract);
+
+					processNode(contract, contractScope, prototypeScope);
+				}
+			}
 		} else if (node instanceof OrdinaryLabelNode) {
 			parentScope = functionScope;
 		}

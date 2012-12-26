@@ -111,8 +111,9 @@ public class DeclarationAnalyzer {
 		return processVariableDeclaration(node, false);
 	}
 	
-	// TODO: need to process parameter declarations in 
-	// function decl.  Add them to scope.
+	// TODO: problem is contract uses variables x declared
+	// as formal parameters but scope is outside of that scope.
+	// function scope: contract, type
 
 	Function processFunctionDeclaration(FunctionDeclarationNode node)
 			throws SyntaxException {

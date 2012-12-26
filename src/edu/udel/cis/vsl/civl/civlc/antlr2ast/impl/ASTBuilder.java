@@ -817,7 +817,7 @@ public class ASTBuilder {
 			} else if (isFunction(data.type, scope)) {
 				FunctionDeclarationNode declaration = nodeFactory
 						.newFunctionDeclarationNode(source, data.identifier,
-								data.type, contract);
+								(FunctionTypeNode) data.type, contract);
 
 				setFunctionSpecifiers(declaration, analysis);
 				setStorageSpecifiers(declaration, analysis, scope);

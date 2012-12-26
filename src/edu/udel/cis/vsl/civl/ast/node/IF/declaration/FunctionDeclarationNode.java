@@ -2,12 +2,19 @@ package edu.udel.cis.vsl.civl.ast.node.IF.declaration;
 
 import edu.udel.cis.vsl.civl.ast.entity.IF.Function;
 import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.type.FunctionTypeNode;
 
+/**
+ * Children: (0) identifier, (1) type, (2) contract.
+ * 
+ * @author siegel
+ *
+ */
 public interface FunctionDeclarationNode extends OrdinaryDeclarationNode {
-	
+
 	@Override
 	Function getEntity();
-	
+
 	/**
 	 * Does the declaration include the "inline" function specifier? Only
 	 * applies to function delcarations.
@@ -31,10 +38,12 @@ public interface FunctionDeclarationNode extends OrdinaryDeclarationNode {
 	boolean hasNoreturnFunctionSpecifier();
 
 	void setNoreturnFunctionSpecifier(boolean value);
-	
+
 	SequenceNode<ContractNode> getContract();
-	
+
 	void setContract(SequenceNode<ContractNode> contract);
-	
+
+	@Override
+	FunctionTypeNode getTypeNode();
 
 }

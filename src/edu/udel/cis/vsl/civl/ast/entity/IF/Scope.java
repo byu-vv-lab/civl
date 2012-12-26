@@ -58,7 +58,7 @@ public interface Scope {
 	 * These are the four different kinds of scopes.
 	 */
 	public enum ScopeKind {
-		FILE, BLOCK, FUNCTION, FUNCTION_PROTOTYPE
+		FILE, BLOCK, FUNCTION, FUNCTION_PROTOTYPE, CONTRACT
 	};
 
 	// information about this scope in the scope tree...

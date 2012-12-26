@@ -368,7 +368,7 @@ public interface NodeFactory {
 	 * @return
 	 */
 	FunctionDeclarationNode newFunctionDeclarationNode(Source source,
-			IdentifierNode name, TypeNode type,
+			IdentifierNode name, FunctionTypeNode type,
 			SequenceNode<ContractNode> contract);
 
 	EnumeratorDeclarationNode newEnumeratorDeclarationNode(Source source,
@@ -513,7 +513,7 @@ public interface NodeFactory {
 	// external definitions...
 
 	FunctionDefinitionNode newFunctionDefinitionNode(Source source,
-			IdentifierNode name, TypeNode type,
+			IdentifierNode name, FunctionTypeNode type,
 			SequenceNode<ContractNode> contract, CompoundStatementNode body);
 
 	ASTNode newTranslationUnitNode(Source source,

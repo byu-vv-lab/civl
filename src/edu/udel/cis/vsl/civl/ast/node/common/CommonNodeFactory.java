@@ -377,7 +377,7 @@ public class CommonNodeFactory implements NodeFactory {
 
 	@Override
 	public FunctionDeclarationNode newFunctionDeclarationNode(Source source,
-			IdentifierNode name, TypeNode type,
+			IdentifierNode name, FunctionTypeNode type,
 			SequenceNode<ContractNode> contract) {
 		return new CommonFunctionDeclarationNode(source, name, type, contract);
 	}
@@ -568,7 +568,7 @@ public class CommonNodeFactory implements NodeFactory {
 
 	@Override
 	public FunctionDefinitionNode newFunctionDefinitionNode(Source source,
-			IdentifierNode name, TypeNode type,
+			IdentifierNode name, FunctionTypeNode type,
 			SequenceNode<ContractNode> contract, CompoundStatementNode body) {
 		return new CommonFunctionDefinitionNode(source, name, type, contract,
 				body);
