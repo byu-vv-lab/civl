@@ -112,6 +112,7 @@ public class CommonEntity implements Entity {
 	public String toString() {
 		DeclarationNode definition = getDefinition();
 		String defString;
+		Type type = this.getType();
 
 		if (definition != null)
 			defString = ", definition=" + definition.id();
@@ -121,7 +122,7 @@ public class CommonEntity implements Entity {
 			defString = ", definition=UNKNOWN";
 		return "Entity[kind=" + entityKind + ", name=" + this.getName()
 				+ ", linkage=" + this.getLinkage() + ", type="
-				+ this.getType().getId() + defString + "]";
+				+ (type == null ? "UNKNOWN" : type.getId()) + defString + "]";
 	}
 
 }

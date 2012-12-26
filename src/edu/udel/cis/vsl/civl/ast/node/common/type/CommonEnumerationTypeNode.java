@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.ast.node.common.type;
 
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.civl.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Enumeration;
 import edu.udel.cis.vsl.civl.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
@@ -72,8 +73,9 @@ public class CommonEnumerationTypeNode extends CommonTypeNode implements
 		return entity;
 	}
 
-	public void setEntity(Enumeration entity) {
-		this.entity = entity;
+	@Override
+	public void setEntity(Entity entity) {
+		this.entity = (Enumeration) entity;
 	}
 
 }

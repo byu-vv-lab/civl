@@ -15,7 +15,10 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.SwitchLabelNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.AssertNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.ChooseStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.DeclarationListNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ExpressionStatementNode;
@@ -25,9 +28,12 @@ import edu.udel.cis.vsl.civl.ast.node.IF.statement.IfNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.JumpNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.LabeledStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.LoopNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.NullStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.SwitchNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.WaitNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.EnumerationTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.civl.ast.value.IF.Value;
@@ -88,10 +94,12 @@ public class StatementAnalyzer {
 			case WHILE:
 				processExpression(loopNode.getCondition());
 				processStatement(loopNode.getBody());
+				processExpression(loopNode.getInvariant());
 				break;
 			case DO_WHILE:
 				processStatement(loopNode.getBody());
 				processExpression(loopNode.getCondition());
+				processExpression(loopNode.getInvariant());
 				break;
 			case FOR: {
 				ForLoopNode forNode = (ForLoopNode) loopNode;
@@ -114,6 +122,7 @@ public class StatementAnalyzer {
 				processExpression(loopNode.getCondition());
 				processExpression(forNode.getIncrementer());
 				processStatement(loopNode.getBody());
+				processExpression(loopNode.getInvariant());
 				break;
 			}
 			default:
@@ -124,7 +133,28 @@ public class StatementAnalyzer {
 			processStatement(((SwitchNode) statement).getBody());
 		} else if (statement instanceof PragmaNode) {
 			// do nothing for now
-		} else
+		} else if (statement instanceof NullStatementNode) {
+			// nothing to do
+		} else if (statement instanceof AssertNode) {
+			processExpression(((AssertNode) statement).getExpression());
+		} else if (statement instanceof AssumeNode) {
+			processExpression(((AssumeNode) statement).getExpression());
+		} else if (statement instanceof WhenNode) {
+			processExpression(((WhenNode) statement).getGuard());
+			processStatement(((WhenNode) statement).getBody());
+		} else if (statement instanceof ChooseStatementNode) {
+			Iterator<StatementNode> children = ((ChooseStatementNode) statement)
+					.childIterator();
+
+			while (children.hasNext())
+				processStatement(children.next());
+		} else if (statement instanceof WaitNode) {
+			processExpression(((WaitNode) statement).getExpression());
+		}
+		// TODO:
+		// expressions: add @ collective, result, self, true, false
+		// check input output only at global scope, only vars
+		else
 			throw error("Unknown kind of statement", statement);
 	}
 
@@ -186,7 +216,8 @@ public class StatementAnalyzer {
 
 	private void processExpression(ExpressionNode expression)
 			throws SyntaxException {
-		expressionAnalyzer.processExpression(expression);
+		if (expression != null)
+			expressionAnalyzer.processExpression(expression);
 	}
 
 	private void processIf(IfNode node) throws SyntaxException {
@@ -194,15 +225,6 @@ public class StatementAnalyzer {
 		processStatement(node.getTrueBranch());
 		if (node.getFalseBranch() != null)
 			processStatement(node.getFalseBranch());
-	}
-
-	private Function enclosingFunction(ASTNode someNode) {
-		for (ASTNode node = someNode; node != null; node = node.parent()) {
-			if (node instanceof FunctionDeclarationNode) {
-				return ((FunctionDeclarationNode) node).getEntity();
-			}
-		}
-		return null;
 	}
 
 	private SwitchNode enclosingSwitch(SwitchLabelNode labelNode) {
@@ -214,21 +236,33 @@ public class StatementAnalyzer {
 		return null;
 	}
 
+	private ASTNode enclosingSwitchOrChoose(SwitchLabelNode labelNode) {
+		for (ASTNode node = labelNode.parent(); node != null; node = node
+				.parent()) {
+			if (node instanceof SwitchNode
+					|| node instanceof ChooseStatementNode)
+				return node;
+		}
+		return null;
+	}
+
 	private void processLabeledStatement(LabeledStatementNode node)
 			throws SyntaxException {
 		LabelNode labelNode = node.getLabel();
 		StatementNode statementNode = node.getStatement();
-		Function function = enclosingFunction(node);
+		Function function = entityAnalyzer.enclosingFunction(node);
 
 		if (function == null)
 			throw error("Label occurs outside of function", node);
 		labelNode.setStatement(statementNode);
 		if (labelNode instanceof OrdinaryLabelNode)
-			processOrdinaryLabel((OrdinaryLabelNode) node, function);
+			processOrdinaryLabel((OrdinaryLabelNode) labelNode, function);
 		else if (labelNode instanceof SwitchLabelNode)
 			processSwitchLabel(node, (SwitchLabelNode) labelNode, function);
 		else
 			throw new RuntimeException("unreachable");
+		processStatement(statementNode);
+
 	}
 
 	private void processOrdinaryLabel(OrdinaryLabelNode node, Function function)
@@ -236,6 +270,7 @@ public class StatementAnalyzer {
 		Label label = entityAnalyzer.entityFactory.newLabel(node);
 
 		node.setFunction(function);
+		node.setEntity(label);
 		try {
 			function.getScope().add(label);
 		} catch (UnsourcedException e) {
@@ -243,9 +278,28 @@ public class StatementAnalyzer {
 		}
 	}
 
+	// TODO: switch or choose.
+	// make choose a generalized switch?
 	private void processSwitchLabel(LabeledStatementNode labeledStatement,
 			SwitchLabelNode switchLabel, Function function)
 			throws SyntaxException {
+
+		if (switchLabel.isDefault()) {
+			ASTNode enclosing = enclosingSwitchOrChoose(switchLabel);
+			
+			if (enclosing instanceof ChooseStatementNode) {
+				ChooseStatementNode choose = (ChooseStatementNode)enclosing;
+				LabeledStatementNode oldDefault = choose.getDefaultCase();
+
+				if (oldDefault != null)
+					throw error(
+							"Two default cases in choose statement.  First was at "
+									+ oldDefault.getSource(), switchLabel);
+				choose.setDefaultCase(labeledStatement);
+				return;
+			}
+		}
+		
 		SwitchNode switchNode = enclosingSwitch(switchLabel);
 
 		if (switchNode == null)

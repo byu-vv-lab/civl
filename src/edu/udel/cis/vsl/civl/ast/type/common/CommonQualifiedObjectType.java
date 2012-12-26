@@ -26,7 +26,8 @@ public class CommonQualifiedObjectType extends CommonObjectType implements
 			boolean restrictQualified, boolean inputQualified,
 			boolean outputQualified) {
 		super(TypeKind.QUALIFIED);
-		if (!constQualified && !volatileQualified && !restrictQualified)
+		if (!constQualified && !volatileQualified && !restrictQualified
+				&& !inputQualified && !outputQualified)
 			throw new RuntimeException("No qualifiers used in qualified type: "
 					+ baseType);
 		this.baseType = baseType;

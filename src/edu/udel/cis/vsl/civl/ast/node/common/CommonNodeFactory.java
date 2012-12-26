@@ -658,7 +658,10 @@ public class CommonNodeFactory implements NodeFactory {
 
 	@Override
 	public ExpressionNode newSelfNode(Source source) {
-		return new CommonSelfNode(source, processType);
+		ExpressionNode result = new CommonSelfNode(source, processType);
+
+		result.setInitialType(processType);
+		return result;
 	}
 
 	@Override

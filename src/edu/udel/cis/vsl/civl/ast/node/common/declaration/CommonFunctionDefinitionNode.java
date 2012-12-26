@@ -22,12 +22,12 @@ public class CommonFunctionDefinitionNode extends CommonFunctionDeclarationNode
 
 	@Override
 	public CompoundStatementNode getBody() {
-		return (CompoundStatementNode) child(2);
+		return (CompoundStatementNode) child(3);
 	}
 
 	@Override
 	public void setBody(CompoundStatementNode statement) {
-		setChild(2, statement);
+		setChild(3, statement);
 	}
 
 	@Override

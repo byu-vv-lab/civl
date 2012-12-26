@@ -5,6 +5,7 @@ import java.util.Iterator;
 import edu.udel.cis.vsl.civl.analysis.IF.Analyzer;
 import edu.udel.cis.vsl.civl.ast.conversion.IF.ConversionFactory;
 import edu.udel.cis.vsl.civl.ast.entity.IF.EntityFactory;
+import edu.udel.cis.vsl.civl.ast.entity.IF.Function;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Scope;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Scope.ScopeKind;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Variable;
@@ -147,6 +148,15 @@ public class EntityAnalyzer implements Analyzer {
 					+ node.getMessage().getConstantValue(), node);
 		default:
 		}
+	}
+
+	Function enclosingFunction(ASTNode someNode) {
+		for (ASTNode node = someNode; node != null; node = node.parent()) {
+			if (node instanceof FunctionDeclarationNode) {
+				return ((FunctionDeclarationNode) node).getEntity();
+			}
+		}
+		return null;
 	}
 
 	// Private methods...

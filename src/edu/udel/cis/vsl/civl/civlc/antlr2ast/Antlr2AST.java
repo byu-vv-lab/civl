@@ -28,50 +28,50 @@ import edu.udel.cis.vsl.civl.token.IF.TokenFactory;
 
 public class Antlr2AST {
 
-    public static TranslationUnit build(CParser parser, UnitFactory unitFactory,
-					PrintStream out)
-	throws ParseException, SyntaxException {
-	CommonTree rootTree = parser.getTree();
-	ASTBuilder builder;
-	
-	if (out != null) {
-	    ANTLRUtils.printTree(out, rootTree);
-	    out.println();
-	    out.flush();
-	}
-	builder = new ASTBuilder(parser, unitFactory, rootTree);
-	return builder.getTranslationUnit();
-    }
-    
-    public static TranslationUnit buildAST(CParser parser, PrintStream out)
-	throws ParseException, SyntaxException {
-	TypeFactory typeFactory = Types.newTypeFactory();
-	ValueFactory valueFactory = Values.newValueFactory(typeFactory);
-	NodeFactory nodeFactory = Nodes.newNodeFactory(typeFactory,
-						       valueFactory);
-	TokenFactory sourceFactory = Tokens.newTokenFactory();
-	UnitFactory unitFactory = Units.newUnitFactory(nodeFactory,
-						       sourceFactory, typeFactory);
-	
-	return build(parser, unitFactory, out);
-    }
+	public static TranslationUnit build(CParser parser,
+			UnitFactory unitFactory, PrintStream out) throws ParseException,
+			SyntaxException {
+		CommonTree rootTree = parser.getTree();
+		ASTBuilder builder;
 
-    public static void buildAndPrintAST(PrintStream out, CParser parser)
-	throws ParseException, SyntaxException {
-	TranslationUnit tu = buildAST(parser, out);
-	
-	tu.print(out);
-    }
-    
-    public static void main(String[] args) throws PreprocessorException,
-						  ParseException, SyntaxException {
-	String filename = args[0];
-	File file = new File(filename);
-	Preprocessor preprocessor = Preprocess.newPreprocessorFactory()
-	    .newPreprocessor();
-	CParser parser = Parse.newCParser(preprocessor, file);
-	
-	buildAndPrintAST(System.out, parser);
-    }
+		if (out != null) {
+			ANTLRUtils.printTree(out, rootTree);
+			out.println();
+			out.flush();
+		}
+		builder = new ASTBuilder(parser, unitFactory, rootTree);
+		return builder.getTranslationUnit();
+	}
+
+	public static TranslationUnit buildAST(CParser parser, PrintStream out)
+			throws ParseException, SyntaxException {
+		TypeFactory typeFactory = Types.newTypeFactory();
+		ValueFactory valueFactory = Values.newValueFactory(typeFactory);
+		NodeFactory nodeFactory = Nodes.newNodeFactory(typeFactory,
+				valueFactory);
+		TokenFactory sourceFactory = Tokens.newTokenFactory();
+		UnitFactory unitFactory = Units.newUnitFactory(nodeFactory,
+				sourceFactory, typeFactory);
+
+		return build(parser, unitFactory, out);
+	}
+
+	public static void buildAndPrintAST(PrintStream out, CParser parser)
+			throws ParseException, SyntaxException {
+		TranslationUnit tu = buildAST(parser, out);
+
+		tu.print(out);
+	}
+
+	public static void main(String[] args) throws PreprocessorException,
+			ParseException, SyntaxException {
+		String filename = args[0];
+		File file = new File(filename);
+		Preprocessor preprocessor = Preprocess.newPreprocessorFactory()
+				.newPreprocessor();
+		CParser parser = Parse.newCParser(preprocessor, file);
+
+		buildAndPrintAST(System.out, parser);
+	}
 
 }

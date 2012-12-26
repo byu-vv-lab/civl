@@ -82,16 +82,15 @@ public class CommonFunctionDeclarationNode extends
 			out.print("]");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public SequenceNode<ContractNode> getContract() {
-		// TODO Auto-generated method stub
-		return null;
+		return (SequenceNode<ContractNode>) child(2);
 	}
 
 	@Override
 	public void setContract(SequenceNode<ContractNode> contract) {
-		// TODO Auto-generated method stub
-
+		setChild(2, contract);
 	}
 
 }

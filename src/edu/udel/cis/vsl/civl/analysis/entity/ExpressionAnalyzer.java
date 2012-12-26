@@ -5,6 +5,7 @@ import edu.udel.cis.vsl.civl.ast.conversion.IF.ConversionFactory;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Entity.EntityKind;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Enumerator;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Field;
+import edu.udel.cis.vsl.civl.ast.entity.IF.Function;
 import edu.udel.cis.vsl.civl.ast.entity.IF.OrdinaryEntity;
 import edu.udel.cis.vsl.civl.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.IdentifierNode;
@@ -12,6 +13,7 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.AlignOfNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ArrowNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CharacterConstantNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.CollectiveExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.CompoundLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.DotNode;
@@ -24,8 +26,11 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.RemoteExpressionNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.ResultNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.SizeableNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.SizeofNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.SpawnNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.StringLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.civl.ast.type.IF.ArithmeticType;
@@ -37,6 +42,7 @@ import edu.udel.cis.vsl.civl.ast.type.IF.IntegerType;
 import edu.udel.cis.vsl.civl.ast.type.IF.ObjectType;
 import edu.udel.cis.vsl.civl.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.civl.ast.type.IF.QualifiedObjectType;
+import edu.udel.cis.vsl.civl.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.civl.ast.type.IF.StandardSignedIntegerType.SignedIntKind;
 import edu.udel.cis.vsl.civl.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.civl.ast.type.IF.Type;
@@ -101,7 +107,24 @@ public class ExpressionAnalyzer {
 			processOperator((OperatorNode) node);
 		else if (node instanceof SizeofNode)
 			processSizeof((SizeofNode) node);
-		else
+		else if (node instanceof SpawnNode)
+			processSpawn((SpawnNode) node);
+		// @ collective, result
+		else if (node instanceof RemoteExpressionNode) {
+			// need to find variable in scope
+			processRemoteExpression((RemoteExpressionNode) node);
+		} else if (node instanceof ResultNode) {
+			// type is same as type returned by function to
+			// which it belongs.
+			processResult((ResultNode) node);
+		} else if (node instanceof CollectiveExpressionNode) {
+			CollectiveExpressionNode collective = (CollectiveExpressionNode) node;
+
+			processExpression(collective.getProcessPointerExpression());
+			processExpression(collective.getLengthExpression());
+			processExpression(collective.getBody());
+			node.setInitialType(typeFactory.basicType(BasicTypeKind.BOOL));
+		} else
 			throw error("Unknown expression kind", node);
 	}
 
@@ -347,6 +370,11 @@ public class ExpressionAnalyzer {
 		node.setInitialType(functionType.getReturnType());
 	}
 
+	private void processSpawn(SpawnNode node) throws SyntaxException {
+		processFunctionCall(node.getCall());
+		node.setInitialType(typeFactory.processType());
+	}
+
 	private void processGenericSelection(GenericSelectionNode node)
 			throws SyntaxException {
 		// TODO
@@ -483,6 +511,23 @@ public class ExpressionAnalyzer {
 			assert false;
 		}
 		node.setInitialType(typeFactory.size_t());
+	}
+
+	private void processRemoteExpression(RemoteExpressionNode node)
+			throws SyntaxException {
+		ExpressionNode left = node.getProcessExpression();
+		IdentifierExpressionNode identifierExpression = node
+				.getIdentifierNode();
+
+		processExpression(left);
+		processIdentifierExpression(identifierExpression);
+		node.setInitialType(identifierExpression.getInitialType());
+	}
+
+	private void processResult(ResultNode node) {
+		Function function = entityAnalyzer.enclosingFunction(node);
+
+		node.setInitialType(function.getType().getReturnType());
 	}
 
 	// Operators...

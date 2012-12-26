@@ -18,14 +18,17 @@ import edu.udel.cis.vsl.civl.ast.node.IF.PairNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ArrayDesignatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.CompoundInitializerNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.DeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.DesignationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.DesignatorNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.EnsuresNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FieldDesignatorNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.OrdinaryDeclarationNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.RequiresNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ExpressionNode;
@@ -99,6 +102,7 @@ public class DeclarationAnalyzer {
 				typedef.setDefinition((TypedefDeclarationNode) node);
 			}
 			typedef.addDeclaration((TypedefDeclarationNode) node);
+			node.setEntity(typedef);
 		}
 	}
 
@@ -106,10 +110,14 @@ public class DeclarationAnalyzer {
 			throws SyntaxException {
 		return processVariableDeclaration(node, false);
 	}
+	
+	// TODO: need to process parameter declarations in 
+	// function decl.  Add them to scope.
 
 	Function processFunctionDeclaration(FunctionDeclarationNode node)
 			throws SyntaxException {
 		Function result = (Function) processOrdinaryDeclaration(node);
+		SequenceNode<ContractNode> contract = node.getContract();
 
 		addDeclarationToFunction(result, node);
 		if (node instanceof FunctionDefinitionNode) {
@@ -118,6 +126,31 @@ public class DeclarationAnalyzer {
 
 			entityAnalyzer.statementAnalyzer.processCompoundStatement(body);
 			processGotos(body);
+		}
+		if (contract != null) {
+			Iterator<ContractNode> contractIter = contract.childIterator();
+
+			while (contractIter.hasNext()) {
+				ContractNode clause = contractIter.next();
+
+				if (clause instanceof RequiresNode) {
+					ExpressionNode expression = ((RequiresNode) clause)
+							.getExpression();
+
+					entityAnalyzer.expressionAnalyzer
+							.processExpression(expression);
+					result.addPrecondition(expression);
+				} else if (clause instanceof EnsuresNode) {
+					ExpressionNode expression = ((EnsuresNode) clause)
+							.getExpression();
+
+					entityAnalyzer.expressionAnalyzer
+							.processExpression(expression);
+					result.addPostcondition(expression);
+				} else {
+					throw error("Unknown kind of contract clause", clause);
+				}
+			}
 		}
 		return result;
 	}
@@ -331,6 +364,7 @@ public class DeclarationAnalyzer {
 			if (linkage != LinkageKind.NONE)
 				unit.add(entity);
 		}
+		node.setEntity(entity);
 		return entity;
 	}
 

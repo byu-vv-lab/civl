@@ -58,6 +58,7 @@ public abstract class CommonDeclarationNode extends CommonASTNode implements
 		return entity;
 	}
 
+	@Override
 	public void setEntity(Entity entity) {
 		this.entity = entity;
 	}

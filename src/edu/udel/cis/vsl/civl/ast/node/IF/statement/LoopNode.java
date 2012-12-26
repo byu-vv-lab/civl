@@ -31,6 +31,8 @@ public interface LoopNode extends StatementNode {
 	 */
 	StatementNode getBody();
 
+	ExpressionNode getInvariant();
+
 	/**
 	 * What kind of loop is this?
 	 * 

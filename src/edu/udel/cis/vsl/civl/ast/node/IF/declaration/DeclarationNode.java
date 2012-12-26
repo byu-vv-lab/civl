@@ -75,4 +75,5 @@ public interface DeclarationNode extends ASTNode {
 	 */
 	Entity getEntity();
 
+	void setEntity(Entity entity);
 }
