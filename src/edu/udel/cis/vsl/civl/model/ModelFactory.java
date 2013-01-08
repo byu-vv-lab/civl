@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-import edu.udel.cis.vsl.civl.model.expression.AnyExpression;
 import edu.udel.cis.vsl.civl.model.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.expression.BinaryExpression.BINARY_OPERATOR;
@@ -229,17 +228,6 @@ public class ModelFactory {
 	 * Expressions
 	 * *********************************************************************
 	 */
-
-	/**
-	 * An any(tag) expression.
-	 * 
-	 * @param tag
-	 *            Expression for the place where the tag should be stored.
-	 * @return The any expression.
-	 */
-	public AnyExpression anyExpression(Expression tag) {
-		return new AnyExpression(tag);
-	}
 
 	/**
 	 * A unary expression. One of {-,!}.
