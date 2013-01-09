@@ -15,8 +15,8 @@ public class SARLInternalException extends RuntimeException {
 	private static final long serialVersionUID = 6522079858283496490L;
 
 	public SARLInternalException(String s) {
-		super("A TASS internal error has occurred.\n"
-				+ "Please send an error report to siegel@cis.udel.edu.\n" + s);
+		super("A SARL internal error has occurred.\n"
+				+ "Please send an error report to siegel@udel.edu.\n" + s);
 	}
 
 }
