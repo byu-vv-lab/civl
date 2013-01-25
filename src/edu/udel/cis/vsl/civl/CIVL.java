@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import edu.udel.cis.vsl.civl.analysis.Analysis;
@@ -15,9 +16,40 @@ import edu.udel.cis.vsl.civl.civlc.preproc.Preprocess;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorFactory;
+import edu.udel.cis.vsl.civl.kripke.Enabler;
+import edu.udel.cis.vsl.civl.kripke.StateManager;
+import edu.udel.cis.vsl.civl.model.Model;
+import edu.udel.cis.vsl.civl.model.ModelBuilder;
+import edu.udel.cis.vsl.civl.model.SideEffectRemover;
+import edu.udel.cis.vsl.civl.predicate.Deadlock;
+import edu.udel.cis.vsl.civl.semantics.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.civl.state.StateFactory;
+import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transition.Transition;
+import edu.udel.cis.vsl.civl.transition.TransitionFactory;
+import edu.udel.cis.vsl.civl.transition.TransitionSequence;
+import edu.udel.cis.vsl.gmc.DfsSearcher;
+import edu.udel.cis.vsl.gmc.EnablerIF;
+import edu.udel.cis.vsl.gmc.StateManagerIF;
+import edu.udel.cis.vsl.gmc.StatePredicateIF;
+import edu.udel.cis.vsl.sarl.number.Numbers;
+import edu.udel.cis.vsl.sarl.number.IF.NumberFactoryIF;
+import edu.udel.cis.vsl.sarl.prove.Prove;
+import edu.udel.cis.vsl.sarl.prove.IF.TheoremProverIF;
+import edu.udel.cis.vsl.sarl.symbolic.Symbolics;
+import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicUniverseIF;
 
 public class CIVL {
+
+	private static ModelBuilder modelBuilder = new ModelBuilder();
+	private static NumberFactoryIF numberFactory = Numbers.REAL_FACTORY;
+	private static SymbolicUniverseIF universe = Symbolics
+			.newRealUniverse(numberFactory);
+	private static TheoremProverIF prover = Prove.newIdealCVC3HybridProver(
+			universe, new PrintWriter(System.out), false);
 
 	// TODO:
 	// add -D support. Need to create a token with "source" the command line.
@@ -115,7 +147,22 @@ public class CIVL {
 		} else {
 			CParser parser = Parse.newCParser(preprocessor, infile);
 			TranslationUnit unit = Antlr2AST.buildAST(parser, out);
+			SideEffectRemover sideEffectRemover = new SideEffectRemover();
+			StateFactoryIF stateFactory = new StateFactory(universe);
+			Model model;
+			TransitionFactory transitionFactory = new TransitionFactory();
+			Evaluator evaluator = new Evaluator(universe);
+			EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
+					transitionFactory, universe, prover, evaluator);
+			StatePredicateIF<State> predicate = new Deadlock(universe, evaluator, prover);
+			Executor executor;
+			StateManagerIF<State, Transition> stateManager;
+			DfsSearcher<State, Transition, TransitionSequence> searcher;
+			State initialState;
+			double startTime = System.currentTimeMillis(), endTime;
+			boolean result;
 			String bar = "===================";
+			
 			out.println(bar + " AST " + bar + "\n");
 			unit.print(out);
 			out.println();
@@ -127,7 +174,58 @@ public class CIVL {
 			out.println("\n\n" + bar + " Types " + bar + "\n");
 			unit.getUnitFactory().getTypeFactory().printTypes(out);
 			out.println();
+			sideEffectRemover.removeSideEffects(unit);
+			model = modelBuilder.buildModel(unit);
+			out.println(bar + " Model " + bar + "\n");
+			model.print(out);
+			out.println();
+			initialState = stateFactory.initialState(model);
+			executor = new Executor(model, universe, stateFactory);
+			stateManager = new StateManager(executor);
+			searcher = new DfsSearcher<State, Transition, TransitionSequence>(
+					enabler, stateManager, predicate);
+			searcher.setDebugOut(new PrintWriter(out));
+			result = searcher.search(initialState);
+			endTime = System.currentTimeMillis();
+			out.println();
+			out.println(bar + " Stats " + bar + "\n");
+			printStats(out, searcher, startTime, endTime,
+					((StateManager) stateManager).maxProcs());
+			if (result) {
+				out.println("The program MAY NOT be correct.");
+			} else {
+				out
+						.println("The specified properties hold for all executions.");
+			}
 			out.flush();
 		}
+	}
+
+	private static void printStats(PrintStream out,
+			DfsSearcher<State, Transition, TransitionSequence> searcher,
+			double startTime, double endTime, int maxProcs) {
+		long numStatesMatched = searcher.numStatesMatched();
+		long numStatesSeen = searcher.numStatesSeen();
+		long transitionsExecuted = searcher.numTransitions();
+		long numProverValidCalls = prover.numValidCalls();
+		long numCVC3Calls = prover.numInternalValidCalls();
+		long heapSize = Runtime.getRuntime().totalMemory();
+
+		out.print("   maxProcs            :");
+		out.println(maxProcs);
+		out.print("   statesSeen          : ");
+		out.println(numStatesSeen);
+		out.print("   statesMatched       : ");
+		out.println(numStatesMatched);
+		out.print("   transitionsExecuted : ");
+		out.println(transitionsExecuted);
+		out.print("   proverValidCalls    : ");
+		out.println(numProverValidCalls);
+		out.print("   CVC3ValidCalls      : ");
+		out.println(numCVC3Calls);
+		out.print("   memory              : ");
+		out.println(heapSize);
+		out.print("   elapsedTime         : ");
+		out.println((endTime - startTime) / 1000.0);
 	}
 }

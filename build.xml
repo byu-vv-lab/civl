@@ -145,6 +145,8 @@
 	<path id="src.compile.classpath">
 		<pathelement location="${src.dir}" />
 		<pathelement location="${antlr.jar}" />
+		<pathelement location="${sarl.jar}"/>
+		<pathelement location="${gmc.jar}"/>
 	</path>
 
 	<target name="compile" description="Compile all java source files." depends="parsers">
@@ -172,6 +174,8 @@
 		<pathelement location="${bin.dir}" />
 		<pathelement location="${antlr.jar}" />
 		<pathelement location="${junit.jar}" />
+		<pathelement location="${sarl.jar}"/>
+		<pathelement location="${gmc.jar}"/>
 	</path>
 
 	<path id="test.execute.classpath">
@@ -179,6 +183,8 @@
 		<pathelement location="${bin.dir}" />
 		<pathelement location="${antlr.jar}" />
 		<pathelement location="${junit.jar}" />
+		<pathelement location="${sarl.jar}"/>
+		<pathelement location="${gmc.jar}"/>
 	</path>
 
 	<target name="test-init">

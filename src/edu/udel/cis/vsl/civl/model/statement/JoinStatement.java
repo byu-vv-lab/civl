@@ -46,7 +46,7 @@ public class JoinStatement extends Statement {
 	
 	@Override
 	public String toString() {
-		return "join " + process;
+		return "wait " + process;
 	}
 
 }

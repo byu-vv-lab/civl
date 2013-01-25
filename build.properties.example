@@ -1,4 +1,4 @@
-# All dependencies for the ABC project are defined here.
+# All dependencies for the CIVL project are defined here.
 
 # Cobertura is a test coverage analysis tool for Java.
 # Donwload from here: http://cobertura.sourceforge.net/download.html
@@ -30,3 +30,11 @@ antlr.jar=/VSL/Tools/src/antlr/antlr-3.4/lib/antlr-3.4-complete.jar
 # whose subdirectories eventually contain all the .class files
 # in the ANTLR runtime.
 antlr.runtime.bin=/VSL/Tools/bin/antlr-3.4-runtime
+
+# SARL is the Symbolic Algebra and Reasoning Library.
+# CIVL uses SARL for reasoning about symbolic values during
+# model checking.
+sarl.jar=/tools/sarl.jar
+
+# GMC is the generic model checker.
+gmc.jar=/tools/gmc.jar

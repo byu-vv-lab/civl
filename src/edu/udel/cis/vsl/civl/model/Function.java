@@ -145,6 +145,9 @@ public class Function {
 	 */
 	public void setStartLocation(Location startLocation) {
 		this.startLocation = startLocation;
+		if (!locations.contains(startLocation)) {
+			locations.add(startLocation);
+		}
 	}
 
 	/**

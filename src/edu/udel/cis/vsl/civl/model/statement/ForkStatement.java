@@ -96,7 +96,7 @@ public class ForkStatement extends Statement {
 		if (lhs != null) {
 			result += lhs + " = ";
 		}
-		result += "fork " + function + "(";
+		result += "spawn " + function + "(";
 		for (int i = 0; i < arguments.size(); i++) {
 			if (i != 0) {
 				result += ", ";
