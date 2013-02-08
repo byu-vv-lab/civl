@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.model.expression.Expression;
 import edu.udel.cis.vsl.civl.model.location.Location;
 import edu.udel.cis.vsl.civl.model.statement.Statement;
 import edu.udel.cis.vsl.civl.model.type.Type;
@@ -32,6 +33,8 @@ public class Function {
 	private Set<Statement> statements;
 	private Location startLocation;
 	private Set<Location> locations;
+	private Expression precondition = null;
+	private Expression postcondition = null;
 
 	/**
 	 * A function.
@@ -55,7 +58,8 @@ public class Function {
 		this.returnType = returnType;
 		this.containingScope = containingScope;
 		scopes = new HashSet<Scope>();
-		outerScope = factory.scope(containingScope, new LinkedHashSet<Variable>(), this);
+		outerScope = factory.scope(containingScope,
+				new LinkedHashSet<Variable>(), this);
 		for (Variable variable : parameters) {
 			outerScope.addVariable(variable);
 		}
@@ -129,6 +133,20 @@ public class Function {
 	 */
 	public Set<Location> locations() {
 		return locations;
+	}
+
+	/**
+	 * @return The precondition for this function. Null if not set.
+	 */
+	public Expression precondition() {
+		return precondition;
+	}
+
+	/**
+	 * @return The postcondition for this function. Null if not set.
+	 */
+	public Expression postcondition() {
+		return postcondition;
 	}
 
 	/**
@@ -223,6 +241,22 @@ public class Function {
 	}
 
 	/**
+	 * @param precondition
+	 *            The precondition for this function.
+	 */
+	public void setPrecondition(Expression precondition) {
+		this.precondition = precondition;
+	}
+
+	/**
+	 * @param postcondition
+	 *            The postcondition for this function.
+	 */
+	public void setPostcondition(Expression postcondition) {
+		this.postcondition = postcondition;
+	}
+
+	/**
 	 * Print the function.
 	 * 
 	 * @param prefix
@@ -234,6 +268,12 @@ public class Function {
 		Iterator<Variable> iter;
 
 		out.println(prefix + "function " + name);
+		if (precondition != null) {
+			out.println(prefix + "| requires " + precondition);
+		}
+		if (postcondition != null) {
+			out.println(prefix + "| ensures " + postcondition);
+		}
 		out.println(prefix + "| formal parameters");
 		iter = parameters.iterator();
 		while (iter.hasNext()) {

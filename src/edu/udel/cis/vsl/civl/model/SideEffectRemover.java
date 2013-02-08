@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
@@ -86,8 +87,7 @@ public class SideEffectRemover {
 		} else if (statement instanceof AssumeNode) {
 			result = assumeStatement((AssumeNode) statement);
 		} else if (statement instanceof ChooseStatementNode) {
-			// TODO
-			result = statement;
+			result = chooseStatement((ChooseStatementNode) statement);
 		} else if (statement instanceof CompoundStatementNode) {
 			result = processCompoundStatement((CompoundStatementNode) statement);
 		} else if (statement instanceof ExpressionStatementNode) {
@@ -95,28 +95,137 @@ public class SideEffectRemover {
 		} else if (statement instanceof ForLoopNode) {
 			result = loopStatement((ForLoopNode) statement);
 		} else if (statement instanceof IfNode) {
-			// TODO
-			result = statement;
+			result = ifStatement((IfNode) statement);
 		} else if (statement instanceof LabeledStatementNode) {
-			// TODO
-			result = statement;
+			result = labeledStatement((LabeledStatementNode) statement);
 		} else if (statement instanceof LoopNode) {
 			result = loopStatement((LoopNode) statement);
 		} else if (statement instanceof ReturnNode) {
-			// TODO
-			result = statement;
+			result = returnStatement((ReturnNode) statement);
 		} else if (statement instanceof SwitchNode) {
-			// TODO
-			result = statement;
+			result = switchStatement((SwitchNode) statement);
 		} else if (statement instanceof WaitNode) {
-			// TODO
-			result = statement;
+			result = waitStatement((WaitNode) statement);
 		} else if (statement instanceof WhenNode) {
-			// TODO
-			result = statement;
+			result = whenStatement((WhenNode) statement);
 		} else {
 			result = statement;
 		}
+		return result;
+	}
+
+	private StatementNode chooseStatement(ChooseStatementNode statement)
+			throws SyntaxException {
+		ChooseStatementNode result;
+		StatementNode defaultCase = statement.getDefaultCase();
+		Vector<StatementNode> statements = new Vector<StatementNode>();
+		Iterator<StatementNode> iterator = statement.childIterator();
+
+		while (iterator.hasNext()) {
+			statements.add(processStatement(iterator.next()));
+		}
+		result = factory.newChooseStatementNode(statement.getSource(),
+				statements);
+		if (defaultCase != null) {
+			defaultCase = processStatement(defaultCase);
+			assert defaultCase instanceof LabeledStatementNode;
+			result.setDefaultCase((LabeledStatementNode) defaultCase);
+		}
+		return result;
+	}
+
+	private StatementNode switchStatement(SwitchNode statement)
+			throws SyntaxException {
+		StatementNode result;
+
+		if (!isSEF(statement.getCondition())) {
+			throw new RuntimeException(
+					"Side effects in a switch condition are not supported. "
+							+ statement.getCondition());
+		}
+		result = factory
+				.newSwitchNode(statement.getSource(), statement.getCondition(),
+						processStatement(statement.getBody()));
+		return result;
+	}
+
+	private StatementNode returnStatement(ReturnNode statement)
+			throws SyntaxException {
+		StatementNode result;
+
+		if (isSEF(statement.getExpression())) {
+			result = statement;
+		} else {
+			Vector<BlockItemNode> newStatements = new Vector<BlockItemNode>();
+			SideEffectFreeTriple triple = processExpression(statement
+					.getExpression());
+
+			if (!triple.getAfter().isEmpty()) {
+				throw new RuntimeException(
+						"Side effects that modify the state after a return statement are not supported. "
+								+ statement);
+			} else {
+				newStatements.addAll(triple.getBefore());
+				newStatements.add(factory.newReturnNode(statement.getSource(),
+						triple.getExpression()));
+				result = factory.newCompoundStatementNode(
+						statement.getSource(), newStatements);
+			}
+		}
+		return result;
+	}
+
+	private StatementNode waitStatement(WaitNode statement)
+			throws SyntaxException {
+		StatementNode result;
+
+		if (isSEF(statement.getExpression())) {
+			result = statement;
+		} else {
+			Vector<BlockItemNode> newStatements = new Vector<BlockItemNode>();
+			SideEffectFreeTriple triple = processExpression(statement
+					.getExpression());
+
+			newStatements.addAll(triple.getBefore());
+			newStatements.add(factory.newWaitNode(statement.getSource(),
+					triple.getExpression()));
+			newStatements.addAll(triple.getAfter());
+			result = factory.newCompoundStatementNode(statement.getSource(),
+					newStatements);
+		}
+		return result;
+	}
+
+	private StatementNode labeledStatement(LabeledStatementNode statement)
+			throws SyntaxException {
+		StatementNode target = processStatement(statement.getStatement());
+
+		return factory.newLabeledStatementNode(statement.getSource(),
+				statement.getLabel(), target);
+	}
+
+	private StatementNode ifStatement(IfNode statement) throws SyntaxException {
+		StatementNode trueBranch = processStatement(statement.getTrueBranch());
+		StatementNode falseBranch = null;
+
+		if (statement.getFalseBranch() != null) {
+			falseBranch = processStatement(statement.getFalseBranch());
+		}
+		if (!isSEF(statement.getCondition())) {
+			throw new RuntimeException(
+					"Side effects in a condition are not supported. "
+							+ statement.getCondition());
+		}
+		return factory.newIfNode(statement.getSource(),
+				statement.getCondition(), trueBranch, falseBranch);
+	}
+
+	private StatementNode whenStatement(WhenNode statement)
+			throws SyntaxException {
+		StatementNode result;
+
+		result = factory.newWhenNode(statement.getSource(),
+				statement.getGuard(), processStatement(statement.getBody()));
 		return result;
 	}
 
@@ -301,9 +410,11 @@ public class SideEffectRemover {
 						Vector<BlockItemNode> blockItems = new Vector<BlockItemNode>();
 
 						if (rhs instanceof FunctionCallNode) {
-
+							// TODO check that arguments are SEF
+							result = statement;
 						} else if (rhs instanceof SpawnNode) {
-
+							// TODO check that arguments are SEF
+							result = statement;
 						} else {
 							Vector<ExpressionNode> assignArguments = new Vector<ExpressionNode>();
 
@@ -324,6 +435,62 @@ public class SideEffectRemover {
 						}
 						break;
 					}
+				case PLUS:
+				case MINUS:
+				case DIV:
+				case TIMES:
+					// TODO: Need to process these for precedent, or is this
+					// taken care of?
+					ExpressionNode left = ((OperatorNode) expression)
+							.getArgument(0);
+					ExpressionNode right = ((OperatorNode) expression)
+							.getArgument(1);
+					SideEffectFreeTriple leftTriple = processExpression(left);
+					SideEffectFreeTriple rightTriple = processExpression(right);
+					Vector<ExpressionNode> operands = new Vector<ExpressionNode>();
+					StatementNode sideEffectFreeStatement;
+					Vector<BlockItemNode> blockItems = new Vector<BlockItemNode>();
+
+					operands.add(leftTriple.getExpression());
+					operands.add(rightTriple.getExpression());
+					sideEffectFreeStatement = factory
+							.newExpressionStatementNode(factory
+									.newOperatorNode(statement.getSource(),
+											((OperatorNode) expression)
+													.getOperator(), operands));
+					blockItems.addAll(leftTriple.getBefore());
+					blockItems.addAll(rightTriple.getBefore());
+					blockItems.add(sideEffectFreeStatement);
+					blockItems.addAll(rightTriple.getAfter());
+					blockItems.addAll(leftTriple.getAfter());
+					result = factory.newCompoundStatementNode(
+							statement.getSource(), blockItems);
+					break;
+				case PLUSEQ:
+					if (isSEF(((OperatorNode) expression).getArgument(1))) {
+						ExpressionNode addition;
+						Vector<ExpressionNode> arguments = new Vector<ExpressionNode>();
+						Vector<ExpressionNode> assignmentArguments = new Vector<ExpressionNode>();
+
+						arguments.add(((OperatorNode) expression)
+								.getArgument(0));
+						arguments.add(((OperatorNode) expression)
+								.getArgument(1));
+						addition = factory.newOperatorNode(
+								expression.getSource(), Operator.PLUS,
+								arguments);
+						assignmentArguments.add(((OperatorNode) expression)
+								.getArgument(0));
+						assignmentArguments.add(addition);
+						result = factory.newExpressionStatementNode(factory
+								.newOperatorNode(expression.getSource(),
+										Operator.ASSIGN, assignmentArguments));
+					} else {
+						throw new RuntimeException(
+								"Side effects in a += are currently unsupported. "
+										+ statement);
+					}
+					break;
 				}
 			} else {
 				throw new RuntimeException(
@@ -413,11 +580,43 @@ public class SideEffectRemover {
 			case POSTDECREMENT:
 				result = incrementOrDecrement((OperatorNode) expression);
 				break;
+			case PLUS:
+			case MINUS:
+			case DIV:
+			case TIMES:
+			case SUBSCRIPT:
+				// TODO: Need to process these for precedent, or is this taken
+				// care of?
+				ExpressionNode left = ((OperatorNode) expression)
+						.getArgument(0);
+				ExpressionNode right = ((OperatorNode) expression)
+						.getArgument(1);
+				SideEffectFreeTriple leftTriple = processExpression(left);
+				SideEffectFreeTriple rightTriple = processExpression(right);
+				Vector<ExpressionNode> operands = new Vector<ExpressionNode>();
+				ExpressionNode sideEffectFreeExpression;
+				Vector<BlockItemNode> before = new Vector<BlockItemNode>();
+				Vector<BlockItemNode> after = new Vector<BlockItemNode>();
+
+				operands.add(leftTriple.getExpression());
+				operands.add(rightTriple.getExpression());
+				sideEffectFreeExpression = factory.newOperatorNode(
+						expression.getSource(),
+						((OperatorNode) expression).getOperator(), operands);
+				before.addAll(leftTriple.getBefore());
+				before.addAll(rightTriple.getBefore());
+				after.addAll(leftTriple.getAfter());
+				after.addAll(leftTriple.getAfter());
+				result = new SideEffectFreeTriple(before,
+						sideEffectFreeExpression, after);
+				break;
 			default:
 				throw new RuntimeException(
 						"Node should not have side effects: " + expression);
 			}
-
+		} else if (isSEF(expression)) {
+			result = new SideEffectFreeTriple(new Vector<BlockItemNode>(),
+					expression, new Vector<BlockItemNode>());
 		} else {
 			throw new RuntimeException("Unknown side effect expression "
 					+ expression);

@@ -14,9 +14,13 @@ import java.util.Vector;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.civl.ast.entity.IF.Label;
 import edu.udel.cis.vsl.civl.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.ContractNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.EnsuresNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.InitializerNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.declaration.RequiresNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.ExpressionNode;
@@ -25,10 +29,14 @@ import edu.udel.cis.vsl.civl.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.OperatorNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.ResultNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.expression.SelfNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.SpawnNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.expression.StringLiteralNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.label.OrdinaryLabelNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.AssertNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.ChooseStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.CompoundStatementNode;
@@ -39,9 +47,11 @@ import edu.udel.cis.vsl.civl.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.GotoNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.LabeledStatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.NullStatementNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.WaitNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.statement.WhenNode;
+import edu.udel.cis.vsl.civl.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.BasicTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.civl.ast.node.IF.type.TypeNode;
@@ -57,6 +67,7 @@ import edu.udel.cis.vsl.civl.model.location.Location;
 import edu.udel.cis.vsl.civl.model.statement.CallStatement;
 import edu.udel.cis.vsl.civl.model.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.statement.Statement;
+import edu.udel.cis.vsl.civl.model.type.ArrayType;
 import edu.udel.cis.vsl.civl.model.type.Type;
 import edu.udel.cis.vsl.civl.model.variable.Variable;
 
@@ -70,6 +81,7 @@ public class ModelBuilder {
 
 	private ModelFactory factory;
 	private Vector<FunctionDefinitionNode> unprocessedFunctions;
+	private Map<FunctionDefinitionNode, Scope> containingScopes;
 	private Map<CallStatement, FunctionDefinitionNode> callStatements;
 	private Map<FunctionDefinitionNode, Function> functionMap;
 	private Map<LabelNode, Statement> labeledStatements;
@@ -107,6 +119,7 @@ public class ModelBuilder {
 		FunctionDefinitionNode mainFunction = null;
 		Statement mainBody;
 
+		containingScopes = new LinkedHashMap<FunctionDefinitionNode, Scope>();
 		callStatements = new LinkedHashMap<CallStatement, FunctionDefinitionNode>();
 		functionMap = new LinkedHashMap<FunctionDefinitionNode, Function>();
 		unprocessedFunctions = new Vector<FunctionDefinitionNode>();
@@ -116,12 +129,16 @@ public class ModelBuilder {
 			if (node instanceof VariableDeclarationNode) {
 				processVariableDeclaration(system.outerScope(),
 						(VariableDeclarationNode) rootNode.child(i));
-			} else if (node instanceof FunctionDeclarationNode) {
+			} else if (node instanceof FunctionDefinitionNode) {
 				if (((FunctionDefinitionNode) node).getName().equals("main")) {
 					mainFunction = (FunctionDefinitionNode) node;
 				} else {
 					unprocessedFunctions.add((FunctionDefinitionNode) node);
+					containingScopes.put((FunctionDefinitionNode) node,
+							system.outerScope());
 				}
+			} else if (node instanceof FunctionDeclarationNode) {
+				// Do we need to keep track of these for any reason?
 			} else {
 				throw new RuntimeException("Unsupported declaration type: "
 						+ node);
@@ -130,25 +147,76 @@ public class ModelBuilder {
 		if (mainFunction == null) {
 			throw new RuntimeException("Program must have a main function.");
 		}
+		labeledStatements = new LinkedHashMap<LabelNode, Statement>();
+		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		mainBody = statement(system, null, mainFunction.getBody(),
 				system.outerScope());
-		returnLocation = factory.location(system.outerScope());
-		returnStatement = factory.returnStatement(returnLocation, null);
-		if (mainBody != null) {
-			mainBody.setTarget(returnLocation);
-		} else {
-			system.setStartLocation(returnLocation);
+		if (!(mainBody instanceof ReturnStatement)) {
+			returnLocation = factory.location(system.outerScope());
+			returnStatement = factory.returnStatement(returnLocation, null);
+			if (mainBody != null) {
+				mainBody.setTarget(returnLocation);
+			} else {
+				system.setStartLocation(returnLocation);
+			}
+			system.addLocation(returnLocation);
+			system.addStatement(returnStatement);
 		}
-		system.addLocation(returnLocation);
-		system.addStatement(returnStatement);
+		for (Statement s : gotoStatements.keySet()) {
+			s.setTarget(labeledStatements.get(gotoStatements.get(s)).source());
+		}
 		model = factory.model(system);
 		while (!unprocessedFunctions.isEmpty()) {
 			FunctionDefinitionNode functionDefinition = unprocessedFunctions
 					.remove(0);
 			Function newFunction = processFunction(functionDefinition,
-					system.outerScope());
+					containingScopes.get(functionDefinition));
+			SequenceNode<ContractNode> contract = functionDefinition
+					.getContract();
+			Expression precondition = null;
+			Expression postcondition = null;
 
+			if (contract != null) {
+				for (int i = 0; i < contract.numChildren(); i++) {
+					ContractNode contractComponent = contract
+							.getSequenceChild(i);
+					Expression componentExpression;
+
+					if (contractComponent instanceof EnsuresNode) {
+						componentExpression = expression(
+								((EnsuresNode) contractComponent)
+										.getExpression(),
+								newFunction.outerScope());
+						if (postcondition == null) {
+							postcondition = componentExpression;
+						} else {
+							postcondition = factory.binaryExpression(
+									BINARY_OPERATOR.AND, postcondition,
+									componentExpression);
+						}
+					} else {
+						componentExpression = expression(
+								((RequiresNode) contractComponent)
+										.getExpression(),
+								newFunction.outerScope());
+						if (precondition == null) {
+							precondition = componentExpression;
+						} else {
+							precondition = factory.binaryExpression(
+									BINARY_OPERATOR.AND, precondition,
+									componentExpression);
+						}
+					}
+				}
+			}
+			if (precondition != null) {
+				newFunction.setPrecondition(precondition);
+			}
+			if (postcondition != null) {
+				newFunction.setPostcondition(postcondition);
+			}
 			model.addFunction(newFunction);
+			functionMap.put(functionDefinition, newFunction);
 		}
 		for (CallStatement statement : callStatements.keySet()) {
 			statement
@@ -197,10 +265,21 @@ public class ModelBuilder {
 
 	private void processVariableDeclaration(Scope scope,
 			VariableDeclarationNode node) {
-		Type type = processType(((VariableDeclarationNode) node).getTypeNode());
+		Type type = processType(node.getTypeNode());
 		Identifier name = factory.identifier(node.getName());
+		Variable variable = factory.variable(type, name, scope.numVariables());
 
-		scope.addVariable(factory.variable(type, name, scope.numVariables()));
+		if (type instanceof ArrayType) {
+			ExpressionNode extentNode = ((ArrayTypeNode) node.getTypeNode())
+					.getExtent();
+			Expression extent;
+
+			if (extentNode != null) {
+				extent = expression(extentNode, scope);
+				variable.setExtent(extent);
+			}
+		}
+		scope.addVariable(variable);
 	}
 
 	private Type processType(TypeNode typeNode) {
@@ -227,6 +306,9 @@ public class ModelBuilder {
 			}
 		} else if (typeNode.kind() == TypeNodeKind.PROCESS) {
 			return factory.processType();
+		} else if (typeNode.kind() == TypeNodeKind.ARRAY) {
+			return factory.arrayType(processType(((ArrayTypeNode) typeNode)
+					.getElementType()));
 		}
 		return result;
 	}
@@ -255,6 +337,10 @@ public class ModelBuilder {
 					scope);
 		} else if (expression instanceof ConstantNode) {
 			result = constant((ConstantNode) expression);
+		} else if (expression instanceof ResultNode) {
+			result = factory.resultExpression();
+		} else if (expression instanceof SelfNode) {
+			result = factory.selfExpression();
 		}
 		return result;
 	}
@@ -361,6 +447,10 @@ public class ModelBuilder {
 		VariableExpression result = null;
 		Identifier name = factory.identifier(identifier.getIdentifier().name());
 
+		if (scope.variable(name) == null) {
+			throw new RuntimeException("No such variable "
+					+ identifier.getSource());
+		}
 		result = factory.variableExpression(scope.variable(name));
 		return result;
 	}
@@ -407,7 +497,13 @@ public class ModelBuilder {
 			StatementNode statement, Scope scope) {
 		Statement result = null;
 
-		if (statement instanceof ExpressionStatementNode) {
+		if (statement instanceof AssumeNode) {
+			result = assume(function, lastStatement, (AssumeNode) statement,
+					scope);
+		} else if (statement instanceof AssertNode) {
+			result = assertStatement(function, lastStatement,
+					(AssertNode) statement, scope);
+		} else if (statement instanceof ExpressionStatementNode) {
 			result = expressionStatement(function, lastStatement,
 					(ExpressionStatementNode) statement, scope);
 		} else if (statement instanceof CompoundStatementNode) {
@@ -432,8 +528,69 @@ public class ModelBuilder {
 		} else if (statement instanceof LabeledStatementNode) {
 			result = labeledStatement(function, lastStatement,
 					(LabeledStatementNode) statement, scope);
+		} else if (statement instanceof ReturnNode) {
+			result = returnStatement(function, lastStatement,
+					(ReturnNode) statement, scope);
 		}
 		function.addStatement(result);
+		return result;
+	}
+
+	/**
+	 * An assume statement.
+	 * 
+	 * @param function
+	 *            The function containing this statement.
+	 * @param lastStatement
+	 *            The previous statement. Null if this is the first statement in
+	 *            a function.
+	 * @param statement
+	 *            The statement node.
+	 * @param scope
+	 *            The scope containing this statement.
+	 * @return The model representation of this statement.
+	 */
+	private Statement assume(Function function, Statement lastStatement,
+			AssumeNode statement, Scope scope) {
+		Statement result;
+		Expression expression = expression(statement.getExpression(), scope);
+		Location location = factory.location(scope);
+
+		result = factory.assumeStatement(location, expression);
+		if (lastStatement != null) {
+			lastStatement.setTarget(location);
+		} else {
+			function.setStartLocation(location);
+		}
+		return result;
+	}
+
+	/**
+	 * An assert statement.
+	 * 
+	 * @param function
+	 *            The function containing this statement.
+	 * @param lastStatement
+	 *            The previous statement. Null if this is the first statement in
+	 *            a function.
+	 * @param statement
+	 *            The statement node.
+	 * @param scope
+	 *            The scope containing this statement.
+	 * @return The model representation of this statement.
+	 */
+	private Statement assertStatement(Function function,
+			Statement lastStatement, AssertNode statement, Scope scope) {
+		Statement result;
+		Expression expression = expression(statement.getExpression(), scope);
+		Location location = factory.location(scope);
+
+		result = factory.assertStatement(location, expression);
+		if (lastStatement != null) {
+			lastStatement.setTarget(location);
+		} else {
+			function.setStartLocation(location);
+		}
 		return result;
 	}
 
@@ -648,6 +805,7 @@ public class ModelBuilder {
 				}
 			} else if (node instanceof FunctionDeclarationNode) {
 				unprocessedFunctions.add((FunctionDefinitionNode) node);
+				containingScopes.put((FunctionDefinitionNode) node, newScope);
 			} else if (node instanceof StatementNode) {
 				Statement newStatement = statement(function, lastStatement,
 						(StatementNode) node, newScope);
@@ -871,6 +1029,24 @@ public class ModelBuilder {
 				statement.getStatement(), scope);
 
 		labeledStatements.put(statement.getLabel(), result);
+		return result;
+	}
+
+	private Statement returnStatement(Function function,
+			Statement lastStatement, ReturnNode statement, Scope scope) {
+		Statement result;
+		Expression expression = null;
+		Location location = factory.location(scope);
+
+		if (lastStatement != null) {
+			lastStatement.setTarget(location);
+		} else {
+			function.setStartLocation(location);
+		}
+		if (statement.getExpression() != null) {
+			expression = expression(statement.getExpression(), scope);
+		}
+		result = factory.returnStatement(location, expression);
 		return result;
 	}
 }

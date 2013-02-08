@@ -17,13 +17,16 @@ import edu.udel.cis.vsl.civl.model.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.expression.Expression;
 import edu.udel.cis.vsl.civl.model.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.location.Location;
+import edu.udel.cis.vsl.civl.model.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.statement.AssignStatement;
+import edu.udel.cis.vsl.civl.model.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.statement.CallStatement;
 import edu.udel.cis.vsl.civl.model.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.statement.ForkStatement;
@@ -304,6 +307,16 @@ public class ModelFactory {
 	}
 
 	/**
+	 * This expression is only used in an ensures clause of a function contract
+	 * to refer to the returned value.
+	 * 
+	 * @return A result expression.
+	 */
+	public ResultExpression resultExpression() {
+		return new ResultExpression();
+	}
+
+	/**
 	 * A string literal expression.
 	 * 
 	 * @param value
@@ -364,6 +377,23 @@ public class ModelFactory {
 	 */
 
 	/**
+	 * An assert statement.
+	 * 
+	 * @param source
+	 *            The source location for this statement.
+	 * @param expression
+	 *            The expression being asserted.
+	 * @return A new assert statement.
+	 */
+	public AssertStatement assertStatement(Location source,
+			Expression expression) {
+		AssertStatement result = new AssertStatement(source, expression);
+
+		result.setStatementScope(expression.expressionScope());
+		return result;
+	}
+
+	/**
 	 * An assignment statement.
 	 * 
 	 * @param source
@@ -380,6 +410,23 @@ public class ModelFactory {
 
 		result.setStatementScope(join(lhs.expressionScope(),
 				rhs.expressionScope()));
+		return result;
+	}
+
+	/**
+	 * An assume statement.
+	 * 
+	 * @param source
+	 *            The source location for this statement.
+	 * @param expression
+	 *            The expression being added to the path condition.
+	 * @return A new assume statement.
+	 */
+	public AssumeStatement assumeStatement(Location source,
+			Expression expression) {
+		AssumeStatement result = new AssumeStatement(source, expression);
+
+		result.setStatementScope(expression.expressionScope());
 		return result;
 	}
 

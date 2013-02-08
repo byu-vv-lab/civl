@@ -166,6 +166,7 @@ public class CIVL {
 			out.println(bar + " AST " + bar + "\n");
 			unit.print(out);
 			out.println();
+			sideEffectRemover.removeSideEffects(unit);
 			Analysis.performStandardAnalysis(unit);
 			out.println(bar + " Analyzed AST " + bar + "\n");
 			unit.print(out);
@@ -174,7 +175,6 @@ public class CIVL {
 			out.println("\n\n" + bar + " Types " + bar + "\n");
 			unit.getUnitFactory().getTypeFactory().printTypes(out);
 			out.println();
-			sideEffectRemover.removeSideEffects(unit);
 			model = modelBuilder.buildModel(unit);
 			out.println(bar + " Model " + bar + "\n");
 			model.print(out);

@@ -108,6 +108,9 @@ public class CallStatement extends Statement {
 	public String toString() {
 		String result = function.toString();
 		
+		if (lhs != null) {
+			result = lhs + " = " + result;
+		}
 		return result;
 	}
 

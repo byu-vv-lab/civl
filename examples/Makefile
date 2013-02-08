@@ -5,7 +5,9 @@ TARGETS = \
 	minimal \
 	spawn \
 	locks \
-	sideEffects
+	sideEffects \
+	sideEffects2 \
+	adder
 
 default: all
 
@@ -22,3 +24,9 @@ locks: locks.cvl
 
 sideEffects: sideEffects.cvl
 	$(CIVL) sideEffects.cvl
+
+sideEffects2: sideEffects2.cvl
+	$(CIVL) sideEffects2.cvl
+
+adder: adder.cvl
+	$(CIVL) adder.cvl

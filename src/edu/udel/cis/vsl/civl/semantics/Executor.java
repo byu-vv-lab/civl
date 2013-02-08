@@ -14,7 +14,9 @@ import edu.udel.cis.vsl.civl.model.expression.Expression;
 import edu.udel.cis.vsl.civl.model.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.location.Location;
+import edu.udel.cis.vsl.civl.model.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.statement.AssignStatement;
+import edu.udel.cis.vsl.civl.model.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.statement.CallStatement;
 import edu.udel.cis.vsl.civl.model.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.statement.ForkStatement;
@@ -30,6 +32,7 @@ import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.sarl.number.IF.IntegerNumberIF;
 import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
 import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicUniverseIF;
+import edu.udel.cis.vsl.sarl.symbolic.ideal.BooleanIdealExpression;
 
 /**
  * An executor is used to execute a Chapel statement. The basic method provided
@@ -273,12 +276,17 @@ public class Executor {
 		StackEntry returnContext;
 		Location returnLocation;
 		CallStatement call;
+		SymbolicExpressionIF returnExpression = null;
 
 		if (state.process(pid).peekStack().location().function().name().name()
 				.equals("_CVT_system")) {
 			if (!finalStates.contains(state)) {
 				finalStates.add(state);
 			}
+		}
+		if (statement.expression() != null) {
+			returnExpression = evaluator.evaluate(state, pid,
+					statement.expression());
 		}
 		state = stateFactory.popCallStack(state, pid);
 		process = state.process(pid);
@@ -290,12 +298,37 @@ public class Executor {
 			// TODO: Verify this, throw an exception if it's not the case.
 			call = (CallStatement) returnLocation.outgoing().iterator().next();
 			if (call.lhs() != null) {
-				state = writeValue(state, pid, call.lhs(),
-						statement.expression());
+				state = writeValue(state, pid, call.lhs(), returnExpression);
 			}
 			state = stateFactory.setLocation(state, pid, call.target());
 		}
 		// state = stateFactory.canonic(state);
+		return state;
+	}
+
+	public State execute(State state, int pid, AssumeStatement statement) {
+		SymbolicExpressionIF assumeExpression = evaluator.evaluate(state, pid,
+				statement.getExpression());
+
+		state = stateFactory.setPathCondition(state,
+				symbolicUniverse.and(state.pathCondition(), assumeExpression));
+		state = transition(state, state.process(pid), statement.target());
+		return state;
+	}
+
+	public State execute(State state, int pid, AssertStatement statement) {
+		SymbolicExpressionIF assertExpression = evaluator.evaluate(state, pid,
+				statement.getExpression());
+
+		// TODO Handle error reporting in a nice way.
+		if (!(assertExpression instanceof BooleanIdealExpression)
+				|| ((BooleanIdealExpression) assertExpression).toString()
+						.equals("false")) {
+			throw new RuntimeException("Assertion may be violated: "
+					+ statement.toString() + "\n  Expected: true\n  Actual: "
+					+ assertExpression);
+		}
+		state = transition(state, state.process(pid), statement.target());
 		return state;
 	}
 
@@ -314,7 +347,11 @@ public class Executor {
 	public State execute(State state, int pid, Statement statement) {
 		Process process;
 
-		if (statement instanceof CallStatement) {
+		if (statement instanceof AssumeStatement) {
+			return execute(state, pid, (AssumeStatement) statement);
+		} else if (statement instanceof AssertStatement) {
+			return execute(state, pid, (AssertStatement) statement);
+		} else if (statement instanceof CallStatement) {
 			return execute(state, pid, (CallStatement) statement);
 		} else if (statement instanceof AssignStatement) {
 			return execute(state, pid, (AssignStatement) statement);
