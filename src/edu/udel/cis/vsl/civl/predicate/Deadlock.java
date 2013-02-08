@@ -174,7 +174,13 @@ public class Deadlock implements StatePredicateIF<State> {
 					SymbolicExpressionIF joinProcess = evaluator.evaluate(
 							state, p.id(), ((JoinStatement) s).process());
 					IntegerNumberIF pidNumber;
+					SymbolicExpressionIF guard = evaluator.evaluate(state,
+							p.id(), s.guard());
 
+					// If guard is false, don't worry about the stack.
+					if (guard.equals(symbolicUniverse.concreteExpression(false))) {
+						continue;
+					}
 					// TODO: Throw exception if not the right type.
 					pidNumber = (IntegerNumberIF) symbolicUniverse
 							.extractNumber(joinProcess);

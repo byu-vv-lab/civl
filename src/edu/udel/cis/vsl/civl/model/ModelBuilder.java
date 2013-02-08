@@ -1038,6 +1038,7 @@ public class ModelBuilder {
 		Expression expression = null;
 		Location location = factory.location(scope);
 
+		function.addLocation(location);
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
 		} else {
