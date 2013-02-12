@@ -74,7 +74,7 @@ public class CommonArrayType extends CommonObjectType implements ArrayType {
 
 	@Override
 	public boolean isComplete() {
-		return variableSize != null || unspecifiedVariableLength;
+		return variableSize != null || constantSize != null || unspecifiedVariableLength;
 	}
 
 	@Override
