@@ -1245,12 +1245,13 @@ scope Symbols;
 	  invariant_opt SEMI
 	  -> ^(DO $s expression invariant_opt)
 	| FOR LPAREN 
-	  ( (declaration) => 
+	  ( 
 	    d=declaration e1=expression_opt SEMI e2=expression_opt
 	    RPAREN i=invariant_opt s=statementWithScope
 	    -> ^(FOR $d $e1 $e2 $s $i)
 	  | e0=expression_opt SEMI e1=expression_opt SEMI
-	    e2=expression_opt RPAREN s=statementWithScope
+	    e2=expression_opt RPAREN i=invariant_opt
+	    s=statementWithScope
 	    -> ^(FOR $e0 $e1 $e2 $s $i)
 	  )
 	;
