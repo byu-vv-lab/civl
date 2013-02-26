@@ -3,7 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.state;
 
-import edu.udel.cis.vsl.civl.model.variable.Variable;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+
 
 /**
  * A dynamic variable.

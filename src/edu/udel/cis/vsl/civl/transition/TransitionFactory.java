@@ -3,9 +3,9 @@
  */
 package edu.udel.cis.vsl.civl.transition;
 
-import edu.udel.cis.vsl.civl.model.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.State;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A factory to create transitions and transition sequences.
@@ -35,7 +35,7 @@ public class TransitionFactory {
 	 *         statement.
 	 */
 	public SimpleTransition newSimpleTransition(
-			SymbolicExpressionIF pathCondition, int pid, Statement statement) {
+			SymbolicExpression pathCondition, int pid, Statement statement) {
 		return new SimpleTransition(pathCondition, pid, statement);
 	}
 
@@ -55,8 +55,8 @@ public class TransitionFactory {
 	 *         statement.
 	 */
 	public SimpleTransition newChooseTransition(
-			SymbolicExpressionIF pathCondition, int pid, Statement statement,
-			SymbolicExpressionIF value) {
+			SymbolicExpression pathCondition, int pid, Statement statement,
+			SymbolicExpression value) {
 		return new ChooseTransition(pathCondition, pid, statement, value);
 	}
 

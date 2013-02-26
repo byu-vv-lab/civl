@@ -3,19 +3,19 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
-import edu.udel.cis.vsl.civl.model.expression.ArrayIndexExpression;
-import edu.udel.cis.vsl.civl.model.expression.BinaryExpression;
-import edu.udel.cis.vsl.civl.model.expression.BooleanLiteralExpression;
-import edu.udel.cis.vsl.civl.model.expression.Expression;
-import edu.udel.cis.vsl.civl.model.expression.IntegerLiteralExpression;
-import edu.udel.cis.vsl.civl.model.expression.RealLiteralExpression;
-import edu.udel.cis.vsl.civl.model.expression.StringLiteralExpression;
-import edu.udel.cis.vsl.civl.model.expression.UnaryExpression;
-import edu.udel.cis.vsl.civl.model.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.number.real.RealNumberFactory;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicUniverseIF;
 
 /**
  * An evaluator is used to evaluate expressions.
@@ -25,7 +25,7 @@ import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicUniverseIF;
  */
 public class Evaluator {
 
-	private SymbolicUniverseIF symbolicUniverse;
+	private SymbolicUniverse symbolicUniverse;
 	private RealNumberFactory numberFactory = new RealNumberFactory();
 
 	/**
@@ -34,7 +34,7 @@ public class Evaluator {
 	 * @param symbolicUniverse
 	 *            The symbolic universe for the expressions.
 	 */
-	public Evaluator(SymbolicUniverseIF symbolicUniverse) {
+	public Evaluator(SymbolicUniverse symbolicUniverse) {
 		this.symbolicUniverse = symbolicUniverse;
 	}
 
@@ -42,9 +42,9 @@ public class Evaluator {
 	 * Evaluate a generic expression. One of the overloaded evaluate methods for
 	 * specific expressions should always be used instead.
 	 */
-	public SymbolicExpressionIF evaluate(State state, int pid,
+	public SymbolicExpression evaluate(State state, int pid,
 			Expression expression) {
-		SymbolicExpressionIF result = null;
+		SymbolicExpression result = null;
 
 		if (expression instanceof ArrayIndexExpression) {
 			result = evaluate(state, pid, (ArrayIndexExpression) expression);
@@ -64,8 +64,7 @@ public class Evaluator {
 			result = evaluate(state, pid, (VariableExpression) expression);
 		}
 		if (result != null) {
-			result = symbolicUniverse.canonicalizeTree(symbolicUniverse
-					.tree(result));
+			result = (SymbolicExpression) symbolicUniverse.canonic(result);
 		}
 		return result;
 	}
@@ -81,11 +80,11 @@ public class Evaluator {
 	 *            The array index expression.
 	 * @return A symbolic expression for an array read.
 	 */
-	public SymbolicExpressionIF evaluate(State state, int pid,
+	public SymbolicExpression evaluate(State state, int pid,
 			ArrayIndexExpression expression) {
-		SymbolicExpressionIF array = evaluate(state, pid, expression.array());
-		SymbolicExpressionIF index = evaluate(state, pid, expression.index());
-		SymbolicExpressionIF simplifiedIndex = symbolicUniverse.simplifier(
+		SymbolicExpression array = evaluate(state, pid, expression.array());
+		SymbolicExpression index = evaluate(state, pid, expression.index());
+		SymbolicExpression simplifiedIndex = symbolicUniverse.simplifier(
 				state.pathCondition()).simplify(index);
 
 		return symbolicUniverse.arrayRead(array, simplifiedIndex);
@@ -102,10 +101,10 @@ public class Evaluator {
 	 *            The binary expression.
 	 * @return A symbolic expression for the binary operation.
 	 */
-	public SymbolicExpressionIF evaluate(State state, int pid,
+	public SymbolicExpression evaluate(State state, int pid,
 			BinaryExpression expression) {
-		SymbolicExpressionIF left = evaluate(state, pid, expression.left());
-		SymbolicExpressionIF right = evaluate(state, pid, expression.right());
+		SymbolicExpression left = evaluate(state, pid, expression.left());
+		SymbolicExpression right = evaluate(state, pid, expression.right());
 
 		switch (expression.operator()) {
 		case PLUS:
@@ -145,9 +144,9 @@ public class Evaluator {
 	 *            The boolean literal expression.
 	 * @return The symbolic representation of the boolean literal expression.
 	 */
-	public SymbolicExpressionIF evaluate(State state, int pid,
+	public SymbolicExpression evaluate(State state, int pid,
 			BooleanLiteralExpression expression) {
-		return symbolicUniverse.concreteExpression(expression.value());
+		return symbolicUniverse.symbolic(expression.value());
 	}
 
 	/**
@@ -161,10 +160,9 @@ public class Evaluator {
 	 *            The integer literal expression.
 	 * @return The symbolic representation of the integer literal expression.
 	 */
-	public SymbolicExpressionIF evaluate(State state, int pid,
+	public SymbolicExpression evaluate(State state, int pid,
 			IntegerLiteralExpression expression) {
-		return symbolicUniverse.concreteExpression(expression.value()
-				.intValue());
+		return symbolicUniverse.symbolic(expression.value().intValue());
 	}
 
 	/**
@@ -178,10 +176,11 @@ public class Evaluator {
 	 *            The real literal expression.
 	 * @return The symbolic representation of the real literal expression.
 	 */
-	public SymbolicExpressionIF evaluate(State state, int pid,
+	public SymbolicExpression evaluate(State state, int pid,
 			RealLiteralExpression expression) {
-		return symbolicUniverse.concreteExpression(numberFactory
-				.rational(expression.value().toPlainString()));
+		return symbolicUniverse.symbolic(symbolicUniverse
+				.numberObject(numberFactory.rational(expression.value()
+						.toPlainString())));
 	}
 
 	/**
@@ -195,7 +194,7 @@ public class Evaluator {
 	 *            The string literal expression.
 	 * @return The symbolic representation of the string literal expression.
 	 */
-	public SymbolicExpressionIF evaluate(State state, int pid,
+	public SymbolicExpression evaluate(State state, int pid,
 			StringLiteralExpression expression) {
 
 		// TODO: Figure this out.
@@ -216,7 +215,7 @@ public class Evaluator {
 	 *            The unary expression.
 	 * @return The symbolic representation of the unary expression.
 	 */
-	public SymbolicExpressionIF evaluate(State state, int pid,
+	public SymbolicExpression evaluate(State state, int pid,
 			UnaryExpression expression) {
 		switch (expression.operator()) {
 		case NEGATIVE:
@@ -240,9 +239,9 @@ public class Evaluator {
 	 *            The variable expression.
 	 * @return
 	 */
-	public SymbolicExpressionIF evaluate(State state, int pid,
+	public SymbolicExpression evaluate(State state, int pid,
 			VariableExpression expression) {
-		SymbolicExpressionIF currentValue = state.valueOf(pid,
+		SymbolicExpression currentValue = state.valueOf(pid,
 				expression.variable());
 
 		return symbolicUniverse.simplifier(state.pathCondition()).simplify(

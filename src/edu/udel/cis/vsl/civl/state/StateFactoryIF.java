@@ -3,11 +3,11 @@
  */
 package edu.udel.cis.vsl.civl.state;
 
-import edu.udel.cis.vsl.civl.model.Function;
-import edu.udel.cis.vsl.civl.model.Model;
-import edu.udel.cis.vsl.civl.model.location.Location;
-import edu.udel.cis.vsl.civl.model.variable.Variable;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
+import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * The state factory is used to create all state objects.
@@ -56,7 +56,7 @@ public interface StateFactoryIF {
 	 *         of the variable.
 	 */
 	State setVariable(State state, Variable variable, int pid,
-			SymbolicExpressionIF value);
+			SymbolicExpression value);
 
 	/**
 	 * Add a new process. The new process is created and one entry is pushed
@@ -85,7 +85,7 @@ public interface StateFactoryIF {
 	 *         the function.
 	 */
 	State addProcess(State state, Function function,
-			SymbolicExpressionIF[] arguments, int callerPid);
+			SymbolicExpression[] arguments, int callerPid);
 
 	/**
 	 * Removes a process from the state. Re-numbers the PIDs to remove the gap
@@ -140,7 +140,7 @@ public interface StateFactoryIF {
 	 *         process having a new entry on its call stack.
 	 */
 	State pushCallStack(State state, int pid, Function function,
-			SymbolicExpressionIF[] arguments);
+			SymbolicExpression[] arguments);
 
 	/**
 	 * Pop an entry off the call stack for a process. Removes scopes that become
@@ -166,6 +166,6 @@ public interface StateFactoryIF {
 	 * @return A new state that is the same as the old state but with the new
 	 *         path condition.
 	 */
-	State setPathCondition(State state, SymbolicExpressionIF pathCondition);
+	State setPathCondition(State state, SymbolicExpression pathCondition);
 
 }

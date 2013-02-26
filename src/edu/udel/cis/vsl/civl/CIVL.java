@@ -18,9 +18,10 @@ import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.civl.civlc.preproc.IF.PreprocessorFactory;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
-import edu.udel.cis.vsl.civl.model.Model;
-import edu.udel.cis.vsl.civl.model.ModelBuilder;
-import edu.udel.cis.vsl.civl.model.SideEffectRemover;
+import edu.udel.cis.vsl.civl.log.ErrorLog;
+import edu.udel.cis.vsl.civl.model.Models;
+import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.predicate.Deadlock;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
@@ -28,6 +29,7 @@ import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactory;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
@@ -35,21 +37,15 @@ import edu.udel.cis.vsl.gmc.DfsSearcher;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
-import edu.udel.cis.vsl.sarl.number.Numbers;
-import edu.udel.cis.vsl.sarl.number.IF.NumberFactoryIF;
-import edu.udel.cis.vsl.sarl.prove.Prove;
-import edu.udel.cis.vsl.sarl.prove.IF.TheoremProverIF;
-import edu.udel.cis.vsl.sarl.symbolic.Symbolics;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicUniverseIF;
+import edu.udel.cis.vsl.sarl.SARL;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
 
 public class CIVL {
 
-	private static ModelBuilder modelBuilder = new ModelBuilder();
-	private static NumberFactoryIF numberFactory = Numbers.REAL_FACTORY;
-	private static SymbolicUniverseIF universe = Symbolics
-			.newRealUniverse(numberFactory);
-	private static TheoremProverIF prover = Prove.newIdealCVC3HybridProver(
-			universe, new PrintWriter(System.out), false);
+	private static SymbolicUniverse universe = SARL.newIdealUniverse();
+	private static ModelBuilder modelBuilder = Models.newModelBuilder();
+	private static TheoremProver prover = universe.prover();
 
 	// TODO:
 	// add -D support. Need to create a token with "source" the command line.
@@ -69,6 +65,8 @@ public class CIVL {
 		PrintStream out;
 		File[] systemIncludes, userIncludes;
 		boolean preprocOnly = false;
+		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
+				new java.io.File("."));
 
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i];
@@ -154,7 +152,8 @@ public class CIVL {
 			Evaluator evaluator = new Evaluator(universe);
 			EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
 					transitionFactory, universe, prover, evaluator);
-			StatePredicateIF<State> predicate = new Deadlock(universe, evaluator, prover);
+			StatePredicateIF<State> predicate = new Deadlock(universe,
+					evaluator);
 			Executor executor;
 			StateManagerIF<State, Transition> stateManager;
 			DfsSearcher<State, Transition, TransitionSequence> searcher;
@@ -162,11 +161,11 @@ public class CIVL {
 			double startTime = System.currentTimeMillis(), endTime;
 			boolean result;
 			String bar = "===================";
-			
+
 			out.println(bar + " AST " + bar + "\n");
 			unit.print(out);
 			out.println();
-			sideEffectRemover.removeSideEffects(unit);
+			sideEffectRemover.transform(unit);
 			Analysis.performStandardAnalysis(unit);
 			out.println(bar + " Analyzed AST " + bar + "\n");
 			unit.print(out);
@@ -180,7 +179,7 @@ public class CIVL {
 			model.print(out);
 			out.println();
 			initialState = stateFactory.initialState(model);
-			executor = new Executor(model, universe, stateFactory);
+			executor = new Executor(model, universe, stateFactory, log);
 			stateManager = new StateManager(executor);
 			searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 					enabler, stateManager, predicate);
@@ -191,11 +190,10 @@ public class CIVL {
 			out.println(bar + " Stats " + bar + "\n");
 			printStats(out, searcher, startTime, endTime,
 					((StateManager) stateManager).maxProcs());
-			if (result) {
+			if (result || log.numReports() > 0) {
 				out.println("The program MAY NOT be correct.");
 			} else {
-				out
-						.println("The specified properties hold for all executions.");
+				out.println("The specified properties hold for all executions.");
 			}
 			out.flush();
 		}

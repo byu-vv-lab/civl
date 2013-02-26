@@ -3,8 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.transition;
 
-import edu.udel.cis.vsl.civl.model.statement.Statement;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A choose transition represents one of the outgoing transitions from a choose
@@ -16,7 +16,7 @@ import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
  */
 public class ChooseTransition extends SimpleTransition {
 
-	private SymbolicExpressionIF value;
+	private SymbolicExpression value;
 	
 	/**
 	 * A choose transition represents one of the outgoing transitions from a
@@ -33,8 +33,8 @@ public class ChooseTransition extends SimpleTransition {
 	 * @param value
 	 *            The value resulting from the choose for this transition.
 	 */
-	public ChooseTransition(SymbolicExpressionIF pathCondition, int pid,
-			Statement statement, SymbolicExpressionIF value) {
+	public ChooseTransition(SymbolicExpression pathCondition, int pid,
+			Statement statement, SymbolicExpression value) {
 		super(pathCondition, pid, statement);
 		this.value = value;
 	}
@@ -42,7 +42,7 @@ public class ChooseTransition extends SimpleTransition {
 	/**
 	 * The value resulting from the choose for this transition.
 	 */
-	public SymbolicExpressionIF value() {
+	public SymbolicExpression value() {
 		return value;
 	}
 }

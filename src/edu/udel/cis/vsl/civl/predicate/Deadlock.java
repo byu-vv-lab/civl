@@ -3,19 +3,19 @@
  */
 package edu.udel.cis.vsl.civl.predicate;
 
-import edu.udel.cis.vsl.civl.model.location.Location;
-import edu.udel.cis.vsl.civl.model.statement.JoinStatement;
-import edu.udel.cis.vsl.civl.model.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.util.ExecutionProblem.Certainty;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
-import edu.udel.cis.vsl.sarl.number.IF.IntegerNumberIF;
-import edu.udel.cis.vsl.sarl.prove.IF.TheoremProverIF;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicUniverseIF;
-import edu.udel.cis.vsl.sarl.util.TernaryResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.prove.TernaryResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
 
 /**
  * An absolute deadlock occurs if all of the following hold:
@@ -38,9 +38,10 @@ import edu.udel.cis.vsl.sarl.util.TernaryResult.ResultType;
  */
 public class Deadlock implements StatePredicateIF<State> {
 
-	private SymbolicUniverseIF symbolicUniverse;
+	private SymbolicUniverse symbolicUniverse;
 	private Evaluator evaluator;
-	private TheoremProverIF prover;
+	private TheoremProver prover;
+	private String pidPrefix = "PID_";
 
 	/**
 	 * If the property holds (i.e., a deadlock has been detected at state), than
@@ -74,11 +75,10 @@ public class Deadlock implements StatePredicateIF<State> {
 	 *            The theorem prover to check validity of statement guards under
 	 *            the path condition.
 	 */
-	public Deadlock(SymbolicUniverseIF symbolicUniverse, Evaluator evaluator,
-			TheoremProverIF prover) {
+	public Deadlock(SymbolicUniverse symbolicUniverse, Evaluator evaluator) {
 		this.symbolicUniverse = symbolicUniverse;
 		this.evaluator = evaluator;
-		this.prover = prover;
+		this.prover = symbolicUniverse.prover();
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class Deadlock implements StatePredicateIF<State> {
 				+ "*****************************************************************\n";
 		for (Process p : state.processes()) {
 			Location location = null;
-			SymbolicExpressionIF predicate = null;
+			SymbolicExpression predicate = null;
 			String nonGuardExplanation = null; // Join of unterminated function,
 												// etc.
 
@@ -116,7 +116,7 @@ public class Deadlock implements StatePredicateIF<State> {
 			} else {
 				explanation += "at location " + location.id() + ". ";
 				for (Statement statement : location.outgoing()) {
-					SymbolicExpressionIF guard = evaluator.evaluate(state,
+					SymbolicExpression guard = evaluator.evaluate(state,
 							p.id(), statement.guard());
 
 					if (statement instanceof JoinStatement) {
@@ -124,7 +124,7 @@ public class Deadlock implements StatePredicateIF<State> {
 						// should be.
 						nonGuardExplanation = "Target process has not terminated:\n"
 								+ ((JoinStatement) statement).process() + "\n";
-					} 
+					}
 					if (predicate == null) {
 						predicate = guard;
 					} else {
@@ -162,7 +162,7 @@ public class Deadlock implements StatePredicateIF<State> {
 		for (Process p : state.processes()) {
 			Location location;
 			ResultType truth;
-			SymbolicExpressionIF predicate = null;
+			SymbolicExpression predicate = null;
 
 			// If a process has an empty stack, it can't execute.
 			if (p == null || p.hasEmptyStack()) {
@@ -171,28 +171,32 @@ public class Deadlock implements StatePredicateIF<State> {
 			location = p.location();
 			for (Statement s : location.outgoing()) {
 				if (s instanceof JoinStatement) {
-					SymbolicExpressionIF joinProcess = evaluator.evaluate(
-							state, p.id(), ((JoinStatement) s).process());
-					IntegerNumberIF pidNumber;
-					SymbolicExpressionIF guard = evaluator.evaluate(state,
+					SymbolicExpression joinProcess = evaluator.evaluate(state,
+							p.id(), ((JoinStatement) s).process());
+					int pidValue;
+					SymbolicExpression guard = evaluator.evaluate(state,
 							p.id(), s.guard());
 
 					// If guard is false, don't worry about the stack.
-					if (guard.equals(symbolicUniverse.concreteExpression(false))) {
+					if (guard.equals(symbolicUniverse.symbolic(false))) {
 						continue;
 					}
+					assert joinProcess instanceof SymbolicConstant;
+					assert ((SymbolicConstant) joinProcess).name().getString()
+							.startsWith(pidPrefix);
 					// TODO: Throw exception if not the right type.
-					pidNumber = (IntegerNumberIF) symbolicUniverse
-							.extractNumber(joinProcess);
-					if (state.process(pidNumber.intValue()).hasEmptyStack()) {
+					pidValue = Integer
+							.parseInt(((SymbolicConstant) joinProcess).name()
+									.getString().substring(pidPrefix.length()));
+					if (state.process(pidValue).hasEmptyStack()) {
 						return false;
 					}
 				} else {
-					SymbolicExpressionIF guard = evaluator.evaluate(state,
+					SymbolicExpression guard = evaluator.evaluate(state,
 							p.id(), s.guard());
 
 					// Most of the time, guards will be true. Shortcut this.
-					if (guard.equals(symbolicUniverse.concreteExpression(true))) {
+					if (guard.equals(symbolicUniverse.symbolic(true))) {
 						return false;
 					}
 					if (predicate == null) {
@@ -209,7 +213,7 @@ public class Deadlock implements StatePredicateIF<State> {
 						// For some input, no statement is enabled for this
 						// process.
 					}
-				} 
+				}
 			}
 		}
 		// If we're here, deadlock might be possible.

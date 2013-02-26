@@ -6,7 +6,7 @@ package edu.udel.cis.vsl.civl.state;
 import java.io.PrintStream;
 import java.util.Arrays;
 
-import edu.udel.cis.vsl.civl.model.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
 
 /**
  * An instance of Process represents the state of a process (thread of

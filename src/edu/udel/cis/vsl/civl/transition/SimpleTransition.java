@@ -3,8 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.transition;
 
-import edu.udel.cis.vsl.civl.model.statement.Statement;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A simple transition involves a single atomic statement in one process. It is
@@ -32,7 +32,7 @@ public class SimpleTransition extends Transition {
 	 * @param statement
 	 *            The statement corresponding to this transition.
 	 */
-	public SimpleTransition(SymbolicExpressionIF pathCondition, int pid,
+	public SimpleTransition(SymbolicExpression pathCondition, int pid,
 			Statement statement) {
 		super(pathCondition);
 		this.pid = pid;

@@ -4,9 +4,9 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.BitSet;
 
-import edu.udel.cis.vsl.civl.model.Scope;
-import edu.udel.cis.vsl.civl.model.variable.Variable;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * Represents state of a dynamic scope.
@@ -53,7 +53,7 @@ public class DynamicScope {
 	 * Non-null array of variable values. The symbolic expression in position i
 	 * is the value of the variable of index i. May contain null values.
 	 */
-	private SymbolicExpressionIF[] variableValues;
+	private SymbolicExpression[] variableValues;
 
 	/**
 	 * Sets of PIDs of processes that can reach this dynamic scope.
@@ -74,11 +74,11 @@ public class DynamicScope {
 		this.lexicalScope = lexicalScope;
 		this.parent = parent;
 		this.reachers = reachers;
-		variableValues = new SymbolicExpressionIF[lexicalScope.numVariables()]; // FIX
+		variableValues = new SymbolicExpression[lexicalScope.numVariables()]; // FIX
 	}
 
 	DynamicScope(Scope lexicalScope, int parent,
-			SymbolicExpressionIF[] variableValues, BitSet reachers) {
+			SymbolicExpression[] variableValues, BitSet reachers) {
 		assert variableValues != null
 				&& variableValues.length == lexicalScope.numVariables();
 		this.lexicalScope = lexicalScope;
@@ -96,7 +96,7 @@ public class DynamicScope {
 		return new DynamicScope(lexicalScope, parent, variableValues, newBitSet);
 	}
 
-	public SymbolicExpressionIF getValue(int vid) {
+	public SymbolicExpression getValue(int vid) {
 		return variableValues[vid];
 	}
 
@@ -150,8 +150,8 @@ public class DynamicScope {
 	/**
 	 * @return Copy the set of values in this scopes.
 	 */
-	SymbolicExpressionIF[] copyValues() {
-		SymbolicExpressionIF[] newValues = new SymbolicExpressionIF[variableValues.length];
+	SymbolicExpression[] copyValues() {
+		SymbolicExpression[] newValues = new SymbolicExpression[variableValues.length];
 
 		System.arraycopy(variableValues, 0, newValues, 0, variableValues.length);
 		return newValues;
@@ -174,7 +174,7 @@ public class DynamicScope {
 	 * @return The value of the variable in the current state. Null if
 	 *         undefined.
 	 */
-	public SymbolicExpressionIF value(DynamicVariable variable) {
+	public SymbolicExpression value(DynamicVariable variable) {
 		int index = lexicalScope.getVid(variable.staticVariable());
 
 		return variableValues[index];
@@ -187,8 +187,8 @@ public class DynamicScope {
 	 *            An expression for the current value of the variable. If a
 	 *            value for this variable previously existed, it is replaced.
 	 */
-	DynamicScope setValue(DynamicVariable variable, SymbolicExpressionIF value) {
-		SymbolicExpressionIF[] newVariableValues = copyValues();
+	DynamicScope setValue(DynamicVariable variable, SymbolicExpression value) {
+		SymbolicExpression[] newVariableValues = copyValues();
 		int index = lexicalScope.getVid(variable.staticVariable());
 
 		newVariableValues[index] = value;
@@ -265,7 +265,7 @@ public class DynamicScope {
 		out.println();
 		for (int i = 0; i < numVars; i++) {
 			Variable variable = lexicalScope.getVariable(i);
-			SymbolicExpressionIF value = variableValues[i];
+			SymbolicExpression value = variableValues[i];
 
 			out.println(prefix + "| " + variable.name() + " = " + value);
 		}

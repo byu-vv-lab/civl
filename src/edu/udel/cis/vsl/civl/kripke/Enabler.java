@@ -2,9 +2,9 @@ package edu.udel.cis.vsl.civl.kripke;
 
 import java.io.PrintWriter;
 
-import edu.udel.cis.vsl.civl.model.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.statement.JoinStatement;
-import edu.udel.cis.vsl.civl.model.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
@@ -12,12 +12,13 @@ import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.EnablerIF;
-import edu.udel.cis.vsl.sarl.number.IF.IntegerNumberIF;
-import edu.udel.cis.vsl.sarl.number.IF.NumberIF;
-import edu.udel.cis.vsl.sarl.prove.IF.TheoremProverIF;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicUniverseIF;
-import edu.udel.cis.vsl.sarl.util.TernaryResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
+import edu.udel.cis.vsl.sarl.IF.number.Number;
+import edu.udel.cis.vsl.sarl.IF.prove.TernaryResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
 
 public class Enabler implements
 		EnablerIF<State, Transition, TransitionSequence> {
@@ -25,15 +26,15 @@ public class Enabler implements
 	private TransitionFactory transitionFactory;
 	private boolean debugging = false;
 	private PrintWriter debugOut = new PrintWriter(System.out);
-	private SymbolicUniverseIF universe;
-	private TheoremProverIF prover;
+	private SymbolicUniverse universe;
+	private TheoremProver prover;
 	private Evaluator evaluator;
 	private long enabledTransitionSets = 0;
 	private long ampleSets = 0;
+	private String pidPrefix = "PID_";
 
 	public Enabler(TransitionFactory transitionFactory,
-			SymbolicUniverseIF universe, TheoremProverIF prover,
-			Evaluator evaluator) {
+			SymbolicUniverse universe, TheoremProver prover, Evaluator evaluator) {
 		this.transitionFactory = transitionFactory;
 		this.prover = prover;
 		this.evaluator = evaluator;
@@ -74,7 +75,7 @@ public class Enabler implements
 				continue;
 			}
 			for (Statement s : p.location().outgoing()) {
-				SymbolicExpressionIF newPathCondition = newPathCondition(state,
+				SymbolicExpression newPathCondition = newPathCondition(state,
 						p.id(), state.pathCondition(), s);
 				int statementScope = p.scope();
 
@@ -89,28 +90,31 @@ public class Enabler implements
 				}
 				if (newPathCondition != null) {
 					if (s instanceof ChooseStatement) {
-						SymbolicExpressionIF argument = evaluator.evaluate(
-								state, p.id(), ((ChooseStatement) s).rhs());
+						SymbolicExpression argument = evaluator.evaluate(state,
+								p.id(), ((ChooseStatement) s).rhs());
 						Integer upper = extractInt(universe.simplifier(
 								newPathCondition).simplify(argument));
 
 						for (int i = 0; i < upper.intValue(); i++) {
 							localTransitions.add(transitionFactory
 									.newChooseTransition(newPathCondition,
-											p.id(), s,
-											universe.concreteExpression(i)));
+											p.id(), s, universe.symbolic(i)));
 						}
 						continue;
 					} else if (s instanceof JoinStatement) {
-						SymbolicExpressionIF pidExpression = evaluator
-								.evaluate(state, p.id(),
-										((JoinStatement) s).process());
-						IntegerNumberIF pidNumber;
+						SymbolicExpression pidExpression = evaluator.evaluate(
+								state, p.id(), ((JoinStatement) s).process());
+						int pidValue;
 
+						assert pidExpression instanceof SymbolicConstant;
+						assert ((SymbolicConstant) pidExpression).name()
+								.getString().startsWith(pidPrefix);
 						// TODO: Throw exception if not the right type.
-						pidNumber = (IntegerNumberIF) universe
-								.extractNumber(pidExpression);
-						if (!state.process(pidNumber.intValue())
+						pidValue = Integer
+								.parseInt(((SymbolicConstant) pidExpression)
+										.name().getString()
+										.substring(pidPrefix.length()));
+						if (!state.process(pidValue)
 								.hasEmptyStack()) {
 							continue;
 						}
@@ -135,12 +139,12 @@ public class Enabler implements
 	 *            A symbolic expression.
 	 * @return A concrete integer if one can be extracted. Else null.
 	 */
-	private Integer extractInt(SymbolicExpressionIF expression) {
-		NumberIF number = universe.extractNumber(expression);
+	private Integer extractInt(SymbolicExpression expression) {
+		Number number = universe.extractNumber(expression);
 		Integer intValue;
 
-		assert number instanceof IntegerNumberIF;
-		intValue = ((IntegerNumberIF) number).intValue();
+		assert number instanceof IntegerNumber;
+		intValue = ((IntegerNumber) number).intValue();
 		return intValue;
 	}
 
@@ -161,10 +165,10 @@ public class Enabler implements
 	 * @return The new path condition. Null if the guard is not satisfiable
 	 *         under the path condition.
 	 */
-	private SymbolicExpressionIF newPathCondition(State state, int pid,
-			SymbolicExpressionIF pathCondition, Statement statement) {
-		SymbolicExpressionIF newPathCondition = null;
-		SymbolicExpressionIF guard = evaluator.evaluate(state, pid,
+	private SymbolicExpression newPathCondition(State state, int pid,
+			SymbolicExpression pathCondition, Statement statement) {
+		SymbolicExpression newPathCondition = null;
+		SymbolicExpression guard = evaluator.evaluate(state, pid,
 				statement.guard());
 		ResultType result = prover.valid(pathCondition, guard);
 		ResultType negResult = prover.valid(pathCondition, universe.not(guard));

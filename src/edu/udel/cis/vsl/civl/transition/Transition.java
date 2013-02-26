@@ -3,8 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.transition;
 
-import edu.udel.cis.vsl.civl.model.Model;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
+import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A transition represents a single atomic step of execution in a CVT system.
@@ -18,7 +18,7 @@ import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
  */
 public class Transition {
 
-	private SymbolicExpressionIF pathCondition;
+	private SymbolicExpression pathCondition;
 	private Model model;
 	
 	/**
@@ -28,14 +28,14 @@ public class Transition {
 	 *            The path condition that should result after executing the
 	 *            transition.
 	 */
-	public Transition(SymbolicExpressionIF pathCondition) {
+	public Transition(SymbolicExpression pathCondition) {
 		this.pathCondition = pathCondition;
 	}
 	
 	/**
 	 * @return The path condition that should result after executing the transition.
 	 */
-	public SymbolicExpressionIF pathCondition() {
+	public SymbolicExpression pathCondition() {
 		return pathCondition;
 	}
 	
@@ -49,7 +49,7 @@ public class Transition {
 	/**
 	 * @param The path condition that should result after executing the transition.
 	 */
-	public void setPathCondition(SymbolicExpressionIF pathCondition) {
+	public void setPathCondition(SymbolicExpression pathCondition) {
 		this.pathCondition = pathCondition;
 	}
 

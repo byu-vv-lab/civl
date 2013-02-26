@@ -6,8 +6,8 @@ package edu.udel.cis.vsl.civl.kripke;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
-import edu.udel.cis.vsl.civl.model.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;

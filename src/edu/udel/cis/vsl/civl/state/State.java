@@ -6,8 +6,8 @@ package edu.udel.cis.vsl.civl.state;
 import java.io.PrintStream;
 import java.util.Arrays;
 
-import edu.udel.cis.vsl.civl.model.variable.Variable;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * An instance of State represents the state of a CVT Model. It encodes:
@@ -82,7 +82,7 @@ public class State {
 	/**
 	 * Non-null boolean-valued symbolic expression.
 	 */
-	private SymbolicExpressionIF pathCondition;
+	private SymbolicExpression pathCondition;
 
 	/**
 	 * Whether this state has been seen in the DFS search.
@@ -105,7 +105,7 @@ public class State {
 	 * @param pathCondition
 	 */
 	State(Process[] processes, DynamicScope[] scopes, 
-			SymbolicExpressionIF pathCondition) {
+			SymbolicExpression pathCondition) {
 		assert processes != null;
 		assert scopes != null;
 		assert pathCondition != null;
@@ -126,7 +126,7 @@ public class State {
 	 * @param pathCondition
 	 */
 	State(State state, Process[] processes, DynamicScope[] scopes,
-			SymbolicExpressionIF pathCondition) {
+			SymbolicExpression pathCondition) {
 		this(processes == null ? state.processes : processes,
 				scopes == null ? state.scopes : scopes,
 				pathCondition == null ? state.pathCondition : pathCondition);
@@ -139,7 +139,7 @@ public class State {
 	 * @param state
 	 * @param newPatCondition
 	 */
-	State(State state, SymbolicExpressionIF newPathCondition) {
+	State(State state, SymbolicExpression newPathCondition) {
 		this(state.processes, state.scopes, newPathCondition);
 	}
 
@@ -269,7 +269,7 @@ public class State {
 	/**
 	 * @return The path condition.
 	 */
-	public SymbolicExpressionIF pathCondition() {
+	public SymbolicExpression pathCondition() {
 		return pathCondition;
 	}
 
@@ -345,7 +345,7 @@ public class State {
 		throw new IllegalArgumentException("Variable not in scope: " + variable);
 	}
 
-	public SymbolicExpressionIF valueOf(int pid, Variable variable) {
+	public SymbolicExpression valueOf(int pid, Variable variable) {
 		DynamicScope scope = getScope(pid, variable);
 		int variableID = scope.lexicalScope().getVid(variable);
 

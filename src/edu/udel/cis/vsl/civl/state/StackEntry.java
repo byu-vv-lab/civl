@@ -3,7 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.state;
 
-import edu.udel.cis.vsl.civl.model.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
+
 
 /**
  * A stack entry has a location, dynamic scope, and (optional) variable to store

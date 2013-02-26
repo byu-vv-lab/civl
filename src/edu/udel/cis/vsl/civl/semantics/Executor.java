@@ -7,32 +7,39 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Vector;
 
-import edu.udel.cis.vsl.civl.model.Function;
-import edu.udel.cis.vsl.civl.model.Model;
-import edu.udel.cis.vsl.civl.model.expression.ArrayIndexExpression;
-import edu.udel.cis.vsl.civl.model.expression.Expression;
-import edu.udel.cis.vsl.civl.model.expression.StringLiteralExpression;
-import edu.udel.cis.vsl.civl.model.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.location.Location;
-import edu.udel.cis.vsl.civl.model.statement.AssertStatement;
-import edu.udel.cis.vsl.civl.model.statement.AssignStatement;
-import edu.udel.cis.vsl.civl.model.statement.AssumeStatement;
-import edu.udel.cis.vsl.civl.model.statement.CallStatement;
-import edu.udel.cis.vsl.civl.model.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.statement.ForkStatement;
-import edu.udel.cis.vsl.civl.model.statement.JoinStatement;
-import edu.udel.cis.vsl.civl.model.statement.ReturnStatement;
-import edu.udel.cis.vsl.civl.model.statement.Statement;
-import edu.udel.cis.vsl.civl.model.variable.Variable;
+import edu.udel.cis.vsl.civl.log.ErrorLog;
+import edu.udel.cis.vsl.civl.log.ExecutionException;
+import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.ForkStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.StackEntry;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
-import edu.udel.cis.vsl.sarl.number.IF.IntegerNumberIF;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicExpressionIF;
-import edu.udel.cis.vsl.sarl.symbolic.IF.SymbolicUniverseIF;
-import edu.udel.cis.vsl.sarl.symbolic.ideal.BooleanIdealExpression;
+import edu.udel.cis.vsl.civl.util.ExecutionProblem.Certainty;
+import edu.udel.cis.vsl.civl.util.ExecutionProblem.ErrorKind;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.prove.TernaryResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * An executor is used to execute a Chapel statement. The basic method provided
@@ -45,25 +52,41 @@ import edu.udel.cis.vsl.sarl.symbolic.ideal.BooleanIdealExpression;
 public class Executor {
 
 	private Model model;
-	private SymbolicUniverseIF symbolicUniverse;
+	private SymbolicUniverse symbolicUniverse;
 	private StateFactoryIF stateFactory;
 	private Evaluator evaluator;
 	private Vector<State> finalStates = new Vector<State>();
+	private TheoremProver prover;
+	private ErrorLog log;
+	private SymbolicTupleType processType;
+	private String pidPrefix = "PID_";
 
 	/**
 	 * Create a new executor.
 	 * 
+	 * @param model
+	 *            The model being executed.
 	 * @param symbolicUniverse
 	 *            A symbolic universe for creating new values.
 	 * @param stateFactory
 	 *            A state factory. Used by the Executor to create new processes.
+	 * @param prover
+	 *            A theorem prover for checking assertions.
 	 */
-	public Executor(Model model, SymbolicUniverseIF symbolicUniverse,
-			StateFactoryIF stateFactory) {
+	public Executor(Model model, SymbolicUniverse symbolicUniverse,
+			StateFactoryIF stateFactory, ErrorLog log) {
+		SymbolicType[] processTypeArray = new SymbolicType[1];
+
 		this.model = model;
 		this.symbolicUniverse = symbolicUniverse;
 		this.stateFactory = stateFactory;
 		this.evaluator = new Evaluator(symbolicUniverse);
+		this.prover = symbolicUniverse.prover();
+		this.log = log;
+		processTypeArray[0] = symbolicUniverse.integerType();
+		processType = symbolicUniverse.tupleType(
+				symbolicUniverse.stringObject("process"),
+				symbolicUniverse.typeSequence(processTypeArray));
 	}
 
 	/**
@@ -76,12 +99,18 @@ public class Executor {
 	 * @param out
 	 *            A PrintStream to use for write statements.
 	 */
-	public Executor(Model model, SymbolicUniverseIF symbolicUniverse,
+	public Executor(Model model, SymbolicUniverse symbolicUniverse,
 			StateFactoryIF stateFactory, PrintStream out) {
+		SymbolicType[] processTypeArray = new SymbolicType[1];
+
 		this.model = model;
 		this.symbolicUniverse = symbolicUniverse;
 		this.stateFactory = stateFactory;
 		this.evaluator = new Evaluator(symbolicUniverse);
+		processTypeArray[0] = symbolicUniverse.integerType();
+		processType = symbolicUniverse.tupleType(
+				symbolicUniverse.stringObject("process"),
+				symbolicUniverse.typeSequence(processTypeArray));
 	}
 
 	/**
@@ -126,30 +155,10 @@ public class Executor {
 	 * @return The updated state of the program.
 	 */
 	public State execute(State state, int pid, ChooseStatement statement,
-			SymbolicExpressionIF value) {
+			SymbolicExpression value) {
 		Process process = state.process(pid);
-		// String newConstantName = chooseVariable + statement.chooseID();
-		// SymbolicConstantIF newConstant = symbolicUniverse
-		// .getOrCreateSymbolicConstant(newConstantName,
-		// symbolicUniverse.integerType());
-		// SymbolicExpressionIF newConstantExpression = symbolicUniverse
-		// .symbolicConstantExpression(newConstant);
-		// TODO: Testing using the enabler to get concrete values instead of
-		// setting up the
-		// PC here. OK to delete this?
-		// SymbolicExpressionIF lowerBound = symbolicUniverse.lessThanEquals(
-		// symbolicUniverse.zeroInt(), newConstantExpression);
-		// SymbolicExpressionIF upperBound = symbolicUniverse.lessThan(
-		// newConstantExpression,
-		// evaluator.evaluate(state, pid, statement.rhs()));
-
 		state = writeValue(state, pid, statement.getLhs(), value);
-		// state = stateFactory.setPathCondition(
-		// state,
-		// symbolicUniverse.and(state.pathCondition(),
-		// symbolicUniverse.and(lowerBound, upperBound)));
 		state = transition(state, process, statement.target());
-		// state = stateFactory.canonic(state);
 		return state;
 	}
 
@@ -169,17 +178,16 @@ public class Executor {
 	 */
 	public State execute(State state, int pid, CallStatement statement) {
 		Function function = statement.function();
-		SymbolicExpressionIF[] arguments;
+		SymbolicExpression[] arguments;
 
-		arguments = new SymbolicExpressionIF[statement.arguments().size()];
+		arguments = new SymbolicExpression[statement.arguments().size()];
 		for (int i = 0; i < statement.arguments().size(); i++) {
-			SymbolicExpressionIF expression = evaluator.evaluate(state, pid,
+			SymbolicExpression expression = evaluator.evaluate(state, pid,
 					statement.arguments().get(i));
 
 			arguments[i] = expression;
 		}
 		state = stateFactory.pushCallStack(state, pid, function, arguments);
-		// state = stateFactory.canonic(state);
 		return state;
 	}
 
@@ -198,7 +206,7 @@ public class Executor {
 	public State execute(State state, int pid, ForkStatement statement) {
 		Process process = state.process(pid);
 		Function function = null;
-		SymbolicExpressionIF[] arguments;
+		SymbolicExpression[] arguments;
 		int newPid;
 
 		for (Function f : model.functions()) {
@@ -212,7 +220,7 @@ public class Executor {
 			}
 		}
 		// TODO: Throw exception if function not found.
-		arguments = new SymbolicExpressionIF[statement.arguments().size()];
+		arguments = new SymbolicExpression[statement.arguments().size()];
 		for (int i = 0; i < statement.arguments().size(); i++) {
 			arguments[i] = evaluator.evaluate(state, pid, statement.arguments()
 					.get(i));
@@ -227,7 +235,9 @@ public class Executor {
 		}
 		if (statement.lhs() != null) {
 			state = writeValue(state, pid, statement.lhs(),
-					symbolicUniverse.concreteExpression(newPid));
+					symbolicUniverse.symbolicConstant(
+							symbolicUniverse.stringObject(pidPrefix + newPid),
+							processType));
 		}
 		state = transition(state, process, statement.target());
 		// state = stateFactory.canonic(state);
@@ -247,14 +257,17 @@ public class Executor {
 	 * @return The updated state of the program.
 	 */
 	public State execute(State state, int pid, JoinStatement statement) {
-		SymbolicExpressionIF pidExpression = evaluator.evaluate(state, pid,
+		SymbolicExpression pidExpression = evaluator.evaluate(state, pid,
 				statement.process());
-		IntegerNumberIF pidNumber;
+		int joinedPid;
 
+		assert pidExpression instanceof SymbolicConstant;
+		assert ((SymbolicConstant) pidExpression).name().getString()
+				.startsWith(pidPrefix);
+		joinedPid = Integer.parseInt(((SymbolicConstant) pidExpression).name()
+				.getString().substring(pidPrefix.length()));
 		// TODO: Throw exception if not the right type.
-		pidNumber = (IntegerNumberIF) symbolicUniverse
-				.extractNumber(pidExpression);
-		state = stateFactory.removeProcess(state, pidNumber.intValue());
+		state = stateFactory.removeProcess(state, joinedPid);
 		state = transition(state, state.process(pid), statement.target());
 		// state = stateFactory.canonic(state);
 		return state;
@@ -276,7 +289,7 @@ public class Executor {
 		StackEntry returnContext;
 		Location returnLocation;
 		CallStatement call;
-		SymbolicExpressionIF returnExpression = null;
+		SymbolicExpression returnExpression = null;
 
 		if (state.process(pid).peekStack().location().function().name().name()
 				.equals("_CVT_system")) {
@@ -307,7 +320,7 @@ public class Executor {
 	}
 
 	public State execute(State state, int pid, AssumeStatement statement) {
-		SymbolicExpressionIF assumeExpression = evaluator.evaluate(state, pid,
+		SymbolicExpression assumeExpression = evaluator.evaluate(state, pid,
 				statement.getExpression());
 
 		state = stateFactory.setPathCondition(state,
@@ -317,16 +330,25 @@ public class Executor {
 	}
 
 	public State execute(State state, int pid, AssertStatement statement) {
-		SymbolicExpressionIF assertExpression = evaluator.evaluate(state, pid,
+		SymbolicExpression assertExpression = evaluator.evaluate(state, pid,
 				statement.getExpression());
+		ResultType valid = prover
+				.valid(state.pathCondition(), assertExpression);
 
 		// TODO Handle error reporting in a nice way.
-		if (!(assertExpression instanceof BooleanIdealExpression)
-				|| ((BooleanIdealExpression) assertExpression).toString()
-						.equals("false")) {
-			throw new RuntimeException("Assertion may be violated: "
-					+ statement.toString() + "\n  Expected: true\n  Actual: "
-					+ assertExpression);
+		if (valid != ResultType.YES) {
+			Certainty certainty;
+
+			if (valid == ResultType.NO) {
+				certainty = Certainty.PROVEABLE;
+			} else {
+				certainty = Certainty.MAYBE;
+			}
+			log.report(new ExecutionException(ErrorKind.ASSERTION_VIOLATION,
+					certainty, "Cannot prove assertion holds: "
+							+ statement.toString() + "\n  Path condition: "
+							+ state.pathCondition() + "\n  Assertion: "
+							+ assertExpression));
 		}
 		state = transition(state, state.process(pid), statement.target());
 		return state;
@@ -407,7 +429,7 @@ public class Executor {
 	 * @return A new state with the value of the target variable modified.
 	 */
 	private State writeValue(State state, int pid, Expression target,
-			SymbolicExpressionIF symbolicValue) {
+			SymbolicExpression symbolicValue) {
 		DynamicScope scope = state.getScope(state.process(pid).scope());
 
 		if (target instanceof VariableExpression) {
@@ -416,9 +438,9 @@ public class Executor {
 			state = stateFactory.setVariable(state, variable, pid,
 					symbolicValue);
 		} else if (target instanceof ArrayIndexExpression) {
-			SymbolicExpressionIF array = evaluator.evaluate(state, pid,
+			SymbolicExpression array = evaluator.evaluate(state, pid,
 					((ArrayIndexExpression) target).array());
-			SymbolicExpressionIF index = evaluator.evaluate(state, pid,
+			SymbolicExpression index = evaluator.evaluate(state, pid,
 					((ArrayIndexExpression) target).index());
 
 			state = stateFactory.setVariable(state,
