@@ -535,7 +535,7 @@ public class StateFactory implements StateFactoryIF {
 			return null;
 		
 		for (int i = 0; i < oldToNew.length; i++) {
-			StringObject oldString = symbolicUniverse.stringObject(pidPrefix + oldToNew[i]);
+			StringObject oldString = symbolicUniverse.stringObject(pidPrefix + i);
 			SymbolicConstant oldConstant = symbolicUniverse.symbolicConstant(oldString, processType);
 			StringObject newString = symbolicUniverse.stringObject(pidPrefix + oldToNew[i]);
 			SymbolicConstant newConstant = symbolicUniverse.symbolicConstant(newString, processType);
