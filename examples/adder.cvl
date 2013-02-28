@@ -13,18 +13,22 @@ double adderPar(int m) {
   double s = 0.0;
   int mutex = 0;
   \proc workers[m];
-  
+
   void worker(int i) {
+    double t;
+
     \when (mutex == 0) mutex = 1;
-    s += a[i];
+    t = s;
+    t += a[i];
+    s = t;
     mutex = 0;
   }
   
-  for (int i = 0; i < m; i++) {
-    workers[i] = \spawn worker(i);
-  }  
   for (int j = 0; j < m; j++) {
-    \wait workers[j];
+    workers[j] = \spawn worker(j);
+  }  
+  for (int k = 0; k < m; k++) {
+    \wait workers[k];
   }
   return s;
 }
