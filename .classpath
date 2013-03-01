@@ -8,5 +8,6 @@
 	<classpathentry kind="var" path="CVC3"/>
 	<classpathentry kind="var" path="PCOLLECTIONS" sourcepath="/PCOLLECTIONS_SOURCE"/>
 	<classpathentry kind="var" path="CLJ-DS"/>
+	<classpathentry kind="var" path="ABC"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
