@@ -18,7 +18,6 @@
 	<property name="src.dir" value="${basedir}/src" />
 	<property name="real.src.dir" value="${src.dir}/edu/udel/cis/vsl/civl/civlc" />
 	<property name="bin.dir" value="${basedir}/bin" />
-	<property name="grammar.dir" value="${basedir}/grammar" />
 	<property name="javadoc.dir" value="${basedir}/doc/javadoc" />
 	<property name="jar-name" value="civl.jar" />
 	<property name="jar-path" value="${basedir}/${jar-name}" />
@@ -65,80 +64,6 @@
 		<pathelement location="${antlr.jar}" />
 	</path>
 
-	<target name="parsers" depends="CivlCParser,PreprocessorExpressionParser,PreprocessorParser,PreprocessorLexer">
-	</target>
-
-	<target name="checkCivlCParserChanges">
-		<uptodate property="noCivlCParserChanges">
-			<srcfiles file="${grammar.dir}/CivlCParser.g" />
-			<srcfiles file="${grammar.dir}/PreprocessorLexer.g" />
-			<srcfiles file="${grammar.dir}/PreprocessorLexer.tokens" />
-			<srcfiles file="${grammar.dir}/PreprocessorParser.g" />
-			<srcfiles file="${grammar.dir}/PreprocessorParser.tokens" />
-			<mapper type="merge" to="${real.src.dir}/parse/common/CivlCParser.java" />
-		</uptodate>
-	</target>
-
-	<target name="CivlCParser" depends="PreprocessorParser,checkCivlCParserChanges" unless="noCivlCParserChanges">
-		<java classname="org.antlr.Tool" classpathref="antlr.class.path" fork="true" failonerror="true" dir="${grammar.dir}">
-			<arg value="-verbose" />
-			<arg value="CivlCParser.g" />
-		</java>
-		<move file="${grammar.dir}/CivlCParser.java" todir="${real.src.dir}/parse/common" />
-	</target>
-
-	<target name="checkExpressionParserChanges">
-		<uptodate property="noExpressionParserChanges">
-			<srcfiles file="${grammar.dir}/PreprocessorExpressionParser.g" />
-			<srcfiles file="${grammar.dir}/PreprocessorLexer.g" />
-			<srcfiles file="${grammar.dir}/PreprocessorLexer.tokens" />
-			<mapper type="merge" to="${real.src.dir}/preproc/common/PreprocessorExpressionParser.java" />
-		</uptodate>
-	</target>
-
-	<target name="PreprocessorExpressionParser" depends="PreprocessorLexer,checkExpressionParserChanges" unless="noExpressionParserChanges">
-		<java classname="org.antlr.Tool" classpathref="antlr.class.path" fork="true" failonerror="true" dir="${grammar.dir}">
-			<arg value="-verbose" />
-			<arg value="PreprocessorExpressionParser.g" />
-		</java>
-		<move file="${grammar.dir}/PreprocessorExpressionParser.java" todir="${real.src.dir}/preproc/common" />
-	</target>
-
-	<target name="checkParserChanges">
-		<uptodate property="noParserChanges">
-			<srcfiles file="${grammar.dir}/PreprocessorParser.g" />
-			<srcfiles file="${grammar.dir}/PreprocessorLexer.g" />
-			<srcfiles file="${grammar.dir}/PreprocessorLexer.tokens" />
-			<mapper type="merge" to="${real.src.dir}/preproc/common/PreprocessorParser.java" />
-		</uptodate>
-	</target>
-
-	<target name="PreprocessorParser" depends="PreprocessorLexer,checkParserChanges" unless="noParserChanges">
-		<java classname="org.antlr.Tool" classpathref="antlr.class.path" fork="true" failonerror="true" dir="${grammar.dir}">
-			<arg value="-verbose" />
-			<arg value="PreprocessorParser.g" />
-		</java>
-		<move file="${grammar.dir}/PreprocessorParser.java" todir="${real.src.dir}/preproc/common" />
-	</target>
-
-	<target name="checkLexerChanges">
-		<uptodate property="noLexerChanges">
-			<srcfiles file="${grammar.dir}/PreprocessorLexer.g" />
-			<compositemapper>
-				<mapper type="merge" to="${grammar.dir}/PreprocessorLexer.tokens" />
-				<mapper type="merge" to="${real.src.dir}/preproc/common/PreprocessorLexer.java" />
-			</compositemapper>
-		</uptodate>
-	</target>
-
-	<target name="PreprocessorLexer" depends="checkLexerChanges" unless="noLexerChanges">
-		<java classname="org.antlr.Tool" classpathref="antlr.class.path" fork="true" failonerror="true" dir="${grammar.dir}">
-			<arg value="-verbose" />
-			<arg value="PreprocessorLexer.g" />
-		</java>
-		<move file="${grammar.dir}/PreprocessorLexer.java" todir="${real.src.dir}/preproc/common" />
-	</target>
-
 
 	<!-- Source compilation and JAR construction -->
 
@@ -149,7 +74,7 @@
 		<pathelement location="${gmc.jar}"/>
 	</path>
 
-	<target name="compile" description="Compile all java source files." depends="parsers">
+	<target name="compile" description="Compile all java source files.">
 		<mkdir dir="${bin.dir}" />
 		<javac debug="true" srcdir="${src.dir}" destdir="${bin.dir}" includes="edu/udel/cis/vsl/civl/**" classpathref="src.compile.classpath" includeantruntime="false">
 		</javac>
@@ -314,14 +239,6 @@
 		<delete file="${cob.ser.file}" />
 		<delete file="${cob.log.file}" />
 		<delete file="${manifest-file}" />
-		<delete file="${grammar.dir}/CivlCParser.tokens" />
-		<delete file="${real.src.dir}/parse/common/CivlCParser.java" />
-		<delete file="${grammar.dir}/PreprocessorLexer.tokens" />
-		<delete file="${real.src.dir}/preproc/common/PreprocessorLexer.java" />
-		<delete file="${grammar.dir}/PreprocessorParser.tokens" />
-		<delete file="${real.src.dir}/preproc/common/PreprocessorParser.java" />
-		<delete file="${grammar.dir}/PreprocessorExpressionParser.tokens" />
-		<delete file="${real.src.dir}/preproc/common/PreprocessorExpressionParser.java" />
 	</target>
 
 	<!-- Do everything -->
