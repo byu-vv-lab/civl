@@ -32,6 +32,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.HeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
@@ -154,6 +155,13 @@ public interface ModelFactory {
 	 * @return The process type.
 	 */
 	public ProcessType processType();
+
+	/**
+	 * Get the heap type.
+	 * 
+	 * @return The heap type.
+	 */
+	public HeapType heapType();
 
 	/**
 	 * Get a new array type.

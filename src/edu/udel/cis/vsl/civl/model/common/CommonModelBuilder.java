@@ -13,6 +13,7 @@ import java.util.Vector;
 
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Label;
+import edu.udel.cis.vsl.abc.ast.entity.IF.OrdinaryEntity;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ContractNode;
@@ -719,7 +720,33 @@ public class CommonModelBuilder implements ModelBuilder {
 			}
 			result = factory.forkStatement(location, name, arguments);
 		} else if (statement.getExpression() instanceof FunctionCallNode) {
+			Vector<Expression> arguments = new Vector<Expression>();
+			ExpressionNode functionExpression = ((FunctionCallNode) statement
+					.getExpression()).getFunction();
+			FunctionDefinitionNode functionDefinition = null;
 
+			if (functionExpression instanceof IdentifierExpressionNode) {
+				OrdinaryEntity functionEntity = functionExpression.getScope()
+						.getOrdinaryEntity(
+								((IdentifierExpressionNode) functionExpression)
+										.getIdentifier().name());
+
+				if (functionEntity instanceof edu.udel.cis.vsl.abc.ast.entity.IF.Function) {
+					functionDefinition = ((edu.udel.cis.vsl.abc.ast.entity.IF.Function) functionEntity)
+							.getDefinition();
+				} else {
+					// TODO: handle this.
+				}
+			} else {
+				// TODO: handle this. Need to get the entity.
+			}
+			for (int i = 0; i < ((FunctionCallNode) statement.getExpression())
+					.getNumberOfArguments(); i++) {
+				arguments.add(expression(((FunctionCallNode) statement
+						.getExpression()).getArgument(i), scope));
+			}
+			result = factory.callStatement(location, null, arguments);
+			callStatements.put((CallStatement) result, functionDefinition);
 		}
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);

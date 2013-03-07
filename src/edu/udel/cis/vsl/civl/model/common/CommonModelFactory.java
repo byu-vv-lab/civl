@@ -39,6 +39,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.HeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType.PRIMITIVE_TYPE;
 import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
@@ -65,6 +66,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonJoinStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonProcessType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
@@ -87,6 +89,7 @@ public class CommonModelFactory implements ModelFactory {
 	private PrimitiveType booleanType = new CommonPrimitiveType(PRIMITIVE_TYPE.BOOL);
 	private PrimitiveType realType = new CommonPrimitiveType(PRIMITIVE_TYPE.REAL);
 	private PrimitiveType stringType = new CommonPrimitiveType(PRIMITIVE_TYPE.STRING);
+	private HeapType heapType = new CommonHeapType();
 	private ProcessType processType = new CommonProcessType();
 	/* Make one canonical true and false. */
 	private BooleanLiteralExpression trueExpression = new CommonBooleanLiteralExpression(
@@ -245,6 +248,15 @@ public class CommonModelFactory implements ModelFactory {
 		return processType;
 	}
 
+	/**
+	 * Get the heap type.
+	 * 
+	 * @return The heap type.
+	 */
+	public HeapType heapType() {
+		return heapType;
+	}
+	
 	/**
 	 * Get a new array type.
 	 * 
