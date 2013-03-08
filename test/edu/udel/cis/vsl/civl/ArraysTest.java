@@ -1,7 +1,7 @@
 package edu.udel.cis.vsl.civl;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,11 +79,15 @@ public class ArraysTest {
 		State initialState;
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
 				new java.io.File("."));
+		double startTime = System.currentTimeMillis(), endTime;
 		boolean result;
+		String bar = "===================";
 
 		sideEffectRemover.transform(unit);
 		Analysis.performStandardAnalysis(unit);
 		model = modelBuilder.buildModel(unit);
+		out.println(bar + " Model " + bar + "\n");
+		model.print(out);
 		initialState = stateFactory.initialState(model);
 		executor = new Executor(model, universe, stateFactory, log);
 		stateManager = new StateManager(executor);
@@ -91,7 +95,17 @@ public class ArraysTest {
 				enabler, stateManager, predicate);
 		searcher.setDebugOut(new PrintWriter(out));
 		result = searcher.search(initialState);
-		assertTrue(result);
+		endTime = System.currentTimeMillis();
+		out.println(bar + " Stats " + bar + "\n");
+		CIVL.printStats(out, searcher, startTime, endTime,
+				((StateManager) stateManager).maxProcs());
+		if (result || log.numReports() > 0) {
+			out.println("The program MAY NOT be correct.");
+		} else {
+			out.println("The specified properties hold for all executions.");
+		}
+		out.flush();
+		assertFalse(result);
 	}
 
 	private SymbolicExpression write2d(SymbolicExpression array,

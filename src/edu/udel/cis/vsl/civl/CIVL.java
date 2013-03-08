@@ -199,7 +199,7 @@ public class CIVL {
 		}
 	}
 
-	private static void printStats(PrintStream out,
+	public static void printStats(PrintStream out,
 			DfsSearcher<State, Transition, TransitionSequence> searcher,
 			double startTime, double endTime, int maxProcs) {
 		long numStatesMatched = searcher.numStatesMatched();
