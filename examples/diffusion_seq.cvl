@@ -1,5 +1,5 @@
 int nx;
-double u0[2];
+\input double u0[2];
 int nsteps;
 double kappa;
 double data[3][2];
