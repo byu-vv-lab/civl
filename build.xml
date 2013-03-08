@@ -72,11 +72,15 @@
 		<pathelement location="${antlr.jar}" />
 		<pathelement location="${sarl.jar}"/>
 		<pathelement location="${gmc.jar}"/>
+		<pathelement location="${abc.jar}"/>
+		<pathelement location="${cvc3.jar}"/>
+		<pathelement location="${pcollections.jar}"/>
+		<pathelement location="${clj-ds.dir}"/>
 	</path>
 
 	<target name="compile" description="Compile all java source files.">
 		<mkdir dir="${bin.dir}" />
-		<javac debug="true" srcdir="${src.dir}" destdir="${bin.dir}" includes="edu/udel/cis/vsl/civl/**" classpathref="src.compile.classpath" includeantruntime="false">
+		<javac debug="true" srcdir="${src.dir}" destdir="${bin.dir}" includes="edu/udel/cis/vsl/civl/**" classpathref="src.compile.classpath" encoding="UTF-8" includeantruntime="false">
 		</javac>
 	</target>
 
@@ -101,6 +105,10 @@
 		<pathelement location="${junit.jar}" />
 		<pathelement location="${sarl.jar}"/>
 		<pathelement location="${gmc.jar}"/>
+		<pathelement location="${abc.jar}"/>
+		<pathelement location="${cvc3.jar}"/>
+		<pathelement location="${pcollections.jar}"/>
+		<pathelement location="${clj-ds.dir}"/>
 	</path>
 
 	<path id="test.execute.classpath">
@@ -110,6 +118,10 @@
 		<pathelement location="${junit.jar}" />
 		<pathelement location="${sarl.jar}"/>
 		<pathelement location="${gmc.jar}"/>
+		<pathelement location="${abc.jar}"/>
+		<pathelement location="${cvc3.jar}"/>
+		<pathelement location="${pcollections.jar}"/>
+		<pathelement location="${clj-ds.dir}"/>
 	</path>
 
 	<target name="test-init">
@@ -122,7 +134,7 @@
 	</target>
 
 	<target name="test-compile" depends="compile,test-init">
-		<javac destdir="${test.bin.dir}" debug="true" failonerror="false" classpathref="test.compile.classpath" includeantruntime="true">
+		<javac destdir="${test.bin.dir}" debug="true" failonerror="false" classpathref="test.compile.classpath" encoding="UTF-8" includeantruntime="true">
 			<src path="${test.src.dir}" />
 		</javac>
 	</target>
@@ -130,6 +142,7 @@
 	<target name="test" depends="test-compile">
 		<junit printsummary="false" errorProperty="test.failed" failureProperty="test.failed" fork="true" timeout="300000">
 			<jvmarg value="-ea" />
+	        <sysproperty key="java.library.path" path="${cvc3.jni.dir}"/>
 			<classpath refid="test.execute.classpath" />
 			<formatter type="brief" usefile="false" />
 			<formatter type="xml" />

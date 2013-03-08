@@ -38,3 +38,16 @@ sarl.jar=/tools/sarl.jar
 
 # GMC is the generic model checker.
 gmc.jar=/tools/gmc.jar
+
+# ABC is the C compiler used by CIVL.
+abc.jar=/tools/abc.jar
+
+# CVC3 is an SMT solver
+cvc3.jar=/tools/cvc3/java/lib/libcvc3-5.0.0.jar
+cvc3.jni.dir=/tools/cvc3/java/lib
+
+# PCOLLECTIONS is an external collections framework used by CIVL.
+pcollections.jar=/tools/pcollections.jar
+
+# CLJ-DS
+clj-ds.dir = /tools/clj-ds-master/target/classes
