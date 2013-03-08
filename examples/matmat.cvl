@@ -1,0 +1,20 @@
+int L = 4;
+int M = 5;
+int N = 6;
+\input double A[L][M];
+\input double B[M][N];
+double C[L][N];
+
+void spec() {
+  for (int i = 0; i < L; i++) 
+    for (int j = 0; j < N; j++) {
+      C[i][j] = 0.0;
+      for (int k = 0; k < M; k++)
+        C[i][j] += A[i][k] * B[k][j]; 
+    }
+}
+
+void main() {
+  spec();
+
+}
