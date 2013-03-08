@@ -58,5 +58,10 @@ public class CommonAssertStatement extends CommonStatement implements AssertStat
 	public void setExpression(Expression expression) {
 		this.expression = expression;
 	}
+	
+	@Override
+	public String toString() {
+		return "\\assert " + expression;
+	}
 
 }

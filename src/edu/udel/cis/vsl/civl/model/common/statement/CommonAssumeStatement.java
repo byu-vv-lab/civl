@@ -46,5 +46,10 @@ public class CommonAssumeStatement extends CommonStatement implements
 	public void setExpression(Expression expression) {
 		this.expression = expression;
 	}
+	
+	@Override
+	public String toString() {
+		return "\\assume " + expression;
+	}
 
 }
