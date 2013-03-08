@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.semantics;
 
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.List;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.log.ErrorLog;
@@ -34,6 +35,8 @@ import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.util.ExecutionProblem.Certainty;
 import edu.udel.cis.vsl.civl.util.ExecutionProblem.ErrorKind;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.prove.TernaryResult.ResultType;
@@ -75,7 +78,7 @@ public class Executor {
 	 */
 	public Executor(Model model, SymbolicUniverse symbolicUniverse,
 			StateFactoryIF stateFactory, ErrorLog log) {
-		SymbolicType[] processTypeArray = new SymbolicType[1];
+		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
 
 		this.model = model;
 		this.symbolicUniverse = symbolicUniverse;
@@ -83,10 +86,9 @@ public class Executor {
 		this.evaluator = new Evaluator(symbolicUniverse);
 		this.prover = symbolicUniverse.prover();
 		this.log = log;
-		processTypeArray[0] = symbolicUniverse.integerType();
+		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
-				symbolicUniverse.stringObject("process"),
-				symbolicUniverse.typeSequence(processTypeArray));
+				symbolicUniverse.stringObject("process"), processTypeList);
 	}
 
 	/**
@@ -101,16 +103,15 @@ public class Executor {
 	 */
 	public Executor(Model model, SymbolicUniverse symbolicUniverse,
 			StateFactoryIF stateFactory, PrintStream out) {
-		SymbolicType[] processTypeArray = new SymbolicType[1];
+		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
 
 		this.model = model;
 		this.symbolicUniverse = symbolicUniverse;
 		this.stateFactory = stateFactory;
 		this.evaluator = new Evaluator(symbolicUniverse);
-		processTypeArray[0] = symbolicUniverse.integerType();
+		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
-				symbolicUniverse.stringObject("process"),
-				symbolicUniverse.typeSequence(processTypeArray));
+				symbolicUniverse.stringObject("process"), processTypeList);
 	}
 
 	/**
@@ -323,8 +324,9 @@ public class Executor {
 		SymbolicExpression assumeExpression = evaluator.evaluate(state, pid,
 				statement.getExpression());
 
-		state = stateFactory.setPathCondition(state,
-				symbolicUniverse.and(state.pathCondition(), assumeExpression));
+		state = stateFactory.setPathCondition(state, symbolicUniverse.and(
+				(BooleanExpression) state.pathCondition(),
+				(BooleanExpression) assumeExpression));
 		state = transition(state, state.process(pid), statement.target());
 		return state;
 	}
@@ -332,8 +334,9 @@ public class Executor {
 	public State execute(State state, int pid, AssertStatement statement) {
 		SymbolicExpression assertExpression = evaluator.evaluate(state, pid,
 				statement.getExpression());
-		ResultType valid = prover
-				.valid(state.pathCondition(), assertExpression);
+		ResultType valid = prover.valid(
+				(BooleanExpression) state.pathCondition(),
+				(BooleanExpression) assertExpression);
 
 		// TODO Handle error reporting in a nice way.
 		if (valid != ResultType.YES) {
@@ -451,12 +454,17 @@ public class Executor {
 	}
 
 	/**
-	 * Determine the symbolic value that results from writing to an array position.
+	 * Determine the symbolic value that results from writing to an array
+	 * position.
 	 * 
-	 * @param state The state of the program.
-	 * @param pid The process ID of the currently executing process.
-	 * @param arrayIndex The expression for the index in the array being modified.
-	 * @param value The value being written to the array at the specified index.
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The process ID of the currently executing process.
+	 * @param arrayIndex
+	 *            The expression for the index in the array being modified.
+	 * @param value
+	 *            The value being written to the array at the specified index.
 	 * @return A new symbolic value for the array.
 	 */
 	private SymbolicExpression arrayWriteValue(State state, int pid,
@@ -470,9 +478,11 @@ public class Executor {
 		if (arrayIndex.array() instanceof ArrayIndexExpression) {
 			result = arrayWriteValue(state, pid,
 					(ArrayIndexExpression) arrayIndex.array(),
-					symbolicUniverse.arrayWrite(array, index, value));
+					symbolicUniverse.arrayWrite(array,
+							(NumericExpression) index, value));
 		} else {
-			result = symbolicUniverse.arrayWrite(array, index, value);
+			result = symbolicUniverse.arrayWrite(array,
+					(NumericExpression) index, value);
 		}
 		return result;
 	}

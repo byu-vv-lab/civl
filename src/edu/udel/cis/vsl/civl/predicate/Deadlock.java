@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.util.ExecutionProblem.Certainty;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.prove.TernaryResult.ResultType;
@@ -128,7 +129,9 @@ public class Deadlock implements StatePredicateIF<State> {
 					if (predicate == null) {
 						predicate = guard;
 					} else {
-						predicate = symbolicUniverse.or(predicate, guard);
+						predicate = symbolicUniverse.or(
+								(BooleanExpression) predicate,
+								(BooleanExpression) guard);
 					}
 				}
 				if (predicate == null) {
@@ -178,7 +181,7 @@ public class Deadlock implements StatePredicateIF<State> {
 							p.id(), s.guard());
 
 					// If guard is false, don't worry about the stack.
-					if (guard.equals(symbolicUniverse.symbolic(false))) {
+					if (guard.equals(symbolicUniverse.falseExpression())) {
 						continue;
 					}
 					assert joinProcess instanceof SymbolicConstant;
@@ -196,15 +199,19 @@ public class Deadlock implements StatePredicateIF<State> {
 							p.id(), s.guard());
 
 					// Most of the time, guards will be true. Shortcut this.
-					if (guard.equals(symbolicUniverse.symbolic(true))) {
+					if (guard.equals(symbolicUniverse.trueExpression())) {
 						return false;
 					}
 					if (predicate == null) {
 						predicate = guard;
 					} else {
-						predicate = symbolicUniverse.or(predicate, guard);
+						predicate = symbolicUniverse.or(
+								(BooleanExpression) predicate,
+								(BooleanExpression) guard);
 					}
-					truth = prover.valid(state.pathCondition(), predicate);
+					truth = prover.valid(
+							(BooleanExpression) state.pathCondition(),
+							(BooleanExpression) predicate);
 					if (truth == ResultType.YES) {
 						return false;
 					} else if (truth == ResultType.MAYBE) {

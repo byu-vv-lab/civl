@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -42,7 +43,10 @@ import edu.udel.cis.vsl.gmc.StateManagerIF;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 
 public class ArraysTest {
 
@@ -75,6 +79,7 @@ public class ArraysTest {
 		State initialState;
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
 				new java.io.File("."));
+		boolean result;
 
 		sideEffectRemover.transform(unit);
 		Analysis.performStandardAnalysis(unit);
@@ -85,7 +90,47 @@ public class ArraysTest {
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
 		searcher.setDebugOut(new PrintWriter(out));
-		assertTrue(searcher.search(initialState));
+		result = searcher.search(initialState);
+		assertTrue(result);
+	}
+
+	private SymbolicExpression write2d(SymbolicExpression array,
+			SymbolicExpression i, SymbolicExpression j, SymbolicExpression value) {
+		SymbolicExpression row = universe.arrayRead(array,
+				(NumericExpression) i);
+		SymbolicExpression newRow = universe.arrayWrite(row,
+				(NumericExpression) j, value);
+
+		return universe.arrayWrite(array, (NumericExpression) i, newRow);
+	}
+
+	private SymbolicExpression read2d(SymbolicExpression array,
+			SymbolicExpression i, SymbolicExpression j) {
+		SymbolicExpression row = universe.arrayRead(array,
+				(NumericExpression) i);
+
+		return universe.arrayRead(row, (NumericExpression) j);
+	}
+
+	/**
+	 * Write and read a 2d array.
+	 */
+	@Test
+	public void array2d() {
+		SymbolicArrayType t = universe.arrayType(universe.arrayType(universe
+				.integerType()));
+		SymbolicExpression a = universe.symbolicConstant(
+				universe.stringObject("a"), t);
+		SymbolicExpression zero = universe.zeroInt();
+		SymbolicExpression twoInt = universe.integer(2);
+		SymbolicExpression read;
+
+		a = write2d(a, zero, zero, twoInt);
+		read = read2d(a, zero, zero);
+		assertEquals(twoInt, read);
+		// for the heck of it...
+		out.println("array2d: new row is: "
+				+ universe.arrayRead(a, (NumericExpression) zero));
 	}
 
 }

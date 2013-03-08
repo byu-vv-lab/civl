@@ -636,6 +636,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		Expression expression = expression(statement.getExpression(), scope);
 		Location location = factory.location(scope);
 
+		function.addLocation(location);
 		result = factory.assertStatement(location, expression);
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
@@ -727,7 +728,7 @@ public class CommonModelBuilder implements ModelBuilder {
 
 			if (functionExpression instanceof IdentifierExpressionNode) {
 				OrdinaryEntity functionEntity = functionExpression.getScope()
-						.getOrdinaryEntity(
+						.getLexicalOrdinaryEntity(
 								((IdentifierExpressionNode) functionExpression)
 										.getIdentifier().name());
 

@@ -3,7 +3,9 @@ package edu.udel.cis.vsl.civl.state;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -52,13 +54,13 @@ public class StateFactory implements StateFactoryIF {
 	 * Factory to create all state objects.
 	 */
 	public StateFactory(SymbolicUniverse symbolicUniverse) {
-		SymbolicType[] processTypeArray = new SymbolicType[1];
+		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
 
 		this.symbolicUniverse = symbolicUniverse;
-		processTypeArray[0] = symbolicUniverse.integerType();
+		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
 				symbolicUniverse.stringObject("process"),
-				symbolicUniverse.typeSequence(processTypeArray));
+				processTypeList);
 	}
 
 	// ************************* Helper Methods ***********************
@@ -327,7 +329,7 @@ public class StateFactory implements StateFactoryIF {
 	@Override
 	public State initialState(Model model) {
 		State state = new State(new Process[0], new DynamicScope[0],
-				symbolicUniverse.symbolic(true));
+				symbolicUniverse.trueExpression());
 		Function function = model.system();
 		int numArgs = function.parameters().size();
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];

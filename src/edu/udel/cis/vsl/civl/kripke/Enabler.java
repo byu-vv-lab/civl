@@ -13,6 +13,8 @@ import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
@@ -93,12 +95,13 @@ public class Enabler implements
 						SymbolicExpression argument = evaluator.evaluate(state,
 								p.id(), ((ChooseStatement) s).rhs());
 						Integer upper = extractInt(universe.simplifier(
-								newPathCondition).simplify(argument));
+								(BooleanExpression) newPathCondition).apply(
+								argument));
 
 						for (int i = 0; i < upper.intValue(); i++) {
 							localTransitions.add(transitionFactory
 									.newChooseTransition(newPathCondition,
-											p.id(), s, universe.symbolic(i)));
+											p.id(), s, universe.integer(i)));
 						}
 						continue;
 					} else if (s instanceof JoinStatement) {
@@ -114,8 +117,7 @@ public class Enabler implements
 								.parseInt(((SymbolicConstant) pidExpression)
 										.name().getString()
 										.substring(pidPrefix.length()));
-						if (!state.process(pidValue)
-								.hasEmptyStack()) {
+						if (!state.process(pidValue).hasEmptyStack()) {
 							continue;
 						}
 					}
@@ -140,7 +142,7 @@ public class Enabler implements
 	 * @return A concrete integer if one can be extracted. Else null.
 	 */
 	private Integer extractInt(SymbolicExpression expression) {
-		Number number = universe.extractNumber(expression);
+		Number number = universe.extractNumber((NumericExpression) expression);
 		Integer intValue;
 
 		assert number instanceof IntegerNumber;
@@ -170,8 +172,10 @@ public class Enabler implements
 		SymbolicExpression newPathCondition = null;
 		SymbolicExpression guard = evaluator.evaluate(state, pid,
 				statement.guard());
-		ResultType result = prover.valid(pathCondition, guard);
-		ResultType negResult = prover.valid(pathCondition, universe.not(guard));
+		ResultType result = prover.valid((BooleanExpression) pathCondition,
+				(BooleanExpression) guard);
+		ResultType negResult = prover.valid((BooleanExpression) pathCondition,
+				universe.not((BooleanExpression) guard));
 
 		// System.out.println("Enabler.newPathCondition() : Process " + pid
 		// + " is at " + state.process(pid).peekStack().location());
@@ -180,7 +184,8 @@ public class Enabler implements
 		} else if (negResult == ResultType.YES) {
 			return null;
 		} else {
-			newPathCondition = universe.and(pathCondition, guard);
+			newPathCondition = universe.and((BooleanExpression) pathCondition,
+					(BooleanExpression) guard);
 		}
 		return newPathCondition;
 	}

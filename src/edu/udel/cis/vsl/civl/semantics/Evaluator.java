@@ -14,6 +14,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.number.real.RealNumberFactory;
 
@@ -84,10 +86,9 @@ public class Evaluator {
 			ArrayIndexExpression expression) {
 		SymbolicExpression array = evaluate(state, pid, expression.array());
 		SymbolicExpression index = evaluate(state, pid, expression.index());
-		SymbolicExpression simplifiedIndex = symbolicUniverse.simplifier(
-				state.pathCondition()).simplify(index);
+		// TODO: simplify index?
 
-		return symbolicUniverse.arrayRead(array, simplifiedIndex);
+		return symbolicUniverse.arrayRead(array, (NumericExpression) index);
 	}
 
 	/**
@@ -106,29 +107,39 @@ public class Evaluator {
 		SymbolicExpression left = evaluate(state, pid, expression.left());
 		SymbolicExpression right = evaluate(state, pid, expression.right());
 
+		// TODO: Check all expression types.
 		switch (expression.operator()) {
 		case PLUS:
-			return symbolicUniverse.add(left, right);
+			return symbolicUniverse.add((NumericExpression) left,
+					(NumericExpression) right);
 		case MINUS:
-			return symbolicUniverse.subtract(left, right);
+			return symbolicUniverse.subtract((NumericExpression) left,
+					(NumericExpression) right);
 		case TIMES:
-			return symbolicUniverse.multiply(left, right);
+			return symbolicUniverse.multiply((NumericExpression) left,
+					(NumericExpression) right);
 		case DIVIDE:
-			return symbolicUniverse.divide(left, right);
+			return symbolicUniverse.divide((NumericExpression) left,
+					(NumericExpression) right);
 		case LESS_THAN:
-			return symbolicUniverse.lessThan(left, right);
+			return symbolicUniverse.lessThan((NumericExpression) left,
+					(NumericExpression) right);
 		case LESS_THAN_EQUAL:
-			return symbolicUniverse.lessThanEquals(left, right);
+			return symbolicUniverse.lessThanEquals((NumericExpression) left,
+					(NumericExpression) right);
 		case EQUAL:
 			return symbolicUniverse.equals(left, right);
 		case NOT_EQUAL:
 			return symbolicUniverse.not(symbolicUniverse.equals(left, right));
 		case AND:
-			return symbolicUniverse.and(left, right);
+			return symbolicUniverse.and((BooleanExpression) left,
+					(BooleanExpression) right);
 		case OR:
-			return symbolicUniverse.or(left, right);
+			return symbolicUniverse.or((BooleanExpression) left,
+					(BooleanExpression) right);
 		case MODULO:
-			return symbolicUniverse.modulo(left, right);
+			return symbolicUniverse.modulo((NumericExpression) left,
+					(NumericExpression) right);
 		}
 		return null;
 	}
@@ -146,7 +157,7 @@ public class Evaluator {
 	 */
 	public SymbolicExpression evaluate(State state, int pid,
 			BooleanLiteralExpression expression) {
-		return symbolicUniverse.symbolic(expression.value());
+		return symbolicUniverse.bool(expression.value());
 	}
 
 	/**
@@ -162,7 +173,7 @@ public class Evaluator {
 	 */
 	public SymbolicExpression evaluate(State state, int pid,
 			IntegerLiteralExpression expression) {
-		return symbolicUniverse.symbolic(expression.value().intValue());
+		return symbolicUniverse.integer(expression.value().intValue());
 	}
 
 	/**
@@ -178,7 +189,7 @@ public class Evaluator {
 	 */
 	public SymbolicExpression evaluate(State state, int pid,
 			RealLiteralExpression expression) {
-		return symbolicUniverse.symbolic(symbolicUniverse
+		return symbolicUniverse.number(symbolicUniverse
 				.numberObject(numberFactory.rational(expression.value()
 						.toPlainString())));
 	}
@@ -219,11 +230,11 @@ public class Evaluator {
 			UnaryExpression expression) {
 		switch (expression.operator()) {
 		case NEGATIVE:
-			return symbolicUniverse.minus(evaluate(state, pid,
-					expression.operand()));
+			return symbolicUniverse.minus((NumericExpression) evaluate(state,
+					pid, expression.operand()));
 		case NOT:
-			return symbolicUniverse.not(evaluate(state, pid,
-					expression.operand()));
+			return symbolicUniverse.not((BooleanExpression) evaluate(state,
+					pid, expression.operand()));
 		}
 		return null;
 	}
@@ -244,8 +255,8 @@ public class Evaluator {
 		SymbolicExpression currentValue = state.valueOf(pid,
 				expression.variable());
 
-		return symbolicUniverse.simplifier(state.pathCondition()).simplify(
-				currentValue);
+		return symbolicUniverse.simplifier(
+				(BooleanExpression) state.pathCondition()).apply(currentValue);
 	}
 
 }
