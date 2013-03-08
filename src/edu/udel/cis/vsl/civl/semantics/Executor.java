@@ -438,18 +438,43 @@ public class Executor {
 			state = stateFactory.setVariable(state, variable, pid,
 					symbolicValue);
 		} else if (target instanceof ArrayIndexExpression) {
-			SymbolicExpression array = evaluator.evaluate(state, pid,
-					((ArrayIndexExpression) target).array());
-			SymbolicExpression index = evaluator.evaluate(state, pid,
-					((ArrayIndexExpression) target).index());
+			SymbolicExpression newValue = arrayWriteValue(state, pid,
+					(ArrayIndexExpression) target, symbolicValue);
 
 			state = stateFactory.setVariable(state,
 					baseArray(scope, (ArrayIndexExpression) target), pid,
-					symbolicUniverse.arrayWrite(array, index, symbolicValue));
+					newValue);
 		}
 		// TODO: Throw some sort of exception otherwise.
 		// state = stateFactory.canonic(state);
 		return state;
+	}
+
+	/**
+	 * Determine the symbolic value that results from writing to an array position.
+	 * 
+	 * @param state The state of the program.
+	 * @param pid The process ID of the currently executing process.
+	 * @param arrayIndex The expression for the index in the array being modified.
+	 * @param value The value being written to the array at the specified index.
+	 * @return A new symbolic value for the array.
+	 */
+	private SymbolicExpression arrayWriteValue(State state, int pid,
+			ArrayIndexExpression arrayIndex, SymbolicExpression value) {
+		SymbolicExpression result = null;
+		SymbolicExpression array = evaluator.evaluate(state, pid,
+				arrayIndex.array());
+		SymbolicExpression index = evaluator.evaluate(state, pid,
+				arrayIndex.index());
+
+		if (arrayIndex.array() instanceof ArrayIndexExpression) {
+			result = arrayWriteValue(state, pid,
+					(ArrayIndexExpression) arrayIndex.array(),
+					symbolicUniverse.arrayWrite(array, index, value));
+		} else {
+			result = symbolicUniverse.arrayWrite(array, index, value);
+		}
+		return result;
 	}
 
 	/**
