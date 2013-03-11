@@ -40,6 +40,33 @@ pointer of that type can point. [Need to add that to ABC too.]
 How do you access the system library functions memcpy, malloc,
 free?
 
+---
+
+Still stuff left over from CVT that needs to be removed:
+
+	/**
+	 * @param syncVariableMap
+	 *            A map from sync variables to the corresponding _CVT_sync_
+	 *            control variable.
+	 */
+	public void setSyncVariableMap(Map<Variable, Variable> syncVariableMap);
+
+	/**
+	 * @return A map from sync variables to the corresponding _CVT_sync_ control
+	 *         variable.
+	 */
+	public Map<Variable, Variable> syncVariableMap();
+
+	/**
+	 * Get the corresponding _CVT_sync_ control variable for a sync variable.
+	 * Returns null if not found.
+	 * 
+	 * @param syncVariable
+	 *            A sync variable.
+	 * @return The _CVT_sync_ control variable corresponding to the sync
+	 *         variable. Null if not found.
+	 */
+	public Variable syncControlVariable(Variable syncVariable);
 
 
  
