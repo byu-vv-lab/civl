@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
@@ -33,6 +34,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.HeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
@@ -172,6 +174,15 @@ public interface ModelFactory {
 	 */
 	public ArrayType arrayType(Type baseType);
 
+	/**
+	 * Get a new pointer type.
+	 * 
+	 * @param baseType
+	 *            The type pointed to by the pointer.
+	 * @return A new pointer type with the given base type.
+	 */
+	public PointerType pointerType(Type baseType);
+
 	/* *********************************************************************
 	 * Expressions
 	 * *********************************************************************
@@ -202,6 +213,20 @@ public interface ModelFactory {
 	 */
 	public BinaryExpression binaryExpression(BINARY_OPERATOR operator,
 			Expression left, Expression right);
+
+	/**
+	 * The ternary conditional expression ("?" in C).
+	 * 
+	 * @param condition
+	 *            The condition being evaluated in this conditional.
+	 * @param trueBranch
+	 *            The expression returned if the condition evaluates to true.
+	 * @param falseBranch
+	 *            The expression returned if the condition evaluates to false.
+	 * @return The conditional expression.
+	 */
+	public ConditionalExpression conditionalExpression(Expression condition,
+			Expression trueBranch, Expression falseBranch);
 
 	/**
 	 * A boolean literal expression.

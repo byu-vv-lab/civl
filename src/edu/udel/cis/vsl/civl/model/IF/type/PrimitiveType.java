@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.model.IF.type;
+ package edu.udel.cis.vsl.civl.model.IF.type;
 
 /**
  * A primitive type. One of: int, bool, real, string.

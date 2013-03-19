@@ -59,8 +59,7 @@ public class StateFactory implements StateFactoryIF {
 		this.symbolicUniverse = symbolicUniverse;
 		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
-				symbolicUniverse.stringObject("process"),
-				processTypeList);
+				symbolicUniverse.stringObject("process"), processTypeList);
 	}
 
 	// ************************* Helper Methods ***********************
@@ -127,6 +126,29 @@ public class StateFactory implements StateFactoryIF {
 				SymbolicType type = arrayType((ArrayType) v.type());
 
 				values[i] = symbolicUniverse.symbolicConstant(name, type);
+			} else if (v.isExtern()) {
+				StringObject name = symbolicUniverse.stringObject("s"
+						+ dynamicScopeId + "v" + i);
+				SymbolicType type = null;
+
+				if (v.type() instanceof PrimitiveType) {
+					switch (((PrimitiveType) v.type()).primitiveType()) {
+					case INT:
+						type = symbolicUniverse.integerType();
+					case BOOL:
+						type = symbolicUniverse.booleanType();
+					case REAL:
+						type = symbolicUniverse.realType();
+					case STRING:
+						// TODO: Handle this.
+					default:
+						break;
+					}
+				} else {
+					throw new RuntimeException("Unimplemented input type: " + v.type());
+				}
+
+				values[i] = symbolicUniverse.symbolicConstant(name, type);
 			}
 		}
 		return values;
@@ -191,7 +213,7 @@ public class StateFactory implements StateFactoryIF {
 			case REAL:
 				return symbolicUniverse.arrayType(symbolicUniverse.realType());
 			case STRING:
-				//TODO: Handle this.
+				// TODO: Handle this.
 			default:
 				break;
 			}
@@ -535,13 +557,17 @@ public class StateFactory implements StateFactoryIF {
 		Map<SymbolicConstant, SymbolicExpression> substitutions = new HashMap<SymbolicConstant, SymbolicExpression>();
 		if (value == null)
 			return null;
-		
+
 		for (int i = 0; i < oldToNew.length; i++) {
-			StringObject oldString = symbolicUniverse.stringObject(pidPrefix + i);
-			SymbolicConstant oldConstant = symbolicUniverse.symbolicConstant(oldString, processType);
-			StringObject newString = symbolicUniverse.stringObject(pidPrefix + oldToNew[i]);
-			SymbolicConstant newConstant = symbolicUniverse.symbolicConstant(newString, processType);
-			
+			StringObject oldString = symbolicUniverse.stringObject(pidPrefix
+					+ i);
+			SymbolicConstant oldConstant = symbolicUniverse.symbolicConstant(
+					oldString, processType);
+			StringObject newString = symbolicUniverse.stringObject(pidPrefix
+					+ oldToNew[i]);
+			SymbolicConstant newConstant = symbolicUniverse.symbolicConstant(
+					newString, processType);
+
 			substitutions.put(oldConstant, newConstant);
 		}
 		return symbolicUniverse.substitute(value, substitutions);

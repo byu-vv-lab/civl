@@ -26,7 +26,6 @@ public class CommonModel implements Model {
 	private Function system;
 	private ModelFactory modelFactory;
 	private String name = "";
-	private Map<Variable, Variable> syncVariableMap;
 	private Map<String, Variable> externVariables;
 
 	/**
@@ -118,36 +117,6 @@ public class CommonModel implements Model {
 	 */
 	public void addFunction(Function function) {
 		functions.add(function);
-	}
-
-	/**
-	 * @param syncVariableMap
-	 *            A map from sync variables to the corresponding _CVT_sync_
-	 *            control variable.
-	 */
-	public void setSyncVariableMap(Map<Variable, Variable> syncVariableMap) {
-		this.syncVariableMap = syncVariableMap;
-	}
-
-	/**
-	 * @return A map from sync variables to the corresponding _CVT_sync_ control
-	 *         variable.
-	 */
-	public Map<Variable, Variable> syncVariableMap() {
-		return syncVariableMap;
-	}
-
-	/**
-	 * Get the corresponding _CVT_sync_ control variable for a sync variable.
-	 * Returns null if not found.
-	 * 
-	 * @param syncVariable
-	 *            A sync variable.
-	 * @return The _CVT_sync_ control variable corresponding to the sync
-	 *         variable. Null if not found.
-	 */
-	public Variable syncControlVariable(Variable syncVariable) {
-		return syncVariableMap.get(syncVariable);
 	}
 
 	/**

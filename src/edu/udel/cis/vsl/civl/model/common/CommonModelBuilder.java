@@ -30,6 +30,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ResultNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SelfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
@@ -55,6 +56,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.BasicTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
@@ -316,6 +318,9 @@ public class CommonModelBuilder implements ModelBuilder {
 				variable.setExtent(extent);
 			}
 		}
+		if (node.getTypeNode().isInputQualified()) {
+			variable.setIsExtern(true);
+		}
 		scope.addVariable(variable);
 	}
 
@@ -360,6 +365,9 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (typeNode.kind() == TypeNodeKind.ARRAY) {
 			return factory.arrayType(processType(((ArrayTypeNode) typeNode)
 					.getElementType()));
+		} else if (typeNode.kind() == TypeNodeKind.POINTER) {
+			return factory.pointerType(processType(((PointerTypeNode) typeNode)
+					.referencedType()));
 		}
 		return result;
 	}
@@ -419,6 +427,18 @@ public class CommonModelBuilder implements ModelBuilder {
 					+ numArgs + " in expression " + expression);
 		}
 		switch (expression.getOperator()) {
+		case ADDRESSOF:
+			result = factory.unaryExpression(UNARY_OPERATOR.ADDRESSOF,
+					arguments.get(0));
+			break;
+		case DEREFERENCE:
+			result = factory.unaryExpression(UNARY_OPERATOR.DEREFERENCE,
+					arguments.get(0));
+			break;
+		case CONDITIONAL:
+			result = factory.conditionalExpression(arguments.get(0),
+					arguments.get(1), arguments.get(2));
+			break;
 		case DIV:
 			result = factory.binaryExpression(BINARY_OPERATOR.DIVIDE,
 					arguments.get(0), arguments.get(1));
@@ -1000,6 +1020,14 @@ public class CommonModelBuilder implements ModelBuilder {
 										decrementVariable,
 										factory.integerLiteralExpression(BigInteger.ONE)));
 				break;
+			case PLUSEQ:
+				Expression lhs = expression(expression.getArgument(0), scope);
+				Expression rhs = expression(expression.getArgument(1), scope);
+
+				result = factory.assignStatement(location, lhs, factory
+						.binaryExpression(BINARY_OPERATOR.PLUS, lhs, rhs));
+				break;
+				//TODO: -=,*=,/=,%=
 			default:
 				result = factory.noopStatement(location);
 			}

@@ -3,20 +3,30 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
+import java.util.List;
+import java.util.Vector;
+
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
+import edu.udel.cis.vsl.sarl.IF.number.Number;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 import edu.udel.cis.vsl.sarl.number.real.RealNumberFactory;
 
 /**
@@ -29,6 +39,7 @@ public class Evaluator {
 
 	private SymbolicUniverse symbolicUniverse;
 	private RealNumberFactory numberFactory = new RealNumberFactory();
+	private SymbolicTupleType pointerType;
 
 	/**
 	 * An evaluator is used to evaluate expressions.
@@ -37,7 +48,15 @@ public class Evaluator {
 	 *            The symbolic universe for the expressions.
 	 */
 	public Evaluator(SymbolicUniverse symbolicUniverse) {
+		List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
+
 		this.symbolicUniverse = symbolicUniverse;
+		pointerComponents.add(symbolicUniverse.integerType());
+		pointerComponents.add(symbolicUniverse.integerType());
+		pointerComponents.add(symbolicUniverse.arrayType(symbolicUniverse
+				.integerType()));
+		pointerType = symbolicUniverse.tupleType(
+				symbolicUniverse.stringObject("pointer"), pointerComponents);
 	}
 
 	/**
@@ -54,6 +73,8 @@ public class Evaluator {
 			result = evaluate(state, pid, (BinaryExpression) expression);
 		} else if (expression instanceof BooleanLiteralExpression) {
 			result = evaluate(state, pid, (BooleanLiteralExpression) expression);
+		} else if (expression instanceof ConditionalExpression) {
+			result = evaluate(state, pid, (ConditionalExpression) expression);
 		} else if (expression instanceof IntegerLiteralExpression) {
 			result = evaluate(state, pid, (IntegerLiteralExpression) expression);
 		} else if (expression instanceof RealLiteralExpression) {
@@ -69,6 +90,31 @@ public class Evaluator {
 			result = (SymbolicExpression) symbolicUniverse.canonic(result);
 		}
 		return result;
+	}
+
+	/**
+	 * Evaluate a conditional expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            the pid of the currently executing process.
+	 * @param expression
+	 *            The conditional expression.
+	 * @return A symbolic expression for the result of the conditional.
+	 */
+	public SymbolicExpression evaluate(State state, int pid,
+			ConditionalExpression expression) {
+		SymbolicExpression condition = evaluate(state, pid,
+				expression.getCondition());
+		SymbolicExpression trueBranch = evaluate(state, pid,
+				expression.getTrueBranch());
+		SymbolicExpression falseBranch = evaluate(state, pid,
+				expression.getFalseBranch());
+
+		assert condition instanceof BooleanExpression;
+		return symbolicUniverse.cond((BooleanExpression) condition, trueBranch,
+				falseBranch);
 	}
 
 	/**
@@ -235,8 +281,105 @@ public class Evaluator {
 		case NOT:
 			return symbolicUniverse.not((BooleanExpression) evaluate(state,
 					pid, expression.operand()));
+		case ADDRESSOF:
+			return reference(state, pid, expression.operand());
+		case DEREFERENCE:
+			return dereference(state, pid, expression.operand());
 		}
 		return null;
+	}
+
+	private SymbolicExpression reference(State state, int pid,
+			Expression operand) {
+		SymbolicExpression result = null;
+		List<SymbolicExpression> navigationSequence = navigationSequence(state,
+				pid, operand);
+		List<SymbolicExpression> components = new Vector<SymbolicExpression>();
+		Variable variable = pointerTarget(operand);
+		int scope = state.getScopeId(pid, variable);
+
+		components.add(symbolicUniverse.integer(scope));
+		components.add(symbolicUniverse.integer(variable.vid()));
+		components.add(symbolicUniverse.array(symbolicUniverse.integerType(),
+				navigationSequence));
+		result = symbolicUniverse.tuple(pointerType, components);
+		return result;
+	}
+
+	private Variable pointerTarget(Expression target) {
+		Variable result = null;
+
+		if (target instanceof VariableExpression) {
+			result = ((VariableExpression) target).variable();
+		} else if (target instanceof ArrayIndexExpression) {
+			result = pointerTarget(((ArrayIndexExpression) target).array());
+		}
+		return result;
+	}
+
+	private List<SymbolicExpression> navigationSequence(State state, int pid,
+			Expression operand) {
+		List<SymbolicExpression> result = new Vector<SymbolicExpression>();
+
+		// TODO: Variable expressions return empty sequence, but need to error
+		// check otherwise.
+		if (operand instanceof ArrayIndexExpression) {
+			result.addAll(navigationSequence(state, pid,
+					((ArrayIndexExpression) operand).array()));
+			result.add(evaluate(state, pid,
+					((ArrayIndexExpression) operand).index()));
+		}
+		return result;
+	}
+
+	private SymbolicExpression dereference(State state, int pid,
+			Expression operand) {
+		SymbolicExpression result = null;
+		SymbolicExpression pointer = evaluate(state, pid, operand);
+		SymbolicSequence<SymbolicExpression> pointerTuple;
+		Number scopeNumber;
+		Number variableNumber;
+		int scopeID;
+		int variableID;
+		SymbolicExpression value;
+
+		assert pointer.type().equals(pointerType);
+		assert pointer.numArguments() == 1;
+		assert pointer.argument(0) instanceof SymbolicSequence;
+		assert ((SymbolicSequence) pointer.argument(0)).size() == 3;
+		pointerTuple = (SymbolicSequence<SymbolicExpression>) pointer
+				.argument(0);
+		scopeNumber = symbolicUniverse
+				.extractNumber((NumericExpression) pointerTuple.get(0));
+		variableNumber = symbolicUniverse
+				.extractNumber((NumericExpression) pointerTuple.get(1));
+		scopeID = ((IntegerNumber) scopeNumber).intValue();
+		variableID = ((IntegerNumber) variableNumber).intValue();
+		value = state.getScope(scopeID).getValue(variableID);
+		result = navigateReference(state, pid, value,
+				(SymbolicExpression) pointerTuple.get(2));
+		return result;
+	}
+
+	private SymbolicExpression navigateReference(State state, int pid,
+			SymbolicExpression base, SymbolicExpression sequence) {
+		SymbolicExpression result = base;
+		SymbolicSequence<SymbolicExpression> innerSequence;
+
+		assert sequence.argument(0) instanceof SymbolicSequence;
+		innerSequence = (SymbolicSequence<SymbolicExpression>) sequence
+				.argument(0);
+		for (int i = 0; i < innerSequence.size(); i++) {
+			Number argumentNumber;
+
+			assert innerSequence.get(i) instanceof NumericExpression;
+			argumentNumber = symbolicUniverse
+					.extractNumber((NumericExpression) innerSequence.get(i));
+			assert argumentNumber instanceof IntegerNumber;
+			result = (SymbolicExpression) result
+					.argument(((IntegerNumber) argumentNumber).intValue());
+		}
+		return result;
 	}
 
 	/**

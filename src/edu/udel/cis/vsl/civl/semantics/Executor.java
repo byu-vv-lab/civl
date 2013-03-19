@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.semantics;
 
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
@@ -289,7 +290,7 @@ public class Executor {
 		Process process;
 		StackEntry returnContext;
 		Location returnLocation;
-		CallStatement call;
+		CallStatement call = null;
 		SymbolicExpression returnExpression = null;
 
 		if (state.process(pid).peekStack().location().function().name().name()
@@ -305,12 +306,30 @@ public class Executor {
 		state = stateFactory.popCallStack(state, pid);
 		process = state.process(pid);
 		if (!process.hasEmptyStack()) {
+			Iterator<Statement> outgoingIterator;
 			returnContext = process.peekStack();
 			returnLocation = returnContext.location();
 			// Note: the location of the function call should have exactly one
 			// outgoing statement, which is a call statement.
 			// TODO: Verify this, throw an exception if it's not the case.
-			call = (CallStatement) returnLocation.outgoing().iterator().next();
+			outgoingIterator = returnLocation.outgoing().iterator();
+			while (outgoingIterator.hasNext()) {
+				Statement outgoingStatement = outgoingIterator.next();
+
+				if (outgoingStatement instanceof CallStatement) {
+					if (call == null) {
+						call = (CallStatement) outgoingStatement;
+					} else {
+						throw new RuntimeException(
+								"Expected 1 outgoing call statement from "
+										+ returnLocation);
+					}
+				}
+			}
+			if (call == null) {
+				throw new RuntimeException("Cannot return to " + returnLocation
+						+ ".  No call statment found.");
+			}
 			if (call.lhs() != null) {
 				state = writeValue(state, pid, call.lhs(), returnExpression);
 			}

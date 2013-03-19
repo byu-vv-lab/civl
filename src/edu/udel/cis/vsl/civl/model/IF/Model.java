@@ -62,30 +62,6 @@ public interface Model {
 	public void addFunction(Function function);
 
 	/**
-	 * @param syncVariableMap
-	 *            A map from sync variables to the corresponding _CVT_sync_
-	 *            control variable.
-	 */
-	public void setSyncVariableMap(Map<Variable, Variable> syncVariableMap);
-
-	/**
-	 * @return A map from sync variables to the corresponding _CVT_sync_ control
-	 *         variable.
-	 */
-	public Map<Variable, Variable> syncVariableMap();
-
-	/**
-	 * Get the corresponding _CVT_sync_ control variable for a sync variable.
-	 * Returns null if not found.
-	 * 
-	 * @param syncVariable
-	 *            A sync variable.
-	 * @return The _CVT_sync_ control variable corresponding to the sync
-	 *         variable. Null if not found.
-	 */
-	public Variable syncControlVariable(Variable syncVariable);
-
-	/**
 	 * Get a function based on its name.
 	 * 
 	 * @param name

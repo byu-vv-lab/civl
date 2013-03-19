@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
@@ -40,6 +41,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.HeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType.PRIMITIVE_TYPE;
 import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
@@ -48,6 +50,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonConditionalExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
@@ -67,6 +70,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonProcessType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
@@ -85,10 +89,14 @@ public class CommonModelFactory implements ModelFactory {
 	/* Keep a set of used identifiers for fly-weighting purposes. */
 	private Map<String, Identifier> identifiers;
 	/* Make one of each primitive type. */
-	private PrimitiveType integerType = new CommonPrimitiveType(PRIMITIVE_TYPE.INT);
-	private PrimitiveType booleanType = new CommonPrimitiveType(PRIMITIVE_TYPE.BOOL);
-	private PrimitiveType realType = new CommonPrimitiveType(PRIMITIVE_TYPE.REAL);
-	private PrimitiveType stringType = new CommonPrimitiveType(PRIMITIVE_TYPE.STRING);
+	private PrimitiveType integerType = new CommonPrimitiveType(
+			PRIMITIVE_TYPE.INT);
+	private PrimitiveType booleanType = new CommonPrimitiveType(
+			PRIMITIVE_TYPE.BOOL);
+	private PrimitiveType realType = new CommonPrimitiveType(
+			PRIMITIVE_TYPE.REAL);
+	private PrimitiveType stringType = new CommonPrimitiveType(
+			PRIMITIVE_TYPE.STRING);
 	private HeapType heapType = new CommonHeapType();
 	private ProcessType processType = new CommonProcessType();
 	/* Make one canonical true and false. */
@@ -183,8 +191,8 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	public Function function(Identifier name, Vector<Variable> parameters,
 			Type returnType, Scope containingScope, Location startLocation) {
-		return new CommonFunction(name, parameters, returnType, containingScope,
-				startLocation, this);
+		return new CommonFunction(name, parameters, returnType,
+				containingScope, startLocation, this);
 	}
 
 	/**
@@ -256,7 +264,7 @@ public class CommonModelFactory implements ModelFactory {
 	public HeapType heapType() {
 		return heapType;
 	}
-	
+
 	/**
 	 * Get a new array type.
 	 * 
@@ -266,6 +274,17 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	public ArrayType arrayType(Type baseType) {
 		return new CommonArrayType(baseType);
+	}
+
+	/**
+	 * Get a new pointer type.
+	 * 
+	 * @param baseType
+	 *            The type of element pointed to by the pointer.
+	 * @return A new pointer type with the given base type.
+	 */
+	public PointerType pointerType(Type baseType) {
+		return new CommonPointerType(baseType);
 	}
 
 	/* *********************************************************************
@@ -308,6 +327,29 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(join(left.expressionScope(),
 				right.expressionScope()));
+		return result;
+	}
+
+	/**
+	 * The ternary conditional expression ("?" in C).
+	 * 
+	 * @param condition
+	 *            The condition being evaluated in this conditional.
+	 * @param trueBranch
+	 *            The expression returned if the condition evaluates to true.
+	 * @param falseBranch
+	 *            The expression returned if the condition evaluates to false.
+	 * @return The conditional expression.
+	 */
+	public ConditionalExpression conditionalExpression(Expression condition,
+			Expression trueBranch, Expression falseBranch) {
+		ConditionalExpression result = new CommonConditionalExpression(condition,
+				trueBranch, falseBranch);
+
+		result.setExpressionScope(join(
+				condition.expressionScope(),
+				join(trueBranch.expressionScope(),
+						falseBranch.expressionScope())));
 		return result;
 	}
 

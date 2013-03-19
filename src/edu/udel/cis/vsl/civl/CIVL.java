@@ -43,7 +43,7 @@ import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
 
 public class CIVL {
 
-	private static SymbolicUniverse universe = SARL.newIdealUniverse();
+	private static SymbolicUniverse universe = SARL.newStandardUniverse();
 	private static ModelBuilder modelBuilder = Models.newModelBuilder();
 	private static TheoremProver prover = universe.prover();
 
