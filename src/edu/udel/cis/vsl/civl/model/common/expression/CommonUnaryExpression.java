@@ -63,7 +63,7 @@ public class CommonUnaryExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		String op = "(";
+		String op = "";
 
 		switch (operator) {
 		case NEGATIVE:
@@ -71,6 +71,14 @@ public class CommonUnaryExpression extends CommonExpression implements
 			break;
 		case NOT:
 			op = "!";
+			break;
+		case ADDRESSOF:
+			op = "&";
+			break;
+		case DEREFERENCE:
+			op ="*";
+			break;
+		default:
 			break;
 		}
 		return op + "(" + operand + ")";
