@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.RequiresNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
@@ -30,7 +31,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ResultNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SelfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
@@ -59,6 +59,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.TypedefNameNode;
 import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -95,6 +96,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	private Map<FunctionDefinitionNode, Function> functionMap;
 	private Map<LabelNode, Statement> labeledStatements;
 	private Map<Statement, LabelNode> gotoStatements;
+	private Map<String, Type> typedefMap;
 
 	/**
 	 * The model builder translates the AST into a CIVL model.
@@ -133,6 +135,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		callStatements = new LinkedHashMap<CallStatement, FunctionDefinitionNode>();
 		functionMap = new LinkedHashMap<FunctionDefinitionNode, Function>();
 		unprocessedFunctions = new Vector<FunctionDefinitionNode>();
+		typedefMap = new LinkedHashMap<String, Type>();
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
 
@@ -172,6 +175,18 @@ public class CommonModelBuilder implements ModelBuilder {
 				}
 			} else if (node instanceof FunctionDeclarationNode) {
 				// Do we need to keep track of these for any reason?
+			} else if (node instanceof TypedefDeclarationNode) {
+				String typeName = ((TypedefDeclarationNode) node).getName();
+
+				if (typeName.equals("$proc")) {
+					typedefMap.put(typeName, factory.processType());
+				} else if (typeName.equals("$heap")) {
+					typedefMap.put(typeName, factory.heapType());
+				} else {
+					typedefMap.put(typeName,
+							processType(((TypedefDeclarationNode) node)
+									.getTypeNode()));
+				}
 			} else {
 				throw new RuntimeException("Unsupported declaration type: "
 						+ node);
@@ -368,6 +383,9 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (typeNode.kind() == TypeNodeKind.POINTER) {
 			return factory.pointerType(processType(((PointerTypeNode) typeNode)
 					.referencedType()));
+		} else if (typeNode.kind() == TypeNodeKind.TYPEDEF_NAME) {
+			return typedefMap
+					.get(((TypedefNameNode) typeNode).getName().name());
 		}
 		return result;
 	}
@@ -1027,7 +1045,7 @@ public class CommonModelBuilder implements ModelBuilder {
 				result = factory.assignStatement(location, lhs, factory
 						.binaryExpression(BINARY_OPERATOR.PLUS, lhs, rhs));
 				break;
-				//TODO: -=,*=,/=,%=
+			// TODO: -=,*=,/=,%=
 			default:
 				result = factory.noopStatement(location);
 			}
