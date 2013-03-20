@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.Number;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
@@ -336,7 +337,7 @@ public class Evaluator {
 			Expression operand) {
 		SymbolicExpression result = null;
 		SymbolicExpression pointer = evaluate(state, pid, operand);
-		SymbolicSequence<SymbolicExpression> pointerTuple;
+		SymbolicSequence<?> pointerTuple;
 		Number scopeNumber;
 		Number variableNumber;
 		int scopeID;
@@ -346,9 +347,8 @@ public class Evaluator {
 		assert pointer.type().equals(pointerType);
 		assert pointer.numArguments() == 1;
 		assert pointer.argument(0) instanceof SymbolicSequence;
-		assert ((SymbolicSequence) pointer.argument(0)).size() == 3;
-		pointerTuple = (SymbolicSequence<SymbolicExpression>) pointer
-				.argument(0);
+		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
+		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
 		scopeNumber = symbolicUniverse
 				.extractNumber((NumericExpression) pointerTuple.get(0));
 		variableNumber = symbolicUniverse
@@ -364,20 +364,20 @@ public class Evaluator {
 	private SymbolicExpression navigateReference(State state, int pid,
 			SymbolicExpression base, SymbolicExpression sequence) {
 		SymbolicExpression result = base;
-		SymbolicSequence<SymbolicExpression> innerSequence;
+		SymbolicSequence<?> innerSequence;
 
 		assert sequence.argument(0) instanceof SymbolicSequence;
-		innerSequence = (SymbolicSequence<SymbolicExpression>) sequence
-				.argument(0);
+		innerSequence = (SymbolicSequence<?>) sequence.argument(0);
 		for (int i = 0; i < innerSequence.size(); i++) {
-			Number argumentNumber;
+			NumericExpression argumentNumber;
 
 			assert innerSequence.get(i) instanceof NumericExpression;
-			argumentNumber = symbolicUniverse
-					.extractNumber((NumericExpression) innerSequence.get(i));
-			assert argumentNumber instanceof IntegerNumber;
-			result = (SymbolicExpression) result
-					.argument(((IntegerNumber) argumentNumber).intValue());
+			argumentNumber = (NumericExpression) innerSequence.get(i);
+			if (result.operator() == SymbolicOperator.DENSE_ARRAY_WRITE
+					|| result.operator() == SymbolicOperator.ARRAY_WRITE) {
+				result = symbolicUniverse.arrayRead(result, argumentNumber);
+			}
+			// TODO: handle otherwise
 		}
 		return result;
 	}
