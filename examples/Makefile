@@ -7,7 +7,8 @@ TARGETS = \
 	locks \
 	sideEffects \
 	sideEffects2 \
-	adder
+	adder \
+	matmat
 
 default: all
 
@@ -30,3 +31,6 @@ sideEffects2: sideEffects2.cvl
 
 adder: adder.cvl
 	$(CIVL) adder.cvl
+
+matmat: matmat.cvl
+	$(CIVL) matmat.cvl

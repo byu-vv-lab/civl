@@ -1,5 +1,7 @@
+#include<civlc.h>
+
 int nx;
-\input double u0[2];
+$input double u0[2];
 int nsteps;
 double kappa;
 double data[3][2];

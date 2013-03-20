@@ -1,6 +1,8 @@
+#include<civlc.h>
+
 void main() {
   int a[1][1];
   
   a[0][0] = 2;
-  \assert a[0][0] == 2;
+  $assert a[0][0] == 2;
 }

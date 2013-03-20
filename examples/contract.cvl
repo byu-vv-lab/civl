@@ -1,12 +1,13 @@
+#include<civlc.h>
 
 double f(double x) 
-  \requires x > 0;
-  \ensures \true;
+  $requires x > 0;
+  $ensures $true;
   ;
 
 double g(double x)
-  \requires x > 0;
-  \ensures \result >= 0;
+  $requires x > 0;
+  $ensures $result >= 0;
 {
   return g(x)*g(x);
 }
