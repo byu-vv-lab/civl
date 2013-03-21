@@ -9,18 +9,11 @@ import java.io.PrintWriter;
 
 import org.junit.Test;
 
-import edu.udel.cis.vsl.abc.analysis.Analysis;
-import edu.udel.cis.vsl.abc.antlr2ast.Antlr2AST;
+import edu.udel.cis.vsl.abc.Activator;
 import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
-import edu.udel.cis.vsl.abc.parse.Parse;
-import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
-import edu.udel.cis.vsl.abc.preproc.Preprocess;
-import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
-import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorFactory;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
@@ -53,15 +46,12 @@ public class PointersTest {
 	private PrintStream out = System.out;
 
 	@Test
-	public void testPonters() throws IOException, PreprocessorException,
+	public void testPointers() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
-		PreprocessorFactory preprocessorFactory = Preprocess
-				.newPreprocessorFactory();
-		Preprocessor preprocessor = preprocessorFactory.newPreprocessor();
-		File infile = new File(rootDir, "pointers.cvl");
-		CParser parser = Parse.newCParser(preprocessor, infile);
-		TranslationUnit unit = Antlr2AST.buildAST(parser, out);
-		SideEffectRemover sideEffectRemover = new SideEffectRemover();
+		File[] systemIncludes = new File[0];
+		File[] userIncludes = new File[0];
+		Activator a = new Activator(new File(rootDir, "pointers" + ".cvl"), systemIncludes, userIncludes);
+		TranslationUnit unit = a.getSideEffectFreeTranslationUnit();
 		StateFactoryIF stateFactory = new StateFactory(universe);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
@@ -75,12 +65,10 @@ public class PointersTest {
 		State initialState;
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
 				new java.io.File("."));
+		
 		double startTime = System.currentTimeMillis(), endTime;
 		boolean result;
 		String bar = "===================";
-
-		sideEffectRemover.transform(unit);
-		Analysis.performStandardAnalysis(unit);
 		model = modelBuilder.buildModel(unit);
 		out.println(bar + " Model " + bar + "\n");
 		model.print(out);
