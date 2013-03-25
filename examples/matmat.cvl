@@ -1,9 +1,11 @@
+#include<civlc.h>
+
 int L = 5;
 int M = 6;
 int N = 7;
 int TILE_SIZE = 3;
-\input double A[L][M];
-\input double B[M][N];
+$input double A[L][M];
+$input double B[M][N];
 double C[L][N];
 double D[L][N];
 
@@ -47,7 +49,7 @@ void main() {
   rowdist();
   for (int i = 0; i < L; i++) {
     for (int j = 0; j < N; j++) {
-      \assert C[i][j] == D[i][j];
+      $assert C[i][j] == D[i][j];
     }
   }
 }
