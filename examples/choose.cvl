@@ -1,6 +1,6 @@
 #include<civlc.h>
 
-int n;
+int n = 2;
 float x;
 
 void main() {
