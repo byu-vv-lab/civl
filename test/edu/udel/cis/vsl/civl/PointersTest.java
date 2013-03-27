@@ -50,7 +50,8 @@ public class PointersTest {
 			ParseException, SyntaxException {
 		File[] systemIncludes = new File[0];
 		File[] userIncludes = new File[0];
-		Activator a = new Activator(new File(rootDir, "pointers" + ".cvl"), systemIncludes, userIncludes);
+		Activator a = new Activator(new File(rootDir, "pointers" + ".cvl"),
+				systemIncludes, userIncludes);
 		TranslationUnit unit = a.getSideEffectFreeTranslationUnit();
 		StateFactoryIF stateFactory = new StateFactory(universe);
 		Model model;
