@@ -157,46 +157,8 @@ public class CommonLocation implements Location {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + id;
-		result = prime * result
-				+ ((incoming == null) ? 0 : incoming.hashCode());
-		result = prime * result
-				+ ((outgoing == null) ? 0 : outgoing.hashCode());
 		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
 		return result;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		CommonLocation other = (CommonLocation) obj;
-		if (id != other.id)
-			return false;
-		if (incoming == null) {
-			if (other.incoming != null)
-				return false;
-		} else if (!incoming.equals(other.incoming))
-			return false;
-		if (outgoing == null) {
-			if (other.outgoing != null)
-				return false;
-		} else if (!outgoing.equals(other.outgoing))
-			return false;
-		if (scope == null) {
-			if (other.scope != null)
-				return false;
-		} else if (!scope.equals(other.scope))
-			return false;
-		return true;
 	}
 
 	@Override
@@ -207,6 +169,14 @@ public class CommonLocation implements Location {
 	@Override
 	public void addOutgoing(Statement statement) {
 		outgoing.add(statement);
+	}
+	
+	@Override
+	public boolean equals(Object that) {
+		if (that instanceof CommonLocation) {
+			return (((CommonLocation) that).id() == id);
+		}
+		return false;
 	}
 
 }

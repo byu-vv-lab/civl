@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -94,7 +95,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	private Map<FunctionDefinitionNode, Scope> containingScopes;
 	private Map<CallStatement, FunctionDefinitionNode> callStatements;
 	private Map<FunctionDefinitionNode, Function> functionMap;
-	private Map<LabelNode, Statement> labeledStatements;
+	private Map<LabelNode, Location> labeledLocations;
 	private Map<Statement, LabelNode> gotoStatements;
 	private Map<String, Type> typedefMap;
 
@@ -195,7 +196,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		if (mainFunction == null) {
 			throw new RuntimeException("Program must have a main function.");
 		}
-		labeledStatements = new LinkedHashMap<LabelNode, Statement>();
+		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		if (!initializations.isEmpty()) {
 			system.setStartLocation(initializations.firstElement().source());
@@ -215,9 +216,6 @@ public class CommonModelBuilder implements ModelBuilder {
 			}
 			system.addLocation(returnLocation);
 			system.addStatement(returnStatement);
-		}
-		for (Statement s : gotoStatements.keySet()) {
-			s.setTarget(labeledStatements.get(gotoStatements.get(s)).source());
 		}
 		model = factory.model(system);
 		while (!unprocessedFunctions.isEmpty()) {
@@ -276,6 +274,9 @@ public class CommonModelBuilder implements ModelBuilder {
 			statement
 					.setFunction(functionMap.get(callStatements.get(statement)));
 		}
+		for (Statement s : gotoStatements.keySet()) {
+			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
+		}
 		return model;
 	}
 
@@ -288,7 +289,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		Type returnType = processType(functionTypeNode.getReturnType());
 		Statement body;
 
-		labeledStatements = new LinkedHashMap<LabelNode, Statement>();
+		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		for (int i = 0; i < functionTypeNode.getParameters().numChildren(); i++) {
 			Type type = processType(functionTypeNode.getParameters()
@@ -312,7 +313,7 @@ public class CommonModelBuilder implements ModelBuilder {
 			result.addStatement(returnStatement);
 		}
 		for (Statement s : gotoStatements.keySet()) {
-			s.setTarget(labeledStatements.get(gotoStatements.get(s)).source());
+			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
 		}
 		return result;
 	}
@@ -626,6 +627,71 @@ public class CommonModelBuilder implements ModelBuilder {
 	}
 
 	/**
+	 * Takes a statement node where the start location and extra guard are
+	 * defined elsewhere and returns the appropriate model statement.
+	 * 
+	 * @param location
+	 *            The start location of the statement.
+	 * @param guard
+	 *            An extra component of the guard beyond that described in the
+	 *            statement.
+	 * @param function
+	 *            The function containing this statement.
+	 * @param lastStatement
+	 *            The previous statement. Null if this is the first statement in
+	 *            a function.
+	 * @param statement
+	 *            The statement node.
+	 * @param scope
+	 *            The scope containing this statement.
+	 * @return The model representation of this statement.
+	 */
+	private Statement statement(Location location, Expression guard,
+			Function function, Statement lastStatement,
+			StatementNode statement, Scope scope) {
+		Statement result = null;
+
+		if (statement instanceof AssumeNode) {
+			result = assume(function, lastStatement, (AssumeNode) statement,
+					scope);
+		} else if (statement instanceof AssertNode) {
+			result = assertStatement(function, lastStatement,
+					(AssertNode) statement, scope);
+		} else if (statement instanceof ExpressionStatementNode) {
+			result = expressionStatement(location, guard, function,
+					lastStatement, (ExpressionStatementNode) statement, scope);
+		} else if (statement instanceof CompoundStatementNode) {
+			result = compoundStatement(location, guard, function,
+					lastStatement, (CompoundStatementNode) statement, scope);
+		} else if (statement instanceof ForLoopNode) {
+			result = forLoop(function, lastStatement, (ForLoopNode) statement,
+					scope);
+		} else if (statement instanceof WaitNode) {
+			result = wait(function, lastStatement, (WaitNode) statement, scope);
+		} else if (statement instanceof NullStatementNode) {
+			result = noop(location, function, lastStatement,
+					(NullStatementNode) statement, scope);
+		} else if (statement instanceof WhenNode) {
+			result = when(location, guard, function, lastStatement,
+					(WhenNode) statement, scope);
+		} else if (statement instanceof ChooseStatementNode) {
+			result = choose(function, lastStatement,
+					(ChooseStatementNode) statement, scope);
+		} else if (statement instanceof GotoNode) {
+			result = gotoStatement(function, lastStatement,
+					(GotoNode) statement, scope);
+		} else if (statement instanceof LabeledStatementNode) {
+			result = labeledStatement(location, guard, function, lastStatement,
+					(LabeledStatementNode) statement, scope);
+		} else if (statement instanceof ReturnNode) {
+			result = returnStatement(function, lastStatement,
+					(ReturnNode) statement, scope);
+		}
+		function.addStatement(result);
+		return result;
+	}
+
+	/**
 	 * An assume statement.
 	 * 
 	 * @param function
@@ -704,10 +770,40 @@ public class CommonModelBuilder implements ModelBuilder {
 	private Statement expressionStatement(Function function,
 			Statement lastStatement, ExpressionStatementNode statement,
 			Scope scope) {
-		Statement result = null;
 		Location location = factory.location(scope);
+		Expression guard = factory.booleanLiteralExpression(true);
 
 		function.addLocation(location);
+		return expressionStatement(location, guard, function, lastStatement,
+				statement, scope);
+	}
+
+	/**
+	 * Takes an expression statement and converts it to a model representation
+	 * of that statement. Currently supported expressions for expression
+	 * statements are spawn, assign, function call, increment, decrement. Any
+	 * other expressions have no side effects and thus result in a no-op.
+	 * 
+	 * @param location
+	 *            The start location for this statement.
+	 * @param guard
+	 *            An extra guard associated with this statement.
+	 * @param function
+	 *            The function containing this statement.
+	 * @param lastStatement
+	 *            The previous statement. Null if this is the first statement in
+	 *            a function.
+	 * @param statement
+	 *            The statement node.
+	 * @param scope
+	 *            The scope containing this statement.
+	 * @return The model representation of this statement.
+	 */
+	private Statement expressionStatement(Location location, Expression guard,
+			Function function, Statement lastStatement,
+			ExpressionStatementNode statement, Scope scope) {
+		Statement result = null;
+
 		if (statement.getExpression() instanceof OperatorNode) {
 			OperatorNode expression = (OperatorNode) statement.getExpression();
 			switch (expression.getOperator()) {
@@ -791,6 +887,12 @@ public class CommonModelBuilder implements ModelBuilder {
 			lastStatement.setTarget(location);
 		} else {
 			function.setStartLocation(location);
+		}
+		if (result.guard().equals(factory.booleanLiteralExpression(true))) {
+			result.setGuard(guard);
+		} else if (!guard.equals(factory.booleanLiteralExpression(true))) {
+			result.setGuard(factory.binaryExpression(BINARY_OPERATOR.AND,
+					guard, result.guard()));
 		}
 		return result;
 	}
@@ -892,8 +994,18 @@ public class CommonModelBuilder implements ModelBuilder {
 	private Statement compoundStatement(Function function,
 			Statement lastStatement, CompoundStatementNode statement,
 			Scope scope) {
+		return compoundStatement(null, null, function, lastStatement,
+				statement, scope);
+
+	}
+
+	private Statement compoundStatement(Location location, Expression guard,
+			Function function, Statement lastStatement,
+			CompoundStatementNode statement, Scope scope) {
 		Scope newScope = factory.scope(scope, new LinkedHashSet<Variable>(),
 				function);
+		boolean usedLocation = false;
+
 		// TODO: Handle everything that can be in here.
 		for (int i = 0; i < statement.numChildren(); i++) {
 			BlockItemNode node = statement.getSequenceChild(i);
@@ -905,8 +1017,14 @@ public class CommonModelBuilder implements ModelBuilder {
 						(VariableDeclarationNode) node);
 				if (init != null) {
 					// TODO: Handle compound initializers
-					Location location = factory.location(newScope);
-					Statement newStatement = assign(location,
+					Statement newStatement;
+					if (usedLocation || location == null) {
+						location = factory.location(newScope);
+						usedLocation = true;
+					} else {
+						usedLocation = true;
+					}
+					newStatement = assign(location,
 							factory.variableExpression(newScope
 									.getVariable(newScope.numVariables() - 1)),
 							(ExpressionNode) init, newScope);
@@ -923,8 +1041,17 @@ public class CommonModelBuilder implements ModelBuilder {
 				unprocessedFunctions.add((FunctionDefinitionNode) node);
 				containingScopes.put((FunctionDefinitionNode) node, newScope);
 			} else if (node instanceof StatementNode) {
-				Statement newStatement = statement(function, lastStatement,
-						(StatementNode) node, newScope);
+				Statement newStatement;
+
+				if (usedLocation || location == null) {
+					usedLocation = true;
+					newStatement = statement(function, lastStatement,
+							(StatementNode) node, newScope);
+				} else {
+					usedLocation = true;
+					newStatement = statement(location, guard, function,
+							lastStatement, (StatementNode) node, newScope);
+				}
 				lastStatement = newStatement;
 			} else {
 				throw new RuntimeException("Unsupported block element: " + node);
@@ -1077,6 +1204,12 @@ public class CommonModelBuilder implements ModelBuilder {
 	private Statement noop(Function function, Statement lastStatement,
 			NullStatementNode statement, Scope scope) {
 		Location location = factory.location(scope);
+
+		return noop(location, function, lastStatement, statement, scope);
+	}
+
+	private Statement noop(Location location, Function function,
+			Statement lastStatement, NullStatementNode statement, Scope scope) {
 		Statement result = factory.noopStatement(location);
 
 		function.addLocation(location);
@@ -1093,8 +1226,43 @@ public class CommonModelBuilder implements ModelBuilder {
 		Statement result = statement(function, lastStatement,
 				statement.getBody(), scope);
 		Expression guard = expression(statement.getGuard(), scope);
+		Iterator<Statement> iter;
 
+		if (lastStatement != null) {
+			iter = lastStatement.target().outgoing().iterator();
+		} else {
+			iter = function.startLocation().outgoing().iterator();
+		}
+		while (iter.hasNext()) {
+			Statement s = iter.next();
+
+			if (s.guard().equals(factory.booleanLiteralExpression(true))) {
+				s.setGuard(guard);
+			} else if (guard.equals(factory.booleanLiteralExpression(true))) {
+				s.setGuard(guard);
+			} else {
+				s.setGuard(factory.binaryExpression(BINARY_OPERATOR.AND,
+						s.guard(), guard));
+			}
+		}
 		result.setGuard(guard);
+		return result;
+	}
+
+	private Statement when(Location location, Expression guard,
+			Function function, Statement lastStatement, WhenNode statement,
+			Scope scope) {
+		Expression newGuard = expression(statement.getGuard(), scope);
+		Statement result;
+
+		if (newGuard.equals(factory.booleanLiteralExpression(true))) {
+			newGuard = guard;
+		} else if (!guard.equals(factory.booleanLiteralExpression(true))) {
+			newGuard = factory.binaryExpression(BINARY_OPERATOR.AND, guard,
+					newGuard);
+		}
+		result = statement(location, newGuard, function, lastStatement,
+				statement.getBody(), scope);
 		return result;
 	}
 
@@ -1104,33 +1272,44 @@ public class CommonModelBuilder implements ModelBuilder {
 		Location endLocation = factory.location(scope);
 		Statement result = factory.noopStatement(endLocation);
 		Expression guard = factory.booleanLiteralExpression(true);
+		int defaultOffset = 0;
 
 		if (lastStatement != null) {
 			lastStatement.setTarget(startLocation);
 		} else {
 			function.setStartLocation(startLocation);
 		}
-		for (int i = 0; i < statement.numChildren(); i++) {
-			Statement entry = factory.noopStatement(startLocation);
-			Statement caseStatement = statement(function, entry,
-					statement.getSequenceChild(i), scope);
+		function.addLocation(startLocation);
+		if (statement.getDefaultCase() != null) {
+			defaultOffset = 1;
+		}
+		for (int i = 0; i < statement.numChildren() - defaultOffset; i++) {
+			Statement caseStatement = statement(startLocation,
+					factory.booleanLiteralExpression(true), function,
+					lastStatement, statement.getSequenceChild(i), scope);
 
 			caseStatement.setTarget(endLocation);
-			for (Statement s : entry.target().outgoing()) {
-				guard = factory.binaryExpression(BINARY_OPERATOR.AND, guard,
-						s.guard());
+		}
+		Iterator<Statement> iter = startLocation.outgoing().iterator();
+		// Compute the guard for the default statement
+		while (iter.hasNext()) {
+			Expression statementGuard = iter.next().guard();
+
+			if (guard.equals(factory.booleanLiteralExpression(true))) {
+				guard = statementGuard;
+			} else if (statementGuard.equals(factory
+					.booleanLiteralExpression(true))) {
+				// Keep current guard
+			} else {
+				guard = factory.binaryExpression(BINARY_OPERATOR.OR, guard,
+						statementGuard);
 			}
 		}
 		if (statement.getDefaultCase() != null) {
-			Statement entry = factory.noopStatement(startLocation);
-			Statement defaultStatement = statement(function, entry,
-					statement.getDefaultCase(), scope);
+			Statement defaultStatement = statement(startLocation,
+					factory.unaryExpression(UNARY_OPERATOR.NOT, guard),
+					function, lastStatement, statement.getDefaultCase(), scope);
 
-			for (Statement s : entry.target().outgoing()) {
-				s.setGuard(factory.binaryExpression(BINARY_OPERATOR.AND,
-						factory.unaryExpression(UNARY_OPERATOR.NOT, guard),
-						s.guard()));
-			}
 			defaultStatement.setTarget(endLocation);
 		}
 		return result;
@@ -1143,6 +1322,12 @@ public class CommonModelBuilder implements ModelBuilder {
 		OrdinaryLabelNode label = ((Label) statement.getLabel().getEntity())
 				.getDefinition();
 
+		function.addLocation(location);
+		if (lastStatement != null) {
+			lastStatement.setTarget(location);
+		} else {
+			function.setStartLocation(location);
+		}
 		gotoStatements.put(noop, label);
 		return noop;
 	}
@@ -1152,7 +1337,27 @@ public class CommonModelBuilder implements ModelBuilder {
 		Statement result = statement(function, lastStatement,
 				statement.getStatement(), scope);
 
-		labeledStatements.put(statement.getLabel(), result);
+		if (lastStatement != null) {
+			labeledLocations.put(statement.getLabel(), lastStatement.target());
+		} else {
+			labeledLocations
+					.put(statement.getLabel(), function.startLocation());
+		}
+		return result;
+	}
+
+	private Statement labeledStatement(Location location, Expression guard,
+			Function function, Statement lastStatement,
+			LabeledStatementNode statement, Scope scope) {
+		Statement result = statement(location, guard, function, lastStatement,
+				statement.getStatement(), scope);
+
+		if (lastStatement != null) {
+			labeledLocations.put(statement.getLabel(), lastStatement.target());
+		} else {
+			labeledLocations
+					.put(statement.getLabel(), function.startLocation());
+		}
 		return result;
 	}
 

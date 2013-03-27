@@ -135,10 +135,13 @@ public class StateFactory implements StateFactoryIF {
 					switch (((PrimitiveType) v.type()).primitiveType()) {
 					case INT:
 						type = symbolicUniverse.integerType();
+						break;
 					case BOOL:
 						type = symbolicUniverse.booleanType();
+						break;
 					case REAL:
 						type = symbolicUniverse.realType();
+						break;
 					case STRING:
 						// TODO: Handle this.
 					default:
@@ -218,7 +221,7 @@ public class StateFactory implements StateFactoryIF {
 				break;
 			}
 		} else if (baseType instanceof ProcessType) {
-			return symbolicUniverse.arrayType(symbolicUniverse.integerType());
+			return symbolicUniverse.arrayType(processType);
 		}
 		return null;
 	}

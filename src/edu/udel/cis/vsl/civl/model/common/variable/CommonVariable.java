@@ -191,7 +191,7 @@ public class CommonVariable implements Variable {
 			result += "const ";
 		}
 		if (isExtern) {
-			result += "extern ";
+			result += "$input ";
 		}
 		result += name + " : " + (isSync ? "sync " : "") + type;
 		return result;
