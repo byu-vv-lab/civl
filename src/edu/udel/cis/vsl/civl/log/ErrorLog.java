@@ -125,6 +125,10 @@ public class ErrorLog {
 		this.searcher = searcher;
 	}
 
+	public int errorBound() {
+		return errorBound;
+	}
+	
 	public void setErrorBound(int bound) {
 		this.errorBound = bound;
 	}

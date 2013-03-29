@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
+import edu.udel.cis.vsl.abc.ast.entity.IF.Field;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Label;
 import edu.udel.cis.vsl.abc.ast.entity.IF.OrdinaryEntity;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -61,6 +62,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypedefNameNode;
+import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -79,6 +81,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -387,6 +390,19 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (typeNode.kind() == TypeNodeKind.TYPEDEF_NAME) {
 			return typedefMap
 					.get(((TypedefNameNode) typeNode).getName().name());
+		} else if (typeNode.kind() == TypeNodeKind.STRUCTURE_OR_UNION) {
+			Iterator<Field> iter = ((StructureOrUnionType) typeNode)
+					.getFields();
+			List<StructField> fields = new Vector<StructField>();
+
+			while (iter.hasNext()) {
+				Field field = iter.next();
+				Identifier name = factory.identifier(field.getName());
+				Type type = processType(field.getDefinition().getTypeNode());
+
+				fields.add(factory.structField(name, type));
+			}
+			result = factory.structType(fields);
 		}
 		return result;
 	}

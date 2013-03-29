@@ -543,7 +543,7 @@ public class StateFactory implements StateFactoryIF {
 	 * based on the oldToNew map and the type.
 	 * 
 	 * @param type
-	 *            the CVT type of the given value
+	 *            the CIVL type of the given value
 	 * @param value
 	 *            a symbolic expression which is the value of a variable whose
 	 *            type is "type"

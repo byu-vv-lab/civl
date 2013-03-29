@@ -61,7 +61,7 @@ public class CommonAssertStatement extends CommonStatement implements AssertStat
 	
 	@Override
 	public String toString() {
-		return "\\assert " + expression;
+		return "$assert " + expression;
 	}
 
 }

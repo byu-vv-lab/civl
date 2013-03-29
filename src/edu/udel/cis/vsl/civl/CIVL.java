@@ -6,7 +6,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import edu.udel.cis.vsl.abc.Activator;
+import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.Preprocess;
@@ -20,7 +20,7 @@ import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
-import edu.udel.cis.vsl.civl.predicate.Deadlock;
+import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.state.State;
@@ -61,8 +61,6 @@ public class CIVL {
 		PrintStream out;
 		File[] systemIncludes, userIncludes;
 		boolean preprocOnly = false;
-		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
-				new java.io.File("."));
 
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i];
@@ -139,56 +137,53 @@ public class CIVL {
 		if (preprocOnly) {
 			preprocessor.printOutput(out, infile);
 		} else {
-			systemIncludes = new File[0];
-			userIncludes = new File[0];
-			Activator a = new Activator(infile, systemIncludes, userIncludes);
-			TranslationUnit unit = a.getSideEffectFreeTranslationUnit();
-			StateFactoryIF stateFactory = new StateFactory(universe);
-			Model model;
-			TransitionFactory transitionFactory = new TransitionFactory();
-			Evaluator evaluator = new Evaluator(universe);
-			EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
-					transitionFactory, universe, prover, evaluator);
-			StatePredicateIF<State> predicate = new Deadlock(universe,
-					evaluator);
-			Executor executor;
-			StateManagerIF<State, Transition> stateManager;
-			DfsSearcher<State, Transition, TransitionSequence> searcher;
-			State initialState;
-			double startTime = System.currentTimeMillis(), endTime;
-			boolean result;
-			String bar = "===================";
-			
-			out.println(bar + " Analyzed AST " + bar + "\n");
-			unit.print(out);
-			out.println("\n\n" + bar + " Symbol Table " + bar + "\n");
-			unit.getRootNode().getScope().print(out);
-			out.println("\n\n" + bar + " Types " + bar + "\n");
-			unit.getUnitFactory().getTypeFactory().printTypes(out);
-			out.println();
-			model = modelBuilder.buildModel(unit);
-			out.println(bar + " Model " + bar + "\n");
-			model.print(out);
-			out.println();
-			initialState = stateFactory.initialState(model);
-			executor = new Executor(model, universe, stateFactory, log);
-			stateManager = new StateManager(executor);
-			searcher = new DfsSearcher<State, Transition, TransitionSequence>(
-					enabler, stateManager, predicate);
-			searcher.setDebugOut(new PrintWriter(out));
-			result = searcher.search(initialState);
-			endTime = System.currentTimeMillis();
-			out.println();
-			out.println(bar + " Stats " + bar + "\n");
-			printStats(out, searcher, startTime, endTime,
-					((StateManager) stateManager).maxProcs());
-			if (result || log.numReports() > 0) {
-				out.println("The program MAY NOT be correct.");
-			} else {
-				out.println("The specified properties hold for all executions.");
-			}
-			out.flush();
+			check(infile, out);
 		}
+	}
+
+	public static boolean check(File file, PrintStream out)
+			throws SyntaxException, ParseException, PreprocessorException {
+		TranslationUnit unit = ABC.activator(file)
+				.getSideEffectFreeTranslationUnit();
+		StateFactoryIF stateFactory = new StateFactory(universe);
+		Model model;
+		TransitionFactory transitionFactory = new TransitionFactory();
+		Evaluator evaluator = new Evaluator(universe);
+		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
+				transitionFactory, universe, prover, evaluator);
+		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
+				new java.io.File("."));
+		StatePredicateIF<State> predicate = new StandardPredicate(log,
+				universe, evaluator);
+		Executor executor;
+		StateManagerIF<State, Transition> stateManager;
+		DfsSearcher<State, Transition, TransitionSequence> searcher;
+		State initialState;
+
+		double startTime = System.currentTimeMillis(), endTime;
+		boolean result;
+		String bar = "===================";
+		model = modelBuilder.buildModel(unit);
+		out.println(bar + " Model " + bar + "\n");
+		model.print(out);
+		initialState = stateFactory.initialState(model);
+		executor = new Executor(model, universe, stateFactory, log);
+		stateManager = new StateManager(executor);
+		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
+				enabler, stateManager, predicate);
+		searcher.setDebugOut(new PrintWriter(out));
+		result = searcher.search(initialState);
+		endTime = System.currentTimeMillis();
+		out.println(bar + " Stats " + bar + "\n");
+		CIVL.printStats(out, searcher, startTime, endTime,
+				((StateManager) stateManager).maxProcs());
+		if (result || log.numReports() > 0) {
+			out.println("The program MAY NOT be correct.");
+		} else {
+			out.println("The specified properties hold for all executions.");
+		}
+		out.flush();
+		return result;
 	}
 
 	public static void printStats(PrintStream out,
@@ -201,7 +196,7 @@ public class CIVL {
 		long numCVC3Calls = prover.numInternalValidCalls();
 		long heapSize = Runtime.getRuntime().totalMemory();
 
-		out.print("   maxProcs            :");
+		out.print("   maxProcs            : ");
 		out.println(maxProcs);
 		out.print("   statesSeen          : ");
 		out.println(numStatesSeen);
@@ -213,9 +208,9 @@ public class CIVL {
 		out.println(numProverValidCalls);
 		out.print("   CVC3ValidCalls      : ");
 		out.println(numCVC3Calls);
-		out.print("   memory              : ");
+		out.print("   memory (bytes)      : ");
 		out.println(heapSize);
-		out.print("   elapsedTime         : ");
+		out.print("   elapsedTime (s)     : ");
 		out.println((endTime - startTime) / 1000.0);
 	}
 }

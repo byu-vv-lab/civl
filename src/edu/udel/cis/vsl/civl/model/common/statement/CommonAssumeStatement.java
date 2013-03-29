@@ -49,7 +49,7 @@ public class CommonAssumeStatement extends CommonStatement implements
 	
 	@Override
 	public String toString() {
-		return "\\assume " + expression;
+		return "$assume " + expression;
 	}
 
 }

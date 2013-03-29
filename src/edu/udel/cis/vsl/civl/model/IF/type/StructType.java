@@ -8,7 +8,7 @@ public interface StructType extends Type {
 	 * 
 	 * @return A list of the field types in this struct.
 	 */
-	List<Type> fields();
+	List<StructField> fields();
 	
 	
 }

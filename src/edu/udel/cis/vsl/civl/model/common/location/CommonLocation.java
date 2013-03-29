@@ -121,7 +121,7 @@ public class CommonLocation implements Location {
 	 *            The PrintStream to use for printing this location.
 	 */
 	public void print(String prefix, PrintStream out) {
-		String targetLocation;
+		String targetLocation = null;
 		String guardString = "(true)";
 		String gotoString;
 
@@ -130,14 +130,15 @@ public class CommonLocation implements Location {
 		for (Statement statement : outgoing) {
 			if (statement.target() != null) {
 				targetLocation = "" + statement.target().id();
-			} else {
-				targetLocation = "<null>";
 			}
 			if (statement.guard() != null) {
 				guardString = "(" + statement.guard() + ")";
 			}
 			gotoString = prefix + "| " + "when " + guardString + " "
-					+ statement + "; goto location " + targetLocation;
+					+ statement + ";";
+			if (targetLocation != null) {
+				gotoString += " goto location " + targetLocation;
+			}
 			out.println(gotoString);
 		}
 	}

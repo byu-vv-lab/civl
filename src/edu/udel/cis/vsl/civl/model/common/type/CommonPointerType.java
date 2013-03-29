@@ -25,5 +25,10 @@ public class CommonPointerType implements PointerType {
 	public Type baseType() {
 		return baseType;
 	}
+	
+	@Override
+	public String toString() {
+		return baseType + "*";
+	}
 
 }

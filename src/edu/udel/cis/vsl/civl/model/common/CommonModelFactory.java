@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.model.common;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -45,6 +46,8 @@ import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType.PRIMITIVE_TYPE;
 import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonArrayIndexExpression;
@@ -73,6 +76,8 @@ import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonProcessType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonStructField;
+import edu.udel.cis.vsl.civl.model.common.type.CommonStructType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
 
 /**
@@ -287,6 +292,30 @@ public class CommonModelFactory implements ModelFactory {
 		return new CommonPointerType(baseType);
 	}
 
+	/**
+	 * Get a new struct type.
+	 * 
+	 * @param fields
+	 *            List of the fields in this struct type.
+	 * @return A new struct type with the given fields.
+	 */
+	public StructType structType(List<StructField> fields) {
+		return new CommonStructType(fields);
+	}
+
+	/**
+	 * Get a struct field.
+	 * 
+	 * @param name
+	 *            Identifier for the name of this struct member.
+	 * @param type
+	 *            The type of this struct member.
+	 * @return A struct field with the given name and type.
+	 */
+	public StructField structField(Identifier name, Type type) {
+		return new CommonStructField(name, type);
+	}
+
 	/* *********************************************************************
 	 * Expressions
 	 * *********************************************************************
@@ -343,8 +372,8 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	public ConditionalExpression conditionalExpression(Expression condition,
 			Expression trueBranch, Expression falseBranch) {
-		ConditionalExpression result = new CommonConditionalExpression(condition,
-				trueBranch, falseBranch);
+		ConditionalExpression result = new CommonConditionalExpression(
+				condition, trueBranch, falseBranch);
 
 		result.setExpressionScope(join(
 				condition.expressionScope(),
