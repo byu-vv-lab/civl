@@ -19,8 +19,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.Number;
-import edu.udel.cis.vsl.sarl.IF.prove.TernaryResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
+import edu.udel.cis.vsl.sarl.IF.prove.ValidityResult.ResultType;
 
 public class Enabler implements
 		EnablerIF<State, Transition, TransitionSequence> {
