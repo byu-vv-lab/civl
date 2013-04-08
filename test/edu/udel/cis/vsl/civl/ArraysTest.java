@@ -11,12 +11,10 @@ import java.io.PrintWriter;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.Activator;
-import edu.udel.cis.vsl.abc.analysis.Analysis;
 import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
@@ -59,7 +57,6 @@ public class ArraysTest {
 		Activator a = new Activator(new File(rootDir, "arrays.cvl"),
 				systemIncludes, userIncludes);
 		TranslationUnit unit = a.getSideEffectFreeTranslationUnit();
-		SideEffectRemover sideEffectRemover = new SideEffectRemover();
 		StateFactoryIF stateFactory = new StateFactory(universe);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
@@ -77,8 +74,6 @@ public class ArraysTest {
 		boolean result;
 		String bar = "===================";
 
-		sideEffectRemover.transform(unit);
-		Analysis.performStandardAnalysis(unit);
 		model = modelBuilder.buildModel(unit);
 		out.println(bar + " Model " + bar + "\n");
 		model.print(out);
