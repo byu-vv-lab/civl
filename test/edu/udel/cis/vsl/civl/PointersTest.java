@@ -80,7 +80,7 @@ public class PointersTest {
 		result = searcher.search(initialState);
 		endTime = System.currentTimeMillis();
 		out.println(bar + " Stats " + bar + "\n");
-		CIVL.printStats(out, searcher, startTime, endTime,
+		CIVL.printStats(out, searcher, universe, startTime, endTime,
 				((StateManager) stateManager).maxProcs());
 		if (result || log.numReports() > 0) {
 			out.println("The program MAY NOT be correct.");

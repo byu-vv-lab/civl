@@ -176,7 +176,7 @@ public class CIVL {
 		result = searcher.search(initialState);
 		endTime = System.currentTimeMillis();
 		out.println(bar + " Stats " + bar + "\n");
-		CIVL.printStats(out, searcher, startTime, endTime,
+		CIVL.printStats(out, searcher, universe, startTime, endTime,
 				((StateManager) stateManager).maxProcs());
 		if (result || log.numReports() > 0) {
 			out.println("The program MAY NOT be correct.");
@@ -189,12 +189,13 @@ public class CIVL {
 
 	public static void printStats(PrintStream out,
 			DfsSearcher<State, Transition, TransitionSequence> searcher,
-			double startTime, double endTime, int maxProcs) {
+			SymbolicUniverse universe, double startTime, double endTime,
+			int maxProcs) {
 		long numStatesMatched = searcher.numStatesMatched();
 		long numStatesSeen = searcher.numStatesSeen();
 		long transitionsExecuted = searcher.numTransitions();
-//		long numProverValidCalls = prover.numValidCalls();
-//		long numCVC3Calls = prover.numInternalValidCalls();
+		long numProverValidCalls = universe.numValidCalls();
+		long numCVC3Calls = universe.numProverValidCalls();
 		long heapSize = Runtime.getRuntime().totalMemory();
 
 		out.print("   maxProcs            : ");
@@ -205,10 +206,10 @@ public class CIVL {
 		out.println(numStatesMatched);
 		out.print("   transitionsExecuted : ");
 		out.println(transitionsExecuted);
-//		out.print("   proverValidCalls    : ");
-//		out.println(numProverValidCalls);
-//		out.print("   CVC3ValidCalls      : ");
-//		out.println(numCVC3Calls);
+		out.print("   proverValidCalls    : ");
+		out.println(numProverValidCalls);
+		out.print("   CVC3ValidCalls      : ");
+		out.println(numCVC3Calls);
 		out.print("   memory (bytes)      : ");
 		out.println(heapSize);
 		out.print("   elapsedTime (s)     : ");
