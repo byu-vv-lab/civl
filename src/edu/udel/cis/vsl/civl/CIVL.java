@@ -37,7 +37,6 @@ import edu.udel.cis.vsl.gmc.StateManagerIF;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
 
 public class CIVL {
 

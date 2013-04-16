@@ -993,8 +993,6 @@ public class CommonModelBuilder implements ModelBuilder {
 			if (systemFunctions.containsKey(definition.getName())) {
 				((CallStatement) result).setFunction(systemFunctions
 						.get(definition.getName()));
-				edu.udel.cis.vsl.abc.ast.type.IF.Type test = ((FunctionCallNode) rhs)
-						.getFunction().getConvertedType();
 			} else {
 				callStatements.put((CallStatement) result, definition);
 			}
