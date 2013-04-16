@@ -112,6 +112,8 @@ public interface ModelFactory {
 	public Function function(Identifier name, Vector<Variable> parameters,
 			Type returnType, Scope containingScope, Location startLocation);
 
+	public SystemFunction systemFunction(Identifier name);
+	
 	/**
 	 * Create a new location.
 	 * 

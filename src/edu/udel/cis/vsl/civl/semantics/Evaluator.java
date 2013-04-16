@@ -398,8 +398,9 @@ public class Evaluator {
 		SymbolicExpression currentValue = state.valueOf(pid,
 				expression.variable());
 
-		return symbolicUniverse.simplifier(
-				(BooleanExpression) state.pathCondition()).apply(currentValue);
+		return symbolicUniverse.reasoner(
+				(BooleanExpression) state.pathCondition()).simplify(
+				currentValue);
 	}
 
 }

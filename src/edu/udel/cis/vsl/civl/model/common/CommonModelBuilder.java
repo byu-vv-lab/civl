@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
-import edu.udel.cis.vsl.abc.ast.entity.IF.Field;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Label;
 import edu.udel.cis.vsl.abc.ast.entity.IF.OrdinaryEntity;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.EnsuresNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FieldDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
@@ -59,10 +59,10 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.BasicTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypedefNameNode;
-import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -70,6 +70,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
@@ -101,12 +102,28 @@ public class CommonModelBuilder implements ModelBuilder {
 	private Map<LabelNode, Location> labeledLocations;
 	private Map<Statement, LabelNode> gotoStatements;
 	private Map<String, Type> typedefMap;
+	private Map<String, Function> systemFunctions;
 
 	/**
 	 * The model builder translates the AST into a CIVL model.
 	 */
 	public CommonModelBuilder() {
 		factory = new CommonModelFactory();
+		setUpSystemFunctions();
+	}
+
+	private void setUpSystemFunctions() {
+		SystemFunction malloc = factory.systemFunction(factory
+				.identifier("malloc"));
+		SystemFunction free = factory
+				.systemFunction(factory.identifier("free"));
+
+		malloc.setLibrary("stdlib");
+		free.setLibrary("stdlib");
+		systemFunctions = new LinkedHashMap<String, Function>();
+		systemFunctions.put("malloc", malloc);
+		systemFunctions.put("free", free);
+
 	}
 
 	/**
@@ -391,14 +408,14 @@ public class CommonModelBuilder implements ModelBuilder {
 			return typedefMap
 					.get(((TypedefNameNode) typeNode).getName().name());
 		} else if (typeNode.kind() == TypeNodeKind.STRUCTURE_OR_UNION) {
-			Iterator<Field> iter = ((StructureOrUnionType) typeNode)
-					.getFields();
+			SequenceNode<FieldDeclarationNode> fieldNodes = ((StructureOrUnionTypeNode) typeNode)
+					.getStructDeclList();
 			List<StructField> fields = new Vector<StructField>();
 
-			while (iter.hasNext()) {
-				Field field = iter.next();
-				Identifier name = factory.identifier(field.getName());
-				Type type = processType(field.getDefinition().getTypeNode());
+			for (int i = 0; i < fieldNodes.numChildren(); i++) {
+				FieldDeclarationNode fieldNode = fieldNodes.getSequenceChild(i);
+				Identifier name = factory.identifier(fieldNode.getName());
+				Type type = processType(fieldNode.getTypeNode());
 
 				fields.add(factory.structField(name, type));
 			}
@@ -875,12 +892,15 @@ public class CommonModelBuilder implements ModelBuilder {
 			ExpressionNode functionExpression = ((FunctionCallNode) statement
 					.getExpression()).getFunction();
 			FunctionDefinitionNode functionDefinition = null;
+			String functionName = "";
 
 			if (functionExpression instanceof IdentifierExpressionNode) {
 				OrdinaryEntity functionEntity = functionExpression.getScope()
 						.getLexicalOrdinaryEntity(
 								((IdentifierExpressionNode) functionExpression)
 										.getIdentifier().name());
+				functionName = ((IdentifierExpressionNode) functionExpression)
+						.getIdentifier().name();
 
 				if (functionEntity instanceof edu.udel.cis.vsl.abc.ast.entity.IF.Function) {
 					functionDefinition = ((edu.udel.cis.vsl.abc.ast.entity.IF.Function) functionEntity)
@@ -897,7 +917,12 @@ public class CommonModelBuilder implements ModelBuilder {
 						.getExpression()).getArgument(i), scope));
 			}
 			result = factory.callStatement(location, null, arguments);
-			callStatements.put((CallStatement) result, functionDefinition);
+			if (systemFunctions.containsKey(functionName)) {
+				((CallStatement) result).setFunction(systemFunctions
+						.get(functionName));
+			} else {
+				callStatements.put((CallStatement) result, functionDefinition);
+			}
 		}
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
@@ -965,7 +990,14 @@ public class CommonModelBuilder implements ModelBuilder {
 			}
 			result = factory.callStatement(location, null, arguments);
 			((CallStatement) result).setLhs(lhs);
-			callStatements.put((CallStatement) result, definition);
+			if (systemFunctions.containsKey(definition.getName())) {
+				((CallStatement) result).setFunction(systemFunctions
+						.get(definition.getName()));
+				edu.udel.cis.vsl.abc.ast.type.IF.Type test = ((FunctionCallNode) rhs)
+						.getFunction().getConvertedType();
+			} else {
+				callStatements.put((CallStatement) result, definition);
+			}
 		} else if (rhs instanceof SpawnNode) {
 			FunctionDefinitionNode definition = findFunctionDefinition(((SpawnNode) rhs)
 					.getCall().getFunction());

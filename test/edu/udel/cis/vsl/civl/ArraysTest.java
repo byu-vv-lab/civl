@@ -38,7 +38,6 @@ import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 
 public class ArraysTest {
@@ -46,7 +45,6 @@ public class ArraysTest {
 	private static File rootDir = new File("examples");
 	private static SymbolicUniverse universe = SARL.newIdealUniverse();
 	private static ModelBuilder modelBuilder = Models.newModelBuilder();
-	private static TheoremProver prover = universe.prover();
 	private PrintStream out = System.out;
 
 	@Test
@@ -62,7 +60,7 @@ public class ArraysTest {
 		TransitionFactory transitionFactory = new TransitionFactory();
 		Evaluator evaluator = new Evaluator(universe);
 		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
-				transitionFactory, universe, prover, evaluator);
+				transitionFactory, universe, evaluator);
 		StatePredicateIF<State> predicate = new Deadlock(universe, evaluator);
 		Executor executor;
 		StateManagerIF<State, Transition> stateManager;

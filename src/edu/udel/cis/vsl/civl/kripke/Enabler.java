@@ -12,15 +12,16 @@ import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.EnablerIF;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.Number;
-import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
-import edu.udel.cis.vsl.sarl.IF.prove.ValidityResult.ResultType;
 
 public class Enabler implements
 		EnablerIF<State, Transition, TransitionSequence> {
@@ -29,16 +30,14 @@ public class Enabler implements
 	private boolean debugging = false;
 	private PrintWriter debugOut = new PrintWriter(System.out);
 	private SymbolicUniverse universe;
-	private TheoremProver prover;
 	private Evaluator evaluator;
 	private long enabledTransitionSets = 0;
 	private long ampleSets = 0;
 	private String pidPrefix = "PID_";
 
 	public Enabler(TransitionFactory transitionFactory,
-			SymbolicUniverse universe, TheoremProver prover, Evaluator evaluator) {
+			SymbolicUniverse universe, Evaluator evaluator) {
 		this.transitionFactory = transitionFactory;
-		this.prover = prover;
 		this.evaluator = evaluator;
 		this.universe = universe;
 	}
@@ -94,8 +93,8 @@ public class Enabler implements
 					if (s instanceof ChooseStatement) {
 						SymbolicExpression argument = evaluator.evaluate(state,
 								p.id(), ((ChooseStatement) s).rhs());
-						Integer upper = extractInt(universe.simplifier(
-								(BooleanExpression) newPathCondition).apply(
+						Integer upper = extractInt(universe.reasoner(
+								(BooleanExpression) newPathCondition).simplify(
 								argument));
 
 						for (int i = 0; i < upper.intValue(); i++) {
@@ -172,16 +171,17 @@ public class Enabler implements
 		SymbolicExpression newPathCondition = null;
 		SymbolicExpression guard = evaluator.evaluate(state, pid,
 				statement.guard());
-		ResultType result = prover.valid((BooleanExpression) pathCondition,
-				(BooleanExpression) guard);
-		ResultType negResult = prover.valid((BooleanExpression) pathCondition,
-				universe.not((BooleanExpression) guard));
+		Reasoner reasoner = universe
+				.reasoner(((BooleanExpression) pathCondition));
+		ValidityResult result = reasoner.valid((BooleanExpression) guard);
+		ValidityResult negResult = reasoner.valid(universe
+				.not((BooleanExpression) guard));
 
 		// System.out.println("Enabler.newPathCondition() : Process " + pid
 		// + " is at " + state.process(pid).peekStack().location());
-		if (result == ResultType.YES) {
+		if (result.getResultType() == ResultType.YES) {
 			newPathCondition = pathCondition;
-		} else if (negResult == ResultType.YES) {
+		} else if (negResult.getResultType() == ResultType.YES) {
 			return null;
 		} else {
 			newPathCondition = universe.and((BooleanExpression) pathCondition,

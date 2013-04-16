@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -198,6 +199,17 @@ public class CommonModelFactory implements ModelFactory {
 			Type returnType, Scope containingScope, Location startLocation) {
 		return new CommonFunction(name, parameters, returnType,
 				containingScope, startLocation, this);
+	}
+
+	/**
+	 * Create a record of a system function.
+	 * 
+	 * @param name
+	 *            The name of this function.
+	 */
+	public SystemFunction systemFunction(Identifier name) {
+		return new CommonSystemFunction(name, new Vector<Variable>(), null,
+				null, null, this);
 	}
 
 	/**

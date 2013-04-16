@@ -11,12 +11,13 @@ import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.util.ExecutionProblem.Certainty;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.prove.ValidityResult.ResultType;
-import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
 
 /**
  * An absolute deadlock occurs if all of the following hold:
@@ -41,7 +42,6 @@ public class Deadlock implements StatePredicateIF<State> {
 
 	private SymbolicUniverse symbolicUniverse;
 	private Evaluator evaluator;
-	private TheoremProver prover;
 	private String pidPrefix = "PID_";
 
 	/**
@@ -79,7 +79,6 @@ public class Deadlock implements StatePredicateIF<State> {
 	public Deadlock(SymbolicUniverse symbolicUniverse, Evaluator evaluator) {
 		this.symbolicUniverse = symbolicUniverse;
 		this.evaluator = evaluator;
-		this.prover = symbolicUniverse.prover();
 	}
 
 	@Override
@@ -164,7 +163,7 @@ public class Deadlock implements StatePredicateIF<State> {
 		}
 		for (Process p : state.processes()) {
 			Location location;
-			ResultType truth;
+			ValidityResult truth;
 			SymbolicExpression predicate = null;
 
 			// If a process has an empty stack, it can't execute.
@@ -197,6 +196,9 @@ public class Deadlock implements StatePredicateIF<State> {
 				} else {
 					SymbolicExpression guard = evaluator.evaluate(state,
 							p.id(), s.guard());
+					Reasoner reasoner = symbolicUniverse
+							.reasoner((BooleanExpression) (state
+									.pathCondition()));
 
 					// Most of the time, guards will be true. Shortcut this.
 					if (guard.equals(symbolicUniverse.trueExpression())) {
@@ -209,12 +211,10 @@ public class Deadlock implements StatePredicateIF<State> {
 								(BooleanExpression) predicate,
 								(BooleanExpression) guard);
 					}
-					truth = prover.valid(
-							(BooleanExpression) state.pathCondition(),
-							(BooleanExpression) predicate);
-					if (truth == ResultType.YES) {
+					truth = reasoner.valid((BooleanExpression) predicate);
+					if (truth.getResultType() == ResultType.YES) {
 						return false;
-					} else if (truth == ResultType.MAYBE) {
+					} else if (truth.getResultType() == ResultType.MAYBE) {
 						certainty = Certainty.MAYBE;
 					} else {
 						// For some input, no statement is enabled for this

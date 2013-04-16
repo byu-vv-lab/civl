@@ -35,14 +35,12 @@ import edu.udel.cis.vsl.gmc.StateManagerIF;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
 
 public class ChooseTest {
 
 	private static File rootDir = new File("examples");
 	private static SymbolicUniverse universe = SARL.newIdealUniverse();
 	private static ModelBuilder modelBuilder = Models.newModelBuilder();
-	private static TheoremProver prover = universe.prover();
 	private PrintStream out = System.out;
 
 	@Test
@@ -55,7 +53,7 @@ public class ChooseTest {
 		TransitionFactory transitionFactory = new TransitionFactory();
 		Evaluator evaluator = new Evaluator(universe);
 		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
-				transitionFactory, universe, prover, evaluator);
+				transitionFactory, universe, evaluator);
 		StatePredicateIF<State> predicate = new Deadlock(universe, evaluator);
 		Executor executor;
 		StateManagerIF<State, Transition> stateManager;

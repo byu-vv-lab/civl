@@ -42,7 +42,6 @@ public class PointersTest {
 	private static File rootDir = new File("examples");
 	private static SymbolicUniverse universe = SARL.newIdealUniverse();
 	private static ModelBuilder modelBuilder = Models.newModelBuilder();
-	private static TheoremProver prover = universe.prover();
 	private PrintStream out = System.out;
 
 	@Test
@@ -58,7 +57,7 @@ public class PointersTest {
 		TransitionFactory transitionFactory = new TransitionFactory();
 		Evaluator evaluator = new Evaluator(universe);
 		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
-				transitionFactory, universe, prover, evaluator);
+				transitionFactory, universe, evaluator);
 		StatePredicateIF<State> predicate = new Deadlock(universe, evaluator);
 		Executor executor;
 		StateManagerIF<State, Transition> stateManager;
@@ -66,7 +65,7 @@ public class PointersTest {
 		State initialState;
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
 				new java.io.File("."));
-		
+
 		double startTime = System.currentTimeMillis(), endTime;
 		boolean result;
 		String bar = "===================";

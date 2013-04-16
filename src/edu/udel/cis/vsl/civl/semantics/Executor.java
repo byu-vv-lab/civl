@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.log.ExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
@@ -28,6 +29,8 @@ import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.StackEntry;
@@ -35,13 +38,14 @@ import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.util.ExecutionProblem.Certainty;
 import edu.udel.cis.vsl.civl.util.ExecutionProblem.ErrorKind;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.prove.ValidityResult.ResultType;
-import edu.udel.cis.vsl.sarl.IF.prove.TheoremProver;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -60,10 +64,38 @@ public class Executor {
 	private StateFactoryIF stateFactory;
 	private Evaluator evaluator;
 	private Vector<State> finalStates = new Vector<State>();
-	private TheoremProver prover;
 	private ErrorLog log;
 	private SymbolicTupleType processType;
 	private String pidPrefix = "PID_";
+	private LibraryExecutorLoader loader;
+
+	/**
+	 * Create a new executor.
+	 * 
+	 * @param model
+	 *            The model being executed.
+	 * @param symbolicUniverse
+	 *            A symbolic universe for creating new values.
+	 * @param stateFactory
+	 *            A state factory. Used by the Executor to create new processes.
+	 * @param prover
+	 *            A theorem prover for checking assertions.
+	 */
+	public Executor(Model model, SymbolicUniverse symbolicUniverse,
+			StateFactoryIF stateFactory, ErrorLog log,
+			LibraryExecutorLoader loader) {
+		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
+
+		this.model = model;
+		this.symbolicUniverse = symbolicUniverse;
+		this.stateFactory = stateFactory;
+		this.evaluator = new Evaluator(symbolicUniverse);
+		this.log = log;
+		this.loader = loader;
+		processTypeList.add(symbolicUniverse.integerType());
+		processType = symbolicUniverse.tupleType(
+				symbolicUniverse.stringObject("process"), processTypeList);
+	}
 
 	/**
 	 * Create a new executor.
@@ -85,7 +117,6 @@ public class Executor {
 		this.symbolicUniverse = symbolicUniverse;
 		this.stateFactory = stateFactory;
 		this.evaluator = new Evaluator(symbolicUniverse);
-		this.prover = symbolicUniverse.prover();
 		this.log = log;
 		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
@@ -179,17 +210,24 @@ public class Executor {
 	 * @return The updated state of the program.
 	 */
 	public State execute(State state, int pid, CallStatement statement) {
-		Function function = statement.function();
-		SymbolicExpression[] arguments;
+		if (statement.function() instanceof SystemFunction) {
+			LibraryExecutor executor = loader.getLibraryExecutor(
+					((SystemFunction) statement.function()).getLibrary(), this);
 
-		arguments = new SymbolicExpression[statement.arguments().size()];
-		for (int i = 0; i < statement.arguments().size(); i++) {
-			SymbolicExpression expression = evaluator.evaluate(state, pid,
-					statement.arguments().get(i));
+			state = executor.execute(state, pid, statement);
+		} else {
+			Function function = statement.function();
+			SymbolicExpression[] arguments;
 
-			arguments[i] = expression;
+			arguments = new SymbolicExpression[statement.arguments().size()];
+			for (int i = 0; i < statement.arguments().size(); i++) {
+				SymbolicExpression expression = evaluator.evaluate(state, pid,
+						statement.arguments().get(i));
+
+				arguments[i] = expression;
+			}
+			state = stateFactory.pushCallStack(state, pid, function, arguments);
 		}
-		state = stateFactory.pushCallStack(state, pid, function, arguments);
 		return state;
 	}
 
@@ -353,15 +391,15 @@ public class Executor {
 	public State execute(State state, int pid, AssertStatement statement) {
 		SymbolicExpression assertExpression = evaluator.evaluate(state, pid,
 				statement.getExpression());
-		ResultType valid = prover.valid(
-				(BooleanExpression) state.pathCondition(),
-				(BooleanExpression) assertExpression);
-
+		Reasoner reasoner = symbolicUniverse.reasoner((BooleanExpression) state
+				.pathCondition());
+		ValidityResult valid = reasoner
+				.valid((BooleanExpression) assertExpression);
 		// TODO Handle error reporting in a nice way.
-		if (valid != ResultType.YES) {
+		if (valid.getResultType() != ResultType.YES) {
 			Certainty certainty;
 
-			if (valid == ResultType.NO) {
+			if (valid.getResultType() == ResultType.NO) {
 				certainty = Certainty.PROVEABLE;
 			} else {
 				certainty = Certainty.MAYBE;
@@ -557,5 +595,12 @@ public class Executor {
 	 */
 	public StateFactoryIF stateFactory() {
 		return stateFactory;
+	}
+
+	/**
+	 * @return The symbolic universe associated with this executor.
+	 */
+	public SymbolicUniverse universe() {
+		return symbolicUniverse;
 	}
 }
