@@ -21,7 +21,7 @@
 	<property name="javadoc.dir" value="${basedir}/doc/javadoc" />
 	<property name="jar-name" value="civl.jar" />
 	<property name="jar-path" value="${basedir}/${jar-name}" />
-<!--
+	<!--
 	<property name="main-class" value="edu.udel.cis.vsl.civl.CIVL" />
  -->
 	<property name="main-class" value="edu.udel.cis.vsl.civl.CIVL" />
@@ -70,12 +70,12 @@
 	<path id="src.compile.classpath">
 		<pathelement location="${src.dir}" />
 		<pathelement location="${antlr.jar}" />
-		<pathelement location="${sarl.jar}"/>
-		<pathelement location="${gmc.jar}"/>
-		<pathelement location="${abc.jar}"/>
-		<pathelement location="${cvc3.jar}"/>
-		<pathelement location="${pcollections.jar}"/>
-		<pathelement location="${clj-ds.dir}"/>
+		<pathelement location="${sarl.jar}" />
+		<pathelement location="${gmc.jar}" />
+		<pathelement location="${abc.jar}" />
+		<pathelement location="${cvc3.jar}" />
+		<pathelement location="${pcollections.jar}" />
+		<pathelement location="${clj-ds.dir}" />
 	</path>
 
 	<target name="compile" description="Compile all java source files.">
@@ -87,7 +87,10 @@
 	<target name="jar" depends="compile" description="Jar up all class files.">
 		<jar destfile="${jar-path}">
 			<fileset dir="${bin.dir}" />
-			<fileset dir="${antlr.runtime.bin}" />
+			<zipfileset includes="**/*.class" src="${abc.jar}" />
+			<zipfileset includes="**/*.h" src="${abc.jar}" />
+			<zipfileset includes="**/*.class" src="${gmc.jar}" />
+			<zipfileset includes="**/*.class" src="${sarl.jar}" />
 			<fileset dir="${basedir}/lib" />
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
@@ -103,12 +106,12 @@
 		<pathelement location="${bin.dir}" />
 		<pathelement location="${antlr.jar}" />
 		<pathelement location="${junit.jar}" />
-		<pathelement location="${sarl.jar}"/>
-		<pathelement location="${gmc.jar}"/>
-		<pathelement location="${abc.jar}"/>
-		<pathelement location="${cvc3.jar}"/>
-		<pathelement location="${pcollections.jar}"/>
-		<pathelement location="${clj-ds.dir}"/>
+		<pathelement location="${sarl.jar}" />
+		<pathelement location="${gmc.jar}" />
+		<pathelement location="${abc.jar}" />
+		<pathelement location="${cvc3.jar}" />
+		<pathelement location="${pcollections.jar}" />
+		<pathelement location="${clj-ds.dir}" />
 	</path>
 
 	<path id="test.execute.classpath">
@@ -116,12 +119,12 @@
 		<pathelement location="${bin.dir}" />
 		<pathelement location="${antlr.jar}" />
 		<pathelement location="${junit.jar}" />
-		<pathelement location="${sarl.jar}"/>
-		<pathelement location="${gmc.jar}"/>
-		<pathelement location="${abc.jar}"/>
-		<pathelement location="${cvc3.jar}"/>
-		<pathelement location="${pcollections.jar}"/>
-		<pathelement location="${clj-ds.dir}"/>
+		<pathelement location="${sarl.jar}" />
+		<pathelement location="${gmc.jar}" />
+		<pathelement location="${abc.jar}" />
+		<pathelement location="${cvc3.jar}" />
+		<pathelement location="${pcollections.jar}" />
+		<pathelement location="${clj-ds.dir}" />
 	</path>
 
 	<target name="test-init">
@@ -142,7 +145,7 @@
 	<target name="test" depends="test-compile">
 		<junit printsummary="false" errorProperty="test.failed" failureProperty="test.failed" fork="true" timeout="300000">
 			<jvmarg value="-ea" />
-	        <sysproperty key="java.library.path" path="${cvc3.jni.dir}"/>
+			<sysproperty key="java.library.path" path="${cvc3.jni.dir}" />
 			<classpath refid="test.execute.classpath" />
 			<formatter type="brief" usefile="false" />
 			<formatter type="xml" />

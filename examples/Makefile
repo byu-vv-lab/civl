@@ -1,5 +1,5 @@
 
-CIVL = ../civl
+CIVL = java -jar ../civl.jar
 
 TARGETS = \
 	minimal \
