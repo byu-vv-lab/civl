@@ -1,0 +1,3 @@
+#!/bin/sh
+export DYLD_LIBRARY_PATH=/Applications/CIVL/lib
+java -jar /Applications/CIVL/civl.jar $@

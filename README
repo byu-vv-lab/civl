@@ -1,0 +1,23 @@
+CIVL
+
+Installation for Mac OS X:
+
+bundle civl.jar and the three cvc3 libs into one directory CIVL
+
+bin/
+  civl
+lib/
+  cvc3.....dylib
+  civl.jar
+doc/1
+
+1. Download CIVL and put it in your /Applications folder
+2. add /Applications/CIVL/bin to your PATH or
+   move /Applications/CIVL/bin/civl somewhere in your path
+
+contents of CIVL:
+
+#!/bin/sh
+export DYLD_LIBRARY_PATH=/Applications/CIVL/lib
+java -jar /Applications/CIVL/civl.jar $@
+ 
