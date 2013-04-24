@@ -17,6 +17,8 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
@@ -89,7 +91,7 @@ public class Executor {
 		this.model = model;
 		this.symbolicUniverse = symbolicUniverse;
 		this.stateFactory = stateFactory;
-		this.evaluator = new Evaluator(symbolicUniverse);
+		this.evaluator = new Evaluator(symbolicUniverse, log);
 		this.log = log;
 		this.loader = loader;
 		processTypeList.add(symbolicUniverse.integerType());
@@ -116,7 +118,7 @@ public class Executor {
 		this.model = model;
 		this.symbolicUniverse = symbolicUniverse;
 		this.stateFactory = stateFactory;
-		this.evaluator = new Evaluator(symbolicUniverse);
+		this.evaluator = new Evaluator(symbolicUniverse, log);
 		this.log = log;
 		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
@@ -140,7 +142,7 @@ public class Executor {
 		this.model = model;
 		this.symbolicUniverse = symbolicUniverse;
 		this.stateFactory = stateFactory;
-		this.evaluator = new Evaluator(symbolicUniverse);
+		this.evaluator = new Evaluator(symbolicUniverse, log);
 		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
 				symbolicUniverse.stringObject("process"), processTypeList);
@@ -504,6 +506,33 @@ public class Executor {
 			state = stateFactory.setVariable(state,
 					baseArray(scope, (ArrayIndexExpression) target), pid,
 					newValue);
+		} else if (target instanceof UnaryExpression) {
+			Expression pointerTarget;
+
+			assert ((UnaryExpression) target).operator() == UNARY_OPERATOR.DEREFERENCE;
+			pointerTarget = ((UnaryExpression) target).operand();
+
+			while (pointerTarget instanceof UnaryExpression) {
+				pointerTarget = ((UnaryExpression) target).operand();
+			}
+			if (pointerTarget instanceof VariableExpression) {
+				Variable variable = ((VariableExpression) pointerTarget)
+						.variable();
+
+				state = stateFactory.setVariable(state, variable, pid,
+						symbolicValue);
+			} else if (pointerTarget instanceof ArrayIndexExpression) {
+				SymbolicExpression newValue = arrayWriteValue(state, pid,
+						(ArrayIndexExpression) pointerTarget, symbolicValue);
+
+				state = stateFactory.setVariable(state,
+						baseArray(scope, (ArrayIndexExpression) pointerTarget),
+						pid, newValue);
+			} else {
+				throw new RuntimeException("Unknown pointer target type: "
+						+ pointerTarget);
+			}
+
 		}
 		// TODO: Throw some sort of exception otherwise.
 		// state = stateFactory.canonic(state);

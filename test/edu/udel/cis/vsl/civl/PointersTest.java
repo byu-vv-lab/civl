@@ -54,7 +54,9 @@ public class PointersTest {
 		StateFactoryIF stateFactory = new StateFactory(universe);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
-		Evaluator evaluator = new Evaluator(universe);
+		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
+				new java.io.File("."));
+		Evaluator evaluator = new Evaluator(universe, log);
 		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
 				transitionFactory, universe, evaluator);
 		StatePredicateIF<State> predicate = new Deadlock(universe, evaluator);
@@ -62,9 +64,6 @@ public class PointersTest {
 		StateManagerIF<State, Transition> stateManager;
 		DfsSearcher<State, Transition, TransitionSequence> searcher;
 		State initialState;
-		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
-				new java.io.File("."));
-
 		double startTime = System.currentTimeMillis(), endTime;
 		boolean result;
 		String bar = "===================";

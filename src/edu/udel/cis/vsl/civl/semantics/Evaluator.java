@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.semantics;
 import java.util.List;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
@@ -15,8 +16,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -41,6 +44,7 @@ public class Evaluator {
 	private SymbolicUniverse symbolicUniverse;
 	private RealNumberFactory numberFactory = new RealNumberFactory();
 	private SymbolicTupleType pointerType;
+	private ErrorLog log;
 
 	/**
 	 * An evaluator is used to evaluate expressions.
@@ -48,7 +52,7 @@ public class Evaluator {
 	 * @param symbolicUniverse
 	 *            The symbolic universe for the expressions.
 	 */
-	public Evaluator(SymbolicUniverse symbolicUniverse) {
+	public Evaluator(SymbolicUniverse symbolicUniverse, ErrorLog log) {
 		List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
 
 		this.symbolicUniverse = symbolicUniverse;
@@ -58,8 +62,13 @@ public class Evaluator {
 				.integerType()));
 		pointerType = symbolicUniverse.tupleType(
 				symbolicUniverse.stringObject("pointer"), pointerComponents);
+		this.log = log;
 	}
 
+	public ErrorLog log() {
+		return log;
+	}
+	
 	/**
 	 * Evaluate a generic expression. One of the overloaded evaluate methods for
 	 * specific expressions should always be used instead.
@@ -92,7 +101,7 @@ public class Evaluator {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * Evaluate a conditional expression.
 	 * 
@@ -401,6 +410,57 @@ public class Evaluator {
 		return symbolicUniverse.reasoner(
 				(BooleanExpression) state.pathCondition()).simplify(
 				currentValue);
+	}
+
+	/**
+	 * Evaluate an expression that returns a variable. This method gets the
+	 * actual variable, not the value stored in the variable. It is used for
+	 * finding the correct location to perform a write.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The expression for the variable.
+	 * @return The variable.
+	 */
+	public Variable getVariable(State state, int pid, Expression expression) {
+		DynamicScope scope = state.getScope(state.process(pid).scope());
+		
+		if (expression instanceof VariableExpression) {
+			return ((VariableExpression) expression).variable();
+		} else if (expression instanceof ArrayIndexExpression) {
+			return baseArray(scope, (ArrayIndexExpression) expression);
+		} else if (expression instanceof UnaryExpression) {
+			Variable pointer;
+			SymbolicExpression pointerExpression;
+			
+			assert ((UnaryExpression) expression).operator() == UNARY_OPERATOR.DEREFERENCE;
+			pointer = getVariable(state, pid, ((UnaryExpression) expression).operand());
+			pointerExpression = state.valueOf(pid, pointer);
+			
+		}
+		return null;
+	}
+	
+	/**
+	 * Get the variable at the base of a (possibly multi-dimensional) array.
+	 * 
+	 * @param scope
+	 *            The dynamic scope containing this array reference.
+	 * @param expression
+	 *            The array index expression.
+	 * @return The variable corresponding to the base of this array.
+	 */
+	private Variable baseArray(DynamicScope scope,
+			ArrayIndexExpression expression) {
+		if (expression.array() instanceof ArrayIndexExpression) {
+			return baseArray(scope, ((ArrayIndexExpression) expression.array()));
+		} else if (expression.array() instanceof VariableExpression) {
+			return ((VariableExpression) expression.array()).variable();
+		}
+		return null;
 	}
 
 }

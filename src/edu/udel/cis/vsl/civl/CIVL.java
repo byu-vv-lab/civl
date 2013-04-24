@@ -148,11 +148,11 @@ public class CIVL {
 		StateFactoryIF stateFactory = new StateFactory(universe);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
-		Evaluator evaluator = new Evaluator(universe);
-		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
-				transitionFactory, universe, evaluator);
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
 				new java.io.File("."));
+		Evaluator evaluator = new Evaluator(universe, log);
+		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
+				transitionFactory, universe, evaluator);
 		StatePredicateIF<State> predicate = new StandardPredicate(log,
 				universe, evaluator);
 		LibraryExecutorLoader loader = new CommonLibraryExecutorLoader();

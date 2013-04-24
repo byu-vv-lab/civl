@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.kripke;
 
 import java.io.PrintWriter;
 
+import edu.udel.cis.vsl.civl.log.ExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -11,6 +12,8 @@ import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
+import edu.udel.cis.vsl.civl.util.ExecutionProblem.Certainty;
+import edu.udel.cis.vsl.civl.util.ExecutionProblem.ErrorKind;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -116,6 +119,16 @@ public class Enabler implements
 								.parseInt(((SymbolicConstant) pidExpression)
 										.name().getString()
 										.substring(pidPrefix.length()));
+						if (pidValue == -1) {
+							evaluator
+									.log()
+									.report(new ExecutionException(
+											ErrorKind.INVALID_PID,
+											Certainty.PROVEABLE,
+											"Unable to call $wait on a process that has already been the target of a $wait.  At "
+													+ s.source() + " : " + s));
+							continue;
+						}
 						if (!state.process(pidValue).hasEmptyStack()) {
 							continue;
 						}

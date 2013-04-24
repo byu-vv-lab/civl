@@ -49,6 +49,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.GotoNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.NullStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
@@ -635,6 +636,9 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (statement instanceof ForLoopNode) {
 			result = forLoop(function, lastStatement, (ForLoopNode) statement,
 					scope);
+		} else if (statement instanceof IfNode) {
+			result = ifStatement(function, lastStatement, (IfNode) statement,
+					scope);
 		} else if (statement instanceof WaitNode) {
 			result = wait(function, lastStatement, (WaitNode) statement, scope);
 		} else if (statement instanceof NullStatementNode) {
@@ -699,6 +703,9 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (statement instanceof ForLoopNode) {
 			result = forLoop(function, lastStatement, (ForLoopNode) statement,
 					scope);
+		} else if (statement instanceof IfNode) {
+			result = ifStatement(location, function, lastStatement,
+					(IfNode) statement, scope);
 		} else if (statement instanceof WaitNode) {
 			result = wait(function, lastStatement, (WaitNode) statement, scope);
 		} else if (statement instanceof NullStatementNode) {
@@ -722,6 +729,44 @@ public class CommonModelBuilder implements ModelBuilder {
 		}
 		function.addStatement(result);
 		return result;
+	}
+
+	/**
+	 * An if statement.
+	 */
+	private Statement ifStatement(Function function, Statement lastStatement,
+			IfNode statement, Scope scope) {
+		return ifStatement(factory.location(scope), function, lastStatement,
+				statement, scope);
+
+	}
+
+	private Statement ifStatement(Location location, Function function,
+			Statement lastStatement, IfNode statement, Scope scope) {
+		Expression expression = expression(statement.getCondition(), scope);
+		Statement trueBranch = statement(location, expression, function,
+				lastStatement, statement.getTrueBranch(), scope);
+		Statement falseBranch;
+		Location exitLocation = factory.location(scope);
+		
+		function.addLocation(location);
+		if (lastStatement != null) {
+			lastStatement.setTarget(location);
+		} else {
+			function.setStartLocation(location);
+		}
+		if (statement.getFalseBranch() == null) {
+			falseBranch = factory.noopStatement(location);
+			falseBranch.setGuard(factory.unaryExpression(UNARY_OPERATOR.NOT, expression));
+		} else {
+			 falseBranch = statement(location,
+					factory.unaryExpression(UNARY_OPERATOR.NOT, expression),
+					function, lastStatement, statement.getFalseBranch(), scope);
+		}
+		function.addLocation(exitLocation);
+		trueBranch.setTarget(exitLocation);
+		falseBranch.setTarget(exitLocation);
+		return factory.noopStatement(exitLocation);
 	}
 
 	/**

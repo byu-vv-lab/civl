@@ -43,7 +43,7 @@ public class StandardPredicate implements StatePredicateIF<State> {
 
 	@Override
 	public boolean holdsAt(State state) {
-		if (log.numReports() > log.errorBound()) {
+		if (log.numReports() >= log.errorBound()) {
 			return true;
 		}
 		return deadlockPredicate.holdsAt(state);
