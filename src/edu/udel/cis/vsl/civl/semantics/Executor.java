@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Iterator;
@@ -400,17 +401,21 @@ public class Executor {
 		// TODO Handle error reporting in a nice way.
 		if (valid.getResultType() != ResultType.YES) {
 			Certainty certainty;
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			PrintStream ps = new PrintStream(baos);
 
 			if (valid.getResultType() == ResultType.NO) {
 				certainty = Certainty.PROVEABLE;
 			} else {
 				certainty = Certainty.MAYBE;
 			}
+			state.print(ps);
 			log.report(new ExecutionException(ErrorKind.ASSERTION_VIOLATION,
 					certainty, "Cannot prove assertion holds: "
 							+ statement.toString() + "\n  Path condition: "
 							+ state.pathCondition() + "\n  Assertion: "
-							+ assertExpression));
+							+ assertExpression + "\n\n" + baos.toString()));
+
 		}
 		state = transition(state, state.process(pid), statement.target());
 		return state;

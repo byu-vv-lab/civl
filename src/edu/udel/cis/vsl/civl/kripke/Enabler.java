@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.kripke;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 
 import edu.udel.cis.vsl.civl.log.ExecutionException;
@@ -120,13 +122,20 @@ public class Enabler implements
 										.name().getString()
 										.substring(pidPrefix.length()));
 						if (pidValue == -1) {
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							PrintStream ps = new PrintStream(baos);
+
+							state.print(ps);
 							evaluator
 									.log()
 									.report(new ExecutionException(
 											ErrorKind.INVALID_PID,
 											Certainty.PROVEABLE,
 											"Unable to call $wait on a process that has already been the target of a $wait.  At "
-													+ s.source() + " : " + s));
+													+ s.source()
+													+ " : "
+													+ s
+													+ "\n\n" + baos.toString()));
 							continue;
 						}
 						if (!state.process(pidValue).hasEmptyStack()) {
