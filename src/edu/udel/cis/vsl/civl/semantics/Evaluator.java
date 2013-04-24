@@ -3,10 +3,13 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.log.ErrorLog;
+import edu.udel.cis.vsl.civl.log.ExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
@@ -21,6 +24,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.civl.util.ExecutionProblem.Certainty;
+import edu.udel.cis.vsl.civl.util.ExecutionProblem.ErrorKind;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -68,7 +73,7 @@ public class Evaluator {
 	public ErrorLog log() {
 		return log;
 	}
-	
+
 	/**
 	 * Evaluate a generic expression. One of the overloaded evaluate methods for
 	 * specific expressions should always be used instead.
@@ -101,7 +106,7 @@ public class Evaluator {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Evaluate a conditional expression.
 	 * 
@@ -407,6 +412,16 @@ public class Evaluator {
 		SymbolicExpression currentValue = state.valueOf(pid,
 				expression.variable());
 
+		if (currentValue == null) {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			PrintStream ps = new PrintStream(baos);
+
+			state.print(ps);
+			log.report(new ExecutionException(ErrorKind.UNDEFINED_VALUE,
+					Certainty.PROVEABLE,
+					"Attempt to read unitialized variable: "
+							+ expression.variable() + "\n\n" + baos.toString()));
+		}
 		return symbolicUniverse.reasoner(
 				(BooleanExpression) state.pathCondition()).simplify(
 				currentValue);
@@ -427,7 +442,7 @@ public class Evaluator {
 	 */
 	public Variable getVariable(State state, int pid, Expression expression) {
 		DynamicScope scope = state.getScope(state.process(pid).scope());
-		
+
 		if (expression instanceof VariableExpression) {
 			return ((VariableExpression) expression).variable();
 		} else if (expression instanceof ArrayIndexExpression) {
@@ -435,15 +450,16 @@ public class Evaluator {
 		} else if (expression instanceof UnaryExpression) {
 			Variable pointer;
 			SymbolicExpression pointerExpression;
-			
+
 			assert ((UnaryExpression) expression).operator() == UNARY_OPERATOR.DEREFERENCE;
-			pointer = getVariable(state, pid, ((UnaryExpression) expression).operand());
+			pointer = getVariable(state, pid,
+					((UnaryExpression) expression).operand());
 			pointerExpression = state.valueOf(pid, pointer);
-			
+
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Get the variable at the base of a (possibly multi-dimensional) array.
 	 * 
