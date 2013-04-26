@@ -113,6 +113,19 @@ public class Enabler implements
 								state, p.id(), ((JoinStatement) s).process());
 						int pidValue;
 
+						if (!(pidExpression instanceof SymbolicConstant)) {
+//							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//							PrintStream ps = new PrintStream(baos);
+//
+//							state.print(ps);
+//							evaluator.log().report(
+//									new ExecutionException(
+//											ErrorKind.INVALID_PID,
+//											Certainty.PROVEABLE,
+//											"Unknown process ID in: " + s + "\n\n"
+//													+ baos.toString()));
+							continue;
+						}
 						assert pidExpression instanceof SymbolicConstant;
 						assert ((SymbolicConstant) pidExpression).name()
 								.getString().startsWith(pidPrefix);

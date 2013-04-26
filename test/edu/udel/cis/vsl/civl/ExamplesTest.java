@@ -97,11 +97,19 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void testFor() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "for.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
+
+	@Test
+	public void testCompare() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "compare.cvl");
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}

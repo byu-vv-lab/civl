@@ -1,12 +1,18 @@
 #include<civlc.h>
 
+void passByRef(int * array) {
+  *array = 42;
+}
+
 void main() {
   int a;
   int* b;
   int c[2];
   int* d;
   int** g;
+  int* f;
     
+  f = &a;
   a = 1;
   b = &a;
   c[0] = 0;
@@ -16,5 +22,7 @@ void main() {
   $assert *b == 1;
   $assert *d == 1;
   $assert **g == 1;
-  
+  $assert g == &d;
+  passByRef(f);
+  $assert *f == 42;
 }

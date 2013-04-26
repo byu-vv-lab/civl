@@ -19,7 +19,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
@@ -31,6 +30,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ForkStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
@@ -224,8 +224,15 @@ public class Executor {
 
 			arguments = new SymbolicExpression[statement.arguments().size()];
 			for (int i = 0; i < statement.arguments().size(); i++) {
-				SymbolicExpression expression = evaluator.evaluate(state, pid,
-						statement.arguments().get(i));
+				SymbolicExpression expression;
+
+				if (function.parameters().get(i).type() instanceof PointerType) {
+					expression = evaluator.reference(state, pid, statement
+							.arguments().get(i));
+				} else {
+					expression = evaluator.evaluate(state, pid, statement
+							.arguments().get(i));
+				}
 
 				arguments[i] = expression;
 			}
@@ -512,32 +519,11 @@ public class Executor {
 					baseArray(scope, (ArrayIndexExpression) target), pid,
 					newValue);
 		} else if (target instanceof UnaryExpression) {
-			Expression pointerTarget;
+			Variable variable = evaluator.getVariable(state, pid, target);
+			int scopeID = evaluator.getPointerTargetScope(state, pid, target);
 
-			assert ((UnaryExpression) target).operator() == UNARY_OPERATOR.DEREFERENCE;
-			pointerTarget = ((UnaryExpression) target).operand();
-
-			while (pointerTarget instanceof UnaryExpression) {
-				pointerTarget = ((UnaryExpression) target).operand();
-			}
-			if (pointerTarget instanceof VariableExpression) {
-				Variable variable = ((VariableExpression) pointerTarget)
-						.variable();
-
-				state = stateFactory.setVariable(state, variable, pid,
-						symbolicValue);
-			} else if (pointerTarget instanceof ArrayIndexExpression) {
-				SymbolicExpression newValue = arrayWriteValue(state, pid,
-						(ArrayIndexExpression) pointerTarget, symbolicValue);
-
-				state = stateFactory.setVariable(state,
-						baseArray(scope, (ArrayIndexExpression) pointerTarget),
-						pid, newValue);
-			} else {
-				throw new RuntimeException("Unknown pointer target type: "
-						+ pointerTarget);
-			}
-
+			state = stateFactory.setVariable(state, variable, scopeID, pid,
+					symbolicValue);
 		}
 		// TODO: Throw some sort of exception otherwise.
 		// state = stateFactory.canonic(state);
@@ -566,6 +552,9 @@ public class Executor {
 		SymbolicExpression index = evaluator.evaluate(state, pid,
 				arrayIndex.index());
 
+		while (array.type().equals(evaluator.pointerType())) {
+			array = evaluator.dereference(state, pid, array);
+		}
 		if (arrayIndex.array() instanceof ArrayIndexExpression) {
 			result = arrayWriteValue(state, pid,
 					(ArrayIndexExpression) arrayIndex.array(),

@@ -148,7 +148,8 @@ public class StateFactory implements StateFactoryIF {
 						break;
 					}
 				} else {
-					throw new RuntimeException("Unimplemented input type: " + v.type());
+					throw new RuntimeException("Unimplemented input type: "
+							+ v.type());
 				}
 
 				values[i] = symbolicUniverse.symbolicConstant(name, type);
@@ -382,6 +383,31 @@ public class StateFactory implements StateFactoryIF {
 	public State setVariable(State state, Variable variable, int pid,
 			SymbolicExpression value) {
 		int scopeId = state.getScopeId(pid, variable);
+		return setVariable(state, variable, scopeId, pid, value);
+	}
+
+	/**
+	 * Update the value of a dynamic variable in the state.
+	 * 
+	 * @param state
+	 *            The old state.
+	 * @param variable
+	 *            The dynamic variable to update.
+	 * @param scopeID
+	 *            The ID of the scope containing the variable. This version of
+	 *            the method is useful when setting the target of a pointer. For
+	 *            a variable in the current lexical scope, use the version of
+	 *            the method without this argument.
+	 * @param pid
+	 *            The pid of the process containing the variable.
+	 * @param value
+	 *            The new value of the dynamic variable.
+	 * @return A new state that is the old state modified by updating the value
+	 *         of the variable.
+	 */
+	@Override
+	public State setVariable(State state, Variable variable, int scopeId,
+			int pid, SymbolicExpression value) {
 		DynamicScope oldScope = state.getScope(scopeId);
 		DynamicScope[] newScopes = state.copyScopes();
 		SymbolicExpression[] newValues = oldScope.copyValues();

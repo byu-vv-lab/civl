@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.State;
@@ -147,8 +148,11 @@ public class Evaluator {
 			ArrayIndexExpression expression) {
 		SymbolicExpression array = evaluate(state, pid, expression.array());
 		SymbolicExpression index = evaluate(state, pid, expression.index());
-		// TODO: simplify index?
 
+		while (array.type().equals(pointerType)) {
+			array = dereference(state, pid, array);
+		}
+		// TODO: simplify index?
 		return symbolicUniverse.arrayRead(array, (NumericExpression) index);
 	}
 
@@ -304,8 +308,7 @@ public class Evaluator {
 		return null;
 	}
 
-	private SymbolicExpression reference(State state, int pid,
-			Expression operand) {
+	SymbolicExpression reference(State state, int pid, Expression operand) {
 		SymbolicExpression result = null;
 		List<SymbolicExpression> navigationSequence = navigationSequence(state,
 				pid, operand);
@@ -349,8 +352,13 @@ public class Evaluator {
 
 	private SymbolicExpression dereference(State state, int pid,
 			Expression operand) {
-		SymbolicExpression result = null;
 		SymbolicExpression pointer = evaluate(state, pid, operand);
+		return dereference(state, pid, pointer);
+	}
+
+	SymbolicExpression dereference(State state, int pid,
+			SymbolicExpression pointer) {
+		SymbolicExpression result = null;
 		SymbolicSequence<?> pointerTuple;
 		Number scopeNumber;
 		Number variableNumber;
@@ -448,16 +456,57 @@ public class Evaluator {
 		} else if (expression instanceof ArrayIndexExpression) {
 			return baseArray(scope, (ArrayIndexExpression) expression);
 		} else if (expression instanceof UnaryExpression) {
-			Variable pointer;
-			SymbolicExpression pointerExpression;
+			SymbolicExpression pointer;
+			SymbolicSequence<?> pointerTuple;
+			Number scopeNumber;
+			Number variableNumber;
+			int scopeID;
+			int variableID;
+			Variable variable;
 
 			assert ((UnaryExpression) expression).operator() == UNARY_OPERATOR.DEREFERENCE;
-			pointer = getVariable(state, pid,
+			pointer = evaluate(state, pid,
 					((UnaryExpression) expression).operand());
-			pointerExpression = state.valueOf(pid, pointer);
+			do {
+				assert pointer.type().equals(pointerType);
+				assert pointer.numArguments() == 1;
+				assert pointer.argument(0) instanceof SymbolicSequence;
+				assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
+				pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
+				scopeNumber = symbolicUniverse
+						.extractNumber((NumericExpression) pointerTuple.get(0));
+				variableNumber = symbolicUniverse
+						.extractNumber((NumericExpression) pointerTuple.get(1));
+				scopeID = ((IntegerNumber) scopeNumber).intValue();
+				variableID = ((IntegerNumber) variableNumber).intValue();
+				variable = state.getScope(scopeID).lexicalScope()
+						.getVariable(variableID);
+				pointer = state.getScope(scopeID).getValue(variableID);
+			} while (variable.type() instanceof PointerType);
+			return variable;
 
 		}
-		return null;
+		throw new RuntimeException("Retrieving variable from " + expression
+				+ " not implemented.");
+	}
+
+	int getPointerTargetScope(State state, int pid, Expression expression) {
+		SymbolicExpression pointer;
+		SymbolicSequence<?> pointerTuple;
+		Number scopeNumber;
+		int scopeID;
+
+		assert ((UnaryExpression) expression).operator() == UNARY_OPERATOR.DEREFERENCE;
+		pointer = evaluate(state, pid, ((UnaryExpression) expression).operand());
+		assert pointer.type().equals(pointerType);
+		assert pointer.numArguments() == 1;
+		assert pointer.argument(0) instanceof SymbolicSequence;
+		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
+		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
+		scopeNumber = symbolicUniverse
+				.extractNumber((NumericExpression) pointerTuple.get(0));
+		scopeID = ((IntegerNumber) scopeNumber).intValue();
+		return scopeID;
 	}
 
 	/**
@@ -477,6 +526,10 @@ public class Evaluator {
 			return ((VariableExpression) expression.array()).variable();
 		}
 		return null;
+	}
+
+	SymbolicType pointerType() {
+		return pointerType;
 	}
 
 }

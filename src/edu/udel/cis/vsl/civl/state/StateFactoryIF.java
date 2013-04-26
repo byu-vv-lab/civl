@@ -59,6 +59,28 @@ public interface StateFactoryIF {
 			SymbolicExpression value);
 
 	/**
+	 * Update the value of a dynamic variable in the state.
+	 * 
+	 * @param state
+	 *            The old state.
+	 * @param variable
+	 *            The dynamic variable to update.
+	 * @param scopeID
+	 *            The ID of the scope containing the variable. This version of
+	 *            the method is useful when setting the target of a pointer. For
+	 *            a variable in the current lexical scope, use the version of
+	 *            the method without this argument.
+	 * @param pid
+	 *            The pid of the process containing the variable.
+	 * @param value
+	 *            The new value of the dynamic variable.
+	 * @return A new state that is the old state modified by updating the value
+	 *         of the variable.
+	 */
+	State setVariable(State state, Variable variable, int scopeId, int pid,
+			SymbolicExpression value);
+
+	/**
 	 * Add a new process. The new process is created and one entry is pushed
 	 * onto its call stack. That entry will have a dynamic scope whose parent is
 	 * determined by the calling process (the process that is executing the fork
