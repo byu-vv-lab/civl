@@ -114,16 +114,17 @@ public class Enabler implements
 						int pidValue;
 
 						if (!(pidExpression instanceof SymbolicConstant)) {
-//							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//							PrintStream ps = new PrintStream(baos);
-//
-//							state.print(ps);
-//							evaluator.log().report(
-//									new ExecutionException(
-//											ErrorKind.INVALID_PID,
-//											Certainty.PROVEABLE,
-//											"Unknown process ID in: " + s + "\n\n"
-//													+ baos.toString()));
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							PrintStream ps = new PrintStream(baos);
+
+							state.print(ps);
+							evaluator
+									.log()
+									.report(new ExecutionException(
+											ErrorKind.INVALID_PID,
+											Certainty.PROVEABLE,
+											"Unknown process ID in: " + s
+													+ "\n\n" + baos.toString()));
 							continue;
 						}
 						assert pidExpression instanceof SymbolicConstant;
