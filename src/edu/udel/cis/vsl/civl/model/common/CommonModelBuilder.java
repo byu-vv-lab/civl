@@ -28,7 +28,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.FloatingConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
@@ -36,7 +35,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ResultNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SelfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.StringLiteralNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssertNode;
@@ -64,6 +62,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypedefNameNode;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -74,6 +74,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
@@ -118,13 +119,16 @@ public class CommonModelBuilder implements ModelBuilder {
 				.identifier("malloc"));
 		SystemFunction free = factory
 				.systemFunction(factory.identifier("free"));
+		SystemFunction printf = factory.systemFunction(factory
+				.identifier("printf"));
 
-		malloc.setLibrary("stdlib");
-		free.setLibrary("stdlib");
+		malloc.setLibrary("civlc");
+		free.setLibrary("civlc");
+		printf.setLibrary("civlc");
 		systemFunctions = new LinkedHashMap<String, Function>();
 		systemFunctions.put("malloc", malloc);
 		systemFunctions.put("free", free);
-
+		systemFunctions.put("printf", printf);
 	}
 
 	/**
@@ -581,19 +585,49 @@ public class CommonModelBuilder implements ModelBuilder {
 
 	private LiteralExpression constant(ConstantNode constant) {
 		LiteralExpression result = null;
+		edu.udel.cis.vsl.abc.ast.type.IF.Type convertedType = constant
+				.getConvertedType();
 
-		if (constant instanceof IntegerConstantNode) {
-			result = factory
-					.integerLiteralExpression(((IntegerConstantNode) constant)
-							.getConstantValue().getIntegerValue());
-		} else if (constant instanceof StringLiteralNode) {
-			result = factory
-					.stringLiteralExpression(((StringLiteralNode) constant)
-							.getStringRepresentation());
-		} else if (constant instanceof FloatingConstantNode) {
-			result = factory.realLiteralExpression(BigDecimal
-					.valueOf(((FloatingConstantNode) constant)
-							.getConstantValue().getDoubleValue()));
+		assert convertedType.kind() == TypeKind.BASIC;
+		switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
+		case SHORT:
+		case UNSIGNED_SHORT:
+		case INT:
+		case UNSIGNED:
+		case LONG:
+		case UNSIGNED_LONG:
+		case LONG_LONG:
+		case UNSIGNED_LONG_LONG:
+			result = factory.integerLiteralExpression(BigInteger.valueOf(Long
+					.parseLong(constant.getStringRepresentation())));
+			break;
+		case FLOAT:
+		case DOUBLE:
+		case LONG_DOUBLE:
+			result = factory.realLiteralExpression(BigDecimal.valueOf(Double
+					.parseDouble(constant.getStringRepresentation())));
+			break;
+		case BOOL:
+			boolean value;
+
+			if (constant instanceof IntegerConstantNode) {
+				BigInteger integerValue = ((IntegerConstantNode) constant)
+						.getConstantValue().getIntegerValue();
+
+				if (integerValue.intValue() == 0) {
+					value = false;
+				} else {
+					value = true;
+				}
+			} else {
+				value = Boolean
+						.parseBoolean(constant.getStringRepresentation());
+			}
+			result = factory.booleanLiteralExpression(value);
+			break;
+		default:
+			throw new RuntimeException(
+					"Unsupported converted type for expression: " + constant);
 		}
 		return result;
 	}
@@ -1169,6 +1203,13 @@ public class CommonModelBuilder implements ModelBuilder {
 				throw new RuntimeException("Unsupported block element: " + node);
 			}
 		}
+		if (lastStatement == null) {
+			if (location == null) {
+				location = factory.location(newScope);
+			}
+			lastStatement = factory.noopStatement(location);
+			function.setStartLocation(location);
+		}
 		return lastStatement;
 	}
 
@@ -1351,6 +1392,15 @@ public class CommonModelBuilder implements ModelBuilder {
 		Expression guard = expression(statement.getGuard(), scope);
 		Iterator<Statement> iter;
 
+		// A $true or $false guard is translated as 1 or 0, but this causes
+		// trouble later.
+		if (guard instanceof IntegerLiteralExpression) {
+			if (((IntegerLiteralExpression) guard).value().intValue() == 0) {
+				guard = factory.booleanLiteralExpression(false);
+			} else {
+				guard = factory.booleanLiteralExpression(true);
+			}
+		}
 		if (lastStatement != null) {
 			iter = lastStatement.target().outgoing().iterator();
 		} else {

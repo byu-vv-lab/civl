@@ -113,5 +113,13 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
+	
+	@Test
+	public void testEmptyBlock() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "emptyWhen.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
 
 }

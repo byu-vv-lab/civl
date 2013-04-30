@@ -272,7 +272,8 @@ public class Evaluator {
 	 */
 	public SymbolicExpression evaluate(State state, int pid,
 			StringLiteralExpression expression) {
-
+		// StringObject result =
+		// symbolicUniverse.stringObject(expression.value());
 		// TODO: Figure this out.
 		// Right now, strings are intercepted in the executor.
 		// They are used in write statements, and are

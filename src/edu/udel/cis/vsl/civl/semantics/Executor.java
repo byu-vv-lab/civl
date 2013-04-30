@@ -626,4 +626,12 @@ public class Executor {
 	public SymbolicUniverse universe() {
 		return symbolicUniverse;
 	}
+
+	/**
+	 * @return The evaluator used by this executor.
+	 * @return
+	 */
+	public Evaluator evaluator() {
+		return evaluator;
+	}
 }
