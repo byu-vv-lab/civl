@@ -143,8 +143,7 @@ public class CIVL {
 
 	public static boolean check(File file, PrintStream out)
 			throws SyntaxException, ParseException, PreprocessorException {
-		TranslationUnit unit = ABC.activator(file)
-				.getSideEffectFreeTranslationUnit();
+		TranslationUnit unit;
 		StateFactoryIF stateFactory = new StateFactory(universe);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
@@ -160,10 +159,25 @@ public class CIVL {
 		StateManagerIF<State, Transition> stateManager;
 		DfsSearcher<State, Transition, TransitionSequence> searcher;
 		State initialState;
-
 		double startTime = System.currentTimeMillis(), endTime;
 		boolean result;
 		String bar = "===================";
+
+		try {
+			unit = ABC.activator(file).getSideEffectFreeTranslationUnit();
+		} catch (SyntaxException e) {
+			System.out.println("Syntax error in " + file.getName() + ": \n"
+					+ e.getMessage());
+			return false;
+		} catch (ParseException e) {
+			System.out.println("Error parsing " + file.getName() + ": \n"
+					+ e.getMessage());
+			return false;
+		} catch (PreprocessorException e) {
+			System.out.println("Error preprocessing " + file.getName() + ": \n"
+					+ e.getMessage());
+			return false;
+		}
 		model = modelBuilder.buildModel(unit);
 		out.println(bar + " Model " + bar + "\n");
 		model.print(out);
