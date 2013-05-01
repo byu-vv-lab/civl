@@ -26,6 +26,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.RequiresNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
@@ -457,7 +458,27 @@ public class CommonModelBuilder implements ModelBuilder {
 			result = factory.resultExpression();
 		} else if (expression instanceof SelfNode) {
 			result = factory.selfExpression();
+		} else if (expression instanceof CastNode) {
+			result = castExpression((CastNode) expression, scope);
 		}
+		return result;
+	}
+
+	/**
+	 * Translate a cast expression from the CIVL AST to the CIVL model.
+	 * 
+	 * @param expression
+	 *            The cast expression.
+	 * @param scope
+	 *            The (static) scope containing the expression.
+	 * @return The model representation of the expression.
+	 */
+	public Expression castExpression(CastNode expression, Scope scope) {
+		Expression result;
+		Type castType = processType(expression.getCastType());
+		Expression castExpression = expression(expression.getArgument(), scope);
+
+		result = factory.castExpression(castType, castExpression);
 		return result;
 	}
 

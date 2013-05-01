@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -113,7 +114,7 @@ public interface ModelFactory {
 			Type returnType, Scope containingScope, Location startLocation);
 
 	public SystemFunction systemFunction(Identifier name);
-	
+
 	/**
 	 * Create a new location.
 	 * 
@@ -187,7 +188,7 @@ public interface ModelFactory {
 	 * @return A new pointer type with the given base type.
 	 */
 	public PointerType pointerType(Type baseType);
-	
+
 	/**
 	 * Get a new struct type.
 	 * 
@@ -238,6 +239,16 @@ public interface ModelFactory {
 	 */
 	public BinaryExpression binaryExpression(BINARY_OPERATOR operator,
 			Expression left, Expression right);
+
+	/**
+	 * A cast of an expression to another type.
+	 * 
+	 * @param type
+	 *            The type to which the expression is cast.
+	 * @param expresssion
+	 *            The expression being cast to a new type.
+	 */
+	public CastExpression castExpression(Type type, Expression expression);
 
 	/**
 	 * The ternary conditional expression ("?" in C).

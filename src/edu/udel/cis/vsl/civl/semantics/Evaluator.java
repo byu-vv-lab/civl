@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.log.ExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -21,7 +22,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.State;
@@ -91,6 +95,8 @@ public class Evaluator {
 			result = evaluate(state, pid, (BooleanLiteralExpression) expression);
 		} else if (expression instanceof ConditionalExpression) {
 			result = evaluate(state, pid, (ConditionalExpression) expression);
+		} else if (expression instanceof CastExpression) {
+			result = evaluate(state, pid, (CastExpression) expression);
 		} else if (expression instanceof IntegerLiteralExpression) {
 			result = evaluate(state, pid, (IntegerLiteralExpression) expression);
 		} else if (expression instanceof RealLiteralExpression) {
@@ -223,6 +229,59 @@ public class Evaluator {
 	public SymbolicExpression evaluate(State state, int pid,
 			BooleanLiteralExpression expression) {
 		return symbolicUniverse.bool(expression.value());
+	}
+
+	/**
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The cast expression.
+	 * @return The symbolic representation of the cast expression.
+	 */
+	public SymbolicExpression evaluate(State state, int pid,
+			CastExpression expression) {
+		SymbolicExpression uncastExpression = evaluate(state, pid,
+				expression.getExpression());
+		Type castType = expression.getCastType();
+		SymbolicType symbolicType = symbolicType(castType);
+		SymbolicExpression result;
+
+		if (castType == null) {
+			log.report(new ExecutionException(ErrorKind.OTHER,
+					Certainty.CONCRETE, "Unable to perform cast : "
+							+ expression + ".  Not implemented."));
+		}
+		result = symbolicUniverse.cast(symbolicType, uncastExpression);
+		return result;
+	}
+
+	private SymbolicType symbolicType(Type type) {
+		SymbolicType result = null;
+		if (type instanceof PrimitiveType) {
+			switch (((PrimitiveType) type).primitiveType()) {
+			case BOOL:
+				result = symbolicUniverse.booleanType();
+				break;
+			case INT:
+				result = symbolicUniverse.integerType();
+				break;
+			case REAL:
+				result = symbolicUniverse.realType();
+				break;
+			case STRING:
+
+			default:
+				result = null;
+
+			}
+		} else if (type instanceof ArrayType) {
+			result = symbolicUniverse.arrayType(symbolicType(((ArrayType) type)
+					.baseType()));
+		}
+		return result;
 	}
 
 	/**

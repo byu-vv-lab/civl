@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -54,6 +55,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonCastExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonConditionalExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
@@ -368,6 +370,21 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(join(left.expressionScope(),
 				right.expressionScope()));
+		return result;
+	}
+
+	/**
+	 * A cast of an expression to another type.
+	 * 
+	 * @param type
+	 *            The type to which the expression is cast.
+	 * @param expresssion
+	 *            The expression being cast to a new type.
+	 */
+	public CastExpression castExpression(Type type, Expression expression) {
+		CastExpression result = new CommonCastExpression(type, expression);
+
+		result.setExpressionScope(expression.expressionScope());
 		return result;
 	}
 

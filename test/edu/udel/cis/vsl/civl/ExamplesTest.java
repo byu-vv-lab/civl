@@ -121,5 +121,13 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
+	
+	@Test
+	public void testCast() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "cast.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
 
 }
