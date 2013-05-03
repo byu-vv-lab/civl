@@ -57,6 +57,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonCastExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonConditionalExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
@@ -122,6 +123,10 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	public CommonModelFactory() {
 		identifiers = new HashMap<String, Identifier>();
+		((CommonBooleanLiteralExpression) trueExpression)
+				.setExpressionType(booleanType);
+		((CommonBooleanLiteralExpression) falseExpression)
+				.setExpressionType(booleanType);
 	}
 
 	/**
@@ -349,6 +354,29 @@ public class CommonModelFactory implements ModelFactory {
 		UnaryExpression result = new CommonUnaryExpression(operator, operand);
 
 		result.setExpressionScope(operand.expressionScope());
+		switch (operator) {
+		case ADDRESSOF:
+			((CommonUnaryExpression) result)
+					.setExpressionType(pointerType(operand.getExpressionType()));
+			break;
+		case DEREFERENCE:
+			assert operand.getExpressionType() instanceof PointerType;
+			((CommonUnaryExpression) result)
+					.setExpressionType(((PointerType) operand
+							.getExpressionType()).baseType());
+			break;
+		case NEGATIVE:
+			((CommonUnaryExpression) result).setExpressionType(operand
+					.getExpressionType());
+			break;
+		case NOT:
+			assert operand.getExpressionType().equals(booleanType);
+			((CommonUnaryExpression) result).setExpressionType(booleanType);
+			break;
+		default:
+			break;
+
+		}
 		return result;
 	}
 
@@ -370,6 +398,28 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(join(left.expressionScope(),
 				right.expressionScope()));
+		switch (operator) {
+		case AND:
+		case EQUAL:
+		case LESS_THAN:
+		case LESS_THAN_EQUAL:
+		case NOT_EQUAL:
+		case OR:
+			((CommonBinaryExpression) result).setExpressionType(booleanType);
+			break;
+		case PLUS:
+		case TIMES:
+		case DIVIDE:
+		case MINUS:
+		case MODULO:
+		default:
+			assert left.getExpressionType().equals(right.getExpressionType());
+			((CommonBinaryExpression) result).setExpressionType(left
+					.getExpressionType());
+			break;
+
+		}
+
 		return result;
 	}
 
@@ -385,6 +435,7 @@ public class CommonModelFactory implements ModelFactory {
 		CastExpression result = new CommonCastExpression(type, expression);
 
 		result.setExpressionScope(expression.expressionScope());
+		((CommonCastExpression) result).setExpressionType(type);
 		return result;
 	}
 
@@ -408,6 +459,10 @@ public class CommonModelFactory implements ModelFactory {
 				condition.expressionScope(),
 				join(trueBranch.expressionScope(),
 						falseBranch.expressionScope())));
+		assert trueBranch.getExpressionType().equals(
+				falseBranch.getExpressionType());
+		((CommonConditionalExpression) result).setExpressionType(trueBranch
+				.getExpressionType());
 		return result;
 	}
 
@@ -434,7 +489,12 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return The integer literal expression.
 	 */
 	public IntegerLiteralExpression integerLiteralExpression(BigInteger value) {
-		return new CommonIntegerLiteralExpression(value);
+		IntegerLiteralExpression result = new CommonIntegerLiteralExpression(
+				value);
+
+		((CommonIntegerLiteralExpression) result)
+				.setExpressionType(integerType);
+		return result;
 	}
 
 	/**
@@ -445,7 +505,10 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return The real literal expression.
 	 */
 	public RealLiteralExpression realLiteralExpression(BigDecimal value) {
-		return new CommonRealLiteralExpression(value);
+		RealLiteralExpression result = new CommonRealLiteralExpression(value);
+
+		((CommonRealLiteralExpression) result).setExpressionType(realType);
+		return result;
 	}
 
 	/**
@@ -466,7 +529,11 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return The string literal expression.
 	 */
 	public StringLiteralExpression stringLiteralExpression(String value) {
-		return new CommonStringLiteralExpression(value);
+		StringLiteralExpression result = new CommonStringLiteralExpression(
+				value);
+
+		((CommonStringLiteralExpression) result).setExpressionType(stringType);
+		return result;
 	}
 
 	/**
@@ -482,9 +549,13 @@ public class CommonModelFactory implements ModelFactory {
 			Expression index) {
 		ArrayIndexExpression result = new CommonArrayIndexExpression(array,
 				index);
+		Type arrayType = array.getExpressionType();
 
 		result.setExpressionScope(join(array.expressionScope(),
 				index.expressionScope()));
+		assert arrayType instanceof ArrayType;
+		((CommonArrayIndexExpression) result)
+				.setExpressionType(((ArrayType) arrayType).baseType());
 		return result;
 	}
 
@@ -494,7 +565,10 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new self expression.
 	 */
 	public SelfExpression selfExpression() {
-		return new CommonSelfExpression();
+		SelfExpression result = new CommonSelfExpression();
+
+		((CommonSelfExpression) result).setExpressionType(processType);
+		return result;
 	}
 
 	/**
@@ -511,6 +585,7 @@ public class CommonModelFactory implements ModelFactory {
 		if (!variable.isConst()) {
 			result.setExpressionScope(variable.scope());
 		}
+		((CommonVariableExpression) result).setExpressionType(variable.type());
 		return result;
 	}
 
@@ -532,6 +607,7 @@ public class CommonModelFactory implements ModelFactory {
 			Expression expression) {
 		AssertStatement result = new CommonAssertStatement(source, expression);
 
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		result.setStatementScope(expression.expressionScope());
 		return result;
 	}
@@ -553,6 +629,7 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setStatementScope(join(lhs.expressionScope(),
 				rhs.expressionScope()));
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
 	}
 
@@ -570,6 +647,7 @@ public class CommonModelFactory implements ModelFactory {
 		AssumeStatement result = new CommonAssumeStatement(source, expression);
 
 		result.setStatementScope(expression.expressionScope());
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
 	}
 
@@ -590,6 +668,7 @@ public class CommonModelFactory implements ModelFactory {
 				arguments);
 		Scope statementScope = null;
 
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		for (Expression arg : arguments) {
 			statementScope = join(statementScope, arg.expressionScope());
 		}
@@ -619,6 +698,7 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setStatementScope(join(lhs.expressionScope(),
 				argument.expressionScope()));
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
 	}
 
@@ -643,6 +723,7 @@ public class CommonModelFactory implements ModelFactory {
 			statementScope = join(statementScope, arg.expressionScope());
 		}
 		result.setStatementScope(statementScope);
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
 	}
 
@@ -670,6 +751,7 @@ public class CommonModelFactory implements ModelFactory {
 			statementScope = join(statementScope, arg.expressionScope());
 		}
 		result.setStatementScope(statementScope);
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
 	}
 
@@ -686,6 +768,7 @@ public class CommonModelFactory implements ModelFactory {
 		JoinStatement result = new CommonJoinStatement(source, process);
 
 		result.setStatementScope(process.expressionScope());
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
 	}
 
@@ -697,7 +780,10 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new noop statement.
 	 */
 	public NoopStatement noopStatement(Location source) {
-		return new CommonNoopStatement(source);
+		NoopStatement result = new CommonNoopStatement(source);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		return result;
 	}
 
 	/**
@@ -716,6 +802,7 @@ public class CommonModelFactory implements ModelFactory {
 		if (expression != null) {
 			result.setStatementScope(expression.expressionScope());
 		}
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
 	}
 

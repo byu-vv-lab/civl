@@ -113,7 +113,7 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void testEmptyBlock() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
@@ -121,7 +121,7 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void testCast() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
@@ -129,11 +129,19 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void testSelf() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "self.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
+
+	@Test
+	public void testNonbooleanCondition() throws IOException,
+			PreprocessorException, ParseException, SyntaxException {
+		File file = new File(rootDir, "nonbooleanCondition.cvl");
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}

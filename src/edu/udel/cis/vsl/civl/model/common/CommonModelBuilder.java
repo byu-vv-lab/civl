@@ -465,6 +465,35 @@ public class CommonModelBuilder implements ModelBuilder {
 	}
 
 	/**
+	 * Translate an expression from the CIVL AST to the CIVL model. The
+	 * resulting expression will always be boolean-valued. If the expression
+	 * evaluates to a numeric type, the result will be the equivalent of
+	 * expression==0. Used for evaluating expression in conditions.
+	 * 
+	 * @param expression
+	 * @param scope
+	 */
+	private Expression booleanExpression(ExpressionNode expression, Scope scope) {
+		Expression result = expression(expression, scope);
+
+		if (!result.getExpressionType().equals(factory.booleanType())) {
+			if (result.getExpressionType().equals(factory.integerType())) {
+				result = factory.binaryExpression(BINARY_OPERATOR.NOT_EQUAL,
+						result,
+						factory.integerLiteralExpression(BigInteger.ZERO));
+			} else if (result.getExpressionType().equals(factory.realType())) {
+				result = factory.binaryExpression(BINARY_OPERATOR.NOT_EQUAL,
+						result, factory.realLiteralExpression(BigDecimal.ZERO));
+			} else {
+				throw new RuntimeException(
+						"Unable to convert expression to boolean type: "
+								+ expression);
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Translate a cast expression from the CIVL AST to the CIVL model.
 	 * 
 	 * @param expression
@@ -1295,7 +1324,7 @@ public class CommonModelBuilder implements ModelBuilder {
 								+ init);
 			}
 		}
-		condition = expression(statement.getCondition(), newScope);
+		condition = booleanExpression(statement.getCondition(), newScope);
 		loopBody = statement(function, initStatement, statement.getBody(),
 				newScope);
 		for (Statement outgoing : initStatement.target().outgoing()) {
@@ -1414,7 +1443,7 @@ public class CommonModelBuilder implements ModelBuilder {
 			WhenNode statement, Scope scope) {
 		Statement result = statement(function, lastStatement,
 				statement.getBody(), scope);
-		Expression guard = expression(statement.getGuard(), scope);
+		Expression guard = booleanExpression(statement.getGuard(), scope);
 		Iterator<Statement> iter;
 
 		// A $true or $false guard is translated as 1 or 0, but this causes
@@ -1450,7 +1479,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	private Statement when(Location location, Expression guard,
 			Function function, Statement lastStatement, WhenNode statement,
 			Scope scope) {
-		Expression newGuard = expression(statement.getGuard(), scope);
+		Expression newGuard = booleanExpression(statement.getGuard(), scope);
 		Statement result;
 
 		if (newGuard.equals(factory.booleanLiteralExpression(true))) {
