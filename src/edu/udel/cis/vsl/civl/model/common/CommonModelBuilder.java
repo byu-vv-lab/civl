@@ -604,11 +604,15 @@ public class CommonModelBuilder implements ModelBuilder {
 		return result;
 	}
 
-	private LiteralExpression constant(ConstantNode constant) {
+	private Expression constant(ConstantNode constant) {
 		LiteralExpression result = null;
 		edu.udel.cis.vsl.abc.ast.type.IF.Type convertedType = constant
 				.getConvertedType();
 
+		if (convertedType.kind() == TypeKind.PROCESS) {
+			assert constant.getStringRepresentation().equals("$self");
+			return factory.selfExpression();
+		}
 		assert convertedType.kind() == TypeKind.BASIC;
 		switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
 		case SHORT:

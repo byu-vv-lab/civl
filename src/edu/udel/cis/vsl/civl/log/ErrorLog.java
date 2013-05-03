@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
@@ -88,28 +89,38 @@ public class ErrorLog {
 			out.println("Encountered in initial state.\n");
 			return;
 		}
-		try {
-			String traceFilename = name() + "_" + entry.id() + ".trace";
-			File traceFile;
-			PrintWriter traceOut;
-
-			traceFile = new File(workingDirectory, traceFilename);
-			traceOut = new PrintWriter(traceFile);
-			out.print("Writing trace to " + traceFilename + "...");
-			out.flush();
-			writeTrace(traceOut);
-			out.println("done.\n");
-			out.flush();
-			traceOut.close();
-		} catch (FileNotFoundException e) {
-			out.println("Unable to open file for writing...exiting...");
-			print(out);
-			throw new RuntimeException(
-					"CIVL: Exiting due to inability to open log file.");
-		}
+//		try {
+//			String traceFilename = name() + "_" + entry.id() + ".trace";
+//			File traceFile;
+//			PrintWriter traceOut;
+//
+//			traceFile = new File(workingDirectory, traceFilename);
+//			traceOut = new PrintWriter(traceFile);
+//			out.print("Writing trace to " + traceFilename + "...");
+//			out.flush();
+//			writeTrace(traceOut);
+//			out.println("done.\n");
+//			out.flush();
+//			traceOut.close();
+//		} catch (FileNotFoundException e) {
+//			out.println("Unable to open file for writing...exiting...");
+//			print(out);
+//			throw new RuntimeException(
+//					"CIVL: Exiting due to inability to open log file.");
+//		}
 	}
 
 	private void writeTrace(PrintWriter traceOut) {
+		Stack<TransitionSequence> stack = searcher.stack();
+		int stackSize = stack.size();
+		traceOut.println();
+		for (int i = 0; i < stackSize; i++) {
+			TransitionSequence sequence = stack.elementAt(i);
+			
+			if (sequence.size() > 1) {
+				
+			}
+		}
 		// int stackSize = searcher.stack().size();
 		// TODO: Handle this printing.
 		// for (int i = 0; i < stackSize; i++) {

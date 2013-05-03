@@ -317,8 +317,8 @@ public class Executor {
 		joinedPid = Integer.parseInt(((SymbolicConstant) pidExpression).name()
 				.getString().substring(pidPrefix.length()));
 		// TODO: Throw exception if not the right type.
-		state = stateFactory.removeProcess(state, joinedPid);
 		state = transition(state, state.process(pid), statement.target());
+		state = stateFactory.removeProcess(state, joinedPid);
 		// state = stateFactory.canonic(state);
 		return state;
 	}
@@ -633,5 +633,9 @@ public class Executor {
 	 */
 	public Evaluator evaluator() {
 		return evaluator;
+	}
+	
+	String pidPrefix() {
+		return pidPrefix;
 	}
 }

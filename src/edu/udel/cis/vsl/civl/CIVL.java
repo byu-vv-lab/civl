@@ -148,7 +148,7 @@ public class CIVL {
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
-				new java.io.File("."));
+				new File(new File("."), "CIVLREP/"));
 		Evaluator evaluator = new Evaluator(universe, log);
 		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
 				transitionFactory, universe, evaluator);
@@ -187,6 +187,7 @@ public class CIVL {
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
 		searcher.setDebugOut(new PrintWriter(out));
+		log.setSearcher(searcher);
 		result = searcher.search(initialState);
 		endTime = System.currentTimeMillis();
 		out.println(bar + " Stats " + bar + "\n");

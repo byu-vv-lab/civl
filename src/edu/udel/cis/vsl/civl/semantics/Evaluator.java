@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
@@ -55,6 +56,8 @@ public class Evaluator {
 	private RealNumberFactory numberFactory = new RealNumberFactory();
 	private SymbolicTupleType pointerType;
 	private ErrorLog log;
+	private String pidPrefix = "PID_";
+	private SymbolicTupleType processType;
 
 	/**
 	 * An evaluator is used to evaluate expressions.
@@ -64,6 +67,7 @@ public class Evaluator {
 	 */
 	public Evaluator(SymbolicUniverse symbolicUniverse, ErrorLog log) {
 		List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
+		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
 
 		this.symbolicUniverse = symbolicUniverse;
 		pointerComponents.add(symbolicUniverse.integerType());
@@ -72,6 +76,9 @@ public class Evaluator {
 				.integerType()));
 		pointerType = symbolicUniverse.tupleType(
 				symbolicUniverse.stringObject("pointer"), pointerComponents);
+		processTypeList.add(symbolicUniverse.integerType());
+		processType = symbolicUniverse.tupleType(
+				symbolicUniverse.stringObject("process"), processTypeList);
 		this.log = log;
 	}
 
@@ -107,6 +114,8 @@ public class Evaluator {
 			result = evaluate(state, pid, (UnaryExpression) expression);
 		} else if (expression instanceof VariableExpression) {
 			result = evaluate(state, pid, (VariableExpression) expression);
+		} else if (expression instanceof SelfExpression) {
+			result = evaluate(state, pid, (SelfExpression) expression);
 		}
 		if (result != null) {
 			result = (SymbolicExpression) symbolicUniverse.canonic(result);
@@ -298,6 +307,12 @@ public class Evaluator {
 	public SymbolicExpression evaluate(State state, int pid,
 			IntegerLiteralExpression expression) {
 		return symbolicUniverse.integer(expression.value().intValue());
+	}
+
+	public SymbolicExpression evaluate(State state, int pid,
+			SelfExpression expression) {
+		return symbolicUniverse.symbolicConstant(
+				symbolicUniverse.stringObject(pidPrefix + pid), processType);
 	}
 
 	/**
