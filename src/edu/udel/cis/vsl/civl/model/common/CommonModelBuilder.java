@@ -793,8 +793,8 @@ public class CommonModelBuilder implements ModelBuilder {
 			result = compoundStatement(location, guard, function,
 					lastStatement, (CompoundStatementNode) statement, scope);
 		} else if (statement instanceof ForLoopNode) {
-			result = forLoop(function, lastStatement, (ForLoopNode) statement,
-					scope);
+			result = forLoop(location, guard, function, lastStatement,
+					(ForLoopNode) statement, scope);
 		} else if (statement instanceof LoopNode) {
 			result = whileLoop(function, lastStatement, (LoopNode) statement,
 					scope);
@@ -1276,6 +1276,14 @@ public class CommonModelBuilder implements ModelBuilder {
 
 	private Statement forLoop(Function function, Statement lastStatement,
 			ForLoopNode statement, Scope scope) {
+		return forLoop(factory.location(scope),
+				factory.booleanLiteralExpression(true), function,
+				lastStatement, statement, scope);
+	}
+
+	private Statement forLoop(Location location, Expression guard,
+			Function function, Statement lastStatement, ForLoopNode statement,
+			Scope scope) {
 		ForLoopInitializerNode init = statement.getInitializer();
 		Statement initStatement = lastStatement;
 		Scope newScope = factory.scope(scope, new LinkedHashSet<Variable>(),
@@ -1285,19 +1293,19 @@ public class CommonModelBuilder implements ModelBuilder {
 		Statement incrementer;
 		Statement loopExit;
 
+		location.setScope(newScope);
 		if (init != null) {
 			if (init instanceof ExpressionNode) {
-				Location initLocation = factory.location(newScope);
-
-				initStatement = expressionStatement(initLocation,
+				initStatement = expressionStatement(location,
 						factory.booleanLiteralExpression(true), function,
 						(ExpressionNode) init, scope);
+				initStatement.setGuard(guard);
 				if (lastStatement != null) {
-					lastStatement.setTarget(initLocation);
-					function.addLocation(initLocation);
+					lastStatement.setTarget(location);
+					function.addLocation(location);
 				} else {
 					lastStatement = initStatement;
-					function.setStartLocation(initLocation);
+					function.setStartLocation(location);
 				}
 			} else if (init instanceof DeclarationListNode) {
 				for (int i = 0; i < ((DeclarationListNode) init).numChildren(); i++) {
@@ -1306,22 +1314,21 @@ public class CommonModelBuilder implements ModelBuilder {
 					// TODO: Double check this is a variable
 					processVariableDeclaration(newScope, declaration);
 					if (declaration.getInitializer() != null) {
-						Location initLocation = factory.location(newScope);
-
 						initStatement = factory
 								.assignStatement(
-										initLocation,
+										location,
 										factory.variableExpression(newScope
 												.getVariable(newScope
 														.numVariables() - 1)),
 										expression((ExpressionNode) declaration
 												.getInitializer(), newScope));
+						initStatement.setGuard(guard);
 						if (lastStatement != null) {
-							lastStatement.setTarget(initLocation);
-							function.addLocation(initLocation);
+							lastStatement.setTarget(location);
+							function.addLocation(location);
 						} else {
 							lastStatement = initStatement;
-							function.setStartLocation(initLocation);
+							function.setStartLocation(location);
 						}
 					}
 				}
