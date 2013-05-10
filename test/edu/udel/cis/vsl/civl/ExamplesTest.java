@@ -146,4 +146,12 @@ public class ExamplesTest {
 		assertFalse(result);
 	}
 
+	@Test
+	public void testAssertFirst() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "assertFirst.cvl");
+		boolean result = CIVL.check(file, out);
+		assertTrue(result);
+	}
+
 }
