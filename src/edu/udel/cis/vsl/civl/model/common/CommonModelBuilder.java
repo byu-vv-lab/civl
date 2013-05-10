@@ -50,6 +50,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.GotoNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.NullStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
@@ -724,6 +725,9 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (statement instanceof ForLoopNode) {
 			result = forLoop(function, lastStatement, (ForLoopNode) statement,
 					scope);
+		} else if (statement instanceof LoopNode) {
+			result = whileLoop(function, lastStatement, (LoopNode) statement,
+					scope);
 		} else if (statement instanceof IfNode) {
 			result = ifStatement(function, lastStatement, (IfNode) statement,
 					scope);
@@ -790,6 +794,9 @@ public class CommonModelBuilder implements ModelBuilder {
 					lastStatement, (CompoundStatementNode) statement, scope);
 		} else if (statement instanceof ForLoopNode) {
 			result = forLoop(function, lastStatement, (ForLoopNode) statement,
+					scope);
+		} else if (statement instanceof LoopNode) {
+			result = whileLoop(function, lastStatement, (LoopNode) statement,
 					scope);
 		} else if (statement instanceof IfNode) {
 			result = ifStatement(location, function, lastStatement,
@@ -1403,6 +1410,50 @@ public class CommonModelBuilder implements ModelBuilder {
 			function.setStartLocation(location);
 		}
 		return result;
+	}
+
+	private Statement whileLoop(Function function, Statement lastStatement,
+			LoopNode statement, Scope scope) {
+		Statement loopExit;
+		Scope newScope = factory.scope(scope, new LinkedHashSet<Variable>(),
+				function);
+		Statement loopBody;
+		Expression condition;
+		Location loopEntrance;
+
+		condition = booleanExpression(statement.getCondition(), newScope);
+		loopBody = statement(function, lastStatement, statement.getBody(),
+				newScope);
+		if (lastStatement != null) {
+			if (lastStatement.target() == null) {
+				// If the loop body is an empty block, the result of evaluating
+				// the
+				// loop body will be lastStatement. When this happens,
+				// lastStatement!=null, but lastStatement.target()==null (since
+				// it hasn't been set yet). If that's the case, make a new
+				// location.
+				loopEntrance = factory.location(newScope);
+				lastStatement.setTarget(loopEntrance);
+				function.addLocation(loopEntrance);
+			} else {
+				loopEntrance = lastStatement.target();
+			}
+		} else {
+			loopEntrance = function.startLocation();
+		}
+		assert loopEntrance != null;
+		if (loopBody.equals(lastStatement)) {
+			loopBody = factory.noopStatement(loopEntrance);
+		}
+		for (Statement outgoing : loopEntrance.outgoing()) {
+			outgoing.setGuard(factory.binaryExpression(BINARY_OPERATOR.AND,
+					outgoing.guard(), condition));
+		}
+		loopBody.setTarget(loopEntrance);
+		loopExit = factory.noopStatement(loopEntrance);
+		loopExit.setGuard(factory
+				.unaryExpression(UNARY_OPERATOR.NOT, condition));
+		return loopExit;
 	}
 
 	private Statement wait(Function function, Statement lastStatement,

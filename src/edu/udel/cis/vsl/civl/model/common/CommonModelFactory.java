@@ -553,9 +553,16 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(join(array.expressionScope(),
 				index.expressionScope()));
-		assert arrayType instanceof ArrayType;
-		((CommonArrayIndexExpression) result)
-				.setExpressionType(((ArrayType) arrayType).baseType());
+		if (arrayType instanceof ArrayType) {
+			((CommonArrayIndexExpression) result)
+					.setExpressionType(((ArrayType) arrayType).baseType());
+		} else if (arrayType instanceof PointerType) {
+			((CommonArrayIndexExpression) result)
+					.setExpressionType(((PointerType) arrayType).baseType());
+		} else {
+			throw new RuntimeException(
+					"Unable to set expression type for expression: " + result);
+		}
 		return result;
 	}
 
