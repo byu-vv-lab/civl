@@ -544,6 +544,7 @@ public class Evaluator {
 					Certainty.PROVEABLE,
 					"Attempt to read unitialized variable: "
 							+ expression.variable() + "\n\n" + baos.toString()));
+			return symbolicUniverse.nullExpression();
 		}
 		return symbolicUniverse.reasoner(
 				(BooleanExpression) state.pathCondition()).simplify(

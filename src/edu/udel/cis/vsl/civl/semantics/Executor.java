@@ -579,6 +579,12 @@ public class Executor {
 		SymbolicExpression index = evaluator.evaluate(state, pid,
 				arrayIndex.index());
 
+		if (!(index instanceof NumericExpression)) {
+			log.report(new ExecutionException(ErrorKind.OTHER,
+					Certainty.CONCRETE,
+					"An array index must evaluate to a numeric expression."));
+			return symbolicUniverse.nullExpression();
+		}
 		while (array.type().equals(evaluator.pointerType())) {
 			array = evaluator.dereference(state, pid, array);
 		}
