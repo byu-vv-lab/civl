@@ -159,7 +159,7 @@ public class ExamplesTest {
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "struct.cvl");
 		boolean result = CIVL.check(file, out);
-		assertTrue(result);
+		assertFalse(result);
 	}
 
 }
