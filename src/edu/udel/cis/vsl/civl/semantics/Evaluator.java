@@ -10,11 +10,13 @@ import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.log.ExecutionException;
+import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
@@ -26,6 +28,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.DynamicScope;
@@ -39,6 +42,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.Number;
+import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
@@ -104,6 +108,8 @@ public class Evaluator {
 			result = evaluate(state, pid, (ConditionalExpression) expression);
 		} else if (expression instanceof CastExpression) {
 			result = evaluate(state, pid, (CastExpression) expression);
+		} else if (expression instanceof DotExpression) {
+			result = evaluate(state, pid, (DotExpression) expression);
 		} else if (expression instanceof IntegerLiteralExpression) {
 			result = evaluate(state, pid, (IntegerLiteralExpression) expression);
 		} else if (expression instanceof RealLiteralExpression) {
@@ -146,6 +152,40 @@ public class Evaluator {
 		assert condition instanceof BooleanExpression;
 		return symbolicUniverse.cond((BooleanExpression) condition, trueBranch,
 				falseBranch);
+	}
+
+	/**
+	 * Evaluate a reference to a struct field.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The dot expression.
+	 * @return The symbolic expression for reading the struct field.
+	 */
+	public SymbolicExpression evaluate(State state, int pid,
+			DotExpression expression) {
+		SymbolicExpression currentValue = evaluate(state, pid,
+				expression.struct());
+		Variable structVariable = getVariable(state, pid, expression.struct());
+		Identifier field = expression.field();
+		StructType structType;
+		IntObject index = null;
+		SymbolicExpression result;
+
+		assert structVariable.type() instanceof StructType;
+		structType = (StructType) structVariable.type();
+		for (int i = 0; i < structType.fields().size(); i++) {
+			if (structType.fields().get(i).name().equals(field)) {
+				index = symbolicUniverse.intObject(i);
+				break;
+			}
+		}
+		assert index != null;
+		result = symbolicUniverse.tupleRead(currentValue, index);
+		return result;
 	}
 
 	/**

@@ -28,6 +28,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.DotNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
@@ -418,6 +419,9 @@ public class CommonModelBuilder implements ModelBuilder {
 			SequenceNode<FieldDeclarationNode> fieldNodes = ((StructureOrUnionTypeNode) typeNode)
 					.getStructDeclList();
 			List<StructField> fields = new Vector<StructField>();
+			Identifier structName = factory
+					.identifier(((StructureOrUnionTypeNode) typeNode).getTag()
+							.name());
 
 			for (int i = 0; i < fieldNodes.numChildren(); i++) {
 				FieldDeclarationNode fieldNode = fieldNodes.getSequenceChild(i);
@@ -426,7 +430,7 @@ public class CommonModelBuilder implements ModelBuilder {
 
 				fields.add(factory.structField(name, type));
 			}
-			result = factory.structType(fields);
+			result = factory.structType(structName, fields);
 		}
 		return result;
 	}
@@ -455,6 +459,8 @@ public class CommonModelBuilder implements ModelBuilder {
 					scope);
 		} else if (expression instanceof ConstantNode) {
 			result = constant((ConstantNode) expression);
+		} else if (expression instanceof DotNode) {
+			result = dotExpression((DotNode) expression, scope);
 		} else if (expression instanceof ResultNode) {
 			result = factory.resultExpression();
 		} else if (expression instanceof SelfNode) {
@@ -509,6 +515,24 @@ public class CommonModelBuilder implements ModelBuilder {
 		Expression castExpression = expression(expression.getArgument(), scope);
 
 		result = factory.castExpression(castType, castExpression);
+		return result;
+	}
+
+	/**
+	 * Translate a struct field reference from the CIVL AST to the CIVL model.
+	 * 
+	 * @param expression
+	 *            The dot expression.
+	 * @param scope
+	 *            The (static) scope containing the expression.
+	 * @return The model representation of the expression.
+	 */
+	private Expression dotExpression(DotNode expression, Scope scope) {
+		Expression result;
+		Expression struct = expression(expression.getStructure(), scope);
+		Identifier field = factory.identifier(expression.getFieldName().name());
+
+		result = factory.dotExpression(struct, field);
 		return result;
 	}
 

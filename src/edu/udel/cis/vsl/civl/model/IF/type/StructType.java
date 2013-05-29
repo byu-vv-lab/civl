@@ -2,6 +2,8 @@ package edu.udel.cis.vsl.civl.model.IF.type;
 
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.model.IF.Identifier;
+
 public interface StructType extends Type {
 
 	/**
@@ -10,5 +12,8 @@ public interface StructType extends Type {
 	 */
 	List<StructField> fields();
 	
-	
+	/**
+	 * @return The name of this struct.
+	 */
+	Identifier name();
 }

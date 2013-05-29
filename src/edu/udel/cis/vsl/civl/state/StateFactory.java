@@ -14,6 +14,8 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -126,6 +128,12 @@ public class StateFactory implements StateFactoryIF {
 				SymbolicType type = arrayType((ArrayType) v.type());
 
 				values[i] = symbolicUniverse.symbolicConstant(name, type);
+			} else if (v.type() instanceof StructType) {
+				StringObject name = symbolicUniverse.stringObject("S_s"
+						+ dynamicScopeId + "v" + i);
+				SymbolicType type = structType((StructType) v.type());
+
+				values[i] = symbolicUniverse.symbolicConstant(name, type);
 			} else if (v.isExtern()) {
 				StringObject name = symbolicUniverse.stringObject("s"
 						+ dynamicScopeId + "v" + i);
@@ -223,8 +231,56 @@ public class StateFactory implements StateFactoryIF {
 			}
 		} else if (baseType instanceof ProcessType) {
 			return symbolicUniverse.arrayType(processType);
+		} else if (baseType instanceof StructType) {
+			return structType((StructType) baseType);
 		}
 		return null;
+	}
+
+	/**
+	 * Get the symbolic type of a struct.
+	 * 
+	 * @param type
+	 *            The model struct type.
+	 * @return The symbolic struct type, which is a tuple whose component types
+	 *         are the symbolic types corresponding to the struct's fields.
+	 */
+	private SymbolicType structType(StructType type) {
+		SymbolicType result;
+		StringObject name = symbolicUniverse.stringObject(type.name().name());
+		List<SymbolicType> fieldTypes = new Vector<SymbolicType>();
+
+		for (StructField f : type.fields()) {
+			SymbolicType fieldType = null;
+
+			if (f.type() instanceof ArrayType) {
+				fieldType = arrayType((ArrayType) f.type());
+			} else if (f.type() instanceof PrimitiveType) {
+				switch (((PrimitiveType) f.type()).primitiveType()) {
+				case INT:
+					fieldType = symbolicUniverse.integerType();
+					break;
+				case BOOL:
+					fieldType = symbolicUniverse.booleanType();
+					break;
+				case REAL:
+					fieldType = symbolicUniverse.realType();
+					break;
+				case STRING:
+					// TODO: Handle this.
+				default:
+					break;
+				}
+			} else if (f.type() instanceof ProcessType) {
+				fieldType = symbolicUniverse.arrayType(processType);
+			} else if (f.type() instanceof StructType) {
+				// TODO: Handle recursive types.
+				fieldType = structType((StructType) f.type());
+			}
+			fieldTypes.add(fieldType);
+		}
+		result = symbolicUniverse.tupleType(name, fieldTypes);
+		return result;
 	}
 
 	private State collectScopes(State state) {

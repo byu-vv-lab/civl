@@ -154,4 +154,12 @@ public class ExamplesTest {
 		assertTrue(result);
 	}
 
+	@Test
+	public void testStruct() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "struct.cvl");
+		boolean result = CIVL.check(file, out);
+		assertTrue(result);
+	}
+
 }

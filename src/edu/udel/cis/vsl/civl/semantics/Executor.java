@@ -13,9 +13,11 @@ import java.util.Vector;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.log.ExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
@@ -31,6 +33,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
@@ -49,6 +52,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -497,7 +501,8 @@ public class Executor {
 	 *            The process id of the currently executing process.
 	 * @param target
 	 *            The location where the value should be stored. This should be
-	 *            an ArrayIndexExpression or a VariableExpression.
+	 *            an ArrayIndexExpression, a VariableExpression, a pointer
+	 *            dereference, or a DotExpression.
 	 * @param symbolicValue
 	 *            The new symbolic value to write.
 	 * @return A new state with the value of the target variable modified.
@@ -524,6 +529,28 @@ public class Executor {
 
 			state = stateFactory.setVariable(state, variable, scopeID, pid,
 					symbolicValue);
+		} else if (target instanceof DotExpression) {
+			Variable variable = evaluator.getVariable(state, pid,
+					((DotExpression) target).struct());
+			SymbolicExpression structValue = evaluator.evaluate(state, pid,
+					((DotExpression) target).struct());
+			Identifier field = ((DotExpression) target).field();
+			StructType structType;
+			IntObject index = null;
+			SymbolicExpression newValue;
+
+			assert variable.type() instanceof StructType;
+			structType = (StructType) variable.type();
+			for (int i = 0; i < structType.fields().size(); i++) {
+				if (structType.fields().get(i).name().equals(field)) {
+					index = symbolicUniverse.intObject(i);
+					break;
+				}
+			}
+			assert index != null;
+			newValue = symbolicUniverse.tupleWrite(structValue, index,
+					symbolicValue);
+			state = stateFactory.setVariable(state, variable, pid, newValue);
 		}
 		// TODO: Throw some sort of exception otherwise.
 		// state = stateFactory.canonic(state);
@@ -634,7 +661,7 @@ public class Executor {
 	public Evaluator evaluator() {
 		return evaluator;
 	}
-	
+
 	String pidPrefix() {
 		return pidPrefix;
 	}

@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATO
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
@@ -192,11 +193,13 @@ public interface ModelFactory {
 	/**
 	 * Get a new struct type.
 	 * 
+	 * @param name
+	 *            The name of this struct type.
 	 * @param fields
 	 *            List of the fields in this struct type.
 	 * @return A new struct type with the given fields.
 	 */
-	public StructType structType(List<StructField> fields);
+	public StructType structType(Identifier name, List<StructField> fields);
 
 	/**
 	 * Get a struct field.
@@ -263,6 +266,17 @@ public interface ModelFactory {
 	 */
 	public ConditionalExpression conditionalExpression(Expression condition,
 			Expression trueBranch, Expression falseBranch);
+
+	/**
+	 * A dot expression is a reference to a struct field.
+	 * 
+	 * @param struct
+	 *            The struct being referenced.
+	 * @param field
+	 *            The field.
+	 * @return The dot expression.
+	 */
+	public DotExpression dotExpression(Expression struct, Identifier field);
 
 	/**
 	 * A boolean literal expression.
