@@ -1,8 +1,8 @@
 package edu.udel.cis.vsl.civl.log;
 
-import edu.udel.cis.vsl.civl.util.ExecutionProblem;
+import edu.udel.cis.vsl.civl.util.CIVLException;
 
-public class ExecutionException extends ExecutionProblem {
+public class ExecutionException extends CIVLException {
 
 	/**
 	 * 

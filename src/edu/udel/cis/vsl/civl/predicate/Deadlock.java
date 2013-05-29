@@ -9,7 +9,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
-import edu.udel.cis.vsl.civl.util.ExecutionProblem.Certainty;
+import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;

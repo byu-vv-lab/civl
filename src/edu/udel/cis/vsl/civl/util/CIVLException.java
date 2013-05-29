@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.util;
 
-public class ExecutionProblem extends Exception {
+public class CIVLException extends RuntimeException {
 
 	/**
 	 * A certainty level gages how certain we are that this is error is a real
@@ -16,7 +16,7 @@ public class ExecutionProblem extends Exception {
 		CONCRETE,
 		/* The prover is not sure whether this is an error */
 		MAYBE,
-		/* Probably an internal TASS error */
+		/* Probably an internal CIVL error */
 		NONE,
 		/* A theorem prover says this is an error */
 		PROVEABLE
@@ -59,7 +59,7 @@ public class ExecutionProblem extends Exception {
 
 	private ErrorKind kind;
 
-	public ExecutionProblem(ErrorKind kind, Certainty certainty, String message) {
+	public CIVLException(ErrorKind kind, Certainty certainty, String message) {
 		super(message);
 		assert kind != null;
 		assert certainty != null;
@@ -77,7 +77,7 @@ public class ExecutionProblem extends Exception {
 	}
 
 	public String toString() {
-		String result = "Execution error (kind: " + kind + ", certainty: "
+		String result = "CIVL execution error (kind: " + kind + ", certainty: "
 				+ certainty + ")";
 
 		result += "\n";

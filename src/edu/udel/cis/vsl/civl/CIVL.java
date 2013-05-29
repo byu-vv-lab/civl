@@ -31,6 +31,9 @@ import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
+import edu.udel.cis.vsl.civl.util.CIVLException;
+import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
@@ -147,8 +150,8 @@ public class CIVL {
 		StateFactoryIF stateFactory = new StateFactory(universe);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
-		ErrorLog log = new ErrorLog(new PrintWriter(System.out),
-				new File(new File("."), "CIVLREP/"));
+		ErrorLog log = new ErrorLog(new PrintWriter(System.out), new File(
+				new File("."), "CIVLREP/"));
 		Evaluator evaluator = new Evaluator(universe, log);
 		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
 				transitionFactory, universe, evaluator);
@@ -166,17 +169,16 @@ public class CIVL {
 		try {
 			unit = ABC.activator(file).getSideEffectFreeTranslationUnit();
 		} catch (SyntaxException e) {
-			System.out.println("Syntax error in " + file.getName() + ": \n"
-					+ e.getMessage());
-			return false;
+			throw new CIVLException(ErrorKind.OTHER, Certainty.CONCRETE,
+					"Syntax error in " + file.getName() + ": \n"
+							+ e.getMessage());
 		} catch (ParseException e) {
-			System.out.println("Error parsing " + file.getName() + ": \n"
-					+ e.getMessage());
-			return false;
+			throw new CIVLException(ErrorKind.OTHER, Certainty.CONCRETE,
+					"Error parsing " + file.getName() + ": \n" + e.getMessage());
 		} catch (PreprocessorException e) {
-			System.out.println("Error preprocessing " + file.getName() + ": \n"
-					+ e.getMessage());
-			return false;
+			throw new CIVLException(ErrorKind.OTHER, Certainty.CONCRETE,
+					"Error preprocessing " + file.getName() + ": \n"
+							+ e.getMessage());
 		}
 		model = modelBuilder.buildModel(unit);
 		out.println(bar + " Model " + bar + "\n");

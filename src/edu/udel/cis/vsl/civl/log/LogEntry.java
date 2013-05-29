@@ -5,7 +5,7 @@ package edu.udel.cis.vsl.civl.log;
 
 import java.io.PrintWriter;
 
-import edu.udel.cis.vsl.civl.util.ExecutionProblem;
+import edu.udel.cis.vsl.civl.util.CIVLException;
 
 /**
  * @author zirkel
@@ -21,7 +21,7 @@ public class LogEntry {
 	 */
 	private int size;
 
-	private ExecutionProblem problem;
+	private CIVLException problem;
 
 	/** The log to which this entry belongs. */
 	private ErrorLog log;
@@ -31,7 +31,7 @@ public class LogEntry {
 	/**
 	 * 
 	 */
-	public LogEntry(ErrorLog log, ExecutionProblem problem, int size) {
+	public LogEntry(ErrorLog log, CIVLException problem, int size) {
 		this.log = log;
 		this.problem = problem;
 		this.size = size;
@@ -67,7 +67,7 @@ public class LogEntry {
 		return id;
 	}
 	
-	public ExecutionProblem problem() {
+	public CIVLException problem() {
 		return problem;
 	}
 	
