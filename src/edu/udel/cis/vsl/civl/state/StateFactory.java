@@ -655,7 +655,8 @@ public class StateFactory implements StateFactoryIF {
 
 			substitutions.put(oldConstant, newConstant);
 		}
-		return symbolicUniverse.substitute(value, substitutions);
+		return symbolicUniverse.substituteSymbolicConstants(value,
+				substitutions);
 	}
 
 	/**
