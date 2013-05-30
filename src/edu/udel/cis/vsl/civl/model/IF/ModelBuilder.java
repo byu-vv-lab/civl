@@ -3,7 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.IF;
 
-import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
+import edu.udel.cis.vsl.abc.ast.IF.AST;
 
 /**
  * Class to provide translation from an AST to a model.
@@ -24,6 +24,6 @@ public interface ModelBuilder {
 	 *            The translation unit for the AST.
 	 * @return The model.
 	 */
-	public Model buildModel(TranslationUnit unit);
+	public Model buildModel(AST unit);
 	
 }

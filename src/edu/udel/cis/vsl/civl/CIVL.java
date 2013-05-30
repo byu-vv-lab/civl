@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import edu.udel.cis.vsl.abc.ABC;
-import edu.udel.cis.vsl.abc.ast.unit.IF.TranslationUnit;
+import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.Preprocess;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
@@ -146,7 +146,7 @@ public class CIVL {
 
 	public static boolean check(File file, PrintStream out)
 			throws SyntaxException, ParseException, PreprocessorException {
-		TranslationUnit unit;
+		AST unit;
 		StateFactoryIF stateFactory = new StateFactory(universe);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
