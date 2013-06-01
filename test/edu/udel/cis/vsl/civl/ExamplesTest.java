@@ -161,5 +161,22 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
+	
+	@Test
+	public void barrier() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "barrier.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
+	
+	@Test
+	public void barrier2() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "barrier2.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
+
 
 }
