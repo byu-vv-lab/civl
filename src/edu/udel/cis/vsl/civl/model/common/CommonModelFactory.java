@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ArrowExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
@@ -54,6 +55,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonArrayIndexExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonArrowExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonCastExpression;
@@ -496,6 +498,34 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(struct.expressionScope());
 		assert structType instanceof StructType;
+		for (StructField f : ((StructType) structType).fields()) {
+			if (f.name().equals(field)) {
+				result.setExpressionType(f.type());
+				break;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * An arrow expression is a reference to a field in a struct pointer.
+	 * 
+	 * @param structPointer
+	 *            The struct pointer being referenced.
+	 * @param field
+	 *            The field.
+	 * @return The arrow expression.
+	 */
+	public ArrowExpression arrowExpression(Expression structPointer,
+			Identifier field) {
+		CommonArrowExpression result = new CommonArrowExpression(structPointer,
+				field);
+		Type structType = structPointer.getExpressionType();
+
+		result.setExpressionScope(structPointer.expressionScope());
+		assert structType instanceof PointerType;
+		assert ((PointerType) structType).baseType() instanceof StructType;
+		structType = ((PointerType) structType).baseType();
 		for (StructField f : ((StructType) structType).fields()) {
 			if (f.name().equals(field)) {
 				result.setExpressionType(f.type());

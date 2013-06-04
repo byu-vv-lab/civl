@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ArrowExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
@@ -277,6 +278,18 @@ public interface ModelFactory {
 	 * @return The dot expression.
 	 */
 	public DotExpression dotExpression(Expression struct, Identifier field);
+
+	/**
+	 * An arrow expression is a reference to a field in a struct pointer.
+	 * 
+	 * @param structPointer
+	 *            The struct pointer being referenced.
+	 * @param field
+	 *            The field.
+	 * @return The arrow expression.
+	 */
+	public ArrowExpression arrowExpression(Expression structPointer,
+			Identifier field);
 
 	/**
 	 * A boolean literal expression.

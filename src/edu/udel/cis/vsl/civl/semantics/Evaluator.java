@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.log.ExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ArrowExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
@@ -100,6 +101,8 @@ public class Evaluator {
 
 		if (expression instanceof ArrayIndexExpression) {
 			result = evaluate(state, pid, (ArrayIndexExpression) expression);
+		} else if (expression instanceof ArrowExpression) {
+			result = evaluate(state, pid, (ArrowExpression) expression);
 		} else if (expression instanceof BinaryExpression) {
 			result = evaluate(state, pid, (BinaryExpression) expression);
 		} else if (expression instanceof BooleanLiteralExpression) {
@@ -177,6 +180,43 @@ public class Evaluator {
 
 		assert structVariable.type() instanceof StructType;
 		structType = (StructType) structVariable.type();
+		for (int i = 0; i < structType.fields().size(); i++) {
+			if (structType.fields().get(i).name().equals(field)) {
+				index = symbolicUniverse.intObject(i);
+				break;
+			}
+		}
+		assert index != null;
+		result = symbolicUniverse.tupleRead(currentValue, index);
+		return result;
+	}
+
+	/**
+	 * Evaluate a reference to a struct pointer field.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The arrow expression.
+	 * @return The symbolic expression for reading the struct field.
+	 */
+	public SymbolicExpression evaluate(State state, int pid,
+			ArrowExpression expression) {
+		SymbolicExpression currentValue = evaluate(state, pid,
+				expression.structPointer());
+		Variable structVariable = getVariable(state, pid,
+				expression.structPointer());
+		Identifier field = expression.field();
+		StructType structType;
+		IntObject index = null;
+		SymbolicExpression result;
+
+		assert structVariable.type() instanceof PointerType;
+		assert ((PointerType) (structVariable.type())).baseType() instanceof StructType;
+		structType = (StructType) ((PointerType) structVariable.type()).baseType();
+		//structType = (StructType) structVariable.type();
 		for (int i = 0; i < structType.fields().size(); i++) {
 			if (structType.fields().get(i).name().equals(field)) {
 				index = symbolicUniverse.intObject(i);
@@ -446,7 +486,11 @@ public class Evaluator {
 			result = ((VariableExpression) target).variable();
 		} else if (target instanceof ArrayIndexExpression) {
 			result = pointerTarget(((ArrayIndexExpression) target).array());
+		} else if (target instanceof UnaryExpression
+				&& ((UnaryExpression) target).operator() == UNARY_OPERATOR.ADDRESSOF) {
+			result = pointerTarget(((UnaryExpression) target).operand());
 		}
+		assert result != null;
 		return result;
 	}
 
@@ -495,6 +539,7 @@ public class Evaluator {
 		value = state.getScope(scopeID).getValue(variableID);
 		result = navigateReference(state, pid, value,
 				(SymbolicExpression) pointerTuple.get(2));
+		assert result != null;
 		return result;
 	}
 

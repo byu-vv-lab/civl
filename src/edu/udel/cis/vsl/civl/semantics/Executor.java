@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ArrowExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
@@ -541,6 +542,32 @@ public class Executor {
 
 			assert variable.type() instanceof StructType;
 			structType = (StructType) variable.type();
+			for (int i = 0; i < structType.fields().size(); i++) {
+				if (structType.fields().get(i).name().equals(field)) {
+					index = symbolicUniverse.intObject(i);
+					break;
+				}
+			}
+			assert index != null;
+			newValue = symbolicUniverse.tupleWrite(structValue, index,
+					symbolicValue);
+			state = stateFactory.setVariable(state, variable, pid, newValue);
+		} else if (target instanceof ArrowExpression) {
+			Variable variable = evaluator.getVariable(state, pid,
+					((ArrowExpression) target).structPointer());
+			SymbolicExpression pointerValue = evaluator.evaluate(state, pid,
+					((ArrowExpression) target).structPointer());
+			SymbolicExpression structValue = evaluator.dereference(state, pid,
+					pointerValue);
+			Identifier field = ((ArrowExpression) target).field();
+			StructType structType;
+			IntObject index = null;
+			SymbolicExpression newValue;
+
+			assert variable.type() instanceof PointerType;
+			assert ((PointerType) variable.type()).baseType() instanceof StructType;
+			structType = (StructType) ((PointerType) variable.type())
+					.baseType();
 			for (int i = 0; i < structType.fields().size(); i++) {
 				if (structType.fields().get(i).name().equals(field)) {
 					index = symbolicUniverse.intObject(i);

@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.RequiresNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.DotNode;
@@ -461,6 +462,8 @@ public class CommonModelBuilder implements ModelBuilder {
 			result = constant((ConstantNode) expression);
 		} else if (expression instanceof DotNode) {
 			result = dotExpression((DotNode) expression, scope);
+		} else if (expression instanceof ArrowNode) {
+			result = arrowExpression((ArrowNode) expression, scope);
 		} else if (expression instanceof ResultNode) {
 			result = factory.resultExpression();
 		} else if (expression instanceof SelfNode) {
@@ -515,6 +518,25 @@ public class CommonModelBuilder implements ModelBuilder {
 		Expression castExpression = expression(expression.getArgument(), scope);
 
 		result = factory.castExpression(castType, castExpression);
+		return result;
+	}
+
+	/**
+	 * Translate a struct pointer field reference from the CIVL AST to the CIVL
+	 * model.
+	 * 
+	 * @param expression
+	 *            The arrow expression.
+	 * @param scope
+	 *            The (static) scope containing the expression.
+	 * @return The model representation of the expression.
+	 */
+	private Expression arrowExpression(ArrowNode expression, Scope scope) {
+		Expression result;
+		Expression struct = expression(expression.getStructurePointer(), scope);
+		Identifier field = factory.identifier(expression.getFieldName().name());
+
+		result = factory.arrowExpression(struct, field);
 		return result;
 	}
 
