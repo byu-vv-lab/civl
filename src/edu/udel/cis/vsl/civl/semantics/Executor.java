@@ -555,8 +555,13 @@ public class Executor {
 		} else if (target instanceof ArrowExpression) {
 			Variable variable = evaluator.getVariable(state, pid,
 					((ArrowExpression) target).structPointer());
+			DynamicScope structScope;
 			SymbolicExpression pointerValue = evaluator.evaluate(state, pid,
 					((ArrowExpression) target).structPointer());
+			int scopeID = evaluator.getPointerTargetScope(state, pid,
+					pointerValue);
+			int variableID = evaluator.getPointerTargetVariableID(state, pid,
+					pointerValue);
 			SymbolicExpression structValue = evaluator.dereference(state, pid,
 					pointerValue);
 			Identifier field = ((ArrowExpression) target).field();
@@ -577,7 +582,10 @@ public class Executor {
 			assert index != null;
 			newValue = symbolicUniverse.tupleWrite(structValue, index,
 					symbolicValue);
-			state = stateFactory.setVariable(state, variable, pid, newValue);
+			structScope = state.getScope(scopeID);
+			// state = stateFactory.setVariable(state, variable, pid, newValue);
+			state = stateFactory.setVariable(state, structScope.lexicalScope()
+					.getVariable(variableID), scopeID, pid, newValue);
 		}
 		// TODO: Throw some sort of exception otherwise.
 		// state = stateFactory.canonic(state);
@@ -612,18 +620,49 @@ public class Executor {
 					"An array index must evaluate to a numeric expression."));
 			return symbolicUniverse.nullExpression();
 		}
-		while (array.type().equals(evaluator.pointerType())) {
-			array = evaluator.dereference(state, pid, array);
-		}
+		// while (array.type().equals(evaluator.pointerType())) {
+		// array = evaluator.dereference(state, pid, array);
+		// }
 		if (arrayIndex.array() instanceof ArrayIndexExpression) {
 			result = arrayWriteValue(state, pid,
 					(ArrayIndexExpression) arrayIndex.array(),
 					symbolicUniverse.arrayWrite(array,
 							(NumericExpression) index, value));
+		} else if (arrayIndex.array() instanceof ArrowExpression) {
+			SymbolicExpression pointerValue = evaluator.evaluate(state, pid,
+					((ArrowExpression) arrayIndex.array()).structPointer());
+			int scopeID = evaluator.getPointerTargetScope(state, pid,
+					pointerValue);
+			int variableID = evaluator.getPointerTargetVariableID(state, pid,
+					pointerValue);
+			SymbolicExpression structVariable = state.getScope(scopeID)
+					.getValue(variableID);
+			SymbolicExpression struct = evaluator.dereference(state, pid,
+					pointerValue);
+			SymbolicExpression field;
+			SymbolicExpression fieldWriteResult;
+			IntObject fieldIndex = null;
+			StructType structType = (StructType) state.getScope(scopeID)
+					.lexicalScope().getVariable(variableID).type();
+
+			for (int i = 0; i < structType.fields().size(); i++) {
+				if (structType.fields().get(i).name()
+						.equals(((ArrowExpression) arrayIndex.array()).field())) {
+					fieldIndex = symbolicUniverse.intObject(i);
+					break;
+				}
+			}
+			assert fieldIndex != null;
+			field = symbolicUniverse.tupleRead(struct, fieldIndex);
+			fieldWriteResult = symbolicUniverse.arrayWrite(field,
+					(NumericExpression) index, value);
+			result = symbolicUniverse.tupleWrite(struct, fieldIndex,
+					fieldWriteResult);
 		} else {
 			result = symbolicUniverse.arrayWrite(array,
 					(NumericExpression) index, value);
 		}
+		assert result != null;
 		return result;
 	}
 

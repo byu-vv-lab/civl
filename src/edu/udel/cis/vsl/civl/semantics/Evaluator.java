@@ -215,8 +215,9 @@ public class Evaluator {
 
 		assert structVariable.type() instanceof PointerType;
 		assert ((PointerType) (structVariable.type())).baseType() instanceof StructType;
-		structType = (StructType) ((PointerType) structVariable.type()).baseType();
-		//structType = (StructType) structVariable.type();
+		structType = (StructType) ((PointerType) structVariable.type())
+				.baseType();
+		// structType = (StructType) structVariable.type();
 		for (int i = 0; i < structType.fields().size(); i++) {
 			if (structType.fields().get(i).name().equals(field)) {
 				index = symbolicUniverse.intObject(i);
@@ -666,6 +667,39 @@ public class Evaluator {
 		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
 		scopeNumber = symbolicUniverse
 				.extractNumber((NumericExpression) pointerTuple.get(0));
+		scopeID = ((IntegerNumber) scopeNumber).intValue();
+		return scopeID;
+	}
+
+	int getPointerTargetScope(State state, int pid, SymbolicExpression pointer) {
+		SymbolicSequence<?> pointerTuple;
+		Number scopeNumber;
+		int scopeID;
+
+		assert pointer.type().equals(pointerType);
+		assert pointer.numArguments() == 1;
+		assert pointer.argument(0) instanceof SymbolicSequence;
+		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
+		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
+		scopeNumber = symbolicUniverse
+				.extractNumber((NumericExpression) pointerTuple.get(0));
+		scopeID = ((IntegerNumber) scopeNumber).intValue();
+		return scopeID;
+	}
+
+	int getPointerTargetVariableID(State state, int pid,
+			SymbolicExpression pointer) {
+		SymbolicSequence<?> pointerTuple;
+		Number scopeNumber;
+		int scopeID;
+
+		assert pointer.type().equals(pointerType);
+		assert pointer.numArguments() == 1;
+		assert pointer.argument(0) instanceof SymbolicSequence;
+		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
+		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
+		scopeNumber = symbolicUniverse
+				.extractNumber((NumericExpression) pointerTuple.get(1));
 		scopeID = ((IntegerNumber) scopeNumber).intValue();
 		return scopeID;
 	}

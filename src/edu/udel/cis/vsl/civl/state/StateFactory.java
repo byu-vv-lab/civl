@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
@@ -276,6 +277,16 @@ public class StateFactory implements StateFactoryIF {
 			} else if (f.type() instanceof StructType) {
 				// TODO: Handle recursive types.
 				fieldType = structType((StructType) f.type());
+			} else if (f.type() instanceof PointerType) {
+				List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
+
+				pointerComponents.add(symbolicUniverse.integerType());
+				pointerComponents.add(symbolicUniverse.integerType());
+				pointerComponents.add(symbolicUniverse
+						.arrayType(symbolicUniverse.integerType()));
+				fieldType = symbolicUniverse.tupleType(
+						symbolicUniverse.stringObject("pointer"),
+						pointerComponents);
 			}
 			fieldTypes.add(fieldType);
 		}
