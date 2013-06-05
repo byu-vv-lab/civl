@@ -33,8 +33,10 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ForkStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructType;
+import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
@@ -53,7 +55,9 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -644,6 +648,7 @@ public class Executor {
 			IntObject fieldIndex = null;
 			StructType structType = (StructType) state.getScope(scopeID)
 					.lexicalScope().getVariable(variableID).type();
+			Type fieldType;
 
 			for (int i = 0; i < structType.fields().size(); i++) {
 				if (structType.fields().get(i).name()
@@ -653,9 +658,31 @@ public class Executor {
 				}
 			}
 			assert fieldIndex != null;
-			field = symbolicUniverse.tupleRead(struct, fieldIndex);
-			fieldWriteResult = symbolicUniverse.arrayWrite(field,
-					(NumericExpression) index, value);
+			fieldType = structType.fields().get(fieldIndex.getInt()).type();
+			field = symbolicUniverse.reasoner(
+					(BooleanExpression) state.pathCondition()).simplify(
+					symbolicUniverse.tupleRead(struct, fieldIndex));
+			if (fieldType instanceof ArrayType) {
+				fieldWriteResult = symbolicUniverse.arrayWrite(field,
+						(NumericExpression) index, value);
+			} else if (fieldType instanceof PointerType) {
+				int fieldScopeID;
+				int fieldVariableID;
+				SymbolicExpression fieldTarget;
+
+				// assert ((PointerType) fieldType).baseType() instanceof
+				// ArrayType;
+				fieldScopeID = evaluator.getPointerTargetScope(state, pid,
+						field);
+				fieldVariableID = evaluator.getPointerTargetVariableID(state,
+						pid, field);
+				fieldTarget = state.getScope(fieldScopeID).getValue(
+						fieldVariableID);
+				fieldWriteResult = symbolicUniverse.arrayWrite(fieldTarget,
+						(NumericExpression) index, value);
+			} else {
+				throw new RuntimeException("Unable to get array: " + arrayIndex);
+			}
 			result = symbolicUniverse.tupleWrite(struct, fieldIndex,
 					fieldWriteResult);
 		} else {
@@ -663,6 +690,17 @@ public class Executor {
 					(NumericExpression) index, value);
 		}
 		assert result != null;
+		return result;
+	}
+
+	private SymbolicExpression readFieldTuple(SymbolicExpression field) {
+		SymbolicExpression result = field;
+
+		if (field.operator() == SymbolicOperator.TUPLE_READ) {
+			SymbolicObject tuple = field.argument(0);
+			SymbolicObject index = field.argument(1);
+		}
+
 		return result;
 	}
 
