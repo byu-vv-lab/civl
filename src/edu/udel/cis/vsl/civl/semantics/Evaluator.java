@@ -32,7 +32,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
@@ -44,6 +43,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.Number;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
@@ -62,7 +62,9 @@ public class Evaluator {
 	private SymbolicTupleType pointerType;
 	private ErrorLog log;
 	private String pidPrefix = "PID_";
+	private String scopePrefix = "Scope_";
 	private SymbolicTupleType processType;
+	private SymbolicTupleType scopeType;
 
 	/**
 	 * An evaluator is used to evaluate expressions.
@@ -71,19 +73,23 @@ public class Evaluator {
 	 *            The symbolic universe for the expressions.
 	 */
 	public Evaluator(SymbolicUniverse symbolicUniverse, ErrorLog log) {
+		List<SymbolicType> scopeTypeList = new Vector<SymbolicType>();
 		List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
 		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
 
 		this.symbolicUniverse = symbolicUniverse;
-		pointerComponents.add(symbolicUniverse.integerType());
+		processTypeList.add(symbolicUniverse.integerType());
+		processType = symbolicUniverse.tupleType(
+				symbolicUniverse.stringObject("process"), processTypeList);
+		scopeTypeList.add(symbolicUniverse.integerType());
+		scopeType = symbolicUniverse.tupleType(
+				symbolicUniverse.stringObject("scope"), scopeTypeList);
+		pointerComponents.add(scopeType);
 		pointerComponents.add(symbolicUniverse.integerType());
 		pointerComponents.add(symbolicUniverse.arrayType(symbolicUniverse
 				.integerType()));
 		pointerType = symbolicUniverse.tupleType(
 				symbolicUniverse.stringObject("pointer"), pointerComponents);
-		processTypeList.add(symbolicUniverse.integerType());
-		processType = symbolicUniverse.tupleType(
-				symbolicUniverse.stringObject("process"), processTypeList);
 		this.log = log;
 	}
 
@@ -204,7 +210,7 @@ public class Evaluator {
 	 */
 	public SymbolicExpression evaluate(State state, int pid,
 			ArrowExpression expression) {
-		SymbolicExpression currentValue = evaluate(state, pid,
+		SymbolicExpression pointerValue = evaluate(state, pid,
 				expression.structPointer());
 		Variable structVariable = getVariable(state, pid,
 				expression.structPointer());
@@ -212,6 +218,9 @@ public class Evaluator {
 		StructType structType;
 		IntObject index = null;
 		SymbolicExpression result;
+		SymbolicExpression currentValue;
+		int scopeID;
+		int variableID;
 
 		assert structVariable.type() instanceof PointerType;
 		assert ((PointerType) (structVariable.type())).baseType() instanceof StructType;
@@ -225,6 +234,10 @@ public class Evaluator {
 			}
 		}
 		assert index != null;
+		scopeID = getPointerTargetScope(state, pid, pointerValue);
+		variableID = getPointerTargetVariableID(state, pid, pointerValue);
+		// TODO: Traverse offsets if necessary
+		currentValue = state.getScope(scopeID).getValue(variableID);
 		result = symbolicUniverse.tupleRead(currentValue, index);
 		return result;
 	}
@@ -472,7 +485,8 @@ public class Evaluator {
 		Variable variable = pointerTarget(operand);
 		int scope = state.getScopeId(pid, variable);
 
-		components.add(symbolicUniverse.integer(scope));
+		components.add(symbolicUniverse.symbolicConstant(
+				symbolicUniverse.stringObject(scopePrefix + scope), scopeType));
 		components.add(symbolicUniverse.integer(variable.vid()));
 		components.add(symbolicUniverse.array(symbolicUniverse.integerType(),
 				navigationSequence));
@@ -520,7 +534,8 @@ public class Evaluator {
 			SymbolicExpression pointer) {
 		SymbolicExpression result = null;
 		SymbolicSequence<?> pointerTuple;
-		Number scopeNumber;
+		SymbolicObject scope;
+		String scopeIDString;
 		Number variableNumber;
 		int scopeID;
 		int variableID;
@@ -531,11 +546,11 @@ public class Evaluator {
 		assert pointer.argument(0) instanceof SymbolicSequence;
 		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
 		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
-		scopeNumber = symbolicUniverse
-				.extractNumber((NumericExpression) pointerTuple.get(0));
+		scope = (SymbolicObject) pointerTuple.get(0);
+		scopeIDString = scope.toString();
+		scopeID = Integer.parseInt(scopeIDString.split("_")[1]);
 		variableNumber = symbolicUniverse
 				.extractNumber((NumericExpression) pointerTuple.get(1));
-		scopeID = ((IntegerNumber) scopeNumber).intValue();
 		variableID = ((IntegerNumber) variableNumber).intValue();
 		value = state.getScope(scopeID).getValue(variableID);
 		result = navigateReference(state, pid, value,
@@ -611,16 +626,15 @@ public class Evaluator {
 	 * @return The variable.
 	 */
 	public Variable getVariable(State state, int pid, Expression expression) {
-		DynamicScope scope = state.getScope(state.process(pid).scope());
-
 		if (expression instanceof VariableExpression) {
 			return ((VariableExpression) expression).variable();
 		} else if (expression instanceof ArrayIndexExpression) {
-			return baseArray(scope, (ArrayIndexExpression) expression);
+			return baseArray(state, pid, (ArrayIndexExpression) expression);
 		} else if (expression instanceof UnaryExpression) {
 			SymbolicExpression pointer;
 			SymbolicSequence<?> pointerTuple;
-			Number scopeNumber;
+			SymbolicObject scope;
+			String scopeIDString;
 			Number variableNumber;
 			int scopeID;
 			int variableID;
@@ -635,11 +649,12 @@ public class Evaluator {
 				assert pointer.argument(0) instanceof SymbolicSequence;
 				assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
 				pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
-				scopeNumber = symbolicUniverse
-						.extractNumber((NumericExpression) pointerTuple.get(0));
+				scope = (SymbolicObject) pointerTuple.get(0);
+				scopeIDString = scope.toString();
+				scopeID = Integer.parseInt(scopeIDString.split("_")[1]);
 				variableNumber = symbolicUniverse
 						.extractNumber((NumericExpression) pointerTuple.get(1));
-				scopeID = ((IntegerNumber) scopeNumber).intValue();
+				//scopeID = ((IntegerNumber) scopeNumber).intValue();
 				variableID = ((IntegerNumber) variableNumber).intValue();
 				variable = state.getScope(scopeID).lexicalScope()
 						.getVariable(variableID);
@@ -652,10 +667,34 @@ public class Evaluator {
 				+ " not implemented.");
 	}
 
+	/**
+	 * Evaluate an expression that returns a variable, and get the ID of the
+	 * dynamic scope containing that variable.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The expression for the variable.
+	 * @return The id of the scope containing the variable.
+	 */
+	public int getVariableScopeID(State state, int pid, Expression expression) {
+		SymbolicExpression value = evaluate(state, pid, expression);
+		Variable variable = getVariable(state, pid, expression);
+
+		if (value.type().equals(pointerType)) {
+			return getPointerTargetScope(state, pid, value);
+		} else {
+			return state.getScopeId(pid, variable);
+		}
+	}
+
 	int getPointerTargetScope(State state, int pid, Expression expression) {
 		SymbolicExpression pointer;
 		SymbolicSequence<?> pointerTuple;
-		Number scopeNumber;
+		SymbolicObject scope;
+		String scopeIDString;
 		int scopeID;
 
 		assert ((UnaryExpression) expression).operator() == UNARY_OPERATOR.DEREFERENCE;
@@ -665,15 +704,16 @@ public class Evaluator {
 		assert pointer.argument(0) instanceof SymbolicSequence;
 		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
 		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
-		scopeNumber = symbolicUniverse
-				.extractNumber((NumericExpression) pointerTuple.get(0));
-		scopeID = ((IntegerNumber) scopeNumber).intValue();
+		scope = (SymbolicObject) pointerTuple.get(0);
+		scopeIDString = scope.toString();
+		scopeID = Integer.parseInt(scopeIDString.split("_")[1]);
 		return scopeID;
 	}
 
 	int getPointerTargetScope(State state, int pid, SymbolicExpression pointer) {
 		SymbolicSequence<?> pointerTuple;
-		Number scopeNumber;
+		SymbolicObject scope;
+		String scopeIDString;
 		int scopeID;
 
 		assert pointer.type().equals(pointerType);
@@ -681,9 +721,9 @@ public class Evaluator {
 		assert pointer.argument(0) instanceof SymbolicSequence;
 		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
 		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
-		scopeNumber = symbolicUniverse
-				.extractNumber((NumericExpression) pointerTuple.get(0));
-		scopeID = ((IntegerNumber) scopeNumber).intValue();
+		scope = (SymbolicObject) pointerTuple.get(0);
+		scopeIDString = scope.toString();
+		scopeID = Integer.parseInt(scopeIDString.split("_")[1]);
 		return scopeID;
 	}
 
@@ -707,18 +747,27 @@ public class Evaluator {
 	/**
 	 * Get the variable at the base of a (possibly multi-dimensional) array.
 	 * 
-	 * @param scope
-	 *            The dynamic scope containing this array reference.
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
 	 * @param expression
 	 *            The array index expression.
 	 * @return The variable corresponding to the base of this array.
 	 */
-	private Variable baseArray(DynamicScope scope,
+	private Variable baseArray(State state, int pid,
 			ArrayIndexExpression expression) {
 		if (expression.array() instanceof ArrayIndexExpression) {
-			return baseArray(scope, ((ArrayIndexExpression) expression.array()));
+			return baseArray(state, pid,
+					((ArrayIndexExpression) expression.array()));
 		} else if (expression.array() instanceof VariableExpression) {
 			return ((VariableExpression) expression.array()).variable();
+		} else if (expression.array() instanceof ArrowExpression) {
+			return getVariable(state, pid,
+					((ArrowExpression) expression.array()).structPointer());
+		} else if (expression.array() instanceof DotExpression) {
+			return getVariable(state, pid,
+					((DotExpression) expression.array()).struct());
 		}
 		return null;
 	}

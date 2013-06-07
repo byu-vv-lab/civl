@@ -122,6 +122,16 @@ public interface Scope {
 	public Collection<Variable> variablesWithProcrefs();
 
 	/**
+	 * A variable contains a pointer type if it is of type PointerType, if it is
+	 * an array with elements containing pointer type, or if it is a struct with
+	 * fields containing pointer type.
+	 * 
+	 * @return A collection of the variables in this scope containing pointer
+	 *         types.
+	 */
+	public Collection<Variable> variablesWithPointers();
+
+	/**
 	 * Print the scope and all children.
 	 * 
 	 * @param prefix

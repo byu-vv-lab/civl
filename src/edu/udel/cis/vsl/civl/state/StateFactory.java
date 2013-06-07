@@ -49,7 +49,11 @@ public class StateFactory implements StateFactoryIF {
 
 	private String pidPrefix = "PID_";
 
+	private String scopePrefix = "Scope_";
+
 	private SymbolicTupleType processType;
+
+	private SymbolicTupleType scopeType;
 
 	// *************************** Constructors ***********************
 
@@ -58,11 +62,15 @@ public class StateFactory implements StateFactoryIF {
 	 */
 	public StateFactory(SymbolicUniverse symbolicUniverse) {
 		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
+		List<SymbolicType> scopeTypeList = new Vector<SymbolicType>();
 
 		this.symbolicUniverse = symbolicUniverse;
 		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
 				symbolicUniverse.stringObject("process"), processTypeList);
+		scopeTypeList.add(symbolicUniverse.integerType());
+		scopeType = symbolicUniverse.tupleType(
+				symbolicUniverse.stringObject("scope"), scopeTypeList);
 	}
 
 	// ************************* Helper Methods ***********************
@@ -299,6 +307,7 @@ public class StateFactory implements StateFactoryIF {
 		int[] oldToNew = numberScopes(state);
 		boolean change = false;
 		int newNumScopes = 0;
+		State newState;
 
 		for (int i = 0; i < oldNumScopes; i++) {
 			int id = oldToNew[i];
@@ -352,7 +361,11 @@ public class StateFactory implements StateFactoryIF {
 			else
 				newProcesses[pid] = oldProcess;
 		}
-		return new State(newProcesses, newScopes, state.pathCondition());
+		newState = new State(newProcesses, newScopes, state.pathCondition());
+		// Need to go through the pointers and canonicalize scope references
+		newScopes = updateScopeReferencesInScopes(newState, oldToNew);
+		newState = new State(newProcesses, newScopes, state.pathCondition());
+		return newState;
 	}
 
 	/**
@@ -591,6 +604,67 @@ public class StateFactory implements StateFactoryIF {
 	}
 
 	/**
+	 * Searches the dynamic scopes in the given state for any scope reference
+	 * value, and returns a new array of scopes equivalent to the old except
+	 * that those scope reference values have been replaced with new specified
+	 * values. Used for garbage collection and canonicalization of scope IDs.
+	 * 
+	 * The method returns null if no changes were made.
+	 * 
+	 * @param state
+	 *            a state
+	 * @param oldToNewPidMap
+	 *            array of length state.numProcs in which element at index i is
+	 *            the new PID of the process whose old PID is i. A negative
+	 *            value indicates that the process of (old) PID i is to be
+	 *            removed.
+	 * @return new dynamic scopes
+	 */
+	private DynamicScope[] updateScopeReferencesInScopes(State state,
+			int[] oldToNewPidMap) {
+		DynamicScope[] newScopes = null;
+		int numScopes = state.numScopes();
+
+		newScopes = new DynamicScope[numScopes];
+		for (int i = 0; i < numScopes; i++) {
+			DynamicScope dynamicScope = state.getScope(i);
+			Scope staticScope = dynamicScope.lexicalScope();
+			Collection<Variable> pointerVariableIter = staticScope
+					.variablesWithPointers();
+			SymbolicExpression[] newValues = null;
+			// BitSet oldBitSet = dynamicScope.reachers();
+			// BitSet newBitSet = updateBitSet(oldBitSet, oldToNewPidMap);
+
+			for (Variable variable : pointerVariableIter) {
+				int vid = variable.vid();
+				SymbolicExpression oldValue = dynamicScope.getValue(vid);
+				SymbolicExpression newValue = substituteScopeIDs(oldValue,
+						oldToNewPidMap);
+
+				if (oldValue != newValue) {
+					if (newValues == null)
+						newValues = dynamicScope.copyValues();
+					newValues[vid] = newValue;
+				}
+			}
+			if (newValues != null) {
+				if (newScopes == null) {
+					newScopes = new DynamicScope[numScopes];
+					for (int j = 0; j < i; j++)
+						newScopes[j] = state.getScope(j);
+				}
+				newScopes[i] = dynamicScope(staticScope,
+						dynamicScope.parent(), newValues,
+						dynamicScope.reachers());
+			} else if (newScopes != null) {
+				newScopes[i] = dynamicScope;
+			}
+		}
+		assert newScopes != null;
+		return newScopes;
+	}
+
+	/**
 	 * Given a BitSet indexed by process IDs, and a map of old PIDs to new PIDs,
 	 * returns a BitSet equivalent to original but indexed using the new PIDs.
 	 * 
@@ -663,6 +737,40 @@ public class StateFactory implements StateFactoryIF {
 					+ oldToNew[i]);
 			SymbolicConstant newConstant = symbolicUniverse.symbolicConstant(
 					newString, processType);
+
+			substitutions.put(oldConstant, newConstant);
+		}
+		return symbolicUniverse.substituteSymbolicConstants(value,
+				substitutions);
+	}
+
+	/**
+	 * Substitute scope IDs into a symbolic expression (value);
+	 * 
+	 * @param value
+	 *            A symbolic expression for the value of a variable.
+	 * @param oldToNew
+	 *            An array of ints of length n, where n must be greater than any
+	 *            scope ID that could occur in value. The element at position i
+	 *            will be substituted for a scope ID value of i.
+	 * @return A symbolic expression with new scope values, or null if the given
+	 *         symbolic expression was null.
+	 */
+	private SymbolicExpression substituteScopeIDs(SymbolicExpression value,
+			int[] oldToNew) {
+		Map<SymbolicConstant, SymbolicExpression> substitutions = new HashMap<SymbolicConstant, SymbolicExpression>();
+		if (value == null)
+			return null;
+
+		for (int i = 0; i < oldToNew.length; i++) {
+			StringObject oldString = symbolicUniverse.stringObject(scopePrefix
+					+ i);
+			SymbolicConstant oldConstant = symbolicUniverse.symbolicConstant(
+					oldString, scopeType);
+			StringObject newString = symbolicUniverse.stringObject(scopePrefix
+					+ oldToNew[i]);
+			SymbolicConstant newConstant = symbolicUniverse.symbolicConstant(
+					newString, scopeType);
 
 			substitutions.put(oldConstant, newConstant);
 		}

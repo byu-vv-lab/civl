@@ -55,9 +55,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
-import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -514,8 +512,6 @@ public class Executor {
 	 */
 	private State writeValue(State state, int pid, Expression target,
 			SymbolicExpression symbolicValue) {
-		DynamicScope scope = state.getScope(state.process(pid).scope());
-
 		if (target instanceof VariableExpression) {
 			Variable variable = ((VariableExpression) target).variable();
 
@@ -524,10 +520,27 @@ public class Executor {
 		} else if (target instanceof ArrayIndexExpression) {
 			SymbolicExpression newValue = arrayWriteValue(state, pid,
 					(ArrayIndexExpression) target, symbolicValue);
+			SymbolicExpression currentArrayValue = evaluator.evaluate(state,
+					pid, ((ArrayIndexExpression) target).array());
+			Variable writeLocation = evaluator.getVariable(state, pid, target);
 
-			state = stateFactory.setVariable(state,
-					baseArray(scope, (ArrayIndexExpression) target), pid,
-					newValue);
+			// state = stateFactory.setVariable(state,
+			// baseArray(scope, (ArrayIndexExpression) target), pid,
+			// newValue);
+			if (currentArrayValue.type().equals(evaluator.pointerType())) {
+				int writeScopeID = evaluator.getPointerTargetScope(state, pid,
+						currentArrayValue);
+				int variableID = evaluator.getPointerTargetVariableID(state,
+						pid, currentArrayValue);
+
+				state = stateFactory.setVariable(state,
+						state.getScope(writeScopeID).lexicalScope()
+								.getVariable(variableID), writeScopeID, pid,
+						newValue);
+			} else {
+				state = stateFactory.setVariable(state, writeLocation, pid,
+						newValue);
+			}
 		} else if (target instanceof UnaryExpression) {
 			Variable variable = evaluator.getVariable(state, pid, target);
 			int scopeID = evaluator.getPointerTargetScope(state, pid, target);
@@ -663,64 +676,32 @@ public class Executor {
 					(BooleanExpression) state.pathCondition()).simplify(
 					symbolicUniverse.tupleRead(struct, fieldIndex));
 			if (fieldType instanceof ArrayType) {
-				fieldWriteResult = symbolicUniverse.arrayWrite(field,
+				result = symbolicUniverse.arrayWrite(field,
 						(NumericExpression) index, value);
 			} else if (fieldType instanceof PointerType) {
 				int fieldScopeID;
 				int fieldVariableID;
 				SymbolicExpression fieldTarget;
 
-				// assert ((PointerType) fieldType).baseType() instanceof
-				// ArrayType;
 				fieldScopeID = evaluator.getPointerTargetScope(state, pid,
 						field);
 				fieldVariableID = evaluator.getPointerTargetVariableID(state,
 						pid, field);
 				fieldTarget = state.getScope(fieldScopeID).getValue(
 						fieldVariableID);
-				fieldWriteResult = symbolicUniverse.arrayWrite(fieldTarget,
+				result = symbolicUniverse.arrayWrite(fieldTarget,
 						(NumericExpression) index, value);
 			} else {
 				throw new RuntimeException("Unable to get array: " + arrayIndex);
 			}
-			result = symbolicUniverse.tupleWrite(struct, fieldIndex,
-					fieldWriteResult);
+			// result = symbolicUniverse.tupleWrite(struct, fieldIndex,
+			// fieldWriteResult);
 		} else {
 			result = symbolicUniverse.arrayWrite(array,
 					(NumericExpression) index, value);
 		}
 		assert result != null;
 		return result;
-	}
-
-	private SymbolicExpression readFieldTuple(SymbolicExpression field) {
-		SymbolicExpression result = field;
-
-		if (field.operator() == SymbolicOperator.TUPLE_READ) {
-			SymbolicObject tuple = field.argument(0);
-			SymbolicObject index = field.argument(1);
-		}
-
-		return result;
-	}
-
-	/**
-	 * Get the variable at the base of a (possibly multi-dimensional) array.
-	 * 
-	 * @param scope
-	 *            The dynamic scope containing this array reference.
-	 * @param expression
-	 *            The array index expression.
-	 * @return The variable corresponding to the base of this array.
-	 */
-	private Variable baseArray(DynamicScope scope,
-			ArrayIndexExpression expression) {
-		if (expression.array() instanceof ArrayIndexExpression) {
-			return baseArray(scope, ((ArrayIndexExpression) expression.array()));
-		} else if (expression.array() instanceof VariableExpression) {
-			return ((VariableExpression) expression.array()).variable();
-		}
-		return null;
 	}
 
 	/**

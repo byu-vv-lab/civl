@@ -14,7 +14,10 @@ import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -30,6 +33,7 @@ public class CommonScope implements Scope {
 	private Variable[] variables;
 	private Set<Scope> children = new HashSet<Scope>();
 	private Collection<Variable> procRefs = new HashSet<Variable>();
+	private Collection<Variable> pointers = new HashSet<Variable>();
 	private int id;
 	private Function function;
 
@@ -51,6 +55,7 @@ public class CommonScope implements Scope {
 			this.variables[v.vid()] = v;
 			v.setScope(this);
 			checkProcRef(v);
+			checkPointer(v);
 		}
 		this.id = id;
 	}
@@ -115,6 +120,7 @@ public class CommonScope implements Scope {
 			assert this.variables[v.vid()] == null;
 			this.variables[v.vid()] = v;
 			checkProcRef(v);
+			checkPointer(v);
 		}
 	}
 
@@ -146,6 +152,7 @@ public class CommonScope implements Scope {
 		assert variable.vid() == oldVariables.length;
 		variables[oldVariables.length] = variable;
 		checkProcRef(variable);
+		checkPointer(variable);
 		variable.setScope(this);
 	}
 
@@ -205,13 +212,25 @@ public class CommonScope implements Scope {
 	}
 
 	/**
-	 * A variables has a "procRefType" if it is of type Process or if it is an
+	 * A variable has a "procRefType" if it is of type Process or if it is an
 	 * array with element of procRefType.
 	 * 
 	 * @return A collection of the variables in this scope with a procRefType.
 	 */
 	public Collection<Variable> variablesWithProcrefs() {
 		return procRefs;
+	}
+
+	/**
+	 * A variable contains a pointer type if it is of type PointerType, if it is
+	 * an array with elements containing pointer type, or if it is a struct with
+	 * fields containing pointer type.
+	 * 
+	 * @return A collection of the variables in this scope containing pointer
+	 *         types.
+	 */
+	public Collection<Variable> variablesWithPointers() {
+		return pointers;
 	}
 
 	/**
@@ -223,12 +242,12 @@ public class CommonScope implements Scope {
 	 */
 	private void checkProcRef(Variable variable) {
 		boolean procRefType = false;
-		
+
 		if (variable.type() instanceof ProcessType) {
 			procRefType = true;
 		} else if (variable.type() instanceof ArrayType) {
 			Type baseType = ((ArrayType) variable.type()).baseType();
-			
+
 			while (baseType instanceof ArrayType) {
 				baseType = ((ArrayType) baseType).baseType();
 			}
@@ -239,6 +258,39 @@ public class CommonScope implements Scope {
 		if (procRefType) {
 			procRefs.add(variable);
 		}
+	}
+
+	/**
+	 * Checks if a variables is a pointer. If it is, it gets added to pointers.
+	 * 
+	 * @param v
+	 *            The variable being checked.
+	 */
+	private void checkPointer(Variable variable) {
+		boolean pointerType = containsPointerType(variable.type());
+
+		if (pointerType) {
+			pointers.add(variable);
+		}
+	}
+
+	private boolean containsPointerType(Type type) {
+		boolean containsPointerType = false;
+
+		if (type instanceof PointerType) {
+			containsPointerType = true;
+		} else if (type instanceof ArrayType) {
+			containsPointerType = containsPointerType(((ArrayType) type)
+					.baseType());
+		} else if (type instanceof StructType) {
+			for (StructField f : ((StructType) type).fields()) {
+				boolean fieldContainsPointer = containsPointerType(f.type());
+
+				containsPointerType = containsPointerType
+						|| fieldContainsPointer;
+			}
+		}
+		return containsPointerType;
 	}
 
 	@Override
