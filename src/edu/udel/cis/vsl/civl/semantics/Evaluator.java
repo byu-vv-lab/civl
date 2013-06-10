@@ -716,6 +716,9 @@ public class Evaluator {
 		String scopeIDString;
 		int scopeID;
 
+		System.out.println("pointer.type: "+pointer.type());
+		System.out.println("pointerType: "+pointerType);
+		
 		assert pointer.type().equals(pointerType);
 		assert pointer.numArguments() == 1;
 		assert pointer.argument(0) instanceof SymbolicSequence;
