@@ -652,12 +652,9 @@ public class Executor {
 					pointerValue);
 			int variableID = evaluator.getPointerTargetVariableID(state, pid,
 					pointerValue);
-			SymbolicExpression structVariable = state.getScope(scopeID)
-					.getValue(variableID);
 			SymbolicExpression struct = evaluator.dereference(state, pid,
 					pointerValue);
 			SymbolicExpression field;
-			SymbolicExpression fieldWriteResult;
 			IntObject fieldIndex = null;
 			StructType structType = (StructType) state.getScope(scopeID)
 					.lexicalScope().getVariable(variableID).type();
