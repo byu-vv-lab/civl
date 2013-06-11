@@ -43,7 +43,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 public class CIVL {
 
-	public final static String version = "0.1";
+	public final static String version = "0.2";
 
 	/** YYYY-MM-DD in accordance with ISO 8601 */
 	public final static String date = "2013-06-11";
