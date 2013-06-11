@@ -46,7 +46,7 @@ public class CIVL {
 	public final static String version = "0.1";
 
 	public final static String date = "10-Jun-2013";
-	
+
 	private static SymbolicUniverse universe = SARL.newStandardUniverse();
 	private static ModelBuilder modelBuilder = Models.newModelBuilder();
 
@@ -120,6 +120,9 @@ public class CIVL {
 				userIncludeList.add(new File(name));
 			} else if (arg.equals("-E")) {
 				preprocOnly = true;
+			} else if (arg.equals("-h") || arg.equals("-help")) {
+				printUsage(new PrintStream(System.out));
+				return;
 			} else if (arg.startsWith("-")) {
 				throw new IllegalArgumentException(
 						"Unknown command line option: " + arg);
@@ -132,8 +135,10 @@ public class CIVL {
 									+ infileName + "): " + arg);
 			}
 		}
-		if (infileName == null)
-			throw new IllegalArgumentException("No input file specified");
+		if (infileName == null) {
+			printUsage(new PrintStream(System.out));
+			return;
+		}
 		infile = new File(infileName);
 		userIncludes = userIncludeList.toArray(new File[0]);
 		systemIncludes = systemIncludeList.toArray(new File[0]);
@@ -238,5 +243,22 @@ public class CIVL {
 		out.println(heapSize);
 		out.print("   elapsedTime (s)     : ");
 		out.println((endTime - startTime) / 1000.0);
+	}
+
+	public static void printUsage(PrintStream out) {
+		out.println("Usage:");
+		out.println("  civl [-help|-h]");
+		out.println("  civl [options] model.cvl");
+		out.println();
+		out.println("Options:");
+		out.println("-oOUTPUT_FILE");
+		out.println("    direct output to file OUTPUT_FILE");
+		out.println("-iINCLUDE_FILE");
+		out.println("    add INCLUDE_FILE to the set of system includes");
+		out.println("-iquoteINCLUDE_FILE");
+		out.println("    add INCLUDE_FILE to the set of user includes");
+		out.println("-E");
+		out.println("    stop after preprocessing the file and output the result");
+		out.flush();
 	}
 }
