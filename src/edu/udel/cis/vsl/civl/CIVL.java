@@ -43,6 +43,10 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 public class CIVL {
 
+	public final static String version = "0.1";
+
+	public final static String date = "10-Jun-2013";
+	
 	private static SymbolicUniverse universe = SARL.newStandardUniverse();
 	private static ModelBuilder modelBuilder = Models.newModelBuilder();
 
@@ -65,6 +69,9 @@ public class CIVL {
 		File[] systemIncludes, userIncludes;
 		boolean preprocOnly = false;
 
+		System.out.println("CIVL v" + version + " of " + date
+				+ " -- http://vsl.cis.udel.edu\n");
+		System.out.flush();
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i];
 

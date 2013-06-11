@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
@@ -28,7 +27,7 @@ public class ErrorLog {
 	private int numEntries = 0;
 	private Map<LogEntry, LogEntry> entryMap = new LinkedHashMap<LogEntry, LogEntry>();
 	private DfsSearcher<State, Transition, TransitionSequence> searcher;
-	private File workingDirectory;
+//	private File workingDirectory;
 
 	/**
 	 * 
@@ -36,7 +35,7 @@ public class ErrorLog {
 	public ErrorLog(PrintWriter out, File workingDirectory) {
 		this.searcher = null;
 		this.out = out;
-		this.workingDirectory = workingDirectory;
+//		this.workingDirectory = workingDirectory;
 	}
 
 	/**
@@ -110,26 +109,27 @@ public class ErrorLog {
 //		}
 	}
 
-	private void writeTrace(PrintWriter traceOut) {
-		Stack<TransitionSequence> stack = searcher.stack();
-		int stackSize = stack.size();
-		traceOut.println();
-		for (int i = 0; i < stackSize; i++) {
-			TransitionSequence sequence = stack.elementAt(i);
-			
-			if (sequence.size() > 1) {
-				
-			}
-		}
-		// int stackSize = searcher.stack().size();
-		// TODO: Handle this printing.
-		// for (int i = 0; i < stackSize; i++) {
-		// TransitionSequence sequence = searcher.stack().elementAt(i);
-		//
-		// traceOut.println(sequence.)
-		// }
-
-	}
+	//TODO: take care of trace writing
+//	private void writeTrace(PrintWriter traceOut) {
+//		Stack<TransitionSequence> stack = searcher.stack();
+//		int stackSize = stack.size();
+//		traceOut.println();
+//		for (int i = 0; i < stackSize; i++) {
+//			TransitionSequence sequence = stack.elementAt(i);
+//			
+//			if (sequence.size() > 1) {
+//				
+//			}
+//		}
+//		// int stackSize = searcher.stack().size();
+//		// TODO: Handle this printing.
+//		// for (int i = 0; i < stackSize; i++) {
+//		// TransitionSequence sequence = searcher.stack().elementAt(i);
+//		//
+//		// traceOut.println(sequence.)
+//		// }
+//
+//	}
 
 	public void setSearcher(
 			DfsSearcher<State, Transition, TransitionSequence> searcher) {

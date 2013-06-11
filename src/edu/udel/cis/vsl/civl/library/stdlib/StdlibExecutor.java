@@ -5,7 +5,6 @@ package edu.udel.cis.vsl.civl.library.stdlib;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
@@ -13,10 +12,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.State;
-import edu.udel.cis.vsl.civl.state.StateFactoryIF;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * Executor for stdlib function calls.
@@ -26,26 +21,28 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  */
 public class StdlibExecutor implements LibraryExecutor {
 
-	private StateFactoryIF factory;
-	private SymbolicUniverse universe;
-	private Vector<SymbolicType> elementTypes;
-	private SymbolicType heapUnionType;
-	private SymbolicExpression heap;
+	// private StateFactoryIF factory;
+//	private SymbolicUniverse universe;
+
+	// private Vector<SymbolicType> elementTypes;
+	// private SymbolicType heapUnionType;
+	// private SymbolicExpression heap;
 
 	/**
 	 * Executor for stdlib function calls.
 	 */
 	public StdlibExecutor(Executor primaryExecutor) {
-		this.factory = primaryExecutor.stateFactory();
-		this.universe = primaryExecutor.universe();
-		elementTypes = new Vector<SymbolicType>();
-		// TODO: Get the set of malloc'd types from the model.
-		elementTypes.add(universe.booleanType());
-		elementTypes.add(universe.integerType());
-		elementTypes.add(universe.realType());
-		heapUnionType = universe.unionType(universe.stringObject("heap"),
-				elementTypes);
-		heap = universe.array(heapUnionType, new Vector<SymbolicExpression>());
+		// this.factory = primaryExecutor.stateFactory();
+		//		this.universe = primaryExecutor.universe();
+		// elementTypes = new Vector<SymbolicType>();
+		// // TODO: Get the set of malloc'd types from the model.
+		// elementTypes.add(universe.booleanType());
+		// elementTypes.add(universe.integerType());
+		// elementTypes.add(universe.realType());
+		// heapUnionType = universe.unionType(universe.stringObject("heap"),
+		// elementTypes);
+		// heap = universe.array(heapUnionType, new
+		// Vector<SymbolicExpression>());
 	}
 
 	/*
@@ -77,7 +74,7 @@ public class StdlibExecutor implements LibraryExecutor {
 		}
 		name = ((CallStatement) statement).function().name();
 		if (name.name().equals("malloc")) {
-			Vector<SymbolicExpression> heapElements = new Vector<SymbolicExpression>();
+//			Vector<SymbolicExpression> heapElements = new Vector<SymbolicExpression>();
 
 		} else if (name.name().equals("free")) {
 
