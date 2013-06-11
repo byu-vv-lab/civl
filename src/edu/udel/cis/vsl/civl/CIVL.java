@@ -45,7 +45,8 @@ public class CIVL {
 
 	public final static String version = "0.1";
 
-	public final static String date = "10-Jun-2013";
+	/** YYYY-MM-DD in accordance with ISO 8601 */
+	public final static String date = "2013-06-11";
 
 	private static SymbolicUniverse universe = SARL.newStandardUniverse();
 	private static ModelBuilder modelBuilder = Models.newModelBuilder();
@@ -68,6 +69,7 @@ public class CIVL {
 		PrintStream out;
 		File[] systemIncludes, userIncludes;
 		boolean preprocOnly = false;
+		boolean printModel = false;
 
 		System.out.println("CIVL v" + version + " of " + date
 				+ " -- http://vsl.cis.udel.edu\n");
@@ -120,6 +122,8 @@ public class CIVL {
 				userIncludeList.add(new File(name));
 			} else if (arg.equals("-E")) {
 				preprocOnly = true;
+			} else if (arg.equals("-P")) {
+				printModel = true;
 			} else if (arg.equals("-h") || arg.equals("-help")) {
 				printUsage(new PrintStream(System.out));
 				return;
@@ -152,11 +156,16 @@ public class CIVL {
 		if (preprocOnly) {
 			preprocessor.printOutput(out, infile);
 		} else {
-			check(infile, out);
+			check(printModel, infile, out);
 		}
 	}
 
 	public static boolean check(File file, PrintStream out)
+			throws SyntaxException, ParseException, PreprocessorException {
+		return check(false, file, out);
+	}
+
+	public static boolean check(boolean printModel, File file, PrintStream out)
 			throws SyntaxException, ParseException, PreprocessorException {
 		AST unit;
 		StateFactoryIF stateFactory = new StateFactory(universe);
@@ -193,8 +202,10 @@ public class CIVL {
 							+ e.getMessage());
 		}
 		model = modelBuilder.buildModel(unit);
-		out.println(bar + " Model " + bar + "\n");
-		model.print(out);
+		if (printModel) {
+			out.println(bar + " Model " + bar + "\n");
+			model.print(out);
+		}
 		initialState = stateFactory.initialState(model);
 		executor = new Executor(model, universe, stateFactory, log, loader);
 		stateManager = new StateManager(executor);
@@ -257,6 +268,8 @@ public class CIVL {
 		out.println("    add INCLUDE_FILE to the set of system includes");
 		out.println("-iquoteINCLUDE_FILE");
 		out.println("    add INCLUDE_FILE to the set of user includes");
+		out.println("-P");
+		out.println("    print the model");
 		out.println("-E");
 		out.println("    stop after preprocessing the file and output the result");
 		out.flush();
