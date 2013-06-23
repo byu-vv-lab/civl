@@ -46,7 +46,7 @@ public class CIVL {
 	public final static String version = "0.2";
 
 	/** YYYY-MM-DD in accordance with ISO 8601 */
-	public final static String date = "2013-06-11";
+	public final static String date = "2013-06-23";
 
 	private static SymbolicUniverse universe = SARL.newStandardUniverse();
 	private static ModelBuilder modelBuilder = Models.newModelBuilder();
