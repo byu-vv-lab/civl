@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.kripke;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 
 import edu.udel.cis.vsl.civl.log.ExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
@@ -33,7 +32,7 @@ public class Enabler implements
 
 	private TransitionFactory transitionFactory;
 	private boolean debugging = false;
-	private PrintWriter debugOut = new PrintWriter(System.out);
+	private PrintStream debugOut = System.out;
 	private SymbolicUniverse universe;
 	private Evaluator evaluator;
 	private long enabledTransitionSets = 0;
@@ -227,7 +226,7 @@ public class Enabler implements
 	}
 
 	@Override
-	public PrintWriter getDebugOut() {
+	public PrintStream getDebugOut() {
 		return debugOut;
 	}
 
@@ -247,25 +246,25 @@ public class Enabler implements
 	}
 
 	@Override
-	public void print(PrintWriter out, TransitionSequence transitionSequence) {
+	public void print(PrintStream out, TransitionSequence transitionSequence) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void printFirstTransition(PrintWriter arg0, TransitionSequence arg1) {
+	public void printFirstTransition(PrintStream arg0, TransitionSequence arg1) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void printRemaining(PrintWriter arg0, TransitionSequence arg1) {
+	public void printRemaining(PrintStream arg0, TransitionSequence arg1) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void setDebugOut(PrintWriter debugOut) {
+	public void setDebugOut(PrintStream debugOut) {
 		this.debugOut = debugOut;
 	}
 

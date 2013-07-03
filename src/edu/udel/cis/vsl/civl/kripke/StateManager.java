@@ -4,7 +4,6 @@
 package edu.udel.cis.vsl.civl.kripke;
 
 import java.io.PrintStream;
-import java.io.PrintWriter;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -79,36 +78,36 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	}
 
 	@Override
-	public void printAllStatesLong(PrintWriter arg0) {
+	public void printAllStatesLong(PrintStream arg0) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void printAllStatesShort(PrintWriter arg0) {
+	public void printAllStatesShort(PrintStream arg0) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void printStateLong(PrintWriter arg0, State arg1) {
+	public void printStateLong(PrintStream arg0, State arg1) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void printStateShort(PrintWriter arg0, State arg1) {
+	public void printStateShort(PrintStream arg0, State arg1) {
 		arg0.print(arg1.toString());
 	}
 
 	@Override
-	public void printTransitionLong(PrintWriter arg0, Transition arg1) {
+	public void printTransitionLong(PrintStream arg0, Transition arg1) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void printTransitionShort(PrintWriter arg0, Transition arg1) {
+	public void printTransitionShort(PrintStream arg0, Transition arg1) {
 		// TODO Auto-generated method stub
 
 	}

@@ -430,9 +430,20 @@ public class CommonModelFactory implements ModelFactory {
 		case MINUS:
 		case MODULO:
 		default:
-			assert left.getExpressionType().equals(right.getExpressionType());
-			((CommonBinaryExpression) result).setExpressionType(left
-					.getExpressionType());
+			Type leftType = left.getExpressionType();
+			Type rightType = right.getExpressionType();
+			
+			// Types should be the same unless we're doing pointer arithmetic.
+			if (leftType.equals(rightType)) {
+				((CommonBinaryExpression) result).setExpressionType(leftType);
+			} else if (leftType instanceof PointerType && rightType instanceof PrimitiveType) {
+				assert ((PrimitiveType) rightType).primitiveType() == PRIMITIVE_TYPE.INT;
+				((CommonBinaryExpression) result).setExpressionType(leftType);
+			} else if (leftType instanceof PointerType && rightType instanceof PrimitiveType) {
+				assert ((PrimitiveType) rightType).primitiveType() == PRIMITIVE_TYPE.INT;
+				((CommonBinaryExpression) result).setExpressionType(leftType);
+			} 
+			
 			break;
 
 		}

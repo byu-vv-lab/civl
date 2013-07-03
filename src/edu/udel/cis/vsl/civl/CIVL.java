@@ -211,7 +211,7 @@ public class CIVL {
 		stateManager = new StateManager(executor);
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
-		searcher.setDebugOut(new PrintWriter(out));
+		searcher.setDebugOut(out);
 		log.setSearcher(searcher);
 		result = searcher.search(initialState);
 		endTime = System.currentTimeMillis();

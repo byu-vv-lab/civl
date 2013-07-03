@@ -41,6 +41,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.SelfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssertNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
@@ -57,6 +58,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.NullStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WaitNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
@@ -91,6 +93,9 @@ import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.util.CIVLException;
+import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
 
 /**
  * Class to provide translation from an AST to a model.
@@ -796,6 +801,9 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (statement instanceof ReturnNode) {
 			result = returnStatement(function, lastStatement,
 					(ReturnNode) statement, scope);
+		} else if (statement instanceof SwitchNode) {
+			result = switchStatement(function, lastStatement,
+					(SwitchNode) statement, scope);
 		}
 		function.addStatement(result);
 		return result;
@@ -867,6 +875,9 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (statement instanceof ReturnNode) {
 			result = returnStatement(function, lastStatement,
 					(ReturnNode) statement, scope);
+		} else if (statement instanceof SwitchNode) {
+			result = switchStatement(location, guard, function, lastStatement,
+					(SwitchNode) statement, scope);
 		}
 		function.addStatement(result);
 		return result;
@@ -1409,6 +1420,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		// TODO: Handle other possibilites
 		if (incrementer instanceof OperatorNode) {
 			OperatorNode expression = (OperatorNode) incrementer;
+			Expression[] args = new Expression[3];
 			switch (expression.getOperator()) {
 			case ASSIGN:
 				result = factory.assignStatement(location,
@@ -1444,14 +1456,55 @@ public class CommonModelBuilder implements ModelBuilder {
 										factory.integerLiteralExpression(BigInteger.ONE)));
 				break;
 			case PLUSEQ:
-				Expression lhs = expression(expression.getArgument(0), scope);
-				Expression rhs = expression(expression.getArgument(1), scope);
+				args[0] = expression(expression.getArgument(0), scope);
+				args[1] = expression(expression.getArgument(1), scope);
 
-				result = factory.assignStatement(location, lhs, factory
-						.binaryExpression(BINARY_OPERATOR.PLUS, lhs, rhs));
+				result = factory.assignStatement(location, args[0], factory
+						.binaryExpression(BINARY_OPERATOR.PLUS, args[0],
+								args[1]));
 				break;
-			// TODO: -=,*=,/=,%=
+			case MINUSEQ:
+				args[0] = expression(expression.getArgument(0), scope);
+				args[1] = expression(expression.getArgument(1), scope);
+
+				result = factory.assignStatement(location, args[0], factory
+						.binaryExpression(BINARY_OPERATOR.MINUS, args[0],
+								args[1]));
+				break;
+			case TIMESEQ:
+				args[0] = expression(expression.getArgument(0), scope);
+				args[1] = expression(expression.getArgument(1), scope);
+
+				result = factory.assignStatement(location, args[0], factory
+						.binaryExpression(BINARY_OPERATOR.TIMES, args[0],
+								args[1]));
+				break;
+			case DIVEQ:
+				args[0] = expression(expression.getArgument(0), scope);
+				args[1] = expression(expression.getArgument(1), scope);
+
+				result = factory.assignStatement(location, args[0], factory
+						.binaryExpression(BINARY_OPERATOR.DIVIDE, args[0],
+								args[1]));
+				break;
+			case MODEQ:
+				args[0] = expression(expression.getArgument(0), scope);
+				args[1] = expression(expression.getArgument(1), scope);
+
+				result = factory.assignStatement(location, args[0], factory
+						.binaryExpression(BINARY_OPERATOR.MODULO, args[0],
+								args[1]));
+				break;
+			case BITANDEQ:
+			case BITOREQ:
+			case BITXOREQ:
+			case SHIFTLEFTEQ:
+			case SHIFTRIGHTEQ:
+				throw new CIVLException(ErrorKind.OTHER, Certainty.CONCRETE,
+						"CIVL does not support bit level operations: "
+								+ expression.getSource());
 			default:
+				// No effect for ops without assignments.
 				result = factory.noopStatement(location);
 			}
 		} else {
@@ -1708,6 +1761,67 @@ public class CommonModelBuilder implements ModelBuilder {
 			expression = expression(statement.getExpression(), scope);
 		}
 		result = factory.returnStatement(location, expression);
+		return result;
+	}
+
+	private Statement switchStatement(Function function,
+			Statement lastStatement, SwitchNode statement, Scope scope) {
+		Location location = factory.location(scope);
+		Expression guard = factory.booleanLiteralExpression(true);
+
+		return switchStatement(location, guard, function, lastStatement,
+				statement, scope);
+	}
+
+	private Statement switchStatement(Location location, Expression guard,
+			Function function, Statement lastStatement, SwitchNode statement,
+			Scope scope) {
+		Statement result = null;
+		Iterator<LabeledStatementNode> cases = statement.getCases();
+		Expression condition = expression(statement.getCondition(), scope);
+		/** Collect case guards to determine guard for default case. */
+		Expression combinedCaseGuards = guard;
+		Statement bodyGoto;
+
+		if (lastStatement != null) {
+			lastStatement.setTarget(location);
+		} else {
+			function.setStartLocation(location);
+		}
+		while (cases.hasNext()) {
+			LabeledStatementNode caseStatement = cases.next();
+			SwitchLabelNode label;
+			Expression caseGuard;
+			Expression combinedGuard;
+			Statement caseGoto;
+
+			assert caseStatement.getLabel() instanceof SwitchLabelNode;
+			label = (SwitchLabelNode) caseStatement.getLabel();
+			caseGuard = factory.binaryExpression(BINARY_OPERATOR.EQUAL,
+					condition, expression(label.getExpression(), scope));
+			if (!guard.equals(factory.booleanLiteralExpression(true))) {
+				combinedGuard = factory.binaryExpression(BINARY_OPERATOR.AND,
+						guard, caseGuard);
+			} else {
+				combinedGuard = caseGuard;
+			}
+			combinedCaseGuards = factory.binaryExpression(BINARY_OPERATOR.AND,
+					caseGuard, combinedCaseGuards);
+			caseGoto = factory.noopStatement(location);
+			caseGoto.setGuard(combinedGuard);
+			gotoStatements.put(caseGoto, label);
+		}
+		if (statement.getDefaultCase() != null) {
+			LabelNode label = statement.getDefaultCase().getLabel();
+			Statement defaultGoto = factory.noopStatement(location);
+
+			defaultGoto.setGuard(factory.unaryExpression(UNARY_OPERATOR.NOT,
+					combinedCaseGuards));
+			gotoStatements.put(defaultGoto, label);
+		}
+		bodyGoto = factory.noopStatement(location);
+		bodyGoto.setGuard(factory.booleanLiteralExpression(false));
+		result = statement(function, bodyGoto, statement.getBody(), scope);
 		return result;
 	}
 }
