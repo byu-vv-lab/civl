@@ -67,16 +67,6 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
-
-The CIVL-C code will not have an explicit "Root" procedure.  Instead,
-a Root procedure will be implicitly wrapped around the enitre code.
-The global input variables will become the inputs to the Root
-procedure.  A "main" procedure must be delcared that takes
-no parameters but can have any return type.   The body of the
-main procedure becomes the body of the Root procedure.   The return
-type of the main procedure becomes the return type of the body.
-The main procedure disappears.
-
 ------------------------ Language Summary -----------------------------
 
 Summary of new keywords:
