@@ -1,3 +1,23 @@
+Note for building CVC3 on linux
+
+sudo apt-get install 
+  g++
+  bison
+  flex
+  libgmp10
+  libgmp-dev
+  openjdk-7-jdk
+  
+
+for 32-bit:
+./configure CXXFLAGS=-m32 --enable-dynamic --enable-java --with-java-home=/usr/lib/jvm/java-7-openjdk-i386
+
+for 64-bit:
+./configure CXXFLAGS=-m64 --enable-dynamic --enable-java --with-java-home=/usr/lib/jvm/java-7-openjdk-amd64
+
+
+
+
 Dependencies and licenses...
 
  pcollections : MIT license,

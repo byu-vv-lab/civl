@@ -34,6 +34,7 @@ import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.civl.util.CIVLException;
 import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
+import edu.udel.cis.vsl.civl.util.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
@@ -55,7 +56,28 @@ public class CIVL {
 	// add -D support. Need to create a token with "source" the command line.
 	// may treat command line as (virtual) file called "commandline"?
 
-	public static void main(String[] args) throws PreprocessorException,
+	public static void main(String[] args) {
+		try {
+			mainWork(args);
+		} catch (PreprocessorException e) {
+			System.err.println("Preprocessing error: " + e.getMessage());
+			System.exit(1);
+		} catch (ParseException e) {
+			System.err.println("Parse error: " + e.getMessage());
+			System.exit(2);
+		} catch (SyntaxException e) {
+			System.err.println("Syntax error: " + e.getMessage());
+			System.exit(3);
+		} catch (FileNotFoundException e) {
+			System.err.println("File not found: " + e.getMessage());
+			System.exit(4);
+		} catch (CIVLUnimplementedFeatureException e) {
+			System.err.println(e.getMessage());
+			System.exit(5);
+		}
+	}
+
+	private static void mainWork(String[] args) throws PreprocessorException,
 			ParseException, SyntaxException, FileNotFoundException {
 		String infileName = null;
 		String outfileName = null;

@@ -96,6 +96,8 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.util.CIVLException;
 import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
+import edu.udel.cis.vsl.civl.util.CIVLInternalException;
+import edu.udel.cis.vsl.civl.util.CIVLUnimplementedFeatureException;
 
 /**
  * Class to provide translation from an AST to a model.
@@ -375,10 +377,14 @@ public class CommonModelBuilder implements ModelBuilder {
 	}
 
 	private Type processType(TypeNode typeNode) {
-		Type result = null;
+		TypeNodeKind kind = typeNode.kind();
+		Type result;
 
 		// TODO: deal with more types.
-		if (typeNode.kind() == TypeNodeKind.BASIC) {
+
+		if (kind == TypeNodeKind.VOID)
+			result = null;
+		else if (kind == TypeNodeKind.BASIC) {
 			switch (((BasicTypeNode) typeNode).getBasicTypeKind()) {
 			case SHORT:
 			case UNSIGNED_SHORT:
@@ -396,19 +402,15 @@ public class CommonModelBuilder implements ModelBuilder {
 			case BOOL:
 				return factory.booleanType();
 			case CHAR:
-				break;
 			case DOUBLE_COMPLEX:
-				break;
 			case FLOAT_COMPLEX:
-				break;
 			case LONG_DOUBLE_COMPLEX:
-				break;
 			case SIGNED_CHAR:
-				break;
 			case UNSIGNED_CHAR:
-				break;
 			default:
-				break;
+				throw new CIVLUnimplementedFeatureException(
+						typeNode.getSource(), "types of kind "
+								+ typeNode.kind());
 			}
 		} else if (typeNode.kind() == TypeNodeKind.PROCESS) {
 			return factory.processType();
@@ -437,7 +439,9 @@ public class CommonModelBuilder implements ModelBuilder {
 				fields.add(factory.structField(name, type));
 			}
 			result = factory.structType(structName, fields);
-		}
+		} else
+			throw new CIVLUnimplementedFeatureException(typeNode.getSource(),
+					"types of kind " + typeNode.kind());
 		return result;
 	}
 
@@ -475,7 +479,10 @@ public class CommonModelBuilder implements ModelBuilder {
 			result = factory.selfExpression();
 		} else if (expression instanceof CastNode) {
 			result = castExpression((CastNode) expression, scope);
-		}
+		} else
+			throw new CIVLUnimplementedFeatureException(expression.getSource(),
+					"expressions of type "
+							+ expression.getClass().getSimpleName());
 		return result;
 	}
 
@@ -500,7 +507,7 @@ public class CommonModelBuilder implements ModelBuilder {
 				result = factory.binaryExpression(BINARY_OPERATOR.NOT_EQUAL,
 						result, factory.realLiteralExpression(BigDecimal.ZERO));
 			} else {
-				throw new RuntimeException(
+				throw new CIVLInternalException(
 						"Unable to convert expression to boolean type: "
 								+ expression);
 			}
@@ -878,7 +885,10 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (statement instanceof SwitchNode) {
 			result = switchStatement(location, guard, function, lastStatement,
 					(SwitchNode) statement, scope);
-		}
+		} else
+			throw new CIVLUnimplementedFeatureException(statement.getSource(),
+					"statements of type "
+							+ statement.getClass().getSimpleName());
 		function.addStatement(result);
 		return result;
 	}
