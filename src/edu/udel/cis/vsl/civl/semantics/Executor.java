@@ -694,6 +694,9 @@ public class Executor {
 			// result = symbolicUniverse.tupleWrite(struct, fieldIndex,
 			// fieldWriteResult);
 		} else {
+			if (array.type().equals(evaluator.pointerType())) {
+				array = evaluator.dereference(state, pid, array);
+			}
 			result = symbolicUniverse.arrayWrite(array,
 					(NumericExpression) index, value);
 		}
