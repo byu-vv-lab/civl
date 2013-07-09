@@ -5,16 +5,16 @@
 CIVL is a framework encompassing...
 
  * a programming language, CIVL-C, which adds to C a number of
-    concurrency primitives, as well as the ability to define
-    functions in any scope.  Together, these features make for
-    a very expressive concurrent language that can faithfully
-    represent programs using various APIs and parallel languages,
-    such as MPI, OpenMP, CUDA, and Chapel. CIVL-C also provides
-    a number of primitives supporting verification.
- * a model checker> which uses symbolic execution to verify a
-    number of safety properties of CIVL-C programs.   The model
-    checker can also be used to verify that two CIVL-C programs
-    are functionally equivalent.
+   concurrency primitives, as well as the ability to define
+   functions in any scope.  Together, these features make for
+   a very expressive concurrent language that can faithfully
+   represent programs using various APIs and parallel languages,
+   such as MPI, OpenMP, CUDA, and Chapel. CIVL-C also provides
+   a number of primitives supporting verification.
+ * a model checker which uses symbolic execution to verify a
+   number of safety properties of CIVL-C programs.   The model
+   checker can also be used to verify that two CIVL-C programs
+   are functionally equivalent.
  * a number of translators from various commonly-used languages
    and APIs to CIVL-C. (This part is still a work in progress.)
 
