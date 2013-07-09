@@ -177,6 +177,14 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
+	
+	@Test
+	public void arrayPointer() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "arrayPointer.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
 
 
 }
