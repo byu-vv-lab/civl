@@ -349,7 +349,7 @@ public class Executor {
 		SymbolicExpression returnExpression = null;
 
 		if (state.process(pid).peekStack().location().function().name().name()
-				.equals("_CVT_system")) {
+				.equals("_CIVL_system")) {
 			if (!finalStates.contains(state)) {
 				finalStates.add(state);
 			}
