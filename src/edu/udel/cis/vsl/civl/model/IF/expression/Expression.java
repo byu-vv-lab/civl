@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 
 /**
@@ -12,7 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.Type;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface Expression {
+public interface Expression extends Sourceable {
 
 	/**
 	 * @return The highest scope accessed by this expression. Null if no

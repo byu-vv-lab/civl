@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
  * The parent of all expressions.
@@ -13,7 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.Type;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonExpression implements Expression {
+public class CommonExpression extends CommonSourceable implements Expression {
 
 	private Scope expressionScope = null;
 	protected Type expressionType = null;

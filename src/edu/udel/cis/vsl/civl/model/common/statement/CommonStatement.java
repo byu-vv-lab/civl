@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
 
 /**
@@ -17,7 +18,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpress
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonStatement implements Statement {
+public class CommonStatement extends CommonSourceable implements Statement {
 
 	private Location source;
 	private Location target;

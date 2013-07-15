@@ -374,6 +374,7 @@ public class CommonModelBuilder implements ModelBuilder {
 			variable.setIsExtern(true);
 		}
 		scope.addVariable(variable);
+		variable.setNode(node);
 	}
 
 	private Type processType(TypeNode typeNode) {
@@ -483,6 +484,7 @@ public class CommonModelBuilder implements ModelBuilder {
 			throw new CIVLUnimplementedFeatureException(expression.getSource(),
 					"expressions of type "
 							+ expression.getClass().getSimpleName());
+		result.setNode(expression);
 		return result;
 	}
 
@@ -900,7 +902,6 @@ public class CommonModelBuilder implements ModelBuilder {
 			IfNode statement, Scope scope) {
 		return ifStatement(factory.location(scope), function, lastStatement,
 				statement, scope);
-
 	}
 
 	private Statement ifStatement(Location location, Function function,
@@ -921,6 +922,7 @@ public class CommonModelBuilder implements ModelBuilder {
 			falseBranch = factory.noopStatement(location);
 			falseBranch.setGuard(factory.unaryExpression(UNARY_OPERATOR.NOT,
 					expression));
+			falseBranch.setNode(statement);
 		} else {
 			falseBranch = statement(location,
 					factory.unaryExpression(UNARY_OPERATOR.NOT, expression),
@@ -958,6 +960,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else {
 			function.setStartLocation(location);
 		}
+		result.setNode(statement);
 		return result;
 	}
 
@@ -988,6 +991,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else {
 			function.setStartLocation(location);
 		}
+		result.setNode(statement);
 		return result;
 	}
 
@@ -1163,6 +1167,7 @@ public class CommonModelBuilder implements ModelBuilder {
 				callStatements.put((CallStatement) result, functionDefinition);
 			}
 		}
+		result.setNode(expressionStatement);
 		return result;
 	}
 
@@ -1390,6 +1395,7 @@ public class CommonModelBuilder implements ModelBuilder {
 										expression((ExpressionNode) declaration
 												.getInitializer(), newScope));
 						initStatement.setGuard(guard);
+						initStatement.setNode(init);
 						if (lastStatement != null) {
 							lastStatement.setTarget(location);
 							function.addLocation(location);
@@ -1525,6 +1531,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else {
 			function.setStartLocation(location);
 		}
+		result.setNode(incrementer);
 		return result;
 	}
 
@@ -1575,6 +1582,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	private Statement wait(Function function, Statement lastStatement,
 			WaitNode statement, Scope scope) {
 		Location location = factory.location(scope);
+		Statement result;
 
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
@@ -1582,8 +1590,10 @@ public class CommonModelBuilder implements ModelBuilder {
 			function.setStartLocation(location);
 		}
 		function.addLocation(location);
-		return factory.joinStatement(location,
+		result = factory.joinStatement(location,
 				expression(statement.getExpression(), scope));
+		result.setNode(statement);
+		return result;
 	}
 
 	private Statement noop(Function function, Statement lastStatement,
@@ -1603,6 +1613,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else {
 			function.setStartLocation(location);
 		}
+		result.setNode(statement);
 		return result;
 	}
 
@@ -1706,6 +1717,7 @@ public class CommonModelBuilder implements ModelBuilder {
 
 			defaultStatement.setTarget(endLocation);
 		}
+		result.setNode(statement);
 		return result;
 	}
 
@@ -1723,6 +1735,7 @@ public class CommonModelBuilder implements ModelBuilder {
 			function.setStartLocation(location);
 		}
 		gotoStatements.put(noop, label);
+		noop.setNode(statement);
 		return noop;
 	}
 
@@ -1771,6 +1784,7 @@ public class CommonModelBuilder implements ModelBuilder {
 			expression = expression(statement.getExpression(), scope);
 		}
 		result = factory.returnStatement(location, expression);
+		result.setNode(statement);
 		return result;
 	}
 
@@ -1819,6 +1833,7 @@ public class CommonModelBuilder implements ModelBuilder {
 					caseGuard, combinedCaseGuards);
 			caseGoto = factory.noopStatement(location);
 			caseGoto.setGuard(combinedGuard);
+			caseGoto.setNode(label);
 			gotoStatements.put(caseGoto, label);
 		}
 		if (statement.getDefaultCase() != null) {
@@ -1827,6 +1842,7 @@ public class CommonModelBuilder implements ModelBuilder {
 
 			defaultGoto.setGuard(factory.unaryExpression(UNARY_OPERATOR.NOT,
 					combinedCaseGuards));
+			defaultGoto.setNode(label);
 			gotoStatements.put(defaultGoto, label);
 		}
 		bodyGoto = factory.noopStatement(location);

@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.IF.variable;
 
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 
@@ -15,7 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.Type;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public interface Variable {
+public interface Variable extends Sourceable {
 
 	public int vid();
 
@@ -44,12 +45,12 @@ public interface Variable {
 	 * @return Whether this variable is an extern.
 	 */
 	public boolean isExtern();
-	
+
 	/**
 	 * @return Whether this variable is an extern.
 	 */
 	public boolean isConfig();
-	
+
 	/**
 	 * @param type
 	 *            The type of this variable.
@@ -87,7 +88,6 @@ public interface Variable {
 	 */
 	public void setIsConfig(boolean isConfig);
 
-	
 	/**
 	 * @param vid
 	 *            The new vid.

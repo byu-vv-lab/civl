@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
  * A variable.
@@ -16,7 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public class CommonVariable implements Variable {
+public class CommonVariable extends CommonSourceable implements Variable {
 
 	private Type type;
 	private Identifier name;
@@ -86,14 +87,14 @@ public class CommonVariable implements Variable {
 	public boolean isExtern() {
 		return isExtern;
 	}
-	
+
 	/**
 	 * @return Whether this variable is an extern.
 	 */
 	public boolean isConfig() {
 		return isConfig;
 	}
-	
+
 	/**
 	 * @param type
 	 *            The type of this variable.
@@ -143,7 +144,6 @@ public class CommonVariable implements Variable {
 		this.isConfig = isConfig;
 	}
 
-	
 	/**
 	 * @param vid
 	 *            The new vid.

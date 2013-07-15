@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 
@@ -13,7 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface Statement {
+public interface Statement extends Sourceable {
 
 	/**
 	 * @return The location that is the source of this statement.
@@ -60,6 +61,5 @@ public interface Statement {
 	 *            variables accessed.
 	 */
 	public void setStatementScope(Scope statementScope);
-
 
 }
