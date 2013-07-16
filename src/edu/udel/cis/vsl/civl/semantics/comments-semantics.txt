@@ -14,6 +14,10 @@ This can improve efficiency
 evaluate: why return null if there is an unknown
 expression instead of throwing an exception?
 
+instead of big sequence of if...else if...
+use an enum like ExpressionKind and then
+use switch
+
 evaluate(...DotExpression): does this assume
 that the first operand of the dot expression
 is a variable?  What if it's another kind of
