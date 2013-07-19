@@ -12,29 +12,29 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
 public interface UnaryExpression extends Expression {
 
 	public enum UNARY_OPERATOR {
-		NEGATIVE, NOT, ADDRESSOF, DEREFERENCE
+		NEGATIVE, NOT
 	};
 
 	/**
 	 * @return The binary operator
 	 */
-	public UNARY_OPERATOR operator();
+	UNARY_OPERATOR operator();
 
 	/**
 	 * @return The operand.
 	 */
-	public Expression operand();
+	Expression operand();
 
 	/**
 	 * @param operator
 	 *            The unary operator.
 	 */
-	public void setOperator(UNARY_OPERATOR operator);
+	void setOperator(UNARY_OPERATOR operator);
 
 	/**
 	 * @param operand
 	 *            The operand.
 	 */
-	public void setOperand(Expression operand);
+	void setOperand(Expression operand);
 
 }

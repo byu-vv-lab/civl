@@ -3,7 +3,6 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 
@@ -15,7 +14,7 @@ public class CommonDotExpression extends CommonExpression implements
 		DotExpression {
 
 	private Expression struct;
-	private Identifier field;
+	private int fieldIndex;
 
 	/**
 	 * A dot expression is a reference to a field in a struct.
@@ -25,9 +24,9 @@ public class CommonDotExpression extends CommonExpression implements
 	 * @param field
 	 *            The field referenced by this dot expression.
 	 */
-	public CommonDotExpression(Expression struct, Identifier field) {
+	public CommonDotExpression(Expression struct, int fieldIndex) {
 		this.struct = struct;
-		this.field = field;
+		this.fieldIndex = fieldIndex;
 	}
 
 	/*
@@ -46,13 +45,18 @@ public class CommonDotExpression extends CommonExpression implements
 	 * @see edu.udel.cis.vsl.civl.model.IF.expression.DotExpression#field()
 	 */
 	@Override
-	public Identifier field() {
-		return field;
+	public int fieldIndex() {
+		return fieldIndex;
 	}
 
 	@Override
 	public String toString() {
-		return struct.toString() + "." + field.toString();
+		return struct.toString() + "." + fieldIndex;
+	}
+
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.DOT;
 	}
 
 }

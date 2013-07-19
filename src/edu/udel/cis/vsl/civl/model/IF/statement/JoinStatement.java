@@ -16,12 +16,12 @@ public interface JoinStatement extends Statement {
 	/**
 	 * @return The process.
 	 */
-	public Expression process();
+	Expression process();
 
 	/**
 	 * @param process
 	 *            The process.
 	 */
-	public void setProcess(Expression process);
+	void setProcess(Expression process);
 
 }

@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.model.IF.statement;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 
 /**
  * A fork statement.
@@ -19,35 +20,35 @@ public interface ForkStatement extends Statement {
 	 * @return Expression for place where the process reference will be stored.
 	 *         Null if non-existent.
 	 */
-	public Expression lhs();
+	LHSExpression lhs();
 
 	/**
 	 * @return The function that is started in the new process.
 	 */
-	public Expression function();
+	Expression function();
 
 	/**
 	 * @return The arguments to the function.
 	 */
-	public Vector<Expression> arguments();
+	Vector<Expression> arguments();
 
 	/**
 	 * @param lhs
 	 *            Expression for place where the process reference will be
 	 *            stored. Null if non-existent.
 	 */
-	public void setLhs(Expression lhs);
+	void setLhs(LHSExpression lhs);
 
 	/**
 	 * @param function
 	 *            The function that is started in the new process.
 	 */
-	public void setFunction(Expression function);
+	void setFunction(Expression function);
 
 	/**
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
-	public void setArguments(Vector<Expression> arguments);
+	void setArguments(Vector<Expression> arguments);
 
 }

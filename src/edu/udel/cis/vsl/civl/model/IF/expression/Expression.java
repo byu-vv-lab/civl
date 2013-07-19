@@ -15,18 +15,29 @@ import edu.udel.cis.vsl.civl.model.IF.type.Type;
  */
 public interface Expression extends Sourceable {
 
+	public enum ExpressionKind {
+		ADDRESS_OF,
+		BINARY,
+		BOOLEAN_LITERAL,
+		CAST,
+		COND,
+		DEREFERENCE,
+		DOT,
+		INTEGER_LITERAL,
+		REAL_LITERAL,
+		RESULT,
+		SELF,
+		STRING_LITERAL,
+		SUBSCRIPT,
+		UNARY,
+		VARIABLE
+	}
+
 	/**
 	 * @return The highest scope accessed by this expression. Null if no
 	 *         variables accessed.
 	 */
-	public Scope expressionScope();
-
-	/**
-	 * @param expressionScope
-	 *            The highest scope accessed by this expression. Null if no
-	 *            variables accessed.
-	 */
-	public void setExpressionScope(Scope expressionScope);
+	Scope expressionScope();
 
 	/**
 	 * 
@@ -35,5 +46,15 @@ public interface Expression extends Sourceable {
 	 *         is the cast type. For operations it is the type of the operation
 	 *         result.
 	 */
-	public Type getExpressionType();
+	Type getExpressionType();
+
+	/** Returns the kind of this expression */
+	ExpressionKind expressionKind();
+
+	/**
+	 * @param expressionScope
+	 *            The highest scope accessed by this expression. Null if no
+	 *            variables accessed.
+	 */
+	void setExpressionScope(Scope expressionScope);
 }

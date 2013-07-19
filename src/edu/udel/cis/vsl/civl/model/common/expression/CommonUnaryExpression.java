@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
+import edu.udel.cis.vsl.civl.util.CIVLInternalException;
 
 /**
  * A unary operation.
@@ -72,16 +73,16 @@ public class CommonUnaryExpression extends CommonExpression implements
 		case NOT:
 			op = "!";
 			break;
-		case ADDRESSOF:
-			op = "&";
-			break;
-		case DEREFERENCE:
-			op ="*";
-			break;
 		default:
-			break;
+			throw new CIVLInternalException("Unknown unary operator: "
+					+ operator);
 		}
 		return op + "(" + operand + ")";
+	}
+
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.UNARY;
 	}
 
 }

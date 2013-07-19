@@ -24,6 +24,11 @@ public class CommonSelfExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		return "me";
+		return "$self";
+	}
+
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.SELF;
 	}
 }

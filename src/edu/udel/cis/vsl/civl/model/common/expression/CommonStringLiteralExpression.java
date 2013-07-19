@@ -46,4 +46,9 @@ public class CommonStringLiteralExpression extends CommonExpression implements
 		return value;
 	}
 
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.STRING_LITERAL;
+	}
+
 }

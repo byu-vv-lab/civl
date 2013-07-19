@@ -9,20 +9,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ArrowExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -61,7 +63,7 @@ public interface ModelFactory {
 	 * @param system
 	 *            The designated outermost function, called "System."
 	 */
-	public Model model(Function system);
+	Model model(Function system);
 
 	/**
 	 * Create a new scope.
@@ -75,7 +77,7 @@ public interface ModelFactory {
 	 *            The function containing this scope.
 	 * @return A new scope
 	 */
-	public Scope scope(Scope parent, Set<Variable> variables, Function function);
+	Scope scope(Scope parent, Set<Variable> variables, Function function);
 
 	/**
 	 * Get an identifier with the given name.
@@ -83,7 +85,7 @@ public interface ModelFactory {
 	 * @param name
 	 *            The name of this identifier.
 	 */
-	public Identifier identifier(String name);
+	Identifier identifier(String name);
 
 	/**
 	 * Create a new variable.
@@ -95,7 +97,7 @@ public interface ModelFactory {
 	 * @param vid
 	 *            The index of this variable in its scope.
 	 */
-	public Variable variable(Type type, Identifier name, int vid);
+	Variable variable(Type type, Identifier name, int vid);
 
 	/**
 	 * Create a new function.
@@ -112,10 +114,10 @@ public interface ModelFactory {
 	 *            The first location in the function.
 	 * @return The new function.
 	 */
-	public Function function(Identifier name, Vector<Variable> parameters,
+	Function function(Identifier name, Vector<Variable> parameters,
 			Type returnType, Scope containingScope, Location startLocation);
 
-	public SystemFunction systemFunction(Identifier name);
+	SystemFunction systemFunction(Identifier name);
 
 	/**
 	 * Create a new location.
@@ -124,7 +126,7 @@ public interface ModelFactory {
 	 *            The scope containing this location.
 	 * @return The new location.
 	 */
-	public Location location(Scope scope);
+	Location location(Scope scope);
 
 	/* *********************************************************************
 	 * Types
@@ -136,42 +138,42 @@ public interface ModelFactory {
 	 * 
 	 * @return The integer primitive type.
 	 */
-	public PrimitiveType integerType();
+	PrimitiveType integerType();
 
 	/**
 	 * Get the real primitive type.
 	 * 
 	 * @return The real primitive type.
 	 */
-	public PrimitiveType realType();
+	PrimitiveType realType();
 
 	/**
 	 * Get the boolean primitive type.
 	 * 
 	 * @return The boolean primitive type.
 	 */
-	public PrimitiveType booleanType();
+	PrimitiveType booleanType();
 
 	/**
 	 * Get the string primitive type.
 	 * 
 	 * @return The string primitive type.
 	 */
-	public PrimitiveType stringType();
+	PrimitiveType stringType();
 
 	/**
 	 * Get the process type.
 	 * 
 	 * @return The process type.
 	 */
-	public ProcessType processType();
+	ProcessType processType();
 
 	/**
 	 * Get the heap type.
 	 * 
 	 * @return The heap type.
 	 */
-	public HeapType heapType();
+	HeapType heapType();
 
 	/**
 	 * Get a new array type.
@@ -180,7 +182,7 @@ public interface ModelFactory {
 	 *            The type of each element in the array.
 	 * @return A new array type with the given base type.
 	 */
-	public ArrayType arrayType(Type baseType);
+	ArrayType arrayType(Type baseType);
 
 	/**
 	 * Get a new pointer type.
@@ -189,7 +191,7 @@ public interface ModelFactory {
 	 *            The type pointed to by the pointer.
 	 * @return A new pointer type with the given base type.
 	 */
-	public PointerType pointerType(Type baseType);
+	PointerType pointerType(Type baseType);
 
 	/**
 	 * Get a new struct type.
@@ -200,7 +202,7 @@ public interface ModelFactory {
 	 *            List of the fields in this struct type.
 	 * @return A new struct type with the given fields.
 	 */
-	public StructType structType(Identifier name, List<StructField> fields);
+	StructType structType(Identifier name, List<StructField> fields);
 
 	/**
 	 * Get a struct field.
@@ -211,7 +213,7 @@ public interface ModelFactory {
 	 *            The type of this struct member.
 	 * @return A struct field with the given name and type.
 	 */
-	public StructField structField(Identifier name, Type type);
+	StructField structField(Identifier name, Type type);
 
 	/* *********************************************************************
 	 * Expressions
@@ -227,8 +229,7 @@ public interface ModelFactory {
 	 *            The expression to which the operator is applied.
 	 * @return The unary expression.
 	 */
-	public UnaryExpression unaryExpression(UNARY_OPERATOR operator,
-			Expression operand);
+	UnaryExpression unaryExpression(UNARY_OPERATOR operator, Expression operand);
 
 	/**
 	 * A binary expression. One of {+,-,*,\,<,<=,==,!=,&&,||,%}
@@ -241,7 +242,7 @@ public interface ModelFactory {
 	 *            The right operand.
 	 * @return The binary expression.
 	 */
-	public BinaryExpression binaryExpression(BINARY_OPERATOR operator,
+	BinaryExpression binaryExpression(BINARY_OPERATOR operator,
 			Expression left, Expression right);
 
 	/**
@@ -252,7 +253,7 @@ public interface ModelFactory {
 	 * @param expresssion
 	 *            The expression being cast to a new type.
 	 */
-	public CastExpression castExpression(Type type, Expression expression);
+	CastExpression castExpression(Type type, Expression expression);
 
 	/**
 	 * The ternary conditional expression ("?" in C).
@@ -265,7 +266,7 @@ public interface ModelFactory {
 	 *            The expression returned if the condition evaluates to false.
 	 * @return The conditional expression.
 	 */
-	public ConditionalExpression conditionalExpression(Expression condition,
+	ConditionalExpression conditionalExpression(Expression condition,
 			Expression trueBranch, Expression falseBranch);
 
 	/**
@@ -273,23 +274,11 @@ public interface ModelFactory {
 	 * 
 	 * @param struct
 	 *            The struct being referenced.
-	 * @param field
-	 *            The field.
+	 * @param fieldIndex
+	 *            The field index (indexed from 0).
 	 * @return The dot expression.
 	 */
-	public DotExpression dotExpression(Expression struct, Identifier field);
-
-	/**
-	 * An arrow expression is a reference to a field in a struct pointer.
-	 * 
-	 * @param structPointer
-	 *            The struct pointer being referenced.
-	 * @param field
-	 *            The field.
-	 * @return The arrow expression.
-	 */
-	public ArrowExpression arrowExpression(Expression structPointer,
-			Identifier field);
+	DotExpression dotExpression(Expression struct, int fieldIndex);
 
 	/**
 	 * A boolean literal expression.
@@ -298,7 +287,7 @@ public interface ModelFactory {
 	 *            True or false.
 	 * @return The boolean literal expression.
 	 */
-	public BooleanLiteralExpression booleanLiteralExpression(boolean value);
+	BooleanLiteralExpression booleanLiteralExpression(boolean value);
 
 	/**
 	 * An integer literal expression.
@@ -307,7 +296,7 @@ public interface ModelFactory {
 	 *            The (arbitrary precision) integer value.
 	 * @return The integer literal expression.
 	 */
-	public IntegerLiteralExpression integerLiteralExpression(BigInteger value);
+	IntegerLiteralExpression integerLiteralExpression(BigInteger value);
 
 	/**
 	 * A real literal expression.
@@ -316,7 +305,7 @@ public interface ModelFactory {
 	 *            The (arbitrary precision) real value.
 	 * @return The real literal expression.
 	 */
-	public RealLiteralExpression realLiteralExpression(BigDecimal value);
+	RealLiteralExpression realLiteralExpression(BigDecimal value);
 
 	/**
 	 * This expression is only used in an ensures clause of a function contract
@@ -324,7 +313,7 @@ public interface ModelFactory {
 	 * 
 	 * @return A result expression.
 	 */
-	public ResultExpression resultExpression();
+	ResultExpression resultExpression();
 
 	/**
 	 * A string literal expression.
@@ -333,7 +322,7 @@ public interface ModelFactory {
 	 *            The string.
 	 * @return The string literal expression.
 	 */
-	public StringLiteralExpression stringLiteralExpression(String value);
+	StringLiteralExpression stringLiteralExpression(String value);
 
 	/**
 	 * An expression for an array index operation. e.g. a[i]
@@ -344,7 +333,7 @@ public interface ModelFactory {
 	 *            An expression evaluating to an integer.
 	 * @return The array index expression.
 	 */
-	public ArrayIndexExpression arrayIndexExpression(Expression array,
+	SubscriptExpression subscriptExpression(LHSExpression array,
 			Expression index);
 
 	/**
@@ -352,7 +341,7 @@ public interface ModelFactory {
 	 * 
 	 * @return A new self expression.
 	 */
-	public SelfExpression selfExpression();
+	SelfExpression selfExpression();
 
 	/**
 	 * A variable expression.
@@ -361,7 +350,26 @@ public interface ModelFactory {
 	 *            The variable being referenced.
 	 * @return The variable expression.
 	 */
-	public VariableExpression variableExpression(Variable variable);
+	VariableExpression variableExpression(Variable variable);
+
+	/**
+	 * Returns a new dereference expression (*p) with operand pointer.
+	 * 
+	 * @param pointer
+	 *            the operand of the dereference operator, an expression with
+	 *            pointer type
+	 * @return the dereference expression with given operand
+	 */
+	DereferenceExpression dereferenceExpression(Expression pointer);
+
+	/**
+	 * Returns a new address-of expression (&e) with given operand.
+	 * 
+	 * @param operand
+	 *            the operand of the address-of operator
+	 * @return the address-of expression with given operand
+	 */
+	AddressOfExpression addressOfExpression(LHSExpression operand);
 
 	/* *********************************************************************
 	 * Statements
@@ -377,8 +385,7 @@ public interface ModelFactory {
 	 *            The expression being asserted.
 	 * @return A new assert statement.
 	 */
-	public AssertStatement assertStatement(Location source,
-			Expression expression);
+	AssertStatement assertStatement(Location source, Expression expression);
 
 	/**
 	 * An assignment statement.
@@ -391,7 +398,7 @@ public interface ModelFactory {
 	 *            The right hand side of the assignment.
 	 * @return A new assignment statement.
 	 */
-	public AssignStatement assignStatement(Location source, Expression lhs,
+	AssignStatement assignStatement(Location source, LHSExpression lhs,
 			Expression rhs);
 
 	/**
@@ -403,8 +410,7 @@ public interface ModelFactory {
 	 *            The expression being added to the path condition.
 	 * @return A new assume statement.
 	 */
-	public AssumeStatement assumeStatement(Location source,
-			Expression expression);
+	AssumeStatement assumeStatement(Location source, Expression expression);
 
 	/**
 	 * A function call.
@@ -417,7 +423,7 @@ public interface ModelFactory {
 	 *            The arguments to the function.
 	 * @return A new call statement.
 	 */
-	public CallStatement callStatement(Location source, Function function,
+	CallStatement callStatement(Location source, Function function,
 			Vector<Expression> arguments);
 
 	/**
@@ -435,7 +441,7 @@ public interface ModelFactory {
 	 *            The argument to choose().
 	 * @return A new choose statement.
 	 */
-	public ChooseStatement chooseStatement(Location source, Expression lhs,
+	ChooseStatement chooseStatement(Location source, LHSExpression lhs,
 			Expression argument);
 
 	/**
@@ -449,7 +455,7 @@ public interface ModelFactory {
 	 *            The arguments to the function.
 	 * @return A new fork statement.
 	 */
-	public ForkStatement forkStatement(Location source, Expression function,
+	ForkStatement forkStatement(Location source, Expression function,
 			Vector<Expression> arguments);
 
 	/**
@@ -466,7 +472,7 @@ public interface ModelFactory {
 	 *            The arguments to the function.
 	 * @return A new fork statement.
 	 */
-	public ForkStatement forkStatement(Location source, Expression lhs,
+	ForkStatement forkStatement(Location source, LHSExpression lhs,
 			Expression function, Vector<Expression> arguments);
 
 	/**
@@ -478,7 +484,7 @@ public interface ModelFactory {
 	 *            An expression evaluating to a process.
 	 * @return A new join statement.
 	 */
-	public JoinStatement joinStatement(Location source, Expression process);
+	JoinStatement joinStatement(Location source, Expression process);
 
 	/**
 	 * A noop statement.
@@ -487,7 +493,7 @@ public interface ModelFactory {
 	 *            The source location for this noop statement.
 	 * @return A new noop statement.
 	 */
-	public NoopStatement noopStatement(Location source);
+	NoopStatement noopStatement(Location source);
 
 	/**
 	 * A return statement.
@@ -498,7 +504,6 @@ public interface ModelFactory {
 	 *            The expression being returned. Null if non-existent.
 	 * @return A new return statement.
 	 */
-	public ReturnStatement returnStatement(Location source,
-			Expression expression);
+	ReturnStatement returnStatement(Location source, Expression expression);
 
 }

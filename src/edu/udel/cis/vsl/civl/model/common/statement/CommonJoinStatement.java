@@ -34,6 +34,7 @@ public class CommonJoinStatement extends CommonStatement implements
 	/**
 	 * @return The process.
 	 */
+	@Override
 	public Expression process() {
 		return process;
 	}
@@ -42,6 +43,7 @@ public class CommonJoinStatement extends CommonStatement implements
 	 * @param process
 	 *            The process.
 	 */
+	@Override
 	public void setProcess(Expression process) {
 		this.process = process;
 	}

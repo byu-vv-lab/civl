@@ -14,7 +14,8 @@ import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonExpression extends CommonSourceable implements Expression {
+public abstract class CommonExpression extends CommonSourceable implements
+		Expression {
 
 	private Scope expressionScope = null;
 	protected Type expressionType = null;

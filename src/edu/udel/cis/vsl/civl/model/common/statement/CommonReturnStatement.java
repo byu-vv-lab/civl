@@ -34,6 +34,7 @@ public class CommonReturnStatement extends CommonStatement implements
 	/**
 	 * @return The expression being returned. Null if non-existent.
 	 */
+	@Override
 	public Expression expression() {
 		return expression;
 	}
@@ -42,6 +43,7 @@ public class CommonReturnStatement extends CommonStatement implements
 	 * @param expression
 	 *            The expression being returned. Null if non-existent.
 	 */
+	@Override
 	public void setExpression(Expression expression) {
 		this.expression = expression;
 	}

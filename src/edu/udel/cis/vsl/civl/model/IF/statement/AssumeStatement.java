@@ -17,12 +17,12 @@ public interface AssumeStatement extends Statement {
 	/**
 	 * @return The expression being added to the path condition.
 	 */
-	public Expression getExpression();
+	Expression getExpression();
 
 	/**
 	 * @param expression
 	 *            The expression being added to the path condition.
 	 */
-	public void setExpression(Expression expression);
+	void setExpression(Expression expression);
 
 }

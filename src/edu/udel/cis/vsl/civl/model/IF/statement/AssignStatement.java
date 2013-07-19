@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 
 /**
  * An assignment statement.
@@ -16,23 +17,23 @@ public interface AssignStatement extends Statement {
 	/**
 	 * @return The left hand side of the assignment.
 	 */
-	public Expression getLhs();
+	LHSExpression getLhs();
 
 	/**
 	 * @return The right hand side of the assignment.
 	 */
-	public Expression rhs();
+	Expression rhs();
 
 	/**
 	 * @param lhs
 	 *            The left hand side of the assignment.
 	 */
-	public void setLhs(Expression lhs);
+	void setLhs(LHSExpression lhs);
 
 	/**
 	 * @param rhs
 	 *            The right hand side of the assignment.
 	 */
-	public void setRhs(Expression rhs);
+	void setRhs(Expression rhs);
 
 }

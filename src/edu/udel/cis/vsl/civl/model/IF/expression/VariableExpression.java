@@ -9,18 +9,19 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * A use of a variable in an expression.
  * 
  * @author Timothy K. Zirkel (zirkel)
- *
+ * 
  */
-public interface VariableExpression extends Expression {
+public interface VariableExpression extends LHSExpression {
 
 	/**
 	 * @return The variable
 	 */
-	public Variable variable();
+	Variable variable();
 
 	/**
-	 * @param variable The variable.
+	 * @param variable
+	 *            The variable.
 	 */
-	public void setVariable(Variable variable);
-	
+	void setVariable(Variable variable);
+
 }

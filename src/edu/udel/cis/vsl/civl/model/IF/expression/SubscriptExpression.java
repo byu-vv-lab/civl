@@ -10,28 +10,28 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface ArrayIndexExpression extends Expression {
+public interface SubscriptExpression extends LHSExpression {
 
 	/**
 	 * @return The expression for the array.
 	 */
-	public Expression array();
+	LHSExpression array();
 
 	/**
 	 * @return The expression for the index.
 	 */
-	public Expression index();
+	Expression index();
 
 	/**
 	 * @param array
 	 *            The expression for the array.
 	 */
-	public void setArray(Expression array);
+	void setArray(LHSExpression array);
 
 	/**
 	 * @param index
 	 *            The expression for the index.
 	 */
-	public void setIndex(Expression index);
+	void setIndex(Expression index);
 
 }

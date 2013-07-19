@@ -39,6 +39,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	/**
 	 * @return The location that is the source of this statement.
 	 */
+	@Override
 	public Location source() {
 		return source;
 	}
@@ -46,6 +47,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	/**
 	 * @return The location that is the target of this statement.
 	 */
+	@Override
 	public Location target() {
 		return target;
 	}
@@ -53,6 +55,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	/**
 	 * @return The boolean-valued guard expression for this statement.
 	 */
+	@Override
 	public Expression guard() {
 		return guard;
 	}
@@ -61,6 +64,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	 * @param source
 	 *            the source to set
 	 */
+	@Override
 	public void setSource(Location source) {
 		if (this.source != null) {
 			this.source.outgoing().remove(this);
@@ -73,6 +77,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	 * @param target
 	 *            the target to set
 	 */
+	@Override
 	public void setTarget(Location target) {
 		if (this.target != null) {
 			this.target().incoming().remove(this);
@@ -85,6 +90,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	 * @param guard
 	 *            the guard to set
 	 */
+	@Override
 	public void setGuard(Expression guard) {
 		this.guard = guard;
 		statementScope = join(statementScope, guard.expressionScope());
@@ -94,6 +100,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	 * @return The highest scope accessed by this statement. Null if no
 	 *         variables accessed.
 	 */
+	@Override
 	public Scope statementScope() {
 		return statementScope;
 	}
@@ -103,6 +110,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	 *            The highest scope accessed by this statement. Null if no
 	 *            variables accessed.
 	 */
+	@Override
 	public void setStatementScope(Scope statementScope) {
 		this.statementScope = statementScope;
 	}

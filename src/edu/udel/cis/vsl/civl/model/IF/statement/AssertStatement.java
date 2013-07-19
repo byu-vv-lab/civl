@@ -16,23 +16,23 @@ public interface AssertStatement extends Statement {
 	/**
 	 * @return Whether this is a collective assertion.
 	 */
-	public boolean isCollective();
+	boolean isCollective();
 
 	/**
 	 * @return The expression being checked.
 	 */
-	public Expression getExpression();
+	Expression getExpression();
 
 	/**
 	 * @param isCollective
 	 *            Whether this is a collective assertion.
 	 */
-	public void setCollective(boolean isCollective);
+	void setCollective(boolean isCollective);
 
 	/**
 	 * @param expression
 	 *            The expression being checked.
 	 */
-	public void setExpression(Expression expression);
+	void setExpression(Expression expression);
 
 }

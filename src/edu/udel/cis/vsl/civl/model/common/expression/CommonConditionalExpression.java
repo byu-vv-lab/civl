@@ -74,4 +74,9 @@ public class CommonConditionalExpression extends CommonExpression implements
 		return "(" + condition + " ? " + trueBranch + " : " + falseBranch + ")";
 	}
 
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.COND;
+	}
+
 }

@@ -77,10 +77,15 @@ public class CommonCastExpression extends CommonExpression implements
 	public void setCastType(Type type) {
 		this.type = type;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "(" + type + ") " + expression;
+	}
+
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.CAST;
 	}
 
 }

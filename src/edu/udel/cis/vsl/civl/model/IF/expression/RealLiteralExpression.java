@@ -16,12 +16,12 @@ public interface RealLiteralExpression extends LiteralExpression {
 	/**
 	 * @return The (arbitrary precision) real value.
 	 */
-	public BigDecimal value();
+	BigDecimal value();
 
 	/**
 	 * @param value
 	 *            The (arbitrary precision) real value.
 	 */
-	public void setValue(BigDecimal value);
-	
+	void setValue(BigDecimal value);
+
 }

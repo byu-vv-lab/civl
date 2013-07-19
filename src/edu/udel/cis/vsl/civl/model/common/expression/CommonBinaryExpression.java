@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.util.CIVLInternalException;
 
 /**
  * A binary operation.
@@ -119,8 +120,21 @@ public class CommonBinaryExpression extends CommonExpression implements
 		case MODULO:
 			op = "%";
 			break;
+		case POINTER_ADD:
+			op = "+";
+			break;
+		case POINTER_SUBTRACT:
+			op = "-";
+			break;
+		default:
+			throw new CIVLInternalException("Unknown operator: " + operator);
 		}
 		return left + op + right;
+	}
+
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.BINARY;
 	}
 
 }

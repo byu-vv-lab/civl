@@ -16,11 +16,10 @@ import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
-import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ArrowExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -230,19 +229,9 @@ public class Executor {
 			SymbolicExpression[] arguments;
 
 			arguments = new SymbolicExpression[statement.arguments().size()];
-			for (int i = 0; i < statement.arguments().size(); i++) {
-				SymbolicExpression expression;
-
-				if (function.parameters().get(i).type() instanceof PointerType) {
-					expression = evaluator.reference(state, pid, statement
-							.arguments().get(i));
-				} else {
-					expression = evaluator.evaluate(state, pid, statement
-							.arguments().get(i));
-				}
-
-				arguments[i] = expression;
-			}
+			for (int i = 0; i < statement.arguments().size(); i++)
+				arguments[i] = evaluator.evaluate(state, pid, statement
+						.arguments().get(i));
 			state = stateFactory.pushCallStack(state, pid, function, arguments);
 		}
 		return state;
@@ -278,10 +267,9 @@ public class Executor {
 		}
 		// TODO: Throw exception if function not found.
 		arguments = new SymbolicExpression[statement.arguments().size()];
-		for (int i = 0; i < statement.arguments().size(); i++) {
+		for (int i = 0; i < statement.arguments().size(); i++)
 			arguments[i] = evaluator.evaluate(state, pid, statement.arguments()
 					.get(i));
-		}
 		state = stateFactory.addProcess(state, function, arguments, pid);
 		// Find the new process's id.
 		newPid = pid;
@@ -290,12 +278,9 @@ public class Executor {
 				newPid = p.id();
 			}
 		}
-		if (statement.lhs() != null) {
+		if (statement.lhs() != null)
 			state = writeValue(state, pid, statement.lhs(),
-					symbolicUniverse.symbolicConstant(
-							symbolicUniverse.stringObject(pidPrefix + newPid),
-							processType));
-		}
+					evaluator.makeProcVal(newPid));
 		state = transition(state, process, statement.target());
 		// state = stateFactory.canonic(state);
 		return state;
@@ -314,16 +299,10 @@ public class Executor {
 	 * @return The updated state of the program.
 	 */
 	public State execute(State state, int pid, JoinStatement statement) {
-		SymbolicExpression pidExpression = evaluator.evaluate(state, pid,
+		SymbolicExpression procVal = evaluator.evaluate(state, pid,
 				statement.process());
-		int joinedPid;
+		int joinedPid = evaluator.getPid(procVal);
 
-		assert pidExpression instanceof SymbolicConstant;
-		assert ((SymbolicConstant) pidExpression).name().getString()
-				.startsWith(pidPrefix);
-		joinedPid = Integer.parseInt(((SymbolicConstant) pidExpression).name()
-				.getString().substring(pidPrefix.length()));
-		// TODO: Throw exception if not the right type.
 		state = transition(state, state.process(pid), statement.target());
 		state = stateFactory.removeProcess(state, joinedPid);
 		// state = stateFactory.canonic(state);
@@ -517,11 +496,11 @@ public class Executor {
 
 			state = stateFactory.setVariable(state, variable, pid,
 					symbolicValue);
-		} else if (target instanceof ArrayIndexExpression) {
+		} else if (target instanceof SubscriptExpression) {
 			SymbolicExpression newValue = arrayWriteValue(state, pid,
-					(ArrayIndexExpression) target, symbolicValue);
+					(SubscriptExpression) target, symbolicValue);
 			SymbolicExpression currentArrayValue = evaluator.evaluate(state,
-					pid, ((ArrayIndexExpression) target).array());
+					pid, ((SubscriptExpression) target).array());
 			Variable writeLocation = evaluator.getVariable(state, pid, target);
 
 			// state = stateFactory.setVariable(state,
@@ -624,7 +603,7 @@ public class Executor {
 	 * @return A new symbolic value for the array.
 	 */
 	private SymbolicExpression arrayWriteValue(State state, int pid,
-			ArrayIndexExpression arrayIndex, SymbolicExpression value) {
+			SubscriptExpression arrayIndex, SymbolicExpression value) {
 		SymbolicExpression result = null;
 		SymbolicExpression array = evaluator.evaluate(state, pid,
 				arrayIndex.array());
@@ -640,9 +619,9 @@ public class Executor {
 		// while (array.type().equals(evaluator.pointerType())) {
 		// array = evaluator.dereference(state, pid, array);
 		// }
-		if (arrayIndex.array() instanceof ArrayIndexExpression) {
+		if (arrayIndex.array() instanceof SubscriptExpression) {
 			result = arrayWriteValue(state, pid,
-					(ArrayIndexExpression) arrayIndex.array(),
+					(SubscriptExpression) arrayIndex.array(),
 					symbolicUniverse.arrayWrite(array,
 							(NumericExpression) index, value));
 		} else if (arrayIndex.array() instanceof ArrowExpression) {

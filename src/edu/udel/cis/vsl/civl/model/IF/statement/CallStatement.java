@@ -7,6 +7,7 @@ import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 
 /**
  * A function call. Either of the form f(x) or else v=f(x).
@@ -19,34 +20,34 @@ public interface CallStatement extends Statement {
 	/**
 	 * @return The left hand side expression if applicable. Else null.
 	 */
-	public Expression lhs();
+	LHSExpression lhs();
 
 	/**
 	 * @return The function being called.
 	 */
-	public Function function();
+	Function function();
 
 	/**
 	 * @return The arguments to the function.
 	 */
-	public Vector<Expression> arguments();
+	Vector<Expression> arguments();
 
 	/**
 	 * @param lhs
 	 *            The left hand side expression if applicable. Else null.
 	 */
-	public void setLhs(Expression lhs);
+	void setLhs(LHSExpression lhs);
 
 	/**
 	 * @param function
 	 *            The function being called.
 	 */
-	public void setFunction(Function function);
+	void setFunction(Function function);
 
 	/**
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
-	public void setArguments(Vector<Expression> arguments);
+	void setArguments(Vector<Expression> arguments);
 
 }

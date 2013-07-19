@@ -7,6 +7,7 @@ import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
 
@@ -19,7 +20,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
 public class CommonCallStatement extends CommonStatement implements
 		CallStatement {
 
-	private Expression lhs = null;
+	private LHSExpression lhs = null;
 	private Function function;
 	private Vector<Expression> arguments;
 
@@ -53,7 +54,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
-	public CommonCallStatement(Location source, Expression lhs,
+	public CommonCallStatement(Location source, LHSExpression lhs,
 			Function function, Vector<Expression> arguments) {
 		super(source);
 		this.lhs = lhs;
@@ -64,13 +65,15 @@ public class CommonCallStatement extends CommonStatement implements
 	/**
 	 * @return The left hand side expression if applicable. Else null.
 	 */
-	public Expression lhs() {
+	@Override
+	public LHSExpression lhs() {
 		return lhs;
 	}
 
 	/**
 	 * @return The function being called.
 	 */
+	@Override
 	public Function function() {
 		return function;
 	}
@@ -78,6 +81,7 @@ public class CommonCallStatement extends CommonStatement implements
 	/**
 	 * @return The arguments to the function.
 	 */
+	@Override
 	public Vector<Expression> arguments() {
 		return arguments;
 	}
@@ -86,7 +90,8 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @param lhs
 	 *            The left hand side expression if applicable. Else null.
 	 */
-	public void setLhs(Expression lhs) {
+	@Override
+	public void setLhs(LHSExpression lhs) {
 		this.lhs = lhs;
 	}
 
@@ -94,6 +99,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @param function
 	 *            The function being called.
 	 */
+	@Override
 	public void setFunction(Function function) {
 		this.function = function;
 	}
@@ -102,6 +108,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
+	@Override
 	public void setArguments(Vector<Expression> arguments) {
 		this.arguments = arguments;
 	}

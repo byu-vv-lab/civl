@@ -15,18 +15,18 @@ public interface ConditionalExpression extends Expression {
 	 * 
 	 * @return The condition being evaluated in this ternary expression.
 	 */
-	public Expression getCondition();
+	Expression getCondition();
 
 	/**
 	 * 
 	 * @return The expression returned if the condition evaluates to true.
 	 */
-	public Expression getTrueBranch();
+	Expression getTrueBranch();
 
 	/**
 	 * 
 	 * @return The expression returned if the condition evaluates to false.
 	 */
-	public Expression getFalseBranch();
+	Expression getFalseBranch();
 
 }

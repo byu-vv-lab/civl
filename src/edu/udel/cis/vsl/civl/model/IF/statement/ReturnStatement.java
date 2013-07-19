@@ -16,12 +16,12 @@ public interface ReturnStatement extends Statement {
 	/**
 	 * @return The expression being returned. Null if non-existent.
 	 */
-	public Expression expression();
+	Expression expression();
 
 	/**
 	 * @param expression
 	 *            The expression being returned. Null if non-existent.
 	 */
-	public void setExpression(Expression expression);
+	void setExpression(Expression expression);
 
 }

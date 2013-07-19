@@ -3,7 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.type;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
@@ -16,7 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 public class CommonStructType implements StructType {
 
 	private Identifier name;
-	private List<StructField> fields;
+	private ArrayList<StructField> fields = new ArrayList<StructField>();
 
 	/**
 	 * A struct type has a sequence of struct fields.
@@ -25,9 +25,15 @@ public class CommonStructType implements StructType {
 	 *            A list of struct fields.
 	 * 
 	 */
-	public CommonStructType(Identifier name, List<StructField> fields) {
+	public CommonStructType(Identifier name, Iterable<StructField> fields) {
+		int count = 0;
+
+		for (StructField field : fields) {
+			this.fields.add(field);
+			((CommonStructField) field).setIndex(count);
+			count++;
+		}
 		this.name = name;
-		this.fields = fields;
 	}
 
 	/*
@@ -36,7 +42,7 @@ public class CommonStructType implements StructType {
 	 * @see edu.udel.cis.vsl.civl.model.IF.type.StructType#fields()
 	 */
 	@Override
-	public List<StructField> fields() {
+	public Iterable<StructField> fields() {
 		return fields;
 	}
 
@@ -44,16 +50,26 @@ public class CommonStructType implements StructType {
 	public Identifier name() {
 		return name;
 	}
-	
+
 	@Override
 	public String toString() {
 		String result = "struct " + name.toString() + " {\n";
-		
+
 		for (StructField f : fields) {
 			result += "  " + f.toString() + "\n";
 		}
 		result += "}";
 		return result;
+	}
+
+	@Override
+	public int numFields() {
+		return fields.size();
+	}
+
+	@Override
+	public StructField getField(int index) {
+		return fields.get(index);
 	}
 
 }

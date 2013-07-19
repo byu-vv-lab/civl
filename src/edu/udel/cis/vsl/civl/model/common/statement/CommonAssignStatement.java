@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 
@@ -13,9 +14,10 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonAssignStatement extends CommonStatement implements AssignStatement {
+public class CommonAssignStatement extends CommonStatement implements
+		AssignStatement {
 
-	private Expression lhs;
+	private LHSExpression lhs;
 	private Expression rhs;
 
 	/**
@@ -28,7 +30,8 @@ public class CommonAssignStatement extends CommonStatement implements AssignStat
 	 * @param rhs
 	 *            The right hand side of the assignment.
 	 */
-	public CommonAssignStatement(Location source, Expression lhs, Expression rhs) {
+	public CommonAssignStatement(Location source, LHSExpression lhs,
+			Expression rhs) {
 		super(source);
 		this.lhs = lhs;
 		this.rhs = rhs;
@@ -37,13 +40,15 @@ public class CommonAssignStatement extends CommonStatement implements AssignStat
 	/**
 	 * @return The left hand side of the assignment.
 	 */
-	public Expression getLhs() {
+	@Override
+	public LHSExpression getLhs() {
 		return lhs;
 	}
 
 	/**
 	 * @return The right hand side of the assignment.
 	 */
+	@Override
 	public Expression rhs() {
 		return rhs;
 	}
@@ -52,7 +57,8 @@ public class CommonAssignStatement extends CommonStatement implements AssignStat
 	 * @param lhs
 	 *            The left hand side of the assignment.
 	 */
-	public void setLhs(Expression lhs) {
+	@Override
+	public void setLhs(LHSExpression lhs) {
 		this.lhs = lhs;
 	}
 
@@ -60,6 +66,7 @@ public class CommonAssignStatement extends CommonStatement implements AssignStat
 	 * @param rhs
 	 *            The right hand side of the assignment.
 	 */
+	@Override
 	public void setRhs(Expression rhs) {
 		this.rhs = rhs;
 	}

@@ -12,16 +12,16 @@ import java.math.BigInteger;
  * 
  */
 public interface IntegerLiteralExpression extends LiteralExpression {
-	
+
 	/**
 	 * @return The (arbitrary precision) value of the integer.
 	 */
-	public BigInteger value();
+	BigInteger value();
 
 	/**
 	 * @param value
 	 *            The (arbitrary precision) value of the integer.
 	 */
-	public void setValue(BigInteger value);
-	
+	void setValue(BigInteger value);
+
 }

@@ -17,20 +17,22 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
-import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ArrowExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -54,12 +56,12 @@ import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonArrayIndexExpression;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonArrowExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonAddressOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonCastExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonConditionalExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonDereferenceExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDotExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
@@ -67,6 +69,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonStringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonVariableExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
@@ -120,6 +123,8 @@ public class CommonModelFactory implements ModelFactory {
 	/* Keep a unique number to identify scopes. */
 	private int scopeID = 0;
 	private int chooseID = 0;
+
+	// private Scope systemScope;
 
 	/**
 	 * The factory to create all model components. Usually this is the only way
@@ -361,25 +366,24 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(operand.expressionScope());
 		switch (operator) {
-		case ADDRESSOF:
-			result = new CommonUnaryExpression(operator, operand);
-			((CommonUnaryExpression) result)
-					.setExpressionType(pointerType(operand.getExpressionType()));
-			break;
-		case DEREFERENCE:
-			assert operand.getExpressionType() instanceof PointerType;
-			result = new CommonUnaryExpression(operator, operand);
-			((CommonUnaryExpression) result)
-					.setExpressionType(((PointerType) operand
-							.getExpressionType()).baseType());
-			break;
+		// case ADDRESSOF:
+		// result = new CommonUnaryExpression(operator, operand);
+		// ((CommonUnaryExpression) result)
+		// .setExpressionType(pointerType(operand.getExpressionType()));
+		// break;
+		// case DEREFERENCE:
+		// assert operand.getExpressionType() instanceof PointerType;
+		// result = new CommonUnaryExpression(operator, operand);
+		// ((CommonUnaryExpression) result)
+		// .setExpressionType(((PointerType) operand
+		// .getExpressionType()).baseType());
+		// break;
 		case NEGATIVE:
 			result = new CommonUnaryExpression(operator, operand);
 			((CommonUnaryExpression) result).setExpressionType(operand
 					.getExpressionType());
 			break;
 		case NOT:
-
 			if (operand.getExpressionType().equals(booleanType)) {
 				result = new CommonUnaryExpression(operator, operand);
 			} else {
@@ -432,18 +436,20 @@ public class CommonModelFactory implements ModelFactory {
 		default:
 			Type leftType = left.getExpressionType();
 			Type rightType = right.getExpressionType();
-			
+
 			// Types should be the same unless we're doing pointer arithmetic.
 			if (leftType.equals(rightType)) {
 				((CommonBinaryExpression) result).setExpressionType(leftType);
-			} else if (leftType instanceof PointerType && rightType instanceof PrimitiveType) {
+			} else if (leftType instanceof PointerType
+					&& rightType instanceof PrimitiveType) {
 				assert ((PrimitiveType) rightType).primitiveType() == PRIMITIVE_TYPE.INT;
 				((CommonBinaryExpression) result).setExpressionType(leftType);
-			} else if (leftType instanceof PointerType && rightType instanceof PrimitiveType) {
+			} else if (leftType instanceof PointerType
+					&& rightType instanceof PrimitiveType) {
 				assert ((PrimitiveType) rightType).primitiveType() == PRIMITIVE_TYPE.INT;
 				((CommonBinaryExpression) result).setExpressionType(leftType);
-			} 
-			
+			}
+
 			break;
 
 		}
@@ -503,46 +509,14 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The field.
 	 * @return The dot expression.
 	 */
-	public DotExpression dotExpression(Expression struct, Identifier field) {
-		CommonDotExpression result = new CommonDotExpression(struct, field);
+	public DotExpression dotExpression(Expression struct, int fieldIndex) {
+		CommonDotExpression result = new CommonDotExpression(struct, fieldIndex);
 		Type structType = struct.getExpressionType();
 
 		result.setExpressionScope(struct.expressionScope());
 		assert structType instanceof StructType;
-		for (StructField f : ((StructType) structType).fields()) {
-			if (f.name().equals(field)) {
-				result.setExpressionType(f.type());
-				break;
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * An arrow expression is a reference to a field in a struct pointer.
-	 * 
-	 * @param structPointer
-	 *            The struct pointer being referenced.
-	 * @param field
-	 *            The field.
-	 * @return The arrow expression.
-	 */
-	public ArrowExpression arrowExpression(Expression structPointer,
-			Identifier field) {
-		CommonArrowExpression result = new CommonArrowExpression(structPointer,
-				field);
-		Type structType = structPointer.getExpressionType();
-
-		result.setExpressionScope(structPointer.expressionScope());
-		assert structType instanceof PointerType;
-		assert ((PointerType) structType).baseType() instanceof StructType;
-		structType = ((PointerType) structType).baseType();
-		for (StructField f : ((StructType) structType).fields()) {
-			if (f.name().equals(field)) {
-				result.setExpressionType(f.type());
-				break;
-			}
-		}
+		result.setExpressionType(((StructType) structType).getField(fieldIndex)
+				.type());
 		return result;
 	}
 
@@ -625,19 +599,18 @@ public class CommonModelFactory implements ModelFactory {
 	 *            An expression evaluating to an integer.
 	 * @return The array index expression.
 	 */
-	public ArrayIndexExpression arrayIndexExpression(Expression array,
+	public SubscriptExpression subscriptExpression(LHSExpression array,
 			Expression index) {
-		ArrayIndexExpression result = new CommonArrayIndexExpression(array,
-				index);
+		SubscriptExpression result = new CommonSubscriptExpression(array, index);
 		Type arrayType = array.getExpressionType();
 
 		result.setExpressionScope(join(array.expressionScope(),
 				index.expressionScope()));
 		if (arrayType instanceof ArrayType) {
-			((CommonArrayIndexExpression) result)
+			((CommonSubscriptExpression) result)
 					.setExpressionType(((ArrayType) arrayType).baseType());
 		} else if (arrayType instanceof PointerType) {
-			((CommonArrayIndexExpression) result)
+			((CommonSubscriptExpression) result)
 					.setExpressionType(((PointerType) arrayType).baseType());
 		} else {
 			throw new RuntimeException(
@@ -710,7 +683,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The right hand side of the assignment.
 	 * @return A new assignment statement.
 	 */
-	public AssignStatement assignStatement(Location source, Expression lhs,
+	public AssignStatement assignStatement(Location source, LHSExpression lhs,
 			Expression rhs) {
 		AssignStatement result = new CommonAssignStatement(source, lhs, rhs);
 
@@ -778,7 +751,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The argument to choose().
 	 * @return A new choose statement.
 	 */
-	public ChooseStatement chooseStatement(Location source, Expression lhs,
+	public ChooseStatement chooseStatement(Location source, LHSExpression lhs,
 			Expression argument) {
 		ChooseStatement result = new CommonChooseStatement(source, lhs,
 				argument, chooseID++);
@@ -828,7 +801,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The arguments ot the function.
 	 * @return A new fork statement.
 	 */
-	public ForkStatement forkStatement(Location source, Expression lhs,
+	public ForkStatement forkStatement(Location source, LHSExpression lhs,
 			Expression function, Vector<Expression> arguments) {
 		ForkStatement result = new CommonForkStatement(source, lhs, function,
 				arguments);
@@ -923,6 +896,26 @@ public class CommonModelFactory implements ModelFactory {
 			}
 			s1Ancestor = s1Ancestor.parent();
 		}
+	}
+
+	@Override
+	public DereferenceExpression dereferenceExpression(Expression pointer) {
+		PointerType pointerType = (PointerType) pointer.getExpressionType();
+		DereferenceExpression result = new CommonDereferenceExpression(pointer);
+
+		result.setExpressionScope(null); // indicates unknown scope
+		((CommonExpression) result).setExpressionType(pointerType.baseType());
+		return result;
+	}
+
+	@Override
+	public AddressOfExpression addressOfExpression(LHSExpression operand) {
+		AddressOfExpression result = new CommonAddressOfExpression(operand);
+
+		result.setExpressionScope(operand.expressionScope());
+		((CommonExpression) result).setExpressionType(this.pointerType(operand
+				.getExpressionType()));
+		return result;
 	}
 
 }

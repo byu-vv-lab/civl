@@ -24,6 +24,11 @@ public class CommonResultExpression extends CommonExpression implements
 	}
 
 	public String toString() {
-		return "\\result";
+		return "$result";
+	}
+
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.RESULT;
 	}
 }

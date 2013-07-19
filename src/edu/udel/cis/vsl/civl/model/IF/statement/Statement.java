@@ -19,47 +19,47 @@ public interface Statement extends Sourceable {
 	/**
 	 * @return The location that is the source of this statement.
 	 */
-	public Location source();
+	Location source();
 
 	/**
 	 * @return The location that is the target of this statement.
 	 */
-	public Location target();
+	Location target();
 
 	/**
 	 * @return The boolean-valued guard expression for this statement.
 	 */
-	public Expression guard();
+	Expression guard();
 
 	/**
 	 * @param source
 	 *            the source to set
 	 */
-	public void setSource(Location source);
+	void setSource(Location source);
 
 	/**
 	 * @param target
 	 *            the target to set
 	 */
-	public void setTarget(Location target);
+	void setTarget(Location target);
 
 	/**
 	 * @param guard
 	 *            the guard to set
 	 */
-	public void setGuard(Expression guard);
+	void setGuard(Expression guard);
 
 	/**
 	 * @return The highest scope accessed by this statement. Null if no
 	 *         variables accessed.
 	 */
-	public Scope statementScope();
+	Scope statementScope();
 
 	/**
 	 * @param statementScope
 	 *            The highest scope accessed by this statement. Null if no
 	 *            variables accessed.
 	 */
-	public void setStatementScope(Scope statementScope);
+	void setStatementScope(Scope statementScope);
 
 }

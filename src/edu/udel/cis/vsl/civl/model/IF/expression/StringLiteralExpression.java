@@ -14,11 +14,12 @@ public interface StringLiteralExpression extends LiteralExpression {
 	/**
 	 * @return The string.
 	 */
-	public String value();
-	
+	String value();
+
 	/**
-	 * @param value The string.
+	 * @param value
+	 *            The string.
 	 */
-	public void setValue(String value);
-	
+	void setValue(String value);
+
 }

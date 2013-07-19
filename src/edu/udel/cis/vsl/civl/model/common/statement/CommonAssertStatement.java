@@ -32,6 +32,7 @@ public class CommonAssertStatement extends CommonStatement implements AssertStat
 	/**
 	 * @return Whether this is a collective assertion.
 	 */
+	@Override
 	public boolean isCollective() {
 		return isCollective;
 	}
@@ -39,6 +40,7 @@ public class CommonAssertStatement extends CommonStatement implements AssertStat
 	/**
 	 * @return The expression being checked.
 	 */
+	@Override
 	public Expression getExpression() {
 		return expression;
 	}
@@ -47,6 +49,7 @@ public class CommonAssertStatement extends CommonStatement implements AssertStat
 	 * @param isCollective
 	 *            Whether this is a collective assertion.
 	 */
+	@Override
 	public void setCollective(boolean isCollective) {
 		this.isCollective = isCollective;
 	}
@@ -55,6 +58,7 @@ public class CommonAssertStatement extends CommonStatement implements AssertStat
 	 * @param expression
 	 *            The expression being checked.
 	 */
+	@Override
 	public void setExpression(Expression expression) {
 		this.expression = expression;
 	}

@@ -14,9 +14,12 @@ import java.util.Vector;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
+import edu.udel.cis.vsl.abc.ast.entity.IF.Entity.EntityKind;
+import edu.udel.cis.vsl.abc.ast.entity.IF.Field;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Label;
 import edu.udel.cis.vsl.abc.ast.entity.IF.OrdinaryEntity;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.EnsuresNode;
@@ -36,6 +39,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ResultNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SelfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
@@ -81,6 +85,7 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
@@ -90,9 +95,13 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType.PRIMITIVE_TYPE;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.util.CIVLException;
 import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
@@ -108,6 +117,9 @@ import edu.udel.cis.vsl.civl.util.CIVLUnimplementedFeatureException;
 public class CommonModelBuilder implements ModelBuilder {
 
 	private ModelFactory factory;
+
+	private Scope systemScope;
+
 	private Vector<FunctionDefinitionNode> unprocessedFunctions;
 	private Map<FunctionDefinitionNode, Scope> containingScopes;
 	private Map<CallStatement, FunctionDefinitionNode> callStatements;
@@ -123,6 +135,22 @@ public class CommonModelBuilder implements ModelBuilder {
 	public CommonModelBuilder() {
 		factory = new CommonModelFactory();
 		setUpSystemFunctions();
+	}
+
+	// Helpers....
+
+	private boolean isIntegerType(Type type) {
+		return type instanceof PrimitiveType
+				&& ((PrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.INT;
+	}
+
+	private boolean isNumericType(Type type) {
+		if (type instanceof PrimitiveType) {
+			PRIMITIVE_TYPE kind = ((PrimitiveType) type).primitiveType();
+
+			return kind == PRIMITIVE_TYPE.INT || kind == PRIMITIVE_TYPE.REAL;
+		}
+		return false;
 	}
 
 	private void setUpSystemFunctions() {
@@ -168,6 +196,7 @@ public class CommonModelBuilder implements ModelBuilder {
 		Statement mainBody;
 		Vector<Statement> initializations = new Vector<Statement>();
 
+		systemScope = system.outerScope();
 		containingScopes = new LinkedHashMap<FunctionDefinitionNode, Scope>();
 		callStatements = new LinkedHashMap<CallStatement, FunctionDefinitionNode>();
 		functionMap = new LinkedHashMap<FunctionDefinitionNode, Function>();
@@ -183,7 +212,7 @@ public class CommonModelBuilder implements ModelBuilder {
 				processVariableDeclaration(system.outerScope(),
 						(VariableDeclarationNode) rootNode.child(i));
 				if (init != null) {
-					Expression left;
+					LHSExpression left;
 					Expression right;
 					Location location = factory.location(system.outerScope());
 
@@ -535,6 +564,21 @@ public class CommonModelBuilder implements ModelBuilder {
 		return result;
 	}
 
+	private int getFieldIndex(IdentifierNode fieldIdentifier) {
+		Entity entity = fieldIdentifier.getEntity();
+		EntityKind kind = entity.getEntityKind();
+
+		if (kind == EntityKind.FIELD) {
+			Field field = (Field) entity;
+
+			return field.getMemberIndex();
+		} else {
+			throw new CIVLInternalException(
+					"getFieldIndex given identifier that does not correspond to field: "
+							+ fieldIdentifier);
+		}
+	}
+
 	/**
 	 * Translate a struct pointer field reference from the CIVL AST to the CIVL
 	 * model.
@@ -546,11 +590,11 @@ public class CommonModelBuilder implements ModelBuilder {
 	 * @return The model representation of the expression.
 	 */
 	private Expression arrowExpression(ArrowNode expression, Scope scope) {
-		Expression result;
 		Expression struct = expression(expression.getStructurePointer(), scope);
-		Identifier field = factory.identifier(expression.getFieldName().name());
+		Expression result = factory.dotExpression(
+				factory.dereferenceExpression(struct),
+				getFieldIndex(expression.getFieldName()));
 
-		result = factory.arrowExpression(struct, field);
 		return result;
 	}
 
@@ -564,11 +608,106 @@ public class CommonModelBuilder implements ModelBuilder {
 	 * @return The model representation of the expression.
 	 */
 	private Expression dotExpression(DotNode expression, Scope scope) {
-		Expression result;
 		Expression struct = expression(expression.getStructure(), scope);
-		Identifier field = factory.identifier(expression.getFieldName().name());
+		Expression result = factory.dotExpression(struct,
+				getFieldIndex(expression.getFieldName()));
 
-		result = factory.dotExpression(struct, field);
+		return result;
+	}
+
+	// note: argument to & should never have array type
+
+	/**
+	 * If the given CIVL expression e has array type, this returns the
+	 * expression &e[0]. Otherwise returns e unchanged.
+	 * 
+	 * This method should be called on every LHS expression e except in the
+	 * following cases: (1) e is the first argument to the SUBSCRIPT operator
+	 * (i.e., e occurs in the context e[i]), or (2) e is the argument to the
+	 * "sizeof" operator.
+	 * 
+	 * @param expression
+	 *            any CIVL expression e
+	 * @return either the original expression or &e[0]
+	 */
+	private Expression arrayToPointer(Expression expression) {
+		Type type = expression.getExpressionType();
+
+		if (type instanceof ArrayType) {
+			ArrayType arrayType = (ArrayType) type;
+			Type elementType = arrayType.baseType();
+			Expression zero = factory.integerLiteralExpression(BigInteger.ZERO);
+			LHSExpression subscript = factory.subscriptExpression(
+					(LHSExpression) expression, zero);
+			Expression pointer = factory.addressOfExpression(subscript);
+			Scope scope = expression.expressionScope();
+			ASTNode node = expression.getNode();
+
+			zero.setExpressionScope(scope);
+			subscript.setExpressionScope(scope);
+			pointer.setExpressionScope(scope);
+			zero.setNode(node);
+			subscript.setNode(node);
+			pointer.setNode(node);
+			((CommonExpression) zero).setExpressionType(factory.integerType());
+			((CommonExpression) subscript).setExpressionType(elementType);
+			((CommonExpression) pointer).setExpressionType(factory
+					.pointerType(elementType));
+			return pointer;
+		}
+		return expression;
+	}
+
+	/**
+	 * Translates an AST subscript node e1[e2] to a CIVL expression. The result
+	 * will either be a CIVL subscript expression (if e1 has array type) or a
+	 * CIVL expression of the form *(e1+e2) or *(e2+e1).
+	 * 
+	 * @param subscriptNode
+	 *            an AST node with operator SUBSCRIPT
+	 * @param scope
+	 *            scope in which this expression occurs
+	 * @return the equivalent CIVL expression
+	 */
+	private Expression subscript(OperatorNode subscriptNode, Scope scope) {
+		ExpressionNode leftNode = subscriptNode.getArgument(0);
+		ExpressionNode rightNode = subscriptNode.getArgument(1);
+		Expression lhs = expression(leftNode, scope);
+		Expression rhs = expression(rightNode, scope);
+		Type lhsType = lhs.getExpressionType();
+		Expression result;
+
+		if (lhsType instanceof ArrayType) {
+			if (!(lhs instanceof LHSExpression))
+				throw new CIVLInternalException(
+						"Expected expression with array type to be LHS: "
+								+ lhs.getSource());
+			result = factory.subscriptExpression((LHSExpression) lhs, rhs);
+		} else {
+			Type rhsType = rhs.getExpressionType();
+			Expression pointerExpr, indexExpr;
+
+			if (lhsType instanceof PointerType) {
+				if (!isIntegerType(rhsType))
+					throw new CIVLInternalException(
+							"Expected expression of integer type: "
+									+ rhs.getSource());
+				pointerExpr = lhs;
+				indexExpr = rhs;
+			} else if (isIntegerType(lhsType)) {
+				if (!(rhsType instanceof PointerType))
+					throw new CIVLInternalException(
+							"Expected expression of pointer type: "
+									+ rhs.getSource());
+				pointerExpr = rhs;
+				indexExpr = lhs;
+			} else
+				throw new CIVLInternalException(
+						"Expected one argument of integer type and one of pointer type: "
+								+ subscriptNode.getSource());
+			result = factory.binaryExpression(BINARY_OPERATOR.POINTER_ADD,
+					pointerExpr, indexExpr);
+		}
 		return result;
 	}
 
@@ -582,6 +721,11 @@ public class CommonModelBuilder implements ModelBuilder {
 	 * @return The model representation of the expression.
 	 */
 	public Expression operator(OperatorNode expression, Scope scope) {
+		Operator operator = expression.getOperator();
+
+		if (operator == Operator.SUBSCRIPT)
+			return subscript(expression, scope);
+
 		int numArgs = expression.getNumberOfArguments();
 		List<Expression> arguments = new Vector<Expression>();
 		Expression result = null;
@@ -596,12 +740,11 @@ public class CommonModelBuilder implements ModelBuilder {
 		}
 		switch (expression.getOperator()) {
 		case ADDRESSOF:
-			result = factory.unaryExpression(UNARY_OPERATOR.ADDRESSOF,
-					arguments.get(0));
+			result = factory.addressOfExpression((LHSExpression) arguments
+					.get(0));
 			break;
 		case DEREFERENCE:
-			result = factory.unaryExpression(UNARY_OPERATOR.DEREFERENCE,
-					arguments.get(0));
+			result = factory.dereferenceExpression(arguments.get(0));
 			break;
 		case CONDITIONAL:
 			result = factory.conditionalExpression(arguments.get(0),
@@ -655,14 +798,46 @@ public class CommonModelBuilder implements ModelBuilder {
 			result = factory.unaryExpression(UNARY_OPERATOR.NOT,
 					arguments.get(0));
 			break;
-		case PLUS:
-			result = factory.binaryExpression(BINARY_OPERATOR.PLUS,
-					arguments.get(0), arguments.get(1));
+		case PLUS: {
+			Expression arg0 = arguments.get(0);
+			Expression arg1 = arguments.get(1);
+			Type type0 = arg0.getExpressionType();
+			Type type1 = arg1.getExpressionType();
+			boolean isNumeric0 = isNumericType(type0);
+			boolean isNumeric1 = isNumericType(type1);
+
+			if (isNumeric0 && isNumeric1) {
+				result = factory.binaryExpression(BINARY_OPERATOR.PLUS, arg0,
+						arg1);
+				break;
+			} else {
+				Expression pointer, offset;
+
+				if (isNumeric1) {
+					pointer = arrayToPointer(arg0);
+					offset = arg1;
+				} else if (isNumeric0) {
+					pointer = arrayToPointer(arg1);
+					offset = arg0;
+				} else
+					throw new CIVLInternalException(
+							"Expected at least one numeric argument: "
+									+ expression.getSource());
+				if (!(pointer.getExpressionType() instanceof PointerType))
+					throw new CIVLInternalException(
+							"Expected expression of pointer type: "
+									+ pointer.getSource());
+				if (!isIntegerType(offset.getExpressionType()))
+					throw new CIVLInternalException(
+							"Expected expression of integer type: "
+									+ offset.getSource());
+				result = factory.binaryExpression(BINARY_OPERATOR.POINTER_ADD,
+						pointer, offset);
+			}
 			break;
+		}
 		case SUBSCRIPT:
-			result = factory.arrayIndexExpression(arguments.get(0),
-					arguments.get(1));
-			break;
+			throw new CIVLInternalException("unreachable");
 		case TIMES:
 			result = factory.binaryExpression(BINARY_OPERATOR.TIMES,
 					arguments.get(0), arguments.get(1));
@@ -675,8 +850,9 @@ public class CommonModelBuilder implements ModelBuilder {
 			result = arguments.get(0);
 			break;
 		default:
-			throw new RuntimeException("Unsupported operator: "
-					+ expression.getOperator() + " in expression " + expression);
+			throw new CIVLUnimplementedFeatureException(
+					"Unsupported operator: " + expression.getOperator()
+							+ " in expression " + expression);
 		}
 		return result;
 	}
@@ -768,7 +944,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	 */
 	private Statement statement(Function function, Statement lastStatement,
 			StatementNode statement, Scope scope) {
-		Statement result = null;
+		Statement result;
 
 		if (statement instanceof AssumeNode) {
 			result = assume(function, lastStatement, (AssumeNode) statement,
@@ -813,7 +989,9 @@ public class CommonModelBuilder implements ModelBuilder {
 		} else if (statement instanceof SwitchNode) {
 			result = switchStatement(function, lastStatement,
 					(SwitchNode) statement, scope);
-		}
+		} else
+			throw new CIVLInternalException("Unknown statement kind: "
+					+ statement.getSource());
 		function.addStatement(result);
 		return result;
 	}
@@ -841,7 +1019,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	private Statement statement(Location location, Expression guard,
 			Function function, Statement lastStatement,
 			StatementNode statement, Scope scope) {
-		Statement result = null;
+		Statement result;
 
 		if (statement instanceof AssumeNode) {
 			result = assume(function, lastStatement, (AssumeNode) statement,
@@ -1088,33 +1266,14 @@ public class CommonModelBuilder implements ModelBuilder {
 				break;
 			case POSTINCREMENT:
 			case PREINCREMENT:
-				Expression incrementVariable = expression(
-						expression.getArgument(0), scope);
-
-				result = factory
-						.assignStatement(
-								location,
-								incrementVariable,
-								factory.binaryExpression(
-										BINARY_OPERATOR.PLUS,
-										incrementVariable,
-										factory.integerLiteralExpression(BigInteger.ONE)));
-				break;
 			case POSTDECREMENT:
 			case PREDECREMENT:
-				Expression decrementVariable = expression(
-						expression.getArgument(0), scope);
-
-				result = factory
-						.assignStatement(
-								location,
-								decrementVariable,
-								factory.binaryExpression(
-										BINARY_OPERATOR.PLUS,
-										decrementVariable,
-										factory.integerLiteralExpression(BigInteger.ONE)));
-				break;
+				throw new CIVLInternalException("Side-effect not removed: "
+						+ expression);
 			default:
+				// since side-effects have been removed,
+				// the only expressions remaining with side-effects
+				// are assignments. all others are equivalent to no-op
 				result = factory.noopStatement(location);
 			}
 		} else if (expressionStatement instanceof SpawnNode) {
@@ -1188,7 +1347,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	 */
 	private Statement assign(Location location, ExpressionNode lhs,
 			ExpressionNode rhs, Scope scope) {
-		Expression lhsExpression = expression(lhs, scope);
+		LHSExpression lhsExpression = (LHSExpression) expression(lhs, scope);
 
 		return assign(location, lhsExpression, rhs, scope);
 	}
@@ -1208,7 +1367,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	 * @return The model representation of the assignment, which might also be a
 	 *         fork statement or function call.
 	 */
-	private Statement assign(Location location, Expression lhs,
+	private Statement assign(Location location, LHSExpression lhs,
 			ExpressionNode rhs, Scope scope) {
 		Statement result = null;
 
@@ -1218,8 +1377,8 @@ public class CommonModelBuilder implements ModelBuilder {
 			Vector<Expression> arguments = new Vector<Expression>();
 
 			for (int i = 0; i < ((FunctionCallNode) rhs).getNumberOfArguments(); i++) {
-				arguments.add(expression(
-						((FunctionCallNode) rhs).getArgument(i), scope));
+				arguments.add(arrayToPointer(expression(
+						((FunctionCallNode) rhs).getArgument(i), scope)));
 			}
 			result = factory.callStatement(location, null, arguments);
 			((CallStatement) result).setLhs(lhs);
@@ -1238,14 +1397,14 @@ public class CommonModelBuilder implements ModelBuilder {
 
 			for (int i = 0; i < ((SpawnNode) rhs).getCall()
 					.getNumberOfArguments(); i++) {
-				arguments.add(expression(((SpawnNode) rhs).getCall()
-						.getArgument(i), scope));
+				arguments.add(arrayToPointer(expression(((SpawnNode) rhs)
+						.getCall().getArgument(i), scope)));
 			}
 			result = factory.forkStatement(location, lhs, functionName,
 					arguments);
 		} else {
 			result = factory.assignStatement(location, lhs,
-					expression(rhs, scope));
+					arrayToPointer(expression(rhs, scope)));
 		}
 		return result;
 	}
@@ -1406,9 +1565,9 @@ public class CommonModelBuilder implements ModelBuilder {
 					}
 				}
 			} else {
-				throw new RuntimeException(
+				throw new CIVLInternalException(
 						"A for loop initializer must be an expression or a declaration list. "
-								+ init);
+								+ init.getSource());
 			}
 		}
 		condition = booleanExpression(statement.getCondition(), newScope);
@@ -1436,81 +1595,23 @@ public class CommonModelBuilder implements ModelBuilder {
 		// TODO: Handle other possibilites
 		if (incrementer instanceof OperatorNode) {
 			OperatorNode expression = (OperatorNode) incrementer;
-			Expression[] args = new Expression[3];
+			// Expression[] args = new Expression[3];
 			switch (expression.getOperator()) {
 			case ASSIGN:
-				result = factory.assignStatement(location,
-						expression(expression.getArgument(0), scope),
+				result = factory.assignStatement(
+						location,
+						(LHSExpression) expression(expression.getArgument(0),
+								scope),
 						expression(expression.getArgument(1), scope));
 				break;
-			case POSTINCREMENT:
-			case PREINCREMENT:
-				Expression incrementVariable = expression(
-						expression.getArgument(0), scope);
-
-				result = factory
-						.assignStatement(
-								location,
-								incrementVariable,
-								factory.binaryExpression(
-										BINARY_OPERATOR.PLUS,
-										incrementVariable,
-										factory.integerLiteralExpression(BigInteger.ONE)));
-				break;
-			case POSTDECREMENT:
-			case PREDECREMENT:
-				Expression decrementVariable = expression(
-						expression.getArgument(0), scope);
-
-				result = factory
-						.assignStatement(
-								location,
-								decrementVariable,
-								factory.binaryExpression(
-										BINARY_OPERATOR.PLUS,
-										decrementVariable,
-										factory.integerLiteralExpression(BigInteger.ONE)));
-				break;
 			case PLUSEQ:
-				args[0] = expression(expression.getArgument(0), scope);
-				args[1] = expression(expression.getArgument(1), scope);
-
-				result = factory.assignStatement(location, args[0], factory
-						.binaryExpression(BINARY_OPERATOR.PLUS, args[0],
-								args[1]));
-				break;
 			case MINUSEQ:
-				args[0] = expression(expression.getArgument(0), scope);
-				args[1] = expression(expression.getArgument(1), scope);
-
-				result = factory.assignStatement(location, args[0], factory
-						.binaryExpression(BINARY_OPERATOR.MINUS, args[0],
-								args[1]));
-				break;
 			case TIMESEQ:
-				args[0] = expression(expression.getArgument(0), scope);
-				args[1] = expression(expression.getArgument(1), scope);
-
-				result = factory.assignStatement(location, args[0], factory
-						.binaryExpression(BINARY_OPERATOR.TIMES, args[0],
-								args[1]));
-				break;
 			case DIVEQ:
-				args[0] = expression(expression.getArgument(0), scope);
-				args[1] = expression(expression.getArgument(1), scope);
-
-				result = factory.assignStatement(location, args[0], factory
-						.binaryExpression(BINARY_OPERATOR.DIVIDE, args[0],
-								args[1]));
-				break;
 			case MODEQ:
-				args[0] = expression(expression.getArgument(0), scope);
-				args[1] = expression(expression.getArgument(1), scope);
-
-				result = factory.assignStatement(location, args[0], factory
-						.binaryExpression(BINARY_OPERATOR.MODULO, args[0],
-								args[1]));
-				break;
+				throw new CIVLException(ErrorKind.INTERNAL, Certainty.CONCRETE,
+						"Side-effects should have been removed: "
+								+ expression.getSource());
 			case BITANDEQ:
 			case BITOREQ:
 			case BITXOREQ:

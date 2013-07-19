@@ -16,23 +16,23 @@ public interface CastExpression extends Expression {
 	/**
 	 * @return The expression being cast to a new type.
 	 */
-	public Expression getExpression();
+	Expression getExpression();
 
 	/**
 	 * @return The type to which the expression is cast.
 	 */
-	public Type getCastType();
+	Type getCastType();
 
 	/**
 	 * @param expression
 	 *            The expression being cast to a new type.
 	 */
-	public void setExpression(Expression expression);
+	void setExpression(Expression expression);
 
 	/**
 	 * @param type
 	 *            The type to which the expression is cast.
 	 */
-	public void setCastType(Type type);
+	void setCastType(Type type);
 
 }

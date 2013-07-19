@@ -14,12 +14,12 @@ public interface BooleanLiteralExpression extends LiteralExpression {
 	/**
 	 * @return The value of this boolean literal.
 	 */
-	public boolean value();
+	boolean value();
 
 	/**
-	 * @param The
-	 *            value of this boolean literal.
+	 * @param value
+	 *            The value of this boolean literal.
 	 */
-	public void setValue(boolean value);
+	void setValue(boolean value);
 
 }

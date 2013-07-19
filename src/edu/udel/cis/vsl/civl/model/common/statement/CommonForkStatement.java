@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ForkStatement;
 
@@ -18,7 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ForkStatement;
 public class CommonForkStatement extends CommonStatement implements
 		ForkStatement {
 
-	private Expression lhs;
+	private LHSExpression lhs;
 	private Expression function;
 	private Vector<Expression> arguments;
 
@@ -35,7 +36,7 @@ public class CommonForkStatement extends CommonStatement implements
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
-	public CommonForkStatement(Location source, Expression lhs,
+	public CommonForkStatement(Location source, LHSExpression lhs,
 			Expression function, Vector<Expression> arguments) {
 		super(source);
 		this.lhs = lhs;
@@ -47,13 +48,15 @@ public class CommonForkStatement extends CommonStatement implements
 	 * @return Expression for place where the process reference will be stored.
 	 *         Null if non-existent.
 	 */
-	public Expression lhs() {
+	@Override
+	public LHSExpression lhs() {
 		return lhs;
 	}
 
 	/**
 	 * @return The function that is started in the new process.
 	 */
+	@Override
 	public Expression function() {
 		return function;
 	}
@@ -61,6 +64,7 @@ public class CommonForkStatement extends CommonStatement implements
 	/**
 	 * @return The arguments to the function.
 	 */
+	@Override
 	public Vector<Expression> arguments() {
 		return arguments;
 	}
@@ -70,7 +74,8 @@ public class CommonForkStatement extends CommonStatement implements
 	 *            Expression for place where the process reference will be
 	 *            stored. Null if non-existent.
 	 */
-	public void setLhs(Expression lhs) {
+	@Override
+	public void setLhs(LHSExpression lhs) {
 		this.lhs = lhs;
 		statementScope = join(statementScope, lhs.expressionScope());
 	}
@@ -79,6 +84,7 @@ public class CommonForkStatement extends CommonStatement implements
 	 * @param function
 	 *            The function that is started in the new process.
 	 */
+	@Override
 	public void setFunction(Expression function) {
 		this.function = function;
 	}
@@ -87,6 +93,7 @@ public class CommonForkStatement extends CommonStatement implements
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
+	@Override
 	public void setArguments(Vector<Expression> arguments) {
 		this.arguments = arguments;
 	}

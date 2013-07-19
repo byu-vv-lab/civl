@@ -48,4 +48,9 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 		return value.toString();
 	}
 
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.REAL_LITERAL;
+	}
+
 }

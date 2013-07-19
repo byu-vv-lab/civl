@@ -19,6 +19,6 @@ public interface ChooseStatement extends AssignStatement {
 	/**
 	 * @return A unique ID for this choose.
 	 */
-	public int chooseID();
-	
+	int chooseID();
+
 }

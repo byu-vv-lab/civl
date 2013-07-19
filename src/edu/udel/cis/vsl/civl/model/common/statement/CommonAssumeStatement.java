@@ -35,6 +35,7 @@ public class CommonAssumeStatement extends CommonStatement implements
 	/**
 	 * @return The expression being added to the path condition.
 	 */
+	@Override
 	public Expression getExpression() {
 		return expression;
 	}
@@ -43,6 +44,7 @@ public class CommonAssumeStatement extends CommonStatement implements
 	 * @param expression
 	 *            The expression being added to the path condition.
 	 */
+	@Override
 	public void setExpression(Expression expression) {
 		this.expression = expression;
 	}

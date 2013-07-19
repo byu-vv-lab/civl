@@ -5,49 +5,50 @@ package edu.udel.cis.vsl.civl.semantics;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.log.ExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ArrowExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
+import edu.udel.cis.vsl.civl.util.CIVLInternalException;
+import edu.udel.cis.vsl.civl.util.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.number.Number;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
-import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
-import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 import edu.udel.cis.vsl.sarl.number.real.RealNumberFactory;
+import edu.udel.cis.vsl.sarl.util.SingletonSet;
 
 /**
  * An evaluator is used to evaluate expressions.
@@ -57,14 +58,49 @@ import edu.udel.cis.vsl.sarl.number.real.RealNumberFactory;
  */
 public class Evaluator {
 
-	private SymbolicUniverse symbolicUniverse;
+	// Fields...
+
+	private SymbolicUniverse universe;
+
 	private RealNumberFactory numberFactory = new RealNumberFactory();
-	private SymbolicTupleType pointerType;
-	private ErrorLog log;
-	private String pidPrefix = "PID_";
-	private String scopePrefix = "Scope_";
+
+	/**
+	 * The process type is a tuple with one component which has integer type. It
+	 * simply wraps a process ID number.
+	 */
 	private SymbolicTupleType processType;
+
+	/**
+	 * The scope type is a tuple with one component which has integer type. It
+	 * simply wraps a scope ID number.
+	 */
 	private SymbolicTupleType scopeType;
+
+	/**
+	 * The pointer value is a triple <s,v,r> where s identifies the dynamic
+	 * scope, v identifies the variable within that scope, and r identifies a
+	 * point within that variable. The type of s is scopeType, which is just a
+	 * tuple wrapping a single integer which is the dynamic scope ID number. The
+	 * type of v is integer; it is the (static) variable ID number for the
+	 * variable in its scope. The type of r is ReferenceExpression from SARL.
+	 */
+	private SymbolicTupleType pointerType;
+
+	private ErrorLog log;
+
+	// private String pidPrefix = "PID_";
+
+	// private String scopePrefix = "Scope_";
+
+	private IntObject zeroObj;
+
+	private IntObject oneObj;
+
+	private IntObject twoObj;
+
+	private ReferenceExpression identityReference;
+
+	// Constructors...
 
 	/**
 	 * An evaluator is used to evaluate expressions.
@@ -77,7 +113,7 @@ public class Evaluator {
 		List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
 		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
 
-		this.symbolicUniverse = symbolicUniverse;
+		this.universe = symbolicUniverse;
 		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
 				symbolicUniverse.stringObject("process"), processTypeList);
@@ -86,60 +122,286 @@ public class Evaluator {
 				symbolicUniverse.stringObject("scope"), scopeTypeList);
 		pointerComponents.add(scopeType);
 		pointerComponents.add(symbolicUniverse.integerType());
-		pointerComponents.add(symbolicUniverse.arrayType(symbolicUniverse
-				.integerType()));
+		pointerComponents.add(symbolicUniverse.referenceType());
 		pointerType = symbolicUniverse.tupleType(
 				symbolicUniverse.stringObject("pointer"), pointerComponents);
 		this.log = log;
+		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
+		oneObj = (IntObject) universe.canonic(universe.intObject(1));
+		twoObj = (IntObject) universe.canonic(universe.intObject(2));
+		identityReference = universe.identityReference();
+
 	}
 
-	public ErrorLog log() {
-		return log;
-	}
+	// Helper methods...
 
-	/**
-	 * Evaluate a generic expression. One of the overloaded evaluate methods for
-	 * specific expressions should always be used instead.
-	 */
-	public SymbolicExpression evaluate(State state, int pid,
-			Expression expression) {
-		SymbolicExpression result = null;
-
-		if (expression instanceof ArrayIndexExpression) {
-			result = evaluate(state, pid, (ArrayIndexExpression) expression);
-		} else if (expression instanceof ArrowExpression) {
-			result = evaluate(state, pid, (ArrowExpression) expression);
-		} else if (expression instanceof BinaryExpression) {
-			result = evaluate(state, pid, (BinaryExpression) expression);
-		} else if (expression instanceof BooleanLiteralExpression) {
-			result = evaluate(state, pid, (BooleanLiteralExpression) expression);
-		} else if (expression instanceof ConditionalExpression) {
-			result = evaluate(state, pid, (ConditionalExpression) expression);
-		} else if (expression instanceof CastExpression) {
-			result = evaluate(state, pid, (CastExpression) expression);
-		} else if (expression instanceof DotExpression) {
-			result = evaluate(state, pid, (DotExpression) expression);
-		} else if (expression instanceof IntegerLiteralExpression) {
-			result = evaluate(state, pid, (IntegerLiteralExpression) expression);
-		} else if (expression instanceof RealLiteralExpression) {
-			result = evaluate(state, pid, (RealLiteralExpression) expression);
-		} else if (expression instanceof StringLiteralExpression) {
-			result = evaluate(state, pid, (StringLiteralExpression) expression);
-		} else if (expression instanceof UnaryExpression) {
-			result = evaluate(state, pid, (UnaryExpression) expression);
-		} else if (expression instanceof VariableExpression) {
-			result = evaluate(state, pid, (VariableExpression) expression);
-		} else if (expression instanceof SelfExpression) {
-			result = evaluate(state, pid, (SelfExpression) expression);
+	private SymbolicType symbolicType(Type type) {
+		SymbolicType result = null;
+		if (type instanceof PrimitiveType) {
+			switch (((PrimitiveType) type).primitiveType()) {
+			case BOOL:
+				result = universe.booleanType();
+				break;
+			case INT:
+				result = universe.integerType();
+				break;
+			case REAL:
+				result = universe.realType();
+				break;
+			case STRING:
+				result = universe.arrayType(universe.characterType());
+				break;
+			default:
+				throw new CIVLUnimplementedFeatureException(
+						"Unsupported primitive type: " + type);
+			}
+		} else if (type instanceof ArrayType) {
+			// what about extent?
+			result = universe.arrayType(symbolicType(((ArrayType) type)
+					.baseType()));
 		}
-		if (result != null) {
-			result = (SymbolicExpression) symbolicUniverse.canonic(result);
-		}
+		// what about record types? Where is this used?
 		return result;
 	}
 
 	/**
-	 * Evaluate a conditional expression.
+	 * Gets a Java conrete int from a symbolic expression or throws exception.
+	 * 
+	 * @param expression
+	 *            a numeric expression expected to hold concrete int value
+	 * @return the concrete int
+	 * @throws CIVLInternalException
+	 *             if a concrete integer value cannot be extracted
+	 */
+	private int extractInt(NumericExpression expression) {
+		IntegerNumber result = (IntegerNumber) universe
+				.extractNumber(expression);
+
+		if (result == null)
+			throw new CIVLInternalException(
+					"Unable to extract concrete int from: " + expression);
+		return result.intValue();
+	}
+
+	/**
+	 * Gets a concrete Java int from the field of a symbolic expression of tuple
+	 * type or throws exception.
+	 * 
+	 * @param tuple
+	 *            symbolic expression of tuple type
+	 * @param fieldIndex
+	 *            index of a field in that tuple
+	 * @return the concrete int value of that field
+	 * @throws CIVLInternalException
+	 *             if a concrete integer value cannot be extracted
+	 */
+	private int extractIntField(SymbolicExpression tuple, IntObject fieldIndex) {
+		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
+				fieldIndex);
+
+		return extractInt(field);
+	}
+
+	/**
+	 * Given a dynamic scope ID number, returns the scope value ("scopeVal")
+	 * which is a symbolic expression wrapping that int in a tuple of type
+	 * scopeType.
+	 * 
+	 * @param sid
+	 *            a nonnegative integer
+	 * @return symbolic expression of type scopeType wrapping sid
+	 */
+	private SymbolicExpression makeScopeVal(int sid) {
+		return universe.tuple(scopeType, new SingletonSet<SymbolicExpression>(
+				universe.integer(sid)));
+	}
+
+	/**
+	 * Given a dynamic scope value ("scopeVal"), extracts the concrete integer
+	 * scope ID number and returns it.
+	 * 
+	 * @param scopeVal
+	 *            an expression created by method {@link #makeScopeVal}.
+	 * @return the concrete integer scope ID wrapped by the scopeVal
+	 */
+	private int getSid(SymbolicExpression scopeVal) {
+		return extractIntField(scopeVal, zeroObj);
+	}
+
+	/**
+	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
+	 * symbolic reference value.
+	 * 
+	 * @param scopeId
+	 *            ID number of a dynamic scope
+	 * @param varId
+	 *            ID number of a variable within that scope
+	 * @param symRef
+	 *            a symbolic reference to a point within the variable
+	 * @return a pointer value as specified by the 3 componentss
+	 */
+	private SymbolicExpression makePointer(int scopeId, int varId,
+			ReferenceExpression symRef) {
+		SymbolicExpression scopeField = makeScopeVal(scopeId);
+		SymbolicExpression varField = universe.integer(varId);
+		SymbolicExpression result = universe.tuple(
+				pointerType,
+				Arrays.asList(new SymbolicExpression[] { scopeField, varField,
+						symRef }));
+
+		return result;
+	}
+
+	/**
+	 * Given a pointer value, returns the dynamic scope ID component of that
+	 * pointer value.
+	 * 
+	 * @param pointer
+	 *            a pointer value
+	 * @return the dynamic scope ID component of that pointer value
+	 */
+	private int getScopeId(SymbolicExpression pointer) {
+		return getSid(universe.tupleRead(pointer, zeroObj));
+	}
+
+	/**
+	 * Given a pointer value, returns the variable ID component of that value.
+	 * 
+	 * @param pointer
+	 *            a pointer value
+	 * @return the variable ID component of that value
+	 */
+	private int getVariableId(SymbolicExpression pointer) {
+		return extractIntField(pointer, oneObj);
+	}
+
+	/**
+	 * Given a pointer value, returns the symbolic reference component of that
+	 * value. The "symRef" refers to a sub-structure of the variable pointed to.
+	 * 
+	 * @param pointer
+	 *            a pointer value
+	 * @return the symRef component
+	 */
+	private ReferenceExpression getSymRef(SymbolicExpression pointer) {
+		return (ReferenceExpression) universe.tupleRead(pointer, twoObj);
+	}
+
+	/**
+	 * Returns the pointer value obtained by replacing the symRef component of
+	 * the given pointer value with the given symRef.
+	 * 
+	 * @param pointer
+	 *            a pointer value
+	 * @param symRef
+	 *            a symbolic refererence expression
+	 * @return the pointer obtained by modifying the given one by replacing its
+	 *         symRef field with the given symRef
+	 */
+	private SymbolicExpression setSymRef(SymbolicExpression pointer,
+			ReferenceExpression symRef) {
+		return universe.tupleWrite(pointer, twoObj, symRef);
+	}
+
+	/**
+	 * Creates a pointer value by evaluating a left-hand-side expression in the
+	 * given state.
+	 * 
+	 * @param state
+	 *            a CIVL model state
+	 * @param pid
+	 *            the process ID of the process in which this evaluation is
+	 *            taking place
+	 * @param operand
+	 *            the left hand side expression we are taking the address of
+	 * @return the pointer value
+	 */
+	private SymbolicExpression reference(State state, int pid,
+			LHSExpression operand) {
+		SymbolicExpression result;
+
+		if (operand instanceof VariableExpression) {
+			Variable variable = ((VariableExpression) operand).variable();
+			int sid = state.getScopeId(pid, variable);
+			int vid = variable.vid();
+
+			result = makePointer(sid, vid, identityReference);
+		} else if (operand instanceof SubscriptExpression) {
+			SymbolicExpression arrayPointer = reference(state, pid,
+					((SubscriptExpression) operand).array());
+			ReferenceExpression oldSymRef = getSymRef(arrayPointer);
+			NumericExpression index = (NumericExpression) evaluate(state, pid,
+					((SubscriptExpression) operand).index());
+			ReferenceExpression newSymRef = universe.arrayElementReference(
+					oldSymRef, index);
+
+			result = setSymRef(arrayPointer, newSymRef);
+		} else if (operand instanceof DereferenceExpression) {
+			result = evaluate(state, pid,
+					((DereferenceExpression) operand).pointer());
+		} else if (operand instanceof DotExpression) {
+			SymbolicExpression structPointer = reference(state, pid,
+					(LHSExpression) ((DotExpression) operand).struct());
+			ReferenceExpression oldSymRef = getSymRef(structPointer);
+			int index = ((DotExpression) operand).fieldIndex();
+			ReferenceExpression newSymRef = universe.tupleComponentReference(
+					oldSymRef, universe.intObject(index));
+
+			result = setSymRef(structPointer, newSymRef);
+		} else
+			throw new CIVLInternalException("Unknown kind of LHSExpression: "
+					+ operand);
+		return result;
+	}
+
+	/**
+	 * Given an expression of pointer type, evaluates that expression in the
+	 * given state to get a pointer value, and then dereferences that to yield
+	 * the value pointed to.
+	 * 
+	 * @param state
+	 *            a CIVL model state
+	 * @param pid
+	 *            PID of the process in which this evaluation occurs
+	 * @param operand
+	 *            an expression of pointer type
+	 * @return the referenced value
+	 */
+	private SymbolicExpression dereference(State state, int pid,
+			Expression operand) {
+		SymbolicExpression pointer = evaluate(state, pid, operand);
+
+		return dereference(state, pid, pointer);
+	}
+
+	private SymbolicExpression pointerAdd(State state, int pid,
+			BinaryExpression expression, SymbolicExpression pointer,
+			NumericExpression offset) {
+		// TODO
+		return null;
+	}
+
+	private SymbolicExpression pointerSubtract(State state, int pid,
+			BinaryExpression expression, SymbolicExpression p1,
+			SymbolicExpression p2) {
+		// TODO
+		return null;
+	}
+
+	// individual evaluation methods....
+
+	private SymbolicExpression evaluateAddressOf(State state, int pid,
+			AddressOfExpression expression) {
+		return reference(state, pid, expression.operand());
+	}
+
+	private SymbolicExpression evaluateDereference(State state, int pid,
+			DereferenceExpression expression) {
+		return dereference(state, pid, expression.pointer());
+	}
+
+	/**
+	 * Evaluates a conditional expression.
 	 * 
 	 * @param state
 	 *            The state of the program.
@@ -149,7 +411,7 @@ public class Evaluator {
 	 *            The conditional expression.
 	 * @return A symbolic expression for the result of the conditional.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateCond(State state, int pid,
 			ConditionalExpression expression) {
 		SymbolicExpression condition = evaluate(state, pid,
 				expression.getCondition());
@@ -159,7 +421,7 @@ public class Evaluator {
 				expression.getFalseBranch());
 
 		assert condition instanceof BooleanExpression;
-		return symbolicUniverse.cond((BooleanExpression) condition, trueBranch,
+		return universe.cond((BooleanExpression) condition, trueBranch,
 				falseBranch);
 	}
 
@@ -174,76 +436,19 @@ public class Evaluator {
 	 *            The dot expression.
 	 * @return The symbolic expression for reading the struct field.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateDot(State state, int pid,
 			DotExpression expression) {
-		SymbolicExpression currentValue = evaluate(state, pid,
+		SymbolicExpression structValue = evaluate(state, pid,
 				expression.struct());
-		Variable structVariable = getVariable(state, pid, expression.struct());
-		Identifier field = expression.field();
-		StructType structType;
-		IntObject index = null;
-		SymbolicExpression result;
+		int fieldIndex = expression.fieldIndex();
+		SymbolicExpression result = universe.tupleRead(structValue,
+				universe.intObject(fieldIndex));
 
-		assert structVariable.type() instanceof StructType;
-		structType = (StructType) structVariable.type();
-		for (int i = 0; i < structType.fields().size(); i++) {
-			if (structType.fields().get(i).name().equals(field)) {
-				index = symbolicUniverse.intObject(i);
-				break;
-			}
-		}
-		assert index != null;
-		result = symbolicUniverse.tupleRead(currentValue, index);
 		return result;
 	}
 
 	/**
-	 * Evaluate a reference to a struct pointer field.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The arrow expression.
-	 * @return The symbolic expression for reading the struct field.
-	 */
-	public SymbolicExpression evaluate(State state, int pid,
-			ArrowExpression expression) {
-		SymbolicExpression pointerValue = evaluate(state, pid,
-				expression.structPointer());
-		Variable structVariable = getVariable(state, pid,
-				expression.structPointer());
-		Identifier field = expression.field();
-		StructType structType;
-		IntObject index = null;
-		SymbolicExpression result;
-		SymbolicExpression currentValue;
-		int scopeID;
-		int variableID;
-
-		assert structVariable.type() instanceof PointerType;
-		assert ((PointerType) (structVariable.type())).baseType() instanceof StructType;
-		structType = (StructType) ((PointerType) structVariable.type())
-				.baseType();
-		// structType = (StructType) structVariable.type();
-		for (int i = 0; i < structType.fields().size(); i++) {
-			if (structType.fields().get(i).name().equals(field)) {
-				index = symbolicUniverse.intObject(i);
-				break;
-			}
-		}
-		assert index != null;
-		scopeID = getPointerTargetScope(state, pid, pointerValue);
-		variableID = getPointerTargetVariableID(state, pid, pointerValue);
-		// TODO: Traverse offsets if necessary
-		currentValue = state.getScope(scopeID).getValue(variableID);
-		result = symbolicUniverse.tupleRead(currentValue, index);
-		return result;
-	}
-
-	/**
-	 * Evaluate an array index expression.
+	 * Evaluate a subscript expression.
 	 * 
 	 * @param state
 	 *            The state of the program.
@@ -253,16 +458,13 @@ public class Evaluator {
 	 *            The array index expression.
 	 * @return A symbolic expression for an array read.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
-			ArrayIndexExpression expression) {
+	private SymbolicExpression evaluateSubscript(State state, int pid,
+			SubscriptExpression expression) {
 		SymbolicExpression array = evaluate(state, pid, expression.array());
-		SymbolicExpression index = evaluate(state, pid, expression.index());
+		NumericExpression index = (NumericExpression) evaluate(state, pid,
+				expression.index());
 
-		while (array.type().equals(pointerType)) {
-			array = dereference(state, pid, array);
-		}
-		// TODO: simplify index?
-		return symbolicUniverse.arrayRead(array, (NumericExpression) index);
+		return universe.arrayRead(array, index);
 	}
 
 	/**
@@ -276,7 +478,7 @@ public class Evaluator {
 	 *            The binary expression.
 	 * @return A symbolic expression for the binary operation.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateBinary(State state, int pid,
 			BinaryExpression expression) {
 		SymbolicExpression left = evaluate(state, pid, expression.left());
 		SymbolicExpression right = evaluate(state, pid, expression.right());
@@ -284,38 +486,45 @@ public class Evaluator {
 		// TODO: Check all expression types.
 		switch (expression.operator()) {
 		case PLUS:
-			return symbolicUniverse.add((NumericExpression) left,
+			return universe.add((NumericExpression) left,
 					(NumericExpression) right);
 		case MINUS:
-			return symbolicUniverse.subtract((NumericExpression) left,
+			return universe.subtract((NumericExpression) left,
 					(NumericExpression) right);
 		case TIMES:
-			return symbolicUniverse.multiply((NumericExpression) left,
+			return universe.multiply((NumericExpression) left,
 					(NumericExpression) right);
 		case DIVIDE:
-			return symbolicUniverse.divide((NumericExpression) left,
+			return universe.divide((NumericExpression) left,
 					(NumericExpression) right);
 		case LESS_THAN:
-			return symbolicUniverse.lessThan((NumericExpression) left,
+			return universe.lessThan((NumericExpression) left,
 					(NumericExpression) right);
 		case LESS_THAN_EQUAL:
-			return symbolicUniverse.lessThanEquals((NumericExpression) left,
+			return universe.lessThanEquals((NumericExpression) left,
 					(NumericExpression) right);
 		case EQUAL:
-			return symbolicUniverse.equals(left, right);
+			return universe.equals(left, right);
 		case NOT_EQUAL:
-			return symbolicUniverse.not(symbolicUniverse.equals(left, right));
+			return universe.not(universe.equals(left, right));
 		case AND:
-			return symbolicUniverse.and((BooleanExpression) left,
+			return universe.and((BooleanExpression) left,
 					(BooleanExpression) right);
 		case OR:
-			return symbolicUniverse.or((BooleanExpression) left,
+			return universe.or((BooleanExpression) left,
 					(BooleanExpression) right);
 		case MODULO:
-			return symbolicUniverse.modulo((NumericExpression) left,
+			return universe.modulo((NumericExpression) left,
 					(NumericExpression) right);
+		case POINTER_ADD:
+			return pointerAdd(state, pid, expression, left,
+					(NumericExpression) right);
+		case POINTER_SUBTRACT:
+			return pointerSubtract(state, pid, expression, left, right);
+		default:
+			throw new CIVLUnimplementedFeatureException(expression.getSource(),
+					"Operator " + expression.operator());
 		}
-		return null;
 	}
 
 	/**
@@ -329,9 +538,9 @@ public class Evaluator {
 	 *            The boolean literal expression.
 	 * @return The symbolic representation of the boolean literal expression.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateBooleanLiteral(State state, int pid,
 			BooleanLiteralExpression expression) {
-		return symbolicUniverse.bool(expression.value());
+		return universe.bool(expression.value());
 	}
 
 	/**
@@ -344,7 +553,7 @@ public class Evaluator {
 	 *            The cast expression.
 	 * @return The symbolic representation of the cast expression.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateCast(State state, int pid,
 			CastExpression expression) {
 		SymbolicExpression uncastExpression = evaluate(state, pid,
 				expression.getExpression());
@@ -357,33 +566,7 @@ public class Evaluator {
 					Certainty.CONCRETE, "Unable to perform cast : "
 							+ expression + ".  Not implemented."));
 		}
-		result = symbolicUniverse.cast(symbolicType, uncastExpression);
-		return result;
-	}
-
-	private SymbolicType symbolicType(Type type) {
-		SymbolicType result = null;
-		if (type instanceof PrimitiveType) {
-			switch (((PrimitiveType) type).primitiveType()) {
-			case BOOL:
-				result = symbolicUniverse.booleanType();
-				break;
-			case INT:
-				result = symbolicUniverse.integerType();
-				break;
-			case REAL:
-				result = symbolicUniverse.realType();
-				break;
-			case STRING:
-
-			default:
-				result = null;
-
-			}
-		} else if (type instanceof ArrayType) {
-			result = symbolicUniverse.arrayType(symbolicType(((ArrayType) type)
-					.baseType()));
-		}
+		result = universe.cast(symbolicType, uncastExpression);
 		return result;
 	}
 
@@ -398,15 +581,14 @@ public class Evaluator {
 	 *            The integer literal expression.
 	 * @return The symbolic representation of the integer literal expression.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateIntegerLiteral(State state, int pid,
 			IntegerLiteralExpression expression) {
-		return symbolicUniverse.integer(expression.value().intValue());
+		return universe.integer(expression.value().intValue());
 	}
 
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateSelf(State state, int pid,
 			SelfExpression expression) {
-		return symbolicUniverse.symbolicConstant(
-				symbolicUniverse.stringObject(pidPrefix + pid), processType);
+		return makeProcVal(pid);
 	}
 
 	/**
@@ -420,11 +602,10 @@ public class Evaluator {
 	 *            The real literal expression.
 	 * @return The symbolic representation of the real literal expression.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateRealLiteral(State state, int pid,
 			RealLiteralExpression expression) {
-		return symbolicUniverse.number(symbolicUniverse
-				.numberObject(numberFactory.rational(expression.value()
-						.toPlainString())));
+		return universe.number(universe.numberObject(numberFactory
+				.rational(expression.value().toPlainString())));
 	}
 
 	/**
@@ -438,15 +619,9 @@ public class Evaluator {
 	 *            The string literal expression.
 	 * @return The symbolic representation of the string literal expression.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateStringLiteral(State state, int pid,
 			StringLiteralExpression expression) {
-		// StringObject result =
-		// symbolicUniverse.stringObject(expression.value());
-		// TODO: Figure this out.
-		// Right now, strings are intercepted in the executor.
-		// They are used in write statements, and are
-		// just passed to the PrintStream.
-		return null;
+		return universe.stringExpression(expression.value());
 	}
 
 	/**
@@ -460,124 +635,23 @@ public class Evaluator {
 	 *            The unary expression.
 	 * @return The symbolic representation of the unary expression.
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateUnary(State state, int pid,
 			UnaryExpression expression) {
 		switch (expression.operator()) {
 		case NEGATIVE:
-			return symbolicUniverse.minus((NumericExpression) evaluate(state,
-					pid, expression.operand()));
+			return universe.minus((NumericExpression) evaluate(state, pid,
+					expression.operand()));
 		case NOT:
-			return symbolicUniverse.not((BooleanExpression) evaluate(state,
-					pid, expression.operand()));
-		case ADDRESSOF:
-			return reference(state, pid, expression.operand());
-		case DEREFERENCE:
-			return dereference(state, pid, expression.operand());
+			return universe.not((BooleanExpression) evaluate(state, pid,
+					expression.operand()));
+			// case ADDRESSOF:
+			// return reference(state, pid, expression.operand());
+			// case DEREFERENCE:
+			// return dereference(state, pid, expression.operand());
+		default:
+			throw new CIVLInternalException("Unknown unary operator "
+					+ expression.operator());
 		}
-		return null;
-	}
-
-	SymbolicExpression reference(State state, int pid, Expression operand) {
-		SymbolicExpression result = null;
-		List<SymbolicExpression> navigationSequence = navigationSequence(state,
-				pid, operand);
-		List<SymbolicExpression> components = new Vector<SymbolicExpression>();
-		Variable variable = pointerTarget(operand);
-		int scope = state.getScopeId(pid, variable);
-
-		components.add(symbolicUniverse.symbolicConstant(
-				symbolicUniverse.stringObject(scopePrefix + scope), scopeType));
-		components.add(symbolicUniverse.integer(variable.vid()));
-		components.add(symbolicUniverse.array(symbolicUniverse.integerType(),
-				navigationSequence));
-		result = symbolicUniverse.tuple(pointerType, components);
-		return result;
-	}
-
-	private Variable pointerTarget(Expression target) {
-		Variable result = null;
-
-		if (target instanceof VariableExpression) {
-			result = ((VariableExpression) target).variable();
-		} else if (target instanceof ArrayIndexExpression) {
-			result = pointerTarget(((ArrayIndexExpression) target).array());
-		} else if (target instanceof UnaryExpression
-				&& ((UnaryExpression) target).operator() == UNARY_OPERATOR.ADDRESSOF) {
-			result = pointerTarget(((UnaryExpression) target).operand());
-		}
-		assert result != null;
-		return result;
-	}
-
-	private List<SymbolicExpression> navigationSequence(State state, int pid,
-			Expression operand) {
-		List<SymbolicExpression> result = new Vector<SymbolicExpression>();
-
-		// TODO: Variable expressions return empty sequence, but need to error
-		// check otherwise.
-		if (operand instanceof ArrayIndexExpression) {
-			result.addAll(navigationSequence(state, pid,
-					((ArrayIndexExpression) operand).array()));
-			result.add(evaluate(state, pid,
-					((ArrayIndexExpression) operand).index()));
-		}
-		return result;
-	}
-
-	private SymbolicExpression dereference(State state, int pid,
-			Expression operand) {
-		SymbolicExpression pointer = evaluate(state, pid, operand);
-		return dereference(state, pid, pointer);
-	}
-
-	SymbolicExpression dereference(State state, int pid,
-			SymbolicExpression pointer) {
-		SymbolicExpression result = null;
-		SymbolicSequence<?> pointerTuple;
-		SymbolicObject scope;
-		String scopeIDString;
-		Number variableNumber;
-		int scopeID;
-		int variableID;
-		SymbolicExpression value;
-
-		assert pointer.type().equals(pointerType);
-		assert pointer.numArguments() == 1;
-		assert pointer.argument(0) instanceof SymbolicSequence;
-		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
-		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
-		scope = (SymbolicObject) pointerTuple.get(0);
-		scopeIDString = scope.toString();
-		scopeID = Integer.parseInt(scopeIDString.split("_")[1]);
-		variableNumber = symbolicUniverse
-				.extractNumber((NumericExpression) pointerTuple.get(1));
-		variableID = ((IntegerNumber) variableNumber).intValue();
-		value = state.getScope(scopeID).getValue(variableID);
-		result = navigateReference(state, pid, value,
-				(SymbolicExpression) pointerTuple.get(2));
-		assert result != null;
-		return result;
-	}
-
-	private SymbolicExpression navigateReference(State state, int pid,
-			SymbolicExpression base, SymbolicExpression sequence) {
-		SymbolicExpression result = base;
-		SymbolicSequence<?> innerSequence;
-
-		assert sequence.argument(0) instanceof SymbolicSequence;
-		innerSequence = (SymbolicSequence<?>) sequence.argument(0);
-		for (int i = 0; i < innerSequence.size(); i++) {
-			NumericExpression argumentNumber;
-
-			assert innerSequence.get(i) instanceof NumericExpression;
-			argumentNumber = (NumericExpression) innerSequence.get(i);
-			if (result.operator() == SymbolicOperator.DENSE_ARRAY_WRITE
-					|| result.operator() == SymbolicOperator.ARRAY_WRITE) {
-				result = symbolicUniverse.arrayRead(result, argumentNumber);
-			}
-			// TODO: handle otherwise
-		}
-		return result;
 	}
 
 	/**
@@ -591,7 +665,7 @@ public class Evaluator {
 	 *            The variable expression.
 	 * @return
 	 */
-	public SymbolicExpression evaluate(State state, int pid,
+	private SymbolicExpression evaluateVariable(State state, int pid,
 			VariableExpression expression) {
 		SymbolicExpression currentValue = state.valueOf(pid,
 				expression.variable());
@@ -605,175 +679,152 @@ public class Evaluator {
 					Certainty.PROVEABLE,
 					"Attempt to read unitialized variable: "
 							+ expression.variable() + "\n\n" + baos.toString()));
-			return symbolicUniverse.nullExpression();
+			return universe.nullExpression();
 		}
-		return symbolicUniverse.reasoner(
-				(BooleanExpression) state.pathCondition()).simplify(
-				currentValue);
+		return universe.reasoner((BooleanExpression) state.pathCondition())
+				.simplify(currentValue);
+	}
+
+	private SymbolicExpression evaluateResult(State state, int pid,
+			ResultExpression expression) {
+		// TODO
+		// this is used in a contract post-condition as a variable to
+		// refer to the result returned by a function. $result.
+		// get rid of ResultExpression and instead create a variable
+		// in the outermost scope of any function with non-void
+		// return type, store the result of return in that variable.
+		// Add method in Function to get that variable. (and set it?)
+		// Model builder will translate $result to that variable.
+		throw new CIVLUnimplementedFeatureException(
+				"$result not yet implemented: " + expression.getSource());
+	}
+
+	// Exported methods...
+
+	/**
+	 * Given a process ID number, returns the process value ("procVal") which is
+	 * a symbolic expression wrapping that int in a tuple of type processType.
+	 * 
+	 * @param pid
+	 *            a nonnegative integer
+	 * @return symbolic expression of type processType wrapping pid
+	 */
+	public SymbolicExpression makeProcVal(int pid) {
+		return universe.tuple(processType,
+				new SingletonSet<SymbolicExpression>(universe.integer(pid)));
 	}
 
 	/**
-	 * Evaluate an expression that returns a variable. This method gets the
-	 * actual variable, not the value stored in the variable. It is used for
-	 * finding the correct location to perform a write.
+	 * Given a process value ("procVal") extract the concrete integer PID and
+	 * returns it.
 	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The expression for the variable.
-	 * @return The variable.
+	 * @param procVal
+	 *            an expression created by method {@link #makeProcVal}.
+	 * @return the concrete integer PID wrapped by the procVal
 	 */
-	public Variable getVariable(State state, int pid, Expression expression) {
-		if (expression instanceof VariableExpression) {
-			return ((VariableExpression) expression).variable();
-		} else if (expression instanceof ArrayIndexExpression) {
-			return baseArray(state, pid, (ArrayIndexExpression) expression);
-		} else if (expression instanceof UnaryExpression) {
-			SymbolicExpression pointer;
-			SymbolicSequence<?> pointerTuple;
-			SymbolicObject scope;
-			String scopeIDString;
-			Number variableNumber;
-			int scopeID;
-			int variableID;
-			Variable variable;
-
-			assert ((UnaryExpression) expression).operator() == UNARY_OPERATOR.DEREFERENCE;
-			pointer = evaluate(state, pid,
-					((UnaryExpression) expression).operand());
-			do {
-				assert pointer.type().equals(pointerType);
-				assert pointer.numArguments() == 1;
-				assert pointer.argument(0) instanceof SymbolicSequence;
-				assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
-				pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
-				scope = (SymbolicObject) pointerTuple.get(0);
-				scopeIDString = scope.toString();
-				scopeID = Integer.parseInt(scopeIDString.split("_")[1]);
-				variableNumber = symbolicUniverse
-						.extractNumber((NumericExpression) pointerTuple.get(1));
-				//scopeID = ((IntegerNumber) scopeNumber).intValue();
-				variableID = ((IntegerNumber) variableNumber).intValue();
-				variable = state.getScope(scopeID).lexicalScope()
-						.getVariable(variableID);
-				pointer = state.getScope(scopeID).getValue(variableID);
-			} while (variable.type() instanceof PointerType);
-			return variable;
-
-		}
-		throw new RuntimeException("Retrieving variable from " + expression
-				+ " not implemented.");
+	public int getPid(SymbolicExpression procVal) {
+		return extractIntField(procVal, zeroObj);
 	}
 
 	/**
-	 * Evaluate an expression that returns a variable, and get the ID of the
-	 * dynamic scope containing that variable.
+	 * Given a pointer value, dereferences it in the given state to yield the
+	 * symbolic expression value stored at the referenced location.
 	 * 
 	 * @param state
-	 *            The state of the program.
+	 *            a CIVL model state
 	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The expression for the variable.
-	 * @return The id of the scope containing the variable.
+	 *            the PID of the process in which this dereferencing is
+	 *            occurring
+	 * @param pointer
+	 *            a pointer value which refers to some sub-structure in the
+	 *            state
+	 * @return the value pointed to
 	 */
-	public int getVariableScopeID(State state, int pid, Expression expression) {
-		SymbolicExpression value = evaluate(state, pid, expression);
-		Variable variable = getVariable(state, pid, expression);
-
-		if (value.type().equals(pointerType)) {
-			return getPointerTargetScope(state, pid, value);
-		} else {
-			return state.getScopeId(pid, variable);
-		}
-	}
-
-	int getPointerTargetScope(State state, int pid, Expression expression) {
-		SymbolicExpression pointer;
-		SymbolicSequence<?> pointerTuple;
-		SymbolicObject scope;
-		String scopeIDString;
-		int scopeID;
-
-		assert ((UnaryExpression) expression).operator() == UNARY_OPERATOR.DEREFERENCE;
-		pointer = evaluate(state, pid, ((UnaryExpression) expression).operand());
-		assert pointer.type().equals(pointerType);
-		assert pointer.numArguments() == 1;
-		assert pointer.argument(0) instanceof SymbolicSequence;
-		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
-		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
-		scope = (SymbolicObject) pointerTuple.get(0);
-		scopeIDString = scope.toString();
-		scopeID = Integer.parseInt(scopeIDString.split("_")[1]);
-		return scopeID;
-	}
-
-	int getPointerTargetScope(State state, int pid, SymbolicExpression pointer) {
-		SymbolicSequence<?> pointerTuple;
-		SymbolicObject scope;
-		String scopeIDString;
-		int scopeID;
-	
-		assert pointer.type().equals(pointerType);
-		assert pointer.numArguments() == 1;
-		assert pointer.argument(0) instanceof SymbolicSequence;
-		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
-		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
-		scope = (SymbolicObject) pointerTuple.get(0);
-		scopeIDString = scope.toString();
-		scopeID = Integer.parseInt(scopeIDString.split("_")[1]);
-		return scopeID;
-	}
-
-	int getPointerTargetVariableID(State state, int pid,
+	public SymbolicExpression dereference(State state, int pid,
 			SymbolicExpression pointer) {
-		SymbolicSequence<?> pointerTuple;
-		Number scopeNumber;
-		int scopeID;
+		int sid = getScopeId(pointer);
+		int vid = getVariableId(pointer);
+		ReferenceExpression symRef = getSymRef(pointer);
+		SymbolicExpression variableValue = state.getScope(sid).getValue(vid);
+		SymbolicExpression result = universe.dereference(variableValue, symRef);
 
-		assert pointer.type().equals(pointerType);
-		assert pointer.numArguments() == 1;
-		assert pointer.argument(0) instanceof SymbolicSequence;
-		assert ((SymbolicSequence<?>) pointer.argument(0)).size() == 3;
-		pointerTuple = (SymbolicSequence<?>) pointer.argument(0);
-		scopeNumber = symbolicUniverse
-				.extractNumber((NumericExpression) pointerTuple.get(1));
-		scopeID = ((IntegerNumber) scopeNumber).intValue();
-		return scopeID;
+		return result;
 	}
 
-	/**
-	 * Get the variable at the base of a (possibly multi-dimensional) array.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The array index expression.
-	 * @return The variable corresponding to the base of this array.
-	 */
-	private Variable baseArray(State state, int pid,
-			ArrayIndexExpression expression) {
-		if (expression.array() instanceof ArrayIndexExpression) {
-			return baseArray(state, pid,
-					((ArrayIndexExpression) expression.array()));
-		} else if (expression.array() instanceof VariableExpression) {
-			return ((VariableExpression) expression.array()).variable();
-		} else if (expression.array() instanceof ArrowExpression) {
-			return getVariable(state, pid,
-					((ArrowExpression) expression.array()).structPointer());
-		} else if (expression.array() instanceof DotExpression) {
-			return getVariable(state, pid,
-					((DotExpression) expression.array()).struct());
-		}
-		return null;
+	public ErrorLog log() {
+		return log;
 	}
 
-	SymbolicType pointerType() {
+	public SymbolicType pointerType() {
 		return pointerType;
+	}
+
+	public SymbolicExpression evaluate(State state, int pid,
+			Expression expression) {
+		ExpressionKind kind = expression.expressionKind();
+		SymbolicExpression result;
+
+		switch (kind) {
+		case ADDRESS_OF:
+			result = evaluateAddressOf(state, pid,
+					(AddressOfExpression) expression);
+			break;
+		case BINARY:
+			result = evaluateBinary(state, pid, (BinaryExpression) expression);
+			break;
+		case BOOLEAN_LITERAL:
+			result = evaluateBooleanLiteral(state, pid,
+					(BooleanLiteralExpression) expression);
+			break;
+		case CAST:
+			result = evaluateCast(state, pid, (CastExpression) expression);
+			break;
+		case COND:
+			result = evaluateCond(state, pid,
+					(ConditionalExpression) expression);
+			break;
+		case DEREFERENCE:
+			result = evaluateDereference(state, pid,
+					(DereferenceExpression) expression);
+			break;
+		case DOT:
+			result = evaluateDot(state, pid, (DotExpression) expression);
+			break;
+		case INTEGER_LITERAL:
+			result = evaluateIntegerLiteral(state, pid,
+					(IntegerLiteralExpression) expression);
+			break;
+		case REAL_LITERAL:
+			result = evaluateRealLiteral(state, pid,
+					(RealLiteralExpression) expression);
+			break;
+		case RESULT:
+			result = evaluateResult(state, pid, (ResultExpression) expression);
+			break;
+		case SELF:
+			result = evaluateSelf(state, pid, (SelfExpression) expression);
+			break;
+		case STRING_LITERAL:
+			result = evaluateStringLiteral(state, pid,
+					(StringLiteralExpression) expression);
+			break;
+		case SUBSCRIPT:
+			result = evaluateSubscript(state, pid,
+					(SubscriptExpression) expression);
+			break;
+		case UNARY:
+			result = evaluateUnary(state, pid, (UnaryExpression) expression);
+			break;
+		case VARIABLE:
+			result = evaluateVariable(state, pid,
+					(VariableExpression) expression);
+			break;
+		default:
+			throw new CIVLInternalException("Unknown kind of expression: "
+					+ expression.getSource());
+		}
+		// make canonic?
+		return result;
 	}
 
 }

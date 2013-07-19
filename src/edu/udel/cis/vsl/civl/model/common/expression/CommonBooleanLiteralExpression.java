@@ -48,4 +48,9 @@ public class CommonBooleanLiteralExpression extends CommonExpression implements
 		}
 		return "false";
 	}
+
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.BOOLEAN_LITERAL;
+	}
 }

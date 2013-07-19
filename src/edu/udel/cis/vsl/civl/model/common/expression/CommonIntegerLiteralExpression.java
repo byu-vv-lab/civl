@@ -48,4 +48,9 @@ public class CommonIntegerLiteralExpression extends CommonExpression implements
 		return value.toString();
 	}
 
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.INTEGER_LITERAL;
+	}
+
 }

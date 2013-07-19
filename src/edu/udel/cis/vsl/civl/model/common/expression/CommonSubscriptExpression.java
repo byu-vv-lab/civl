@@ -3,8 +3,9 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
-import edu.udel.cis.vsl.civl.model.IF.expression.ArrayIndexExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 
 /**
  * a[i], where "a" is an array and "i" is an expression evaluating to an
@@ -13,10 +14,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonArrayIndexExpression extends CommonExpression implements
-		ArrayIndexExpression {
+public class CommonSubscriptExpression extends CommonExpression implements
+		SubscriptExpression {
 
-	private Expression array;
+	private LHSExpression array;
 	private Expression index;
 
 	/**
@@ -28,7 +29,7 @@ public class CommonArrayIndexExpression extends CommonExpression implements
 	 * @param index
 	 *            An expression evaluating to an integer.
 	 */
-	public CommonArrayIndexExpression(Expression array, Expression index) {
+	public CommonSubscriptExpression(LHSExpression array, Expression index) {
 		this.array = array;
 		this.index = index;
 	}
@@ -36,7 +37,7 @@ public class CommonArrayIndexExpression extends CommonExpression implements
 	/**
 	 * @return The expression for the array.
 	 */
-	public Expression array() {
+	public LHSExpression array() {
 		return array;
 	}
 
@@ -51,7 +52,7 @@ public class CommonArrayIndexExpression extends CommonExpression implements
 	 * @param array
 	 *            The expression for the array.
 	 */
-	public void setArray(Expression array) {
+	public void setArray(LHSExpression array) {
 		this.array = array;
 	}
 
@@ -66,6 +67,11 @@ public class CommonArrayIndexExpression extends CommonExpression implements
 	@Override
 	public String toString() {
 		return array + "[" + index + "]";
+	}
+
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.SUBSCRIPT;
 	}
 
 }
