@@ -35,6 +35,7 @@ public class CommonSystemFunction extends CommonFunction implements
 			ModelFactory factory) {
 		super(name, parameters, returnType, containingScope, startLocation,
 				factory);
+		this.isSystem = false;
 	}
 
 	/*

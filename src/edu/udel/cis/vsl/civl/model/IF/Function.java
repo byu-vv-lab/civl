@@ -164,4 +164,10 @@ public interface Function {
 	 */
 	public void print(String prefix, PrintStream out);
 
+	/**
+	 * 
+	 * @return Is this the outermost function?
+	 */
+	public boolean isSystem();
+	
 }

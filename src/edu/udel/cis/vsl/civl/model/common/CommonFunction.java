@@ -39,6 +39,7 @@ public class CommonFunction implements Function{
 	private Set<Location> locations;
 	private Expression precondition = null;
 	private Expression postcondition = null;
+	protected boolean isSystem = false;
 
 	/**
 	 * A function.
@@ -74,6 +75,9 @@ public class CommonFunction implements Function{
 			locations.add(this.startLocation);
 		}
 		statements = new LinkedHashSet<Statement>();
+		if (containingScope == null) {
+			this.isSystem = true;
+		}
 	}
 
 	/**
@@ -303,6 +307,11 @@ public class CommonFunction implements Function{
 		}
 		result += ")";
 		return result;
+	}
+
+	@Override
+	public boolean isSystem() {
+		return isSystem;
 	}
 
 }
