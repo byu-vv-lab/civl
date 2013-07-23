@@ -7,6 +7,8 @@ import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -171,13 +173,32 @@ public class CommonLocation implements Location {
 	public void addOutgoing(Statement statement) {
 		outgoing.add(statement);
 	}
-	
+
 	@Override
 	public boolean equals(Object that) {
 		if (that instanceof CommonLocation) {
 			return (((CommonLocation) that).id() == id);
 		}
 		return false;
+	}
+
+	@Override
+	public Statement getSoleOutgoing() {
+		int size = outgoing.size();
+
+		if (size >= 1) {
+			Statement result = outgoing.iterator().next();
+
+			if (size > 1) {
+				throw new CIVLInternalException(
+						"Expected 1 outgoing transition but saw " + size,
+						result.getSource());
+			}
+			return result;
+		}
+		throw new CIVLInternalException(
+				"Expected 1 outgoing transition but saw 0 at " + this
+						+ " in function " + function, (Source) null);
 	}
 
 }

@@ -10,12 +10,26 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 
 /**
- * A function call. Either of the form f(x) or else v=f(x).
+ * A function call or spawn. Either of the form f(x) or else v=f(x).
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface CallStatement extends Statement {
+public interface CallOrSpawnStatement extends Statement {
+
+	/**
+	 * Is this a call (not spawn)?
+	 * 
+	 * @return true iff this is a call
+	 */
+	boolean isCall();
+
+	/**
+	 * Is this a spawn (not call)?
+	 * 
+	 * @return true iff this is a spawn
+	 */
+	boolean isSpawn();
 
 	/**
 	 * @return The left hand side expression if applicable. Else null.

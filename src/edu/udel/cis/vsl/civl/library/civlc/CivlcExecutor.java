@@ -6,15 +6,15 @@ package edu.udel.cis.vsl.civl.library.civlc;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.State;
-import edu.udel.cis.vsl.civl.util.CIVLInternalException;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
@@ -53,7 +53,7 @@ public class CivlcExecutor implements LibraryExecutor {
 	 *            an invocation of malloc
 	 * @return the type of the elements being malloc'ed
 	 */
-	private Type getMallocType(CallStatement mallocStatement) {
+	private Type getMallocType(CallOrSpawnStatement mallocStatement) {
 		// TODO
 		return null;
 	}
@@ -127,19 +127,19 @@ public class CivlcExecutor implements LibraryExecutor {
 		Identifier name;
 		State result = null;
 		SymbolicExpression[] arguments;
-		CallStatement call;
+		CallOrSpawnStatement call;
 		Expression lhs;
 
-		if (!(statement instanceof CallStatement)) {
-			throw new CIVLInternalException("Unsupported statement for civlc: "
-					+ statement);
+		if (!(statement instanceof CallOrSpawnStatement)) {
+			throw new CIVLInternalException("Unsupported statement for civlc",
+					statement);
 		}
-		call = (CallStatement) statement;
+		call = (CallOrSpawnStatement) statement;
 		name = call.function().name();
 		lhs = call.lhs();
-		arguments = new SymbolicExpression[((CallStatement) statement)
+		arguments = new SymbolicExpression[((CallOrSpawnStatement) statement)
 				.arguments().size()];
-		for (int i = 0; i < ((CallStatement) statement).arguments().size(); i++) {
+		for (int i = 0; i < ((CallOrSpawnStatement) statement).arguments().size(); i++) {
 			arguments[i] = primaryExecutor.evaluator().evaluate(state, pid,
 					call.arguments().elementAt(i));
 		}
@@ -167,8 +167,8 @@ public class CivlcExecutor implements LibraryExecutor {
 		case "$comm_chan_size":
 		case "$comm_total_size":
 		default:
-			throw new CIVLInternalException("Unknown civlc function: " + name
-					+ "\n" + statement);
+			throw new CIVLInternalException("Unknown civlc function: " + name,
+					statement);
 		}
 		if (name.name().equals("malloc")) {
 			assert arguments.length == 2;

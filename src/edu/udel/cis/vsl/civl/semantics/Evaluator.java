@@ -9,8 +9,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
-import edu.udel.cis.vsl.civl.log.ExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
@@ -34,10 +39,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.State;
-import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
-import edu.udel.cis.vsl.civl.util.CIVLInternalException;
-import edu.udel.cis.vsl.civl.util.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -179,7 +180,8 @@ public class Evaluator {
 
 		if (result == null)
 			throw new CIVLInternalException(
-					"Unable to extract concrete int from: " + expression);
+					"Unable to extract concrete int from " + expression,
+					(Source) null);
 		return result.intValue();
 	}
 
@@ -260,7 +262,7 @@ public class Evaluator {
 	 *            a pointer value
 	 * @return the dynamic scope ID component of that pointer value
 	 */
-	private int getScopeId(SymbolicExpression pointer) {
+	public int getScopeId(SymbolicExpression pointer) {
 		return getSid(universe.tupleRead(pointer, zeroObj));
 	}
 
@@ -271,7 +273,7 @@ public class Evaluator {
 	 *            a pointer value
 	 * @return the variable ID component of that value
 	 */
-	private int getVariableId(SymbolicExpression pointer) {
+	public int getVariableId(SymbolicExpression pointer) {
 		return extractIntField(pointer, oneObj);
 	}
 
@@ -283,7 +285,7 @@ public class Evaluator {
 	 *            a pointer value
 	 * @return the symRef component
 	 */
-	private ReferenceExpression getSymRef(SymbolicExpression pointer) {
+	public ReferenceExpression getSymRef(SymbolicExpression pointer) {
 		return (ReferenceExpression) universe.tupleRead(pointer, twoObj);
 	}
 
@@ -316,7 +318,7 @@ public class Evaluator {
 	 *            the left hand side expression we are taking the address of
 	 * @return the pointer value
 	 */
-	private SymbolicExpression reference(State state, int pid,
+	public SymbolicExpression reference(State state, int pid,
 			LHSExpression operand) {
 		SymbolicExpression result;
 
@@ -349,8 +351,8 @@ public class Evaluator {
 
 			result = setSymRef(structPointer, newSymRef);
 		} else
-			throw new CIVLInternalException("Unknown kind of LHSExpression: "
-					+ operand);
+			throw new CIVLInternalException("Unknown kind of LHSExpression",
+					operand);
 		return result;
 	}
 
@@ -371,7 +373,7 @@ public class Evaluator {
 			Expression operand) {
 		SymbolicExpression pointer = evaluate(state, pid, operand);
 
-		return dereference(state, pid, pointer);
+		return dereference(state, pointer);
 	}
 
 	private SymbolicExpression pointerAdd(State state, int pid,
@@ -522,8 +524,8 @@ public class Evaluator {
 		case POINTER_SUBTRACT:
 			return pointerSubtract(state, pid, expression, left, right);
 		default:
-			throw new CIVLUnimplementedFeatureException(expression.getSource(),
-					"Operator " + expression.operator());
+			throw new CIVLUnimplementedFeatureException("Operator "
+					+ expression.operator(), expression.getSource());
 		}
 	}
 
@@ -561,11 +563,8 @@ public class Evaluator {
 		SymbolicType symbolicType = symbolicType(castType);
 		SymbolicExpression result;
 
-		if (castType == null) {
-			log.report(new ExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE, "Unable to perform cast : "
-							+ expression + ".  Not implemented."));
-		}
+		if (castType == null)
+			throw new CIVLInternalException("Null cast type", expression);
 		result = universe.cast(symbolicType, uncastExpression);
 		return result;
 	}
@@ -650,7 +649,7 @@ public class Evaluator {
 			// return dereference(state, pid, expression.operand());
 		default:
 			throw new CIVLInternalException("Unknown unary operator "
-					+ expression.operator());
+					+ expression.operator(), expression);
 		}
 	}
 
@@ -675,10 +674,10 @@ public class Evaluator {
 			PrintStream ps = new PrintStream(baos);
 
 			state.print(ps);
-			log.report(new ExecutionException(ErrorKind.UNDEFINED_VALUE,
+			log.report(new CIVLStateException(ErrorKind.UNDEFINED_VALUE,
 					Certainty.PROVEABLE,
-					"Attempt to read unitialized variable: "
-							+ expression.variable() + "\n\n" + baos.toString()));
+					"Attempt to read unitialized variable", state, expression
+							.getSource()));
 			return universe.nullExpression();
 		}
 		return universe.reasoner((BooleanExpression) state.pathCondition())
@@ -702,8 +701,39 @@ public class Evaluator {
 	// Exported methods...
 
 	/**
+	 * Returns the log used by this evaluator to record an property violations
+	 * encountered.
+	 * 
+	 * @return the error log
+	 */
+	public ErrorLog log() {
+		return log;
+	}
+
+	/**
+	 * Returns the pointer type: the type of the symbolic expressions used to
+	 * represent pointer values.
+	 * 
+	 * @return the pointer type
+	 */
+	public SymbolicType pointerType() {
+		return pointerType;
+	}
+
+	/**
+	 * Returns the process type: the type of the symbolic expressions used as
+	 * values assigned to variables of type <code>$proc</code>.
+	 * 
+	 * @return the process type
+	 */
+	public SymbolicType processType() {
+		return processType;
+	}
+
+	/**
 	 * Given a process ID number, returns the process value ("procVal") which is
-	 * a symbolic expression wrapping that int in a tuple of type processType.
+	 * a symbolic expression wrapping that int in a tuple of type
+	 * <code>processType.</code>
 	 * 
 	 * @param pid
 	 *            a nonnegative integer
@@ -715,8 +745,8 @@ public class Evaluator {
 	}
 
 	/**
-	 * Given a process value ("procVal") extract the concrete integer PID and
-	 * returns it.
+	 * Given a process value (aka "procVal", a symbolic expression of process
+	 * type), extracts and returns the concrete integer PID.
 	 * 
 	 * @param procVal
 	 *            an expression created by method {@link #makeProcVal}.
@@ -732,15 +762,12 @@ public class Evaluator {
 	 * 
 	 * @param state
 	 *            a CIVL model state
-	 * @param pid
-	 *            the PID of the process in which this dereferencing is
-	 *            occurring
 	 * @param pointer
 	 *            a pointer value which refers to some sub-structure in the
 	 *            state
 	 * @return the value pointed to
 	 */
-	public SymbolicExpression dereference(State state, int pid,
+	public SymbolicExpression dereference(State state,
 			SymbolicExpression pointer) {
 		int sid = getScopeId(pointer);
 		int vid = getVariableId(pointer);
@@ -751,14 +778,18 @@ public class Evaluator {
 		return result;
 	}
 
-	public ErrorLog log() {
-		return log;
-	}
-
-	public SymbolicType pointerType() {
-		return pointerType;
-	}
-
+	/**
+	 * Evaluates the expression and returns the result, which is a symbolic
+	 * expression value.
+	 * 
+	 * @param state
+	 *            the state in which the evaluation takes place
+	 * @param pid
+	 *            the PID of the process which is evaluating the expression
+	 * @param expression
+	 *            the (static) expression being evaluated
+	 * @return the result of the evaluation
+	 */
 	public SymbolicExpression evaluate(State state, int pid,
 			Expression expression) {
 		ExpressionKind kind = expression.expressionKind();
@@ -821,7 +852,7 @@ public class Evaluator {
 			break;
 		default:
 			throw new CIVLInternalException("Unknown kind of expression: "
-					+ expression.getSource());
+					+ kind, expression.getSource());
 		}
 		// make canonic?
 		return result;

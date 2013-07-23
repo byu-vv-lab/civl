@@ -3,7 +3,9 @@ package edu.udel.cis.vsl.civl.kripke;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.log.ExecutionException;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -13,8 +15,6 @@ import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
-import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -22,7 +22,6 @@ import edu.udel.cis.vsl.sarl.IF.ValidityResult;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.Number;
@@ -110,30 +109,8 @@ public class Enabler implements
 					} else if (s instanceof JoinStatement) {
 						SymbolicExpression pidExpression = evaluator.evaluate(
 								state, p.id(), ((JoinStatement) s).process());
-						int pidValue;
+						int pidValue = evaluator.getPid(pidExpression);
 
-						if (!(pidExpression instanceof SymbolicConstant)) {
-							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							PrintStream ps = new PrintStream(baos);
-
-							state.print(ps);
-							evaluator
-									.log()
-									.report(new ExecutionException(
-											ErrorKind.INVALID_PID,
-											Certainty.PROVEABLE,
-											"Unknown process ID in: " + s
-													+ "\n\n" + baos.toString()));
-							continue;
-						}
-						assert pidExpression instanceof SymbolicConstant;
-						assert ((SymbolicConstant) pidExpression).name()
-								.getString().startsWith(pidPrefix);
-						// TODO: Throw exception if not the right type.
-						pidValue = Integer
-								.parseInt(((SymbolicConstant) pidExpression)
-										.name().getString()
-										.substring(pidPrefix.length()));
 						if (pidValue == -1) {
 							ByteArrayOutputStream baos = new ByteArrayOutputStream();
 							PrintStream ps = new PrintStream(baos);
@@ -141,14 +118,11 @@ public class Enabler implements
 							state.print(ps);
 							evaluator
 									.log()
-									.report(new ExecutionException(
+									.report(new CIVLStateException(
 											ErrorKind.INVALID_PID,
 											Certainty.PROVEABLE,
-											"Unable to call $wait on a process that has already been the target of a $wait.  At "
-													+ s.source()
-													+ " : "
-													+ s
-													+ "\n\n" + baos.toString()));
+											"Unable to call $wait on a process that has already been the target of a $wait.",
+											state, s.getSource()));
 							continue;
 						}
 						if (!state.process(pidValue).hasEmptyStack()) {

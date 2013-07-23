@@ -40,9 +40,8 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ForkStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
@@ -78,7 +77,6 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonChooseStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonForkStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonJoinStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
@@ -722,9 +720,9 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The arguments to the function.
 	 * @return A new call statement.
 	 */
-	public CallStatement callStatement(Location source, Function function,
-			Vector<Expression> arguments) {
-		CallStatement result = new CommonCallStatement(source, function,
+	public CallOrSpawnStatement callOrSpawnStatement(Location source,
+			boolean isCall, Function function, Vector<Expression> arguments) {
+		CallOrSpawnStatement result = new CommonCallStatement(source,isCall, function,
 				arguments);
 		Scope statementScope = null;
 
@@ -762,58 +760,58 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * A fork statement. Used to spawn a new process.
-	 * 
-	 * @param source
-	 *            The source location for this fork statement.
-	 * @param function
-	 *            An expression evaluating to a function.
-	 * @param arguments
-	 *            The arguments to the function.
-	 * @return A new fork statement.
-	 */
-	public ForkStatement forkStatement(Location source, Expression function,
-			Vector<Expression> arguments) {
-		ForkStatement result = new CommonForkStatement(source, null, function,
-				arguments);
-		Scope statementScope = null;
-
-		for (Expression arg : arguments) {
-			statementScope = join(statementScope, arg.expressionScope());
-		}
-		result.setStatementScope(statementScope);
-		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		return result;
-	}
-
-	/**
-	 * A fork statement. Used to spawn a new process.
-	 * 
-	 * @param source
-	 *            The source location for this fork statement.
-	 * @param lhs
-	 *            Expression for place where the process reference will be
-	 *            stored. Null if non-existent.
-	 * @param function
-	 *            An expression evaluating to a function.
-	 * @param arguments
-	 *            The arguments ot the function.
-	 * @return A new fork statement.
-	 */
-	public ForkStatement forkStatement(Location source, LHSExpression lhs,
-			Expression function, Vector<Expression> arguments) {
-		ForkStatement result = new CommonForkStatement(source, lhs, function,
-				arguments);
-		Scope statementScope = lhs.expressionScope();
-
-		for (Expression arg : arguments) {
-			statementScope = join(statementScope, arg.expressionScope());
-		}
-		result.setStatementScope(statementScope);
-		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		return result;
-	}
+	// /**
+	// * A fork statement. Used to spawn a new process.
+	// *
+	// * @param source
+	// * The source location for this fork statement.
+	// * @param function
+	// * A function
+	// * @param arguments
+	// * The arguments to the function.
+	// * @return A new fork statement.
+	// */
+	// public ForkStatement forkStatement(Location source, Function function,
+	// Vector<Expression> arguments) {
+	// ForkStatement result = new CommonForkStatement(source, null, function,
+	// arguments);
+	// Scope statementScope = null;
+	//
+	// for (Expression arg : arguments) {
+	// statementScope = join(statementScope, arg.expressionScope());
+	// }
+	// result.setStatementScope(statementScope);
+	// ((CommonExpression) result.guard()).setExpressionType(booleanType);
+	// return result;
+	// }
+	//
+	// /**
+	// * A fork statement. Used to spawn a new process.
+	// *
+	// * @param source
+	// * The source location for this fork statement.
+	// * @param lhs
+	// * Expression for place where the process reference will be
+	// * stored. Null if non-existent.
+	// * @param function
+	// * A function.
+	// * @param arguments
+	// * The arguments ot the function.
+	// * @return A new fork statement.
+	// */
+	// public ForkStatement forkStatement(Location source, LHSExpression lhs,
+	// Function function, Vector<Expression> arguments) {
+	// ForkStatement result = new CommonForkStatement(source, lhs, function,
+	// arguments);
+	// Scope statementScope = lhs.expressionScope();
+	//
+	// for (Expression arg : arguments) {
+	// statementScope = join(statementScope, arg.expressionScope());
+	// }
+	// result.setStatementScope(statementScope);
+	// ((CommonExpression) result.guard()).setExpressionType(booleanType);
+	// return result;
+	// }
 
 	/**
 	 * A join statement. Used to wait for a process to complete.

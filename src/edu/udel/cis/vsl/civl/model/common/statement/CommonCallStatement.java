@@ -9,19 +9,23 @@ import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 
 /**
- * A function call. Either of the form f(x) or else v=f(x).
+ * A function call or spawn. Either of the form f(x) or else v=f(x).
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
 public class CommonCallStatement extends CommonStatement implements
-		CallStatement {
+		CallOrSpawnStatement {
+
+	private boolean isCall;
 
 	private LHSExpression lhs = null;
+
 	private Function function;
+
 	private Vector<Expression> arguments;
 
 	/**
@@ -29,14 +33,17 @@ public class CommonCallStatement extends CommonStatement implements
 	 * 
 	 * @param source
 	 *            The source location for this call statement.
+	 * @param isCall
+	 *            is this a call statement (not fork)?
 	 * @param function
 	 *            The function.
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
-	public CommonCallStatement(Location source, Function function,
-			Vector<Expression> arguments) {
+	public CommonCallStatement(Location source, boolean isCall,
+			Function function, Vector<Expression> arguments) {
 		super(source);
+		this.isCall = isCall;
 		this.function = function;
 		this.arguments = arguments;
 	}
@@ -121,6 +128,16 @@ public class CommonCallStatement extends CommonStatement implements
 			result = lhs + " = " + result;
 		}
 		return result;
+	}
+
+	@Override
+	public boolean isCall() {
+		return isCall;
+	}
+
+	@Override
+	public boolean isSpawn() {
+		return !isCall;
 	}
 
 }

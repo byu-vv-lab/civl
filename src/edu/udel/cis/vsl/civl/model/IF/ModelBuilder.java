@@ -3,7 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.IF;
 
-import edu.udel.cis.vsl.abc.ast.IF.AST;
+import edu.udel.cis.vsl.abc.program.IF.Program;
 
 /**
  * Class to provide translation from an AST to a model.
@@ -17,13 +17,14 @@ public interface ModelBuilder {
 	 * @return The model factory used by this model builder.
 	 */
 	public ModelFactory factory();
+
 	/**
 	 * Build the model.
 	 * 
-	 * @param unit
-	 *            The translation unit for the AST.
+	 * @param program
+	 *            The ABC program to translate.
 	 * @return The model.
 	 */
-	public Model buildModel(AST unit);
-	
+	public Model buildModel(Program program);
+
 }

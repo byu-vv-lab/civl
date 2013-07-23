@@ -3,9 +3,9 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.util.CIVLInternalException;
 
 /**
  * A binary operation.
@@ -127,7 +127,8 @@ public class CommonBinaryExpression extends CommonExpression implements
 			op = "-";
 			break;
 		default:
-			throw new CIVLInternalException("Unknown operator: " + operator);
+			throw new CIVLInternalException("Unknown operator: " + operator,
+					this);
 		}
 		return left + op + right;
 	}

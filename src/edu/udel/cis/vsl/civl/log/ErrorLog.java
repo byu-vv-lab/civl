@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
@@ -27,7 +28,8 @@ public class ErrorLog {
 	private int numEntries = 0;
 	private Map<LogEntry, LogEntry> entryMap = new LinkedHashMap<LogEntry, LogEntry>();
 	private DfsSearcher<State, Transition, TransitionSequence> searcher;
-//	private File workingDirectory;
+
+	// private File workingDirectory;
 
 	/**
 	 * 
@@ -35,7 +37,7 @@ public class ErrorLog {
 	public ErrorLog(PrintWriter out, File workingDirectory) {
 		this.searcher = null;
 		this.out = out;
-//		this.workingDirectory = workingDirectory;
+		// this.workingDirectory = workingDirectory;
 	}
 
 	/**
@@ -44,7 +46,7 @@ public class ErrorLog {
 	 * 
 	 * @throws FileNotFoundException
 	 */
-	public void report(ExecutionException error) {
+	public void report(CIVLExecutionException error) {
 		int size = (searcher == null ? 0 : searcher.stack().size());
 		processLogEntry(new LogEntry(this, error, size));
 		considerQuitting();
@@ -88,48 +90,48 @@ public class ErrorLog {
 			out.println("Encountered in initial state.\n");
 			return;
 		}
-//		try {
-//			String traceFilename = name() + "_" + entry.id() + ".trace";
-//			File traceFile;
-//			PrintWriter traceOut;
-//
-//			traceFile = new File(workingDirectory, traceFilename);
-//			traceOut = new PrintWriter(traceFile);
-//			out.print("Writing trace to " + traceFilename + "...");
-//			out.flush();
-//			writeTrace(traceOut);
-//			out.println("done.\n");
-//			out.flush();
-//			traceOut.close();
-//		} catch (FileNotFoundException e) {
-//			out.println("Unable to open file for writing...exiting...");
-//			print(out);
-//			throw new RuntimeException(
-//					"CIVL: Exiting due to inability to open log file.");
-//		}
+		// try {
+		// String traceFilename = name() + "_" + entry.id() + ".trace";
+		// File traceFile;
+		// PrintWriter traceOut;
+		//
+		// traceFile = new File(workingDirectory, traceFilename);
+		// traceOut = new PrintWriter(traceFile);
+		// out.print("Writing trace to " + traceFilename + "...");
+		// out.flush();
+		// writeTrace(traceOut);
+		// out.println("done.\n");
+		// out.flush();
+		// traceOut.close();
+		// } catch (FileNotFoundException e) {
+		// out.println("Unable to open file for writing...exiting...");
+		// print(out);
+		// throw new RuntimeException(
+		// "CIVL: Exiting due to inability to open log file.");
+		// }
 	}
 
-	//TODO: take care of trace writing
-//	private void writeTrace(PrintWriter traceOut) {
-//		Stack<TransitionSequence> stack = searcher.stack();
-//		int stackSize = stack.size();
-//		traceOut.println();
-//		for (int i = 0; i < stackSize; i++) {
-//			TransitionSequence sequence = stack.elementAt(i);
-//			
-//			if (sequence.size() > 1) {
-//				
-//			}
-//		}
-//		// int stackSize = searcher.stack().size();
-//		// TODO: Handle this printing.
-//		// for (int i = 0; i < stackSize; i++) {
-//		// TransitionSequence sequence = searcher.stack().elementAt(i);
-//		//
-//		// traceOut.println(sequence.)
-//		// }
-//
-//	}
+	// TODO: take care of trace writing
+	// private void writeTrace(PrintWriter traceOut) {
+	// Stack<TransitionSequence> stack = searcher.stack();
+	// int stackSize = stack.size();
+	// traceOut.println();
+	// for (int i = 0; i < stackSize; i++) {
+	// TransitionSequence sequence = stack.elementAt(i);
+	//
+	// if (sequence.size() > 1) {
+	//
+	// }
+	// }
+	// // int stackSize = searcher.stack().size();
+	// // TODO: Handle this printing.
+	// // for (int i = 0; i < stackSize; i++) {
+	// // TransitionSequence sequence = searcher.stack().elementAt(i);
+	// //
+	// // traceOut.println(sequence.)
+	// // }
+	//
+	// }
 
 	public void setSearcher(
 			DfsSearcher<State, Transition, TransitionSequence> searcher) {
@@ -139,7 +141,7 @@ public class ErrorLog {
 	public int errorBound() {
 		return errorBound;
 	}
-	
+
 	public void setErrorBound(int bound) {
 		this.errorBound = bound;
 	}

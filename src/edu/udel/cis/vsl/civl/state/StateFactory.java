@@ -463,7 +463,7 @@ public class StateFactory implements StateFactoryIF {
 	public State setVariable(State state, Variable variable, int pid,
 			SymbolicExpression value) {
 		int scopeId = state.getScopeId(pid, variable);
-		return setVariable(state, variable, scopeId, pid, value);
+		return setVariable(state, variable.vid(), scopeId, value);
 	}
 
 	/**
@@ -478,22 +478,20 @@ public class StateFactory implements StateFactoryIF {
 	 *            the method is useful when setting the target of a pointer. For
 	 *            a variable in the current lexical scope, use the version of
 	 *            the method without this argument.
-	 * @param pid
-	 *            The pid of the process containing the variable.
 	 * @param value
 	 *            The new value of the dynamic variable.
 	 * @return A new state that is the old state modified by updating the value
 	 *         of the variable.
 	 */
 	@Override
-	public State setVariable(State state, Variable variable, int scopeId,
-			int pid, SymbolicExpression value) {
+	public State setVariable(State state, int vid, int scopeId,
+			SymbolicExpression value) {
 		DynamicScope oldScope = state.getScope(scopeId);
 		DynamicScope[] newScopes = state.copyScopes();
 		SymbolicExpression[] newValues = oldScope.copyValues();
 		DynamicScope newScope;
 
-		newValues[variable.vid()] = value;
+		newValues[vid] = value;
 		newScope = dynamicScope(oldScope.lexicalScope(), oldScope.parent(),
 				newValues, oldScope.reachers());
 		newScopes[scopeId] = newScope;
@@ -653,9 +651,8 @@ public class StateFactory implements StateFactoryIF {
 					for (int j = 0; j < i; j++)
 						newScopes[j] = state.getScope(j);
 				}
-				newScopes[i] = dynamicScope(staticScope,
-						dynamicScope.parent(), newValues,
-						dynamicScope.reachers());
+				newScopes[i] = dynamicScope(staticScope, dynamicScope.parent(),
+						newValues, dynamicScope.reachers());
 			} else if (newScopes != null) {
 				newScopes[i] = dynamicScope;
 			}

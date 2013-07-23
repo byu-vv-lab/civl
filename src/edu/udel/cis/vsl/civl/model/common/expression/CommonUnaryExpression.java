@@ -3,9 +3,9 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
-import edu.udel.cis.vsl.civl.util.CIVLInternalException;
 
 /**
  * A unary operation.
@@ -75,7 +75,7 @@ public class CommonUnaryExpression extends CommonExpression implements
 			break;
 		default:
 			throw new CIVLInternalException("Unknown unary operator: "
-					+ operator);
+					+ operator, this);
 		}
 		return op + "(" + operand + ")";
 	}

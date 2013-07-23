@@ -1,6 +1,14 @@
-package edu.udel.cis.vsl.civl.util;
+package edu.udel.cis.vsl.civl.err;
 
-public class CIVLException extends RuntimeException {
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.IF.Sourceable;
+
+public class CIVLExecutionException extends CIVLException {
+
+	/**
+	 * Added by Eclipse.
+	 */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * A certainty level gages how certain we are that this is error is a real
@@ -49,23 +57,35 @@ public class CIVLException extends RuntimeException {
 		UNDEFINED_VALUE
 	}
 
-	/**
-	 * This is a compiler-generated serial id required to correctly implement
-	 * Serializeable, inherited from Exception class.
-	 */
-	private static final long serialVersionUID = 6345634620954563631L;
-
 	private Certainty certainty;
 
 	private ErrorKind kind;
 
-	public CIVLException(ErrorKind kind, Certainty certainty, String message) {
-		super(message);
+	/**
+	 * Constructs new CIVLException with given fields.
+	 * 
+	 * @param kind
+	 *            the kind of error
+	 * @param certainty
+	 *            the certainty with which this is known to be an error in the
+	 *            program being verified
+	 * @param message
+	 *            a message explaining the error
+	 * @param source
+	 *            the source code element associated to the error; may be null
+	 */
+	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
+			String message, Source source) {
+		super(message, source);
 		assert kind != null;
 		assert certainty != null;
-		assert message != null;
 		this.kind = kind;
 		this.certainty = certainty;
+	}
+
+	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
+			String message, Sourceable sourceable) {
+		this(kind, certainty, message, sourceable.getSource());
 	}
 
 	public Certainty certainty() {
@@ -76,12 +96,12 @@ public class CIVLException extends RuntimeException {
 		return kind;
 	}
 
+	@Override
 	public String toString() {
 		String result = "CIVL execution error (kind: " + kind + ", certainty: "
-				+ certainty + ")";
+				+ certainty + ")\n";
 
-		result += "\n";
-		result += getMessage();
+		result += super.toString();
 		return result;
 	}
 }

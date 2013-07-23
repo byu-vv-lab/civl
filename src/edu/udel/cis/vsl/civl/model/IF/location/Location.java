@@ -43,6 +43,16 @@ public interface Location {
 	public Set<Statement> outgoing();
 
 	/**
+	 * Returns the sole outgoing statement from this location.
+	 * 
+	 * @return the outgoing statement
+	 * @throws CIVLInternalException
+	 *             if the number of outgoing statements from this location is
+	 *             not 1
+	 */
+	public Statement getSoleOutgoing();
+
+	/**
 	 * Set the unique ID number of this location.
 	 * 
 	 * @param id

@@ -1,4 +1,7 @@
-package edu.udel.cis.vsl.civl.util;
+package edu.udel.cis.vsl.civl.err;
+
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 
 /**
  * A CIVL internal exception represents an error that is
@@ -7,16 +10,20 @@ package edu.udel.cis.vsl.civl.util;
  * no need to declare or catch it. It will be thrown all the way up to main and
  * reported.
  */
-public class CIVLInternalException extends RuntimeException {
+public class CIVLInternalException extends CIVLException {
 
 	/**
 	 * The generated serial ID to implement Serializaeable.
 	 */
 	private static final long serialVersionUID = 6522079858283496490L;
 
-	public CIVLInternalException(String s) {
+	public CIVLInternalException(String s, Source source) {
 		super("A CIVL internal error has occurred.\n"
-				+ "Please send an error report to siegel@udel.edu.\n" + s);
+				+ "Please send an error report to civl-dev@udel.edu.\n" + s,
+				source);
 	}
 
+	public CIVLInternalException(String s, Sourceable sourceable) {
+		this(s, sourceable.getSource());
+	}
 }

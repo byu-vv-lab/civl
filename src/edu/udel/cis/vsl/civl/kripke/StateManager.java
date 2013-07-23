@@ -46,7 +46,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		statement = ((SimpleTransition) transition).statement();
 		if (transition instanceof ChooseTransition) {
 			assert statement instanceof ChooseStatement;
-			newState = executor.execute(state, pid,
+			newState = executor.executeChoose(state, pid,
 					(ChooseStatement) statement,
 					((ChooseTransition) transition).value());
 		} else {

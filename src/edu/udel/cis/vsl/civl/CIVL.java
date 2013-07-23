@@ -7,13 +7,15 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import edu.udel.cis.vsl.abc.ABC;
-import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.Preprocess;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorFactory;
+import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.err.CIVLException;
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutorLoader;
@@ -31,10 +33,6 @@ import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
-import edu.udel.cis.vsl.civl.util.CIVLException;
-import edu.udel.cis.vsl.civl.util.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.util.CIVLException.ErrorKind;
-import edu.udel.cis.vsl.civl.util.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
@@ -189,7 +187,7 @@ public class CIVL {
 
 	public static boolean check(boolean printModel, File file, PrintStream out)
 			throws SyntaxException, ParseException, PreprocessorException {
-		AST unit;
+		Program program;
 		StateFactoryIF stateFactory = new StateFactory(universe);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
@@ -210,20 +208,20 @@ public class CIVL {
 		String bar = "===================";
 
 		try {
-			unit = ABC.activator(file).getSideEffectFreeTranslationUnit();
+			program = ABC.activator(file).getProgram();
+			program.prune();
+			program.removeSideEffects();
 		} catch (SyntaxException e) {
-			throw new CIVLException(ErrorKind.OTHER, Certainty.CONCRETE,
-					"Syntax error in " + file.getName() + ": \n"
-							+ e.getMessage());
+			throw new CIVLException("Syntax error in " + file.getName()
+					+ ": \n" + e.getMessage(), e.getSource());
 		} catch (ParseException e) {
-			throw new CIVLException(ErrorKind.OTHER, Certainty.CONCRETE,
-					"Error parsing " + file.getName() + ": \n" + e.getMessage());
+			throw new CIVLException("Error parsing " + file.getName() + ": \n"
+					+ e.getMessage(), null);
 		} catch (PreprocessorException e) {
-			throw new CIVLException(ErrorKind.OTHER, Certainty.CONCRETE,
-					"Error preprocessing " + file.getName() + ": \n"
-							+ e.getMessage());
+			throw new CIVLException("Error preprocessing " + file.getName()
+					+ ": \n" + e.getMessage(), null);
 		}
-		model = modelBuilder.buildModel(unit);
+		model = modelBuilder.buildModel(program);
 		if (printModel) {
 			out.println(bar + " Model " + bar + "\n");
 			model.print(out);

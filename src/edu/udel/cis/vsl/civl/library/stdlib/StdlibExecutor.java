@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
@@ -68,11 +68,11 @@ public class StdlibExecutor implements LibraryExecutor {
 		Identifier name;
 		State result = null;
 
-		if (!(statement instanceof CallStatement)) {
+		if (!(statement instanceof CallOrSpawnStatement)) {
 			throw new RuntimeException("Unsupported statement for stdlib: "
 					+ statement);
 		}
-		name = ((CallStatement) statement).function().name();
+		name = ((CallOrSpawnStatement) statement).function().name();
 		if (name.name().equals("malloc")) {
 //			Vector<SymbolicExpression> heapElements = new Vector<SymbolicExpression>();
 
