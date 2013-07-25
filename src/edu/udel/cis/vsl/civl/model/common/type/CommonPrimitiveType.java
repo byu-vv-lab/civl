@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common.type;
 
-import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 
 /**
  * A primitive type. One of: int, bool, real, string.
@@ -8,7 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonPrimitiveType implements PrimitiveType {
+public class CommonPrimitiveType implements CIVLPrimitiveType {
 
 	private PRIMITIVE_TYPE primitiveType;
 

@@ -6,7 +6,7 @@ package edu.udel.cis.vsl.civl.model.IF.type;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface Type {
+public interface CIVLType {
 
 	boolean isNumericType();
 

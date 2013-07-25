@@ -12,7 +12,7 @@ public interface StructField {
 
 	Identifier name();
 
-	Type type();
+	CIVLType type();
 
 	int index();
 

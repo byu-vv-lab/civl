@@ -6,6 +6,6 @@ package edu.udel.cis.vsl.civl.model.IF.type;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface ProcessType extends Type {
+public interface CIVLProcessType extends CIVLType {
 
 }

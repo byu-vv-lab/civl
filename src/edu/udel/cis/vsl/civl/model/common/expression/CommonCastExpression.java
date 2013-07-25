@@ -5,7 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
  * A cast of an expression to a different type.
@@ -16,7 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.Type;
 public class CommonCastExpression extends CommonExpression implements
 		CastExpression {
 
-	private Type type;
+	private CIVLType type;
 	private Expression expression;
 
 	/**
@@ -27,7 +27,7 @@ public class CommonCastExpression extends CommonExpression implements
 	 * @param expression
 	 *            The expression being cast to a new type.
 	 */
-	public CommonCastExpression(Type type, Expression expression) {
+	public CommonCastExpression(CIVLType type, Expression expression) {
 		this.type = type;
 		this.expression = expression;
 	}
@@ -50,7 +50,7 @@ public class CommonCastExpression extends CommonExpression implements
 	 * edu.udel.cis.vsl.civl.model.IF.expression.CastExpression#getCastType()
 	 */
 	@Override
-	public Type getCastType() {
+	public CIVLType getCastType() {
 		return type;
 	}
 
@@ -74,7 +74,7 @@ public class CommonCastExpression extends CommonExpression implements
 	 * udel.cis.vsl.civl.model.IF.type.Type)
 	 */
 	@Override
-	public void setCastType(Type type) {
+	public void setCastType(CIVLType type) {
 		this.type = type;
 	}
 

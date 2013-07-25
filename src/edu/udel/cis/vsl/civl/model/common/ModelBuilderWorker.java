@@ -2,9 +2,11 @@ package edu.udel.cis.vsl.civl.model.common;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -18,7 +20,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.EnsuresNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FieldDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
@@ -61,16 +62,18 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WaitNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.BasicTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.TypedefNameNode;
+import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
+import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
+import edu.udel.cis.vsl.abc.ast.type.IF.QualifiedObjectType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
+import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Function;
@@ -90,18 +93,44 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType.PRIMITIVE_TYPE;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PRIMITIVE_TYPE;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 
+/**
+ * Does the main work translating a single ABC Program to a model.
+ * 
+ * TODO: translate all conversions to casts.
+ * 
+ * Break cycles by brekaing up constructions of struct types into two parts.
+ * 
+ * Add void type and use it.
+ * 
+ * Make a CIVLSource and CIVLSourceable.  One implementation will
+ * be CIVL_ABC_Source which wraps an ABC Source.  Constructors
+ * to all CIVL model statements, expressions, ..., must take a source.
+ * 
+ * Following will implement CIVLSourceable:
+ * Function, Identifier, Scope, Expression, Location, Statement, Variable.
+ * Type: no, because want two types to be the same (equal).
+ * Make CIVLSourceable first argument to every construct. Update
+ * model factory as well.  Add method source(ASTNode) in model builder
+ * worker to create a CIVLSource from an ASTNode (wrap it).
+ * 
+ * 
+ * 
+ * 
+ * @author siegel
+ * 
+ */
 public class ModelBuilderWorker {
 
-	// Fields..........................................................
+	// Fields..............................................................
 
 	/**
 	 * The factory used to create new Model components.
@@ -131,15 +160,16 @@ public class ModelBuilderWorker {
 	private Vector<FunctionDefinitionNode> unprocessedFunctions;
 
 	/**
-	 * 
+	 * For each function definition node, the CIVL static scope containing that
+	 * definition.
 	 */
 	private Map<FunctionDefinitionNode, Scope> containingScopes;
 
 	/**
-	 * Map containing all call statements in the model. This is built up as call
-	 * statements are processed. On a later pass, we iterate over this map and
-	 * set the function fields of the call statements to the corresponding model
-	 * Function object.
+	 * Map containing all call and spawn statements in the model. This is built
+	 * up as call statements are processed. On a later pass, we iterate over
+	 * this map and set the function fields of the call/spawn statements to the
+	 * corresponding model Function object.
 	 */
 	private Map<CallOrSpawnStatement, FunctionDefinitionNode> callStatements;
 
@@ -157,21 +187,22 @@ public class ModelBuilderWorker {
 	private Map<LabelNode, Location> labeledLocations;
 
 	/**
-	 * 
+	 * Also being used for single function (the one being processed). Maps from
+	 * CIVL goto statements to the corresponding label nodes.
 	 */
 	private Map<Statement, LabelNode> gotoStatements;
 
 	/**
-	 * 
+	 * Mapping from ABC types to corresponding CIVL types.
 	 */
-	private Map<String, Type> typedefMap;
+	private Map<Type, CIVLType> typeMap = new HashMap<Type, CIVLType>();
 
 	/**
 	 * 
 	 */
 	private Map<String, Function> systemFunctions;
 
-	// Constructors....................................................
+	// Constructors........................................................
 
 	/**
 	 * Constructs new instance of CommonModelBuilder, creating instance of
@@ -184,7 +215,7 @@ public class ModelBuilderWorker {
 		setUpSystemFunctions();
 	}
 
-	// Helper methods..................................................
+	// Helper methods......................................................
 
 	/**
 	 * Is the given (static) model type the integer type?
@@ -193,9 +224,9 @@ public class ModelBuilderWorker {
 	 *            a static type
 	 * @return true iff types is the integer type
 	 */
-	private boolean isIntegerType(Type type) {
-		return type instanceof PrimitiveType
-				&& ((PrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.INT;
+	private boolean isIntegerType(CIVLType type) {
+		return type instanceof CIVLPrimitiveType
+				&& ((CIVLPrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.INT;
 	}
 
 	/**
@@ -205,9 +236,9 @@ public class ModelBuilderWorker {
 	 *            a static type
 	 * @return true iff type is integer or real
 	 */
-	private boolean isNumericType(Type type) {
-		if (type instanceof PrimitiveType) {
-			PRIMITIVE_TYPE kind = ((PrimitiveType) type).primitiveType();
+	private boolean isNumericType(CIVLType type) {
+		if (type instanceof CIVLPrimitiveType) {
+			PRIMITIVE_TYPE kind = ((CIVLPrimitiveType) type).primitiveType();
 
 			return kind == PRIMITIVE_TYPE.INT || kind == PRIMITIVE_TYPE.REAL;
 		}
@@ -255,13 +286,14 @@ public class ModelBuilderWorker {
 		Identifier name = factory.identifier(functionNode.getName());
 		Vector<Variable> parameters = new Vector<Variable>();
 		FunctionTypeNode functionTypeNode = functionNode.getTypeNode();
-		Type returnType = processType(functionTypeNode.getReturnType());
+		CIVLType returnType = translateTypeNode(functionTypeNode
+				.getReturnType());
 		Statement body;
 
 		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		for (int i = 0; i < functionTypeNode.getParameters().numChildren(); i++) {
-			Type type = processType(functionTypeNode.getParameters()
+			CIVLType type = translateTypeNode(functionTypeNode.getParameters()
 					.getSequenceChild(i).getTypeNode());
 			Identifier variableName = factory.identifier(functionTypeNode
 					.getParameters().getSequenceChild(i).getName());
@@ -298,11 +330,11 @@ public class ModelBuilderWorker {
 	 */
 	private void processVariableDeclaration(Scope scope,
 			VariableDeclarationNode node) {
-		Type type = processType(node.getTypeNode());
+		CIVLType type = translateTypeNode(node.getTypeNode());
 		Identifier name = factory.identifier(node.getName());
 		Variable variable = factory.variable(type, name, scope.numVariables());
 
-		if (type instanceof ArrayType) {
+		if (type instanceof CIVLArrayType) {
 			ExpressionNode extentNode = ((ArrayTypeNode) node.getTypeNode())
 					.getExtent();
 			Expression extent;
@@ -319,80 +351,215 @@ public class ModelBuilderWorker {
 		variable.setNode(node);
 	}
 
-	/**
-	 * Translates an AST type node to a Model Type.
-	 * 
-	 * @param typeNode
-	 *            AST type node
-	 * @return the corresponding model Type
-	 */
-	private Type processType(TypeNode typeNode) {
-		TypeNodeKind kind = typeNode.kind();
-		Type result;
-
-		// TODO: deal with more types.
-
-		if (kind == TypeNodeKind.VOID)
-			result = null;
-		else if (kind == TypeNodeKind.BASIC) {
-			switch (((BasicTypeNode) typeNode).getBasicTypeKind()) {
-			case SHORT:
-			case UNSIGNED_SHORT:
-			case INT:
-			case UNSIGNED:
-			case LONG:
-			case UNSIGNED_LONG:
-			case LONG_LONG:
-			case UNSIGNED_LONG_LONG:
-				return factory.integerType();
-			case FLOAT:
-			case DOUBLE:
-			case LONG_DOUBLE:
-				return factory.realType();
-			case BOOL:
-				return factory.booleanType();
-			case CHAR:
-			case DOUBLE_COMPLEX:
-			case FLOAT_COMPLEX:
-			case LONG_DOUBLE_COMPLEX:
-			case SIGNED_CHAR:
-			case UNSIGNED_CHAR:
-			default:
-				throw new CIVLUnimplementedFeatureException("types of kind "
-						+ typeNode.kind(), typeNode.getSource());
-			}
-		} else if (typeNode.kind() == TypeNodeKind.PROCESS) {
-			return factory.processType();
-		} else if (typeNode.kind() == TypeNodeKind.ARRAY) {
-			return factory.arrayType(processType(((ArrayTypeNode) typeNode)
-					.getElementType()));
-		} else if (typeNode.kind() == TypeNodeKind.POINTER) {
-			return factory.pointerType(processType(((PointerTypeNode) typeNode)
-					.referencedType()));
-		} else if (typeNode.kind() == TypeNodeKind.TYPEDEF_NAME) {
-			return typedefMap
-					.get(((TypedefNameNode) typeNode).getName().name());
-		} else if (typeNode.kind() == TypeNodeKind.STRUCTURE_OR_UNION) {
-			SequenceNode<FieldDeclarationNode> fieldNodes = ((StructureOrUnionTypeNode) typeNode)
-					.getStructDeclList();
-			List<StructField> fields = new Vector<StructField>();
-			Identifier structName = factory
-					.identifier(((StructureOrUnionTypeNode) typeNode).getTag()
-							.name());
-
-			for (int i = 0; i < fieldNodes.numChildren(); i++) {
-				FieldDeclarationNode fieldNode = fieldNodes.getSequenceChild(i);
-				Identifier name = factory.identifier(fieldNode.getName());
-				Type type = processType(fieldNode.getTypeNode());
-
-				fields.add(factory.structField(name, type));
-			}
-			result = factory.structType(structName, fields);
-		} else
+	private CIVLType translateBasicType(StandardBasicType basicType,
+			Source source) {
+		switch (basicType.getBasicTypeKind()) {
+		case SHORT:
+		case UNSIGNED_SHORT:
+		case INT:
+		case UNSIGNED:
+		case LONG:
+		case UNSIGNED_LONG:
+		case LONG_LONG:
+		case UNSIGNED_LONG_LONG:
+			return factory.integerType();
+		case FLOAT:
+		case DOUBLE:
+		case LONG_DOUBLE:
+			return factory.realType();
+		case BOOL:
+			return factory.booleanType();
+		case CHAR:
+		case DOUBLE_COMPLEX:
+		case FLOAT_COMPLEX:
+		case LONG_DOUBLE_COMPLEX:
+		case SIGNED_CHAR:
+		case UNSIGNED_CHAR:
+		default:
 			throw new CIVLUnimplementedFeatureException("types of kind "
-					+ typeNode.kind(), typeNode.getSource());
+					+ basicType.kind(), source);
+		}
+	}
+
+	private CIVLType translateStructureOrUnion(StructureOrUnionType type,
+			Source source) {
+		// TODO: break cycles. break into two parts.
+		// first create the incomplete type and put in map.
+		// then complete it.
+		String tag = type.getTag();
+
+		if (type.isUnion())
+			throw new CIVLUnimplementedFeatureException("Union types", source);
+		// civlc.h defines $proc as struct __proc__
+		if ("__proc__".equals(tag))
+			return factory.processType();
+		// civlc.h defines $heap as struct __heap__
+		if ("__heap__".equals(tag))
+			return factory.heapType();
+		else {
+			int numFields = type.getNumFields();
+			List<StructField> civlFields = new LinkedList<StructField>();
+
+			for (int i = 0; i < numFields; i++) {
+				Field field = type.getField(i);
+
+				String name = field.getName();
+				Type fieldType = field.getType();
+				CIVLType civlFieldType = translateType(fieldType, source);
+				Identifier identifier = factory.identifier(name);
+				StructField civlField = factory.structField(identifier,
+						civlFieldType);
+
+				civlFields.add(civlField);
+			}
+			return factory.structType(factory.identifier(tag), civlFields);
+		}
+	}
+
+	/**
+	 * Working on replacing process type with this.
+	 * 
+	 * @param abcType
+	 * @return
+	 */
+	private CIVLType translateType(Type abcType, Source source) {
+		CIVLType result = typeMap.get(abcType);
+
+		if (result == null) {
+			TypeKind kind = abcType.kind();
+
+			switch (kind) {
+			case ARRAY: {
+				ArrayType arrayType = (ArrayType) abcType;
+
+				result = factory.arrayType(translateType(
+						arrayType.getElementType(), source));
+				break;
+			}
+			case BASIC:
+				result = translateBasicType((StandardBasicType) abcType, source);
+				break;
+			case HEAP:
+				result = factory.heapType();
+				break;
+			case OTHER_INTEGER:
+				result = factory.integerType();
+				break;
+			case POINTER: {
+				PointerType pointerType = (PointerType) abcType;
+				Type referencedType = pointerType.referencedType();
+				CIVLType baseType = translateType(referencedType, source);
+
+				result = factory.pointerType(baseType);
+				break;
+			}
+			case PROCESS:
+				result = factory.processType();
+				break;
+			case QUALIFIED:
+				result = translateType(
+						((QualifiedObjectType) abcType).getBaseType(), source);
+				break;
+			case STRUCTURE_OR_UNION:
+				result = translateStructureOrUnion(
+						(StructureOrUnionType) abcType, source);
+				break;
+			case VOID:
+				// TODO: make a CIVL void type
+				result = null;
+				break;
+			case ATOMIC:
+			case FUNCTION:
+			case ENUMERATION:
+				throw new CIVLUnimplementedFeatureException("Enumerated types",
+						source);
+			default:
+				throw new CIVLInternalException("Unknown type: " + abcType,
+						source);
+			}
+			typeMap.put(abcType, result);
+		}
 		return result;
 	}
+
+	private CIVLType translateTypeNode(TypeNode typeNode) {
+		return translateType(typeNode.getType(), typeNode.getSource());
+	}
+
+	// /**
+	// * Translates an AST type node to a Model Type. TODO: Why??? Why not use a
+	// * CIVL Type instead?
+	// *
+	// * @param typeNode
+	// * AST type node
+	// * @return the corresponding model Type
+	// */
+	// private CIVLType processType(TypeNode typeNode) {
+	// TypeNodeKind kind = typeNode.kind();
+	// CIVLType result;
+	//
+	// // TODO: deal with more types.
+	//
+	// if (kind == TypeNodeKind.VOID)
+	// result = null;
+	// else if (kind == TypeNodeKind.BASIC) {
+	// switch (((BasicTypeNode) typeNode).getBasicTypeKind()) {
+	// case SHORT:
+	// case UNSIGNED_SHORT:
+	// case INT:
+	// case UNSIGNED:
+	// case LONG:
+	// case UNSIGNED_LONG:
+	// case LONG_LONG:
+	// case UNSIGNED_LONG_LONG:
+	// return factory.integerType();
+	// case FLOAT:
+	// case DOUBLE:
+	// case LONG_DOUBLE:
+	// return factory.realType();
+	// case BOOL:
+	// return factory.booleanType();
+	// case CHAR:
+	// case DOUBLE_COMPLEX:
+	// case FLOAT_COMPLEX:
+	// case LONG_DOUBLE_COMPLEX:
+	// case SIGNED_CHAR:
+	// case UNSIGNED_CHAR:
+	// default:
+	// throw new CIVLUnimplementedFeatureException("types of kind "
+	// + typeNode.kind(), typeNode.getSource());
+	// }
+	// } else if (typeNode.kind() == TypeNodeKind.ARRAY) {
+	// return factory.arrayType(processType(((ArrayTypeNode) typeNode)
+	// .getElementType()));
+	// } else if (typeNode.kind() == TypeNodeKind.POINTER) {
+	// return factory.pointerType(processType(((PointerTypeNode) typeNode)
+	// .referencedType()));
+	// } else if (typeNode.kind() == TypeNodeKind.TYPEDEF_NAME) {
+	// return typedefMap
+	// .get(((TypedefNameNode) typeNode).getName().name());
+	// } else if (typeNode.kind() == TypeNodeKind.STRUCTURE_OR_UNION) {
+	// SequenceNode<FieldDeclarationNode> fieldNodes =
+	// ((StructureOrUnionTypeNode) typeNode)
+	// .getStructDeclList();
+	// List<StructField> fields = new Vector<StructField>();
+	// Identifier structName = factory
+	// .identifier(((StructureOrUnionTypeNode) typeNode).getTag()
+	// .name());
+	//
+	// for (int i = 0; i < fieldNodes.numChildren(); i++) {
+	// FieldDeclarationNode fieldNode = fieldNodes.getSequenceChild(i);
+	// Identifier name = factory.identifier(fieldNode.getName());
+	// CIVLType type = processType(fieldNode.getTypeNode());
+	//
+	// fields.add(factory.structField(name, type));
+	// }
+	// result = factory.structType(structName, fields);
+	// } else
+	// throw new CIVLUnimplementedFeatureException("types of kind "
+	// + typeNode.kind(), typeNode.getSource());
+	// return result;
+	// }
 
 	/* *********************************************************************
 	 * Expressions
@@ -474,9 +641,9 @@ public class ModelBuilderWorker {
 	 *            The (static) scope containing the expression.
 	 * @return The model representation of the expression.
 	 */
-	public Expression castExpression(CastNode expression, Scope scope) {
+	private Expression castExpression(CastNode expression, Scope scope) {
 		Expression result;
-		Type castType = processType(expression.getCastType());
+		CIVLType castType = translateTypeNode(expression.getCastType());
 		Expression castExpression = expression(expression.getArgument(), scope);
 
 		result = factory.castExpression(castType, castExpression);
@@ -550,11 +717,11 @@ public class ModelBuilderWorker {
 	 * @return either the original expression or &e[0]
 	 */
 	private Expression arrayToPointer(Expression expression) {
-		Type type = expression.getExpressionType();
+		CIVLType type = expression.getExpressionType();
 
-		if (type instanceof ArrayType) {
-			ArrayType arrayType = (ArrayType) type;
-			Type elementType = arrayType.baseType();
+		if (type instanceof CIVLArrayType) {
+			CIVLArrayType arrayType = (CIVLArrayType) type;
+			CIVLType elementType = arrayType.baseType();
 			Expression zero = factory.integerLiteralExpression(BigInteger.ZERO);
 			LHSExpression subscript = factory.subscriptExpression(
 					(LHSExpression) expression, zero);
@@ -593,20 +760,20 @@ public class ModelBuilderWorker {
 		ExpressionNode rightNode = subscriptNode.getArgument(1);
 		Expression lhs = expression(leftNode, scope);
 		Expression rhs = expression(rightNode, scope);
-		Type lhsType = lhs.getExpressionType();
+		CIVLType lhsType = lhs.getExpressionType();
 		Expression result;
 
-		if (lhsType instanceof ArrayType) {
+		if (lhsType instanceof CIVLArrayType) {
 			if (!(lhs instanceof LHSExpression))
 				throw new CIVLInternalException(
 						"Expected expression with array type to be LHS",
 						lhs.getSource());
 			result = factory.subscriptExpression((LHSExpression) lhs, rhs);
 		} else {
-			Type rhsType = rhs.getExpressionType();
+			CIVLType rhsType = rhs.getExpressionType();
 			Expression pointerExpr, indexExpr;
 
-			if (lhsType instanceof PointerType) {
+			if (lhsType instanceof CIVLPointerType) {
 				if (!isIntegerType(rhsType))
 					throw new CIVLInternalException(
 							"Expected expression of integer type",
@@ -614,7 +781,7 @@ public class ModelBuilderWorker {
 				pointerExpr = lhs;
 				indexExpr = rhs;
 			} else if (isIntegerType(lhsType)) {
-				if (!(rhsType instanceof PointerType))
+				if (!(rhsType instanceof CIVLPointerType))
 					throw new CIVLInternalException(
 							"Expected expression of pointer type",
 							rhs.getSource());
@@ -639,7 +806,7 @@ public class ModelBuilderWorker {
 	 *            The (static) scope containing the expression.
 	 * @return The model representation of the expression.
 	 */
-	public Expression operator(OperatorNode expression, Scope scope) {
+	private Expression operator(OperatorNode expression, Scope scope) {
 		Operator operator = expression.getOperator();
 
 		if (operator == Operator.SUBSCRIPT)
@@ -720,8 +887,8 @@ public class ModelBuilderWorker {
 		case PLUS: {
 			Expression arg0 = arguments.get(0);
 			Expression arg1 = arguments.get(1);
-			Type type0 = arg0.getExpressionType();
-			Type type1 = arg1.getExpressionType();
+			CIVLType type0 = arg0.getExpressionType();
+			CIVLType type1 = arg1.getExpressionType();
 			boolean isNumeric0 = isNumericType(type0);
 			boolean isNumeric1 = isNumericType(type1);
 
@@ -742,7 +909,7 @@ public class ModelBuilderWorker {
 					throw new CIVLInternalException(
 							"Expected at least one numeric argument",
 							expression.getSource());
-				if (!(pointer.getExpressionType() instanceof PointerType))
+				if (!(pointer.getExpressionType() instanceof CIVLPointerType))
 					throw new CIVLInternalException(
 							"Expected expression of pointer type",
 							pointer.getSource());
@@ -1009,6 +1176,7 @@ public class ModelBuilderWorker {
 				lastStatement, statement.getTrueBranch(), scope);
 		Statement falseBranch;
 		Location exitLocation = factory.location(scope);
+		Statement result;
 
 		function.addLocation(location);
 		if (lastStatement != null) {
@@ -1029,7 +1197,9 @@ public class ModelBuilderWorker {
 		function.addLocation(exitLocation);
 		trueBranch.setTarget(exitLocation);
 		falseBranch.setTarget(exitLocation);
-		return factory.noopStatement(exitLocation);
+		result = factory.noopStatement(exitLocation);
+		result.setNode(statement);
+		return result;
 	}
 
 	/**
@@ -1160,6 +1330,7 @@ public class ModelBuilderWorker {
 			result.setGuard(factory.binaryExpression(BINARY_OPERATOR.AND,
 					guard, result.guard()));
 		}
+		result.setNode(statement);
 		return result;
 	}
 
@@ -1195,6 +1366,7 @@ public class ModelBuilderWorker {
 			callStatements.put((CallOrSpawnStatement) result,
 					functionDefinition);
 		}
+		result.setNode(callNode);
 		return result;
 	}
 
@@ -1297,6 +1469,7 @@ public class ModelBuilderWorker {
 		} else {
 			result = factory.assignStatement(location, lhs,
 					arrayToPointer(expression(rhs, scope)));
+			result.setNode(rhs);
 		}
 		return result;
 	}
@@ -1328,6 +1501,7 @@ public class ModelBuilderWorker {
 				if (init != null) {
 					// TODO: Handle compound initializers
 					Statement newStatement;
+
 					if (usedLocation || location == null) {
 						location = factory.location(newScope);
 						usedLocation = true;
@@ -1338,6 +1512,7 @@ public class ModelBuilderWorker {
 							factory.variableExpression(newScope
 									.getVariable(newScope.numVariables() - 1)),
 							(ExpressionNode) init, newScope);
+					newStatement.setNode(statement);
 
 					if (lastStatement != null) {
 						lastStatement.setTarget(location);
@@ -1824,7 +1999,7 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	// Exported methods...
+	// Exported methods....................................................
 
 	/**
 	 * @return The model factory used by this model builder.
@@ -1856,7 +2031,6 @@ public class ModelBuilderWorker {
 		callStatements = new LinkedHashMap<CallOrSpawnStatement, FunctionDefinitionNode>();
 		functionMap = new LinkedHashMap<FunctionDefinitionNode, Function>();
 		unprocessedFunctions = new Vector<FunctionDefinitionNode>();
-		typedefMap = new LinkedHashMap<String, Type>();
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
 
@@ -1897,24 +2071,25 @@ public class ModelBuilderWorker {
 			} else if (node instanceof FunctionDeclarationNode) {
 				// Do we need to keep track of these for any reason?
 			} else if (node instanceof TypedefDeclarationNode) {
-				String typeName = ((TypedefDeclarationNode) node).getName();
-
-				if (typeName.equals("$proc")) {
-					typedefMap.put(typeName, factory.processType());
-				} else if (typeName.equals("$heap")) {
-					typedefMap.put(typeName, factory.heapType());
-				} else {
-					typedefMap.put(typeName,
-							processType(((TypedefDeclarationNode) node)
-									.getTypeNode()));
-				}
+				// String typeName = ((TypedefDeclarationNode) node).getName();
+				//
+				// if (typeName.equals("$proc")) {
+				// typedefMap.put(typeName, factory.processType());
+				// } else if (typeName.equals("$heap")) {
+				// typedefMap.put(typeName, factory.heapType());
+				// } else {
+				// typedefMap.put(typeName,
+				// processType(((TypedefDeclarationNode) node)
+				// .getTypeNode()));
+				// }
 			} else {
-				throw new RuntimeException("Unsupported declaration type: "
-						+ node);
+				throw new CIVLInternalException("Unsupported declaration type",
+						node.getSource());
 			}
 		}
 		if (mainFunction == null) {
-			throw new RuntimeException("Program must have a main function.");
+			throw new CIVLException("Program must have a main function.",
+					rootNode.getSource());
 		}
 		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();

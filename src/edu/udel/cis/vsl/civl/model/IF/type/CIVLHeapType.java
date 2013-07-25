@@ -9,6 +9,6 @@ package edu.udel.cis.vsl.civl.model.IF.type;
  * @author zirkel
  *
  */
-public interface HeapType extends Type {
+public interface CIVLHeapType extends CIVLType {
 
 }

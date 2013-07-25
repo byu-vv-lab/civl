@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common.type;
 
-import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
 
 /**
  * The type of a process.
@@ -8,7 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonProcessType implements ProcessType {
+public class CommonProcessType implements CIVLProcessType {
 
 	/**
 	 * The type of a process.
@@ -18,7 +18,7 @@ public class CommonProcessType implements ProcessType {
 
 	@Override
 	public String toString() {
-		return "process";
+		return "$proc";
 	}
 
 	@Override

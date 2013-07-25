@@ -2,15 +2,15 @@ package edu.udel.cis.vsl.civl.model.common.type;
 
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 public class CommonStructField implements StructField {
 
 	private int index = -1;
 	private Identifier name;
-	private Type type;
+	private CIVLType type;
 
-	public CommonStructField(Identifier name, Type type) {
+	public CommonStructField(Identifier name, CIVLType type) {
 		this.name = name;
 		this.type = type;
 	}
@@ -21,7 +21,7 @@ public class CommonStructField implements StructField {
 	}
 
 	@Override
-	public Type type() {
+	public CIVLType type() {
 		return type;
 	}
 

@@ -10,7 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -31,7 +31,7 @@ public class CommonSystemFunction extends CommonFunction implements
 	 * @param factory
 	 */
 	public CommonSystemFunction(Identifier name, Vector<Variable> parameters,
-			Type returnType, Scope containingScope, Location startLocation,
+			CIVLType returnType, Scope containingScope, Location startLocation,
 			ModelFactory factory) {
 		super(name, parameters, returnType, containingScope, startLocation,
 				factory);

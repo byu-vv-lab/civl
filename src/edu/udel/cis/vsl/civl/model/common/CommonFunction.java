@@ -17,7 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -30,7 +30,7 @@ public class CommonFunction implements Function{
 
 	private Identifier name;
 	private Vector<Variable> parameters;
-	private Type returnType;
+	private CIVLType returnType;
 	private Set<Scope> scopes;
 	private Scope outerScope;
 	private Scope containingScope;
@@ -56,7 +56,7 @@ public class CommonFunction implements Function{
 	 *            The first location in the function.
 	 */
 	public CommonFunction(Identifier name, Vector<Variable> parameters,
-			Type returnType, Scope containingScope, Location startLocation,
+			CIVLType returnType, Scope containingScope, Location startLocation,
 			ModelFactory factory) {
 		this.name = name;
 		this.parameters = parameters;
@@ -97,7 +97,7 @@ public class CommonFunction implements Function{
 	/**
 	 * @return The return type of this function.
 	 */
-	public Type returnType() {
+	public CIVLType returnType() {
 		return returnType;
 	}
 
@@ -220,7 +220,7 @@ public class CommonFunction implements Function{
 	 * @param returnType
 	 *            The return type of this function.
 	 */
-	public void setReturnType(Type returnType) {
+	public void setReturnType(CIVLType returnType) {
 		this.returnType = returnType;
 	}
 

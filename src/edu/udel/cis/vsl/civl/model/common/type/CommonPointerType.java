@@ -3,18 +3,18 @@
  */
 package edu.udel.cis.vsl.civl.model.common.type;
 
-import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
  * @author zirkel
  *
  */
-public class CommonPointerType implements PointerType {
+public class CommonPointerType implements CIVLPointerType {
 
-	private Type baseType;
+	private CIVLType baseType;
 	
-	public CommonPointerType(Type baseType) {
+	public CommonPointerType(CIVLType baseType) {
 		this.baseType = baseType;
 	}
 	
@@ -22,7 +22,7 @@ public class CommonPointerType implements PointerType {
 	 * @see edu.udel.cis.vsl.civl.model.IF.type.PointerType#baseType()
 	 */
 	@Override
-	public Type baseType() {
+	public CIVLType baseType() {
 		return baseType;
 	}
 	

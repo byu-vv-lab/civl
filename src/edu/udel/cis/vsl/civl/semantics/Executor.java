@@ -31,6 +31,7 @@ import edu.udel.cis.vsl.civl.state.StackEntry;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
@@ -445,7 +446,7 @@ public class Executor {
 	 *            The statement to be executed.
 	 * @return The updated state of the program.
 	 */
-	public State execute(State state, int pid, Statement statement) {
+	private State executeWork(State state, int pid, Statement statement) {
 		if (statement instanceof AssumeStatement) {
 			return executeAssume(state, pid, (AssumeStatement) statement);
 		} else if (statement instanceof AssertStatement) {
@@ -472,4 +473,13 @@ public class Executor {
 		} else
 			throw new CIVLInternalException("Unknown statement kind", statement);
 	}
+
+	public State execute(State state, int pid, Statement statement) {
+		try {
+			return executeWork(state, pid, statement);
+		} catch (SARLException e) {
+			throw new CIVLInternalException("SARL exception: " + e, statement);
+		}
+	}
+
 }

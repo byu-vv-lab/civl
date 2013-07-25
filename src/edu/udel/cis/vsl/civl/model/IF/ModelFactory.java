@@ -37,14 +37,14 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
-import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.HeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
-import edu.udel.cis.vsl.civl.model.IF.type.StructType;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -96,7 +96,7 @@ public interface ModelFactory {
 	 * @param vid
 	 *            The index of this variable in its scope.
 	 */
-	Variable variable(Type type, Identifier name, int vid);
+	Variable variable(CIVLType type, Identifier name, int vid);
 
 	/**
 	 * Create a new function.
@@ -114,7 +114,7 @@ public interface ModelFactory {
 	 * @return The new function.
 	 */
 	Function function(Identifier name, Vector<Variable> parameters,
-			Type returnType, Scope containingScope, Location startLocation);
+			CIVLType returnType, Scope containingScope, Location startLocation);
 
 	SystemFunction systemFunction(Identifier name);
 
@@ -137,42 +137,42 @@ public interface ModelFactory {
 	 * 
 	 * @return The integer primitive type.
 	 */
-	PrimitiveType integerType();
+	CIVLPrimitiveType integerType();
 
 	/**
 	 * Get the real primitive type.
 	 * 
 	 * @return The real primitive type.
 	 */
-	PrimitiveType realType();
+	CIVLPrimitiveType realType();
 
 	/**
 	 * Get the boolean primitive type.
 	 * 
 	 * @return The boolean primitive type.
 	 */
-	PrimitiveType booleanType();
+	CIVLPrimitiveType booleanType();
 
 	/**
 	 * Get the string primitive type.
 	 * 
 	 * @return The string primitive type.
 	 */
-	PrimitiveType stringType();
+	CIVLPrimitiveType stringType();
 
 	/**
 	 * Get the process type.
 	 * 
 	 * @return The process type.
 	 */
-	ProcessType processType();
+	CIVLProcessType processType();
 
 	/**
 	 * Get the heap type.
 	 * 
 	 * @return The heap type.
 	 */
-	HeapType heapType();
+	CIVLHeapType heapType();
 
 	/**
 	 * Get a new array type.
@@ -181,7 +181,7 @@ public interface ModelFactory {
 	 *            The type of each element in the array.
 	 * @return A new array type with the given base type.
 	 */
-	ArrayType arrayType(Type baseType);
+	CIVLArrayType arrayType(CIVLType baseType);
 
 	/**
 	 * Get a new pointer type.
@@ -190,7 +190,7 @@ public interface ModelFactory {
 	 *            The type pointed to by the pointer.
 	 * @return A new pointer type with the given base type.
 	 */
-	PointerType pointerType(Type baseType);
+	CIVLPointerType pointerType(CIVLType baseType);
 
 	/**
 	 * Get a new struct type.
@@ -201,7 +201,7 @@ public interface ModelFactory {
 	 *            List of the fields in this struct type.
 	 * @return A new struct type with the given fields.
 	 */
-	StructType structType(Identifier name, List<StructField> fields);
+	CIVLStructType structType(Identifier name, List<StructField> fields);
 
 	/**
 	 * Get a struct field.
@@ -212,7 +212,7 @@ public interface ModelFactory {
 	 *            The type of this struct member.
 	 * @return A struct field with the given name and type.
 	 */
-	StructField structField(Identifier name, Type type);
+	StructField structField(Identifier name, CIVLType type);
 
 	/* *********************************************************************
 	 * Expressions
@@ -252,7 +252,7 @@ public interface ModelFactory {
 	 * @param expresssion
 	 *            The expression being cast to a new type.
 	 */
-	CastExpression castExpression(Type type, Expression expression);
+	CastExpression castExpression(CIVLType type, Expression expression);
 
 	/**
 	 * The ternary conditional expression ("?" in C).

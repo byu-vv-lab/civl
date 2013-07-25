@@ -6,7 +6,7 @@ package edu.udel.cis.vsl.civl.model.common.variable;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
@@ -19,7 +19,7 @@ import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
  */
 public class CommonVariable extends CommonSourceable implements Variable {
 
-	private Type type;
+	private CIVLType type;
 	private Identifier name;
 	private boolean isSync;
 	private boolean isConst;
@@ -39,7 +39,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	 * @param vid
 	 *            The index of this variable in its scope.
 	 */
-	public CommonVariable(Type type, Identifier name, int vid) {
+	public CommonVariable(CIVLType type, Identifier name, int vid) {
 		this.type = type;
 		this.name = name;
 		this.vid = vid;
@@ -55,7 +55,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	/**
 	 * @return The type of this variable.
 	 */
-	public Type type() {
+	public CIVLType type() {
 		return type;
 	}
 
@@ -99,7 +99,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	 * @param type
 	 *            The type of this variable.
 	 */
-	public void setType(Type type) {
+	public void setType(CIVLType type) {
 		this.type = type;
 	}
 

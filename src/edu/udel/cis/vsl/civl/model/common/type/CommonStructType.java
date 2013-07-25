@@ -7,13 +7,13 @@ import java.util.ArrayList;
 
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
-import edu.udel.cis.vsl.civl.model.IF.type.StructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 
 /**
  * @author zirkel
  * 
  */
-public class CommonStructType implements StructType {
+public class CommonStructType implements CIVLStructType {
 
 	private Identifier name;
 	private ArrayList<StructField> fields = new ArrayList<StructField>();

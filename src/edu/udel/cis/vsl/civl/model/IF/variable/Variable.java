@@ -7,7 +7,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
  * A variable.
@@ -23,7 +23,7 @@ public interface Variable extends Sourceable {
 	/**
 	 * @return The type of this variable.
 	 */
-	public Type type();
+	public CIVLType type();
 
 	/**
 	 * @return Whether this variable is a sync variable.
@@ -55,7 +55,7 @@ public interface Variable extends Sourceable {
 	 * @param type
 	 *            The type of this variable.
 	 */
-	public void setType(Type type);
+	public void setType(CIVLType type);
 
 	/**
 	 * @param isSync

@@ -45,15 +45,15 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
-import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.HeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType.PRIMITIVE_TYPE;
-import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PRIMITIVE_TYPE;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
-import edu.udel.cis.vsl.civl.model.IF.type.StructType;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAddressOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
@@ -103,16 +103,16 @@ public class CommonModelFactory implements ModelFactory {
 	/* Keep a set of used identifiers for fly-weighting purposes. */
 	private Map<String, Identifier> identifiers;
 	/* Make one of each primitive type. */
-	private PrimitiveType integerType = new CommonPrimitiveType(
+	private CIVLPrimitiveType integerType = new CommonPrimitiveType(
 			PRIMITIVE_TYPE.INT);
-	private PrimitiveType booleanType = new CommonPrimitiveType(
+	private CIVLPrimitiveType booleanType = new CommonPrimitiveType(
 			PRIMITIVE_TYPE.BOOL);
-	private PrimitiveType realType = new CommonPrimitiveType(
+	private CIVLPrimitiveType realType = new CommonPrimitiveType(
 			PRIMITIVE_TYPE.REAL);
-	private PrimitiveType stringType = new CommonPrimitiveType(
+	private CIVLPrimitiveType stringType = new CommonPrimitiveType(
 			PRIMITIVE_TYPE.STRING);
-	private HeapType heapType = new CommonHeapType();
-	private ProcessType processType = new CommonProcessType();
+	private CIVLHeapType heapType = new CommonHeapType();
+	private CIVLProcessType processType = new CommonProcessType();
 	/* Make one canonical true and false. */
 	private BooleanLiteralExpression trueExpression = new CommonBooleanLiteralExpression(
 			true);
@@ -190,7 +190,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * @param vid
 	 *            The index of this variable in its scope.
 	 */
-	public Variable variable(Type type, Identifier name, int vid) {
+	public Variable variable(CIVLType type, Identifier name, int vid) {
 		return new CommonVariable(type, name, vid);
 	}
 
@@ -210,7 +210,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return The new function.
 	 */
 	public Function function(Identifier name, Vector<Variable> parameters,
-			Type returnType, Scope containingScope, Location startLocation) {
+			CIVLType returnType, Scope containingScope, Location startLocation) {
 		return new CommonFunction(name, parameters, returnType,
 				containingScope, startLocation, this);
 	}
@@ -247,7 +247,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * 
 	 * @return The integer primitive type.
 	 */
-	public PrimitiveType integerType() {
+	public CIVLPrimitiveType integerType() {
 		return integerType;
 	}
 
@@ -256,7 +256,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * 
 	 * @return The real primitive type.
 	 */
-	public PrimitiveType realType() {
+	public CIVLPrimitiveType realType() {
 		return realType;
 	}
 
@@ -265,7 +265,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * 
 	 * @return The boolean primitive type.
 	 */
-	public PrimitiveType booleanType() {
+	public CIVLPrimitiveType booleanType() {
 		return booleanType;
 	}
 
@@ -274,7 +274,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * 
 	 * @return The string primitive type.
 	 */
-	public PrimitiveType stringType() {
+	public CIVLPrimitiveType stringType() {
 		return stringType;
 	}
 
@@ -283,7 +283,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * 
 	 * @return The process type.
 	 */
-	public ProcessType processType() {
+	public CIVLProcessType processType() {
 		return processType;
 	}
 
@@ -292,7 +292,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * 
 	 * @return The heap type.
 	 */
-	public HeapType heapType() {
+	public CIVLHeapType heapType() {
 		return heapType;
 	}
 
@@ -303,7 +303,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The type of each element in the array.
 	 * @return A new array type with the given base type.
 	 */
-	public ArrayType arrayType(Type baseType) {
+	public CIVLArrayType arrayType(CIVLType baseType) {
 		return new CommonArrayType(baseType);
 	}
 
@@ -314,7 +314,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The type of element pointed to by the pointer.
 	 * @return A new pointer type with the given base type.
 	 */
-	public PointerType pointerType(Type baseType) {
+	public CIVLPointerType pointerType(CIVLType baseType) {
 		return new CommonPointerType(baseType);
 	}
 
@@ -327,7 +327,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *            List of the fields in this struct type.
 	 * @return A new struct type with the given fields.
 	 */
-	public StructType structType(Identifier name, List<StructField> fields) {
+	public CIVLStructType structType(Identifier name, List<StructField> fields) {
 		return new CommonStructType(name, fields);
 	}
 
@@ -340,7 +340,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The type of this struct member.
 	 * @return A struct field with the given name and type.
 	 */
-	public StructField structField(Identifier name, Type type) {
+	public StructField structField(Identifier name, CIVLType type) {
 		return new CommonStructField(name, type);
 	}
 
@@ -432,19 +432,19 @@ public class CommonModelFactory implements ModelFactory {
 		case MINUS:
 		case MODULO:
 		default:
-			Type leftType = left.getExpressionType();
-			Type rightType = right.getExpressionType();
+			CIVLType leftType = left.getExpressionType();
+			CIVLType rightType = right.getExpressionType();
 
 			// Types should be the same unless we're doing pointer arithmetic.
 			if (leftType.equals(rightType)) {
 				((CommonBinaryExpression) result).setExpressionType(leftType);
-			} else if (leftType instanceof PointerType
-					&& rightType instanceof PrimitiveType) {
-				assert ((PrimitiveType) rightType).primitiveType() == PRIMITIVE_TYPE.INT;
+			} else if (leftType instanceof CIVLPointerType
+					&& rightType instanceof CIVLPrimitiveType) {
+				assert ((CIVLPrimitiveType) rightType).primitiveType() == PRIMITIVE_TYPE.INT;
 				((CommonBinaryExpression) result).setExpressionType(leftType);
-			} else if (leftType instanceof PointerType
-					&& rightType instanceof PrimitiveType) {
-				assert ((PrimitiveType) rightType).primitiveType() == PRIMITIVE_TYPE.INT;
+			} else if (leftType instanceof CIVLPointerType
+					&& rightType instanceof CIVLPrimitiveType) {
+				assert ((CIVLPrimitiveType) rightType).primitiveType() == PRIMITIVE_TYPE.INT;
 				((CommonBinaryExpression) result).setExpressionType(leftType);
 			}
 
@@ -463,7 +463,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * @param expresssion
 	 *            The expression being cast to a new type.
 	 */
-	public CastExpression castExpression(Type type, Expression expression) {
+	public CastExpression castExpression(CIVLType type, Expression expression) {
 		CastExpression result = new CommonCastExpression(type, expression);
 
 		result.setExpressionScope(expression.expressionScope());
@@ -509,11 +509,11 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	public DotExpression dotExpression(Expression struct, int fieldIndex) {
 		CommonDotExpression result = new CommonDotExpression(struct, fieldIndex);
-		Type structType = struct.getExpressionType();
+		CIVLType structType = struct.getExpressionType();
 
 		result.setExpressionScope(struct.expressionScope());
-		assert structType instanceof StructType;
-		result.setExpressionType(((StructType) structType).getField(fieldIndex)
+		assert structType instanceof CIVLStructType;
+		result.setExpressionType(((CIVLStructType) structType).getField(fieldIndex)
 				.type());
 		return result;
 	}
@@ -600,16 +600,16 @@ public class CommonModelFactory implements ModelFactory {
 	public SubscriptExpression subscriptExpression(LHSExpression array,
 			Expression index) {
 		SubscriptExpression result = new CommonSubscriptExpression(array, index);
-		Type arrayType = array.getExpressionType();
+		CIVLType arrayType = array.getExpressionType();
 
 		result.setExpressionScope(join(array.expressionScope(),
 				index.expressionScope()));
-		if (arrayType instanceof ArrayType) {
+		if (arrayType instanceof CIVLArrayType) {
 			((CommonSubscriptExpression) result)
-					.setExpressionType(((ArrayType) arrayType).baseType());
-		} else if (arrayType instanceof PointerType) {
+					.setExpressionType(((CIVLArrayType) arrayType).baseType());
+		} else if (arrayType instanceof CIVLPointerType) {
 			((CommonSubscriptExpression) result)
-					.setExpressionType(((PointerType) arrayType).baseType());
+					.setExpressionType(((CIVLPointerType) arrayType).baseType());
 		} else {
 			throw new RuntimeException(
 					"Unable to set expression type for expression: " + result);
@@ -898,7 +898,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public DereferenceExpression dereferenceExpression(Expression pointer) {
-		PointerType pointerType = (PointerType) pointer.getExpressionType();
+		CIVLPointerType pointerType = (CIVLPointerType) pointer.getExpressionType();
 		DereferenceExpression result = new CommonDereferenceExpression(pointer);
 
 		result.setExpressionScope(null); // indicates unknown scope

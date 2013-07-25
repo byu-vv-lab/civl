@@ -3,7 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
  * A cast of an expression to a different type.
@@ -21,7 +21,7 @@ public interface CastExpression extends Expression {
 	/**
 	 * @return The type to which the expression is cast.
 	 */
-	Type getCastType();
+	CIVLType getCastType();
 
 	/**
 	 * @param expression
@@ -33,6 +33,6 @@ public interface CastExpression extends Expression {
 	 * @param type
 	 *            The type to which the expression is cast.
 	 */
-	void setCastType(Type type);
+	void setCastType(CIVLType type);
 
 }

@@ -13,12 +13,12 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
-import edu.udel.cis.vsl.civl.model.IF.type.StructType;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -243,15 +243,15 @@ public class CommonScope implements Scope {
 	private void checkProcRef(Variable variable) {
 		boolean procRefType = false;
 
-		if (variable.type() instanceof ProcessType) {
+		if (variable.type() instanceof CIVLProcessType) {
 			procRefType = true;
-		} else if (variable.type() instanceof ArrayType) {
-			Type baseType = ((ArrayType) variable.type()).baseType();
+		} else if (variable.type() instanceof CIVLArrayType) {
+			CIVLType baseType = ((CIVLArrayType) variable.type()).baseType();
 
-			while (baseType instanceof ArrayType) {
-				baseType = ((ArrayType) baseType).baseType();
+			while (baseType instanceof CIVLArrayType) {
+				baseType = ((CIVLArrayType) baseType).baseType();
 			}
-			if (baseType instanceof ProcessType) {
+			if (baseType instanceof CIVLProcessType) {
 				procRefType = true;
 			}
 		}
@@ -274,16 +274,16 @@ public class CommonScope implements Scope {
 		}
 	}
 
-	private boolean containsPointerType(Type type) {
+	private boolean containsPointerType(CIVLType type) {
 		boolean containsPointerType = false;
 
-		if (type instanceof PointerType) {
+		if (type instanceof CIVLPointerType) {
 			containsPointerType = true;
-		} else if (type instanceof ArrayType) {
-			containsPointerType = containsPointerType(((ArrayType) type)
+		} else if (type instanceof CIVLArrayType) {
+			containsPointerType = containsPointerType(((CIVLArrayType) type)
 					.baseType());
-		} else if (type instanceof StructType) {
-			for (StructField f : ((StructType) type).fields()) {
+		} else if (type instanceof CIVLStructType) {
+			for (StructField f : ((CIVLStructType) type).fields()) {
 				boolean fieldContainsPointer = containsPointerType(f.type());
 
 				containsPointerType = containsPointerType

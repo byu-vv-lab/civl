@@ -5,7 +5,7 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
  * The parent of all expressions.
@@ -47,7 +47,7 @@ public interface Expression extends Sourceable {
 	 *         is the cast type. For operations it is the type of the operation
 	 *         result.
 	 */
-	Type getExpressionType();
+	CIVLType getExpressionType();
 
 	/** Returns the kind of this expression */
 	ExpressionKind expressionKind();

@@ -6,17 +6,17 @@ package edu.udel.cis.vsl.civl.model.IF.type;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface ArrayType extends Type {
+public interface CIVLArrayType extends CIVLType {
 
 	/**
 	 * @return The type of elements in this array.
 	 */
-	public Type baseType();
+	public CIVLType baseType();
 
 	/**
 	 * @param baseType
 	 *            The type of elements in this array.
 	 */
-	public void setBaseType(Type baseType);
+	public void setBaseType(CIVLType baseType);
 	
 }

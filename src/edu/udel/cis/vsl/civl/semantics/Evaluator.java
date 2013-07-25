@@ -34,11 +34,11 @@ import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType.PRIMITIVE_TYPE;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PRIMITIVE_TYPE;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
@@ -157,11 +157,11 @@ public class Evaluator {
 
 	// Helper methods......................................................
 
-	private NumericExpression zeroOf(Type type) {
-		if (type instanceof PrimitiveType) {
-			if (((PrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.INT)
+	private NumericExpression zeroOf(CIVLType type) {
+		if (type instanceof CIVLPrimitiveType) {
+			if (((CIVLPrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.INT)
 				return zero;
-			if (((PrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.REAL)
+			if (((CIVLPrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.REAL)
 				return zeroR;
 		}
 		throw new CIVLInternalException("Expected integer or real type, not "
@@ -182,11 +182,11 @@ public class Evaluator {
 	// return certaintyOf(result.getResultType());
 	// }
 
-	private SymbolicType symbolicType(Type type) {
+	private SymbolicType symbolicType(CIVLType type) {
 		SymbolicType result;
 
-		if (type instanceof PrimitiveType) {
-			switch (((PrimitiveType) type).primitiveType()) {
+		if (type instanceof CIVLPrimitiveType) {
+			switch (((CIVLPrimitiveType) type).primitiveType()) {
 			case BOOL:
 				result = universe.booleanType();
 				break;
@@ -203,11 +203,11 @@ public class Evaluator {
 				throw new CIVLUnimplementedFeatureException(
 						"Unsupported primitive type: " + type);
 			}
-		} else if (type instanceof ArrayType) {
+		} else if (type instanceof CIVLArrayType) {
 			// what about extent?
-			result = universe.arrayType(symbolicType(((ArrayType) type)
+			result = universe.arrayType(symbolicType(((CIVLArrayType) type)
 					.baseType()));
-		} else if (type instanceof PointerType) {
+		} else if (type instanceof CIVLPointerType) {
 			result = pointerType;
 		} else
 			throw new CIVLInternalException("Cannot find symbolic type for "
@@ -907,11 +907,11 @@ public class Evaluator {
 		// be able to cast integers to pointers to handle
 		// NULL=(void*)0. From one pointer type to another.
 		Expression arg = expression.getExpression();
-		Type argType = arg.getExpressionType();
+		CIVLType argType = arg.getExpressionType();
 		Evaluation eval = evaluate(state, pid, arg);
 		SymbolicExpression value = eval.value;
 		// SymbolicType startType = value.type();
-		Type castType = expression.getCastType();
+		CIVLType castType = expression.getCastType();
 		SymbolicType endType = symbolicType(castType);
 
 		if (argType.isIntegerType() && castType.isPointerType()) {

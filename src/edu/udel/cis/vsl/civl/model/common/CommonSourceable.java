@@ -28,7 +28,7 @@ public abstract class CommonSourceable implements Sourceable {
 	 */
 	@Override
 	public Source getSource() {
-		return node.getSource();
+		return node == null ? null : node.getSource();
 	}
 
 	/* (non-Javadoc)

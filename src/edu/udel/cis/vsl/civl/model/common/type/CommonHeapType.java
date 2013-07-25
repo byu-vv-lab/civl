@@ -3,13 +3,13 @@
  */
 package edu.udel.cis.vsl.civl.model.common.type;
 
-import edu.udel.cis.vsl.civl.model.IF.type.HeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 
 /**
  * @author zirkel
  * 
  */
-public class CommonHeapType implements HeapType {
+public class CommonHeapType implements CIVLHeapType {
 
 	/**
 	 * A heap type.
@@ -35,6 +35,11 @@ public class CommonHeapType implements HeapType {
 	@Override
 	public boolean isPointerType() {
 		return false;
+	}
+
+	@Override
+	public String toString() {
+		return "$heap";
 	}
 
 }

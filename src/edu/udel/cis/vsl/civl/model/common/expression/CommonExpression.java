@@ -5,7 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
@@ -18,7 +18,7 @@ public abstract class CommonExpression extends CommonSourceable implements
 		Expression {
 
 	private Scope expressionScope = null;
-	protected Type expressionType = null;
+	protected CIVLType expressionType = null;
 
 	/**
 	 * The parent of all expressions.
@@ -44,7 +44,7 @@ public abstract class CommonExpression extends CommonSourceable implements
 	}
 
 	@Override
-	public Type getExpressionType() {
+	public CIVLType getExpressionType() {
 		return expressionType;
 	}
 
@@ -53,7 +53,7 @@ public abstract class CommonExpression extends CommonSourceable implements
 	 * @param expressionType
 	 *            The type resulting from this expression.
 	 */
-	public void setExpressionType(Type expressionType) {
+	public void setExpressionType(CIVLType expressionType) {
 		this.expressionType = expressionType;
 	}
 

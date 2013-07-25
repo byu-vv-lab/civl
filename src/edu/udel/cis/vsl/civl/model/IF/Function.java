@@ -10,7 +10,7 @@ import java.util.Vector;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -34,7 +34,7 @@ public interface Function {
 	/**
 	 * @return The return type of this function.
 	 */
-	public Type returnType();
+	public CIVLType returnType();
 
 	/**
 	 * @return The set of scopes in this function.
@@ -122,7 +122,7 @@ public interface Function {
 	 * @param returnType
 	 *            The return type of this function.
 	 */
-	public void setReturnType(Type returnType);
+	public void setReturnType(CIVLType returnType);
 
 	/**
 	 * @param scopes

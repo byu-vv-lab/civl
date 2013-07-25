@@ -11,7 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
@@ -54,7 +54,7 @@ public class CivlcExecutor implements LibraryExecutor {
 	 *            an invocation of malloc
 	 * @return the type of the elements being malloc'ed
 	 */
-	private Type getMallocType(CallOrSpawnStatement mallocStatement) {
+	private CIVLType getMallocType(CallOrSpawnStatement mallocStatement) {
 		// TODO
 		return null;
 	}
@@ -96,7 +96,7 @@ public class CivlcExecutor implements LibraryExecutor {
 	 *            number of bytes being malloc'ed
 	 * @return the post-state
 	 */
-	private State executeMalloc(State state, int pid, Type type,
+	private State executeMalloc(State state, int pid, CIVLType type,
 			Expression lhs, SymbolicExpression heapReference,
 			NumericExpression size) {
 		// TODO

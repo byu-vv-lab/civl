@@ -13,13 +13,13 @@ import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.PointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.ProcessType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
-import edu.udel.cis.vsl.civl.model.IF.type.StructType;
-import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -134,16 +134,16 @@ public class StateFactory implements StateFactoryIF {
 		for (int i = 0; i < values.length; i++) {
 			Variable v = lexicalScope.getVariable(i);
 
-			if (v.type() instanceof ArrayType) {
+			if (v.type() instanceof CIVLArrayType) {
 				StringObject name = symbolicUniverse.stringObject("A_s"
 						+ dynamicScopeId + "v" + i);
-				SymbolicType type = arrayType((ArrayType) v.type());
+				SymbolicType type = arrayType((CIVLArrayType) v.type());
 
 				values[i] = symbolicUniverse.symbolicConstant(name, type);
-			} else if (v.type() instanceof StructType) {
+			} else if (v.type() instanceof CIVLStructType) {
 				StringObject name = symbolicUniverse.stringObject("S_s"
 						+ dynamicScopeId + "v" + i);
-				SymbolicType type = structType((StructType) v.type());
+				SymbolicType type = structType((CIVLStructType) v.type());
 
 				values[i] = symbolicUniverse.symbolicConstant(name, type);
 			} else if (v.isExtern()) {
@@ -151,8 +151,8 @@ public class StateFactory implements StateFactoryIF {
 						+ dynamicScopeId + "v" + i);
 				SymbolicType type = null;
 
-				if (v.type() instanceof PrimitiveType) {
-					switch (((PrimitiveType) v.type()).primitiveType()) {
+				if (v.type() instanceof CIVLPrimitiveType) {
+					switch (((CIVLPrimitiveType) v.type()).primitiveType()) {
 					case INT:
 						type = symbolicUniverse.integerType();
 						break;
@@ -224,13 +224,14 @@ public class StateFactory implements StateFactoryIF {
 	 *            The model array type.
 	 * @return The symbolic array type.
 	 */
-	private SymbolicType arrayType(ArrayType type) {
-		Type baseType = type.baseType();
+	private SymbolicType arrayType(CIVLArrayType type) {
+		CIVLType baseType = type.baseType();
 
-		if (baseType instanceof ArrayType) {
-			return symbolicUniverse.arrayType(arrayType((ArrayType) baseType));
-		} else if (baseType instanceof PrimitiveType) {
-			switch (((PrimitiveType) baseType).primitiveType()) {
+		if (baseType instanceof CIVLArrayType) {
+			return symbolicUniverse
+					.arrayType(arrayType((CIVLArrayType) baseType));
+		} else if (baseType instanceof CIVLPrimitiveType) {
+			switch (((CIVLPrimitiveType) baseType).primitiveType()) {
 			case INT:
 				return symbolicUniverse.arrayType(symbolicUniverse
 						.integerType());
@@ -240,16 +241,18 @@ public class StateFactory implements StateFactoryIF {
 			case REAL:
 				return symbolicUniverse.arrayType(symbolicUniverse.realType());
 			case STRING:
-				// TODO: Handle this.
+				return symbolicUniverse.arrayType(symbolicUniverse
+						.characterType());
 			default:
 				break;
 			}
-		} else if (baseType instanceof ProcessType) {
+		} else if (baseType instanceof CIVLProcessType) {
 			return symbolicUniverse.arrayType(processType);
-		} else if (baseType instanceof StructType) {
-			return structType((StructType) baseType);
+		} else if (baseType instanceof CIVLStructType) {
+			return structType((CIVLStructType) baseType);
 		}
-		return null;
+		throw new CIVLInternalException("Unknown type: " + baseType,
+				(Source) null);
 	}
 
 	/**
@@ -260,7 +263,7 @@ public class StateFactory implements StateFactoryIF {
 	 * @return The symbolic struct type, which is a tuple whose component types
 	 *         are the symbolic types corresponding to the struct's fields.
 	 */
-	private SymbolicType structType(StructType type) {
+	private SymbolicType structType(CIVLStructType type) {
 		SymbolicType result;
 		StringObject name = symbolicUniverse.stringObject(type.name().name());
 		List<SymbolicType> fieldTypes = new Vector<SymbolicType>();
@@ -268,10 +271,10 @@ public class StateFactory implements StateFactoryIF {
 		for (StructField f : type.fields()) {
 			SymbolicType fieldType = null;
 
-			if (f.type() instanceof ArrayType) {
-				fieldType = arrayType((ArrayType) f.type());
-			} else if (f.type() instanceof PrimitiveType) {
-				switch (((PrimitiveType) f.type()).primitiveType()) {
+			if (f.type() instanceof CIVLArrayType) {
+				fieldType = arrayType((CIVLArrayType) f.type());
+			} else if (f.type() instanceof CIVLPrimitiveType) {
+				switch (((CIVLPrimitiveType) f.type()).primitiveType()) {
 				case INT:
 					fieldType = symbolicUniverse.integerType();
 					break;
@@ -286,12 +289,12 @@ public class StateFactory implements StateFactoryIF {
 				default:
 					break;
 				}
-			} else if (f.type() instanceof ProcessType) {
+			} else if (f.type() instanceof CIVLProcessType) {
 				fieldType = symbolicUniverse.arrayType(processType);
-			} else if (f.type() instanceof StructType) {
+			} else if (f.type() instanceof CIVLStructType) {
 				// TODO: Handle recursive types.
-				fieldType = structType((StructType) f.type());
-			} else if (f.type() instanceof PointerType) {
+				fieldType = structType((CIVLStructType) f.type());
+			} else if (f.type() instanceof CIVLPointerType) {
 				List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
 
 				pointerComponents.add(symbolicUniverse.integerType());
@@ -730,7 +733,7 @@ public class StateFactory implements StateFactoryIF {
 	 * @return a symbolic expression with new PID values, or null if the given
 	 *         symbolic expression was null
 	 */
-	private SymbolicExpression substituteIntegers(Type type,
+	private SymbolicExpression substituteIntegers(CIVLType type,
 			SymbolicExpression value, int[] oldToNew) {
 		Map<SymbolicConstant, SymbolicExpression> substitutions = new HashMap<SymbolicConstant, SymbolicExpression>();
 		if (value == null)

@@ -6,7 +6,7 @@
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface PrimitiveType extends Type {
+public interface CIVLPrimitiveType extends CIVLType {
 
 	public enum PRIMITIVE_TYPE {
 		INT, BOOL, REAL, STRING

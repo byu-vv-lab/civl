@@ -9,8 +9,8 @@ package edu.udel.cis.vsl.civl.model.IF.type;
  * 
  * @author zirkel
  */
-public interface PointerType extends Type {
+public interface CIVLPointerType extends CIVLType {
 
 	/** Returns the type of element pointed to. Result could be "void", as in C */
-	Type baseType();
+	CIVLType baseType();
 }
