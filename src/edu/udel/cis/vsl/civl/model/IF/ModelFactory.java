@@ -34,7 +34,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
@@ -454,7 +454,7 @@ public interface ModelFactory {
 	 *            An expression evaluating to a process.
 	 * @return A new join statement.
 	 */
-	JoinStatement joinStatement(Location source, Expression process);
+	WaitStatement joinStatement(Location source, Expression process);
 
 	/**
 	 * A noop statement.

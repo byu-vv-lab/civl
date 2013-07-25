@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.transition;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -17,7 +18,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public class ChooseTransition extends SimpleTransition {
 
 	private SymbolicExpression value;
-	
+
 	/**
 	 * A choose transition represents one of the outgoing transitions from a
 	 * choose statement. There is one such transition for each value that can
@@ -33,7 +34,7 @@ public class ChooseTransition extends SimpleTransition {
 	 * @param value
 	 *            The value resulting from the choose for this transition.
 	 */
-	public ChooseTransition(SymbolicExpression pathCondition, int pid,
+	public ChooseTransition(BooleanExpression pathCondition, int pid,
 			Statement statement, SymbolicExpression value) {
 		super(pathCondition, pid, statement);
 		this.value = value;

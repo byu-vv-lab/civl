@@ -72,4 +72,24 @@ public class CommonStructType implements StructType {
 		return fields.get(index);
 	}
 
+	@Override
+	public boolean isNumericType() {
+		return false;
+	}
+
+	@Override
+	public boolean isIntegerType() {
+		return false;
+	}
+
+	@Override
+	public boolean isRealType() {
+		return false;
+	}
+
+	@Override
+	public boolean isPointerType() {
+		return false;
+	}
+
 }

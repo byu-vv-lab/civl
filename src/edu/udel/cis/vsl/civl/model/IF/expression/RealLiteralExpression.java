@@ -5,6 +5,8 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
 
 import java.math.BigDecimal;
 
+import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
+
 /**
  * A real literal.
  * 
@@ -23,5 +25,10 @@ public interface RealLiteralExpression extends LiteralExpression {
 	 *            The (arbitrary precision) real value.
 	 */
 	void setValue(BigDecimal value);
+
+	/**
+	 * Returns the real type.
+	 */
+	PrimitiveType getExpressionType();
 
 }

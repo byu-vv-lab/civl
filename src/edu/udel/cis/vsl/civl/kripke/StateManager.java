@@ -22,8 +22,11 @@ import edu.udel.cis.vsl.gmc.StateManagerIF;
 public class StateManager implements StateManagerIF<State, Transition> {
 
 	private Executor executor;
+	
 	private PrintStream debugOut = null;
+	
 	private StateFactoryIF stateFactory;
+	
 	private int maxProcs = 0;
 
 	public StateManager(Executor executor) {

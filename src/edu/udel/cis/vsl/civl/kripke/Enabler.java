@@ -1,48 +1,58 @@
 package edu.udel.cis.vsl.civl.kripke;
 
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.ValidityResult;
-import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.number.Number;
 
 public class Enabler implements
 		EnablerIF<State, Transition, TransitionSequence> {
 
 	private TransitionFactory transitionFactory;
-	private boolean debugging = false;
-	private PrintStream debugOut = System.out;
-	private SymbolicUniverse universe;
-	private Evaluator evaluator;
-	private long enabledTransitionSets = 0;
-	private long ampleSets = 0;
-	private String pidPrefix = "PID_";
 
-	public Enabler(TransitionFactory transitionFactory,
-			SymbolicUniverse universe, Evaluator evaluator) {
+	private StateFactoryIF stateFactory;
+
+	private boolean debugging = false;
+
+	private PrintStream debugOut = System.out;
+
+	private SymbolicUniverse universe;
+
+	private Evaluator evaluator;
+
+	private long enabledTransitionSets = 0;
+
+	private long ampleSets = 0;
+
+	private BooleanExpression falseValue;
+
+	public Enabler(StateFactoryIF stateFactory,
+			TransitionFactory transitionFactory, SymbolicUniverse universe,
+			Evaluator evaluator) {
+		this.stateFactory = stateFactory;
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
 		this.universe = universe;
+		this.falseValue = universe.falseExpression();
 	}
 
 	@Override
@@ -67,9 +77,10 @@ public class Enabler implements
 	private TransitionSequence enabledTransitionsPOR(State state) {
 		TransitionSequence transitions = transitionFactory
 				.newTransitionSequence(state);
+		Process[] processStates = state.processes();
 
 		enabledTransitionSets++;
-		for (Process p : state.processes()) {
+		for (Process p : processStates) {
 			TransitionSequence localTransitions = transitionFactory
 					.newTransitionSequence(state);
 			boolean allLocal = true;
@@ -79,8 +90,8 @@ public class Enabler implements
 				continue;
 			}
 			for (Statement s : p.location().outgoing()) {
-				SymbolicExpression newPathCondition = newPathCondition(state,
-						p.id(), state.pathCondition(), s);
+				BooleanExpression newPathCondition = newPathCondition(state,
+						p.id(), s);
 				int statementScope = p.scope();
 
 				if (s.statementScope() != null) {
@@ -92,38 +103,46 @@ public class Enabler implements
 				if (state.getScope(statementScope).numberOfReachers() > 1) {
 					allLocal = false;
 				}
-				if (newPathCondition != null) {
+				if (!newPathCondition.isFalse()) {
 					if (s instanceof ChooseStatement) {
-						SymbolicExpression argument = evaluator.evaluate(state,
-								p.id(), ((ChooseStatement) s).rhs());
-						Integer upper = extractInt(universe.reasoner(
-								(BooleanExpression) newPathCondition).simplify(
-								argument));
+						Evaluation eval = evaluator.evaluate(stateFactory
+								.setPathCondition(state, newPathCondition), p
+								.id(), ((ChooseStatement) s).rhs());
+						IntegerNumber upperNumber = (IntegerNumber) universe
+								.reasoner(eval.state.pathCondition())
+								.extractNumber((NumericExpression) eval.value);
+						int upper;
 
-						for (int i = 0; i < upper.intValue(); i++) {
+						if (upperNumber == null)
+							throw new CIVLStateException(ErrorKind.INTERNAL,
+									Certainty.NONE,
+									"Argument to $choose_int not concrete: "
+											+ eval.value, eval.state,
+									s.getSource());
+						upper = upperNumber.intValue();
+						for (int i = 0; i < upper; i++) {
 							localTransitions.add(transitionFactory
-									.newChooseTransition(newPathCondition,
-											p.id(), s, universe.integer(i)));
+									.newChooseTransition(
+											eval.state.pathCondition(), p.id(),
+											s, universe.integer(i)));
 						}
 						continue;
-					} else if (s instanceof JoinStatement) {
-						SymbolicExpression pidExpression = evaluator.evaluate(
-								state, p.id(), ((JoinStatement) s).process());
-						int pidValue = evaluator.getPid(pidExpression);
+					} else if (s instanceof WaitStatement) {
+						Evaluation eval = evaluator.evaluate(stateFactory
+								.setPathCondition(state, newPathCondition), p
+								.id(), ((WaitStatement) s).process());
+						int pidValue = evaluator.getPid(eval.value);
 
-						if (pidValue == -1) {
-							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							PrintStream ps = new PrintStream(baos);
+						if (pidValue < 0) {
+							CIVLExecutionException e = new CIVLStateException(
+									ErrorKind.INVALID_PID,
+									Certainty.PROVEABLE,
+									"Unable to call $wait on a process that has already been the target of a $wait.",
+									state, s.getSource());
 
-							state.print(ps);
-							evaluator
-									.log()
-									.report(new CIVLStateException(
-											ErrorKind.INVALID_PID,
-											Certainty.PROVEABLE,
-											"Unable to call $wait on a process that has already been the target of a $wait.",
-											state, s.getSource()));
-							continue;
+							evaluator.log().report(e);
+							// TODO: recover: add a no-op transition
+							throw e;
 						}
 						if (!state.process(pidValue).hasEmptyStack()) {
 							continue;
@@ -144,59 +163,34 @@ public class Enabler implements
 	}
 
 	/**
-	 * 
-	 * @param expression
-	 *            A symbolic expression.
-	 * @return A concrete integer if one can be extracted. Else null.
-	 */
-	private Integer extractInt(SymbolicExpression expression) {
-		Number number = universe.extractNumber((NumericExpression) expression);
-		Integer intValue;
-
-		assert number instanceof IntegerNumber;
-		intValue = ((IntegerNumber) number).intValue();
-		return intValue;
-	}
-
-	/**
-	 * Given a state, a process, a path condition, and a statement, check if the
-	 * statement's guard is satisfiable under the path condition. If it is,
-	 * return the conjunction of the path condition and the guard. This will be
-	 * the new path condition. Otherwise, return null.
+	 * Given a state, a process, and a statement, check if the statement's guard
+	 * is satisfiable under the path condition. If it is, return the conjunction
+	 * of the path condition and the guard. This will be the new path condition.
+	 * Otherwise, return false.
 	 * 
 	 * @param state
 	 *            The current state.
 	 * @param pid
 	 *            The id of the currently executing process.
-	 * @param pathCondition
-	 *            The path condition.
 	 * @param statement
 	 *            The statement.
-	 * @return The new path condition. Null if the guard is not satisfiable
+	 * @return The new path condition. False if the guard is not satisfiable
 	 *         under the path condition.
 	 */
-	private SymbolicExpression newPathCondition(State state, int pid,
-			SymbolicExpression pathCondition, Statement statement) {
-		SymbolicExpression newPathCondition = null;
-		SymbolicExpression guard = evaluator.evaluate(state, pid,
-				statement.guard());
-		Reasoner reasoner = universe
-				.reasoner(((BooleanExpression) pathCondition));
-		ValidityResult result = reasoner.valid((BooleanExpression) guard);
-		ValidityResult negResult = reasoner.valid(universe
-				.not((BooleanExpression) guard));
+	private BooleanExpression newPathCondition(State state, int pid,
+			Statement statement) {
+		Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
+		BooleanExpression pathCondition = eval.state.pathCondition();
+		BooleanExpression guard = (BooleanExpression) eval.value;
+		Reasoner reasoner = universe.reasoner(pathCondition);
 
 		// System.out.println("Enabler.newPathCondition() : Process " + pid
 		// + " is at " + state.process(pid).peekStack().location());
-		if (result.getResultType() == ResultType.YES) {
-			newPathCondition = pathCondition;
-		} else if (negResult.getResultType() == ResultType.YES) {
-			return null;
-		} else {
-			newPathCondition = universe.and((BooleanExpression) pathCondition,
-					(BooleanExpression) guard);
-		}
-		return newPathCondition;
+		if (reasoner.isValid(guard))
+			return pathCondition;
+		if (reasoner.isValid(universe.not(guard)))
+			return falseValue;
+		return universe.and(pathCondition, guard);
 	}
 
 	@Override

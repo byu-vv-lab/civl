@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 import java.math.BigDecimal;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.PrimitiveType;
 
 /**
  * A real literal.
@@ -51,6 +52,11 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.REAL_LITERAL;
+	}
+
+	@Override
+	public PrimitiveType getExpressionType() {
+		return (PrimitiveType) super.getExpressionType();
 	}
 
 }

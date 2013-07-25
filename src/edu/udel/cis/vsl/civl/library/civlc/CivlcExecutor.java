@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
+import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.State;
@@ -139,9 +140,12 @@ public class CivlcExecutor implements LibraryExecutor {
 		lhs = call.lhs();
 		arguments = new SymbolicExpression[((CallOrSpawnStatement) statement)
 				.arguments().size()];
-		for (int i = 0; i < ((CallOrSpawnStatement) statement).arguments().size(); i++) {
-			arguments[i] = primaryExecutor.evaluator().evaluate(state, pid,
+		for (int i = 0; i < ((CallOrSpawnStatement) statement).arguments()
+				.size(); i++) {
+			Evaluation eval = primaryExecutor.evaluator().evaluate(state, pid,
 					call.arguments().elementAt(i));
+			arguments[i] = eval.value;
+			state = eval.state;
 		}
 		switch (name.name()) {
 		case "$malloc":

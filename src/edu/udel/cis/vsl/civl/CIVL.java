@@ -193,9 +193,9 @@ public class CIVL {
 		TransitionFactory transitionFactory = new TransitionFactory();
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out), new File(
 				new File("."), "CIVLREP/"));
-		Evaluator evaluator = new Evaluator(universe, log);
+		Evaluator evaluator = new Evaluator(stateFactory, log);
 		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
-				transitionFactory, universe, evaluator);
+				stateFactory, transitionFactory, universe, evaluator);
 		StatePredicateIF<State> predicate = new StandardPredicate(log,
 				universe, evaluator);
 		LibraryExecutorLoader loader = new CommonLibraryExecutorLoader();
@@ -227,7 +227,7 @@ public class CIVL {
 			model.print(out);
 		}
 		initialState = stateFactory.initialState(model);
-		executor = new Executor(model, universe, stateFactory, log, loader);
+		executor = new Executor(universe, stateFactory, log, loader);
 		stateManager = new StateManager(executor);
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);

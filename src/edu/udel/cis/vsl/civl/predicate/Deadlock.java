@@ -5,8 +5,8 @@ package edu.udel.cis.vsl.civl.predicate;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
@@ -16,7 +16,6 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -100,7 +99,7 @@ public class Deadlock implements StatePredicateIF<State> {
 				+ "*****************************************************************\n";
 		for (Process p : state.processes()) {
 			Location location = null;
-			SymbolicExpression predicate = null;
+			BooleanExpression predicate = null;
 			String nonGuardExplanation = null; // Join of unterminated function,
 												// etc.
 
@@ -116,21 +115,19 @@ public class Deadlock implements StatePredicateIF<State> {
 			} else {
 				explanation += "at location " + location.id() + ". ";
 				for (Statement statement : location.outgoing()) {
-					SymbolicExpression guard = evaluator.evaluate(state,
-							p.id(), statement.guard());
+					BooleanExpression guard = (BooleanExpression) evaluator
+							.evaluate(state, p.id(), statement.guard()).value;
 
-					if (statement instanceof JoinStatement) {
+					if (statement instanceof WaitStatement) {
 						// TODO: Check that the guard is actually true, but it
 						// should be.
 						nonGuardExplanation = "Target process has not terminated:\n"
-								+ ((JoinStatement) statement).process() + "\n";
+								+ ((WaitStatement) statement).process() + "\n";
 					}
 					if (predicate == null) {
 						predicate = guard;
 					} else {
-						predicate = symbolicUniverse.or(
-								(BooleanExpression) predicate,
-								(BooleanExpression) guard);
+						predicate = symbolicUniverse.or(predicate, guard);
 					}
 				}
 				if (predicate == null) {
@@ -164,7 +161,7 @@ public class Deadlock implements StatePredicateIF<State> {
 		for (Process p : state.processes()) {
 			Location location;
 			ValidityResult truth;
-			SymbolicExpression predicate = null;
+			BooleanExpression predicate = null;
 
 			// If a process has an empty stack, it can't execute.
 			if (p == null || p.hasEmptyStack()) {
@@ -172,33 +169,25 @@ public class Deadlock implements StatePredicateIF<State> {
 			}
 			location = p.location();
 			for (Statement s : location.outgoing()) {
-				if (s instanceof JoinStatement) {
+				if (s instanceof WaitStatement) {
 					SymbolicExpression joinProcess = evaluator.evaluate(state,
-							p.id(), ((JoinStatement) s).process());
-					int pidValue;
+							p.id(), ((WaitStatement) s).process()).value;
+					int pidValue = evaluator.getPid(joinProcess);
 					SymbolicExpression guard = evaluator.evaluate(state,
-							p.id(), s.guard());
+							p.id(), s.guard()).value;
 
 					// If guard is false, don't worry about the stack.
 					if (guard.equals(symbolicUniverse.falseExpression())) {
 						continue;
 					}
-					assert joinProcess instanceof SymbolicConstant;
-					assert ((SymbolicConstant) joinProcess).name().getString()
-							.startsWith(pidPrefix);
-					// TODO: Throw exception if not the right type.
-					pidValue = Integer
-							.parseInt(((SymbolicConstant) joinProcess).name()
-									.getString().substring(pidPrefix.length()));
 					if (state.process(pidValue).hasEmptyStack()) {
 						return false;
 					}
 				} else {
-					SymbolicExpression guard = evaluator.evaluate(state,
-							p.id(), s.guard());
-					Reasoner reasoner = symbolicUniverse
-							.reasoner((BooleanExpression) (state
-									.pathCondition()));
+					BooleanExpression guard = (BooleanExpression) evaluator
+							.evaluate(state, p.id(), s.guard()).value;
+					Reasoner reasoner = symbolicUniverse.reasoner(state
+							.pathCondition());
 
 					// Most of the time, guards will be true. Shortcut this.
 					if (guard.equals(symbolicUniverse.trueExpression())) {
@@ -207,9 +196,7 @@ public class Deadlock implements StatePredicateIF<State> {
 					if (predicate == null) {
 						predicate = guard;
 					} else {
-						predicate = symbolicUniverse.or(
-								(BooleanExpression) predicate,
-								(BooleanExpression) guard);
+						predicate = symbolicUniverse.or(predicate, guard);
 					}
 					truth = reasoner.valid((BooleanExpression) predicate);
 					if (truth.getResultType() == ResultType.YES) {

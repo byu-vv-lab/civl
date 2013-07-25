@@ -24,6 +24,7 @@ public interface Expression extends Sourceable {
 		DEREFERENCE,
 		DOT,
 		INTEGER_LITERAL,
+		NULL_LITERAL,
 		REAL_LITERAL,
 		RESULT,
 		SELF,

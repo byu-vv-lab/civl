@@ -42,7 +42,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.ArrayType;
@@ -77,7 +77,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonChooseStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonJoinStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
@@ -822,8 +822,8 @@ public class CommonModelFactory implements ModelFactory {
 	 *            An expression evaluating to a process.
 	 * @return A new join statement.
 	 */
-	public JoinStatement joinStatement(Location source, Expression process) {
-		JoinStatement result = new CommonJoinStatement(source, process);
+	public WaitStatement joinStatement(Location source, Expression process) {
+		WaitStatement result = new CommonWaitStatement(source, process);
 
 		result.setStatementScope(process.expressionScope());
 		((CommonExpression) result.guard()).setExpressionType(booleanType);

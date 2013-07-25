@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -20,6 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.StructType;
 import edu.udel.cis.vsl.civl.model.IF.type.Type;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
@@ -160,15 +163,18 @@ public class StateFactory implements StateFactoryIF {
 						type = symbolicUniverse.realType();
 						break;
 					case STRING:
-						// TODO: Handle this.
-					default:
+						type = symbolicUniverse.arrayType(symbolicUniverse
+								.characterType());
 						break;
+					default:
+						throw new CIVLInternalException("Unreachable",
+								(Source) null);
 					}
 				} else {
-					throw new RuntimeException("Unimplemented input type: "
-							+ v.type());
+					throw new CIVLInternalException(
+							"Unimplemented input type: " + v.type(),
+							(Source) null);
 				}
-
 				values[i] = symbolicUniverse.symbolicConstant(name, type);
 			}
 		}
@@ -418,6 +424,11 @@ public class StateFactory implements StateFactoryIF {
 	}
 
 	// *********************** Exported Methods ***********************
+
+	@Override
+	public SymbolicUniverse symbolicUniverse() {
+		return symbolicUniverse;
+	}
 
 	@Override
 	public State canonic(State state) {
@@ -1084,7 +1095,7 @@ public class StateFactory implements StateFactoryIF {
 	 *         path condition.
 	 */
 	@Override
-	public State setPathCondition(State state, SymbolicExpression pathCondition) {
+	public State setPathCondition(State state, BooleanExpression pathCondition) {
 		return new State(state, pathCondition);
 	}
 

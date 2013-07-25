@@ -5,16 +5,16 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.JoinStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 
 /**
- * A join statement, to wait for another process to complete.
+ * A wait statement, to wait for another process to complete.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonJoinStatement extends CommonStatement implements
-		JoinStatement {
+public class CommonWaitStatement extends CommonStatement implements
+		WaitStatement {
 
 	private Expression process;
 
@@ -26,7 +26,7 @@ public class CommonJoinStatement extends CommonStatement implements
 	 * @param process
 	 *            A reference to the process.
 	 */
-	public CommonJoinStatement(Location source, Expression process) {
+	public CommonWaitStatement(Location source, Expression process) {
 		super(source);
 		this.process = process;
 	}

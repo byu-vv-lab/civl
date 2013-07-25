@@ -7,6 +7,8 @@ import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -17,6 +19,14 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * 
  */
 public interface StateFactoryIF {
+
+	/**
+	 * Returns the symbolic universe used by this factory to manipulate symbolic
+	 * expressions.
+	 * 
+	 * @return the symbolic universe
+	 */
+	SymbolicUniverse symbolicUniverse();
 
 	/**
 	 * Return a "canonical" version of the given state. This relates to the
@@ -81,14 +91,17 @@ public interface StateFactoryIF {
 	/**
 	 * Add a new process. The new process is created and one entry is pushed
 	 * onto its call stack. That entry will have a dynamic scope whose parent is
-	 * determined by the calling process (the process that is executing the fork
-	 * command to create this new process) and the given function. The parent
-	 * dynamic scope is computed by starting with the current dynamic scope of
-	 * the caller, and working up the parent chain, stopping at the first
-	 * dynamic scope whose static scope matches the containing scope of the
-	 * function. If no such dyanmic scope is found in the chain, an
+	 * determined by the calling process (the process that is executing the
+	 * spawn command to create this new process) and the given function. The
+	 * parent dynamic scope is computed by starting with the current dynamic
+	 * scope of the caller, and working up the parent chain, stopping at the
+	 * first dynamic scope whose static scope matches the containing scope of
+	 * the function. If no such dyanmic scope is found in the chain, an
 	 * IllegalArgumentException is thrown. Hence the calling process must have a
 	 * non-empty call stack.
+	 * 
+	 * The PID of the new process will be state.numProcs(), where state is the
+	 * pre-state (the given state), not the new state.
 	 * 
 	 * @param state
 	 *            The old state.
@@ -186,6 +199,6 @@ public interface StateFactoryIF {
 	 * @return A new state that is the same as the old state but with the new
 	 *         path condition.
 	 */
-	State setPathCondition(State state, SymbolicExpression pathCondition);
+	State setPathCondition(State state, BooleanExpression pathCondition);
 
 }

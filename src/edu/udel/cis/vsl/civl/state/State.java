@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -82,7 +83,7 @@ public class State {
 	/**
 	 * Non-null boolean-valued symbolic expression.
 	 */
-	private SymbolicExpression pathCondition;
+	private BooleanExpression pathCondition;
 
 	/**
 	 * Whether this state has been seen in the DFS search.
@@ -104,8 +105,8 @@ public class State {
 	 * @param buffers
 	 * @param pathCondition
 	 */
-	State(Process[] processes, DynamicScope[] scopes, 
-			SymbolicExpression pathCondition) {
+	State(Process[] processes, DynamicScope[] scopes,
+			BooleanExpression pathCondition) {
 		assert processes != null;
 		assert scopes != null;
 		assert pathCondition != null;
@@ -126,7 +127,7 @@ public class State {
 	 * @param pathCondition
 	 */
 	State(State state, Process[] processes, DynamicScope[] scopes,
-			SymbolicExpression pathCondition) {
+			BooleanExpression pathCondition) {
 		this(processes == null ? state.processes : processes,
 				scopes == null ? state.scopes : scopes,
 				pathCondition == null ? state.pathCondition : pathCondition);
@@ -139,7 +140,7 @@ public class State {
 	 * @param state
 	 * @param newPatCondition
 	 */
-	State(State state, SymbolicExpression newPathCondition) {
+	State(State state, BooleanExpression newPathCondition) {
 		this(state.processes, state.scopes, newPathCondition);
 	}
 
@@ -269,7 +270,7 @@ public class State {
 	/**
 	 * @return The path condition.
 	 */
-	public SymbolicExpression pathCondition() {
+	public BooleanExpression pathCondition() {
 		return pathCondition;
 	}
 

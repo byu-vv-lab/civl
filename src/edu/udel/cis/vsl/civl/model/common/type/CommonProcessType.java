@@ -20,4 +20,24 @@ public class CommonProcessType implements ProcessType {
 	public String toString() {
 		return "process";
 	}
+
+	@Override
+	public boolean isNumericType() {
+		return false;
+	}
+
+	@Override
+	public boolean isIntegerType() {
+		return false;
+	}
+
+	@Override
+	public boolean isRealType() {
+		return false;
+	}
+
+	@Override
+	public boolean isPointerType() {
+		return false;
+	}
 }

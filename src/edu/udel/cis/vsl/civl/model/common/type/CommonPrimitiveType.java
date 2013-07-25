@@ -51,4 +51,25 @@ public class CommonPrimitiveType implements PrimitiveType {
 		}
 	}
 
+	@Override
+	public boolean isNumericType() {
+		return primitiveType == PRIMITIVE_TYPE.INT
+				|| primitiveType == PRIMITIVE_TYPE.REAL;
+	}
+
+	@Override
+	public boolean isIntegerType() {
+		return primitiveType == PRIMITIVE_TYPE.INT;
+	}
+
+	@Override
+	public boolean isRealType() {
+		return primitiveType == PRIMITIVE_TYPE.REAL;
+	}
+
+	@Override
+	public boolean isPointerType() {
+		return false;
+	}
+
 }

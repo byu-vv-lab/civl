@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.transition;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -35,7 +36,7 @@ public class TransitionFactory {
 	 *         statement.
 	 */
 	public SimpleTransition newSimpleTransition(
-			SymbolicExpression pathCondition, int pid, Statement statement) {
+			BooleanExpression pathCondition, int pid, Statement statement) {
 		return new SimpleTransition(pathCondition, pid, statement);
 	}
 
@@ -55,7 +56,7 @@ public class TransitionFactory {
 	 *         statement.
 	 */
 	public SimpleTransition newChooseTransition(
-			SymbolicExpression pathCondition, int pid, Statement statement,
+			BooleanExpression pathCondition, int pid, Statement statement,
 			SymbolicExpression value) {
 		return new ChooseTransition(pathCondition, pid, statement, value);
 	}
