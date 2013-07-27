@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import java.math.BigInteger;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 
 /**
@@ -24,7 +25,8 @@ public class CommonIntegerLiteralExpression extends CommonExpression implements
 	 * @param value
 	 *            The (arbitrary precision) value of the integer.
 	 */
-	public CommonIntegerLiteralExpression(BigInteger value) {
+	public CommonIntegerLiteralExpression(CIVLSource source, BigInteger value) {
+		super(source);
 		this.value = value;
 	}
 

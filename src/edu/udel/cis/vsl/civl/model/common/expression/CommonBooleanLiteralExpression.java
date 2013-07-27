@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 
 /**
@@ -22,7 +23,8 @@ public class CommonBooleanLiteralExpression extends CommonExpression implements
 	 * @param The
 	 *            value of this boolean literal.
 	 */
-	public CommonBooleanLiteralExpression(boolean value) {
+	public CommonBooleanLiteralExpression(CIVLSource source, boolean value) {
+		super(source);
 		this.value = value;
 	}
 

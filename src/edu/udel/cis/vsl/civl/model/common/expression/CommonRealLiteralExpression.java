@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import java.math.BigDecimal;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 
@@ -25,7 +26,8 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 	 * @param value
 	 *            The (arbitrary precision) real value.
 	 */
-	public CommonRealLiteralExpression(BigDecimal value) {
+	public CommonRealLiteralExpression(CIVLSource source, BigDecimal value) {
+		super(source);
 		this.value = value;
 	}
 

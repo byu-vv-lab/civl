@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.variable;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -39,7 +40,9 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	 * @param vid
 	 *            The index of this variable in its scope.
 	 */
-	public CommonVariable(CIVLType type, Identifier name, int vid) {
+	public CommonVariable(CIVLSource source, CIVLType type, Identifier name,
+			int vid) {
+		super(source);
 		this.type = type;
 		this.name = name;
 		this.vid = vid;

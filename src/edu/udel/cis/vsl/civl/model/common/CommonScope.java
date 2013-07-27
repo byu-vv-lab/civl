@@ -10,15 +10,16 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -27,7 +28,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonScope implements Scope {
+public class CommonScope extends CommonSourceable implements Scope {
 
 	private Scope parent;
 	private Variable[] variables;
@@ -47,7 +48,9 @@ public class CommonScope implements Scope {
 	 * @param variables
 	 *            The set of variables in this scope.
 	 */
-	public CommonScope(Scope parent, Set<Variable> variables, int id) {
+	public CommonScope(CIVLSource source, Scope parent,
+			Set<Variable> variables, int id) {
+		super(source);
 		this.parent = parent;
 		this.variables = new Variable[variables.size()];
 		for (Variable v : variables) {

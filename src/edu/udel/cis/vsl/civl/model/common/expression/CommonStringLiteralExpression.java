@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 
 /**
@@ -22,7 +23,8 @@ public class CommonStringLiteralExpression extends CommonExpression implements
 	 * @param value
 	 *            The string.
 	 */
-	public CommonStringLiteralExpression(String value) {
+	public CommonStringLiteralExpression(CIVLSource source, String value) {
+		super(source);
 		this.value = value;
 	}
 

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -42,18 +43,18 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PRIMITIVE_TYPE;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAddressOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
@@ -77,9 +78,9 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonChooseStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
@@ -96,30 +97,37 @@ import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonModelFactory implements ModelFactory {
+public class CommonModelFactory extends CommonSourceable implements
+		ModelFactory {
+
+	private CIVLSource systemSource = new SystemCIVLSource();
 
 	/* Keep a unique number to identify locations. */
 	private int locationID = 0;
+
 	/* Keep a set of used identifiers for fly-weighting purposes. */
 	private Map<String, Identifier> identifiers;
+
 	/* Make one of each primitive type. */
 	private CIVLPrimitiveType integerType = new CommonPrimitiveType(
 			PRIMITIVE_TYPE.INT);
+
 	private CIVLPrimitiveType booleanType = new CommonPrimitiveType(
 			PRIMITIVE_TYPE.BOOL);
+
 	private CIVLPrimitiveType realType = new CommonPrimitiveType(
 			PRIMITIVE_TYPE.REAL);
+
 	private CIVLPrimitiveType stringType = new CommonPrimitiveType(
 			PRIMITIVE_TYPE.STRING);
+
 	private CIVLHeapType heapType = new CommonHeapType();
+
 	private CIVLProcessType processType = new CommonProcessType();
-	/* Make one canonical true and false. */
-	private BooleanLiteralExpression trueExpression = new CommonBooleanLiteralExpression(
-			true);
-	private BooleanLiteralExpression falseExpression = new CommonBooleanLiteralExpression(
-			false);
+
 	/* Keep a unique number to identify scopes. */
 	private int scopeID = 0;
+
 	private int chooseID = 0;
 
 	// private Scope systemScope;
@@ -128,12 +136,18 @@ public class CommonModelFactory implements ModelFactory {
 	 * The factory to create all model components. Usually this is the only way
 	 * model components will be created.
 	 */
-	public CommonModelFactory() {
+	public CommonModelFactory(CIVLSource civlSource) {
+		super(civlSource);
 		identifiers = new HashMap<String, Identifier>();
-		((CommonBooleanLiteralExpression) trueExpression)
-				.setExpressionType(booleanType);
-		((CommonBooleanLiteralExpression) falseExpression)
-				.setExpressionType(booleanType);
+		// ((CommonBooleanLiteralExpression) trueExpression)
+		// .setExpressionType(booleanType);
+		// ((CommonBooleanLiteralExpression) falseExpression)
+		// .setExpressionType(booleanType);
+	}
+
+	@Override
+	public CIVLSource systemSource() {
+		return systemSource;
 	}
 
 	/**
@@ -142,8 +156,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * @param system
 	 *            The designated outermost function, called "System."
 	 */
-	public Model model(Function system) {
-		return new CommonModel(this, system);
+	public Model model(CIVLSource civlSource, Function system) {
+		return new CommonModel(civlSource, this, system);
 	}
 
 	/**
@@ -158,8 +172,9 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The function containing this scope.
 	 * @return A new scope
 	 */
-	public Scope scope(Scope parent, Set<Variable> variables, Function function) {
-		Scope newScope = new CommonScope(parent, variables, scopeID++);
+	public Scope scope(CIVLSource source, Scope parent,
+			Set<Variable> variables, Function function) {
+		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
 		if (parent != null) {
 			parent.addChild(newScope);
 		}
@@ -173,9 +188,9 @@ public class CommonModelFactory implements ModelFactory {
 	 * @param name
 	 *            The name of this identifier.
 	 */
-	public Identifier identifier(String name) {
+	public Identifier identifier(CIVLSource source, String name) {
 		if (!identifiers.containsKey(name)) {
-			identifiers.put(name, new CommonIdentifier(name));
+			identifiers.put(name, new CommonIdentifier(source, name));
 		}
 		return identifiers.get(name);
 	}
@@ -190,8 +205,9 @@ public class CommonModelFactory implements ModelFactory {
 	 * @param vid
 	 *            The index of this variable in its scope.
 	 */
-	public Variable variable(CIVLType type, Identifier name, int vid) {
-		return new CommonVariable(type, name, vid);
+	public Variable variable(CIVLSource source, CIVLType type, Identifier name,
+			int vid) {
+		return new CommonVariable(source, type, name, vid);
 	}
 
 	/**
@@ -209,9 +225,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The first location in the function.
 	 * @return The new function.
 	 */
-	public Function function(Identifier name, Vector<Variable> parameters,
-			CIVLType returnType, Scope containingScope, Location startLocation) {
-		return new CommonFunction(name, parameters, returnType,
+	public Function function(CIVLSource source, Identifier name,
+			Vector<Variable> parameters, CIVLType returnType,
+			Scope containingScope, Location startLocation) {
+		return new CommonFunction(source, name, parameters, returnType,
 				containingScope, startLocation, this);
 	}
 
@@ -222,8 +239,8 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The name of this function.
 	 */
 	public SystemFunction systemFunction(Identifier name) {
-		return new CommonSystemFunction(name, new Vector<Variable>(), null,
-				null, null, this);
+		return new CommonSystemFunction(systemSource, name,
+				new Vector<Variable>(), null, null, null, this);
 	}
 
 	/**
@@ -233,8 +250,8 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The scope containing this location.
 	 * @return The new location.
 	 */
-	public Location location(Scope scope) {
-		return new CommonLocation(scope, locationID++);
+	public Location location(CIVLSource source, Scope scope) {
+		return new CommonLocation(source, scope, locationID++);
 	}
 
 	/* *********************************************************************
@@ -358,9 +375,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The expression to which the operator is applied.
 	 * @return The unary expression.
 	 */
-	public UnaryExpression unaryExpression(UNARY_OPERATOR operator,
-			Expression operand) {
-		UnaryExpression result = new CommonUnaryExpression(operator, operand);
+	public UnaryExpression unaryExpression(CIVLSource source,
+			UNARY_OPERATOR operator, Expression operand) {
+		UnaryExpression result = new CommonUnaryExpression(source, operator,
+				operand);
 
 		result.setExpressionScope(operand.expressionScope());
 		switch (operator) {
@@ -377,18 +395,20 @@ public class CommonModelFactory implements ModelFactory {
 		// .getExpressionType()).baseType());
 		// break;
 		case NEGATIVE:
-			result = new CommonUnaryExpression(operator, operand);
+			result = new CommonUnaryExpression(source, operator, operand);
 			((CommonUnaryExpression) result).setExpressionType(operand
 					.getExpressionType());
 			break;
 		case NOT:
 			if (operand.getExpressionType().equals(booleanType)) {
-				result = new CommonUnaryExpression(operator, operand);
+				result = new CommonUnaryExpression(source, operator, operand);
 			} else {
 				// TODO: This often won't work. Need to do conversion for e.g.
 				// numeric types
-				Expression castOperand = castExpression(booleanType, operand);
-				result = new CommonUnaryExpression(operator, castOperand);
+				Expression castOperand = castExpression(source, booleanType,
+						operand);
+				result = new CommonUnaryExpression(source, operator,
+						castOperand);
 			}
 			((CommonUnaryExpression) result).setExpressionType(booleanType);
 			break;
@@ -410,10 +430,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The right operand.
 	 * @return The binary expression.
 	 */
-	public BinaryExpression binaryExpression(BINARY_OPERATOR operator,
-			Expression left, Expression right) {
-		BinaryExpression result = new CommonBinaryExpression(operator, left,
-				right);
+	public BinaryExpression binaryExpression(CIVLSource source,
+			BINARY_OPERATOR operator, Expression left, Expression right) {
+		BinaryExpression result = new CommonBinaryExpression(source, operator,
+				left, right);
 
 		result.setExpressionScope(join(left.expressionScope(),
 				right.expressionScope()));
@@ -463,8 +483,10 @@ public class CommonModelFactory implements ModelFactory {
 	 * @param expresssion
 	 *            The expression being cast to a new type.
 	 */
-	public CastExpression castExpression(CIVLType type, Expression expression) {
-		CastExpression result = new CommonCastExpression(type, expression);
+	public CastExpression castExpression(CIVLSource source, CIVLType type,
+			Expression expression) {
+		CastExpression result = new CommonCastExpression(source, type,
+				expression);
 
 		result.setExpressionScope(expression.expressionScope());
 		((CommonCastExpression) result).setExpressionType(type);
@@ -482,9 +504,9 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The expression returned if the condition evaluates to false.
 	 * @return The conditional expression.
 	 */
-	public ConditionalExpression conditionalExpression(Expression condition,
-			Expression trueBranch, Expression falseBranch) {
-		ConditionalExpression result = new CommonConditionalExpression(
+	public ConditionalExpression conditionalExpression(CIVLSource source,
+			Expression condition, Expression trueBranch, Expression falseBranch) {
+		ConditionalExpression result = new CommonConditionalExpression(source,
 				condition, trueBranch, falseBranch);
 
 		result.setExpressionScope(join(
@@ -507,14 +529,16 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The field.
 	 * @return The dot expression.
 	 */
-	public DotExpression dotExpression(Expression struct, int fieldIndex) {
-		CommonDotExpression result = new CommonDotExpression(struct, fieldIndex);
+	public DotExpression dotExpression(CIVLSource source, Expression struct,
+			int fieldIndex) {
+		CommonDotExpression result = new CommonDotExpression(source, struct,
+				fieldIndex);
 		CIVLType structType = struct.getExpressionType();
 
 		result.setExpressionScope(struct.expressionScope());
 		assert structType instanceof CIVLStructType;
-		result.setExpressionType(((CIVLStructType) structType).getField(fieldIndex)
-				.type());
+		result.setExpressionType(((CIVLStructType) structType).getField(
+				fieldIndex).type());
 		return result;
 	}
 
@@ -525,11 +549,12 @@ public class CommonModelFactory implements ModelFactory {
 	 *            True or false.
 	 * @return The boolean literal expression.
 	 */
-	public BooleanLiteralExpression booleanLiteralExpression(boolean value) {
+	public BooleanLiteralExpression booleanLiteralExpression(CIVLSource source,
+			boolean value) {
 		if (value) {
-			return trueExpression;
+			return new CommonBooleanLiteralExpression(source, true);
 		} else {
-			return falseExpression;
+			return new CommonBooleanLiteralExpression(source, false);
 		}
 	}
 
@@ -540,9 +565,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The (arbitrary precision) integer value.
 	 * @return The integer literal expression.
 	 */
-	public IntegerLiteralExpression integerLiteralExpression(BigInteger value) {
+	public IntegerLiteralExpression integerLiteralExpression(CIVLSource source,
+			BigInteger value) {
 		IntegerLiteralExpression result = new CommonIntegerLiteralExpression(
-				value);
+				source, value);
 
 		((CommonIntegerLiteralExpression) result)
 				.setExpressionType(integerType);
@@ -556,8 +582,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The (arbitrary precision) real value.
 	 * @return The real literal expression.
 	 */
-	public RealLiteralExpression realLiteralExpression(BigDecimal value) {
-		RealLiteralExpression result = new CommonRealLiteralExpression(value);
+	public RealLiteralExpression realLiteralExpression(CIVLSource source,
+			BigDecimal value) {
+		RealLiteralExpression result = new CommonRealLiteralExpression(source,
+				value);
 
 		((CommonRealLiteralExpression) result).setExpressionType(realType);
 		return result;
@@ -569,8 +597,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * 
 	 * @return A result expression.
 	 */
-	public ResultExpression resultExpression() {
-		return new CommonResultExpression();
+	public ResultExpression resultExpression(CIVLSource source) {
+		return new CommonResultExpression(source);
 	}
 
 	/**
@@ -580,9 +608,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The string.
 	 * @return The string literal expression.
 	 */
-	public StringLiteralExpression stringLiteralExpression(String value) {
+	public StringLiteralExpression stringLiteralExpression(CIVLSource source,
+			String value) {
 		StringLiteralExpression result = new CommonStringLiteralExpression(
-				value);
+				source, value);
 
 		((CommonStringLiteralExpression) result).setExpressionType(stringType);
 		return result;
@@ -597,9 +626,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            An expression evaluating to an integer.
 	 * @return The array index expression.
 	 */
-	public SubscriptExpression subscriptExpression(LHSExpression array,
-			Expression index) {
-		SubscriptExpression result = new CommonSubscriptExpression(array, index);
+	public SubscriptExpression subscriptExpression(CIVLSource source,
+			LHSExpression array, Expression index) {
+		SubscriptExpression result = new CommonSubscriptExpression(source,
+				array, index);
 		CIVLType arrayType = array.getExpressionType();
 
 		result.setExpressionScope(join(array.expressionScope(),
@@ -622,8 +652,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * 
 	 * @return A new self expression.
 	 */
-	public SelfExpression selfExpression() {
-		SelfExpression result = new CommonSelfExpression();
+	public SelfExpression selfExpression(CIVLSource source) {
+		SelfExpression result = new CommonSelfExpression(source);
 
 		((CommonSelfExpression) result).setExpressionType(processType);
 		return result;
@@ -636,8 +666,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The variable being referenced.
 	 * @return The variable expression.
 	 */
-	public VariableExpression variableExpression(Variable variable) {
-		VariableExpression result = new CommonVariableExpression(variable);
+	public VariableExpression variableExpression(CIVLSource source,
+			Variable variable) {
+		VariableExpression result = new CommonVariableExpression(source,
+				variable);
 
 		// Don't need to worry about the expression scope of constants.
 		if (!variable.isConst()) {
@@ -661,9 +693,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The expression being asserted.
 	 * @return A new assert statement.
 	 */
-	public AssertStatement assertStatement(Location source,
-			Expression expression) {
-		AssertStatement result = new CommonAssertStatement(source, expression);
+	public AssertStatement assertStatement(CIVLSource civlSource,
+			Location source, Expression expression) {
+		AssertStatement result = new CommonAssertStatement(civlSource, source,
+				expression);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		result.setStatementScope(expression.expressionScope());
@@ -681,9 +714,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The right hand side of the assignment.
 	 * @return A new assignment statement.
 	 */
-	public AssignStatement assignStatement(Location source, LHSExpression lhs,
-			Expression rhs) {
-		AssignStatement result = new CommonAssignStatement(source, lhs, rhs);
+	public AssignStatement assignStatement(CIVLSource civlSource,
+			Location source, LHSExpression lhs, Expression rhs) {
+		AssignStatement result = new CommonAssignStatement(civlSource, source,
+				lhs, rhs);
 
 		result.setStatementScope(join(lhs.expressionScope(),
 				rhs.expressionScope()));
@@ -700,9 +734,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The expression being added to the path condition.
 	 * @return A new assume statement.
 	 */
-	public AssumeStatement assumeStatement(Location source,
-			Expression expression) {
-		AssumeStatement result = new CommonAssumeStatement(source, expression);
+	public AssumeStatement assumeStatement(CIVLSource civlSource,
+			Location source, Expression expression) {
+		AssumeStatement result = new CommonAssumeStatement(civlSource, source,
+				expression);
 
 		result.setStatementScope(expression.expressionScope());
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
@@ -720,10 +755,11 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The arguments to the function.
 	 * @return A new call statement.
 	 */
-	public CallOrSpawnStatement callOrSpawnStatement(Location source,
-			boolean isCall, Function function, Vector<Expression> arguments) {
-		CallOrSpawnStatement result = new CommonCallStatement(source,isCall, function,
-				arguments);
+	public CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
+			Location source, boolean isCall, Function function,
+			Vector<Expression> arguments) {
+		CallOrSpawnStatement result = new CommonCallStatement(civlSource,
+				source, isCall, function, arguments);
 		Scope statementScope = null;
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
@@ -749,69 +785,16 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The argument to choose().
 	 * @return A new choose statement.
 	 */
-	public ChooseStatement chooseStatement(Location source, LHSExpression lhs,
-			Expression argument) {
-		ChooseStatement result = new CommonChooseStatement(source, lhs,
-				argument, chooseID++);
+	public ChooseStatement chooseStatement(CIVLSource civlSource,
+			Location source, LHSExpression lhs, Expression argument) {
+		ChooseStatement result = new CommonChooseStatement(civlSource, source,
+				lhs, argument, chooseID++);
 
 		result.setStatementScope(join(lhs.expressionScope(),
 				argument.expressionScope()));
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
 	}
-
-	// /**
-	// * A fork statement. Used to spawn a new process.
-	// *
-	// * @param source
-	// * The source location for this fork statement.
-	// * @param function
-	// * A function
-	// * @param arguments
-	// * The arguments to the function.
-	// * @return A new fork statement.
-	// */
-	// public ForkStatement forkStatement(Location source, Function function,
-	// Vector<Expression> arguments) {
-	// ForkStatement result = new CommonForkStatement(source, null, function,
-	// arguments);
-	// Scope statementScope = null;
-	//
-	// for (Expression arg : arguments) {
-	// statementScope = join(statementScope, arg.expressionScope());
-	// }
-	// result.setStatementScope(statementScope);
-	// ((CommonExpression) result.guard()).setExpressionType(booleanType);
-	// return result;
-	// }
-	//
-	// /**
-	// * A fork statement. Used to spawn a new process.
-	// *
-	// * @param source
-	// * The source location for this fork statement.
-	// * @param lhs
-	// * Expression for place where the process reference will be
-	// * stored. Null if non-existent.
-	// * @param function
-	// * A function.
-	// * @param arguments
-	// * The arguments ot the function.
-	// * @return A new fork statement.
-	// */
-	// public ForkStatement forkStatement(Location source, LHSExpression lhs,
-	// Function function, Vector<Expression> arguments) {
-	// ForkStatement result = new CommonForkStatement(source, lhs, function,
-	// arguments);
-	// Scope statementScope = lhs.expressionScope();
-	//
-	// for (Expression arg : arguments) {
-	// statementScope = join(statementScope, arg.expressionScope());
-	// }
-	// result.setStatementScope(statementScope);
-	// ((CommonExpression) result.guard()).setExpressionType(booleanType);
-	// return result;
-	// }
 
 	/**
 	 * A join statement. Used to wait for a process to complete.
@@ -822,8 +805,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            An expression evaluating to a process.
 	 * @return A new join statement.
 	 */
-	public WaitStatement joinStatement(Location source, Expression process) {
-		WaitStatement result = new CommonWaitStatement(source, process);
+	public WaitStatement joinStatement(CIVLSource civlSource, Location source,
+			Expression process) {
+		WaitStatement result = new CommonWaitStatement(civlSource, source,
+				process);
 
 		result.setStatementScope(process.expressionScope());
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
@@ -837,8 +822,8 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The source location for this noop statement.
 	 * @return A new noop statement.
 	 */
-	public NoopStatement noopStatement(Location source) {
-		NoopStatement result = new CommonNoopStatement(source);
+	public NoopStatement noopStatement(CIVLSource civlSource, Location source) {
+		NoopStatement result = new CommonNoopStatement(civlSource, source);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
@@ -853,9 +838,10 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The expression being returned. Null if non-existent.
 	 * @return A new return statement.
 	 */
-	public ReturnStatement returnStatement(Location source,
-			Expression expression) {
-		ReturnStatement result = new CommonReturnStatement(source, expression);
+	public ReturnStatement returnStatement(CIVLSource civlSource,
+			Location source, Expression expression) {
+		ReturnStatement result = new CommonReturnStatement(civlSource, source,
+				expression);
 
 		if (expression != null) {
 			result.setStatementScope(expression.expressionScope());
@@ -897,9 +883,12 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public DereferenceExpression dereferenceExpression(Expression pointer) {
-		CIVLPointerType pointerType = (CIVLPointerType) pointer.getExpressionType();
-		DereferenceExpression result = new CommonDereferenceExpression(pointer);
+	public DereferenceExpression dereferenceExpression(CIVLSource source,
+			Expression pointer) {
+		CIVLPointerType pointerType = (CIVLPointerType) pointer
+				.getExpressionType();
+		DereferenceExpression result = new CommonDereferenceExpression(source,
+				pointer);
 
 		result.setExpressionScope(null); // indicates unknown scope
 		((CommonExpression) result).setExpressionType(pointerType.baseType());
@@ -907,8 +896,10 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public AddressOfExpression addressOfExpression(LHSExpression operand) {
-		AddressOfExpression result = new CommonAddressOfExpression(operand);
+	public AddressOfExpression addressOfExpression(CIVLSource source,
+			LHSExpression operand) {
+		AddressOfExpression result = new CommonAddressOfExpression(source,
+				operand);
 
 		result.setExpressionScope(operand.expressionScope());
 		((CommonExpression) result).setExpressionType(this.pointerType(operand

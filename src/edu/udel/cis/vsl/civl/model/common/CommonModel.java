@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -20,7 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonModel implements Model {
+public class CommonModel extends CommonSourceable implements Model {
 
 	private LinkedList<Function> functions;
 	private Function system;
@@ -36,7 +37,8 @@ public class CommonModel implements Model {
 	 * @param system
 	 *            The designated outermost function, called "System."
 	 */
-	public CommonModel(ModelFactory factory, Function system) {
+	public CommonModel(CIVLSource source, ModelFactory factory, Function system) {
+		super(source);
 		this.modelFactory = factory;
 		this.system = system;
 		functions = new LinkedList<Function>();
@@ -44,7 +46,7 @@ public class CommonModel implements Model {
 	}
 
 	/**
-	 * A model of a Chapel program.
+	 * A model of a CIVL program.
 	 * 
 	 * @param factory
 	 *            The ModelFactory responsible for creating this model.
@@ -53,7 +55,9 @@ public class CommonModel implements Model {
 	 * @param functions
 	 *            The set of all functions in the model, including "System."
 	 */
-	public CommonModel(ModelFactory factory, Function system, Set<Function> functions) {
+	public CommonModel(CIVLSource source, ModelFactory factory,
+			Function system, Set<Function> functions) {
+		super(source);
 		this.modelFactory = factory;
 		this.system = system;
 		this.functions = new LinkedList<Function>(functions);

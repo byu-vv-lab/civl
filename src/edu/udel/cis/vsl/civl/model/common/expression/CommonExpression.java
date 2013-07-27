@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -23,7 +24,8 @@ public abstract class CommonExpression extends CommonSourceable implements
 	/**
 	 * The parent of all expressions.
 	 */
-	public CommonExpression() {
+	public CommonExpression(CIVLSource source) {
+		super(source);
 	}
 
 	/**

@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common;
 
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -30,11 +31,11 @@ public class CommonSystemFunction extends CommonFunction implements
 	 * @param startLocation
 	 * @param factory
 	 */
-	public CommonSystemFunction(Identifier name, Vector<Variable> parameters,
-			CIVLType returnType, Scope containingScope, Location startLocation,
-			ModelFactory factory) {
-		super(name, parameters, returnType, containingScope, startLocation,
-				factory);
+	public CommonSystemFunction(CIVLSource source, Identifier name,
+			Vector<Variable> parameters, CIVLType returnType,
+			Scope containingScope, Location startLocation, ModelFactory factory) {
+		super(source, name, parameters, returnType, containingScope,
+				startLocation, factory);
 		this.isSystem = false;
 	}
 
@@ -64,5 +65,5 @@ public class CommonSystemFunction extends CommonFunction implements
 	public String toString() {
 		return this.name().name() + " : system function call";
 	}
-	
+
 }

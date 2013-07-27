@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
@@ -27,8 +28,9 @@ public class CommonAssumeStatement extends CommonStatement implements
 	 * @param expression
 	 *            The expression being added to the path condition.
 	 */
-	public CommonAssumeStatement(Location source, Expression expression) {
-		super(source);
+	public CommonAssumeStatement(CIVLSource civlSource, Location source,
+			Expression expression) {
+		super(civlSource, source);
 		this.expression = expression;
 	}
 
@@ -48,7 +50,7 @@ public class CommonAssumeStatement extends CommonStatement implements
 	public void setExpression(Expression expression) {
 		this.expression = expression;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "$assume " + expression;

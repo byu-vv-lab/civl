@@ -34,17 +34,17 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -57,12 +57,20 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public interface ModelFactory {
 
 	/**
+	 * Returns a source object representing a system-defined object with no link
+	 * to actual source code. Used for built-in functions, types, etc.
+	 * 
+	 * @return a system source object
+	 */
+	CIVLSource systemSource();
+
+	/**
 	 * Create a new model.
 	 * 
 	 * @param system
 	 *            The designated outermost function, called "System."
 	 */
-	Model model(Function system);
+	Model model(CIVLSource source, Function system);
 
 	/**
 	 * Create a new scope.
@@ -76,7 +84,8 @@ public interface ModelFactory {
 	 *            The function containing this scope.
 	 * @return A new scope
 	 */
-	Scope scope(Scope parent, Set<Variable> variables, Function function);
+	Scope scope(CIVLSource source, Scope parent, Set<Variable> variables,
+			Function function);
 
 	/**
 	 * Get an identifier with the given name.
@@ -84,7 +93,7 @@ public interface ModelFactory {
 	 * @param name
 	 *            The name of this identifier.
 	 */
-	Identifier identifier(String name);
+	Identifier identifier(CIVLSource source, String name);
 
 	/**
 	 * Create a new variable.
@@ -96,7 +105,7 @@ public interface ModelFactory {
 	 * @param vid
 	 *            The index of this variable in its scope.
 	 */
-	Variable variable(CIVLType type, Identifier name, int vid);
+	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
 
 	/**
 	 * Create a new function.
@@ -113,8 +122,9 @@ public interface ModelFactory {
 	 *            The first location in the function.
 	 * @return The new function.
 	 */
-	Function function(Identifier name, Vector<Variable> parameters,
-			CIVLType returnType, Scope containingScope, Location startLocation);
+	Function function(CIVLSource source, Identifier name,
+			Vector<Variable> parameters, CIVLType returnType,
+			Scope containingScope, Location startLocation);
 
 	SystemFunction systemFunction(Identifier name);
 
@@ -125,7 +135,7 @@ public interface ModelFactory {
 	 *            The scope containing this location.
 	 * @return The new location.
 	 */
-	Location location(Scope scope);
+	Location location(CIVLSource source, Scope scope);
 
 	/* *********************************************************************
 	 * Types
@@ -228,7 +238,8 @@ public interface ModelFactory {
 	 *            The expression to which the operator is applied.
 	 * @return The unary expression.
 	 */
-	UnaryExpression unaryExpression(UNARY_OPERATOR operator, Expression operand);
+	UnaryExpression unaryExpression(CIVLSource source, UNARY_OPERATOR operator,
+			Expression operand);
 
 	/**
 	 * A binary expression. One of {+,-,*,\,<,<=,==,!=,&&,||,%}
@@ -241,8 +252,8 @@ public interface ModelFactory {
 	 *            The right operand.
 	 * @return The binary expression.
 	 */
-	BinaryExpression binaryExpression(BINARY_OPERATOR operator,
-			Expression left, Expression right);
+	BinaryExpression binaryExpression(CIVLSource source,
+			BINARY_OPERATOR operator, Expression left, Expression right);
 
 	/**
 	 * A cast of an expression to another type.
@@ -252,7 +263,8 @@ public interface ModelFactory {
 	 * @param expresssion
 	 *            The expression being cast to a new type.
 	 */
-	CastExpression castExpression(CIVLType type, Expression expression);
+	CastExpression castExpression(CIVLSource source, CIVLType type,
+			Expression expression);
 
 	/**
 	 * The ternary conditional expression ("?" in C).
@@ -265,8 +277,8 @@ public interface ModelFactory {
 	 *            The expression returned if the condition evaluates to false.
 	 * @return The conditional expression.
 	 */
-	ConditionalExpression conditionalExpression(Expression condition,
-			Expression trueBranch, Expression falseBranch);
+	ConditionalExpression conditionalExpression(CIVLSource source,
+			Expression condition, Expression trueBranch, Expression falseBranch);
 
 	/**
 	 * A dot expression is a reference to a struct field.
@@ -277,7 +289,8 @@ public interface ModelFactory {
 	 *            The field index (indexed from 0).
 	 * @return The dot expression.
 	 */
-	DotExpression dotExpression(Expression struct, int fieldIndex);
+	DotExpression dotExpression(CIVLSource source, Expression struct,
+			int fieldIndex);
 
 	/**
 	 * A boolean literal expression.
@@ -286,7 +299,8 @@ public interface ModelFactory {
 	 *            True or false.
 	 * @return The boolean literal expression.
 	 */
-	BooleanLiteralExpression booleanLiteralExpression(boolean value);
+	BooleanLiteralExpression booleanLiteralExpression(CIVLSource source,
+			boolean value);
 
 	/**
 	 * An integer literal expression.
@@ -295,7 +309,8 @@ public interface ModelFactory {
 	 *            The (arbitrary precision) integer value.
 	 * @return The integer literal expression.
 	 */
-	IntegerLiteralExpression integerLiteralExpression(BigInteger value);
+	IntegerLiteralExpression integerLiteralExpression(CIVLSource source,
+			BigInteger value);
 
 	/**
 	 * A real literal expression.
@@ -304,7 +319,8 @@ public interface ModelFactory {
 	 *            The (arbitrary precision) real value.
 	 * @return The real literal expression.
 	 */
-	RealLiteralExpression realLiteralExpression(BigDecimal value);
+	RealLiteralExpression realLiteralExpression(CIVLSource source,
+			BigDecimal value);
 
 	/**
 	 * This expression is only used in an ensures clause of a function contract
@@ -312,7 +328,7 @@ public interface ModelFactory {
 	 * 
 	 * @return A result expression.
 	 */
-	ResultExpression resultExpression();
+	ResultExpression resultExpression(CIVLSource source);
 
 	/**
 	 * A string literal expression.
@@ -321,7 +337,8 @@ public interface ModelFactory {
 	 *            The string.
 	 * @return The string literal expression.
 	 */
-	StringLiteralExpression stringLiteralExpression(String value);
+	StringLiteralExpression stringLiteralExpression(CIVLSource source,
+			String value);
 
 	/**
 	 * An expression for an array index operation. e.g. a[i]
@@ -332,15 +349,15 @@ public interface ModelFactory {
 	 *            An expression evaluating to an integer.
 	 * @return The array index expression.
 	 */
-	SubscriptExpression subscriptExpression(LHSExpression array,
-			Expression index);
+	SubscriptExpression subscriptExpression(CIVLSource source,
+			LHSExpression array, Expression index);
 
 	/**
 	 * A self expression. Used to referenced the current process.
 	 * 
 	 * @return A new self expression.
 	 */
-	SelfExpression selfExpression();
+	SelfExpression selfExpression(CIVLSource source);
 
 	/**
 	 * A variable expression.
@@ -349,7 +366,7 @@ public interface ModelFactory {
 	 *            The variable being referenced.
 	 * @return The variable expression.
 	 */
-	VariableExpression variableExpression(Variable variable);
+	VariableExpression variableExpression(CIVLSource source, Variable variable);
 
 	/**
 	 * Returns a new dereference expression (*p) with operand pointer.
@@ -359,7 +376,8 @@ public interface ModelFactory {
 	 *            pointer type
 	 * @return the dereference expression with given operand
 	 */
-	DereferenceExpression dereferenceExpression(Expression pointer);
+	DereferenceExpression dereferenceExpression(CIVLSource source,
+			Expression pointer);
 
 	/**
 	 * Returns a new address-of expression (&e) with given operand.
@@ -368,7 +386,8 @@ public interface ModelFactory {
 	 *            the operand of the address-of operator
 	 * @return the address-of expression with given operand
 	 */
-	AddressOfExpression addressOfExpression(LHSExpression operand);
+	AddressOfExpression addressOfExpression(CIVLSource source,
+			LHSExpression operand);
 
 	/* *********************************************************************
 	 * Statements
@@ -384,7 +403,8 @@ public interface ModelFactory {
 	 *            The expression being asserted.
 	 * @return A new assert statement.
 	 */
-	AssertStatement assertStatement(Location source, Expression expression);
+	AssertStatement assertStatement(CIVLSource civlSource, Location source,
+			Expression expression);
 
 	/**
 	 * An assignment statement.
@@ -397,8 +417,8 @@ public interface ModelFactory {
 	 *            The right hand side of the assignment.
 	 * @return A new assignment statement.
 	 */
-	AssignStatement assignStatement(Location source, LHSExpression lhs,
-			Expression rhs);
+	AssignStatement assignStatement(CIVLSource civlSource, Location source,
+			LHSExpression lhs, Expression rhs);
 
 	/**
 	 * An assume statement.
@@ -409,7 +429,8 @@ public interface ModelFactory {
 	 *            The expression being added to the path condition.
 	 * @return A new assume statement.
 	 */
-	AssumeStatement assumeStatement(Location source, Expression expression);
+	AssumeStatement assumeStatement(CIVLSource civlSource, Location source,
+			Expression expression);
 
 	/**
 	 * A choose statement is of the form x = choose(n);
@@ -426,8 +447,8 @@ public interface ModelFactory {
 	 *            The argument to choose().
 	 * @return A new choose statement.
 	 */
-	ChooseStatement chooseStatement(Location source, LHSExpression lhs,
-			Expression argument);
+	ChooseStatement chooseStatement(CIVLSource civlSource, Location source,
+			LHSExpression lhs, Expression argument);
 
 	/**
 	 * A fork statement. Used to spawn a new process.
@@ -442,8 +463,9 @@ public interface ModelFactory {
 	 *            The arguments to the function.
 	 * @return A new fork statement.
 	 */
-	CallOrSpawnStatement callOrSpawnStatement(Location source, boolean isCall,
-			Function function, Vector<Expression> arguments);
+	CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
+			Location source, boolean isCall, Function function,
+			Vector<Expression> arguments);
 
 	/**
 	 * A join statement. Used to wait for a process to complete.
@@ -454,7 +476,8 @@ public interface ModelFactory {
 	 *            An expression evaluating to a process.
 	 * @return A new join statement.
 	 */
-	WaitStatement joinStatement(Location source, Expression process);
+	WaitStatement joinStatement(CIVLSource civlSource, Location source,
+			Expression process);
 
 	/**
 	 * A noop statement.
@@ -463,7 +486,7 @@ public interface ModelFactory {
 	 *            The source location for this noop statement.
 	 * @return A new noop statement.
 	 */
-	NoopStatement noopStatement(Location source);
+	NoopStatement noopStatement(CIVLSource civlSource, Location source);
 
 	/**
 	 * A return statement.
@@ -474,6 +497,7 @@ public interface ModelFactory {
 	 *            The expression being returned. Null if non-existent.
 	 * @return A new return statement.
 	 */
-	ReturnStatement returnStatement(Location source, Expression expression);
+	ReturnStatement returnStatement(CIVLSource civlSource, Location source,
+			Expression expression);
 
 }

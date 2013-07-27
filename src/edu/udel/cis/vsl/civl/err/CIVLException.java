@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.err;
 
-import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 
 /**
  * Root of CIVL exception hierarchy, representing any kind of event where
@@ -20,9 +20,9 @@ public class CIVLException extends RuntimeException {
 	 * Source coe element that led to exception, for error reporting. May be
 	 * null.
 	 */
-	private Source source;
+	private CIVLSource source;
 
-	public CIVLException(String message, Source source) {
+	public CIVLException(String message, CIVLSource source) {
 		super(message);
 		assert message != null;
 		this.source = source;

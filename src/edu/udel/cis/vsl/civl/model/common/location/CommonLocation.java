@@ -7,12 +7,13 @@ import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Set;
 
-import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
  * The parent of all locations.
@@ -20,7 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonLocation implements Location {
+public class CommonLocation extends CommonSourceable implements Location {
 
 	private int id;
 	private Scope scope;
@@ -36,7 +37,8 @@ public class CommonLocation implements Location {
 	 * @param id
 	 *            The unique id of this location.
 	 */
-	public CommonLocation(Scope scope, int id) {
+	public CommonLocation(CIVLSource source, Scope scope, int id) {
+		super(source);
 		this.scope = scope;
 		this.id = id;
 		this.function = scope.function();
@@ -198,7 +200,7 @@ public class CommonLocation implements Location {
 		}
 		throw new CIVLInternalException(
 				"Expected 1 outgoing transition but saw 0 at " + this
-						+ " in function " + function, (Source) null);
+						+ " in function " + function, this.getSource());
 	}
 
 }

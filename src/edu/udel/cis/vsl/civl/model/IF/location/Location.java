@@ -6,8 +6,10 @@ package edu.udel.cis.vsl.civl.model.IF.location;
 import java.io.PrintStream;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
 /**
@@ -16,7 +18,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface Location {
+public interface Location extends Sourceable {
 	/**
 	 * @return The unique ID number of this location.
 	 */

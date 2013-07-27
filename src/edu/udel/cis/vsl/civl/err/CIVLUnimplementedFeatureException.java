@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.err;
 
-import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 
 /**
@@ -15,7 +15,7 @@ public class CIVLUnimplementedFeatureException extends CIVLException {
 	/** Generated ID. */
 	private static final long serialVersionUID = -4225986290508573575L;
 
-	public CIVLUnimplementedFeatureException(String feature, Source source) {
+	public CIVLUnimplementedFeatureException(String feature, CIVLSource source) {
 		super("This feature is not yet implemented: " + feature, source);
 	}
 
@@ -25,7 +25,7 @@ public class CIVLUnimplementedFeatureException extends CIVLException {
 	}
 
 	public CIVLUnimplementedFeatureException(String feature) {
-		this(feature, (Source) null);
+		this(feature, (CIVLSource) null);
 	}
 
 }

@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -26,7 +27,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonFunction implements Function{
+public class CommonFunction extends CommonSourceable implements Function {
 
 	private Identifier name;
 	private Vector<Variable> parameters;
@@ -55,15 +56,16 @@ public class CommonFunction implements Function{
 	 * @param startLocation
 	 *            The first location in the function.
 	 */
-	public CommonFunction(Identifier name, Vector<Variable> parameters,
-			CIVLType returnType, Scope containingScope, Location startLocation,
-			ModelFactory factory) {
+	public CommonFunction(CIVLSource source, Identifier name,
+			Vector<Variable> parameters, CIVLType returnType,
+			Scope containingScope, Location startLocation, ModelFactory factory) {
+		super(source);
 		this.name = name;
 		this.parameters = parameters;
 		this.returnType = returnType;
 		this.containingScope = containingScope;
 		scopes = new HashSet<Scope>();
-		outerScope = factory.scope(containingScope,
+		outerScope = factory.scope(source, containingScope,
 				new LinkedHashSet<Variable>(), this);
 		for (Variable variable : parameters) {
 			outerScope.addVariable(variable);

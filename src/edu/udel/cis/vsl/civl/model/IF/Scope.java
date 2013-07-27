@@ -15,7 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface Scope {
+public interface Scope extends Sourceable {
 
 	/**
 	 * @return The containing scope of this scope.

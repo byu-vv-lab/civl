@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -40,9 +41,9 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
-	public CommonCallStatement(Location source, boolean isCall,
-			Function function, Vector<Expression> arguments) {
-		super(source);
+	public CommonCallStatement(CIVLSource civlSource, Location source,
+			boolean isCall, Function function, Vector<Expression> arguments) {
+		super(civlSource, source);
 		this.isCall = isCall;
 		this.function = function;
 		this.arguments = arguments;
@@ -61,9 +62,9 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
-	public CommonCallStatement(Location source, LHSExpression lhs,
-			Function function, Vector<Expression> arguments) {
-		super(source);
+	public CommonCallStatement(CIVLSource civlSource, Location source,
+			LHSExpression lhs, Function function, Vector<Expression> arguments) {
+		super(civlSource, source);
 		this.lhs = lhs;
 		this.function = function;
 		this.arguments = arguments;

@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 
@@ -27,7 +28,9 @@ public class CommonUnaryExpression extends CommonExpression implements
 	 * @param operand
 	 *            The left operand.
 	 */
-	public CommonUnaryExpression(UNARY_OPERATOR operator, Expression operand) {
+	public CommonUnaryExpression(CIVLSource source, UNARY_OPERATOR operator,
+			Expression operand) {
+		super(source);
 		this.operator = operator;
 		this.operand = operand;
 	}

@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 
@@ -8,7 +9,8 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 	private Expression pointer;
 
-	public CommonDereferenceExpression(Expression pointer) {
+	public CommonDereferenceExpression(CIVLSource source, Expression pointer) {
+		super(source);
 		this.pointer = pointer;
 	}
 

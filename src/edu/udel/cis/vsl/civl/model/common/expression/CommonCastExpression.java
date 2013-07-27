@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -27,7 +28,9 @@ public class CommonCastExpression extends CommonExpression implements
 	 * @param expression
 	 *            The expression being cast to a new type.
 	 */
-	public CommonCastExpression(CIVLType type, Expression expression) {
+	public CommonCastExpression(CIVLSource source, CIVLType type,
+			Expression expression) {
+		super(source);
 		this.type = type;
 		this.expression = expression;
 	}

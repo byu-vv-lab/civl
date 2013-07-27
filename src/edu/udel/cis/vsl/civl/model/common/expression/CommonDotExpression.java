@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 
@@ -24,7 +25,9 @@ public class CommonDotExpression extends CommonExpression implements
 	 * @param field
 	 *            The field referenced by this dot expression.
 	 */
-	public CommonDotExpression(Expression struct, int fieldIndex) {
+	public CommonDotExpression(CIVLSource source, Expression struct,
+			int fieldIndex) {
+		super(source);
 		this.struct = struct;
 		this.fieldIndex = fieldIndex;
 	}

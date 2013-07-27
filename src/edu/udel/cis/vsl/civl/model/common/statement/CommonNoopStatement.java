@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 
@@ -21,8 +22,8 @@ public class CommonNoopStatement extends CommonStatement implements
 	 * @param source
 	 *            The source location for this noop.
 	 */
-	public CommonNoopStatement(Location source) {
-		super(source);
+	public CommonNoopStatement(CIVLSource civlSource, Location source) {
+		super(civlSource, source);
 	}
 
 	@Override

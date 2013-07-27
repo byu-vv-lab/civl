@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 
 /**
@@ -19,7 +20,8 @@ public class CommonSelfExpression extends CommonExpression implements
 	 * Self expression. Returns a reference to the process in which the
 	 * expression is evaluated.
 	 */
-	public CommonSelfExpression() {
+	public CommonSelfExpression(CIVLSource source) {
+		super(source);
 	}
 
 	@Override

@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -38,9 +39,9 @@ public class CommonChooseStatement extends CommonAssignStatement implements
 	 * @param argument
 	 *            The argument to choose().
 	 */
-	public CommonChooseStatement(Location source, LHSExpression lhs,
-			Expression argument, int chooseID) {
-		super(source, lhs, argument);
+	public CommonChooseStatement(CIVLSource civlSource, Location source,
+			LHSExpression lhs, Expression argument, int chooseID) {
+		super(civlSource, source, lhs, argument);
 		this.chooseID = chooseID;
 	}
 

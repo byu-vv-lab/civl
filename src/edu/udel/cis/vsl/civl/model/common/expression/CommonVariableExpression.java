@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -23,7 +24,8 @@ public class CommonVariableExpression extends CommonExpression implements
 	 * @param variable
 	 *            The variable.
 	 */
-	public CommonVariableExpression(Variable variable) {
+	public CommonVariableExpression(CIVLSource source, Variable variable) {
+		super(source);
 		this.variable = variable;
 	}
 

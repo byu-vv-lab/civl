@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 
@@ -30,8 +31,9 @@ public class CommonBinaryExpression extends CommonExpression implements
 	 * @param right
 	 *            The right operand.
 	 */
-	public CommonBinaryExpression(BINARY_OPERATOR operator, Expression left,
-			Expression right) {
+	public CommonBinaryExpression(CIVLSource source, BINARY_OPERATOR operator,
+			Expression left, Expression right) {
+		super(source);
 		this.operator = operator;
 		this.left = left;
 		this.right = right;

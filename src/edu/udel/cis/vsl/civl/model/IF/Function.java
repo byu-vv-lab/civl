@@ -19,7 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface Function {
+public interface Function extends Sourceable {
 
 	/**
 	 * @return The name of this function.
@@ -169,5 +169,5 @@ public interface Function {
 	 * @return Is this the outermost function?
 	 */
 	public boolean isSystem();
-	
+
 }

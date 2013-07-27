@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -22,7 +23,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 
 	private Location source;
 	private Location target;
-	private Expression guard = new CommonBooleanLiteralExpression(true);
+	private Expression guard;
 	protected Scope statementScope = null;
 
 	/**
@@ -31,8 +32,10 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	 * @param source
 	 *            The location that is the source of this statement.
 	 */
-	public CommonStatement(Location source) {
+	public CommonStatement(CIVLSource civlSource, Location source) {
+		super(civlSource);
 		this.source = source;
+		guard = new CommonBooleanLiteralExpression(civlSource, true);
 		source.addOutgoing(this);
 	}
 

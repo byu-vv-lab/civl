@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
@@ -26,8 +27,9 @@ public class CommonReturnStatement extends CommonStatement implements
 	 * @param expression
 	 *            The expression being returned. Null if non-existent.
 	 */
-	public CommonReturnStatement(Location source, Expression expression) {
-		super(source);
+	public CommonReturnStatement(CIVLSource civlSource, Location source,
+			Expression expression) {
+		super(civlSource, source);
 		this.expression = expression;
 	}
 

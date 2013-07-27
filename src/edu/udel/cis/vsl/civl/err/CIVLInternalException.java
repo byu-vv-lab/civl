@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.err;
 
-import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 
 /**
@@ -17,7 +17,7 @@ public class CIVLInternalException extends CIVLException {
 	 */
 	private static final long serialVersionUID = 6522079858283496490L;
 
-	public CIVLInternalException(String s, Source source) {
+	public CIVLInternalException(String s, CIVLSource source) {
 		super("A CIVL internal error has occurred.\n"
 				+ "Please send an error report to civl-dev@udel.edu.\n" + s,
 				source);

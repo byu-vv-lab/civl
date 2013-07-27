@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -30,9 +31,9 @@ public class CommonAssignStatement extends CommonStatement implements
 	 * @param rhs
 	 *            The right hand side of the assignment.
 	 */
-	public CommonAssignStatement(Location source, LHSExpression lhs,
-			Expression rhs) {
-		super(source);
+	public CommonAssignStatement(CIVLSource civlSource, Location source,
+			LHSExpression lhs, Expression rhs) {
+		super(civlSource, source);
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}

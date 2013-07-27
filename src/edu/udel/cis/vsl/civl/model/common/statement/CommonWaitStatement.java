@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -26,8 +27,9 @@ public class CommonWaitStatement extends CommonStatement implements
 	 * @param process
 	 *            A reference to the process.
 	 */
-	public CommonWaitStatement(Location source, Expression process) {
-		super(source);
+	public CommonWaitStatement(CIVLSource civlSource, Location source,
+			Expression process) {
+		super(civlSource, source);
 		this.process = process;
 	}
 

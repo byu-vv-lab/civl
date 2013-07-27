@@ -72,10 +72,12 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.abc.token.IF.CToken;
+import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -83,6 +85,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
+import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -111,15 +114,14 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
  * 
  * Add void type and use it.
  * 
- * Make a CIVLSource and CIVLSourceable.  One implementation will
- * be CIVL_ABC_Source which wraps an ABC Source.  Constructors
- * to all CIVL model statements, expressions, ..., must take a source.
+ * Make a CIVLSource and Sourceable. One implementation will be CIVL_ABC_Source
+ * which wraps an ABC Source. Constructors to all CIVL model statements,
+ * expressions, ..., must take a source.
  * 
- * Following will implement CIVLSourceable:
- * Function, Identifier, Scope, Expression, Location, Statement, Variable.
- * Type: no, because want two types to be the same (equal).
- * Make CIVLSourceable first argument to every construct. Update
- * model factory as well.  Add method source(ASTNode) in model builder
+ * Following will implement CIVLSourceable: Function, Identifier, Scope,
+ * Expression, Location, Statement, Variable. Type: no, because want two types
+ * to be the same (equal). Make CIVLSource first argument to every construct.
+ * Update model factory as well. Add method source(ASTNode) in model builder
  * worker to create a CIVLSource from an ASTNode (wrap it).
  * 
  * 
@@ -131,6 +133,8 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 public class ModelBuilderWorker {
 
 	// Fields..............................................................
+
+	private TokenFactory tokenFactory;
 
 	/**
 	 * The factory used to create new Model components.
@@ -210,12 +214,44 @@ public class ModelBuilderWorker {
 	 * 
 	 */
 	public ModelBuilderWorker(ModelFactory factory, Program program) {
+		// how to get the token factory: from Activator, get Preprocessor,
+		// then getTokenFactory().
+		// from program , getAST, get ASTFactory, getTokenFactory
 		this.factory = factory;
 		this.program = program;
+		// TODO: put this into Program.
+		// and rename getUnitFactory getASTFactory please
+		this.tokenFactory = program.getAST().getUnitFactory().getTokenFactory();
 		setUpSystemFunctions();
 	}
 
 	// Helper methods......................................................
+
+	private CIVLSource sourceOfToken(CToken token) {
+		return new ABC_CIVLSource(tokenFactory.newSource(token));
+	}
+
+	private CIVLSource sourceOf(ASTNode node) {
+		return new ABC_CIVLSource(node.getSource());
+	}
+
+	private CIVLSource sourceOfBeginning(ASTNode node) {
+		return sourceOfToken(node.getSource().getFirstToken());
+	}
+
+	private CIVLSource sourceOfEnd(ASTNode node) {
+		return sourceOfToken(node.getSource().getLastToken());
+	}
+
+	private boolean isTrue(Expression expression) {
+		return expression instanceof BooleanLiteralExpression
+				&& ((BooleanLiteralExpression) expression).value();
+	}
+
+	private boolean isFalse(Expression expression) {
+		return expression instanceof BooleanLiteralExpression
+				&& !((BooleanLiteralExpression) expression).value();
+	}
 
 	/**
 	 * Is the given (static) model type the integer type?
@@ -255,12 +291,14 @@ public class ModelBuilderWorker {
 	 * construction of these system functions?
 	 */
 	private void setUpSystemFunctions() {
-		SystemFunction malloc = factory.systemFunction(factory
-				.identifier("$malloc"));
-		SystemFunction free = factory.systemFunction(factory
-				.identifier("$free"));
-		SystemFunction printf = factory.systemFunction(factory
-				.identifier("printf"));
+		// actually the source object should be taken from
+		// the header file civlc.h
+		SystemFunction malloc = factory.systemFunction(factory.identifier(
+				factory.systemSource(), "$malloc"));
+		SystemFunction free = factory.systemFunction(factory.identifier(
+				factory.systemSource(), "$free"));
+		SystemFunction printf = factory.systemFunction(factory.identifier(
+				factory.systemSource(), "printf"));
 
 		malloc.setLibrary("civlc");
 		free.setLibrary("civlc");
@@ -283,31 +321,40 @@ public class ModelBuilderWorker {
 	private Function processFunction(FunctionDefinitionNode functionNode,
 			Scope scope) {
 		Function result;
-		Identifier name = factory.identifier(functionNode.getName());
+		Identifier name = factory.identifier(
+				sourceOf(functionNode.getIdentifier()), functionNode.getName());
 		Vector<Variable> parameters = new Vector<Variable>();
 		FunctionTypeNode functionTypeNode = functionNode.getTypeNode();
 		CIVLType returnType = translateTypeNode(functionTypeNode
 				.getReturnType());
 		Statement body;
+		SequenceNode<VariableDeclarationNode> abcParameters = functionTypeNode
+				.getParameters();
+		int numParameters = abcParameters.numChildren();
 
 		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
-		for (int i = 0; i < functionTypeNode.getParameters().numChildren(); i++) {
-			CIVLType type = translateTypeNode(functionTypeNode.getParameters()
-					.getSequenceChild(i).getTypeNode());
-			Identifier variableName = factory.identifier(functionTypeNode
-					.getParameters().getSequenceChild(i).getName());
+		for (int i = 0; i < numParameters; i++) {
+			VariableDeclarationNode decl = abcParameters.getSequenceChild(i);
+			CIVLType type = translateTypeNode(decl.getTypeNode());
+			CIVLSource source = sourceOf(decl.getIdentifier());
+			Identifier variableName = factory
+					.identifier(source, decl.getName());
 
-			parameters.add(factory.variable(type, variableName,
+			parameters.add(factory.variable(source, type, variableName,
 					parameters.size()));
 		}
-		result = factory.function(name, parameters, returnType, scope, null);
+		result = factory.function(sourceOf(functionNode), name, parameters,
+				returnType, scope, null);
 		body = statement(result, null, functionNode.getBody(),
 				result.outerScope());
 		if (!(body instanceof ReturnStatement)) {
-			Location returnLocation = factory.location(result.outerScope());
+			// would like to get source of closing "}"?
+			CIVLSource endSource = sourceOfEnd(functionNode.getBody());
+			Location returnLocation = factory.location(endSource,
+					result.outerScope());
 			ReturnStatement returnStatement = factory.returnStatement(
-					returnLocation, null);
+					endSource, returnLocation, null);
 
 			body.setTarget(returnLocation);
 			result.addLocation(returnLocation);
@@ -331,8 +378,10 @@ public class ModelBuilderWorker {
 	private void processVariableDeclaration(Scope scope,
 			VariableDeclarationNode node) {
 		CIVLType type = translateTypeNode(node.getTypeNode());
-		Identifier name = factory.identifier(node.getName());
-		Variable variable = factory.variable(type, name, scope.numVariables());
+		Identifier name = factory.identifier(sourceOf(node.getIdentifier()),
+				node.getName());
+		Variable variable = factory.variable(sourceOf(node.getIdentifier()),
+				type, name, scope.numVariables());
 
 		if (type instanceof CIVLArrayType) {
 			ExpressionNode extentNode = ((ArrayTypeNode) node.getTypeNode())
@@ -348,11 +397,10 @@ public class ModelBuilderWorker {
 			variable.setIsExtern(true);
 		}
 		scope.addVariable(variable);
-		variable.setNode(node);
 	}
 
 	private CIVLType translateBasicType(StandardBasicType basicType,
-			Source source) {
+			CIVLSource source) {
 		switch (basicType.getBasicTypeKind()) {
 		case SHORT:
 		case UNSIGNED_SHORT:
@@ -382,7 +430,7 @@ public class ModelBuilderWorker {
 	}
 
 	private CIVLType translateStructureOrUnion(StructureOrUnionType type,
-			Source source) {
+			CIVLSource source) {
 		// TODO: break cycles. break into two parts.
 		// first create the incomplete type and put in map.
 		// then complete it.
@@ -406,13 +454,15 @@ public class ModelBuilderWorker {
 				String name = field.getName();
 				Type fieldType = field.getType();
 				CIVLType civlFieldType = translateType(fieldType, source);
-				Identifier identifier = factory.identifier(name);
+				Identifier identifier = factory.identifier(sourceOf(field
+						.getDefinition().getIdentifier()), name);
 				StructField civlField = factory.structField(identifier,
 						civlFieldType);
 
 				civlFields.add(civlField);
 			}
-			return factory.structType(factory.identifier(tag), civlFields);
+			return factory.structType(factory.identifier(source, tag),
+					civlFields);
 		}
 	}
 
@@ -422,7 +472,7 @@ public class ModelBuilderWorker {
 	 * @param abcType
 	 * @return
 	 */
-	private CIVLType translateType(Type abcType, Source source) {
+	private CIVLType translateType(Type abcType, CIVLSource source) {
 		CIVLType result = typeMap.get(abcType);
 
 		if (result == null) {
@@ -483,83 +533,8 @@ public class ModelBuilderWorker {
 	}
 
 	private CIVLType translateTypeNode(TypeNode typeNode) {
-		return translateType(typeNode.getType(), typeNode.getSource());
+		return translateType(typeNode.getType(), sourceOf(typeNode));
 	}
-
-	// /**
-	// * Translates an AST type node to a Model Type. TODO: Why??? Why not use a
-	// * CIVL Type instead?
-	// *
-	// * @param typeNode
-	// * AST type node
-	// * @return the corresponding model Type
-	// */
-	// private CIVLType processType(TypeNode typeNode) {
-	// TypeNodeKind kind = typeNode.kind();
-	// CIVLType result;
-	//
-	// // TODO: deal with more types.
-	//
-	// if (kind == TypeNodeKind.VOID)
-	// result = null;
-	// else if (kind == TypeNodeKind.BASIC) {
-	// switch (((BasicTypeNode) typeNode).getBasicTypeKind()) {
-	// case SHORT:
-	// case UNSIGNED_SHORT:
-	// case INT:
-	// case UNSIGNED:
-	// case LONG:
-	// case UNSIGNED_LONG:
-	// case LONG_LONG:
-	// case UNSIGNED_LONG_LONG:
-	// return factory.integerType();
-	// case FLOAT:
-	// case DOUBLE:
-	// case LONG_DOUBLE:
-	// return factory.realType();
-	// case BOOL:
-	// return factory.booleanType();
-	// case CHAR:
-	// case DOUBLE_COMPLEX:
-	// case FLOAT_COMPLEX:
-	// case LONG_DOUBLE_COMPLEX:
-	// case SIGNED_CHAR:
-	// case UNSIGNED_CHAR:
-	// default:
-	// throw new CIVLUnimplementedFeatureException("types of kind "
-	// + typeNode.kind(), typeNode.getSource());
-	// }
-	// } else if (typeNode.kind() == TypeNodeKind.ARRAY) {
-	// return factory.arrayType(processType(((ArrayTypeNode) typeNode)
-	// .getElementType()));
-	// } else if (typeNode.kind() == TypeNodeKind.POINTER) {
-	// return factory.pointerType(processType(((PointerTypeNode) typeNode)
-	// .referencedType()));
-	// } else if (typeNode.kind() == TypeNodeKind.TYPEDEF_NAME) {
-	// return typedefMap
-	// .get(((TypedefNameNode) typeNode).getName().name());
-	// } else if (typeNode.kind() == TypeNodeKind.STRUCTURE_OR_UNION) {
-	// SequenceNode<FieldDeclarationNode> fieldNodes =
-	// ((StructureOrUnionTypeNode) typeNode)
-	// .getStructDeclList();
-	// List<StructField> fields = new Vector<StructField>();
-	// Identifier structName = factory
-	// .identifier(((StructureOrUnionTypeNode) typeNode).getTag()
-	// .name());
-	//
-	// for (int i = 0; i < fieldNodes.numChildren(); i++) {
-	// FieldDeclarationNode fieldNode = fieldNodes.getSequenceChild(i);
-	// Identifier name = factory.identifier(fieldNode.getName());
-	// CIVLType type = processType(fieldNode.getTypeNode());
-	//
-	// fields.add(factory.structField(name, type));
-	// }
-	// result = factory.structType(structName, fields);
-	// } else
-	// throw new CIVLUnimplementedFeatureException("types of kind "
-	// + typeNode.kind(), typeNode.getSource());
-	// return result;
-	// }
 
 	/* *********************************************************************
 	 * Expressions
@@ -590,16 +565,15 @@ public class ModelBuilderWorker {
 		} else if (expression instanceof ArrowNode) {
 			result = arrowExpression((ArrowNode) expression, scope);
 		} else if (expression instanceof ResultNode) {
-			result = factory.resultExpression();
+			result = factory.resultExpression(sourceOf(expression));
 		} else if (expression instanceof SelfNode) {
-			result = factory.selfExpression();
+			result = factory.selfExpression(sourceOf(expression));
 		} else if (expression instanceof CastNode) {
 			result = castExpression((CastNode) expression, scope);
 		} else
 			throw new CIVLUnimplementedFeatureException("expressions of type "
 					+ expression.getClass().getSimpleName(),
-					expression.getSource());
-		result.setNode(expression);
+					sourceOf(expression));
 		return result;
 	}
 
@@ -617,16 +591,19 @@ public class ModelBuilderWorker {
 
 		if (!result.getExpressionType().equals(factory.booleanType())) {
 			if (result.getExpressionType().equals(factory.integerType())) {
-				result = factory.binaryExpression(BINARY_OPERATOR.NOT_EQUAL,
-						result,
-						factory.integerLiteralExpression(BigInteger.ZERO));
+				result = factory.binaryExpression(sourceOf(expression),
+						BINARY_OPERATOR.NOT_EQUAL, result, factory
+								.integerLiteralExpression(sourceOf(expression),
+										BigInteger.ZERO));
 			} else if (result.getExpressionType().equals(factory.realType())) {
-				result = factory.binaryExpression(BINARY_OPERATOR.NOT_EQUAL,
-						result, factory.realLiteralExpression(BigDecimal.ZERO));
+				result = factory.binaryExpression(sourceOf(expression),
+						BINARY_OPERATOR.NOT_EQUAL, result, factory
+								.realLiteralExpression(sourceOf(expression),
+										BigDecimal.ZERO));
 			} else {
 				throw new CIVLInternalException(
 						"Unable to convert expression to boolean type",
-						expression.getSource());
+						sourceOf(expression));
 			}
 		}
 		return result;
@@ -646,7 +623,8 @@ public class ModelBuilderWorker {
 		CIVLType castType = translateTypeNode(expression.getCastType());
 		Expression castExpression = expression(expression.getArgument(), scope);
 
-		result = factory.castExpression(castType, castExpression);
+		result = factory.castExpression(sourceOf(expression), castType,
+				castExpression);
 		return result;
 	}
 
@@ -661,7 +639,7 @@ public class ModelBuilderWorker {
 		} else {
 			throw new CIVLInternalException(
 					"getFieldIndex given identifier that does not correspond to field: ",
-					fieldIdentifier.getSource());
+					sourceOf(fieldIdentifier));
 		}
 	}
 
@@ -678,7 +656,9 @@ public class ModelBuilderWorker {
 	private Expression arrowExpression(ArrowNode expression, Scope scope) {
 		Expression struct = expression(expression.getStructurePointer(), scope);
 		Expression result = factory.dotExpression(
-				factory.dereferenceExpression(struct),
+				sourceOf(expression),
+				factory.dereferenceExpression(
+						sourceOf(expression.getStructurePointer()), struct),
 				getFieldIndex(expression.getFieldName()));
 
 		return result;
@@ -695,7 +675,7 @@ public class ModelBuilderWorker {
 	 */
 	private Expression dotExpression(DotNode expression, Scope scope) {
 		Expression struct = expression(expression.getStructure(), scope);
-		Expression result = factory.dotExpression(struct,
+		Expression result = factory.dotExpression(sourceOf(expression), struct,
 				getFieldIndex(expression.getFieldName()));
 
 		return result;
@@ -720,21 +700,19 @@ public class ModelBuilderWorker {
 		CIVLType type = expression.getExpressionType();
 
 		if (type instanceof CIVLArrayType) {
+			CIVLSource source = expression.getSource();
 			CIVLArrayType arrayType = (CIVLArrayType) type;
 			CIVLType elementType = arrayType.baseType();
-			Expression zero = factory.integerLiteralExpression(BigInteger.ZERO);
-			LHSExpression subscript = factory.subscriptExpression(
+			Expression zero = factory.integerLiteralExpression(source,
+					BigInteger.ZERO);
+			LHSExpression subscript = factory.subscriptExpression(source,
 					(LHSExpression) expression, zero);
-			Expression pointer = factory.addressOfExpression(subscript);
+			Expression pointer = factory.addressOfExpression(source, subscript);
 			Scope scope = expression.expressionScope();
-			ASTNode node = expression.getNode();
 
 			zero.setExpressionScope(scope);
 			subscript.setExpressionScope(scope);
 			pointer.setExpressionScope(scope);
-			zero.setNode(node);
-			subscript.setNode(node);
-			pointer.setNode(node);
 			((CommonExpression) zero).setExpressionType(factory.integerType());
 			((CommonExpression) subscript).setExpressionType(elementType);
 			((CommonExpression) pointer).setExpressionType(factory
@@ -768,7 +746,8 @@ public class ModelBuilderWorker {
 				throw new CIVLInternalException(
 						"Expected expression with array type to be LHS",
 						lhs.getSource());
-			result = factory.subscriptExpression((LHSExpression) lhs, rhs);
+			result = factory.subscriptExpression(sourceOf(subscriptNode),
+					(LHSExpression) lhs, rhs);
 		} else {
 			CIVLType rhsType = rhs.getExpressionType();
 			Expression pointerExpr, indexExpr;
@@ -790,9 +769,9 @@ public class ModelBuilderWorker {
 			} else
 				throw new CIVLInternalException(
 						"Expected one argument of integer type and one of pointer type",
-						subscriptNode.getSource());
-			result = factory.binaryExpression(BINARY_OPERATOR.POINTER_ADD,
-					pointerExpr, indexExpr);
+						sourceOf(subscriptNode));
+			result = factory.binaryExpression(sourceOf(subscriptNode),
+					BINARY_OPERATOR.POINTER_ADD, pointerExpr, indexExpr);
 		}
 		return result;
 	}
@@ -807,6 +786,7 @@ public class ModelBuilderWorker {
 	 * @return The model representation of the expression.
 	 */
 	private Expression operator(OperatorNode expression, Scope scope) {
+		CIVLSource source = sourceOf(expression);
 		Operator operator = expression.getOperator();
 
 		if (operator == Operator.SUBSCRIPT)
@@ -826,62 +806,67 @@ public class ModelBuilderWorker {
 		}
 		switch (expression.getOperator()) {
 		case ADDRESSOF:
-			result = factory.addressOfExpression((LHSExpression) arguments
-					.get(0));
+			result = factory.addressOfExpression(source,
+					(LHSExpression) arguments.get(0));
 			break;
 		case DEREFERENCE:
-			result = factory.dereferenceExpression(arguments.get(0));
+			result = factory.dereferenceExpression(source, arguments.get(0));
 			break;
 		case CONDITIONAL:
-			result = factory.conditionalExpression(arguments.get(0),
+			result = factory.conditionalExpression(source, arguments.get(0),
 					arguments.get(1), arguments.get(2));
 			break;
 		case DIV:
-			result = factory.binaryExpression(BINARY_OPERATOR.DIVIDE,
+			result = factory.binaryExpression(source, BINARY_OPERATOR.DIVIDE,
 					arguments.get(0), arguments.get(1));
 			break;
 		case EQUALS:
-			result = factory.binaryExpression(BINARY_OPERATOR.EQUAL,
+			result = factory.binaryExpression(source, BINARY_OPERATOR.EQUAL,
 					arguments.get(0), arguments.get(1));
 			break;
 		case GT:
-			result = factory.binaryExpression(BINARY_OPERATOR.LESS_THAN,
-					arguments.get(1), arguments.get(0));
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.LESS_THAN, arguments.get(1),
+					arguments.get(0));
 			break;
 		case GTE:
-			result = factory.binaryExpression(BINARY_OPERATOR.LESS_THAN_EQUAL,
-					arguments.get(1), arguments.get(0));
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.LESS_THAN_EQUAL, arguments.get(1),
+					arguments.get(0));
 			break;
 		case LAND:
-			result = factory.binaryExpression(BINARY_OPERATOR.AND,
+			result = factory.binaryExpression(source, BINARY_OPERATOR.AND,
 					arguments.get(0), arguments.get(1));
 			break;
 		case LOR:
-			result = factory.binaryExpression(BINARY_OPERATOR.OR,
+			result = factory.binaryExpression(source, BINARY_OPERATOR.OR,
 					arguments.get(0), arguments.get(1));
 			break;
 		case LT:
-			result = factory.binaryExpression(BINARY_OPERATOR.LESS_THAN,
-					arguments.get(0), arguments.get(1));
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.LESS_THAN, arguments.get(0),
+					arguments.get(1));
 			break;
 		case LTE:
-			result = factory.binaryExpression(BINARY_OPERATOR.LESS_THAN_EQUAL,
-					arguments.get(0), arguments.get(1));
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.LESS_THAN_EQUAL, arguments.get(0),
+					arguments.get(1));
 			break;
 		case MINUS:
-			result = factory.binaryExpression(BINARY_OPERATOR.MINUS,
+			result = factory.binaryExpression(source, BINARY_OPERATOR.MINUS,
 					arguments.get(0), arguments.get(1));
 			break;
 		case MOD:
-			result = factory.binaryExpression(BINARY_OPERATOR.MODULO,
+			result = factory.binaryExpression(source, BINARY_OPERATOR.MODULO,
 					arguments.get(0), arguments.get(1));
 			break;
 		case NEQ:
-			result = factory.binaryExpression(BINARY_OPERATOR.NOT_EQUAL,
-					arguments.get(0), arguments.get(1));
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.NOT_EQUAL, arguments.get(0),
+					arguments.get(1));
 			break;
 		case NOT:
-			result = factory.unaryExpression(UNARY_OPERATOR.NOT,
+			result = factory.unaryExpression(source, UNARY_OPERATOR.NOT,
 					arguments.get(0));
 			break;
 		case PLUS: {
@@ -893,8 +878,8 @@ public class ModelBuilderWorker {
 			boolean isNumeric1 = isNumericType(type1);
 
 			if (isNumeric0 && isNumeric1) {
-				result = factory.binaryExpression(BINARY_OPERATOR.PLUS, arg0,
-						arg1);
+				result = factory.binaryExpression(source, BINARY_OPERATOR.PLUS,
+						arg0, arg1);
 				break;
 			} else {
 				Expression pointer, offset;
@@ -907,8 +892,7 @@ public class ModelBuilderWorker {
 					offset = arg0;
 				} else
 					throw new CIVLInternalException(
-							"Expected at least one numeric argument",
-							expression.getSource());
+							"Expected at least one numeric argument", source);
 				if (!(pointer.getExpressionType() instanceof CIVLPointerType))
 					throw new CIVLInternalException(
 							"Expected expression of pointer type",
@@ -917,20 +901,19 @@ public class ModelBuilderWorker {
 					throw new CIVLInternalException(
 							"Expected expression of integer type",
 							offset.getSource());
-				result = factory.binaryExpression(BINARY_OPERATOR.POINTER_ADD,
-						pointer, offset);
+				result = factory.binaryExpression(source,
+						BINARY_OPERATOR.POINTER_ADD, pointer, offset);
 			}
 			break;
 		}
 		case SUBSCRIPT:
-			throw new CIVLInternalException("unreachable",
-					expression.getSource());
+			throw new CIVLInternalException("unreachable", source);
 		case TIMES:
-			result = factory.binaryExpression(BINARY_OPERATOR.TIMES,
+			result = factory.binaryExpression(source, BINARY_OPERATOR.TIMES,
 					arguments.get(0), arguments.get(1));
 			break;
 		case UNARYMINUS:
-			result = factory.unaryExpression(UNARY_OPERATOR.NEGATIVE,
+			result = factory.unaryExpression(source, UNARY_OPERATOR.NEGATIVE,
 					arguments.get(0));
 			break;
 		case UNARYPLUS:
@@ -946,25 +929,26 @@ public class ModelBuilderWorker {
 
 	private VariableExpression variableExpression(
 			IdentifierExpressionNode identifier, Scope scope) {
-		VariableExpression result = null;
-		Identifier name = factory.identifier(identifier.getIdentifier().name());
+		CIVLSource source = sourceOf(identifier);
+		Identifier name = factory.identifier(source, identifier.getIdentifier()
+				.name());
+		VariableExpression result;
 
 		if (scope.variable(name) == null) {
-			throw new RuntimeException("No such variable "
-					+ identifier.getSource());
+			throw new CIVLInternalException("No such variable ", source);
 		}
-		result = factory.variableExpression(scope.variable(name));
+		result = factory.variableExpression(source, scope.variable(name));
 		return result;
 	}
 
 	private Expression constant(ConstantNode constant) {
-		LiteralExpression result = null;
-		edu.udel.cis.vsl.abc.ast.type.IF.Type convertedType = constant
-				.getConvertedType();
+		CIVLSource source = sourceOf(constant);
+		Type convertedType = constant.getConvertedType();
+		LiteralExpression result;
 
 		if (convertedType.kind() == TypeKind.PROCESS) {
 			assert constant.getStringRepresentation().equals("$self");
-			return factory.selfExpression();
+			return factory.selfExpression(source);
 		}
 		assert convertedType.kind() == TypeKind.BASIC;
 		switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
@@ -976,14 +960,16 @@ public class ModelBuilderWorker {
 		case UNSIGNED_LONG:
 		case LONG_LONG:
 		case UNSIGNED_LONG_LONG:
-			result = factory.integerLiteralExpression(BigInteger.valueOf(Long
-					.parseLong(constant.getStringRepresentation())));
+			result = factory.integerLiteralExpression(source,
+					BigInteger.valueOf(Long.parseLong(constant
+							.getStringRepresentation())));
 			break;
 		case FLOAT:
 		case DOUBLE:
 		case LONG_DOUBLE:
-			result = factory.realLiteralExpression(BigDecimal.valueOf(Double
-					.parseDouble(constant.getStringRepresentation())));
+			result = factory.realLiteralExpression(source, BigDecimal
+					.valueOf(Double.parseDouble(constant
+							.getStringRepresentation())));
 			break;
 		case BOOL:
 			boolean value;
@@ -1001,7 +987,7 @@ public class ModelBuilderWorker {
 				value = Boolean
 						.parseBoolean(constant.getStringRepresentation());
 			}
-			result = factory.booleanLiteralExpression(value);
+			result = factory.booleanLiteralExpression(source, value);
 			break;
 		default:
 			throw new RuntimeException(
@@ -1078,7 +1064,7 @@ public class ModelBuilderWorker {
 					(SwitchNode) statement, scope);
 		} else
 			throw new CIVLInternalException("Unknown statement kind",
-					statement.getSource());
+					sourceOf(statement));
 		function.addStatement(result);
 		return result;
 	}
@@ -1154,8 +1140,7 @@ public class ModelBuilderWorker {
 					(SwitchNode) statement, scope);
 		} else
 			throw new CIVLUnimplementedFeatureException("statements of type "
-					+ statement.getClass().getSimpleName(),
-					statement.getSource());
+					+ statement.getClass().getSimpleName(), sourceOf(statement));
 		function.addStatement(result);
 		return result;
 	}
@@ -1165,8 +1150,9 @@ public class ModelBuilderWorker {
 	 */
 	private Statement ifStatement(Function function, Statement lastStatement,
 			IfNode statement, Scope scope) {
-		return ifStatement(factory.location(scope), function, lastStatement,
-				statement, scope);
+		return ifStatement(
+				factory.location(sourceOfBeginning(statement), scope),
+				function, lastStatement, statement, scope);
 	}
 
 	private Statement ifStatement(Location location, Function function,
@@ -1174,8 +1160,8 @@ public class ModelBuilderWorker {
 		Expression expression = expression(statement.getCondition(), scope);
 		Statement trueBranch = statement(location, expression, function,
 				lastStatement, statement.getTrueBranch(), scope);
+		Location exitLocation = factory.location(sourceOfEnd(statement), scope);
 		Statement falseBranch;
-		Location exitLocation = factory.location(scope);
 		Statement result;
 
 		function.addLocation(location);
@@ -1185,20 +1171,19 @@ public class ModelBuilderWorker {
 			function.setStartLocation(location);
 		}
 		if (statement.getFalseBranch() == null) {
-			falseBranch = factory.noopStatement(location);
-			falseBranch.setGuard(factory.unaryExpression(UNARY_OPERATOR.NOT,
-					expression));
-			falseBranch.setNode(statement);
+			falseBranch = factory.noopStatement(sourceOfEnd(statement),
+					location);
+			falseBranch.setGuard(factory.unaryExpression(
+					expression.getSource(), UNARY_OPERATOR.NOT, expression));
 		} else {
-			falseBranch = statement(location,
-					factory.unaryExpression(UNARY_OPERATOR.NOT, expression),
+			falseBranch = statement(location, factory.unaryExpression(
+					expression.getSource(), UNARY_OPERATOR.NOT, expression),
 					function, lastStatement, statement.getFalseBranch(), scope);
 		}
 		function.addLocation(exitLocation);
 		trueBranch.setTarget(exitLocation);
 		falseBranch.setTarget(exitLocation);
-		result = factory.noopStatement(exitLocation);
-		result.setNode(statement);
+		result = factory.noopStatement(sourceOfEnd(statement), exitLocation);
 		return result;
 	}
 
@@ -1220,15 +1205,16 @@ public class ModelBuilderWorker {
 			AssumeNode statement, Scope scope) {
 		Statement result;
 		Expression expression = expression(statement.getExpression(), scope);
-		Location location = factory.location(scope);
+		Location location = factory.location(sourceOfBeginning(statement),
+				scope);
 
-		result = factory.assumeStatement(location, expression);
+		result = factory.assumeStatement(sourceOf(statement), location,
+				expression);
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
 		} else {
 			function.setStartLocation(location);
 		}
-		result.setNode(statement);
 		return result;
 	}
 
@@ -1248,18 +1234,19 @@ public class ModelBuilderWorker {
 	 */
 	private Statement assertStatement(Function function,
 			Statement lastStatement, AssertNode statement, Scope scope) {
-		Statement result;
 		Expression expression = expression(statement.getExpression(), scope);
-		Location location = factory.location(scope);
+		Location location = factory.location(sourceOfBeginning(statement),
+				scope);
+		Statement result;
 
 		function.addLocation(location);
-		result = factory.assertStatement(location, expression);
+		result = factory.assertStatement(sourceOf(statement), location,
+				expression);
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
 		} else {
 			function.setStartLocation(location);
 		}
-		result.setNode(statement);
 		return result;
 	}
 
@@ -1283,8 +1270,9 @@ public class ModelBuilderWorker {
 	private Statement expressionStatement(Function function,
 			Statement lastStatement, ExpressionStatementNode statement,
 			Scope scope) {
-		Location location = factory.location(scope);
-		Expression guard = factory.booleanLiteralExpression(true);
+		CIVLSource start = sourceOfBeginning(statement);
+		Location location = factory.location(start, scope);
+		Expression guard = factory.booleanLiteralExpression(start, true);
 
 		function.addLocation(location);
 		return expressionStatement(location, guard, function, lastStatement,
@@ -1324,13 +1312,12 @@ public class ModelBuilderWorker {
 		} else {
 			function.setStartLocation(location);
 		}
-		if (result.guard().equals(factory.booleanLiteralExpression(true))) {
+		if (isTrue(result.guard())) {
 			result.setGuard(guard);
-		} else if (!guard.equals(factory.booleanLiteralExpression(true))) {
-			result.setGuard(factory.binaryExpression(BINARY_OPERATOR.AND,
-					guard, result.guard()));
+		} else if (!isTrue(guard)) {
+			result.setGuard(factory.binaryExpression(guard.getSource(),
+					BINARY_OPERATOR.AND, guard, result.guard()));
 		}
-		result.setNode(statement);
 		return result;
 	}
 

@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 
@@ -27,8 +28,9 @@ public class CommonConditionalExpression extends CommonExpression implements
 	 * @param falseBranch
 	 *            The expression returned if the branch evaluates to false.
 	 */
-	public CommonConditionalExpression(Expression condition,
+	public CommonConditionalExpression(CIVLSource source, Expression condition,
 			Expression trueBranch, Expression falseBranch) {
+		super(source);
 		this.condition = condition;
 		this.trueBranch = trueBranch;
 		this.falseBranch = falseBranch;

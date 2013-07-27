@@ -3,24 +3,27 @@
  */
 package edu.udel.cis.vsl.civl.model.common;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 
 /**
- * An identifier.  Used for names of variables, functions, etc.
+ * An identifier. Used for names of variables, functions, etc.
  * 
  * @author Timothy K. Zirkel (zirkel)
- *
+ * 
  */
-public class CommonIdentifier implements Identifier {
+public class CommonIdentifier extends CommonSourceable implements Identifier {
 
 	private String name;
-	
+
 	/**
-	 * An identifier.  Used for names of variables, functions, etc.
+	 * An identifier. Used for names of variables, functions, etc.
 	 * 
-	 * @param name The name associated with this identifier.
+	 * @param name
+	 *            The name associated with this identifier.
 	 */
-	public CommonIdentifier(String name) {
+	public CommonIdentifier(CIVLSource source, String name) {
+		super(source);
 		this.name = name;
 	}
 
@@ -30,20 +33,23 @@ public class CommonIdentifier implements Identifier {
 	public String name() {
 		return name;
 	}
-	
+
 	/**
-	 * @param name The name associated with this identifier.
+	 * @param name
+	 *            The name associated with this identifier.
 	 */
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	@Override
 	public String toString() {
 		return name;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -54,7 +60,9 @@ public class CommonIdentifier implements Identifier {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -73,7 +81,5 @@ public class CommonIdentifier implements Identifier {
 			return false;
 		return true;
 	}
-	
-	
-	
+
 }

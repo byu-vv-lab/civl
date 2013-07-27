@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
@@ -29,7 +30,9 @@ public class CommonSubscriptExpression extends CommonExpression implements
 	 * @param index
 	 *            An expression evaluating to an integer.
 	 */
-	public CommonSubscriptExpression(LHSExpression array, Expression index) {
+	public CommonSubscriptExpression(CIVLSource source, LHSExpression array,
+			Expression index) {
+		super(source);
 		this.array = array;
 		this.index = index;
 	}

@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
@@ -13,7 +14,8 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
  * @author zirkel
  * 
  */
-public class CommonAssertStatement extends CommonStatement implements AssertStatement {
+public class CommonAssertStatement extends CommonStatement implements
+		AssertStatement {
 
 	private boolean isCollective = false;
 	private Expression expression;
@@ -24,8 +26,9 @@ public class CommonAssertStatement extends CommonStatement implements AssertStat
 	 * @param expression
 	 *            The expression being checked.
 	 */
-	public CommonAssertStatement(Location source, Expression expression) {
-		super(source);
+	public CommonAssertStatement(CIVLSource civlSource, Location source,
+			Expression expression) {
+		super(civlSource, source);
 		this.expression = expression;
 	}
 
@@ -62,7 +65,7 @@ public class CommonAssertStatement extends CommonStatement implements AssertStat
 	public void setExpression(Expression expression) {
 		this.expression = expression;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "$assert " + expression;
