@@ -136,7 +136,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * model components will be created.
 	 */
 	public CommonModelFactory() {
-		//super(civlSource);
+		// super(civlSource);
 		identifiers = new HashMap<String, Identifier>();
 		// ((CommonBooleanLiteralExpression) trueExpression)
 		// .setExpressionType(booleanType);
@@ -550,11 +550,11 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	public BooleanLiteralExpression booleanLiteralExpression(CIVLSource source,
 			boolean value) {
-		if (value) {
-			return new CommonBooleanLiteralExpression(source, true);
-		} else {
-			return new CommonBooleanLiteralExpression(source, false);
-		}
+		CommonBooleanLiteralExpression result;
+
+		result = new CommonBooleanLiteralExpression(source, value);
+		result.setExpressionType(booleanType);
+		return result;
 	}
 
 	/**
