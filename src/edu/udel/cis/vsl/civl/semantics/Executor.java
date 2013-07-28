@@ -153,12 +153,19 @@ public class Executor {
 		int vid = evaluator.getVariableId(source, pointer);
 		int sid = evaluator.getScopeId(source, pointer);
 		ReferenceExpression symRef = evaluator.getSymRef(pointer);
-		Evaluation eval = evaluator.dereference(source, state, pointer);
-		SymbolicExpression newVariableValue = symbolicUniverse.assign(
-				eval.value, symRef, value);
-		State result = stateFactory.setVariable(eval.state, vid, sid,
-				newVariableValue);
+		State result;
 
+		if (symRef.isIdentityReference()) {
+			result = stateFactory.setVariable(state, vid, sid, value);
+		} else {
+			SymbolicExpression oldVariableValue = state.getVariableValue(sid,
+					vid);
+			SymbolicExpression newVariableValue = symbolicUniverse.assign(
+					oldVariableValue, symRef, value);
+
+			result = stateFactory
+					.setVariable(state, vid, sid, newVariableValue);
+		}
 		return result;
 	}
 
@@ -320,7 +327,7 @@ public class Executor {
 	 */
 	private State executeReturn(State state, int pid, ReturnStatement statement) {
 		Expression expr = statement.expression();
-		Process process = state.process(pid);
+		Process process;
 		SymbolicExpression returnValue;
 
 		if (expr == null) {
@@ -332,6 +339,7 @@ public class Executor {
 			state = eval.state;
 		}
 		state = stateFactory.popCallStack(state, pid);
+		process = state.process(pid);
 		if (!process.hasEmptyStack()) {
 			StackEntry returnContext = process.peekStack();
 			Location returnLocation = returnContext.location();

@@ -1386,7 +1386,7 @@ public class ModelBuilderWorker {
 	 */
 	private Statement expressionStatement(Location location, Expression guard,
 			Function function, ExpressionNode expressionStatement, Scope scope) {
-		Statement result = null;
+		Statement result;
 
 		if (expressionStatement instanceof OperatorNode) {
 			OperatorNode expression = (OperatorNode) expressionStatement;

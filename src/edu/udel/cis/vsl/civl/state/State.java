@@ -346,6 +346,12 @@ public class State {
 		throw new IllegalArgumentException("Variable not in scope: " + variable);
 	}
 
+	public SymbolicExpression getVariableValue(int scopeId, int variableId) {
+		DynamicScope scope = getScope(scopeId);
+
+		return scope.getValue(variableId);
+	}
+
 	public SymbolicExpression valueOf(int pid, Variable variable) {
 		DynamicScope scope = getScope(pid, variable);
 		int variableID = scope.lexicalScope().getVid(variable);

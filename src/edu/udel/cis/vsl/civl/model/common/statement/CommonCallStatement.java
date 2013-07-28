@@ -125,6 +125,8 @@ public class CommonCallStatement extends CommonStatement implements
 	public String toString() {
 		String result = function.toString();
 
+		if (!isCall)
+			result = "$spawn " + result;
 		if (lhs != null) {
 			result = lhs + " = " + result;
 		}
