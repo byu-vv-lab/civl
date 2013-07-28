@@ -73,6 +73,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
+import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -155,7 +156,7 @@ public class ModelBuilderWorker {
 	 * The outermost scope of the model, root of the static scope tree, known as
 	 * the "system scope".
 	 */
-	private Scope systemScope;
+	// private Scope systemScope;
 
 	/**
 	 * Variable accumulates the AST definition node of every function definition
@@ -227,12 +228,16 @@ public class ModelBuilderWorker {
 
 	// Helper methods......................................................
 
+	private CIVLSource sourceOf(Source abcSource) {
+		return new ABC_CIVLSource(abcSource);
+	}
+
 	private CIVLSource sourceOfToken(CToken token) {
-		return new ABC_CIVLSource(tokenFactory.newSource(token));
+		return sourceOf(tokenFactory.newSource(token));
 	}
 
 	private CIVLSource sourceOf(ASTNode node) {
-		return new ABC_CIVLSource(node.getSource());
+		return sourceOf(node.getSource());
 	}
 
 	private CIVLSource sourceOfBeginning(ASTNode node) {
@@ -243,15 +248,28 @@ public class ModelBuilderWorker {
 		return sourceOfToken(node.getSource().getLastToken());
 	}
 
+	private CIVLSource sourceOfSpan(Source abcSource1, Source abcSource2) {
+		return sourceOf(tokenFactory.join(abcSource1, abcSource2));
+	}
+
+	private CIVLSource sourceOfSpan(ASTNode node1, ASTNode node2) {
+		return sourceOfSpan(node1.getSource(), node2.getSource());
+	}
+
+	private CIVLSource sourceOfSpan(CIVLSource source1, CIVLSource source2) {
+		return sourceOfSpan(((ABC_CIVLSource) source1).getABCSource(),
+				((ABC_CIVLSource) source2).getABCSource());
+	}
+
 	private boolean isTrue(Expression expression) {
 		return expression instanceof BooleanLiteralExpression
 				&& ((BooleanLiteralExpression) expression).value();
 	}
 
-	private boolean isFalse(Expression expression) {
-		return expression instanceof BooleanLiteralExpression
-				&& !((BooleanLiteralExpression) expression).value();
-	}
+	// private boolean isFalse(Expression expression) {
+	// return expression instanceof BooleanLiteralExpression
+	// && !((BooleanLiteralExpression) expression).value();
+	// }
 
 	/**
 	 * Is the given (static) model type the integer type?
@@ -1343,8 +1361,8 @@ public class ModelBuilderWorker {
 		for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
 			arguments.add(expression(callNode.getArgument(i), scope));
 		}
-		result = factory
-				.callOrSpawnStatement(location, isCall, null, arguments);
+		result = factory.callOrSpawnStatement(sourceOf(callNode), location,
+				isCall, null, arguments);
 		result.setLhs(lhs);
 		if (systemFunctions.containsKey(functionName)) {
 			((CallOrSpawnStatement) result).setFunction(systemFunctions
@@ -1353,7 +1371,6 @@ public class ModelBuilderWorker {
 			callStatements.put((CallOrSpawnStatement) result,
 					functionDefinition);
 		}
-		result.setNode(callNode);
 		return result;
 	}
 
@@ -1383,12 +1400,12 @@ public class ModelBuilderWorker {
 			case POSTDECREMENT:
 			case PREDECREMENT:
 				throw new CIVLInternalException("Side-effect not removed: ",
-						expression.getSource());
+						sourceOf(expression));
 			default:
 				// since side-effects have been removed,
 				// the only expressions remaining with side-effects
 				// are assignments. all others are equivalent to no-op
-				result = factory.noopStatement(location);
+				result = factory.noopStatement(sourceOf(expression), location);
 			}
 		} else if (expressionStatement instanceof SpawnNode) {
 			FunctionCallNode call = ((SpawnNode) expressionStatement).getCall();
@@ -1400,8 +1417,7 @@ public class ModelBuilderWorker {
 		} else
 			throw new CIVLInternalException(
 					"expression statement of this kind",
-					expressionStatement.getSource());
-		result.setNode(expressionStatement);
+					sourceOf(expressionStatement));
 		result.setGuard(guard);
 		return result;
 	}
@@ -1425,7 +1441,8 @@ public class ModelBuilderWorker {
 			ExpressionNode rhs, Scope scope) {
 		LHSExpression lhsExpression = (LHSExpression) expression(lhs, scope);
 
-		return assign(location, lhsExpression, rhs, scope);
+		return assign(sourceOfSpan(lhs, rhs), location, lhsExpression, rhs,
+				scope);
 	}
 
 	/**
@@ -1443,8 +1460,8 @@ public class ModelBuilderWorker {
 	 * @return The model representation of the assignment, which might also be a
 	 *         fork statement or function call.
 	 */
-	private Statement assign(Location location, LHSExpression lhs,
-			ExpressionNode rhs, Scope scope) {
+	private Statement assign(CIVLSource source, Location location,
+			LHSExpression lhs, ExpressionNode rhs, Scope scope) {
 		Statement result = null;
 
 		if (rhs instanceof FunctionCallNode) {
@@ -1454,9 +1471,8 @@ public class ModelBuilderWorker {
 			result = callOrSpawn(location, true, lhs,
 					((SpawnNode) rhs).getCall(), scope);
 		} else {
-			result = factory.assignStatement(location, lhs,
+			result = factory.assignStatement(lhs.getSource(), location, lhs,
 					arrayToPointer(expression(rhs, scope)));
-			result.setNode(rhs);
 		}
 		return result;
 	}
@@ -1472,8 +1488,8 @@ public class ModelBuilderWorker {
 	private Statement compoundStatement(Location location, Expression guard,
 			Function function, Statement lastStatement,
 			CompoundStatementNode statement, Scope scope) {
-		Scope newScope = factory.scope(scope, new LinkedHashSet<Variable>(),
-				function);
+		Scope newScope = factory.scope(sourceOf(statement), scope,
+				new LinkedHashSet<Variable>(), function);
 		boolean usedLocation = false;
 
 		// TODO: Handle everything that can be in here.
@@ -1481,25 +1497,27 @@ public class ModelBuilderWorker {
 			BlockItemNode node = statement.getSequenceChild(i);
 
 			if (node instanceof VariableDeclarationNode) {
-				InitializerNode init = ((VariableDeclarationNode) node)
-						.getInitializer();
-				processVariableDeclaration(newScope,
-						(VariableDeclarationNode) node);
+				VariableDeclarationNode decl = (VariableDeclarationNode) node;
+				InitializerNode init = decl.getInitializer();
+				IdentifierNode identifier = decl.getIdentifier();
+
+				processVariableDeclaration(newScope, decl);
 				if (init != null) {
 					// TODO: Handle compound initializers
 					Statement newStatement;
 
 					if (usedLocation || location == null) {
-						location = factory.location(newScope);
+						location = factory.location(sourceOfBeginning(init),
+								newScope);
 						usedLocation = true;
 					} else {
 						usedLocation = true;
 					}
-					newStatement = assign(location,
-							factory.variableExpression(newScope
-									.getVariable(newScope.numVariables() - 1)),
+					newStatement = assign(sourceOf(decl), location,
+							factory.variableExpression(sourceOf(identifier),
+									newScope.getVariable(newScope
+											.numVariables() - 1)),
 							(ExpressionNode) init, newScope);
-					newStatement.setNode(statement);
 
 					if (lastStatement != null) {
 						lastStatement.setTarget(location);
@@ -1527,14 +1545,16 @@ public class ModelBuilderWorker {
 				lastStatement = newStatement;
 			} else {
 				throw new CIVLUnimplementedFeatureException(
-						"Unsupported block element", node.getSource());
+						"Unsupported block element", sourceOf(node));
 			}
 		}
 		if (lastStatement == null) {
 			if (location == null) {
-				location = factory.location(newScope);
+				location = factory.location(sourceOfBeginning(statement),
+						newScope);
 			}
-			lastStatement = factory.noopStatement(location);
+			lastStatement = factory.noopStatement(location.getSource(),
+					location);
 			function.setStartLocation(location);
 		}
 		return lastStatement;
@@ -1542,18 +1562,31 @@ public class ModelBuilderWorker {
 
 	private Statement forLoop(Function function, Statement lastStatement,
 			ForLoopNode statement, Scope scope) {
-		return forLoop(factory.location(scope),
-				factory.booleanLiteralExpression(true), function,
+		CIVLSource startSource = sourceOfBeginning(statement);
+
+		return forLoop(factory.location(startSource, scope),
+				factory.booleanLiteralExpression(startSource, true), function,
 				lastStatement, statement, scope);
 	}
 
+	/**
+	 * 
+	 * @param location
+	 *            start location for the for loop
+	 * @param guard
+	 * @param function
+	 * @param lastStatement
+	 * @param statement
+	 * @param scope
+	 * @return
+	 */
 	private Statement forLoop(Location location, Expression guard,
 			Function function, Statement lastStatement, ForLoopNode statement,
 			Scope scope) {
 		ForLoopInitializerNode init = statement.getInitializer();
 		Statement initStatement = lastStatement;
-		Scope newScope = factory.scope(scope, new LinkedHashSet<Variable>(),
-				function);
+		Scope newScope = factory.scope(sourceOf(statement), scope,
+				new LinkedHashSet<Variable>(), function);
 		Statement loopBody;
 		Expression condition;
 		Statement incrementer;
@@ -1563,8 +1596,8 @@ public class ModelBuilderWorker {
 		if (init != null) {
 			if (init instanceof ExpressionNode) {
 				initStatement = expressionStatement(location,
-						factory.booleanLiteralExpression(true), function,
-						(ExpressionNode) init, scope);
+						factory.booleanLiteralExpression(sourceOf(init), true),
+						function, (ExpressionNode) init, scope);
 				initStatement.setGuard(guard);
 				if (lastStatement != null) {
 					lastStatement.setTarget(location);
@@ -1580,16 +1613,16 @@ public class ModelBuilderWorker {
 					// TODO: Double check this is a variable
 					processVariableDeclaration(newScope, declaration);
 					if (declaration.getInitializer() != null) {
-						initStatement = factory
-								.assignStatement(
-										location,
-										factory.variableExpression(newScope
-												.getVariable(newScope
-														.numVariables() - 1)),
-										expression((ExpressionNode) declaration
-												.getInitializer(), newScope));
+						initStatement = factory.assignStatement(
+								sourceOf(init),
+								location,
+								factory.variableExpression(sourceOf(declaration
+										.getIdentifier()),
+										newScope.getVariable(newScope
+												.numVariables() - 1)),
+								expression((ExpressionNode) declaration
+										.getInitializer(), newScope));
 						initStatement.setGuard(guard);
-						initStatement.setNode(init);
 						if (lastStatement != null) {
 							lastStatement.setTarget(location);
 							function.addLocation(location);
@@ -1602,79 +1635,85 @@ public class ModelBuilderWorker {
 			} else {
 				throw new CIVLInternalException(
 						"A for loop initializer must be an expression or a declaration list.",
-						init.getSource());
+						sourceOf(init));
 			}
 		}
 		condition = booleanExpression(statement.getCondition(), newScope);
 		loopBody = statement(function, initStatement, statement.getBody(),
 				newScope);
 		for (Statement outgoing : initStatement.target().outgoing()) {
-			outgoing.setGuard(factory.binaryExpression(BINARY_OPERATOR.AND,
-					outgoing.guard(), condition));
+			Expression outGuard = outgoing.guard();
+			CIVLSource augmentedSource = sourceOfSpan(outGuard.getSource(),
+					condition.getSource());
+
+			outgoing.setGuard(factory.binaryExpression(augmentedSource,
+					BINARY_OPERATOR.AND, outGuard, condition));
 		}
 		incrementer = forLoopIncrementer(function, loopBody,
 				statement.getIncrementer(), newScope);
 		incrementer.setTarget(initStatement.target());
-		loopExit = factory.noopStatement(initStatement.target());
-		loopExit.setGuard(factory
-				.unaryExpression(UNARY_OPERATOR.NOT, condition));
+		loopExit = factory.noopStatement(condition.getSource(),
+				initStatement.target());
+		loopExit.setGuard(factory.unaryExpression(condition.getSource(),
+				UNARY_OPERATOR.NOT, condition));
 		return loopExit;
 	}
 
 	private Statement forLoopIncrementer(Function function,
 			Statement lastStatement, ExpressionNode incrementer, Scope scope) {
-		Location location = factory.location(scope);
+		Location location = factory.location(sourceOfBeginning(incrementer),
+				scope);
+		CIVLSource source = sourceOf(incrementer);
 		Statement result;
 
 		function.addLocation(location);
 		// TODO: Handle other possibilites
 		if (incrementer instanceof OperatorNode) {
 			OperatorNode expression = (OperatorNode) incrementer;
-			// Expression[] args = new Expression[3];
 			switch (expression.getOperator()) {
-			case ASSIGN:
-				result = factory.assignStatement(
-						location,
-						(LHSExpression) expression(expression.getArgument(0),
-								scope),
-						expression(expression.getArgument(1), scope));
+			case ASSIGN: {
+				LHSExpression lhs = (LHSExpression) expression(
+						expression.getArgument(0), scope);
+				Expression rhs = expression(expression.getArgument(1), scope);
+
+				result = factory.assignStatement(source, location, lhs, rhs);
 				break;
+			}
 			case PLUSEQ:
 			case MINUSEQ:
 			case TIMESEQ:
 			case DIVEQ:
 			case MODEQ:
 				throw new CIVLInternalException(
-						"Side-effects should have been removed",
-						expression.getSource());
+						"Side-effects should have been removed", source);
 			case BITANDEQ:
 			case BITOREQ:
 			case BITXOREQ:
 			case SHIFTLEFTEQ:
 			case SHIFTRIGHTEQ:
 				throw new CIVLUnimplementedFeatureException(
-						"bit-level operations", expression.getSource());
+						"bit-level operations", source);
 			default:
 				// No effect for ops without assignments.
-				result = factory.noopStatement(location);
+				result = factory.noopStatement(source, location);
 			}
 		} else {
-			result = factory.noopStatement(location);
+			result = factory.noopStatement(source, location);
 		}
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
 		} else {
 			function.setStartLocation(location);
 		}
-		result.setNode(incrementer);
 		return result;
 	}
 
 	private Statement whileLoop(Function function, Statement lastStatement,
 			LoopNode statement, Scope scope) {
+		CIVLSource source = sourceOf(statement);
 		Statement loopExit;
-		Scope newScope = factory.scope(scope, new LinkedHashSet<Variable>(),
-				function);
+		Scope newScope = factory.scope(source, scope,
+				new LinkedHashSet<Variable>(), function);
 		Statement loopBody;
 		Expression condition;
 		Location loopEntrance;
@@ -1690,7 +1729,8 @@ public class ModelBuilderWorker {
 				// lastStatement!=null, but lastStatement.target()==null (since
 				// it hasn't been set yet). If that's the case, make a new
 				// location.
-				loopEntrance = factory.location(newScope);
+				loopEntrance = factory.location(sourceOfBeginning(statement),
+						newScope);
 				lastStatement.setTarget(loopEntrance);
 				function.addLocation(loopEntrance);
 			} else {
@@ -1701,22 +1741,27 @@ public class ModelBuilderWorker {
 		}
 		assert loopEntrance != null;
 		if (loopBody.equals(lastStatement)) {
-			loopBody = factory.noopStatement(loopEntrance);
+			loopBody = factory.noopStatement(source, loopEntrance);
 		}
 		for (Statement outgoing : loopEntrance.outgoing()) {
-			outgoing.setGuard(factory.binaryExpression(BINARY_OPERATOR.AND,
+			outgoing.setGuard(factory.binaryExpression(
+					sourceOfSpan(outgoing.guard().getSource(),
+							condition.getSource()), BINARY_OPERATOR.AND,
 					outgoing.guard(), condition));
 		}
 		loopBody.setTarget(loopEntrance);
-		loopExit = factory.noopStatement(loopEntrance);
-		loopExit.setGuard(factory
-				.unaryExpression(UNARY_OPERATOR.NOT, condition));
+		loopExit = factory
+				.noopStatement(loopEntrance.getSource(), loopEntrance);
+		loopExit.setGuard(factory.unaryExpression(condition.getSource(),
+				UNARY_OPERATOR.NOT, condition));
 		return loopExit;
 	}
 
 	private Statement wait(Function function, Statement lastStatement,
 			WaitNode statement, Scope scope) {
-		Location location = factory.location(scope);
+		CIVLSource source = sourceOf(statement);
+		Location location = factory.location(sourceOfBeginning(statement),
+				scope);
 		Statement result;
 
 		if (lastStatement != null) {
@@ -1725,22 +1770,22 @@ public class ModelBuilderWorker {
 			function.setStartLocation(location);
 		}
 		function.addLocation(location);
-		result = factory.joinStatement(location,
+		result = factory.joinStatement(source, location,
 				expression(statement.getExpression(), scope));
-		result.setNode(statement);
 		return result;
 	}
 
 	private Statement noop(Function function, Statement lastStatement,
 			NullStatementNode statement, Scope scope) {
-		Location location = factory.location(scope);
+		Location location = factory.location(sourceOfBeginning(statement),
+				scope);
 
 		return noop(location, function, lastStatement, statement, scope);
 	}
 
 	private Statement noop(Location location, Function function,
 			Statement lastStatement, NullStatementNode statement, Scope scope) {
-		Statement result = factory.noopStatement(location);
+		Statement result = factory.noopStatement(sourceOf(statement), location);
 
 		function.addLocation(location);
 		if (lastStatement != null) {
@@ -1748,7 +1793,6 @@ public class ModelBuilderWorker {
 		} else {
 			function.setStartLocation(location);
 		}
-		result.setNode(statement);
 		return result;
 	}
 
@@ -1763,9 +1807,11 @@ public class ModelBuilderWorker {
 		// trouble later.
 		if (guard instanceof IntegerLiteralExpression) {
 			if (((IntegerLiteralExpression) guard).value().intValue() == 0) {
-				guard = factory.booleanLiteralExpression(false);
+				guard = factory.booleanLiteralExpression(guard.getSource(),
+						false);
 			} else {
-				guard = factory.booleanLiteralExpression(true);
+				guard = factory.booleanLiteralExpression(guard.getSource(),
+						true);
 			}
 		}
 		if (lastStatement != null) {
@@ -1776,13 +1822,14 @@ public class ModelBuilderWorker {
 		while (iter.hasNext()) {
 			Statement s = iter.next();
 
-			if (s.guard().equals(factory.booleanLiteralExpression(true))) {
+			if (isTrue(s.guard())) {
 				s.setGuard(guard);
-			} else if (guard.equals(factory.booleanLiteralExpression(true))) {
-				s.setGuard(guard);
+			} else if (isTrue(guard)) {
+				s.setGuard(s.guard()); // argument was just "guard" -sfs
 			} else {
-				s.setGuard(factory.binaryExpression(BINARY_OPERATOR.AND,
-						s.guard(), guard));
+				s.setGuard(factory.binaryExpression(
+						sourceOfSpan(s.guard().getSource(), guard.getSource()),
+						BINARY_OPERATOR.AND, s.guard(), guard));
 			}
 		}
 		result.setGuard(guard);
@@ -1795,11 +1842,12 @@ public class ModelBuilderWorker {
 		Expression newGuard = booleanExpression(statement.getGuard(), scope);
 		Statement result;
 
-		if (newGuard.equals(factory.booleanLiteralExpression(true))) {
+		if (isTrue(newGuard)) {
 			newGuard = guard;
-		} else if (!guard.equals(factory.booleanLiteralExpression(true))) {
-			newGuard = factory.binaryExpression(BINARY_OPERATOR.AND, guard,
-					newGuard);
+		} else if (!isTrue(guard)) {
+			newGuard = factory.binaryExpression(
+					sourceOfSpan(guard.getSource(), newGuard.getSource()),
+					BINARY_OPERATOR.AND, guard, newGuard);
 		}
 		result = statement(location, newGuard, function, lastStatement,
 				statement.getBody(), scope);
@@ -1808,10 +1856,13 @@ public class ModelBuilderWorker {
 
 	private Statement choose(Function function, Statement lastStatement,
 			ChooseStatementNode statement, Scope scope) {
-		Location startLocation = factory.location(scope);
-		Location endLocation = factory.location(scope);
-		Statement result = factory.noopStatement(endLocation);
-		Expression guard = factory.booleanLiteralExpression(true);
+		Location startLocation = factory.location(sourceOfBeginning(statement),
+				scope);
+		Location endLocation = factory.location(sourceOfEnd(statement), scope);
+		Statement result = factory.noopStatement(endLocation.getSource(),
+				endLocation);
+		Expression guard = factory.booleanLiteralExpression(
+				startLocation.getSource(), true);
 		int defaultOffset = 0;
 
 		if (lastStatement != null) {
@@ -1824,42 +1875,48 @@ public class ModelBuilderWorker {
 			defaultOffset = 1;
 		}
 		for (int i = 0; i < statement.numChildren() - defaultOffset; i++) {
+			StatementNode childNode = statement.getSequenceChild(i);
 			Statement caseStatement = statement(startLocation,
-					factory.booleanLiteralExpression(true), function,
-					lastStatement, statement.getSequenceChild(i), scope);
+					factory.booleanLiteralExpression(
+							sourceOfBeginning(childNode), true), function,
+					lastStatement, childNode, scope);
 
 			caseStatement.setTarget(endLocation);
 		}
+
 		Iterator<Statement> iter = startLocation.outgoing().iterator();
+
 		// Compute the guard for the default statement
 		while (iter.hasNext()) {
 			Expression statementGuard = iter.next().guard();
 
-			if (guard.equals(factory.booleanLiteralExpression(true))) {
+			if (isTrue(guard)) {
 				guard = statementGuard;
-			} else if (statementGuard.equals(factory
-					.booleanLiteralExpression(true))) {
+			} else if (isTrue(statementGuard)) {
 				// Keep current guard
 			} else {
-				guard = factory.binaryExpression(BINARY_OPERATOR.OR, guard,
-						statementGuard);
+				guard = factory.binaryExpression(
+						sourceOfSpan(guard.getSource(),
+								statementGuard.getSource()),
+						BINARY_OPERATOR.OR, guard, statementGuard);
 			}
 		}
 		if (statement.getDefaultCase() != null) {
 			Statement defaultStatement = statement(startLocation,
-					factory.unaryExpression(UNARY_OPERATOR.NOT, guard),
-					function, lastStatement, statement.getDefaultCase(), scope);
+					factory.unaryExpression(guard.getSource(),
+							UNARY_OPERATOR.NOT, guard), function,
+					lastStatement, statement.getDefaultCase(), scope);
 
 			defaultStatement.setTarget(endLocation);
 		}
-		result.setNode(statement);
 		return result;
 	}
 
 	private Statement gotoStatement(Function function, Statement lastStatement,
 			GotoNode statement, Scope scope) {
-		Location location = factory.location(scope);
-		Statement noop = factory.noopStatement(location);
+		Location location = factory.location(sourceOfBeginning(statement),
+				scope);
+		Statement noop = factory.noopStatement(sourceOf(statement), location);
 		OrdinaryLabelNode label = ((Label) statement.getLabel().getEntity())
 				.getDefinition();
 
@@ -1870,7 +1927,6 @@ public class ModelBuilderWorker {
 			function.setStartLocation(location);
 		}
 		gotoStatements.put(noop, label);
-		noop.setNode(statement);
 		return noop;
 	}
 
@@ -1905,9 +1961,10 @@ public class ModelBuilderWorker {
 
 	private Statement returnStatement(Function function,
 			Statement lastStatement, ReturnNode statement, Scope scope) {
+		Location location = factory.location(sourceOfBeginning(statement),
+				scope);
 		Statement result;
-		Expression expression = null;
-		Location location = factory.location(scope);
+		Expression expression;
 
 		function.addLocation(location);
 		if (lastStatement != null) {
@@ -1917,16 +1974,19 @@ public class ModelBuilderWorker {
 		}
 		if (statement.getExpression() != null) {
 			expression = expression(statement.getExpression(), scope);
-		}
-		result = factory.returnStatement(location, expression);
-		result.setNode(statement);
+		} else
+			expression = null;
+		result = factory.returnStatement(sourceOf(statement), location,
+				expression);
 		return result;
 	}
 
 	private Statement switchStatement(Function function,
 			Statement lastStatement, SwitchNode statement, Scope scope) {
-		Location location = factory.location(scope);
-		Expression guard = factory.booleanLiteralExpression(true);
+		Location location = factory.location(sourceOfBeginning(statement),
+				scope);
+		Expression guard = factory.booleanLiteralExpression(
+				location.getSource(), true);
 
 		return switchStatement(location, guard, function, lastStatement,
 				statement, scope);
@@ -1949,6 +2009,7 @@ public class ModelBuilderWorker {
 		}
 		while (cases.hasNext()) {
 			LabeledStatementNode caseStatement = cases.next();
+			// CIVLSource caseSource = sourceOf(caseStatement);
 			SwitchLabelNode label;
 			Expression caseGuard;
 			Expression combinedGuard;
@@ -1956,32 +2017,38 @@ public class ModelBuilderWorker {
 
 			assert caseStatement.getLabel() instanceof SwitchLabelNode;
 			label = (SwitchLabelNode) caseStatement.getLabel();
-			caseGuard = factory.binaryExpression(BINARY_OPERATOR.EQUAL,
+			caseGuard = factory.binaryExpression(
+					sourceOf(label.getExpression()), BINARY_OPERATOR.EQUAL,
 					condition, expression(label.getExpression(), scope));
-			if (!guard.equals(factory.booleanLiteralExpression(true))) {
-				combinedGuard = factory.binaryExpression(BINARY_OPERATOR.AND,
-						guard, caseGuard);
+			if (!isTrue(guard)) {
+				combinedGuard = factory.binaryExpression(
+						sourceOfSpan(guard.getSource(), caseGuard.getSource()),
+						BINARY_OPERATOR.AND, guard, caseGuard);
 			} else {
 				combinedGuard = caseGuard;
 			}
-			combinedCaseGuards = factory.binaryExpression(BINARY_OPERATOR.AND,
-					caseGuard, combinedCaseGuards);
-			caseGoto = factory.noopStatement(location);
+			combinedCaseGuards = factory.binaryExpression(
+					sourceOfSpan(caseGuard.getSource(),
+							combinedCaseGuards.getSource()),
+					BINARY_OPERATOR.AND, caseGuard, combinedCaseGuards);
+			caseGoto = factory.noopStatement(sourceOfBeginning(caseStatement),
+					location);
 			caseGoto.setGuard(combinedGuard);
-			caseGoto.setNode(label);
 			gotoStatements.put(caseGoto, label);
 		}
 		if (statement.getDefaultCase() != null) {
 			LabelNode label = statement.getDefaultCase().getLabel();
-			Statement defaultGoto = factory.noopStatement(location);
+			Statement defaultGoto = factory.noopStatement(
+					sourceOf(statement.getDefaultCase()), location);
 
-			defaultGoto.setGuard(factory.unaryExpression(UNARY_OPERATOR.NOT,
-					combinedCaseGuards));
-			defaultGoto.setNode(label);
+			defaultGoto.setGuard(factory.unaryExpression(
+					sourceOfBeginning(statement.getDefaultCase()),
+					UNARY_OPERATOR.NOT, combinedCaseGuards));
 			gotoStatements.put(defaultGoto, label);
 		}
-		bodyGoto = factory.noopStatement(location);
-		bodyGoto.setGuard(factory.booleanLiteralExpression(false));
+		bodyGoto = factory.noopStatement(location.getSource(), location);
+		bodyGoto.setGuard(factory.booleanLiteralExpression(
+				bodyGoto.getSource(), false));
 		result = statement(function, bodyGoto, statement.getBody(), scope);
 		return result;
 	}
@@ -2003,9 +2070,11 @@ public class ModelBuilderWorker {
 	 * @return The model.
 	 */
 	public void buildModel() {
-		Identifier systemID = factory.identifier("_CIVL_system");
-		Function system = factory.function(systemID, new Vector<Variable>(),
-				null, null, null);
+		Identifier systemID = factory.identifier(factory.systemSource(),
+				"_CIVL_system");
+		Function system = factory.function(sourceOf(program.getAST()
+				.getRootNode()), systemID, new Vector<Variable>(), null, null,
+				null);
 		ASTNode rootNode = program.getAST().getRootNode();
 		Location returnLocation;
 		Statement returnStatement;
@@ -2013,7 +2082,7 @@ public class ModelBuilderWorker {
 		Statement mainBody;
 		Vector<Statement> initializations = new Vector<Statement>();
 
-		systemScope = system.outerScope();
+		// systemScope = system.outerScope();
 		containingScopes = new LinkedHashMap<FunctionDefinitionNode, Scope>();
 		callStatements = new LinkedHashMap<CallOrSpawnStatement, FunctionDefinitionNode>();
 		functionMap = new LinkedHashMap<FunctionDefinitionNode, Function>();
@@ -2022,28 +2091,27 @@ public class ModelBuilderWorker {
 			ASTNode node = rootNode.child(i);
 
 			if (node instanceof VariableDeclarationNode) {
-				InitializerNode init = ((VariableDeclarationNode) node)
-						.getInitializer();
+				VariableDeclarationNode decl = (VariableDeclarationNode) node;
+				InitializerNode init = decl.getInitializer();
 
-				processVariableDeclaration(system.outerScope(),
-						(VariableDeclarationNode) rootNode.child(i));
+				processVariableDeclaration(system.outerScope(), decl);
 				if (init != null) {
+					Location location = factory.location(
+							sourceOfBeginning(node), system.outerScope());
 					LHSExpression left;
 					Expression right;
-					Location location = factory.location(system.outerScope());
 
-					left = factory
-							.variableExpression(system
-									.outerScope()
-									.getVariable(
-											system.outerScope().numVariables() - 1));
+					left = factory.variableExpression(
+							sourceOf(decl.getIdentifier()),
+							system.outerScope().getVariable(
+									system.outerScope().numVariables() - 1));
 					right = expression((ExpressionNode) init,
 							system.outerScope());
 					if (!initializations.isEmpty()) {
 						initializations.lastElement().setTarget(location);
 					}
-					initializations.add(factory.assignStatement(location, left,
-							right));
+					initializations.add(factory.assignStatement(sourceOf(decl),
+							location, left, right));
 					system.addLocation(location);
 					system.addStatement(initializations.lastElement());
 				}
@@ -2071,12 +2139,12 @@ public class ModelBuilderWorker {
 				// }
 			} else {
 				throw new CIVLInternalException("Unsupported declaration type",
-						node.getSource());
+						sourceOf(node));
 			}
 		}
 		if (mainFunction == null) {
 			throw new CIVLException("Program must have a main function.",
-					rootNode.getSource());
+					sourceOf(rootNode));
 		}
 		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
@@ -2089,8 +2157,10 @@ public class ModelBuilderWorker {
 					system.outerScope());
 		}
 		if (!(mainBody instanceof ReturnStatement)) {
-			returnLocation = factory.location(system.outerScope());
-			returnStatement = factory.returnStatement(returnLocation, null);
+			returnLocation = factory.location(
+					sourceOfEnd(mainFunction.getBody()), system.outerScope());
+			returnStatement = factory.returnStatement(
+					returnLocation.getSource(), returnLocation, null);
 			if (mainBody != null) {
 				mainBody.setTarget(returnLocation);
 			} else {
@@ -2099,7 +2169,7 @@ public class ModelBuilderWorker {
 			system.addLocation(returnLocation);
 			system.addStatement(returnStatement);
 		}
-		model = factory.model(system);
+		model = factory.model(system.getSource(), system);
 		while (!unprocessedFunctions.isEmpty()) {
 			FunctionDefinitionNode functionDefinition = unprocessedFunctions
 					.remove(0);
@@ -2125,6 +2195,8 @@ public class ModelBuilderWorker {
 							postcondition = componentExpression;
 						} else {
 							postcondition = factory.binaryExpression(
+									sourceOfSpan(postcondition.getSource(),
+											componentExpression.getSource()),
 									BINARY_OPERATOR.AND, postcondition,
 									componentExpression);
 						}
@@ -2137,6 +2209,8 @@ public class ModelBuilderWorker {
 							precondition = componentExpression;
 						} else {
 							precondition = factory.binaryExpression(
+									sourceOfSpan(precondition.getSource(),
+											componentExpression.getSource()),
 									BINARY_OPERATOR.AND, precondition,
 									componentExpression);
 						}

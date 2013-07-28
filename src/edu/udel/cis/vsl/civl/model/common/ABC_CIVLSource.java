@@ -34,4 +34,8 @@ public class ABC_CIVLSource implements CIVLSource {
 		return abcSource.getSummary();
 	}
 
+	public Source getABCSource() {
+		return abcSource;
+	}
+
 }

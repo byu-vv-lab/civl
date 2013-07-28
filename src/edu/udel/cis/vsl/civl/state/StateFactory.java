@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -17,9 +17,9 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -137,13 +137,15 @@ public class StateFactory implements StateFactoryIF {
 			if (v.type() instanceof CIVLArrayType) {
 				StringObject name = symbolicUniverse.stringObject("A_s"
 						+ dynamicScopeId + "v" + i);
-				SymbolicType type = arrayType((CIVLArrayType) v.type());
+				SymbolicType type = arrayType(v.getSource(),
+						(CIVLArrayType) v.type());
 
 				values[i] = symbolicUniverse.symbolicConstant(name, type);
 			} else if (v.type() instanceof CIVLStructType) {
 				StringObject name = symbolicUniverse.stringObject("S_s"
 						+ dynamicScopeId + "v" + i);
-				SymbolicType type = structType((CIVLStructType) v.type());
+				SymbolicType type = structType(v.getSource(),
+						(CIVLStructType) v.type());
 
 				values[i] = symbolicUniverse.symbolicConstant(name, type);
 			} else if (v.isExtern()) {
@@ -168,12 +170,12 @@ public class StateFactory implements StateFactoryIF {
 						break;
 					default:
 						throw new CIVLInternalException("Unreachable",
-								(Source) null);
+								v.getSource());
 					}
 				} else {
 					throw new CIVLInternalException(
 							"Unimplemented input type: " + v.type(),
-							(Source) null);
+							v.getSource());
 				}
 				values[i] = symbolicUniverse.symbolicConstant(name, type);
 			}
@@ -224,12 +226,12 @@ public class StateFactory implements StateFactoryIF {
 	 *            The model array type.
 	 * @return The symbolic array type.
 	 */
-	private SymbolicType arrayType(CIVLArrayType type) {
+	private SymbolicType arrayType(CIVLSource source, CIVLArrayType type) {
 		CIVLType baseType = type.baseType();
 
 		if (baseType instanceof CIVLArrayType) {
-			return symbolicUniverse
-					.arrayType(arrayType((CIVLArrayType) baseType));
+			return symbolicUniverse.arrayType(arrayType(source,
+					(CIVLArrayType) baseType));
 		} else if (baseType instanceof CIVLPrimitiveType) {
 			switch (((CIVLPrimitiveType) baseType).primitiveType()) {
 			case INT:
@@ -249,10 +251,9 @@ public class StateFactory implements StateFactoryIF {
 		} else if (baseType instanceof CIVLProcessType) {
 			return symbolicUniverse.arrayType(processType);
 		} else if (baseType instanceof CIVLStructType) {
-			return structType((CIVLStructType) baseType);
+			return structType(source, (CIVLStructType) baseType);
 		}
-		throw new CIVLInternalException("Unknown type: " + baseType,
-				(Source) null);
+		throw new CIVLInternalException("Unknown type: " + baseType, source);
 	}
 
 	/**
@@ -263,7 +264,7 @@ public class StateFactory implements StateFactoryIF {
 	 * @return The symbolic struct type, which is a tuple whose component types
 	 *         are the symbolic types corresponding to the struct's fields.
 	 */
-	private SymbolicType structType(CIVLStructType type) {
+	private SymbolicType structType(CIVLSource source, CIVLStructType type) {
 		SymbolicType result;
 		StringObject name = symbolicUniverse.stringObject(type.name().name());
 		List<SymbolicType> fieldTypes = new Vector<SymbolicType>();
@@ -272,7 +273,7 @@ public class StateFactory implements StateFactoryIF {
 			SymbolicType fieldType = null;
 
 			if (f.type() instanceof CIVLArrayType) {
-				fieldType = arrayType((CIVLArrayType) f.type());
+				fieldType = arrayType(source, (CIVLArrayType) f.type());
 			} else if (f.type() instanceof CIVLPrimitiveType) {
 				switch (((CIVLPrimitiveType) f.type()).primitiveType()) {
 				case INT:
@@ -293,7 +294,7 @@ public class StateFactory implements StateFactoryIF {
 				fieldType = symbolicUniverse.arrayType(processType);
 			} else if (f.type() instanceof CIVLStructType) {
 				// TODO: Handle recursive types.
-				fieldType = structType((CIVLStructType) f.type());
+				fieldType = structType(source, (CIVLStructType) f.type());
 			} else if (f.type() instanceof CIVLPointerType) {
 				List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
 

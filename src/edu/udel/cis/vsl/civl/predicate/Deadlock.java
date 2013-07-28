@@ -41,7 +41,6 @@ public class Deadlock implements StatePredicateIF<State> {
 
 	private SymbolicUniverse symbolicUniverse;
 	private Evaluator evaluator;
-	private String pidPrefix = "PID_";
 
 	/**
 	 * If the property holds (i.e., a deadlock has been detected at state), than
@@ -172,7 +171,8 @@ public class Deadlock implements StatePredicateIF<State> {
 				if (s instanceof WaitStatement) {
 					SymbolicExpression joinProcess = evaluator.evaluate(state,
 							p.id(), ((WaitStatement) s).process()).value;
-					int pidValue = evaluator.getPid(joinProcess);
+					int pidValue = evaluator.getPid(((WaitStatement) s)
+							.process().getSource(), joinProcess);
 					SymbolicExpression guard = evaluator.evaluate(state,
 							p.id(), s.guard()).value;
 

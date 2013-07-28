@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -147,12 +148,12 @@ public class Executor {
 	 *            a value to be assigned to the referenced memory location
 	 * @return the new state
 	 */
-	private State assign(State state, SymbolicExpression pointer,
-			SymbolicExpression value) {
-		int vid = evaluator.getVariableId(pointer);
-		int sid = evaluator.getScopeId(pointer);
+	private State assign(CIVLSource source, State state,
+			SymbolicExpression pointer, SymbolicExpression value) {
+		int vid = evaluator.getVariableId(source, pointer);
+		int sid = evaluator.getScopeId(source, pointer);
 		ReferenceExpression symRef = evaluator.getSymRef(pointer);
-		Evaluation eval = evaluator.dereference(state, pointer);
+		Evaluation eval = evaluator.dereference(source, state, pointer);
 		SymbolicExpression newVariableValue = symbolicUniverse.assign(
 				eval.value, symRef, value);
 		State result = stateFactory.setVariable(eval.state, vid, sid,
@@ -179,7 +180,7 @@ public class Executor {
 			SymbolicExpression value) {
 		Evaluation eval = evaluator.reference(state, pid, lhs);
 
-		return assign(eval.state, eval.value, value);
+		return assign(lhs.getSource(), eval.state, eval.value, value);
 	}
 
 	/**
@@ -297,7 +298,8 @@ public class Executor {
 	private State executeWait(State state, int pid, WaitStatement statement) {
 		Evaluation eval = evaluator.evaluate(state, pid, statement.process());
 		SymbolicExpression procVal = eval.value;
-		int joinedPid = evaluator.getPid(procVal);
+		int joinedPid = evaluator.getPid(statement.process().getSource(),
+				procVal);
 
 		state = transition(eval.state, state.process(pid), statement.target());
 		state = stateFactory.removeProcess(state, joinedPid);

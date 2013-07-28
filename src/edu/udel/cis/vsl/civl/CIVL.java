@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
+import edu.udel.cis.vsl.civl.model.common.ABC_CIVLSource;
 import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
@@ -213,7 +214,8 @@ public class CIVL {
 			program.removeSideEffects();
 		} catch (SyntaxException e) {
 			throw new CIVLException("Syntax error in " + file.getName()
-					+ ": \n" + e.getMessage(), e.getSource());
+					+ ": \n" + e.getMessage(),
+					new ABC_CIVLSource(e.getSource()));
 		} catch (ParseException e) {
 			throw new CIVLException("Error parsing " + file.getName() + ": \n"
 					+ e.getMessage(), null);

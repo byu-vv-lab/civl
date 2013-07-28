@@ -131,7 +131,8 @@ public class Enabler implements
 						Evaluation eval = evaluator.evaluate(stateFactory
 								.setPathCondition(state, newPathCondition), p
 								.id(), ((WaitStatement) s).process());
-						int pidValue = evaluator.getPid(eval.value);
+						int pidValue = evaluator.getPid(((WaitStatement) s)
+								.process().getSource(), eval.value);
 
 						if (pidValue < 0) {
 							CIVLExecutionException e = new CIVLStateException(

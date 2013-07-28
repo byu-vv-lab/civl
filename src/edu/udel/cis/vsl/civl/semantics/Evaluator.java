@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
@@ -15,6 +14,7 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -157,7 +157,7 @@ public class Evaluator {
 
 	// Helper methods......................................................
 
-	private NumericExpression zeroOf(CIVLType type) {
+	private NumericExpression zeroOf(CIVLSource source, CIVLType type) {
 		if (type instanceof CIVLPrimitiveType) {
 			if (((CIVLPrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.INT)
 				return zero;
@@ -165,24 +165,24 @@ public class Evaluator {
 				return zeroR;
 		}
 		throw new CIVLInternalException("Expected integer or real type, not "
-				+ type, (Source) null);
+				+ type, source);
 	}
 
-	private Certainty certaintyOf(ResultType resultType) {
+	private Certainty certaintyOf(CIVLSource source, ResultType resultType) {
 		if (resultType == ResultType.NO)
 			return Certainty.PROVEABLE;
 		if (resultType == ResultType.MAYBE)
 			return Certainty.MAYBE;
 		throw new CIVLInternalException(
 				"This method should only be called with result type of NO or MAYBE",
-				(Source) null);
+				source);
 	}
 
 	// private Certainty certaintyOf(ValidityResult result) {
 	// return certaintyOf(result.getResultType());
 	// }
 
-	private SymbolicType symbolicType(CIVLType type) {
+	private SymbolicType symbolicType(CIVLSource source, CIVLType type) {
 		SymbolicType result;
 
 		if (type instanceof CIVLPrimitiveType) {
@@ -205,13 +205,13 @@ public class Evaluator {
 			}
 		} else if (type instanceof CIVLArrayType) {
 			// what about extent?
-			result = universe.arrayType(symbolicType(((CIVLArrayType) type)
-					.baseType()));
+			result = universe.arrayType(symbolicType(source,
+					((CIVLArrayType) type).baseType()));
 		} else if (type instanceof CIVLPointerType) {
 			result = pointerType;
 		} else
 			throw new CIVLInternalException("Cannot find symbolic type for "
-					+ type, (Source) null);
+					+ type, source);
 		// TODO: what about record types?
 		// So far, this is only used in evaluation of casts.
 		return result;
@@ -226,14 +226,13 @@ public class Evaluator {
 	 * @throws CIVLInternalException
 	 *             if a concrete integer value cannot be extracted
 	 */
-	private int extractInt(NumericExpression expression) {
+	private int extractInt(CIVLSource source, NumericExpression expression) {
 		IntegerNumber result = (IntegerNumber) universe
 				.extractNumber(expression);
 
 		if (result == null)
 			throw new CIVLInternalException(
-					"Unable to extract concrete int from " + expression,
-					(Source) null);
+					"Unable to extract concrete int from " + expression, source);
 		return result.intValue();
 	}
 
@@ -249,11 +248,12 @@ public class Evaluator {
 	 * @throws CIVLInternalException
 	 *             if a concrete integer value cannot be extracted
 	 */
-	private int extractIntField(SymbolicExpression tuple, IntObject fieldIndex) {
+	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
+			IntObject fieldIndex) {
 		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
 				fieldIndex);
 
-		return extractInt(field);
+		return extractInt(source, field);
 	}
 
 	/**
@@ -278,8 +278,8 @@ public class Evaluator {
 	 *            an expression created by method {@link #makeScopeVal}.
 	 * @return the concrete integer scope ID wrapped by the scopeVal
 	 */
-	private int getSid(SymbolicExpression scopeVal) {
-		return extractIntField(scopeVal, zeroObj);
+	private int getSid(CIVLSource source, SymbolicExpression scopeVal) {
+		return extractIntField(source, scopeVal, zeroObj);
 	}
 
 	/**
@@ -344,14 +344,15 @@ public class Evaluator {
 	 * @throws CIVLInternalException
 	 *             if pointer is trivial
 	 */
-	private SymbolicExpression parentPointer(SymbolicExpression pointer) {
+	private SymbolicExpression parentPointer(CIVLSource source,
+			SymbolicExpression pointer) {
 		ReferenceExpression symRef = getSymRef(pointer);
 
 		if (symRef instanceof NTReferenceExpression)
 			return setSymRef(pointer,
 					((NTReferenceExpression) symRef).getParent());
 		throw new CIVLInternalException("Expected non-trivial pointer: "
-				+ pointer, (Source) null);
+				+ pointer, source);
 	}
 
 	/**
@@ -370,7 +371,7 @@ public class Evaluator {
 	private Evaluation dereference(State state, int pid, Expression operand) {
 		Evaluation eval = evaluate(state, pid, operand);
 
-		return dereference(eval.state, eval.value);
+		return dereference(operand.getSource(), eval.state, eval.value);
 	}
 
 	/**
@@ -395,8 +396,10 @@ public class Evaluator {
 		ReferenceExpression symRef = getSymRef(pointer);
 
 		if (symRef.isArrayElementReference()) {
-			SymbolicExpression arrayPointer = parentPointer(pointer);
-			Evaluation eval = dereference(state, arrayPointer);
+			SymbolicExpression arrayPointer = parentPointer(
+					expression.getSource(), pointer);
+			Evaluation eval = dereference(expression.getSource(), state,
+					arrayPointer);
 			NumericExpression length = universe.length(eval.value);
 			ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
 			NumericExpression oldIndex = arrayElementRef.getIndex();
@@ -411,7 +414,8 @@ public class Evaluator {
 
 			if (resultType != ResultType.YES) {
 				CIVLStateException e = new CIVLStateException(
-						ErrorKind.OUT_OF_BOUNDS, certaintyOf(resultType),
+						ErrorKind.OUT_OF_BOUNDS, certaintyOf(
+								expression.getSource(), resultType),
 						"Pointer addition resulted in out of bounds array index:\nindex = "
 								+ newIndex + "\nlength = " + length,
 						eval.state, expression.getSource());
@@ -436,7 +440,8 @@ public class Evaluator {
 
 			if (resultType != ResultType.YES) {
 				CIVLStateException e = new CIVLStateException(
-						ErrorKind.OUT_OF_BOUNDS, certaintyOf(resultType),
+						ErrorKind.OUT_OF_BOUNDS, certaintyOf(
+								expression.getSource(), resultType),
 						"Pointer addition resulted in out of bounds object pointer:\noffset = "
 								+ newOffset, state, expression.getSource());
 				log.report(e);
@@ -744,7 +749,8 @@ public class Evaluator {
 		resultType = universe.reasoner(assumption).valid(claim).getResultType();
 		if (resultType != ResultType.YES) {
 			CIVLStateException e = new CIVLStateException(
-					ErrorKind.OUT_OF_BOUNDS, certaintyOf(resultType),
+					ErrorKind.OUT_OF_BOUNDS, certaintyOf(
+							expression.getSource(), resultType),
 					"Out of bounds array index:\nindex = " + index
 							+ "\nlength = " + length, eval.state,
 					expression.getSource());
@@ -800,15 +806,17 @@ public class Evaluator {
 				BooleanExpression assumption = eval.state.pathCondition();
 				NumericExpression denominator = (NumericExpression) right;
 				BooleanExpression claim = universe.neq(
-						zeroOf(expression.getExpressionType()), denominator);
+						zeroOf(expression.getSource(),
+								expression.getExpressionType()), denominator);
 				ResultType resultType = universe.reasoner(assumption)
 						.valid(claim).getResultType();
 
 				if (resultType != ResultType.YES) {
 					CIVLExecutionException e = new CIVLStateException(
-							ErrorKind.DIVISION_BY_ZERO,
-							certaintyOf(resultType), "Division by zero",
-							eval.state, expression.getSource());
+							ErrorKind.DIVISION_BY_ZERO, certaintyOf(
+									expression.getSource(), resultType),
+							"Division by zero", eval.state,
+							expression.getSource());
 
 					log.report(e);
 					eval.state = stateFactory.setPathCondition(eval.state,
@@ -836,14 +844,15 @@ public class Evaluator {
 				BooleanExpression assumption = eval.state.pathCondition();
 				NumericExpression denominator = (NumericExpression) right;
 				BooleanExpression claim = universe.neq(
-						zeroOf(expression.getExpressionType()), denominator);
+						zeroOf(expression.getSource(),
+								expression.getExpressionType()), denominator);
 				ResultType resultType = universe.reasoner(assumption)
 						.valid(claim).getResultType();
 
 				if (resultType != ResultType.YES) {
 					CIVLExecutionException e = new CIVLStateException(
-							ErrorKind.DIVISION_BY_ZERO,
-							certaintyOf(resultType),
+							ErrorKind.DIVISION_BY_ZERO, certaintyOf(
+									expression.getSource(), resultType),
 							"Modulus denominator is zero", eval.state,
 							expression.getSource());
 
@@ -912,7 +921,7 @@ public class Evaluator {
 		SymbolicExpression value = eval.value;
 		// SymbolicType startType = value.type();
 		CIVLType castType = expression.getCastType();
-		SymbolicType endType = symbolicType(castType);
+		SymbolicType endType = symbolicType(expression.getSource(), castType);
 
 		if (argType.isIntegerType() && castType.isPointerType()) {
 			// only good cast is from 0 to null pointer
@@ -923,7 +932,7 @@ public class Evaluator {
 
 			if (resultType != ResultType.YES) {
 				log.report(new CIVLStateException(ErrorKind.INVALID_CAST,
-						certaintyOf(resultType),
+						certaintyOf(expression.getSource(), resultType),
 						"Cast from non-zero integer to pointer", eval.state,
 						expression.getSource()));
 				eval.state = stateFactory.setPathCondition(eval.state,
@@ -1156,8 +1165,8 @@ public class Evaluator {
 	 *            an expression created by method {@link #makeProcVal}.
 	 * @return the concrete integer PID wrapped by the procVal
 	 */
-	public int getPid(SymbolicExpression procVal) {
-		return extractIntField(procVal, zeroObj);
+	public int getPid(CIVLSource source, SymbolicExpression procVal) {
+		return extractIntField(source, procVal, zeroObj);
 	}
 
 	/**
@@ -1168,8 +1177,8 @@ public class Evaluator {
 	 *            a pointer value
 	 * @return the dynamic scope ID component of that pointer value
 	 */
-	public int getScopeId(SymbolicExpression pointer) {
-		return getSid(universe.tupleRead(pointer, zeroObj));
+	public int getScopeId(CIVLSource source, SymbolicExpression pointer) {
+		return getSid(source, universe.tupleRead(pointer, zeroObj));
 	}
 
 	/**
@@ -1179,8 +1188,8 @@ public class Evaluator {
 	 *            a pointer value
 	 * @return the variable ID component of that value
 	 */
-	public int getVariableId(SymbolicExpression pointer) {
-		return extractIntField(pointer, oneObj);
+	public int getVariableId(CIVLSource source, SymbolicExpression pointer) {
+		return extractIntField(source, pointer, oneObj);
 	}
 
 	/**
@@ -1262,12 +1271,11 @@ public class Evaluator {
 	 *            state
 	 * @return the value pointed to
 	 */
-	public Evaluation dereference(State state, SymbolicExpression pointer) {
-
+	public Evaluation dereference(CIVLSource source, State state,
+			SymbolicExpression pointer) {
 		// how to figure out if pointer is null pointer?
-
-		int sid = getScopeId(pointer);
-		int vid = getVariableId(pointer);
+		int sid = getScopeId(source, pointer);
+		int vid = getVariableId(source, pointer);
 		ReferenceExpression symRef = getSymRef(pointer);
 		SymbolicExpression variableValue = state.getScope(sid).getValue(vid);
 		Evaluation result = new Evaluation(state, universe.dereference(

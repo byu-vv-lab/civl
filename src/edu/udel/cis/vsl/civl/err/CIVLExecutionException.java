@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.err;
 
-import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 
 public class CIVLExecutionException extends CIVLException {
@@ -75,7 +75,7 @@ public class CIVLExecutionException extends CIVLException {
 	 *            the source code element associated to the error; may be null
 	 */
 	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
-			String message, Source source) {
+			String message, CIVLSource source) {
 		super(message, source);
 		assert kind != null;
 		assert certainty != null;

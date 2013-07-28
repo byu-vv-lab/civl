@@ -3,7 +3,7 @@ package edu.udel.cis.vsl.civl.err;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.state.State;
 
 /**
@@ -25,7 +25,7 @@ public class CIVLStateException extends CIVLExecutionException {
 	private State state;
 
 	public CIVLStateException(ErrorKind kind, Certainty certainty,
-			String message, State state, Source source) {
+			String message, State state, CIVLSource source) {
 		super(kind, certainty, message, source);
 		assert state != null;
 		this.state = state;

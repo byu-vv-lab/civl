@@ -97,8 +97,7 @@ import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonModelFactory extends CommonSourceable implements
-		ModelFactory {
+public class CommonModelFactory implements ModelFactory {
 
 	private CIVLSource systemSource = new SystemCIVLSource();
 
@@ -136,8 +135,8 @@ public class CommonModelFactory extends CommonSourceable implements
 	 * The factory to create all model components. Usually this is the only way
 	 * model components will be created.
 	 */
-	public CommonModelFactory(CIVLSource civlSource) {
-		super(civlSource);
+	public CommonModelFactory() {
+		//super(civlSource);
 		identifiers = new HashMap<String, Identifier>();
 		// ((CommonBooleanLiteralExpression) trueExpression)
 		// .setExpressionType(booleanType);
