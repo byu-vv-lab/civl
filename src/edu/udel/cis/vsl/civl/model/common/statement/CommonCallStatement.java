@@ -123,8 +123,18 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public String toString() {
-		String result = function.toString();
+		String result = function.name().name();
+		boolean first = true;
 
+		result += "(";
+		for (Expression arg : arguments) {
+			if (first)
+				first = false;
+			else
+				result += ", ";
+			result += arg.toString();
+		}
+		result += ")";
 		if (!isCall)
 			result = "$spawn " + result;
 		if (lhs != null) {

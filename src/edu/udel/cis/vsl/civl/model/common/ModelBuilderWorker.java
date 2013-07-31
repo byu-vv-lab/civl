@@ -1468,7 +1468,7 @@ public class ModelBuilderWorker {
 			result = callOrSpawn(location, true, lhs, (FunctionCallNode) rhs,
 					scope);
 		} else if (rhs instanceof SpawnNode) {
-			result = callOrSpawn(location, true, lhs,
+			result = callOrSpawn(location, false, lhs,
 					((SpawnNode) rhs).getCall(), scope);
 		} else {
 			result = factory.assignStatement(lhs.getSource(), location, lhs,

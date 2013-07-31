@@ -267,3 +267,46 @@ $proc procs[N];
 $assert $collective(procs, N) i==procs[(pid+1)%N]@i ;
 
 ------------------------------------------------------------------------
+
+
+
+Arrays.......
+
+
+Type: array of T
+
+expression: newArray(int n);
+
+double a[][N][]; translates to:
+
+a : array of array of array of double
+
+needs to be a type.
+
+static type: Array(T, expr) = array of T of length expr;
+
+not used for type checking but imposes some additional information
+or restriction on the values that a may hold. kind of initializes a
+.
+
+double a[][N];  array of (array of double of len N)
+double b[N][];  array of (array of double) of len N
+
+
+decls:
+  we want to allow a[] to allow sequences of any sides
+
+difference between restricting type and allocating memory
+
+how to initialize: need expression newArray(T, n).
+
+
+
+Translation: 
+
+  ordinary variable decl:
+    if initializer is present: use initializer expr to allocate.
+    if initializer not present: type must be complete.
+example:
+  formal parameter:
+  field:
