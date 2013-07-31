@@ -55,6 +55,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.number.real.RealNumberFactory;
@@ -390,6 +391,12 @@ public class Evaluator {
 	 *            the result of evaluating argument 1 of expression
 	 * @return the result of evaluating the sum of the pointer and the integer
 	 */
+
+	// TODO: need to know if the type of the array is complete or
+	// incomplete.
+	// Need the type of the array. isn't this in the symbolic array
+	// type?
+
 	private Evaluation pointerAdd(State state, int pid,
 			BinaryExpression expression, SymbolicExpression pointer,
 			NumericExpression offset) {
@@ -400,28 +407,32 @@ public class Evaluator {
 					expression.getSource(), pointer);
 			Evaluation eval = dereference(expression.getSource(), state,
 					arrayPointer);
-			NumericExpression length = universe.length(eval.value);
+			// eval.value is now a symbolic expression of array type.
+			SymbolicArrayType arrayType = (SymbolicArrayType) eval.value.type();
 			ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
 			NumericExpression oldIndex = arrayElementRef.getIndex();
 			NumericExpression newIndex = universe.add(oldIndex, offset);
-			// checking bounds:
-			BooleanExpression claim = universe.and(
-					universe.lessThanEquals(zero, newIndex),
-					universe.lessThanEquals(newIndex, length));
-			BooleanExpression assumption = eval.state.pathCondition();
-			ResultType resultType = universe.reasoner(assumption).valid(claim)
-					.getResultType();
 
-			if (resultType != ResultType.YES) {
-				CIVLStateException e = new CIVLStateException(
-						ErrorKind.OUT_OF_BOUNDS, certaintyOf(
-								expression.getSource(), resultType),
-						"Pointer addition resulted in out of bounds array index:\nindex = "
-								+ newIndex + "\nlength = " + length,
-						eval.state, expression.getSource());
-				log.report(e);
-				eval.state = stateFactory.setPathCondition(eval.state,
-						universe.and(assumption, claim));
+			if (arrayType.isComplete()) { // check bounds
+				NumericExpression length = universe.length(eval.value);
+				BooleanExpression claim = universe.and(
+						universe.lessThanEquals(zero, newIndex),
+						universe.lessThanEquals(newIndex, length));
+				BooleanExpression assumption = eval.state.pathCondition();
+				ResultType resultType = universe.reasoner(assumption)
+						.valid(claim).getResultType();
+
+				if (resultType != ResultType.YES) {
+					CIVLStateException e = new CIVLStateException(
+							ErrorKind.OUT_OF_BOUNDS, certaintyOf(
+									expression.getSource(), resultType),
+							"Pointer addition resulted in out of bounds array index:\nindex = "
+									+ newIndex + "\nlength = " + length,
+							eval.state, expression.getSource());
+					log.report(e);
+					eval.state = stateFactory.setPathCondition(eval.state,
+							universe.and(assumption, claim));
+				}
 			}
 			eval.value = setSymRef(pointer, universe.arrayElementReference(
 					arrayElementRef.getParent(), newIndex));
@@ -736,28 +747,32 @@ public class Evaluator {
 			SubscriptExpression expression) {
 		Evaluation eval = evaluate(state, pid, expression.array());
 		SymbolicExpression array = eval.value;
-		NumericExpression index, length;
-		BooleanExpression assumption, claim;
-		ResultType resultType;
+		SymbolicArrayType arrayType = (SymbolicArrayType) array.type();
+		NumericExpression index;
 
 		eval = evaluate(state, pid, expression.index());
 		index = (NumericExpression) eval.value;
-		length = universe.length(array);
-		assumption = eval.state.pathCondition();
-		claim = universe.and(universe.lessThanEquals(zero, index),
-				universe.lessThan(index, length));
-		resultType = universe.reasoner(assumption).valid(claim).getResultType();
-		if (resultType != ResultType.YES) {
-			CIVLStateException e = new CIVLStateException(
-					ErrorKind.OUT_OF_BOUNDS, certaintyOf(
-							expression.getSource(), resultType),
-					"Out of bounds array index:\nindex = " + index
-							+ "\nlength = " + length, eval.state,
-					expression.getSource());
+		if (arrayType.isComplete()) {
+			NumericExpression length = universe.length(array);
+			BooleanExpression assumption = eval.state.pathCondition();
+			BooleanExpression claim = universe.and(
+					universe.lessThanEquals(zero, index),
+					universe.lessThan(index, length));
+			ResultType resultType = universe.reasoner(assumption).valid(claim)
+					.getResultType();
 
-			log.report(e);
-			eval.state = stateFactory.setPathCondition(state,
-					universe.and(assumption, claim));
+			if (resultType != ResultType.YES) {
+				CIVLStateException e = new CIVLStateException(
+						ErrorKind.OUT_OF_BOUNDS, certaintyOf(
+								expression.getSource(), resultType),
+						"Out of bounds array index:\nindex = " + index
+								+ "\nlength = " + length, eval.state,
+						expression.getSource());
+
+				log.report(e);
+				eval.state = stateFactory.setPathCondition(state,
+						universe.and(assumption, claim));
+			}
 		}
 		eval.value = universe.arrayRead(array, index);
 		return eval;
