@@ -19,4 +19,10 @@ public interface CIVLArrayType extends CIVLType {
 	 */
 	public void setBaseType(CIVLType baseType);
 	
+	/**
+	 * 
+	 * @return Is this a complete array type?
+	 */
+	public boolean isComplete();
+	
 }
