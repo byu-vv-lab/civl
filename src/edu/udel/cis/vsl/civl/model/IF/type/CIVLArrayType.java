@@ -11,18 +11,18 @@ public interface CIVLArrayType extends CIVLType {
 	/**
 	 * @return The type of elements in this array.
 	 */
-	public CIVLType baseType();
+	CIVLType baseType();
 
 	/**
 	 * @param baseType
 	 *            The type of elements in this array.
 	 */
-	public void setBaseType(CIVLType baseType);
-	
+	void setBaseType(CIVLType baseType);
+
 	/**
 	 * 
 	 * @return Is this a complete array type?
 	 */
-	public boolean isComplete();
-	
+	boolean isComplete();
+
 }

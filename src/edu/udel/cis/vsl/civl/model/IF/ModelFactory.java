@@ -171,6 +171,13 @@ public interface ModelFactory {
 	CIVLPrimitiveType stringType();
 
 	/**
+	 * Get the scope primitive type.
+	 * 
+	 * @return The scope primitive type.
+	 */
+	CIVLPrimitiveType scopeType();
+	
+	/**
 	 * Get the process type.
 	 * 
 	 * @return The process type.

@@ -17,13 +17,13 @@ public interface CIVLCompleteArrayType extends CIVLArrayType {
 	 * 
 	 * @return The extent of this array.
 	 */
-	public Expression extent();
+	Expression extent();
 
 	/**
 	 * 
 	 * @param extent
 	 *            The extent of this array.
 	 */
-	public void setExtent(Expression extent);
+	void setExtent(Expression extent);
 
 }

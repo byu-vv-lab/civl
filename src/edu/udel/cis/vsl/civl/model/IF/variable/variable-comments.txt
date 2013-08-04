@@ -1,13 +1,10 @@
 
-don't use "public" in interfaces.
-
 extern, sync, config: aren't these all CVT notions?  
 
 the extent thing seems a little clunky.  It is there only for 
 variables of array type.  Would it be better to have
 an ArrayVariable which extends Variable?  Or something else?
 
-vid() needs a javadoc.
 
 Explanation of whole interface can be better.   It is a variable,
 but maybe say static notion of variable, declared in some static scope,

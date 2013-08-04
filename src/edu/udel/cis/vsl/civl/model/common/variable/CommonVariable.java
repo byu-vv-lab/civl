@@ -22,10 +22,8 @@ public class CommonVariable extends CommonSourceable implements Variable {
 
 	private CIVLType type;
 	private Identifier name;
-	private boolean isSync;
 	private boolean isConst;
 	private boolean isExtern;
-	private boolean isConfig;
 	private Expression extent = null;
 	private int vid;
 	private Scope scope;
@@ -63,13 +61,6 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	}
 
 	/**
-	 * @return Whether this variable is a sync variable.
-	 */
-	public boolean isSync() {
-		return isSync;
-	}
-
-	/**
 	 * @return Whether this variable is a const.
 	 */
 	public boolean isConst() {
@@ -92,26 +83,11 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	}
 
 	/**
-	 * @return Whether this variable is an extern.
-	 */
-	public boolean isConfig() {
-		return isConfig;
-	}
-
-	/**
 	 * @param type
 	 *            The type of this variable.
 	 */
 	public void setType(CIVLType type) {
 		this.type = type;
-	}
-
-	/**
-	 * @param isSync
-	 *            Whether this variable is a sync variable.
-	 */
-	public void setSync(boolean isSync) {
-		this.isSync = isSync;
 	}
 
 	/**
@@ -139,13 +115,6 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		this.isExtern = isExtern;
 	}
 
-	/**
-	 * @param isConfig
-	 *            Whether this variable is an config.
-	 */
-	public void setIsConfig(boolean isConfig) {
-		this.isConfig = isConfig;
-	}
 
 	/**
 	 * @param vid
@@ -196,7 +165,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		if (isExtern) {
 			result += "$input ";
 		}
-		result += name + " : " + (isSync ? "sync " : "") + type;
+		result += name + " : " + type;
 		return result;
 	}
 
@@ -211,7 +180,6 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		int result = 1;
 		result = prime * result + ((extent == null) ? 0 : extent.hashCode());
 		result = prime * result + (isConst ? 1231 : 1237);
-		result = prime * result + (isSync ? 1231 : 1237);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;

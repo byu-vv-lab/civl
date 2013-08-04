@@ -63,4 +63,9 @@ public class CommonArrayType implements CIVLArrayType {
 		return false;
 	}
 
+	@Override
+	public boolean isComplete() {
+		return false;
+	}
+
 }

@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.type;
 
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
@@ -49,6 +50,12 @@ public class CommonPointerType implements CIVLPointerType {
 	@Override
 	public boolean isPointerType() {
 		return true;
+	}
+
+	@Override
+	public Scope getRegion() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

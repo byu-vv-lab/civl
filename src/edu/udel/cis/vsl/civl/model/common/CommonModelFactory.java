@@ -119,6 +119,8 @@ public class CommonModelFactory implements ModelFactory {
 
 	private CIVLPrimitiveType stringType = new CommonPrimitiveType(
 			PRIMITIVE_TYPE.STRING);
+	
+	private CIVLPrimitiveType scopeType = new CommonPrimitiveType(PRIMITIVE_TYPE.SCOPE);
 
 	private CIVLHeapType heapType = new CommonHeapType();
 
@@ -294,6 +296,15 @@ public class CommonModelFactory implements ModelFactory {
 		return stringType;
 	}
 
+	/**
+	 * Get the scope primitive type.
+	 * 
+	 * @return The scope primitive type.
+	 */
+	public CIVLPrimitiveType scopeType() {
+		return scopeType;
+	}
+	
 	/**
 	 * Get the process type.
 	 * 
