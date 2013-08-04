@@ -17,7 +17,9 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
@@ -38,14 +40,14 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * The factory to create all model components. Usually this is the only way
@@ -55,6 +57,8 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * 
  */
 public interface ModelFactory {
+
+	SymbolicUniverse universe();
 
 	/**
 	 * Returns a source object representing a system-defined object with no link
@@ -176,29 +180,45 @@ public interface ModelFactory {
 	 * @return The scope primitive type.
 	 */
 	CIVLPrimitiveType scopeType();
-	
+
 	/**
 	 * Get the process type.
 	 * 
 	 * @return The process type.
 	 */
-	CIVLProcessType processType();
+	CIVLPrimitiveType processType();
+
+	CIVLPrimitiveType dynamicType();
 
 	/**
 	 * Get the heap type.
 	 * 
 	 * @return The heap type.
 	 */
-	CIVLHeapType heapType();
+	CIVLPrimitiveType heapType();
 
 	/**
-	 * Get a new array type.
+	 * Get a new incomplete array type.
 	 * 
-	 * @param baseType
+	 * @param elementType
 	 *            The type of each element in the array.
 	 * @return A new array type with the given base type.
 	 */
-	CIVLArrayType arrayType(CIVLType baseType);
+	CIVLArrayType incompleteArrayType(CIVLType elementType);
+
+	/**
+	 * Returns a new compelte array type with specified extent (length
+	 * expression) and element type.
+	 * 
+	 * @param elementType
+	 *            the type of each element in the array
+	 * @param extent
+	 *            the expression of integer type specifying the length of the
+	 *            array
+	 * @return the complete array type, as specified
+	 */
+	CIVLCompleteArrayType completeArrayType(CIVLType elementType,
+			Expression extent);
 
 	/**
 	 * Get a new pointer type.
@@ -272,6 +292,34 @@ public interface ModelFactory {
 	 */
 	CastExpression castExpression(CIVLSource source, CIVLType type,
 			Expression expression);
+
+	/**
+	 * Returns a "DynamicTypeOf" expression with the given type argument. This
+	 * is an expression of type {@link CIVLDynamicType}. When evaluated in a
+	 * state s, it returns an symbolic expression wrapping a symbolic type which
+	 * is the type determined by the static type in the given state.
+	 * 
+	 * @param source
+	 *            source code reference
+	 * @param type
+	 *            static type argument
+	 * @return the DynamicTypeOf expression with given argument
+	 */
+	DynamicTypeOfExpression dynamicTypeOfExpression(CIVLSource source,
+			CIVLType type);
+
+	/**
+	 * Returns an "initial value" expression for the given variable. This is an
+	 * expression which returns the initial value for the variable. It is used
+	 * to initialize a variable by assigning it to the variable. The type of
+	 * this expression is the type of the variable.
+	 * 
+	 * @param source
+	 * @param variable
+	 * @return
+	 */
+	InitialValueExpression initialValueExpression(CIVLSource source,
+			Variable variable);
 
 	/**
 	 * The ternary conditional expression ("?" in C).

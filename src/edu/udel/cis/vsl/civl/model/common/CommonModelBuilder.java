@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * Class to provide translation from an ABC AST to a CIVL model.
@@ -30,8 +31,8 @@ public class CommonModelBuilder implements ModelBuilder {
 	 * ModelFactory in the process, and sets up system functions.
 	 * 
 	 */
-	public CommonModelBuilder() {
-		factory = new CommonModelFactory();
+	public CommonModelBuilder(SymbolicUniverse universe) {
+		factory = new CommonModelFactory(universe);
 	}
 
 	// Exported Methods................................................

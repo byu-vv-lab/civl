@@ -9,58 +9,30 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonArrayType implements CIVLArrayType {
+public class CommonArrayType extends CommonType implements CIVLArrayType {
 
-	private CIVLType baseType;
+	private CIVLType elementType;
 
 	/**
 	 * The type for an array of T.
 	 * 
-	 * @param baseType
+	 * @param elementType
 	 *            The type of the elements of this array.
 	 */
-	public CommonArrayType(CIVLType baseType) {
-		this.baseType = baseType;
+	public CommonArrayType(CIVLType elementType) {
+		this.elementType = elementType;
 	}
 
 	/**
 	 * @return The type of elements in this array.
 	 */
-	public CIVLType baseType() {
-		return baseType;
-	}
-
-	/**
-	 * @param baseType
-	 *            The type of elements in this array.
-	 */
-	public void setBaseType(CIVLType baseType) {
-		this.baseType = baseType;
+	public CIVLType elementType() {
+		return elementType;
 	}
 
 	@Override
 	public String toString() {
-		return baseType + "[]";
-	}
-
-	@Override
-	public boolean isNumericType() {
-		return false;
-	}
-
-	@Override
-	public boolean isIntegerType() {
-		return false;
-	}
-
-	@Override
-	public boolean isRealType() {
-		return false;
-	}
-
-	@Override
-	public boolean isPointerType() {
-		return false;
+		return elementType + "[]";
 	}
 
 	@Override

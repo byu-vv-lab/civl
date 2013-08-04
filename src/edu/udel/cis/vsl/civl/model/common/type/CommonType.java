@@ -1,21 +1,14 @@
-/**
- * 
- */
 package edu.udel.cis.vsl.civl.model.common.type;
 
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
- * @author zirkel
+ * Root of CIVL class hierarchy.
+ * 
+ * @author siegel
  * 
  */
-public class CommonHeapType implements CIVLHeapType {
-
-	/**
-	 * A heap type.
-	 */
-	public CommonHeapType() {
-	}
+public class CommonType implements CIVLType {
 
 	@Override
 	public boolean isNumericType() {
@@ -38,8 +31,13 @@ public class CommonHeapType implements CIVLHeapType {
 	}
 
 	@Override
-	public String toString() {
-		return "$heap";
+	public boolean isProcessType() {
+		return false;
+	}
+
+	@Override
+	public boolean isScopeType() {
+		return false;
 	}
 
 }

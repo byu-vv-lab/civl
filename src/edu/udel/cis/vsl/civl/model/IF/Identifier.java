@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.IF;
 
+import edu.udel.cis.vsl.sarl.IF.object.StringObject;
+
 /**
  * An identifier. Used for names of variables, functions, etc.
  * 
@@ -17,9 +19,16 @@ public interface Identifier extends Sourceable {
 	public String name();
 
 	/**
-	 * @param name
-	 *            The name associated with this identifier.
+	 * The name as a SARL string object.
+	 * 
+	 * @return name as string object
 	 */
-	public void setName(String name);
+	public StringObject stringObject();
+
+	// /**
+	// * @param name
+	// * The name associated with this identifier.
+	// */
+	// public void setName(String name);
 
 }

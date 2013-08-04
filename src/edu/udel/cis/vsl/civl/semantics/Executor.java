@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -87,12 +88,11 @@ public class Executor {
 	 * @param prover
 	 *            A theorem prover for checking assertions.
 	 */
-	public Executor(SymbolicUniverse symbolicUniverse,
-			StateFactoryIF stateFactory, ErrorLog log,
-			LibraryExecutorLoader loader) {
-		this.symbolicUniverse = symbolicUniverse;
+	public Executor(ModelFactory modelFactory, StateFactoryIF stateFactory,
+			ErrorLog log, LibraryExecutorLoader loader) {
+		this.symbolicUniverse = modelFactory.universe();
 		this.stateFactory = stateFactory;
-		this.evaluator = new Evaluator(stateFactory, log);
+		this.evaluator = new Evaluator(modelFactory, stateFactory, log);
 		this.log = log;
 		this.loader = loader;
 	}
@@ -109,9 +109,9 @@ public class Executor {
 	 * @param prover
 	 *            A theorem prover for checking assertions.
 	 */
-	public Executor(SymbolicUniverse symbolicUniverse,
-			StateFactoryIF stateFactory, ErrorLog log) {
-		this(symbolicUniverse, stateFactory, log, null);
+	public Executor(ModelFactory modelFactory, StateFactoryIF stateFactory,
+			ErrorLog log) {
+		this(modelFactory, stateFactory, log, null);
 	}
 
 	// Helper methods...

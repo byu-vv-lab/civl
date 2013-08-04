@@ -1,6 +1,9 @@
 package edu.udel.cis.vsl.civl.model.common.type;
 
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * A primitive type. One of: int, bool, real, string.
@@ -8,24 +11,29 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonPrimitiveType implements CIVLPrimitiveType {
+public class CommonPrimitiveType extends CommonType implements
+		CIVLPrimitiveType {
 
-	private PRIMITIVE_TYPE primitiveType;
+	private PrimitiveTypeKind primitiveType;
+
+	private SymbolicType symbolicType;
 
 	/**
-	 * One of: int, bool, real, string.
+	 * One of: int, bool, real, string, ...
 	 * 
 	 * @param The
 	 *            actual primitive type (int, bool, real, or string).
 	 */
-	public CommonPrimitiveType(PRIMITIVE_TYPE primitiveType) {
+	public CommonPrimitiveType(PrimitiveTypeKind primitiveType,
+			SymbolicType symbolicType) {
 		this.primitiveType = primitiveType;
+		this.symbolicType = symbolicType;
 	}
 
 	/**
 	 * @return The actual primitive type (int, bool, real, or string).
 	 */
-	public PRIMITIVE_TYPE primitiveType() {
+	public PrimitiveTypeKind primitiveTypeKind() {
 		return primitiveType;
 	}
 
@@ -33,7 +41,7 @@ public class CommonPrimitiveType implements CIVLPrimitiveType {
 	 * @param The
 	 *            actual primitive type (int, bool, real, or string).
 	 */
-	public void setPrimitiveType(PRIMITIVE_TYPE primitiveType) {
+	public void setPrimitiveType(PrimitiveTypeKind primitiveType) {
 		this.primitiveType = primitiveType;
 	}
 
@@ -41,35 +49,55 @@ public class CommonPrimitiveType implements CIVLPrimitiveType {
 	public String toString() {
 		switch (primitiveType) {
 		case INT:
-			return "int";
+			return "$int";
 		case BOOL:
-			return "bool";
+			return "$bool";
 		case REAL:
-			return "real";
+			return "$real";
+		case STRING:
+			return "$string";
+		case SCOPE:
+			return "$scope";
+		case PROCESS:
+			return "$proc";
+		case DYNAMIC:
+			return "$dynamicType";
+		case HEAP:
+			return "$heap";
 		default:
-			return "string";
+			throw new CIVLInternalException("Unreachable", (CIVLSource) null);
 		}
 	}
 
 	@Override
 	public boolean isNumericType() {
-		return primitiveType == PRIMITIVE_TYPE.INT
-				|| primitiveType == PRIMITIVE_TYPE.REAL;
+		return primitiveType == PrimitiveTypeKind.INT
+				|| primitiveType == PrimitiveTypeKind.REAL;
 	}
 
 	@Override
 	public boolean isIntegerType() {
-		return primitiveType == PRIMITIVE_TYPE.INT;
+		return primitiveType == PrimitiveTypeKind.INT;
 	}
 
 	@Override
 	public boolean isRealType() {
-		return primitiveType == PRIMITIVE_TYPE.REAL;
+		return primitiveType == PrimitiveTypeKind.REAL;
 	}
 
 	@Override
-	public boolean isPointerType() {
-		return false;
+	public SymbolicType getSymbolicType() {
+		return symbolicType;
+	}
+
+	@Override
+	public boolean isProcessType() {
+		return primitiveType == PrimitiveTypeKind.PROCESS;
+	}
+
+	@Override
+	public boolean isScopeType() {
+		return primitiveType == PrimitiveTypeKind.SCOPE;
 	}
 
 }

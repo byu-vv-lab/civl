@@ -6,17 +6,21 @@ package edu.udel.cis.vsl.civl.model.common.type;
 import java.util.ArrayList;
 
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * @author zirkel
  * 
  */
-public class CommonStructType implements CIVLStructType {
+public class CommonStructType extends CommonType implements CIVLStructType {
 
 	private Identifier name;
+
 	private ArrayList<StructField> fields = new ArrayList<StructField>();
+
+	private Variable variable = null;
 
 	/**
 	 * A struct type has a sequence of struct fields.
@@ -73,23 +77,13 @@ public class CommonStructType implements CIVLStructType {
 	}
 
 	@Override
-	public boolean isNumericType() {
-		return false;
+	public Variable getVariable() {
+		return variable;
 	}
 
 	@Override
-	public boolean isIntegerType() {
-		return false;
-	}
-
-	@Override
-	public boolean isRealType() {
-		return false;
-	}
-
-	@Override
-	public boolean isPointerType() {
-		return false;
+	public void setVariable(Variable variable) {
+		this.variable = variable;
 	}
 
 }

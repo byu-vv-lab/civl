@@ -61,7 +61,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WaitNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
@@ -100,7 +99,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PRIMITIVE_TYPE;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -280,7 +279,7 @@ public class ModelBuilderWorker {
 	 */
 	private boolean isIntegerType(CIVLType type) {
 		return type instanceof CIVLPrimitiveType
-				&& ((CIVLPrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.INT;
+				&& ((CIVLPrimitiveType) type).primitiveTypeKind() == PrimitiveTypeKind.INT;
 	}
 
 	/**
@@ -292,9 +291,9 @@ public class ModelBuilderWorker {
 	 */
 	private boolean isNumericType(CIVLType type) {
 		if (type instanceof CIVLPrimitiveType) {
-			PRIMITIVE_TYPE kind = ((CIVLPrimitiveType) type).primitiveType();
+			PrimitiveTypeKind kind = ((CIVLPrimitiveType) type).primitiveTypeKind();
 
-			return kind == PRIMITIVE_TYPE.INT || kind == PRIMITIVE_TYPE.REAL;
+			return kind == PrimitiveTypeKind.INT || kind == PrimitiveTypeKind.REAL;
 		}
 		return false;
 	}
@@ -343,8 +342,8 @@ public class ModelBuilderWorker {
 				sourceOf(functionNode.getIdentifier()), functionNode.getName());
 		Vector<Variable> parameters = new Vector<Variable>();
 		FunctionTypeNode functionTypeNode = functionNode.getTypeNode();
-		CIVLType returnType = translateTypeNode(functionTypeNode
-				.getReturnType());
+		CIVLType returnType = translateTypeNode(
+				functionTypeNode.getReturnType(), scope);
 		Statement body;
 		SequenceNode<VariableDeclarationNode> abcParameters = functionTypeNode
 				.getParameters();
@@ -354,7 +353,8 @@ public class ModelBuilderWorker {
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		for (int i = 0; i < numParameters; i++) {
 			VariableDeclarationNode decl = abcParameters.getSequenceChild(i);
-			CIVLType type = translateTypeNode(decl.getTypeNode());
+			// TODO: is this the right scope?
+			CIVLType type = translateTypeNode(decl.getTypeNode(), scope);
 			CIVLSource source = sourceOf(decl.getIdentifier());
 			Identifier variableName = factory
 					.identifier(source, decl.getName());
@@ -395,22 +395,22 @@ public class ModelBuilderWorker {
 	 */
 	private void processVariableDeclaration(Scope scope,
 			VariableDeclarationNode node) {
-		CIVLType type = translateTypeNode(node.getTypeNode());
+		CIVLType type = translateTypeNode(node.getTypeNode(), scope);
 		Identifier name = factory.identifier(sourceOf(node.getIdentifier()),
 				node.getName());
 		Variable variable = factory.variable(sourceOf(node.getIdentifier()),
 				type, name, scope.numVariables());
 
-		if (type instanceof CIVLArrayType) {
-			ExpressionNode extentNode = ((ArrayTypeNode) node.getTypeNode())
-					.getExtent();
-			Expression extent;
-
-			if (extentNode != null) {
-				extent = expression(extentNode, scope);
-				variable.setExtent(extent);
-			}
-		}
+		// if (type instanceof CIVLArrayType) {
+		// ExpressionNode extentNode = ((ArrayTypeNode) node.getTypeNode())
+		// .getExtent();
+		// Expression extent;
+		//
+		// if (extentNode != null) {
+		// extent = expression(extentNode, scope);
+		// variable.setExtent(extent);
+		// }
+		// }
 		if (node.getTypeNode().isInputQualified()) {
 			variable.setIsExtern(true);
 		}
@@ -448,7 +448,7 @@ public class ModelBuilderWorker {
 	}
 
 	private CIVLType translateStructureOrUnion(StructureOrUnionType type,
-			CIVLSource source) {
+			Scope scope, CIVLSource source) {
 		// TODO: break cycles. break into two parts.
 		// first create the incomplete type and put in map.
 		// then complete it.
@@ -471,7 +471,7 @@ public class ModelBuilderWorker {
 
 				String name = field.getName();
 				Type fieldType = field.getType();
-				CIVLType civlFieldType = translateType(fieldType, source);
+				CIVLType civlFieldType = translateType(fieldType, scope, source);
 				Identifier identifier = factory.identifier(sourceOf(field
 						.getDefinition().getIdentifier()), name);
 				StructField civlField = factory.structField(identifier,
@@ -490,7 +490,7 @@ public class ModelBuilderWorker {
 	 * @param abcType
 	 * @return
 	 */
-	private CIVLType translateType(Type abcType, CIVLSource source) {
+	private CIVLType translateType(Type abcType, Scope scope, CIVLSource source) {
 		CIVLType result = typeMap.get(abcType);
 
 		if (result == null) {
@@ -499,9 +499,14 @@ public class ModelBuilderWorker {
 			switch (kind) {
 			case ARRAY: {
 				ArrayType arrayType = (ArrayType) abcType;
+				CIVLType elementType = translateType(
+						arrayType.getElementType(), scope, source);
 
-				result = factory.arrayType(translateType(
-						arrayType.getElementType(), source));
+				if (arrayType.isComplete())
+					result = factory.completeArrayType(elementType,
+							expression(arrayType.getVariableSize(), scope));
+				else
+					result = factory.incompleteArrayType(elementType);
 				break;
 			}
 			case BASIC:
@@ -516,7 +521,7 @@ public class ModelBuilderWorker {
 			case POINTER: {
 				PointerType pointerType = (PointerType) abcType;
 				Type referencedType = pointerType.referencedType();
-				CIVLType baseType = translateType(referencedType, source);
+				CIVLType baseType = translateType(referencedType, scope, source);
 
 				result = factory.pointerType(baseType);
 				break;
@@ -526,11 +531,12 @@ public class ModelBuilderWorker {
 				break;
 			case QUALIFIED:
 				result = translateType(
-						((QualifiedObjectType) abcType).getBaseType(), source);
+						((QualifiedObjectType) abcType).getBaseType(), scope,
+						source);
 				break;
 			case STRUCTURE_OR_UNION:
 				result = translateStructureOrUnion(
-						(StructureOrUnionType) abcType, source);
+						(StructureOrUnionType) abcType, scope, source);
 				break;
 			case VOID:
 				// TODO: make a CIVL void type
@@ -550,8 +556,8 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	private CIVLType translateTypeNode(TypeNode typeNode) {
-		return translateType(typeNode.getType(), sourceOf(typeNode));
+	private CIVLType translateTypeNode(TypeNode typeNode, Scope scope) {
+		return translateType(typeNode.getType(), scope, sourceOf(typeNode));
 	}
 
 	/* *********************************************************************
@@ -638,7 +644,7 @@ public class ModelBuilderWorker {
 	 */
 	private Expression castExpression(CastNode expression, Scope scope) {
 		Expression result;
-		CIVLType castType = translateTypeNode(expression.getCastType());
+		CIVLType castType = translateTypeNode(expression.getCastType(), scope);
 		Expression castExpression = expression(expression.getArgument(), scope);
 
 		result = factory.castExpression(sourceOf(expression), castType,
@@ -720,7 +726,7 @@ public class ModelBuilderWorker {
 		if (type instanceof CIVLArrayType) {
 			CIVLSource source = expression.getSource();
 			CIVLArrayType arrayType = (CIVLArrayType) type;
-			CIVLType elementType = arrayType.baseType();
+			CIVLType elementType = arrayType.elementType();
 			Expression zero = factory.integerLiteralExpression(source,
 					BigInteger.ZERO);
 			LHSExpression subscript = factory.subscriptExpression(source,

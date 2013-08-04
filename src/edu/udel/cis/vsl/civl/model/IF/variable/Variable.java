@@ -6,7 +6,6 @@ package edu.udel.cis.vsl.civl.model.IF.variable;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
@@ -38,12 +37,6 @@ public interface Variable extends Sourceable {
 	boolean isConst();
 
 	/**
-	 * @return For an array variable, the extent of the array. Null if
-	 *         unspecified or not an array.
-	 */
-	Expression extent();
-
-	/**
 	 * @return Whether this variable is an extern.
 	 */
 	boolean isExtern();
@@ -60,12 +53,12 @@ public interface Variable extends Sourceable {
 	 */
 	void setConst(boolean isConst);
 
-	/**
-	 * @param extent
-	 *            For an array variable, the extent of the array. Null if
-	 *            unspecified or not an array.
-	 */
-	void setExtent(Expression extent);
+	// /**
+	// * @param extent
+	// * For an array variable, the extent of the array. Null if
+	// * unspecified or not an array.
+	// */
+	// void setExtent(Expression extent);
 
 	/**
 	 * @param isExtern

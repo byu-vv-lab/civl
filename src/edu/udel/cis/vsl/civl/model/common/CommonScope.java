@@ -16,7 +16,6 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
@@ -245,16 +244,17 @@ public class CommonScope extends CommonSourceable implements Scope {
 	 */
 	private void checkProcRef(Variable variable) {
 		boolean procRefType = false;
+		CIVLType type = variable.type();
 
-		if (variable.type() instanceof CIVLProcessType) {
+		if (type.isProcessType()) {
 			procRefType = true;
 		} else if (variable.type() instanceof CIVLArrayType) {
-			CIVLType baseType = ((CIVLArrayType) variable.type()).baseType();
+			CIVLType baseType = ((CIVLArrayType) variable.type()).elementType();
 
 			while (baseType instanceof CIVLArrayType) {
-				baseType = ((CIVLArrayType) baseType).baseType();
+				baseType = ((CIVLArrayType) baseType).elementType();
 			}
-			if (baseType instanceof CIVLProcessType) {
+			if (baseType.isProcessType()) {
 				procRefType = true;
 			}
 		}
@@ -284,7 +284,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 			containsPointerType = true;
 		} else if (type instanceof CIVLArrayType) {
 			containsPointerType = containsPointerType(((CIVLArrayType) type)
-					.baseType());
+					.elementType());
 		} else if (type instanceof CIVLStructType) {
 			for (StructField f : ((CIVLStructType) type).fields()) {
 				boolean fieldContainsPointer = containsPointerType(f.type());

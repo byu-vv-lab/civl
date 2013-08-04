@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.common.ABC_CIVLSource;
 import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
@@ -49,7 +50,10 @@ public class CIVL {
 	public final static String date = "2013-06-23";
 
 	private static SymbolicUniverse universe = SARL.newStandardUniverse();
-	private static ModelBuilder modelBuilder = Models.newModelBuilder();
+
+	private static ModelBuilder modelBuilder = Models.newModelBuilder(universe);
+
+	private static ModelFactory modelFactory = modelBuilder.factory();
 
 	// TODO:
 	// add -D support. Need to create a token with "source" the command line.
@@ -194,7 +198,7 @@ public class CIVL {
 		TransitionFactory transitionFactory = new TransitionFactory();
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out), new File(
 				new File("."), "CIVLREP/"));
-		Evaluator evaluator = new Evaluator(stateFactory, log);
+		Evaluator evaluator = new Evaluator(modelFactory, stateFactory, log);
 		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
 				stateFactory, transitionFactory, universe, evaluator);
 		StatePredicateIF<State> predicate = new StandardPredicate(log,
@@ -229,7 +233,7 @@ public class CIVL {
 			model.print(out);
 		}
 		initialState = stateFactory.initialState(model);
-		executor = new Executor(universe, stateFactory, log, loader);
+		executor = new Executor(modelFactory, stateFactory, log, loader);
 		stateManager = new StateManager(executor);
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);

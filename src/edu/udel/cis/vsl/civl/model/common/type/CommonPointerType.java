@@ -8,43 +8,31 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
+ * 
  * @author zirkel
- *
+ * 
  */
-public class CommonPointerType implements CIVLPointerType {
+public class CommonPointerType extends CommonType implements CIVLPointerType {
 
 	private CIVLType baseType;
-	
+
 	public CommonPointerType(CIVLType baseType) {
 		this.baseType = baseType;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.udel.cis.vsl.civl.model.IF.type.PointerType#baseType()
 	 */
 	@Override
 	public CIVLType baseType() {
 		return baseType;
 	}
-	
+
 	@Override
 	public String toString() {
 		return baseType + "*";
-	}
-
-	@Override
-	public boolean isNumericType() {
-		return false;
-	}
-
-	@Override
-	public boolean isIntegerType() {
-		return false;
-	}
-
-	@Override
-	public boolean isRealType() {
-		return false;
 	}
 
 	@Override

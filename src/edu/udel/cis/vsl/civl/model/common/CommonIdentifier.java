@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 
 /**
  * An identifier. Used for names of variables, functions, etc.
@@ -14,7 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
  */
 public class CommonIdentifier extends CommonSourceable implements Identifier {
 
-	private String name;
+	private StringObject stringObject;
 
 	/**
 	 * An identifier. Used for names of variables, functions, etc.
@@ -22,29 +23,29 @@ public class CommonIdentifier extends CommonSourceable implements Identifier {
 	 * @param name
 	 *            The name associated with this identifier.
 	 */
-	public CommonIdentifier(CIVLSource source, String name) {
+	public CommonIdentifier(CIVLSource source, StringObject stringObject) {
 		super(source);
-		this.name = name;
+		this.stringObject = stringObject;
 	}
 
 	/**
 	 * @return The name associated with this identifier.
 	 */
 	public String name() {
-		return name;
+		return stringObject.getString();
 	}
 
-	/**
-	 * @param name
-	 *            The name associated with this identifier.
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+	// /**
+	// * @param name
+	// * The name associated with this identifier.
+	// */
+	// public void setName(String name) {
+	// this.name = name;
+	// }
 
 	@Override
 	public String toString() {
-		return name;
+		return stringObject.toString();
 	}
 
 	/*
@@ -56,7 +57,8 @@ public class CommonIdentifier extends CommonSourceable implements Identifier {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result
+				+ ((stringObject == null) ? 0 : stringObject.hashCode());
 		return result;
 	}
 
@@ -74,12 +76,18 @@ public class CommonIdentifier extends CommonSourceable implements Identifier {
 		if (getClass() != obj.getClass())
 			return false;
 		Identifier other = (Identifier) obj;
-		if (name == null) {
-			if (other.name() != null)
+		if (stringObject == null) {
+			if (other.stringObject() != null)
 				return false;
-		} else if (!name.equals(other.name()))
+		} else if (!stringObject.equals(other.stringObject()))
 			return false;
 		return true;
+	}
+
+	@Override
+	public StringObject stringObject() {
+		// TODO Auto-generated method stub
+		return stringObject;
 	}
 
 }

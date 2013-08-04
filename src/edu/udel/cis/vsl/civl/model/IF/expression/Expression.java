@@ -23,6 +23,8 @@ public interface Expression extends Sourceable {
 		COND,
 		DEREFERENCE,
 		DOT,
+		DYNAMIC_TYPE_OF,
+		INITIAL_VALUE,
 		INTEGER_LITERAL,
 		NULL_LITERAL,
 		REAL_LITERAL,

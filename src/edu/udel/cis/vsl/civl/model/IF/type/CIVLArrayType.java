@@ -11,13 +11,13 @@ public interface CIVLArrayType extends CIVLType {
 	/**
 	 * @return The type of elements in this array.
 	 */
-	CIVLType baseType();
+	CIVLType elementType();
 
-	/**
-	 * @param baseType
-	 *            The type of elements in this array.
-	 */
-	void setBaseType(CIVLType baseType);
+	// /**
+	// * @param baseType
+	// * The type of elements in this array.
+	// */
+	//void setBaseType(CIVLType baseType);
 
 	/**
 	 * 

@@ -16,7 +16,6 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLProcessType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
@@ -44,6 +43,11 @@ public class StateFactory implements StateFactoryIF {
 
 	private SymbolicUniverse symbolicUniverse;
 
+	// /**
+	// * Object used to initialize variables when entering a new scope.
+	// */
+	// private Initializer initializer;
+
 	private Map<DynamicScope, DynamicScope> scopeMap = new HashMap<DynamicScope, DynamicScope>();
 
 	private Map<Process, Process> processMap = new HashMap<Process, Process>();
@@ -63,11 +67,14 @@ public class StateFactory implements StateFactoryIF {
 	/**
 	 * Factory to create all state objects.
 	 */
-	public StateFactory(SymbolicUniverse symbolicUniverse) {
+	public StateFactory(SymbolicUniverse symbolicUniverse
+	// ,Initializer initializer
+	) {
 		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
 		List<SymbolicType> scopeTypeList = new Vector<SymbolicType>();
 
 		this.symbolicUniverse = symbolicUniverse;
+		// this.initializer = initializer;
 		processTypeList.add(symbolicUniverse.integerType());
 		processType = symbolicUniverse.tupleType(
 				symbolicUniverse.stringObject("process"), processTypeList);
@@ -126,59 +133,68 @@ public class StateFactory implements StateFactoryIF {
 		return canonic(new Process(id, stack));
 	}
 
-	private SymbolicExpression[] initialValues(Scope lexicalScope,
-			int dynamicScopeId) {
+	// make an interface Initializer for this. Take Variable and dynamicScopeId,
+	// and returns SymbolicExpression. initialValue. Put the
+	// interface here (in state module). Use it in this class.
+	// Implement the interface in semantics: CommonInitializer.
+	// Constructor for StateFactory will take an Initializer.
+	private SymbolicExpression[] initialValues(
+	// State state,
+			Scope lexicalScope, int dynamicScopeId) {
 		SymbolicExpression[] values = new SymbolicExpression[lexicalScope
 				.variables().size()];
 
 		for (int i = 0; i < values.length; i++) {
-			Variable v = lexicalScope.getVariable(i);
+			// Variable v = lexicalScope.getVariable(i);
 
-			if (v.type() instanceof CIVLArrayType) {
-				StringObject name = symbolicUniverse.stringObject("A_s"
-						+ dynamicScopeId + "v" + i);
-				SymbolicType type = arrayType(v.getSource(),
-						(CIVLArrayType) v.type());
+			values[i] = symbolicUniverse.nullExpression();
+			// values[i] = initializer.initialValue(state, v, dynamicScopeId);
 
-				values[i] = symbolicUniverse.symbolicConstant(name, type);
-			} else if (v.type() instanceof CIVLStructType) {
-				StringObject name = symbolicUniverse.stringObject("S_s"
-						+ dynamicScopeId + "v" + i);
-				SymbolicType type = structType(v.getSource(),
-						(CIVLStructType) v.type());
-
-				values[i] = symbolicUniverse.symbolicConstant(name, type);
-			} else if (v.isExtern()) {
-				StringObject name = symbolicUniverse.stringObject("s"
-						+ dynamicScopeId + "v" + i);
-				SymbolicType type = null;
-
-				if (v.type() instanceof CIVLPrimitiveType) {
-					switch (((CIVLPrimitiveType) v.type()).primitiveType()) {
-					case INT:
-						type = symbolicUniverse.integerType();
-						break;
-					case BOOL:
-						type = symbolicUniverse.booleanType();
-						break;
-					case REAL:
-						type = symbolicUniverse.realType();
-						break;
-					case STRING:
-						type = symbolicUniverse.arrayType(symbolicUniverse
-								.characterType());
-						break;
-					default:
-						throw new CIVLInternalException("Unreachable",
-								v.getSource());
-					}
-				} else {
-					throw new CIVLInternalException(
-							"Unimplemented input type: " + v.type(),
-							v.getSource());
-				}
-				values[i] = symbolicUniverse.symbolicConstant(name, type);
-			}
+			// if (v.type() instanceof CIVLArrayType) {
+			// StringObject name = symbolicUniverse.stringObject("A_s"
+			// + dynamicScopeId + "v" + i);
+			// SymbolicType type = arrayType(v.getSource(),
+			// (CIVLArrayType) v.type());
+			//
+			// values[i] = symbolicUniverse.symbolicConstant(name, type);
+			// } else if (v.type() instanceof CIVLStructType) {
+			// StringObject name = symbolicUniverse.stringObject("S_s"
+			// + dynamicScopeId + "v" + i);
+			// SymbolicType type = structType(v.getSource(),
+			// (CIVLStructType) v.type());
+			//
+			// values[i] = symbolicUniverse.symbolicConstant(name, type);
+			// } else if (v.isExtern()) {
+			// StringObject name = symbolicUniverse.stringObject("s"
+			// + dynamicScopeId + "v" + i);
+			// SymbolicType type = null;
+			//
+			// if (v.type() instanceof CIVLPrimitiveType) {
+			// switch (((CIVLPrimitiveType) v.type()).primitiveType()) {
+			// case INT:
+			// type = symbolicUniverse.integerType();
+			// break;
+			// case BOOL:
+			// type = symbolicUniverse.booleanType();
+			// break;
+			// case REAL:
+			// type = symbolicUniverse.realType();
+			// break;
+			// case STRING:
+			// type = symbolicUniverse.arrayType(symbolicUniverse
+			// .characterType());
+			// break;
+			// default:
+			// throw new CIVLInternalException("Unreachable",
+			// v.getSource());
+			// }
+			// } else {
+			// throw new CIVLInternalException(
+			// "Unimplemented input type: " + v.type(),
+			// v.getSource());
+			// }
+			// values[i] = symbolicUniverse.symbolicConstant(name, type);
+			// }
 		}
 		return values;
 	}
@@ -199,10 +215,11 @@ public class StateFactory implements StateFactoryIF {
 	 *            dynamic scope.
 	 * @return A new dynamic scope.
 	 */
-	private DynamicScope dynamicScope(Scope lexicalScope, int parent,
-			int dynamicScopeId, BitSet reachers) {
-		return dynamicScope(lexicalScope, parent,
-				initialValues(lexicalScope, dynamicScopeId), reachers);
+	private DynamicScope dynamicScope(
+	// State state,
+			Scope lexicalScope, int parent, int dynamicScopeId, BitSet reachers) {
+		return dynamicScope(lexicalScope, parent, initialValues(// state,
+				lexicalScope, dynamicScopeId), reachers);
 	}
 
 	/**
@@ -227,13 +244,13 @@ public class StateFactory implements StateFactoryIF {
 	 * @return The symbolic array type.
 	 */
 	private SymbolicType arrayType(CIVLSource source, CIVLArrayType type) {
-		CIVLType baseType = type.baseType();
+		CIVLType baseType = type.elementType();
 
 		if (baseType instanceof CIVLArrayType) {
 			return symbolicUniverse.arrayType(arrayType(source,
 					(CIVLArrayType) baseType));
 		} else if (baseType instanceof CIVLPrimitiveType) {
-			switch (((CIVLPrimitiveType) baseType).primitiveType()) {
+			switch (((CIVLPrimitiveType) baseType).primitiveTypeKind()) {
 			case INT:
 				return symbolicUniverse.arrayType(symbolicUniverse
 						.integerType());
@@ -245,11 +262,11 @@ public class StateFactory implements StateFactoryIF {
 			case STRING:
 				return symbolicUniverse.arrayType(symbolicUniverse
 						.characterType());
+			case PROCESS:
+				return symbolicUniverse.arrayType(processType);
 			default:
 				break;
 			}
-		} else if (baseType instanceof CIVLProcessType) {
-			return symbolicUniverse.arrayType(processType);
 		} else if (baseType instanceof CIVLStructType) {
 			return structType(source, (CIVLStructType) baseType);
 		}
@@ -275,7 +292,7 @@ public class StateFactory implements StateFactoryIF {
 			if (f.type() instanceof CIVLArrayType) {
 				fieldType = arrayType(source, (CIVLArrayType) f.type());
 			} else if (f.type() instanceof CIVLPrimitiveType) {
-				switch (((CIVLPrimitiveType) f.type()).primitiveType()) {
+				switch (((CIVLPrimitiveType) f.type()).primitiveTypeKind()) {
 				case INT:
 					fieldType = symbolicUniverse.integerType();
 					break;
@@ -290,7 +307,7 @@ public class StateFactory implements StateFactoryIF {
 				default:
 					break;
 				}
-			} else if (f.type() instanceof CIVLProcessType) {
+			} else if (f.type().isProcessType()) {
 				fieldType = symbolicUniverse.arrayType(processType);
 			} else if (f.type() instanceof CIVLStructType) {
 				// TODO: Handle recursive types.

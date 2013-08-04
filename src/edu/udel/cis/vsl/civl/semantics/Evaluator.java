@@ -4,7 +4,10 @@
 package edu.udel.cis.vsl.civl.semantics;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
@@ -15,6 +18,7 @@ import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -23,8 +27,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
+import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
@@ -35,13 +41,17 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PRIMITIVE_TYPE;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
+import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -59,7 +69,6 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.number.real.RealNumberFactory;
-import edu.udel.cis.vsl.sarl.util.SingletonSet;
 
 /**
  * An evaluator is used to evaluate expressions.
@@ -70,6 +79,8 @@ import edu.udel.cis.vsl.sarl.util.SingletonSet;
 public class Evaluator {
 
 	// Fields..............................................................
+
+	private ModelFactory modelFactory;
 
 	private StateFactoryIF stateFactory;
 
@@ -82,6 +93,11 @@ public class Evaluator {
 	 * simply wraps a process ID number.
 	 */
 	private SymbolicTupleType processType;
+
+	/**
+	 * Map from symbolic type to a canonic symbolic expression of that type.
+	 */
+	private Map<SymbolicType, SymbolicExpression> typeExpressionMap = new HashMap<SymbolicType, SymbolicExpression>();
 
 	/**
 	 * The scope type is a tuple with one component which has integer type. It
@@ -98,6 +114,8 @@ public class Evaluator {
 	 * variable in its scope. The type of r is ReferenceExpression from SARL.
 	 */
 	private SymbolicTupleType pointerType;
+
+	private SymbolicTupleType dynamicType;
 
 	private SymbolicExpression nullPointer;
 
@@ -117,6 +135,13 @@ public class Evaluator {
 
 	private ReferenceExpression identityReference;
 
+	// /**
+	// * Name used for symbolic constants used for encapsulating symbolic types.
+	// * There will be one symbolic constant for each type, but all of these
+	// * symbolic constants will have the same name.
+	// */
+	// private StringObject typeName;
+
 	// Constructors........................................................
 
 	/**
@@ -125,19 +150,29 @@ public class Evaluator {
 	 * @param symbolicUniverse
 	 *            The symbolic universe for the expressions.
 	 */
-	public Evaluator(StateFactoryIF stateFactory, ErrorLog log) {
-		List<SymbolicType> scopeTypeList = new Vector<SymbolicType>();
+	public Evaluator(ModelFactory modelFactory, StateFactoryIF stateFactory,
+			ErrorLog log) {
+		// List<SymbolicType> scopeTypeList = new Vector<SymbolicType>();
 		List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
-		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
+		// List<SymbolicType> processTypeList = new Vector<SymbolicType>();
 
+		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
 		this.universe = stateFactory.symbolicUniverse();
-		processTypeList.add(universe.integerType());
-		processType = (SymbolicTupleType) universe.canonic(universe.tupleType(
-				universe.stringObject("process"), processTypeList));
-		scopeTypeList.add(universe.integerType());
-		scopeType = (SymbolicTupleType) universe.canonic(universe.tupleType(
-				universe.stringObject("scope"), scopeTypeList));
+		// processTypeList.add(universe.integerType());
+		processType = (SymbolicTupleType) modelFactory.processType()
+				.getSymbolicType();
+		// processType = (SymbolicTupleType)
+		// universe.canonic(universe.tupleType(
+		// universe.stringObject("process"), processTypeList));
+		// scopeTypeList.add(universe.integerType());
+		// can get this from model factory...
+		scopeType = (SymbolicTupleType) modelFactory.scopeType()
+				.getSymbolicType();
+		// scopeType = (SymbolicTupleType) universe.canonic(universe.tupleType(
+		// universe.stringObject("scope"), scopeTypeList));
+		dynamicType = (SymbolicTupleType) modelFactory.dynamicType()
+				.getSymbolicType();
 		pointerComponents.add(scopeType);
 		pointerComponents.add(universe.integerType());
 		pointerComponents.add(universe.referenceType());
@@ -154,15 +189,16 @@ public class Evaluator {
 		one = (NumericExpression) universe.canonic(universe.integer(1));
 		nullPointer = universe.canonic(makePointer(-1, -1,
 				universe.nullReference()));
+		// typeName = universe.stringObject("TYPE");
 	}
 
 	// Helper methods......................................................
 
 	private NumericExpression zeroOf(CIVLSource source, CIVLType type) {
 		if (type instanceof CIVLPrimitiveType) {
-			if (((CIVLPrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.INT)
+			if (((CIVLPrimitiveType) type).primitiveTypeKind() == PrimitiveTypeKind.INT)
 				return zero;
-			if (((CIVLPrimitiveType) type).primitiveType() == PRIMITIVE_TYPE.REAL)
+			if (((CIVLPrimitiveType) type).primitiveTypeKind() == PrimitiveTypeKind.REAL)
 				return zeroR;
 		}
 		throw new CIVLInternalException("Expected integer or real type, not "
@@ -187,7 +223,7 @@ public class Evaluator {
 		SymbolicType result;
 
 		if (type instanceof CIVLPrimitiveType) {
-			switch (((CIVLPrimitiveType) type).primitiveType()) {
+			switch (((CIVLPrimitiveType) type).primitiveTypeKind()) {
 			case BOOL:
 				result = universe.booleanType();
 				break;
@@ -207,7 +243,7 @@ public class Evaluator {
 		} else if (type instanceof CIVLArrayType) {
 			// what about extent?
 			result = universe.arrayType(symbolicType(source,
-					((CIVLArrayType) type).baseType()));
+					((CIVLArrayType) type).elementType()));
 		} else if (type instanceof CIVLPointerType) {
 			result = pointerType;
 		} else
@@ -267,7 +303,7 @@ public class Evaluator {
 	 * @return symbolic expression of type scopeType wrapping sid
 	 */
 	private SymbolicExpression makeScopeVal(int sid) {
-		return universe.tuple(scopeType, new SingletonSet<SymbolicExpression>(
+		return universe.tuple(scopeType, new Singleton<SymbolicExpression>(
 				universe.integer(sid)));
 	}
 
@@ -1103,7 +1139,97 @@ public class Evaluator {
 				"$result not yet implemented: " + expression.getSource());
 	}
 
+	private SymbolicType getDynamicType(State state, int pid, CIVLType type,
+			CIVLSource source, boolean computeStructs) {
+		SymbolicType result;
+
+		if (type instanceof CIVLPrimitiveType) {
+			result = ((CIVLPrimitiveType) type).getSymbolicType();
+		} else if (type instanceof CIVLArrayType) {
+			CIVLArrayType arrayType = (CIVLArrayType) type;
+			SymbolicType elementSymbolicType = getDynamicType(state, pid,
+					arrayType.elementType(), source, computeStructs);
+
+			if (arrayType.isComplete()) {
+				NumericExpression length = (NumericExpression) evaluate(state,
+						pid, ((CIVLCompleteArrayType) arrayType).extent());
+				result = universe.arrayType(elementSymbolicType, length);
+			} else {
+				result = universe.arrayType(elementSymbolicType);
+			}
+		} else if (type instanceof CIVLPointerType) {
+			result = pointerType;
+		} else if (type instanceof CIVLStructType) {
+			// TODO: note: the variable must be set in the model builder
+			CIVLStructType structType = (CIVLStructType) type;
+
+			if (computeStructs) {
+				int numFields = structType.numFields();
+				LinkedList<SymbolicType> componentTypes = new LinkedList<SymbolicType>();
+
+				for (int i = 0; i < numFields; i++) {
+					StructField field = structType.getField(i);
+					SymbolicType componentType = getDynamicType(state, pid,
+							field.type(), source, computeStructs);
+
+					componentTypes.add(componentType);
+				}
+				result = universe.tupleType(structType.name().stringObject(),
+						componentTypes);
+			} else {
+				Variable variable = structType.getVariable();
+				SymbolicExpression value = state.valueOf(pid, variable);
+				result = getType(source, value);
+			}
+		} else
+			throw new CIVLInternalException("Unreachable", source);
+		return result;
+	}
+
+	private SymbolicExpression computeInitialValue(State s, LHSExpression expr,
+			SymbolicType dynamicType) {
+		// TODO
+		CIVLSource source = expr.getSource();
+		CIVLType type = expr.getExpressionType();
+
+		if (type instanceof CIVLPrimitiveType) {
+			// an "undefined" symbolic constant of that type?
+
+		} else if (type instanceof CIVLArrayType) {
+
+		} else if (type instanceof CIVLPointerType) {
+			// same as primitive type
+		} else if (type instanceof CIVLStructType) {
+
+		} else
+			throw new CIVLInternalException("Unreachable", source);
+		return null;
+
+		// if dynamicType is a tuple type, create the concrete tuple of that
+		// type with each component obtained by evaluating
+		// computeInitialValue(s, dotExpression(), componentType)
+		// if dynamicType is an array type, create a unique symbolic constant
+		// name based on the LHS expression and a symbolic constant with that
+		// name and type dynamicType (no recursion in this case)
+	}
+
+	private Evaluation evaluateDynamicTypeOf(State state, int pid,
+			DynamicTypeOfExpression expression) {
+		// TODO
+		return null;
+	}
+
+	private Evaluation evaluateInitialValue(State state, int pid,
+			InitialValueExpression expression) {
+		// TODO
+		return null;
+	}
+
 	// Exported methods...
+
+	public ModelFactory modelFactory() {
+		return modelFactory;
+	}
 
 	public StateFactoryIF stateFactory() {
 		return stateFactory;
@@ -1168,8 +1294,8 @@ public class Evaluator {
 	 * @return symbolic expression of type processType wrapping pid
 	 */
 	public SymbolicExpression makeProcVal(int pid) {
-		return universe.tuple(processType,
-				new SingletonSet<SymbolicExpression>(universe.integer(pid)));
+		return universe.tuple(processType, new Singleton<SymbolicExpression>(
+				universe.integer(pid)));
 	}
 
 	/**
@@ -1300,6 +1426,48 @@ public class Evaluator {
 	}
 
 	/**
+	 * Given a symbolic type, returns a canonic symbolic expression which
+	 * somehow wraps that type so it can be used as a value. Nothing should be
+	 * assumed about the symbolic expression. To extract the type from such an
+	 * expression, use method {@link #getType}.
+	 * 
+	 * @param type
+	 *            a symbolic type
+	 * @return a canonic symbolic expression wrapping that type
+	 */
+	public SymbolicExpression expressionOfType(SymbolicType type) {
+		SymbolicExpression result;
+
+		type = (SymbolicType) universe.canonic(type);
+		result = typeExpressionMap.get(type);
+		if (result == null) {
+			SymbolicExpression id = universe.integer(type.id());
+
+			result = universe.canonic(universe.tuple(dynamicType,
+					new Singleton<SymbolicExpression>(id)));
+			typeExpressionMap.put(type, result);
+		}
+		return result;
+	}
+
+	/**
+	 * Given a symbolic expression returned by the method
+	 * {@link #expressionOfType}, this extracts the type that was used to create
+	 * that expression. If the given expression is not an expression that was
+	 * created by {@link #expressionOfType}, the behavior is undefined.
+	 * 
+	 * @param expr
+	 *            a symbolic expression returned by method
+	 *            {@link #expressionOfType}
+	 * @return the symbolic type used to create that expression
+	 */
+	public SymbolicType getType(CIVLSource source, SymbolicExpression expr) {
+		int id = extractIntField(source, expr, zeroObj);
+
+		return (SymbolicType) universe.objectWithId(id);
+	}
+
+	/**
 	 * Evaluates the expression and returns the result, which is a symbolic
 	 * expression value.
 	 * 
@@ -1340,6 +1508,14 @@ public class Evaluator {
 			break;
 		case DOT:
 			result = evaluateDot(state, pid, (DotExpression) expression);
+			break;
+		case DYNAMIC_TYPE_OF:
+			result = evaluateDynamicTypeOf(state, pid,
+					(DynamicTypeOfExpression) expression);
+			break;
+		case INITIAL_VALUE:
+			result = evaluateInitialValue(state, pid,
+					(InitialValueExpression) expression);
 			break;
 		case INTEGER_LITERAL:
 			result = evaluateIntegerLiteral(state, pid,

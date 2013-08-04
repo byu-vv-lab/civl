@@ -6,7 +6,6 @@ package edu.udel.cis.vsl.civl.model.common.variable;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
@@ -24,7 +23,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	private Identifier name;
 	private boolean isConst;
 	private boolean isExtern;
-	private Expression extent = null;
+	// private Expression extent = null;
 	private int vid;
 	private Scope scope;
 
@@ -67,13 +66,13 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		return isConst;
 	}
 
-	/**
-	 * @return For an array variable, the extent of the array. Null if
-	 *         unspecified or not an array.
-	 */
-	public Expression extent() {
-		return extent;
-	}
+	// /**
+	// * @return For an array variable, the extent of the array. Null if
+	// * unspecified or not an array.
+	// */
+	// public Expression extent() {
+	// return extent;
+	// }
 
 	/**
 	 * @return Whether this variable is an extern.
@@ -98,14 +97,14 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		this.isConst = isConst;
 	}
 
-	/**
-	 * @param extent
-	 *            For an array variable, the extent of the array. Null if
-	 *            unspecified or not an array.
-	 */
-	public void setExtent(Expression extent) {
-		this.extent = extent;
-	}
+	// /**
+	// * @param extent
+	// * For an array variable, the extent of the array. Null if
+	// * unspecified or not an array.
+	// */
+	// public void setExtent(Expression extent) {
+	// this.extent = extent;
+	// }
 
 	/**
 	 * @param isExtern
@@ -114,7 +113,6 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	public void setIsExtern(boolean isExtern) {
 		this.isExtern = isExtern;
 	}
-
 
 	/**
 	 * @param vid
@@ -178,7 +176,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((extent == null) ? 0 : extent.hashCode());
+		// result = prime * result + ((extent == null) ? 0 : extent.hashCode());
 		result = prime * result + (isConst ? 1231 : 1237);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());

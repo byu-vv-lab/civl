@@ -16,4 +16,8 @@ public interface CIVLType {
 
 	boolean isPointerType();
 
+	boolean isProcessType();
+
+	boolean isScopeType();
+
 }
