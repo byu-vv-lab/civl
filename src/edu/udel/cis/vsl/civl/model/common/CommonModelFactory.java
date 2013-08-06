@@ -117,11 +117,23 @@ public class CommonModelFactory implements ModelFactory {
 	/* Keep a set of used identifiers for fly-weighting purposes. */
 	private Map<String, Identifier> identifiers;
 
+	private CIVLPrimitiveType voidType;
+
 	private CIVLPrimitiveType integerType;
 
 	private CIVLPrimitiveType booleanType;
 
 	private CIVLPrimitiveType realType;
+
+	private CIVLPrimitiveType scopeType;
+
+	private CIVLPrimitiveType heapType;
+
+	private CIVLPrimitiveType processType;
+
+	private CIVLPrimitiveType dynamicType;
+
+	private CIVLPrimitiveType stringType;
 
 	private SymbolicTupleType scopeSymbolicType;
 
@@ -134,16 +146,6 @@ public class CommonModelFactory implements ModelFactory {
 	private SymbolicTupleType pointerSymbolicType;
 
 	private SymbolicArrayType stringSymbolicType;
-
-	private CIVLPrimitiveType scopeType;
-
-	private CIVLPrimitiveType heapType;
-
-	private CIVLPrimitiveType processType;
-
-	private CIVLPrimitiveType dynamicType;
-
-	private CIVLPrimitiveType stringType;
 
 	/* Keep a unique number to identify scopes. */
 	private int scopeID = 0;
@@ -162,6 +164,7 @@ public class CommonModelFactory implements ModelFactory {
 		LinkedList<SymbolicType> pointerComponents = new LinkedList<SymbolicType>();
 
 		this.universe = universe;
+		this.voidType = new CommonPrimitiveType(PrimitiveTypeKind.VOID, null);
 		this.integerType = new CommonPrimitiveType(PrimitiveTypeKind.INT,
 				universe.integerType());
 		this.booleanType = new CommonPrimitiveType(PrimitiveTypeKind.BOOL,
@@ -1073,6 +1076,11 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SymbolicArrayType stringSymbolicType() {
 		return stringSymbolicType;
+	}
+
+	@Override
+	public CIVLPrimitiveType voidType() {
+		return voidType;
 	}
 
 }

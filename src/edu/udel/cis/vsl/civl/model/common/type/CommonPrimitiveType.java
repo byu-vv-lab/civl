@@ -6,7 +6,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
- * A primitive type. One of: int, bool, real, string.
+ * Implementation of {@link CIVLPrimitiveType}.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
@@ -14,7 +14,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 public class CommonPrimitiveType extends CommonType implements
 		CIVLPrimitiveType {
 
-	private PrimitiveTypeKind primitiveType;
+	private PrimitiveTypeKind kind;
 
 	private SymbolicType symbolicType;
 
@@ -24,9 +24,8 @@ public class CommonPrimitiveType extends CommonType implements
 	 * @param The
 	 *            actual primitive type (int, bool, real, or string).
 	 */
-	public CommonPrimitiveType(PrimitiveTypeKind primitiveType,
-			SymbolicType symbolicType) {
-		this.primitiveType = primitiveType;
+	public CommonPrimitiveType(PrimitiveTypeKind kind, SymbolicType symbolicType) {
+		this.kind = kind;
 		this.symbolicType = symbolicType;
 	}
 
@@ -34,7 +33,7 @@ public class CommonPrimitiveType extends CommonType implements
 	 * @return The actual primitive type (int, bool, real, or string).
 	 */
 	public PrimitiveTypeKind primitiveTypeKind() {
-		return primitiveType;
+		return kind;
 	}
 
 	/**
@@ -42,12 +41,12 @@ public class CommonPrimitiveType extends CommonType implements
 	 *            actual primitive type (int, bool, real, or string).
 	 */
 	public void setPrimitiveType(PrimitiveTypeKind primitiveType) {
-		this.primitiveType = primitiveType;
+		this.kind = primitiveType;
 	}
 
 	@Override
 	public String toString() {
-		switch (primitiveType) {
+		switch (kind) {
 		case INT:
 			return "$int";
 		case BOOL:
@@ -71,18 +70,17 @@ public class CommonPrimitiveType extends CommonType implements
 
 	@Override
 	public boolean isNumericType() {
-		return primitiveType == PrimitiveTypeKind.INT
-				|| primitiveType == PrimitiveTypeKind.REAL;
+		return kind == PrimitiveTypeKind.INT || kind == PrimitiveTypeKind.REAL;
 	}
 
 	@Override
 	public boolean isIntegerType() {
-		return primitiveType == PrimitiveTypeKind.INT;
+		return kind == PrimitiveTypeKind.INT;
 	}
 
 	@Override
 	public boolean isRealType() {
-		return primitiveType == PrimitiveTypeKind.REAL;
+		return kind == PrimitiveTypeKind.REAL;
 	}
 
 	@Override
@@ -92,12 +90,12 @@ public class CommonPrimitiveType extends CommonType implements
 
 	@Override
 	public boolean isProcessType() {
-		return primitiveType == PrimitiveTypeKind.PROCESS;
+		return kind == PrimitiveTypeKind.PROCESS;
 	}
 
 	@Override
 	public boolean isScopeType() {
-		return primitiveType == PrimitiveTypeKind.SCOPE;
+		return kind == PrimitiveTypeKind.SCOPE;
 	}
 
 	@Override
@@ -105,4 +103,8 @@ public class CommonPrimitiveType extends CommonType implements
 		return false;
 	}
 
+	@Override
+	public boolean isVoidType() {
+		return kind == PrimitiveTypeKind.VOID;
+	}
 }

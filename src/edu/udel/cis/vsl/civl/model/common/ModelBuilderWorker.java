@@ -98,8 +98,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
@@ -111,25 +109,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
  * 
  * TODO: translate all conversions to casts.
  * 
- * Break cycles by brekaing up constructions of struct types into two parts.
- * 
- * Add void type and use it.
- * 
- * Make a CIVLSource and Sourceable. One implementation will be CIVL_ABC_Source
- * which wraps an ABC Source. Constructors to all CIVL model statements,
- * expressions, ..., must take a source.
- * 
- * Following will implement CIVLSourceable: Function, Identifier, Scope,
- * Expression, Location, Statement, Variable. Type: no, because want two types
- * to be the same (equal). Make CIVLSource first argument to every construct.
- * Update model factory as well. Add method source(ASTNode) in model builder
- * worker to create a CIVLSource from an ASTNode (wrap it).
- * 
- * 
- * 
- * 
  * @author siegel
- * 
  */
 public class ModelBuilderWorker {
 
@@ -159,8 +139,8 @@ public class ModelBuilderWorker {
 	// private Scope systemScope;
 
 	/**
-	 * Variable accumulates the AST definition node of every function definition
-	 * in the AST.
+	 * This field accumulates the AST definition node of every function
+	 * definition in the AST.
 	 */
 	private Vector<FunctionDefinitionNode> unprocessedFunctions;
 
@@ -171,10 +151,11 @@ public class ModelBuilderWorker {
 	private Map<FunctionDefinitionNode, Scope> containingScopes;
 
 	/**
-	 * Map containing all call and spawn statements in the model. This is built
-	 * up as call statements are processed. On a later pass, we iterate over
-	 * this map and set the function fields of the call/spawn statements to the
-	 * corresponding model Function object.
+	 * Map whose key set contains all call/spawn statements in the model. The
+	 * value associated to the key is the ABC function definition node. This is
+	 * built up as call statements are processed. On a later pass, we iterate
+	 * over this map and set the function fields of the call/spawn statements to
+	 * the corresponding model Function object.
 	 */
 	private Map<CallOrSpawnStatement, FunctionDefinitionNode> callStatements;
 
@@ -185,15 +166,15 @@ public class ModelBuilderWorker {
 	private Map<FunctionDefinitionNode, Function> functionMap;
 
 	/**
-	 * Currently being used to store information for a single function, the last
-	 * one to be processed. Unclear about how this works. Maps associated AST
-	 * label nodes to the corresponding model locations.
+	 * This fields stores information for a single function, the current one
+	 * being processed. It maps ABC label nodes to the corresponding CIVL
+	 * locations.
 	 */
 	private Map<LabelNode, Location> labeledLocations;
 
 	/**
 	 * Also being used for single function (the one being processed). Maps from
-	 * CIVL goto statements to the corresponding label nodes.
+	 * CIVL "goto" statements to the corresponding label nodes.
 	 */
 	private Map<Statement, LabelNode> gotoStatements;
 
@@ -215,14 +196,9 @@ public class ModelBuilderWorker {
 	 * 
 	 */
 	public ModelBuilderWorker(ModelFactory factory, Program program) {
-		// how to get the token factory: from Activator, get Preprocessor,
-		// then getTokenFactory().
-		// from program , getAST, get ASTFactory, getTokenFactory
 		this.factory = factory;
 		this.program = program;
-		// TODO: put this into Program.
-		// and rename getUnitFactory getASTFactory please
-		this.tokenFactory = program.getAST().getUnitFactory().getTokenFactory();
+		this.tokenFactory = program.getTokenFactory();
 		setUpSystemFunctions();
 	}
 
@@ -272,36 +248,6 @@ public class ModelBuilderWorker {
 	// }
 
 	/**
-	 * Is the given (static) model type the integer type?
-	 * 
-	 * @param type
-	 *            a static type
-	 * @return true iff types is the integer type
-	 */
-	private boolean isIntegerType(CIVLType type) {
-		return type instanceof CIVLPrimitiveType
-				&& ((CIVLPrimitiveType) type).primitiveTypeKind() == PrimitiveTypeKind.INT;
-	}
-
-	/**
-	 * Is the given (static) model type the integer or real type?
-	 * 
-	 * @param type
-	 *            a static type
-	 * @return true iff type is integer or real
-	 */
-	private boolean isNumericType(CIVLType type) {
-		if (type instanceof CIVLPrimitiveType) {
-			PrimitiveTypeKind kind = ((CIVLPrimitiveType) type)
-					.primitiveTypeKind();
-
-			return kind == PrimitiveTypeKind.INT
-					|| kind == PrimitiveTypeKind.REAL;
-		}
-		return false;
-	}
-
-	/**
 	 * Creates system function objects and associates them to particular
 	 * libraries. This should be replaced with a general technique for creating
 	 * the system function objects.
@@ -336,7 +282,7 @@ public class ModelBuilderWorker {
 	 *            the function definition AST node
 	 * @param scope
 	 *            the model scope in which the function definition occurs
-	 * @return the new model Function object
+	 * @return the new CIVL Function object
 	 */
 	private Function processFunction(FunctionDefinitionNode functionNode,
 			Scope scope) {
@@ -356,7 +302,6 @@ public class ModelBuilderWorker {
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		for (int i = 0; i < numParameters; i++) {
 			VariableDeclarationNode decl = abcParameters.getSequenceChild(i);
-			// TODO: is this the right scope?
 			CIVLType type = translateTypeNode(decl.getTypeNode(), scope);
 			CIVLSource source = sourceOf(decl.getIdentifier());
 			Identifier variableName = factory
@@ -536,8 +481,7 @@ public class ModelBuilderWorker {
 				// type already entered into map, so just return:
 				return result;
 			case VOID:
-				// TODO: make a CIVL void type
-				result = null;
+				result = factory.voidType();
 				break;
 			case ATOMIC:
 			case FUNCTION:
@@ -774,13 +718,13 @@ public class ModelBuilderWorker {
 			Expression pointerExpr, indexExpr;
 
 			if (lhsType instanceof CIVLPointerType) {
-				if (!isIntegerType(rhsType))
+				if (!rhsType.isIntegerType())
 					throw new CIVLInternalException(
 							"Expected expression of integer type",
 							rhs.getSource());
 				pointerExpr = lhs;
 				indexExpr = rhs;
-			} else if (isIntegerType(lhsType)) {
+			} else if (lhsType.isIntegerType()) {
 				if (!(rhsType instanceof CIVLPointerType))
 					throw new CIVLInternalException(
 							"Expected expression of pointer type",
@@ -895,8 +839,8 @@ public class ModelBuilderWorker {
 			Expression arg1 = arguments.get(1);
 			CIVLType type0 = arg0.getExpressionType();
 			CIVLType type1 = arg1.getExpressionType();
-			boolean isNumeric0 = isNumericType(type0);
-			boolean isNumeric1 = isNumericType(type1);
+			boolean isNumeric0 = type0.isNumericType();
+			boolean isNumeric1 = type1.isNumericType();
 
 			if (isNumeric0 && isNumeric1) {
 				result = factory.binaryExpression(source, BINARY_OPERATOR.PLUS,
@@ -918,7 +862,7 @@ public class ModelBuilderWorker {
 					throw new CIVLInternalException(
 							"Expected expression of pointer type",
 							pointer.getSource());
-				if (!isIntegerType(offset.getExpressionType()))
+				if (!offset.getExpressionType().isIntegerType())
 					throw new CIVLInternalException(
 							"Expected expression of integer type",
 							offset.getSource());
@@ -1563,15 +1507,14 @@ public class ModelBuilderWorker {
 		}
 		if (init != null) {
 			Statement statement;
-			
+
 			if (!(init instanceof ExpressionNode))
 				throw new CIVLUnimplementedFeatureException(
 						"Non-expression initializer", sourceOf(init));
 			if (sourceLocation == null)
 				sourceLocation = factory.location(sourceOfBeginning(node),
 						scope);
-			statement = assign(sourceOf(node),
-					sourceLocation,
+			statement = assign(sourceOf(node), sourceLocation,
 					factory.variableExpression(sourceOf(identifier), variable),
 					(ExpressionNode) init, scope);
 			if (result == null)
@@ -1787,7 +1730,6 @@ public class ModelBuilderWorker {
 				for (int i = 0; i < ((DeclarationListNode) init).numChildren(); i++) {
 					VariableDeclarationNode declaration = ((DeclarationListNode) init)
 							.getSequenceChild(i);
-					// TODO: Double check this is a variable
 					processVariableDeclaration(newScope, declaration);
 					if (declaration.getInitializer() != null) {
 						initStatement = factory.assignStatement(
@@ -2268,8 +2210,8 @@ public class ModelBuilderWorker {
 			ASTNode node = rootNode.child(i);
 
 			if (node instanceof VariableDeclarationNode) {
-				// TODO: use method
-				
+				// TODO: use methods
+
 				VariableDeclarationNode decl = (VariableDeclarationNode) node;
 				InitializerNode init = decl.getInitializer();
 
@@ -2305,8 +2247,8 @@ public class ModelBuilderWorker {
 			} else if (node instanceof FunctionDeclarationNode) {
 				// Do we need to keep track of these for any reason?
 			} else if (node instanceof TypedefDeclarationNode) {
-				// TODO: do as in CompoundStatementNode 
-				
+				// TODO: do as in CompoundStatementNode
+
 				// String typeName = ((TypedefDeclarationNode) node).getName();
 				//
 				// if (typeName.equals("$proc")) {

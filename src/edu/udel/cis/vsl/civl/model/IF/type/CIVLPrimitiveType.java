@@ -13,13 +13,20 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 public interface CIVLPrimitiveType extends CIVLType {
 
 	public enum PrimitiveTypeKind {
-		BOOL, DYNAMIC, HEAP, INT, PROCESS, REAL, SCOPE, STRING
+		BOOL, DYNAMIC, HEAP, INT, PROCESS, REAL, SCOPE, STRING, VOID
 	};
 
+	/**
+	 * Returns the symbolic type used to represent values of this primitive
+	 * type. May be null (only in the case of {@link PrimitiveTypeKind.VOID}.
+	 * 
+	 * @return the symbolic type corresponding to this primitive type
+	 */
 	SymbolicType getSymbolicType();
 
 	/**
-	 * @return The actual primitive type (int, bool, real, or string).
+	 * @return The kind of this primitive type, an element of the enumerated
+	 *         type
 	 */
 	PrimitiveTypeKind primitiveTypeKind();
 

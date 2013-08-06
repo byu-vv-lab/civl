@@ -148,6 +148,13 @@ public interface ModelFactory {
 	 */
 
 	/**
+	 * Returns the void type. Used in places where a type is required
+	 * syntactically but there is no type, such as function which does not
+	 * return a value.
+	 */
+	CIVLPrimitiveType voidType();
+
+	/**
 	 * Get the integer primitive type.
 	 * 
 	 * @return The integer primitive type.

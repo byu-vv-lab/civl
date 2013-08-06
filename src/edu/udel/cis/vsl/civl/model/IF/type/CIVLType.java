@@ -48,5 +48,7 @@ public interface CIVLType {
 	boolean isProcessType();
 
 	boolean isScopeType();
+	
+	boolean isVoidType();
 
 }

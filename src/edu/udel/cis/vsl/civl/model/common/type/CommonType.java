@@ -53,4 +53,9 @@ public abstract class CommonType implements CIVLType {
 		stateVariable = variable;
 	}
 
+	@Override
+	public boolean isVoidType() {
+		return false;
+	}
+
 }
