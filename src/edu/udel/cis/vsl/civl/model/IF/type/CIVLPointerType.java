@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.IF.type;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * Type of a pointer.
@@ -20,4 +21,11 @@ public interface CIVLPointerType extends CIVLType {
 	 * target of this pointer could be declared.
 	 */
 	Scope getRegion();
+
+	/**
+	 * Returns the symbolic type used for pointer values.
+	 * 
+	 * @return the symbolic pointer type
+	 */
+	SymbolicType getSymbolicType();
 }

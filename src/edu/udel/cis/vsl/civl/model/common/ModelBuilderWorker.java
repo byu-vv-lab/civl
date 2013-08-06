@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -62,6 +61,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WaitNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
@@ -100,6 +100,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -291,9 +292,11 @@ public class ModelBuilderWorker {
 	 */
 	private boolean isNumericType(CIVLType type) {
 		if (type instanceof CIVLPrimitiveType) {
-			PrimitiveTypeKind kind = ((CIVLPrimitiveType) type).primitiveTypeKind();
+			PrimitiveTypeKind kind = ((CIVLPrimitiveType) type)
+					.primitiveTypeKind();
 
-			return kind == PrimitiveTypeKind.INT || kind == PrimitiveTypeKind.REAL;
+			return kind == PrimitiveTypeKind.INT
+					|| kind == PrimitiveTypeKind.REAL;
 		}
 		return false;
 	}
@@ -393,7 +396,7 @@ public class ModelBuilderWorker {
 	 * @param node
 	 *            the AST variable declaration node.
 	 */
-	private void processVariableDeclaration(Scope scope,
+	private Variable processVariableDeclaration(Scope scope,
 			VariableDeclarationNode node) {
 		CIVLType type = translateTypeNode(node.getTypeNode(), scope);
 		Identifier name = factory.identifier(sourceOf(node.getIdentifier()),
@@ -401,20 +404,11 @@ public class ModelBuilderWorker {
 		Variable variable = factory.variable(sourceOf(node.getIdentifier()),
 				type, name, scope.numVariables());
 
-		// if (type instanceof CIVLArrayType) {
-		// ExpressionNode extentNode = ((ArrayTypeNode) node.getTypeNode())
-		// .getExtent();
-		// Expression extent;
-		//
-		// if (extentNode != null) {
-		// extent = expression(extentNode, scope);
-		// variable.setExtent(extent);
-		// }
-		// }
 		if (node.getTypeNode().isInputQualified()) {
 			variable.setIsExtern(true);
 		}
 		scope.addVariable(variable);
+		return variable;
 	}
 
 	private CIVLType translateBasicType(StandardBasicType basicType,
@@ -449,26 +443,28 @@ public class ModelBuilderWorker {
 
 	private CIVLType translateStructureOrUnion(StructureOrUnionType type,
 			Scope scope, CIVLSource source) {
-		// TODO: break cycles. break into two parts.
-		// first create the incomplete type and put in map.
-		// then complete it.
 		String tag = type.getTag();
 
 		if (type.isUnion())
 			throw new CIVLUnimplementedFeatureException("Union types", source);
-		// civlc.h defines $proc as struct __proc__
+		// civlc.h defines $proc as struct __proc__, etc.
 		if ("__proc__".equals(tag))
 			return factory.processType();
-		// civlc.h defines $heap as struct __heap__
 		if ("__heap__".equals(tag))
 			return factory.heapType();
+		if ("__scope__".equals(tag))
+			return factory.scopeType();
+		if ("__dynamic__".equals(tag))
+			return factory.dynamicType();
 		else {
+			CIVLStructType result = factory.structType(factory.identifier(
+					source, tag));
 			int numFields = type.getNumFields();
-			List<StructField> civlFields = new LinkedList<StructField>();
+			StructField[] civlFields = new StructField[numFields];
 
+			typeMap.put(type, result);
 			for (int i = 0; i < numFields; i++) {
 				Field field = type.getField(i);
-
 				String name = field.getName();
 				Type fieldType = field.getType();
 				CIVLType civlFieldType = translateType(fieldType, scope, source);
@@ -477,10 +473,10 @@ public class ModelBuilderWorker {
 				StructField civlField = factory.structField(identifier,
 						civlFieldType);
 
-				civlFields.add(civlField);
+				civlFields[i] = civlField;
 			}
-			return factory.structType(factory.identifier(source, tag),
-					civlFields);
+			result.complete(civlFields);
+			return result;
 		}
 	}
 
@@ -537,7 +533,8 @@ public class ModelBuilderWorker {
 			case STRUCTURE_OR_UNION:
 				result = translateStructureOrUnion(
 						(StructureOrUnionType) abcType, scope, source);
-				break;
+				// type already entered into map, so just return:
+				return result;
 			case VOID:
 				// TODO: make a CIVL void type
 				result = null;
@@ -545,7 +542,7 @@ public class ModelBuilderWorker {
 			case ATOMIC:
 			case FUNCTION:
 			case ENUMERATION:
-				throw new CIVLUnimplementedFeatureException("Enumerated types",
+				throw new CIVLUnimplementedFeatureException("Type " + abcType,
 						source);
 			default:
 				throw new CIVLInternalException("Unknown type: " + abcType,
@@ -1491,47 +1488,222 @@ public class ModelBuilderWorker {
 
 	}
 
+	private Variable newStructOrUnionStateVariable(Scope scope, CIVLType type,
+			CIVLSource source) {
+		Variable result;
+
+		if (type instanceof CIVLStructType) {
+			String tag = ((CIVLStructType) type).name().name();
+			String name = "__struct_" + tag + "__";
+			Identifier identifier = factory.identifier(source, name);
+			int vid = scope.numVariables();
+
+			result = factory.variable(source, factory.dynamicType(),
+					identifier, vid);
+		} else {
+			throw new CIVLInternalException("unexpected type: " + type, source);
+		}
+		scope.addVariable(result);
+		type.setStateVariable(result);
+		return result;
+	}
+
+	private Variable newTypedefStateVariable(Scope scope, String tag,
+			CIVLType type, CIVLSource source) {
+		Variable result;
+		String name = "__typedef_" + tag + "__";
+		Identifier identifier = factory.identifier(source, name);
+		int vid = scope.numVariables();
+
+		result = factory.variable(source, factory.dynamicType(), identifier,
+				vid);
+		scope.addVariable(result);
+		type.setStateVariable(result);
+		return result;
+	}
+
+	// how to process indiviual block elements?
+
+	/**
+	 * Translates a variable declaration node. If the given sourceLocation is
+	 * non-null, it is used as the source location for the new statement(s).
+	 * Otherwise a new location is generated and used. This method may return
+	 * null if no statements are generated as a result of processing the
+	 * declaration.
+	 * 
+	 * @param sourceLocation
+	 *            location to use as origin of new statements or null
+	 * @param scope
+	 *            CIVL scope in which this declaration appears
+	 * @param node
+	 *            the ABC variable declaration node to translate
+	 * @return the pair consisting of the (new or given) start location of the
+	 *         generated fragment and the last statement in the sequence of
+	 *         statements generated by translating this declaration node, or
+	 *         null if no statements are generated
+	 */
+	private Fragment translateVariableDeclarationNode(Location sourceLocation,
+			Scope scope, VariableDeclarationNode node) {
+		InitializerNode init = node.getInitializer();
+		Variable variable = processVariableDeclaration(scope, node);
+		CIVLType type = variable.type();
+		Fragment result = null;
+		IdentifierNode identifier = node.getIdentifier();
+		CIVLSource source = sourceOf(node);
+
+		if (type instanceof CIVLArrayType || type instanceof CIVLStructType) {
+			if (sourceLocation == null)
+				sourceLocation = factory.location(sourceOfBeginning(node),
+						scope);
+			result = new Fragment(sourceLocation, factory.assignStatement(
+					source, sourceLocation,
+					factory.variableExpression(sourceOf(identifier), variable),
+					factory.initialValueExpression(source, variable)));
+			sourceLocation = null;
+		}
+		if (init != null) {
+			Statement statement;
+			
+			if (!(init instanceof ExpressionNode))
+				throw new CIVLUnimplementedFeatureException(
+						"Non-expression initializer", sourceOf(init));
+			if (sourceLocation == null)
+				sourceLocation = factory.location(sourceOfBeginning(node),
+						scope);
+			statement = assign(sourceOf(node),
+					sourceLocation,
+					factory.variableExpression(sourceOf(identifier), variable),
+					(ExpressionNode) init, scope);
+			if (result == null)
+				result = new Fragment(sourceLocation, statement);
+			else {
+				result.lastStatement.setTarget(sourceLocation);
+				result.lastStatement = statement;
+			}
+		}
+		return result;
+	}
+
+	private Fragment translateStructureOrUnionTypeNode(Location sourceLocation,
+			Scope scope, StructureOrUnionTypeNode node) {
+		Fragment result = null;
+
+		if (node.getStructDeclList() != null) {
+			CIVLType type = translateTypeNode(node, scope);
+			CIVLSource civlSource = sourceOf(node);
+
+			if (type.hasState()) {
+				Variable variable = newStructOrUnionStateVariable(scope, type,
+						civlSource);
+				LHSExpression lhs = factory.variableExpression(civlSource,
+						variable);
+				Expression rhs = factory.dynamicTypeOfExpression(civlSource,
+						type);
+
+				if (sourceLocation == null)
+					sourceLocation = factory.location(sourceOfBeginning(node),
+							scope);
+				result = new Fragment(sourceLocation, factory.assignStatement(
+						civlSource, sourceLocation, lhs, rhs));
+			}
+		}
+		return result;
+	}
+
+	private Fragment translateTypedefNode(Location sourceLocation, Scope scope,
+			TypedefDeclarationNode node) {
+		TypeNode typeNode = node.getTypeNode();
+		CIVLType type = translateTypeNode(typeNode, scope);
+		Fragment result = null;
+
+		if (type.hasState()) {
+			CIVLSource civlSource = sourceOf(node);
+			String tag = node.getName();
+			Variable variable = newTypedefStateVariable(scope, tag, type,
+					civlSource);
+			LHSExpression lhs = factory
+					.variableExpression(civlSource, variable);
+			Expression rhs = factory.dynamicTypeOfExpression(civlSource, type);
+
+			if (sourceLocation == null)
+				sourceLocation = factory.location(sourceOfBeginning(node),
+						scope);
+			result = new Fragment(sourceLocation, factory.assignStatement(
+					civlSource, sourceLocation, lhs, rhs));
+		}
+		return result;
+	}
+
+	/**
+	 * Translates a compound statement.
+	 * 
+	 * Tagged entities can have state and require special handling. The method
+	 * {@link CIVLType#hasState} in {@link CIVLType} will return
+	 * <code>true</code> for any type which contains an array with extent which
+	 * is not constant. We associate to these types a state variable that can be
+	 * set and get.
+	 * 
+	 * When perusing compound statements or external defs, when you come across
+	 * a typedef, or complete struct or union def, construct the CIVL type
+	 * <code>t</code> as usual. If <code>t.hasState()</code>, insert into the
+	 * model at the current scope a variable <code>__struct_foo__</code>,
+	 * <code>__union_foo__</code>, or <code>__typedef_foo__</code> of type
+	 * "CIVL dynamic type". Set the state variable in <code>t</code> to this
+	 * variable. At the point of definition, insert a model assignment
+	 * statement, <code>__struct_foo__ = DynamicTypeOf(t)</code> (for example).
+	 * 
+	 * When processing a variable decl: if variable has compound type (array or
+	 * struct), insert statement (into beginning of current compound statement)
+	 * saying "v = InitialValue[v]". then insert the variable's initializer if
+	 * present.
+	 * 
+	 * @param location
+	 * @param guard
+	 * @param function
+	 * @param lastStatement
+	 * @param statement
+	 * @param scope
+	 * @return
+	 */
 	private Statement compoundStatement(Location location, Expression guard,
 			Function function, Statement lastStatement,
 			CompoundStatementNode statement, Scope scope) {
 		Scope newScope = factory.scope(sourceOf(statement), scope,
 				new LinkedHashSet<Variable>(), function);
+		// indicates whether the location argument has been used:
 		boolean usedLocation = false;
 
-		// TODO: Handle everything that can be in here.
 		for (int i = 0; i < statement.numChildren(); i++) {
 			BlockItemNode node = statement.getSequenceChild(i);
 
-			if (node instanceof VariableDeclarationNode) {
-				VariableDeclarationNode decl = (VariableDeclarationNode) node;
-				InitializerNode init = decl.getInitializer();
-				IdentifierNode identifier = decl.getIdentifier();
+			if (node instanceof VariableDeclarationNode
+					|| node instanceof StructureOrUnionTypeNode
+					|| node instanceof TypedefDeclarationNode) {
+				Fragment fragment;
 
-				processVariableDeclaration(newScope, decl);
-				if (init != null) {
-					// TODO: Handle compound initializers
-					Statement newStatement;
-
-					if (usedLocation || location == null) {
-						location = factory.location(sourceOfBeginning(init),
-								newScope);
-						usedLocation = true;
-					} else {
-						usedLocation = true;
-					}
-					newStatement = assign(sourceOf(decl), location,
-							factory.variableExpression(sourceOf(identifier),
-									newScope.getVariable(newScope
-											.numVariables() - 1)),
-							(ExpressionNode) init, newScope);
-
+				if (node instanceof VariableDeclarationNode)
+					fragment = translateVariableDeclarationNode(
+							usedLocation ? null : location, newScope,
+							(VariableDeclarationNode) node);
+				else if (node instanceof StructureOrUnionTypeNode)
+					fragment = translateStructureOrUnionTypeNode(
+							usedLocation ? null : location, newScope,
+							(StructureOrUnionTypeNode) node);
+				else if (node instanceof TypedefDeclarationNode)
+					fragment = translateTypedefNode(usedLocation ? null
+							: location, newScope, (TypedefDeclarationNode) node);
+				else
+					throw new CIVLInternalException("unreachable",
+							sourceOf(node));
+				if (fragment != null) {
+					usedLocation = true;
 					if (lastStatement != null) {
-						lastStatement.setTarget(location);
-						function.addLocation(location);
+						lastStatement.setTarget(fragment.startLocation);
+						function.addLocation(fragment.startLocation);
 					} else {
-						function.setStartLocation(location);
+						function.setStartLocation(fragment.startLocation);
 					}
-					lastStatement = newStatement;
+					lastStatement = fragment.lastStatement;
 				}
 			} else if (node instanceof FunctionDeclarationNode) {
 				unprocessedFunctions.add((FunctionDefinitionNode) node);
@@ -1540,15 +1712,14 @@ public class ModelBuilderWorker {
 				Statement newStatement;
 
 				if (usedLocation || location == null) {
-					usedLocation = true;
 					newStatement = statement(function, lastStatement,
 							(StatementNode) node, newScope);
 				} else {
-					usedLocation = true;
 					newStatement = statement(location, guard, function,
 							lastStatement, (StatementNode) node, newScope);
 				}
 				lastStatement = newStatement;
+				usedLocation = true;
 			} else {
 				throw new CIVLUnimplementedFeatureException(
 						"Unsupported block element", sourceOf(node));
@@ -2097,6 +2268,8 @@ public class ModelBuilderWorker {
 			ASTNode node = rootNode.child(i);
 
 			if (node instanceof VariableDeclarationNode) {
+				// TODO: use method
+				
 				VariableDeclarationNode decl = (VariableDeclarationNode) node;
 				InitializerNode init = decl.getInitializer();
 
@@ -2132,6 +2305,8 @@ public class ModelBuilderWorker {
 			} else if (node instanceof FunctionDeclarationNode) {
 				// Do we need to keep track of these for any reason?
 			} else if (node instanceof TypedefDeclarationNode) {
+				// TODO: do as in CompoundStatementNode 
+				
 				// String typeName = ((TypedefDeclarationNode) node).getName();
 				//
 				// if (typeName.equals("$proc")) {
@@ -2243,5 +2418,24 @@ public class ModelBuilderWorker {
 
 	public Model getModel() {
 		return model;
+	}
+}
+
+/**
+ * A fragment of a CIVL model. Consists of a start location and a last
+ * statement. Why not always generate next location.
+ * 
+ * @author siegel
+ * 
+ */
+class Fragment {
+
+	public Location startLocation;
+
+	public Statement lastStatement;
+
+	public Fragment(Location startLocation, Statement lastStatement) {
+		this.startLocation = startLocation;
+		this.lastStatement = lastStatement;
 	}
 }

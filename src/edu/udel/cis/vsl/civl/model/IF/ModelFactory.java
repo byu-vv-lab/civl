@@ -5,7 +5,6 @@ package edu.udel.cis.vsl.civl.model.IF;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
@@ -48,6 +47,8 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 
 /**
  * The factory to create all model components. Usually this is the only way
@@ -230,18 +231,17 @@ public interface ModelFactory {
 	CIVLPointerType pointerType(CIVLType baseType);
 
 	/**
-	 * Get a new struct type.
+	 * Returns new incomplete struct type with given name. Type can be completed
+	 * later using one of the "complete" methods in CIVLStructType.
 	 * 
 	 * @param name
-	 *            The name of this struct type.
-	 * @param fields
-	 *            List of the fields in this struct type.
-	 * @return A new struct type with the given fields.
+	 *            identifier, usually the "tag" for this struct type
+	 * @return a new incomplete struct type with given name
 	 */
-	CIVLStructType structType(Identifier name, List<StructField> fields);
+	CIVLStructType structType(Identifier name);
 
 	/**
-	 * Get a struct field.
+	 * Returns a new struct field, used to complete a struct type.
 	 * 
 	 * @param name
 	 *            Identifier for the name of this struct member.
@@ -250,6 +250,50 @@ public interface ModelFactory {
 	 * @return A struct field with the given name and type.
 	 */
 	StructField structField(Identifier name, CIVLType type);
+
+	/**
+	 * Returns the symbolic type used to represent pointers.
+	 * 
+	 * @return he symbolic type used to represent pointers
+	 */
+	SymbolicTupleType pointerSymbolicType();
+
+	/**
+	 * Returns the symbolic type used to represent heap values
+	 * 
+	 * @return the symbolic type used to represent heap values
+	 */
+	SymbolicTupleType heapSymbolicType();
+
+	/**
+	 * Returns the symbolic type used to represent process reference values
+	 * 
+	 * @return the symbolic type used to represent process reference values
+	 */
+	SymbolicTupleType processSymbolicType();
+
+	/**
+	 * Returns the symbolic type used to represent values of type
+	 * CIVLDynamicType
+	 * 
+	 * @return the symbolic type used to represent values of type
+	 *         CIVLDynamicType
+	 */
+	SymbolicTupleType dynamicSymbolicType();
+
+	/**
+	 * Returns the symbolic type used to represent scope values
+	 * 
+	 * @return the symbolic type used to represent scope values
+	 */
+	SymbolicTupleType scopeSymbolicType();
+
+	/**
+	 * Returns the symbolic type used to represent strings
+	 * 
+	 * @return the symbolic type "array of char"
+	 */
+	SymbolicArrayType stringSymbolicType();
 
 	/* *********************************************************************
 	 * Expressions

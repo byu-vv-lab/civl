@@ -6,9 +6,7 @@ package edu.udel.cis.vsl.civl.semantics;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
@@ -65,6 +63,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -117,6 +116,8 @@ public class Evaluator {
 
 	private SymbolicTupleType dynamicType;
 
+	private SymbolicExpression nullExpression;
+
 	private SymbolicExpression nullPointer;
 
 	private ErrorLog log;
@@ -135,13 +136,6 @@ public class Evaluator {
 
 	private ReferenceExpression identityReference;
 
-	// /**
-	// * Name used for symbolic constants used for encapsulating symbolic types.
-	// * There will be one symbolic constant for each type, but all of these
-	// * symbolic constants will have the same name.
-	// */
-	// private StringObject typeName;
-
 	// Constructors........................................................
 
 	/**
@@ -152,32 +146,13 @@ public class Evaluator {
 	 */
 	public Evaluator(ModelFactory modelFactory, StateFactoryIF stateFactory,
 			ErrorLog log) {
-		// List<SymbolicType> scopeTypeList = new Vector<SymbolicType>();
-		List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
-		// List<SymbolicType> processTypeList = new Vector<SymbolicType>();
-
 		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
 		this.universe = stateFactory.symbolicUniverse();
-		// processTypeList.add(universe.integerType());
-		processType = (SymbolicTupleType) modelFactory.processType()
-				.getSymbolicType();
-		// processType = (SymbolicTupleType)
-		// universe.canonic(universe.tupleType(
-		// universe.stringObject("process"), processTypeList));
-		// scopeTypeList.add(universe.integerType());
-		// can get this from model factory...
-		scopeType = (SymbolicTupleType) modelFactory.scopeType()
-				.getSymbolicType();
-		// scopeType = (SymbolicTupleType) universe.canonic(universe.tupleType(
-		// universe.stringObject("scope"), scopeTypeList));
-		dynamicType = (SymbolicTupleType) modelFactory.dynamicType()
-				.getSymbolicType();
-		pointerComponents.add(scopeType);
-		pointerComponents.add(universe.integerType());
-		pointerComponents.add(universe.referenceType());
-		pointerType = (SymbolicTupleType) universe.canonic(universe.tupleType(
-				universe.stringObject("pointer"), pointerComponents));
+		processType = modelFactory.processSymbolicType();
+		scopeType = modelFactory.scopeSymbolicType();
+		dynamicType = modelFactory.dynamicSymbolicType();
+		pointerType = modelFactory.pointerSymbolicType();
 		this.log = log;
 		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
 		oneObj = (IntObject) universe.canonic(universe.intObject(1));
@@ -189,6 +164,7 @@ public class Evaluator {
 		one = (NumericExpression) universe.canonic(universe.integer(1));
 		nullPointer = universe.canonic(makePointer(-1, -1,
 				universe.nullReference()));
+		nullExpression = universe.nullExpression();
 		// typeName = universe.stringObject("TYPE");
 	}
 
@@ -427,12 +403,6 @@ public class Evaluator {
 	 *            the result of evaluating argument 1 of expression
 	 * @return the result of evaluating the sum of the pointer and the integer
 	 */
-
-	// TODO: need to know if the type of the array is complete or
-	// incomplete.
-	// Need the type of the array. isn't this in the symbolic array
-	// type?
-
 	private Evaluation pointerAdd(State state, int pid,
 			BinaryExpression expression, SymbolicExpression pointer,
 			NumericExpression offset) {
@@ -1139,90 +1109,100 @@ public class Evaluator {
 				"$result not yet implemented: " + expression.getSource());
 	}
 
-	private SymbolicType getDynamicType(State state, int pid, CIVLType type,
-			CIVLSource source, boolean computeStructs) {
-		SymbolicType result;
+	private TypeEvaluation getDynamicType(State state, int pid, CIVLType type,
+			CIVLSource source, boolean isDefinition) {
+		TypeEvaluation result;
 
+		// if type has a state variable and computeStructs is false, use
+		// variable
+		// else compute
 		if (type instanceof CIVLPrimitiveType) {
-			result = ((CIVLPrimitiveType) type).getSymbolicType();
+			result = new TypeEvaluation(state,
+					((CIVLPrimitiveType) type).getSymbolicType());
+		} else if (type instanceof CIVLPointerType) {
+			result = new TypeEvaluation(state, pointerType);
+		} else if (type.getStateVariable() != null && !isDefinition) {
+			SymbolicExpression value = state.valueOf(pid,
+					type.getStateVariable());
+
+			result = new TypeEvaluation(state, getType(source, value));
 		} else if (type instanceof CIVLArrayType) {
 			CIVLArrayType arrayType = (CIVLArrayType) type;
-			SymbolicType elementSymbolicType = getDynamicType(state, pid,
-					arrayType.elementType(), source, computeStructs);
+			TypeEvaluation elementTypeEval = getDynamicType(state, pid,
+					arrayType.elementType(), source, false);
 
 			if (arrayType.isComplete()) {
-				NumericExpression length = (NumericExpression) evaluate(state,
-						pid, ((CIVLCompleteArrayType) arrayType).extent());
-				result = universe.arrayType(elementSymbolicType, length);
+				Evaluation lengthEval = evaluate(elementTypeEval.state, pid,
+						((CIVLCompleteArrayType) arrayType).extent());
+				NumericExpression length = (NumericExpression) lengthEval.value;
+
+				result = new TypeEvaluation(lengthEval.state,
+						universe.arrayType(elementTypeEval.type, length));
 			} else {
-				result = universe.arrayType(elementSymbolicType);
+				result = new TypeEvaluation(elementTypeEval.state,
+						universe.arrayType(elementTypeEval.type));
 			}
-		} else if (type instanceof CIVLPointerType) {
-			result = pointerType;
 		} else if (type instanceof CIVLStructType) {
-			// TODO: note: the variable must be set in the model builder
 			CIVLStructType structType = (CIVLStructType) type;
+			int numFields = structType.numFields();
+			LinkedList<SymbolicType> componentTypes = new LinkedList<SymbolicType>();
 
-			if (computeStructs) {
-				int numFields = structType.numFields();
-				LinkedList<SymbolicType> componentTypes = new LinkedList<SymbolicType>();
+			for (int i = 0; i < numFields; i++) {
+				StructField field = structType.getField(i);
+				TypeEvaluation componentEval = getDynamicType(state, pid,
+						field.type(), source, false);
 
-				for (int i = 0; i < numFields; i++) {
-					StructField field = structType.getField(i);
-					SymbolicType componentType = getDynamicType(state, pid,
-							field.type(), source, computeStructs);
-
-					componentTypes.add(componentType);
-				}
-				result = universe.tupleType(structType.name().stringObject(),
-						componentTypes);
-			} else {
-				Variable variable = structType.getVariable();
-				SymbolicExpression value = state.valueOf(pid, variable);
-				result = getType(source, value);
+				state = componentEval.state;
+				componentTypes.add(componentEval.type);
 			}
+			result = new TypeEvaluation(state, universe.tupleType(structType
+					.name().stringObject(), componentTypes));
 		} else
 			throw new CIVLInternalException("Unreachable", source);
 		return result;
 	}
 
-	private SymbolicExpression computeInitialValue(State s, LHSExpression expr,
-			SymbolicType dynamicType) {
-		// TODO
-		CIVLSource source = expr.getSource();
-		CIVLType type = expr.getExpressionType();
+	private SymbolicExpression computeInitialValue(State s, Variable variable,
+			SymbolicType dynamicType, int dyscopeId) {
+		CIVLType type = variable.type();
+		int vid = variable.vid();
+		SymbolicExpression result;
 
 		if (type instanceof CIVLPrimitiveType) {
-			// an "undefined" symbolic constant of that type?
-
-		} else if (type instanceof CIVLArrayType) {
-
+			result = nullExpression;
 		} else if (type instanceof CIVLPointerType) {
-			// same as primitive type
-		} else if (type instanceof CIVLStructType) {
+			result = nullExpression;
+		} else {
+			StringObject name = universe.stringObject("X_s" + dyscopeId + "v"
+					+ vid);
 
-		} else
-			throw new CIVLInternalException("Unreachable", source);
-		return null;
-
-		// if dynamicType is a tuple type, create the concrete tuple of that
-		// type with each component obtained by evaluating
-		// computeInitialValue(s, dotExpression(), componentType)
-		// if dynamicType is an array type, create a unique symbolic constant
-		// name based on the LHS expression and a symbolic constant with that
-		// name and type dynamicType (no recursion in this case)
+			result = universe.symbolicConstant(name, dynamicType);
+		}
+		return result;
 	}
 
 	private Evaluation evaluateDynamicTypeOf(State state, int pid,
 			DynamicTypeOfExpression expression) {
-		// TODO
-		return null;
+		TypeEvaluation typeEval = getDynamicType(state, pid,
+				expression.getType(), expression.getSource(), true);
+		SymbolicExpression expr = expressionOfType(typeEval.type);
+		Evaluation result = new Evaluation(typeEval.state, expr);
+
+		return result;
 	}
 
 	private Evaluation evaluateInitialValue(State state, int pid,
 			InitialValueExpression expression) {
-		// TODO
-		return null;
+		Variable variable = expression.variable();
+		CIVLType type = variable.type();
+		TypeEvaluation typeEval = getDynamicType(state, pid, type,
+				expression.getSource(), false);
+		int sid = state.getScopeId(pid, variable);
+		SymbolicExpression value = computeInitialValue(typeEval.state,
+				variable, typeEval.type, sid);
+		Evaluation result = new Evaluation(typeEval.state, value);
+
+		return result;
 	}
 
 	// Exported methods...

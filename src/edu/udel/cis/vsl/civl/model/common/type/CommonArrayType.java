@@ -40,4 +40,9 @@ public class CommonArrayType extends CommonType implements CIVLArrayType {
 		return false;
 	}
 
+	@Override
+	public boolean hasState() {
+		return elementType.hasState();
+	}
+
 }

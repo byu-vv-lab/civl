@@ -100,4 +100,9 @@ public class CommonPrimitiveType extends CommonType implements
 		return primitiveType == PrimitiveTypeKind.SCOPE;
 	}
 
+	@Override
+	public boolean hasState() {
+		return false;
+	}
+
 }

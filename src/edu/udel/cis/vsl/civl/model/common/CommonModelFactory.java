@@ -6,7 +6,7 @@ package edu.udel.cis.vsl.civl.model.common;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -91,8 +91,11 @@ import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructField;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
+import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
@@ -114,21 +117,23 @@ public class CommonModelFactory implements ModelFactory {
 	/* Keep a set of used identifiers for fly-weighting purposes. */
 	private Map<String, Identifier> identifiers;
 
-	// private
+	private CIVLPrimitiveType integerType;
 
-	/* Make one of each primitive type. */
-	private CIVLPrimitiveType integerType = new CommonPrimitiveType(
-			PrimitiveTypeKind.INT, universe.integerType());
+	private CIVLPrimitiveType booleanType;
 
-	private CIVLPrimitiveType booleanType = new CommonPrimitiveType(
-			PrimitiveTypeKind.BOOL, universe.booleanType());
+	private CIVLPrimitiveType realType;
 
-	private CIVLPrimitiveType realType = new CommonPrimitiveType(
-			PrimitiveTypeKind.REAL, universe.realType());
+	private SymbolicTupleType scopeSymbolicType;
 
-	private CIVLPrimitiveType stringType = new CommonPrimitiveType(
-			PrimitiveTypeKind.STRING, (SymbolicType) universe.canonic(universe
-					.arrayType(universe.characterType())));
+	private SymbolicTupleType heapSymbolicType;
+
+	private SymbolicTupleType processSymbolicType;
+
+	private SymbolicTupleType dynamicSymbolicType;
+
+	private SymbolicTupleType pointerSymbolicType;
+
+	private SymbolicArrayType stringSymbolicType;
 
 	private CIVLPrimitiveType scopeType;
 
@@ -137,6 +142,8 @@ public class CommonModelFactory implements ModelFactory {
 	private CIVLPrimitiveType processType;
 
 	private CIVLPrimitiveType dynamicType;
+
+	private CIVLPrimitiveType stringType;
 
 	/* Keep a unique number to identify scopes. */
 	private int scopeID = 0;
@@ -150,28 +157,46 @@ public class CommonModelFactory implements ModelFactory {
 	 * model components will be created.
 	 */
 	public CommonModelFactory(SymbolicUniverse universe) {
-		List<SymbolicType> intTypeSingleton = new Vector<SymbolicType>();
+		Iterable<SymbolicType> intTypeSingleton = new Singleton<SymbolicType>(
+				universe.integerType());
+		LinkedList<SymbolicType> pointerComponents = new LinkedList<SymbolicType>();
 
 		this.universe = universe;
-		identifiers = new HashMap<String, Identifier>();
-
-		intTypeSingleton.add(universe.integerType());
+		this.integerType = new CommonPrimitiveType(PrimitiveTypeKind.INT,
+				universe.integerType());
+		this.booleanType = new CommonPrimitiveType(PrimitiveTypeKind.BOOL,
+				universe.booleanType());
+		this.realType = new CommonPrimitiveType(PrimitiveTypeKind.REAL,
+				universe.realType());
+		this.identifiers = new HashMap<String, Identifier>();
+		scopeSymbolicType = (SymbolicTupleType) universe.canonic(universe
+				.tupleType(universe.stringObject("scope"), intTypeSingleton));
 		scopeType = new CommonPrimitiveType(PrimitiveTypeKind.SCOPE,
-				(SymbolicType) universe.canonic(universe.tupleType(
-						universe.stringObject("scope"), intTypeSingleton)));
+				scopeSymbolicType);
+		processSymbolicType = (SymbolicTupleType) universe.canonic(universe
+				.tupleType(universe.stringObject("process"), intTypeSingleton));
 		processType = new CommonPrimitiveType(PrimitiveTypeKind.PROCESS,
-				(SymbolicType) universe.canonic(universe.tupleType(
-						universe.stringObject("process"), intTypeSingleton)));
+				processSymbolicType);
 		// TODO: what is the heap type?
 		// symbolic heap type determined by analyzing model and taking union
-		heapType = new CommonPrimitiveType(PrimitiveTypeKind.HEAP, null);
-		// dynamic type: wraps an int which is the type ID.
-		// universe provides method to getObjectWithId. just make
-		// sure always canonic.
-		dynamicType = new CommonPrimitiveType(
-				PrimitiveTypeKind.DYNAMIC,
-				(SymbolicType) universe.canonic(universe.tupleType(
-						universe.stringObject("dynamicType"), intTypeSingleton)));
+		heapSymbolicType = null;
+		heapType = new CommonPrimitiveType(PrimitiveTypeKind.HEAP,
+				heapSymbolicType);
+		dynamicSymbolicType = (SymbolicTupleType) universe.canonic(universe
+				.tupleType(universe.stringObject("dynamicType"),
+						intTypeSingleton));
+		dynamicType = new CommonPrimitiveType(PrimitiveTypeKind.DYNAMIC,
+				dynamicSymbolicType);
+		pointerComponents.add(scopeType.getSymbolicType());
+		pointerComponents.add(universe.integerType());
+		pointerComponents.add(universe.referenceType());
+		pointerSymbolicType = (SymbolicTupleType) universe
+				.canonic(universe.tupleType(universe.stringObject("pointer"),
+						pointerComponents));
+		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
+				.arrayType(universe.characterType()));
+		stringType = new CommonPrimitiveType(PrimitiveTypeKind.STRING,
+				stringSymbolicType);
 	}
 
 	@Override
@@ -403,21 +428,12 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public CIVLPointerType pointerType(CIVLType baseType) {
-		return new CommonPointerType(baseType);
+		return new CommonPointerType(baseType, pointerSymbolicType);
 	}
 
-	/**
-	 * Get a new struct type.
-	 * 
-	 * @param name
-	 *            The name of this struct type.
-	 * @param fields
-	 *            List of the fields in this struct type.
-	 * @return A new struct type with the given fields.
-	 */
 	@Override
-	public CIVLStructType structType(Identifier name, List<StructField> fields) {
-		return new CommonStructType(name, fields);
+	public CIVLStructType structType(Identifier name) {
+		return new CommonStructType(name);
 	}
 
 	/**
@@ -1027,6 +1043,36 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SymbolicUniverse universe() {
 		return universe;
+	}
+
+	@Override
+	public SymbolicTupleType pointerSymbolicType() {
+		return pointerSymbolicType;
+	}
+
+	@Override
+	public SymbolicTupleType heapSymbolicType() {
+		return heapSymbolicType;
+	}
+
+	@Override
+	public SymbolicTupleType processSymbolicType() {
+		return processSymbolicType;
+	}
+
+	@Override
+	public SymbolicTupleType dynamicSymbolicType() {
+		return dynamicSymbolicType;
+	}
+
+	@Override
+	public SymbolicTupleType scopeSymbolicType() {
+		return scopeSymbolicType;
+	}
+
+	@Override
+	public SymbolicArrayType stringSymbolicType() {
+		return stringSymbolicType;
 	}
 
 }

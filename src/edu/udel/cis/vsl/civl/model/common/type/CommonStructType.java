@@ -3,12 +3,14 @@
  */
 package edu.udel.cis.vsl.civl.model.common.type;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
-import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * @author zirkel
@@ -18,36 +20,15 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 
 	private Identifier name;
 
-	private ArrayList<StructField> fields = new ArrayList<StructField>();
+	private StructField[] fields = null;
 
-	private Variable variable = null;
-
-	/**
-	 * A struct type has a sequence of struct fields.
-	 * 
-	 * @param fields
-	 *            A list of struct fields.
-	 * 
-	 */
-	public CommonStructType(Identifier name, Iterable<StructField> fields) {
-		int count = 0;
-
-		for (StructField field : fields) {
-			this.fields.add(field);
-			((CommonStructField) field).setIndex(count);
-			count++;
-		}
+	public CommonStructType(Identifier name) {
 		this.name = name;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.udel.cis.vsl.civl.model.IF.type.StructType#fields()
-	 */
 	@Override
 	public Iterable<StructField> fields() {
-		return fields;
+		return Arrays.asList(fields);
 	}
 
 	@Override
@@ -57,33 +38,78 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 
 	@Override
 	public String toString() {
-		String result = "struct " + name.toString() + " {\n";
+		String result = "struct " + name.toString();
 
-		for (StructField f : fields) {
-			result += "  " + f.toString() + "\n";
+		if (isComplete()) {
+			result += " {\n";
+
+			for (StructField f : fields) {
+				result += "  " + f.toString() + "\n";
+			}
+			result += "}";
 		}
-		result += "}";
 		return result;
 	}
 
 	@Override
 	public int numFields() {
-		return fields.size();
+		return fields.length;
 	}
 
 	@Override
 	public StructField getField(int index) {
-		return fields.get(index);
+		return fields[index];
 	}
 
 	@Override
-	public Variable getVariable() {
-		return variable;
+	public boolean hasState() {
+		if (!isComplete())
+			throw new CIVLInternalException("Struct not complete",
+					(CIVLSource) null);
+		for (StructField field : fields) {
+			if (field.type().hasState())
+				return true;
+		}
+		return false;
 	}
 
 	@Override
-	public void setVariable(Variable variable) {
-		this.variable = variable;
+	public boolean isComplete() {
+		return fields != null;
+	}
+
+	@Override
+	public void complete(Collection<StructField> fields) {
+		if (isComplete())
+			throw new CIVLInternalException("Struct already complete",
+					(CIVLSource) null);
+		else {
+			int numFields = fields.size();
+			int count = 0;
+
+			this.fields = new StructField[numFields];
+			for (StructField field : fields) {
+				this.fields[count] = field;
+				count++;
+			}
+		}
+	}
+
+	@Override
+	public void complete(StructField[] fields) {
+		if (isComplete())
+			throw new CIVLInternalException("Struct already complete",
+					(CIVLSource) null);
+		else {
+			int numFields = fields.length;
+			int count = 0;
+
+			this.fields = new StructField[numFields];
+			for (StructField field : fields) {
+				this.fields[count] = field;
+				count++;
+			}
+		}
 	}
 
 }

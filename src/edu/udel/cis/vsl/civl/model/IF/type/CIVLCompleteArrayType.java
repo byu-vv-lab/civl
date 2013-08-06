@@ -19,11 +19,4 @@ public interface CIVLCompleteArrayType extends CIVLArrayType {
 	 */
 	Expression extent();
 
-	/**
-	 * 
-	 * @param extent
-	 *            The extent of this array.
-	 */
-	//void setExtent(Expression extent);
-
 }
