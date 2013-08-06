@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.predicate;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -40,7 +41,10 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public class Deadlock implements StatePredicateIF<State> {
 
 	private SymbolicUniverse symbolicUniverse;
+
 	private Evaluator evaluator;
+
+	private ModelFactory modelFactory;
 
 	/**
 	 * If the property holds (i.e., a deadlock has been detected at state), than
@@ -77,6 +81,7 @@ public class Deadlock implements StatePredicateIF<State> {
 	public Deadlock(SymbolicUniverse symbolicUniverse, Evaluator evaluator) {
 		this.symbolicUniverse = symbolicUniverse;
 		this.evaluator = evaluator;
+		this.modelFactory = evaluator.modelFactory();
 	}
 
 	@Override
@@ -171,8 +176,9 @@ public class Deadlock implements StatePredicateIF<State> {
 				if (s instanceof WaitStatement) {
 					SymbolicExpression joinProcess = evaluator.evaluate(state,
 							p.id(), ((WaitStatement) s).process()).value;
-					int pidValue = evaluator.getPid(((WaitStatement) s)
-							.process().getSource(), joinProcess);
+					int pidValue = modelFactory.getProcessId(
+							((WaitStatement) s).process().getSource(),
+							joinProcess);
 					SymbolicExpression guard = evaluator.evaluate(state,
 							p.id(), s.guard()).value;
 

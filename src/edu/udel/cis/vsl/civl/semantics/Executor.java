@@ -53,6 +53,8 @@ public class Executor {
 
 	// Fields..............................................................
 
+	private ModelFactory modelFactory;
+
 	/** The symbolic universe used to maange all symbolic expressions. */
 	private SymbolicUniverse symbolicUniverse;
 
@@ -92,6 +94,7 @@ public class Executor {
 			ErrorLog log, LibraryExecutorLoader loader) {
 		this.symbolicUniverse = modelFactory.universe();
 		this.stateFactory = stateFactory;
+		this.modelFactory = modelFactory;
 		this.evaluator = new Evaluator(modelFactory, stateFactory, log);
 		this.log = log;
 		this.loader = loader;
@@ -284,7 +287,7 @@ public class Executor {
 		state = stateFactory.addProcess(state, function, arguments, pid);
 		if (statement.lhs() != null)
 			state = assign(state, pid, statement.lhs(),
-					evaluator.makeProcVal(newPid));
+					modelFactory.processValue(newPid));
 		state = transition(state, process, statement.target());
 		// state = stateFactory.canonic(state);
 		return state;
@@ -305,8 +308,8 @@ public class Executor {
 	private State executeWait(State state, int pid, WaitStatement statement) {
 		Evaluation eval = evaluator.evaluate(state, pid, statement.process());
 		SymbolicExpression procVal = eval.value;
-		int joinedPid = evaluator.getPid(statement.process().getSource(),
-				procVal);
+		int joinedPid = modelFactory.getProcessId(statement.process()
+				.getSource(), procVal);
 
 		state = transition(eval.state, state.process(pid), statement.target());
 		state = stateFactory.removeProcess(state, joinedPid);

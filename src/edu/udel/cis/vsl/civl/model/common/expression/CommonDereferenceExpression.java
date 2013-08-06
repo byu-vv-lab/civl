@@ -26,7 +26,7 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		return "*" + pointer;
+		return "*(" + pointer + ")";
 	}
 
 }

@@ -5,12 +5,15 @@ package edu.udel.cis.vsl.civl.model.common;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -93,6 +96,10 @@ import edu.udel.cis.vsl.civl.model.common.type.CommonStructType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
 import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
+import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
@@ -106,6 +113,13 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  * 
  */
 public class CommonModelFactory implements ModelFactory {
+
+	/**
+	 * Amount by which to increase the list of cached scope values and process
+	 * values when a new value is requested that is outside of the current
+	 * range.
+	 */
+	private final static int CACHE_INCREMENT = 10;
 
 	private SymbolicUniverse universe;
 
@@ -154,6 +168,19 @@ public class CommonModelFactory implements ModelFactory {
 
 	// private Scope systemScope;
 
+	private IntObject zeroObj;
+
+	private ArrayList<SymbolicExpression> processValues = new ArrayList<SymbolicExpression>();
+
+	private ArrayList<SymbolicExpression> scopeValues = new ArrayList<SymbolicExpression>();
+
+	private SymbolicExpression undefinedProcessValue;
+
+	private SymbolicExpression undefinedScopeValue;
+
+	/** A list of nulls of length CACHE_INCREMENT */
+	private List<SymbolicExpression> nullList = new LinkedList<SymbolicExpression>();
+
 	/**
 	 * The factory to create all model components. Usually this is the only way
 	 * model components will be created.
@@ -200,6 +227,15 @@ public class CommonModelFactory implements ModelFactory {
 				.arrayType(universe.characterType()));
 		stringType = new CommonPrimitiveType(PrimitiveTypeKind.STRING,
 				stringSymbolicType);
+		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
+		for (int i = 0; i < CACHE_INCREMENT; i++)
+			nullList.add(null);
+		undefinedProcessValue = universe.canonic(universe.tuple(
+				processSymbolicType,
+				new Singleton<SymbolicExpression>(universe.integer(-1))));
+		undefinedScopeValue = universe.canonic(universe.tuple(
+				scopeSymbolicType,
+				new Singleton<SymbolicExpression>(universe.integer(-1))));
 	}
 
 	@Override
@@ -1018,6 +1054,45 @@ public class CommonModelFactory implements ModelFactory {
 		}
 	}
 
+	/**
+	 * Gets a Java conrete int from a symbolic expression or throws exception.
+	 * 
+	 * @param expression
+	 *            a numeric expression expected to hold concrete int value
+	 * @return the concrete int
+	 * @throws CIVLInternalException
+	 *             if a concrete integer value cannot be extracted
+	 */
+	private int extractInt(CIVLSource source, NumericExpression expression) {
+		IntegerNumber result = (IntegerNumber) universe
+				.extractNumber(expression);
+
+		if (result == null)
+			throw new CIVLInternalException(
+					"Unable to extract concrete int from " + expression, source);
+		return result.intValue();
+	}
+
+	/**
+	 * Gets a concrete Java int from the field of a symbolic expression of tuple
+	 * type or throws exception.
+	 * 
+	 * @param tuple
+	 *            symbolic expression of tuple type
+	 * @param fieldIndex
+	 *            index of a field in that tuple
+	 * @return the concrete int value of that field
+	 * @throws CIVLInternalException
+	 *             if a concrete integer value cannot be extracted
+	 */
+	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
+			IntObject fieldIndex) {
+		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
+				fieldIndex);
+
+		return extractInt(source, field);
+	}
+
 	@Override
 	public DereferenceExpression dereferenceExpression(CIVLSource source,
 			Expression pointer) {
@@ -1081,6 +1156,50 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CIVLPrimitiveType voidType() {
 		return voidType;
+	}
+
+	@Override
+	public SymbolicExpression processValue(int pid) {
+		SymbolicExpression result;
+
+		if (pid < 0)
+			return undefinedProcessValue;
+		while (pid >= processValues.size())
+			processValues.addAll(nullList);
+		result = processValues.get(pid);
+		if (result == null) {
+			result = universe.canonic(universe.tuple(processSymbolicType,
+					new Singleton<SymbolicExpression>(universe.integer(pid))));
+			processValues.set(pid, result);
+		}
+		return result;
+	}
+
+	@Override
+	public int getProcessId(CIVLSource source, SymbolicExpression processValue) {
+		return extractIntField(source, processValue, zeroObj);
+	}
+
+	@Override
+	public SymbolicExpression scopeValue(int sid) {
+		SymbolicExpression result;
+
+		if (sid < 0)
+			return undefinedScopeValue;
+		while (sid >= scopeValues.size())
+			scopeValues.addAll(nullList);
+		result = scopeValues.get(sid);
+		if (result == null) {
+			result = universe.canonic(universe.tuple(scopeSymbolicType,
+					new Singleton<SymbolicExpression>(universe.integer(sid))));
+			scopeValues.set(sid, result);
+		}
+		return result;
+	}
+
+	@Override
+	public int getScopeId(CIVLSource source, SymbolicExpression scopeValue) {
+		return extractIntField(source, scopeValue, zeroObj);
 	}
 
 }

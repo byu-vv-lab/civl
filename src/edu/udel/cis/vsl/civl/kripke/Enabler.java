@@ -6,6 +6,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -27,6 +28,8 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 public class Enabler implements
 		EnablerIF<State, Transition, TransitionSequence> {
 
+	private ModelFactory modelFactory;
+
 	private TransitionFactory transitionFactory;
 
 	private StateFactoryIF stateFactory;
@@ -45,13 +48,12 @@ public class Enabler implements
 
 	private BooleanExpression falseValue;
 
-	public Enabler(StateFactoryIF stateFactory,
-			TransitionFactory transitionFactory, SymbolicUniverse universe,
-			Evaluator evaluator) {
-		this.stateFactory = stateFactory;
+	public Enabler(TransitionFactory transitionFactory, Evaluator evaluator) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
-		this.universe = universe;
+		this.modelFactory = evaluator.modelFactory();
+		this.stateFactory = evaluator.stateFactory();
+		this.universe = modelFactory.universe();
 		this.falseValue = universe.falseExpression();
 	}
 
@@ -131,8 +133,9 @@ public class Enabler implements
 						Evaluation eval = evaluator.evaluate(stateFactory
 								.setPathCondition(state, newPathCondition), p
 								.id(), ((WaitStatement) s).process());
-						int pidValue = evaluator.getPid(((WaitStatement) s)
-								.process().getSource(), eval.value);
+						int pidValue = modelFactory.getProcessId(
+								((WaitStatement) s).process().getSource(),
+								eval.value);
 
 						if (pidValue < 0) {
 							CIVLExecutionException e = new CIVLStateException(

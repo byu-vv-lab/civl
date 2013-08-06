@@ -278,10 +278,10 @@ public class Evaluator {
 	 *            a nonnegative integer
 	 * @return symbolic expression of type scopeType wrapping sid
 	 */
-	private SymbolicExpression makeScopeVal(int sid) {
-		return universe.tuple(scopeType, new Singleton<SymbolicExpression>(
-				universe.integer(sid)));
-	}
+	// private SymbolicExpression makeScopeVal(int sid) {
+	// return universe.tuple(scopeType, new Singleton<SymbolicExpression>(
+	// universe.integer(sid)));
+	// }
 
 	/**
 	 * Given a dynamic scope value ("scopeVal"), extracts the concrete integer
@@ -291,9 +291,9 @@ public class Evaluator {
 	 *            an expression created by method {@link #makeScopeVal}.
 	 * @return the concrete integer scope ID wrapped by the scopeVal
 	 */
-	private int getSid(CIVLSource source, SymbolicExpression scopeVal) {
-		return extractIntField(source, scopeVal, zeroObj);
-	}
+	// private int getSid(CIVLSource source, SymbolicExpression scopeVal) {
+	// return extractIntField(source, scopeVal, zeroObj);
+	// }
 
 	/**
 	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
@@ -309,7 +309,7 @@ public class Evaluator {
 	 */
 	private SymbolicExpression makePointer(int scopeId, int varId,
 			ReferenceExpression symRef) {
-		SymbolicExpression scopeField = makeScopeVal(scopeId);
+		SymbolicExpression scopeField = modelFactory.scopeValue(scopeId);
 		SymbolicExpression varField = universe.integer(varId);
 		SymbolicExpression result = universe.tuple(
 				pointerType,
@@ -998,7 +998,7 @@ public class Evaluator {
 
 	private Evaluation evaluateSelf(State state, int pid,
 			SelfExpression expression) {
-		return new Evaluation(state, makeProcVal(pid));
+		return new Evaluation(state, modelFactory.processValue(pid));
 	}
 
 	/**
@@ -1273,10 +1273,10 @@ public class Evaluator {
 	 *            a nonnegative integer
 	 * @return symbolic expression of type processType wrapping pid
 	 */
-	public SymbolicExpression makeProcVal(int pid) {
-		return universe.tuple(processType, new Singleton<SymbolicExpression>(
-				universe.integer(pid)));
-	}
+	// public SymbolicExpression makeProcVal(int pid) {
+	// return universe.tuple(processType, new Singleton<SymbolicExpression>(
+	// universe.integer(pid)));
+	// }
 
 	/**
 	 * Given a process value (aka "procVal", a symbolic expression of process
@@ -1286,9 +1286,9 @@ public class Evaluator {
 	 *            an expression created by method {@link #makeProcVal}.
 	 * @return the concrete integer PID wrapped by the procVal
 	 */
-	public int getPid(CIVLSource source, SymbolicExpression procVal) {
-		return extractIntField(source, procVal, zeroObj);
-	}
+	// public int getPid(CIVLSource source, SymbolicExpression procVal) {
+	// return extractIntField(source, procVal, zeroObj);
+	// }
 
 	/**
 	 * Given a pointer value, returns the dynamic scope ID component of that
@@ -1299,7 +1299,8 @@ public class Evaluator {
 	 * @return the dynamic scope ID component of that pointer value
 	 */
 	public int getScopeId(CIVLSource source, SymbolicExpression pointer) {
-		return getSid(source, universe.tupleRead(pointer, zeroObj));
+		return modelFactory.getScopeId(source,
+				universe.tupleRead(pointer, zeroObj));
 	}
 
 	/**
@@ -1322,7 +1323,12 @@ public class Evaluator {
 	 * @return the symRef component
 	 */
 	public ReferenceExpression getSymRef(SymbolicExpression pointer) {
-		return (ReferenceExpression) universe.tupleRead(pointer, twoObj);
+		SymbolicExpression result = universe.tupleRead(pointer, twoObj);
+
+		if (!(result instanceof ReferenceExpression))
+			throw new RuntimeException("Expected ReferenceExpression, not: "
+					+ result.toStringBufferLong());
+		return (ReferenceExpression) result;
 	}
 
 	/**
@@ -1367,6 +1373,12 @@ public class Evaluator {
 		} else if (operand instanceof DotExpression) {
 			Evaluation eval = reference(state, pid,
 					(LHSExpression) ((DotExpression) operand).struct());
+
+			// if (!(eval.value instanceof ReferenceExpression))
+			// throw new CIVLInternalException(
+			// "Expected reference expression, not " + eval.value,
+			// operand);
+
 			SymbolicExpression structPointer = eval.value;
 			ReferenceExpression oldSymRef = getSymRef(structPointer);
 			int index = ((DotExpression) operand).fieldIndex();

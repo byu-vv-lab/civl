@@ -193,14 +193,14 @@ public class CIVL {
 	public static boolean check(boolean printModel, File file, PrintStream out)
 			throws SyntaxException, ParseException, PreprocessorException {
 		Program program;
-		StateFactoryIF stateFactory = new StateFactory(universe);
+		StateFactoryIF stateFactory = new StateFactory(modelFactory);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out), new File(
 				new File("."), "CIVLREP/"));
 		Evaluator evaluator = new Evaluator(modelFactory, stateFactory, log);
 		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
-				stateFactory, transitionFactory, universe, evaluator);
+				transitionFactory, evaluator);
 		StatePredicateIF<State> predicate = new StandardPredicate(log,
 				universe, evaluator);
 		LibraryExecutorLoader loader = new CommonLibraryExecutorLoader();

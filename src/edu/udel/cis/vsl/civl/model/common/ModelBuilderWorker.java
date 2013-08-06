@@ -136,7 +136,7 @@ public class ModelBuilderWorker {
 	 * The outermost scope of the model, root of the static scope tree, known as
 	 * the "system scope".
 	 */
-	// private Scope systemScope;
+	private Scope systemScope;
 
 	/**
 	 * This field accumulates the AST definition node of every function
@@ -699,6 +699,7 @@ public class ModelBuilderWorker {
 	 * @return the equivalent CIVL expression
 	 */
 	private Expression subscript(OperatorNode subscriptNode, Scope scope) {
+		CIVLSource source = sourceOf(subscriptNode);
 		ExpressionNode leftNode = subscriptNode.getArgument(0);
 		ExpressionNode rightNode = subscriptNode.getArgument(1);
 		Expression lhs = expression(leftNode, scope);
@@ -711,8 +712,8 @@ public class ModelBuilderWorker {
 				throw new CIVLInternalException(
 						"Expected expression with array type to be LHS",
 						lhs.getSource());
-			result = factory.subscriptExpression(sourceOf(subscriptNode),
-					(LHSExpression) lhs, rhs);
+			result = factory.subscriptExpression(source, (LHSExpression) lhs,
+					rhs);
 		} else {
 			CIVLType rhsType = rhs.getExpressionType();
 			Expression pointerExpr, indexExpr;
@@ -734,9 +735,10 @@ public class ModelBuilderWorker {
 			} else
 				throw new CIVLInternalException(
 						"Expected one argument of integer type and one of pointer type",
-						sourceOf(subscriptNode));
-			result = factory.binaryExpression(sourceOf(subscriptNode),
-					BINARY_OPERATOR.POINTER_ADD, pointerExpr, indexExpr);
+						source);
+			result = factory.dereferenceExpression(source, factory
+					.binaryExpression(source, BINARY_OPERATOR.POINTER_ADD,
+							pointerExpr, indexExpr));
 		}
 		return result;
 	}
@@ -1386,10 +1388,13 @@ public class ModelBuilderWorker {
 	 */
 	private Statement assign(Location location, ExpressionNode lhs,
 			ExpressionNode rhs, Scope scope) {
-		LHSExpression lhsExpression = (LHSExpression) expression(lhs, scope);
+		Expression lhsExpression = expression(lhs, scope);
 
-		return assign(sourceOfSpan(lhs, rhs), location, lhsExpression, rhs,
-				scope);
+		if (!(lhsExpression instanceof LHSExpression))
+			throw new CIVLInternalException("expected LHS expression, not "
+					+ lhsExpression, sourceOf(lhs));
+		return assign(sourceOfSpan(lhs, rhs), location,
+				(LHSExpression) lhsExpression, rhs, scope);
 	}
 
 	/**
@@ -1786,7 +1791,7 @@ public class ModelBuilderWorker {
 		Statement result;
 
 		function.addLocation(location);
-		// TODO: Handle other possibilites
+		// TODO: why can't this be treated like any statement?
 		if (incrementer instanceof OperatorNode) {
 			OperatorNode expression = (OperatorNode) incrementer;
 			switch (expression.getOperator()) {
@@ -2172,6 +2177,34 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Adds the locations and statements in a sequence of statements to a
+	 * function. Also adds the statements to the list.
+	 * 
+	 * @param fragment
+	 * @param function
+	 * @param addFirstLocation
+	 */
+	private void addToFunction(Fragment fragment, Function function,
+			boolean addFirstLocation, Vector<Statement> list) {
+		Statement statement = fragment.startLocation.getSoleOutgoing();
+
+		if (addFirstLocation)
+			function.addLocation(fragment.startLocation);
+		while (statement != null) {
+			Location location = statement.target();
+
+			list.add(statement);
+			function.addStatement(statement);
+			if (location == null)
+				break;
+			function.addLocation(location);
+			if (statement == fragment.lastStatement)
+				break;
+			statement = location.getSoleOutgoing();
+		}
+	}
+
 	// Exported methods....................................................
 
 	/**
@@ -2201,7 +2234,7 @@ public class ModelBuilderWorker {
 		Statement mainBody;
 		Vector<Statement> initializations = new Vector<Statement>();
 
-		// systemScope = system.outerScope();
+		systemScope = system.outerScope();
 		containingScopes = new LinkedHashMap<FunctionDefinitionNode, Scope>();
 		callStatements = new LinkedHashMap<CallOrSpawnStatement, FunctionDefinitionNode>();
 		functionMap = new LinkedHashMap<FunctionDefinitionNode, Function>();
@@ -2209,32 +2242,29 @@ public class ModelBuilderWorker {
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
 
-			if (node instanceof VariableDeclarationNode) {
-				// TODO: use methods
+			if (node instanceof VariableDeclarationNode
+					|| node instanceof TypedefDeclarationNode
+					|| node instanceof StructureOrUnionTypeNode) {
+				Fragment fragment;
 
-				VariableDeclarationNode decl = (VariableDeclarationNode) node;
-				InitializerNode init = decl.getInitializer();
-
-				processVariableDeclaration(system.outerScope(), decl);
-				if (init != null) {
-					Location location = factory.location(
-							sourceOfBeginning(node), system.outerScope());
-					LHSExpression left;
-					Expression right;
-
-					left = factory.variableExpression(
-							sourceOf(decl.getIdentifier()),
-							system.outerScope().getVariable(
-									system.outerScope().numVariables() - 1));
-					right = expression((ExpressionNode) init,
-							system.outerScope());
-					if (!initializations.isEmpty()) {
-						initializations.lastElement().setTarget(location);
-					}
-					initializations.add(factory.assignStatement(sourceOf(decl),
-							location, left, right));
-					system.addLocation(location);
-					system.addStatement(initializations.lastElement());
+				if (node instanceof VariableDeclarationNode)
+					fragment = translateVariableDeclarationNode(null,
+							systemScope, (VariableDeclarationNode) node);
+				else if (node instanceof TypedefDeclarationNode)
+					fragment = translateTypedefNode(null, systemScope,
+							(TypedefDeclarationNode) node);
+				else if (node instanceof StructureOrUnionTypeNode)
+					fragment = this.translateStructureOrUnionTypeNode(null,
+							systemScope, (StructureOrUnionTypeNode) node);
+				else
+					throw new RuntimeException("unreachable");
+				if (fragment != null) {
+					// add locations and statements to fragment and
+					// statements to initializations:
+					addToFunction(fragment, system, true, initializations);
+					if (!initializations.isEmpty())
+						initializations.lastElement().setTarget(
+								fragment.startLocation);
 				}
 			} else if (node instanceof FunctionDefinitionNode) {
 				if (((FunctionDefinitionNode) node).getName().equals("main")) {
@@ -2245,21 +2275,7 @@ public class ModelBuilderWorker {
 							system.outerScope());
 				}
 			} else if (node instanceof FunctionDeclarationNode) {
-				// Do we need to keep track of these for any reason?
-			} else if (node instanceof TypedefDeclarationNode) {
-				// TODO: do as in CompoundStatementNode
-
-				// String typeName = ((TypedefDeclarationNode) node).getName();
-				//
-				// if (typeName.equals("$proc")) {
-				// typedefMap.put(typeName, factory.processType());
-				// } else if (typeName.equals("$heap")) {
-				// typedefMap.put(typeName, factory.heapType());
-				// } else {
-				// typedefMap.put(typeName,
-				// processType(((TypedefDeclarationNode) node)
-				// .getTypeNode()));
-				// }
+				// nothing to do
 			} else {
 				throw new CIVLInternalException("Unsupported declaration type",
 						sourceOf(node));

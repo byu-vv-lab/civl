@@ -3,30 +3,17 @@ package edu.udel.cis.vsl.civl.state;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
-import edu.udel.cis.vsl.civl.err.CIVLInternalException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.object.StringObject;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * Factory to create all state objects.
@@ -39,14 +26,11 @@ public class StateFactory implements StateFactoryIF {
 
 	// *************************** Fields *****************************
 
+	private ModelFactory modelFactory;
+
 	private int stateCount = 0;
 
-	private SymbolicUniverse symbolicUniverse;
-
-	// /**
-	// * Object used to initialize variables when entering a new scope.
-	// */
-	// private Initializer initializer;
+	private SymbolicUniverse universe;
 
 	private Map<DynamicScope, DynamicScope> scopeMap = new HashMap<DynamicScope, DynamicScope>();
 
@@ -54,33 +38,14 @@ public class StateFactory implements StateFactoryIF {
 
 	private Map<State, State> stateMap = new HashMap<State, State>();
 
-	private String pidPrefix = "PID_";
-
-	private String scopePrefix = "Scope_";
-
-	private SymbolicTupleType processType;
-
-	private SymbolicTupleType scopeType;
-
 	// *************************** Constructors ***********************
 
 	/**
 	 * Factory to create all state objects.
 	 */
-	public StateFactory(SymbolicUniverse symbolicUniverse
-	// ,Initializer initializer
-	) {
-		List<SymbolicType> processTypeList = new Vector<SymbolicType>();
-		List<SymbolicType> scopeTypeList = new Vector<SymbolicType>();
-
-		this.symbolicUniverse = symbolicUniverse;
-		// this.initializer = initializer;
-		processTypeList.add(symbolicUniverse.integerType());
-		processType = symbolicUniverse.tupleType(
-				symbolicUniverse.stringObject("process"), processTypeList);
-		scopeTypeList.add(symbolicUniverse.integerType());
-		scopeType = symbolicUniverse.tupleType(
-				symbolicUniverse.stringObject("scope"), scopeTypeList);
+	public StateFactory(ModelFactory modelFactory) {
+		this.modelFactory = modelFactory;
+		this.universe = modelFactory.universe();
 	}
 
 	// ************************* Helper Methods ***********************
@@ -133,68 +98,13 @@ public class StateFactory implements StateFactoryIF {
 		return canonic(new Process(id, stack));
 	}
 
-	// make an interface Initializer for this. Take Variable and dynamicScopeId,
-	// and returns SymbolicExpression. initialValue. Put the
-	// interface here (in state module). Use it in this class.
-	// Implement the interface in semantics: CommonInitializer.
-	// Constructor for StateFactory will take an Initializer.
-	private SymbolicExpression[] initialValues(
-	// State state,
-			Scope lexicalScope, int dynamicScopeId) {
+	private SymbolicExpression[] initialValues(Scope lexicalScope,
+			int dynamicScopeId) {
 		SymbolicExpression[] values = new SymbolicExpression[lexicalScope
 				.variables().size()];
 
 		for (int i = 0; i < values.length; i++) {
-			// Variable v = lexicalScope.getVariable(i);
-
-			values[i] = symbolicUniverse.nullExpression();
-			// values[i] = initializer.initialValue(state, v, dynamicScopeId);
-
-			// if (v.type() instanceof CIVLArrayType) {
-			// StringObject name = symbolicUniverse.stringObject("A_s"
-			// + dynamicScopeId + "v" + i);
-			// SymbolicType type = arrayType(v.getSource(),
-			// (CIVLArrayType) v.type());
-			//
-			// values[i] = symbolicUniverse.symbolicConstant(name, type);
-			// } else if (v.type() instanceof CIVLStructType) {
-			// StringObject name = symbolicUniverse.stringObject("S_s"
-			// + dynamicScopeId + "v" + i);
-			// SymbolicType type = structType(v.getSource(),
-			// (CIVLStructType) v.type());
-			//
-			// values[i] = symbolicUniverse.symbolicConstant(name, type);
-			// } else if (v.isExtern()) {
-			// StringObject name = symbolicUniverse.stringObject("s"
-			// + dynamicScopeId + "v" + i);
-			// SymbolicType type = null;
-			//
-			// if (v.type() instanceof CIVLPrimitiveType) {
-			// switch (((CIVLPrimitiveType) v.type()).primitiveType()) {
-			// case INT:
-			// type = symbolicUniverse.integerType();
-			// break;
-			// case BOOL:
-			// type = symbolicUniverse.booleanType();
-			// break;
-			// case REAL:
-			// type = symbolicUniverse.realType();
-			// break;
-			// case STRING:
-			// type = symbolicUniverse.arrayType(symbolicUniverse
-			// .characterType());
-			// break;
-			// default:
-			// throw new CIVLInternalException("Unreachable",
-			// v.getSource());
-			// }
-			// } else {
-			// throw new CIVLInternalException(
-			// "Unimplemented input type: " + v.type(),
-			// v.getSource());
-			// }
-			// values[i] = symbolicUniverse.symbolicConstant(name, type);
-			// }
+			values[i] = universe.nullExpression();
 		}
 		return values;
 	}
@@ -215,9 +125,8 @@ public class StateFactory implements StateFactoryIF {
 	 *            dynamic scope.
 	 * @return A new dynamic scope.
 	 */
-	private DynamicScope dynamicScope(
-	// State state,
-			Scope lexicalScope, int parent, int dynamicScopeId, BitSet reachers) {
+	private DynamicScope dynamicScope(Scope lexicalScope, int parent,
+			int dynamicScopeId, BitSet reachers) {
 		return dynamicScope(lexicalScope, parent, initialValues(// state,
 				lexicalScope, dynamicScopeId), reachers);
 	}
@@ -234,99 +143,6 @@ public class StateFactory implements StateFactoryIF {
 	 */
 	private StackEntry stackEntry(Location location, int scope) {
 		return new StackEntry(location, scope);
-	}
-
-	/**
-	 * Get the symbolic type of an array.
-	 * 
-	 * @param type
-	 *            The model array type.
-	 * @return The symbolic array type.
-	 */
-	private SymbolicType arrayType(CIVLSource source, CIVLArrayType type) {
-		CIVLType baseType = type.elementType();
-
-		if (baseType instanceof CIVLArrayType) {
-			return symbolicUniverse.arrayType(arrayType(source,
-					(CIVLArrayType) baseType));
-		} else if (baseType instanceof CIVLPrimitiveType) {
-			switch (((CIVLPrimitiveType) baseType).primitiveTypeKind()) {
-			case INT:
-				return symbolicUniverse.arrayType(symbolicUniverse
-						.integerType());
-			case BOOL:
-				return symbolicUniverse.arrayType(symbolicUniverse
-						.booleanType());
-			case REAL:
-				return symbolicUniverse.arrayType(symbolicUniverse.realType());
-			case STRING:
-				return symbolicUniverse.arrayType(symbolicUniverse
-						.characterType());
-			case PROCESS:
-				return symbolicUniverse.arrayType(processType);
-			default:
-				break;
-			}
-		} else if (baseType instanceof CIVLStructType) {
-			return structType(source, (CIVLStructType) baseType);
-		}
-		throw new CIVLInternalException("Unknown type: " + baseType, source);
-	}
-
-	/**
-	 * Get the symbolic type of a struct.
-	 * 
-	 * @param type
-	 *            The model struct type.
-	 * @return The symbolic struct type, which is a tuple whose component types
-	 *         are the symbolic types corresponding to the struct's fields.
-	 */
-	private SymbolicType structType(CIVLSource source, CIVLStructType type) {
-		SymbolicType result;
-		StringObject name = symbolicUniverse.stringObject(type.name().name());
-		List<SymbolicType> fieldTypes = new Vector<SymbolicType>();
-
-		for (StructField f : type.fields()) {
-			SymbolicType fieldType = null;
-
-			if (f.type() instanceof CIVLArrayType) {
-				fieldType = arrayType(source, (CIVLArrayType) f.type());
-			} else if (f.type() instanceof CIVLPrimitiveType) {
-				switch (((CIVLPrimitiveType) f.type()).primitiveTypeKind()) {
-				case INT:
-					fieldType = symbolicUniverse.integerType();
-					break;
-				case BOOL:
-					fieldType = symbolicUniverse.booleanType();
-					break;
-				case REAL:
-					fieldType = symbolicUniverse.realType();
-					break;
-				case STRING:
-					// TODO: Handle this.
-				default:
-					break;
-				}
-			} else if (f.type().isProcessType()) {
-				fieldType = symbolicUniverse.arrayType(processType);
-			} else if (f.type() instanceof CIVLStructType) {
-				// TODO: Handle recursive types.
-				fieldType = structType(source, (CIVLStructType) f.type());
-			} else if (f.type() instanceof CIVLPointerType) {
-				List<SymbolicType> pointerComponents = new Vector<SymbolicType>();
-
-				pointerComponents.add(symbolicUniverse.integerType());
-				pointerComponents.add(symbolicUniverse.integerType());
-				pointerComponents.add(symbolicUniverse
-						.arrayType(symbolicUniverse.integerType()));
-				fieldType = symbolicUniverse.tupleType(
-						symbolicUniverse.stringObject("pointer"),
-						pointerComponents);
-			}
-			fieldTypes.add(fieldType);
-		}
-		result = symbolicUniverse.tupleType(name, fieldTypes);
-		return result;
 	}
 
 	private State collectScopes(State state) {
@@ -448,7 +264,7 @@ public class StateFactory implements StateFactoryIF {
 
 	@Override
 	public SymbolicUniverse symbolicUniverse() {
-		return symbolicUniverse;
+		return universe;
 	}
 
 	@Override
@@ -467,7 +283,7 @@ public class StateFactory implements StateFactoryIF {
 	@Override
 	public State initialState(Model model) {
 		State state = new State(new Process[0], new DynamicScope[0],
-				symbolicUniverse.trueExpression());
+				universe.trueExpression());
 		Function function = model.system();
 		int numArgs = function.parameters().size();
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
@@ -566,6 +382,38 @@ public class StateFactory implements StateFactoryIF {
 		return collectScopes(state);
 	}
 
+	private Map<SymbolicExpression, SymbolicExpression> procSubMap(
+			int[] oldToNewPidMap) {
+		int size = oldToNewPidMap.length;
+		Map<SymbolicExpression, SymbolicExpression> result = new HashMap<SymbolicExpression, SymbolicExpression>(
+				size);
+
+		for (int i = 0; i < size; i++) {
+			SymbolicExpression oldVal = modelFactory.processValue(i);
+			SymbolicExpression newVal = modelFactory
+					.processValue(oldToNewPidMap[i]);
+
+			result.put(oldVal, newVal);
+		}
+		return result;
+	}
+
+	private Map<SymbolicExpression, SymbolicExpression> scopeSubMap(
+			int[] oldToNewSidMap) {
+		int size = oldToNewSidMap.length;
+		Map<SymbolicExpression, SymbolicExpression> result = new HashMap<SymbolicExpression, SymbolicExpression>(
+				size);
+
+		for (int i = 0; i < size; i++) {
+			SymbolicExpression oldVal = modelFactory.scopeValue(i);
+			SymbolicExpression newVal = modelFactory
+					.scopeValue(oldToNewSidMap[i]);
+
+			result.put(oldVal, newVal);
+		}
+		return result;
+	}
+
 	/**
 	 * Searches the dynamic scopes in the given state for any process reference
 	 * value, and returns a new array of scopes equivalent to the old except
@@ -590,6 +438,7 @@ public class StateFactory implements StateFactoryIF {
 	 */
 	private DynamicScope[] updateProcessReferencesInScopes(State state,
 			int[] oldToNewPidMap) {
+		Map<SymbolicExpression, SymbolicExpression> procSubMap = procSubMap(oldToNewPidMap);
 		DynamicScope[] newScopes = null;
 		int numScopes = state.numScopes();
 
@@ -605,8 +454,8 @@ public class StateFactory implements StateFactoryIF {
 			for (Variable variable : procrefVariableIter) {
 				int vid = variable.vid();
 				SymbolicExpression oldValue = dynamicScope.getValue(vid);
-				SymbolicExpression newValue = substituteIntegers(
-						variable.type(), oldValue, oldToNewPidMap);
+				SymbolicExpression newValue = universe.substitute(oldValue,
+						procSubMap);
 
 				if (oldValue != newValue) {
 					if (newValues == null)
@@ -643,15 +492,13 @@ public class StateFactory implements StateFactoryIF {
 	 * 
 	 * @param state
 	 *            a state
-	 * @param oldToNewPidMap
-	 *            array of length state.numProcs in which element at index i is
-	 *            the new PID of the process whose old PID is i. A negative
-	 *            value indicates that the process of (old) PID i is to be
-	 *            removed.
+	 * @param oldToNewSidMap
+	 * 
 	 * @return new dynamic scopes
 	 */
 	private DynamicScope[] updateScopeReferencesInScopes(State state,
-			int[] oldToNewPidMap) {
+			int[] oldToNewSidMap) {
+		Map<SymbolicExpression, SymbolicExpression> scopeSubMap = scopeSubMap(oldToNewSidMap);
 		DynamicScope[] newScopes = null;
 		int numScopes = state.numScopes();
 
@@ -668,13 +515,16 @@ public class StateFactory implements StateFactoryIF {
 			for (Variable variable : pointerVariableIter) {
 				int vid = variable.vid();
 				SymbolicExpression oldValue = dynamicScope.getValue(vid);
-				SymbolicExpression newValue = substituteScopeIDs(oldValue,
-						oldToNewPidMap);
 
-				if (oldValue != newValue) {
-					if (newValues == null)
-						newValues = dynamicScope.copyValues();
-					newValues[vid] = newValue;
+				if (oldValue != null && !oldValue.isNull()) {
+					SymbolicExpression newValue = universe.substitute(oldValue,
+							scopeSubMap);
+
+					if (oldValue != newValue) {
+						if (newValues == null)
+							newValues = dynamicScope.copyValues();
+						newValues[vid] = newValue;
+					}
 				}
 			}
 			if (newValues != null) {
@@ -727,84 +577,6 @@ public class StateFactory implements StateFactoryIF {
 		if (newBitSet == null)
 			return oldBitSet;
 		return newBitSet;
-	}
-
-	/**
-	 * Substitutes PIDs in a symbolic expression (value).
-	 * 
-	 * If given expression is null, returns null.
-	 * 
-	 * Otherwise, searches for PID values in the expression, and returns a
-	 * symbolic expression obtained by subsituting new values for the old ones,
-	 * based on the oldToNew map and the type.
-	 * 
-	 * @param type
-	 *            the CIVL type of the given value
-	 * @param value
-	 *            a symbolic expression which is the value of a variable whose
-	 *            type is "type"
-	 * @param oldToNew
-	 *            an array of ints of length n, where n must be greater than any
-	 *            PID value that could occur in value. The element at position i
-	 *            will be substituted for a PID value of i.
-	 * 
-	 * @return a symbolic expression with new PID values, or null if the given
-	 *         symbolic expression was null
-	 */
-	private SymbolicExpression substituteIntegers(CIVLType type,
-			SymbolicExpression value, int[] oldToNew) {
-		Map<SymbolicConstant, SymbolicExpression> substitutions = new HashMap<SymbolicConstant, SymbolicExpression>();
-		if (value == null)
-			return null;
-
-		for (int i = 0; i < oldToNew.length; i++) {
-			StringObject oldString = symbolicUniverse.stringObject(pidPrefix
-					+ i);
-			SymbolicConstant oldConstant = symbolicUniverse.symbolicConstant(
-					oldString, processType);
-			StringObject newString = symbolicUniverse.stringObject(pidPrefix
-					+ oldToNew[i]);
-			SymbolicConstant newConstant = symbolicUniverse.symbolicConstant(
-					newString, processType);
-
-			substitutions.put(oldConstant, newConstant);
-		}
-		return symbolicUniverse.substituteSymbolicConstants(value,
-				substitutions);
-	}
-
-	/**
-	 * Substitute scope IDs into a symbolic expression (value);
-	 * 
-	 * @param value
-	 *            A symbolic expression for the value of a variable.
-	 * @param oldToNew
-	 *            An array of ints of length n, where n must be greater than any
-	 *            scope ID that could occur in value. The element at position i
-	 *            will be substituted for a scope ID value of i.
-	 * @return A symbolic expression with new scope values, or null if the given
-	 *         symbolic expression was null.
-	 */
-	private SymbolicExpression substituteScopeIDs(SymbolicExpression value,
-			int[] oldToNew) {
-		Map<SymbolicConstant, SymbolicExpression> substitutions = new HashMap<SymbolicConstant, SymbolicExpression>();
-		if (value == null)
-			return null;
-
-		for (int i = 0; i < oldToNew.length; i++) {
-			StringObject oldString = symbolicUniverse.stringObject(scopePrefix
-					+ i);
-			SymbolicConstant oldConstant = symbolicUniverse.symbolicConstant(
-					oldString, scopeType);
-			StringObject newString = symbolicUniverse.stringObject(scopePrefix
-					+ oldToNew[i]);
-			SymbolicConstant newConstant = symbolicUniverse.symbolicConstant(
-					newString, scopeType);
-
-			substitutions.put(oldConstant, newConstant);
-		}
-		return symbolicUniverse.substituteSymbolicConstants(value,
-				substitutions);
 	}
 
 	/**

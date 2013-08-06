@@ -47,6 +47,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 
@@ -301,6 +302,14 @@ public interface ModelFactory {
 	 * @return the symbolic type "array of char"
 	 */
 	SymbolicArrayType stringSymbolicType();
+
+	SymbolicExpression processValue(int pid);
+
+	int getProcessId(CIVLSource source, SymbolicExpression processValue);
+
+	SymbolicExpression scopeValue(int sid);
+
+	int getScopeId(CIVLSource source, SymbolicExpression scopeValue);
 
 	/* *********************************************************************
 	 * Expressions
