@@ -1308,7 +1308,8 @@ public class ModelBuilderWorker {
 							+ functionExpression.getSource());
 		}
 		for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
-			arguments.add(expression(callNode.getArgument(i), scope));
+			arguments.add(arrayToPointer(expression(callNode.getArgument(i),
+					scope)));
 		}
 		result = factory.callOrSpawnStatement(sourceOf(callNode), location,
 				isCall, null, arguments);
@@ -2261,10 +2262,10 @@ public class ModelBuilderWorker {
 				if (fragment != null) {
 					// add locations and statements to fragment and
 					// statements to initializations:
-					addToFunction(fragment, system, true, initializations);
 					if (!initializations.isEmpty())
 						initializations.lastElement().setTarget(
 								fragment.startLocation);
+					addToFunction(fragment, system, true, initializations);
 				}
 			} else if (node instanceof FunctionDefinitionNode) {
 				if (((FunctionDefinitionNode) node).getName().equals("main")) {

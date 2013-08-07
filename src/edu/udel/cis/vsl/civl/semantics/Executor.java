@@ -491,6 +491,8 @@ public class Executor {
 		try {
 			return executeWork(state, pid, statement);
 		} catch (SARLException e) {
+			e.printStackTrace(System.err);
+			System.err.flush();
 			throw new CIVLInternalException("SARL exception: " + e, statement);
 		}
 	}

@@ -1,12 +1,23 @@
 // attempt to make general barrier module
 #include <civlc.h>
 
+struct _CIVL_Barrier {
+  int numProcs;
+  int *in_barrier;
+  int num_in_barrier;
+  int lock;
+};
+
+/*
 typedef struct _CIVL_Barrier {
   int numProcs;
   int *in_barrier;
   int num_in_barrier;
   int lock;
 } CIVL_Barrier;
+*/
+
+typedef struct _CIVL_Barrier CIVL_Barrier;
 
 void CIVL_Barrier_init(int numProcs, CIVL_Barrier *barrier, int *array) {  
   barrier->numProcs = numProcs;

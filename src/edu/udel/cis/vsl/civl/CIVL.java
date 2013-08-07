@@ -217,6 +217,8 @@ public class CIVL {
 			program.prune();
 			program.removeSideEffects();
 		} catch (SyntaxException e) {
+			e.printStackTrace(System.err);
+			System.err.flush();
 			throw new CIVLException("Syntax error in " + file.getName()
 					+ ": \n" + e.getMessage(),
 					new ABC_CIVLSource(e.getSource()));
