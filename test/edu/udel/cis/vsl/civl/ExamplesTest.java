@@ -46,7 +46,7 @@ public class ExamplesTest {
 	public void testDiffusion() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "diffusion_seq.cvl");
-		boolean result = CIVL.check(file, out);
+		boolean result = CIVL.check(true, file, out);
 		assertFalse(result);
 	}
 

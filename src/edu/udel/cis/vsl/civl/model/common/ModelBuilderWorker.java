@@ -70,6 +70,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
+import edu.udel.cis.vsl.abc.ast.value.IF.IntegerValue;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
@@ -425,6 +426,31 @@ public class ModelBuilderWorker {
 		}
 	}
 
+	private Expression getExtent(CIVLSource source, ArrayType arrayType,
+			Scope scope) {
+		Expression result;
+
+		if (arrayType.isComplete()) {
+			ExpressionNode variableSize = arrayType.getVariableSize();
+
+			if (variableSize != null) {
+				result = expression(variableSize, scope);
+			} else {
+				IntegerValue constantSize = arrayType.getConstantSize();
+
+				if (constantSize != null)
+					result = factory.integerLiteralExpression(source,
+							constantSize.getIntegerValue());
+				else
+					throw new CIVLInternalException(
+							"Complete array type has neither constant size nor variable size: "
+									+ arrayType, source);
+			}
+		} else
+			result = null;
+		return result;
+	}
+
 	/**
 	 * Working on replacing process type with this.
 	 * 
@@ -442,10 +468,10 @@ public class ModelBuilderWorker {
 				ArrayType arrayType = (ArrayType) abcType;
 				CIVLType elementType = translateType(
 						arrayType.getElementType(), scope, source);
+				Expression extent = getExtent(source, arrayType, scope);
 
-				if (arrayType.isComplete())
-					result = factory.completeArrayType(elementType,
-							expression(arrayType.getVariableSize(), scope));
+				if (extent != null)
+					result = factory.completeArrayType(elementType, extent);
 				else
 					result = factory.incompleteArrayType(elementType);
 				break;
