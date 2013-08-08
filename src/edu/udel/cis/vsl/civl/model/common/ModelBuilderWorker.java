@@ -1151,11 +1151,20 @@ public class ModelBuilderWorker {
 	private Statement ifStatement(Location location, Function function,
 			Statement lastStatement, IfNode statement, Scope scope) {
 		Expression expression = expression(statement.getCondition(), scope);
-		Statement trueBranch = statement(location, expression, function,
-				lastStatement, statement.getTrueBranch(), scope);
+		Statement trueBranch = factory.noopStatement(
+				sourceOfBeginning(statement.getTrueBranch()), location);
 		Location exitLocation = factory.location(sourceOfEnd(statement), scope);
-		Statement falseBranch;
+		Statement falseBranch = factory.noopStatement(sourceOfEnd(statement),
+				location);
+		Statement falseBranchBody;
 		Statement result;
+		Location trueBranchBodyLocation = factory.location(
+				sourceOf(statement.getTrueBranch()), scope);
+		Statement trueBranchBody = statement(
+				trueBranchBodyLocation,
+				factory.booleanLiteralExpression(
+						sourceOf(statement.getTrueBranch()), true), function,
+				trueBranch, statement.getTrueBranch(), scope);
 
 		function.addLocation(location);
 		if (lastStatement != null) {
@@ -1163,19 +1172,19 @@ public class ModelBuilderWorker {
 		} else {
 			function.setStartLocation(location);
 		}
+		falseBranch.setGuard(factory.unaryExpression(expression.getSource(),
+				UNARY_OPERATOR.NOT, expression));
 		if (statement.getFalseBranch() == null) {
-			falseBranch = factory.noopStatement(sourceOfEnd(statement),
-					location);
-			falseBranch.setGuard(factory.unaryExpression(
-					expression.getSource(), UNARY_OPERATOR.NOT, expression));
+			falseBranchBody = falseBranch;
 		} else {
-			falseBranch = statement(location, factory.unaryExpression(
-					expression.getSource(), UNARY_OPERATOR.NOT, expression),
-					function, lastStatement, statement.getFalseBranch(), scope);
+			falseBranchBody = statement(location,
+					factory.booleanLiteralExpression(expression.getSource(),
+							true), function, falseBranch,
+					statement.getFalseBranch(), scope);
 		}
 		function.addLocation(exitLocation);
-		trueBranch.setTarget(exitLocation);
-		falseBranch.setTarget(exitLocation);
+		trueBranchBody.setTarget(exitLocation);
+		falseBranchBody.setTarget(exitLocation);
 		result = factory.noopStatement(sourceOfEnd(statement), exitLocation);
 		return result;
 	}
