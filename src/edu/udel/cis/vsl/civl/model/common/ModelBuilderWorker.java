@@ -1166,6 +1166,7 @@ public class ModelBuilderWorker {
 						sourceOf(statement.getTrueBranch()), true), function,
 				trueBranch, statement.getTrueBranch(), scope);
 
+		trueBranch.setGuard(expression);
 		function.addLocation(location);
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
