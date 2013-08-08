@@ -1750,6 +1750,8 @@ public class ModelBuilderWorker {
 				new LinkedHashSet<Variable>(), function);
 		Statement loopBody;
 		Expression condition;
+		Location loopEntranceLocation;
+		Statement loopEntrance;
 		Statement incrementer;
 		Statement loopExit;
 
@@ -1799,16 +1801,14 @@ public class ModelBuilderWorker {
 			}
 		}
 		condition = booleanExpression(statement.getCondition(), newScope);
-		loopBody = statement(function, initStatement, statement.getBody(),
+		loopEntranceLocation = factory.location(sourceOf(statement
+				.getCondition().getSource()), newScope);
+		loopEntrance = factory.noopStatement(sourceOf(statement.getCondition()
+				.getSource()), loopEntranceLocation);
+		loopEntrance.setGuard(condition);
+		initStatement.setTarget(loopEntranceLocation);
+		loopBody = statement(function, loopEntrance, statement.getBody(),
 				newScope);
-		for (Statement outgoing : initStatement.target().outgoing()) {
-			Expression outGuard = outgoing.guard();
-			CIVLSource augmentedSource = sourceOfSpan(outGuard.getSource(),
-					condition.getSource());
-
-			outgoing.setGuard(factory.binaryExpression(augmentedSource,
-					BINARY_OPERATOR.AND, outGuard, condition));
-		}
 		incrementer = forLoopIncrementer(function, loopBody,
 				statement.getIncrementer(), newScope);
 		incrementer.setTarget(initStatement.target());
@@ -1871,47 +1871,31 @@ public class ModelBuilderWorker {
 	private Statement whileLoop(Function function, Statement lastStatement,
 			LoopNode statement, Scope scope) {
 		CIVLSource source = sourceOf(statement);
+		Statement loopEntrance;
 		Statement loopExit;
 		Scope newScope = factory.scope(source, scope,
 				new LinkedHashSet<Variable>(), function);
 		Statement loopBody;
 		Expression condition;
-		Location loopEntrance;
+		Location loopEntranceLocation;
 
 		condition = booleanExpression(statement.getCondition(), newScope);
-		loopBody = statement(function, lastStatement, statement.getBody(),
-				newScope);
+		loopEntranceLocation = factory.location(sourceOfBeginning(statement), newScope);
 		if (lastStatement != null) {
-			if (lastStatement.target() == null) {
-				// If the loop body is an empty block, the result of evaluating
-				// the
-				// loop body will be lastStatement. When this happens,
-				// lastStatement!=null, but lastStatement.target()==null (since
-				// it hasn't been set yet). If that's the case, make a new
-				// location.
-				loopEntrance = factory.location(sourceOfBeginning(statement),
-						newScope);
-				lastStatement.setTarget(loopEntrance);
-				function.addLocation(loopEntrance);
-			} else {
-				loopEntrance = lastStatement.target();
-			}
+			lastStatement.setTarget(loopEntranceLocation);
 		} else {
-			loopEntrance = function.startLocation();
+			function.setStartLocation(loopEntranceLocation);
 		}
-		assert loopEntrance != null;
-		if (loopBody.equals(lastStatement)) {
-			loopBody = factory.noopStatement(source, loopEntrance);
-		}
-		for (Statement outgoing : loopEntrance.outgoing()) {
-			outgoing.setGuard(factory.binaryExpression(
-					sourceOfSpan(outgoing.guard().getSource(),
-							condition.getSource()), BINARY_OPERATOR.AND,
-					outgoing.guard(), condition));
-		}
-		loopBody.setTarget(loopEntrance);
+		loopEntrance = factory.noopStatement(sourceOf(statement.getCondition()
+				.getSource()), loopEntranceLocation);
+		loopEntrance.setGuard(condition);
+		loopBody = statement(function, loopEntrance, statement.getBody(),
+				newScope);
+		function.addLocation(loopEntranceLocation);
+		assert loopEntranceLocation != null;
+		loopBody.setTarget(loopEntranceLocation);
 		loopExit = factory
-				.noopStatement(loopEntrance.getSource(), loopEntrance);
+				.noopStatement(loopEntranceLocation.getSource(), loopEntranceLocation);
 		loopExit.setGuard(factory.unaryExpression(condition.getSource(),
 				UNARY_OPERATOR.NOT, condition));
 		return loopExit;
