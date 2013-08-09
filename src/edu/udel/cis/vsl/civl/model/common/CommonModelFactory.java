@@ -332,6 +332,11 @@ public class CommonModelFactory implements ModelFactory {
 	public Function function(CIVLSource source, Identifier name,
 			Vector<Variable> parameters, CIVLType returnType,
 			Scope containingScope, Location startLocation) {
+		for (Variable v : parameters) {
+			if (v.type() instanceof CIVLArrayType) {
+				throw new CIVLInternalException("Parameter of array type.", v);
+			}
+		}
 		return new CommonFunction(source, name, parameters, returnType,
 				containingScope, startLocation, this);
 	}
