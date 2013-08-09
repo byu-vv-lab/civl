@@ -1015,55 +1015,61 @@ public class ModelBuilderWorker {
 	private Expression constant(ConstantNode constant) {
 		CIVLSource source = sourceOf(constant);
 		Type convertedType = constant.getConvertedType();
-		LiteralExpression result;
+		Expression result;
 
 		if (convertedType.kind() == TypeKind.PROCESS) {
 			assert constant.getStringRepresentation().equals("$self");
-			return factory.selfExpression(source);
-		}
-		assert convertedType.kind() == TypeKind.BASIC;
-		switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
-		case SHORT:
-		case UNSIGNED_SHORT:
-		case INT:
-		case UNSIGNED:
-		case LONG:
-		case UNSIGNED_LONG:
-		case LONG_LONG:
-		case UNSIGNED_LONG_LONG:
+			result = factory.selfExpression(source);
+		} else if (convertedType.kind() == TypeKind.OTHER_INTEGER) {
 			result = factory.integerLiteralExpression(source,
 					BigInteger.valueOf(Long.parseLong(constant
 							.getStringRepresentation())));
-			break;
-		case FLOAT:
-		case DOUBLE:
-		case LONG_DOUBLE:
-			result = factory.realLiteralExpression(source, BigDecimal
-					.valueOf(Double.parseDouble(constant
-							.getStringRepresentation())));
-			break;
-		case BOOL:
-			boolean value;
+		} else if (convertedType.kind() == TypeKind.BASIC) {
+			switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
+			case SHORT:
+			case UNSIGNED_SHORT:
+			case INT:
+			case UNSIGNED:
+			case LONG:
+			case UNSIGNED_LONG:
+			case LONG_LONG:
+			case UNSIGNED_LONG_LONG:
+				result = factory.integerLiteralExpression(source, BigInteger
+						.valueOf(Long.parseLong(constant
+								.getStringRepresentation())));
+				break;
+			case FLOAT:
+			case DOUBLE:
+			case LONG_DOUBLE:
+				result = factory.realLiteralExpression(source, BigDecimal
+						.valueOf(Double.parseDouble(constant
+								.getStringRepresentation())));
+				break;
+			case BOOL:
+				boolean value;
 
-			if (constant instanceof IntegerConstantNode) {
-				BigInteger integerValue = ((IntegerConstantNode) constant)
-						.getConstantValue().getIntegerValue();
+				if (constant instanceof IntegerConstantNode) {
+					BigInteger integerValue = ((IntegerConstantNode) constant)
+							.getConstantValue().getIntegerValue();
 
-				if (integerValue.intValue() == 0) {
-					value = false;
+					if (integerValue.intValue() == 0) {
+						value = false;
+					} else {
+						value = true;
+					}
 				} else {
-					value = true;
+					value = Boolean.parseBoolean(constant
+							.getStringRepresentation());
 				}
-			} else {
-				value = Boolean
-						.parseBoolean(constant.getStringRepresentation());
+				result = factory.booleanLiteralExpression(source, value);
+				break;
+			default:
+				throw new CIVLUnimplementedFeatureException("type "
+						+ convertedType, source);
 			}
-			result = factory.booleanLiteralExpression(source, value);
-			break;
-		default:
-			throw new RuntimeException(
-					"Unsupported converted type for expression: " + constant);
-		}
+		} else
+			throw new CIVLUnimplementedFeatureException(
+					"type " + convertedType, source);
 		return result;
 	}
 
