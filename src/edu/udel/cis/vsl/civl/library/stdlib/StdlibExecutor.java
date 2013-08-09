@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.library.stdlib;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -22,7 +23,7 @@ import edu.udel.cis.vsl.civl.state.State;
 public class StdlibExecutor implements LibraryExecutor {
 
 	// private StateFactoryIF factory;
-//	private SymbolicUniverse universe;
+	// private SymbolicUniverse universe;
 
 	// private Vector<SymbolicType> elementTypes;
 	// private SymbolicType heapUnionType;
@@ -33,7 +34,7 @@ public class StdlibExecutor implements LibraryExecutor {
 	 */
 	public StdlibExecutor(Executor primaryExecutor) {
 		// this.factory = primaryExecutor.stateFactory();
-		//		this.universe = primaryExecutor.universe();
+		// this.universe = primaryExecutor.universe();
 		// elementTypes = new Vector<SymbolicType>();
 		// // TODO: Get the set of malloc'd types from the model.
 		// elementTypes.add(universe.booleanType());
@@ -68,22 +69,26 @@ public class StdlibExecutor implements LibraryExecutor {
 		Identifier name;
 		State result = null;
 
-		if (!(statement instanceof CallOrSpawnStatement)) {
-			throw new RuntimeException("Unsupported statement for stdlib: "
-					+ statement);
-		}
-		name = ((CallOrSpawnStatement) statement).function().name();
-		if (name.name().equals("malloc")) {
-//			Vector<SymbolicExpression> heapElements = new Vector<SymbolicExpression>();
+		throw new CIVLUnimplementedFeatureException(
+				"stdlib not yet implemented", statement);
 
-		} else if (name.name().equals("free")) {
-
-		} else {
-			throw new RuntimeException("Unsupported statement for stdlib: "
-					+ statement);
-		}
-		return result;
-		// TODO Auto-generated method stub
+		// if (!(statement instanceof CallOrSpawnStatement)) {
+		// throw new RuntimeException("Unsupported statement for stdlib: "
+		// + statement);
+		// }
+		// name = ((CallOrSpawnStatement) statement).function().name();
+		// if (name.name().equals("malloc")) {
+		// // Vector<SymbolicExpression> heapElements = new
+		// // Vector<SymbolicExpression>();
+		//
+		// } else if (name.name().equals("free")) {
+		//
+		// } else {
+		// throw new RuntimeException("Unsupported statement for stdlib: "
+		// + statement);
+		// }
+		// return result;
+		//	// TODO Auto-generated method stub
 
 	}
 

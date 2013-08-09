@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -27,7 +27,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonFunction extends CommonSourceable implements Function {
+public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 	private Identifier name;
 	private Vector<Variable> parameters;
@@ -77,9 +77,6 @@ public class CommonFunction extends CommonSourceable implements Function {
 			locations.add(this.startLocation);
 		}
 		statements = new LinkedHashSet<Statement>();
-		if (containingScope == null) {
-			this.isSystem = true;
-		}
 	}
 
 	/**

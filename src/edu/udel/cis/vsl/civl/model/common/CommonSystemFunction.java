@@ -33,10 +33,12 @@ public class CommonSystemFunction extends CommonFunction implements
 	 */
 	public CommonSystemFunction(CIVLSource source, Identifier name,
 			Vector<Variable> parameters, CIVLType returnType,
-			Scope containingScope, Location startLocation, ModelFactory factory) {
+			Scope containingScope, Location startLocation,
+			ModelFactory factory, String libraryName) {
 		super(source, name, parameters, returnType, containingScope,
 				startLocation, factory);
-		this.isSystem = false;
+		this.isSystem = true;
+		this.library = libraryName;
 	}
 
 	/*

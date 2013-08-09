@@ -19,10 +19,18 @@ public class ExamplesTest {
 	private PrintStream out = System.out;
 
 	@Test
+	public void testMalloc() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "malloc.cvl");
+		boolean result = CIVL.check(true, file, out);
+		assertFalse(result);
+	}
+
+	@Test
 	public void testAdder() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "adder.cvl");
-		boolean result = CIVL.check(file, out);
+		boolean result = CIVL.check(true, file, out);
 		assertFalse(result);
 	}
 
@@ -150,7 +158,7 @@ public class ExamplesTest {
 	public void testAssertFirst() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "assertFirst.cvl");
-		boolean result = CIVL.check(file, out);
+		boolean result = CIVL.check(true, file, out);
 		assertTrue(result);
 	}
 
@@ -161,15 +169,15 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void barrier() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "barrier.cvl");
-		boolean result = CIVL.check(file, out);
+		boolean result = CIVL.check(true, file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void barrier2() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
@@ -177,7 +185,7 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void arrayPointer() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
@@ -185,6 +193,5 @@ public class ExamplesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-
 
 }

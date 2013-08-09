@@ -11,7 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
@@ -35,7 +35,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	private Collection<Variable> procRefs = new HashSet<Variable>();
 	private Collection<Variable> pointers = new HashSet<Variable>();
 	private int id;
-	private Function function;
+	private CIVLFunction function;
 
 	/**
 	 * A scope.
@@ -195,14 +195,14 @@ public class CommonScope extends CommonSourceable implements Scope {
 	 * @param function
 	 *            The function containing this scope.
 	 */
-	public void setFunction(Function function) {
+	public void setFunction(CIVLFunction function) {
 		this.function = function;
 	}
 
 	/**
 	 * @return The function containing this scope.
 	 */
-	public Function function() {
+	public CIVLFunction function() {
 		return function;
 	}
 

@@ -15,7 +15,7 @@ import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -250,7 +250,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The designated outermost function, called "System."
 	 */
 	@Override
-	public Model model(CIVLSource civlSource, Function system) {
+	public Model model(CIVLSource civlSource, CIVLFunction system) {
 		return new CommonModel(civlSource, this, system);
 	}
 
@@ -268,7 +268,7 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public Scope scope(CIVLSource source, Scope parent,
-			Set<Variable> variables, Function function) {
+			Set<Variable> variables, CIVLFunction function) {
 		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
 		if (parent != null) {
 			parent.addChild(newScope);
@@ -329,7 +329,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return The new function.
 	 */
 	@Override
-	public Function function(CIVLSource source, Identifier name,
+	public CIVLFunction function(CIVLSource source, Identifier name,
 			Vector<Variable> parameters, CIVLType returnType,
 			Scope containingScope, Location startLocation) {
 		for (Variable v : parameters) {
@@ -348,9 +348,11 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The name of this function.
 	 */
 	@Override
-	public SystemFunction systemFunction(Identifier name) {
-		return new CommonSystemFunction(systemSource, name,
-				new Vector<Variable>(), null, null, null, this);
+	public SystemFunction systemFunction(CIVLSource source, Identifier name,
+			Vector<Variable> parameters, CIVLType returnType,
+			Scope containingScope, String libraryName) {
+		return new CommonSystemFunction(source, name, parameters, returnType,
+				containingScope, (Location) null, this, libraryName);
 	}
 
 	/**
@@ -929,7 +931,7 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
-			Location source, boolean isCall, Function function,
+			Location source, boolean isCall, CIVLFunction function,
 			Vector<Expression> arguments) {
 		CallOrSpawnStatement result = new CommonCallStatement(civlSource,
 				source, isCall, function, arguments);

@@ -11,7 +11,7 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -239,7 +239,7 @@ public class Executor {
 
 			state = executor.execute(state, pid, statement);
 		} else {
-			Function function = statement.function();
+			CIVLFunction function = statement.function();
 			SymbolicExpression[] arguments;
 
 			arguments = new SymbolicExpression[statement.arguments().size()];
@@ -270,7 +270,7 @@ public class Executor {
 	private State executeSpawn(State state, int pid,
 			CallOrSpawnStatement statement) {
 		Process process = state.process(pid);
-		Function function = statement.function();
+		CIVLFunction function = statement.function();
 		int newPid = state.numProcs();
 		Vector<Expression> argumentExpressions = statement.arguments();
 		int numArgs = argumentExpressions.size();

@@ -6,7 +6,7 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -25,7 +25,7 @@ public class CommonCallStatement extends CommonStatement implements
 
 	private LHSExpression lhs = null;
 
-	private Function function;
+	private CIVLFunction function;
 
 	private Vector<Expression> arguments;
 
@@ -42,7 +42,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 *            The arguments to the function.
 	 */
 	public CommonCallStatement(CIVLSource civlSource, Location source,
-			boolean isCall, Function function, Vector<Expression> arguments) {
+			boolean isCall, CIVLFunction function, Vector<Expression> arguments) {
 		super(civlSource, source);
 		this.isCall = isCall;
 		this.function = function;
@@ -63,7 +63,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 *            The arguments to the function.
 	 */
 	public CommonCallStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Function function, Vector<Expression> arguments) {
+			LHSExpression lhs, CIVLFunction function, Vector<Expression> arguments) {
 		super(civlSource, source);
 		this.lhs = lhs;
 		this.function = function;
@@ -82,7 +82,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @return The function being called.
 	 */
 	@Override
-	public Function function() {
+	public CIVLFunction function() {
 		return function;
 	}
 
@@ -108,7 +108,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 *            The function being called.
 	 */
 	@Override
-	public void setFunction(Function function) {
+	public void setFunction(CIVLFunction function) {
 		this.function = function;
 	}
 

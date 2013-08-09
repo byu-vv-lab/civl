@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -23,8 +23,8 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  */
 public class CommonModel extends CommonSourceable implements Model {
 
-	private LinkedList<Function> functions;
-	private Function system;
+	private LinkedList<CIVLFunction> functions;
+	private CIVLFunction system;
 	private ModelFactory modelFactory;
 	private String name = "";
 	private Map<String, Variable> externVariables;
@@ -37,11 +37,11 @@ public class CommonModel extends CommonSourceable implements Model {
 	 * @param system
 	 *            The designated outermost function, called "System."
 	 */
-	public CommonModel(CIVLSource source, ModelFactory factory, Function system) {
+	public CommonModel(CIVLSource source, ModelFactory factory, CIVLFunction system) {
 		super(source);
 		this.modelFactory = factory;
 		this.system = system;
-		functions = new LinkedList<Function>();
+		functions = new LinkedList<CIVLFunction>();
 		functions.add(system);
 	}
 
@@ -56,11 +56,11 @@ public class CommonModel extends CommonSourceable implements Model {
 	 *            The set of all functions in the model, including "System."
 	 */
 	public CommonModel(CIVLSource source, ModelFactory factory,
-			Function system, Set<Function> functions) {
+			CIVLFunction system, Set<CIVLFunction> functions) {
 		super(source);
 		this.modelFactory = factory;
 		this.system = system;
-		this.functions = new LinkedList<Function>(functions);
+		this.functions = new LinkedList<CIVLFunction>(functions);
 	}
 
 	/**
@@ -88,14 +88,14 @@ public class CommonModel extends CommonSourceable implements Model {
 	/**
 	 * @return The set of all functions in the model.
 	 */
-	public Set<Function> functions() {
-		return new HashSet<Function>(functions);
+	public Set<CIVLFunction> functions() {
+		return new HashSet<CIVLFunction>(functions);
 	}
 
 	/**
 	 * @return The designated outermost function "System."
 	 */
-	public Function system() {
+	public CIVLFunction system() {
 		return system;
 	}
 
@@ -103,15 +103,15 @@ public class CommonModel extends CommonSourceable implements Model {
 	 * @param functions
 	 *            The set of all functions in the model.
 	 */
-	public void setFunctions(Set<Function> functions) {
-		this.functions = new LinkedList<Function>(functions);
+	public void setFunctions(Set<CIVLFunction> functions) {
+		this.functions = new LinkedList<CIVLFunction>(functions);
 	}
 
 	/**
 	 * @param system
 	 *            The designated outermost function "System."
 	 */
-	public void setSystem(Function system) {
+	public void setSystem(CIVLFunction system) {
 		this.system = system;
 	}
 
@@ -119,7 +119,7 @@ public class CommonModel extends CommonSourceable implements Model {
 	 * @param function
 	 *            The function to be added to the model.
 	 */
-	public void addFunction(Function function) {
+	public void addFunction(CIVLFunction function) {
 		functions.add(function);
 	}
 
@@ -130,8 +130,8 @@ public class CommonModel extends CommonSourceable implements Model {
 	 *            The name of the function.
 	 * @return The function with the given name. Null if not found.
 	 */
-	public Function function(String name) {
-		for (Function f : functions) {
+	public CIVLFunction function(String name) {
+		for (CIVLFunction f : functions) {
 			if (f.name().name().equals(name)) {
 				return f;
 			}
@@ -147,7 +147,7 @@ public class CommonModel extends CommonSourceable implements Model {
 	 */
 	public void print(PrintStream out) {
 		out.println("Model");
-		for (Function function : functions) {
+		for (CIVLFunction function : functions) {
 			function.print(" | ", out);
 		}
 		out.flush();

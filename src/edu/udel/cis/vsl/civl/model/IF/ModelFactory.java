@@ -76,7 +76,7 @@ public interface ModelFactory {
 	 * @param system
 	 *            The designated outermost function, called "System."
 	 */
-	Model model(CIVLSource source, Function system);
+	Model model(CIVLSource source, CIVLFunction system);
 
 	/**
 	 * Create a new scope.
@@ -91,7 +91,7 @@ public interface ModelFactory {
 	 * @return A new scope
 	 */
 	Scope scope(CIVLSource source, Scope parent, Set<Variable> variables,
-			Function function);
+			CIVLFunction function);
 
 	/**
 	 * Get an identifier with the given name.
@@ -128,11 +128,13 @@ public interface ModelFactory {
 	 *            The first location in the function.
 	 * @return The new function.
 	 */
-	Function function(CIVLSource source, Identifier name,
+	CIVLFunction function(CIVLSource source, Identifier name,
 			Vector<Variable> parameters, CIVLType returnType,
 			Scope containingScope, Location startLocation);
 
-	SystemFunction systemFunction(Identifier name);
+	SystemFunction systemFunction(CIVLSource source, Identifier name,
+			Vector<Variable> parameters, CIVLType returnType,
+			Scope containingScope, String libraryName);
 
 	/**
 	 * Create a new location.
@@ -579,7 +581,7 @@ public interface ModelFactory {
 	 * @return A new fork statement.
 	 */
 	CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
-			Location source, boolean isCall, Function function,
+			Location source, boolean isCall, CIVLFunction function,
 			Vector<Expression> arguments);
 
 	/**

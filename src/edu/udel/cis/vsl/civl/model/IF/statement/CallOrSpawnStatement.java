@@ -5,7 +5,7 @@ package edu.udel.cis.vsl.civl.model.IF.statement;
 
 import java.util.Vector;
 
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 
@@ -39,7 +39,7 @@ public interface CallOrSpawnStatement extends Statement {
 	/**
 	 * @return The function being called.
 	 */
-	Function function();
+	CIVLFunction function();
 
 	/**
 	 * @return The arguments to the function.
@@ -56,7 +56,7 @@ public interface CallOrSpawnStatement extends Statement {
 	 * @param function
 	 *            The function being called.
 	 */
-	void setFunction(Function function);
+	void setFunction(CIVLFunction function);
 
 	/**
 	 * @param arguments

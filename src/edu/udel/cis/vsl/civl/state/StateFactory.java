@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -284,7 +284,7 @@ public class StateFactory implements StateFactoryIF {
 	public State initialState(Model model) {
 		State state = new State(new Process[0], new DynamicScope[0],
 				universe.trueExpression());
-		Function function = model.system();
+		CIVLFunction function = model.system();
 		int numArgs = function.parameters().size();
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
 
@@ -347,7 +347,7 @@ public class StateFactory implements StateFactoryIF {
 	}
 
 	@Override
-	public State addProcess(State state, Function function,
+	public State addProcess(State state, CIVLFunction function,
 			SymbolicExpression[] arguments, int callerPid) {
 		int numProcs = state.numProcs();
 		Process[] newProcesses;
@@ -768,7 +768,7 @@ public class StateFactory implements StateFactoryIF {
 	 *         process having a new entry on its call stack.
 	 */
 	@Override
-	public State pushCallStack(State state, int pid, Function function,
+	public State pushCallStack(State state, int pid, CIVLFunction function,
 			SymbolicExpression[] arguments) {
 		return pushCallStack2(state, pid, function, arguments, pid);
 	}
@@ -796,7 +796,7 @@ public class StateFactory implements StateFactoryIF {
 	 *            which has no caller
 	 * @return new stack with new frame on call stack of process pid
 	 */
-	private State pushCallStack2(State state, int pid, Function function,
+	private State pushCallStack2(State state, int pid, CIVLFunction function,
 			SymbolicExpression[] arguments, int callerPid) {
 		Scope containingStaticScope = function.containingScope();
 		Scope functionStaticScope = function.outerScope();

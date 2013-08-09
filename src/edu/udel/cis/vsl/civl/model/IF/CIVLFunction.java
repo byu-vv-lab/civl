@@ -19,7 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public interface Function extends Sourceable {
+public interface CIVLFunction extends Sourceable {
 
 	/**
 	 * @return The name of this function.

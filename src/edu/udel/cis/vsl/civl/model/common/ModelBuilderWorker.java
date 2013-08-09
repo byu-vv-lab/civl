@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.Vector;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity.EntityKind;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Field;
+import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Label;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
@@ -64,6 +66,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
+import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.QualifiedObjectType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
@@ -78,13 +81,12 @@ import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Function;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -145,11 +147,12 @@ public class ModelBuilderWorker {
 	 */
 	private Vector<FunctionDefinitionNode> unprocessedFunctions;
 
-	/**
-	 * For each function definition node, the CIVL static scope containing that
-	 * definition.
-	 */
-	private Map<FunctionDefinitionNode, Scope> containingScopes;
+	// /**
+	// * For each function definition node, the CIVL static scope containing
+	// that
+	// * definition.
+	// */
+	// private Map<FunctionDefinitionNode, Scope> containingScopes;
 
 	/**
 	 * Map whose key set contains all call/spawn statements in the model. The
@@ -158,13 +161,12 @@ public class ModelBuilderWorker {
 	 * over this map and set the function fields of the call/spawn statements to
 	 * the corresponding model Function object.
 	 */
-	private Map<CallOrSpawnStatement, FunctionDefinitionNode> callStatements;
+	private Map<CallOrSpawnStatement, Function> callStatements;
 
 	/**
-	 * Map from all ABC function definition nodes to corresponding CIVL Function
-	 * object.
+	 * Map from ABC Function entity to corresponding CIVL Function.
 	 */
-	private Map<FunctionDefinitionNode, Function> functionMap;
+	private Map<Function, CIVLFunction> functionMap;
 
 	/**
 	 * This fields stores information for a single function, the current one
@@ -184,10 +186,10 @@ public class ModelBuilderWorker {
 	 */
 	private Map<Type, CIVLType> typeMap = new HashMap<Type, CIVLType>();
 
-	/**
-	 * 
-	 */
-	private Map<String, Function> systemFunctions;
+	// /**
+	// *
+	// */
+	// private Map<String, CIVLFunction> systemFunctions;
 
 	// Constructors........................................................
 
@@ -200,7 +202,7 @@ public class ModelBuilderWorker {
 		this.factory = factory;
 		this.program = program;
 		this.tokenFactory = program.getTokenFactory();
-		setUpSystemFunctions();
+		// setUpSystemFunctions();
 	}
 
 	// Helper methods......................................................
@@ -243,80 +245,157 @@ public class ModelBuilderWorker {
 				&& ((BooleanLiteralExpression) expression).value();
 	}
 
-	// private boolean isFalse(Expression expression) {
-	// return expression instanceof BooleanLiteralExpression
-	// && !((BooleanLiteralExpression) expression).value();
-	// }
-
 	/**
-	 * Creates system function objects and associates them to particular
-	 * libraries. This should be replaced with a general technique for creating
-	 * the system function objects.
+	 * Processes a function declaration node (whether or not node is also a
+	 * definition node).
 	 * 
-	 * Don't understand why these are created when their decls will already
-	 * occur in the AST. When those decls are processed, won't they lead to the
-	 * construction of these system functions?
+	 * Let F be the ABC Function Entity corresponding to this function
+	 * declaration.
+	 * 
+	 * First, see if there is already a CIVL Function CF corresponding to F. If
+	 * not, create one and add it to the modelm and map(s). This may be an
+	 * ordinary or a system function. (It is a system function if F does not
+	 * have any definition.)
+	 * 
+	 * Process the contract (if any) and add it to whatever is already in the
+	 * contract fields of CF.
+	 * 
+	 * If F is a function definition, add to lists of unprocessed function
+	 * defintitions: unprocessedFunctions.add(node); containingScopes.put(node,
+	 * scope);. Function bodies will be processed at a later pass.
+	 * 
+	 * @param node
+	 *            any ABC function declaration node
+	 * @param scope
+	 *            the scope in which the function declaration occurs
+	 * @return the CIVL Function (whether newly created or old)
 	 */
-	private void setUpSystemFunctions() {
-		// actually the source object should be taken from
-		// the header file civlc.h
-		SystemFunction malloc = factory.systemFunction(factory.identifier(
-				factory.systemSource(), "$malloc"));
-		SystemFunction free = factory.systemFunction(factory.identifier(
-				factory.systemSource(), "$free"));
-		SystemFunction printf = factory.systemFunction(factory.identifier(
-				factory.systemSource(), "printf"));
+	private CIVLFunction processFunctionDeclaration(
+			FunctionDeclarationNode node, Scope scope) {
+		Function entity = node.getEntity();
+		SequenceNode<ContractNode> contract = node.getContract();
+		CIVLFunction result;
 
-		malloc.setLibrary("civlc");
-		free.setLibrary("civlc");
-		printf.setLibrary("civlc");
-		systemFunctions = new LinkedHashMap<String, Function>();
-		systemFunctions.put("$malloc", malloc);
-		systemFunctions.put("$free", free);
-		systemFunctions.put("printf", printf);
+		if (entity == null)
+			throw new CIVLInternalException("Unresolved function declaration",
+					sourceOf(node));
+		result = functionMap.get(entity);
+		if (result == null) {
+			CIVLSource nodeSource = sourceOf(node);
+			String functionName = entity.getName();
+			CIVLSource identifierSource = sourceOf(node.getIdentifier());
+			Identifier functionIdentifier = factory.identifier(
+					identifierSource, functionName);
+			Vector<Variable> parameters = new Vector<Variable>();
+			// type should come from entity, not this type node.
+			// if it has a definition node, should probably use that one.
+			FunctionType functionType = entity.getType();
+			FunctionTypeNode functionTypeNode = node.getTypeNode();
+			CIVLType returnType = translateType(functionType.getReturnType(),
+					scope, sourceOf(functionTypeNode.getReturnType()));
+			SequenceNode<VariableDeclarationNode> abcParameters = functionTypeNode
+					.getParameters();
+			int numParameters = abcParameters.numChildren();
+
+			for (int i = 0; i < numParameters; i++) {
+				VariableDeclarationNode decl = abcParameters
+						.getSequenceChild(i);
+				CIVLType type = translateType(functionType.getParameterType(i),
+						scope, sourceOf(decl));
+				CIVLSource source = sourceOf(decl.getIdentifier());
+				Identifier variableName = factory.identifier(source,
+						decl.getName());
+
+				parameters.add(factory.variable(source, type, variableName,
+						parameters.size()));
+			}
+			if (entity.getDefinition() == null) { // system function
+				Source declSource = node.getIdentifier().getSource();
+				CToken token = declSource.getFirstToken();
+				File file = token.getSourceFile();
+				String fileName = file.getName();
+				// fileName will be something like "stdlib.h" or "civlc.h"
+				int dotIndex = fileName.lastIndexOf('.');
+				String libName;
+
+				if (dotIndex < 0)
+					throw new CIVLInternalException("Malformed file name "
+							+ fileName + " containing system function "
+							+ functionName, nodeSource);
+				libName = fileName.substring(0, dotIndex);
+				result = factory.systemFunction(nodeSource, functionIdentifier,
+						parameters, returnType, scope, libName);
+			} else { // regular function
+				result = factory.function(nodeSource, functionIdentifier,
+						parameters, returnType, scope, null);
+				unprocessedFunctions.add(entity.getDefinition());
+			}
+			// model.addFunction(result);
+			functionMap.put(entity, result);
+		}
+		// result is now defined and in the model
+		if (contract != null) {
+			Expression precondition = result.precondition();
+			Expression postcondition = result.postcondition();
+
+			for (int i = 0; i < contract.numChildren(); i++) {
+				ContractNode contractComponent = contract.getSequenceChild(i);
+				Expression componentExpression;
+
+				if (contractComponent instanceof EnsuresNode) {
+					componentExpression = expression(
+							((EnsuresNode) contractComponent).getExpression(),
+							result.outerScope());
+					if (postcondition == null) {
+						postcondition = componentExpression;
+					} else {
+						postcondition = factory.binaryExpression(
+								sourceOfSpan(postcondition.getSource(),
+										componentExpression.getSource()),
+								BINARY_OPERATOR.AND, postcondition,
+								componentExpression);
+					}
+				} else {
+					componentExpression = expression(
+							((RequiresNode) contractComponent).getExpression(),
+							result.outerScope());
+					if (precondition == null) {
+						precondition = componentExpression;
+					} else {
+						precondition = factory.binaryExpression(
+								sourceOfSpan(precondition.getSource(),
+										componentExpression.getSource()),
+								BINARY_OPERATOR.AND, precondition,
+								componentExpression);
+					}
+				}
+			}
+			if (precondition != null)
+				result.setPrecondition(precondition);
+			if (postcondition != null)
+				result.setPostcondition(postcondition);
+		}
+		return result;
 	}
 
 	/**
-	 * Translates a function definition.
-	 * 
-	 * @param functionNode
-	 *            the function definition AST node
-	 * @param scope
-	 *            the model scope in which the function definition occurs
-	 * @return the new CIVL Function object
+	 * Processes the function body of a function definition node. At least one
+	 * function declaration for this function should have been processed
+	 * already, so the corresponding CIVL function should already exist.
 	 */
-	private Function processFunction(FunctionDefinitionNode functionNode,
-			Scope scope) {
-		Function result;
-		Identifier name = factory.identifier(
-				sourceOf(functionNode.getIdentifier()), functionNode.getName());
-		Vector<Variable> parameters = new Vector<Variable>();
-		FunctionTypeNode functionTypeNode = functionNode.getTypeNode();
-		CIVLType returnType = translateTypeNode(
-				functionTypeNode.getReturnType(), scope);
+	private void processFunctionBody(FunctionDefinitionNode functionNode) {
+		Entity entity = functionNode.getEntity();
+		CIVLFunction result = functionMap.get(entity);
 		Statement body;
-		SequenceNode<VariableDeclarationNode> abcParameters = functionTypeNode
-				.getParameters();
-		int numParameters = abcParameters.numChildren();
 
+		if (result == null)
+			throw new CIVLInternalException("Did not process declaration",
+					sourceOf(functionNode));
 		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
-		for (int i = 0; i < numParameters; i++) {
-			VariableDeclarationNode decl = abcParameters.getSequenceChild(i);
-			CIVLType type = translateTypeNode(decl.getTypeNode(), scope);
-			CIVLSource source = sourceOf(decl.getIdentifier());
-			Identifier variableName = factory
-					.identifier(source, decl.getName());
-
-			parameters.add(factory.variable(source, type, variableName,
-					parameters.size()));
-		}
-		result = factory.function(sourceOf(functionNode), name, parameters,
-				returnType, scope, null);
 		body = statement(result, null, functionNode.getBody(),
 				result.outerScope());
 		if (!(body instanceof ReturnStatement)) {
-			// would like to get source of closing "}"?
 			CIVLSource endSource = sourceOfEnd(functionNode.getBody());
 			Location returnLocation = factory.location(endSource,
 					result.outerScope());
@@ -330,7 +409,6 @@ public class ModelBuilderWorker {
 		for (Statement s : gotoStatements.keySet()) {
 			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
 		}
-		return result;
 	}
 
 	/**
@@ -1008,7 +1086,7 @@ public class ModelBuilderWorker {
 	 *            The scope containing this statement.
 	 * @return The model representation of this statement.
 	 */
-	private Statement statement(Function function, Statement lastStatement,
+	private Statement statement(CIVLFunction function, Statement lastStatement,
 			StatementNode statement, Scope scope) {
 		Statement result;
 
@@ -1083,7 +1161,7 @@ public class ModelBuilderWorker {
 	 * @return The model representation of this statement.
 	 */
 	private Statement statement(Location location, Expression guard,
-			Function function, Statement lastStatement,
+			CIVLFunction function, Statement lastStatement,
 			StatementNode statement, Scope scope) {
 		Statement result;
 
@@ -1141,14 +1219,14 @@ public class ModelBuilderWorker {
 	/**
 	 * An if statement.
 	 */
-	private Statement ifStatement(Function function, Statement lastStatement,
-			IfNode statement, Scope scope) {
+	private Statement ifStatement(CIVLFunction function,
+			Statement lastStatement, IfNode statement, Scope scope) {
 		return ifStatement(
 				factory.location(sourceOfBeginning(statement), scope),
 				function, lastStatement, statement, scope);
 	}
 
-	private Statement ifStatement(Location location, Function function,
+	private Statement ifStatement(Location location, CIVLFunction function,
 			Statement lastStatement, IfNode statement, Scope scope) {
 		Expression expression = expression(statement.getCondition(), scope);
 		Statement trueBranch = factory.noopStatement(
@@ -1204,7 +1282,7 @@ public class ModelBuilderWorker {
 	 *            The scope containing this statement.
 	 * @return The model representation of this statement.
 	 */
-	private Statement assume(Function function, Statement lastStatement,
+	private Statement assume(CIVLFunction function, Statement lastStatement,
 			AssumeNode statement, Scope scope) {
 		Statement result;
 		Expression expression = expression(statement.getExpression(), scope);
@@ -1235,7 +1313,7 @@ public class ModelBuilderWorker {
 	 *            The scope containing this statement.
 	 * @return The model representation of this statement.
 	 */
-	private Statement assertStatement(Function function,
+	private Statement assertStatement(CIVLFunction function,
 			Statement lastStatement, AssertNode statement, Scope scope) {
 		Expression expression = expression(statement.getExpression(), scope);
 		Location location = factory.location(sourceOfBeginning(statement),
@@ -1270,7 +1348,7 @@ public class ModelBuilderWorker {
 	 *            The scope containing this statement.
 	 * @return The model representation of this statement.
 	 */
-	private Statement expressionStatement(Function function,
+	private Statement expressionStatement(CIVLFunction function,
 			Statement lastStatement, ExpressionStatementNode statement,
 			Scope scope) {
 		CIVLSource start = sourceOfBeginning(statement);
@@ -1304,7 +1382,7 @@ public class ModelBuilderWorker {
 	 * @return The model representation of this statement.
 	 */
 	private Statement expressionStatement(Location location, Expression guard,
-			Function function, Statement lastStatement,
+			CIVLFunction function, Statement lastStatement,
 			ExpressionStatementNode statement, Scope scope) {
 		Statement result = null;
 
@@ -1329,34 +1407,28 @@ public class ModelBuilderWorker {
 		Vector<Expression> arguments = new Vector<Expression>();
 		ExpressionNode functionExpression = ((FunctionCallNode) callNode)
 				.getFunction();
-		FunctionDefinitionNode functionDefinition;
-		String functionName;
 		CallOrSpawnStatement result;
+		Function callee;
 
-		if (functionExpression instanceof IdentifierExpressionNode) {
-			edu.udel.cis.vsl.abc.ast.entity.IF.Function callee = (edu.udel.cis.vsl.abc.ast.entity.IF.Function) ((IdentifierExpressionNode) functionExpression)
+		if (functionExpression instanceof IdentifierExpressionNode)
+			callee = (Function) ((IdentifierExpressionNode) functionExpression)
 					.getIdentifier().getEntity();
-			functionName = callee.getName();
-			functionDefinition = callee.getDefinition();
-		} else {
+		else
 			throw new CIVLUnimplementedFeatureException(
 					"Function call must use identifier for now: "
 							+ functionExpression.getSource());
-		}
 		for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
-			arguments.add(arrayToPointer(expression(callNode.getArgument(i),
-					scope)));
+			Expression actual = expression(callNode.getArgument(i), scope);
+
+			// TODO: once you translate conversions, you will do this
+			// there and can delete the following line:
+			actual = arrayToPointer(actual);
+			arguments.add(actual);
 		}
 		result = factory.callOrSpawnStatement(sourceOf(callNode), location,
 				isCall, null, arguments);
 		result.setLhs(lhs);
-		if (systemFunctions.containsKey(functionName)) {
-			((CallOrSpawnStatement) result).setFunction(systemFunctions
-					.get(functionName));
-		} else {
-			callStatements.put((CallOrSpawnStatement) result,
-					functionDefinition);
-		}
+		callStatements.put(result, callee);
 		return result;
 	}
 
@@ -1371,7 +1443,8 @@ public class ModelBuilderWorker {
 	 * @param scope
 	 */
 	private Statement expressionStatement(Location location, Expression guard,
-			Function function, ExpressionNode expressionStatement, Scope scope) {
+			CIVLFunction function, ExpressionNode expressionStatement,
+			Scope scope) {
 		Statement result;
 
 		if (expressionStatement instanceof OperatorNode) {
@@ -1466,7 +1539,7 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	private Statement compoundStatement(Function function,
+	private Statement compoundStatement(CIVLFunction function,
 			Statement lastStatement, CompoundStatementNode statement,
 			Scope scope) {
 		return compoundStatement(null, null, function, lastStatement,
@@ -1651,7 +1724,7 @@ public class ModelBuilderWorker {
 	 * @return
 	 */
 	private Statement compoundStatement(Location location, Expression guard,
-			Function function, Statement lastStatement,
+			CIVLFunction function, Statement lastStatement,
 			CompoundStatementNode statement, Scope scope) {
 		Scope newScope = factory.scope(sourceOf(statement), scope,
 				new LinkedHashSet<Variable>(), function);
@@ -1691,8 +1764,11 @@ public class ModelBuilderWorker {
 					lastStatement = fragment.lastStatement;
 				}
 			} else if (node instanceof FunctionDeclarationNode) {
-				unprocessedFunctions.add((FunctionDefinitionNode) node);
-				containingScopes.put((FunctionDefinitionNode) node, newScope);
+				processFunctionDeclaration((FunctionDeclarationNode) node,
+						newScope);
+				// unprocessedFunctions.add((FunctionDefinitionNode) node);
+				// containingScopes.put((FunctionDefinitionNode) node,
+				// newScope);
 			} else if (node instanceof StatementNode) {
 				Statement newStatement;
 
@@ -1722,7 +1798,7 @@ public class ModelBuilderWorker {
 		return lastStatement;
 	}
 
-	private Statement forLoop(Function function, Statement lastStatement,
+	private Statement forLoop(CIVLFunction function, Statement lastStatement,
 			ForLoopNode statement, Scope scope) {
 		CIVLSource startSource = sourceOfBeginning(statement);
 
@@ -1743,8 +1819,8 @@ public class ModelBuilderWorker {
 	 * @return
 	 */
 	private Statement forLoop(Location location, Expression guard,
-			Function function, Statement lastStatement, ForLoopNode statement,
-			Scope scope) {
+			CIVLFunction function, Statement lastStatement,
+			ForLoopNode statement, Scope scope) {
 		ForLoopInitializerNode init = statement.getInitializer();
 		Statement initStatement = lastStatement;
 		Scope newScope = factory.scope(sourceOf(statement), scope,
@@ -1820,7 +1896,7 @@ public class ModelBuilderWorker {
 		return loopExit;
 	}
 
-	private Statement forLoopIncrementer(Function function,
+	private Statement forLoopIncrementer(CIVLFunction function,
 			Statement lastStatement, ExpressionNode incrementer, Scope scope) {
 		Location location = factory.location(sourceOfBeginning(incrementer),
 				scope);
@@ -1869,7 +1945,7 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	private Statement whileLoop(Function function, Statement lastStatement,
+	private Statement whileLoop(CIVLFunction function, Statement lastStatement,
 			LoopNode statement, Scope scope) {
 		CIVLSource source = sourceOf(statement);
 		Statement loopEntrance;
@@ -1881,7 +1957,8 @@ public class ModelBuilderWorker {
 		Location loopEntranceLocation;
 
 		condition = booleanExpression(statement.getCondition(), newScope);
-		loopEntranceLocation = factory.location(sourceOfBeginning(statement), newScope);
+		loopEntranceLocation = factory.location(sourceOfBeginning(statement),
+				newScope);
 		if (lastStatement != null) {
 			lastStatement.setTarget(loopEntranceLocation);
 		} else {
@@ -1895,14 +1972,14 @@ public class ModelBuilderWorker {
 		function.addLocation(loopEntranceLocation);
 		assert loopEntranceLocation != null;
 		loopBody.setTarget(loopEntranceLocation);
-		loopExit = factory
-				.noopStatement(loopEntranceLocation.getSource(), loopEntranceLocation);
+		loopExit = factory.noopStatement(loopEntranceLocation.getSource(),
+				loopEntranceLocation);
 		loopExit.setGuard(factory.unaryExpression(condition.getSource(),
 				UNARY_OPERATOR.NOT, condition));
 		return loopExit;
 	}
 
-	private Statement wait(Function function, Statement lastStatement,
+	private Statement wait(CIVLFunction function, Statement lastStatement,
 			WaitNode statement, Scope scope) {
 		CIVLSource source = sourceOf(statement);
 		Location location = factory.location(sourceOfBeginning(statement),
@@ -1920,7 +1997,7 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	private Statement noop(Function function, Statement lastStatement,
+	private Statement noop(CIVLFunction function, Statement lastStatement,
 			NullStatementNode statement, Scope scope) {
 		Location location = factory.location(sourceOfBeginning(statement),
 				scope);
@@ -1928,7 +2005,7 @@ public class ModelBuilderWorker {
 		return noop(location, function, lastStatement, statement, scope);
 	}
 
-	private Statement noop(Location location, Function function,
+	private Statement noop(Location location, CIVLFunction function,
 			Statement lastStatement, NullStatementNode statement, Scope scope) {
 		Statement result = factory.noopStatement(sourceOf(statement), location);
 
@@ -1941,11 +2018,18 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	private Statement when(Function function, Statement lastStatement,
+	// TODO: I don't get this.
+	// what is lastStatement?
+	// what's going on with the guards?
+
+	private Statement when(CIVLFunction function, Statement lastStatement,
 			WhenNode statement, Scope scope) {
 		Statement result = statement(function, lastStatement,
 				statement.getBody(), scope);
 		Expression guard = booleanExpression(statement.getGuard(), scope);
+		// iter iterates over all initial statements resulting
+		// from translating the body of the when statement.
+		// what is relation of those to "result"?
 		Iterator<Statement> iter;
 
 		// A $true or $false guard is translated as 1 or 0, but this causes
@@ -1964,25 +2048,25 @@ public class ModelBuilderWorker {
 		} else {
 			iter = function.startLocation().outgoing().iterator();
 		}
-		while (iter.hasNext()) {
-			Statement s = iter.next();
+		if (!isTrue(guard)) {
+			while (iter.hasNext()) {
+				Statement s = iter.next();
 
-			if (isTrue(s.guard())) {
-				s.setGuard(guard);
-			} else if (isTrue(guard)) {
-				s.setGuard(s.guard()); // argument was just "guard" -sfs
-			} else {
-				s.setGuard(factory.binaryExpression(
-						sourceOfSpan(s.guard().getSource(), guard.getSource()),
-						BINARY_OPERATOR.AND, s.guard(), guard));
+				if (isTrue(s.guard())) {
+					s.setGuard(guard);
+				} else {
+					s.setGuard(factory.binaryExpression(
+							sourceOfSpan(s.guard().getSource(),
+									guard.getSource()), BINARY_OPERATOR.AND,
+							s.guard(), guard));
+				}
 			}
 		}
-		result.setGuard(guard);
 		return result;
 	}
 
 	private Statement when(Location location, Expression guard,
-			Function function, Statement lastStatement, WhenNode statement,
+			CIVLFunction function, Statement lastStatement, WhenNode statement,
 			Scope scope) {
 		Expression newGuard = booleanExpression(statement.getGuard(), scope);
 		Statement result;
@@ -1999,7 +2083,7 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	private Statement choose(Function function, Statement lastStatement,
+	private Statement choose(CIVLFunction function, Statement lastStatement,
 			ChooseStatementNode statement, Scope scope) {
 		Location startLocation = factory.location(sourceOfBeginning(statement),
 				scope);
@@ -2057,8 +2141,8 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	private Statement gotoStatement(Function function, Statement lastStatement,
-			GotoNode statement, Scope scope) {
+	private Statement gotoStatement(CIVLFunction function,
+			Statement lastStatement, GotoNode statement, Scope scope) {
 		Location location = factory.location(sourceOfBeginning(statement),
 				scope);
 		Statement noop = factory.noopStatement(sourceOf(statement), location);
@@ -2075,7 +2159,7 @@ public class ModelBuilderWorker {
 		return noop;
 	}
 
-	private Statement labeledStatement(Function function,
+	private Statement labeledStatement(CIVLFunction function,
 			Statement lastStatement, LabeledStatementNode statement, Scope scope) {
 		Statement result = statement(function, lastStatement,
 				statement.getStatement(), scope);
@@ -2090,7 +2174,7 @@ public class ModelBuilderWorker {
 	}
 
 	private Statement labeledStatement(Location location, Expression guard,
-			Function function, Statement lastStatement,
+			CIVLFunction function, Statement lastStatement,
 			LabeledStatementNode statement, Scope scope) {
 		Statement result = statement(location, guard, function, lastStatement,
 				statement.getStatement(), scope);
@@ -2104,7 +2188,7 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	private Statement returnStatement(Function function,
+	private Statement returnStatement(CIVLFunction function,
 			Statement lastStatement, ReturnNode statement, Scope scope) {
 		Location location = factory.location(sourceOfBeginning(statement),
 				scope);
@@ -2126,7 +2210,7 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	private Statement switchStatement(Function function,
+	private Statement switchStatement(CIVLFunction function,
 			Statement lastStatement, SwitchNode statement, Scope scope) {
 		Location location = factory.location(sourceOfBeginning(statement),
 				scope);
@@ -2138,8 +2222,8 @@ public class ModelBuilderWorker {
 	}
 
 	private Statement switchStatement(Location location, Expression guard,
-			Function function, Statement lastStatement, SwitchNode statement,
-			Scope scope) {
+			CIVLFunction function, Statement lastStatement,
+			SwitchNode statement, Scope scope) {
 		Statement result = null;
 		Iterator<LabeledStatementNode> cases = statement.getCases();
 		Expression condition = expression(statement.getCondition(), scope);
@@ -2206,7 +2290,7 @@ public class ModelBuilderWorker {
 	 * @param function
 	 * @param addFirstLocation
 	 */
-	private void addToFunction(Fragment fragment, Function function,
+	private void addToFunction(Fragment fragment, CIVLFunction function,
 			boolean addFirstLocation, Vector<Statement> list) {
 		Statement statement = fragment.startLocation.getSoleOutgoing();
 
@@ -2245,7 +2329,7 @@ public class ModelBuilderWorker {
 	public void buildModel() {
 		Identifier systemID = factory.identifier(factory.systemSource(),
 				"_CIVL_system");
-		Function system = factory.function(sourceOf(program.getAST()
+		CIVLFunction system = factory.function(sourceOf(program.getAST()
 				.getRootNode()), systemID, new Vector<Variable>(), null, null,
 				null);
 		ASTNode rootNode = program.getAST().getRootNode();
@@ -2256,9 +2340,8 @@ public class ModelBuilderWorker {
 		Vector<Statement> initializations = new Vector<Statement>();
 
 		systemScope = system.outerScope();
-		containingScopes = new LinkedHashMap<FunctionDefinitionNode, Scope>();
-		callStatements = new LinkedHashMap<CallOrSpawnStatement, FunctionDefinitionNode>();
-		functionMap = new LinkedHashMap<FunctionDefinitionNode, Function>();
+		callStatements = new LinkedHashMap<CallOrSpawnStatement, Function>();
+		functionMap = new LinkedHashMap<Function, CIVLFunction>();
 		unprocessedFunctions = new Vector<FunctionDefinitionNode>();
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
@@ -2290,13 +2373,12 @@ public class ModelBuilderWorker {
 			} else if (node instanceof FunctionDefinitionNode) {
 				if (((FunctionDefinitionNode) node).getName().equals("main")) {
 					mainFunction = (FunctionDefinitionNode) node;
-				} else {
-					unprocessedFunctions.add((FunctionDefinitionNode) node);
-					containingScopes.put((FunctionDefinitionNode) node,
-							system.outerScope());
 				}
+				processFunctionDeclaration((FunctionDeclarationNode) node,
+						systemScope);
 			} else if (node instanceof FunctionDeclarationNode) {
-				// nothing to do
+				processFunctionDeclaration((FunctionDeclarationNode) node,
+						systemScope);
 			} else {
 				throw new CIVLInternalException("Unsupported declaration type",
 						sourceOf(node));
@@ -2329,62 +2411,11 @@ public class ModelBuilderWorker {
 			system.addLocation(returnLocation);
 			system.addStatement(returnStatement);
 		}
-		model = factory.model(system.getSource(), system);
 		while (!unprocessedFunctions.isEmpty()) {
 			FunctionDefinitionNode functionDefinition = unprocessedFunctions
 					.remove(0);
-			Function newFunction = processFunction(functionDefinition,
-					containingScopes.get(functionDefinition));
-			SequenceNode<ContractNode> contract = functionDefinition
-					.getContract();
-			Expression precondition = null;
-			Expression postcondition = null;
 
-			if (contract != null) {
-				for (int i = 0; i < contract.numChildren(); i++) {
-					ContractNode contractComponent = contract
-							.getSequenceChild(i);
-					Expression componentExpression;
-
-					if (contractComponent instanceof EnsuresNode) {
-						componentExpression = expression(
-								((EnsuresNode) contractComponent)
-										.getExpression(),
-								newFunction.outerScope());
-						if (postcondition == null) {
-							postcondition = componentExpression;
-						} else {
-							postcondition = factory.binaryExpression(
-									sourceOfSpan(postcondition.getSource(),
-											componentExpression.getSource()),
-									BINARY_OPERATOR.AND, postcondition,
-									componentExpression);
-						}
-					} else {
-						componentExpression = expression(
-								((RequiresNode) contractComponent)
-										.getExpression(),
-								newFunction.outerScope());
-						if (precondition == null) {
-							precondition = componentExpression;
-						} else {
-							precondition = factory.binaryExpression(
-									sourceOfSpan(precondition.getSource(),
-											componentExpression.getSource()),
-									BINARY_OPERATOR.AND, precondition,
-									componentExpression);
-						}
-					}
-				}
-			}
-			if (precondition != null) {
-				newFunction.setPrecondition(precondition);
-			}
-			if (postcondition != null) {
-				newFunction.setPostcondition(postcondition);
-			}
-			model.addFunction(newFunction);
-			functionMap.put(functionDefinition, newFunction);
+			processFunctionBody(functionDefinition);
 		}
 		for (CallOrSpawnStatement statement : callStatements.keySet()) {
 			statement
@@ -2392,6 +2423,11 @@ public class ModelBuilderWorker {
 		}
 		for (Statement s : gotoStatements.keySet()) {
 			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
+		}
+		model = factory.model(system.getSource(), system);
+		// add all functions to model:
+		for (CIVLFunction f : functionMap.values()) {
+			model.addFunction(f);
 		}
 	}
 

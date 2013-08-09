@@ -7,7 +7,7 @@ import java.io.PrintStream;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -32,7 +32,7 @@ public interface Location extends Sourceable {
 	/**
 	 * @return The function containing this location.
 	 */
-	public Function function();
+	public CIVLFunction function();
 
 	/**
 	 * @return The set of incoming statements.

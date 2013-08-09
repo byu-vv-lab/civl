@@ -36,30 +36,30 @@ public interface Model extends Sourceable {
 	/**
 	 * @return The set of all functions in the model.
 	 */
-	public Set<Function> functions();
+	public Set<CIVLFunction> functions();
 
 	/**
 	 * @return The designated outermost function "System."
 	 */
-	public Function system();
+	public CIVLFunction system();
 
 	/**
 	 * @param functions
 	 *            The set of all functions in the model.
 	 */
-	public void setFunctions(Set<Function> functions);
+	public void setFunctions(Set<CIVLFunction> functions);
 
 	/**
 	 * @param system
 	 *            The designated outermost function "System."
 	 */
-	public void setSystem(Function system);
+	public void setSystem(CIVLFunction system);
 
 	/**
 	 * @param function
 	 *            The function to be added to the model.
 	 */
-	public void addFunction(Function function);
+	public void addFunction(CIVLFunction function);
 
 	/**
 	 * Get a function based on its name.
@@ -68,7 +68,7 @@ public interface Model extends Sourceable {
 	 *            The name of the function.
 	 * @return The function with the given name. Null if not found.
 	 */
-	public Function function(String name);
+	public CIVLFunction function(String name);
 
 	/**
 	 * Print the model.

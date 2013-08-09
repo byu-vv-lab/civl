@@ -101,12 +101,12 @@ public interface Scope extends Sourceable {
 	 * @param function
 	 *            The function containing this scope.
 	 */
-	public void setFunction(Function function);
+	public void setFunction(CIVLFunction function);
 
 	/**
 	 * @return The function containing this scope.
 	 */
-	public Function function();
+	public CIVLFunction function();
 
 	/**
 	 * @return The identifier of the function containing this scope.

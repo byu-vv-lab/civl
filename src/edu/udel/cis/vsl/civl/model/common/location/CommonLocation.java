@@ -9,7 +9,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -27,7 +27,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 	private Scope scope;
 	private Set<Statement> incoming = new HashSet<Statement>();
 	private Set<Statement> outgoing = new HashSet<Statement>();
-	private Function function;
+	private CIVLFunction function;
 
 	/**
 	 * The parent of all locations.
@@ -61,7 +61,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 	/**
 	 * @return The function containing this location.
 	 */
-	public Function function() {
+	public CIVLFunction function() {
 		return function;
 	}
 

@@ -3,7 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.state;
 
-import edu.udel.cis.vsl.civl.model.IF.Function;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -117,7 +117,7 @@ public interface StateFactoryIF {
 	 *         new dynamic scope corresponding to the outermost lexical scope of
 	 *         the function.
 	 */
-	State addProcess(State state, Function function,
+	State addProcess(State state, CIVLFunction function,
 			SymbolicExpression[] arguments, int callerPid);
 
 	/**
@@ -172,7 +172,7 @@ public interface StateFactoryIF {
 	 * @return A new state that is the same as the old state with the given
 	 *         process having a new entry on its call stack.
 	 */
-	State pushCallStack(State state, int pid, Function function,
+	State pushCallStack(State state, int pid, CIVLFunction function,
 			SymbolicExpression[] arguments);
 
 	/**

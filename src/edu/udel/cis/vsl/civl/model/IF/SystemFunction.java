@@ -7,7 +7,7 @@ package edu.udel.cis.vsl.civl.model.IF;
  * @author zirkel
  * 
  */
-public interface SystemFunction extends Function {
+public interface SystemFunction extends CIVLFunction {
 
 	/**
 	 * 
