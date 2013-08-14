@@ -1,8 +1,8 @@
 package edu.udel.cis.vsl.civl.model.common.type;
 
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 
 public class CommonStructField implements StructField {
 

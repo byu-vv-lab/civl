@@ -1,0 +1,71 @@
+
+For implementing malloc:
+
+Add sizeof expression in model.
+
+During model building, count the malloc statements.
+Every time you come to a malloc call, create a new system
+function:
+
+T* __malloc__i($heap *h, int size);
+
+where T is obtained from the cast wrapping the malloc
+and i is the counter.
+Add this to the model and use this in the translation.
+Maybe even create a special class for it extending
+FunctionCall.
+
+Complete the $heap type:  
+  For each i, you have the static CIVL type T_i and the 
+  __malloc__ function.  Compute the most general symbolic
+  type t_i by translating t_i and using incomplete types
+  for arrays.  Store t_i in the malloc call object.
+  let $heap be the symbolic type which is the tuple type
+
+  [array of array of t1,
+   array of array of t2,
+   array of array of t3, ...]
+
+Initial value:
+
+  [array of length 0, array of length 0, ...]
+ 
+Semantics:
+  to execute a __malloc__i:
+  let h be the result of evaluating the heap argument. *h is a tuple.
+  (*h).i is a concrete array.  Let l be its concrete length.
+  create a new symbolic constant whose name is a function of
+  the pid, dynamic scope id, heap variable ID, index i, and
+  l.  The type of this new symbolic constant is array of t_i
+  of length arg/sizeof(t+i), where arg is the result of evaluating
+  the size argument.  Check that it evenly divides, and log
+  an error if it might not.  Now append this symbolic constant
+  to the concrete array. [Really need a method in SARL to do this.]
+  Anyway, since it is concrete, get its sequence and append on to that.
+  Return the reference with tree:
+  - ref to heap (h)
+  - tuple component ref (i)
+  - array element reference (l)
+  - array element reference (0)
+  which is a reference to the first element of the newly allocated
+  array.  
+
+
+free: sets the value in the heap array to some symbolic constant
+UNDEFINED of type array of t_i.
+
+Canonicalization: map
+  Ref[h,i,l,0] -> Ref[h,i,l',0]
+  H_p_s_v_i_l -> H_p_s_v_i_l' (symbolic constants)
+
+
+
+---
+
+   
+Think about moving more stuff into model factory, like pointer value
+manipulation
+
+better printing of model
+
+better printing of states during execution

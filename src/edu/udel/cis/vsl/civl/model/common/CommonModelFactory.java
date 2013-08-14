@@ -14,8 +14,8 @@ import java.util.Set;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;

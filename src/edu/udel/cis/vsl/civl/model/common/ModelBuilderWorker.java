@@ -92,7 +92,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -146,13 +145,6 @@ public class ModelBuilderWorker {
 	 * definition in the AST.
 	 */
 	private Vector<FunctionDefinitionNode> unprocessedFunctions;
-
-	// /**
-	// * For each function definition node, the CIVL static scope containing
-	// that
-	// * definition.
-	// */
-	// private Map<FunctionDefinitionNode, Scope> containingScopes;
 
 	/**
 	 * Map whose key set contains all call/spawn statements in the model. The
@@ -2024,20 +2016,18 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	// TODO: I don't get this.
-	// what is lastStatement?
-	// what's going on with the guards?
-
 	private Statement when(CIVLFunction function, Statement lastStatement,
 			WhenNode statement, Scope scope) {
+		// result will be the final statement resulting from
+		// translating the body of the when statement node
 		Statement result = statement(function, lastStatement,
 				statement.getBody(), scope);
 		Expression guard = booleanExpression(statement.getGuard(), scope);
 		// iter iterates over all initial statements resulting
-		// from translating the body of the when statement.
-		// what is relation of those to "result"?
+		// from translating the body of the when statement node.
 		Iterator<Statement> iter;
 
+		// TODO: why not have an integer->boolean conversion method?
 		// A $true or $false guard is translated as 1 or 0, but this causes
 		// trouble later.
 		if (guard instanceof IntegerLiteralExpression) {
@@ -2054,18 +2044,20 @@ public class ModelBuilderWorker {
 		} else {
 			iter = function.startLocation().outgoing().iterator();
 		}
+		// add the guard to the guards of all initial statements
+		// in the body:
 		if (!isTrue(guard)) {
 			while (iter.hasNext()) {
-				Statement s = iter.next();
+				Statement outgoing = iter.next();
+				Expression outgoingGuard = outgoing.guard();
 
-				if (isTrue(s.guard())) {
-					s.setGuard(guard);
-				} else {
-					s.setGuard(factory.binaryExpression(
-							sourceOfSpan(s.guard().getSource(),
+				if (isTrue(outgoingGuard))
+					outgoing.setGuard(guard);
+				else
+					outgoing.setGuard(factory.binaryExpression(
+							sourceOfSpan(outgoingGuard.getSource(),
 									guard.getSource()), BINARY_OPERATOR.AND,
-							s.guard(), guard));
-				}
+							outgoingGuard, guard));
 			}
 		}
 		return result;

@@ -10,8 +10,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;

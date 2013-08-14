@@ -9,8 +9,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;

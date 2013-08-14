@@ -8,7 +8,6 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;

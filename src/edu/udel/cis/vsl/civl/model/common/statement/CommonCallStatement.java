@@ -5,8 +5,8 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 
 import java.util.Vector;
 
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
