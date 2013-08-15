@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,9 +12,9 @@ import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
-public class ExamplesTest {
+public class LanguageFeaturesTest {
 
-	private static File rootDir = new File("examples");
+	private static File rootDir = new File("examples/languageFeatures");
 	private PrintStream out = System.out;
 
 	@Test
@@ -27,10 +26,10 @@ public class ExamplesTest {
 	}
 
 	@Test
-	public void testAdder() throws IOException, PreprocessorException,
+	public void testAssume() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
-		File file = new File(rootDir, "adder.cvl");
-		boolean result = CIVL.check(true, file, out);
+		File file = new File(rootDir, "assume.cvl");
+		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
 
@@ -46,30 +45,6 @@ public class ExamplesTest {
 	public void testChoose() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "choose.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
-	}
-
-	@Test
-	public void testDiffusion() throws IOException, PreprocessorException,
-			ParseException, SyntaxException {
-		File file = new File(rootDir, "diffusion_seq.cvl");
-		boolean result = CIVL.check(true, file, out);
-		assertFalse(result);
-	}
-
-	@Test
-	public void testLocks() throws IOException, PreprocessorException,
-			ParseException, SyntaxException {
-		File file = new File(rootDir, "locks.cvl");
-		boolean result = CIVL.check(file, out);
-		assertTrue(result);
-	}
-
-	@Test
-	public void testMatmat() throws IOException, PreprocessorException,
-			ParseException, SyntaxException {
-		File file = new File(rootDir, "matmat.cvl");
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
@@ -94,14 +69,6 @@ public class ExamplesTest {
 	public void testSideEffects() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "sideEffects.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
-	}
-
-	@Test
-	public void testSpawn() throws IOException, PreprocessorException,
-			ParseException, SyntaxException {
-		File file = new File(rootDir, "spawn.cvl");
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
@@ -155,14 +122,6 @@ public class ExamplesTest {
 	}
 
 	@Test
-	public void testAssertFirst() throws IOException, PreprocessorException,
-			ParseException, SyntaxException {
-		File file = new File(rootDir, "assertFirst.cvl");
-		boolean result = CIVL.check(true, file, out);
-		assertTrue(result);
-	}
-
-	@Test
 	public void testStruct() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "struct.cvl");
@@ -171,27 +130,20 @@ public class ExamplesTest {
 	}
 
 	@Test
-	public void barrier() throws IOException, PreprocessorException,
-			ParseException, SyntaxException {
-		File file = new File(rootDir, "barrier.cvl");
-		boolean result = CIVL.check(true, file, out);
-		assertFalse(result);
-	}
-
-	@Test
-	public void barrier2() throws IOException, PreprocessorException,
-			ParseException, SyntaxException {
-		File file = new File(rootDir, "barrier2.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
-	}
-
-	@Test
-	public void arrayPointer() throws IOException, PreprocessorException,
+	public void testArrayPointer() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "arrayPointer.cvl");
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
 
+	@Test
+	public void testScoping() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "scoping.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
+
+	
 }

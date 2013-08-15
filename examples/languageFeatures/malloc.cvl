@@ -4,7 +4,7 @@
 
 void main() {
   $heap h;
-  double *p = $malloc(&h, 5*sizeof(double));
+  double *p = (double *) $malloc(&h, 5*sizeof(double));
   
   $free(p);
 }   

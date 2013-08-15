@@ -1,8 +1,8 @@
 #include<civlc.h>
 
-int L = 5;
-int M = 6;
-int N = 7;
+int L = 3;
+int M = 4;
+int N = 5;
 int TILE_SIZE = 3;
 $input double A[L][M];
 $input double B[M][N];
