@@ -144,6 +144,22 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
+	
+	@Test
+	public void testStructArray() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "structArray.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
+	
+	@Test
+	public void testStructStruct() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "structStruct.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
 
 	
 }
