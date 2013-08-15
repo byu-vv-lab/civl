@@ -160,6 +160,14 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
+	
+	@Test
+	public void testDynamicStruct() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "dynamicStruct.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
 
 	
 }
