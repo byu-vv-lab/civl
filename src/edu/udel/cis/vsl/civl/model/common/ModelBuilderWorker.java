@@ -178,10 +178,10 @@ public class ModelBuilderWorker {
 	 */
 	private Map<Type, CIVLType> typeMap = new HashMap<Type, CIVLType>();
 
-	// /**
-	// *
-	// */
-	// private Map<String, CIVLFunction> systemFunctions;
+	/**
+	 * Used to give names to anonymous structs and unions.
+	 */
+	private int anonymousStructCounter = 0;
 
 	// Constructors........................................................
 
@@ -461,6 +461,13 @@ public class ModelBuilderWorker {
 			Scope scope, CIVLSource source) {
 		String tag = type.getTag();
 
+		if (tag == null) {
+			if (type.isStruct())
+				tag = "__struct_" + anonymousStructCounter + "__";
+			else
+				tag = "__union_" + anonymousStructCounter + "__";
+			anonymousStructCounter++;
+		}
 		if (type.isUnion())
 			throw new CIVLUnimplementedFeatureException("Union types", source);
 		// civlc.h defines $proc as struct __proc__, etc.

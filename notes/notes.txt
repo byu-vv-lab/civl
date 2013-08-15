@@ -3,7 +3,9 @@ For implementing malloc:
 
 Add sizeof expression in model.
 Semantics: get the dynamic type and evaluate the sizeof that
-using some well-known formulas.  Add things to the path condition
+using some well-known formulas.  Introduce a symbolic function
+SIZEOF that takes a dynamic type and returns an int.
+Add things to the path condition
 as a side effect, like sizes are greater than 0, or 1, or
 whatever.
 
@@ -12,10 +14,11 @@ Add a MallocStatement to the model.  Example
   - int getMallocId();
   - Expression getHeapPointerExpression(); // &h 
   - Type getStaticElementType(); // double
-  - SymbolicType getDynamicObjectType(); // symbolic array of double
+  - SymbolicType getDynamicElementType() // symbolic real
+  - SymbolicType getDynamicObjectType(); // symbolic array of real
   - Expression getSizeExpression(); // sizeof(double)*10
   - SymbolicExpression getUndefinedObject(); // symbolic constant UNDEFINED
-                                             // of type array of double
+                                             // of type array of real
 
 During model building, count the malloc statements as they are
 encountered and assign each a unique ID.
