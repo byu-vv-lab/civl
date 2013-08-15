@@ -143,7 +143,7 @@ public class CommonInitializer implements Initializer {
 					(CIVLStructType) v.type());
 
 			return symbolicUniverse.symbolicConstant(name, type);
-		} else if (v.isExtern()) {
+		} else if (v.isInput()) {
 			StringObject name = symbolicUniverse.stringObject("s"
 					+ dynamicScopeId + "v" + i);
 			SymbolicType type = null;

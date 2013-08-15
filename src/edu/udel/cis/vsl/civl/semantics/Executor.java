@@ -362,7 +362,8 @@ public class Executor {
 				statement.getExpression());
 		BooleanExpression assumeValue = (BooleanExpression) eval.value;
 
-		state = stateFactory.setPathCondition(eval.state,
+		state = eval.state;
+		state = stateFactory.setPathCondition(state,
 				symbolicUniverse.and(state.pathCondition(), assumeValue));
 		state = transition(state, state.process(pid), statement.target());
 		return state;

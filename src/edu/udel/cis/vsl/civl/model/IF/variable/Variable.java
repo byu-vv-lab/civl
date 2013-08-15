@@ -39,7 +39,7 @@ public interface Variable extends Sourceable {
 	/**
 	 * @return Whether this variable is an extern.
 	 */
-	boolean isExtern();
+	boolean isInput();
 
 	/**
 	 * @param type
@@ -53,36 +53,16 @@ public interface Variable extends Sourceable {
 	 */
 	void setConst(boolean isConst);
 
-	// /**
-	// * @param extent
-	// * For an array variable, the extent of the array. Null if
-	// * unspecified or not an array.
-	// */
-	// void setExtent(Expression extent);
-
 	/**
-	 * @param isExtern
+	 * @param value
 	 *            Whether this variable is an extern.
 	 */
-	void setIsExtern(boolean isExtern);
-
-	/**
-	 * @param vid
-	 *            The new vid.
-	 */
-	void setVid(int vid);
+	void setIsInput(boolean value);
 
 	/**
 	 * @return The name of this variable.
 	 */
 	Identifier name();
-
-	// TODO remove setters
-	/**
-	 * @param name
-	 *            The name of this variable.
-	 */
-	void setName(Identifier name);
 
 	/**
 	 * @param scope

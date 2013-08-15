@@ -25,8 +25,8 @@ public class SimpleTransition extends Transition {
 	 * statements executing together in two different processes.
 	 * 
 	 * @param pathCondition
-	 *            The path condition that should result after executing the
-	 *            transition.
+	 *            The path condition that should be used when executing
+	 *            statement
 	 * @param pid
 	 *            The process id of the process executing this transition.
 	 * @param statement

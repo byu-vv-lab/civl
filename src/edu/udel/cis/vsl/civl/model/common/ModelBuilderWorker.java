@@ -421,7 +421,7 @@ public class ModelBuilderWorker {
 				type, name, scope.numVariables());
 
 		if (node.getTypeNode().isInputQualified()) {
-			variable.setIsExtern(true);
+			variable.setIsInput(true);
 		}
 		scope.addVariable(variable);
 		return variable;
@@ -1608,7 +1608,8 @@ public class ModelBuilderWorker {
 		IdentifierNode identifier = node.getIdentifier();
 		CIVLSource source = sourceOf(node);
 
-		if (type instanceof CIVLArrayType || type instanceof CIVLStructType) {
+		if (variable.isInput() || type instanceof CIVLArrayType
+				|| type instanceof CIVLStructType) {
 			if (sourceLocation == null)
 				sourceLocation = factory.location(sourceOfBeginning(node),
 						scope);

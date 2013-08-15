@@ -22,8 +22,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	private CIVLType type;
 	private Identifier name;
 	private boolean isConst;
-	private boolean isExtern;
-	// private Expression extent = null;
+	private boolean isInput;
 	private int vid;
 	private Scope scope;
 
@@ -66,19 +65,11 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		return isConst;
 	}
 
-	// /**
-	// * @return For an array variable, the extent of the array. Null if
-	// * unspecified or not an array.
-	// */
-	// public Expression extent() {
-	// return extent;
-	// }
-
 	/**
 	 * @return Whether this variable is an extern.
 	 */
-	public boolean isExtern() {
-		return isExtern;
+	public boolean isInput() {
+		return isInput;
 	}
 
 	/**
@@ -97,29 +88,12 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		this.isConst = isConst;
 	}
 
-	// /**
-	// * @param extent
-	// * For an array variable, the extent of the array. Null if
-	// * unspecified or not an array.
-	// */
-	// public void setExtent(Expression extent) {
-	// this.extent = extent;
-	// }
-
 	/**
-	 * @param isExtern
+	 * @param value
 	 *            Whether this variable is an extern.
 	 */
-	public void setIsExtern(boolean isExtern) {
-		this.isExtern = isExtern;
-	}
-
-	/**
-	 * @param vid
-	 *            The new vid.
-	 */
-	public void setVid(int vid) {
-		this.vid = vid;
+	public void setIsInput(boolean value) {
+		this.isInput = value;
 	}
 
 	/**
@@ -127,15 +101,6 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	 */
 	public Identifier name() {
 		return name;
-	}
-
-	// TODO remove setters
-	/**
-	 * @param name
-	 *            The name of this variable.
-	 */
-	public void setName(Identifier name) {
-		this.name = name;
 	}
 
 	/**
@@ -160,7 +125,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		if (isConst) {
 			result += "const ";
 		}
-		if (isExtern) {
+		if (isInput) {
 			result += "$input ";
 		}
 		result += name + " : " + type;

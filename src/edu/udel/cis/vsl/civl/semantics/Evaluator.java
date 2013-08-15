@@ -1168,9 +1168,8 @@ public class Evaluator {
 		int vid = variable.vid();
 		SymbolicExpression result;
 
-		if (type instanceof CIVLPrimitiveType) {
-			result = nullExpression;
-		} else if (type instanceof CIVLPointerType) {
+		if (!variable.isInput()
+				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
 			result = nullExpression;
 		} else {
 			StringObject name = universe.stringObject("X_s" + dyscopeId + "v"

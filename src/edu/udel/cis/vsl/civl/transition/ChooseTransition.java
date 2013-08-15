@@ -25,8 +25,8 @@ public class ChooseTransition extends SimpleTransition {
 	 * result from the choose.
 	 * 
 	 * @param pathCondition
-	 *            The path condition that should result after executing the
-	 *            transition.
+	 *            The path condition that should be used when executing this
+	 *            transition
 	 * @param pid
 	 *            The process id of the process executing this transition.
 	 * @param statement

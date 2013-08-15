@@ -26,8 +26,8 @@ public class TransitionFactory {
 	 * Create a new simple transition.
 	 * 
 	 * @param pathCondition
-	 *            The path condition that should result after executing this
-	 *            transition.
+	 *            The path condition that should be used when executing the
+	 *            statement
 	 * @param pid
 	 *            The process id of the process executing this transition.
 	 * @param statement
@@ -44,8 +44,8 @@ public class TransitionFactory {
 	 * Create a new choose transition.
 	 * 
 	 * @param pathCondition
-	 *            The path condition that should result after executing this
-	 *            transition.
+	 *            The path condition that should be used when executing the
+	 *            statement
 	 * @param pid
 	 *            The process id of the process executing this transition.
 	 * @param statement

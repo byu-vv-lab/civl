@@ -22,11 +22,11 @@ import edu.udel.cis.vsl.gmc.StateManagerIF;
 public class StateManager implements StateManagerIF<State, Transition> {
 
 	private Executor executor;
-	
+
 	private PrintStream debugOut = null;
-	
+
 	private StateFactoryIF stateFactory;
-	
+
 	private int maxProcs = 0;
 
 	public StateManager(Executor executor) {
@@ -46,6 +46,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 		assert transition instanceof SimpleTransition;
 		pid = ((SimpleTransition) transition).pid();
+		newState = stateFactory.setPathCondition(state,
+				((SimpleTransition) transition).pathCondition());
 		statement = ((SimpleTransition) transition).statement();
 		if (transition instanceof ChooseTransition) {
 			assert statement instanceof ChooseStatement;
@@ -55,8 +57,6 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		} else {
 			newState = executor.execute(state, pid, statement);
 		}
-		newState = stateFactory.setPathCondition(newState,
-				((SimpleTransition) transition).pathCondition());
 		newState = stateFactory.canonic(newState);
 		if (debugOut != null) {
 			newState.print(debugOut);

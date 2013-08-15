@@ -2,18 +2,23 @@
 For implementing malloc:
 
 Add sizeof expression in model.
+Semantics: get the dynamic type and evaluate the sizeof that
+using some well-known formulas.  Add things to the path condition
+as a side effect, like sizes are greater than 0, or 1, or
+whatever.
 
-During model building, count the malloc statements.
-Every time you come to a malloc call, create a new system
-function:
+Add a MallocStatement to the model.  Example
+(double*)malloc(&h, sizeof(double)*10).
+  - int getMallocId();
+  - Expression getHeapPointerExpression(); // &h 
+  - Type getStaticElementType(); // double
+  - SymbolicType getDynamicObjectType(); // symbolic array of double
+  - Expression getSizeExpression(); // sizeof(double)*10
+  - SymbolicExpression getUndefinedObject(); // symbolic constant UNDEFINED
+                                             // of type array of double
 
-T* __malloc__i($heap *h, int size);
-
-where T is obtained from the cast wrapping the malloc
-and i is the counter.
-Add this to the model and use this in the translation.
-Maybe even create a special class for it extending
-FunctionCall.
+During model building, count the malloc statements as they are
+encountered and assign each a unique ID.
 
 Complete the $heap type:  
   For each i, you have the static CIVL type T_i and the 
@@ -31,7 +36,7 @@ Initial value:
   [array of length 0, array of length 0, ...]
  
 Semantics:
-  to execute a __malloc__i:
+  to execute a malloc statement with malloc index i:
   let h be the result of evaluating the heap argument. *h is a tuple.
   (*h).i is a concrete array.  Let l be its concrete length.
   create a new symbolic constant whose name is a function of
@@ -50,14 +55,13 @@ Semantics:
   which is a reference to the first element of the newly allocated
   array.  
 
-
 free: sets the value in the heap array to some symbolic constant
 UNDEFINED of type array of t_i.
 
 Canonicalization: map
   Ref[h,i,l,0] -> Ref[h,i,l',0]
   H_p_s_v_i_l -> H_p_s_v_i_l' (symbolic constants)
-
+Perform substitution on the state
 
 
 ---
