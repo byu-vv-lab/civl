@@ -34,6 +34,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
@@ -102,7 +103,7 @@ public class Evaluator {
 	 * The scope type is a tuple with one component which has integer type. It
 	 * simply wraps a scope ID number.
 	 */
-	private SymbolicTupleType scopeType;
+	// private SymbolicTupleType scopeType;
 
 	/**
 	 * The pointer value is a triple <s,v,r> where s identifies the dynamic
@@ -136,6 +137,13 @@ public class Evaluator {
 
 	private ReferenceExpression identityReference;
 
+	/**
+	 * An uninterpreted function used to evaluate "sizeof" on a type. It takes
+	 * as input one expression of type dynamicType and returns an integer
+	 * expression.
+	 */
+	private SymbolicExpression sizeofFunction;
+
 	// Constructors........................................................
 
 	/**
@@ -146,11 +154,13 @@ public class Evaluator {
 	 */
 	public Evaluator(ModelFactory modelFactory, StateFactoryIF stateFactory,
 			ErrorLog log) {
+		SymbolicType dynamicToIntType;
+
 		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
 		this.universe = stateFactory.symbolicUniverse();
 		processType = modelFactory.processSymbolicType();
-		scopeType = modelFactory.scopeSymbolicType();
+		// scopeType = modelFactory.scopeSymbolicType();
 		dynamicType = modelFactory.dynamicSymbolicType();
 		pointerType = modelFactory.pointerSymbolicType();
 		this.log = log;
@@ -165,7 +175,11 @@ public class Evaluator {
 		nullPointer = universe.canonic(makePointer(-1, -1,
 				universe.nullReference()));
 		nullExpression = universe.nullExpression();
-		// typeName = universe.stringObject("TYPE");
+		dynamicToIntType = universe.functionType(new Singleton<SymbolicType>(
+				dynamicType), universe.integerType());
+		sizeofFunction = universe.symbolicConstant(
+				universe.stringObject("SIZEOF"), dynamicToIntType);
+		sizeofFunction = universe.canonic(sizeofFunction);
 	}
 
 	// Helper methods......................................................
@@ -190,10 +204,6 @@ public class Evaluator {
 				"This method should only be called with result type of NO or MAYBE",
 				source);
 	}
-
-	// private Certainty certaintyOf(ValidityResult result) {
-	// return certaintyOf(result.getResultType());
-	// }
 
 	private SymbolicType symbolicType(CIVLSource source, CIVLType type) {
 		SymbolicType result;
@@ -268,32 +278,6 @@ public class Evaluator {
 
 		return extractInt(source, field);
 	}
-
-	/**
-	 * Given a dynamic scope ID number, returns the scope value ("scopeVal")
-	 * which is a symbolic expression wrapping that int in a tuple of type
-	 * scopeType.
-	 * 
-	 * @param sid
-	 *            a nonnegative integer
-	 * @return symbolic expression of type scopeType wrapping sid
-	 */
-	// private SymbolicExpression makeScopeVal(int sid) {
-	// return universe.tuple(scopeType, new Singleton<SymbolicExpression>(
-	// universe.integer(sid)));
-	// }
-
-	/**
-	 * Given a dynamic scope value ("scopeVal"), extracts the concrete integer
-	 * scope ID number and returns it.
-	 * 
-	 * @param scopeVal
-	 *            an expression created by method {@link #makeScopeVal}.
-	 * @return the concrete integer scope ID wrapped by the scopeVal
-	 */
-	// private int getSid(CIVLSource source, SymbolicExpression scopeVal) {
-	// return extractIntField(source, scopeVal, zeroObj);
-	// }
 
 	/**
 	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
@@ -979,6 +963,51 @@ public class Evaluator {
 		return eval;
 	}
 
+	private Evaluation evaluateSizeofTypeExpression(State state, int pid,
+			SizeofTypeExpression expression) {
+		return evaluateSizeofType(expression.getSource(), state, pid,
+				expression.getTypeArgument());
+	}
+
+	private Evaluation evaluateSizeofType(CIVLSource source, State state,
+			int pid, CIVLType type) {
+		Evaluation eval;
+
+		if (type instanceof CIVLPrimitiveType) {
+			NumericExpression value = ((CIVLPrimitiveType) type).getSizeof();
+			BooleanExpression facts = ((CIVLPrimitiveType) type).getFacts();
+			BooleanExpression pathCondition = universe.and(facts,
+					state.pathCondition());
+
+			state = stateFactory.setPathCondition(state, pathCondition);
+			eval = new Evaluation(state, value);
+		} else if (type instanceof CIVLCompleteArrayType) {
+			NumericExpression extentValue;
+
+			eval = evaluate(state, pid, ((CIVLCompleteArrayType) type).extent());
+			extentValue = (NumericExpression) eval.value;
+			eval = evaluateSizeofType(source, eval.state, pid,
+					((CIVLArrayType) type).elementType());
+			eval.value = universe.multiply(extentValue,
+					(NumericExpression) eval.value);
+		} else if (type instanceof CIVLArrayType) {
+			throw new CIVLInternalException(
+					"sizeof applied to incomplete array type", source);
+		} else {
+			NumericExpression sizeof;
+			BooleanExpression pathCondition;
+
+			eval = dynamicTypeOf(state, pid, type, source, false);
+			sizeof = (NumericExpression) universe.apply(sizeofFunction,
+					new Singleton<SymbolicExpression>(eval.value));
+			pathCondition = universe.and(eval.state.pathCondition(),
+					universe.lessThan(zero, sizeof));
+			eval.value = sizeof;
+			eval.state = stateFactory.setPathCondition(state, pathCondition);
+		}
+		return eval;
+	}
+
 	/**
 	 * Evalute an integer literal expression.
 	 * 
@@ -1180,14 +1209,20 @@ public class Evaluator {
 		return result;
 	}
 
-	private Evaluation evaluateDynamicTypeOf(State state, int pid,
-			DynamicTypeOfExpression expression) {
-		TypeEvaluation typeEval = getDynamicType(state, pid,
-				expression.getType(), expression.getSource(), true);
+	private Evaluation dynamicTypeOf(State state, int pid, CIVLType type,
+			CIVLSource source, boolean isDefinition) {
+		TypeEvaluation typeEval = getDynamicType(state, pid, type, source,
+				isDefinition);
 		SymbolicExpression expr = expressionOfType(typeEval.type);
 		Evaluation result = new Evaluation(typeEval.state, expr);
 
 		return result;
+	}
+
+	private Evaluation evaluateDynamicTypeOf(State state, int pid,
+			DynamicTypeOfExpression expression) {
+		return dynamicTypeOf(state, pid, expression.getType(),
+				expression.getSource(), true);
 	}
 
 	private Evaluation evaluateInitialValue(State state, int pid,
@@ -1262,32 +1297,6 @@ public class Evaluator {
 	public SymbolicType processType() {
 		return processType;
 	}
-
-	/**
-	 * Given a process ID number, returns the process value ("procVal") which is
-	 * a symbolic expression wrapping that int in a tuple of type
-	 * <code>processType.</code>
-	 * 
-	 * @param pid
-	 *            a nonnegative integer
-	 * @return symbolic expression of type processType wrapping pid
-	 */
-	// public SymbolicExpression makeProcVal(int pid) {
-	// return universe.tuple(processType, new Singleton<SymbolicExpression>(
-	// universe.integer(pid)));
-	// }
-
-	/**
-	 * Given a process value (aka "procVal", a symbolic expression of process
-	 * type), extracts and returns the concrete integer PID.
-	 * 
-	 * @param procVal
-	 *            an expression created by method {@link #makeProcVal}.
-	 * @return the concrete integer PID wrapped by the procVal
-	 */
-	// public int getPid(CIVLSource source, SymbolicExpression procVal) {
-	// return extractIntField(source, procVal, zeroObj);
-	// }
 
 	/**
 	 * Given a pointer value, returns the dynamic scope ID component of that
@@ -1372,12 +1381,6 @@ public class Evaluator {
 		} else if (operand instanceof DotExpression) {
 			Evaluation eval = reference(state, pid,
 					(LHSExpression) ((DotExpression) operand).struct());
-
-			// if (!(eval.value instanceof ReferenceExpression))
-			// throw new CIVLInternalException(
-			// "Expected reference expression, not " + eval.value,
-			// operand);
-
 			SymbolicExpression structPointer = eval.value;
 			ReferenceExpression oldSymRef = getSymRef(structPointer);
 			int index = ((DotExpression) operand).fieldIndex();
@@ -1521,6 +1524,10 @@ public class Evaluator {
 			break;
 		case SELF:
 			result = evaluateSelf(state, pid, (SelfExpression) expression);
+			break;
+		case SIZEOF_TYPE:
+			result = evaluateSizeofTypeExpression(state, pid,
+					(SizeofTypeExpression) expression);
 			break;
 		case STRING_LITERAL:
 			result = evaluateStringLiteral(state, pid,

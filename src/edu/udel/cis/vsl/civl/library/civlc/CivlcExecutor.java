@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -185,8 +186,8 @@ public class CivlcExecutor implements LibraryExecutor {
 
 			System.out.println(arguments[0]);
 		} else {
-			throw new RuntimeException("Unsupported statement for stdlib: "
-					+ statement);
+			throw new CIVLUnimplementedFeatureException(name.name(),
+					statement.getSource());
 		}
 		return result;
 		// TODO Auto-generated method stub

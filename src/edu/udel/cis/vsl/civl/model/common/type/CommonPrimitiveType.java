@@ -3,6 +3,8 @@ package edu.udel.cis.vsl.civl.model.common.type;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
@@ -18,15 +20,34 @@ public class CommonPrimitiveType extends CommonType implements
 
 	private SymbolicType symbolicType;
 
+	private NumericExpression sizeofExpression;
+
+	private BooleanExpression facts;
+
 	/**
-	 * One of: int, bool, real, string, ...
+	 * Constructs new primitive type instance with given parameters
 	 * 
-	 * @param The
-	 *            actual primitive type (int, bool, real, or string).
+	 * @param kind
+	 *            the kind of primitive type; may not be null
+	 * @param symbolicType
+	 *            the symbolic type corresponding to this primitive type; may be
+	 *            null here but then must be set later
+	 * @param sizeofExpression
+	 *            the value that will be returned when evaluating "sizeof" this
+	 *            type; null indicates this type should never occur in a sizeof
+	 *            expression and if it does an exception will be thrown
+	 * @param facts
+	 *            boolean predicates concerned with this type which must hold,
+	 *            e.g., sizeof(t)>0 or sizeof(t)=1
+	 * 
 	 */
-	public CommonPrimitiveType(PrimitiveTypeKind kind, SymbolicType symbolicType) {
+	public CommonPrimitiveType(PrimitiveTypeKind kind,
+			SymbolicType symbolicType, NumericExpression sizeofExpression,
+			BooleanExpression facts) {
 		this.kind = kind;
 		this.symbolicType = symbolicType;
+		this.sizeofExpression = sizeofExpression;
+		this.facts = facts;
 	}
 
 	/**
@@ -48,7 +69,7 @@ public class CommonPrimitiveType extends CommonType implements
 	public String toString() {
 		switch (kind) {
 		case INT:
-			return "$int";
+			return "int";
 		case BOOL:
 			return "$bool";
 		case REAL:
@@ -63,8 +84,11 @@ public class CommonPrimitiveType extends CommonType implements
 			return "$dynamicType";
 		case HEAP:
 			return "$heap";
+		case VOID:
+			return "void";
 		default:
-			throw new CIVLInternalException("Unreachable", (CIVLSource) null);
+			throw new CIVLInternalException("Unknown primitive type kind: "
+					+ kind, (CIVLSource) null);
 		}
 	}
 
@@ -106,5 +130,15 @@ public class CommonPrimitiveType extends CommonType implements
 	@Override
 	public boolean isVoidType() {
 		return kind == PrimitiveTypeKind.VOID;
+	}
+
+	@Override
+	public NumericExpression getSizeof() {
+		return sizeofExpression;
+	}
+
+	@Override
+	public BooleanExpression getFacts() {
+		return facts;
 	}
 }

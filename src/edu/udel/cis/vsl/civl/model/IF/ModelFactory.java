@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
@@ -354,6 +355,17 @@ public interface ModelFactory {
 	 */
 	CastExpression castExpression(CIVLSource source, CIVLType type,
 			Expression expression);
+
+	/**
+	 * Returns a new "sizeof(t)" expression.
+	 * 
+	 * @param source
+	 *            source code reference
+	 * @param type
+	 *            a CIVL type, the argument to "sizeof"
+	 * @return the sizeof expression
+	 */
+	SizeofTypeExpression sizeofTypeExpression(CIVLSource source, CIVLType type);
 
 	/**
 	 * Returns a "DynamicTypeOf" expression with the given type argument. This

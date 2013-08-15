@@ -1,19 +1,31 @@
 
 For implementing malloc:
 
-Add sizeof expression in model.
-Semantics: get the dynamic type and evaluate the sizeof that
-using some well-known formulas.  Introduce a symbolic function
-SIZEOF that takes a dynamic type and returns an int.
-Add things to the path condition
-as a side effect, like sizes are greater than 0, or 1, or
-whatever.
+Add sizeof expression in model:
+  CIVLType getType();
+[do we also need sizeof(expr)? -- that's different!]
+
+For primitive types, add a method:
+  NumericExpression getSizeof();
+
+Create a symbolic constant for each primitive type, of type int,
+named SIZEOF_INT, etc.  Set this in model factory.
+
+In Evaluator: as a side-effect, if a sizeof expression is ever evaluated,
+add some facts about it to the path condition: sizeof(...)>0,
+maybe sizeof(char)=1 ?
+
+Evaluator: for primitive types, get it from type.
+Otherwise, compute: for arrays, multiply extent and sizeof
+element type (evaluating extent).  For all others (records,
+pointers) use an uninterpreted function sizeof(...) which
+takes a DynamicType and returns int.
 
 Add a MallocStatement to the model.  Example
 (double*)malloc(&h, sizeof(double)*10).
   - int getMallocId();
   - Expression getHeapPointerExpression(); // &h 
-  - Type getStaticElementType(); // double
+  - CIVLType getStaticElementType(); // double
   - SymbolicType getDynamicElementType() // symbolic real
   - SymbolicType getDynamicObjectType(); // symbolic array of real
   - Expression getSizeExpression(); // sizeof(double)*10

@@ -39,6 +39,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ResultNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SelfNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeableNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeofNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
@@ -194,7 +196,6 @@ public class ModelBuilderWorker {
 		this.factory = factory;
 		this.program = program;
 		this.tokenFactory = program.getTokenFactory();
-		// setUpSystemFunctions();
 	}
 
 	// Helper methods......................................................
@@ -638,6 +639,8 @@ public class ModelBuilderWorker {
 			result = factory.selfExpression(sourceOf(expression));
 		} else if (expression instanceof CastNode) {
 			result = castExpression((CastNode) expression, scope);
+		} else if (expression instanceof SizeofNode) {
+			result = translateSizeof((SizeofNode) expression, scope);
 		} else
 			throw new CIVLUnimplementedFeatureException("expressions of type "
 					+ expression.getClass().getSimpleName(),
@@ -693,6 +696,20 @@ public class ModelBuilderWorker {
 
 		result = factory.castExpression(sourceOf(expression), castType,
 				castExpression);
+		return result;
+	}
+
+	private Expression translateSizeof(SizeofNode node, Scope scope) {
+		Expression result;
+		SizeableNode argNode = node.getArgument();
+
+		if (argNode instanceof TypeNode) {
+			CIVLType type = translateTypeNode((TypeNode) argNode, scope);
+
+			result = factory.sizeofTypeExpression(sourceOf(node), type);
+		} else
+			throw new CIVLUnimplementedFeatureException(
+					"sizeof applied to expressions", sourceOf(node));
 		return result;
 	}
 

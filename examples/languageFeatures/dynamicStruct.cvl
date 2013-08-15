@@ -8,7 +8,7 @@ void f(int n) {
   } foo;
   
   foo s;
-  sum = (n * (n + 1)) / 2;
+  sum = (n * (n - 1)) / 2;
   if (n > 1) {
     $spawn f(n-1);
   }

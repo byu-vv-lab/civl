@@ -30,6 +30,7 @@ public interface Expression extends Sourceable {
 		REAL_LITERAL,
 		RESULT,
 		SELF,
+		SIZEOF_TYPE,
 		STRING_LITERAL,
 		SUBSCRIPT,
 		UNARY,

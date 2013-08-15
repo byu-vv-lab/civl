@@ -287,11 +287,14 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 			out.println(prefix + "| | " + iter.next().name());
 		}
 		outerScope.print(prefix + "| ", out);
-		out.println(prefix + "| locations (start=" + startLocation.id() + ")");
-		for (Location loc : locations) {
-			loc.print(prefix + "| | ", out);
-			out.flush();
+		if (!isSystem()) {
+			out.println(prefix + "| locations (start=" + startLocation.id()
+					+ ")");
+			for (Location loc : locations) {
+				loc.print(prefix + "| | ", out);
+			}
 		}
+		out.flush();
 	}
 
 	@Override

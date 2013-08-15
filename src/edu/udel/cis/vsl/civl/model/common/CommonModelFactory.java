@@ -37,6 +37,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
@@ -74,6 +75,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpress
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonStringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
@@ -96,6 +98,7 @@ import edu.udel.cis.vsl.civl.model.common.type.CommonStructType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
 import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
@@ -191,31 +194,30 @@ public class CommonModelFactory implements ModelFactory {
 		LinkedList<SymbolicType> pointerComponents = new LinkedList<SymbolicType>();
 
 		this.universe = universe;
-		this.voidType = new CommonPrimitiveType(PrimitiveTypeKind.VOID, null);
-		this.integerType = new CommonPrimitiveType(PrimitiveTypeKind.INT,
+		this.voidType = primitiveType(PrimitiveTypeKind.VOID, null);
+		this.integerType = primitiveType(PrimitiveTypeKind.INT,
 				universe.integerType());
-		this.booleanType = new CommonPrimitiveType(PrimitiveTypeKind.BOOL,
+		this.booleanType = primitiveType(PrimitiveTypeKind.BOOL,
 				universe.booleanType());
-		this.realType = new CommonPrimitiveType(PrimitiveTypeKind.REAL,
+		this.realType = primitiveType(PrimitiveTypeKind.REAL,
 				universe.realType());
+
 		this.identifiers = new HashMap<String, Identifier>();
 		scopeSymbolicType = (SymbolicTupleType) universe.canonic(universe
 				.tupleType(universe.stringObject("scope"), intTypeSingleton));
-		scopeType = new CommonPrimitiveType(PrimitiveTypeKind.SCOPE,
-				scopeSymbolicType);
+		scopeType = primitiveType(PrimitiveTypeKind.SCOPE, scopeSymbolicType);
 		processSymbolicType = (SymbolicTupleType) universe.canonic(universe
 				.tupleType(universe.stringObject("process"), intTypeSingleton));
-		processType = new CommonPrimitiveType(PrimitiveTypeKind.PROCESS,
+		processType = primitiveType(PrimitiveTypeKind.PROCESS,
 				processSymbolicType);
-		// TODO: what is the heap type?
-		// symbolic heap type determined by analyzing model and taking union
+		// symbolic heap type determined by analyzing model; will be set
+		// in model builder:
 		heapSymbolicType = null;
-		heapType = new CommonPrimitiveType(PrimitiveTypeKind.HEAP,
-				heapSymbolicType);
+		heapType = primitiveType(PrimitiveTypeKind.HEAP, heapSymbolicType);
 		dynamicSymbolicType = (SymbolicTupleType) universe.canonic(universe
 				.tupleType(universe.stringObject("dynamicType"),
 						intTypeSingleton));
-		dynamicType = new CommonPrimitiveType(PrimitiveTypeKind.DYNAMIC,
+		dynamicType = primitiveType(PrimitiveTypeKind.DYNAMIC,
 				dynamicSymbolicType);
 		pointerComponents.add(scopeType.getSymbolicType());
 		pointerComponents.add(universe.integerType());
@@ -225,8 +227,7 @@ public class CommonModelFactory implements ModelFactory {
 						pointerComponents));
 		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
 				.arrayType(universe.characterType()));
-		stringType = new CommonPrimitiveType(PrimitiveTypeKind.STRING,
-				stringSymbolicType);
+		stringType = primitiveType(PrimitiveTypeKind.STRING, stringSymbolicType);
 		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
 		for (int i = 0; i < CACHE_INCREMENT; i++)
 			nullList.add(null);
@@ -236,6 +237,34 @@ public class CommonModelFactory implements ModelFactory {
 		undefinedScopeValue = universe.canonic(universe.tuple(
 				scopeSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
+	}
+
+	private NumericExpression sizeofExpression(PrimitiveTypeKind kind) {
+		NumericExpression result = (NumericExpression) universe
+				.symbolicConstant(universe.stringObject("SIZEOF_" + kind),
+						universe.integerType());
+
+		result = (NumericExpression) universe.canonic(result);
+		return result;
+	}
+
+	private CIVLPrimitiveType primitiveType(PrimitiveTypeKind kind,
+			SymbolicType dynamicType) {
+		CIVLPrimitiveType result;
+		NumericExpression size = null;
+		BooleanExpression fact = null;
+
+		if (dynamicType != null)
+			dynamicType = (SymbolicType) universe.canonic(dynamicType);
+		if (kind != PrimitiveTypeKind.VOID)
+			size = sizeofExpression(kind);
+		if (size == null)
+			fact = universe.trueExpression();
+		else
+			fact = universe.lessThan(universe.zeroInt(), size);
+		fact = (BooleanExpression) universe.canonic(fact);
+		result = new CommonPrimitiveType(kind, dynamicType, size, fact);
+		return result;
 	}
 
 	@Override
@@ -628,6 +657,17 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(expression.expressionScope());
 		((CommonCastExpression) result).setExpressionType(type);
+		return result;
+	}
+
+	@Override
+	public SizeofTypeExpression sizeofTypeExpression(CIVLSource source,
+			CIVLType type) {
+		CommonSizeofTypeExpression result = new CommonSizeofTypeExpression(
+				source, type);
+
+		// result.setExpressionScope() don't know
+		result.setExpressionType(integerType);
 		return result;
 	}
 
