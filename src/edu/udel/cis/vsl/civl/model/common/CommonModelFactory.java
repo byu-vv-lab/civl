@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -549,18 +550,6 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(operand.expressionScope());
 		switch (operator) {
-		// case ADDRESSOF:
-		// result = new CommonUnaryExpression(operator, operand);
-		// ((CommonUnaryExpression) result)
-		// .setExpressionType(pointerType(operand.getExpressionType()));
-		// break;
-		// case DEREFERENCE:
-		// assert operand.getExpressionType() instanceof PointerType;
-		// result = new CommonUnaryExpression(operator, operand);
-		// ((CommonUnaryExpression) result)
-		// .setExpressionType(((PointerType) operand
-		// .getExpressionType()).baseType());
-		// break;
 		case NEGATIVE:
 			result = new CommonUnaryExpression(source, operator, operand);
 			((CommonUnaryExpression) result).setExpressionType(operand
@@ -580,7 +569,8 @@ public class CommonModelFactory implements ModelFactory {
 			((CommonUnaryExpression) result).setExpressionType(booleanType);
 			break;
 		default:
-			break;
+			throw new CIVLInternalException("Unknown unary operator: "
+					+ operator, source);
 
 		}
 		return result;
@@ -634,12 +624,10 @@ public class CommonModelFactory implements ModelFactory {
 					&& rightType instanceof CIVLPrimitiveType) {
 				assert ((CIVLPrimitiveType) rightType).primitiveTypeKind() == PrimitiveTypeKind.INT;
 				((CommonBinaryExpression) result).setExpressionType(leftType);
-			}
-
+			} else
+				throw new CIVLException("Incompatible types to +", source);
 			break;
-
 		}
-
 		return result;
 	}
 

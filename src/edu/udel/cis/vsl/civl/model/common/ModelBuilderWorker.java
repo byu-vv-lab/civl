@@ -12,6 +12,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.abc.ast.conversion.IF.ArithmeticConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.ArrayConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.CompatibleStructureOrUnionConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.Conversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.FunctionConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.LvalueConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.NullPointerConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.PointerBoolConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.VoidPointerConversion;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity.EntityKind;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Field;
@@ -617,6 +626,18 @@ public class ModelBuilderWorker {
 	 * *********************************************************************
 	 */
 
+	private Expression nullPointerExpression(CIVLPointerType pointerType,
+			Scope scope, CIVLSource source) {
+		Expression zero = factory.integerLiteralExpression(source,
+				BigInteger.ZERO);
+		Expression result;
+
+		zero.setExpressionScope(scope);
+		result = factory.castExpression(source, pointerType, zero);
+		result.setExpressionScope(scope);
+		return result;
+	}
+
 	/**
 	 * Translate an expression from the CIVL AST to the CIVL model.
 	 * 
@@ -652,6 +673,63 @@ public class ModelBuilderWorker {
 			throw new CIVLUnimplementedFeatureException("expressions of type "
 					+ expression.getClass().getSimpleName(),
 					sourceOf(expression));
+		// apply conversions
+		CIVLSource source = result.getSource();
+		int numConversions = expression.getNumConversions();
+
+		for (int i = 0; i < numConversions; i++) {
+			Conversion conversion = expression.getConversion(i);
+			Type oldType = conversion.getOldType();
+			Type newType = conversion.getNewType();
+			// Arithmetic, Array, CompatibleStructureOrUnion,
+			// Function, Lvalue, NullPointer, PointerBool, VoidPointer
+
+			if (conversion instanceof ArithmeticConversion) {
+				CIVLType oldCIVLType = translateType(oldType, scope, source);
+				CIVLType newCIVLType = translateType(newType, scope, source);
+
+				// need equals on Types
+				if (oldCIVLType.isIntegerType() && newCIVLType.isIntegerType()
+						|| oldCIVLType.isRealType() && newCIVLType.isRealType()) {
+					// nothing to do
+				} else {
+					result = factory
+							.castExpression(source, newCIVLType, result);
+				}
+			} else if (conversion instanceof ArrayConversion) {
+				// we will ignore this one here because we want
+				// to keep it as array in subscript expressions
+			} else if (conversion instanceof CompatibleStructureOrUnionConversion) {
+				// think about this
+				throw new CIVLUnimplementedFeatureException(
+						"compatible structure or union conversion", source);
+			} else if (conversion instanceof FunctionConversion) {
+				throw new CIVLUnimplementedFeatureException(
+						"function pointers", source);
+			} else if (conversion instanceof LvalueConversion) {
+				// nothing to do since ignore qualifiers anyway
+			} else if (conversion instanceof NullPointerConversion) {
+				// result is a null pointer to new type
+				CIVLPointerType newCIVLType = (CIVLPointerType) translateType(
+						newType, scope, source);
+
+				result = nullPointerExpression(newCIVLType, scope, source);
+			} else if (conversion instanceof PointerBoolConversion) {
+				// pointer type to boolean type: p!=NULL
+				result = factory.binaryExpression(
+						source,
+						BINARY_OPERATOR.NOT_EQUAL,
+						result,
+						nullPointerExpression(
+								(CIVLPointerType) result.getExpressionType(),
+								scope, source));
+			} else if (conversion instanceof VoidPointerConversion) {
+				// void*->T* or T*->void*
+				// ignore, pointer types are all the same
+			} else
+				throw new CIVLInternalException("Unknown conversion: "
+						+ conversion, source);
+		}
 		return result;
 	}
 
