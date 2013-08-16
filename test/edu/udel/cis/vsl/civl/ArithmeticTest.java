@@ -34,6 +34,14 @@ public class ArithmeticTest {
 	}
 	
 	@Test
+	public void testLaplace() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "laplace.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
+	
+	@Test
 	public void testAssoc() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "assoc.cvl");
@@ -48,5 +56,20 @@ public class ArithmeticTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
+	
+	@Test
+	public void testDerivative() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "derivative.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
 
+	@Test
+	public void testDivision() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "division.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
 }

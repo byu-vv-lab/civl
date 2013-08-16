@@ -169,5 +169,20 @@ public class LanguageFeaturesTest {
 		assertFalse(result);
 	}
 
+	@Test
+	public void testSizeOf() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "sizeOf.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
+	
+	@Test
+	public void testDuffs() throws IOException, PreprocessorException,
+			ParseException, SyntaxException {
+		File file = new File(rootDir, "duffs.cvl");
+		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
 	
 }
