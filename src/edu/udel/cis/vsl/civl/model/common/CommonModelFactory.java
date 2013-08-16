@@ -49,6 +49,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -86,6 +87,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonChooseStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonMallocStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
@@ -219,7 +221,7 @@ public class CommonModelFactory implements ModelFactory {
 						intTypeSingleton));
 		dynamicType = primitiveType(PrimitiveTypeKind.DYNAMIC,
 				dynamicSymbolicType);
-		pointerComponents.add(scopeType.getSymbolicType());
+		pointerComponents.add(scopeType.getDynamicType(universe));
 		pointerComponents.add(universe.integerType());
 		pointerComponents.add(universe.referenceType());
 		pointerSymbolicType = (SymbolicTupleType) universe
@@ -1247,6 +1249,49 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public int getScopeId(CIVLSource source, SymbolicExpression scopeValue) {
 		return extractIntField(source, scopeValue, zeroObj);
+	}
+
+	private SymbolicExpression undefinedValue(SymbolicType type) {
+		SymbolicExpression result = universe.symbolicConstant(
+				universe.stringObject("UNDEFINED"), type);
+
+		result = universe.canonic(result);
+		return result;
+	}
+
+	@Override
+	public SymbolicType setHeapType(Iterable<MallocStatement> mallocStatements) {
+		LinkedList<SymbolicType> fieldTypes = new LinkedList<SymbolicType>();
+		SymbolicType result;
+
+		for (MallocStatement statement : mallocStatements) {
+			SymbolicType fieldType = universe.arrayType(statement
+					.getDynamicObjectType());
+
+			fieldTypes.add(fieldType);
+		}
+		result = universe.tupleType(universe.stringObject("$heap"), fieldTypes);
+		result = (SymbolicType) universe.canonic(result);
+		((CommonPrimitiveType) heapType).setDynamicType(result);
+		return result;
+	}
+
+	@Override
+	public MallocStatement mallocStatement(CIVLSource civlSource,
+			Location source, LHSExpression lhs, CIVLType staticElementType,
+			Expression heapPointerExpression, Expression sizeExpression,
+			int mallocId) {
+		SymbolicType dynamicElementType = staticElementType
+				.getDynamicType(universe);
+		SymbolicArrayType dynamicObjectType = (SymbolicArrayType) universe
+				.canonic(universe.arrayType(dynamicElementType));
+		SymbolicExpression undefinedObject = undefinedValue(dynamicObjectType);
+		MallocStatement result = new CommonMallocStatement(civlSource, source,
+				mallocId, heapPointerExpression, staticElementType,
+				dynamicElementType, dynamicObjectType, sizeExpression,
+				undefinedObject, lhs);
+
+		return result;
 	}
 
 }

@@ -62,6 +62,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.OffsetReference;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
+import edu.udel.cis.vsl.sarl.IF.expr.UnionMemberReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
@@ -249,7 +251,7 @@ public class Evaluator {
 	 * @throws CIVLInternalException
 	 *             if a concrete integer value cannot be extracted
 	 */
-	private int extractInt(CIVLSource source, NumericExpression expression) {
+	public int extractInt(CIVLSource source, NumericExpression expression) {
 		IntegerNumber result = (IntegerNumber) universe
 				.extractNumber(expression);
 
@@ -969,7 +971,7 @@ public class Evaluator {
 				expression.getTypeArgument());
 	}
 
-	private Evaluation evaluateSizeofType(CIVLSource source, State state,
+	public Evaluation evaluateSizeofType(CIVLSource source, State state,
 			int pid, CIVLType type) {
 		Evaluation eval;
 
@@ -1143,11 +1145,9 @@ public class Evaluator {
 		TypeEvaluation result;
 
 		// if type has a state variable and computeStructs is false, use
-		// variable
-		// else compute
+		// variable else compute
 		if (type instanceof CIVLPrimitiveType) {
-			result = new TypeEvaluation(state,
-					((CIVLPrimitiveType) type).getSymbolicType());
+			result = new TypeEvaluation(state, type.getDynamicType(universe));
 		} else if (type instanceof CIVLPointerType) {
 			result = new TypeEvaluation(state, pointerType);
 		} else if (type.getStateVariable() != null && !isDefinition) {
@@ -1459,6 +1459,76 @@ public class Evaluator {
 		int id = extractIntField(source, expr, zeroObj);
 
 		return (SymbolicType) universe.objectWithId(id);
+	}
+
+	private String uniqueIdentifier(CIVLSource source,
+			ReferenceExpression symRef) {
+		String result;
+
+		switch (symRef.referenceKind()) {
+		case ARRAY_ELEMENT: {
+			ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
+			NumericExpression index = arrayElementRef.getIndex();
+			int indexInt = extractInt(source, index);
+
+			result = uniqueIdentifier(source, arrayElementRef.getParent());
+			result += "i" + indexInt;
+			break;
+		}
+		case IDENTITY:
+			result = "";
+			break;
+		case NULL:
+			result = "NULL";
+			break;
+		case OFFSET: {
+			OffsetReference offsetRef = (OffsetReference) symRef;
+			NumericExpression index = offsetRef.getOffset();
+			int indexInt = extractInt(source, index);
+
+			result = uniqueIdentifier(source, offsetRef.getParent());
+			result += "i" + indexInt;
+			break;
+		}
+		case TUPLE_COMPONENT: {
+			TupleComponentReference tupleComponentRef = (TupleComponentReference) symRef;
+			IntObject index = tupleComponentRef.getIndex();
+
+			result = uniqueIdentifier(source, tupleComponentRef.getParent());
+			result += "f" + index;
+			break;
+		}
+		case UNION_MEMBER: {
+			UnionMemberReference unionMemberRef = (UnionMemberReference) symRef;
+			IntObject index = unionMemberRef.getIndex();
+
+			result = uniqueIdentifier(source, unionMemberRef.getParent());
+			result += "e" + index;
+			break;
+		}
+		default:
+			throw new CIVLInternalException("unreachable", source);
+		}
+		return result;
+	}
+
+	/**
+	 * Returns a string that will uniquely identify (within the state) the
+	 * memory location referenced by the pointer. Only applies to pointers in
+	 * which all array element indexes are concrete.
+	 * 
+	 * @param pointer
+	 *            a pointer value
+	 * @return a string based on that value
+	 */
+	public String uniqueIdentifier(CIVLSource source, SymbolicExpression pointer) {
+		int sid = getScopeId(source, pointer);
+		int vid = getVariableId(source, pointer);
+		ReferenceExpression symRef = getSymRef(pointer);
+		String result = "_s" + sid + "v" + vid
+				+ uniqueIdentifier(source, symRef);
+
+		return result;
 	}
 
 	/**

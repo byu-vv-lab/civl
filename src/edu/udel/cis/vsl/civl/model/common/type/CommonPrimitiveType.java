@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.model.common.type;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -18,7 +19,7 @@ public class CommonPrimitiveType extends CommonType implements
 
 	private PrimitiveTypeKind kind;
 
-	private SymbolicType symbolicType;
+	private SymbolicType dynamicType = null;
 
 	private NumericExpression sizeofExpression;
 
@@ -44,8 +45,9 @@ public class CommonPrimitiveType extends CommonType implements
 	public CommonPrimitiveType(PrimitiveTypeKind kind,
 			SymbolicType symbolicType, NumericExpression sizeofExpression,
 			BooleanExpression facts) {
+		super();
+		this.dynamicType = symbolicType;
 		this.kind = kind;
-		this.symbolicType = symbolicType;
 		this.sizeofExpression = sizeofExpression;
 		this.facts = facts;
 	}
@@ -108,11 +110,6 @@ public class CommonPrimitiveType extends CommonType implements
 	}
 
 	@Override
-	public SymbolicType getSymbolicType() {
-		return symbolicType;
-	}
-
-	@Override
 	public boolean isProcessType() {
 		return kind == PrimitiveTypeKind.PROCESS;
 	}
@@ -140,5 +137,18 @@ public class CommonPrimitiveType extends CommonType implements
 	@Override
 	public BooleanExpression getFacts() {
 		return facts;
+	}
+
+	public void setDynamicType(SymbolicType dynamicType) {
+		this.dynamicType = dynamicType;
+	}
+
+	@Override
+	public SymbolicType getDynamicType(SymbolicUniverse universe) {
+		if (dynamicType == null && kind != PrimitiveTypeKind.VOID)
+			throw new CIVLInternalException(
+					"no dynamic type specified for primitive type " + kind,
+					(CIVLSource) null);
+		return dynamicType;
 	}
 }

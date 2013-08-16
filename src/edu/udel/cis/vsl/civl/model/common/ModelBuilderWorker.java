@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.model.common;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -98,6 +99,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
@@ -125,6 +127,8 @@ public class ModelBuilderWorker {
 	 * The factory used to create new Model components.
 	 */
 	private ModelFactory factory;
+
+	// private SymbolicUniverse universe;
 
 	/**
 	 * The ABC AST being translated by this model builder worker.
@@ -185,6 +189,8 @@ public class ModelBuilderWorker {
 	 */
 	private int anonymousStructCounter = 0;
 
+	private ArrayList<MallocStatement> mallocStatements = new ArrayList<MallocStatement>();
+
 	// Constructors........................................................
 
 	/**
@@ -196,6 +202,7 @@ public class ModelBuilderWorker {
 		this.factory = factory;
 		this.program = program;
 		this.tokenFactory = program.getTokenFactory();
+		// this.universe = factory.universe();
 	}
 
 	// Helper methods......................................................
@@ -681,6 +688,71 @@ public class ModelBuilderWorker {
 	}
 
 	/**
+	 * Is the ABC expression node a call to the function "$malloc"?
+	 * 
+	 * @param node
+	 *            an expression node
+	 * @return true iff node is a function call to node to a function named
+	 *         "$malloc"
+	 */
+	private boolean isMallocCall(ExpressionNode node) {
+		if (node instanceof FunctionCallNode) {
+			ExpressionNode functionNode = ((FunctionCallNode) node)
+					.getFunction();
+
+			if (functionNode instanceof IdentifierExpressionNode) {
+				String functionName = ((IdentifierExpressionNode) functionNode)
+						.getIdentifier().name();
+
+				if ("$malloc".equals(functionName))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Is the ABC expression node an expression of the form
+	 * <code>(t)$malloc(...)</code>? I.e., a cast expression for which the
+	 * argument is a malloc call?
+	 * 
+	 * @param node
+	 *            an expression node
+	 * @return true iff this is a cast of a malloc call
+	 */
+	private boolean isCompleteMallocExpression(ExpressionNode node) {
+		if (node instanceof CastNode) {
+			ExpressionNode argumentNode = ((CastNode) node).getArgument();
+
+			return isMallocCall(argumentNode);
+		}
+		return false;
+	}
+
+	private MallocStatement translateMalloc(CIVLSource source,
+			Location location, LHSExpression lhs, CastNode castNode, Scope scope) {
+		CIVLType pointerType = translateTypeNode(castNode.getCastType(), scope);
+		FunctionCallNode callNode = (FunctionCallNode) castNode.getArgument();
+		int mallocId = mallocStatements.size();
+		Expression heapPointerExpression;
+		Expression sizeExpression;
+		CIVLType elementType;
+		MallocStatement result;
+
+		if (!pointerType.isPointerType())
+			throw new CIVLException(
+					"result of $malloc not cast to pointer type", source);
+		elementType = ((CIVLPointerType) pointerType).baseType();
+		heapPointerExpression = expression(callNode.getArgument(0), scope);
+		sizeExpression = expression(callNode.getArgument(1), scope);
+		result = factory.mallocStatement(source, location, lhs, elementType,
+				heapPointerExpression, sizeExpression, mallocId);
+
+		mallocStatements.add(result);
+		return result;
+	}
+
+	/**
 	 * Translate a cast expression from the CIVL AST to the CIVL model.
 	 * 
 	 * @param expression
@@ -690,12 +762,12 @@ public class ModelBuilderWorker {
 	 * @return The model representation of the expression.
 	 */
 	private Expression castExpression(CastNode expression, Scope scope) {
-		Expression result;
 		CIVLType castType = translateTypeNode(expression.getCastType(), scope);
-		Expression castExpression = expression(expression.getArgument(), scope);
+		ExpressionNode argumentNode = expression.getArgument();
+		Expression castExpression = expression(argumentNode, scope);
+		Expression result = factory.castExpression(sourceOf(expression),
+				castType, castExpression);
 
-		result = factory.castExpression(sourceOf(expression), castType,
-				castExpression);
 		return result;
 	}
 
@@ -710,6 +782,7 @@ public class ModelBuilderWorker {
 		} else
 			throw new CIVLUnimplementedFeatureException(
 					"sizeof applied to expressions", sourceOf(node));
+		result.setExpressionScope(scope);
 		return result;
 	}
 
@@ -1432,10 +1505,14 @@ public class ModelBuilderWorker {
 		CallOrSpawnStatement result;
 		Function callee;
 
-		if (functionExpression instanceof IdentifierExpressionNode)
+		if (isMallocCall(callNode))
+			throw new CIVLException(
+					"$malloc can only occur in a cast expression",
+					sourceOf(callNode));
+		if (functionExpression instanceof IdentifierExpressionNode) {
 			callee = (Function) ((IdentifierExpressionNode) functionExpression)
 					.getIdentifier().getEntity();
-		else
+		} else
 			throw new CIVLUnimplementedFeatureException(
 					"Function call must use identifier for now: "
 							+ functionExpression.getSource());
@@ -1471,6 +1548,7 @@ public class ModelBuilderWorker {
 
 		if (expressionStatement instanceof OperatorNode) {
 			OperatorNode expression = (OperatorNode) expressionStatement;
+
 			switch (expression.getOperator()) {
 			case ASSIGN:
 				result = assign(location, expression.getArgument(0),
@@ -1548,16 +1626,18 @@ public class ModelBuilderWorker {
 			LHSExpression lhs, ExpressionNode rhs, Scope scope) {
 		Statement result = null;
 
-		if (rhs instanceof FunctionCallNode) {
+		if (isCompleteMallocExpression(rhs))
+			result = translateMalloc(source, location, lhs, (CastNode) rhs,
+					scope);
+		else if (rhs instanceof FunctionCallNode)
 			result = callOrSpawn(location, true, lhs, (FunctionCallNode) rhs,
 					scope);
-		} else if (rhs instanceof SpawnNode) {
+		else if (rhs instanceof SpawnNode)
 			result = callOrSpawn(location, false, lhs,
 					((SpawnNode) rhs).getCall(), scope);
-		} else {
+		else
 			result = factory.assignStatement(lhs.getSource(), location, lhs,
 					arrayToPointer(expression(rhs, scope)));
-		}
 		return result;
 	}
 
@@ -2333,6 +2413,16 @@ public class ModelBuilderWorker {
 		}
 	}
 
+	/**
+	 * Record of mallocID fields in which field i is: array of
+	 * mallocStatement[i].dynamicObjectType
+	 * 
+	 * @return
+	 */
+	private void setHeapType() {
+		factory.setHeapType(mallocStatements);
+	}
+
 	// Exported methods....................................................
 
 	/**
@@ -2447,6 +2537,7 @@ public class ModelBuilderWorker {
 		for (Statement s : gotoStatements.keySet()) {
 			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
 		}
+		setHeapType();
 		model = factory.model(system.getSource(), system);
 		// add all functions to model:
 		for (CIVLFunction f : functionMap.values()) {

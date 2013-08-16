@@ -2,6 +2,8 @@ package edu.udel.cis.vsl.civl.model.common.type;
 
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * The type for an array of T.
@@ -12,6 +14,8 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 public class CommonArrayType extends CommonType implements CIVLArrayType {
 
 	private CIVLType elementType;
+
+	private SymbolicType dynamicType = null;
 
 	/**
 	 * The type for an array of T.
@@ -43,6 +47,18 @@ public class CommonArrayType extends CommonType implements CIVLArrayType {
 	@Override
 	public boolean hasState() {
 		return elementType.hasState();
+	}
+
+	@Override
+	public SymbolicType getDynamicType(SymbolicUniverse universe) {
+		if (dynamicType == null) {
+			SymbolicType elementDynamicType = elementType
+					.getDynamicType(universe);
+
+			dynamicType = universe.arrayType(elementDynamicType);
+			dynamicType = (SymbolicType) universe.canonic(dynamicType);
+		}
+		return dynamicType;
 	}
 
 }

@@ -1,6 +1,9 @@
 package edu.udel.cis.vsl.civl.model.IF.type;
 
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * Parent of all types.
@@ -37,6 +40,17 @@ public interface CIVLType {
 	 */
 	void setStateVariable(Variable variable);
 
+	/**
+	 * This returns the dynamic type corresponding to this static type in which
+	 * all array extent expressions are ignored, i.e., all of the dynamic array
+	 * types are incomplete. May be null (only in the case of the primitive type
+	 * of kind {@link PrimitiveTypeKind.VOID}).
+	 * 
+	 * @return the dynamic type corresponding to this static type with
+	 *         incomplete array type
+	 */
+	SymbolicType getDynamicType(SymbolicUniverse universe);
+
 	boolean isNumericType();
 
 	boolean isIntegerType();
@@ -48,7 +62,7 @@ public interface CIVLType {
 	boolean isProcessType();
 
 	boolean isScopeType();
-	
+
 	boolean isVoidType();
 
 }

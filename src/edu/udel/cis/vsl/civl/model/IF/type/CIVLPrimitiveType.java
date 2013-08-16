@@ -1,9 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF.type;
 
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * A primitive type is a type of which there is only one instance. In addition,
@@ -18,14 +16,6 @@ public interface CIVLPrimitiveType extends CIVLType {
 	public enum PrimitiveTypeKind {
 		BOOL, DYNAMIC, HEAP, INT, PROCESS, REAL, SCOPE, STRING, VOID
 	};
-
-	/**
-	 * Returns the symbolic type used to represent values of this primitive
-	 * type. May be null (only in the case of {@link PrimitiveTypeKind.VOID}.
-	 * 
-	 * @return the symbolic type corresponding to this primitive type
-	 */
-	SymbolicType getSymbolicType();
 
 	/**
 	 * @return The kind of this primitive type, an element of the enumerated

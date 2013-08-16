@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
+import edu.udel.cis.vsl.civl.library.civlc.CivlcExecutor;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -22,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -76,6 +78,8 @@ public class Executor {
 	 */
 	private LibraryExecutorLoader loader;
 
+	private CivlcExecutor civlcExecutor;
+
 	// Constructors........................................................
 
 	/**
@@ -98,6 +102,8 @@ public class Executor {
 		this.evaluator = new Evaluator(modelFactory, stateFactory, log);
 		this.log = log;
 		this.loader = loader;
+		this.civlcExecutor = (CivlcExecutor) loader.getLibraryExecutor("civlc",
+				this);
 	}
 
 	/**
@@ -151,7 +157,7 @@ public class Executor {
 	 *            a value to be assigned to the referenced memory location
 	 * @return the new state
 	 */
-	private State assign(CIVLSource source, State state,
+	public State assign(CIVLSource source, State state,
 			SymbolicExpression pointer, SymbolicExpression value) {
 		int vid = evaluator.getVariableId(source, pointer);
 		int sid = evaluator.getScopeId(source, pointer);
@@ -234,6 +240,7 @@ public class Executor {
 	private State executeCall(State state, int pid,
 			CallOrSpawnStatement statement) {
 		if (statement.function() instanceof SystemFunction) {
+			// TODO: optimize this. store libraryExecutor in SystemFunction?
 			LibraryExecutor executor = loader.getLibraryExecutor(
 					((SystemFunction) statement.function()).getLibrary(), this);
 
@@ -253,6 +260,12 @@ public class Executor {
 			state = stateFactory.pushCallStack(state, pid, function, arguments);
 		}
 		return state;
+	}
+
+	private State executeMalloc(State state, int pid, MallocStatement statement) {
+		State result = civlcExecutor.executeMalloc(state, pid, statement);
+
+		return result;
 	}
 
 	/**
@@ -482,6 +495,8 @@ public class Executor {
 			state = transition(state, state.process(pid), statement.target());
 
 			return state;
+		} else if (statement instanceof MallocStatement) {
+			return executeMalloc(state, pid, (MallocStatement) statement);
 		} else if (statement instanceof ChooseStatement) {
 			throw new CIVLInternalException("Should be unreachable", statement);
 		} else

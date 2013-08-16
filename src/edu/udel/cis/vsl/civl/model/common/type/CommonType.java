@@ -13,6 +13,9 @@ public abstract class CommonType implements CIVLType {
 
 	private Variable stateVariable = null;
 
+	public CommonType() {
+	}
+
 	@Override
 	public boolean isNumericType() {
 		return false;

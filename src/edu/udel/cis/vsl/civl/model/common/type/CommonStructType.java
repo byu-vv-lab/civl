@@ -5,12 +5,15 @@ package edu.udel.cis.vsl.civl.model.common.type;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * @author zirkel
@@ -21,6 +24,8 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 	private Identifier name;
 
 	private StructField[] fields = null;
+
+	private SymbolicType dynamicType = null;
 
 	public CommonStructType(Identifier name) {
 		this.name = name;
@@ -110,6 +115,30 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 				count++;
 			}
 		}
+	}
+
+	@Override
+	public SymbolicType getDynamicType(SymbolicUniverse universe) {
+		if (dynamicType == null) {
+			if (!isComplete())
+				throw new CIVLInternalException(
+						"cannot get dynamic type of incomplete struct type: "
+								+ this, (CIVLSource) null);
+			else {
+				LinkedList<SymbolicType> fieldDynamicTypes = new LinkedList<SymbolicType>();
+
+				for (StructField field : fields) {
+					SymbolicType fieldDynamicType = field.type()
+							.getDynamicType(universe);
+
+					fieldDynamicTypes.add(fieldDynamicType);
+				}
+				dynamicType = universe.tupleType(
+						universe.stringObject(name.name()), fieldDynamicTypes);
+				dynamicType = (SymbolicType) universe.canonic(dynamicType);
+			}
+		}
+		return dynamicType;
 	}
 
 }

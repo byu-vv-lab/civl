@@ -36,6 +36,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -51,6 +52,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * The factory to create all model components. Usually this is the only way
@@ -629,4 +631,21 @@ public interface ModelFactory {
 	ReturnStatement returnStatement(CIVLSource civlSource, Location source,
 			Expression expression);
 
+	/**
+	 * Sets the dynamic heap type. This can only be done once all the heap
+	 * statements in the model have been generated. This method takes as input
+	 * the list of heap statements, in order, creates the dynamic heap type, and
+	 * sets it in the static heap type.
+	 * 
+	 * @param mallocStatements
+	 *            iterable object such that the i-th item returns in a malloc
+	 *            statement with mallocId i
+	 * @return the dynamic heap type
+	 */
+	SymbolicType setHeapType(Iterable<MallocStatement> mallocStatements);
+
+	MallocStatement mallocStatement(CIVLSource civlSource, Location source,
+			LHSExpression lhs, CIVLType staticElementType,
+			Expression heapPointerExpression, Expression sizeExpression,
+			int mallocId);
 }

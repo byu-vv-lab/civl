@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.model.common.type;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
@@ -17,11 +18,12 @@ public class CommonPointerType extends CommonType implements CIVLPointerType {
 
 	private CIVLType baseType;
 
-	private SymbolicType symbolicPointerType;
+	private SymbolicType dynamicType;
 
 	public CommonPointerType(CIVLType baseType, SymbolicType pointerType) {
+		super();
+		this.dynamicType = pointerType;
 		this.baseType = baseType;
-		this.symbolicPointerType = pointerType;
 	}
 
 	/*
@@ -51,13 +53,13 @@ public class CommonPointerType extends CommonType implements CIVLPointerType {
 	}
 
 	@Override
-	public SymbolicType getSymbolicType() {
-		return symbolicPointerType;
+	public boolean hasState() {
+		return false;
 	}
 
 	@Override
-	public boolean hasState() {
-		return false;
+	public SymbolicType getDynamicType(SymbolicUniverse universe) {
+		return dynamicType;
 	}
 
 }
