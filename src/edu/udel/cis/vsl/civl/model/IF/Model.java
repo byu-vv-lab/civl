@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -90,5 +91,9 @@ public interface Model extends Sourceable {
 	 *         model.
 	 */
 	public Map<String, Variable> externVariables();
+
+	int getNumMallocs();
+
+	MallocStatement getMalloc(int index);
 
 }

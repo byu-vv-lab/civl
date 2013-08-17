@@ -192,7 +192,7 @@ public class Executor {
 	 *            the value being assigned to the left-hand-side
 	 * @return the new state
 	 */
-	private State assign(State state, int pid, LHSExpression lhs,
+	public State assign(State state, int pid, LHSExpression lhs,
 			SymbolicExpression value) {
 		Evaluation eval = evaluator.reference(state, pid, lhs);
 
@@ -245,6 +245,7 @@ public class Executor {
 					((SystemFunction) statement.function()).getLibrary(), this);
 
 			state = executor.execute(state, pid, statement);
+			state = transition(state, state.process(pid), statement.target());
 		} else {
 			CIVLFunction function = statement.function();
 			SymbolicExpression[] arguments;
@@ -265,6 +266,7 @@ public class Executor {
 	private State executeMalloc(State state, int pid, MallocStatement statement) {
 		State result = civlcExecutor.executeMalloc(state, pid, statement);
 
+		result = transition(result, result.process(pid), statement.target());
 		return result;
 	}
 

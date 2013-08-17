@@ -64,5 +64,7 @@ public interface CIVLType {
 	boolean isScopeType();
 
 	boolean isVoidType();
+	
+	boolean isHeapType();
 
 }

@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.IF;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Set;
 import java.util.Vector;
 
@@ -42,6 +43,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
@@ -52,7 +54,6 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * The factory to create all model components. Usually this is the only way
@@ -205,13 +206,6 @@ public interface ModelFactory {
 	CIVLPrimitiveType dynamicType();
 
 	/**
-	 * Get the heap type.
-	 * 
-	 * @return The heap type.
-	 */
-	CIVLPrimitiveType heapType();
-
-	/**
 	 * Get a new incomplete array type.
 	 * 
 	 * @param elementType
@@ -254,6 +248,30 @@ public interface ModelFactory {
 	CIVLStructType structType(Identifier name);
 
 	/**
+	 * Returns a new, incomplete heap type. The heap type must be completed
+	 * later by specifying a sequence of malloc statements in method
+	 * {@link #completeHeapType}.
+	 * 
+	 * @param name
+	 *            a name to give to the new heap type
+	 * 
+	 * @return a new incomplete heap type
+	 */
+	CIVLHeapType heapType(String name);
+
+	/**
+	 * Completes the heap type.
+	 * 
+	 * @param heapType
+	 *            an incomplete heap type
+	 * @param mallocs
+	 *            sequence of malloc statements that can access heaps of that
+	 *            type
+	 */
+	void completeHeapType(CIVLHeapType heapType,
+			Collection<MallocStatement> mallocs);
+
+	/**
 	 * Returns a new struct field, used to complete a struct type.
 	 * 
 	 * @param name
@@ -270,13 +288,6 @@ public interface ModelFactory {
 	 * @return he symbolic type used to represent pointers
 	 */
 	SymbolicTupleType pointerSymbolicType();
-
-	/**
-	 * Returns the symbolic type used to represent heap values
-	 * 
-	 * @return the symbolic type used to represent heap values
-	 */
-	SymbolicTupleType heapSymbolicType();
 
 	/**
 	 * Returns the symbolic type used to represent process reference values
@@ -631,21 +642,9 @@ public interface ModelFactory {
 	ReturnStatement returnStatement(CIVLSource civlSource, Location source,
 			Expression expression);
 
-	/**
-	 * Sets the dynamic heap type. This can only be done once all the heap
-	 * statements in the model have been generated. This method takes as input
-	 * the list of heap statements, in order, creates the dynamic heap type, and
-	 * sets it in the static heap type.
-	 * 
-	 * @param mallocStatements
-	 *            iterable object such that the i-th item returns in a malloc
-	 *            statement with mallocId i
-	 * @return the dynamic heap type
-	 */
-	SymbolicType setHeapType(Iterable<MallocStatement> mallocStatements);
-
 	MallocStatement mallocStatement(CIVLSource civlSource, Location source,
 			LHSExpression lhs, CIVLType staticElementType,
 			Expression heapPointerExpression, Expression sizeExpression,
 			int mallocId);
+
 }

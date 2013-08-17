@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.model.common;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,6 +57,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
@@ -94,6 +96,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructField;
@@ -147,8 +150,6 @@ public class CommonModelFactory implements ModelFactory {
 
 	private CIVLPrimitiveType scopeType;
 
-	private CIVLPrimitiveType heapType;
-
 	private CIVLPrimitiveType processType;
 
 	private CIVLPrimitiveType dynamicType;
@@ -156,8 +157,6 @@ public class CommonModelFactory implements ModelFactory {
 	private CIVLPrimitiveType stringType;
 
 	private SymbolicTupleType scopeSymbolicType;
-
-	private SymbolicTupleType heapSymbolicType;
 
 	private SymbolicTupleType processSymbolicType;
 
@@ -213,10 +212,6 @@ public class CommonModelFactory implements ModelFactory {
 				.tupleType(universe.stringObject("process"), intTypeSingleton));
 		processType = primitiveType(PrimitiveTypeKind.PROCESS,
 				processSymbolicType);
-		// symbolic heap type determined by analyzing model; will be set
-		// in model builder:
-		heapSymbolicType = null;
-		heapType = primitiveType(PrimitiveTypeKind.HEAP, heapSymbolicType);
 		dynamicSymbolicType = (SymbolicTupleType) universe.canonic(universe
 				.tupleType(universe.stringObject("dynamicType"),
 						intTypeSingleton));
@@ -467,16 +462,6 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CIVLPrimitiveType dynamicType() {
 		return dynamicType;
-	}
-
-	/**
-	 * Get the heap type.
-	 * 
-	 * @return The heap type.
-	 */
-	@Override
-	public CIVLPrimitiveType heapType() {
-		return heapType;
 	}
 
 	/**
@@ -1166,11 +1151,6 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public SymbolicTupleType heapSymbolicType() {
-		return heapSymbolicType;
-	}
-
-	@Override
 	public SymbolicTupleType processSymbolicType() {
 		return processSymbolicType;
 	}
@@ -1247,10 +1227,27 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	@Override
-	public SymbolicType setHeapType(Iterable<MallocStatement> mallocStatements) {
+	private SymbolicExpression computeInitialHeapValue(
+			SymbolicTupleType heapDynamicType) {
+		LinkedList<SymbolicExpression> fields = new LinkedList<SymbolicExpression>();
+		SymbolicExpression result;
+
+		for (SymbolicType fieldType : heapDynamicType.sequence()) {
+			SymbolicArrayType arrayType = (SymbolicArrayType) fieldType;
+			SymbolicType objectType = arrayType.elementType();
+			SymbolicExpression emptyArray = universe.emptyArray(objectType);
+
+			fields.add(emptyArray);
+		}
+		result = universe.tuple(heapDynamicType, fields);
+		result = universe.canonic(result);
+		return result;
+	}
+
+	private SymbolicTupleType computeDynamicHeapType(
+			Iterable<MallocStatement> mallocStatements) {
 		LinkedList<SymbolicType> fieldTypes = new LinkedList<SymbolicType>();
-		SymbolicType result;
+		SymbolicTupleType result;
 
 		for (MallocStatement statement : mallocStatements) {
 			SymbolicType fieldType = universe.arrayType(statement
@@ -1259,8 +1256,7 @@ public class CommonModelFactory implements ModelFactory {
 			fieldTypes.add(fieldType);
 		}
 		result = universe.tupleType(universe.stringObject("$heap"), fieldTypes);
-		result = (SymbolicType) universe.canonic(result);
-		((CommonPrimitiveType) heapType).setDynamicType(result);
+		result = (SymbolicTupleType) universe.canonic(result);
 		return result;
 	}
 
@@ -1280,6 +1276,23 @@ public class CommonModelFactory implements ModelFactory {
 				undefinedObject, lhs);
 
 		return result;
+	}
+
+	@Override
+	public CIVLHeapType heapType(String name) {
+		return new CommonHeapType(name);
+	}
+
+	@Override
+	public void completeHeapType(CIVLHeapType heapType,
+			Collection<MallocStatement> mallocs) {
+		SymbolicTupleType dynamicType = computeDynamicHeapType(mallocs);
+		SymbolicExpression initialValue = computeInitialHeapValue(dynamicType);
+		SymbolicExpression undefinedValue = universe.symbolicConstant(
+				universe.stringObject("UNDEFINED"), dynamicType);
+
+		undefinedValue = universe.canonic(undefinedValue);
+		heapType.complete(mallocs, dynamicType, initialValue, undefinedValue);
 	}
 
 }

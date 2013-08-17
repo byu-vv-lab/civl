@@ -41,6 +41,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
@@ -327,7 +328,7 @@ public class Evaluator {
 	 * @return the pointer obtained by modifying the given one by replacing its
 	 *         symRef field with the given symRef
 	 */
-	private SymbolicExpression setSymRef(SymbolicExpression pointer,
+	public SymbolicExpression setSymRef(SymbolicExpression pointer,
 			ReferenceExpression symRef) {
 		return universe.tupleWrite(pointer, twoObj, symRef);
 	}
@@ -343,7 +344,7 @@ public class Evaluator {
 	 * @throws CIVLInternalException
 	 *             if pointer is trivial
 	 */
-	private SymbolicExpression parentPointer(CIVLSource source,
+	public SymbolicExpression parentPointer(CIVLSource source,
 			SymbolicExpression pointer) {
 		ReferenceExpression symRef = getSymRef(pointer);
 
@@ -352,6 +353,23 @@ public class Evaluator {
 					((NTReferenceExpression) symRef).getParent());
 		throw new CIVLInternalException("Expected non-trivial pointer: "
 				+ pointer, source);
+	}
+
+	/**
+	 * Returns the parent pointer of the given pointer, or null if the given
+	 * pointer is a variable pointer (i.e., has no parent pointer).
+	 * 
+	 * @param pointer
+	 *            any pointer value
+	 * @return parent pointer or null
+	 */
+	public SymbolicExpression getParentPointer(SymbolicExpression pointer) {
+		ReferenceExpression symRef = getSymRef(pointer);
+
+		if (symRef instanceof NTReferenceExpression)
+			return setSymRef(pointer,
+					((NTReferenceExpression) symRef).getParent());
+		return null;
 	}
 
 	/**
@@ -1229,13 +1247,20 @@ public class Evaluator {
 			InitialValueExpression expression) {
 		Variable variable = expression.variable();
 		CIVLType type = variable.type();
-		TypeEvaluation typeEval = getDynamicType(state, pid, type,
-				expression.getSource(), false);
-		int sid = state.getScopeId(pid, variable);
-		SymbolicExpression value = computeInitialValue(typeEval.state,
-				variable, typeEval.type, sid);
-		Evaluation result = new Evaluation(typeEval.state, value);
+		Evaluation result;
 
+		if (type.isHeapType()) {
+			result = new Evaluation(state,
+					((CIVLHeapType) type).getInitialValue());
+		} else {
+			TypeEvaluation typeEval = getDynamicType(state, pid, type,
+					expression.getSource(), false);
+			int sid = state.getScopeId(pid, variable);
+			SymbolicExpression value = computeInitialValue(typeEval.state,
+					variable, typeEval.type, sid);
+
+			result = new Evaluation(typeEval.state, value);
+		}
 		return result;
 	}
 
@@ -1621,5 +1646,16 @@ public class Evaluator {
 		// make canonic?
 		return result;
 	}
+
+	// Evaluator: does not specify model
+
+	// heap type: no longer primitive.
+	// different heap type for each model, or even more than one
+	// for one model
+	// heap type completed by giving list of malloc statements
+	// model factory does not have one heap type
+	// each model has its heap type
+	// heap type has its malloc statements
+	// every statement, location, scope, belongs to a model
 
 }

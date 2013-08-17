@@ -84,8 +84,6 @@ public class CommonPrimitiveType extends CommonType implements
 			return "$proc";
 		case DYNAMIC:
 			return "$dynamicType";
-		case HEAP:
-			return "$heap";
 		case VOID:
 			return "void";
 		default:

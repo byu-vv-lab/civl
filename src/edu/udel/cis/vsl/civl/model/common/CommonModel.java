@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
@@ -13,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -28,6 +30,8 @@ public class CommonModel extends CommonSourceable implements Model {
 	private ModelFactory modelFactory;
 	private String name = "";
 	private Map<String, Variable> externVariables;
+	
+	private ArrayList<MallocStatement> mallocStatements;
 
 	/**
 	 * A model of a Chapel program.
@@ -69,7 +73,8 @@ public class CommonModel extends CommonSourceable implements Model {
 	public ModelFactory factory() {
 		return modelFactory;
 	}
-
+	
+	
 	/**
 	 * @param name
 	 *            The name of this model.
@@ -168,6 +173,20 @@ public class CommonModel extends CommonSourceable implements Model {
 	 */
 	public Map<String, Variable> externVariables() {
 		return externVariables;
+	}
+	
+	public void setMallocStatements(ArrayList<MallocStatement> mallocStatements) {
+		this.mallocStatements=mallocStatements;
+	}
+
+	@Override
+	public int getNumMallocs() {
+		return  mallocStatements.size();
+	}
+
+	@Override
+	public MallocStatement getMalloc(int index) {
+		return mallocStatements.get(index);
 	}
 
 }

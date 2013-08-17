@@ -61,4 +61,9 @@ public abstract class CommonType implements CIVLType {
 		return false;
 	}
 
+	@Override
+	public boolean isHeapType() {
+		return false;
+	}
+
 }

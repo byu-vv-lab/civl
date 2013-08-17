@@ -1,10 +1,10 @@
 #include <civlc.h>
 
-// void* $malloc($heap *h, int size);
-
 void main() {
   $heap h;
   double *p = (double *) $malloc(&h, 5*sizeof(double));
   
-  $free(p);
+  p[4]=3.14;
+  $assert(p[4]==3.14);
+  $free(&h, p);
 }   

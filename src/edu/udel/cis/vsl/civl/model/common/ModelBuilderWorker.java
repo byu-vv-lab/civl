@@ -112,6 +112,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -200,6 +201,8 @@ public class ModelBuilderWorker {
 
 	private ArrayList<MallocStatement> mallocStatements = new ArrayList<MallocStatement>();
 
+	private CIVLHeapType heapType;
+
 	// Constructors........................................................
 
 	/**
@@ -211,6 +214,7 @@ public class ModelBuilderWorker {
 		this.factory = factory;
 		this.program = program;
 		this.tokenFactory = program.getTokenFactory();
+		this.heapType = factory.heapType("model");
 		// this.universe = factory.universe();
 	}
 
@@ -491,7 +495,7 @@ public class ModelBuilderWorker {
 		if ("__proc__".equals(tag))
 			return factory.processType();
 		if ("__heap__".equals(tag))
-			return factory.heapType();
+			return heapType;
 		if ("__scope__".equals(tag))
 			return factory.scopeType();
 		if ("__dynamic__".equals(tag))
@@ -574,7 +578,7 @@ public class ModelBuilderWorker {
 				result = translateBasicType((StandardBasicType) abcType, source);
 				break;
 			case HEAP:
-				result = factory.heapType();
+				result = heapType;
 				break;
 			case OTHER_INTEGER:
 				result = factory.integerType();
@@ -1791,7 +1795,7 @@ public class ModelBuilderWorker {
 		CIVLSource source = sourceOf(node);
 
 		if (variable.isInput() || type instanceof CIVLArrayType
-				|| type instanceof CIVLStructType) {
+				|| type instanceof CIVLStructType || type.isHeapType()) {
 			if (sourceLocation == null)
 				sourceLocation = factory.location(sourceOfBeginning(node),
 						scope);
@@ -2491,16 +2495,6 @@ public class ModelBuilderWorker {
 		}
 	}
 
-	/**
-	 * Record of mallocID fields in which field i is: array of
-	 * mallocStatement[i].dynamicObjectType
-	 * 
-	 * @return
-	 */
-	private void setHeapType() {
-		factory.setHeapType(mallocStatements);
-	}
-
 	// Exported methods....................................................
 
 	/**
@@ -2564,9 +2558,9 @@ public class ModelBuilderWorker {
 			} else if (node instanceof FunctionDefinitionNode) {
 				if (((FunctionDefinitionNode) node).getName().equals("main")) {
 					mainFunction = (FunctionDefinitionNode) node;
-				}
-				processFunctionDeclaration((FunctionDeclarationNode) node,
-						systemScope);
+				} else
+					processFunctionDeclaration((FunctionDeclarationNode) node,
+							systemScope);
 			} else if (node instanceof FunctionDeclarationNode) {
 				processFunctionDeclaration((FunctionDeclarationNode) node,
 						systemScope);
@@ -2615,12 +2609,13 @@ public class ModelBuilderWorker {
 		for (Statement s : gotoStatements.keySet()) {
 			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
 		}
-		setHeapType();
+		factory.completeHeapType(heapType, mallocStatements);
 		model = factory.model(system.getSource(), system);
-		// add all functions to model:
+		// add all functions to model except main:
 		for (CIVLFunction f : functionMap.values()) {
 			model.addFunction(f);
 		}
+		((CommonModel) model).setMallocStatements(mallocStatements);
 	}
 
 	public Model getModel() {

@@ -12,12 +12,16 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
@@ -26,10 +30,13 @@ import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -48,14 +55,17 @@ public class CivlcExecutor implements LibraryExecutor {
 
 	private StateFactoryIF stateFactory;
 
-	/**
-	 * 
-	 */
+	private NumericExpression zero;
+
+	private ErrorLog log;
+
 	public CivlcExecutor(Executor primaryExecutor) {
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
+		this.log = evaluator.log();
 		this.universe = evaluator.universe();
 		this.stateFactory = evaluator.stateFactory();
+		this.zero = universe.zeroInt();
 	}
 
 	/*
@@ -110,6 +120,7 @@ public class CivlcExecutor implements LibraryExecutor {
 		int sid = state.process(pid).scope();
 		int index = statement.getMallocId();
 		IntObject indexObj = universe.intObject(index);
+		LHSExpression lhs = statement.getLHS();
 		Evaluation eval;
 		SymbolicExpression heapPointer;
 		int heapVariableId;
@@ -120,10 +131,12 @@ public class CivlcExecutor implements LibraryExecutor {
 		ResultType validity;
 		NumericExpression elementCount;
 		SymbolicExpression heapField;
+		NumericExpression lengthExpression;
 		int length; // num allocated objects in index component of heap
 		StringObject newObjectName;
 		SymbolicType newObjectType;
 		SymbolicExpression newObject;
+		SymbolicExpression firstElementPointer; // returned value
 
 		eval = evaluator.evaluate(state, pid,
 				statement.getHeapPointerExpression());
@@ -155,13 +168,14 @@ public class CivlcExecutor implements LibraryExecutor {
 					"Size argument to $malloc is not multiple of element size",
 					eval.state, source);
 
-			evaluator.log().report(e);
+			log.report(e);
 			state = stateFactory.setPathCondition(state,
 					universe.and(pathCondition, claim));
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
 		heapField = universe.tupleRead(heapValue, indexObj);
-		length = evaluator.extractInt(source, universe.length(heapField));
+		lengthExpression = universe.length(heapField);
+		length = evaluator.extractInt(source, lengthExpression);
 		newObjectName = universe.stringObject("H_p" + pid + "s" + sid + "v"
 				+ heapVariableId + "i" + index + "l" + length);
 		newObjectType = universe.arrayType(statement.getDynamicElementType(),
@@ -170,48 +184,147 @@ public class CivlcExecutor implements LibraryExecutor {
 		heapField = universe.append(heapField, newObject);
 		heapValue = universe.tupleWrite(heapValue, indexObj, heapField);
 		state = primaryExecutor.assign(source, state, heapPointer, heapValue);
+		if (lhs != null) {
+			symRef = universe.tupleComponentReference(symRef, indexObj);
+			symRef = universe.arrayElementReference(symRef, lengthExpression);
+			symRef = universe.arrayElementReference(symRef, zero);
+			firstElementPointer = evaluator.setSymRef(heapPointer, symRef);
+			state = primaryExecutor
+					.assign(state, pid, lhs, firstElementPointer);
+		}
 		return state;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#execute(edu.udel.cis
-	 * .vsl.civl.state.State, int,
-	 * edu.udel.cis.vsl.civl.model.IF.statement.Statement)
-	 */
+	private Evaluation getAndCheckHeapObjectPointer(
+			SymbolicExpression heapPointer, SymbolicExpression pointer,
+			CIVLSource pointerSource, State state) {
+		SymbolicExpression objectPointer = evaluator.getParentPointer(pointer);
+
+		if (objectPointer != null) {
+			SymbolicExpression fieldPointer = evaluator
+					.getParentPointer(objectPointer);
+
+			if (fieldPointer != null) {
+				SymbolicExpression actualHeapPointer = evaluator
+						.getParentPointer(fieldPointer);
+
+				if (actualHeapPointer != null) {
+					BooleanExpression pathCondition = state.pathCondition();
+					BooleanExpression claim = universe.equals(
+							actualHeapPointer, heapPointer);
+					ResultType valid = universe.reasoner(pathCondition)
+							.valid(claim).getResultType();
+					ReferenceExpression symRef;
+
+					if (valid != ResultType.YES) {
+						Certainty certainty = valid == ResultType.NO ? Certainty.PROVEABLE
+								: Certainty.MAYBE;
+						CIVLStateException e = new CIVLStateException(
+								ErrorKind.MALLOC, certainty,
+								"Invalid pointer for heap", state,
+								pointerSource);
+
+						log.report(e);
+						state = stateFactory.setPathCondition(state,
+								universe.and(pathCondition, claim));
+					}
+					symRef = evaluator.getSymRef(pointer);
+					if (symRef instanceof ArrayElementReference) {
+						NumericExpression index = ((ArrayElementReference) symRef)
+								.getIndex();
+
+						if (index.isZero()) {
+							return new Evaluation(state, objectPointer);
+						}
+					}
+
+				}
+			}
+		}
+		{
+			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
+					Certainty.PROVEABLE, "Invalid pointer for heap", state,
+					pointerSource);
+
+			log.report(e);
+			state = stateFactory.setPathCondition(state,
+					universe.falseExpression());
+			return new Evaluation(state, objectPointer);
+		}
+	}
+
+	private int getMallocIndex(SymbolicExpression pointer) {
+		// ref points to element 0 of an array:
+		NTReferenceExpression ref = (NTReferenceExpression) evaluator
+				.getSymRef(pointer);
+		// objectPointer points to array:
+		NTReferenceExpression objectPointer = (NTReferenceExpression) ref
+				.getParent();
+		// fieldPointer points to the field:
+		TupleComponentReference fieldPointer = (TupleComponentReference) objectPointer
+				.getParent();
+		int result = fieldPointer.getIndex().getInt();
+
+		return result;
+	}
+
+	// better to get more precise source...
+	private State executeFree(State state, int pid, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source) {
+		Expression heapPointerExpression = arguments[0];
+		CIVLHeapType heapType = (CIVLHeapType) ((CIVLPointerType) heapPointerExpression
+				.getExpressionType()).baseType();
+		Expression pointerExpression = arguments[1];
+		SymbolicExpression heapPointer = argumentValues[0];
+		SymbolicExpression firstElementPointer = argumentValues[1];
+		SymbolicExpression heapObjectPointer;
+		Evaluation eval;
+		int index;
+		SymbolicExpression undef;
+
+		eval = getAndCheckHeapObjectPointer(heapPointer, firstElementPointer,
+				pointerExpression.getSource(), state);
+		state = eval.state;
+		heapObjectPointer = eval.value;
+		index = getMallocIndex(firstElementPointer);
+		undef = heapType.getMalloc(index).getUndefinedObject();
+		state = primaryExecutor.assign(source, state, heapObjectPointer, undef);
+
+		return state;
+	}
+
 	@Override
 	public State execute(State state, int pid, Statement statement) {
 		Identifier name;
-		State result = null;
-		SymbolicExpression[] arguments;
+		Expression[] arguments;
+		SymbolicExpression[] argumentValues;
 		CallOrSpawnStatement call;
 		Expression lhs;
+		int numArgs;
 
 		if (!(statement instanceof CallOrSpawnStatement)) {
 			throw new CIVLInternalException("Unsupported statement for civlc",
 					statement);
 		}
 		call = (CallOrSpawnStatement) statement;
+		numArgs = call.arguments().size();
 		name = call.function().name();
 		lhs = call.lhs();
-		arguments = new SymbolicExpression[((CallOrSpawnStatement) statement)
-				.arguments().size()];
-		for (int i = 0; i < ((CallOrSpawnStatement) statement).arguments()
-				.size(); i++) {
-			Evaluation eval = primaryExecutor.evaluator().evaluate(state, pid,
-					call.arguments().elementAt(i));
-			arguments[i] = eval.value;
+		arguments = new Expression[numArgs];
+		argumentValues = new SymbolicExpression[numArgs];
+		for (int i = 0; i < numArgs; i++) {
+			Evaluation eval;
+
+			arguments[i] = call.arguments().elementAt(i);
+			eval = evaluator.evaluate(state, pid, arguments[i]);
+			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
 		switch (name.name()) {
-		// case "$malloc":
-		// result = executeMalloc(state, pid, getMallocType(call), lhs,
-		// arguments[0], (NumericExpression) arguments[1]);
-		// break;
 		case "$free":
-			// put in stdio? case "printf":
+			state = executeFree(state, pid, arguments, argumentValues,
+					statement.getSource());
+			break;
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":
@@ -228,64 +341,30 @@ public class CivlcExecutor implements LibraryExecutor {
 		case "$comm_dequeue":
 		case "$comm_chan_size":
 		case "$comm_total_size":
-			break;
+			throw new CIVLUnimplementedFeatureException(name.name(), statement);
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					statement);
 		}
-		if (name.name().equals("free")) {
-			assert arguments.length == 2;
-
-		} else if (name.name().equals("printf")) {
-			assert arguments[0] instanceof StringObject;
-
-			System.out.println(arguments[0]);
-		} else {
-			throw new CIVLUnimplementedFeatureException(name.name(),
-					statement.getSource());
-		}
-		return result;
-		// TODO Auto-generated method stub
-
+		return state;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#containsFunction(java
-	 * .lang.String)
-	 */
 	@Override
 	public boolean containsFunction(String name) {
 		Set<String> functions = new HashSet<String>();
 
-		functions.add("malloc");
-		functions.add("free");
-		functions.add("write");
+		functions.add("$malloc");
+		functions.add("$free");
+		functions.add("$write");
 		return functions.contains(name);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#initialize(edu.udel
-	 * .cis.vsl.civl.state.State)
-	 */
 	@Override
 	public State initialize(State state) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#wrapUp(edu.udel.cis
-	 * .vsl.civl.state.State)
-	 */
 	@Override
 	public State wrapUp(State state) {
 		// TODO Auto-generated method stub
