@@ -34,6 +34,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
@@ -983,12 +984,6 @@ public class Evaluator {
 		return eval;
 	}
 
-	private Evaluation evaluateSizeofTypeExpression(State state, int pid,
-			SizeofTypeExpression expression) {
-		return evaluateSizeofType(expression.getSource(), state, pid,
-				expression.getTypeArgument());
-	}
-
 	public Evaluation evaluateSizeofType(CIVLSource source, State state,
 			int pid, CIVLType type) {
 		Evaluation eval;
@@ -1026,6 +1021,18 @@ public class Evaluator {
 			eval.state = stateFactory.setPathCondition(state, pathCondition);
 		}
 		return eval;
+	}
+
+	private Evaluation evaluateSizeofTypeExpression(State state, int pid,
+			SizeofTypeExpression expression) {
+		return evaluateSizeofType(expression.getSource(), state, pid,
+				expression.getTypeArgument());
+	}
+
+	private Evaluation evaluateSizeofExpressionExpression(State state, int pid,
+			SizeofExpressionExpression expression) {
+		return evaluateSizeofType(expression.getSource(), state, pid,
+				expression.getArgument().getExpressionType());
 	}
 
 	/**
@@ -1624,6 +1631,10 @@ public class Evaluator {
 			result = evaluateSizeofTypeExpression(state, pid,
 					(SizeofTypeExpression) expression);
 			break;
+		case SIZEOF_EXPRESSION:
+			result = evaluateSizeofExpressionExpression(state, pid,
+					(SizeofExpressionExpression) expression);
+			break;
 		case STRING_LITERAL:
 			result = evaluateStringLiteral(state, pid,
 					(StringLiteralExpression) expression);
@@ -1646,16 +1657,5 @@ public class Evaluator {
 		// make canonic?
 		return result;
 	}
-
-	// Evaluator: does not specify model
-
-	// heap type: no longer primitive.
-	// different heap type for each model, or even more than one
-	// for one model
-	// heap type completed by giving list of malloc statements
-	// model factory does not have one heap type
-	// each model has its heap type
-	// heap type has its malloc statements
-	// every statement, location, scope, belongs to a model
 
 }

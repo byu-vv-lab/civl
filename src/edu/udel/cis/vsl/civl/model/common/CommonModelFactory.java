@@ -39,6 +39,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
@@ -79,6 +80,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpress
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonStringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
@@ -1293,6 +1295,17 @@ public class CommonModelFactory implements ModelFactory {
 
 		undefinedValue = universe.canonic(undefinedValue);
 		heapType.complete(mallocs, dynamicType, initialValue, undefinedValue);
+	}
+
+	@Override
+	public SizeofExpressionExpression sizeofExpressionExpression(
+			CIVLSource source, Expression argument) {
+		CommonSizeofExpressionExpression result = new CommonSizeofExpressionExpression(
+				source, argument);
+
+		result.setExpressionScope(argument.expressionScope());
+		result.setExpressionType(integerType);
+		return result;
 	}
 
 }

@@ -642,99 +642,105 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	private Expression expression(ExpressionNode node, Scope scope,
+			boolean translateConversions) {
+		Expression result;
+
+		if (node instanceof OperatorNode) {
+			result = operator((OperatorNode) node, scope);
+		} else if (node instanceof IdentifierExpressionNode) {
+			result = variableExpression((IdentifierExpressionNode) node, scope);
+		} else if (node instanceof ConstantNode) {
+			result = constant((ConstantNode) node);
+		} else if (node instanceof DotNode) {
+			result = dotExpression((DotNode) node, scope);
+		} else if (node instanceof ArrowNode) {
+			result = arrowExpression((ArrowNode) node, scope);
+		} else if (node instanceof ResultNode) {
+			result = factory.resultExpression(sourceOf(node));
+		} else if (node instanceof SelfNode) {
+			result = factory.selfExpression(sourceOf(node));
+		} else if (node instanceof CastNode) {
+			result = castExpression((CastNode) node, scope);
+		} else if (node instanceof SizeofNode) {
+			result = translateSizeof((SizeofNode) node, scope);
+		} else
+			throw new CIVLUnimplementedFeatureException("expressions of type "
+					+ node.getClass().getSimpleName(), sourceOf(node));
+		if (translateConversions) {
+			// apply conversions
+			CIVLSource source = result.getSource();
+			int numConversions = node.getNumConversions();
+
+			for (int i = 0; i < numConversions; i++) {
+				Conversion conversion = node.getConversion(i);
+				Type oldType = conversion.getOldType();
+				Type newType = conversion.getNewType();
+				// Arithmetic, Array, CompatibleStructureOrUnion,
+				// Function, Lvalue, NullPointer, PointerBool, VoidPointer
+
+				if (conversion instanceof ArithmeticConversion) {
+					CIVLType oldCIVLType = translateType(oldType, scope, source);
+					CIVLType newCIVLType = translateType(newType, scope, source);
+
+					// need equals on Types
+					if (oldCIVLType.isIntegerType()
+							&& newCIVLType.isIntegerType()
+							|| oldCIVLType.isRealType()
+							&& newCIVLType.isRealType()) {
+						// nothing to do
+					} else {
+						result = factory.castExpression(source, newCIVLType,
+								result);
+					}
+				} else if (conversion instanceof ArrayConversion) {
+					// we will ignore this one here because we want
+					// to keep it as array in subscript expressions
+				} else if (conversion instanceof CompatibleStructureOrUnionConversion) {
+					// think about this
+					throw new CIVLUnimplementedFeatureException(
+							"compatible structure or union conversion", source);
+				} else if (conversion instanceof FunctionConversion) {
+					throw new CIVLUnimplementedFeatureException(
+							"function pointers", source);
+				} else if (conversion instanceof LvalueConversion) {
+					// nothing to do since ignore qualifiers anyway
+				} else if (conversion instanceof NullPointerConversion) {
+					// result is a null pointer to new type
+					CIVLPointerType newCIVLType = (CIVLPointerType) translateType(
+							newType, scope, source);
+
+					result = nullPointerExpression(newCIVLType, scope, source);
+				} else if (conversion instanceof PointerBoolConversion) {
+					// pointer type to boolean type: p!=NULL
+					result = factory.binaryExpression(
+							source,
+							BINARY_OPERATOR.NOT_EQUAL,
+							result,
+							nullPointerExpression((CIVLPointerType) result
+									.getExpressionType(), scope, source));
+				} else if (conversion instanceof VoidPointerConversion) {
+					// void*->T* or T*->void*
+					// ignore, pointer types are all the same
+				} else
+					throw new CIVLInternalException("Unknown conversion: "
+							+ conversion, source);
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * Translate an expression from the CIVL AST to the CIVL model.
 	 * 
-	 * @param expression
+	 * @param node
 	 *            The expression being translated.
 	 * @param scope
 	 *            The (static) scope containing the expression.
 	 * @return The model representation of the expression.
 	 */
-	private Expression expression(ExpressionNode expression, Scope scope) {
-		Expression result;
-
-		if (expression instanceof OperatorNode) {
-			result = operator((OperatorNode) expression, scope);
-		} else if (expression instanceof IdentifierExpressionNode) {
-			result = variableExpression((IdentifierExpressionNode) expression,
-					scope);
-		} else if (expression instanceof ConstantNode) {
-			result = constant((ConstantNode) expression);
-		} else if (expression instanceof DotNode) {
-			result = dotExpression((DotNode) expression, scope);
-		} else if (expression instanceof ArrowNode) {
-			result = arrowExpression((ArrowNode) expression, scope);
-		} else if (expression instanceof ResultNode) {
-			result = factory.resultExpression(sourceOf(expression));
-		} else if (expression instanceof SelfNode) {
-			result = factory.selfExpression(sourceOf(expression));
-		} else if (expression instanceof CastNode) {
-			result = castExpression((CastNode) expression, scope);
-		} else if (expression instanceof SizeofNode) {
-			result = translateSizeof((SizeofNode) expression, scope);
-		} else
-			throw new CIVLUnimplementedFeatureException("expressions of type "
-					+ expression.getClass().getSimpleName(),
-					sourceOf(expression));
-		// apply conversions
-		CIVLSource source = result.getSource();
-		int numConversions = expression.getNumConversions();
-
-		for (int i = 0; i < numConversions; i++) {
-			Conversion conversion = expression.getConversion(i);
-			Type oldType = conversion.getOldType();
-			Type newType = conversion.getNewType();
-			// Arithmetic, Array, CompatibleStructureOrUnion,
-			// Function, Lvalue, NullPointer, PointerBool, VoidPointer
-
-			if (conversion instanceof ArithmeticConversion) {
-				CIVLType oldCIVLType = translateType(oldType, scope, source);
-				CIVLType newCIVLType = translateType(newType, scope, source);
-
-				// need equals on Types
-				if (oldCIVLType.isIntegerType() && newCIVLType.isIntegerType()
-						|| oldCIVLType.isRealType() && newCIVLType.isRealType()) {
-					// nothing to do
-				} else {
-					result = factory
-							.castExpression(source, newCIVLType, result);
-				}
-			} else if (conversion instanceof ArrayConversion) {
-				// we will ignore this one here because we want
-				// to keep it as array in subscript expressions
-			} else if (conversion instanceof CompatibleStructureOrUnionConversion) {
-				// think about this
-				throw new CIVLUnimplementedFeatureException(
-						"compatible structure or union conversion", source);
-			} else if (conversion instanceof FunctionConversion) {
-				throw new CIVLUnimplementedFeatureException(
-						"function pointers", source);
-			} else if (conversion instanceof LvalueConversion) {
-				// nothing to do since ignore qualifiers anyway
-			} else if (conversion instanceof NullPointerConversion) {
-				// result is a null pointer to new type
-				CIVLPointerType newCIVLType = (CIVLPointerType) translateType(
-						newType, scope, source);
-
-				result = nullPointerExpression(newCIVLType, scope, source);
-			} else if (conversion instanceof PointerBoolConversion) {
-				// pointer type to boolean type: p!=NULL
-				result = factory.binaryExpression(
-						source,
-						BINARY_OPERATOR.NOT_EQUAL,
-						result,
-						nullPointerExpression(
-								(CIVLPointerType) result.getExpressionType(),
-								scope, source));
-			} else if (conversion instanceof VoidPointerConversion) {
-				// void*->T* or T*->void*
-				// ignore, pointer types are all the same
-			} else
-				throw new CIVLInternalException("Unknown conversion: "
-						+ conversion, source);
-		}
-		return result;
+	private Expression expression(ExpressionNode node, Scope scope) {
+		return expression(node, scope, true);
 	}
 
 	/**
@@ -854,16 +860,21 @@ public class ModelBuilderWorker {
 	}
 
 	private Expression translateSizeof(SizeofNode node, Scope scope) {
-		Expression result;
 		SizeableNode argNode = node.getArgument();
+		CIVLSource source = sourceOf(node);
+		Expression result;
 
 		if (argNode instanceof TypeNode) {
 			CIVLType type = translateTypeNode((TypeNode) argNode, scope);
 
-			result = factory.sizeofTypeExpression(sourceOf(node), type);
+			result = factory.sizeofTypeExpression(source, type);
+		} else if (argNode instanceof ExpressionNode) {
+			Expression argument = expression((ExpressionNode) argNode, scope);
+
+			result = factory.sizeofExpressionExpression(source, argument);
 		} else
-			throw new CIVLUnimplementedFeatureException(
-					"sizeof applied to expressions", sourceOf(node));
+			throw new CIVLInternalException("Unknown kind of SizeofNode: "
+					+ node, source);
 		result.setExpressionScope(scope);
 		return result;
 	}
