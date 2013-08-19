@@ -43,6 +43,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
@@ -55,6 +56,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * The factory to create all model components. Usually this is the only way
@@ -271,6 +273,20 @@ public interface ModelFactory {
 	 */
 	void completeHeapType(CIVLHeapType heapType,
 			Collection<MallocStatement> mallocs);
+
+	CIVLBundleType newBundleType();
+
+	/**
+	 * Completes the bundle type by specifying the list of all dynamic types
+	 * which can occur as bundle elements. If the collections yields a sequence
+	 * of types t_i, then the bundlesymbolic type is union_i(array(t_i)).
+	 * 
+	 * @param bundleType
+	 *            an incomplete bundle type
+	 * @param types
+	 *            the set of all dynamic types which occur as bundle elements
+	 */
+	void complete(CIVLBundleType bundleType, Collection<SymbolicType> types);
 
 	/**
 	 * Returns a new struct field, used to complete a struct type.

@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.model.common.type;
 
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * Root of CIVL class hierarchy.
@@ -10,6 +11,10 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * 
  */
 public abstract class CommonType implements CIVLType {
+
+	protected SymbolicType dynamicType = null;
+
+	private int dynamicTypeIndex = -1;
 
 	private Variable stateVariable = null;
 
@@ -64,6 +69,20 @@ public abstract class CommonType implements CIVLType {
 	@Override
 	public boolean isHeapType() {
 		return false;
+	}
+
+	@Override
+	public boolean isBundleType() {
+		return false;
+	}
+
+	@Override
+	public int getDynamicTypeIndex() {
+		return dynamicTypeIndex;
+	}
+
+	public void setDynamicTypeIndex(int index) {
+		this.dynamicTypeIndex = index;
 	}
 
 }

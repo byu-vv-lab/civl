@@ -19,8 +19,6 @@ public class CommonPrimitiveType extends CommonType implements
 
 	private PrimitiveTypeKind kind;
 
-	private SymbolicType dynamicType = null;
-
 	private NumericExpression sizeofExpression;
 
 	private BooleanExpression facts;

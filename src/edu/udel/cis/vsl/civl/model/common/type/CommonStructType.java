@@ -25,8 +25,6 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 
 	private StructField[] fields = null;
 
-	private SymbolicType dynamicType = null;
-
 	public CommonStructType(Identifier name) {
 		this.name = name;
 	}

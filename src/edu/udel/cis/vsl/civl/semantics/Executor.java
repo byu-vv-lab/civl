@@ -9,7 +9,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
-import edu.udel.cis.vsl.civl.library.civlc.CivlcExecutor;
+import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -78,7 +78,7 @@ public class Executor {
 	 */
 	private LibraryExecutorLoader loader;
 
-	private CivlcExecutor civlcExecutor;
+	private Libcivlc civlcExecutor;
 
 	// Constructors........................................................
 
@@ -102,7 +102,7 @@ public class Executor {
 		this.evaluator = new Evaluator(modelFactory, stateFactory, log);
 		this.log = log;
 		this.loader = loader;
-		this.civlcExecutor = (CivlcExecutor) loader.getLibraryExecutor("civlc",
+		this.civlcExecutor = (Libcivlc) loader.getLibraryExecutor("civlc",
 				this);
 	}
 

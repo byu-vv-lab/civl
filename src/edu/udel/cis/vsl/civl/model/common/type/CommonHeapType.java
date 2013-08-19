@@ -17,8 +17,6 @@ public class CommonHeapType extends CommonType implements CIVLHeapType {
 
 	private MallocStatement[] mallocs = null;
 
-	private SymbolicType dynamicType = null;
-
 	private SymbolicExpression initialValue = null;
 
 	private SymbolicExpression undefinedValue = null;

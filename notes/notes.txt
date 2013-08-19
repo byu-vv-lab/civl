@@ -1,80 +1,4 @@
 
-For implementing malloc:
-
-Add sizeof expression in model:
-  CIVLType getType();
-[do we also need sizeof(expr)? -- that's different!]
-
-For primitive types, add a method:
-  NumericExpression getSizeof();
-
-Create a symbolic constant for each primitive type, of type int,
-named SIZEOF_INT, etc.  Set this in model factory.
-
-In Evaluator: as a side-effect, if a sizeof expression is ever evaluated,
-add some facts about it to the path condition: sizeof(...)>0,
-maybe sizeof(char)=1 ?
-
-Evaluator: for primitive types, get it from type.
-Otherwise, compute: for arrays, multiply extent and sizeof
-element type (evaluating extent).  For all others (records,
-pointers) use an uninterpreted function sizeof(...) which
-takes a DynamicType and returns int.
-
-Add a MallocStatement to the model.  Example
-(double*)malloc(&h, sizeof(double)*10).
-  - int getMallocId();
-  - Expression getHeapPointerExpression(); // &h 
-  - CIVLType getStaticElementType(); // double
-  - SymbolicType getDynamicElementType() // symbolic real
-  - SymbolicType getDynamicObjectType(); // symbolic array of real
-  - Expression getSizeExpression(); // sizeof(double)*10
-  - SymbolicExpression getUndefinedObject(); // symbolic constant UNDEFINED
-                                             // of type array of real
-
-
-
-
-During model building, count the malloc statements as they are
-encountered and assign each a unique ID.
-
-Complete the $heap type:  
-  For each i, you have the static CIVL type T_i and the 
-  __malloc__ function.  Compute the most general symbolic
-  type t_i by translating t_i and using incomplete types
-  for arrays.  Store t_i in the malloc call object.
-  let $heap be the symbolic type which is the tuple type
-
-  [array of array of t1,
-   array of array of t2,
-   array of array of t3, ...]
-
-Initial value:
-
-  [array of length 0, array of length 0, ...]
- 
-Semantics:
-  to execute a malloc statement with malloc index i:
-  let h be the result of evaluating the heap argument. *h is a tuple.
-  (*h).i is a concrete array.  Let l be its concrete length.
-  create a new symbolic constant whose name is a function of
-  the pid, dynamic scope id, heap variable ID, index i, and
-  l.  The type of this new symbolic constant is array of t_i
-  of length arg/sizeof(t+i), where arg is the result of evaluating
-  the size argument.  Check that it evenly divides, and log
-  an error if it might not.  Now append this symbolic constant
-  to the concrete array. [Really need a method in SARL to do this.]
-  Anyway, since it is concrete, get its sequence and append on to that.
-  Return the reference with tree:
-  - ref to heap (h)
-  - tuple component ref (i)
-  - array element reference (l)
-  - array element reference (0)
-  which is a reference to the first element of the newly allocated
-  array.  
-
-free: sets the value in the heap array to some symbolic constant
-UNDEFINED of type array of t_i.
 
 Canonicalization: map
   Ref[h,i,l,0] -> Ref[h,i,l',0]
@@ -82,6 +6,148 @@ Canonicalization: map
 Perform substitution on the state
 
 
+Fundamentals:
+
+expression: $length(array)
+expression: $append(array, element)
+$concatenate, $remove, 
+
+/* A system type for any segment of memory used as a buffer,
+ * formed using union types */
+typedef struct __bundle__ $bundle;
+
+/* Creates a buffer from the memory region specified by
+ * ptr and size, copying the data into the new buffer */
+$bundle $bundle_pack(void *ptr, int size);
+
+/* Copies the data out of the buffer into the region
+ * specified */
+void $bundle_unpack($bundle bundle, void *ptr, int size);
+
+/* creates a new comm from the given sequence of processes,
+ * by allocating memory and copying the process sequence;
+ * the new comm has no messages */
+$comm $comm_create(int nprocs, $proc * procs);
+
+/* adds the message to the comm */
+void $comm_enqueue($comm * comm, $message * message);
+
+/* finds the first matching message, removes it from
+ * comm, and returns pointer to message */ 
+$message * $comm_dequeue($comm * comm, int source, int dest, int tag);
+
+
+Action Plan:
+  - add a CIVLBundleType, similar to CIVLHeapType
+  - collect all types during model building
+  - complete the CIVLBundleType by giving it the list of all types,
+    and the symbolic type which is the union of array of t_i
+  - defined $bundle_pack in executor by:
+    1. let v = dereference ptr* (just first element)
+    2. let t = v.type();
+    3. array-of-t is the type of the bundle you will make by cases:
+a. is ptr to a variable, or an array element pointer, etc.
+create the new value of type array-of-t.
+    4. cast that to type bundleSymbolicType.
+    5. assign it to lhs.
+
+
+
+
+Consider CIVL-C dropping C's awful pointer-array pun.
+No automatic conversions. (Just drop them if language is CIVL-C).
+
+f(double[] a) : really takes an array of double, not pointer.
+double[] f(...) : returns an array of double
+
+To get the C behavior:
+
+f(double *p) {...}
+
+to call f: f(&a[0]);
+
+
+
+
+
+
+How hard would it be to add a new type: $sequence<T>
+to the language?  Like vector or variable length array.
+Then define functions like $append, $add, $remove,
+$subseq, blah blah: but these are all generic.
+Need concept of generic functions.  Could make them
+operations.
+
+$buffer $buffer_create(void *ptr, $type element_type, int count);
+
+$buffer $buffer_pack(void *ptr, int size);
+
+Problem: what if type of ptr is just void*.  Won't know statically
+all the types to form the union type.  Without some sort of flow
+analysis, will have to assume every type is possible.
+
+flow analysis: look at occurrences of $buffer_pack
+if type of expression ptr is void*, look at what goes into that
+expression.  pointer arithmetic: ptr argument, trace back
+through assignments, function calls. forget it.
+
+need union of all types.
+
+**** collect all types used in model ****  easy
+
+
+
+do essentially the same thing, but take different args.
+If the element type is complete (and hence can use sizeof)
+the first can be defined as
+    $buffer_pack(ptr, count*sizeof(t))
+
+
+
+Messages:
+
+$message_pack has to produce a message, but how?
+Use union type.
+Union over all types which can occur in message_pack.
+Inject.
+Need to extract value from slice of array.
+Wish I had symbolic operators for that.
+Could be single variable, entire array, slice of array
+slice of array: copy elements if concrete bounds, else
+need array - lambda (not yet implemented)
+
+stick in union type.
+
+tyedef struct __buffer__ __buffer__;
+typedef struct __message__ {
+  int source;
+  int dest;
+  int tag;
+  __buffer__ data;
+  int size;
+}
+
+Translate __buffer__ to CIVLBufferType.
+Symbolic type: symbolicBufferType:
+Union-of-array-of-t_i, where t_i ranges over all types
+occuring in message pack calls.   
+
+Implement $message_pack : just to create buffer
+
+
+How about relaxing restriction from C that element types of
+arrays must be complete?  Instead just generate error
+if you try to take sizeof such a thing. 
+Instead of 
+(double*)$malloc(&h, size)
+  how about
+$alloc(&h, typeof(double), count);
+
+void* $alloc($heap *h, $type type, int count);
+
+Add to grammar: "$typeof(sizeable)" just like sizeof, but
+don't care about completeness.
+no sizeof required.  Type of typeof is $dynamic.  Why not "type".
 ---
 
    

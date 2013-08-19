@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.util.HashSet;
@@ -20,6 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
@@ -28,6 +26,8 @@ import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
+import edu.udel.cis.vsl.civl.util.Singleton;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
@@ -35,17 +35,28 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression.ReferenceKind;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 /**
- * @author zirkel
+ * Implementation of system functions declared civlc.h.
+ * 
+ * <ul>
+ * <li><code>$malloc</code>: since calls to this function have already been
+ * translated to {@link MallocStatement}s in the model, these are handled a
+ * little differently.</li>
+ * <li><code>$free</code></li>
+ * </ul>
+ * 
+ * @author siegel
  * 
  */
-public class CivlcExecutor implements LibraryExecutor {
+public class Libcivlc implements LibraryExecutor {
 
 	private Executor primaryExecutor;
 
@@ -57,64 +68,28 @@ public class CivlcExecutor implements LibraryExecutor {
 
 	private NumericExpression zero;
 
+	private NumericExpression one;
+
 	private ErrorLog log;
 
-	public CivlcExecutor(Executor primaryExecutor) {
+	// private SymbolicType bundleSymbolicType;
+
+	public Libcivlc(Executor primaryExecutor) {
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.log = evaluator.log();
 		this.universe = evaluator.universe();
 		this.stateFactory = evaluator.stateFactory();
 		this.zero = universe.zeroInt();
+		this.one = universe.oneInt();
+
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#name()
-	 */
 	@Override
 	public String name() {
 		return "civlc";
 	}
 
-	/**
-	 * Arguments to malloc are: (0) pointer to heap, (1) integer size. It
-	 * returns a pointer to the newly allocated object.
-	 * 
-	 * Arugment should have from n*sizeof(t) where n is some integer expression
-	 * and t is a type. Furthermore, it should be cast to that type. There is
-	 * some inference here.
-	 * 
-	 * The value of the heap should be the heapType, a symbolic type
-	 * array-of-(union_i(array-of-t_i)), for some types t_1,t_2,....
-	 * 
-	 * Since the size argument has been evaluated, search for SIZEOF ? Or should
-	 * this have already been done and stuck in the malloc?
-	 * 
-	 * Look at cast outside of malloc.
-	 * 
-	 * Other idea: create a new symbolic value "object(size)". Can be an
-	 * uninterpreted function. Or struct. It doesn't matter. It can have an
-	 * offset reference into it. Malloc returns the offset reference with offset
-	 * 0. When that reference is cast to something else, actually change the
-	 * value----there is a cascading cast which casts the object(size) to
-	 * int[10] or whatever. Hence the cast does have a side effect on the state?
-	 * 
-	 * @param state
-	 *            the pre-state
-	 * @param pid
-	 *            PID of process excecuting malloc
-	 * @param type
-	 *            of elements being malloc'ed
-	 * @param lhs
-	 *            left-hand side of assignment; could be null
-	 * @param heapReference
-	 *            reference to heap being used to perform malloc
-	 * @param size
-	 *            number of bytes being malloc'ed
-	 * @return the post-state
-	 */
 	public State executeMalloc(State state, int pid, MallocStatement statement) {
 		CIVLSource source = statement.getSource();
 		int sid = state.process(pid).scope();
@@ -289,7 +264,148 @@ public class CivlcExecutor implements LibraryExecutor {
 		index = getMallocIndex(firstElementPointer);
 		undef = heapType.getMalloc(index).getUndefinedObject();
 		state = primaryExecutor.assign(source, state, heapObjectPointer, undef);
+		return state;
+	}
 
+	private State executeMemcpy(State state, int pid, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source) {
+
+		return null;
+	}
+
+	/*
+	 * Creates a bundle from the memory region specified by ptr and size,
+	 * copying the data into the new bundle:
+	 * 
+	 * $bundle $bundle_pack(void *ptr, int size);
+	 * 
+	 * Copies the data out of the bundle into the region specified:
+	 * 
+	 * void $bundle_unpack($bundle bundle, void *ptr, int size);
+	 */
+
+	private State executeBundlePack(State state, int pid,
+			CIVLBundleType bundleType, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) {
+		Expression pointerExpr = arguments[0];
+		// Expression sizeExpr = arguments[1];
+		SymbolicExpression pointer = argumentValues[0];
+		NumericExpression size = (NumericExpression) argumentValues[1];
+		ReferenceExpression symRef = evaluator.getSymRef(pointer);
+		ReferenceKind kind = symRef.referenceKind();
+		SymbolicType elementType = evaluator.referencedType(source, state,
+				pointer);
+		SymbolicUnionType symbolicBundleType = bundleType
+				.getDynamicType(universe);
+		int index = bundleType.getIndexOf(elementType);
+		IntObject indexObj = universe.intObject(index);
+		NumericExpression elementSize = evaluator.sizeof(source, elementType);
+		BooleanExpression pathCondition = state.pathCondition();
+		BooleanExpression zeroSizeClaim = universe.equals(size, zero);
+		Reasoner reasoner = universe.reasoner(pathCondition);
+		ResultType zeroSizeValid = reasoner.valid(zeroSizeClaim)
+				.getResultType();
+		SymbolicExpression array;
+		SymbolicExpression bundle;
+
+		if (zeroSizeValid == ResultType.YES) {
+			array = universe.emptyArray(elementType);
+		} else {
+			BooleanExpression oneCountClaim = universe
+					.equals(size, elementSize);
+			ResultType oneCountValid = reasoner.valid(oneCountClaim)
+					.getResultType();
+
+			if (oneCountValid == ResultType.YES) {
+				Evaluation eval = evaluator.dereference(
+						pointerExpr.getSource(), state, pointer);
+				SymbolicExpression element0 = eval.value;
+
+				state = eval.state;
+				pathCondition = state.pathCondition();
+				array = universe.array(elementType,
+						new Singleton<SymbolicExpression>(element0));
+			} else {
+				BooleanExpression divisibility = universe.divides(elementSize,
+						size);
+				ResultType divisibilityValid = reasoner.valid(divisibility)
+						.getResultType();
+				NumericExpression count;
+
+				if (divisibilityValid != ResultType.YES) {
+					Certainty certainty = divisibilityValid == ResultType.MAYBE ? Certainty.MAYBE
+							: Certainty.PROVEABLE;
+					CIVLStateException e = new CIVLStateException(
+							ErrorKind.OTHER, certainty,
+							"sizeof element does not divide size argument",
+							state, source);
+
+					log.report(e);
+					pathCondition = universe.and(pathCondition, divisibility);
+					state = stateFactory.setPathCondition(state, pathCondition);
+					reasoner = universe.reasoner(pathCondition);
+				}
+				count = universe.divide(size, elementSize);
+				switch (kind) {
+				case ARRAY_ELEMENT: {
+					NumericExpression startIndex = ((ArrayElementReference) symRef)
+							.getIndex();
+					SymbolicExpression arrayPointer = evaluator.parentPointer(
+							source, pointer);
+					Evaluation eval = evaluator.dereference(source, state,
+							arrayPointer);
+					SymbolicExpression originalArray = eval.value;
+					NumericExpression endIndex = universe
+							.add(startIndex, count);
+
+					state = eval.state;
+					array = evaluator.getSubArray(originalArray, startIndex,
+							endIndex, state, source);
+					break;
+				}
+				case IDENTITY:
+					throw new CIVLStateException(ErrorKind.POINTER,
+							Certainty.MAYBE,
+							"unable to get concrete count of 0 or 1 from size",
+							state, source);
+				case NULL: { // size must be 0
+					Certainty certainty = zeroSizeValid == ResultType.MAYBE ? Certainty.MAYBE
+							: Certainty.PROVEABLE;
+					CIVLStateException e = new CIVLStateException(
+							ErrorKind.POINTER, certainty,
+							"null pointer only valid with size 0", state,
+							source);
+
+					log.report(e);
+					pathCondition = universe.and(pathCondition, zeroSizeClaim);
+					state = stateFactory.setPathCondition(state, pathCondition);
+					reasoner = universe.reasoner(pathCondition);
+					array = universe.emptyArray(elementType);
+				}
+				case OFFSET: {
+					// either size is zero or size is 1 and offset is 0
+					throw new CIVLStateException(ErrorKind.POINTER,
+							Certainty.MAYBE, "possible out of bounds pointer",
+							state, source);
+				}
+				case TUPLE_COMPONENT: {
+					throw new CIVLStateException(ErrorKind.POINTER,
+							Certainty.MAYBE,
+							"unable to get concrete count of 0 or 1 from size",
+							state, source);
+				}
+				case UNION_MEMBER:
+					throw new CIVLInternalException("dereference union member",
+							source);
+				default:
+					throw new CIVLInternalException("unreachable", source);
+				}
+			}
+		}
+		bundle = universe.unionInject(symbolicBundleType, indexObj, array);
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, lhs, bundle);
 		return state;
 	}
 
@@ -299,7 +415,7 @@ public class CivlcExecutor implements LibraryExecutor {
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		CallOrSpawnStatement call;
-		Expression lhs;
+		LHSExpression lhs;
 		int numArgs;
 
 		if (!(statement instanceof CallOrSpawnStatement)) {
@@ -325,6 +441,12 @@ public class CivlcExecutor implements LibraryExecutor {
 			state = executeFree(state, pid, arguments, argumentValues,
 					statement.getSource());
 			break;
+		case "$bundle_pack":
+			state = executeBundlePack(state, pid, (CIVLBundleType) call
+					.function().returnType(), lhs, arguments, argumentValues,
+					statement.getSource());
+			break;
+		case "$bundle_unpack":
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":

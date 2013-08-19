@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -112,6 +113,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
@@ -119,6 +121,9 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
+import edu.udel.cis.vsl.civl.model.common.type.CommonType;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * Does the main work translating a single ABC Program to a model.
@@ -138,7 +143,7 @@ public class ModelBuilderWorker {
 	 */
 	private ModelFactory factory;
 
-	// private SymbolicUniverse universe;
+	private SymbolicUniverse universe;
 
 	/**
 	 * The ABC AST being translated by this model builder worker.
@@ -201,7 +206,11 @@ public class ModelBuilderWorker {
 
 	private ArrayList<MallocStatement> mallocStatements = new ArrayList<MallocStatement>();
 
+	private LinkedList<CIVLType> typeList = new LinkedList<CIVLType>();
+
 	private CIVLHeapType heapType;
+
+	private CIVLBundleType bundleType;
 
 	// Constructors........................................................
 
@@ -215,7 +224,8 @@ public class ModelBuilderWorker {
 		this.program = program;
 		this.tokenFactory = program.getTokenFactory();
 		this.heapType = factory.heapType("model");
-		// this.universe = factory.universe();
+		this.bundleType = factory.newBundleType();
+		this.universe = factory.universe();
 	}
 
 	// Helper methods......................................................
@@ -500,6 +510,8 @@ public class ModelBuilderWorker {
 			return factory.scopeType();
 		if ("__dynamic__".equals(tag))
 			return factory.dynamicType();
+		if ("__bundle__".equals(tag))
+			return bundleType;
 		else {
 			CIVLStructType result = factory.structType(factory.identifier(
 					source, tag));
@@ -618,6 +630,8 @@ public class ModelBuilderWorker {
 			}
 			typeMap.put(abcType, result);
 		}
+		if (!result.isBundleType() && !result.isVoidType())
+			typeList.add(result);
 		return result;
 	}
 
@@ -2506,6 +2520,24 @@ public class ModelBuilderWorker {
 		}
 	}
 
+	private void completeBundleType() {
+		Map<SymbolicType, Integer> dynamicTypeMap = new LinkedHashMap<SymbolicType, Integer>();
+		int dynamicTypeCount = 0;
+
+		for (CIVLType type : typeList) {
+			SymbolicType dynamicType = type.getDynamicType(universe);
+			Integer id = dynamicTypeMap.get(dynamicType);
+
+			if (id == null) {
+				id = dynamicTypeCount;
+				dynamicTypeMap.put(dynamicType, id);
+				dynamicTypeCount++;
+			}
+			((CommonType) type).setDynamicTypeIndex(id);
+		}
+		factory.complete(bundleType, dynamicTypeMap.keySet());
+	}
+
 	// Exported methods....................................................
 
 	/**
@@ -2621,11 +2653,11 @@ public class ModelBuilderWorker {
 			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
 		}
 		factory.completeHeapType(heapType, mallocStatements);
+		completeBundleType();
 		model = factory.model(system.getSource(), system);
 		// add all functions to model except main:
-		for (CIVLFunction f : functionMap.values()) {
+		for (CIVLFunction f : functionMap.values())
 			model.addFunction(f);
-		}
 		((CommonModel) model).setMallocStatements(mallocStatements);
 	}
 

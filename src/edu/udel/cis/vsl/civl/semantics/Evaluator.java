@@ -70,6 +70,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.number.real.RealNumberFactory;
@@ -148,6 +149,8 @@ public class Evaluator {
 	 */
 	private SymbolicExpression sizeofFunction;
 
+	private Map<SymbolicType, NumericExpression> sizeofDynamicMap = new HashMap<SymbolicType, NumericExpression>();
+
 	// Constructors........................................................
 
 	/**
@@ -209,41 +212,6 @@ public class Evaluator {
 				source);
 	}
 
-	private SymbolicType symbolicType(CIVLSource source, CIVLType type) {
-		SymbolicType result;
-
-		if (type instanceof CIVLPrimitiveType) {
-			switch (((CIVLPrimitiveType) type).primitiveTypeKind()) {
-			case BOOL:
-				result = universe.booleanType();
-				break;
-			case INT:
-				result = universe.integerType();
-				break;
-			case REAL:
-				result = universe.realType();
-				break;
-			case STRING:
-				result = universe.arrayType(universe.characterType());
-				break;
-			default:
-				throw new CIVLUnimplementedFeatureException(
-						"Unsupported primitive type: " + type);
-			}
-		} else if (type instanceof CIVLArrayType) {
-			// what about extent?
-			result = universe.arrayType(symbolicType(source,
-					((CIVLArrayType) type).elementType()));
-		} else if (type instanceof CIVLPointerType) {
-			result = pointerType;
-		} else
-			throw new CIVLInternalException("Cannot find symbolic type for "
-					+ type, source);
-		// TODO: what about record types?
-		// So far, this is only used in evaluation of casts.
-		return result;
-	}
-
 	/**
 	 * Gets a Java conrete int from a symbolic expression or throws exception.
 	 * 
@@ -281,6 +249,97 @@ public class Evaluator {
 				fieldIndex);
 
 		return extractInt(source, field);
+	}
+
+	/**
+	 * Given an array, a start index, and end index, returns the array which is
+	 * the subsequence of the given array consisting of the elements in
+	 * positions start index through end index minus one. The length of the new
+	 * array is endIndex - startIndex.
+	 * 
+	 * @param array
+	 * @param startIndex
+	 * @param endIndex
+	 * @param assumption
+	 * @param source
+	 * @return
+	 */
+	public SymbolicExpression getSubArray(SymbolicExpression array,
+			NumericExpression startIndex, NumericExpression endIndex,
+			State state, CIVLSource source) {
+		// if startIndex is zero and endIndex is length, return array
+		// verify startIndex >=0 and endIndex<= Length
+		// if startIndex==endIndex return emptyArray
+		// else if startIndex and endIndex are concrete, create concrete array
+		// else need array lambdas or subsequence operation: todo
+		BooleanExpression pathCondition = state.pathCondition();
+		Reasoner reasoner = universe.reasoner(pathCondition);
+		NumericExpression length = universe.length(array);
+		SymbolicArrayType arrayType = (SymbolicArrayType) array.type();
+		SymbolicType elementType = arrayType.elementType();
+
+		if (reasoner.isValid(universe.equals(zero, startIndex))
+				&& reasoner.isValid(universe.equals(length, endIndex)))
+			return array;
+		else {
+			BooleanExpression claim = universe.lessThanEquals(zero, startIndex);
+			ResultType valid = reasoner.valid(claim).getResultType();
+
+			if (valid != ResultType.YES) {
+				CIVLStateException e = new CIVLStateException(
+						ErrorKind.OUT_OF_BOUNDS, certaintyOf(source, valid),
+						"negative start index", state, source);
+
+				log.report(e);
+				pathCondition = universe.and(pathCondition, claim);
+				state = stateFactory.setPathCondition(state, pathCondition);
+				reasoner = universe.reasoner(pathCondition);
+			}
+			claim = universe.lessThanEquals(endIndex, length);
+			valid = reasoner.valid(claim).getResultType();
+			if (valid != ResultType.YES) {
+				CIVLStateException e = new CIVLStateException(
+						ErrorKind.OUT_OF_BOUNDS, certaintyOf(source, valid),
+						"end index exceeds length of array", state, source);
+
+				log.report(e);
+				pathCondition = universe.and(pathCondition, claim);
+				state = stateFactory.setPathCondition(state, pathCondition);
+				reasoner = universe.reasoner(pathCondition);
+			}
+			claim = universe.lessThanEquals(startIndex, endIndex);
+			valid = reasoner.valid(claim).getResultType();
+			if (valid != ResultType.YES) {
+				CIVLStateException e = new CIVLStateException(
+						ErrorKind.OUT_OF_BOUNDS, certaintyOf(source, valid),
+						"start index greater than end index", state, source);
+
+				log.report(e);
+				pathCondition = universe.and(pathCondition, claim);
+				state = stateFactory.setPathCondition(state, pathCondition);
+				reasoner = universe.reasoner(pathCondition);
+			}
+			if (reasoner.isValid(universe.equals(startIndex, endIndex))) {
+				return universe.emptyArray(elementType);
+			} else {
+				IntegerNumber concreteStart = (IntegerNumber) reasoner
+						.extractNumber(startIndex);
+				IntegerNumber concreteEnd = (IntegerNumber) reasoner
+						.extractNumber(endIndex);
+
+				if (concreteStart != null && concreteEnd != null) {
+					int startInt = concreteStart.intValue();
+					int endInt = concreteEnd.intValue();
+					LinkedList<SymbolicExpression> valueList = new LinkedList<SymbolicExpression>();
+
+					for (int i = startInt; i < endInt; i++)
+						valueList.add(universe.arrayRead(array,
+								universe.integer(i)));
+					return universe.array(elementType, valueList);
+				}
+			}
+		}
+		throw new CIVLInternalException("Unable to extract sub-array", source);
 	}
 
 	/**
@@ -936,22 +995,19 @@ public class Evaluator {
 	 */
 	private Evaluation evaluateCast(State state, int pid,
 			CastExpression expression) {
-		// TODO: many cases to deal with here. Go through
-		// all the conversions in ABC, as these will be
-		// translated to casts. In particular, need to
-		// be able to cast integers to pointers to handle
-		// NULL=(void*)0. From one pointer type to another.
 		Expression arg = expression.getExpression();
 		CIVLType argType = arg.getExpressionType();
 		Evaluation eval = evaluate(state, pid, arg);
 		SymbolicExpression value = eval.value;
-		// SymbolicType startType = value.type();
 		CIVLType castType = expression.getCastType();
-		SymbolicType endType = symbolicType(expression.getSource(), castType);
+		TypeEvaluation typeEval = getDynamicType(eval.state, pid, castType,
+				expression.getSource(), false);
+		SymbolicType endType = typeEval.type;
 
+		state = typeEval.state;
 		if (argType.isIntegerType() && castType.isPointerType()) {
 			// only good cast is from 0 to null pointer
-			BooleanExpression assumption = eval.state.pathCondition();
+			BooleanExpression assumption = state.pathCondition();
 			BooleanExpression claim = universe.equals(zero, value);
 			ResultType resultType = universe.reasoner(assumption).valid(claim)
 					.getResultType();
@@ -959,10 +1015,11 @@ public class Evaluator {
 			if (resultType != ResultType.YES) {
 				log.report(new CIVLStateException(ErrorKind.INVALID_CAST,
 						certaintyOf(expression.getSource(), resultType),
-						"Cast from non-zero integer to pointer", eval.state,
+						"Cast from non-zero integer to pointer", state,
 						expression.getSource()));
-				eval.state = stateFactory.setPathCondition(eval.state,
+				state = stateFactory.setPathCondition(state,
 						universe.and(assumption, claim));
+				eval.state = state;
 			}
 			eval.value = nullPointer;
 			return eval;
@@ -982,6 +1039,44 @@ public class Evaluator {
 			throw error;
 		}
 		return eval;
+	}
+
+	public NumericExpression sizeof(CIVLSource source, SymbolicType type) {
+		NumericExpression result = sizeofDynamicMap.get(type);
+
+		if (result == null) {
+
+			if (type.isBoolean())
+				result = modelFactory.booleanType().getSizeof();
+			else if (type == modelFactory.dynamicSymbolicType())
+				result = modelFactory.dynamicType().getSizeof();
+			else if (type.isInteger())
+				result = modelFactory.integerType().getSizeof();
+			else if (type == modelFactory.processSymbolicType())
+				result = modelFactory.processType().getSizeof();
+			else if (type.isReal())
+				result = modelFactory.realType().getSizeof();
+			else if (type == modelFactory.scopeSymbolicType())
+				result = modelFactory.scopeType().getSizeof();
+			else if (type instanceof SymbolicCompleteArrayType) {
+				SymbolicCompleteArrayType arrayType = (SymbolicCompleteArrayType) type;
+
+				result = sizeof(source, arrayType.elementType());
+				result = universe.multiply(arrayType.extent(),
+						(NumericExpression) result);
+			} else if (type instanceof SymbolicArrayType) {
+				throw new CIVLInternalException(
+						"sizeof applied to incomplete array type", source);
+			} else {
+				// wrap the type in an expression of type dynamicTYpe
+				SymbolicExpression typeExpr = expressionOfType(type);
+
+				result = (NumericExpression) universe.apply(sizeofFunction,
+						new Singleton<SymbolicExpression>(typeExpr));
+			}
+			sizeofDynamicMap.put(type, result);
+		}
+		return result;
 	}
 
 	public Evaluation evaluateSizeofType(CIVLSource source, State state,
@@ -1447,6 +1542,28 @@ public class Evaluator {
 		SymbolicExpression variableValue = state.getScope(sid).getValue(vid);
 		Evaluation result = new Evaluation(state, universe.dereference(
 				variableValue, symRef));
+
+		return result;
+	}
+
+	/**
+	 * Returns the dynamic type pointed to by a pointer. Can be used even if the
+	 * pointer can't be dereferenced (because it points off the end of an
+	 * object, for example).
+	 * 
+	 * @param source
+	 * @param state
+	 * @param pointer
+	 * @return
+	 */
+	public SymbolicType referencedType(CIVLSource source, State state,
+			SymbolicExpression pointer) {
+		int sid = getScopeId(source, pointer);
+		int vid = getVariableId(source, pointer);
+		ReferenceExpression symRef = getSymRef(pointer);
+		SymbolicExpression variableValue = state.getScope(sid).getValue(vid);
+		SymbolicType variableType = variableValue.type();
+		SymbolicType result = universe.referencedType(variableType, symRef);
 
 		return result;
 	}

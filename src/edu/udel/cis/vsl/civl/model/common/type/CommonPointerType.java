@@ -18,19 +18,12 @@ public class CommonPointerType extends CommonType implements CIVLPointerType {
 
 	private CIVLType baseType;
 
-	private SymbolicType dynamicType;
-
 	public CommonPointerType(CIVLType baseType, SymbolicType pointerType) {
 		super();
 		this.dynamicType = pointerType;
 		this.baseType = baseType;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.udel.cis.vsl.civl.model.IF.type.PointerType#baseType()
-	 */
 	@Override
 	public CIVLType baseType() {
 		return baseType;

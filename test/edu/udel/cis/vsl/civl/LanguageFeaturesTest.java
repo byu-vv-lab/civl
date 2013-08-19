@@ -8,6 +8,7 @@ import java.io.PrintStream;
 
 import org.junit.Test;
 
+import edu.udel.cis.vsl.abc.ABCException;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
@@ -38,6 +39,14 @@ public class LanguageFeaturesTest {
 			ParseException, SyntaxException {
 		File file = new File(rootDir, "arrays.cvl");
 		boolean result = CIVL.check(file, out);
+		assertFalse(result);
+	}
+
+	@Test
+	public void testBundle() throws ABCException {
+		File file = new File(rootDir, "bundle.cvl");
+
+		boolean result = CIVL.check(true, file, out);
 		assertFalse(result);
 	}
 
@@ -144,7 +153,7 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void testStructArray() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
@@ -152,7 +161,7 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void testStructStruct() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
@@ -160,7 +169,7 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void testDynamicStruct() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
@@ -176,7 +185,7 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 	@Test
 	public void testDuffs() throws IOException, PreprocessorException,
 			ParseException, SyntaxException {
@@ -184,5 +193,5 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.check(file, out);
 		assertFalse(result);
 	}
-	
+
 }

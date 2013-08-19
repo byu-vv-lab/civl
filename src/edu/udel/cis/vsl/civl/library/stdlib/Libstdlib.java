@@ -19,7 +19,7 @@ import edu.udel.cis.vsl.civl.state.State;
  * @author zirkel
  * 
  */
-public class StdlibExecutor implements LibraryExecutor {
+public class Libstdlib implements LibraryExecutor {
 
 	// private StateFactoryIF factory;
 	// private SymbolicUniverse universe;
@@ -31,7 +31,7 @@ public class StdlibExecutor implements LibraryExecutor {
 	/**
 	 * Executor for stdlib function calls.
 	 */
-	public StdlibExecutor(Executor primaryExecutor) {
+	public Libstdlib(Executor primaryExecutor) {
 		// this.factory = primaryExecutor.stateFactory();
 		// this.universe = primaryExecutor.universe();
 		// elementTypes = new Vector<SymbolicType>();

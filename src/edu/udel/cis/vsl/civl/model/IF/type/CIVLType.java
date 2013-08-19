@@ -51,6 +51,14 @@ public interface CIVLType {
 	 */
 	SymbolicType getDynamicType(SymbolicUniverse universe);
 
+	/**
+	 * All dynamic types occurring in a model are indexed. This returns the
+	 * index of the dynamic type corresponding to this type.
+	 * 
+	 * @return the dynamic type index
+	 */
+	int getDynamicTypeIndex();
+
 	boolean isNumericType();
 
 	boolean isIntegerType();
@@ -64,7 +72,9 @@ public interface CIVLType {
 	boolean isScopeType();
 
 	boolean isVoidType();
-	
+
 	boolean isHeapType();
+
+	boolean isBundleType();
 
 }

@@ -15,8 +15,6 @@ public class CommonArrayType extends CommonType implements CIVLArrayType {
 
 	private CIVLType elementType;
 
-	private SymbolicType dynamicType = null;
-
 	/**
 	 * The type for an array of T.
 	 * 

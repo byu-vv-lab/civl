@@ -57,6 +57,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
@@ -97,6 +98,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonBundleType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
@@ -115,6 +117,7 @@ import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 /**
  * The factory to create all model components. Usually this is the only way
@@ -1306,6 +1309,25 @@ public class CommonModelFactory implements ModelFactory {
 		result.setExpressionScope(argument.expressionScope());
 		result.setExpressionType(integerType);
 		return result;
+	}
+
+	@Override
+	public CIVLBundleType newBundleType() {
+		return new CommonBundleType();
+	}
+
+	@Override
+	public void complete(CIVLBundleType bundleType,
+			Collection<SymbolicType> elementTypes) {
+		LinkedList<SymbolicType> arrayTypes = new LinkedList<SymbolicType>();
+		SymbolicUnionType dynamicType;
+
+		for (SymbolicType type : elementTypes)
+			arrayTypes.add(universe.arrayType(type));
+		dynamicType = universe.unionType(universe.stringObject("$bundle"),
+				arrayTypes);
+		dynamicType = (SymbolicUnionType) universe.canonic(dynamicType);
+		bundleType.complete(elementTypes, dynamicType);
 	}
 
 }
