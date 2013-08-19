@@ -1495,7 +1495,7 @@ public class ModelBuilderWorker {
 				expression);
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
-		} else {
+		} else if (function != null) {
 			function.setStartLocation(location);
 		}
 		return result;
@@ -2607,6 +2607,18 @@ public class ModelBuilderWorker {
 			} else if (node instanceof FunctionDeclarationNode) {
 				processFunctionDeclaration((FunctionDeclarationNode) node,
 						systemScope);
+			} else if (node instanceof AssumeNode) {
+				Statement assumeStmt = assume(null, null, (AssumeNode) node,
+						systemScope);
+
+				// lastStatement not updated because null
+				// startLocation not set because function null
+				if (!initializations.isEmpty())
+					initializations.lastElement()
+							.setTarget(assumeStmt.source());
+				initializations.add(assumeStmt);
+				system.addLocation(assumeStmt.source());
+				system.addStatement(assumeStmt);
 			} else {
 				throw new CIVLInternalException("Unsupported declaration type",
 						sourceOf(node));
