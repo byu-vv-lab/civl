@@ -37,9 +37,12 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression.ReferenceKind;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
@@ -409,6 +412,97 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
+	private State executeBundleUnpack(State state, int pid,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) {
+		SymbolicExpression bundle = argumentValues[0];
+		Expression pointerExpr = arguments[1];
+		// Expression sizeExpr = arguments[1];
+		SymbolicExpression pointer = argumentValues[1];
+		NumericExpression size = (NumericExpression) argumentValues[2];
+		ReferenceExpression symRef = evaluator.getSymRef(pointer);
+		ReferenceKind kind = symRef.referenceKind();
+		SymbolicType referencedType = evaluator.referencedType(source, state,
+				pointer);
+		IntObject index = (IntObject) bundle.argument(0);
+		SymbolicExpression array = (SymbolicExpression) bundle.argument(1);
+		SymbolicType elementType = ((SymbolicArrayType) array.type())
+				.elementType();
+		NumericExpression length = universe.length(array);
+		BooleanExpression pathCondition = state.pathCondition();
+		BooleanExpression zeroLengthClaim = universe.equals(length, zero);
+		Reasoner reasoner = universe.reasoner(pathCondition);
+		ResultType zeroLengthValid = reasoner.valid(zeroLengthClaim)
+				.getResultType();
+
+		assert bundle.operator() == SymbolicOperator.UNION_INJECT;
+		if (zeroLengthValid == ResultType.YES) {
+			return state;
+		} else {
+			BooleanExpression oneLengthClaim = universe.equals(length, one);
+			ResultType oneLengthValid = reasoner.valid(oneLengthClaim)
+					.getResultType();
+
+			if (oneLengthValid == ResultType.YES) {
+				SymbolicExpression element = universe.arrayRead(array, zero);
+
+				state = primaryExecutor.assign(source, state, pointer, element);
+				return state;
+			} else {
+				// if pointer is to element 0 of an array and lengths are equal,
+				// just assign the whole array
+				// else try to get concrete length, and iterate making
+				// assignment
+				if (kind == ReferenceKind.ARRAY_ELEMENT) {
+					NumericExpression pointerIndex = ((ArrayElementReference) symRef)
+							.getIndex();
+					SymbolicExpression parentPointer = evaluator.parentPointer(
+							source, pointer);
+					Evaluation eval = evaluator.dereference(source, state,
+							parentPointer);
+					SymbolicExpression targetArray = eval.value;
+					BooleanExpression claim;
+
+					state = eval.state;
+					pathCondition = state.pathCondition();
+					claim = universe.and(
+							universe.equals(pointerIndex, zero),
+							universe.equals(length,
+									universe.length(targetArray)));
+					if (reasoner.isValid(claim)) {
+						state = primaryExecutor.assign(source, state,
+								parentPointer, array);
+
+						return state;
+					} else {
+						IntegerNumber concreteLength = (IntegerNumber) reasoner
+								.extractNumber(length);
+
+						if (concreteLength != null) {
+							int lengthInt = concreteLength.intValue();
+
+							for (int i = 0; i < lengthInt; i++) {
+								NumericExpression sourceIndex = universe
+										.integer(i);
+								NumericExpression targetIndex = universe.add(
+										pointerIndex, sourceIndex);
+								SymbolicExpression element = universe
+										.arrayRead(array, universe.integer(i));
+
+								targetArray = universe.arrayWrite(targetArray,
+										targetIndex, element);
+							}
+							state = primaryExecutor.assign(source, state,
+									parentPointer, targetArray);
+							return state;
+						}
+					}
+				}
+			}
+		}
+		throw new CIVLInternalException("Cannot complete unpack", source);
+	}
+
 	@Override
 	public State execute(State state, int pid, Statement statement) {
 		Identifier name;
@@ -447,6 +541,9 @@ public class Libcivlc implements LibraryExecutor {
 					statement.getSource());
 			break;
 		case "$bundle_unpack":
+			state = executeBundleUnpack(state, pid, arguments, argumentValues,
+					statement.getSource());
+			break;
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":

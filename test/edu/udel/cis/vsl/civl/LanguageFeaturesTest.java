@@ -69,8 +69,16 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void testBundle() throws ABCException {
-		File file = new File(rootDir, "bundle.cvl");
+	public void testBundleConcrete() throws ABCException {
+		File file = new File(rootDir, "bundleConcrete.cvl");
+
+		boolean result = CIVL.check(true, file, out);
+		assertFalse(result);
+	}
+
+	@Test
+	public void testBundleArray() throws ABCException {
+		File file = new File(rootDir, "bundleArray.cvl");
 
 		boolean result = CIVL.check(true, file, out);
 		assertFalse(result);
