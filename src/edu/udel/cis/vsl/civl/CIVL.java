@@ -190,8 +190,7 @@ public class CIVL {
 		return check(false, file, out);
 	}
 
-	public static boolean check(boolean printModel, File file, PrintStream out)
-			throws SyntaxException, ParseException, PreprocessorException {
+	public static boolean check(boolean printModel, File file, PrintStream out) {
 		Program program;
 		StateFactoryIF stateFactory = new StateFactory(modelFactory);
 		Model model;
@@ -241,7 +240,14 @@ public class CIVL {
 				enabler, stateManager, predicate);
 		searcher.setDebugOut(out);
 		log.setSearcher(searcher);
-		result = searcher.search(initialState);
+		try {
+			result = searcher.search(initialState);
+		} catch (CIVLException e) {
+			result = true;
+			out.println(e);
+			e.printStackTrace(out);
+			out.println();
+		}
 		endTime = System.currentTimeMillis();
 		out.println(bar + " Stats " + bar + "\n");
 		CIVL.printStats(out, searcher, universe, startTime, endTime,
