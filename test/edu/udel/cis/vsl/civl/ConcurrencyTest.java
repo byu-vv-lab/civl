@@ -18,43 +18,43 @@ public class ConcurrencyTest {
 	@Test
 	public void testAdder() throws ABCException {
 		File file = new File(rootDir, "adder.cvl");
-		boolean result = CIVL.check(true, file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(true, file, out);
+		assertTrue(result);
 	}
 
 	@Test
 	public void testLocks() throws ABCException {
 		File file = new File(rootDir, "locks.cvl");
-		boolean result = CIVL.check(file, out);
-		assertTrue(result);
+		boolean result = CIVL.verify(file, out);
+		assertFalse(result);
 	}
 
 	@Test
 	public void testSpawn() throws ABCException {
 		File file = new File(rootDir, "spawn.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
 	}
 
 	@Test
 	public void testBarrier() throws ABCException {
 		File file = new File(rootDir, "barrier.cvl");
-		boolean result = CIVL.check(true, file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(true, file, out);
+		assertTrue(result);
 	}
 
 	@Test
 	public void testBarrier2() throws ABCException {
 		File file = new File(rootDir, "barrier2.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
 	}
 
 	@Test
 	public void testDining() throws ABCException {
 		File file = new File(rootDir, "dining.cvl");
-		boolean result = CIVL.check(file, out);
-		assertTrue(result);
+		boolean result = CIVL.verify(file, out);
+		assertFalse(result);
 	}
 
 }

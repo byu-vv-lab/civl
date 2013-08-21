@@ -181,16 +181,16 @@ public class CIVL {
 		if (preprocOnly) {
 			preprocessor.printOutput(out, infile);
 		} else {
-			check(printModel, infile, out);
+			verify(printModel, infile, out);
 		}
 	}
 
-	public static boolean check(File file, PrintStream out)
+	public static boolean verify(File file, PrintStream out)
 			throws SyntaxException, ParseException, PreprocessorException {
-		return check(false, file, out);
+		return verify(false, file, out);
 	}
 
-	public static boolean check(boolean printModel, File file, PrintStream out) {
+	public static boolean verify(boolean printModel, File file, PrintStream out) {
 		Program program;
 		StateFactoryIF stateFactory = new StateFactory(modelFactory);
 		Model model;
@@ -258,7 +258,9 @@ public class CIVL {
 			out.println("The specified properties hold for all executions.");
 		}
 		out.flush();
-		return result;
+		// Result is true if there is an error, but we want to return true if
+		// there are no errors.
+		return !result;
 	}
 
 	public static void printStats(PrintStream out,

@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -17,49 +17,49 @@ public class ArithmeticTest {
 	@Test
 	public void testDiffusion() throws ABCException {
 		File file = new File(rootDir, "diffusion_seq.cvl");
-		boolean result = CIVL.check(true, file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(true, file, out);
+		assertTrue(result);
 	}
 
 	@Test
 	public void testMatmat() throws ABCException {
 		File file = new File(rootDir, "matmat.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
 	}
 	
 	@Test
 	public void testLaplace() throws ABCException {
 		File file = new File(rootDir, "laplace.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
 	}
 	
 	@Test
 	public void testAssoc() throws ABCException {
 		File file = new File(rootDir, "assoc.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
 	}
 	
 	@Test
 	public void testAlgebra() throws ABCException {
 		File file = new File(rootDir, "algebra.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
 	}
 	
 	@Test
 	public void testDerivative() throws ABCException {
 		File file = new File(rootDir, "derivative.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
 	}
 
 	@Test
 	public void testDivision() throws ABCException {
 		File file = new File(rootDir, "division.cvl");
-		boolean result = CIVL.check(file, out);
-		assertFalse(result);
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
 	}
 }
