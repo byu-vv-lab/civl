@@ -1,8 +1,8 @@
 int NX_BOUND = 2;
 int NY_BOUND = 2;
 int TIME_BOUND = 2;
-int nx = 2;  // number of x coordinates (including boundary)
-int ny = 2;  // number of rows including boundary
+#define nx 3 // number of x coordinates (including boundary)
+#define ny 3 // number of rows including boundary
 double epsilon = 0.01; // total error tolerance
 $input double initialValues[ny][nx]; // initial values
 $output int t;
@@ -21,7 +21,7 @@ void init() {
 			grid[row][col] = initialValues[row][col];
 }
 
-void write_result(int time, double** data) {
+void write_result(int time, double data[ny][nx]) {
 	int row;
 	int col;
 	
