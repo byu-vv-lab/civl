@@ -9,7 +9,7 @@ void main() {
   $bundle bun;
 
   bun = $bundle_pack(&a[0], N*sizeof(double));
-  $bundle_unpack(bun, &b[0], N*sizeof(double));
+  $bundle_unpack(bun, &b[0]);
   $assert(a[0]==b[0]);
   $assert(a[1]==b[1]);
 }

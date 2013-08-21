@@ -419,7 +419,6 @@ public class Libcivlc implements LibraryExecutor {
 		Expression pointerExpr = arguments[1];
 		// Expression sizeExpr = arguments[1];
 		SymbolicExpression pointer = argumentValues[1];
-		NumericExpression size = (NumericExpression) argumentValues[2];
 		ReferenceExpression symRef = evaluator.getSymRef(pointer);
 		ReferenceKind kind = symRef.referenceKind();
 		SymbolicType referencedType = evaluator.referencedType(source, state,
