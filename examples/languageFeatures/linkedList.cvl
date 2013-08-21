@@ -10,12 +10,12 @@ typedef struct Node {
 
 void main() {
   $heap h;
-  Node head;
+  Node* head;
   Node* current = (Node *) $malloc(&h, sizeof(Node));
   Node final;
   
-  head = *current;
-  head.value = 0.0;
+  head = current;
+  head->value = 0.0;
   for (int i = 0; i < N-1; i++) {
     Node* newNode = (Node *) $malloc(&h, sizeof(Node));
     
@@ -24,7 +24,7 @@ void main() {
     current = newNode;
   }
   current->next = NULL;
-  final = head;
+  final = *head;
   while (final.next != NULL) {
     final = *(final.next);
   }
