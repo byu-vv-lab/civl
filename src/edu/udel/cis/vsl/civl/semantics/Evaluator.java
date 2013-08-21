@@ -1536,14 +1536,22 @@ public class Evaluator {
 	public Evaluation dereference(CIVLSource source, State state,
 			SymbolicExpression pointer) {
 		// how to figure out if pointer is null pointer?
-		int sid = getScopeId(source, pointer);
-		int vid = getVariableId(source, pointer);
-		ReferenceExpression symRef = getSymRef(pointer);
-		SymbolicExpression variableValue = state.getScope(sid).getValue(vid);
-		Evaluation result = new Evaluation(state, universe.dereference(
-				variableValue, symRef));
+		try {
+			int sid = getScopeId(source, pointer);
+			int vid = getVariableId(source, pointer);
+			ReferenceExpression symRef = getSymRef(pointer);
+			SymbolicExpression variableValue = state.getScope(sid)
+					.getValue(vid);
+			Evaluation result = new Evaluation(state, universe.dereference(
+					variableValue, symRef));
 
-		return result;
+			return result;
+			// TODO: this should be an internal exception, it is more
+			// expected if a reference has not been defined:
+		} catch (CIVLInternalException e) {
+			throw new CIVLStateException(ErrorKind.POINTER, Certainty.MAYBE,
+					"Undefined pointer value?", state, source);
+		}
 	}
 
 	/**

@@ -39,18 +39,28 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 		return name;
 	}
 
+	
+	
 	@Override
 	public String toString() {
 		String result = "struct " + name.toString();
 
-		if (isComplete()) {
-			result += " {\n";
-
-			for (StructField f : fields) {
-				result += "  " + f.toString() + "\n";
-			}
-			result += "}";
-		}
+		// if (isComplete()) {
+		// result += "{";
+		// boolean first = true;
+		//
+		// for (StructField f : fields) {
+		// if (first)
+		// first = false;
+		// else
+		// result += ", ";
+		// if (f.type() instanceof CIVLStructType)
+		// result += ((CIVLStructType) f.type()).name();
+		// else
+		// result += f.toString();
+		// }
+		// result += "}";
+		// }
 		return result;
 	}
 
