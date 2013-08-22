@@ -91,6 +91,14 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.verify(true, file, out);
 		assertTrue(result);
 	}
+	
+	@Test
+	public void testBundleStructComponent() throws ABCException {
+		File file = new File(rootDir, "bundleStructComponent.cvl");
+
+		boolean result = CIVL.verify(true, file, out);
+		assertFalse(result);
+	}
 
 	@Test
 	public void testChoose() throws ABCException {
