@@ -83,7 +83,7 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.verify(true, file, out);
 		assertTrue(result);
 	}
-	
+
 	@Test
 	public void testBundleStruct() throws ABCException {
 		File file = new File(rootDir, "bundleStruct.cvl");
@@ -91,13 +91,21 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.verify(true, file, out);
 		assertTrue(result);
 	}
-	
+
 	@Test
 	public void testBundleStructComponent() throws ABCException {
 		File file = new File(rootDir, "bundleStructComponent.cvl");
 
 		boolean result = CIVL.verify(true, file, out);
 		assertFalse(result);
+	}
+
+	@Test
+	public void testBundleSize() throws ABCException {
+		File file = new File(rootDir, "bundleSize.cvl");
+
+		boolean result = CIVL.verify(true, file, out);
+		assertTrue(result);
 	}
 
 	@Test
@@ -120,7 +128,7 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.verify(file, out);
 		assertTrue(result);
 	}
-	
+
 	@Test
 	public void testLinkedList() throws ABCException {
 		File file = new File(rootDir, "linkedList.cvl");

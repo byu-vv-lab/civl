@@ -42,6 +42,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
+import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
@@ -274,6 +275,35 @@ public class Libcivlc implements LibraryExecutor {
 			SymbolicExpression[] argumentValues, CIVLSource source) {
 
 		return null;
+	}
+
+	/**
+	 * Returns the size of a bundle.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @param civlSource
+	 * @return The size of a bundle.
+	 */
+	private State executeBundleSize(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource civlSource) {
+		SymbolicObject arrayObject;
+		SymbolicExpression array;
+		NumericExpression size;
+
+		assert arguments.length == 1;
+		assert argumentValues[0].operator() == SymbolicOperator.UNION_INJECT;
+		arrayObject = argumentValues[0].argument(1);
+		assert arrayObject instanceof SymbolicExpression;
+		array = (SymbolicExpression) arrayObject;
+		size = evaluator.sizeof(civlSource, array.type());
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, lhs, size);
+		return state;
 	}
 
 	/*
@@ -543,6 +573,10 @@ public class Libcivlc implements LibraryExecutor {
 		case "$bundle_unpack":
 			state = executeBundleUnpack(state, pid, arguments, argumentValues,
 					statement.getSource());
+			break;
+		case "$bundle_size":
+			state = executeBundleSize(state, pid, lhs, arguments,
+					argumentValues, statement.getSource());
 			break;
 		case "$memcpy":
 		case "$message_pack":
