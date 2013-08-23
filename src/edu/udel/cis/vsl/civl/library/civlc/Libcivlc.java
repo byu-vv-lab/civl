@@ -299,9 +299,10 @@ public class Libcivlc implements LibraryExecutor {
 		ReferenceKind kind = symRef.referenceKind();
 		SymbolicType elementType = evaluator.referencedType(source, state,
 				pointer);
+		SymbolicType pureElementType = universe.pureType(elementType);
 		SymbolicUnionType symbolicBundleType = bundleType
 				.getDynamicType(universe);
-		int index = bundleType.getIndexOf(elementType);
+		int index = bundleType.getIndexOf(pureElementType);
 		IntObject indexObj = universe.intObject(index);
 		NumericExpression elementSize = evaluator.sizeof(source, elementType);
 		BooleanExpression pathCondition = state.pathCondition();
