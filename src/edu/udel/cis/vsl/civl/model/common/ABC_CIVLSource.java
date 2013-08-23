@@ -37,5 +37,9 @@ public class ABC_CIVLSource implements CIVLSource {
 	public Source getABCSource() {
 		return abcSource;
 	}
+	
+	public String toString() {
+		return abcSource.toString();
+	}
 
 }
