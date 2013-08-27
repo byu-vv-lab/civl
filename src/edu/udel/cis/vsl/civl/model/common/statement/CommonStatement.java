@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -24,6 +25,7 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	private Location source;
 	private Location target;
 	private Expression guard;
+	private Model model;
 	protected Scope statementScope = null;
 
 	/**
@@ -62,6 +64,14 @@ public class CommonStatement extends CommonSourceable implements Statement {
 	public Expression guard() {
 		return guard;
 	}
+	
+	/**
+	 * @return The model to which this statement belongs.
+	 */
+	@Override
+	public Model model() {
+		return model;
+	}
 
 	/**
 	 * @param source
@@ -99,6 +109,15 @@ public class CommonStatement extends CommonSourceable implements Statement {
 		statementScope = join(statementScope, guard.expressionScope());
 	}
 
+	/**
+	 * @param model The Model to which this statement belongs.
+	 */
+	@Override
+	public void setModel(Model model) {
+		this.model = model;
+	}
+	
+	
 	/**
 	 * @return The highest scope accessed by this statement. Null if no
 	 *         variables accessed.

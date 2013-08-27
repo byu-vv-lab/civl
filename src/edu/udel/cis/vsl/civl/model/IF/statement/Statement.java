@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -30,6 +31,11 @@ public interface Statement extends Sourceable {
 	 * @return The boolean-valued guard expression for this statement.
 	 */
 	Expression guard();
+	
+	/**
+	 * @return The model to which this statement belongs.
+	 */
+	Model model();
 
 	/**
 	 * @param source
@@ -49,6 +55,11 @@ public interface Statement extends Sourceable {
 	 */
 	void setGuard(Expression guard);
 
+	/**
+	 * @param model The Model to which this statement belongs.
+	 */
+	void setModel(Model model);
+	
 	/**
 	 * @return The highest scope accessed by this statement. Null if no
 	 *         variables accessed.
