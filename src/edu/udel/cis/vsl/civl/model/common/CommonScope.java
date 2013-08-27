@@ -13,6 +13,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
@@ -349,6 +350,11 @@ public class CommonScope extends CommonSourceable implements Scope {
 		}
 		// TODO If not found, either throw error here or catch higher up
 		return result;
+	}
+
+	@Override
+	public Model model() {
+		return function.model();
 	}
 
 }

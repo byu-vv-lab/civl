@@ -13,6 +13,7 @@ import java.util.Vector;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -40,6 +41,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	private Set<Location> locations;
 	private Expression precondition = null;
 	private Expression postcondition = null;
+	private Model model;
 	protected boolean isSystem = false;
 
 	/**
@@ -155,6 +157,14 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Expression postcondition() {
 		return postcondition;
 	}
+	
+	/**
+	 * @return The model to which this function belongs.
+	 */
+	@Override
+	public Model model() {
+		return model;
+	}
 
 	/**
 	 * @param statements
@@ -263,6 +273,14 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		this.postcondition = postcondition;
 	}
 
+	/**
+	 * @param model The Model to which this function belongs.
+	 */
+	@Override
+	public void setModel(Model model) {
+		this.model = model;
+	}
+	
 	/**
 	 * Print the function.
 	 * 

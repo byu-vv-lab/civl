@@ -20,61 +20,66 @@ public interface Scope extends Sourceable {
 	/**
 	 * @return The containing scope of this scope.
 	 */
-	public Scope parent();
+	Scope parent();
 
 	/**
 	 * @return The set of variables contained in this scope.
 	 */
-	public Set<Variable> variables();
+	Set<Variable> variables();
 
 	/**
 	 * @return The number of variables contained in this scope.
 	 */
-	public int numVariables();
+	int numVariables();
 
 	/**
 	 * @return Get the variable at position i.
 	 */
-	public Variable getVariable(int i);
+	Variable getVariable(int i);
 
 	/**
 	 * @return The id of this scope.
 	 */
-	public int id();
+	int id();
 
 	/**
 	 * @return The scopes contained by this scope.
 	 */
-	public Set<Scope> children();
+	Set<Scope> children();
+
+	/**
+	 * @return The model to which this scope belongs.
+	 */
+	Model model();
 
 	/**
 	 * @param parent
 	 *            The containing scope of this scope.
 	 */
-	public void setParent(Scope parent);
+	void setParent(Scope parent);
 
 	/**
 	 * @param variables
 	 *            The set of variables contained in this scope.
 	 */
-	public void setVariables(Set<Variable> variables);
+	void setVariables(Set<Variable> variables);
 
 	/**
 	 * @param children
 	 *            The scopes contained by this scope.
 	 */
-	public void setChildren(Set<Scope> children);
+	void setChildren(Set<Scope> children);
 
 	/**
 	 * @param A
 	 *            new scope contained by this scope.
 	 */
-	public void addChild(Scope child);
+	void addChild(Scope child);
 
 	/**
 	 * A new variable in this scope.
 	 */
-	public void addVariable(Variable variable);
+	void addVariable(Variable variable);
 
 	/**
 	 * Get the variable associated with an identifier. If this scope does not
@@ -85,7 +90,7 @@ public interface Scope extends Sourceable {
 	 * @return The model representation of the variable in this scope hierarchy,
 	 *         or null if not found.
 	 */
-	public Variable variable(Identifier name);
+	Variable variable(Identifier name);
 
 	/**
 	 * Get the variable at the specified array index.
@@ -95,23 +100,23 @@ public interface Scope extends Sourceable {
 	 *            [0,numVariable()-1].
 	 * @return The variable at the index.
 	 */
-	public Variable variable(int vid);
+	Variable variable(int vid);
 
 	/**
 	 * @param function
 	 *            The function containing this scope.
 	 */
-	public void setFunction(CIVLFunction function);
+	void setFunction(CIVLFunction function);
 
 	/**
 	 * @return The function containing this scope.
 	 */
-	public CIVLFunction function();
+	CIVLFunction function();
 
 	/**
 	 * @return The identifier of the function containing this scope.
 	 */
-	public Identifier functionName();
+	Identifier functionName();
 
 	/**
 	 * A variables has a "procRefType" if it is of type Process or if it is an
@@ -119,7 +124,7 @@ public interface Scope extends Sourceable {
 	 * 
 	 * @return A collection of the variables in this scope with a procRefType.
 	 */
-	public Collection<Variable> variablesWithProcrefs();
+	Collection<Variable> variablesWithProcrefs();
 
 	/**
 	 * A variable contains a pointer type if it is of type PointerType, if it is
@@ -129,7 +134,7 @@ public interface Scope extends Sourceable {
 	 * @return A collection of the variables in this scope containing pointer
 	 *         types.
 	 */
-	public Collection<Variable> variablesWithPointers();
+	Collection<Variable> variablesWithPointers();
 
 	/**
 	 * Print the scope and all children.
@@ -139,8 +144,8 @@ public interface Scope extends Sourceable {
 	 * @param out
 	 *            The PrintStream to use for printing.
 	 */
-	public void print(String prefix, PrintStream out);
+	void print(String prefix, PrintStream out);
 
-	public int getVid(Variable staticVariable);
+	int getVid(Variable staticVariable);
 
 }

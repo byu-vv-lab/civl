@@ -211,6 +211,12 @@ public class ModelBuilderWorker {
 	private CIVLHeapType heapType;
 
 	private CIVLBundleType bundleType;
+	
+	private CIVLType messageType;
+	
+	private CIVLType queueType;
+	
+	private CIVLType commType;
 
 	// Constructors........................................................
 
@@ -532,6 +538,12 @@ public class ModelBuilderWorker {
 				civlFields[i] = civlField;
 			}
 			result.complete(civlFields);
+			if ("__message__".equals(tag)) 
+				messageType = result;
+			if ("__queue__".equals(tag))
+				queueType = result;
+			if ("__comm__".equals(tag))
+				commType = result;
 			return result;
 		}
 	}
@@ -2667,10 +2679,19 @@ public class ModelBuilderWorker {
 		factory.completeHeapType(heapType, mallocStatements);
 		completeBundleType();
 		model = factory.model(system.getSource(), system);
+		model.setMessageType(messageType);
+		model.setQueueType(queueType);
+		model.setCommType(commType);
 		// add all functions to model except main:
 		for (CIVLFunction f : functionMap.values())
 			model.addFunction(f);
 		((CommonModel) model).setMallocStatements(mallocStatements);
+		for (CIVLFunction f : model.functions()) {
+			f.setModel(model);
+			for (Statement s : f.statements()) {
+				s.setModel(model);
+			}
+		}
 	}
 
 	public Model getModel() {

@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -30,6 +31,9 @@ public class CommonModel extends CommonSourceable implements Model {
 	private ModelFactory modelFactory;
 	private String name = "";
 	private Map<String, Variable> externVariables;
+	private CIVLType queueType;
+	private CIVLType messageType;
+	private CIVLType commType;
 	
 	private ArrayList<MallocStatement> mallocStatements;
 
@@ -129,6 +133,27 @@ public class CommonModel extends CommonSourceable implements Model {
 	}
 
 	/**
+	 * @param queueType The queue type used by this model.
+	 */
+	public void setQueueType(CIVLType queueType) {
+		this.queueType = queueType;
+	}
+	
+	/**
+	 * @param messageType The message type used by this model.
+	 */
+	public void setMessageType(CIVLType messageType) {
+		this.messageType = messageType;
+	}
+	
+	/**
+	 * @param commType The comm type used by this model.
+	 */
+	public void setCommType(CIVLType commType) {
+		this.commType = commType;
+	}
+	
+	/**
 	 * Get a function based on its name.
 	 * 
 	 * @param name
@@ -187,6 +212,21 @@ public class CommonModel extends CommonSourceable implements Model {
 	@Override
 	public MallocStatement getMalloc(int index) {
 		return mallocStatements.get(index);
+	}
+
+	@Override
+	public CIVLType queueType() {
+		return queueType;
+	}
+
+	@Override
+	public CIVLType mesageType() {
+		return messageType;
+	}
+
+	@Override
+	public CIVLType commType() {
+		return commType;
 	}
 
 }

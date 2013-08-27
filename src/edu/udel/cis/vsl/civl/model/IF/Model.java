@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -95,5 +96,35 @@ public interface Model extends Sourceable {
 	int getNumMallocs();
 
 	MallocStatement getMalloc(int index);
+	
+	/**
+	 * 
+	 * @param queueType The queue type used by this model.
+	 */
+	void setQueueType(CIVLType queueType);
+	
+	/**
+	 * @param messageType The message type used by this model.
+	 */
+	void setMessageType(CIVLType messageType);
+	
+	/**
+	 * @param commType The comm type used by this model.
+	 */
+	void setCommType(CIVLType commType);
+	
+	/**
+	 * @return The queue type used by this model.
+	 */
+	 CIVLType queueType();
+	 
+	 /**
+	  * @return The message type used by this model.
+	  */
+	 CIVLType mesageType();
 
+	 /**
+	  * @return The comm type used by this model.
+	  */
+	 CIVLType commType();
 }

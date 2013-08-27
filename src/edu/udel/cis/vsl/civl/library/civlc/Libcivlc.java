@@ -1,6 +1,8 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLException;
@@ -12,6 +14,7 @@ import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -20,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
@@ -44,6 +48,7 @@ import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
@@ -325,8 +330,8 @@ public class Libcivlc implements LibraryExecutor {
 		// Expression sizeExpr = arguments[1];
 		SymbolicExpression pointer = argumentValues[0];
 		NumericExpression size = (NumericExpression) argumentValues[1];
-		ReferenceExpression symRef = evaluator.getSymRef(pointer);
-		ReferenceKind kind = symRef.referenceKind();
+		// ReferenceExpression symRef = evaluator.getSymRef(pointer);
+		// ReferenceKind kind = symRef.referenceKind();
 		SymbolicType elementType = evaluator.referencedType(source, state,
 				pointer);
 		SymbolicType pureElementType = universe.pureType(elementType);
@@ -334,109 +339,113 @@ public class Libcivlc implements LibraryExecutor {
 				.getDynamicType(universe);
 		int index = bundleType.getIndexOf(pureElementType);
 		IntObject indexObj = universe.intObject(index);
-		NumericExpression elementSize = evaluator.sizeof(source, elementType);
-		BooleanExpression pathCondition = state.pathCondition();
-		BooleanExpression zeroSizeClaim = universe.equals(size, zero);
-		Reasoner reasoner = universe.reasoner(pathCondition);
-		ResultType zeroSizeValid = reasoner.valid(zeroSizeClaim)
-				.getResultType();
-		SymbolicExpression array;
+		// NumericExpression elementSize = evaluator.sizeof(source,
+		// elementType);
+		// BooleanExpression pathCondition = state.pathCondition();
+		// BooleanExpression zeroSizeClaim = universe.equals(size, zero);
+		// Reasoner reasoner = universe.reasoner(pathCondition);
+		// ResultType zeroSizeValid = reasoner.valid(zeroSizeClaim)
+		// .getResultType();
+		SymbolicExpression array = getArrayFromPointer(state, pointerExpr,
+				pointer, size, source);
 		SymbolicExpression bundle;
-
-		if (zeroSizeValid == ResultType.YES) {
-			array = universe.emptyArray(elementType);
-		} else {
-			BooleanExpression oneCountClaim = universe
-					.equals(size, elementSize);
-			ResultType oneCountValid = reasoner.valid(oneCountClaim)
-					.getResultType();
-
-			if (oneCountValid == ResultType.YES) {
-				Evaluation eval = evaluator.dereference(
-						pointerExpr.getSource(), state, pointer);
-				SymbolicExpression element0 = eval.value;
-
-				state = eval.state;
-				pathCondition = state.pathCondition();
-				array = universe.array(elementType,
-						new Singleton<SymbolicExpression>(element0));
-			} else {
-				BooleanExpression divisibility = universe.divides(elementSize,
-						size);
-				ResultType divisibilityValid = reasoner.valid(divisibility)
-						.getResultType();
-				NumericExpression count;
-
-				if (divisibilityValid != ResultType.YES) {
-					Certainty certainty = divisibilityValid == ResultType.MAYBE ? Certainty.MAYBE
-							: Certainty.PROVEABLE;
-					CIVLStateException e = new CIVLStateException(
-							ErrorKind.OTHER, certainty,
-							"sizeof element does not divide size argument",
-							state, source);
-
-					log.report(e);
-					pathCondition = universe.and(pathCondition, divisibility);
-					state = stateFactory.setPathCondition(state, pathCondition);
-					reasoner = universe.reasoner(pathCondition);
-				}
-				count = universe.divide(size, elementSize);
-				switch (kind) {
-				case ARRAY_ELEMENT: {
-					NumericExpression startIndex = ((ArrayElementReference) symRef)
-							.getIndex();
-					SymbolicExpression arrayPointer = evaluator.parentPointer(
-							source, pointer);
-					Evaluation eval = evaluator.dereference(source, state,
-							arrayPointer);
-					SymbolicExpression originalArray = eval.value;
-					NumericExpression endIndex = universe
-							.add(startIndex, count);
-
-					state = eval.state;
-					array = evaluator.getSubArray(originalArray, startIndex,
-							endIndex, state, source);
-					break;
-				}
-				case IDENTITY:
-					throw new CIVLStateException(ErrorKind.POINTER,
-							Certainty.MAYBE,
-							"unable to get concrete count of 0 or 1 from size",
-							state, source);
-				case NULL: { // size must be 0
-					Certainty certainty = zeroSizeValid == ResultType.MAYBE ? Certainty.MAYBE
-							: Certainty.PROVEABLE;
-					CIVLStateException e = new CIVLStateException(
-							ErrorKind.POINTER, certainty,
-							"null pointer only valid with size 0", state,
-							source);
-
-					log.report(e);
-					pathCondition = universe.and(pathCondition, zeroSizeClaim);
-					state = stateFactory.setPathCondition(state, pathCondition);
-					reasoner = universe.reasoner(pathCondition);
-					array = universe.emptyArray(elementType);
-				}
-				case OFFSET: {
-					// either size is zero or size is 1 and offset is 0
-					throw new CIVLStateException(ErrorKind.POINTER,
-							Certainty.MAYBE, "possible out of bounds pointer",
-							state, source);
-				}
-				case TUPLE_COMPONENT: {
-					throw new CIVLStateException(ErrorKind.POINTER,
-							Certainty.MAYBE,
-							"unable to get concrete count of 0 or 1 from size",
-							state, source);
-				}
-				case UNION_MEMBER:
-					throw new CIVLInternalException("dereference union member",
-							source);
-				default:
-					throw new CIVLInternalException("unreachable", source);
-				}
-			}
-		}
+		//
+		// if (zeroSizeValid == ResultType.YES) {
+		// array = universe.emptyArray(elementType);
+		// } else {
+		// BooleanExpression oneCountClaim = universe
+		// .equals(size, elementSize);
+		// ResultType oneCountValid = reasoner.valid(oneCountClaim)
+		// .getResultType();
+		//
+		// if (oneCountValid == ResultType.YES) {
+		// Evaluation eval = evaluator.dereference(
+		// pointerExpr.getSource(), state, pointer);
+		// SymbolicExpression element0 = eval.value;
+		//
+		// state = eval.state;
+		// pathCondition = state.pathCondition();
+		// array = universe.array(elementType,
+		// new Singleton<SymbolicExpression>(element0));
+		// } else {
+		// BooleanExpression divisibility = universe.divides(elementSize,
+		// size);
+		// ResultType divisibilityValid = reasoner.valid(divisibility)
+		// .getResultType();
+		// NumericExpression count;
+		//
+		// if (divisibilityValid != ResultType.YES) {
+		// Certainty certainty = divisibilityValid == ResultType.MAYBE ?
+		// Certainty.MAYBE
+		// : Certainty.PROVEABLE;
+		// CIVLStateException e = new CIVLStateException(
+		// ErrorKind.OTHER, certainty,
+		// "sizeof element does not divide size argument",
+		// state, source);
+		//
+		// log.report(e);
+		// pathCondition = universe.and(pathCondition, divisibility);
+		// state = stateFactory.setPathCondition(state, pathCondition);
+		// reasoner = universe.reasoner(pathCondition);
+		// }
+		// count = universe.divide(size, elementSize);
+		// switch (kind) {
+		// case ARRAY_ELEMENT: {
+		// NumericExpression startIndex = ((ArrayElementReference) symRef)
+		// .getIndex();
+		// SymbolicExpression arrayPointer = evaluator.parentPointer(
+		// source, pointer);
+		// Evaluation eval = evaluator.dereference(source, state,
+		// arrayPointer);
+		// SymbolicExpression originalArray = eval.value;
+		// NumericExpression endIndex = universe
+		// .add(startIndex, count);
+		//
+		// state = eval.state;
+		// array = evaluator.getSubArray(originalArray, startIndex,
+		// endIndex, state, source);
+		// break;
+		// }
+		// case IDENTITY:
+		// throw new CIVLStateException(ErrorKind.POINTER,
+		// Certainty.MAYBE,
+		// "unable to get concrete count of 0 or 1 from size",
+		// state, source);
+		// case NULL: { // size must be 0
+		// Certainty certainty = zeroSizeValid == ResultType.MAYBE ?
+		// Certainty.MAYBE
+		// : Certainty.PROVEABLE;
+		// CIVLStateException e = new CIVLStateException(
+		// ErrorKind.POINTER, certainty,
+		// "null pointer only valid with size 0", state,
+		// source);
+		//
+		// log.report(e);
+		// pathCondition = universe.and(pathCondition, zeroSizeClaim);
+		// state = stateFactory.setPathCondition(state, pathCondition);
+		// reasoner = universe.reasoner(pathCondition);
+		// array = universe.emptyArray(elementType);
+		// }
+		// case OFFSET: {
+		// // either size is zero or size is 1 and offset is 0
+		// throw new CIVLStateException(ErrorKind.POINTER,
+		// Certainty.MAYBE, "possible out of bounds pointer",
+		// state, source);
+		// }
+		// case TUPLE_COMPONENT: {
+		// throw new CIVLStateException(ErrorKind.POINTER,
+		// Certainty.MAYBE,
+		// "unable to get concrete count of 0 or 1 from size",
+		// state, source);
+		// }
+		// case UNION_MEMBER:
+		// throw new CIVLInternalException("dereference union member",
+		// source);
+		// default:
+		// throw new CIVLInternalException("unreachable", source);
+		// }
+		// }
+		// }
 		bundle = universe.unionInject(symbolicBundleType, indexObj, array);
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, lhs, bundle);
@@ -533,6 +542,55 @@ public class Libcivlc implements LibraryExecutor {
 		throw new CIVLInternalException("Cannot complete unpack", source);
 	}
 
+	private State executeCommCreate(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) {
+		SymbolicExpression comm;
+		SymbolicExpression nprocs = argumentValues[0];
+		int nprocsConcrete;
+		SymbolicExpression procs;
+		SymbolicExpression buff;
+		SymbolicExpression buff1d;
+		List<SymbolicExpression> queueComponents = new LinkedList<SymbolicExpression>();
+		List<SymbolicExpression> emptyQueues = new LinkedList<SymbolicExpression>();
+		List<SymbolicExpression> buff1ds = new LinkedList<SymbolicExpression>();
+		List<SymbolicExpression> commComponents = new LinkedList<SymbolicExpression>();
+		Model model = state.getScope(0).lexicalScope().model();
+		CIVLType queueType = model.queueType();
+		CIVLType messageType = model.mesageType();
+		CIVLType commType = model.commType();
+		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
+		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
+		SymbolicExpression emptyQueue; // Just need one since immutable.
+
+		assert nprocs instanceof NumericExpression;
+		procs = getArrayFromPointer(state, arguments[1], argumentValues[1],
+				(NumericExpression) nprocs, source);
+		nprocsConcrete = evaluator.extractInt(source,
+				(NumericExpression) nprocs);
+		queueComponents.add(universe.integer(0));
+		queueComponents.add(universe.emptyArray(dynamicMessageType));
+		assert dynamicQueueType instanceof SymbolicTupleType;
+		emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
+				queueComponents);
+		for (int i = 0; i < nprocsConcrete; i++) {
+			emptyQueues.add(emptyQueue);
+		}
+		buff1d = universe.array(dynamicQueueType, emptyQueues);
+		for (int i = 0; i < nprocsConcrete; i++) {
+			buff1ds.add(buff1d);
+		}
+		buff = universe.array(universe.arrayType(dynamicQueueType), buff1ds);
+		commComponents.add(nprocs);
+		commComponents.add(procs);
+		commComponents.add(buff);
+		assert commType instanceof SymbolicTupleType;
+		comm = universe.tuple((SymbolicTupleType) commType, commComponents);
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, lhs, comm);
+		return state;
+	}
+
 	@Override
 	public State execute(State state, int pid, Statement statement) {
 		Identifier name;
@@ -578,6 +636,10 @@ public class Libcivlc implements LibraryExecutor {
 			state = executeBundleSize(state, pid, lhs, arguments,
 					argumentValues, statement.getSource());
 			break;
+		case "$comm_create":
+			state = executeCommCreate(state, pid, lhs, arguments,
+					argumentValues, statement.getSource());
+			break;
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":
@@ -585,7 +647,6 @@ public class Libcivlc implements LibraryExecutor {
 		case "$message_dest":
 		case "$message_size":
 		case "$message_unpack":
-		case "$comm_create":
 		case "$comm_destroy":
 		case "$comm_nprocs":
 		case "$comm_enqueue":
@@ -600,6 +661,118 @@ public class Libcivlc implements LibraryExecutor {
 					statement);
 		}
 		return state;
+	}
+
+	private SymbolicExpression getArrayFromPointer(State state,
+			Expression pointerExpr, SymbolicExpression pointer,
+			NumericExpression size, CIVLSource source) {
+		SymbolicExpression array;
+		ReferenceExpression symRef = evaluator.getSymRef(pointer);
+		ReferenceKind kind = symRef.referenceKind();
+		SymbolicType elementType = evaluator.referencedType(source, state,
+				pointer);
+		NumericExpression elementSize = evaluator.sizeof(source, elementType);
+		BooleanExpression pathCondition = state.pathCondition();
+		BooleanExpression zeroSizeClaim = universe.equals(size, zero);
+		Reasoner reasoner = universe.reasoner(pathCondition);
+		ResultType zeroSizeValid = reasoner.valid(zeroSizeClaim)
+				.getResultType();
+
+		if (zeroSizeValid == ResultType.YES) {
+			array = universe.emptyArray(elementType);
+		} else {
+			BooleanExpression oneCountClaim = universe
+					.equals(size, elementSize);
+			ResultType oneCountValid = reasoner.valid(oneCountClaim)
+					.getResultType();
+
+			if (oneCountValid == ResultType.YES) {
+				Evaluation eval = evaluator.dereference(
+						pointerExpr.getSource(), state, pointer);
+				SymbolicExpression element0 = eval.value;
+
+				state = eval.state;
+				pathCondition = state.pathCondition();
+				array = universe.array(elementType,
+						new Singleton<SymbolicExpression>(element0));
+			} else {
+				BooleanExpression divisibility = universe.divides(elementSize,
+						size);
+				ResultType divisibilityValid = reasoner.valid(divisibility)
+						.getResultType();
+				NumericExpression count;
+
+				if (divisibilityValid != ResultType.YES) {
+					Certainty certainty = divisibilityValid == ResultType.MAYBE ? Certainty.MAYBE
+							: Certainty.PROVEABLE;
+					CIVLStateException e = new CIVLStateException(
+							ErrorKind.OTHER, certainty,
+							"sizeof element does not divide size argument",
+							state, source);
+
+					log.report(e);
+					pathCondition = universe.and(pathCondition, divisibility);
+					state = stateFactory.setPathCondition(state, pathCondition);
+					reasoner = universe.reasoner(pathCondition);
+				}
+				count = universe.divide(size, elementSize);
+				switch (kind) {
+				case ARRAY_ELEMENT: {
+					NumericExpression startIndex = ((ArrayElementReference) symRef)
+							.getIndex();
+					SymbolicExpression arrayPointer = evaluator.parentPointer(
+							source, pointer);
+					Evaluation eval = evaluator.dereference(source, state,
+							arrayPointer);
+					SymbolicExpression originalArray = eval.value;
+					NumericExpression endIndex = universe
+							.add(startIndex, count);
+
+					state = eval.state;
+					array = evaluator.getSubArray(originalArray, startIndex,
+							endIndex, state, source);
+					break;
+				}
+				case IDENTITY:
+					throw new CIVLStateException(ErrorKind.POINTER,
+							Certainty.MAYBE,
+							"unable to get concrete count of 0 or 1 from size",
+							state, source);
+				case NULL: { // size must be 0
+					Certainty certainty = zeroSizeValid == ResultType.MAYBE ? Certainty.MAYBE
+							: Certainty.PROVEABLE;
+					CIVLStateException e = new CIVLStateException(
+							ErrorKind.POINTER, certainty,
+							"null pointer only valid with size 0", state,
+							source);
+
+					log.report(e);
+					pathCondition = universe.and(pathCondition, zeroSizeClaim);
+					state = stateFactory.setPathCondition(state, pathCondition);
+					reasoner = universe.reasoner(pathCondition);
+					array = universe.emptyArray(elementType);
+				}
+				case OFFSET: {
+					// either size is zero or size is 1 and offset is 0
+					throw new CIVLStateException(ErrorKind.POINTER,
+							Certainty.MAYBE, "possible out of bounds pointer",
+							state, source);
+				}
+				case TUPLE_COMPONENT: {
+					throw new CIVLStateException(ErrorKind.POINTER,
+							Certainty.MAYBE,
+							"unable to get concrete count of 0 or 1 from size",
+							state, source);
+				}
+				case UNION_MEMBER:
+					throw new CIVLInternalException("dereference union member",
+							source);
+				default:
+					throw new CIVLInternalException("unreachable", source);
+				}
+			}
+		}
+		return array;
 	}
 
 	@Override

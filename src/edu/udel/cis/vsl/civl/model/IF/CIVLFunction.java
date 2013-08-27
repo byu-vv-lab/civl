@@ -77,6 +77,11 @@ public interface CIVLFunction extends Sourceable {
 	public Expression postcondition();
 
 	/**
+	 * @return The model to which this function belongs.
+	 */
+	Model model();
+	
+	/**
 	 * @param statements
 	 *            The set of statements in this function.
 	 */
@@ -154,6 +159,11 @@ public interface CIVLFunction extends Sourceable {
 	 */
 	public void setPostcondition(Expression postcondition);
 
+	/**
+	 * @param model The Model to which this function belongs.
+	 */
+	void setModel(Model model);
+	
 	/**
 	 * Print the function.
 	 * 
