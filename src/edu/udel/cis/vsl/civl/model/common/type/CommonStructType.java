@@ -148,5 +148,10 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 		}
 		return dynamicType;
 	}
+	
+	@Override
+	public boolean isStructType() {
+		return true;
+	}
 
 }

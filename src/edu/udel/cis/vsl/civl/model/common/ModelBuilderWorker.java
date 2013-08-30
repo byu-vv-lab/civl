@@ -206,16 +206,18 @@ public class ModelBuilderWorker {
 
 	private ArrayList<MallocStatement> mallocStatements = new ArrayList<MallocStatement>();
 
-	private LinkedList<CIVLType> typeList = new LinkedList<CIVLType>();
+	private LinkedList<CIVLType> bundleableTypeList = new LinkedList<CIVLType>();
+	
+	private LinkedList<CIVLType> unbundleableTypeList = new LinkedList<CIVLType>();
 
 	private CIVLHeapType heapType;
 
 	private CIVLBundleType bundleType;
-	
+
 	private CIVLType messageType;
-	
+
 	private CIVLType queueType;
-	
+
 	private CIVLType commType;
 
 	// Constructors........................................................
@@ -538,7 +540,7 @@ public class ModelBuilderWorker {
 				civlFields[i] = civlField;
 			}
 			result.complete(civlFields);
-			if ("__message__".equals(tag)) 
+			if ("__message__".equals(tag))
 				messageType = result;
 			if ("__queue__".equals(tag))
 				queueType = result;
@@ -642,8 +644,43 @@ public class ModelBuilderWorker {
 			}
 			typeMap.put(abcType, result);
 		}
-		if (!result.isBundleType() && !result.isVoidType())
-			typeList.add(result);
+		if (bundleableType(result)){
+			bundleableTypeList.add(result); 
+		} else {
+			unbundleableTypeList.add(result);
+		}
+		
+		return result;
+	}
+
+	/**
+	 * Returns false if a type contains a bundle or void (but void* is ok).
+	 * 
+	 */
+	private boolean bundleableType(CIVLType type) {
+		boolean result = true;
+
+		if (type.isBundleType()) {
+			result = false;
+		} else if (type.isPointerType()) {
+			if (((CIVLPointerType) type).baseType().isVoidType()) {
+				// void* is bundleable, so catch this before checking base type
+				result = true;
+			} else {
+				result = bundleableType(((CIVLPointerType) type).baseType());
+			}
+		} else if (type.isVoidType()) {
+			result = false;
+		} else if (type.isArrayType()) {
+			result = bundleableType(((CIVLArrayType) type).elementType());
+		} else if (type.isStructType()) {
+			for (StructField f : ((CIVLStructType) type).fields()) {
+				result = result && bundleableType(f.type());
+				if (!result)
+					break;
+			}
+		}
+		// Heaps and primitive types can be bundled.
 		return result;
 	}
 
@@ -2536,7 +2573,7 @@ public class ModelBuilderWorker {
 		Map<SymbolicType, Integer> dynamicTypeMap = new LinkedHashMap<SymbolicType, Integer>();
 		int dynamicTypeCount = 0;
 
-		for (CIVLType type : typeList) {
+		for (CIVLType type : bundleableTypeList) {
 			SymbolicType dynamicType = type.getDynamicType(universe);
 			Integer id = dynamicTypeMap.get(dynamicType);
 

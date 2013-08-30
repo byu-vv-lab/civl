@@ -76,5 +76,9 @@ public interface CIVLType {
 	boolean isHeapType();
 
 	boolean isBundleType();
+	
+	boolean isStructType();
+	
+	boolean isArrayType();
 
 }

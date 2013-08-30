@@ -77,6 +77,16 @@ public abstract class CommonType implements CIVLType {
 	}
 
 	@Override
+	public boolean isArrayType() {
+		return false;
+	}
+
+	@Override
+	public boolean isStructType() {
+		return false;
+	}
+
+	@Override
 	public int getDynamicTypeIndex() {
 		return dynamicTypeIndex;
 	}
