@@ -41,6 +41,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
@@ -1306,6 +1307,8 @@ public class Evaluator {
 			}
 			result = new TypeEvaluation(state, universe.tupleType(structType
 					.name().stringObject(), componentTypes));
+		} else if (type instanceof CIVLBundleType) {
+			result = new TypeEvaluation(state, type.getDynamicType(universe));
 		} else
 			throw new CIVLInternalException("Unreachable", source);
 		return result;
