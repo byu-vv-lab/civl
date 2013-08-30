@@ -683,6 +683,85 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
+	private State executeCommDequeue(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues) {
+		SymbolicExpression comm;
+		SymbolicExpression procArray;
+		CIVLSource commArgSource = arguments[0].getSource();
+		int nprocs;
+		int source = -1;
+		int dest = -1;
+		NumericExpression sourceExpression;
+		NumericExpression destExpression;
+		SymbolicExpression buf; // buf has type $queue[][]
+		SymbolicExpression bufRow; // buf[source], has type $queue[] and
+									// corresponds
+		SymbolicExpression queue; // the particular $queue for this source and
+									// dest
+		int queueLength;
+		SymbolicExpression messages;
+		SymbolicExpression message = null;
+		int commScopeID = evaluator
+				.getScopeId(commArgSource, argumentValues[0]);
+		int commVariableID = evaluator.getVariableId(commArgSource,
+				argumentValues[0]);
+
+		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
+		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
+		nprocs = evaluator.extractInt(commArgSource,
+				(NumericExpression) universe.tupleRead(comm, zeroObject));
+		procArray = (SymbolicExpression) universe.tupleRead(comm,
+				universe.intObject(1));
+		// Find the array index corresponding to the source proc and dest proc
+		for (int i = 0; i < nprocs; i++) {
+			SymbolicExpression proc = universe.arrayRead(procArray,
+					universe.integer(i));
+			if (universe.tupleRead(proc, zeroObject).equals(argumentValues[1])) {
+				source = i;
+			}
+			if (universe.tupleRead(proc, zeroObject).equals(argumentValues[2])) {
+				dest = i;
+			}
+			if (dest >= 0 && source >= 0) {
+				break;
+			}
+		}
+		assert source >= 0;
+		assert dest >= 0;
+		sourceExpression = universe.integer(source);
+		destExpression = universe.integer(dest);
+		buf = universe.tupleRead(comm, universe.intObject(2));
+		bufRow = universe.arrayRead(buf, sourceExpression);
+		queue = universe.arrayRead(bufRow, destExpression);
+		messages = universe.tupleRead(queue, universe.intObject(1));
+		for (int i = 0; i < evaluator.extractInt(commArgSource,
+				universe.length(messages)); i++) {
+			if (universe.tupleRead(
+					universe.arrayRead(messages, universe.integer(i)),
+					universe.intObject(2)).equals(argumentValues[3])) {
+				message = universe.arrayRead(messages, universe.integer(i));
+				messages = universe.removeElementAt(messages, i);
+			}
+		}
+		assert universe.tupleRead(queue, zeroObject) instanceof NumericExpression;
+		queueLength = evaluator.extractInt(commArgSource,
+				(NumericExpression) universe.tupleRead(queue, zeroObject));
+		queueLength--;
+		queue = universe.tupleWrite(queue, universe.intObject(0),
+				universe.integer(queueLength));
+		queue = universe.tupleWrite(queue, universe.intObject(1), messages);
+		bufRow = universe.arrayWrite(bufRow, destExpression, queue);
+		buf = universe.arrayWrite(buf, sourceExpression, bufRow);
+		comm = universe.tupleWrite(comm, universe.intObject(2), buf);
+		state = stateFactory.setVariable(state, commVariableID, commScopeID,
+				comm);
+		if (lhs != null) {
+			assert message != null;
+			state = primaryExecutor.assign(state, pid, lhs, message);
+		}
+		return state;
+	}
+
 	@Override
 	public State execute(State state, int pid, Statement statement) {
 		Identifier name;
@@ -735,6 +814,9 @@ public class Libcivlc implements LibraryExecutor {
 		case "$comm_enqueue":
 			state = executeCommEnqueue(state, pid, arguments, argumentValues);
 			break;
+		case "$comm_dequeue":
+			state = executeCommDequeue(state, pid, lhs, arguments, argumentValues);
+			break;
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":
@@ -746,7 +828,6 @@ public class Libcivlc implements LibraryExecutor {
 		case "$comm_nprocs":
 		case "$comm_probe":
 		case "$comm_seek":
-		case "$comm_dequeue":
 		case "$comm_chan_size":
 		case "$comm_total_size":
 			throw new CIVLUnimplementedFeatureException(name.name(), statement);
