@@ -79,6 +79,8 @@ public class Libcivlc implements LibraryExecutor {
 
 	private NumericExpression one;
 
+	private IntObject zeroObject;
+
 	private ErrorLog log;
 
 	// private SymbolicType bundleSymbolicType;
@@ -91,6 +93,7 @@ public class Libcivlc implements LibraryExecutor {
 		this.stateFactory = evaluator.stateFactory();
 		this.zero = universe.zeroInt();
 		this.one = universe.oneInt();
+		this.zeroObject = universe.intObject(0);
 
 	}
 
@@ -615,27 +618,28 @@ public class Libcivlc implements LibraryExecutor {
 		int queueLength;
 		SymbolicExpression messages;
 		List<SymbolicExpression> messagesElements = new LinkedList<SymbolicExpression>();
+		Evaluation newMessage;
 		int commScopeID = evaluator
 				.getScopeId(commArgSource, argumentValues[0]);
 		int commVariableID = evaluator.getVariableId(commArgSource,
 				argumentValues[0]);
 
 		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
-		assert comm.argument(0) instanceof NumericExpression;
+		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
 		nprocs = evaluator.extractInt(commArgSource,
-				(NumericExpression) comm.argument(0));
-		procArray = (SymbolicExpression) ((SymbolicExpression) comm)
-				.argument(1);
+				(NumericExpression) universe.tupleRead(comm, zeroObject));
+		procArray = (SymbolicExpression) universe.tupleRead(comm,
+				universe.intObject(1));
 		// Find the array index corresponding to the source proc and dest proc
 		for (int i = 0; i < nprocs; i++) {
 			SymbolicExpression proc = universe.arrayRead(procArray,
 					universe.integer(i));
 			int procID = evaluator.extractInt(commArgSource,
-					(NumericExpression) proc.argument(1));
+					(NumericExpression) universe.tupleRead(proc, zeroObject));
 			if (procID == pid) {
 				source = i;
 			}
-			if (proc.argument(1).equals(argumentValues[2])) {
+			if (universe.tupleRead(proc, zeroObject).equals(argumentValues[2])) {
 				dest = i;
 			}
 			if (dest >= 0 && source >= 0) {
@@ -646,18 +650,22 @@ public class Libcivlc implements LibraryExecutor {
 		assert dest >= 0;
 		sourceExpression = universe.integer(source);
 		destExpression = universe.integer(dest);
-		buf = (SymbolicExpression) comm.argument(2);
+		buf = universe.tupleRead(comm, universe.intObject(2));
 		bufRow = universe.arrayRead(buf, sourceExpression);
 		queue = universe.arrayRead(bufRow, destExpression);
 		messages = universe.tupleRead(queue, universe.intObject(1));
-		for (int i = 0; i < messages.numArguments(); i++) {
-			messagesElements.add((SymbolicExpression) messages.argument(i));
+		for (int i = 0; i < evaluator.extractInt(commArgSource,
+				universe.length(messages)); i++) {
+			messagesElements.add(universe.arrayRead(messages,
+					universe.integer(i)));
 		}
-		messagesElements.add(argumentValues[1]);
-		messages = universe.array(messages.type(), messagesElements);
-		assert queue.argument(0) instanceof NumericExpression;
+		newMessage = evaluator.dereference(commArgSource, state,
+				argumentValues[1]);
+		messagesElements.add(newMessage.value);
+		messages = universe.array(((SymbolicArrayType) messages.type()).elementType(), messagesElements);
+		assert universe.tupleRead(queue, zeroObject) instanceof NumericExpression;
 		queueLength = evaluator.extractInt(commArgSource,
-				(NumericExpression) queue.argument(0));
+				(NumericExpression) universe.tupleRead(queue, zeroObject));
 		queueLength++;
 		queue = universe.tupleWrite(queue, universe.intObject(0),
 				universe.integer(queueLength));
