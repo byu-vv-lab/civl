@@ -241,5 +241,12 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.verify(file, out);
 		assertTrue(result);
 	}
+	
+	@Test
+	public void testComm() throws ABCException {
+		File file = new File(rootDir, "comm.cvl");
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
+	}
 
 }

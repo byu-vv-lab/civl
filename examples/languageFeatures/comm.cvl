@@ -1,0 +1,20 @@
+#include <civlc.h>
+
+void worker(int value) {
+  for (int i = 0; i < value; i++) {
+    ; // Do work
+  }
+}
+
+void main() {
+  int nprocs = 3;
+  $proc procs[nprocs];
+  $comm comm;
+  $message message;
+  
+  procs[0] = $self;
+  procs[1] = $spawn worker(4);
+  procs[2] = $spawn worker(5);
+  comm = $comm_create(nprocs, procs);
+  message = $message_pack(0, 1, 0, &nprocs, sizeof(int));
+}

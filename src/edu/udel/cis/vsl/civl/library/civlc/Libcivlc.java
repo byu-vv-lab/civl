@@ -547,6 +547,7 @@ public class Libcivlc implements LibraryExecutor {
 			CIVLSource source) {
 		SymbolicExpression comm;
 		SymbolicExpression nprocs = argumentValues[0];
+		NumericExpression size;
 		int nprocsConcrete;
 		SymbolicExpression procs;
 		SymbolicExpression buff;
@@ -564,8 +565,11 @@ public class Libcivlc implements LibraryExecutor {
 		SymbolicExpression emptyQueue; // Just need one since immutable.
 
 		assert nprocs instanceof NumericExpression;
+		size = universe.multiply((NumericExpression) nprocs, evaluator.sizeof(
+				arguments[1].getSource(), evaluator.modelFactory()
+						.processSymbolicType()));
 		procs = getArrayFromPointer(state, arguments[1], argumentValues[1],
-				(NumericExpression) nprocs, source);
+				size, source);
 		nprocsConcrete = evaluator.extractInt(source,
 				(NumericExpression) nprocs);
 		queueComponents.add(universe.integer(0));
@@ -584,10 +588,85 @@ public class Libcivlc implements LibraryExecutor {
 		commComponents.add(nprocs);
 		commComponents.add(procs);
 		commComponents.add(buff);
-		assert commType instanceof SymbolicTupleType;
-		comm = universe.tuple((SymbolicTupleType) commType, commComponents);
+		assert commType.getDynamicType(universe) instanceof SymbolicTupleType;
+		comm = universe.tuple(
+				(SymbolicTupleType) commType.getDynamicType(universe),
+				commComponents);
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, lhs, comm);
+		return state;
+	}
+
+	private State executeCommEnqueue(State state, int pid,
+			Expression[] arguments, SymbolicExpression[] argumentValues) {
+		SymbolicExpression comm;
+		SymbolicExpression procArray;
+		CIVLSource commArgSource = arguments[0].getSource();
+		int nprocs;
+		int source = -1;
+		int dest = -1;
+		NumericExpression sourceExpression;
+		NumericExpression destExpression;
+		SymbolicExpression buf; // buf has type $queue[][]
+		SymbolicExpression bufRow; // buf[source], has type $queue[] and
+									// corresponds
+		SymbolicExpression queue; // the particular $queue for this source and
+									// dest
+		int queueLength;
+		SymbolicExpression messages;
+		List<SymbolicExpression> messagesElements = new LinkedList<SymbolicExpression>();
+		int commScopeID = evaluator
+				.getScopeId(commArgSource, argumentValues[0]);
+		int commVariableID = evaluator.getVariableId(commArgSource,
+				argumentValues[0]);
+
+		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
+		assert comm.argument(0) instanceof NumericExpression;
+		nprocs = evaluator.extractInt(commArgSource,
+				(NumericExpression) comm.argument(0));
+		procArray = (SymbolicExpression) ((SymbolicExpression) comm)
+				.argument(1);
+		// Find the array index corresponding to the source proc and dest proc
+		for (int i = 0; i < nprocs; i++) {
+			SymbolicExpression proc = universe.arrayRead(procArray,
+					universe.integer(i));
+			int procID = evaluator.extractInt(commArgSource,
+					(NumericExpression) proc.argument(1));
+			if (procID == pid) {
+				source = i;
+			}
+			if (proc.argument(1).equals(argumentValues[2])) {
+				dest = i;
+			}
+			if (dest >= 0 && source >= 0) {
+				break;
+			}
+		}
+		assert source >= 0;
+		assert dest >= 0;
+		sourceExpression = universe.integer(source);
+		destExpression = universe.integer(dest);
+		buf = (SymbolicExpression) comm.argument(2);
+		bufRow = universe.arrayRead(buf, sourceExpression);
+		queue = universe.arrayRead(bufRow, destExpression);
+		messages = universe.tupleRead(queue, universe.intObject(1));
+		for (int i = 0; i < messages.numArguments(); i++) {
+			messagesElements.add((SymbolicExpression) messages.argument(i));
+		}
+		messagesElements.add(argumentValues[1]);
+		messages = universe.array(messages.type(), messagesElements);
+		assert queue.argument(0) instanceof NumericExpression;
+		queueLength = evaluator.extractInt(commArgSource,
+				(NumericExpression) queue.argument(0));
+		queueLength++;
+		queue = universe.tupleWrite(queue, universe.intObject(0),
+				universe.integer(queueLength));
+		queue = universe.tupleWrite(queue, universe.intObject(1), messages);
+		bufRow = universe.arrayWrite(bufRow, destExpression, queue);
+		buf = universe.arrayWrite(buf, sourceExpression, bufRow);
+		comm = universe.tupleWrite(comm, universe.intObject(2), buf);
+		state = stateFactory.setVariable(state, commVariableID, commScopeID,
+				comm);
 		return state;
 	}
 
@@ -640,6 +719,9 @@ public class Libcivlc implements LibraryExecutor {
 			state = executeCommCreate(state, pid, lhs, arguments,
 					argumentValues, statement.getSource());
 			break;
+		case "$comm_enqueue":
+			state = executeCommEnqueue(state, pid, arguments, argumentValues);
+			break;
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":
@@ -649,7 +731,6 @@ public class Libcivlc implements LibraryExecutor {
 		case "$message_unpack":
 		case "$comm_destroy":
 		case "$comm_nprocs":
-		case "$comm_enqueue":
 		case "$comm_probe":
 		case "$comm_seek":
 		case "$comm_dequeue":
