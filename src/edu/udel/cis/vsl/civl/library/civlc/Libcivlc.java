@@ -630,6 +630,9 @@ public class Libcivlc implements LibraryExecutor {
 				(NumericExpression) universe.tupleRead(comm, zeroObject));
 		procArray = (SymbolicExpression) universe.tupleRead(comm,
 				universe.intObject(1));
+		newMessage = evaluator.dereference(commArgSource, state,
+				argumentValues[1]);
+
 		// Find the array index corresponding to the source proc and dest proc
 		for (int i = 0; i < nprocs; i++) {
 			SymbolicExpression proc = universe.arrayRead(procArray,
@@ -639,7 +642,9 @@ public class Libcivlc implements LibraryExecutor {
 			if (procID == pid) {
 				source = i;
 			}
-			if (universe.tupleRead(proc, zeroObject).equals(argumentValues[2])) {
+			if (universe.tupleRead(proc, zeroObject)
+					.equals(universe.tupleRead(newMessage.value,
+							universe.intObject(1)))) {
 				dest = i;
 			}
 			if (dest >= 0 && source >= 0) {
@@ -659,10 +664,10 @@ public class Libcivlc implements LibraryExecutor {
 			messagesElements.add(universe.arrayRead(messages,
 					universe.integer(i)));
 		}
-		newMessage = evaluator.dereference(commArgSource, state,
-				argumentValues[1]);
 		messagesElements.add(newMessage.value);
-		messages = universe.array(((SymbolicArrayType) messages.type()).elementType(), messagesElements);
+		messages = universe.array(
+				((SymbolicArrayType) messages.type()).elementType(),
+				messagesElements);
 		assert universe.tupleRead(queue, zeroObject) instanceof NumericExpression;
 		queueLength = evaluator.extractInt(commArgSource,
 				(NumericExpression) universe.tupleRead(queue, zeroObject));

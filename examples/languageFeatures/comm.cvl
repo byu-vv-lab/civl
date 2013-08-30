@@ -17,4 +17,5 @@ void main() {
   procs[2] = $spawn worker(5);
   comm = $comm_create(nprocs, procs);
   message = $message_pack(0, 1, 0, &nprocs, sizeof(int));
+  $comm_enqueue(&comm, &message);
 }
