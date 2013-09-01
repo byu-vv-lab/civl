@@ -15,6 +15,7 @@ import java.util.Vector;
 
 import edu.udel.cis.vsl.abc.ast.conversion.IF.ArithmeticConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.ArrayConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.CompatiblePointerConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.CompatibleStructureOrUnionConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.Conversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.FunctionConversion;
@@ -207,7 +208,7 @@ public class ModelBuilderWorker {
 	private ArrayList<MallocStatement> mallocStatements = new ArrayList<MallocStatement>();
 
 	private LinkedList<CIVLType> bundleableTypeList = new LinkedList<CIVLType>();
-	
+
 	private LinkedList<CIVLType> unbundleableTypeList = new LinkedList<CIVLType>();
 
 	private CIVLHeapType heapType;
@@ -514,8 +515,6 @@ public class ModelBuilderWorker {
 			return factory.processType();
 		if ("__heap__".equals(tag))
 			return heapType;
-		if ("__scope__".equals(tag))
-			return factory.scopeType();
 		if ("__dynamic__".equals(tag))
 			return factory.dynamicType();
 		if ("__bundle__".equals(tag))
@@ -620,6 +619,9 @@ public class ModelBuilderWorker {
 			case PROCESS:
 				result = factory.processType();
 				break;
+			case SCOPE:
+				result = factory.scopeType();
+				break;
 			case QUALIFIED:
 				result = translateType(
 						((QualifiedObjectType) abcType).getBaseType(), scope,
@@ -644,12 +646,11 @@ public class ModelBuilderWorker {
 			}
 			typeMap.put(abcType, result);
 		}
-		if (bundleableType(result)){
-			bundleableTypeList.add(result); 
+		if (bundleableType(result)) {
+			bundleableTypeList.add(result);
 		} else {
 			unbundleableTypeList.add(result);
 		}
-		
 		return result;
 	}
 
@@ -756,6 +757,8 @@ public class ModelBuilderWorker {
 						result = factory.castExpression(source, newCIVLType,
 								result);
 					}
+				} else if (conversion instanceof CompatiblePointerConversion) {
+					// nothing to do
 				} else if (conversion instanceof ArrayConversion) {
 					// we will ignore this one here because we want
 					// to keep it as array in subscript expressions
