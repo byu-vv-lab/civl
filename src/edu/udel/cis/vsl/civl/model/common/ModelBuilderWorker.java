@@ -322,7 +322,11 @@ public class ModelBuilderWorker {
 			// type should come from entity, not this type node.
 			// if it has a definition node, should probably use that one.
 			FunctionType functionType = entity.getType();
-			FunctionTypeNode functionTypeNode = node.getTypeNode();
+
+			// TODO: deal with parameterized functions....
+
+			FunctionTypeNode functionTypeNode = (FunctionTypeNode) node
+					.getTypeNode();
 			CIVLType returnType = translateType(functionType.getReturnType(),
 					scope, sourceOf(functionTypeNode.getReturnType()));
 			SequenceNode<VariableDeclarationNode> abcParameters = functionTypeNode
