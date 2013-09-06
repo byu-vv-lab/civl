@@ -618,7 +618,7 @@ public class Libcivlc implements LibraryExecutor {
 		int queueLength;
 		SymbolicExpression messages;
 		List<SymbolicExpression> messagesElements = new LinkedList<SymbolicExpression>();
-		Evaluation newMessage;
+		SymbolicExpression newMessage;
 		int commScopeID = evaluator
 				.getScopeId(commArgSource, argumentValues[0]);
 		int commVariableID = evaluator.getVariableId(commArgSource,
@@ -630,8 +630,9 @@ public class Libcivlc implements LibraryExecutor {
 				(NumericExpression) universe.tupleRead(comm, zeroObject));
 		procArray = (SymbolicExpression) universe.tupleRead(comm,
 				universe.intObject(1));
-		newMessage = evaluator.dereference(commArgSource, state,
-				argumentValues[1]);
+		newMessage = argumentValues[1];
+		// evaluator.dereference(commArgSource, state,
+		// argumentValues[1]);
 
 		// Find the array index corresponding to the source proc and dest proc
 		for (int i = 0; i < nprocs; i++) {
@@ -642,9 +643,8 @@ public class Libcivlc implements LibraryExecutor {
 			if (procID == pid) {
 				source = i;
 			}
-			if (universe.tupleRead(proc, zeroObject)
-					.equals(universe.tupleRead(newMessage.value,
-							universe.intObject(1)))) {
+			if (universe.tupleRead(proc, zeroObject).equals(
+					universe.tupleRead(newMessage, universe.intObject(1)))) {
 				dest = i;
 			}
 			if (dest >= 0 && source >= 0) {
@@ -664,7 +664,7 @@ public class Libcivlc implements LibraryExecutor {
 			messagesElements.add(universe.arrayRead(messages,
 					universe.integer(i)));
 		}
-		messagesElements.add(newMessage.value);
+		messagesElements.add(newMessage);
 		messages = universe.array(
 				((SymbolicArrayType) messages.type()).elementType(),
 				messagesElements);
@@ -815,7 +815,8 @@ public class Libcivlc implements LibraryExecutor {
 			state = executeCommEnqueue(state, pid, arguments, argumentValues);
 			break;
 		case "$comm_dequeue":
-			state = executeCommDequeue(state, pid, lhs, arguments, argumentValues);
+			state = executeCommDequeue(state, pid, lhs, arguments,
+					argumentValues);
 			break;
 		case "$memcpy":
 		case "$message_pack":
