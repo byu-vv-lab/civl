@@ -42,29 +42,28 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	public State nextState(State state, Transition transition) {
 		int pid;
 		Statement statement;
-		State newState;
 
 		assert transition instanceof SimpleTransition;
 		pid = ((SimpleTransition) transition).pid();
-		newState = stateFactory.setPathCondition(state,
+		state = stateFactory.setPathCondition(state,
 				((SimpleTransition) transition).pathCondition());
 		statement = ((SimpleTransition) transition).statement();
 		if (transition instanceof ChooseTransition) {
 			assert statement instanceof ChooseStatement;
-			newState = executor.executeChoose(state, pid,
+			state = executor.executeChoose(state, pid,
 					(ChooseStatement) statement,
 					((ChooseTransition) transition).value());
 		} else {
-			newState = executor.execute(state, pid, statement);
+			state = executor.execute(state, pid, statement);
 		}
-		newState = stateFactory.canonic(newState);
+		state = stateFactory.canonic(state);
 		if (debugOut != null) {
-			newState.print(debugOut);
+			state.print(debugOut);
 		}
-		if (newState.numProcs() > maxProcs) {
-			maxProcs = newState.numProcs();
+		if (state.numProcs() > maxProcs) {
+			maxProcs = state.numProcs();
 		}
-		return newState;
+		return state;
 	}
 
 	/**

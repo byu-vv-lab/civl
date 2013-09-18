@@ -1504,6 +1504,7 @@ public class ModelBuilderWorker {
 
 		trueBranch.setGuard(expression);
 		function.addLocation(location);
+		function.addLocation(trueBranchBodyLocation);
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
 		} else {
@@ -2150,6 +2151,7 @@ public class ModelBuilderWorker {
 				.getSource()), loopEntranceLocation);
 		loopEntrance.setGuard(condition);
 		initStatement.setTarget(loopEntranceLocation);
+		function.addLocation(loopEntranceLocation);
 		loopBody = statement(function, loopEntrance, statement.getBody(),
 				newScope);
 		incrementer = forLoopIncrementer(function, loopBody,

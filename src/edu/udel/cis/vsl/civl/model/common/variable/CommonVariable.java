@@ -25,6 +25,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	private boolean isInput;
 	private int vid;
 	private Scope scope;
+	private int hashCode;
 
 	/**
 	 * A variable.
@@ -42,6 +43,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		this.type = type;
 		this.name = name;
 		this.vid = vid;
+		computeHashCode();
 	}
 
 	/**
@@ -78,6 +80,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	 */
 	public void setType(CIVLType type) {
 		this.type = type;
+		computeHashCode();
 	}
 
 	/**
@@ -86,6 +89,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	 */
 	public void setConst(boolean isConst) {
 		this.isConst = isConst;
+		computeHashCode();
 	}
 
 	/**
@@ -139,14 +143,18 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	 */
 	@Override
 	public int hashCode() {
+		return hashCode;
+	}
+	
+	private void computeHashCode() {
 		final int prime = 31;
 		int result = 1;
 		// result = prime * result + ((extent == null) ? 0 : extent.hashCode());
 		result = prime * result + (isConst ? 1231 : 1237);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		return result;
+		hashCode = prime * result + ((type == null) ? 0 : type.hashCode());
 	}
+	
 
 	/*
 	 * (non-Javadoc)
