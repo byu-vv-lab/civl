@@ -1,9 +1,9 @@
 /* Compare sequential and parallel sum of array */
 #include<civlc.h>
 $input int N;
-$assume N>=1 && N<=2;
+$assume N>=2 && N<=3;
 $input int P;
-$assume P==1;
+$assume P>=1 && P<=2;
 $input double a[N];
 double sum_seq;
 double sum_par;
