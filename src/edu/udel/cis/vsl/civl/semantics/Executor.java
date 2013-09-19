@@ -102,8 +102,8 @@ public class Executor {
 		this.evaluator = new Evaluator(modelFactory, stateFactory, log);
 		this.log = log;
 		this.loader = loader;
-		this.civlcExecutor = (Libcivlc) loader.getLibraryExecutor("civlc",
-				this);
+		this.civlcExecutor = (Libcivlc) loader
+				.getLibraryExecutor("civlc", this);
 	}
 
 	/**
@@ -376,10 +376,12 @@ public class Executor {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
 		BooleanExpression assumeValue = (BooleanExpression) eval.value;
+		BooleanExpression oldPathCondition, newPathCondition;
 
 		state = eval.state;
-		state = stateFactory.setPathCondition(state,
-				symbolicUniverse.and(state.pathCondition(), assumeValue));
+		oldPathCondition = state.pathCondition();
+		newPathCondition = symbolicUniverse.and(oldPathCondition, assumeValue);
+		state = stateFactory.setPathCondition(state, newPathCondition);
 		state = transition(state, state.process(pid), statement.target());
 		return state;
 	}

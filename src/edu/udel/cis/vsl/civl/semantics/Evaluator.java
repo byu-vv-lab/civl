@@ -727,13 +727,27 @@ public class Evaluator {
 			eval.value = universe.falseExpression();
 			return eval;
 		} else {
-			State s1 = stateFactory.setPathCondition(eval.state,
-					universe.and(assumption, p));
+			BooleanExpression assumptionAndp = universe.and(assumption, p);
+			State s1 = stateFactory
+					.setPathCondition(eval.state, assumptionAndp);
 			Evaluation eval1 = evaluate(s1, pid, expression.right());
-			BooleanExpression pc = universe.or(eval1.state.pathCondition(),
-					universe.and(assumption, universe.not(p)));
+			BooleanExpression pcTemp = eval1.state.pathCondition();
 
-			eval.state = stateFactory.setPathCondition(eval.state, pc);
+			if (!assumptionAndp.equals(pcTemp)) {
+				BooleanExpression pc = universe.or(pcTemp,
+						universe.and(assumption, universe.not(p)));
+
+				eval.state = stateFactory.setPathCondition(eval.state, pc);
+			}
+			// Reason for above: In the common case where there
+			// are no side effects, this would set the path condition to
+			// (assumption && p) || (assumption && !p),
+			// which does not get simplified to just "assumption",
+			// as one would like. So it is handled as a special case:
+			// check whether pcTemp equals assumption && p
+			// (i.e., the evaluation of expression.right() did not
+			// add any side-effects). If this holds, then pc is just
+			// assumption.
 			eval.value = universe.and(p, (BooleanExpression) eval1.value);
 			return eval;
 		}
@@ -758,6 +772,9 @@ public class Evaluator {
 		BooleanExpression p = (BooleanExpression) eval.value;
 		BooleanExpression assumption = eval.state.pathCondition();
 		Reasoner reasoner = universe.reasoner(assumption);
+
+		// TODO: handle special common case as in evaluateAnd.
+		// Look at evaluation of ternary operator too?
 
 		if (reasoner.isValid(p)) {
 			eval.value = universe.trueExpression();
