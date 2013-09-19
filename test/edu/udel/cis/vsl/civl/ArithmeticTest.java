@@ -17,7 +17,7 @@ public class ArithmeticTest {
 	@Test
 	public void testDiffusion() throws ABCException {
 		File file = new File(rootDir, "diffusion_seq.cvl");
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertTrue(result);
 	}
 

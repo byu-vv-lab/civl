@@ -18,7 +18,7 @@ public class ConcurrencyTest {
 	@Test
 	public void testAdder() throws ABCException {
 		File file = new File(rootDir, "adder.cvl");
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertTrue(result);
 	}
 
@@ -39,7 +39,7 @@ public class ConcurrencyTest {
 	@Test
 	public void testBarrier() throws ABCException {
 		File file = new File(rootDir, "barrier.cvl");
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertTrue(result);
 	}
 

@@ -22,35 +22,35 @@ public class LanguageFeaturesTest {
 	@Test
 	public void testMalloc() throws ABCException {
 		File file = new File(rootDir, "malloc.cvl");
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertTrue(result);
 	}
 
 	@Test
 	public void testMallocBad() throws ABCException {
 		File file = new File(rootDir, "mallocBad.cvl");
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertFalse(result);
 	}
 
 	@Test
 	public void testMallocBad2() throws ABCException {
 		File file = new File(rootDir, "mallocBad2.cvl");
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertFalse(result);
 	}
 
 	@Test
 	public void testMallocBad3() throws ABCException {
 		File file = new File(rootDir, "mallocBad3.cvl");
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertFalse(result);
 	}
 
 	@Test
 	public void testMallocBad4() throws ABCException {
 		File file = new File(rootDir, "mallocBad4.cvl");
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertFalse(result);
 	}
 
@@ -72,7 +72,7 @@ public class LanguageFeaturesTest {
 	public void testBundleConcrete() throws ABCException {
 		File file = new File(rootDir, "bundleConcrete.cvl");
 
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertTrue(result);
 	}
 
@@ -80,7 +80,7 @@ public class LanguageFeaturesTest {
 	public void testBundleArray() throws ABCException {
 		File file = new File(rootDir, "bundleArray.cvl");
 
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertTrue(result);
 	}
 
@@ -88,7 +88,7 @@ public class LanguageFeaturesTest {
 	public void testBundleStruct() throws ABCException {
 		File file = new File(rootDir, "bundleStruct.cvl");
 
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertTrue(result);
 	}
 
@@ -96,7 +96,7 @@ public class LanguageFeaturesTest {
 	public void testBundleStructComponent() throws ABCException {
 		File file = new File(rootDir, "bundleStructComponent.cvl");
 
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertFalse(result);
 	}
 
@@ -104,7 +104,7 @@ public class LanguageFeaturesTest {
 	public void testBundleSize() throws ABCException {
 		File file = new File(rootDir, "bundleSize.cvl");
 
-		boolean result = CIVL.verify(true, file, out);
+		boolean result = CIVL.verify(true, false, file, out);
 		assertTrue(result);
 	}
 

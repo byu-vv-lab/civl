@@ -95,6 +95,7 @@ public class CIVL {
 		File[] systemIncludes, userIncludes;
 		boolean preprocOnly = false;
 		boolean printModel = false;
+		boolean verbose = false;
 
 		System.out.println("CIVL v" + version + " of " + date
 				+ " -- http://vsl.cis.udel.edu\n");
@@ -152,6 +153,9 @@ public class CIVL {
 			} else if (arg.equals("-h") || arg.equals("-help")) {
 				printUsage(new PrintStream(System.out));
 				return;
+			} else if (arg.equals("-v")) {
+				verbose = true;
+				printModel = true;
 			} else if (arg.startsWith("-")) {
 				throw new IllegalArgumentException(
 						"Unknown command line option: " + arg);
@@ -181,16 +185,16 @@ public class CIVL {
 		if (preprocOnly) {
 			preprocessor.printOutput(out, infile);
 		} else {
-			verify(printModel, infile, out);
+			verify(printModel, verbose, infile, out);
 		}
 	}
 
 	public static boolean verify(File file, PrintStream out)
 			throws SyntaxException, ParseException, PreprocessorException {
-		return verify(false, file, out);
+		return verify(false, false, file, out);
 	}
 
-	public static boolean verify(boolean printModel, File file, PrintStream out) {
+	public static boolean verify(boolean printModel, boolean verbose, File file, PrintStream out) {
 		Program program;
 		StateFactoryIF stateFactory = new StateFactory(modelFactory);
 		Model model;
@@ -236,6 +240,9 @@ public class CIVL {
 		initialState = stateFactory.initialState(model);
 		executor = new Executor(modelFactory, stateFactory, log, loader);
 		stateManager = new StateManager(executor);
+		if (verbose) {
+			((StateManager) stateManager).setDebugOut(out);
+		}
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
 		searcher.setDebugOut(out);
@@ -306,6 +313,8 @@ public class CIVL {
 		out.println("    add INCLUDE_FILE to the set of user includes");
 		out.println("-P");
 		out.println("    print the model");
+		out.println("-v");
+		out.println("    print the model and every state");
 		out.println("-E");
 		out.println("    stop after preprocessing the file and output the result");
 		out.flush();
