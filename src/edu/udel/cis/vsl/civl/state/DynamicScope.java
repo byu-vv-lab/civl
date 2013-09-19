@@ -267,7 +267,7 @@ public class DynamicScope {
 			Variable variable = lexicalScope.getVariable(i);
 			SymbolicExpression value = variableValues[i];
 
-			out.println(prefix + "| " + variable.name() + " = " + value);
+			out.println(prefix + "| " + variable.name() + " = " + value + " : " + value.type());
 		}
 		out.flush();
 	}

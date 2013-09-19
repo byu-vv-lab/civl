@@ -1247,7 +1247,6 @@ public class Evaluator {
 	 */
 	private Evaluation evaluateVariable(State state, int pid,
 			VariableExpression expression) {
-		BooleanExpression pathCondition = state.pathCondition();
 		SymbolicExpression value = state.valueOf(pid, expression.variable());
 
 		if (value == null || value.isNull()) {
@@ -1260,7 +1259,6 @@ public class Evaluator {
 			// unrecoverable error:
 			throw e;
 		}
-		value = universe.reasoner(pathCondition).simplify(value);
 		return new Evaluation(state, value);
 	}
 
