@@ -11,7 +11,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
- * An instance of State represents the state of a CVT Model. It encodes:
+ * An instance of State represents the state of a CIVL Model. It encodes:
  * 
  * <ul>
  * <li>a sequence of processes</li>

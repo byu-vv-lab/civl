@@ -64,6 +64,9 @@ public class Enabler implements
 
 	@Override
 	public TransitionSequence enabledTransitions(State state) {
+		if (state.pathCondition().isFalse())
+			// return empty set of transitions:
+			return new TransitionSequence(state);
 		if (debugging && enabledTransitionSets % 1000 == 0) {
 			System.out.println("Ample transition sets: " + ampleSets + "/"
 					+ enabledTransitionSets);

@@ -856,10 +856,15 @@ public class Evaluator {
 						"Out of bounds array index:\nindex = " + index
 								+ "\nlength = " + length, eval.state,
 						expression.getSource());
+				BooleanExpression pc;
 
 				log.report(e);
-				eval.state = stateFactory.setPathCondition(state,
-						universe.and(assumption, claim));
+				pc = universe.and(assumption, claim);
+				eval.state = stateFactory.setPathCondition(state, pc);
+				if (pc.isFalse()) {
+					eval.value = nullExpression;
+					return eval;
+				}
 			}
 		}
 		eval.value = universe.arrayRead(array, index);

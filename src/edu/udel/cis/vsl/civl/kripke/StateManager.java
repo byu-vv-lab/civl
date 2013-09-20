@@ -56,7 +56,11 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		} else {
 			state = executor.execute(state, pid, statement);
 		}
+		// TODO: try this simplification out, see how it works:
+
+		state = stateFactory.simplify(state);
 		state = stateFactory.canonic(state);
+
 		if (debugOut != null) {
 			state.print(debugOut);
 		}

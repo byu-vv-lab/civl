@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -38,6 +39,8 @@ public class StateFactory implements StateFactoryIF {
 
 	private Map<State, State> stateMap = new HashMap<State, State>();
 
+	private Reasoner trueReasoner;
+
 	// *************************** Constructors ***********************
 
 	/**
@@ -46,6 +49,7 @@ public class StateFactory implements StateFactoryIF {
 	public StateFactory(ModelFactory modelFactory) {
 		this.modelFactory = modelFactory;
 		this.universe = modelFactory.universe();
+		this.trueReasoner = universe.reasoner(universe.trueExpression());
 	}
 
 	// ************************* Helper Methods ***********************
@@ -890,6 +894,42 @@ public class StateFactory implements StateFactoryIF {
 	@Override
 	public State setPathCondition(State state, BooleanExpression pathCondition) {
 		return new State(state, pathCondition);
+	}
+
+	private boolean nsat(BooleanExpression p) {
+		return trueReasoner.isValid(universe.not(p));
+	}
+
+	@Override
+	public State simplify(State state) {
+		// TODO: room for optimization here.
+		// don't create new things unless something changes.
+		int numScopes = state.numScopes();
+		DynamicScope[] newDynamicScopes = new DynamicScope[numScopes];
+		Reasoner reasoner = universe.reasoner(state.pathCondition());
+		BooleanExpression newPathCondition;
+		State newState;
+
+		for (int i = 0; i < numScopes; i++) {
+			DynamicScope oldScope = state.getScope(i);
+			int numVars = oldScope.numberOfVariables();
+			SymbolicExpression[] newVariableValues = new SymbolicExpression[numVars];
+
+			for (int j = 0; j < numVars; j++) {
+				SymbolicExpression oldValue = oldScope.getValue(j);
+				SymbolicExpression newValue = reasoner.simplify(oldValue);
+
+				newVariableValues[j] = newValue;
+			}
+			newDynamicScopes[i] = oldScope
+					.changeVariableValues(newVariableValues);
+		}
+		newPathCondition = reasoner.getReducedContext();
+		// TODO: do this here or when you produce new path condition? 
+		if (nsat(newPathCondition))
+			newPathCondition = universe.falseExpression();
+		newState = new State(state, null, newDynamicScopes, newPathCondition);
+		return newState;
 	}
 
 }

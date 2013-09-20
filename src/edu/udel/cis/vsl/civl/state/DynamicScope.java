@@ -96,6 +96,11 @@ public class DynamicScope {
 		return new DynamicScope(lexicalScope, parent, variableValues, newBitSet);
 	}
 
+	DynamicScope changeVariableValues(SymbolicExpression[] newVariableValues) {
+		return new DynamicScope(lexicalScope, parent, newVariableValues,
+				reachers);
+	}
+
 	public SymbolicExpression getValue(int vid) {
 		return variableValues[vid];
 	}
@@ -267,7 +272,8 @@ public class DynamicScope {
 			Variable variable = lexicalScope.getVariable(i);
 			SymbolicExpression value = variableValues[i];
 
-			out.println(prefix + "| " + variable.name() + " = " + value + " : " + value.type());
+			out.println(prefix + "| " + variable.name() + " = " + value + " : "
+					+ value.type());
 		}
 		out.flush();
 	}

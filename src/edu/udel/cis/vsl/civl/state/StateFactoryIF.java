@@ -201,4 +201,14 @@ public interface StateFactoryIF {
 	 */
 	State setPathCondition(State state, BooleanExpression pathCondition);
 
+	/**
+	 * Simplies all variable values in the state, using the path condition as
+	 * the simplification context.
+	 * 
+	 * @param state
+	 *            The old state.
+	 * @return The simplified state
+	 */
+	State simplify(State state);
+
 }
