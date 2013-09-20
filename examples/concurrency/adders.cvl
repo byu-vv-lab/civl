@@ -1,9 +1,9 @@
 /* Compare sequential and parallel sum of array */
 #include<civlc.h>
 $input int N;
-$assume N>=2 && N<=3;
+$assume N>=2 && N<=8;
 $input int P;
-$assume P>=1 && P<=2;
+$assume P>=1 && P<=4;
 $input double a[N];
 double sum_seq;
 double sum_par;
@@ -30,6 +30,8 @@ void adder_par() {
     lock = 0;
   }
   sum_par = 0.0;
+  // hack follows:
+  for (int i=0; i<P; i++) ;
   for (int i=0; i<P; i++)
     workers[i] = $spawn run_worker(i);
   for (int i=0; i<P; i++)
