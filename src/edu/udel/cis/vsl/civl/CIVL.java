@@ -194,7 +194,8 @@ public class CIVL {
 		return verify(false, false, file, out);
 	}
 
-	public static boolean verify(boolean printModel, boolean verbose, File file, PrintStream out) {
+	public static boolean verify(boolean printModel, boolean verbose,
+			File file, PrintStream out) {
 		Program program;
 		StateFactoryIF stateFactory = new StateFactory(modelFactory);
 		Model model;

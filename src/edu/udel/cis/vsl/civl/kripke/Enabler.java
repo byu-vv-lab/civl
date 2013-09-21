@@ -6,6 +6,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -109,54 +110,62 @@ public class Enabler implements
 					allLocal = false;
 				}
 				if (!newPathCondition.isFalse()) {
-					if (s instanceof ChooseStatement) {
-						Evaluation eval = evaluator.evaluate(stateFactory
-								.setPathCondition(state, newPathCondition), p
-								.id(), ((ChooseStatement) s).rhs());
-						IntegerNumber upperNumber = (IntegerNumber) universe
-								.reasoner(eval.state.pathCondition())
-								.extractNumber((NumericExpression) eval.value);
-						int upper;
+					try {
+						if (s instanceof ChooseStatement) {
+							Evaluation eval = evaluator.evaluate(stateFactory
+									.setPathCondition(state, newPathCondition),
+									p.id(), ((ChooseStatement) s).rhs());
+							IntegerNumber upperNumber = (IntegerNumber) universe
+									.reasoner(eval.state.pathCondition())
+									.extractNumber(
+											(NumericExpression) eval.value);
+							int upper;
 
-						if (upperNumber == null)
-							throw new CIVLStateException(ErrorKind.INTERNAL,
-									Certainty.NONE,
-									"Argument to $choose_int not concrete: "
-											+ eval.value, eval.state,
-									s.getSource());
-						upper = upperNumber.intValue();
-						for (int i = 0; i < upper; i++) {
-							localTransitions.add(transitionFactory
-									.newChooseTransition(
-											eval.state.pathCondition(), p.id(),
-											s, universe.integer(i)));
-						}
-						continue;
-					} else if (s instanceof WaitStatement) {
-						Evaluation eval = evaluator.evaluate(stateFactory
-								.setPathCondition(state, newPathCondition), p
-								.id(), ((WaitStatement) s).process());
-						int pidValue = modelFactory.getProcessId(
-								((WaitStatement) s).process().getSource(),
-								eval.value);
-
-						if (pidValue < 0) {
-							CIVLExecutionException e = new CIVLStateException(
-									ErrorKind.INVALID_PID,
-									Certainty.PROVEABLE,
-									"Unable to call $wait on a process that has already been the target of a $wait.",
-									state, s.getSource());
-
-							evaluator.log().report(e);
-							// TODO: recover: add a no-op transition
-							throw e;
-						}
-						if (!state.process(pidValue).hasEmptyStack()) {
+							if (upperNumber == null)
+								throw new CIVLStateException(
+										ErrorKind.INTERNAL, Certainty.NONE,
+										"Argument to $choose_int not concrete: "
+												+ eval.value, eval.state,
+										s.getSource());
+							upper = upperNumber.intValue();
+							for (int i = 0; i < upper; i++) {
+								localTransitions
+										.add(transitionFactory
+												.newChooseTransition(eval.state
+														.pathCondition(), p
+														.id(), s, universe
+														.integer(i)));
+							}
 							continue;
+						} else if (s instanceof WaitStatement) {
+							Evaluation eval = evaluator.evaluate(stateFactory
+									.setPathCondition(state, newPathCondition),
+									p.id(), ((WaitStatement) s).process());
+							int pidValue = modelFactory.getProcessId(
+									((WaitStatement) s).process().getSource(),
+									eval.value);
+
+							if (pidValue < 0) {
+								CIVLExecutionException e = new CIVLStateException(
+										ErrorKind.INVALID_PID,
+										Certainty.PROVEABLE,
+										"Unable to call $wait on a process that has already been the target of a $wait.",
+										state, s.getSource());
+
+								evaluator.log().report(e);
+								// TODO: recover: add a no-op transition
+								throw e;
+							}
+							if (!state.process(pidValue).hasEmptyStack()) {
+								continue;
+							}
 						}
+						localTransitions.add(transitionFactory
+								.newSimpleTransition(newPathCondition, p.id(),
+										s));
+					} catch (UnsatisfiablePathConditionException e) {
+						// nothing to do: don't add this transition
 					}
-					localTransitions.add(transitionFactory.newSimpleTransition(
-							newPathCondition, p.id(), s));
 				}
 			}
 			if (allLocal && localTransitions.size() > 0) {
@@ -186,18 +195,22 @@ public class Enabler implements
 	 */
 	private BooleanExpression newPathCondition(State state, int pid,
 			Statement statement) {
-		Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
-		BooleanExpression pathCondition = eval.state.pathCondition();
-		BooleanExpression guard = (BooleanExpression) eval.value;
-		Reasoner reasoner = universe.reasoner(pathCondition);
+		try {
+			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
+			BooleanExpression pathCondition = eval.state.pathCondition();
+			BooleanExpression guard = (BooleanExpression) eval.value;
+			Reasoner reasoner = universe.reasoner(pathCondition);
 
-		// System.out.println("Enabler.newPathCondition() : Process " + pid
-		// + " is at " + state.process(pid).peekStack().location());
-		if (reasoner.isValid(guard))
-			return pathCondition;
-		if (reasoner.isValid(universe.not(guard)))
+			// System.out.println("Enabler.newPathCondition() : Process " + pid
+			// + " is at " + state.process(pid).peekStack().location());
+			if (reasoner.isValid(guard))
+				return pathCondition;
+			if (reasoner.isValid(universe.not(guard)))
+				return falseValue;
+			return universe.and(pathCondition, guard);
+		} catch (UnsatisfiablePathConditionException e) {
 			return falseValue;
-		return universe.and(pathCondition, guard);
+		}
 	}
 
 	@Override

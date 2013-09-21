@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -102,7 +103,8 @@ public class Libcivlc implements LibraryExecutor {
 		return "civlc";
 	}
 
-	public State executeMalloc(State state, int pid, MallocStatement statement) {
+	public State executeMalloc(State state, int pid, MallocStatement statement)
+			throws UnsatisfiablePathConditionException {
 		CIVLSource source = statement.getSource();
 		int sid = state.process(pid).scope();
 		int index = statement.getMallocId();
@@ -295,10 +297,11 @@ public class Libcivlc implements LibraryExecutor {
 	 * @param argumentValues
 	 * @param civlSource
 	 * @return The size of a bundle.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeBundleSize(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource civlSource) {
+			CIVLSource civlSource) throws UnsatisfiablePathConditionException {
 		SymbolicObject arrayObject;
 		SymbolicExpression array;
 		NumericExpression size;
@@ -328,7 +331,7 @@ public class Libcivlc implements LibraryExecutor {
 	private State executeBundlePack(State state, int pid,
 			CIVLBundleType bundleType, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) {
+			CIVLSource source) throws UnsatisfiablePathConditionException {
 		Expression pointerExpr = arguments[0];
 		// Expression sizeExpr = arguments[1];
 		SymbolicExpression pointer = argumentValues[0];
@@ -547,7 +550,7 @@ public class Libcivlc implements LibraryExecutor {
 
 	private State executeCommCreate(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) {
+			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression comm;
 		SymbolicExpression nprocs = argumentValues[0];
 		NumericExpression size;
@@ -684,7 +687,8 @@ public class Libcivlc implements LibraryExecutor {
 	}
 
 	private State executeCommDequeue(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues) {
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression comm;
 		SymbolicExpression procArray;
 		CIVLSource commArgSource = arguments[0].getSource();
@@ -762,8 +766,8 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
-	@Override
-	public State execute(State state, int pid, Statement statement) {
+	private State executeWork(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
 		Identifier name;
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
@@ -839,9 +843,16 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
+	@Override
+	public State execute(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
+		return executeWork(state, pid, statement);
+	}
+
 	private SymbolicExpression getArrayFromPointer(State state,
 			Expression pointerExpr, SymbolicExpression pointer,
-			NumericExpression size, CIVLSource source) {
+			NumericExpression size, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression array;
 		ReferenceExpression symRef = evaluator.getSymRef(pointer);
 		ReferenceKind kind = symRef.referenceKind();

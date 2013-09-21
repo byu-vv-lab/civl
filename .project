@@ -3,6 +3,7 @@
 	<name>CIVL</name>
 	<comment></comment>
 	<projects>
+		<project>SARL</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

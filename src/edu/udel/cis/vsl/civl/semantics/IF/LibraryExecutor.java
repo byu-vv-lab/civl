@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
+import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.State;
 
@@ -14,7 +15,8 @@ public interface LibraryExecutor {
 	/** Returns the name associated to this executor, for example, "libstdio". */
 	String name();
 	
-	State execute(State state, int pid, Statement statement);
+	State execute(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException;
 	
 	/**
 	 * Does the library for which this is the executor contain a function with

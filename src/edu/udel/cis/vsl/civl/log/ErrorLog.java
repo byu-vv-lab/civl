@@ -10,6 +10,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;

@@ -1,9 +1,59 @@
 
+exceptions:
 
-Canonicalization: map
-  Ref[h,i,l,0] -> Ref[h,i,l',0]
-  H_p_s_v_i_l -> H_p_s_v_i_l' (symbolic constants)
-Perform substitution on the state
+need to log exceptions and keep going, but backtrack as soon as
+pc is unsat.
+
+need to see if pc is sat before deciding there is an error to report.
+
+Enabler: evalutes guard, forms new path condition.
+check at this point that new path condition is sat.
+
+Evaluator: in the course of evaluation, pc may change, things
+may be checked.  log errors
+
+  evaluate:
+     step 1, step 2, step 3 (check something, pc becomes unsat),
+     step 4, step 5 (check something), ..., return
+
+When check something, first check if pc is false. Skip the check
+if it is.
+
+Let us assume pc is not certainly unsat when evaluate is called.
+
+Check protocol: check condition condsat.  if consat OK, proceed.
+Otherwise:  check pc satisfiability, pcsat
+ - pcsat=YES && condsat=NO : certainty=PROVEABLE
+ - pcsat=YES && condsat=MAYBE : certainty=MAYBE
+ - pcsat=MAYBE && condsat=NO : MAYBE
+ - pcsat=MAYBE && condsat=MAYBE : MAYBE
+ - pcsat=NO: should not happen (assertion)
+Add claim to pc and check satisfiability of pc again.
+Add to the log report a note about recovery attempt:
+updating PC changed PC to MAYBE unsat, or definitely
+unsat, ...
+If pcsat=NO, throw UnsatisfiablePathConditionException.
+This gets thrown all the way up to Enabler or Executor.
+
+In Executor, the exception is caught, and the intermediate state
+(whatever the state was when the exception was thrown) with
+path condition set to false is returned.
+
+In Enabler, this happens when determining if a transition is enabled.
+I.e., in evaluating a guard, a side-effect occurred.
+Example: guard: a[i]=0.  i might be out of range, what happens?
+The error has been logged, now pc is false, so don't include
+this transition in the list of enabled ones.  No need to do
+anything with the exception.
+
+Enabler:
+
+when examining potential transition:
+form new path condition.
+check for satisfiability.
+if not certain unsat, add it.
+
+next state: after producing state, simplify and canonicalize.
 
 
 Fundamentals:

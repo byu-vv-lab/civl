@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -191,9 +192,11 @@ public class Executor {
 	 * @param value
 	 *            the value being assigned to the left-hand-side
 	 * @return the new state
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	public State assign(State state, int pid, LHSExpression lhs,
-			SymbolicExpression value) {
+			SymbolicExpression value)
+			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.reference(state, pid, lhs);
 
 		return assign(lhs.getSource(), eval.state, eval.value, value);
@@ -212,8 +215,10 @@ public class Executor {
 	 * @param statement
 	 *            An assignment statement to be executed
 	 * @return The updated state of the program
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeAssign(State state, int pid, AssignStatement statement) {
+	private State executeAssign(State state, int pid, AssignStatement statement)
+			throws UnsatisfiablePathConditionException {
 		Process process = state.process(pid);
 		Evaluation eval = evaluator.evaluate(state, pid, statement.rhs());
 
@@ -236,9 +241,11 @@ public class Executor {
 	 * @param statement
 	 *            A call statement to be executed.
 	 * @return The updated state of the program.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCall(State state, int pid,
-			CallOrSpawnStatement statement) {
+			CallOrSpawnStatement statement)
+			throws UnsatisfiablePathConditionException {
 		if (statement.function() instanceof SystemFunction) {
 			// TODO: optimize this. store libraryExecutor in SystemFunction?
 			LibraryExecutor executor = loader.getLibraryExecutor(
@@ -263,7 +270,8 @@ public class Executor {
 		return state;
 	}
 
-	private State executeMalloc(State state, int pid, MallocStatement statement) {
+	private State executeMalloc(State state, int pid, MallocStatement statement)
+			throws UnsatisfiablePathConditionException {
 		State result = civlcExecutor.executeMalloc(state, pid, statement);
 
 		result = transition(result, result.process(pid), statement.target());
@@ -281,9 +289,11 @@ public class Executor {
 	 * @param statement
 	 *            A spawn statement to be executed.
 	 * @return The updated state of the program.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeSpawn(State state, int pid,
-			CallOrSpawnStatement statement) {
+			CallOrSpawnStatement statement)
+			throws UnsatisfiablePathConditionException {
 		Process process = state.process(pid);
 		CIVLFunction function = statement.function();
 		int newPid = state.numProcs();
@@ -319,8 +329,10 @@ public class Executor {
 	 * @param statement
 	 *            The join statement to be executed.
 	 * @return The updated state of the program.
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeWait(State state, int pid, WaitStatement statement) {
+	private State executeWait(State state, int pid, WaitStatement statement)
+			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid, statement.process());
 		SymbolicExpression procVal = eval.value;
 		int joinedPid = modelFactory.getProcessId(statement.process()
@@ -342,8 +354,10 @@ public class Executor {
 	 * @param statement
 	 *            The return statement to be executed.
 	 * @return The updated state of the program.
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeReturn(State state, int pid, ReturnStatement statement) {
+	private State executeReturn(State state, int pid, ReturnStatement statement)
+			throws UnsatisfiablePathConditionException {
 		Expression expr = statement.expression();
 		Process process;
 		SymbolicExpression returnValue;
@@ -372,7 +386,8 @@ public class Executor {
 		return state;
 	}
 
-	private State executeAssume(State state, int pid, AssumeStatement statement) {
+	private State executeAssume(State state, int pid, AssumeStatement statement)
+			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
 		BooleanExpression assumeValue = (BooleanExpression) eval.value;
@@ -386,7 +401,8 @@ public class Executor {
 		return state;
 	}
 
-	private State executeAssert(State state, int pid, AssertStatement statement) {
+	private State executeAssert(State state, int pid, AssertStatement statement)
+			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
 		BooleanExpression assertValue = (BooleanExpression) eval.value;
@@ -433,9 +449,11 @@ public class Executor {
 	 *            transition. This concrete value should be provided by the
 	 *            enabler.
 	 * @return The updated state of the program.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	public State executeChoose(State state, int pid, ChooseStatement statement,
-			SymbolicExpression value) {
+			SymbolicExpression value)
+			throws UnsatisfiablePathConditionException {
 		Process process = state.process(pid);
 
 		state = assign(state, pid, statement.getLhs(), value);
@@ -477,7 +495,8 @@ public class Executor {
 	 *            The statement to be executed.
 	 * @return The updated state of the program.
 	 */
-	private State executeWork(State state, int pid, Statement statement) {
+	private State executeWork(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
 		if (statement instanceof AssumeStatement) {
 			return executeAssume(state, pid, (AssumeStatement) statement);
 		} else if (statement instanceof AssertStatement) {
@@ -507,7 +526,17 @@ public class Executor {
 			throw new CIVLInternalException("Unknown statement kind", statement);
 	}
 
-	public State execute(State state, int pid, Statement statement) {
+	/**
+	 * Returns the state that results from executing the statement, or null if
+	 * path condition becomes unsatisfiable.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param statement
+	 * @return
+	 */
+	public State execute(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
 		try {
 			return executeWork(state, pid, statement);
 		} catch (SARLException e) {

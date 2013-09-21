@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.predicate;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -84,8 +85,7 @@ public class Deadlock implements StatePredicateIF<State> {
 		this.modelFactory = evaluator.modelFactory();
 	}
 
-	@Override
-	public String explanation() {
+	private String explanationWork() throws UnsatisfiablePathConditionException {
 		State state = holdState;
 		String explanation;
 
@@ -148,7 +148,16 @@ public class Deadlock implements StatePredicateIF<State> {
 	}
 
 	@Override
-	public boolean holdsAt(State state) {
+	public String explanation() {
+		try {
+			return explanationWork();
+		} catch (UnsatisfiablePathConditionException e) {
+			return "No explanation possible due to unsatisfiable path condition";
+		}
+	}
+
+	private boolean holdsAtWork(State state)
+			throws UnsatisfiablePathConditionException {
 		Certainty certainty = Certainty.PROVEABLE;
 		String message;
 		boolean terminated = true;
@@ -227,6 +236,15 @@ public class Deadlock implements StatePredicateIF<State> {
 		System.out.println(message);
 		state.print(System.out);
 		return true;
+	}
+
+	@Override
+	public boolean holdsAt(State state) {
+		try {
+			return holdsAtWork(state);
+		} catch (UnsatisfiablePathConditionException e) {
+			return false;
+		}
 	}
 
 	public String toString() {
