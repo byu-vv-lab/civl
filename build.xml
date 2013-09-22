@@ -71,6 +71,7 @@
 		<pathelement location="${test.src.dir}" />
 		<pathelement location="${bin.dir}" />
 		<pathelement location="${junit.jar}" />
+		<pathelement location="${hamcrest.jar}" />
 		<pathelement location="${sarl.jar}" />
 		<pathelement location="${gmc.jar}" />
 		<pathelement location="${abc.jar}" />
@@ -80,6 +81,7 @@
 		<pathelement location="${test.bin.dir}" />
 		<pathelement location="${bin.dir}" />
 		<pathelement location="${junit.jar}" />
+		<pathelement location="${hamcrest.jar}" />
 		<pathelement location="${sarl.jar}" />
 		<pathelement location="${gmc.jar}" />
 		<pathelement location="${abc.jar}" />
