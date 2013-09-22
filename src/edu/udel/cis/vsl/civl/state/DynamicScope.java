@@ -32,6 +32,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class DynamicScope {
 
+	private static boolean debug = false;
+
 	private boolean hashed = false;
 
 	private int hashCode = -1;
@@ -272,8 +274,11 @@ public class DynamicScope {
 			Variable variable = lexicalScope.getVariable(i);
 			SymbolicExpression value = variableValues[i];
 
-			out.println(prefix + "| " + variable.name() + " = " + value + " : "
-					+ value.type());
+			out.print(prefix + "| " + variable.name() + " = ");
+			if (debug)
+				out.println(value.toStringBufferLong());
+			else
+				out.println(value + " : " + value.type());
 		}
 		out.flush();
 	}
