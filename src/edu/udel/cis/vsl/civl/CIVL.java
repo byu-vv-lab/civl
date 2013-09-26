@@ -268,7 +268,7 @@ public class CIVL {
 		out.flush();
 		// Result is true if there is an error, but we want to return true if
 		// there are no errors.
-		return !result;
+		return (!result) && (log.numReports() == 0);
 	}
 
 	public static void printStats(PrintStream out,

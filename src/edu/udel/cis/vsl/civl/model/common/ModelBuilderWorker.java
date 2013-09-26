@@ -210,6 +210,9 @@ public class ModelBuilderWorker {
 	private LinkedList<CIVLType> bundleableTypeList = new LinkedList<CIVLType>();
 
 	private LinkedList<CIVLType> unbundleableTypeList = new LinkedList<CIVLType>();
+	
+	/** Used to shortcut checking whether circular types are bundleable. */
+	private List<CIVLType> bundleableEncountered = new LinkedList<CIVLType>();
 
 	private CIVLHeapType heapType;
 
@@ -650,11 +653,6 @@ public class ModelBuilderWorker {
 			}
 			typeMap.put(abcType, result);
 		}
-		if (bundleableType(result)) {
-			bundleableTypeList.add(result);
-		} else {
-			unbundleableTypeList.add(result);
-		}
 		return result;
 	}
 
@@ -665,6 +663,14 @@ public class ModelBuilderWorker {
 	private boolean bundleableType(CIVLType type) {
 		boolean result = true;
 
+		if (bundleableEncountered.contains(type)) {
+			// We are in a recursive evaluation that has already encountered this type.
+			// E.g. a struct foo with a field of type struct foo, etc.
+			// If this type is not bundleable, that will be determined elsewhere.
+			return true;
+		} else {
+			bundleableEncountered.add(type);
+		}
 		if (type.isBundleType()) {
 			result = false;
 		} else if (type.isPointerType()) {
@@ -686,6 +692,7 @@ public class ModelBuilderWorker {
 			}
 		}
 		// Heaps and primitive types can be bundled.
+		bundleableEncountered.remove(type);
 		return result;
 	}
 
@@ -2723,6 +2730,14 @@ public class ModelBuilderWorker {
 			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
 		}
 		factory.completeHeapType(heapType, mallocStatements);
+		for (Type t : typeMap.keySet()) {
+			CIVLType thisType = typeMap.get(t);
+			if (bundleableType(thisType)) {
+				bundleableTypeList.add(thisType);
+			} else {
+				unbundleableTypeList.add(thisType);
+			}
+		}
 		completeBundleType();
 		model = factory.model(system.getSource(), system);
 		model.setMessageType(messageType);
