@@ -249,4 +249,24 @@ public class LanguageFeaturesTest {
 		assertTrue(result);
 	}
 
+	@Test
+	public void testBreak() throws ABCException {
+		File file = new File(rootDir, "break.cvl");
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
+	}
+	
+	@Test
+	public void testContinue() throws ABCException {
+		File file = new File(rootDir, "continue.cvl");
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
+	}
+	
+	@Test
+	public void testSwitch() throws ABCException {
+		File file = new File(rootDir, "switch.cvl");
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
+	}
 }

@@ -11,6 +11,8 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 import java.util.Vector;
 
 import edu.udel.cis.vsl.abc.ast.conversion.IF.ArithmeticConversion;
@@ -68,6 +70,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.GotoNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.JumpNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.JumpNode.JumpKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.NullStatementNode;
@@ -122,6 +126,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
+import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonType;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -210,7 +215,7 @@ public class ModelBuilderWorker {
 	private LinkedList<CIVLType> bundleableTypeList = new LinkedList<CIVLType>();
 
 	private LinkedList<CIVLType> unbundleableTypeList = new LinkedList<CIVLType>();
-	
+
 	/** Used to shortcut checking whether circular types are bundleable. */
 	private List<CIVLType> bundleableEncountered = new LinkedList<CIVLType>();
 
@@ -223,6 +228,23 @@ public class ModelBuilderWorker {
 	private CIVLType queueType;
 
 	private CIVLType commType;
+
+	/**
+	 * Used to keep track of continue statements in nested loops. Each entry on
+	 * the stack corresponds to a particular loop. The statements in the set for
+	 * that entry are noops which need their target set to the appropriate
+	 * location at the end of the loop processing.
+	 */
+	private Stack<Set<Statement>> continueStatements = new Stack<Set<Statement>>();
+
+	/**
+	 * Used to keep track of break statements in nested loops/switches. Each
+	 * entry on the stack corresponds to a particular loop or switch. The
+	 * statements in the set for that entry are noops which need their target
+	 * set to the appropriate location at the end of the loop or switch
+	 * processing.
+	 */
+	private Stack<Set<Statement>> breakStatements = new Stack<Set<Statement>>();
 
 	// Constructors........................................................
 
@@ -664,9 +686,11 @@ public class ModelBuilderWorker {
 		boolean result = true;
 
 		if (bundleableEncountered.contains(type)) {
-			// We are in a recursive evaluation that has already encountered this type.
+			// We are in a recursive evaluation that has already encountered
+			// this type.
 			// E.g. a struct foo with a field of type struct foo, etc.
-			// If this type is not bundleable, that will be determined elsewhere.
+			// If this type is not bundleable, that will be determined
+			// elsewhere.
 			return true;
 		} else {
 			bundleableEncountered.add(type);
@@ -1398,6 +1422,9 @@ public class ModelBuilderWorker {
 		} else if (statement instanceof SwitchNode) {
 			result = switchStatement(function, lastStatement,
 					(SwitchNode) statement, scope);
+		} else if (statement instanceof JumpNode) {
+			result = jumpStatement(function, lastStatement,
+					(JumpNode) statement, scope);
 		} else
 			throw new CIVLInternalException("Unknown statement kind",
 					sourceOf(statement));
@@ -1474,10 +1501,48 @@ public class ModelBuilderWorker {
 		} else if (statement instanceof SwitchNode) {
 			result = switchStatement(location, guard, function, lastStatement,
 					(SwitchNode) statement, scope);
+		} else if (statement instanceof JumpNode) {
+			result = jumpStatement(location, function, lastStatement,
+					(JumpNode) statement, scope);
 		} else
 			throw new CIVLUnimplementedFeatureException("statements of type "
 					+ statement.getClass().getSimpleName(), sourceOf(statement));
 		function.addStatement(result);
+		return result;
+	}
+
+	/**
+	 * A break or continue statement.
+	 */
+	private Statement jumpStatement(CIVLFunction function,
+			Statement lastStatement, JumpNode statement, Scope scope) {
+		return jumpStatement(
+				factory.location(sourceOfBeginning(statement), scope),
+				function, lastStatement, statement, scope);
+	}
+
+	/**
+	 * A break or continue statement;
+	 */
+	private Statement jumpStatement(Location location, CIVLFunction function,
+			Statement lastStatement, JumpNode statement, Scope scope) {
+		Statement result = factory.noopStatement(sourceOf(statement), location);
+
+		function.addLocation(location);
+		if (statement.getKind() == JumpKind.CONTINUE) {
+			continueStatements.peek().add(result);
+		} else if (statement.getKind() == JumpKind.BREAK) {
+			breakStatements.peek().add(result);
+		} else {
+			throw new CIVLInternalException(
+					"Jump nodes other than BREAK and CONTINUE should be handled seperately.",
+					sourceOf(statement.getSource()));
+		}
+		if (lastStatement != null) {
+			lastStatement.setTarget(location);
+		} else {
+			function.setStartLocation(location);
+		}
 		return result;
 	}
 
@@ -2105,6 +2170,9 @@ public class ModelBuilderWorker {
 		Statement loopEntrance;
 		Statement incrementer;
 		Statement loopExit;
+		Location incrementerLocation;
+		Set<Statement> continues;
+		Set<Statement> breaks;
 
 		location.setScope(newScope);
 		if (init != null) {
@@ -2159,22 +2227,38 @@ public class ModelBuilderWorker {
 		loopEntrance.setGuard(condition);
 		initStatement.setTarget(loopEntranceLocation);
 		function.addLocation(loopEntranceLocation);
+		continueStatements.add(new LinkedHashSet<Statement>());
+		breakStatements.add(new LinkedHashSet<Statement>());
 		loopBody = statement(function, loopEntrance, statement.getBody(),
 				newScope);
-		incrementer = forLoopIncrementer(function, loopBody,
-				statement.getIncrementer(), newScope);
+		continues = continueStatements.pop();
+		breaks = breakStatements.pop();
+		incrementerLocation = factory.location(
+				sourceOfBeginning(statement.getIncrementer()), newScope);
+		for (Statement s : continues) {
+			s.setTarget(incrementerLocation);
+		}
+		incrementer = forLoopIncrementer(incrementerLocation, function,
+				loopBody, statement.getIncrementer(), newScope);
 		incrementer.setTarget(initStatement.target());
 		loopExit = factory.noopStatement(condition.getSource(),
 				initStatement.target());
 		loopExit.setGuard(factory.unaryExpression(condition.getSource(),
 				UNARY_OPERATOR.NOT, condition));
+		if (breaks.size() > 0) {
+			StatementSet loopExits = new StatementSet();
+			loopExits.add(loopExit);
+			for (Statement s : breaks) {
+				loopExits.add(s);
+			}
+			return loopExits;
+		}
 		return loopExit;
 	}
 
-	private Statement forLoopIncrementer(CIVLFunction function,
-			Statement lastStatement, ExpressionNode incrementer, Scope scope) {
-		Location location = factory.location(sourceOfBeginning(incrementer),
-				scope);
+	private Statement forLoopIncrementer(Location location,
+			CIVLFunction function, Statement lastStatement,
+			ExpressionNode incrementer, Scope scope) {
 		CIVLSource source = sourceOf(incrementer);
 		Statement result;
 
@@ -2230,6 +2314,8 @@ public class ModelBuilderWorker {
 		Statement loopBody;
 		Expression condition;
 		Location loopEntranceLocation;
+		Set<Statement> continues;
+		Set<Statement> breaks;
 
 		condition = booleanExpression(statement.getCondition(), newScope);
 		loopEntranceLocation = factory.location(sourceOfBeginning(statement),
@@ -2242,8 +2328,15 @@ public class ModelBuilderWorker {
 		loopEntrance = factory.noopStatement(sourceOf(statement.getCondition()
 				.getSource()), loopEntranceLocation);
 		loopEntrance.setGuard(condition);
+		continueStatements.add(new LinkedHashSet<Statement>());
+		breakStatements.add(new LinkedHashSet<Statement>());
 		loopBody = statement(function, loopEntrance, statement.getBody(),
 				newScope);
+		continues = continueStatements.pop();
+		breaks = breakStatements.pop();
+		for (Statement s : continues) {
+			s.setTarget(loopEntranceLocation);
+		}
 		function.addLocation(loopEntranceLocation);
 		assert loopEntranceLocation != null;
 		loopBody.setTarget(loopEntranceLocation);
@@ -2251,6 +2344,14 @@ public class ModelBuilderWorker {
 				loopEntranceLocation);
 		loopExit.setGuard(factory.unaryExpression(condition.getSource(),
 				UNARY_OPERATOR.NOT, condition));
+		if (breaks.size() > 0) {
+			StatementSet loopExits = new StatementSet();
+			loopExits.add(loopExit);
+			for (Statement s : breaks) {
+				loopExits.add(s);
+			}
+			return loopExits;
+		}
 		return loopExit;
 	}
 
@@ -2505,12 +2606,15 @@ public class ModelBuilderWorker {
 		/** Collect case guards to determine guard for default case. */
 		Expression combinedCaseGuards = guard;
 		Statement bodyGoto;
+		Set<Statement> breaks;
 
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
 		} else {
 			function.setStartLocation(location);
 		}
+		function.addLocation(location);
+		breakStatements.add(new LinkedHashSet<Statement>());
 		while (cases.hasNext()) {
 			LabeledStatementNode caseStatement = cases.next();
 			// CIVLSource caseSource = sourceOf(caseStatement);
@@ -2531,10 +2635,14 @@ public class ModelBuilderWorker {
 			} else {
 				combinedGuard = caseGuard;
 			}
-			combinedCaseGuards = factory.binaryExpression(
-					sourceOfSpan(caseGuard.getSource(),
-							combinedCaseGuards.getSource()),
-					BINARY_OPERATOR.AND, caseGuard, combinedCaseGuards);
+			if (isTrue(combinedCaseGuards)) {
+				combinedCaseGuards = caseGuard;
+			} else {
+				combinedCaseGuards = factory.binaryExpression(
+						sourceOfSpan(caseGuard.getSource(),
+								combinedCaseGuards.getSource()),
+						BINARY_OPERATOR.OR, caseGuard, combinedCaseGuards);
+			}
 			caseGoto = factory.noopStatement(sourceOfBeginning(caseStatement),
 					location);
 			caseGoto.setGuard(combinedGuard);
@@ -2554,6 +2662,16 @@ public class ModelBuilderWorker {
 		bodyGoto.setGuard(factory.booleanLiteralExpression(
 				bodyGoto.getSource(), false));
 		result = statement(function, bodyGoto, statement.getBody(), scope);
+		breaks = breakStatements.pop();
+		if (breaks.size() > 0) {
+			StatementSet switchExits = new StatementSet();
+
+			switchExits.add(result);
+			for (Statement s : breaks) {
+				switchExits.add(s);
+			}
+			return switchExits;
+		}
 		return result;
 	}
 
