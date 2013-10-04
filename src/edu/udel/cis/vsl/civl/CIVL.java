@@ -49,12 +49,6 @@ public class CIVL {
 	/** YYYY-MM-DD in accordance with ISO 8601 */
 	public final static String date = "2013-06-23";
 
-	private static SymbolicUniverse universe = SARL.newStandardUniverse();
-
-	private static ModelBuilder modelBuilder = Models.newModelBuilder(universe);
-
-	private static ModelFactory modelFactory = modelBuilder.factory();
-
 	// TODO:
 	// add -D support. Need to create a token with "source" the command line.
 	// may treat command line as (virtual) file called "commandline"?
@@ -187,6 +181,10 @@ public class CIVL {
 		} else {
 			verify(printModel, verbose, infile, out);
 		}
+		out.flush();
+		if (outfileName != null) {
+			out.close();
+		}
 	}
 
 	public static boolean verify(File file, PrintStream out)
@@ -196,6 +194,9 @@ public class CIVL {
 
 	public static boolean verify(boolean printModel, boolean verbose,
 			File file, PrintStream out) {
+		SymbolicUniverse universe = SARL.newStandardUniverse();
+		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
+		ModelFactory modelFactory = modelBuilder.factory();
 		Program program;
 		StateFactoryIF stateFactory = new StateFactory(modelFactory);
 		Model model;
