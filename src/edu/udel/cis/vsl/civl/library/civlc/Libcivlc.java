@@ -766,6 +766,14 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
+	private State executePrintf(State state, int pid,
+			SymbolicExpression[] argumentValues) {
+		for (int i = 0; i < argumentValues.length; i++) {
+			System.out.println(argumentValues[i].toString());
+		}
+		return state;
+	}
+
 	private State executeWork(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
 		Identifier name;
@@ -821,6 +829,9 @@ public class Libcivlc implements LibraryExecutor {
 		case "$comm_dequeue":
 			state = executeCommDequeue(state, pid, lhs, arguments,
 					argumentValues);
+			break;
+		case "printf":
+			state = executePrintf(state, pid, argumentValues);
 			break;
 		case "$memcpy":
 		case "$message_pack":

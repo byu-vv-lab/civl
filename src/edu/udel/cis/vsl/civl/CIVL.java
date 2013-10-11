@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Random;
 
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
@@ -90,6 +91,7 @@ public class CIVL {
 		boolean preprocOnly = false;
 		boolean printModel = false;
 		boolean verbose = false;
+		boolean randomMode = false;
 
 		System.out.println("CIVL v" + version + " of " + date
 				+ " -- http://vsl.cis.udel.edu\n");
@@ -144,6 +146,8 @@ public class CIVL {
 				preprocOnly = true;
 			} else if (arg.equals("-P")) {
 				printModel = true;
+			} else if (arg.equals("-R")) {
+				randomMode = true;
 			} else if (arg.equals("-h") || arg.equals("-help")) {
 				printUsage(new PrintStream(System.out));
 				return;
@@ -179,7 +183,7 @@ public class CIVL {
 		if (preprocOnly) {
 			preprocessor.printOutput(out, infile);
 		} else {
-			verify(printModel, verbose, infile, out);
+			verify(printModel, verbose, infile, out, randomMode);
 		}
 		out.flush();
 		if (outfileName != null) {
@@ -189,11 +193,16 @@ public class CIVL {
 
 	public static boolean verify(File file, PrintStream out)
 			throws SyntaxException, ParseException, PreprocessorException {
-		return verify(false, false, file, out);
+		return verify(false, false, file, out, false);
 	}
 
 	public static boolean verify(boolean printModel, boolean verbose,
 			File file, PrintStream out) {
+		return verify(printModel, verbose, file, out, false);
+	}
+
+	public static boolean verify(boolean printModel, boolean verbose,
+			File file, PrintStream out, boolean randomMode) {
 		SymbolicUniverse universe = SARL.newStandardUniverse();
 		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
 		ModelFactory modelFactory = modelBuilder.factory();
@@ -204,8 +213,7 @@ public class CIVL {
 		ErrorLog log = new ErrorLog(new PrintWriter(System.out), new File(
 				new File("."), "CIVLREP/"));
 		Evaluator evaluator = new Evaluator(modelFactory, stateFactory, log);
-		EnablerIF<State, Transition, TransitionSequence> enabler = new Enabler(
-				transitionFactory, evaluator);
+		EnablerIF<State, Transition, TransitionSequence> enabler;
 		StatePredicateIF<State> predicate = new StandardPredicate(log,
 				universe, evaluator);
 		LibraryExecutorLoader loader = new CommonLibraryExecutorLoader();
@@ -216,7 +224,16 @@ public class CIVL {
 		double startTime = System.currentTimeMillis(), endTime;
 		boolean result;
 		String bar = "===================";
+		long seed = System.currentTimeMillis();
 
+		if (randomMode) {
+			System.out.println("Random execution with seed " + seed + ".");
+			enabler = new Enabler(transitionFactory, evaluator, randomMode,
+					new Random(seed));
+		} else {
+			enabler = new Enabler(transitionFactory, evaluator);
+		}
+		log.setErrorBound(5);
 		try {
 			program = ABC.activator(file).getProgram();
 			program.prune();
@@ -319,6 +336,8 @@ public class CIVL {
 		out.println("    print the model and every state");
 		out.println("-E");
 		out.println("    stop after preprocessing the file and output the result");
+		out.println("-R");
+		out.println("    instead of full verification, execute a random path through the program");
 		out.flush();
 	}
 }

@@ -1,6 +1,9 @@
 package edu.udel.cis.vsl.civl.kripke;
 
 import java.io.PrintStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Random;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
@@ -49,6 +52,10 @@ public class Enabler implements
 
 	private BooleanExpression falseValue;
 
+	private boolean randomMode = false;
+
+	private Random generator = null;
+
 	public Enabler(TransitionFactory transitionFactory, Evaluator evaluator) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
@@ -58,6 +65,13 @@ public class Enabler implements
 		this.falseValue = universe.falseExpression();
 	}
 
+	public Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
+			boolean randomMode, Random generator) {
+		this(transitionFactory, evaluator);
+		this.randomMode = randomMode;
+		this.generator = generator;
+	}
+
 	@Override
 	public boolean debugging() {
 		return debugging;
@@ -65,6 +79,8 @@ public class Enabler implements
 
 	@Override
 	public TransitionSequence enabledTransitions(State state) {
+		TransitionSequence transitions;
+
 		if (state.pathCondition().isFalse())
 			// return empty set of transitions:
 			return new TransitionSequence(state);
@@ -72,8 +88,118 @@ public class Enabler implements
 			System.out.println("Ample transition sets: " + ampleSets + "/"
 					+ enabledTransitionSets);
 		}
-		return enabledTransitionsPOR(state);
+		transitions = enabledTransitionsPOR(state);
+		if (randomMode && transitions.size() > 0) {
+			TransitionSequence singletonSequence = new TransitionSequence(state);
+			singletonSequence.add(transitions.get(generator.nextInt(transitions
+					.size())));
+			return singletonSequence;
+		}
+		return transitions;
 	}
+
+//	/**
+//	 * Attempts to form an ample set from the enabled transitions of the given
+//	 * process, from the given state. If this is not possible, returns all
+//	 * transitions.
+//	 */
+//	private TransitionSequence enabledTransitionsPOR(State state) {
+//		TransitionSequence transitions = transitionFactory
+//				.newTransitionSequence(state);
+//		Process[] processStates = state.processes();
+//
+//		enabledTransitionSets++;
+//		for (Process p : processStates) {
+//			TransitionSequence localTransitions = transitionFactory
+//					.newTransitionSequence(state);
+//			boolean allLocal = true;
+//
+//			// A process with an empty stack has no current location.
+//			if (p == null || p.hasEmptyStack()) {
+//				continue;
+//			}
+//			for (Statement s : p.location().outgoing()) {
+//				BooleanExpression newPathCondition = newPathCondition(state,
+//						p.id(), s);
+//				int statementScope = p.scope();
+//
+//				if (s.statementScope() != null) {
+//					while (!state.getScope(statementScope).lexicalScope()
+//							.equals(s.statementScope())) {
+//						statementScope = state.getParentId(statementScope);
+//					}
+//				}
+//				if (state.getScope(statementScope).numberOfReachers() > 1) {
+//					allLocal = false;
+//				}
+//				if (!newPathCondition.isFalse()) {
+//					try {
+//						if (s instanceof ChooseStatement) {
+//							Evaluation eval = evaluator.evaluate(stateFactory
+//									.setPathCondition(state, newPathCondition),
+//									p.id(), ((ChooseStatement) s).rhs());
+//							IntegerNumber upperNumber = (IntegerNumber) universe
+//									.reasoner(eval.state.pathCondition())
+//									.extractNumber(
+//											(NumericExpression) eval.value);
+//							int upper;
+//
+//							if (upperNumber == null)
+//								throw new CIVLStateException(
+//										ErrorKind.INTERNAL, Certainty.NONE,
+//										"Argument to $choose_int not concrete: "
+//												+ eval.value, eval.state,
+//										s.getSource());
+//							upper = upperNumber.intValue();
+//							for (int i = 0; i < upper; i++) {
+//								localTransitions
+//										.add(transitionFactory
+//												.newChooseTransition(eval.state
+//														.pathCondition(), p
+//														.id(), s, universe
+//														.integer(i)));
+//							}
+//							continue;
+//						} else if (s instanceof WaitStatement) {
+//							Evaluation eval = evaluator.evaluate(stateFactory
+//									.setPathCondition(state, newPathCondition),
+//									p.id(), ((WaitStatement) s).process());
+//							int pidValue = modelFactory.getProcessId(
+//									((WaitStatement) s).process().getSource(),
+//									eval.value);
+//
+//							if (pidValue < 0) {
+//								CIVLExecutionException e = new CIVLStateException(
+//										ErrorKind.INVALID_PID,
+//										Certainty.PROVEABLE,
+//										"Unable to call $wait on a process that has already been the target of a $wait.",
+//										state, s.getSource());
+//
+//								evaluator.log().report(e);
+//								// TODO: recover: add a no-op transition
+//								throw e;
+//							}
+//							if (!state.process(pidValue).hasEmptyStack()) {
+//								continue;
+//							}
+//						}
+//						localTransitions.add(transitionFactory
+//								.newSimpleTransition(newPathCondition, p.id(),
+//										s));
+//					} catch (UnsatisfiablePathConditionException e) {
+//						// nothing to do: don't add this transition
+//					}
+//				}
+//			}
+//			if (allLocal && localTransitions.size() > 0) {
+//				ampleSets++;
+//				return localTransitions;
+//			} else {
+//				transitions.addAll(localTransitions);
+//			}
+//		}
+//		return transitions;
+//	}
 
 	/**
 	 * Attempts to form an ample set from the enabled transitions of the given
@@ -84,6 +210,8 @@ public class Enabler implements
 		TransitionSequence transitions = transitionFactory
 				.newTransitionSequence(state);
 		Process[] processStates = state.processes();
+		Map<Process, TransitionSequence> processTransitions = new LinkedHashMap<Process, TransitionSequence>();
+		int totalTransitions = 0;
 
 		enabledTransitionSets++;
 		for (Process p : processStates) {
@@ -168,13 +296,35 @@ public class Enabler implements
 					}
 				}
 			}
+			totalTransitions += localTransitions.size();
 			if (allLocal && localTransitions.size() > 0) {
 				ampleSets++;
-				return localTransitions;
+				processTransitions.put(p, localTransitions);
+				if (localTransitions.size() == 1) {
+					// If the size isn't 1, keep looking for a smaller local
+					// set.
+					return localTransitions;
+				}
 			} else {
 				transitions.addAll(localTransitions);
 			}
 		}
+		if (processTransitions.size() > 0) {
+			Process smallestProcess = null;
+			int smallestProcessSetSize = totalTransitions + 1;
+
+			for (Process p : processTransitions.keySet()) {
+				if (processTransitions.get(p).size() < smallestProcessSetSize) {
+					smallestProcess = p;
+					smallestProcessSetSize = processTransitions.get(p).size();
+				}
+			}
+			assert smallestProcess != null;
+			// System.out.println("Returning " + smallestProcessSetSize +
+			// " transitions for 1 process");
+			return processTransitions.get(smallestProcess);
+		}
+		// System.out.println("Returning " + totalTransitions + " transitions");
 		return transitions;
 	}
 
