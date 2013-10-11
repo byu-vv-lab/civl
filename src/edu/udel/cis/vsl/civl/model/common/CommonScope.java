@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -293,6 +294,11 @@ public class CommonScope extends CommonSourceable implements Scope {
 				containsPointerType = containsPointerType
 						|| fieldContainsPointer;
 			}
+		} else if (type instanceof CIVLHeapType) {
+			// Heaps start out incomplete, so let's assume this is true for now.
+			// Ultimately we'd like to only have this be true if the heap
+			// contains pointer types.
+			containsPointerType = true;
 		}
 		return containsPointerType;
 	}
