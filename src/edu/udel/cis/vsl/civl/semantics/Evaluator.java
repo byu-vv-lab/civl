@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -52,6 +53,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.util.Singleton;
@@ -1657,6 +1659,70 @@ public class Evaluator {
 			throw new CIVLStateException(ErrorKind.POINTER, Certainty.MAYBE,
 					"Undefined pointer value?", state, source);
 		}
+	}
+
+	private String symRefToString(ReferenceExpression symRef, CIVLSource source) {
+		switch (symRef.referenceKind()) {
+		case ARRAY_ELEMENT: {
+			// parent[i]
+			ArrayElementReference aref = (ArrayElementReference) symRef;
+
+			return symRefToString(aref.getParent(), source) + "["
+					+ aref.getIndex() + "]";
+		}
+		case IDENTITY: // empty string
+			return "";
+		case NULL: // NULL
+			return "NULL";
+		case OFFSET: {// parent+i
+			OffsetReference oref = (OffsetReference) symRef;
+
+			return symRefToString(oref.getParent(), source) + "+"
+					+ oref.getOffset();
+		}
+		case TUPLE_COMPONENT: {// .i
+			TupleComponentReference tref = (TupleComponentReference) symRef;
+
+			return symRefToString(tref.getParent(), source) + "."
+					+ tref.getIndex();
+		}
+		case UNION_MEMBER: {// #i
+			UnionMemberReference uref = (UnionMemberReference) symRef;
+
+			return symRefToString(uref.getParent(), source) + "#"
+					+ uref.getIndex();
+		}
+		default:
+			throw new CIVLInternalException("unreachable", source);
+		}
+	}
+
+	/**
+	 * Provide a nice-human readable representation of the pointer.
+	 * 
+	 * @param pointer
+	 */
+	public String pointerToString(CIVLSource source, State state,
+			SymbolicExpression pointer) {
+		String result = "";
+
+		try {
+			int sid = getScopeId(source, pointer);
+			int vid = getVariableId(source, pointer);
+			ReferenceExpression symRef = getSymRef(pointer);
+			DynamicScope dyscope = state.getScope(sid);
+			Scope scope = dyscope.lexicalScope();
+			Variable variable = scope.getVariable(vid);
+			String variableName = variable.name().name();
+
+			result = "Ptr[scope=" + sid + ", &" + variableName;
+			result += symRefToString(symRef, source);
+			result += "]";
+
+		} catch (CIVLInternalException e) {
+			result += "ERROR";
+		}
+		return result;
 	}
 
 	/**
