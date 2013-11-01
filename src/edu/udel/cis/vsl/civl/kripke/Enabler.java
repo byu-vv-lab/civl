@@ -11,11 +11,15 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
@@ -46,6 +50,8 @@ public class Enabler implements
 
 	private Evaluator evaluator;
 
+	private Executor executor;
+
 	private long enabledTransitionSets = 0;
 
 	private long ampleSets = 0;
@@ -56,9 +62,11 @@ public class Enabler implements
 
 	private Random generator = null;
 
-	public Enabler(TransitionFactory transitionFactory, Evaluator evaluator) {
+	public Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
+			Executor executor) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
+		this.executor = executor;
 		this.modelFactory = evaluator.modelFactory();
 		this.stateFactory = evaluator.stateFactory();
 		this.universe = modelFactory.universe();
@@ -66,8 +74,8 @@ public class Enabler implements
 	}
 
 	public Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
-			boolean randomMode, Random generator) {
-		this(transitionFactory, evaluator);
+			Executor executor, boolean randomMode, Random generator) {
+		this(transitionFactory, evaluator, executor);
 		this.randomMode = randomMode;
 		this.generator = generator;
 	}
@@ -98,108 +106,108 @@ public class Enabler implements
 		return transitions;
 	}
 
-//	/**
-//	 * Attempts to form an ample set from the enabled transitions of the given
-//	 * process, from the given state. If this is not possible, returns all
-//	 * transitions.
-//	 */
-//	private TransitionSequence enabledTransitionsPOR(State state) {
-//		TransitionSequence transitions = transitionFactory
-//				.newTransitionSequence(state);
-//		Process[] processStates = state.processes();
-//
-//		enabledTransitionSets++;
-//		for (Process p : processStates) {
-//			TransitionSequence localTransitions = transitionFactory
-//					.newTransitionSequence(state);
-//			boolean allLocal = true;
-//
-//			// A process with an empty stack has no current location.
-//			if (p == null || p.hasEmptyStack()) {
-//				continue;
-//			}
-//			for (Statement s : p.location().outgoing()) {
-//				BooleanExpression newPathCondition = newPathCondition(state,
-//						p.id(), s);
-//				int statementScope = p.scope();
-//
-//				if (s.statementScope() != null) {
-//					while (!state.getScope(statementScope).lexicalScope()
-//							.equals(s.statementScope())) {
-//						statementScope = state.getParentId(statementScope);
-//					}
-//				}
-//				if (state.getScope(statementScope).numberOfReachers() > 1) {
-//					allLocal = false;
-//				}
-//				if (!newPathCondition.isFalse()) {
-//					try {
-//						if (s instanceof ChooseStatement) {
-//							Evaluation eval = evaluator.evaluate(stateFactory
-//									.setPathCondition(state, newPathCondition),
-//									p.id(), ((ChooseStatement) s).rhs());
-//							IntegerNumber upperNumber = (IntegerNumber) universe
-//									.reasoner(eval.state.pathCondition())
-//									.extractNumber(
-//											(NumericExpression) eval.value);
-//							int upper;
-//
-//							if (upperNumber == null)
-//								throw new CIVLStateException(
-//										ErrorKind.INTERNAL, Certainty.NONE,
-//										"Argument to $choose_int not concrete: "
-//												+ eval.value, eval.state,
-//										s.getSource());
-//							upper = upperNumber.intValue();
-//							for (int i = 0; i < upper; i++) {
-//								localTransitions
-//										.add(transitionFactory
-//												.newChooseTransition(eval.state
-//														.pathCondition(), p
-//														.id(), s, universe
-//														.integer(i)));
-//							}
-//							continue;
-//						} else if (s instanceof WaitStatement) {
-//							Evaluation eval = evaluator.evaluate(stateFactory
-//									.setPathCondition(state, newPathCondition),
-//									p.id(), ((WaitStatement) s).process());
-//							int pidValue = modelFactory.getProcessId(
-//									((WaitStatement) s).process().getSource(),
-//									eval.value);
-//
-//							if (pidValue < 0) {
-//								CIVLExecutionException e = new CIVLStateException(
-//										ErrorKind.INVALID_PID,
-//										Certainty.PROVEABLE,
-//										"Unable to call $wait on a process that has already been the target of a $wait.",
-//										state, s.getSource());
-//
-//								evaluator.log().report(e);
-//								// TODO: recover: add a no-op transition
-//								throw e;
-//							}
-//							if (!state.process(pidValue).hasEmptyStack()) {
-//								continue;
-//							}
-//						}
-//						localTransitions.add(transitionFactory
-//								.newSimpleTransition(newPathCondition, p.id(),
-//										s));
-//					} catch (UnsatisfiablePathConditionException e) {
-//						// nothing to do: don't add this transition
-//					}
-//				}
-//			}
-//			if (allLocal && localTransitions.size() > 0) {
-//				ampleSets++;
-//				return localTransitions;
-//			} else {
-//				transitions.addAll(localTransitions);
-//			}
-//		}
-//		return transitions;
-//	}
+	// /**
+	// * Attempts to form an ample set from the enabled transitions of the given
+	// * process, from the given state. If this is not possible, returns all
+	// * transitions.
+	// */
+	// private TransitionSequence enabledTransitionsPOR(State state) {
+	// TransitionSequence transitions = transitionFactory
+	// .newTransitionSequence(state);
+	// Process[] processStates = state.processes();
+	//
+	// enabledTransitionSets++;
+	// for (Process p : processStates) {
+	// TransitionSequence localTransitions = transitionFactory
+	// .newTransitionSequence(state);
+	// boolean allLocal = true;
+	//
+	// // A process with an empty stack has no current location.
+	// if (p == null || p.hasEmptyStack()) {
+	// continue;
+	// }
+	// for (Statement s : p.location().outgoing()) {
+	// BooleanExpression newPathCondition = newPathCondition(state,
+	// p.id(), s);
+	// int statementScope = p.scope();
+	//
+	// if (s.statementScope() != null) {
+	// while (!state.getScope(statementScope).lexicalScope()
+	// .equals(s.statementScope())) {
+	// statementScope = state.getParentId(statementScope);
+	// }
+	// }
+	// if (state.getScope(statementScope).numberOfReachers() > 1) {
+	// allLocal = false;
+	// }
+	// if (!newPathCondition.isFalse()) {
+	// try {
+	// if (s instanceof ChooseStatement) {
+	// Evaluation eval = evaluator.evaluate(stateFactory
+	// .setPathCondition(state, newPathCondition),
+	// p.id(), ((ChooseStatement) s).rhs());
+	// IntegerNumber upperNumber = (IntegerNumber) universe
+	// .reasoner(eval.state.pathCondition())
+	// .extractNumber(
+	// (NumericExpression) eval.value);
+	// int upper;
+	//
+	// if (upperNumber == null)
+	// throw new CIVLStateException(
+	// ErrorKind.INTERNAL, Certainty.NONE,
+	// "Argument to $choose_int not concrete: "
+	// + eval.value, eval.state,
+	// s.getSource());
+	// upper = upperNumber.intValue();
+	// for (int i = 0; i < upper; i++) {
+	// localTransitions
+	// .add(transitionFactory
+	// .newChooseTransition(eval.state
+	// .pathCondition(), p
+	// .id(), s, universe
+	// .integer(i)));
+	// }
+	// continue;
+	// } else if (s instanceof WaitStatement) {
+	// Evaluation eval = evaluator.evaluate(stateFactory
+	// .setPathCondition(state, newPathCondition),
+	// p.id(), ((WaitStatement) s).process());
+	// int pidValue = modelFactory.getProcessId(
+	// ((WaitStatement) s).process().getSource(),
+	// eval.value);
+	//
+	// if (pidValue < 0) {
+	// CIVLExecutionException e = new CIVLStateException(
+	// ErrorKind.INVALID_PID,
+	// Certainty.PROVEABLE,
+	// "Unable to call $wait on a process that has already been the target of a $wait.",
+	// state, s.getSource());
+	//
+	// evaluator.log().report(e);
+	// // TODO: recover: add a no-op transition
+	// throw e;
+	// }
+	// if (!state.process(pidValue).hasEmptyStack()) {
+	// continue;
+	// }
+	// }
+	// localTransitions.add(transitionFactory
+	// .newSimpleTransition(newPathCondition, p.id(),
+	// s));
+	// } catch (UnsatisfiablePathConditionException e) {
+	// // nothing to do: don't add this transition
+	// }
+	// }
+	// }
+	// if (allLocal && localTransitions.size() > 0) {
+	// ampleSets++;
+	// return localTransitions;
+	// } else {
+	// transitions.addAll(localTransitions);
+	// }
+	// }
+	// return transitions;
+	// }
 
 	/**
 	 * Attempts to form an ample set from the enabled transitions of the given
@@ -351,6 +359,14 @@ public class Enabler implements
 			BooleanExpression guard = (BooleanExpression) eval.value;
 			Reasoner reasoner = universe.reasoner(pathCondition);
 
+//			if (statement instanceof CallOrSpawnStatement) {
+//				if (((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
+//					LibraryExecutor libraryExecutor = executor
+//							.libraryExecutor((CallOrSpawnStatement) statement);
+//					guard = universe.and(guard,
+//							libraryExecutor.getGuard(state, pid, statement));
+//				}
+//			}
 			// System.out.println("Enabler.newPathCondition() : Process " + pid
 			// + " is at " + state.process(pid).peekStack().location());
 			if (reasoner.isValid(guard))

@@ -546,4 +546,17 @@ public class Executor {
 		}
 	}
 
+	public LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
+		String library;
+
+		assert statement.function() instanceof SystemFunction;
+		library = ((SystemFunction) statement.function()).getLibrary();
+		if (library.equals("civlc")) {
+			return civlcExecutor;
+		} else {
+			throw new CIVLInternalException("Unknown library: " + library,
+					statement);
+		}
+	}
+
 }

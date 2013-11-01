@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
  * Executor for stdlib function calls.
@@ -131,6 +132,12 @@ public class Libstdlib implements LibraryExecutor {
 	public State wrapUp(State state) {
 		// TODO Auto-generated method stub
 		return state;
+	}
+
+	@Override
+	public BooleanExpression getGuard(State state, int pid, Statement statement) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

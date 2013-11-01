@@ -82,6 +82,8 @@ public class Libcivlc implements LibraryExecutor {
 
 	private IntObject zeroObject;
 
+	private IntObject oneObject;
+	
 	private ErrorLog log;
 
 	// private SymbolicType bundleSymbolicType;
@@ -95,7 +97,7 @@ public class Libcivlc implements LibraryExecutor {
 		this.zero = universe.zeroInt();
 		this.one = universe.oneInt();
 		this.zeroObject = universe.intObject(0);
-
+		this.oneObject = universe.intObject(1);
 	}
 
 	@Override
@@ -606,9 +608,9 @@ public class Libcivlc implements LibraryExecutor {
 	private State executeCommEnqueue(State state, int pid,
 			Expression[] arguments, SymbolicExpression[] argumentValues) {
 		SymbolicExpression comm;
-		SymbolicExpression procArray;
+//		SymbolicExpression procArray;
 		CIVLSource commArgSource = arguments[0].getSource();
-		int nprocs;
+//		int nprocs;
 		int source = -1;
 		int dest = -1;
 		NumericExpression sourceExpression;
@@ -629,31 +631,33 @@ public class Libcivlc implements LibraryExecutor {
 
 		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
 		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
-		nprocs = evaluator.extractInt(commArgSource,
-				(NumericExpression) universe.tupleRead(comm, zeroObject));
-		procArray = (SymbolicExpression) universe.tupleRead(comm,
-				universe.intObject(1));
+//		nprocs = evaluator.extractInt(commArgSource,
+//				(NumericExpression) universe.tupleRead(comm, zeroObject));
+//		procArray = (SymbolicExpression) universe.tupleRead(comm,
+//				universe.intObject(1));
 		newMessage = argumentValues[1];
 		// evaluator.dereference(commArgSource, state,
 		// argumentValues[1]);
 
+		source = evaluator.extractInt(arguments[1].getSource(), (NumericExpression) universe.tupleRead(newMessage, zeroObject));
+		dest = evaluator.extractInt(arguments[1].getSource(), (NumericExpression) universe.tupleRead(newMessage, oneObject));
 		// Find the array index corresponding to the source proc and dest proc
-		for (int i = 0; i < nprocs; i++) {
-			SymbolicExpression proc = universe.arrayRead(procArray,
-					universe.integer(i));
-			int procID = evaluator.extractInt(commArgSource,
-					(NumericExpression) universe.tupleRead(proc, zeroObject));
-			if (procID == pid) {
-				source = i;
-			}
-			if (universe.tupleRead(proc, zeroObject).equals(
-					universe.tupleRead(newMessage, universe.intObject(1)))) {
-				dest = i;
-			}
-			if (dest >= 0 && source >= 0) {
-				break;
-			}
-		}
+//		for (int i = 0; i < nprocs; i++) {
+//			SymbolicExpression proc = universe.arrayRead(procArray,
+//					universe.integer(i));
+//			int procID = evaluator.extractInt(commArgSource,
+//					(NumericExpression) universe.tupleRead(proc, zeroObject));
+//			if (procID == pid) {
+//				source = i;
+//			}
+//			if (universe.tupleRead(proc, zeroObject).equals(
+//					universe.tupleRead(newMessage, universe.intObject(1)))) {
+//				dest = i;
+//			}
+//			if (dest >= 0 && source >= 0) {
+//				break;
+//			}
+//		}
 		assert source >= 0;
 		assert dest >= 0;
 		sourceExpression = universe.integer(source);
@@ -690,11 +694,11 @@ public class Libcivlc implements LibraryExecutor {
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression comm;
-		SymbolicExpression procArray;
+//		SymbolicExpression procArray;
 		CIVLSource commArgSource = arguments[0].getSource();
-		int nprocs;
-		int source = -1;
-		int dest = -1;
+//		int nprocs;
+//		int source = -1;
+//		int dest = -1;
 		NumericExpression sourceExpression;
 		NumericExpression destExpression;
 		SymbolicExpression buf; // buf has type $queue[][]
@@ -712,28 +716,30 @@ public class Libcivlc implements LibraryExecutor {
 
 		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
 		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
-		nprocs = evaluator.extractInt(commArgSource,
-				(NumericExpression) universe.tupleRead(comm, zeroObject));
-		procArray = (SymbolicExpression) universe.tupleRead(comm,
-				universe.intObject(1));
+//		nprocs = evaluator.extractInt(commArgSource,
+//				(NumericExpression) universe.tupleRead(comm, zeroObject));
+//		procArray = (SymbolicExpression) universe.tupleRead(comm,
+//				universe.intObject(1));
 		// Find the array index corresponding to the source proc and dest proc
-		for (int i = 0; i < nprocs; i++) {
-			SymbolicExpression proc = universe.arrayRead(procArray,
-					universe.integer(i));
-			if (universe.tupleRead(proc, zeroObject).equals(argumentValues[1])) {
-				source = i;
-			}
-			if (universe.tupleRead(proc, zeroObject).equals(argumentValues[2])) {
-				dest = i;
-			}
-			if (dest >= 0 && source >= 0) {
-				break;
-			}
-		}
-		assert source >= 0;
-		assert dest >= 0;
-		sourceExpression = universe.integer(source);
-		destExpression = universe.integer(dest);
+//		for (int i = 0; i < nprocs; i++) {
+//			SymbolicExpression proc = universe.arrayRead(procArray,
+//					universe.integer(i));
+//			if (universe.tupleRead(proc, zeroObject).equals(argumentValues[1])) {
+//				source = i;
+//			}
+//			if (universe.tupleRead(proc, zeroObject).equals(argumentValues[2])) {
+//				dest = i;
+//			}
+//			if (dest >= 0 && source >= 0) {
+//				break;
+//			}
+//		}
+//		assert source >= 0;
+//		assert dest >= 0;
+//		sourceExpression = universe.integer(source);
+//		destExpression = universe.integer(dest);
+		sourceExpression = (NumericExpression) argumentValues[1];
+		destExpression = (NumericExpression) argumentValues[2];
 		buf = universe.tupleRead(comm, universe.intObject(2));
 		bufRow = universe.arrayRead(buf, sourceExpression);
 		queue = universe.arrayRead(bufRow, destExpression);
@@ -993,6 +999,65 @@ public class Libcivlc implements LibraryExecutor {
 	public State wrapUp(State state) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public BooleanExpression getGuard(State state, int pid, Statement statement) {
+		Identifier name;
+		Expression[] arguments;
+		SymbolicExpression[] argumentValues;
+		CallOrSpawnStatement call;
+		LHSExpression lhs;
+		int numArgs;
+		BooleanExpression guard;
+
+		if (!(statement instanceof CallOrSpawnStatement)) {
+			throw new CIVLInternalException("Unsupported statement for civlc",
+					statement);
+		}
+		call = (CallOrSpawnStatement) statement;
+		numArgs = call.arguments().size();
+		name = call.function().name();
+		lhs = call.lhs();
+		arguments = new Expression[numArgs];
+		argumentValues = new SymbolicExpression[numArgs];
+//		for (int i = 0; i < numArgs; i++) {
+//			Evaluation eval;
+//
+//			arguments[i] = call.arguments().elementAt(i);
+//			eval = evaluator.evaluate(state, pid, arguments[i]);
+//			argumentValues[i] = eval.value;
+//			state = eval.state;
+//		}
+		switch (name.name()) {
+		case "$free":
+		case "$bundle_pack":
+		case "$bundle_unpack":
+		case "$bundle_size":
+		case "$comm_create":
+		case "$comm_enqueue":
+		case "$comm_dequeue":
+		case "printf":
+		case "$memcpy":
+		case "$message_pack":
+		case "$message_source":
+		case "$message_tag":
+		case "$message_dest":
+		case "$message_size":
+		case "$message_unpack":
+		case "$comm_destroy":
+		case "$comm_nprocs":
+		case "$comm_probe":
+		case "$comm_seek":
+		case "$comm_chan_size":
+		case "$comm_total_size":
+			guard = universe.trueExpression();
+			break;
+		default:
+			throw new CIVLInternalException("Unknown civlc function: " + name,
+					statement);
+		}
+		return guard;
 	}
 
 }

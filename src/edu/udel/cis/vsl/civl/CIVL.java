@@ -226,13 +226,6 @@ public class CIVL {
 		String bar = "===================";
 		long seed = System.currentTimeMillis();
 
-		if (randomMode) {
-			System.out.println("Random execution with seed " + seed + ".");
-			enabler = new Enabler(transitionFactory, evaluator, randomMode,
-					new Random(seed));
-		} else {
-			enabler = new Enabler(transitionFactory, evaluator);
-		}
 		log.setErrorBound(5);
 		try {
 			program = ABC.activator(file).getProgram();
@@ -258,6 +251,13 @@ public class CIVL {
 		}
 		initialState = stateFactory.initialState(model);
 		executor = new Executor(modelFactory, stateFactory, log, loader);
+		if (randomMode) {
+			System.out.println("Random execution with seed " + seed + ".");
+			enabler = new Enabler(transitionFactory, evaluator, executor,
+					randomMode, new Random(seed));
+		} else {
+			enabler = new Enabler(transitionFactory, evaluator, executor);
+		}
 		stateManager = new StateManager(executor);
 		if (verbose) {
 			((StateManager) stateManager).setDebugOut(out);
