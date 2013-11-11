@@ -164,45 +164,6 @@ public class DynamicScope {
 		return newValues;
 	}
 
-	// /**
-	// * Returns a new DynamicScope identical to this one, except that the
-	// values
-	// * have been copied into a new array.
-	// *
-	// * @return
-	// */
-	// private DynamicScope copy() {
-	// return new DynamicScope(lexicalScope, parent, copyValues(), reachers);
-	// }
-
-	/**
-	 * @param variable
-	 *            A dynamic variable in the current state.
-	 * @return The value of the variable in the current state. Null if
-	 *         undefined.
-	 */
-	public SymbolicExpression value(DynamicVariable variable) {
-		int index = lexicalScope.getVid(variable.staticVariable());
-
-		return variableValues[index];
-	}
-
-	/**
-	 * @param variable
-	 *            A dynamic variable in the current state.
-	 * @param value
-	 *            An expression for the current value of the variable. If a
-	 *            value for this variable previously existed, it is replaced.
-	 */
-	DynamicScope setValue(DynamicVariable variable, SymbolicExpression value) {
-		SymbolicExpression[] newVariableValues = copyValues();
-		int index = lexicalScope.getVid(variable.staticVariable());
-
-		newVariableValues[index] = value;
-		return new DynamicScope(this.lexicalScope, this.parent,
-				newVariableValues, this.reachers);
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
