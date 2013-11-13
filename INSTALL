@@ -41,7 +41,7 @@ typing "civl <filename>".  Type just "civl" for usage information.
 We recommend using the Eclipse IDE for Java/EE developers.
 
 1. Install prerequisite projects ABC, SARL and GMC. 
-   Make sure that the three projects are put where workspace
+   Make sure that the three projects are put in the workspace
    directory where CIVL will be put. 
 
 	a. Install the C front-end ABC, http://vsl.cis.udel.edu/abc,
@@ -101,34 +101,40 @@ a bunch of work.
 
    		README.txt    lib        licenses    src
 
-5. Open build_default.properties, edit the entry "workspace" to point to the
+5. Create a file build.properties in the directory where build.xml is in.
+   Copy and paste the content from properties/build.properties.osx or 
+   properties/build.properties.linux depending on your platform.
+   If your workspace directory is the default setting of Eclipse, 
+   i.e., HOME/Documents/workspace for osx or HOME/workspace for linux, 
+   then you dont have to anything.
+   Otherwise, you need to edit the entry "workspace" to point to the
    corresponding directory where you put the projects ABC, SARL and GMC.
 
 6. Navigate to Preferences -> Java -> Build Path -> ClassPath 
-Variables, and then select “New…” to create a classpath variable VSL, 
-and specify its value to be /opt/vsl. Navigate to Preferences -> Run/Debug 
--> String Substitution -> New…, and then define an entry vsl_lib and 
-set its value to be /opt/vsl/lib.
+   Variables, and then select “New…” to create a classpath variable VSL, 
+   and specify its value to be /opt/vsl. Navigate to Preferences -> Run/Debug 
+   -> String Substitution -> New…, and then define an entry vsl_lib and 
+   set its value to be /opt/vsl/lib.
 
 7. Do a clean build.  Everything should compile.  Generate the civl.jar
-by right-clicking (or ctrl-click on OS X) the build.xml file and
-Run As->Ant Build.  
+   by right-clicking (or ctrl-click on OS X) the build.xml file and
+   Run As->Ant Build.  
 
 8. Go to Run->Run Configurations.... Create a new JUnit configuration.
-Name it CIVL Tests. Select "Run all tests in the selected project..."
-and navigate to the folder "test" in the CIVL project.
-The Test runner should be JUnit 4. Under the Arguments tab, type
-"-ea" (without the quotes) in the VM arguments area (to enable assertion
-checking). Under the Environment tab, create an entry 
-DYLD_LIBRARY_PATH (OS X) or LD_LIBRARY_PATH (linux), 
-specify its value by clicking Variables… and choose vsl_lib from the list, 
-or you may type ${vsl_lib} in the value entry.
+   Name it CIVL Tests. Select "Run all tests in the selected project..."
+   and navigate to the folder "test" in the CIVL project.
+   The Test runner should be JUnit 4. Under the Arguments tab, type
+   "-ea" (without the quotes) in the VM arguments area (to enable assertion
+   checking). Under the Environment tab, create an entry 
+   DYLD_LIBRARY_PATH (OS X) or LD_LIBRARY_PATH (linux), 
+   specify its value by clicking Variables… and choose vsl_lib from the list, 
+   or you may type ${vsl_lib} in the value entry.
 
 9. An example of how to set up a single test from within Eclipse:
-create a new Run Configuration via the Run->Run
-Configurations... menu.  Create a new "Java Application"
-configuration.  Call it "CIVL barrier2".  The Project is CIVL.  The
-main class is edu.udel.cis.vsl.civl.CIVL.  Under the Arguments tab,
-set the Program arguments to "examples/barrier2.cvl" (without the
-quotes).  Modify the VM arguments and the Environment as in the step
-above.  You should now be able to run the test by clicking "Run".
+   create a new Run Configuration via the Run->Run
+   Configurations... menu.  Create a new "Java Application"
+   configuration.  Call it "CIVL barrier2".  The Project is CIVL.  The
+   main class is edu.udel.cis.vsl.civl.CIVL.  Under the Arguments tab,
+   set the Program arguments to "examples/barrier2.cvl" (without the
+   quotes).  Modify the VM arguments and the Environment as in the step
+   above.  You should now be able to run the test by clicking "Run".
