@@ -1,5 +1,5 @@
-root=/VSL_depend
-workspace=/Users/zmanchun/Documents/workspace
+root=/opt/vsl
+workspace=/Users/${user.name}/Documents/workspace
 hamcrest.jar=${root}/lib/hamcrest-core-1.3.jar
 jacoco.jar=${root}/src/jacoco/lib/jacocoant.jar
 junit.jar=${root}/lib/junit-4.11.jar
