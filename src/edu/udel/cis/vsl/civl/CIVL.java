@@ -45,10 +45,10 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 public class CIVL {
 
-	public final static String version = "0.2";
+	public final static String version = "0.3";
 
 	/** YYYY-MM-DD in accordance with ISO 8601 */
-	public final static String date = "2013-06-23";
+	public final static String date = "2013-11-20";
 
 	// TODO:
 	// add -D support. Need to create a token with "source" the command line.
