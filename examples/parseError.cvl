@@ -1,0 +1,6 @@
+void main() {
+  int row;
+  for (row=1; row<10; row++) {
+    ;
+  }
+}

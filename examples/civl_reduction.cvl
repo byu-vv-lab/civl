@@ -1,0 +1,200 @@
+#include <civlc.h>
+ 
+//the length of the array
+int n = 8;
+
+//a float incrementer
+float float_i;
+
+float test[n];
+
+//input arrays of the program
+$input float a[100];
+$input float b[100];
+
+//the outputs of the program
+$output float seq_sum;
+$output float par_sum;
+$output float tree_sum;
+
+
+void init()
+{
+  float_i = 0.0;
+  
+  //can't cast i to float, so use float version
+  for(int i=0; i<n; i++) {
+      a[i] = float_i;
+      b[i] = float_i;
+      float_i = float_i + 1.0;
+      test[i] = 0.0;
+  }
+  
+  seq_sum = 0.0;
+  par_sum = 0.0;
+  tree_sum = 0.0;
+  
+}
+
+void sequential() $requires n > 0; $requires seq_sum == 0.0; $ensures seq_sum > 0.0;
+{
+  for(int i=0; i<n; i++){
+      float product = a[i] * b[i];
+      seq_sum +=  product;
+  }
+  return;
+}
+
+//slow (sequential) algorithm
+float parallel_slow() $requires n > 0; $requires par_sum == 0.0; $ensures par_sum > 0.0;
+{
+  //the mutex variable
+  int lock = 0;
+  
+  //an array of workers
+  $proc process[n];
+  
+  void accumulate(int i)
+  { 
+    float product = a[i] * b[i];
+  
+    //this version doesn't need a lock
+    //but a lock speeds it up
+    $when (lock == 0) lock = 1;
+    par_sum += product;
+    lock = 0;
+    
+    //this version needs a lock
+    //$when (lock == 0) lock = 1;
+    //float temp = par_sum;
+    //temp += product;
+    //par_sum = temp;
+    //lock = 0;
+
+    // uncomment for guaranteed incorrect result
+    // par_sum += 1.0;
+  }
+  
+  //spawn processes
+  for (int j=0; j < n; j++) {
+    process[j] = $spawn accumulate(j);
+  }
+  
+  //wait for processes
+  for (int k=0; k < n; k++) {
+    $wait process[k];
+  }
+}
+
+
+//tree reduction
+void parallel_tree() $requires n > 0; $requires par_sum == 0.0; $ensures par_sum > 0.0;
+{
+  //the mutex variable array
+  int tree_lock[n];
+
+  //the result array
+  float result[n];
+  
+  //initialize mutex and result arrays
+  for(int i = 0; i < n; i++){
+    tree_lock[i] = 0;
+    result[i] = 0.0;
+  }
+  
+  //an array of workers
+  $proc tree_process[n];
+  
+                 void accumulate_tree(int i)
+        	 { 
+		   //just testing to make sure this process made it in here
+		   test[i] = 1.0;
+		   
+		   //multiply a[i] and b[i], increment result[i] by this amount
+		   //$when (tree_lock[i] == 0) tree_lock[i] = 1;
+		   result[i] = result[i] + a[i] * b[i];
+		   //tree_lock[i] = 0;
+		   
+		   //m helps to determine who to wait for
+		   //and who to report to.
+		   int m = n/2;
+		   
+		   //0 waits for 1, 2, 4
+		   //1 waits for 3, 5
+		   //2 waits for 6
+		   //3 waits for 7
+		   for(int unused=0; m > i; unused++){
+		     $wait tree_process[m+i];
+		     m = m / 2;
+		   }
+		   
+		   if(i > 0){ 
+		     //$when (tree_lock[i-m] == 0) tree_lock[i-m] = 1;
+		     result[i-m] = result[i-m] + result[i];
+		     //tree_lock[i-m] = 0;
+		   }
+		 }
+
+  //spawn processes
+  for (int j=0; j < n; j++) {
+    tree_process[j] = $spawn accumulate_tree(j);
+  }
+
+  //this waiting causes a nullpointer exception
+  //wait for processes
+  $wait tree_process[0];
+
+  tree_sum = result[0];
+  
+}
+ 
+  
+void main() 
+  $requires n > 0;
+{
+  //initialize data
+  init();
+  
+  //initialization sanity check
+  $assert par_sum == 0.0;
+  $assert seq_sum == 0.0;
+  $assert tree_sum == 0.0;
+  $assert a[0] == 0.0; $assert b[0] == 0.0;
+  $assert a[1] == 1.0; $assert b[1] == 1.0;
+  //$assert a[2] == 2.0; $assert b[2] == 2.0;
+  $assert test[0] == 0.0;
+  $assert test[1] == 0.0;
+  //$assert test[2] == 0.0;
+  //$assert test[3] == 0.0;
+  //$assert test[4] == 0.0;
+  //$assert test[5] == 0.0;
+  //$assert test[6] == 0.0;
+  //$assert test[7] == 0.0;
+
+  //calculate the sequential and parallel sums
+  sequential();
+  parallel_slow();
+  parallel_tree();
+
+  $assert seq_sum > 0.0;
+  $assert par_sum > 0.0;
+  
+  $assert par_sum == seq_sum;
+  
+  $assert test[0] == 1.0;
+  $assert test[1] == 1.0;
+  //$assert test[2] == 1.0;
+  //$assert test[3] == 1.0;
+  //$assert test[4] == 1.0;
+  //$assert test[5] == 1.0;
+  //$assert test[6] == 1.0;
+  //$assert test[7] == 1.0;
+
+
+  // BROKEN FOR NOW!
+  // $assert tree_sum > 0;
+  // $assert tree_sum == seq_sum;
+
+  // uncomment this for an error;
+  // $assert par_sum > seq_sum;
+}

@@ -1,0 +1,53 @@
+#include <civlc.h>
+void main () 
+{
+int NRA = 4;
+int NCA = 4;
+int NCB = 4;
+int i, j, k, nprocs, chunk;
+double 
+a[NRA][NCA], /* matrix A to be multiplied */
+b[NCA][NCB], /* matrix B to be multiplied */
+seq_c[NRA][NCB], /* result matrix C (sequential) */
+par_c[NRA][NCB]; /* result matrix C (parallel) */
+
+void init() {
+for (i=0; i<NRA; i++)
+for (j=0; j<NCA; j++)
+a[i][j]= i+j;
+for (i=0; i<NCA; i++)
+for (j=0; j<NCB; j++)
+b[i][j]= i*j;
+for (i=0; i<NRA; i++)
+for (j=0; j<NCB; j++) {
+seq_c[i][j] = 0;
+par_c[i][j] = 0;
+}
+}
+
+void parallel(int chunkid) {
+int chunk_start = chunkid * chunk;
+int chunk_end = chunk_start + chunk;
+
+
+for (i=chunk_start; i<chunk_end; i++) 
+for (j=0; j<NCB; j++) 
+for (k=0; k<NCA; k++)
+par_c[i][j] += a[i][k] * b[k][j];
+}
+
+chunk = 2; /* set loop iteration chunk size */
+nprocs = NRA / chunk; /* determine number of procs to spawn */
+
+$proc process[nprocs];
+for(int iter=0; iter<nprocs; iter++)
+
+{
+process[iter] = $spawn parallel(iter);
+}
+for(int iter=0; iter<nprocs; iter++)
+
+{
+$wait process[iter];
+}
+}

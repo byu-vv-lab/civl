@@ -9,7 +9,9 @@ TARGETS = \
 	sideEffects \
 	sideEffects2 \
 	adder \
-	matmat
+	matmat \
+	barrier \
+	barrier2
 
 default: all
 
@@ -35,3 +37,9 @@ adder: adder.cvl
 
 matmat: matmat.cvl
 	$(CIVL) matmat.cvl
+
+barrier: barrier.cvl
+	$(CIVL) barrier.cvl
+
+barrier2: barrier2.cvl
+	$(CIVL) barrier2.cvl

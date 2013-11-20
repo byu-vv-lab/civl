@@ -1,0 +1,35 @@
+#include <civlc.h>
+
+int y = 0;
+
+void P013(){
+	int x = 0;
+	
+	void P0(){ x += 10; }
+	void P1(){ x += 20; }
+	void P3(){
+		int z = -1;
+		if( x + y == 0)
+			z = 0;
+		else if ( x + y ==  5)
+			z = 5;
+		else if ( x + y == 15)
+			z = 15;
+		else if ( x + y == 25)
+			z = 25;
+		else z = 100;
+	}
+	
+	$spawn P0();
+	$spawn P1();
+	$spawn P3();
+}
+
+void P2(){
+	y += 5;
+}
+
+void main(){
+	$spawn P013();
+	$spawn P2();
+}

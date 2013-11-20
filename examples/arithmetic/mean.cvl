@@ -1,0 +1,21 @@
+$input int N_BOUND;
+#pragma TASS input {N>0 && N<=N_BOUND} 
+$input int N;
+#pragma TASS input 
+double a[N];
+#pragma TASS output 
+double s;
+
+void main() {
+	int i=0;
+	double x=0.0;
+	
+	$assume 
+#pragma TASS joint invariant LOOP true;
+	while (i < N) {
+		x = x + a[i];
+		i = i + 1;
+	}
+	s = x/N;
+}
+

@@ -1,0 +1,8 @@
+#include<civlc.h>
+
+$input int n;
+
+
+void main() {
+  int a[n];
+}

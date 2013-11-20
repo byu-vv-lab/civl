@@ -1,0 +1,19 @@
+
+double f(double x) 
+  \requires x > 0;
+  \ensures \true;
+  ;
+
+double g(double x)
+  \requires x > 0;
+  \ensures \result >= 0;
+{
+  return x*x;
+}
+
+double main() {
+  double x;
+  
+  x = g(2);
+  return x;
+}

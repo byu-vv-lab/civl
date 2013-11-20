@@ -1,5 +1,5 @@
 #include <civlc.h>
-int N = 4; // number of threads
+int N = 5; /* number of threads */
 $proc threads[N]; // the threads
 int lock = 0; // 0=available
 int in_barrier[N]; // am I inside the barrier?
