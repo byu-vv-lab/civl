@@ -9,32 +9,41 @@ http://www.oracle.com/technetwork/java/javase/downloads/ for the
 latest from Oracle.  On linux, you can optionally sudo apt-get install
 openjdk-7-jdk.
 
-2. Download the approrpriate complete binary distribution from
+2. If you already have the VSL dependencies library, you may
+skip this step.  Otherwise, download the archive of VSL
+dependencies from http://vsl.cis.udel.edu/tools/vsl_depend,
+choosing the version for your OS type (32-bit linux,
+64-bit linux, or 64-bit OS X).  Unzip and untar the
+downloaded .tgz file and you will have a folder named "vsl".
+If you do not already have a directory /opt, create one with
+"mkdir /opt".  Move vsl into /opt.  Use sudo as needed.
+
+3. Download the approrpriate CIVL distribution from
 http://vsl.cis.udel.edu/civl.  
 
-3. Unzip and untar the downloaded file if this does not happen
+4. Unzip and untar the downloaded file if this does not happen
 automatically.  This should result in a folder named
 CIVL-TAG, where TAG is some version id string.  This folder
 contains the following:
 
  - README : this file
  - bin : containing one executable sh script called "civl"
- - lib : containing civl-TAG.jar and native libraries
-         used by CIVL
+ - lib : containing civl-TAG.jar
  - doc : containing some documentation about CIVL
  - licenses : licenses for CIVL and included libraries
  - examples : some example CIVL programs
 
-4. For OS X, move the CIVL-TAG folder into /Applications.  For
-linux, move it into /usr/local.
+5. Move CIVL-TAG into /opt.
 
-5. Put the civl script in your path however you like to put things
+6. Put the civl script in your path however you like to put things
 in your path.   Either move it to a directory in your path,
 or create a symlink to it, or edit your .profile or equivalent
 to put it in your path.
 
 Now you should be able to run CIVL from the command line by 
 typing "civl <filename>".  Type just "civl" for usage information.
+
+
 
 ------------------------- Source Installation -------------------------
 
@@ -85,7 +94,7 @@ a bunch of work.
 	vsl_osx64-1.0.tgz	- 64-bit osx
 	
    Unzip the .tgz file and you will have the folder vsl.
-   Move vsl to /opt (you might need to use “sudo” for this.
+   Move vsl to /opt (you might need to use sudo for this.
    Also, if you don't already have a directory called /opt, 
    you will have to create it with mkdir /opt).
 
@@ -111,9 +120,9 @@ a bunch of work.
    corresponding directory where you put the projects ABC, SARL and GMC.
 
 6. Navigate to Preferences -> Java -> Build Path -> ClassPath 
-   Variables, and then select “New…” to create a classpath variable VSL, 
+   Variables, and then select New to create a classpath variable VSL, 
    and specify its value to be /opt/vsl. Navigate to Preferences -> Run/Debug 
-   -> String Substitution -> New…, and then define an entry vsl_lib and 
+   -> String Substitution -> New, and then define an entry vsl_lib and 
    set its value to be /opt/vsl/lib.
 
 7. Do a clean build.  Everything should compile.  Generate the civl.jar
@@ -127,7 +136,7 @@ a bunch of work.
    "-ea" (without the quotes) in the VM arguments area (to enable assertion
    checking). Under the Environment tab, create an entry 
    DYLD_LIBRARY_PATH (OS X) or LD_LIBRARY_PATH (linux), 
-   specify its value by clicking Variables… and choose vsl_lib from the list, 
+   specify its value by clicking Variables and choose vsl_lib from the list, 
    or you may type ${vsl_lib} in the value entry.
 
 9. An example of how to set up a single test from within Eclipse:
