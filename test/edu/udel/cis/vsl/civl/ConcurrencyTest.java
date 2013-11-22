@@ -54,7 +54,7 @@ public class ConcurrencyTest {
 	public void testDining() throws ABCException {
 		File file = new File(rootDir, "dining.cvl");
 		boolean result = CIVL.verify(file, out);
-		assertFalse(result);
+		assertTrue(result);
 	}
 
 }

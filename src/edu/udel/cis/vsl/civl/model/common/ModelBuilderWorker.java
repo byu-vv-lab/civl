@@ -1587,7 +1587,10 @@ public class ModelBuilderWorker {
 		if (statement.getFalseBranch() == null) {
 			falseBranchBody = falseBranch;
 		} else {
-			falseBranchBody = statement(location,
+			Location falseBranchLocation = factory.location(
+					sourceOf(statement.getFalseBranch()), scope);
+
+			falseBranchBody = statement(falseBranchLocation,
 					factory.booleanLiteralExpression(expression.getSource(),
 							true), function, falseBranch,
 					statement.getFalseBranch(), scope);
