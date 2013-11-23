@@ -61,7 +61,7 @@ public class ConcurrencyTest {
 	public void testBank() throws ABCException {
 		File file = new File(rootDir, "bank.cvl");
 		boolean result = CIVL.verify(file, out);
-		assertFalse(result);
+		assertTrue(result);
 	}
 
 }

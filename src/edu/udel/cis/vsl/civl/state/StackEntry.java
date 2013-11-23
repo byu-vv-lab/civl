@@ -3,8 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.state;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-
 
 /**
  * A stack entry has a location, dynamic scope, and (optional) variable to store
@@ -99,8 +99,12 @@ public class StackEntry {
 
 	@Override
 	public String toString() {
-		return "Frame[function=" + location.function().name()
-				+ ", location=" + location.id() + ", scope=" + scope + "]";
+		CIVLSource source = location.getSource();
+		String locationString = source == null ? "" : ", "
+				+ source.getSummary();
+		
+		return "Frame[function=" + location.function().name() + ", location="
+				+ location.id() + locationString + ", scope=" + scope + "]";
 	}
 
 }
