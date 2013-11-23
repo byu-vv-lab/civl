@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.predicate;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -117,7 +118,12 @@ public class Deadlock implements StatePredicateIF<State> {
 			if (location == null) {
 				explanation += "terminated\n";
 			} else {
-				explanation += "at location " + location.id() + ". ";
+				CIVLSource source = location.getSource();
+
+				explanation += "at location " + location.id() + ", ";
+				if (source != null)
+					explanation += source.getSummary();
+				explanation += ".\n";
 				for (Statement statement : location.outgoing()) {
 					BooleanExpression guard = (BooleanExpression) evaluator
 							.evaluate(state, p.id(), statement.guard()).value;
