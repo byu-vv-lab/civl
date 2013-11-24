@@ -12,7 +12,6 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -32,6 +31,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.util.Singleton;
+import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
@@ -159,7 +159,7 @@ public class Libcivlc implements LibraryExecutor {
 					"Size argument to $malloc is not multiple of element size",
 					eval.state, source);
 
-			log.report(e);
+			evaluator.reportError(e);
 			state = stateFactory.setPathCondition(state,
 					universe.and(pathCondition, claim));
 		}
@@ -215,7 +215,7 @@ public class Libcivlc implements LibraryExecutor {
 								"Invalid pointer for heap", state,
 								pointerSource);
 
-						log.report(e);
+						evaluator.reportError(e);
 						state = stateFactory.setPathCondition(state,
 								universe.and(pathCondition, claim));
 					}
@@ -237,7 +237,7 @@ public class Libcivlc implements LibraryExecutor {
 					Certainty.PROVEABLE, "Invalid pointer for heap", state,
 					pointerSource);
 
-			log.report(e);
+			evaluator.reportError(e);
 			state = stateFactory.setPathCondition(state,
 					universe.falseExpression());
 			return new Evaluation(state, objectPointer);
@@ -914,7 +914,7 @@ public class Libcivlc implements LibraryExecutor {
 							"sizeof element does not divide size argument",
 							state, source);
 
-					log.report(e);
+					evaluator.reportError(e);
 					pathCondition = universe.and(pathCondition, divisibility);
 					state = stateFactory.setPathCondition(state, pathCondition);
 					reasoner = universe.reasoner(pathCondition);
@@ -950,7 +950,7 @@ public class Libcivlc implements LibraryExecutor {
 							"null pointer only valid with size 0", state,
 							source);
 
-					log.report(e);
+					evaluator.reportError(e);
 					pathCondition = universe.and(pathCondition, zeroSizeClaim);
 					state = stateFactory.setPathCondition(state, pathCondition);
 					reasoner = universe.reasoner(pathCondition);

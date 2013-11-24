@@ -17,7 +17,7 @@ public class CIVLException extends RuntimeException {
 	private static final long serialVersionUID = -5218392349059280169L;
 
 	/**
-	 * Source coe element that led to exception, for error reporting. May be
+	 * Source of the element that led to exception, for error reporting. May be
 	 * null.
 	 */
 	private CIVLSource source;
@@ -35,6 +35,10 @@ public class CIVLException extends RuntimeException {
 		if (source != null)
 			result += "\nat " + source.getSummary();
 		return result;
+	}
+
+	public CIVLSource getSource() {
+		return source;
 	}
 
 }

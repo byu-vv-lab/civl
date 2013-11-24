@@ -20,14 +20,30 @@ public class CIVLExecutionException extends CIVLException {
 	 * 
 	 */
 	public enum Certainty {
-		/* A concrete trace verifies this is an error */
+		/**
+		 * A concrete trace verifies this is an error: the highest level of
+		 * certainty that this represents a real error in the program being
+		 * analyzed.
+		 */
 		CONCRETE,
-		/* The prover is not sure whether this is an error */
+		/**
+		 * A theorem prover says this is an error: second-highest level of
+		 * certainty. However no conrete trace has been produced to verify the
+		 * theorem prover's claim.
+		 */
+		PROVEABLE,
+		/**
+		 * The prover is not sure whether this is an error. It could be due to
+		 * the incompleteness of the decision procecure, or it could be a real
+		 * error.
+		 */
 		MAYBE,
-		/* Probably an internal CIVL error */
-		NONE,
-		/* A theorem prover says this is an error */
-		PROVEABLE
+		/**
+		 * Probably an internal CIVL error: the theorem prover hasn't said
+		 * anything. The lowest level of certaintly that this represents a real
+		 * error in the program being analyzed.
+		 */
+		NONE
 	}
 
 	public enum ErrorKind {

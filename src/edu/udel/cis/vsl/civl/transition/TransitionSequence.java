@@ -21,7 +21,31 @@ public class TransitionSequence extends LinkedList<Transition> {
 	 * LinkedList.
 	 */
 	private static final long serialVersionUID = -1765498780485391615L;
+
 	private State state;
+
+	/**
+	 * The number of elements removed from this sequence since it was created.
+	 */
+	private int numRemoved = 0;
+
+	@Override
+	public Transition remove() {
+		Transition result = super.remove();
+
+		numRemoved++;
+		return result;
+	}
+
+	/**
+	 * Returns the number of transitions removed from this sequence since it was
+	 * first created.
+	 * 
+	 * @return the number of transitions removed
+	 */
+	public int numRemoved() {
+		return numRemoved;
+	}
 
 	/**
 	 * Create an empty transition sequence.

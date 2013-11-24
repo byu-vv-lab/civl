@@ -3,9 +3,9 @@
  */
 package edu.udel.cis.vsl.civl.predicate;
 
-import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
@@ -43,7 +43,7 @@ public class StandardPredicate implements StatePredicateIF<State> {
 
 	@Override
 	public boolean holdsAt(State state) {
-		if (log.numReports() >= log.errorBound()) {
+		if (log.numErrors() >= log.errorBound()) {
 			return true;
 		}
 		return deadlockPredicate.holdsAt(state);

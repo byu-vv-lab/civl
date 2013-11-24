@@ -3,11 +3,13 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
@@ -15,7 +17,7 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.log.ErrorLog;
+import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -57,6 +59,7 @@ import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.util.Singleton;
+import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.sarl.IF.ModelResult;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
@@ -207,6 +210,14 @@ public class Evaluator {
 
 	// Helper methods......................................................
 
+	public void reportError(CIVLExecutionException err) {
+		try {
+			log.report(new CIVLLogEntry(err));
+		} catch (FileNotFoundException e) {
+			throw new CIVLException(e.toString(), err.getSource());
+		}
+	}
+
 	/**
 	 * Report a (possible) error detected in the course of evaluating an
 	 * expression.
@@ -271,7 +282,7 @@ public class Evaluator {
 		}
 		error = new CIVLStateException(errorKind, certainty, message, state,
 				source);
-		log.report(error);
+		reportError(error);
 		newPc = universe.and(pc, claim);
 		// need to check satisfiability again because failure to do so
 		// could lead to a SARLException when some subsequent evaluation
@@ -1131,7 +1142,7 @@ public class Evaluator {
 					"SARL could not cast: " + e, eval.state,
 					expression.getSource());
 
-			log.report(error);
+			reportError(error);
 			throw new UnsatisfiablePathConditionException();
 		}
 		return eval;
@@ -1339,7 +1350,7 @@ public class Evaluator {
 					"Attempt to read uninitialized variable", state,
 					expression.getSource());
 
-			log.report(e);
+			reportError(e);
 			throw new UnsatisfiablePathConditionException();
 		}
 		return new Evaluation(state, value);

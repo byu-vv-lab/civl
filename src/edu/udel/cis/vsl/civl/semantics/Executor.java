@@ -11,7 +11,6 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
-import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -35,6 +34,7 @@ import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.StackEntry;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
+import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -418,11 +418,12 @@ public class Executor {
 			Certainty certainty = resultType == ResultType.NO ? Certainty.PROVEABLE
 					: Certainty.MAYBE;
 
-			log.report(new CIVLStateException(ErrorKind.ASSERTION_VIOLATION,
-					certainty, "Cannot prove assertion holds: "
-							+ statement.toString() + "\n  Path condition: "
-							+ state.pathCondition() + "\n  Assertion: "
-							+ assertValue + "\n", state, statement.getSource()));
+			evaluator.reportError(new CIVLStateException(
+					ErrorKind.ASSERTION_VIOLATION, certainty,
+					"Cannot prove assertion holds: " + statement.toString()
+							+ "\n  Path condition: " + state.pathCondition()
+							+ "\n  Assertion: " + assertValue + "\n", state,
+					statement.getSource()));
 			state = stateFactory.setPathCondition(state,
 					symbolicUniverse.and(state.pathCondition(), assertValue));
 		}

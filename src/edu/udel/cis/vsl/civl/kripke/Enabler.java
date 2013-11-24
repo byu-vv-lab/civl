@@ -11,15 +11,12 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
@@ -288,7 +285,7 @@ public class Enabler implements
 										"Unable to call $wait on a process that has already been the target of a $wait.",
 										state, s.getSource());
 
-								evaluator.log().report(e);
+								evaluator.reportError(e);
 								// TODO: recover: add a no-op transition
 								throw e;
 							}
@@ -359,14 +356,15 @@ public class Enabler implements
 			BooleanExpression guard = (BooleanExpression) eval.value;
 			Reasoner reasoner = universe.reasoner(pathCondition);
 
-//			if (statement instanceof CallOrSpawnStatement) {
-//				if (((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
-//					LibraryExecutor libraryExecutor = executor
-//							.libraryExecutor((CallOrSpawnStatement) statement);
-//					guard = universe.and(guard,
-//							libraryExecutor.getGuard(state, pid, statement));
-//				}
-//			}
+			// if (statement instanceof CallOrSpawnStatement) {
+			// if (((CallOrSpawnStatement) statement).function() instanceof
+			// SystemFunction) {
+			// LibraryExecutor libraryExecutor = executor
+			// .libraryExecutor((CallOrSpawnStatement) statement);
+			// guard = universe.and(guard,
+			// libraryExecutor.getGuard(state, pid, statement));
+			// }
+			// }
 			// System.out.println("Enabler.newPathCondition() : Process " + pid
 			// + " is at " + state.process(pid).peekStack().location());
 			if (reasoner.isValid(guard))
@@ -430,6 +428,16 @@ public class Enabler implements
 	@Override
 	public State source(TransitionSequence transitionSequence) {
 		return transitionSequence.state();
+	}
+
+	@Override
+	public boolean hasMultiple(TransitionSequence sequence) {
+		return sequence.numRemoved() + sequence.size() > 1;
+	}
+
+	@Override
+	public int numRemoved(TransitionSequence sequence) {
+		return sequence.numRemoved();
 	}
 
 }

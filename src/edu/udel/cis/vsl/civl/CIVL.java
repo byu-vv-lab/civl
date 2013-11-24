@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -20,7 +19,6 @@ import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutorLoader;
-import edu.udel.cis.vsl.civl.log.ErrorLog;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
@@ -38,6 +36,7 @@ import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
 import edu.udel.cis.vsl.gmc.EnablerIF;
+import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.SARL;
@@ -203,6 +202,7 @@ public class CIVL {
 
 	public static boolean verify(boolean printModel, boolean verbose,
 			File file, PrintStream out, boolean randomMode) {
+		String sessionName = coreName(file);
 		SymbolicUniverse universe = SARL.newStandardUniverse();
 		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
 		ModelFactory modelFactory = modelBuilder.factory();
@@ -210,8 +210,8 @@ public class CIVL {
 		StateFactoryIF stateFactory = new StateFactory(modelFactory);
 		Model model;
 		TransitionFactory transitionFactory = new TransitionFactory();
-		ErrorLog log = new ErrorLog(new PrintWriter(System.out), new File(
-				new File("."), "CIVLREP/"));
+		ErrorLog log = new ErrorLog(new File("CIVLREP"), sessionName,
+				System.out);
 		Evaluator evaluator = new Evaluator(modelFactory, stateFactory, log);
 		EnablerIF<State, Transition, TransitionSequence> enabler;
 		StatePredicateIF<State> predicate = new StandardPredicate(log,
@@ -278,7 +278,7 @@ public class CIVL {
 		out.println(bar + " Stats " + bar + "\n");
 		CIVL.printStats(out, searcher, universe, startTime, endTime,
 				((StateManager) stateManager).maxProcs());
-		if (result || log.numReports() > 0) {
+		if (result || log.numEntries() > 0) {
 			out.println("The program MAY NOT be correct.");
 		} else {
 			out.println("The specified properties hold for all executions.");
@@ -286,7 +286,7 @@ public class CIVL {
 		out.flush();
 		// Result is true if there is an error, but we want to return true if
 		// there are no errors.
-		return (!result) && (log.numReports() == 0);
+		return (!result) && (log.numEntries() == 0);
 	}
 
 	public static void printStats(PrintStream out,
@@ -339,5 +339,18 @@ public class CIVL {
 		out.println("-R");
 		out.println("    instead of full verification, execute a random path through the program");
 		out.flush();
+	}
+
+	private static String coreName(File file) {
+		String result = file.getName();
+		char sep = File.pathSeparatorChar;
+		int lastSep = result.lastIndexOf(sep);
+		if (lastSep >= 0)
+			result = result.substring(lastSep + 1);
+		int lastDot = result.lastIndexOf('.');
+		if (lastDot >= 0)
+			result = result.substring(0, lastDot);
+
+		return result;
 	}
 }
