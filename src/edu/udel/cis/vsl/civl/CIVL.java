@@ -201,6 +201,9 @@ public class CIVL {
 		return verify(printModel, verbose, file, out, false);
 	}
 
+	// TODO: this needs to be broken up into one or more separate
+	// classes....
+	
 	public static boolean verify(boolean printModel, boolean verbose,
 			File file, PrintStream out, boolean randomMode) {
 		String sessionName = coreName(file);
@@ -315,8 +318,6 @@ public class CIVL {
 		}
 		out.println();
 		out.flush();
-		// Result is true if there is an error, but we want to return true if
-		// there are no errors.
 		return !violationFound && log.numEntries() == 0;
 	}
 
