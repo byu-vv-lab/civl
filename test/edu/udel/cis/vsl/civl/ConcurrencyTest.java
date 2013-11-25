@@ -56,12 +56,20 @@ public class ConcurrencyTest {
 		boolean result = CIVL.verify(file, out);
 		assertTrue(result);
 	}
-	
+
 	@Test
 	public void testBank() throws ABCException {
 		File file = new File(rootDir, "bank.cvl");
 		boolean result = CIVL.verify(file, out);
 		assertTrue(result);
+	}
+
+	@Test
+	public void testOutOfOrderLocks() throws ABCException {
+		File file = new File(rootDir, "outOfOrderLocks.cvl");
+		boolean result = CIVL.verify(file, out);
+
+		assertFalse(result);
 	}
 
 }

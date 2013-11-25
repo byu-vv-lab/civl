@@ -1,0 +1,22 @@
+
+int lock0 = 0;
+int lock1 = 0;
+
+void proc0() {
+  $when (lock0==0) lock0=1;
+  $when (lock1==0) lock1=1;
+  lock0=0;
+  lock1=0;
+}
+
+void proc1() {
+  $when (lock1==0) lock1=1;
+  $when (lock0==0) lock0=1;
+  lock0=0;
+  lock1=0;
+}
+
+void main() {
+  $spawn proc0();
+  $spawn proc1();
+}

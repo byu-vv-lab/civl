@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.predicate;
 
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.gmc.ErrorLog;
@@ -39,6 +40,10 @@ public class StandardPredicate implements StatePredicateIF<State> {
 	@Override
 	public String explanation() {
 		return deadlockPredicate.explanation();
+	}
+
+	public CIVLExecutionException getViolation() {
+		return deadlockPredicate.getViolation();
 	}
 
 	@Override

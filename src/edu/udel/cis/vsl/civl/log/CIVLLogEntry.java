@@ -27,7 +27,7 @@ public class CIVLLogEntry extends LogEntry {
 
 	@Override
 	public void printBody(PrintStream out) {
-		out.println(problem.getMessage());
+		out.println(problem.toString());
 	}
 
 	@Override

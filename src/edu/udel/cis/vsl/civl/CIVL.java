@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
@@ -37,8 +38,8 @@ import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.gmc.ErrorLog;
+import edu.udel.cis.vsl.gmc.ExcessiveErrorException;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
-import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
@@ -214,15 +215,14 @@ public class CIVL {
 				System.out);
 		Evaluator evaluator = new Evaluator(modelFactory, stateFactory, log);
 		EnablerIF<State, Transition, TransitionSequence> enabler;
-		StatePredicateIF<State> predicate = new StandardPredicate(log,
-				universe, evaluator);
+		StandardPredicate predicate = new StandardPredicate(log, universe,
+				evaluator);
 		LibraryExecutorLoader loader = new CommonLibraryExecutorLoader();
 		Executor executor;
 		StateManagerIF<State, Transition> stateManager;
 		DfsSearcher<State, Transition, TransitionSequence> searcher;
 		State initialState;
 		double startTime = System.currentTimeMillis(), endTime;
-		boolean result;
 		String bar = "===================";
 		long seed = System.currentTimeMillis();
 
@@ -266,27 +266,58 @@ public class CIVL {
 				enabler, stateManager, predicate);
 		searcher.setDebugOut(out);
 		log.setSearcher(searcher);
+
+		boolean violationFound = false;
+
 		try {
-			result = searcher.search(initialState);
-		} catch (CIVLException e) {
-			result = true;
+			while (true) {
+				boolean result;
+
+				if (violationFound) {
+					searcher.proceedToNewState();
+					result = searcher.search();
+				} else {
+					result = searcher.search(initialState);
+				}
+				if (result) {
+					log.report(new CIVLLogEntry(predicate.getViolation()));
+					violationFound = true;
+					// need to move past this state....searcher.
+				} else
+					break;
+			}
+		} catch (ExcessiveErrorException e) {
+			violationFound = true;
+			out.println("Error bound exceeded: search terminated");
+		} catch (Exception e) {
+			violationFound = true;
 			out.println(e);
 			e.printStackTrace(out);
 			out.println();
 		}
 		endTime = System.currentTimeMillis();
+		out.println();
 		out.println(bar + " Stats " + bar + "\n");
 		CIVL.printStats(out, searcher, universe, startTime, endTime,
 				((StateManager) stateManager).maxProcs());
-		if (result || log.numEntries() > 0) {
-			out.println("The program MAY NOT be correct.");
+		out.println();
+		if (violationFound || log.numEntries() > 0) {
+			out.println("The program MAY NOT be correct.  See "
+					+ log.getLogFile());
+			try {
+				log.save();
+			} catch (FileNotFoundException e) {
+				System.err.println("Failed to print log file "
+						+ log.getLogFile());
+			}
 		} else {
 			out.println("The specified properties hold for all executions.");
 		}
+		out.println();
 		out.flush();
 		// Result is true if there is an error, but we want to return true if
 		// there are no errors.
-		return (!result) && (log.numEntries() == 0);
+		return !violationFound && log.numEntries() == 0;
 	}
 
 	public static void printStats(PrintStream out,

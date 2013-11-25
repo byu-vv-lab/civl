@@ -3,10 +3,16 @@
  */
 package edu.udel.cis.vsl.civl.predicate;
 
+import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.MAYBE;
+import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.YES;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -16,7 +22,6 @@ import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.ValidityResult;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -42,18 +47,18 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class Deadlock implements StatePredicateIF<State> {
 
-	private SymbolicUniverse symbolicUniverse;
+	private SymbolicUniverse universe;
 
 	private Evaluator evaluator;
 
 	private ModelFactory modelFactory;
 
 	/**
-	 * If the property holds (i.e., a deadlock has been detected at state), than
-	 * the state is stored in this variable for future reference so that a nice
-	 * "explanation" can be presented to the user.
+	 * If violation is found it is cached here.
 	 */
-	private State holdState = null;
+	private CIVLStateException violation = null;
+
+	private BooleanExpression falseExpr;
 
 	/**
 	 * An absolute deadlock occurs if all of the following hold:
@@ -81,49 +86,56 @@ public class Deadlock implements StatePredicateIF<State> {
 	 *            the path condition.
 	 */
 	public Deadlock(SymbolicUniverse symbolicUniverse, Evaluator evaluator) {
-		this.symbolicUniverse = symbolicUniverse;
+		this.universe = symbolicUniverse;
 		this.evaluator = evaluator;
 		this.modelFactory = evaluator.modelFactory();
+		this.falseExpr = symbolicUniverse.falseExpression();
 	}
 
-	private String explanationWork() throws UnsatisfiablePathConditionException {
-		State state = holdState;
-		String explanation;
+	public CIVLExecutionException getViolation() {
+		return violation;
+	}
 
-		if (state == null) {
-			return "No deadlock possible at this state.";
-		}
-		explanation = "\n*****************************************************************\n"
-				// +
-				// "*                                                                                  *\n"
-				+ "  Deadlock possible at "
-				+ state
-				+ "!\n"
-				// +
-				// "*                                                                              *\n"
-				+ "*****************************************************************\n";
+	/**
+	 * Precondition: already know that deadlock is a possibility in this state,
+	 * i.e., we cannot show the enabled predicate is valid.
+	 * 
+	 * @param state
+	 *            a state that might have a deadlock
+	 * @return a String with a detailed explanation including the locatin of
+	 *         each process in the state
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private String explanationWork(State state)
+			throws UnsatisfiablePathConditionException {
+		StringBuffer explanation = new StringBuffer();
+		boolean first = true;
+
 		for (Process p : state.processes()) {
+			if (p == null)
+				continue;
+
 			Location location = null;
 			BooleanExpression predicate = null;
-			String nonGuardExplanation = null; // Join of unterminated function,
-												// etc.
+			// wait on unterminated function, no outgoing edges:
+			String nonGuardExplanation = null;
+			int pid = p.id();
 
-			if (p == null) {
-				continue;
-			}
-			if (!p.hasEmptyStack()) {
+			if (first)
+				first = false;
+			else
+				explanation.append("\n");
+			if (!p.hasEmptyStack())
 				location = p.location();
-			}
-			explanation += "Process " + p.id() + ": ";
+			explanation.append("Process " + pid + ": ");
 			if (location == null) {
-				explanation += "terminated\n";
+				explanation.append("terminated");
 			} else {
 				CIVLSource source = location.getSource();
 
-				explanation += "at location " + location.id() + ", ";
+				explanation.append("at location " + location.id() + ", ");
 				if (source != null)
-					explanation += source.getSummary();
-				explanation += ".\n";
+					explanation.append(source.getSummary());
 				for (Statement statement : location.outgoing()) {
 					BooleanExpression guard = (BooleanExpression) evaluator
 							.evaluate(state, p.id(), statement.guard()).value;
@@ -131,117 +143,112 @@ public class Deadlock implements StatePredicateIF<State> {
 					if (statement instanceof WaitStatement) {
 						// TODO: Check that the guard is actually true, but it
 						// should be.
-						nonGuardExplanation = "Target process has not terminated:\n"
-								+ ((WaitStatement) statement).process() + "\n";
+						WaitStatement wait = (WaitStatement) statement;
+						Expression waitExpr = wait.process();
+						SymbolicExpression joinProcess = evaluator.evaluate(
+								state, pid, waitExpr).value;
+						int pidValue = modelFactory.getProcessId(
+								waitExpr.getSource(), joinProcess);
+						nonGuardExplanation = "\n  Waiting on process "
+								+ pidValue;
 					}
 					if (predicate == null) {
 						predicate = guard;
 					} else {
-						predicate = symbolicUniverse.or(predicate, guard);
+						predicate = universe.or(predicate, guard);
 					}
 				}
 				if (predicate == null) {
-					explanation += "No outgoing transitions.\n";
+					explanation.append("No outgoing transitions.");
 				} else if (nonGuardExplanation != null) {
-					explanation += nonGuardExplanation;
+					explanation.append(nonGuardExplanation);
 				} else {
-					explanation += "Cannot prove enabling statement valid:\n"
-							+ predicate + "\n";
+					explanation.append("\n  Enabling predicate: " + predicate);
 				}
 			}
 		}
-		return explanation;
+		return explanation.toString();
 	}
 
 	@Override
 	public String explanation() {
-		try {
-			return explanationWork();
-		} catch (UnsatisfiablePathConditionException e) {
-			return "No explanation possible due to unsatisfiable path condition";
+		if (violation == null)
+			return "No deadlock";
+		return violation.getMessage();
+	}
+
+	private boolean allTerminated(State state) {
+		for (Process p : state.processes()) {
+			if (!p.hasEmptyStack())
+				return false;
 		}
+		return true;
 	}
 
 	private boolean holdsAtWork(State state)
 			throws UnsatisfiablePathConditionException {
-		Certainty certainty = Certainty.PROVEABLE;
-		String message;
-		boolean terminated = true;
-
-		for (Process p : state.processes()) {
-			if (!p.hasEmptyStack()) {
-				terminated = false;
-				break;
-			}
-		}
-		if (terminated) { // all processes terminated: no deadlock.
+		if (allTerminated(state)) // all processes terminated: no deadlock.
 			return false;
-		}
+
+		BooleanExpression predicate = falseExpr;
+		Reasoner reasoner = universe.reasoner(state.pathCondition());
+		CIVLSource source = null; // location of first non-term proc
+
 		for (Process p : state.processes()) {
-			Location location;
-			ValidityResult truth;
-			BooleanExpression predicate = null;
-
-			// If a process has an empty stack, it can't execute.
-			if (p == null || p.hasEmptyStack()) {
+			if (p == null || p.hasEmptyStack())
 				continue;
-			}
-			location = p.location();
+
+			int pid = p.id();
+			Location location = p.location();
+
+			if (source == null)
+				source = location.getSource();
 			for (Statement s : location.outgoing()) {
+				Expression staticGuard = s.guard();
+				BooleanExpression guard = (BooleanExpression) evaluator
+						.evaluate(state, pid, staticGuard).value;
+
+				if (guard.isFalse())
+					continue;
 				if (s instanceof WaitStatement) {
+					WaitStatement wait = (WaitStatement) s;
+					Expression waitExpr = wait.process();
 					SymbolicExpression joinProcess = evaluator.evaluate(state,
-							p.id(), ((WaitStatement) s).process()).value;
+							pid, waitExpr).value;
 					int pidValue = modelFactory.getProcessId(
-							((WaitStatement) s).process().getSource(),
-							joinProcess);
-					SymbolicExpression guard = evaluator.evaluate(state,
-							p.id(), s.guard()).value;
+							waitExpr.getSource(), joinProcess);
 
-					// If guard is false, don't worry about the stack.
-					if (guard.equals(symbolicUniverse.falseExpression())) {
+					if (!state.process(pidValue).hasEmptyStack())
 						continue;
-					}
-					if (state.process(pidValue).hasEmptyStack()) {
-						return false;
-					}
-				} else {
-					BooleanExpression guard = (BooleanExpression) evaluator
-							.evaluate(state, p.id(), s.guard()).value;
-					Reasoner reasoner = symbolicUniverse.reasoner(state
-							.pathCondition());
-
-					// Most of the time, guards will be true. Shortcut this.
-					if (guard.equals(symbolicUniverse.trueExpression())) {
-						return false;
-					}
-					if (predicate == null) {
-						predicate = guard;
-					} else {
-						predicate = symbolicUniverse.or(predicate, guard);
-					}
-					truth = reasoner.valid((BooleanExpression) predicate);
-					if (truth.getResultType() == ResultType.YES) {
-						return false;
-					} else if (truth.getResultType() == ResultType.MAYBE) {
-						certainty = Certainty.MAYBE;
-					} else {
-						// For some input, no statement is enabled for this
-						// process.
-					}
 				}
+				predicate = universe.or(predicate, guard);
+				if (predicate.isTrue())
+					return false;
+			} // end loop over all outgoing statements
+		} // end loop over all processes
+
+		ResultType enabled = reasoner.valid(predicate).getResultType();
+
+		if (enabled == YES)
+			return false;
+		else {
+			String message;
+			Certainty certainty;
+
+			if (enabled == MAYBE) {
+				certainty = Certainty.MAYBE;
+				message = "Cannot prove that deadlock is impossible:\n";
+			} else {
+				certainty = Certainty.PROVEABLE;
+				message = "A deadlock is possible:\n";
 			}
+			message += "  Path condition: " + state.pathCondition()
+					+ "\n  Enabling predicate: " + predicate + "\n";
+			message += explanationWork(state);
+			violation = new CIVLStateException(ErrorKind.DEADLOCK, certainty,
+					message, state, source);
+			return true;
 		}
-		// If we're here, deadlock might be possible.
-		holdState = state;
-		if (certainty == Certainty.MAYBE) {
-			message = "Cannot prove that deadlock is impossible:";
-		} else {
-			message = "A deadlock is possible:";
-		}
-		message += explanation();
-		System.out.println(message);
-		state.print(System.out);
-		return true;
 	}
 
 	@Override
