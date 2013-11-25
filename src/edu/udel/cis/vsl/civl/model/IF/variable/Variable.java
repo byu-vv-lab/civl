@@ -37,7 +37,7 @@ public interface Variable extends Sourceable {
 	boolean isConst();
 
 	/**
-	 * @return Whether this variable is an extern.
+	 * @return Whether this variable is an input.
 	 */
 	boolean isInput();
 
@@ -55,7 +55,7 @@ public interface Variable extends Sourceable {
 
 	/**
 	 * @param value
-	 *            Whether this variable is an extern.
+	 *            Whether this variable is an input.
 	 */
 	void setIsInput(boolean value);
 
