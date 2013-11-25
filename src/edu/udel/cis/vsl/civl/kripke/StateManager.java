@@ -57,6 +57,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			throws UnsatisfiablePathConditionException {
 		int pid;
 		Statement statement;
+		int numProcs;
 
 		assert transition instanceof SimpleTransition;
 		pid = ((SimpleTransition) transition).pid();
@@ -72,6 +73,9 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		} else {
 			state = executor.execute(state, pid, statement);
 		}
+		// TODO: Maybe make a loop here for $atomic/Dstep transitions. We could
+		// loop over the transitions and then just simplify and canonic once at
+		// the end. This could greatly increase efficiency.
 		// TODO: try this simplification out, see how it works:
 
 		state = stateFactory.simplify(state);
@@ -80,8 +84,9 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		if (debugOut != null) {
 			state.print(debugOut);
 		}
-		if (state.numProcs() > maxProcs) {
-			maxProcs = state.numProcs();
+		numProcs = state.numProcs();
+		if (numProcs > maxProcs) {
+			maxProcs = numProcs;
 		}
 		return state;
 	}
