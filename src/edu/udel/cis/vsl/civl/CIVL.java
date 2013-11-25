@@ -268,6 +268,7 @@ public class CIVL {
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
 		searcher.setDebugOut(out);
+		searcher.setName(coreName(file));
 		log.setSearcher(searcher);
 
 		boolean violationFound = false;
