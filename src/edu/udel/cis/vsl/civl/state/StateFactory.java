@@ -236,9 +236,12 @@ public class StateFactory implements StateFactoryIF {
 		int numScopes = state.numScopes();
 		int numProcs = state.numProcs();
 		int[] oldToNew = new int[numScopes];
-		int nextScopeId = 0;
-
-		for (int i = 0; i < numScopes; i++)
+		
+		// the root dyscope is forced to be 0
+		oldToNew[0] = 0;
+		
+		int nextScopeId = 1;
+		for (int i = 1; i < numScopes; i++)
 			oldToNew[i] = -1;
 		for (int pid = 0; pid < numProcs; pid++) {
 			Process process = state.process(pid);
