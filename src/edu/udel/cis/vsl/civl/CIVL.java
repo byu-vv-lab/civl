@@ -203,7 +203,7 @@ public class CIVL {
 
 	// TODO: this needs to be broken up into one or more separate
 	// classes....
-	
+
 	public static boolean verify(boolean printModel, boolean verbose,
 			File file, PrintStream out, boolean randomMode) {
 		String sessionName = coreName(file);
@@ -278,8 +278,10 @@ public class CIVL {
 				boolean result;
 
 				if (violationFound) {
-					searcher.proceedToNewState();
-					result = searcher.search();
+					if (searcher.proceedToNewState())
+						result = searcher.search();
+					else
+						result = false;
 				} else {
 					result = searcher.search(initialState);
 				}
