@@ -7,6 +7,7 @@ import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.gmc.LogEntry;
 
 /**
@@ -17,7 +18,9 @@ public class CIVLLogEntry extends LogEntry {
 
 	private CIVLExecutionException problem;
 
-	public CIVLLogEntry(CIVLExecutionException problem) {
+	public CIVLLogEntry(GMCConfiguration configuration,
+			CIVLExecutionException problem) {
+		super(configuration);
 		this.problem = problem;
 	}
 

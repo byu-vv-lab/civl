@@ -1,75 +1,69 @@
 package edu.udel.cis.vsl.civl;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 import java.io.PrintStream;
 
 import org.junit.Test;
 
-import edu.udel.cis.vsl.abc.ABCException;
-
 public class ConcurrencyTest {
 
 	private static File rootDir = new File("examples/concurrency");
+
 	private PrintStream out = System.out;
 
-	@Test
-	public void testAdder() throws ABCException {
-		File file = new File(rootDir, "adder.cvl");
-		boolean result = CIVL.verify(true, false, file, out);
-		assertTrue(result);
-	}
-
-	@Test
-	public void testLocks() throws ABCException {
-		File file = new File(rootDir, "locks.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertFalse(result);
-	}
-
-	@Test
-	public void testSpawn() throws ABCException {
-		File file = new File(rootDir, "spawn.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertTrue(result);
-	}
-
-	@Test
-	public void testBarrier() throws ABCException {
-		File file = new File(rootDir, "barrier.cvl");
-		boolean result = CIVL.verify(true, false, file, out);
-		assertTrue(result);
-	}
-
-	@Test
-	public void testBarrier2() throws ABCException {
-		File file = new File(rootDir, "barrier2.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertTrue(result);
-	}
-
-	@Test
-	public void testDining() throws ABCException {
-		File file = new File(rootDir, "dining.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertTrue(result);
-	}
-
-	@Test
-	public void testBank() throws ABCException {
-		File file = new File(rootDir, "bank.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertTrue(result);
-	}
-
-	@Test
-	public void testOutOfOrderLocks() throws ABCException {
-		File file = new File(rootDir, "outOfOrderLocks.cvl");
+	private void test(boolean expected, String filename) {
+		File file = new File(rootDir, filename);
+		// boolean result = CIVL.verify(true, false, file, out);
 		boolean result = CIVL.verify(file, out);
 
-		assertFalse(result);
+		out.println();
+		if (expected)
+			assertTrue(result);
+		else
+			assertFalse(result);
+	}
+
+	@Test
+	public void adder() {
+		test(true, "adder.cvl");
+	}
+
+	@Test
+	public void locks() {
+		test(false, "locks.cvl");
+	}
+
+	@Test
+	public void spawn() {
+		test(true, "spawn.cvl");
+	}
+
+	@Test
+	public void barier() {
+		test(true, "barrier.cvl");
+	}
+
+	@Test
+	public void barrier2() {
+		test(true, "barrier2.cvl");
+	}
+
+	@Test
+	public void dining() {
+		test(true, "dining.cvl");
+	}
+
+	@Test
+	public void bank() {
+		test(true, "bank.cvl");
+	}
+
+	@Test
+	public void outOfOrderLocks() {
+		test(false, "outOfOrderLocks.cvl");
 	}
 
 }

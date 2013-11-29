@@ -34,7 +34,7 @@ public class CommonModel extends CommonSourceable implements Model {
 	private CIVLType queueType;
 	private CIVLType messageType;
 	private CIVLType commType;
-	
+
 	private ArrayList<MallocStatement> mallocStatements;
 
 	/**
@@ -45,7 +45,8 @@ public class CommonModel extends CommonSourceable implements Model {
 	 * @param system
 	 *            The designated outermost function, called "System."
 	 */
-	public CommonModel(CIVLSource source, ModelFactory factory, CIVLFunction system) {
+	public CommonModel(CIVLSource source, ModelFactory factory,
+			CIVLFunction system) {
 		super(source);
 		this.modelFactory = factory;
 		this.system = system;
@@ -77,8 +78,7 @@ public class CommonModel extends CommonSourceable implements Model {
 	public ModelFactory factory() {
 		return modelFactory;
 	}
-	
-	
+
 	/**
 	 * @param name
 	 *            The name of this model.
@@ -133,26 +133,29 @@ public class CommonModel extends CommonSourceable implements Model {
 	}
 
 	/**
-	 * @param queueType The queue type used by this model.
+	 * @param queueType
+	 *            The queue type used by this model.
 	 */
 	public void setQueueType(CIVLType queueType) {
 		this.queueType = queueType;
 	}
-	
+
 	/**
-	 * @param messageType The message type used by this model.
+	 * @param messageType
+	 *            The message type used by this model.
 	 */
 	public void setMessageType(CIVLType messageType) {
 		this.messageType = messageType;
 	}
-	
+
 	/**
-	 * @param commType The comm type used by this model.
+	 * @param commType
+	 *            The comm type used by this model.
 	 */
 	public void setCommType(CIVLType commType) {
 		this.commType = commType;
 	}
-	
+
 	/**
 	 * Get a function based on its name.
 	 * 
@@ -176,7 +179,10 @@ public class CommonModel extends CommonSourceable implements Model {
 	 *            The PrintStream used to print the model.
 	 */
 	public void print(PrintStream out) {
-		out.println("Model");
+		out.print("Model");
+		if (name != null)
+			out.print(" " + name);
+		out.println();
 		for (CIVLFunction function : functions) {
 			function.print(" | ", out);
 		}
@@ -199,14 +205,14 @@ public class CommonModel extends CommonSourceable implements Model {
 	public Map<String, Variable> externVariables() {
 		return externVariables;
 	}
-	
+
 	public void setMallocStatements(ArrayList<MallocStatement> mallocStatements) {
-		this.mallocStatements=mallocStatements;
+		this.mallocStatements = mallocStatements;
 	}
 
 	@Override
 	public int getNumMallocs() {
-		return  mallocStatements.size();
+		return mallocStatements.size();
 	}
 
 	@Override

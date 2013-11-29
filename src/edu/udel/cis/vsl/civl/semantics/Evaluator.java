@@ -60,6 +60,7 @@ import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.gmc.ErrorLog;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.ModelResult;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
@@ -166,6 +167,8 @@ public class Evaluator {
 	 */
 	private Reasoner trueReasoner;
 
+	private GMCConfiguration config;
+
 	// private BooleanExpression falseExpr;
 
 	// Constructors........................................................
@@ -176,10 +179,11 @@ public class Evaluator {
 	 * @param symbolicUniverse
 	 *            The symbolic universe for the expressions.
 	 */
-	public Evaluator(ModelFactory modelFactory, StateFactoryIF stateFactory,
-			ErrorLog log) {
+	public Evaluator(GMCConfiguration config, ModelFactory modelFactory,
+			StateFactoryIF stateFactory, ErrorLog log) {
 		SymbolicType dynamicToIntType;
 
+		this.config = config;
 		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
 		this.universe = stateFactory.symbolicUniverse();
@@ -212,7 +216,7 @@ public class Evaluator {
 
 	public void reportError(CIVLExecutionException err) {
 		try {
-			log.report(new CIVLLogEntry(err));
+			log.report(new CIVLLogEntry(config, err));
 		} catch (FileNotFoundException e) {
 			throw new CIVLException(e.toString(), err.getSource());
 		}

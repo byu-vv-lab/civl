@@ -35,6 +35,7 @@ import edu.udel.cis.vsl.civl.state.StackEntry;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.gmc.ErrorLog;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -67,11 +68,11 @@ public class Executor {
 	/** The Evaluator used to evaluate expressions. */
 	private Evaluator evaluator;
 
-	/**
-	 * Log used to record property violations encountered as the model is
-	 * executed.
-	 */
-	private ErrorLog log;
+//	/**
+//	 * Log used to record property violations encountered as the model is
+//	 * executed.
+//	 */
+//	private ErrorLog log;
 
 	/**
 	 * The loader used to find Executors for system functions declared in
@@ -95,13 +96,14 @@ public class Executor {
 	 * @param prover
 	 *            A theorem prover for checking assertions.
 	 */
-	public Executor(ModelFactory modelFactory, StateFactoryIF stateFactory,
-			ErrorLog log, LibraryExecutorLoader loader) {
+	public Executor(GMCConfiguration config, ModelFactory modelFactory,
+			StateFactoryIF stateFactory, ErrorLog log,
+			LibraryExecutorLoader loader) {
 		this.symbolicUniverse = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
-		this.evaluator = new Evaluator(modelFactory, stateFactory, log);
-		this.log = log;
+		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);
+		//this.log = log;
 		this.loader = loader;
 		this.civlcExecutor = (Libcivlc) loader
 				.getLibraryExecutor("civlc", this);
@@ -119,9 +121,9 @@ public class Executor {
 	 * @param prover
 	 *            A theorem prover for checking assertions.
 	 */
-	public Executor(ModelFactory modelFactory, StateFactoryIF stateFactory,
-			ErrorLog log) {
-		this(modelFactory, stateFactory, log, null);
+	public Executor(GMCConfiguration config, ModelFactory modelFactory,
+			StateFactoryIF stateFactory, ErrorLog log) {
+		this(config, modelFactory, stateFactory, log, null);
 	}
 
 	// Helper methods...
