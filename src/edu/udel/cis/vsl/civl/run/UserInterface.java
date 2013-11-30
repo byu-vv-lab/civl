@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.run;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.BOOLEAN;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
-import static java.lang.Boolean.TRUE;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,11 +59,11 @@ public class UserInterface {
 
 	public final static Option randomO = Option.newScalarOption("random",
 			BOOLEAN, "select enabled transitions randomly; default for run,\n"
-					+ "  ignored for all other commands", null);
+					+ "    ignored for all other commands", null);
 
 	public final static Option guidedO = Option.newScalarOption("guided",
 			BOOLEAN, "user guided simulation; applies only to run, ignored\n"
-					+ "  for all other commands", null);
+					+ "    for all other commands", null);
 
 	public final static Option seedO = Option.newScalarOption("seed", STRING,
 			"set the random seed; applies only to run", null);
@@ -110,6 +109,16 @@ public class UserInterface {
 				showSavedStatesO, showQueriesO, showProverQueriesO, inputO);
 
 		parser = new CommandLineParser(options);
+	}
+
+	private void setToDefault(GMCConfiguration config, Option option) {
+		config.setScalarValue(option, option.defaultValue());
+	}
+
+	private void setToDefault(GMCConfiguration config,
+			Collection<Option> options) {
+		for (Option option : options)
+			setToDefault(config, option);
 	}
 
 	/**
@@ -223,10 +232,10 @@ public class UserInterface {
 
 	private Model extractModel(PrintStream out, GMCConfiguration config,
 			String filename) throws ABCException, IOException {
-		boolean parse = TRUE.equals(config.getFreeArg(0));
-		boolean debug = TRUE.equals(config.getValue(debugO));
-		boolean verbose = TRUE.equals(config.getValue(verboseO));
-		boolean showModel = TRUE.equals(config.getValue(showModelO));
+		boolean parse = "parse".equals(config.getFreeArg(0));
+		boolean debug = config.isTrue(debugO);
+		boolean verbose = config.isTrue(verboseO);
+		boolean showModel = config.isTrue(showModelO);
 		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
 		Activator frontEnd = getFrontEnd(filename, config);
 		Program program;
@@ -314,7 +323,7 @@ public class UserInterface {
 		long numProverCalls = universe.numProverValidCalls();
 		long memory = Runtime.getRuntime().totalMemory();
 
-		out.println(bar + " Stats " + bar + "\n");
+		out.println(bar + " Stats " + bar );
 		out.print("   validCalls          : ");
 		out.println(numValidCalls);
 		out.print("   proverCalls         : ");
@@ -339,7 +348,7 @@ public class UserInterface {
 	 */
 	public boolean runWork(String[] args) throws CommandLineException {
 		PrintStream out = System.out, err = System.err;
-		GMCConfiguration config = parser.parse(0, args);
+		GMCConfiguration config = parser.parse(Arrays.asList(args));
 		int numFree = config.getNumFreeArgs();
 		String command;
 		boolean result;
@@ -350,6 +359,7 @@ public class UserInterface {
 		if (numFree == 0)
 			throw new CommandLineException("Missing command");
 		command = config.getFreeArg(0);
+
 		try {
 			switch (command) {
 			case "help":
@@ -375,10 +385,20 @@ public class UserInterface {
 				{
 					String sourceFilename = config.getFreeArg(1);
 					String traceFilename = config.getFreeArg(2);
-					Model model = extractModel(out, config, sourceFilename);
-					Replayer replayer = new Replayer(config, model,
-							traceFilename);
+					File traceFile = new File(traceFilename);
+					GMCConfiguration newConfig = parser.newConfig();
+					Model model;
+					TracePlayer replayer;
 
+					// need to get the original trace and overwrite
+					// it with new options...
+					parser.parse(newConfig, traceFile);
+					setToDefault(newConfig, Arrays.asList(showModelO, verboseO,
+							debugO, showTransitionsO, showStatesO,
+							showSavedStatesO, showQueriesO, showProverQueriesO));
+					parser.parse(newConfig, Arrays.asList(args));
+					model = extractModel(out, newConfig, sourceFilename);
+					replayer = new TracePlayer(newConfig, model, traceFile, out);
 					result = replayer.run();
 					break;
 				}
@@ -387,10 +407,12 @@ public class UserInterface {
 				{
 					String filename = config.getFreeArg(1);
 					Model model = extractModel(out, config, filename);
-					Player player = new Player(config, model);
-
-					result = player.run();
-					break;
+					// Player player = new Player(config, model);
+					//
+					// result = player.run();
+					throw new UnsupportedOperationException(
+							"run not yet implemented");
+					// break;
 				}
 			case "parse": // run ABC, but get options right first
 				checkFilenames(1, config);
@@ -429,9 +451,10 @@ public class UserInterface {
 			return runWork(args);
 		} catch (CommandLineException e) {
 			System.err.println(e.getMessage());
+			System.err.println("Type \"civl help\" for command line syntax.");
 			System.err.flush();
-			printUsage(System.out);
-			System.out.flush();
+			//printUsage(System.out);
+			//System.out.flush();
 		}
 		return false;
 	}
