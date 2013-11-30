@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.transition;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -45,5 +46,15 @@ public class ChooseTransition extends SimpleTransition {
 	 */
 	public SymbolicExpression value() {
 		return value;
+	}
+
+	@Override
+	public String toString() {
+		CIVLSource source = statement.getSource();
+		String result = super.toString() + " (" + value + ")";
+
+		if (source != null)
+			result += " at " + source.getLocation();
+		return result;
 	}
 }

@@ -27,7 +27,6 @@ import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.ExcessiveErrorException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
-import edu.udel.cis.vsl.gmc.StateManagerIF;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 public class Verifier {
@@ -58,7 +57,7 @@ public class Verifier {
 
 	private Executor executor;
 
-	private StateManagerIF<State, Transition> stateManager;
+	private StateManager stateManager;
 
 	private DfsSearcher<State, Transition, TransitionSequence> searcher;
 
@@ -72,7 +71,7 @@ public class Verifier {
 
 	private boolean showStates;
 
-	private boolean showAllStates;
+	private boolean showSavedStates;
 
 	private boolean showTransitions;
 
@@ -97,15 +96,12 @@ public class Verifier {
 		this.log.setErrorBound(config.getIntValue("errorBound"));
 		this.executor = new Executor(config, modelFactory, stateFactory, log,
 				loader);
-		this.random = Boolean.TRUE.equals(config.getBooleanValue("random"));
-		this.verbose = Boolean.TRUE.equals(config.getBooleanValue("verbose"));
-		this.debug = Boolean.TRUE.equals(config.getBooleanValue("debug"));
-		this.showStates = Boolean.TRUE.equals(config
-				.getBooleanValue("showStates"));
-		this.showAllStates = Boolean.TRUE.equals(config
-				.getBooleanValue("showAllStates"));
-		this.showTransitions = Boolean.TRUE.equals(config
-				.getBooleanValue("showTransitions"));
+		this.random = config.isTrue(UserInterface.randomO);
+		this.verbose = config.isTrue(UserInterface.verboseO);
+		this.debug = config.isTrue(UserInterface.debugO);
+		this.showStates = config.isTrue(UserInterface.showStatesO);
+		this.showSavedStates = config.isTrue(UserInterface.showSavedStatesO);
+		this.showTransitions = config.isTrue(UserInterface.showTransitionsO);
 
 		if (this.random) {
 			long seed;
@@ -127,10 +123,12 @@ public class Verifier {
 			enabler = new Enabler(transitionFactory, evaluator, executor);
 		}
 		stateManager = new StateManager(executor);
-		if (verbose || debug) {
-			// TODO: give state manager separate verbose and debug modes
-			((StateManager) stateManager).setDebugOut(out);
-		}
+		stateManager.setOutputStream(out);
+		stateManager.setVerbose(verbose);
+		stateManager.setDebug(debug);
+		stateManager.setShowStates(showStates);
+		stateManager.setShowSavedStates(showSavedStates);
+		stateManager.setShowTransitions(showTransitions);
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
 		if (debug)

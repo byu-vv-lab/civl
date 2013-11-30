@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.transition;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
@@ -16,8 +17,9 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  */
 public class SimpleTransition extends Transition {
 
-	private int pid;
-	private Statement statement;
+	protected int pid;
+
+	protected Statement statement;
 
 	/**
 	 * A simple transition involves a single atomic statement in one process. It
@@ -67,6 +69,16 @@ public class SimpleTransition extends Transition {
 	 */
 	public void setStatement(Statement statement) {
 		this.statement = statement;
+	}
+
+	@Override
+	public String toString() {
+		CIVLSource source = statement.getSource();
+		String result = "proc " + pid + ": " + statement.toString();
+
+		if (source != null)
+			result += " at " + source.getLocation();
+		return result;
 	}
 
 }

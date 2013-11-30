@@ -49,51 +49,52 @@ public class UserInterface {
 	 */
 	SymbolicUniverse universe = SARL.newStandardUniverse();
 
-	Option errorBoundO = Option.newScalarOption("errorBound", INTEGER,
-			"stop after finding this many errors", 1);
+	public final static Option errorBoundO = Option.newScalarOption(
+			"errorBound", INTEGER, "stop after finding this many errors", 1);
 
-	Option showModelO = Option.newScalarOption("showModel", BOOLEAN,
-			"print the model", false);
+	public final static Option showModelO = Option.newScalarOption("showModel",
+			BOOLEAN, "print the model", false);
 
-	Option verboseO = Option.newScalarOption("verbose", BOOLEAN,
-			"verbose mode", false);
+	public final static Option verboseO = Option.newScalarOption("verbose",
+			BOOLEAN, "verbose mode", false);
 
-	Option randomO = Option.newScalarOption("random", BOOLEAN,
-			"select enabled transitions randomly; default for run,\n"
+	public final static Option randomO = Option.newScalarOption("random",
+			BOOLEAN, "select enabled transitions randomly; default for run,\n"
 					+ "  ignored for all other commands", null);
 
-	Option guidedO = Option.newScalarOption("guided", BOOLEAN,
-			"user guided simulation; applies only to run, ignored\n"
+	public final static Option guidedO = Option.newScalarOption("guided",
+			BOOLEAN, "user guided simulation; applies only to run, ignored\n"
 					+ "  for all other commands", null);
 
-	Option seedO = Option.newScalarOption("seed", STRING,
+	public final static Option seedO = Option.newScalarOption("seed", STRING,
 			"set the random seed; applies only to run", null);
 
-	Option debugO = Option.newScalarOption("debug", BOOLEAN,
-			"debug mode: print very detailed information", false);
+	public final static Option debugO = Option.newScalarOption("debug",
+			BOOLEAN, "debug mode: print very detailed information", false);
 
-	Option userIncludePathO = Option.newScalarOption("userIncludePath", STRING,
-			"set the user include path", null);
+	public final static Option userIncludePathO = Option.newScalarOption(
+			"userIncludePath", STRING, "set the user include path", null);
 
-	Option sysIncludePathO = Option.newScalarOption("sysIncludePath", STRING,
-			"set the user include path", null);
+	public final static Option sysIncludePathO = Option.newScalarOption(
+			"sysIncludePath", STRING, "set the user include path", null);
 
-	Option showTransitionsO = Option.newScalarOption("showTransitions",
-			BOOLEAN, "print transitions", false);
+	public final static Option showTransitionsO = Option.newScalarOption(
+			"showTransitions", BOOLEAN, "print transitions", false);
 
-	Option showStatesO = Option.newScalarOption("showStates", BOOLEAN,
-			"print all states", false);
+	public final static Option showStatesO = Option.newScalarOption(
+			"showStates", BOOLEAN, "print all states", false);
 
-	Option showSavedStatesO = Option.newScalarOption("showSavedStates",
-			BOOLEAN, "print saved states only", false);
+	public final static Option showSavedStatesO = Option.newScalarOption(
+			"showSavedStates", BOOLEAN, "print saved states only", false);
 
-	Option showQueriesO = Option.newScalarOption("showQueries", BOOLEAN,
-			"print all queries", false);
+	public final static Option showQueriesO = Option.newScalarOption(
+			"showQueries", BOOLEAN, "print all queries", false);
 
-	Option showProverQueriesO = Option.newScalarOption("showProverQueries",
-			BOOLEAN, "print theorem prover queries only", false);
+	public final static Option showProverQueriesO = Option.newScalarOption(
+			"showProverQueries", BOOLEAN, "print theorem prover queries only",
+			false);
 
-	Option inputO = Option.newMapOption("input",
+	public final static Option inputO = Option.newMapOption("input",
 			"initialize input variable KEY to VALUE");
 
 	/**

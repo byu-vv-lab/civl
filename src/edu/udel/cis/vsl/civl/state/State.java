@@ -35,22 +35,18 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * 
  * Processes and scopes have ID numbers.
  * 
- * TODO: add dynamic scope reachability data. Given a state, define the set of
- * dynamic scopes that a process p can "reach" to be those that can be reached
- * from the dynamic scopes pointed to by frames in p's call stack following the
- * "parent" edges in the dynamic scope tree. Encode this information in the
- * state as follows: each dynamic scope state should include a list of integers:
- * PIDs of processes that can reach that scope. Transitions in state factory
- * need to be modified to update that information appropriately when new states
- * are generated.
- * 
- * 
- * 
+ * @author Stephen F. Siegel (siegel)
  * @author Timothy K. Zirkel (zirkel)
  * @author Tim McClory (tmcclory)
  * 
  */
 public class State {
+
+	/**
+	 * The number of instances of this class that have been created since the
+	 * class was loaded.
+	 */
+	private static long instanceCount = 0;
 
 	/**
 	 * Has the hashcode on this state already been computed?
@@ -63,6 +59,12 @@ public class State {
 	 * is -1.
 	 */
 	private int canonicId = -1;
+
+	/**
+	 * The absolutely unique ID number of this state, among all states ever
+	 * created in this run of the JVM.
+	 */
+	private final long instanceId = instanceCount++;
 
 	/**
 	 * If the hashcode has been computed, it is cached here.
@@ -417,9 +419,7 @@ public class State {
 		int numScopes = numScopes();
 		int numProcs = numProcs();
 
-		out.print("State ");
-		if (canonicId >= 0)
-			out.print(canonicId);
+		out.print("State "+identifier());
 		out.println();
 		out.println("| Path condition");
 		out.println("| | " + pathCondition);
@@ -444,9 +444,19 @@ public class State {
 		out.flush();
 	}
 
+	/**
+	 * Returns a string of the form instanceId:canonicId. The instanceId alone
+	 * uniquely identifies the state, but the canonicId is also useful, though
+	 * it is only used for canonic states.
+	 * 
+	 * @return the string instanceId:canonicId
+	 */
+	public String identifier() {
+		return instanceId + ":" + canonicId;
+	}
+
 	@Override
 	public String toString() {
-		return "State " + canonicId + "(nprocs=" + numProcs() + ", nscopes="
-				+ numScopes() + ")";
+		return "State " + identifier();
 	}
 }

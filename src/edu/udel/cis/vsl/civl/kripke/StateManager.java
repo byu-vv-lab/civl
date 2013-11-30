@@ -24,19 +24,73 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 	private Executor executor;
 
-	private PrintStream debugOut = null;
+	private PrintStream out = null;
 
 	private StateFactoryIF stateFactory;
 
 	private int maxProcs = 0;
+
+	private boolean showStates = false;
+
+	private boolean showSavedStates = false;
+
+	private boolean showTransitions = false;
+
+	private boolean debug = false;
+
+	private boolean verbose = false;
 
 	public StateManager(Executor executor) {
 		this.executor = executor;
 		this.stateFactory = executor.stateFactory();
 	}
 
-	public void setDebugOut(PrintStream debugOut) {
-		this.debugOut = debugOut;
+	public void setOutputStream(PrintStream out) {
+		this.out = out;
+	}
+
+	public PrintStream getOutputStream() {
+		return out;
+	}
+
+	public void setShowStates(boolean value) {
+		this.showStates = value;
+	}
+
+	public boolean getShowStates() {
+		return showStates;
+	}
+
+	public void setShowSavedStates(boolean value) {
+		this.showSavedStates = value;
+	}
+
+	public boolean getShowSavedStates() {
+		return showSavedStates;
+	}
+
+	public void setShowTransitions(boolean value) {
+		this.showTransitions = value;
+	}
+
+	public boolean getShowTransitions() {
+		return showTransitions;
+	}
+
+	public void setDebug(boolean value) {
+		this.debug = value;
+	}
+
+	public boolean getDebug() {
+		return debug;
+	}
+
+	public void setVerbose(boolean value) {
+		this.verbose = value;
+	}
+
+	public boolean getVerbose() {
+		return verbose;
 	}
 
 	@Override
@@ -60,13 +114,18 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		int numProcs;
 
 		assert transition instanceof SimpleTransition;
+		if (verbose || debug || showTransitions) {
+			out.println();
+			out.print(state + " --");
+			printTransitionLong(out, transition);
+			out.print("--> ");
+		}
 		pid = ((SimpleTransition) transition).pid();
 		state = stateFactory.setPathCondition(state,
 				((SimpleTransition) transition).pathCondition());
 		statement = ((SimpleTransition) transition).statement();
 		if (transition instanceof ChooseTransition) {
 			assert statement instanceof ChooseStatement;
-
 			state = executor.executeChoose(state, pid,
 					(ChooseStatement) statement,
 					((ChooseTransition) transition).value());
@@ -77,17 +136,18 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		// loop over the transitions and then just simplify and canonic once at
 		// the end. This could greatly increase efficiency.
 		// TODO: try this simplification out, see how it works:
-
 		state = stateFactory.simplify(state);
 		state = stateFactory.canonic(state);
-
-		if (debugOut != null) {
-			state.print(debugOut);
+		if (verbose || debug || showTransitions) {
+			out.println(state);
+		}
+		if (debug || verbose || showStates || showSavedStates) {
+			out.println();
+			state.print(out);
 		}
 		numProcs = state.numProcs();
-		if (numProcs > maxProcs) {
+		if (numProcs > maxProcs)
 			maxProcs = numProcs;
-		}
 		return state;
 	}
 
@@ -117,26 +177,23 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	}
 
 	@Override
-	public void printStateLong(PrintStream arg0, State arg1) {
-		// TODO Auto-generated method stub
-
+	public void printStateLong(PrintStream out, State state) {
+		state.print(out);
 	}
 
 	@Override
-	public void printStateShort(PrintStream arg0, State arg1) {
-		arg0.print(arg1.toString());
+	public void printStateShort(PrintStream out, State state) {
+		out.print(state.toString());
 	}
 
 	@Override
-	public void printTransitionLong(PrintStream arg0, Transition arg1) {
-		// TODO Auto-generated method stub
-
+	public void printTransitionLong(PrintStream out, Transition transition) {
+		out.print(transition.toString());
 	}
 
 	@Override
-	public void printTransitionShort(PrintStream arg0, Transition arg1) {
-		// TODO Auto-generated method stub
-
+	public void printTransitionShort(PrintStream out, Transition transition) {
+		out.print(transition.toString());
 	}
 
 	@Override

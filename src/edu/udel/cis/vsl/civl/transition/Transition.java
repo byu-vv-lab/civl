@@ -69,4 +69,5 @@ public class Transition {
 	public void setModel(Model model) {
 		this.model = model;
 	}
+
 }
