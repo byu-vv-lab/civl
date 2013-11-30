@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.MisguidedExecutionException;
 import edu.udel.cis.vsl.gmc.Option;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -323,7 +324,7 @@ public class UserInterface {
 		long numProverCalls = universe.numProverValidCalls();
 		long memory = Runtime.getRuntime().totalMemory();
 
-		out.println(bar + " Stats " + bar );
+		out.println(bar + " Stats " + bar);
 		out.print("   validCalls          : ");
 		out.println(numValidCalls);
 		out.print("   proverCalls         : ");
@@ -435,6 +436,10 @@ public class UserInterface {
 			err.println(e);
 			err.flush();
 			result = false;
+		} catch (MisguidedExecutionException e) {
+			err.println(e);
+			err.flush();
+			result = false;
 		}
 		return result;
 	}
@@ -453,8 +458,8 @@ public class UserInterface {
 			System.err.println(e.getMessage());
 			System.err.println("Type \"civl help\" for command line syntax.");
 			System.err.flush();
-			//printUsage(System.out);
-			//System.out.flush();
+			// printUsage(System.out);
+			// System.out.flush();
 		}
 		return false;
 	}

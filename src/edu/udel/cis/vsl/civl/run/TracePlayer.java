@@ -10,7 +10,10 @@ import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GuidedTransitionChooser;
+import edu.udel.cis.vsl.gmc.MisguidedExecutionException;
 import edu.udel.cis.vsl.gmc.Replayer;
+import edu.udel.cis.vsl.gmc.TransitionChooser;
 
 /**
  * A tool to replay a trace saved by a previous CIVL session.
@@ -23,40 +26,43 @@ import edu.udel.cis.vsl.gmc.Replayer;
  */
 public class TracePlayer extends Player {
 
-	private Replayer<State, Transition, TransitionSequence> replayer;
+	private TransitionChooser<State, Transition> chooser;
 
-	private File traceFile;
+	private Replayer<State, Transition> replayer;
 
-	/**
-	 * 
-	 * @param config
-	 * @param args
-	 * @param model
-	 * @param traceFilename
-	 * @param out
-	 * @throws CommandLineException
-	 */
-	public TracePlayer(GMCConfiguration config, Model model, File traceFile,
-			PrintStream out) throws CommandLineException {
+	TracePlayer(GMCConfiguration config, Model model, PrintStream out)
+			throws CommandLineException {
 		super(config, model, out);
-		this.traceFile = traceFile;
-		replayer = new Replayer<State, Transition, TransitionSequence>(enabler,
-				stateManager, out);
-		log.setSearcher(null);
 		// turn the following off because they duplicate what
 		// the Replayer prints:
 		stateManager.setShowStates(false);
 		stateManager.setShowSavedStates(false);
 		stateManager.setShowTransitions(false);
 		stateManager.setVerbose(false);
+		log.setSearcher(null);
+		replayer = new Replayer<State, Transition>(stateManager, out);
 		replayer.setPrintAllStates(showStates || verbose || debug);
 	}
 
-	public boolean run() throws IOException {
+	public TracePlayer(GMCConfiguration config, Model model,
+			TransitionChooser<State, Transition> chooser, PrintStream out)
+			throws CommandLineException {
+		this(config, model, out);
+		this.chooser = chooser;
+	}
+
+	public TracePlayer(GMCConfiguration config, Model model, File traceFile,
+			PrintStream out) throws CommandLineException, IOException, MisguidedExecutionException {
+		this(config, model, out);
+		this.chooser = new GuidedTransitionChooser<State, Transition, TransitionSequence>(
+				enabler, traceFile);
+	}
+
+	public boolean run() throws MisguidedExecutionException {
 		State initialState = stateFactory.initialState(model);
 
-		replayer.play(initialState, traceFile);
-		return false;
+		replayer.play(initialState, chooser);
+		return true;
 	}
 
 	public void printStats() {
