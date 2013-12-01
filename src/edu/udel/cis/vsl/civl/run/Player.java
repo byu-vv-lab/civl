@@ -77,6 +77,10 @@ public abstract class Player {
 
 	protected String result;
 
+	protected boolean minimize;
+
+	protected int maxdepth;
+
 	public Player(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
 		SymbolicUniverse universe;
@@ -103,6 +107,8 @@ public abstract class Player {
 		this.showStates = config.isTrue(UserInterface.showStatesO);
 		this.showSavedStates = config.isTrue(UserInterface.showSavedStatesO);
 		this.showTransitions = config.isTrue(UserInterface.showTransitionsO);
+		this.minimize = config.isTrue(UserInterface.minO);
+		this.maxdepth = (int) config.getValueOrDefault(UserInterface.maxdepthO);
 
 		if (this.random) {
 			long seed;

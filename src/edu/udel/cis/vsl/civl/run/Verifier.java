@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.run;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.kripke.StateManager;
 import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.state.State;
@@ -27,6 +26,10 @@ public class Verifier extends Player {
 			searcher.setDebugOut(out);
 		searcher.setName(sessionName);
 		log.setSearcher(searcher);
+		if (minimize)
+			log.setMinimize(true);
+		if (config.getValue(UserInterface.maxdepthO) != null)
+			searcher.boundDepth(maxdepth);
 	}
 
 	/**
@@ -36,7 +39,7 @@ public class Verifier extends Player {
 	 */
 	public void printStats() {
 		out.print("   maxProcs            : ");
-		out.println(((StateManager) stateManager).maxProcs());
+		out.println(stateManager.maxProcs());
 		out.print("   statesSeen          : ");
 		out.println(searcher.numStatesSeen());
 		out.print("   statesMatched       : ");

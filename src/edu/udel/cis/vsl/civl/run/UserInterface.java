@@ -28,12 +28,16 @@ import edu.udel.cis.vsl.gmc.Option;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
-// TODO: minimal counterexample finder: put depth bound in DfsSearcher, change
-// it dynamically, add option -minimize
 // TODO: implement -input....
 // TODO: solver for concrete values of all symbolic constants in state
 // when error found, rerun with -input..
 
+/**
+ * Basic command line and API user interface for CIVL tools.
+ * 
+ * @author Stephen F. Siegel
+ * 
+ */
 public class UserInterface {
 
 	// Static fields...
@@ -92,6 +96,12 @@ public class UserInterface {
 	public final static Option traceO = Option.newScalarOption("trace", STRING,
 			"filename of trace to replay", null);
 
+	public final static Option minO = Option.newScalarOption("min", BOOLEAN,
+			"search for minimal counterexample", false);
+
+	public final static Option maxdepthO = Option.newScalarOption("maxdepth",
+			INTEGER, "bound on search depth", Integer.MAX_VALUE);
+
 	/**
 	 * A string printed before and after titles of sections of output to make
 	 * them stand out among the clutter.
@@ -132,7 +142,7 @@ public class UserInterface {
 				verboseO, randomO, guidedO, seedO, debugO, userIncludePathO,
 				sysIncludePathO, showTransitionsO, showStatesO,
 				showSavedStatesO, showQueriesO, showProverQueriesO, inputO,
-				idO, traceO);
+				idO, traceO, minO, maxdepthO);
 
 		parser = new CommandLineParser(options);
 	}
