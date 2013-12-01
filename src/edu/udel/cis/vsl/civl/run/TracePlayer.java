@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.gmc.GuidedTransitionChooser;
 import edu.udel.cis.vsl.gmc.MisguidedExecutionException;
+import edu.udel.cis.vsl.gmc.RandomTransitionChooser;
 import edu.udel.cis.vsl.gmc.Replayer;
 import edu.udel.cis.vsl.gmc.TransitionChooser;
 
@@ -30,6 +31,47 @@ public class TracePlayer extends Player {
 
 	private Replayer<State, Transition> replayer;
 
+	private boolean isRandom = false;
+
+	private long seed = 0;
+
+	public static TracePlayer guidedPlayer(GMCConfiguration config,
+			Model model, File traceFile, PrintStream out)
+			throws CommandLineException, IOException,
+			MisguidedExecutionException {
+		TracePlayer result = new TracePlayer(config, model, out);
+
+		result.chooser = new GuidedTransitionChooser<State, Transition, TransitionSequence>(
+				result.enabler, traceFile);
+		return result;
+	}
+
+	public static TracePlayer randomPlayer(GMCConfiguration config,
+			Model model, PrintStream out) throws CommandLineException,
+			IOException, MisguidedExecutionException {
+		TracePlayer result = new TracePlayer(config, model, out);
+		String seedString = (String) config.getValue(UserInterface.seedO);
+		RandomTransitionChooser<State, Transition, TransitionSequence> chooser;
+
+		if (seedString == null)
+			chooser = new RandomTransitionChooser<>(result.enabler);
+		else {
+			long seed;
+
+			try {
+				seed = new Long(seedString);
+			} catch (NumberFormatException e) {
+				throw new CommandLineException(
+						"Expected long value for seed, saw " + seedString);
+			}
+			chooser = new RandomTransitionChooser<>(result.enabler, seed);
+		}
+		result.seed = chooser.getSeed();
+		result.isRandom = true;
+		result.chooser = chooser;
+		return result;
+	}
+
 	TracePlayer(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
 		super(config, model, out);
@@ -42,6 +84,7 @@ public class TracePlayer extends Player {
 		log.setSearcher(null);
 		replayer = new Replayer<State, Transition>(stateManager, out);
 		replayer.setPrintAllStates(showStates || verbose || debug);
+		replayer.setPredicate(predicate);
 	}
 
 	public TracePlayer(GMCConfiguration config, Model model,
@@ -52,7 +95,8 @@ public class TracePlayer extends Player {
 	}
 
 	public TracePlayer(GMCConfiguration config, Model model, File traceFile,
-			PrintStream out) throws CommandLineException, IOException, MisguidedExecutionException {
+			PrintStream out) throws CommandLineException, IOException,
+			MisguidedExecutionException {
 		this(config, model, out);
 		this.chooser = new GuidedTransitionChooser<State, Transition, TransitionSequence>(
 				enabler, traceFile);
@@ -60,14 +104,33 @@ public class TracePlayer extends Player {
 
 	public boolean run() throws MisguidedExecutionException {
 		State initialState = stateFactory.initialState(model);
+		boolean violation = replayer.play(initialState, chooser);
 
-		replayer.play(initialState, chooser);
-		return true;
+		violation = violation || log.numErrors() > 0;
+		if (violation) {
+			out.println("Violation(s) found.");
+			out.flush();
+		}
+		return !violation;
 	}
 
 	public void printStats() {
-		out.print("   maxProcs            : ");
-		out.println(stateManager.maxProcs());
+		out.println("   maxProcs            : " + stateManager.maxProcs());
+		if (isRandom)
+			out.println("   seed                : " + seed);
+	}
+
+	/**
+	 * Returns the random seed if this is a random simulator, otherwise 0.
+	 * 
+	 * @return the random seed
+	 */
+	public long getSeed() {
+		return seed;
+	}
+
+	public boolean isRandom() {
+		return isRandom;
 	}
 
 }

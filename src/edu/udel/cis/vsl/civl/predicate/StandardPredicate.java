@@ -19,7 +19,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  */
 public class StandardPredicate implements StatePredicateIF<State> {
 
-	private ErrorLog log;
+//	private ErrorLog log;
 	private Deadlock deadlockPredicate;
 
 	/**
@@ -33,7 +33,7 @@ public class StandardPredicate implements StatePredicateIF<State> {
 	 */
 	public StandardPredicate(ErrorLog log, SymbolicUniverse universe,
 			Evaluator evaluator) {
-		this.log = log;
+		// this.log = log;
 		deadlockPredicate = new Deadlock(universe, evaluator);
 	}
 
@@ -48,10 +48,15 @@ public class StandardPredicate implements StatePredicateIF<State> {
 
 	@Override
 	public boolean holdsAt(State state) {
-		if (log.numErrors() >= log.errorBound()) {
-			return true;
-		}
+		// if (log.numErrors() >= log.errorBound()) {
+		// return true;
+		// }
 		return deadlockPredicate.holdsAt(state);
+	}
+
+	@Override
+	public String toString() {
+		return "Deadlock";
 	}
 
 }

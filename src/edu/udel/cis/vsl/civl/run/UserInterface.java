@@ -5,6 +5,7 @@ import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -27,27 +28,15 @@ import edu.udel.cis.vsl.gmc.Option;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
+// TODO: minimal counterexample finder: put depth bound in DfsSearcher, change
+// it dynamically, add option -minimize
+// TODO: implement -input....
+// TODO: solver for concrete values of all symbolic constants in state
+// when error found, rerun with -input..
+
 public class UserInterface {
 
 	// Static fields...
-
-	/**
-	 * A string printed before and after titles of sections of output to make
-	 * them stand out among the clutter.
-	 */
-	public final static String bar = "===================";
-
-	// Instance fields...
-
-	/**
-	 * The time at which this instance of UserInterface was created.
-	 */
-	public final double startTime = System.currentTimeMillis();
-
-	/**
-	 * The symbolic universe used in this session.
-	 */
-	SymbolicUniverse universe = SARL.newStandardUniverse();
 
 	public final static Option errorBoundO = Option.newScalarOption(
 			"errorBound", INTEGER, "stop after finding this many errors", 1);
@@ -97,20 +86,58 @@ public class UserInterface {
 	public final static Option inputO = Option.newMapOption("input",
 			"initialize input variable KEY to VALUE");
 
+	public final static Option idO = Option.newScalarOption("id", INTEGER,
+			"ID number of trace to replay", 0);
+
+	public final static Option traceO = Option.newScalarOption("trace", STRING,
+			"filename of trace to replay", null);
+
+	/**
+	 * A string printed before and after titles of sections of output to make
+	 * them stand out among the clutter.
+	 */
+	public final static String bar = "===================";
+
+	// Instance fields...
+
+	/**
+	 * The symbolic universe used in this session.
+	 */
+	SymbolicUniverse universe = SARL.newStandardUniverse();
+
+	/** Stdout: where most output is going to go, including error reports */
+	private PrintStream out = System.out;
+
+	/**
+	 * Stderr: used only if something goes wrong, like a bad command line arg,
+	 * or internal exception
+	 */
+	private PrintStream err = System.err;
+
+	/**
+	 * The time at which this instance of UserInterface was created.
+	 */
+	private final double startTime = System.currentTimeMillis();
+
 	/**
 	 * The parser from the Generic Model Checking package used to parse the
 	 * command line.
 	 */
 	private CommandLineParser parser;
 
+	// Constructors...
+
 	public UserInterface() {
 		Collection<Option> options = Arrays.asList(errorBoundO, showModelO,
 				verboseO, randomO, guidedO, seedO, debugO, userIncludePathO,
 				sysIncludePathO, showTransitionsO, showStatesO,
-				showSavedStatesO, showQueriesO, showProverQueriesO, inputO);
+				showSavedStatesO, showQueriesO, showProverQueriesO, inputO,
+				idO, traceO);
 
 		parser = new CommandLineParser(options);
 	}
+
+	// Helper methods...
 
 	private void setToDefault(GMCConfiguration config, Option option) {
 		config.setScalarValue(option, option.defaultValue());
@@ -129,14 +156,14 @@ public class UserInterface {
 	 *            stream to which to print
 	 */
 	private void printUsage(PrintStream out) {
-		out.println("Usage: civl <command> <options> file0 ...");
+		out.println("Usage: civl <command> <options> filename ...");
 		out.println("Commands:");
-		out.println("  verify : verify program file0");
-		out.println("  run : run program file0");
+		out.println("  verify : verify program filename");
+		out.println("  run : run program filename");
 		out.println("  help : print this message");
-		out.println("  replay : replay trace for program file0 using trace file file1");
-		out.println("  parse : show result of preprocessing and parsing file0");
-		out.println("  preprocess : show result of preprocessing file0");
+		out.println("  replay : replay trace for program filename");
+		out.println("  parse : show result of preprocessing and parsing filename");
+		out.println("  preprocess : show result of preprocessing filename");
 		out.println("Options:");
 		parser.printUsage(out);
 		out.flush();
@@ -316,7 +343,7 @@ public class UserInterface {
 	 * @param transitions
 	 *            the number of transitions executed in the course of the run
 	 */
-	public void printStats(PrintStream out) {
+	private void printStats(PrintStream out) {
 		// round up time to nearest 1/100th of second...
 		double time = Math
 				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
@@ -335,6 +362,113 @@ public class UserInterface {
 		out.println(time);
 	}
 
+	// Public methods...
+
+	public boolean runHelp(GMCConfiguration config) {
+		printUsage(out);
+		return true;
+	}
+
+	public boolean runVerify(GMCConfiguration config)
+			throws CommandLineException, ABCException, IOException {
+		boolean result;
+		String filename;
+		Model model;
+		Verifier verifier;
+
+		checkFilenames(1, config);
+		filename = config.getFreeArg(1);
+		model = extractModel(out, config, filename);
+		verifier = new Verifier(config, model, out);
+		result = verifier.run();
+		printStats(out);
+		verifier.printStats();
+		out.println();
+		verifier.printResult();
+		out.flush();
+		return result;
+	}
+
+	// tass replay foo.cvl
+	// looks for trace file CIVLREP/foo_0.trace
+	// tass replay foo.cvl -id=2 (default 0)
+	// looks for trace file CIVLREP/foo_id.trace
+	// tass replay foo.cvl -trace=/path/to/whatever.trace
+	// (null default; default is function filename)
+
+	public boolean runReplay(GMCConfiguration config)
+			throws CommandLineException, FileNotFoundException, IOException,
+			ABCException, MisguidedExecutionException {
+		boolean result;
+		String sourceFilename, traceFilename;
+		File traceFile;
+		GMCConfiguration newConfig;
+		Model model;
+		TracePlayer replayer;
+
+		checkFilenames(1, config);
+		sourceFilename = config.getFreeArg(1);
+		traceFilename = (String) config.getValue(traceO);
+		if (traceFilename == null) {
+			traceFilename = coreName(sourceFilename) + "_"
+					+ config.getValueOrDefault(idO) + ".trace";
+			traceFile = new File(new File("CIVLREP"), traceFilename);
+		} else
+			traceFile = new File(traceFilename);
+		newConfig = parser.newConfig();
+		// get the original trace and overwrite it with new options...
+		parser.parse(newConfig, traceFile); // gets free args verify filename
+		setToDefault(newConfig, Arrays.asList(showModelO, verboseO, debugO,
+				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
+				showProverQueriesO));
+		newConfig.read(config);
+		// TODO: check predicate
+		// add option -deadlock (boolean, default true)
+		model = extractModel(out, newConfig, sourceFilename);
+		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
+		result = replayer.run();
+		printStats(out);
+		replayer.printStats();
+		out.println();
+		return result;
+	}
+
+	public boolean runRun(GMCConfiguration config) throws CommandLineException,
+			ABCException, IOException, MisguidedExecutionException {
+		// TODO: still need check predicate in GMC Replayer
+		boolean result;
+		String filename;
+		Model model;
+		TracePlayer player;
+
+		checkFilenames(1, config);
+		filename = config.getFreeArg(1);
+		model = extractModel(out, config, filename);
+		player = TracePlayer.randomPlayer(config, model, out);
+		out.println("\nRunning random simulation with seed " + player.getSeed()
+				+ " ...");
+		out.flush();
+		result = player.run();
+		printStats(out);
+		player.printStats();
+		out.println();
+		return result;
+	}
+
+	public boolean runParse(GMCConfiguration config)
+			throws CommandLineException, ABCException, IOException {
+		checkFilenames(1, config);
+		extractModel(out, config, config.getFreeArg(1));
+		return true;
+	}
+
+	public boolean runPreprocess(GMCConfiguration config)
+			throws CommandLineException, PreprocessorException {
+		checkFilenames(1, config);
+		preprocess(out, config, config.getFreeArg(1));
+		return true;
+	}
+
 	/**
 	 * Parses command line arguments and runs the CIVL tool(s) as specified by
 	 * those arguments.
@@ -347,12 +481,10 @@ public class UserInterface {
 	 * @throws CommandLineException
 	 *             if the args are not properly formatted commandline arguments
 	 */
-	public boolean runWork(String[] args) throws CommandLineException {
-		PrintStream out = System.out, err = System.err;
+	public boolean runMain(String[] args) throws CommandLineException {
 		GMCConfiguration config = parser.parse(Arrays.asList(args));
 		int numFree = config.getNumFreeArgs();
 		String command;
-		boolean result;
 
 		out.println("CIVL v" + CIVL.version + " of " + CIVL.date
 				+ " -- http://vsl.cis.udel.edu/civl");
@@ -360,88 +492,36 @@ public class UserInterface {
 		if (numFree == 0)
 			throw new CommandLineException("Missing command");
 		command = config.getFreeArg(0);
-
 		try {
 			switch (command) {
 			case "help":
-				printUsage(out);
-				return true;
+				return runHelp(config);
 			case "verify":
-				checkFilenames(1, config);
-				{
-					String filename = config.getFreeArg(1);
-					Model model = extractModel(out, config, filename);
-					Verifier verifier = new Verifier(config, model, out);
-
-					result = verifier.run();
-					printStats(out);
-					verifier.printStats();
-					out.println();
-					verifier.printResult();
-					out.flush();
-					break;
-				}
+				return runVerify(config);
 			case "replay":
-				checkFilenames(2, config);
-				{
-					String sourceFilename = config.getFreeArg(1);
-					String traceFilename = config.getFreeArg(2);
-					File traceFile = new File(traceFilename);
-					GMCConfiguration newConfig = parser.newConfig();
-					Model model;
-					TracePlayer replayer;
-
-					// need to get the original trace and overwrite
-					// it with new options...
-					parser.parse(newConfig, traceFile);
-					setToDefault(newConfig, Arrays.asList(showModelO, verboseO,
-							debugO, showTransitionsO, showStatesO,
-							showSavedStatesO, showQueriesO, showProverQueriesO));
-					parser.parse(newConfig, Arrays.asList(args));
-					model = extractModel(out, newConfig, sourceFilename);
-					replayer = new TracePlayer(newConfig, model, traceFile, out);
-					result = replayer.run();
-					break;
-				}
+				return runReplay(config);
 			case "run":
-				checkFilenames(1, config);
-				{
-					String filename = config.getFreeArg(1);
-					Model model = extractModel(out, config, filename);
-					// Player player = new Player(config, model);
-					//
-					// result = player.run();
-					throw new UnsupportedOperationException(
-							"run not yet implemented");
-					// break;
-				}
-			case "parse": // run ABC, but get options right first
-				checkFilenames(1, config);
-				extractModel(out, config, config.getFreeArg(1));
-				result = true;
-				break;
-			case "preprocess": // ditto
-				checkFilenames(1, config);
-				preprocess(out, config, config.getFreeArg(1));
-				result = true;
-				break;
+				return runRun(config);
+			case "parse":
+				return runParse(config);
+			case "preprocess":
+				return runPreprocess(config);
 			default:
 				throw new CommandLineException("Unknown command: " + command);
 			}
 		} catch (ABCException e) {
 			err.println(e);
 			err.flush();
-			result = false;
+			return false;
 		} catch (IOException e) {
 			err.println(e);
 			err.flush();
-			result = false;
+			return false;
 		} catch (MisguidedExecutionException e) {
 			err.println(e);
 			err.flush();
-			result = false;
+			return false;
 		}
-		return result;
 	}
 
 	/**
@@ -453,13 +533,11 @@ public class UserInterface {
 	 */
 	public boolean run(String[] args) {
 		try {
-			return runWork(args);
+			return runMain(args);
 		} catch (CommandLineException e) {
-			System.err.println(e.getMessage());
-			System.err.println("Type \"civl help\" for command line syntax.");
-			System.err.flush();
-			// printUsage(System.out);
-			// System.out.flush();
+			err.println(e.getMessage());
+			err.println("Type \"civl help\" for command line syntax.");
+			err.flush();
 		}
 		return false;
 	}
