@@ -45,7 +45,7 @@ public interface StateFactoryIF {
 	State canonic(State state);
 
 	/**
-	 * Creates the canonic, initial state for a Chapel Model.
+	 * Creates the canonic, initial state for a CIVL Model.
 	 * 
 	 * @return the initial state
 	 */

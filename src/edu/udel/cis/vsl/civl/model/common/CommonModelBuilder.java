@@ -7,6 +7,8 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.gmc.CommandLineException;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
@@ -38,8 +40,10 @@ public class CommonModelBuilder implements ModelBuilder {
 	// Exported Methods................................................
 
 	@Override
-	public Model buildModel(Program program) {
-		ModelBuilderWorker worker = new ModelBuilderWorker(factory, program);
+	public Model buildModel(GMCConfiguration config, Program program)
+			throws CommandLineException {
+		ModelBuilderWorker worker = new ModelBuilderWorker(config, factory,
+				program);
 
 		worker.buildModel();
 		return worker.getModel();

@@ -104,6 +104,8 @@ public class StateFactory implements StateFactoryIF {
 
 	private SymbolicExpression[] initialValues(Scope lexicalScope,
 			int dynamicScopeId) {
+		// TODO: special handling for input variables in root scope?
+
 		SymbolicExpression[] values = new SymbolicExpression[lexicalScope
 				.variables().size()];
 
@@ -236,10 +238,10 @@ public class StateFactory implements StateFactoryIF {
 		int numScopes = state.numScopes();
 		int numProcs = state.numProcs();
 		int[] oldToNew = new int[numScopes];
-		
+
 		// the root dyscope is forced to be 0
 		oldToNew[0] = 0;
-		
+
 		int nextScopeId = 1;
 		for (int i = 1; i < numScopes; i++)
 			oldToNew[i] = -1;
@@ -796,7 +798,7 @@ public class StateFactory implements StateFactoryIF {
 	 * @param callerPid
 	 *            the PID of the process that is creating the new frame. For an
 	 *            ordinary function call, this will be the same as pid. For a
-	 *            "fork" command, callerPid will be different from pid and
+	 *            "spawn" command, callerPid will be different from pid and
 	 *            process pid will be new and have an empty stack. Exception: if
 	 *            callerPid is -1 then the new dynamic scope will have no
 	 *            parent; this is used for pushing the original system function,
@@ -928,7 +930,7 @@ public class StateFactory implements StateFactoryIF {
 					.changeVariableValues(newVariableValues);
 		}
 		newPathCondition = reasoner.getReducedContext();
-		// TODO: do this here or when you produce new path condition? 
+		// TODO: do this here or when you produce new path condition?
 		if (nsat(newPathCondition))
 			newPathCondition = universe.falseExpression();
 		newState = new State(state, null, newDynamicScopes, newPathCondition);

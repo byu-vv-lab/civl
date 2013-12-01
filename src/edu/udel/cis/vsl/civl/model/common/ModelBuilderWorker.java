@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -110,6 +111,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -121,6 +123,8 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
@@ -128,6 +132,9 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonType;
+import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.gmc.CommandLineException;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -246,6 +253,23 @@ public class ModelBuilderWorker {
 	 */
 	private Stack<Set<Statement>> breakStatements = new Stack<Set<Statement>>();
 
+	private GMCConfiguration config;
+
+	/**
+	 * The map formed from parsing the command line for "-input" options that
+	 * specifies an initial constant value for some input variables. May be null
+	 * if no "-input"s appeared on the command line.
+	 */
+	private Map<String, Object> inputInitMap;
+
+	/**
+	 * Set containing the names of all input variables that were initialized
+	 * from a commandline argument. This is used at the end of the building
+	 * process to determine if there were any command line arguments that were
+	 * not used. This usually indicates an error.
+	 */
+	private Set<String> initializedInputs = new HashSet<String>();
+
 	// Constructors........................................................
 
 	/**
@@ -253,7 +277,10 @@ public class ModelBuilderWorker {
 	 * ModelFactory in the process, and sets up system functions.
 	 * 
 	 */
-	public ModelBuilderWorker(ModelFactory factory, Program program) {
+	public ModelBuilderWorker(GMCConfiguration config, ModelFactory factory,
+			Program program) {
+		this.config = config;
+		this.inputInitMap = config.getMapValue(UserInterface.inputO);
 		this.factory = factory;
 		this.program = program;
 		this.tokenFactory = program.getTokenFactory();
@@ -1923,6 +1950,68 @@ public class ModelBuilderWorker {
 	}
 
 	// how to process indiviual block elements?
+	// int x: INTEGER or STRING -> universe.integer
+	// real x: INTEGER or DOUBLE or STRING -> universe.real
+	// String x: STRING
+	// boolean x : BOOLEAN
+	// else no can do yet
+
+	private LiteralExpression translateCommandLineConstant(Variable variable,
+			Object constant) throws CommandLineException {
+		CIVLType type = variable.type();
+		CIVLSource source = variable.getSource();
+
+		if (type instanceof CIVLPrimitiveType) {
+			PrimitiveTypeKind kind = ((CIVLPrimitiveType) type)
+					.primitiveTypeKind();
+
+			switch (kind) {
+			case BOOL:
+				if (constant instanceof Boolean)
+					return factory.booleanLiteralExpression(source,
+							(boolean) constant);
+				else
+					throw new CommandLineException(
+							"Expected boolean value for variable " + variable
+									+ " but saw " + constant);
+			case INT:
+				if (constant instanceof Integer)
+					return factory.integerLiteralExpression(source,
+							new BigInteger(((Integer) constant).toString()));
+				if (constant instanceof String)
+					return factory.integerLiteralExpression(source,
+							new BigInteger((String) constant));
+				else
+					throw new CommandLineException(
+							"Expected integer value for variable " + variable
+									+ " but saw " + constant);
+			case REAL:
+				if (constant instanceof Integer)
+					return factory.realLiteralExpression(source,
+							new BigDecimal(((Integer) constant).toString()));
+				if (constant instanceof Double)
+					return factory.realLiteralExpression(source,
+							new BigDecimal(((Double) constant).toString()));
+				if (constant instanceof String)
+					return factory.realLiteralExpression(source,
+							new BigDecimal((String) constant));
+				else
+					throw new CommandLineException(
+							"Expected real value for variable " + variable
+									+ " but saw " + constant);
+			case STRING:
+				throw new CIVLUnimplementedFeatureException("Strings");
+				// case DYNAMIC:
+				// case PROCESS:
+				// case SCOPE:
+				// case VOID:
+			default:
+			}
+		}
+		throw new CIVLUnimplementedFeatureException(
+				"Specification of initial value not of integer, real, or boolean type",
+				variable);
+	}
 
 	/**
 	 * Translates a variable declaration node. If the given sourceLocation is
@@ -1941,9 +2030,14 @@ public class ModelBuilderWorker {
 	 *         generated fragment and the last statement in the sequence of
 	 *         statements generated by translating this declaration node, or
 	 *         null if no statements are generated
+	 * @throws CommandLineException
+	 *             if an intializer for an input variable specified on the
+	 *             command line does not have a type compatible with the
+	 *             variable
 	 */
 	private Fragment translateVariableDeclarationNode(Location sourceLocation,
-			Scope scope, VariableDeclarationNode node) {
+			Scope scope, VariableDeclarationNode node)
+			throws CommandLineException {
 		InitializerNode init = node.getInitializer();
 		Variable variable = processVariableDeclaration(scope, node);
 		CIVLType type = variable.type();
@@ -1953,13 +2047,26 @@ public class ModelBuilderWorker {
 
 		if (variable.isInput() || type instanceof CIVLArrayType
 				|| type instanceof CIVLStructType || type.isHeapType()) {
+			Expression rhs = null;
+
+			if (variable.isInput() && inputInitMap != null) {
+				String name = variable.name().name();
+				Object value = inputInitMap.get(name);
+
+				if (value != null) {
+					rhs = translateCommandLineConstant(variable, value);
+					initializedInputs.add(name);
+				}
+			}
+			if (rhs == null)
+				rhs = factory.initialValueExpression(source, variable);
 			if (sourceLocation == null)
 				sourceLocation = factory.location(sourceOfBeginning(node),
 						scope);
 			result = new Fragment(sourceLocation, factory.assignStatement(
 					source, sourceLocation,
 					factory.variableExpression(sourceOf(identifier), variable),
-					factory.initialValueExpression(source, variable)));
+					rhs));
 			sourceLocation = null;
 		}
 		if (init != null) {
@@ -2082,9 +2189,15 @@ public class ModelBuilderWorker {
 				Fragment fragment;
 
 				if (node instanceof VariableDeclarationNode)
-					fragment = translateVariableDeclarationNode(
-							usedLocation ? null : location, newScope,
-							(VariableDeclarationNode) node);
+					try {
+						fragment = translateVariableDeclarationNode(
+								usedLocation ? null : location, newScope,
+								(VariableDeclarationNode) node);
+					} catch (CommandLineException e) {
+						throw new CIVLInternalException(
+								"Saw input variable outside of root scope",
+								sourceOf(node));
+					}
 				else if (node instanceof StructureOrUnionTypeNode)
 					fragment = translateStructureOrUnionTypeNode(
 							usedLocation ? null : location, newScope,
@@ -2739,8 +2852,9 @@ public class ModelBuilderWorker {
 	 * @param unit
 	 *            The translation unit for the AST.
 	 * @return The model.
+	 * @throws CommandLineException
 	 */
-	public void buildModel() {
+	public void buildModel() throws CommandLineException {
 		Identifier systemID = factory.identifier(factory.systemSource(),
 				"_CIVL_system");
 		CIVLFunction system = factory.function(sourceOf(program.getAST()
@@ -2813,6 +2927,27 @@ public class ModelBuilderWorker {
 		if (mainFunction == null) {
 			throw new CIVLException("Program must have a main function.",
 					sourceOf(rootNode));
+		}
+		if (inputInitMap != null) {
+			// if commandline specified input variables that do not
+			// exist, throw exception...
+			Set<String> commandLineVars = new HashSet<String>(
+					inputInitMap.keySet());
+
+			commandLineVars.removeAll(initializedInputs);
+			if (!commandLineVars.isEmpty()) {
+				String msg = "Program contains no input variables named ";
+				boolean first = true;
+
+				for (String name : commandLineVars) {
+					if (first)
+						first = false;
+					else
+						msg += ", ";
+					msg += name;
+				}
+				throw new CommandLineException(msg);
+			}
 		}
 		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();

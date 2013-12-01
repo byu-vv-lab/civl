@@ -4,6 +4,8 @@
 package edu.udel.cis.vsl.civl.model.IF;
 
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.gmc.CommandLineException;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 /**
  * Class to provide translation from an AST to a model.
@@ -16,15 +18,20 @@ public interface ModelBuilder {
 	/**
 	 * @return The model factory used by this model builder.
 	 */
-	public ModelFactory factory();
+	ModelFactory factory();
 
 	/**
-	 * Build the model.
+	 * Builds the model.
 	 * 
 	 * @param program
 	 *            The ABC program to translate.
 	 * @return The model.
+	 * @throws CommandLineException
+	 *             if an input variable initial value specified on the command
+	 *             line has a type which is not compatible with the type of the
+	 *             variable
 	 */
-	public Model buildModel(Program program);
+	Model buildModel(GMCConfiguration config, Program program)
+			throws CommandLineException;
 
 }

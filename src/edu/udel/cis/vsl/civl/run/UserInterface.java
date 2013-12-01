@@ -28,9 +28,11 @@ import edu.udel.cis.vsl.gmc.Option;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
-// TODO: implement -input....
-// TODO: solver for concrete values of all symbolic constants in state
-// when error found, rerun with -input..
+// TODO: When an error is found, solve for concrete values
+// for all symbolic constants in state.  Check pc is true
+// and predicate really holds.  Up the confidence level
+// to CONCRETE.  Save these to a config with -input options
+// and run that.
 
 /**
  * Basic command line and API user interface for CIVL tools.
@@ -269,7 +271,8 @@ public class UserInterface {
 	}
 
 	private Model extractModel(PrintStream out, GMCConfiguration config,
-			String filename) throws ABCException, IOException {
+			String filename) throws ABCException, IOException,
+			CommandLineException {
 		boolean parse = "parse".equals(config.getFreeArg(0));
 		boolean debug = config.isTrue(debugO);
 		boolean verbose = config.isTrue(verboseO);
@@ -301,7 +304,7 @@ public class UserInterface {
 		}
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
-		model = modelBuilder.buildModel(program);
+		model = modelBuilder.buildModel(config, program);
 		model.setName(coreName(filename));
 		if (showModel || verbose || debug || parse) {
 			out.println(bar + " Model " + bar + "\n");
