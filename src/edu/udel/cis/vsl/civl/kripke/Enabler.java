@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Stack;
@@ -47,7 +48,7 @@ public class Enabler implements
 
 	private StateFactoryIF stateFactory;
 
-	private boolean debugging = true;
+	private boolean debugging = false;
 
 	private PrintStream debugOut = System.out;
 
@@ -419,8 +420,8 @@ public class Enabler implements
 	 * @param state
 	 * @return
 	 */
-	private HashSet<Process> ampleProcesses(State state){
-		HashSet<Process> ampleProcesses = new HashSet<Process>();
+	private LinkedHashSet<Process> ampleProcesses(State state){
+		LinkedHashSet<Process> ampleProcesses = new LinkedHashSet<Process>();
 		
 		Stack<Integer> workingScopes = new Stack<Integer>();
 		
@@ -643,7 +644,7 @@ public class Enabler implements
 					ArrayList<Integer> impScopes = impactScopesOfProcess(proc, state);
 					for(int iScope : impScopes){
 						if(iScope == state.rootScopeID()){
-							ampleProcesses = new HashSet<Process> (allProcesses);
+							ampleProcesses = new LinkedHashSet<Process> (allProcesses);
 							return ampleProcesses;
 						}
 						
