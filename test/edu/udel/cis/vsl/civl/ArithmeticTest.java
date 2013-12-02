@@ -1,66 +1,66 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.PrintStream;
 
 import org.junit.Test;
 
-import edu.udel.cis.vsl.abc.ABCException;
+import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class ArithmeticTest {
 
-	private static File rootDir = new File("examples/arithmetic");
-	private PrintStream out = System.out;
+	private static UserInterface ui = new UserInterface();
 
-	@Test
-	public void testDiffusion() throws ABCException {
-		File file = new File(rootDir, "diffusion_seq.cvl");
-		boolean result = CIVL.verify(true, false, file, out);
-		assertTrue(result);
+	private static File rootDir = new File(new File("examples"), "arithmetic");
+
+	private static String filename(String name) {
+		return new File(rootDir, name).getPath();
 	}
 
-	@Test
-	public void testMatmat() throws ABCException {
-		File file = new File(rootDir, "matmat.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertTrue(result);
-	}
-	
-	@Test
-	public void testLaplace() throws ABCException {
-		File file = new File(rootDir, "laplace.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertTrue(result);
-	}
-	
-	@Test
-	public void testAssoc() throws ABCException {
-		File file = new File(rootDir, "assoc.cvl");
-		boolean result = CIVL.verify(false, true, file, out);
-		
-		assertTrue(result);
-	}
-	
-	@Test
-	public void testAlgebra() throws ABCException {
-		File file = new File(rootDir, "algebra.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertTrue(result);
-	}
-	
-	@Test
-	public void testDerivative() throws ABCException {
-		File file = new File(rootDir, "derivative.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertTrue(result);
+	private void check(String name) {
+		assertTrue(ui.run("verify", filename(name)));
 	}
 
 	@Test
-	public void testDivision() throws ABCException {
-		File file = new File(rootDir, "division.cvl");
-		boolean result = CIVL.verify(file, out);
-		assertTrue(result);
+	public void diffusion() {
+		check("diffusion_seq.cvl");
+	}
+
+	@Test
+	public void matmat2() {
+		assertTrue(ui.run("verify", "-inputBOUND=3", filename("matmat2.cvl")));
+	}
+
+	@Test
+	public void matmat2Bad() {
+		assertFalse(ui.run("verify", "-inputBOUND=3",
+				filename("matmat2bad.cvl")));
+	}
+
+	@Test
+	public void laplace() {
+		check("laplace.cvl");
+	}
+
+	@Test
+	public void assoc() {
+		assertTrue(ui.run("verify", "-inputB=10", filename("assoc.cvl")));
+	}
+
+	@Test
+	public void algebra() {
+		check("algebra.cvl");
+	}
+
+	@Test
+	public void derivative() {
+		check("derivative.cvl");
+	}
+
+	@Test
+	public void division() {
+		check("division.cvl");
 	}
 }

@@ -544,7 +544,7 @@ public class UserInterface {
 	 *            command line arguments
 	 * @return true iff everything succeeeded and no errors were found
 	 */
-	public boolean run(String[] args) {
+	public boolean run(String... args) {
 		try {
 			return runMain(args);
 		} catch (CommandLineException e) {
@@ -553,5 +553,18 @@ public class UserInterface {
 			err.flush();
 		}
 		return false;
+	}
+
+	/**
+	 * /** Runs the appropriate CIVL tools based on the command line arguments.
+	 * This variant provided in case a collection is more convenient than an
+	 * array.
+	 * 
+	 * @param args
+	 *            command line arguments as collection
+	 * @return true iff everything succeeeded and no errors were found
+	 */
+	public boolean run(Collection<String> args) {
+		return run(args.toArray(new String[args.size()]));
 	}
 }
