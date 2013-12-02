@@ -47,7 +47,7 @@ public class Enabler implements
 
 	private Evaluator evaluator;
 
-	private Executor executor;
+	// private Executor executor;
 
 	private long enabledTransitionSets = 0;
 
@@ -63,7 +63,7 @@ public class Enabler implements
 			Executor executor) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
-		this.executor = executor;
+		// this.executor = executor;
 		this.modelFactory = evaluator.modelFactory();
 		this.stateFactory = evaluator.stateFactory();
 		this.universe = modelFactory.universe();

@@ -2847,6 +2847,15 @@ public class ModelBuilderWorker {
 	}
 
 	/**
+	 * Returns the configuration.
+	 * 
+	 * @return the configuration
+	 */
+	public GMCConfiguration getConfiguration() {
+		return config;
+	}
+
+	/**
 	 * Build the model.
 	 * 
 	 * @param unit

@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
@@ -66,8 +65,8 @@ public class Libstdlib implements LibraryExecutor {
 	 */
 	@Override
 	public State execute(State state, int pid, Statement statement) {
-		Identifier name;
-		State result = null;
+		// Identifier name;
+		// State result = null;
 
 		throw new CIVLUnimplementedFeatureException(
 				"stdlib not yet implemented", statement);
@@ -88,7 +87,7 @@ public class Libstdlib implements LibraryExecutor {
 		// + statement);
 		// }
 		// return result;
-		//	// TODO Auto-generated method stub
+		// // TODO Auto-generated method stub
 
 	}
 
