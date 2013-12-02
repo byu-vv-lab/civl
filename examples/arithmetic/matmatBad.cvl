@@ -46,7 +46,7 @@ void rowdist() {
           hi2 = (jj + TILE_SIZE < N ? jj + TILE_SIZE : N);
           for (int j = jj; j < hi2; j++) {
             hi3 = (kk + TILE_SIZE < M ? kk + TILE_SIZE : M);
-            for (int k = kk; k < hi3; k++)
+            for (int k = kk; k < hi1; k++) // oops, hi1->hi3
               D[i][j] = D[i][j] + A[i][k] * B[k][j]; 
           }
         }

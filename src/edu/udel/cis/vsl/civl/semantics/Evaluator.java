@@ -767,17 +767,24 @@ public class Evaluator {
 		if (reasoner.isValid(universe.not(c)))
 			return evaluate(eval.state, pid, falseBranch);
 		else {
-			State s1 = stateFactory.setPathCondition(eval.state,
-					universe.and(assumption, c));
-			State s2 = stateFactory.setPathCondition(eval.state,
-					universe.and(assumption, universe.not(c)));
+			BooleanExpression pc1 = universe.and(assumption, c);
+			State s1 = stateFactory.setPathCondition(eval.state, pc1);
+			BooleanExpression pc2 = universe.and(assumption, universe.not(c));
+			State s2 = stateFactory.setPathCondition(eval.state, pc2);
 			Evaluation eval1 = evaluate(s1, pid, trueBranch);
 			Evaluation eval2 = evaluate(s2, pid, falseBranch);
+			BooleanExpression newpc1 = eval1.state.pathCondition();
+			BooleanExpression newpc2 = eval2.state.pathCondition();
 
-			eval.state = stateFactory.setPathCondition(
-					eval.state,
-					universe.or(eval1.state.pathCondition(),
-							eval2.state.pathCondition()));
+			if (pc1 == newpc1 && pc2 == newpc2) {
+				// no side effects from evaluating either branch
+				// eval.state.pathCondition is assumption
+			} else {
+				eval.state = stateFactory.setPathCondition(
+						eval.state,
+						universe.or(eval1.state.pathCondition(),
+								eval2.state.pathCondition()));
+			}
 			eval.value = universe.cond(c, eval1.value, eval2.value);
 			return eval;
 		}

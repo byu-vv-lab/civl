@@ -158,6 +158,16 @@ public class State {
 	}
 
 	/**
+	 * Returns the instance ID of this State. The is obtained from a static
+	 * counter that is incremented every time a state is instantiated.
+	 * 
+	 * @return this state's instance ID
+	 */
+	public long getInstanceId() {
+		return instanceId;
+	}
+
+	/**
 	 * A new state same as old, but with new scopes array. Seen/onStack bits set
 	 * to false.
 	 * 
@@ -236,6 +246,11 @@ public class State {
 		return canonicId >= 0;
 	}
 
+	/**
+	 * Returns the canonicID of this state. Returns -1 if it is not canonic.
+	 * 
+	 * @return canonicID of this state
+	 */
 	public int getId() {
 		return canonicId;
 	}
@@ -419,7 +434,7 @@ public class State {
 		int numScopes = numScopes();
 		int numProcs = numProcs();
 
-		out.print("State "+identifier());
+		out.print("State " + identifier());
 		out.println();
 		out.println("| Path condition");
 		out.println("| | " + pathCondition);

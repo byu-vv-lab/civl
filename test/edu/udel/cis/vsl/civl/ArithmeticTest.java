@@ -38,7 +38,8 @@ public class ArithmeticTest {
 	@Test
 	public void testAssoc() throws ABCException {
 		File file = new File(rootDir, "assoc.cvl");
-		boolean result = CIVL.verify(file, out);
+		boolean result = CIVL.verify(false, true, file, out);
+		
 		assertTrue(result);
 	}
 	
