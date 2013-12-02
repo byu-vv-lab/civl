@@ -40,9 +40,11 @@ public class TracePlayer extends Player {
 			throws CommandLineException, IOException,
 			MisguidedExecutionException {
 		TracePlayer result = new TracePlayer(config, model, out);
-
-		result.chooser = new GuidedTransitionChooser<State, Transition, TransitionSequence>(
+		GuidedTransitionChooser<State, Transition, TransitionSequence> guidedChooser = new GuidedTransitionChooser<>(
 				result.enabler, traceFile);
+
+		result.chooser = guidedChooser;
+		result.replayer.setLength(guidedChooser.getLength());
 		return result;
 	}
 

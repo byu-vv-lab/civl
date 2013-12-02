@@ -16,7 +16,7 @@ void main() {
     double result=a[0];
 
     for (int i=1; i<n; i++)
-      result = result*(i*1.0/(i+1)) + a[i]/(i+1);
+      result = result*(i/(i+1)) + a[i]/(i+1);
     return result;
   }
   double result1 = mean1();

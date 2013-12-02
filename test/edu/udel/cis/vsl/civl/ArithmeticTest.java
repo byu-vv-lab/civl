@@ -63,4 +63,15 @@ public class ArithmeticTest {
 	public void division() {
 		check("division.cvl");
 	}
+
+	@Test
+	public void mean() {
+		assertTrue(ui.run("verify", "-inputB=10", filename("mean.cvl")));
+	}
+
+	@Test
+	public void meanBad() {
+		assertFalse(ui.run("verify", "-inputB=10", "-min",
+				filename("meanBad.cvl")));
+	}
 }
