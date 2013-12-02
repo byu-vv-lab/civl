@@ -54,5 +54,4 @@ public class CommonIntegerLiteralExpression extends CommonExpression implements
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.INTEGER_LITERAL;
 	}
-
 }

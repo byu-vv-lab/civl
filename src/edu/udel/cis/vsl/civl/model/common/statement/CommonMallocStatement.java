@@ -99,4 +99,13 @@ public class CommonMallocStatement extends CommonStatement implements
 		return result;
 	}
 
+	@Override
+	public void caculateDerefs() {
+		this.heapPointerExpression.calculateDerefs();
+		this.sizeExpression.calculateDerefs();
+		this.hasDerefs = this.heapPointerExpression.hasDerefs() ||
+				this.sizeExpression.hasDerefs();
+		
+	}
+
 }

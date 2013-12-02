@@ -91,4 +91,10 @@ public class CommonCastExpression extends CommonExpression implements
 		return ExpressionKind.CAST;
 	}
 
+	@Override
+	public void calculateDerefs() {
+		this.expression.calculateDerefs();
+		this.hasDerefs = this.expression.hasDerefs();
+	}
+
 }

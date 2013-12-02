@@ -33,7 +33,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 
 	private Scope parent;
 	private Variable[] variables;
-	private Set<Scope> children = new HashSet<Scope>();
+	private Set<Scope> children = new LinkedHashSet<Scope>();
 	private Collection<Variable> procRefs = new HashSet<Variable>();
 	private Collection<Variable> pointers = new HashSet<Variable>();
 	private int id;

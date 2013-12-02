@@ -139,5 +139,12 @@ public class CommonBinaryExpression extends CommonExpression implements
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.BINARY;
 	}
-	
+
+	@Override
+	public void calculateDerefs() {
+		this.left.calculateDerefs();
+		this.right.calculateDerefs();
+		this.hasDerefs = this.left.hasDerefs() || this.right.hasDerefs();
+	}
+
 }

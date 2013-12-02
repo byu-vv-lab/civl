@@ -20,13 +20,14 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpress
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class CommonStatement extends CommonSourceable implements Statement {
+public abstract class CommonStatement extends CommonSourceable implements Statement {
 
 	private Location source;
 	private Location target;
 	private Expression guard;
 	private Model model;
 	protected Scope statementScope = null;
+	protected boolean hasDerefs = false;
 
 	/**
 	 * The parent of all statements.
@@ -167,6 +168,16 @@ public class CommonStatement extends CommonSourceable implements Statement {
 			}
 			s1Ancestor = s1Ancestor.parent();
 		}
+	}
+	
+	@Override
+	public void caculateDerefs(){
+		this.hasDerefs = false;
+	}
+
+	@Override
+	public boolean hasDerefs() {
+		return this.hasDerefs;
 	}
 
 }

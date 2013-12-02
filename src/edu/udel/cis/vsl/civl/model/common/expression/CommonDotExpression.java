@@ -62,4 +62,10 @@ public class CommonDotExpression extends CommonExpression implements
 		return ExpressionKind.DOT;
 	}
 
+	@Override
+	public void calculateDerefs() {
+		this.struct.calculateDerefs();
+		this.hasDerefs = this.struct.hasDerefs();
+	}
+
 }

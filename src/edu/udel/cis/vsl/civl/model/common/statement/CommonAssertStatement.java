@@ -71,4 +71,10 @@ public class CommonAssertStatement extends CommonStatement implements
 		return "$assert " + expression;
 	}
 
+	@Override
+	public void caculateDerefs() {
+		this.expression.calculateDerefs();
+		this.hasDerefs = this.expression.hasDerefs();
+	}
+
 }

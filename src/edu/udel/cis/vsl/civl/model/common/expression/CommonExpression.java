@@ -20,6 +20,14 @@ public abstract class CommonExpression extends CommonSourceable implements
 
 	private Scope expressionScope = null;
 	protected CIVLType expressionType = null;
+	protected boolean hasDerefs;
+	
+	/**
+	 * @return true iff the expression has at least one dereferences
+	 */
+	public boolean hasDerefs(){
+		return hasDerefs;
+	}
 
 	/**
 	 * The parent of all expressions.
@@ -57,6 +65,11 @@ public abstract class CommonExpression extends CommonSourceable implements
 	 */
 	public void setExpressionType(CIVLType expressionType) {
 		this.expressionType = expressionType;
+	}
+	
+	@Override
+	public void calculateDerefs(){
+		this.hasDerefs = false;
 	}
 
 }

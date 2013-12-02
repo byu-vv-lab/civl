@@ -80,6 +80,8 @@ public abstract class Player {
 	protected boolean minimize;
 
 	protected int maxdepth;
+	
+	protected boolean scpPor;//false by default
 
 	public Player(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
@@ -109,6 +111,7 @@ public abstract class Player {
 		this.showTransitions = config.isTrue(UserInterface.showTransitionsO);
 		this.minimize = config.isTrue(UserInterface.minO);
 		this.maxdepth = (int) config.getValueOrDefault(UserInterface.maxdepthO);
+		this.scpPor = ((String)config.getValueOrDefault(UserInterface.porO)).equalsIgnoreCase("scp");
 
 		if (this.random) {
 			long seed;
@@ -125,9 +128,11 @@ public abstract class Player {
 				}
 			out.println("Random execution with seed " + seed + ".");
 			enabler = new Enabler(transitionFactory, evaluator, executor,
-					random, new Random(seed));
+					random, new Random(seed), this.scpPor);
+			enabler.setDebugOut(out);
 		} else {
-			enabler = new Enabler(transitionFactory, evaluator, executor);
+			enabler = new Enabler(transitionFactory, evaluator, executor, this.scpPor);
+			enabler.setDebugOut(out);
 		}
 		stateManager = new StateManager(executor);
 		stateManager.setOutputStream(out);

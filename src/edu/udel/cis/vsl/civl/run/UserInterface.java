@@ -103,6 +103,10 @@ public class UserInterface {
 
 	public final static Option maxdepthO = Option.newScalarOption("maxdepth",
 			INTEGER, "bound on search depth", Integer.MAX_VALUE);
+	
+	public final static Option porO = Option.newScalarOption("por",
+			STRING, "partial order reduction (por) choices:\n"
+					+ "    std (standard por) or scp (scoped por)", "std");
 
 	/**
 	 * A string printed before and after titles of sections of output to make
@@ -144,7 +148,7 @@ public class UserInterface {
 				verboseO, randomO, guidedO, seedO, debugO, userIncludePathO,
 				sysIncludePathO, showTransitionsO, showStatesO,
 				showSavedStatesO, showQueriesO, showProverQueriesO, inputO,
-				idO, traceO, minO, maxdepthO);
+				idO, traceO, minO, maxdepthO, porO);
 
 		parser = new CommandLineParser(options);
 	}

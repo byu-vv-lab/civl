@@ -81,4 +81,15 @@ public class CommonConditionalExpression extends CommonExpression implements
 		return ExpressionKind.COND;
 	}
 
+	@Override
+	public void calculateDerefs() {
+		// TODO Auto-generated method stub
+		this.condition.calculateDerefs();
+		this.trueBranch.calculateDerefs();
+		this.falseBranch.calculateDerefs();
+		this.hasDerefs = this.condition.hasDerefs() || this.trueBranch.hasDerefs() 
+				|| this.falseBranch.hasDerefs();
+		
+	}
+
 }

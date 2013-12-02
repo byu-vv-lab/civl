@@ -153,4 +153,19 @@ public class CommonCallStatement extends CommonStatement implements
 		return !isCall;
 	}
 
+	@Override
+	public void caculateDerefs() {
+		this.hasDerefs = false;
+		if(this.lhs != null){
+			lhs.calculateDerefs();
+			this.hasDerefs = this.hasDerefs || lhs.hasDerefs();
+		}
+		if(this.arguments != null){
+			for(Expression arg: this.arguments){
+				arg.calculateDerefs();
+				this.hasDerefs = this.hasDerefs || arg.hasDerefs();
+			}
+		}
+	}
+
 }

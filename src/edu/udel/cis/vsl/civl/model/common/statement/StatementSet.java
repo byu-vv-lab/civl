@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 public class StatementSet implements Statement {
 
 	private Set<Statement> statements;
+	private boolean hasDerefs;
 
 	public StatementSet() {
 		statements = new LinkedHashSet<Statement>();
@@ -99,6 +100,21 @@ public class StatementSet implements Statement {
 	public void setStatementScope(Scope statementScope) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public boolean hasDerefs() {
+		// TODO Auto-generated method stub
+		return this.hasDerefs;
+	}
+
+	@Override
+	public void caculateDerefs() {
+		this.hasDerefs = false;
+		for(Statement s: statements){
+			s.caculateDerefs();
+			this.hasDerefs = this.hasDerefs || s.hasDerefs();
+		}
 	}
 
 }

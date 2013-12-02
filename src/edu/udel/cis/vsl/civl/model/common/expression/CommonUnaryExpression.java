@@ -88,4 +88,11 @@ public class CommonUnaryExpression extends CommonExpression implements
 		return ExpressionKind.UNARY;
 	}
 
+	@Override
+	public void calculateDerefs() {
+		// TODO Auto-generated method stub
+		this.operand.calculateDerefs();
+		this.hasDerefs = this.operand.hasDerefs();
+	}
+
 }

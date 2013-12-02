@@ -54,5 +54,11 @@ public class CommonWaitStatement extends CommonStatement implements
 	public String toString() {
 		return "wait " + process;
 	}
+	
+	@Override
+	public void caculateDerefs() {
+		this.process.calculateDerefs();
+		this.hasDerefs = this.process.hasDerefs();
+	}
 
 }

@@ -55,4 +55,5 @@ public class CommonBooleanLiteralExpression extends CommonExpression implements
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.BOOLEAN_LITERAL;
 	}
+
 }

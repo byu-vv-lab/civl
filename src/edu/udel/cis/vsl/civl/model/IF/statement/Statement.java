@@ -72,5 +72,13 @@ public interface Statement extends Sourceable {
 	 *            variables accessed.
 	 */
 	void setStatementScope(Scope statementScope);
+	
+	/**
+	 * return true iff the statement has at least one dereferences
+	 * @return
+	 */
+	boolean hasDerefs();
+	
+	void caculateDerefs();
 
 }

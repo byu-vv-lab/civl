@@ -58,4 +58,14 @@ public class CommonReturnStatement extends CommonStatement implements
 		return "return " + expression;
 	}
 
+	@Override
+	public void caculateDerefs() {
+		if(this.expression != null){
+			this.expression.calculateDerefs();
+			this.hasDerefs = this.expression.hasDerefs();
+		}else
+			this.hasDerefs = false;
+		
+	}
+
 }

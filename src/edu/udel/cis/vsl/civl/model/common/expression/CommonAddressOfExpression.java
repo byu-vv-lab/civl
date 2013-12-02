@@ -29,4 +29,10 @@ public class CommonAddressOfExpression extends CommonExpression implements
 		return "&" + operand;
 	}
 
+	@Override
+	public void calculateDerefs() {
+		this.operand.calculateDerefs();
+		this.hasDerefs = this.operand.hasDerefs();
+	}
+
 }

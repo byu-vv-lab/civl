@@ -57,4 +57,5 @@ public class CommonChooseStatement extends CommonAssignStatement implements
 	public int chooseID() {
 		return chooseID;
 	}
+	
 }

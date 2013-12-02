@@ -77,4 +77,13 @@ public class CommonAssignStatement extends CommonStatement implements
 		return lhs + " = " + rhs;
 	}
 
+	@Override
+	public void caculateDerefs() {
+		// TODO Auto-generated method stub
+		this.lhs.calculateDerefs();
+		this.rhs.calculateDerefs();
+		this.hasDerefs = this.lhs.hasDerefs() ||
+				this.rhs.hasDerefs();
+	}
+
 }

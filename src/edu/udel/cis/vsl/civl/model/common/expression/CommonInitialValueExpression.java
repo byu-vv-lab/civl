@@ -28,5 +28,4 @@ public class CommonInitialValueExpression extends CommonExpression implements
 	public String toString() {
 		return "InitialValue(" + variable + ")";
 	}
-
 }

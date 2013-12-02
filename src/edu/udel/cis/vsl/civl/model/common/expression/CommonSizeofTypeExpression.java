@@ -28,5 +28,4 @@ public class CommonSizeofTypeExpression extends CommonExpression implements
 	public String toString() {
 		return "sizeof(" + getTypeArgument() + ")";
 	}
-
 }

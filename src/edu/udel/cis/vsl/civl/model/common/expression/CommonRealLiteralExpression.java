@@ -60,5 +60,4 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 	public CIVLPrimitiveType getExpressionType() {
 		return (CIVLPrimitiveType) super.getExpressionType();
 	}
-
 }

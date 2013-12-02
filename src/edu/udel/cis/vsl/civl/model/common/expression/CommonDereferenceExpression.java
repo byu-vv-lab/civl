@@ -29,4 +29,9 @@ public class CommonDereferenceExpression extends CommonExpression implements
 		return "*(" + pointer + ")";
 	}
 
+	@Override
+	public void calculateDerefs() {
+		this.hasDerefs = true;
+	}
+
 }

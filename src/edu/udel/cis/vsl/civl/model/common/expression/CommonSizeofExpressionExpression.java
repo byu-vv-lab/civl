@@ -30,4 +30,9 @@ public class CommonSizeofExpressionExpression extends CommonExpression
 		return "sizeof(" + argument + ")";
 	}
 
+	@Override
+	public void calculateDerefs() {
+		this.argument.calculateDerefs();
+		this.hasDerefs = this.argument.hasDerefs();
+	}
 }

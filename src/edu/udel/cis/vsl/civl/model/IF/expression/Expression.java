@@ -62,4 +62,13 @@ public interface Expression extends Sourceable {
 	 *            variables accessed.
 	 */
 	void setExpressionScope(Scope expressionScope);
+	
+	void calculateDerefs();
+	
+	/**
+	 * return true iff the expression has at least one dereferences of a certain
+	 * pointer variable
+	 * @return
+	 */
+	boolean hasDerefs();
 }

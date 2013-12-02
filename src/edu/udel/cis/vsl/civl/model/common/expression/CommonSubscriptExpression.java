@@ -76,5 +76,14 @@ public class CommonSubscriptExpression extends CommonExpression implements
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.SUBSCRIPT;
 	}
+	
+	@Override
+	public void calculateDerefs() {
+		// TODO Auto-generated method stub
+		this.array.calculateDerefs();
+		this.index.calculateDerefs();
+		this.hasDerefs = this.array.hasDerefs() || 
+				this.index.hasDerefs();
+	}
 
 }
