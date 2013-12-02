@@ -4,7 +4,6 @@
 package edu.udel.cis.vsl.civl.model.common.location;
 
 import java.io.PrintStream;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
