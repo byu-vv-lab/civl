@@ -1,4 +1,6 @@
-// attempt to make general barrier module
+/* Basic flag barrier.  Same algorithm as barrier.cvl, but
+ * packaged to be re-used in other code.
+ */
 #include <civlc.h>
 
 struct _CIVL_Barrier {

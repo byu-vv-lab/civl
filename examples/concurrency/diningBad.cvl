@@ -1,5 +1,4 @@
-/* Dining philosophers with fork switching. Even philosophers pick
- * up left fork first, odd pick up right first.  This breaks deadlock.
+/* Dining philosophers, standard version, which deadlocks.
  *
  *       civl verify -inputB=4 dining.cvl
  */
@@ -17,17 +16,10 @@ void dine(int id) {
   int right = (id + 1) % n;
 
   while (1) {
-    if (id % 2 == 0) {
-      $when (forks[left] == 0) {forks[left] = 1;}
-      $when (forks[right] == 0) {forks[right] = 1;}
-      forks[right] = 0;
-      forks[left] = 0;
-    } else {
-      $when (forks[right] == 0) {forks[right] = 1;}
-      $when (forks[left] == 0) {forks[left] = 1;}
-      forks[right] = 0;
-      forks[left] = 0;
-    }
+    $when (forks[left] == 0) {forks[left] = 1;}
+    $when (forks[right] == 0) {forks[right] = 1;}
+    forks[right] = 0;
+    forks[left] = 0;
   }
 }
 
