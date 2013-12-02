@@ -211,4 +211,23 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		state.setSeen(value);
 	}
 
+	/**
+	 * Returns the number of objects of type State that have been instantiated
+	 * since this JVM started.
+	 * 
+	 * @return the number of states instantiated
+	 */
+	public long getNumStateInstances() {
+		return stateFactory.getNumStateInstances();
+	}
+
+	/**
+	 * Returns the number of states saved, i.e., made canonic.
+	 * 
+	 * @return the number of canonic states
+	 */
+	public int getNumStatesSaved() {
+		return stateFactory.getNumStatesSaved();
+	}
+
 }

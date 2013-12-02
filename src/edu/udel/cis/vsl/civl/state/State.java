@@ -46,7 +46,7 @@ public class State {
 	 * The number of instances of this class that have been created since the
 	 * class was loaded.
 	 */
-	private static long instanceCount = 0;
+	static long instanceCount = 0;
 
 	/**
 	 * Has the hashcode on this state already been computed?

@@ -40,6 +40,10 @@ public class Verifier extends Player {
 	public void printStats() {
 		out.print("   maxProcs            : ");
 		out.println(stateManager.maxProcs());
+		out.print("   statesInstantiated  : ");
+		out.println(stateManager.getNumStateInstances());
+		out.print("   statesSaved         : ");
+		out.println(stateManager.getNumStatesSaved());
 		out.print("   statesSeen          : ");
 		out.println(searcher.numStatesSeen());
 		out.print("   statesMatched       : ");

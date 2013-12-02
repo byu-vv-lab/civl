@@ -115,9 +115,14 @@ public class TracePlayer extends Player {
 	}
 
 	public void printStats() {
+		out.print("   statesInstantiated  : ");
+		out.println(stateManager.getNumStateInstances());
+		out.print("   statesSaved         : ");
+		out.println(stateManager.getNumStatesSaved());
 		out.println("   maxProcs            : " + stateManager.maxProcs());
 		if (isRandom)
 			out.println("   seed                : " + seed);
+
 	}
 
 	/**

@@ -211,4 +211,19 @@ public interface StateFactoryIF {
 	 */
 	State simplify(State state);
 
+	/**
+	 * Returns the number of objects of type State that have been instantiated
+	 * since this JVM started.
+	 * 
+	 * @return the number of states instantiated
+	 */
+	long getNumStateInstances();
+
+	/**
+	 * Returns the number of states saved, i.e., made canonic.
+	 * 
+	 * @return the number of canonic states
+	 */
+	int getNumStatesSaved();
+
 }

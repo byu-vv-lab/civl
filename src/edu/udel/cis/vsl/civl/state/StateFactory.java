@@ -272,6 +272,16 @@ public class StateFactory implements StateFactoryIF {
 	// *********************** Exported Methods ***********************
 
 	@Override
+	public long getNumStateInstances() {
+		return State.instanceCount;
+	}
+
+	@Override
+	public int getNumStatesSaved() {
+		return stateMap.size();
+	}
+
+	@Override
 	public SymbolicUniverse symbolicUniverse() {
 		return universe;
 	}
