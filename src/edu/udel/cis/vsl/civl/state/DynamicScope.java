@@ -150,7 +150,11 @@ public class DynamicScope {
 		return parent;
 	}
 
-	BitSet reachers() {
+	/**
+	 * Change to publice, since we need to get the owners of a scope in POR (Enabler.java)
+	 * @return
+	 */
+	public BitSet reachers() {
 		return reachers;
 	}
 
