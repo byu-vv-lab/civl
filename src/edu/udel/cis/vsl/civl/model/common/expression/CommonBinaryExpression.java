@@ -132,12 +132,12 @@ public class CommonBinaryExpression extends CommonExpression implements
 			throw new CIVLInternalException("Unknown operator: " + operator,
 					this);
 		}
-		return left + op + right;
+		return "(" + left + op + right + ")";
 	}
 
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.BINARY;
 	}
-
+	
 }

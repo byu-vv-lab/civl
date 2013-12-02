@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.location;
 
 import java.io.PrintStream;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -25,8 +26,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	private int id;
 	private Scope scope;
-	private Set<Statement> incoming = new HashSet<Statement>();
-	private Set<Statement> outgoing = new HashSet<Statement>();
+	private Set<Statement> incoming = new LinkedHashSet<Statement>();
+	private Set<Statement> outgoing = new LinkedHashSet<Statement>();
 	private CIVLFunction function;
 
 	/**
