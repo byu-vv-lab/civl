@@ -230,4 +230,14 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		return stateFactory.getNumStatesSaved();
 	}
 
+	@Override
+	public int getDepth(State state) {
+		return state.getDepth();
+	}
+
+	@Override
+	public void setDepth(State state, int value) {
+		state.setDepth(value);
+	}
+
 }

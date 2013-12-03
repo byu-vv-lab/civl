@@ -98,6 +98,12 @@ public class State {
 	private boolean onStack = false;
 
 	/**
+	 * Minimum depth at which this state has been encountered in DFS; used for
+	 * finding minimal counterexample.
+	 */
+	private int depth = -1;
+
+	/**
 	 * Basic constructor. The arrays are used as fields---the elements are not
 	 * copied into a new array. All arguments must be non-null. Seen and onStack
 	 * bits are set to false.
@@ -473,5 +479,13 @@ public class State {
 	@Override
 	public String toString() {
 		return "State " + identifier();
+	}
+
+	public void setDepth(int value) {
+		this.depth = value;
+	}
+
+	public int getDepth() {
+		return depth;
 	}
 }
