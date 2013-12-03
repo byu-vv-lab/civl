@@ -3013,6 +3013,7 @@ public class ModelBuilderWorker {
 			model.addFunction(f);
 		((CommonModel) model).setMallocStatements(mallocStatements);
 		for (CIVLFunction f : model.functions()) {
+			f.simplify();
 			f.setModel(model);
 			for (Statement s : f.statements()) {
 				s.setModel(model);

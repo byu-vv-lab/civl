@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -21,6 +22,8 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 
 /**
  * A function.
@@ -334,17 +337,98 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		return isSystem;
 	}
 	
+	/**
+	 * Remove all locations that satisfiy the following conditions:
+	 * 1. has exactly one outgoing statement and
+	 * 2. the statement is a no-op with the gard true.
+	 * Meanwhile, have to redirect each statement that targets at the no-op location
+	 * to the target of the no-op location.
+	 * For example, let l(s->l', ...) be a location l with statement s going to l' ...
+	 * l1 (s1 -> l2, s2 -> l3), l2 ([true]no-op -> l4), l3(), l(4)
+	 * After applying simplify(), should be
+	 * l1 (s1 -> l4, s2 -> l3), l3(), l4()
+	 */
+	@Override
 	public void simplify(){
-		Set<Location> newLocations = new LinkedHashSet<Location>(this.locations);
-		for(Location loc: this.locations){
+		ArrayList<Location> oldLocations = new ArrayList<Location>(this.locations);
+		int count = oldLocations.size();
+		
+		/**
+		 * The index of locations that can be removed
+		 */
+		ArrayList<Integer> toRemove = new ArrayList<Integer>();
+		
+		for(int i = 0; i < count; i++){
+			Location loc = oldLocations.get(i);
+			
 			Set<Statement> statements = loc.outgoing();
+			 
+			/**
+			 * loc has exactly one statement
+			 */
 			if(statements.size() == 1){
 				for(Statement s: statements){
-					if(s.guard().)
+					/**
+					 * The only statement of loc is a no-op statement
+					 */
+					if(s instanceof CommonNoopStatement){
+						Expression guard = s.guard();
+						
+						/**
+						 * The guard of the no-op is true
+						 * TODO: can be improved by checking if guard has any side-effect,
+						 * e.g., if guard is (x + y < 90) then we still can remove this no-op statement
+						 */
+						if(guard instanceof CommonBooleanLiteralExpression){
+							if(((CommonBooleanLiteralExpression)guard).value()){
+								/**
+								 * Record the index of loc so that it can be removed later
+								 */
+								toRemove.add(i);
+								
+								/**
+								 * The target of loc
+								 */
+								Location target = s.target();
+								
+								for(int j = 0; j < count; j++){
+									/**
+									 * Do nothing to the locations that are to be removed
+									 */
+									if(toRemove.contains(j))
+										continue;
+									
+									Location curLoc = oldLocations.get(j);
+									
+									/**
+									 * For each statement of curLoc \in (this.locations - toRemove)
+									 */
+									for(Statement curS : curLoc.outgoing()){
+										Location curTarget = curS.target();
+										
+										/**
+										 * Redirect the target location so that no-op location is skipped
+										 */
+										if(curTarget != null && curTarget.id() == loc.id()){
+											curS.setTarget(target);//the incoming field is implicitly modified by setTarget()
+										}
+									}
+								}								
+							}
+						}
+					}
 				}
 			}
 		}
 		
+		Set<Location> newLocations = new LinkedHashSet<Location>();
+		for(int k = 0; k < count; k++){
+			if(toRemove.contains(k))
+				continue;
+			newLocations.add(oldLocations.get(k));
+		}
+		
+		this.locations = newLocations;
 	}
 
 }

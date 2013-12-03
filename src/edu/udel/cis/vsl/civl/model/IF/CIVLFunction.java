@@ -179,5 +179,18 @@ public interface CIVLFunction extends Sourceable {
 	 * @return Is this the outermost function?
 	 */
 	public boolean isSystem();
+	
+	/**
+	 * Remove all locations that satisfiy the following conditions:
+	 * 1. has exactly one outgoing statement and
+	 * 2. the statement is a no-op with the gard true.
+	 * Meanwhile, have to redirect each statement that targets at the no-op location
+	 * to the target of the no-op location.
+	 * For example, let l(s->l', ...) be a location l with statement s going to l' ...
+	 * l1 (s1 -> l2, s2 -> l3), l2 ([true]no-op -> l4), l3(), l(4)
+	 * After applying simplify(), should be
+	 * l1 (s1 -> l4, s2 -> l3), l3(), l4()
+	 */
+	public void simplify();
 
 }
