@@ -318,10 +318,14 @@ public class Enabler implements
 		
 		if (debugging) {
 			checkCorrectness(processStates, state);
-			debugOut.println("Number of all processes: " + state.processes().length);
+			//debugOut.println("Number of all processes: " + state.processes().length);
 			debugOut.println("Number of ample processes: " + processStates.size());
-			debugOut.println("Ample process set is : "
-					+ processStates.toString());
+			
+			if(processStates.size() > 1){
+				debugOut.println("Ample process set is : "
+						+ processStates.toString());
+				state.print(debugOut);
+			}
 		}
 		
 		/**
@@ -680,12 +684,9 @@ public class Enabler implements
 		 * Obtain the impact scopes of all possible statements of process
 		 */
 		int pScope=0;
-		try{
-			pScope = p.scope();
-		}catch(Exception ex){
-			int k = 0;
-			k = k + 1;
-		}
+
+		pScope = p.scope();
+		
 		for (Statement s : p.location().outgoing()) {
 			if(s.hasDerefs()){
 				dyscopes.add(state.rootScopeID());
