@@ -3016,6 +3016,7 @@ public class ModelBuilderWorker {
 			f.setModel(model);
 			for (Statement s : f.statements()) {
 				s.setModel(model);
+				s.caculateDerefs();
 			}
 		}
 	}

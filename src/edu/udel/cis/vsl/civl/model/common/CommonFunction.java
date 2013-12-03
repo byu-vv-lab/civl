@@ -333,5 +333,18 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public boolean isSystem() {
 		return isSystem;
 	}
+	
+	public void simplify(){
+		Set<Location> newLocations = new LinkedHashSet<Location>(this.locations);
+		for(Location loc: this.locations){
+			Set<Statement> statements = loc.outgoing();
+			if(statements.size() == 1){
+				for(Statement s: statements){
+					if(s.guard().)
+				}
+			}
+		}
+		
+	}
 
 }
