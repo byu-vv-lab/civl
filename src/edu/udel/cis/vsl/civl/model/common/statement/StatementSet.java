@@ -135,6 +135,12 @@ public class StatementSet implements Statement {
 
 	@Override
 	public void purelyLocalAnalysis() {
+		this.guard().purelyLocalAnalysis();
+		if(!this.guard().isPurelyLocal()){
+			this.purelyLocal = false;
+			return;
+		}
+		
 		for(Statement s: statements){
 			s.purelyLocalAnalysis();
 			if(!s.isPurelyLocal()){

@@ -104,4 +104,6 @@ public interface Location extends Sourceable {
 	
 	public boolean isPurelyLocal();
 
+	public void purelyLocalAnalysis();
+
 }

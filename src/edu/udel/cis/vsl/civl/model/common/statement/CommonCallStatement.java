@@ -183,6 +183,9 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		
+		this.guard().purelyLocalAnalysis();
+		
 		if(this.lhs != null){
 			this.lhs.purelyLocalAnalysis();
 			if(!this.lhs.isPurelyLocal()){
@@ -200,7 +203,7 @@ public class CommonCallStatement extends CommonStatement implements
 			}
 		}
 		
-		this.purelyLocal = true;
+		this.purelyLocal = this.guard().isPurelyLocal();
 	}
 	
 }

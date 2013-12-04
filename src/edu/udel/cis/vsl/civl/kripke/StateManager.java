@@ -168,7 +168,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			Location newLoc = p.peekStack().location();
 			
 			while(newLoc != null && newLoc.isPurelyLocal()){
-				
+				//TODO check spawn statement
 				//exactly one statement in newLoc.outgoing()
 				for(Statement s: newLoc.outgoing())
 				{

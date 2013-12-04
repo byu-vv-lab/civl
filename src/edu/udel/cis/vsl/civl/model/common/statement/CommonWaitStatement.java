@@ -69,8 +69,10 @@ public class CommonWaitStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		this.guard().purelyLocalAnalysis();
 		this.process.purelyLocalAnalysis();
-		this.purelyLocal = this.process.isPurelyLocal();
+		this.purelyLocal = this.guard().isPurelyLocal() 
+				&& this.process.isPurelyLocal();
 	}
 
 }

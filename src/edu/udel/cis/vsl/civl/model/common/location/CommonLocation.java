@@ -28,6 +28,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 	private Set<Statement> incoming = new LinkedHashSet<Statement>();
 	private Set<Statement> outgoing = new LinkedHashSet<Statement>();
 	private CIVLFunction function;
+	private boolean purelyLocal = false;
 
 	/**
 	 * The parent of all locations.
@@ -129,7 +130,12 @@ public class CommonLocation extends CommonSourceable implements Location {
 		String guardString = "(true)";
 		String gotoString;
 
-		out.println(prefix + "location " + id() + " (scope: " + scope.id()
+		if(this.purelyLocal){
+			out.println(prefix + "location " + id() + " (scope: " + scope.id()
+					+ ") #");
+		}
+		else
+			out.println(prefix + "location " + id() + " (scope: " + scope.id()
 				+ ")");
 		for (Statement statement : outgoing) {
 			if (statement.target() != null) {
@@ -141,7 +147,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 			
 			if(statement.isPurelyLocal()){
 				gotoString = prefix + "| " + "when " + guardString + " "
-						+ statement + " @ " + statement.getSource().getLocation() + " ; @";
+						+ statement + " @ " + statement.getSource().getLocation() + " ; #";
 			}else
 				gotoString = prefix + "| " + "when " + guardString + " "
 					+ statement + " @ " + statement.getSource().getLocation() + " ;";
@@ -212,17 +218,21 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public boolean isPurelyLocal() {
-		if(incoming.size() > 1)
-			return false;
-		if(outgoing.size() != 1)
-			return false;
-		
-		for(Statement s: outgoing){
-			if(s.isPurelyLocal())
-				return true;
-		}
-		
-		return false;
+		return this.purelyLocal;
 	}
 
+	@Override
+	public void purelyLocalAnalysis() {
+		if(incoming.size() > 1)
+			this.purelyLocal = false;
+		else if(outgoing.size() != 1)
+			this.purelyLocal = false;
+		else{
+			for(Statement s: outgoing){
+				this.purelyLocal = s.isPurelyLocal();
+				return;
+			}
+		}
+	}
+	
 }

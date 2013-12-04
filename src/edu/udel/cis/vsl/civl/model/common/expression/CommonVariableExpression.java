@@ -70,5 +70,7 @@ public class CommonVariableExpression extends CommonExpression implements
 	public void purelyLocalAnalysis() {
 		this.purelyLocal = this.variable.purelyLocal();
 	}
+	
+	
 
 }

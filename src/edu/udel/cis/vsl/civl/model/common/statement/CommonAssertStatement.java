@@ -85,8 +85,9 @@ public class CommonAssertStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		this.guard().purelyLocalAnalysis();
 		this.expression.purelyLocalAnalysis();
-		this.purelyLocal = this.expression.isPurelyLocal();
+		this.purelyLocal = this.guard().isPurelyLocal() && this.expression.isPurelyLocal();
 	}
 
 }

@@ -336,7 +336,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 		out.println(prefix + "scope " + id + " (parent: " + parentID + ")");
 		for (Variable v : variables) {
 			if(v.purelyLocal()){
-				out.println(prefix + "| " + v + "@");
+				out.println(prefix + "| " + v + "#");
 			}
 			else out.println(prefix + "| " + v);
 		}
@@ -368,7 +368,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 
 	@Override
 	public boolean isDescendantOf(Scope anc) {
-		Scope parent = this;
+		Scope parent = this.parent;
 		
 		while(parent != null){
 			if(parent.id() == anc.id())

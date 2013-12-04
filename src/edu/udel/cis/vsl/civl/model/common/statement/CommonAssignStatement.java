@@ -94,9 +94,11 @@ public class CommonAssignStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		this.guard().purelyLocalAnalysis();
 		this.lhs.purelyLocalAnalysis();
 		this.rhs.purelyLocalAnalysis();
-		this.purelyLocal = this.lhs.isPurelyLocal() && this.rhs.isPurelyLocal();
+		this.purelyLocal = this.guard().isPurelyLocal() 
+				&& this.lhs.isPurelyLocal() && this.rhs.isPurelyLocal();
 	}
 
 }

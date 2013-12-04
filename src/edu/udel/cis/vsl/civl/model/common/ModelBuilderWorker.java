@@ -3014,12 +3014,32 @@ public class ModelBuilderWorker {
 		((CommonModel) model).setMallocStatements(mallocStatements);
 		for (CIVLFunction f : model.functions()) {
 			f.simplify();
+			//identify all purely local variables
 			f.purelyLocalAnalysis();
 			f.setModel(model);
 			for (Statement s : f.statements()) {
 				s.setModel(model);
 				s.caculateDerefs();
-				s.purelyLocalAnalysis();
+			}
+		}
+		
+		//CommonAssignStatement a;
+		
+		for (CIVLFunction f : model.functions()) {
+			//purely local statements/locations can only be
+			//identified after ALL variables have been
+			//checked for being purely local or not
+//			for (Statement s : f.statements()) {
+//				s.purelyLocalAnalysis();
+//			}
+			
+			for (Location loc : f.locations()) {
+				
+				for (Statement s : loc.outgoing()) {
+					s.purelyLocalAnalysis();
+				}
+				
+				loc.purelyLocalAnalysis();
 			}
 		}
 	}

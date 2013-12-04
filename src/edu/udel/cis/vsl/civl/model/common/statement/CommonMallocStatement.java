@@ -124,6 +124,9 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		
+		this.guard().purelyLocalAnalysis();
+		
 		boolean lhsPL = true;
 		if(lhs != null){
 			lhs.purelyLocalAnalysis();
@@ -133,7 +136,8 @@ public class CommonMallocStatement extends CommonStatement implements
 		this.heapPointerExpression.purelyLocalAnalysis();
 		this.sizeExpression.purelyLocalAnalysis();
 		
-		this.purelyLocal = lhsPL && this.heapPointerExpression.isPurelyLocal()
+		this.purelyLocal = lhsPL && this.guard().isPurelyLocal()
+				&& this.heapPointerExpression.isPurelyLocal()
 				&& this.sizeExpression.isPurelyLocal();
 	}
 

@@ -193,7 +193,8 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	
 	@Override
 	public void purelyLocalAnalysis(){
-		this.purelyLocal = true;
+		this.guard.purelyLocalAnalysis();
+		this.purelyLocal = this.guard.isPurelyLocal();
 	}
 
 }

@@ -77,11 +77,13 @@ public class CommonReturnStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		this.guard().purelyLocalAnalysis();
 		if(this.expression != null){
 			this.expression.purelyLocalAnalysis();
-			this.purelyLocal = this.expression.isPurelyLocal();
+			this.purelyLocal = this.expression.isPurelyLocal() 
+					&& this.guard().isPurelyLocal();
 		}else
-			this.purelyLocal = true;
+			this.purelyLocal = this.guard().isPurelyLocal();
 	}
 
 }
