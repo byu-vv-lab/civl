@@ -16,12 +16,15 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 //import edu.udel.cis.vsl.civl.state.DynamicScope;
 import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
@@ -55,6 +58,8 @@ public class Enabler implements
 	private SymbolicUniverse universe;
 
 	private Evaluator evaluator;
+	
+	private Executor executor;
 
 	private long enabledTransitionSets = 0;
 
@@ -70,6 +75,7 @@ public class Enabler implements
 			Executor executor, boolean sPor){
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
+		this.executor = executor;
 		this.modelFactory = evaluator.modelFactory();
 		this.stateFactory = evaluator.stateFactory();
 		this.universe = modelFactory.universe();
@@ -772,15 +778,14 @@ public class Enabler implements
 			BooleanExpression guard = (BooleanExpression) eval.value;
 			Reasoner reasoner = universe.reasoner(pathCondition);
 
-			// if (statement instanceof CallOrSpawnStatement) {
-			// if (((CallOrSpawnStatement) statement).function() instanceof
-			// SystemFunction) {
-			// LibraryExecutor libraryExecutor = executor
-			// .libraryExecutor((CallOrSpawnStatement) statement);
-			// guard = universe.and(guard,
-			// libraryExecutor.getGuard(state, pid, statement));
-			// }
-			// }
+			if (statement instanceof CallOrSpawnStatement) {
+				if (((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
+					LibraryExecutor libraryExecutor = executor
+							.libraryExecutor((CallOrSpawnStatement) statement);
+					guard = universe.and(guard,
+							libraryExecutor.getGuard(state, pid, statement));
+				}
+			}
 			// System.out.println("Enabler.newPathCondition() : Process " + pid
 			// + " is at " + state.process(pid).peekStack().location());
 			if (reasoner.isValid(guard))
