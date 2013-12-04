@@ -80,8 +80,12 @@ public abstract class Player {
 	protected boolean minimize;
 
 	protected int maxdepth;
-	
-	protected boolean scpPor;//false by default
+
+	protected boolean scpPor; // false by default
+
+	protected boolean saveStates; // true by default
+
+	protected boolean simplify; // true by default
 
 	public Player(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
@@ -111,7 +115,12 @@ public abstract class Player {
 		this.showTransitions = config.isTrue(UserInterface.showTransitionsO);
 		this.minimize = config.isTrue(UserInterface.minO);
 		this.maxdepth = (int) config.getValueOrDefault(UserInterface.maxdepthO);
-		this.scpPor = ((String)config.getValueOrDefault(UserInterface.porO)).equalsIgnoreCase("scp");
+		this.scpPor = ((String) config.getValueOrDefault(UserInterface.porO))
+				.equalsIgnoreCase("scp");
+		this.saveStates = (Boolean) config
+				.getValueOrDefault(UserInterface.saveStatesO);
+		this.simplify = (Boolean) config
+				.getValueOrDefault(UserInterface.simplifyO);
 
 		if (this.random) {
 			long seed;
@@ -131,7 +140,8 @@ public abstract class Player {
 					random, new Random(seed), this.scpPor);
 			enabler.setDebugOut(out);
 		} else {
-			enabler = new Enabler(transitionFactory, evaluator, executor, this.scpPor);
+			enabler = new Enabler(transitionFactory, evaluator, executor,
+					this.scpPor);
 			enabler.setDebugOut(out);
 		}
 		stateManager = new StateManager(executor);
@@ -141,6 +151,8 @@ public abstract class Player {
 		stateManager.setShowStates(showStates);
 		stateManager.setShowSavedStates(showSavedStates);
 		stateManager.setShowTransitions(showTransitions);
+		stateManager.setSaveStates(saveStates);
+		stateManager.setSimplify(simplify);
 	}
 
 	public void printResult() {

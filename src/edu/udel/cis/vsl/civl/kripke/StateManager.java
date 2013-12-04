@@ -40,6 +40,16 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 	private boolean verbose = false;
 
+	/**
+	 * Save states during search?
+	 */
+	private boolean saveStates = true;
+
+	/**
+	 * Simplify state returned by nextState?
+	 */
+	private boolean simplify = true;
+
 	public StateManager(Executor executor) {
 		this.executor = executor;
 		this.stateFactory = executor.stateFactory();
@@ -93,6 +103,22 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		return verbose;
 	}
 
+	public void setSaveStates(boolean value) {
+		this.saveStates = value;
+	}
+
+	public boolean getSaveStates() {
+		return saveStates;
+	}
+
+	public void setSimplify(boolean value) {
+		simplify = value;
+	}
+
+	public boolean getSimplify() {
+		return simplify;
+	}
+
 	@Override
 	public State nextState(State state, Transition transition) {
 		try {
@@ -136,8 +162,15 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		// loop over the transitions and then just simplify and canonic once at
 		// the end. This could greatly increase efficiency.
 		// TODO: try this simplification out, see how it works:
-		state = stateFactory.simplify(state);
-		state = stateFactory.canonic(state);
+
+		if (simplify) {
+			state = stateFactory.simplify(state);
+		}
+
+		if (saveStates) {
+			state = stateFactory.canonic(state);
+		}
+
 		if (verbose || debug || showTransitions) {
 			out.println(state);
 		}
