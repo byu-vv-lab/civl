@@ -82,18 +82,33 @@ public class ConcurrencyTest {
 	}
 
 	@Test
-	public void locks() {
-		assertFalse(ui.run("verify", filename("locks.cvl")));
+	public void locksBad() {
+		assertFalse(ui.run("verify", filename("locksBad.cvl")));
+	}
+
+	@Test
+	public void locksGood() {
+		assertTrue(ui.run("verify", filename("locksGood.cvl")));
+	}
+
+	@Test
+	public void locksBad10() {
+		assertFalse(ui.run("verify", filename("locksBad10.cvl")));
 	}
 
 	@Test
 	public void spawn() {
-		assertTrue(ui.run("verify", filename("spawn.cvl")));
+		assertTrue(ui.run("verify", "-inputN=10", filename("spawn.cvl")));
 	}
 
 	@Test
-	public void outOfOrderLocks() {
-		assertFalse(ui.run("verify", filename("outOfOrderLocks.cvl")));
+	public void spawn2() {
+		assertTrue(ui.run("verify", "-inputN=10", filename("spawn2.cvl")));
+	}
+
+	@Test
+	public void spawnBad() {
+		assertFalse(ui.run("verify", "-inputN=10", filename("spawnBad.cvl")));
 	}
 
 }

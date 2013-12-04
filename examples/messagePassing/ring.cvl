@@ -1,0 +1,42 @@
+/* Create nprocs processes.  Have them exchange data in a cycle.
+ * Run with:
+ *     civl verify -inputNPROCS=2 mpithreads.cvl 
+ */
+#include<civlc.h>
+
+$input int NPROCS;
+$proc __procs[NPROCS];
+_Bool __start = 0;
+$comm MPI_COMM_WORLD;
+
+void MPI_Process (int rank);
+
+void init() {
+  for (int i=0; i<NPROCS; i++)
+    __procs[i] = $spawn MPI_Process(i);
+  MPI_COMM_WORLD = $comm_create(NPROCS, __procs);
+  __start=1;
+}
+
+void finalize() {
+  for (int i=0; i<NPROCS; i++)
+    $wait __procs[i];
+}
+
+void MPI_Process (int rank) {
+  double x, y;
+  $message out, in;
+
+  $when (__start);
+  x=rank;
+  out = $message_pack(rank, (rank+1)%NPROCS, 0, &x, sizeof(double));
+  $comm_enqueue(&MPI_COMM_WORLD, out);
+  in = $comm_dequeue(&MPI_COMM_WORLD, (rank+NPROCS-1)%NPROCS, rank, 0);
+  $message_unpack(in, &y, sizeof(double));
+  $assert y==(rank+NPROCS-1)%NPROCS;
+}
+
+void main() {
+  init();
+  finalize();
+}
