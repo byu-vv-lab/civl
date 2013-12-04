@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
@@ -229,8 +230,12 @@ public class CommonLocation extends CommonSourceable implements Location {
 			this.purelyLocal = false;
 		else{
 			for(Statement s: outgoing){
-				this.purelyLocal = s.isPurelyLocal();
-				return;
+				if(s instanceof WaitStatement)
+					this.purelyLocal = false;
+				else{
+					this.purelyLocal = s.isPurelyLocal();
+					return;
+				}
 			}
 		}
 	}

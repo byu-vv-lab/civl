@@ -172,6 +172,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				//exactly one statement in newLoc.outgoing()
 				for(Statement s: newLoc.outgoing())
 				{
+					
 					BooleanExpression guard = (BooleanExpression) executor.evaluator()
 							.evaluate(state, p.id(), s.guard()).value;
 					BooleanExpression newPathCondition = 
