@@ -71,4 +71,11 @@ public interface Expression extends Sourceable {
 	 * @return
 	 */
 	boolean hasDerefs();
+
+	void purelyLocalAnalysisOfVariables(Scope funcScope);
+	
+	boolean isPurelyLocal();
+	
+	void purelyLocalAnalysis();
+	
 }

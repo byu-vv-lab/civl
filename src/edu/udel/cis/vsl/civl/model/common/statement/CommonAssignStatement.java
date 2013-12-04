@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -79,11 +80,23 @@ public class CommonAssignStatement extends CommonStatement implements
 
 	@Override
 	public void caculateDerefs() {
-		// TODO Auto-generated method stub
 		this.lhs.calculateDerefs();
 		this.rhs.calculateDerefs();
 		this.hasDerefs = this.lhs.hasDerefs() ||
 				this.rhs.hasDerefs();
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.lhs.purelyLocalAnalysisOfVariables(funcScope);
+		this.rhs.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.lhs.purelyLocalAnalysis();
+		this.rhs.purelyLocalAnalysis();
+		this.purelyLocal = this.lhs.isPurelyLocal() && this.rhs.isPurelyLocal();
 	}
 
 }

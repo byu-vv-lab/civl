@@ -192,5 +192,7 @@ public interface CIVLFunction extends Sourceable {
 	 * l1 (s1 -> l4, s2 -> l3), l3(), l4()
 	 */
 	public void simplify();
+	
+	public void purelyLocalAnalysis();
 
 }

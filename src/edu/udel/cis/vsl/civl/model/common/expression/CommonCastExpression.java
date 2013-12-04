@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -95,6 +96,17 @@ public class CommonCastExpression extends CommonExpression implements
 	public void calculateDerefs() {
 		this.expression.calculateDerefs();
 		this.hasDerefs = this.expression.hasDerefs();
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.expression.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.expression.purelyLocalAnalysis();
+		this.purelyLocal = this.expression.isPurelyLocal();
 	}
 
 }

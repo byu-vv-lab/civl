@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
@@ -66,6 +67,21 @@ public class CommonReturnStatement extends CommonStatement implements
 		}else
 			this.hasDerefs = false;
 		
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		if(this.expression != null)
+			this.expression.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		if(this.expression != null){
+			this.expression.purelyLocalAnalysis();
+			this.purelyLocal = this.expression.isPurelyLocal();
+		}else
+			this.purelyLocal = true;
 	}
 
 }

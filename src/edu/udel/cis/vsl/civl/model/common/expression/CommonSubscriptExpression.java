@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
@@ -84,6 +85,23 @@ public class CommonSubscriptExpression extends CommonExpression implements
 		this.index.calculateDerefs();
 		this.hasDerefs = this.array.hasDerefs() || 
 				this.index.hasDerefs();
+	}
+
+	@Override
+	public void setPurelyLocal(boolean pl) {
+		this.array.setPurelyLocal(pl);
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.array.purelyLocalAnalysisOfVariables(funcScope);
+		this.index.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.array.purelyLocalAnalysis();
+		this.index.purelyLocalAnalysis();
 	}
 
 }

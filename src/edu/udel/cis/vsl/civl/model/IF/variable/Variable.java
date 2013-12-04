@@ -74,5 +74,15 @@ public interface Variable extends Sourceable {
 	 * @return The scope of this variable.
 	 */
 	Scope scope();
+	
+	/**
+	 * return true iff the variable is purely local, 
+	 * i.e., v is purely local if there is no &v in the model, 
+	 * and in v's scope, if there are no spawned functions that refer to v
+	 * @return
+	 */
+	boolean purelyLocal();
+	
+	void setPurelyLocal(boolean pl);
 
 }

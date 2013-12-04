@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 
@@ -90,6 +91,23 @@ public class CommonConditionalExpression extends CommonExpression implements
 		this.hasDerefs = this.condition.hasDerefs() || this.trueBranch.hasDerefs() 
 				|| this.falseBranch.hasDerefs();
 		
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.condition.purelyLocalAnalysisOfVariables(funcScope);
+		this.trueBranch.purelyLocalAnalysisOfVariables(funcScope);
+		this.falseBranch.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.condition.purelyLocalAnalysis();
+		this.trueBranch.purelyLocalAnalysis();
+		this.falseBranch.purelyLocalAnalysis();
+		this.purelyLocal = this.condition.isPurelyLocal() 
+				&& this.trueBranch.isPurelyLocal()
+				&& this.falseBranch.isPurelyLocal();
 	}
 
 }

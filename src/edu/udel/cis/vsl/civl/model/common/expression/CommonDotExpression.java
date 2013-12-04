@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 
@@ -14,7 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 public class CommonDotExpression extends CommonExpression implements
 		DotExpression {
 
-	private Expression struct;
+	private Expression struct;//TODO shall this be of type LHSExpression?
 	private int fieldIndex;
 
 	/**
@@ -66,6 +67,23 @@ public class CommonDotExpression extends CommonExpression implements
 	public void calculateDerefs() {
 		this.struct.calculateDerefs();
 		this.hasDerefs = this.struct.hasDerefs();
+	}
+
+	@Override
+	public void setPurelyLocal(boolean pl) {
+		// TODO what if &(a.index) where a is defined as a struct 
+		// and index is a field of the struct
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.struct.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.struct.purelyLocalAnalysis();
+		this.purelyLocal = this.struct.isPurelyLocal();
 	}
 
 }

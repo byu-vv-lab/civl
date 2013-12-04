@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -59,6 +60,17 @@ public class CommonWaitStatement extends CommonStatement implements
 	public void caculateDerefs() {
 		this.process.calculateDerefs();
 		this.hasDerefs = this.process.hasDerefs();
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.process.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.process.purelyLocalAnalysis();
+		this.purelyLocal = this.process.isPurelyLocal();
 	}
 
 }

@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 
@@ -145,6 +146,20 @@ public class CommonBinaryExpression extends CommonExpression implements
 		this.left.calculateDerefs();
 		this.right.calculateDerefs();
 		this.hasDerefs = this.left.hasDerefs() || this.right.hasDerefs();
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.left.purelyLocalAnalysisOfVariables(funcScope);
+		this.right.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.left.purelyLocalAnalysis();
+		this.right.purelyLocalAnalysis();
+		this.purelyLocal = this.left.isPurelyLocal()
+				&& this.right.isPurelyLocal();
 	}
 
 }

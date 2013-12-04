@@ -338,9 +338,9 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	}
 	
 	/**
-	 * Remove all locations that satisfiy the following conditions:
+	 * Remove all locations that satisfy the following conditions:
 	 * 1. has exactly one outgoing statement and
-	 * 2. the statement is a no-op with the gard true.
+	 * 2. the statement is a no-op with the guard true.
 	 * Meanwhile, have to redirect each statement that targets at the no-op location
 	 * to the target of the no-op location.
 	 * For example, let l(s->l', ...) be a location l with statement s going to l' ...
@@ -430,5 +430,89 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		
 		this.locations = newLocations;
 	}
+
+	
+	public void purelyLocalAnalysis(){
+//		HashSet<String> spawnFuncs = new HashSet<String>(); 
+		
+		Scope funcScope = this.outerScope;
+		
+		for(Location loc: this.locations){
+			
+			Set<Statement> stmts = loc.outgoing();
+			
+			for(Statement s: stmts){
+				s.purelyLocalAnalysisOfVariables(funcScope);
+//				TODO functions that are never spawned are to be executed in the same process as the caller
+//				if(s instanceof CallOrSpawnStatement){
+//					CallOrSpawnStatement call = (CallOrSpawnStatement) s;
+//					if(call.isSpawn()){
+//						spawnFuncs.add(call.function().name().name());
+//					}
+//				}
+			}
+		}
+		
+//		Map<String, Variable> variables = new HashMap<String, Variable>();
+//		
+//		Set<Variable> vars = outerScope.variables();
+//		for(Variable var: vars){
+//			variables.put(var.name().toString(), var);
+//		}
+//		
+//		vars = containingScope.variables();
+//		for(Variable var: vars){
+//			variables.put(var.name().toString(), var);
+//		}
+//		
+//		//Location loc = this.startLocation;
+//		
+//		Stack<Location> stack = new Stack<Location>();
+//		stack.push(this.startLocation);
+//		Stack<Integer> visitedLocs = new Stack<Integer>();
+//		Scope scope = this.containingScope;//TODO: outerScope vs containingScope
+//		
+//		
+//		
+//		
+//		while(!stack.isEmpty()){
+//			Location loc = stack.pop();
+//			int lid = loc.id();
+//			if(visitedLocs.contains(lid))
+//				continue;
+//			visitedLocs.add(lid);
+//			
+//			Scope newScope = loc.scope();
+//			int scopeId = scope.id();
+//			int newScopeId = newScope.id();
+//			if(newScopeId != scopeId){
+//				if(newScope.parent().id() == scopeId){
+//					
+//				}else if(scope.parent().id() == scopeId){
+//					
+//				}
+//				
+//			}
+//			
+//			scope = newScope;
+//			
+//			
+//			Set<Statement> stmts = loc.outgoing();
+//			
+//			
+//			
+//			for(Statement s: stmts){
+//				Location target = s.target();
+//				int tgid = target.id();
+//				if(!visitedLocs.contains(tgid)){
+//					stack.push(target);
+//				}
+//			}
+//		}
+		
+
+		
+	}
+	
 
 }

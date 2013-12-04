@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -52,6 +53,22 @@ public class CommonVariableExpression extends CommonExpression implements
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.VARIABLE;
+	}
+
+	@Override
+	public void setPurelyLocal(boolean pl) {
+		this.variable.setPurelyLocal(pl);
+	}
+	
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope){
+		if(funcScope.isDescendantOf(this.variable.scope()))
+			this.setPurelyLocal(false);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.purelyLocal = this.variable.purelyLocal();
 	}
 
 }

@@ -60,6 +60,7 @@ public interface Statement extends Sourceable {
 	 */
 	void setModel(Model model);
 	
+	
 	/**
 	 * @return The highest scope accessed by this statement. Null if no
 	 *         variables accessed.
@@ -80,5 +81,18 @@ public interface Statement extends Sourceable {
 	boolean hasDerefs();
 	
 	void caculateDerefs();
+
+	/**
+	 * if an &(var) is encountered, then var is considered as no purely local
+	 * if a statement inside a function with fscope is accessing some variable
+	 * that is declared in the scope vscope such that fscope.isDescendantOf(vscope),
+	 * then that variable is not purely local
+	 * @param funcScope the function scope of the statement
+	 */
+	void purelyLocalAnalysisOfVariables(Scope funcScope);
+	
+	boolean isPurelyLocal();
+	
+	void purelyLocalAnalysis();
 
 }

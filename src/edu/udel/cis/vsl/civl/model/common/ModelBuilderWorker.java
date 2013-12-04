@@ -3014,10 +3014,12 @@ public class ModelBuilderWorker {
 		((CommonModel) model).setMallocStatements(mallocStatements);
 		for (CIVLFunction f : model.functions()) {
 			f.simplify();
+			f.purelyLocalAnalysis();
 			f.setModel(model);
 			for (Statement s : f.statements()) {
 				s.setModel(model);
 				s.caculateDerefs();
+				s.purelyLocalAnalysis();
 			}
 		}
 	}

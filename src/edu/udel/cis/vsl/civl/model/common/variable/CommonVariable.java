@@ -26,6 +26,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	private int vid;
 	private Scope scope;
 	private int hashCode;
+	private boolean purelyLocal = true;
 
 	/**
 	 * A variable.
@@ -153,6 +154,16 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		result = prime * result + (isConst ? 1231 : 1237);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		hashCode = prime * result + ((type == null) ? 0 : type.hashCode());
+	}
+
+	@Override
+	public boolean purelyLocal() {
+		return this.purelyLocal;
+	}
+
+	@Override
+	public void setPurelyLocal(boolean pl) {
+		this.purelyLocal = pl;
 	}
 	
 

@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 
@@ -34,5 +35,16 @@ public class CommonSizeofExpressionExpression extends CommonExpression
 	public void calculateDerefs() {
 		this.argument.calculateDerefs();
 		this.hasDerefs = this.argument.hasDerefs();
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.argument.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.argument.purelyLocalAnalysis();
+		this.purelyLocal = this.argument.isPurelyLocal();
 	}
 }

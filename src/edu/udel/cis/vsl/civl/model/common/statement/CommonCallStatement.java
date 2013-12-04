@@ -7,6 +7,7 @@ import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -164,8 +165,42 @@ public class CommonCallStatement extends CommonStatement implements
 			for(Expression arg: this.arguments){
 				arg.calculateDerefs();
 				this.hasDerefs = this.hasDerefs || arg.hasDerefs();
+				//early return
+				if(this.hasDerefs)
+					return;
 			}
 		}
 	}
 
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		if(this.lhs != null)
+			this.lhs.purelyLocalAnalysisOfVariables(funcScope);
+		for(Expression arg: this.arguments){
+			arg.purelyLocalAnalysisOfVariables(funcScope);
+		}
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		if(this.lhs != null){
+			this.lhs.purelyLocalAnalysis();
+			if(!this.lhs.isPurelyLocal()){
+				this.purelyLocal = false;
+				return;
+			}
+		}
+		
+		for(Expression arg: this.arguments){
+			arg.purelyLocalAnalysis();
+			if(!arg.isPurelyLocal())
+			{
+				this.purelyLocal = false;
+				return;
+			}
+		}
+		
+		this.purelyLocal = true;
+	}
+	
 }

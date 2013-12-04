@@ -22,6 +22,8 @@ public class StatementSet implements Statement {
 
 	private Set<Statement> statements;
 	private boolean hasDerefs;
+	private boolean purelyLocal;
+	
 
 	public StatementSet() {
 		statements = new LinkedHashSet<Statement>();
@@ -104,7 +106,6 @@ public class StatementSet implements Statement {
 
 	@Override
 	public boolean hasDerefs() {
-		// TODO Auto-generated method stub
 		return this.hasDerefs;
 	}
 
@@ -114,7 +115,34 @@ public class StatementSet implements Statement {
 		for(Statement s: statements){
 			s.caculateDerefs();
 			this.hasDerefs = this.hasDerefs || s.hasDerefs();
+			//early return
+			if(this.hasDerefs)
+				return;
 		}
+	}
+
+	@Override
+	public boolean isPurelyLocal() {
+		return this.purelyLocal;
+	}
+	
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		for(Statement s: statements){
+			s.purelyLocalAnalysisOfVariables(funcScope);
+		}
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		for(Statement s: statements){
+			s.purelyLocalAnalysis();
+			if(!s.isPurelyLocal()){
+				this.purelyLocal = false;
+				return;
+			}
+		}
+		this.purelyLocal = true;
 	}
 
 }

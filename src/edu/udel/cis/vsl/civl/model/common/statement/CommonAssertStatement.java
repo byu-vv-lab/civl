@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
@@ -75,6 +76,17 @@ public class CommonAssertStatement extends CommonStatement implements
 	public void caculateDerefs() {
 		this.expression.calculateDerefs();
 		this.hasDerefs = this.expression.hasDerefs();
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.expression.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.expression.purelyLocalAnalysis();
+		this.purelyLocal = this.expression.isPurelyLocal();
 	}
 
 }

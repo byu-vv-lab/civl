@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 
@@ -93,6 +94,17 @@ public class CommonUnaryExpression extends CommonExpression implements
 		// TODO Auto-generated method stub
 		this.operand.calculateDerefs();
 		this.hasDerefs = this.operand.hasDerefs();
+	}
+
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.operand.purelyLocalAnalysisOfVariables(funcScope);
+	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		this.operand.purelyLocalAnalysis();
+		this.purelyLocal = this.operand.isPurelyLocal();
 	}
 
 }

@@ -28,6 +28,7 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	private Model model;
 	protected Scope statementScope = null;
 	protected boolean hasDerefs = false;
+	protected boolean purelyLocal = false;
 
 	/**
 	 * The parent of all statements.
@@ -178,6 +179,21 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	@Override
 	public boolean hasDerefs() {
 		return this.hasDerefs;
+	}
+	
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope){
+		
+	}
+	
+	@Override
+	public boolean isPurelyLocal(){
+		return this.purelyLocal;
+	}
+	
+	@Override
+	public void purelyLocalAnalysis(){
+		this.purelyLocal = true;
 	}
 
 }

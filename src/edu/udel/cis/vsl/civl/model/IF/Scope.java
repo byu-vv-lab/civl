@@ -147,5 +147,13 @@ public interface Scope extends Sourceable {
 	void print(String prefix, PrintStream out);
 
 	int getVid(Variable staticVariable);
+	
+	/**
+	 * Return true if the scope is a descendant of the scope anc
+	 * @param des
+	 * @param anc
+	 * @return
+	 */
+	boolean isDescendantOf(Scope anc);
 
 }

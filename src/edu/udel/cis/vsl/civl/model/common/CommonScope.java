@@ -335,7 +335,10 @@ public class CommonScope extends CommonSourceable implements Scope {
 		}
 		out.println(prefix + "scope " + id + " (parent: " + parentID + ")");
 		for (Variable v : variables) {
-			out.println(prefix + "| " + v);
+			if(v.purelyLocal()){
+				out.println(prefix + "| " + v + "@");
+			}
+			else out.println(prefix + "| " + v);
 		}
 		for (Scope child : children) {
 			if (child.function().equals(function)) {
@@ -361,6 +364,19 @@ public class CommonScope extends CommonSourceable implements Scope {
 	@Override
 	public Model model() {
 		return function.model();
+	}
+
+	@Override
+	public boolean isDescendantOf(Scope anc) {
+		Scope parent = this;
+		
+		while(parent != null){
+			if(parent.id() == anc.id())
+				return true;
+			parent = parent.parent();
+		}
+
+		return false;
 	}
 
 }
