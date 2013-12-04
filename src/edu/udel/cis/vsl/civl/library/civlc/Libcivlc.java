@@ -83,8 +83,6 @@ public class Libcivlc implements LibraryExecutor {
 
 	private IntObject oneObject;
 
-	// private ErrorLog log;
-
 	// private SymbolicType bundleSymbolicType;
 
 	public Libcivlc(Executor primaryExecutor) {
@@ -805,7 +803,7 @@ public class Libcivlc implements LibraryExecutor {
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
 
-			arguments[i] = call.arguments().elementAt(i);
+			arguments[i] = call.arguments().get(i);
 			eval = evaluator.evaluate(state, pid, arguments[i]);
 			argumentValues[i] = eval.value;
 			state = eval.state;
@@ -1007,11 +1005,11 @@ public class Libcivlc implements LibraryExecutor {
 	@Override
 	public BooleanExpression getGuard(State state, int pid, Statement statement) {
 		Identifier name;
-		// Expression[] arguments;
-		// SymbolicExpression[] argumentValues;
+		Expression[] arguments;
+		SymbolicExpression[] argumentValues;
 		CallOrSpawnStatement call;
 		// LHSExpression lhs;
-		// int numArgs;
+		int numArgs;
 		BooleanExpression guard;
 
 		if (!(statement instanceof CallOrSpawnStatement)) {
@@ -1019,27 +1017,35 @@ public class Libcivlc implements LibraryExecutor {
 					statement);
 		}
 		call = (CallOrSpawnStatement) statement;
-		// numArgs = call.arguments().size();
+		numArgs = call.arguments().size();
 		name = call.function().name();
 		// lhs = call.lhs();
-		// arguments = new Expression[numArgs];
-		// argumentValues = new SymbolicExpression[numArgs];
-		// for (int i = 0; i < numArgs; i++) {
-		// Evaluation eval;
-		//
-		// arguments[i] = call.arguments().elementAt(i);
-		// eval = evaluator.evaluate(state, pid, arguments[i]);
-		// argumentValues[i] = eval.value;
-		// state = eval.state;
-		// }
+		arguments = new Expression[numArgs];
+		argumentValues = new SymbolicExpression[numArgs];
+		for (int i = 0; i < numArgs; i++) {
+			Evaluation eval = null;
+
+			arguments[i] = call.arguments().get(i);
+			try {
+				eval = evaluator.evaluate(state, pid, arguments[i]);
+			} catch (UnsatisfiablePathConditionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			argumentValues[i] = eval.value;
+			state = eval.state;
+		}
+
 		switch (name.name()) {
+		case "$comm_dequeue":
+			guard = getDequeueGuard(state, pid, arguments, argumentValues);
+			break;
 		case "$free":
 		case "$bundle_pack":
 		case "$bundle_unpack":
 		case "$bundle_size":
 		case "$comm_create":
 		case "$comm_enqueue":
-		case "$comm_dequeue":
 		case "printf":
 		case "$memcpy":
 		case "$message_pack":
@@ -1061,6 +1067,38 @@ public class Libcivlc implements LibraryExecutor {
 					statement);
 		}
 		return guard;
+	}
+
+	private BooleanExpression getDequeueGuard(State state, int pid,
+			Expression[] arguments, SymbolicExpression[] argumentValues) {
+		SymbolicExpression comm;
+		CIVLSource commArgSource = arguments[0].getSource();
+		NumericExpression sourceExpression;
+		NumericExpression destExpression;
+		SymbolicExpression buf; // buf has type $queue[][]
+		SymbolicExpression bufRow; // buf[source], has type $queue[]
+		SymbolicExpression queue; // particular $queue for this source and dest
+		SymbolicExpression messages;
+		boolean enabled = false;
+
+		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
+		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
+		sourceExpression = (NumericExpression) argumentValues[1];
+		destExpression = (NumericExpression) argumentValues[2];
+		buf = universe.tupleRead(comm, universe.intObject(2));
+		bufRow = universe.arrayRead(buf, sourceExpression);
+		queue = universe.arrayRead(bufRow, destExpression);
+		messages = universe.tupleRead(queue, universe.intObject(1));
+		for (int i = 0; i < evaluator.extractInt(commArgSource,
+				universe.length(messages)); i++) {
+			if (universe.tupleRead(
+					universe.arrayRead(messages, universe.integer(i)),
+					universe.intObject(2)).equals(argumentValues[3])) {
+				// We have a message with the right tag!
+				enabled = true;
+			}
+		}
+		return universe.bool(enabled);
 	}
 
 }
