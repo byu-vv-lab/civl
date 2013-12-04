@@ -695,11 +695,7 @@ public class Libcivlc implements LibraryExecutor {
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression comm;
-		// SymbolicExpression procArray;
 		CIVLSource commArgSource = arguments[0].getSource();
-		// int nprocs;
-		// int source = -1;
-		// int dest = -1;
 		NumericExpression sourceExpression;
 		NumericExpression destExpression;
 		SymbolicExpression buf; // buf has type $queue[][]
@@ -714,44 +710,25 @@ public class Libcivlc implements LibraryExecutor {
 				.getScopeId(commArgSource, argumentValues[0]);
 		int commVariableID = evaluator.getVariableId(commArgSource,
 				argumentValues[0]);
+		int numMessages;
 
 		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
 		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
-		// nprocs = evaluator.extractInt(commArgSource,
-		// (NumericExpression) universe.tupleRead(comm, zeroObject));
-		// procArray = (SymbolicExpression) universe.tupleRead(comm,
-		// universe.intObject(1));
-		// Find the array index corresponding to the source proc and dest proc
-		// for (int i = 0; i < nprocs; i++) {
-		// SymbolicExpression proc = universe.arrayRead(procArray,
-		// universe.integer(i));
-		// if (universe.tupleRead(proc, zeroObject).equals(argumentValues[1])) {
-		// source = i;
-		// }
-		// if (universe.tupleRead(proc, zeroObject).equals(argumentValues[2])) {
-		// dest = i;
-		// }
-		// if (dest >= 0 && source >= 0) {
-		// break;
-		// }
-		// }
-		// assert source >= 0;
-		// assert dest >= 0;
-		// sourceExpression = universe.integer(source);
-		// destExpression = universe.integer(dest);
 		sourceExpression = (NumericExpression) argumentValues[1];
 		destExpression = (NumericExpression) argumentValues[2];
 		buf = universe.tupleRead(comm, universe.intObject(2));
 		bufRow = universe.arrayRead(buf, sourceExpression);
 		queue = universe.arrayRead(bufRow, destExpression);
 		messages = universe.tupleRead(queue, universe.intObject(1));
-		for (int i = 0; i < evaluator.extractInt(commArgSource,
-				universe.length(messages)); i++) {
+		numMessages = evaluator.extractInt(commArgSource,
+				universe.length(messages));
+		for (int i = 0; i < numMessages; i++) {
 			if (universe.tupleRead(
 					universe.arrayRead(messages, universe.integer(i)),
 					universe.intObject(2)).equals(argumentValues[3])) {
 				message = universe.arrayRead(messages, universe.integer(i));
 				messages = universe.removeElementAt(messages, i);
+				break;
 			}
 		}
 		assert universe.tupleRead(queue, zeroObject) instanceof NumericExpression;
@@ -1079,6 +1056,7 @@ public class Libcivlc implements LibraryExecutor {
 		SymbolicExpression bufRow; // buf[source], has type $queue[]
 		SymbolicExpression queue; // particular $queue for this source and dest
 		SymbolicExpression messages;
+		int numMessages;
 		boolean enabled = false;
 
 		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
@@ -1089,13 +1067,15 @@ public class Libcivlc implements LibraryExecutor {
 		bufRow = universe.arrayRead(buf, sourceExpression);
 		queue = universe.arrayRead(bufRow, destExpression);
 		messages = universe.tupleRead(queue, universe.intObject(1));
-		for (int i = 0; i < evaluator.extractInt(commArgSource,
-				universe.length(messages)); i++) {
+		numMessages = evaluator.extractInt(commArgSource,
+				universe.length(messages));
+		for (int i = 0; i < numMessages; i++) {
 			if (universe.tupleRead(
 					universe.arrayRead(messages, universe.integer(i)),
 					universe.intObject(2)).equals(argumentValues[3])) {
 				// We have a message with the right tag!
 				enabled = true;
+				break;
 			}
 		}
 		return universe.bool(enabled);
