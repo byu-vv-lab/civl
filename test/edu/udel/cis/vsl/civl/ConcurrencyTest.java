@@ -1,10 +1,9 @@
 package edu.udel.cis.vsl.civl;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.PrintStream;
 
 import org.junit.Test;
 
@@ -20,7 +19,7 @@ public class ConcurrencyTest {
 		return new File(rootDir, name).getPath();
 	}
 
-	private PrintStream out = System.out;
+	// private PrintStream out = System.out;
 
 	@Test
 	public void adder() {
