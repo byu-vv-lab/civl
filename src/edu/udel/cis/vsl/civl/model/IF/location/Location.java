@@ -101,5 +101,7 @@ public interface Location extends Sourceable {
 	 *            The PrintStream to use for printing this location.
 	 */
 	public void print(String prefix, PrintStream out);
+	
+	public boolean isPurelyLocal();
 
 }

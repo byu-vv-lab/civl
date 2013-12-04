@@ -210,4 +210,19 @@ public class CommonLocation extends CommonSourceable implements Location {
 						+ " in function " + function, this.getSource());
 	}
 
+	@Override
+	public boolean isPurelyLocal() {
+		if(incoming.size() > 1)
+			return false;
+		if(outgoing.size() != 1)
+			return false;
+		
+		for(Statement s: outgoing){
+			if(s.isPurelyLocal())
+				return true;
+		}
+		
+		return false;
+	}
+
 }

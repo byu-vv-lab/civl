@@ -6,15 +6,18 @@ package edu.udel.cis.vsl.civl.kripke;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.state.Process;
 import edu.udel.cis.vsl.civl.state.State;
 import edu.udel.cis.vsl.civl.state.StateFactoryIF;
 import edu.udel.cis.vsl.civl.transition.ChooseTransition;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
  * @author Timothy K. Zirkel (zirkel)
@@ -158,6 +161,33 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		} else {
 			state = executor.execute(state, pid, statement);
 		}
+		
+		Process p = state.process(pid) ;
+		if(p != null && !p.hasEmptyStack()){
+			
+			Location newLoc = p.peekStack().location();
+			
+			while(newLoc != null && newLoc.isPurelyLocal()){
+				
+				//exactly one statement in newLoc.outgoing()
+				for(Statement s: newLoc.outgoing())
+				{
+					BooleanExpression guard = (BooleanExpression) executor.evaluator()
+							.evaluate(state, p.id(), s.guard()).value;
+					BooleanExpression newPathCondition = 
+							executor.universe().and(state.pathCondition(), guard);
+					state = stateFactory.setPathCondition(state, newPathCondition);
+					state = executor.execute(state, pid, s);
+					break;
+				}
+				
+				p = state.process(pid);
+				if(p != null && !p.hasEmptyStack())
+					newLoc = p.peekStack().location();
+				else newLoc = null;
+			}
+		}
+		
 		// TODO: Maybe make a loop here for $atomic/Dstep transitions. We could
 		// loop over the transitions and then just simplify and canonic once at
 		// the end. This could greatly increase efficiency.
