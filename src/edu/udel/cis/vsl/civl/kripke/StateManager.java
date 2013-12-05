@@ -149,6 +149,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			printTransitionLong(out, transition);
 			out.print("--> ");
 		}
+				
 		pid = ((SimpleTransition) transition).pid();
 		state = stateFactory.setPathCondition(state,
 				((SimpleTransition) transition).pathCondition());
@@ -162,30 +163,33 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			state = executor.execute(state, pid, statement);
 		}
 		
-		Process p = state.process(pid) ;
-		if(p != null && !p.hasEmptyStack()){
-			
-			Location newLoc = p.peekStack().location();
-			
-			while(newLoc != null && newLoc.isPurelyLocal()){
-				//TODO check spawn statement
-				//exactly one statement in newLoc.outgoing()
-				for(Statement s: newLoc.outgoing())
-				{
-					
-					BooleanExpression guard = (BooleanExpression) executor.evaluator()
-							.evaluate(state, p.id(), s.guard()).value;
-					BooleanExpression newPathCondition = 
-							executor.universe().and(state.pathCondition(), guard);
-					state = stateFactory.setPathCondition(state, newPathCondition);
-					state = executor.execute(state, pid, s);
-					break;
-				}
+		//do nothing when process pid terminates and is removed from the state
+		if(state.numProcs() > pid){
+			Process p = state.process(pid) ;
+			if(p != null && !p.hasEmptyStack()){
 				
-				p = state.process(pid);
-				if(p != null && !p.hasEmptyStack())
-					newLoc = p.peekStack().location();
-				else newLoc = null;
+				Location newLoc = p.peekStack().location();
+				
+				while(newLoc != null && newLoc.isPurelyLocal()){
+					//TODO check spawn statement
+					//exactly one statement in newLoc.outgoing()
+					for(Statement s: newLoc.outgoing())
+					{
+						
+						BooleanExpression guard = (BooleanExpression) executor.evaluator()
+								.evaluate(state, p.id(), s.guard()).value;
+						BooleanExpression newPathCondition = 
+								executor.universe().and(state.pathCondition(), guard);
+						state = stateFactory.setPathCondition(state, newPathCondition);
+						state = executor.execute(state, pid, s);
+						break;
+					}
+					
+					p = state.process(pid);
+					if(p != null && !p.hasEmptyStack())
+						newLoc = p.peekStack().location();
+					else newLoc = null;
+				}
 			}
 		}
 		
