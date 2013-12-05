@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
@@ -113,6 +114,13 @@ public class Enabler implements
 			}
 			
 			transitions = enabledTransitionsPOR(state);
+			
+			if(debugging){
+				if(transitions.size() > 1){
+					debugOut.println("Number of transitions at state " + state.getId() + "is " + transitions.size());
+					state.print(debugOut);
+				}
+			}
 		}else 
 			transitions = enabledTransitionsPORsoped(state);
 		
@@ -228,8 +236,8 @@ public class Enabler implements
 				if (localTransitions.size() == 1) {
 					// If the size isn't 1, keep looking for a smaller local
 					// set.
-					if(debugging)
-						debugOut.println("Number of transtions at state " + state.getId() + ": " + localTransitions.size());
+					//if(debugging)
+						//debugOut.println("Number of transtions at state " + state.getId() + ": " + localTransitions.size());
 					return localTransitions;
 				}
 			} else {
@@ -249,13 +257,13 @@ public class Enabler implements
 			assert smallestProcess != null;
 			// System.out.println("Returning " + smallestProcessSetSize +
 			// " transitions for 1 process");
-			if(debugging)
-				debugOut.println("Number of transtions at state " + state.getId() + ": " + processTransitions.get(smallestProcess).size());
+			//if(debugging)
+				//debugOut.println("Number of transtions at state " + state.getId() + ": " + processTransitions.get(smallestProcess).size());
 			return processTransitions.get(smallestProcess);
 		}
 		// System.out.println("Returning " + totalTransitions + " transitions");
-		if(debugging)
-			debugOut.println("Number of transtions at state " + state.getId() + ": " + transitions.size());
+		//if(debugging)
+			//debugOut.println("Number of transtions at state " + state.getId() + ": " + transitions.size());
 		return transitions;
 	}
 
@@ -322,17 +330,7 @@ public class Enabler implements
 				
 		ArrayList<Process> processStates = new ArrayList<Process>(ampleProcesses(state));
 		
-		if (debugging) {
-			checkCorrectness(processStates, state);
-			//debugOut.println("Number of all processes: " + state.processes().length);
-			debugOut.println("Number of ample processes: " + processStates.size());
-			
-			if(processStates.size() > 1){
-				debugOut.println("Ample process set is : "
-						+ processStates.toString());
-				state.print(debugOut);
-			}
-		}
+		
 		
 		/**
 		 * Compute the ample set (of transitions)
@@ -420,13 +418,27 @@ public class Enabler implements
 			transitions.addAll(localTransitions);
 		}
 		
-		if(debugging)
-			debugOut.println("Number of transtions at state " + state.getId() + ": " + transitions.size());
+		if (debugging) {
+			checkCorrectness(processStates, state);
+			//debugOut.println("Number of all processes: " + state.processes().length);
+			
+			
+			if(processStates.size() > 1){
+				debugOut.println("Number of transtions at state " + state.getId() + ": " + transitions.size());
+				debugOut.println("Number of ample processes: " + processStates.size());
+				debugOut.println("Ample process set is : "
+						+ processStates.toString());
+				state.print(debugOut);
+			}
+		}
+			
 		return transitions;
 	}
 	
 	/**
 	 * Obtain the set of processes to generate ample set transitions
+	 * TODO: try to avoid repeatedly calculating things like joinedPid, 
+	 * path condition satisfiability, etc.
 	 * @param state
 	 * @return
 	 */
@@ -474,6 +486,13 @@ public class Enabler implements
 			p = allProcesses.get(i);
 			
 			if(blocked(p)){
+				//if p's current statement is Wait and the joined process
+				//has terminated, then p is the ample process set
+				if(isEnabledWait(p, state)){
+					ampleProcesses.add(p);
+					return ampleProcesses;
+				}
+				
 				waitProc = p;
 				
 				i--;
@@ -672,6 +691,43 @@ public class Enabler implements
 		return ampleProcesses;
 	}
 	
+	/**
+	 * Return true iff p's current statement is Wait
+	 * and is enabled
+	 * @param p
+	 * @return
+	 */
+	private boolean isEnabledWait(Process p, State state){
+//		if(p == null || p.hasEmptyStack())
+//			return false;
+		Set<Statement> statements = p.location().outgoing();
+		
+		if(statements.size() == 1){
+			int pid = p.id();
+			for(Statement s: statements){
+				if(s instanceof WaitStatement){
+					try{
+						WaitStatement wait = (WaitStatement) s;
+						Evaluation eval = evaluator.evaluate(state, pid, wait.process());
+						SymbolicExpression procVal = eval.value;
+						int joinedPid = modelFactory.getProcessId(wait.process()
+								.getSource(), procVal);
+						
+						Process joinedProc = state.process(joinedPid);
+						
+						if(joinedProc == null || joinedProc.hasEmptyStack()){
+							return true;
+						}
+						
+					}catch(UnsatisfiablePathConditionException ex){
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+	
 	private boolean blocked(Process p){
 //		if(p == null || p.hasEmptyStack())
 //			return false;
@@ -694,6 +750,7 @@ public class Enabler implements
 		pScope = p.scope();
 		
 		for (Statement s : p.location().outgoing()) {
+			
 			if(s.hasDerefs()){
 				dyscopes.add(state.rootScopeID());
 				return dyscopes;
