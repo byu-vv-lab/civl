@@ -5,10 +5,8 @@ package edu.udel.cis.vsl.civl.semantics;
 
 import java.util.Vector;
 
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -68,11 +66,11 @@ public class Executor {
 	/** The Evaluator used to evaluate expressions. */
 	private Evaluator evaluator;
 
-//	/**
-//	 * Log used to record property violations encountered as the model is
-//	 * executed.
-//	 */
-//	private ErrorLog log;
+	// /**
+	// * Log used to record property violations encountered as the model is
+	// * executed.
+	// */
+	// private ErrorLog log;
 
 	/**
 	 * The loader used to find Executors for system functions declared in
@@ -103,7 +101,7 @@ public class Executor {
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
 		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);
-		//this.log = log;
+		// this.log = log;
 		this.loader = loader;
 		this.civlcExecutor = (Libcivlc) loader
 				.getLibraryExecutor("civlc", this);
@@ -417,17 +415,25 @@ public class Executor {
 		valid = reasoner.valid(assertValue);
 		resultType = valid.getResultType();
 		if (resultType != ResultType.YES) {
-			Certainty certainty = resultType == ResultType.NO ? Certainty.PROVEABLE
-					: Certainty.MAYBE;
+			// Certainty certainty = resultType == ResultType.NO ?
+			// Certainty.PROVEABLE
+			// : Certainty.MAYBE;
 
-			evaluator.reportError(new CIVLStateException(
-					ErrorKind.ASSERTION_VIOLATION, certainty,
+			// TODO: USE GENERAL METHOD ... state = evaluator.logError in own
+			// class
+			state = evaluator.logError(statement.getSource(), state,
+					assertValue, resultType, ErrorKind.ASSERTION_VIOLATION,
 					"Cannot prove assertion holds: " + statement.toString()
 							+ "\n  Path condition: " + state.pathCondition()
-							+ "\n  Assertion: " + assertValue + "\n", state,
-					statement.getSource()));
-			state = stateFactory.setPathCondition(state,
-					symbolicUniverse.and(state.pathCondition(), assertValue));
+							+ "\n  Assertion: " + assertValue + "\n");
+			// evaluator.reportError(new CIVLStateException(
+			// ErrorKind.ASSERTION_VIOLATION, certainty,
+			// "Cannot prove assertion holds: " + statement.toString()
+			// + "\n  Path condition: " + state.pathCondition()
+			// + "\n  Assertion: " + assertValue + "\n", state,
+			// statement.getSource()));
+			// state = stateFactory.setPathCondition(state,
+			// symbolicUniverse.and(state.pathCondition(), assertValue));
 		}
 		state = transition(state, state.process(pid), statement.target());
 		return state;

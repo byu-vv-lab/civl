@@ -30,7 +30,8 @@ public class ArithmeticTest {
 
 	@Test
 	public void matmat2() {
-		assertTrue(ui.run("verify", "-inputBOUND=3", filename("matmat2.cvl")));
+		assertTrue(ui.run("verify", "-inputBOUND=3", "-simplify=false",
+				filename("matmat2.cvl")));
 	}
 
 	@Test

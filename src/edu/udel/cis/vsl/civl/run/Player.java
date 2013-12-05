@@ -87,6 +87,8 @@ public abstract class Player {
 
 	protected boolean simplify; // true by default
 
+	protected boolean solve; // false by default
+
 	public Player(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
 		SymbolicUniverse universe;
@@ -101,6 +103,7 @@ public abstract class Player {
 		this.transitionFactory = new TransitionFactory();
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);
+		evaluator.setSolve(solve);
 		this.predicate = new StandardPredicate(log, universe, evaluator);
 		this.loader = new CommonLibraryExecutorLoader();
 		this.log.setErrorBound((int) config
@@ -121,6 +124,7 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.saveStatesO);
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
+		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 
 		if (this.random) {
 			long seed;

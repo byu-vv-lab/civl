@@ -73,6 +73,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.OffsetReference;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.expr.UnionMemberReference;
@@ -151,6 +152,11 @@ public class Evaluator {
 	private NumericExpression zeroR;
 
 	private ReferenceExpression identityReference;
+
+	/**
+	 * Solve for concrete counterexamples?
+	 */
+	private boolean solve = false;
 
 	/**
 	 * An uninterpreted function used to evaluate "sizeof" on a type. It takes
@@ -246,9 +252,11 @@ public class Evaluator {
 	 * state.
 	 * 
 	 */
-	private State logError(CIVLSource source, State state,
-			BooleanExpression claim, ResultType resultType,
-			ErrorKind errorKind, String message)
+
+	// TODO: move this to its own package, like log, make public
+
+	State logError(CIVLSource source, State state, BooleanExpression claim,
+			ResultType resultType, ErrorKind errorKind, String message)
 			throws UnsatisfiablePathConditionException {
 		BooleanExpression pc = state.pathCondition(), newPc;
 		BooleanExpression npc = universe.not(pc);
@@ -266,20 +274,25 @@ public class Evaluator {
 		if (nsat == ResultType.MAYBE)
 			certainty = Certainty.MAYBE;
 		else { // pc is definitely satisfiable
+			certainty = null;
 			if (resultType == ResultType.NO) {
 				// need something satisfying PC and not claim...
-				ValidityResult claimResult = trueReasoner.validOrModel(universe
-						.or(npc, claim));
+				if (solve) {
+					ValidityResult claimResult = trueReasoner
+							.validOrModel(universe.or(npc, claim));
 
-				if (claimResult.getResultType() == ResultType.NO) {
-					ModelResult modelResult = (ModelResult) claimResult;
+					if (claimResult.getResultType() == ResultType.NO) {
+						Map<SymbolicConstant, SymbolicExpression> model = ((ModelResult) claimResult)
+								.getModel();
 
-					certainty = Certainty.CONCRETE;
-					message += "\nCounterexample:\n" + modelResult.getModel()
-							+ "\n";
-				} else {
-					certainty = Certainty.PROVEABLE;
+						if (model != null) {
+							certainty = Certainty.CONCRETE;
+							message += "\nCounterexample:\n" + model + "\n";
+						}
+					}
 				}
+				if (certainty == null)
+					certainty = Certainty.PROVEABLE;
 			} else {
 				certainty = Certainty.MAYBE;
 			}
@@ -1881,6 +1894,14 @@ public class Evaluator {
 		return result;
 	}
 
+	public boolean getSolve() {
+		return solve;
+	}
+
+	public void setSolve(boolean value) {
+		this.solve = value;
+	}
+
 	/**
 	 * Evaluates the expression and returns the result, which is a symbolic
 	 * expression value.
@@ -1974,7 +1995,6 @@ public class Evaluator {
 			throw new CIVLInternalException("Unknown kind of expression: "
 					+ kind, expression.getSource());
 		}
-		// make canonic?
 		return result;
 	}
 

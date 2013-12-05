@@ -28,12 +28,6 @@ import edu.udel.cis.vsl.gmc.Option;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
-// TODO: When an error is found, solve for concrete values
-// for all symbolic constants in state.  Check pc is true
-// and predicate really holds.  Up the confidence level
-// to CONCRETE.  Save these to a config with -input options
-// and run that.
-
 /**
  * Basic command line and API user interface for CIVL tools.
  * 
@@ -115,6 +109,9 @@ public class UserInterface {
 	public final static Option simplifyO = Option.newScalarOption("simplify",
 			BOOLEAN, "simplify states?", true);
 
+	public final static Option solveO = Option.newScalarOption("solve",
+			BOOLEAN, "try to solve for concrete counterexample", false);
+
 	/**
 	 * A string printed before and after titles of sections of output to make
 	 * them stand out among the clutter.
@@ -155,7 +152,8 @@ public class UserInterface {
 				verboseO, randomO, guidedO, seedO, debugO, userIncludePathO,
 				sysIncludePathO, showTransitionsO, showStatesO,
 				showSavedStatesO, showQueriesO, showProverQueriesO, inputO,
-				idO, traceO, minO, maxdepthO, porO, saveStatesO, simplifyO);
+				idO, traceO, minO, maxdepthO, porO, saveStatesO, simplifyO,
+				solveO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -440,14 +438,12 @@ public class UserInterface {
 		} else
 			traceFile = new File(traceFilename);
 		newConfig = parser.newConfig();
-		// get the original trace and overwrite it with new options...
+		// get the original config and overwrite it with new options...
 		parser.parse(newConfig, traceFile); // gets free args verify filename
 		setToDefault(newConfig, Arrays.asList(showModelO, verboseO, debugO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO));
 		newConfig.read(config);
-		// TODO: check predicate
-		// add option -deadlock (boolean, default true)
 		model = extractModel(out, newConfig, sourceFilename);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
 		result = replayer.run();
@@ -459,7 +455,6 @@ public class UserInterface {
 
 	public boolean runRun(GMCConfiguration config) throws CommandLineException,
 			ABCException, IOException, MisguidedExecutionException {
-		// TODO: still need check predicate in GMC Replayer
 		boolean result;
 		String filename;
 		Model model;
