@@ -3,6 +3,8 @@
  * program by the following way:
  * First, GPU/GPU_BLOCK/GPU_THREAD no longer access global variables of 
  * int type, but use their value (by parameter passing) instead.
+ * Second, the process that spawns GPU_BLOCK/GPU_THREAD
+ * doen't reuse itself to run GPU_BLOCK/GPU_THREAD.
  */
 
 #include<civlc.h>
