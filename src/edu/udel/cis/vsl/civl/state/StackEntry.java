@@ -103,6 +103,9 @@ public class StackEntry {
 		String locationString = source == null ? "" : ", "
 				+ source.getSummary();
 		
+//		if(location.isPurelyLocal())
+//			locationString = locationString + " # ";
+		
 		return "Frame[function=" + location.function().name() + ", location="
 				+ location.id() + locationString + ", scope=" + scope + "]";
 	}

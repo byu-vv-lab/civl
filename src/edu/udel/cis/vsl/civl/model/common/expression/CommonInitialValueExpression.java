@@ -31,7 +31,6 @@ public class CommonInitialValueExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		//TODO check
-		this.purelyLocal = true;
+		this.purelyLocal = this.variable.purelyLocal();
 	}
 }

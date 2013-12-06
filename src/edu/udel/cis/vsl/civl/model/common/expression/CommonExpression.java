@@ -21,7 +21,7 @@ public abstract class CommonExpression extends CommonSourceable implements
 	private Scope expressionScope = null;
 	protected CIVLType expressionType = null;
 	protected boolean hasDerefs;
-	protected boolean purelyLocal;
+	protected boolean purelyLocal = false;
 	
 	/**
 	 * @return true iff the expression has at least one dereferences
@@ -85,7 +85,7 @@ public abstract class CommonExpression extends CommonSourceable implements
 	
 	@Override
 	public void purelyLocalAnalysis(){
-		this.purelyLocal = true;
+		this.purelyLocal = !this.hasDerefs;
 	}
 
 }

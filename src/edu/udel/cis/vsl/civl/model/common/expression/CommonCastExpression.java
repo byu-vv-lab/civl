@@ -105,6 +105,10 @@ public class CommonCastExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		if(this.hasDerefs){
+			this.purelyLocal = false;
+			return;
+		}
 		this.expression.purelyLocalAnalysis();
 		this.purelyLocal = this.expression.isPurelyLocal();
 	}

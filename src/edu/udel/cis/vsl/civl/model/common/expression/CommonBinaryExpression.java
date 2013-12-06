@@ -156,6 +156,10 @@ public class CommonBinaryExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		if (this.hasDerefs) {
+			this.purelyLocal = false;
+			return;
+		}
 		this.left.purelyLocalAnalysis();
 		this.right.purelyLocalAnalysis();
 		this.purelyLocal = this.left.isPurelyLocal()

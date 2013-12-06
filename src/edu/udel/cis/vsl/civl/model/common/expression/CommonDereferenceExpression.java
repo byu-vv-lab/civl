@@ -38,6 +38,7 @@ public class CommonDereferenceExpression extends CommonExpression implements
 	@Override
 	public void setPurelyLocal(boolean pl) {
 		//TODO check &(*p)
+		this.purelyLocal = pl;
 	}
 
 	@Override
@@ -47,8 +48,7 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		this.pointer.purelyLocalAnalysis();
-		this.purelyLocal = this.pointer.isPurelyLocal();
+		this.purelyLocal = false;
 	}
 
 }

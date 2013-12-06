@@ -52,7 +52,7 @@ public class Enabler implements
 
 	private StateFactoryIF stateFactory;
 
-	private boolean debugging = true;
+	private boolean debugging = false;
 
 	private PrintStream debugOut = System.out;
 
@@ -435,7 +435,7 @@ public class Enabler implements
 						+ processStates.size());
 				debugOut.println("Ample process set is : "
 						+ processStates.toString());
-				state.print(debugOut);
+				//state.print(debugOut);
 			}
 		}
 

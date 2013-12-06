@@ -94,7 +94,6 @@ public class CommonUnaryExpression extends CommonExpression implements
 
 	@Override
 	public void calculateDerefs() {
-		// TODO Auto-generated method stub
 		this.operand.calculateDerefs();
 		this.hasDerefs = this.operand.hasDerefs();
 	}
@@ -106,6 +105,11 @@ public class CommonUnaryExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		if(this.hasDerefs){
+			this.purelyLocal = false;
+			return;
+		}
+		
 		this.operand.purelyLocalAnalysis();
 		this.purelyLocal = this.operand.isPurelyLocal();
 	}

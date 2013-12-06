@@ -147,7 +147,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	public int hashCode() {
 		return hashCode;
 	}
-	
+
 	private void computeHashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -164,7 +164,11 @@ public class CommonVariable extends CommonSourceable implements Variable {
 
 	@Override
 	public void setPurelyLocal(boolean pl) {
-		this.purelyLocal = pl;
+		// a constant or an input variable is always considered as purely local
+		if (this.isConst() || this.isInput()) {
+			this.purelyLocal = true;
+		} else
+			this.purelyLocal = pl;
 	}
 
 	@Override
@@ -176,7 +180,6 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	public void setIsBound(boolean value) {
 		this.isBound = value;
 	}
-	
 
 	/*
 	 * (non-Javadoc)

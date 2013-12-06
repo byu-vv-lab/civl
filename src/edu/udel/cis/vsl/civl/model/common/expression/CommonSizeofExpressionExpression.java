@@ -44,6 +44,11 @@ public class CommonSizeofExpressionExpression extends CommonExpression
 
 	@Override
 	public void purelyLocalAnalysis() {
+		if(this.hasDerefs){
+			this.purelyLocal = false;
+			return;
+		}
+		
 		this.argument.purelyLocalAnalysis();
 		this.purelyLocal = this.argument.isPurelyLocal();
 	}

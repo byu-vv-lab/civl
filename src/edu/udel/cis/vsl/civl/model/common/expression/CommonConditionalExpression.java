@@ -102,6 +102,11 @@ public class CommonConditionalExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		if(this.hasDerefs){
+			this.purelyLocal = false;
+			return;
+		}
+		
 		this.condition.purelyLocalAnalysis();
 		this.trueBranch.purelyLocalAnalysis();
 		this.falseBranch.purelyLocalAnalysis();

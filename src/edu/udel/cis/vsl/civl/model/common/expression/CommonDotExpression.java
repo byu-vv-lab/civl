@@ -82,6 +82,11 @@ public class CommonDotExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		if(this.hasDerefs){
+			this.purelyLocal = false;
+			return;
+		}
+		
 		this.struct.purelyLocalAnalysis();
 		this.purelyLocal = this.struct.isPurelyLocal();
 	}

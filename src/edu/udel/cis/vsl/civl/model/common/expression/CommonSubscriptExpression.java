@@ -80,7 +80,6 @@ public class CommonSubscriptExpression extends CommonExpression implements
 	
 	@Override
 	public void calculateDerefs() {
-		// TODO Auto-generated method stub
 		this.array.calculateDerefs();
 		this.index.calculateDerefs();
 		this.hasDerefs = this.array.hasDerefs() || 
@@ -89,7 +88,7 @@ public class CommonSubscriptExpression extends CommonExpression implements
 
 	@Override
 	public void setPurelyLocal(boolean pl) {
-		this.array.setPurelyLocal(pl);
+		this.purelyLocal = pl;
 	}
 
 	@Override
@@ -100,8 +99,18 @@ public class CommonSubscriptExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
+		if(!this.purelyLocal)
+			return;
+		
+		if(this.hasDerefs){
+			this.purelyLocal = false;
+			return;
+		}
+		
 		this.array.purelyLocalAnalysis();
 		this.index.purelyLocalAnalysis();
+		this.purelyLocal = this.array.isPurelyLocal() 
+				&& this.index.isPurelyLocal();
 	}
 
 }

@@ -173,6 +173,10 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				while (newLoc != null && newLoc.isPurelyLocal()) {
 					// TODO check spawn statement
 					// exactly one statement in newLoc.outgoing()
+					//if(debug)
+//					{System.out.println("intermediate state:");
+//					state.print(System.out);}
+					
 					Statement s = newLoc.getOutgoing(0);
 					BooleanExpression guard = (BooleanExpression) executor
 							.evaluator().evaluate(state, p.id(), s.guard()).value;
@@ -181,6 +185,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 					state = stateFactory.setPathCondition(state,
 							newPathCondition);
 					state = executor.execute(state, pid, s);
+					
 					p = state.process(pid);
 					if (p != null && !p.hasEmptyStack())
 						newLoc = p.peekStack().location();

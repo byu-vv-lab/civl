@@ -45,8 +45,12 @@ public class CommonAddressOfExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		// TODO Auto-generated method stub
-		
+		if(this.hasDerefs){
+			this.purelyLocal = false;
+			return;
+		}
+		this.operand.purelyLocalAnalysis();
+		this.purelyLocal = this.operand.isPurelyLocal();
 	}
 	
 	
