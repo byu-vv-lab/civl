@@ -1,17 +1,722 @@
 % LaTeX source for CIVL Reference Manual.
 %
-\documentclass[11pt]{article}
+\documentclass[11pt]{book}
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{xcolor}
 \usepackage{bbold}
+\usepackage{url}
 \usepackage[lined,vlined,linesnumbered,noresetcount]{algorithm2e}
 
 \include{preambular}
 
-\title{The CIVL Reference Manual}
+\title{{\huge\bf CIVL}\\\mbox{The Concurrency Intermediate Verification
+  Language}\\Reference Manual\\ v0.4}
+\author{%
+  Matthew B.\ Dwyer \and
+  Ganesh Gopalakrishnan \and
+  Zvonimir Rakamaric \and
+  Stephen F.\ Siegel \and
+  Manchun Zheng \and
+  Timothy K.\ Zirkel
+}
+
 \begin{document}
 \maketitle
+\tableofcontents
+
+\chapter{Quick Start}
+
+\begin{enumerate}
+\item Download and unpack the appropriate pre-compiled library of CIVL
+  dependencies from \url{http://vsl.cis.udel.edu/tools/vsl_depend/}.
+  There are versions for Darwin (OS X), 32-bit linux, and 64-bit
+  linux.
+\item Move the resulting directory \texttt{vsl} to \texttt{/opt/vsl}.
+\item Download and unpack the latest stable release of CIVL from 
+  \url{http://vsl.cis.udel.edu/civl}.  Again there are versions
+  for Darwin, 32-bit linux, and 64-bit linux.
+\item The resulting directory should be named
+  \texttt{CIVL-\textit{tag}} for some string \textit{tag} which
+  identifies the version of CIVL you downloaded.  Move this directory
+  into \texttt{/opt}.
+\item You should now have an executable script
+  \texttt{/opt/CIVL-\textit{tag}/bin/civl}.  Move this script into
+  your path, or create a symlink from somewhere in your path to it, or
+  add the directory \texttt{/opt/CIVL-\textit{tag}/bin} to your path.
+\end{enumerate}
+
+From the command line, you should now be able to type \texttt{civl
+  help} and see a help message describing the command line syntax.
+
+Copy the file
+\texttt{CIVL-\textit{tag}/examples/concurrency/locksBad.cvl} to your
+working directory.  Look at the program: it is a simple 2-process
+program with two shared variables used as locks.  The 2 processes try
+to obtain the locks in opposite order, leading to a deadlock.
+
+Type
+\begin{verbatim}
+civl verify locksBad.cvl
+\end{verbatim}
+You should see some output culminating in a message 
+\begin{verbatim}
+The program MAY NOT be correct.  See CIVLREP/locksBad_log.txt
+\end{verbatim}
+
+Type
+\begin{verbatim}
+civl replay locksBad.cvl
+\end{verbatim}
+You should see a step-by-step account of how the program arrived
+at the deadlock.
+
+\textbf{Note.}  You can install \texttt{CIVL-\textit{tag}} and
+\texttt{vsl} in any directory you want, not just in \texttt{/opt}.
+You just need to edit the script file \texttt{civl} appropriately,
+replacing the default paths with the new paths.
+
+\part{Language}
+
+\chapter{Overview of CIVL-C}
+
+% write a grammar.  Leave out type qualifiers, etc.  Keep pointers.
+% Keep simple types?  Why not keep all the standard types.
+% How about "symbolic types"?  Make all the casts explicit.
+% Look at CIL?
+
+% Describe as subset of C, but leave out:... and add...
+
+% add Set<proc> and use it.
+
+\section{CIVL-C concepts and primitives}
+
+CIVL-C is a programming language.  It is an extension of a subset of
+the C11 dialect of C.  It does not include the standard C library.
+
+A CIVL-C program should begin with the line
+\begin{verbatim}
+#include <civlc.h>
+\end{verbatim}
+which includes the main CIVL-C header file, which declares all the
+types and other CIVL primitives.  Almost all of the CIVL-C primitives
+which are not already in C begin with the symbol \texttt{\$} to easily
+distinguish them from any reserved work or identifier in a C program.  
+
+A CIVL-C program encodes a CIVL model for a particular CIVL
+context. The types are essentially the C types with the additional
+process reference type (denoted \cproc).  The expressions are C
+expressions with some additional expressions defined below.
+
+In CIVL-C, functions can be defined in any scope, not just in file
+scope.  The lexical scope structure and placement of function
+definitions determine the static scope tree $\Sigma$ and the function
+prototype system.  A function's defining scope is, as you would
+expect, the scope in which its definition occurs.
+
+The CIVL-C code will not have an explicit ``root'' procedure.
+Instead, a root procedure will be implicitly wrapped around the entire
+code.  The global input variables will become the inputs to the root
+procedure.  A ``\texttt{main}'' procedure must be delcared that takes
+no parameters but can have any return type.  The body of \texttt{main}
+becomes the body of the root procedure.  The return type of
+\texttt{main} becomes the return type of the root procedure.  The
+\texttt{main} procedure itself disappears in translation.
+
+The reason for this protocol is that an arbitrary (sequential) C program
+is a legal (and reasonable) CIVL-C program.  The global variables in the
+C program simply become variables declared in the root scope.
+
+The additional language elements are shown in Figure \ref{fig:cc}.
+
+\begin{figure}
+  \begin{tabular}{ll}
+    \cproc & the process type \\
+    \cself & the evaluating process (constant of type \cproc) \\
+    \cinput & type qualifier declaring variable to be a program input \\
+    \coutput & type qualifier declaring variable to be a program output \\
+    \cspawn & create a new process running procedure \\
+    \cwait & wait for a process to terminate \\
+    \cassert & check something holds \\
+    \ctrue & boolean value true, used in assertions \\
+    \cfalse & boolean value false, used in assertions \\
+    \cassume & assume something holds \\
+    \cwhen & guarded statement \\
+    \cchoose & nondeterministic choice statement \\
+    \cchooseint & nondeterministic choice of integer  \\
+    \cinvariant & declare a loop invariant \\
+    \crequires & procedure precondition \\
+    \censures & procedure postcondition \\
+    \cresult & refers to result returned by procedure in contracts \\
+    \cat & refer to variable in other process, e.g., \texttt{p@x} \\
+    \ccollective & a collective expression\\
+    \cheap & the heap type \\
+    \cscope & the scope type, used to give a name to a scope \\
+    \cmalloc & malloc function with additional heap arguments \\
+    \texttt{*<...>} & scope-qualified pointer type
+  \end{tabular}
+  \caption{CIVL-C primitives.  Some of these are part of the grammar of the language;
+    others are defined in the header file \texttt{civlc.h}.}
+  \label{fig:cc}
+\end{figure}
+
+
+
+\section{Detailed descriptions of primitives}
+
+\subsection{\cproc} This is a primitive object type and functions like
+any other primitive C type (e.g., \texttt{int}).  An object of this
+type refers to a process.  It can be thought of as a process ID, but
+it is not an integer and cannot be cast to one.  Certain expressions
+take an argument of \cproc{} type and some return something of
+\cproc{} type.
+
+\subsection{\cself} This is a constant of type \cproc.  It can be used
+wherever an argument of type \cproc{} is called for.  It refers to the
+process that is evaluating the expression containing ``\cself''.
+
+\subsection{\cinput} A variable in the root scope only may be declared
+with this type modifier indicating it is an ``input'' variable, as in
+\begin{verbatim}
+  $input int n;
+\end{verbatim}
+As explained above, the variable becomes a parameter to the root
+procedure.  This is used when comparing two programs for functional
+equivalence.  The two programs are functionally equivalent if,
+whenever they are given the same inputs (i.e., corresponding \cinput{}
+variables are initialized with the same values) they will produce the
+same outputs (i.e., corresponding \coutput{} variables will end up
+with the same values at termination).  Input variables can also be
+assigned a concrete value on the command line.
+
+\subsection{\coutput} A variable in the root scope may be declared
+with this type modifier to declare it to be an output variable.
+
+\subsection{\cspawn} This is an expression with side-effects.  It
+spawns a new process and returns a reference to the new process, i.e.,
+an object of type \cproc.  The syntax is the same as a procedure
+invocation with the keyword ``\cspawn'' inserted in front:
+\begin{verbatim}
+  $spawn f(expr1, ..., exprn)
+\end{verbatim}
+Typically the returned value is assigned to a variable, e.g.,
+\begin{verbatim}
+  $proc p = $spawn f(i);
+\end{verbatim}
+If the invoked function \texttt{f} returns a value, that value is
+simply ignored.
+
+\subsection{\cwait} This is a statement that takes an argument of type
+\cproc{} and blocks until the referenced process terminates:
+\begin{verbatim}
+  $wait expr;
+\end{verbatim}
+
+\subsection{\cassert} This is an assertion statement.  It takes as its
+sole argument an expression of boolean type.  The expressions have a
+richer syntax than C expressions.  During verification, the assertion
+is checked.  If it does not hold, a violation is reported.
+\begin{verbatim}
+  $assert expr;
+\end{verbatim}
+Boolean values \ctrue{} and \cfalse{} may be used in assertions
+and assumptions.
+
+\subsection{\cassume} This is an assume statement. Its syntax is the
+same as that of \cassert.  During verification, the assumed expression
+is assumed to hold.  If this leads to a contradiction on some
+execution, that execution is simply ignored.  It never reports a
+violation, it only restricts the set of possible executions that will
+be explored by the verification algorithm.
+\begin{verbatim}
+  $assume expr;
+\end{verbatim}
+
+\subsection{\cwhen} This represents a guarded command:
+\begin{verbatim}
+  $when (expr) stmt;
+\end{verbatim}
+All statements have a guard, either implicit or explicit.  For most
+statements, the guard is \ctrue.  The \cwhen{} statement allows one to
+attach an explicit guard to a statement.
+
+When \texttt{expr} is \emph{true}, the statement is enabled, otherwise
+it is disabled.  A disabled statement is \emph{blocked}---it will not
+be scheduled for execution.  When it is enabled, it may execute by
+moving control to the \texttt{stmt} and executing the first atomic
+action in the \texttt{stmt}.
+
+If \texttt{stmt} itself has a non-trivial guard, the guard of the
+\cwhen{} statement is effectively the conjunction of the \texttt{expr}
+and the guard of \texttt{stmt}.
+
+The evaluation of \texttt{expr} and the first atomic action of
+\texttt{stmt} effectively occur as a single atomic action.  There is
+no guarantee that execution of \texttt{stmt} will continue atomically
+if it contains more than one atomic action, i.e., other processes may
+be scheduled.
+
+Examples:
+\begin{verbatim}
+  $when (s>0) s--;
+\end{verbatim}
+This will block until \texttt{s} is positive and then decrement
+\texttt{s}.  The execution of \texttt{s--} is guaranteed to take place
+in an environment in which \texttt{s} is positive.
+
+\begin{verbatim}
+  $when (s>0) {s--; t++}
+\end{verbatim}
+The execution of \texttt{s--} must happen when \texttt{s>0}, but
+between \texttt{s--} and \texttt{t++}, other processes may execute.
+
+\begin{verbatim}
+  $when (s>0) $when (t>0) x=y*t;
+\end{verbatim}
+This blocks until both \texttt{x} and \texttt{t} are positive then
+executes the assignment in that state.  It is equivalent to
+\begin{verbatim}
+  $when (s>0 && t>0) x=y*t;
+\end{verbatim}
+
+\subsection{\cchoose}  A \cchoose{} statement has the form
+\begin{verbatim}
+  $choose {
+    stmt1;
+    stmt2;
+    ...
+    default: stmt
+  }
+\end{verbatim}
+The \texttt{default} clause is optional.
+
+The guards of the statements are evaluated and among those that are
+\emph{true}, one is chosen nondeterministically and executed.  If none
+are \emph{true} and the \texttt{default} clause is present, it is
+chosen.  The \texttt{default} clause will only be selected if all
+guards are \emph{false}.  If no \texttt{default} clause is present and
+all guards are \emph{false}, the statement blocks.  Hence the implicit
+guard of the \cchoose{} statement without a \texttt{default} clause is
+the disjunction of the guards of its sub-statements.  The implicit
+guard of the \cchoose{} statement with a default clause is
+\emph{true}.
+
+Example: this shows how to encode a ``low-level'' CIVL guarded
+transition system:
+
+\begin{verbatim}
+  l1: $choose {
+    $when (x>0) {x--; goto l2;}
+    $when (x==0) {y=1; goto l3;}
+    default: {z=1; goto l4;}
+  }
+  l2: $choose {
+    ...
+  }
+  l3: $choose {
+    ...
+  }
+\end{verbatim}
+
+\subsection{\cchooseint} This is a function with the following prototype:
+\begin{verbatim}
+  int $choose_int(int n);
+\end{verbatim}
+It takes as input a positive integer \texttt{n} and returns an integer
+in the range $[0,\texttt{n}-1]$.  
+
+\subsection{\cinvariant} This indicates a loop invariant.  Each C loop
+construct has an optional invariant clause as follows:
+\begin{verbatim}
+  while (expr) $invariant (expr) stmt
+  for (e1; e2; e3) $invariant (expr) stmt
+  do stmt while (expr) $invariant (expr) ;
+\end{verbatim}
+The invariant encodes the claim that if \texttt{expr} holds upon
+entering the loop and the loop condition holds, then it will hold
+after completion of execution of the loop body.  The invariant is used
+by certain verification techniques.
+
+\emph{Status:} parsed, but nothing is currently done with this
+information.
+
+\subsection{Procedure contracts}
+The \crequires{} and \censures{} primitives are used to encode
+procedure contracts.  There are optional
+elements that may occur in a procedure declaration or definition,
+as follows.  For a function prototype:
+\begin{verbatim}
+  T f(...)
+    $requires expr;
+    $ensures expr;
+  ;
+\end{verbatim}
+For a function definition:
+\begin{verbatim}
+  T f(...)
+    $requires expr;
+    $ensures expr;
+  {
+    ...
+  }
+\end{verbatim}
+The value \cresult{} may be used in post-conditions to refer
+to the result returned by a procedure.
+
+\emph{Status}: parsed, but nothing is currently done with this
+information.
+
+\subsection{Remote expressions}.  These have the form \verb!expr@x!
+and refer to a variable in another process, e.g., \verb!procs[i]@x!.
+This special kind of expression is used in collective expressions,
+which are used to formulate collective assertions and invariants.
+
+The expression \verb!expr! must have \cproc{} type.  The variable
+\texttt{x} must be a statically visible variable in the context in
+which it is occurs.  When this expression is evaluated, the evaluation
+context will be shifted to the process referred to by \texttt{expr}.
+
+\emph{Status}: not implemented.
+
+\subsection{Collective expressions}.  These have the form
+\begin{verbatim}
+  $collective(proc_expr, int_expr) expr 
+\end{verbatim}
+This is a collective expression over a set of processes.  The
+expression \texttt{proc{\U}expr} yields a pointer to the first element
+of an array of \cproc.  The expression \texttt{int{\U}expr} gives the
+length of that array, i.e., the number of processes.  Expression
+\texttt{expr} is a boolean-valued expression; it may use remote
+expressions to refer to variables in the processes specified in the
+array.  Example:
+\begin{verbatim}
+  $proc procs[N];
+  ...
+  $assert $collective(procs, N) i==procs[(pid+1)%N]@i ;
+\end{verbatim}
+
+\emph{Status}: not implemented.
+
+\chapter{Pointers and heaps}
+
+CIVL-C supports pointers, using the same operators with the same
+meanings as C (\texttt{\&}, \texttt{*}, pointer arithmetic).
+As mentioned above, there is also a heap type \cheap{}, which can
+be used to declare multiple heaps in a CIVL-C program.  The
+interaction between pointers, heaps, and scopes is an important
+aspect of CIVL-C.
+
+\section{Pointer types}
+
+Given any object type $T$ and a static scope $s$ in a CIVL-C program,
+there is a type \emph{pointer-to-$T$-in-$s$}.  The type is used to
+represent a pointer to a memory location of type $T$ in scope $s$ or a
+descendant of $s$ (i.e., some scope contained in $s$).
+
+If scope $s_1$ is a descendant of $s_2$ (i.e., $s_1$ is lexically
+contained in $s_2$), the type \emph{pointer-to-$T$-in-$s_1$} is a
+subtype of \emph{pointer-to-$T$-in-$s_2$}.  This means that any
+expression of the first type can be used wherever an object of the
+second type is expected.  In particular, any expression $e$ of the
+subtype can be assigned to a left-hand-side expression of the
+supertype without explicit casts; also $e$ can be used as an argument
+to a function for which the corresponding parameter has the supertype.
+
+The syntax for denoting this type adheres to the usual C syntax for
+denoting the type \emph{pointer-to-$T$} with the addition of a scope
+parameter within angular brackets immediately following the \texttt{*}
+token.  For example, to declare a variable \texttt{p} of type
+\emph{pointer-to-$T$-in-$s$}, one writes
+\begin{verbatim}
+     int *<s> p;
+\end{verbatim}
+If the scope modifier \texttt{<...>} is absent, the scope is taken to
+be the root scope $s_0$.  The object has type
+\emph{pointer-to-$T$-in-$s_0$}, which is abreviated as
+\emph{pointer-to-$T$}.  In this way, stanard C programs can be
+interpreted as CIVL-C programs.
+
+\section{Address-of operator}
+
+The address-of operator \texttt{\&} returns a pointer of the
+appropriate subtype using the innermost scope in which its left-hand-side
+argument is declared.  For example
+
+\begin{verbatim}
+  {
+    $scope s1;
+    int x;
+    double a[N];
+    int *<s1> p = &x;
+    double *<s1> q = &a[2];
+  }
+\end{verbatim}
+is correct (in particular, it is type-correct) because \texttt{\&x}
+has type \emph{pointer-to-\texttt{int}-in-\texttt{s1}}, since
+\texttt{s1} is the scope in which \texttt{x} is declared.
+
+\section{Pointer addition and subtractions}
+
+If \texttt{e} is an expression of type \emph{pointer-to-$T$-in-$s$}
+and \texttt{i} is an expression of integer type then \texttt{e+i} also
+has type \emph{pointer-to-$T$-in-$s$}.  In other words, pointer
+addition cannot leave the scope of the original pointer.  This
+reflects the fact that every object is contained in one scope, and
+pointer addition cannot leave the object.
+
+
+Pointer subtraction is defined on two pointers of the same type, where
+``same'' includes the scope.  That is checked statically.  As in C, it
+is only defined if the two pointers point to the same object.  In
+CIVL-C, a runtime error will be thrown if they do not point to the
+same object.
+
+\section{Semantics of scopes and pointer types}
+
+A variable of type \cscope{} is treated like any other variable.
+It becomes part of the state when the scope in which it is declared
+is instantiated to form a dynamic scope.  The variable is 
+initialized  at that time and its value cannot change.
+
+Each time a dynamic scope is instantiated, it is assigned a unique ID
+number.  The exactly value of the ID number is not relevant, it just
+has to be distince from any other scope ID number that currently
+exists in the state.  This is the value that is assigned to the scope
+variable.  Therefore, if a static scope contains a scope variable, and
+that scope is instantiated twice to form two distinct dynamic scopes,
+the values assigned to the two variables will be distinct.
+
+A pointer value is an ordered pair $\langle \delta,r \rangle$, where
+$\delta$ is a dynamic scope ID and $r$ is a reference to a memory
+location in the static scope associated to $\delta$.  (We will define
+the exact form of a reference later.)
+
+When a dynamic scope is instantiated, each new variable created is
+assigned a \emph{dynamic type}.  This is a refinement of the static
+type associated to the static variable.   Every dynamic type
+is an instance of exactly one static type.  The dynamic
+type of the newly instantiated variable is an instance of the
+static type of the static variable.
+
+The dynamic pointer types have the form
+\emph{pointer-to-$t$-in-$\delta$}, where $t$ is a dynamic type and
+$\delta$ is a dynamic scope ID.  For a program to be dynamically type
+safe, such a variable should hold only values of the form $\langle
+\delta, r\rangle$.  In particular, the variable should never be
+assigned a value where the dynamic scope component is a different
+instance of the static scope $s$ associated to $\delta$.
+
+\section{Pointer casts}
+
+If scope $s_1$ is contained in scope $s_2$, an expression of type
+\emph{pointer-to-$T$-in-$s_1$} can always be cast to
+\emph{pointer-to-$T$-in-$s_2$},
+ because the first is a subtype of the second.  (As described above,
+the cast is unnecessary.)  
+
+The cast in the other direction is also allowed, but the dynamic type
+safety of that cast will only be checked at runtime.  In particular, a
+runtime error will result if the cast attempts to cast the pointer
+value to a dynamic scope which does not contain (is an ancestor of)
+the dynamic scope component of the pointer value.
+
+A type \emph{pointer-to-$T_1$-in-$s$} can be cast to a type
+\emph{pointer-to-$T_2$-in-$s$} according to the usual rules of C.  In
+other words, usual casting rules apply as long as you don't change the
+scope.
+
+
+
+\section{Heaps}
+
+The standard CIVL-C library defines a type \cheap{} for explicit
+modeling of a heap.  The default value of \cheap{} type is an empty
+heap, so you only need to declare a variable to have type \cheap{}
+in order to create a new heap:
+\begin{verbatim}
+  $heap h; /* a new empty heap */
+\end{verbatim}
+
+The following functions are also defined:
+\begin{verbatim}
+void* $malloc($heap *h, int size);
+void memcpy(void *p, void *q, size_t size);
+void free(void *p)
+\end{verbatim}
+The first function is like C's \texttt{malloc}, except that you
+specify the heap in which the allocation takes place by passing a
+pointer to the heap as the first argument.  This modifies the
+specified heap and returns a pointer to the new object.  The function
+can only occur in a context in which the type of the object is
+specified, as in:
+\begin{verbatim}
+  $heap h;
+  int n = 10;
+  double *p = (double*)$malloc(&h, n*sizeof(double));
+\end{verbatim}
+The second and third functions are exactly the same as in C. Note that
+\texttt{free} modifies the heap which was used to allocate \texttt{p}.
+
+Another pointer example:
+\begin{verbatim}
+{ $heap h;
+  { $scope s1;
+    double x;
+    { $scope s2;
+      double y;
+      double *<s1> p;
+      /* p can only point to something in s1 or descendant,
+       * for example, s2 */
+      p = &x; // fine
+      p = &y; // fine
+      p = (double*)$malloc(&h,10*sizeof(double)); // static type error
+    }
+  }
+}
+\end{verbatim}
+
+\emph{Status}: Pointer type, \texttt{\&}, \texttt{*}, pointer addition
+all implemented.  Type \cheap{}, \texttt{malloc}, \texttt{free}
+implemented.  Scope-qualified pointers: parsed, type-checked, but
+information not currently used.
+
+\section{Scope-Parameterized Functions}
+
+Coming soon.  (Parsed, type checked, not currently used otherwise.)
+
+\section{Scope-Parameterized Type Definitions}
+
+Coming soon. (Ditto.)
+
+\chapter{Some Translation Examples}
+
+\section{Structured parallelism}
+Structured \verb!parbegin!/\verb!parend! statements look like this:
+\begin{verbatim}
+$parbegin
+  S1; S2; S2
+$parend
+\end{verbatim}
+(See Dijkstra, Cooperating Sequential Processes.)  The meaning is: run
+the three statements in parallel, and block at the end until all have
+completed.
+
+This can be represented in CIVL-C as follows:
+
+\begin{verbatim}
+{
+  void f_1() {S1}
+  void f_2() {S2}
+  void f_3() {S3}
+  $proc tmp1 = $fork f_1(), tmp2=$fork f_2(), tmp3=$fork f_3();
+  $join(tmp1); $join(tmp2); $join(tmp3);
+}
+\end{verbatim}
+
+\subsection{Parallel for loops}
+The standard parallel ``for'' loop looks like
+\begin{verbatim}
+  $parfor(T i = e; cond; inc) S
+\end{verbatim}
+It indicates each iteration should be run concurrently, blocking
+at end until all complete.  In CIVL-C:
+
+\begin{verbatim}
+{
+  void f(T i) {S}
+  T i = e;
+  int c = 0;
+  Vector<$proc> list;
+
+  while (cond) {
+    list.add($fork f());
+    c++;
+    inc;
+  }
+  for (int j=0; j<c; j++) $join(list.get(j));
+}
+\end{verbatim}
+
+(This is assuming we have some sort of Vector datatype.  Need to think
+about that.)
+
+\subsection{Message Passing}
+
+There will be a bunch of standard libraries that can be included
+into CIVL-C.  One of these will be the message-passing library.
+It will define a bunch of primitives that we will fill in shortly.
+Among them will be basic send and receive functions.
+
+The message-passing library can be defined entirely in CIVL-C.
+(See Figure \ref{fig:mp1}.)
+
+\begin{figure}
+\begin{verbatim}
+typedef struct _CIVL_Message {
+  struct _CIVL_Message *next; // next message in this queue
+  struct _CIVL_Message *prev; // previous message in this queue
+  int tag; // message tag
+  int size; // size of buffer
+  void *data; // pointer to first element
+} *CIVL_Message;
+
+typedef struct _CIVL_Comm {
+  $heap heap;
+  int numProcs; // number of procs in this communicator
+  $proc *procs; // array of length numProcs
+  CIVL_Message buf_front[][]; // oldest element of each queue
+  CIVL_Message buf_back[][]; // newest element of each queue
+} *CIVL_Comm;
+\end{verbatim}
+  \caption{CIVL Message Passing library: basic definitions}
+  \label{fig:mp1}
+\end{figure}
+
+Message passing functions may be defined with prototypes such as:
+\begin{verbatim}
+  CIVL_Comm CIVL_Comm_create($proc procs[], int numProcs);
+  void CIVL_send(int src, void *buf, int size, int dest,
+                 int tag, CIVL_Comm comm);
+  void CIVL_recv(int dest, void *buf, int size, int src,
+                 int tag, CIVL_Comm comm);
+\end{verbatim}
+
+The arguments for \texttt{send} are:
+\begin{enumerate}
+\item rank of process issuing the send
+\item address of buffer containing data to be sent
+\item size of message
+\item an integer tag
+\item rank of destination process
+\item communicator
+\end{enumerate}
+
+The arguments for \texttt{recv} are:
+\begin{enumerate}
+\item rank of process issuing the receive
+\item address of receive buffer
+\item size of receive buffer (must be large enough to hold any incoming message)
+\item rank of source process or \code{CIVL{\U}ANY{\U}SOURCE}
+\item tag or \code{CIVL{\U}ANY{\U}TAG}
+\item communicator
+\end{enumerate}
+
+Notice one difference from MPI: we have to specify the process to
+which the send or receive is associated in the first argument. This is
+because we need to be more general than MPI. In MPI, that process is
+always the MPI process invoking the send or receive. In CIVL, you
+might want to have threads within processes (for example) and
+associate the message to the MPI process, even though the thread is
+actually invoking the send. Or you might want to associate it to
+something else in some other language/library/API.
+
+How they are implemented: \texttt{CIVL{\U}Comm{\U}create}
+mallocs a new object of type \texttt{struct {\U}CIVL{\U}Comm} and returns
+a pointer to it.
+
+
+\part{Semantics}
+
 
 \section{CIVL Model Syntax}
 
@@ -325,7 +1030,7 @@ semantics will be described in \S\ref{sec:semantics}.
   \end{itemize}
 \end{enumerate}
 
-\subsubsection{Remarks}
+\subsection{Remarks}
 
 The system described is sufficiently general to model pointers. There
 can be (one or more) pointer types and corresponding values.  The
@@ -737,526 +1442,82 @@ In any state, you can renumber the processes (and update the
 references accordingly) however you want, to get rid of gaps, put them
 in a canonic order, etc.
 
-\section{CIVL-C}
 
-\subsection{Overview}
+\part{Tools}
 
-% write a grammar.  Leave out type qualifiers, etc.  Keep pointers.
-% Keep simple types?  Why not keep all the standard types.
-% How about "symbolic types"?  Make all the casts explicit.
-% Look at CIL?
+Current tools allow one to \emph{run} a CIVL program using random
+choice to resolve nondeterministic choices; \emph{verify} a program
+using model checking to explore all states of the program;
+\emph{replay} a trace if an error is found.
 
-% Describe as subset of C, but leave out:... and add...
+The properties checked are assertion violations, division by zero,
+illegal pointer accesses, etc.
 
-% add Set<proc> and use it.
-
-CIVL-C is a programming language.   It is an extension of the C11
-dialect of C.  It does not however, include the entire standard
-C library.
-
-A CIVL-C program encodes a CIVL model for a particular CIVL context. The
-types are essentially the C types with the additional process reference
-type (denoted \cproc).  The expressions are C expressions with 
-some additional expressions defined below.
-
-In CIVL-C, functions can be defined in any scope, not just in file
-scope.  The lexical scope structure and placement of function
-definitions determine the static scope tree $\Sigma$ and the function
-prototype system.  A function's defining scope is, as you would
-expect, the scope in which its definition occurs.
-
-The CIVL-C code will not have an explicit ``root'' procedure.
-Instead, a root procedure will be implicitly wrapped around the entire
-code.  The global input variables will become the inputs to the root
-procedure.  A ``\texttt{main}'' procedure must be delcared that takes
-no parameters but can have any return type.  The body of \texttt{main}
-becomes the body of the root procedure.  The return type of
-\texttt{main} becomes the return type of the root procedure.  The
-\texttt{main} procedure itself disappears in translation.
-
-The reason for this protocol is that an arbitrary (sequential) C program
-is a legal (and reasonable) CIVL-C program.  The global variables in the
-C program simply become variables declared in the root scope.
-
-The additional language elements are shown in Figure \ref{fig:cc}.
-
-\begin{figure}
-  \begin{tabular}{ll}
-    \cproc & the process type \\
-    \cself & the evaluating process (constant of type \cproc) \\
-    \cinput & type qualifier declaring variable to be a program input \\
-    \coutput & type qualifier declaring variable to be a program output \\
-    \cspawn & create a new process running procedure \\
-    \cwait & wait for a process to terminate \\
-    \cassert & check something holds \\
-    \ctrue & boolean value true, used in assertions \\
-    \cfalse & boolean value false, used in assertions \\
-    \cassume & assume something holds \\
-    \cwhen & guarded statement \\
-    \cchoose & nondeterministic choice statement \\
-    \cchooseint & nondeterministic choice of integer  \\
-    \cinvariant & declare a loop invariant \\
-    \crequires & procedure precondition \\
-    \censures & procedure postcondition \\
-    \cresult & refers to result returned by procedure in contracts \\
-    \cat & refer to variable in other process, e.g., \texttt{p@x} \\
-    \ccollective & a collective expression\\
-    \cheap & the heap type \\
-    \cscope & the scope type, used to give a name to a scope \\
-    \cmalloc & malloc function with additional heap arguments \\
-    \cregion & region qualifier for a pointer type
-  \end{tabular}
-  \caption{CIVL-C primitives.  Some of these are part of the grammar of the language;
-    others are defined in the header file \texttt{civlc.h}.}
-  \label{fig:cc}
-\end{figure}
-
-
-
-\subsection{Detailed descriptions}
-
-\subsubsection{\cproc} This is a primitive object type and functions
-like any other primitive C type (e.g., \texttt{int}).  An object of
-this type refers to process.  It can be thought of as a process ID,
-but it is not an integer and cannot be cast to one.  Certain
-expressions take an argument of \cproc{} type and some return
-something of \cproc{} type.
-
-\subsubsection{\cself} This is a constant of type \cproc.  It can be
-used wherever an argument of type \cproc{} is called for.  It refers to
-the process that is evaluating the expression containing ``\cself''.
-
-\subsubsection{\cinput} A variable in the root scope only may be
-declared with this type modifier indicating it is an ``input''
-variable, as in
-\begin{verbatim}
-  $input int n;
-\end{verbatim}
-As explained above, the variable becomes a parameter to the root
-procedure.  This is used when comparing two programs for functional
-equivalence.  The two programs are functionally equivalent if,
-whenever they are given the same inputs (i.e., corresponding \cinput{}
-variables are initialized with the same values) they will produce the
-same outputs (i.e., corresponding \coutput{} variables will end up
-with the same values at termination).
-
-\subsubsection{\coutput} A variable in the root scope may be
-declared with this type modifier to declare it to be an output
-variable.
-
-\subsubsection{\cspawn} This is an expression with side-effects.  It
-spawns a new process and returns a reference to the new process, i.e.,
-an object of type \cproc.  The syntax is the same as a procedure
-invocation with the keyword ``\cspawn'' inserted in front:
-\begin{verbatim}
-  $spawn f(expr1, ..., exprn)
-\end{verbatim}
-Typically the returned value is assigned to a variable, e.g.,
-\begin{verbatim}
-  $proc p = $spawn f(i);
-\end{verbatim}
-If the invoked function \texttt{f} returns a value, that value is
-simply ignored.
-
-\subsubsection{\cwait} This is a statement that takes an argument of
-type \cproc{} and blocks until the referenced process terminates:
-\begin{verbatim}
-  $wait expr;
-\end{verbatim}
-
-\subsubsection{\cassert} This is an assertion statement.  It takes as
-its sole argument an expression of boolean type.  The expressions have
-a richer syntax than C expressions.  During verification, the
-assertion is checked.  If it does not hold, a violation is reported.
-\begin{verbatim}
-  $assert expr;
-\end{verbatim}
-Boolean values \ctrue{} and \cfalse{} may be used in assertions
-and assumptions.
-
-\subsubsection{\cassume} This is an assume statement. Its syntax is
-the same as that of \cassert.  During verification, the assumed
-expression is assumed to hold.  If this leads to a contradiction on
-some execution, that execution is simply ignored.  It never reports a
-violation, it only restricts the set of possible executions that will
-be explored by the verification algorithm.
-\begin{verbatim}
-  $assume expr;
-\end{verbatim}
-
-\subsubsection{\cwhen} This represents a guarded comment:
-\begin{verbatim}
-  $when (expr) stmt;
-\end{verbatim}
-All statements have a guard, either implicit or explicit.  For most
-statements, the guard is \ctrue.  The \cwhen{} statement allows one to
-attach an explicit guard to a statement.
-
-When \texttt{expr} is \emph{true}, the statement is enabled, otherwise
-it is disabled.  A disabled statement is \emph{blocked}---it will not
-be scheduled for execution.  When it is enabled, it may execute by
-moving control to the \texttt{stmt} and executing the first atomic
-action in the \texttt{stmt}.
-
-If \texttt{stmt} itself has a non-trivial guard, the guard of the
-\cwhen{} statement is effectively the conjunction of the \texttt{expr}
-and the guard of \texttt{stmt}.
-
-The evaluation of \texttt{expr} and the first atomic action of
-\texttt{stmt} effectively occur as a single atomic action.  There is
-no guarantee that execution of \texttt{stmt} will continue atomically
-if it contains more than one atomic action, i.e., other processes may
-be scheduled.
-
-Examples:
-\begin{verbatim}
-  $when (s>0) s--;
-\end{verbatim}
-This will block until \texttt{s} is positive and then decrement
-\texttt{s}.  The execution of \texttt{s--} is guaranteed to take place
-in an environment in which \texttt{s} is positive.
+The available tools and options are summarized by the \texttt{civl
+  help} command:
 
 \begin{verbatim}
-  $when (s>0) {s--; t++}
-\end{verbatim}
-The execution of \texttt{s--} must happen when \texttt{s>0}, but
-between \texttt{s--} and \texttt{t++}, other processes may execute.
-
-\begin{verbatim}
-  $when (s>0) $when (t>0) x=y*t;
-\end{verbatim}
-This blocks until both \texttt{x} and \texttt{t} are positive then
-executes the assignment in that state.  It is equivalent to
-\begin{verbatim}
-  $when (s>0 && t>0) x=y*t;
-\end{verbatim}
-
-\subsubsection{\cchoose}  A \cchoose{} statement has the form
-\begin{verbatim}
-  $choose {
-    stmt1;
-    stmt2;
-    ...
-    default: stmt
-  }
-\end{verbatim}
-The \texttt{default} clause is optional.
-
-The guards of the statements are evaluated and among those that are
-\emph{true}, one is chosen nondeterministically and executed.  If none
-are \emph{true} and the \texttt{default} clause is present, it is
-chosen.  The \texttt{default} clause will only be selected if all
-guards are \emph{false}.  If no \texttt{default} clause is present and
-all guards are \emph{false}, the statement blocks.  Hence the implicit
-guard of the \cchoose{} statement without a \texttt{default} clause is
-the disjunction of the guards of its sub-statements.  The implicit
-guard of the \cchoose{} statement with a default clause is
-\emph{true}.
-
-Example: this shows how to encode a ``low-level'' CIVL guarded
-transition system:
-
-\begin{verbatim}
-  l1: $choose {
-    $when (x>0) {x--; goto l2;}
-    $when (x==0) {y=1; goto l3;}
-    default: {z=1; goto l4;}
-  }
-  l2: $choose {
-    ...
-  }
-  l3: $choose {
-    ...
-  }
-\end{verbatim}
-
-\subsubsection{\cchooseint} This is a function with the following prototype:
-\begin{verbatim}
-  int $choose_int(int n);
-\end{verbatim}
-It takes as input a positive integer \texttt{n} and returns an integer
-in the range $[0,\texttt{n}-1]$.  
-
-\subsubsection{\cinvariant} This indicates a loop invariant.  Each C loop construct has an
-optional invariant clause as follows:
-\begin{verbatim}
-  while (expr) $invariant (expr) stmt
-  for (e1; e2; e3) $invariant (expr) stmt
-  do stmt while (expr) $invariant (expr) ;
-\end{verbatim}
-The invariant encodes the claim that if \texttt{expr} holds upon
-entering the loop and the loop condition holds, then it will hold
-after completion of execution of the loop body.  The invariant is used
-by certain verification techniques.
-
-\subsubsection{Procedure contracts}
-The \crequires{} and \censures{} primitives are used to encode
-procedure contracts.  There are optional
-elements that may occur in a procedure declaration or definition,
-as follows.  For a function prototype:
-\begin{verbatim}
-  T f(...)
-    $requires expr;
-    $ensures expr;
-  ;
-\end{verbatim}
-For a function definition:
-\begin{verbatim}
-  T f(...)
-    $requires expr;
-    $ensures expr;
-  {
-    ...
-  }
-\end{verbatim}
-The value \cresult{} may be used in post-conditions to refer
-to the result returned by a procedure.
-
-\subsubsection{Remote expressions}.  These have the form \verb!expr@x!
-and refer to a variable in another process, e.g., \verb!procs[i]@x!.
-This special kind of expression is used in collective expressions,
-which are used to formulate collective assertions and invariants.
-
-The expression \verb!expr! must have \cproc{} type.  The variable
-\texttt{x} must be a statically visible variable in the context in
-which it is occurs.  When this expression is evaluated, the evaluation
-context will be shifted to the process referred to by \texttt{expr}.
-
-\subsubsection{Collective expressions}.  These have the form
-\begin{verbatim}
-  $collective(proc_expr, int_expr) expr 
-\end{verbatim}
-This is a collective expression over a set of processes.  The
-expression \texttt{proc{\U}expr} yields a pointer to the first element
-of an array of \cproc.  The expression \texttt{int{\U}expr} gives the
-length of that array, i.e., the number of processes.  Expression
-\texttt{expr} is a boolean-valued expression; it may use remote
-expressions to refer to variables in the processes specified in the
-array.  Example:
-\begin{verbatim}
-  $proc procs[N];
-  ...
-  $assert $collective(procs, N) i==procs[(pid+1)%N]@i ;
+Usage: civl <command> <options> filename ...
+Commands:
+  verify : verify program filename
+  run : run program filename
+  help : print this message
+  replay : replay trace for program filename
+  parse : show result of preprocessing and parsing filename
+  preprocess : show result of preprocessing filename
+Options:
+  -debug or -debug=BOOLEAN (default: false)
+    debug mode: print very detailed information
+  -errorBound=INTEGER (default: 1)
+    stop after finding this many errors
+  -guided or -guided=BOOLEAN
+    user guided simulation; applies only to run, ignored
+    for all other commands
+  -id=INTEGER (default: 0)
+    ID number of trace to replay
+  -inputKEY=VALUE
+    initialize input variable KEY to VALUE
+  -maxdepth=INTEGER (default: 2147483647)
+    bound on search depth
+  -min or -min=BOOLEAN (default: false)
+    search for minimal counterexample
+  -por=STRING (default: std)
+    partial order reduction (por) choices:
+    std (standard por) or scp (scoped por)
+  -random or -random=BOOLEAN
+    select enabled transitions randomly; default for run,
+    ignored for all other commands
+  -saveStates or -saveStates=BOOLEAN (default: true)
+    save states during depth-first search
+  -seed=STRING
+    set the random seed; applies only to run
+  -showModel or -showModel=BOOLEAN (default: false)
+    print the model
+  -showProverQueries or -showProverQueries=BOOLEAN (default: false)
+    print theorem prover queries only
+  -showQueries or -showQueries=BOOLEAN (default: false)
+    print all queries
+  -showSavedStates or -showSavedStates=BOOLEAN (default: false)
+    print saved states only
+  -showStates or -showStates=BOOLEAN (default: false)
+    print all states
+  -showTransitions or -showTransitions=BOOLEAN (default: false)
+    print transitions
+  -simplify or -simplify=BOOLEAN (default: true)
+    simplify states?
+  -solve or -solve=BOOLEAN (default: false)
+    try to solve for concrete counterexample
+  -sysIncludePath=STRING
+    set the user include path
+  -trace=STRING
+    filename of trace to replay
+  -userIncludePath=STRING
+    set the user include path
+  -verbose or -verbose=BOOLEAN (default: false)
+    verbose mode
 \end{verbatim}
 
-\subsection{Pointers and heaps}
 
-CIVL-C supports pointers, using the same operators with the same
-meanings as C (\texttt{\&}, \texttt{*}, pointer arithmetic).
-
-The standard CIVL-C library defines a type \cheap{} for explicit
-modeling of a heap.  The default value of \cheap{} type is an empty
-heap, so you only need to declare a variable to have type \cheap{}
-in order to create a new heap:
-\begin{verbatim}
-  $heap h; /* a new empty heap */
-\end{verbatim}
-
-The following functions are also defined:
-\begin{verbatim}
-void* $malloc($heap *h, int size);
-void memcpy(void *p, void *q, size_t size);
-void free(void *p)
-\end{verbatim}
-The first function is like C's \texttt{malloc}, except that you
-specify the heap in which the allocation takes place by passing a
-pointer to the heap as the first argument.  This modifies the
-specified heap and returns a pointer to the new object.  The function
-can only occur in a context in which the type of the object is
-specified, as in:
-\begin{verbatim}
-  $heap h;
-  int n = 10;
-  double *p = (double*)$malloc(&h, n*sizeof(double));
-\end{verbatim}
-The second and third functions are exactly the same as in C. Note that
-\texttt{free} modifies the heap which was used to allocate \texttt{p}.
-
-CIVL-C allows an additional qualifier to be added to a pointer
-type.  The qualifier limits the region into which the pointer
-may point.  To use it, you first need to give a name to a scope.
-This is accomplished by just declaring a variable of type
-\cscope{} in the scope you wish to name.  Example:
-\begin{verbatim}
-  {
-    { /* beginning of scope s */
-      $scope s; /* names this scope */
-      ...
-    } /* end of scope s */
-  }
-\end{verbatim}
-At runtime, \texttt{s} is assigned the value of a dynamic scope ID
-(i.e., an element of $\Delta$; see Def.\ \ref{def:state}).  Currently,
-there are no operations on \cscope{} variables and they cannot be
-assigned.  They can only be used in a pointer qualifier as described
-below.
-
-The primitive \texttt{\cregion(s)}, where \texttt{s} is a \cscope{}
-variable, denotes the set of dynamic scopes consisting of \texttt{s}
-and all descendants of \texttt{s}.  This expression can be used in a
-pointer type as follows:
-\begin{verbatim}
-  {
-    $scope s; /* gives name s to this scope */
-    int x;
-    ...
-    {
-      int *$region(s) p = &x;
-      ...
-    }
-  }
-\end{verbatim}
-The declaration of \texttt{p} states that \texttt{p} can only point to
-an object declared in \texttt{s} or one of its descendants (inner
-scopes).
-
-If the optional region qualifier is not used, the assumption is the
-pointer could point anywhere, i.e., the default region is the one
-determined by the \emph{root} dynamic scope.
-
-Another pointer example:
-\begin{verbatim}
-{ $heap h;
-  { $scope s1;
-    double x;
-    { $scope s2;
-      double y;
-      double *$region(s1) p;
-      /* p can only point to something in s1 or descendant,
-       * for example, s2 */
-      p = &x; // fine
-      p = &y;
-      p = (double*)$malloc(&h,10*sizeof(double)); // syntax error
-    }
-  }
-}
-\end{verbatim}
-
-\section{Some Translation Examples}
-
-\subsection{Structured parallelism}
-Structured \verb!parbegin!/\verb!parend! statements look like this:
-\begin{verbatim}
-$parbegin
-  S1; S2; S2
-$parend
-\end{verbatim}
-(See Dijkstra, Cooperating Sequential Processes.)  The meaning is: run
-the three statements in parallel, and block at the end until all have
-completed.
-
-This can be represented in CIVL-C as follows:
-
-\begin{verbatim}
-{
-  void f_1() {S1}
-  void f_2() {S2}
-  void f_3() {S3}
-  $proc tmp1 = $fork f_1(), tmp2=$fork f_2(), tmp3=$fork f_3();
-  $join(tmp1); $join(tmp2); $join(tmp3);
-}
-\end{verbatim}
-
-\subsection{Parallel for loops}
-The standard parallel ``for'' loop looks like
-\begin{verbatim}
-  $parfor(T i = e; cond; inc) S
-\end{verbatim}
-It indicates each iteration should be run concurrently, blocking
-at end until all complete.  In CIVL-C:
-
-\begin{verbatim}
-{
-  void f(T i) {S}
-  T i = e;
-  int c = 0;
-  Vector<$proc> list;
-
-  while (cond) {
-    list.add($fork f());
-    c++;
-    inc;
-  }
-  for (int j=0; j<c; j++) $join(list.get(j));
-}
-\end{verbatim}
-
-(This is assuming we have some sort of Vector datatype.  Need to think
-about that.)
-
-\subsection{Message Passing}
-
-There will be a bunch of standard libraries that can be included
-into CIVL-C.  One of these will be the message-passing library.
-It will define a bunch of primitives that we will fill in shortly.
-Among them will be basic send and receive functions.
-
-The message-passing library can be defined entirely in CIVL-C.
-(See Figure \ref{fig:mp1}.)
-
-\begin{figure}
-\begin{verbatim}
-typedef struct _CIVL_Message {
-  struct _CIVL_Message *next; // next message in this queue
-  struct _CIVL_Message *prev; // previous message in this queue
-  int tag; // message tag
-  int size; // size of buffer
-  void *data; // pointer to first element
-} *CIVL_Message;
-
-typedef struct _CIVL_Comm {
-  $heap heap;
-  int numProcs; // number of procs in this communicator
-  $proc *procs; // array of length numProcs
-  CIVL_Message buf_front[][]; // oldest element of each queue
-  CIVL_Message buf_back[][]; // newest element of each queue
-} *CIVL_Comm;
-\end{verbatim}
-  \caption{CIVL Message Passing library: basic definitions}
-  \label{fig:mp1}
-\end{figure}
-
-Message passing functions may be defined with prototypes such as:
-\begin{verbatim}
-  CIVL_Comm CIVL_Comm_create($proc procs[], int numProcs);
-  void CIVL_send(int src, void *buf, int size, int dest,
-                 int tag, CIVL_Comm comm);
-  void CIVL_recv(int dest, void *buf, int size, int src,
-                 int tag, CIVL_Comm comm);
-\end{verbatim}
-
-The arguments for \texttt{send} are:
-\begin{enumerate}
-\item rank of process issuing the send
-\item address of buffer containing data to be sent
-\item size of message
-\item an integer tag
-\item rank of destination process
-\item communicator
-\end{enumerate}
-
-The arguments for \texttt{recv} are:
-\begin{enumerate}
-\item rank of process issuing the receive
-\item address of receive buffer
-\item size of receive buffer (must be large enough to hold any incoming message)
-\item rank of source process or \code{CIVL{\U}ANY{\U}SOURCE}
-\item tag or \code{CIVL{\U}ANY{\U}TAG}
-\item communicator
-\end{enumerate}
-
-Notice one difference from MPI: we have to specify the process to
-which the send or receive is associated in the first argument. This is
-because we need to be more general than MPI. In MPI, that process is
-always the MPI process invoking the send or receive. In CIVL, you
-might want to have threads within processes (for example) and
-associate the message to the MPI process, even though the thread is
-actually invoking the send. Or you might want to associate it to
-something else in some other language/library/API.
-
-How they are implemented: \texttt{CIVL{\U}Comm{\U}create}
-mallocs a new object of type \texttt{struct {\U}CIVL{\U}Comm} and returns
-a pointer to it.
 
 % \subsection{Example 1}
 

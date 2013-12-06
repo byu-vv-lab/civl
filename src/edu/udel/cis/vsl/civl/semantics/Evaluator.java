@@ -272,7 +272,7 @@ public class Evaluator {
 			throws UnsatisfiablePathConditionException {
 		BooleanExpression pc = state.pathCondition(), newPc;
 		BooleanExpression npc = universe.not(pc);
-		ValidityResult validityResult = trueReasoner.validOrModel(npc);
+		ValidityResult validityResult = trueReasoner.valid(npc);
 		ResultType nsat = validityResult.getResultType();
 		Certainty certainty;
 		CIVLStateException error;
@@ -1470,7 +1470,8 @@ public class Evaluator {
 		int vid = variable.vid();
 		SymbolicExpression result;
 
-		if (!variable.isInput() && !variable.isBound() 
+		if (!variable.isInput()
+				&& !variable.isBound()
 				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
 			result = nullExpression;
 		} else {

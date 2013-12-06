@@ -147,6 +147,7 @@ public abstract class Player {
 			enabler = new Enabler(transitionFactory, evaluator, executor,
 					this.scpPor);
 			enabler.setDebugOut(out);
+			enabler.setDebugging(debug);
 		}
 		stateManager = new StateManager(executor);
 		stateManager.setOutputStream(out);
