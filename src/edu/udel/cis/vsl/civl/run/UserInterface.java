@@ -65,7 +65,7 @@ public class UserInterface {
 			"userIncludePath", STRING, "set the user include path", null);
 
 	public final static Option sysIncludePathO = Option.newScalarOption(
-			"sysIncludePath", STRING, "set the user include path", null);
+			"sysIncludePath", STRING, "set the system include path", null);
 
 	public final static Option showTransitionsO = Option.newScalarOption(
 			"showTransitions", BOOLEAN, "print transitions", false);
