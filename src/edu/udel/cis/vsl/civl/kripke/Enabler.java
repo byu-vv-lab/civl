@@ -52,7 +52,7 @@ public class Enabler implements
 
 	private StateFactoryIF stateFactory;
 
-	private boolean debugging = false;
+	private boolean debugging = true;
 
 	private PrintStream debugOut = System.out;
 
@@ -491,11 +491,16 @@ public class Enabler implements
 		HashSet<Integer> vScopes = new HashSet<Integer>();
 		do {
 			p = allProcesses.get(i);
-
-			if (blocked(p)) {
-				// if p's current statement is Wait and the joined process
-				// has terminated, then p is the ample process set
-				if (isEnabledWait(p, state)) {
+			
+			if(p.isPurelyLocalProc()){
+				ampleProcesses.add(p);
+				return ampleProcesses;
+			}
+			
+			if(blocked(p)){
+				//if p's current statement is Wait and the joined process
+				//has terminated, then p is the ample process set
+				if(isEnabledWait(p, state)){
 					ampleProcesses.add(p);
 					return ampleProcesses;
 				}
@@ -703,6 +708,9 @@ public class Enabler implements
 		return ampleProcesses;
 	}
 
+	
+
+	
 	/**
 	 * Return true iff p's current statement is Wait and is enabled
 	 * 

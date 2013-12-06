@@ -233,9 +233,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public void purelyLocalAnalysis() {
-		if (incoming.size() > 1)
-			this.purelyLocal = false;
-		else if (outgoing.size() != 1)
+//		if(incoming.size() > 1)
+//			this.purelyLocal = false;
+		//else 
+		if(outgoing.size() != 1)
+
 			this.purelyLocal = false;
 		else {
 			for (Statement s : outgoing) {

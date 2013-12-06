@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
 /**
  * An instance of Process represents the state of a process (thread of
@@ -200,5 +201,16 @@ public class Process {
 	public String toString() {
 		return "State of process " + id + " (call stack length = "
 				+ callStack.length + ")";
+	}
+	
+	public boolean isPurelyLocalProc(){
+		Iterable<Statement> stmts = this.callStack[0].location().outgoing();
+		
+		for(Statement s: stmts){
+			if(!s.isPurelyLocal())
+				return false;
+		}
+		
+		return true;
 	}
 }
