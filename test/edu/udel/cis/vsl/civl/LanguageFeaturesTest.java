@@ -269,4 +269,11 @@ public class LanguageFeaturesTest {
 		boolean result = CIVL.verify(file, out);
 		assertTrue(result);
 	}
+	
+	@Test
+	public void testMemcpy() throws ABCException {
+		File file = new File(rootDir, "memcpy.cvl");
+		boolean result = CIVL.verify(file, out);
+		assertTrue(result);
+	}
 }

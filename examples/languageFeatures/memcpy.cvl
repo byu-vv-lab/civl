@@ -1,0 +1,13 @@
+#include<civlc.h>
+
+void main() {
+  int a[10], b[5];
+  
+  for (int i = 0; i < 10; i++) {
+    a[i] = i;
+  }
+  memcpy(b, a, 5*sizeof(int));
+  for (int i = 0; i < 5; i++) {
+    $assert b[i] == i;
+  }
+}
