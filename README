@@ -29,36 +29,107 @@ Timothy K. Zirkel
 
 ---------------------------- Installation -----------------------------
 
-You must have a Java virtual machine (version 7) installed on your 
-system and "java" should be in your path.
+For most users, this will be the easiest way to install and use CIVL.
 
-Installation for Mac OS X:
+1. Install a Java 7 SDK if you have not already.  Go to
+http://www.oracle.com/technetwork/java/javase/downloads/ for the
+latest from Oracle.  On linux, you can optionally sudo apt-get install
+openjdk-7-jdk.
 
-The complete distribution for Mac OS X 64-bit Intel
-comes in a folder named CIVL-TAG, where TAG is some version
-id string.  This folder contains the following:
+2. If you already have the VSL dependencies library, you may
+skip this step.  Otherwise, download the archive of VSL
+dependencies from http://vsl.cis.udel.edu/tools/vsl_depend,
+choosing the version for your OS type (32-bit linux,
+64-bit linux, or 64-bit OS X).  Unzip and untar the
+downloaded .tgz file and you will have a folder named "vsl".
+If you do not already have a directory /opt, create one with
+"mkdir /opt".  Move vsl into /opt.  Use sudo as needed.
+
+3. Download the appropriate CIVL distribution from
+http://vsl.cis.udel.edu/civl.
+
+4. Unzip and untar the downloaded file if this does not happen
+automatically.  This should result in a folder named
+CIVL-TAG, where TAG is some version id string.  This folder
+contains the following:
 
  - README : this file
  - bin : containing one executable sh script called "civl"
- - lib : containing civl-TAG.jar and native libraries
-         used by CIVL
+ - lib : containing civl-TAG.jar
  - doc : containing some documentation about CIVL
  - licenses : licenses for CIVL and included libraries
  - examples : some example CIVL programs
 
-Installation instructions:
-  1. Move folder CIVL-TAG into the /Applications folder
-  2. Put the civl script in your path however you like to put things
-     into your path.   Either move it to a directory in your path,
-     or create a symlink to it, or edit your .profile or equivalent
-     to put it in your path.
+5. Move CIVL-TAG into /opt.
 
-Now you should be able to run CIVL from the command line by 
-typing "civl <filename>".
+6. Put the civl script in your path however you like to put things
+in your path.   Either move it to a directory in your path,
+or create a symlink to it, or edit your .profile or equivalent
+to put it in your path.
 
-Installation for Linux:
+---------------------------- CIVL help -----------------------------
+In command line, type just "civl help" for the usage information 
+as shown below.
 
-Same as above, except the folder goes into /usr/local.
+CIVL v0.4 of 2013-12-06 -- http://vsl.cis.udel.edu/civl
+Usage: civl <command> <options> filename ...
+Commands:
+  verify : verify program filename
+  run : run program filename
+  help : print this message
+  replay : replay trace for program filename
+  parse : show result of preprocessing and parsing filename
+  preprocess : show result of preprocessing filename
+Options:
+  -debug or -debug=BOOLEAN (default: false)
+    debug mode: print very detailed information
+  -errorBound=INTEGER (default: 1)
+    stop after finding this many errors
+  -guided or -guided=BOOLEAN
+    user guided simulation; applies only to run, ignored
+    for all other commands
+  -id=INTEGER (default: 0)
+    ID number of trace to replay
+  -inputKEY=VALUE
+    initialize input variable KEY to VALUE
+  -maxdepth=INTEGER (default: 2147483647)
+    bound on search depth
+  -min or -min=BOOLEAN (default: false)
+    search for minimal counterexample
+  -por=STRING (default: std)
+    partial order reduction (por) choices:
+    std (standard por) or scp (scoped por)
+  -random or -random=BOOLEAN
+    select enabled transitions randomly; default for run,
+    ignored for all other commands
+  -saveStates or -saveStates=BOOLEAN (default: true)
+    save states during depth-first search
+  -seed=STRING
+    set the random seed; applies only to run
+  -showModel or -showModel=BOOLEAN (default: false)
+    print the model
+  -showProverQueries or -showProverQueries=BOOLEAN (default: false)
+    print theorem prover queries only
+  -showQueries or -showQueries=BOOLEAN (default: false)
+    print all queries
+  -showSavedStates or -showSavedStates=BOOLEAN (default: false)
+    print saved states only
+  -showStates or -showStates=BOOLEAN (default: false)
+    print all states
+  -showTransitions or -showTransitions=BOOLEAN (default: false)
+    print transitions
+  -simplify or -simplify=BOOLEAN (default: true)
+    simplify states?
+  -solve or -solve=BOOLEAN (default: false)
+    try to solve for concrete counterexample
+  -sysIncludePath=STRING
+    set the system include path
+  -trace=STRING
+    filename of trace to replay
+  -userIncludePath=STRING
+    set the user include path
+  -verbose or -verbose=BOOLEAN (default: false)
+    verbose mode
 
 ------------------------------- License -------------------------------
 
