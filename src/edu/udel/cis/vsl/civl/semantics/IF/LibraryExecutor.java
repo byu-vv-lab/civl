@@ -31,6 +31,7 @@ public interface LibraryExecutor {
 	 */
 	boolean containsFunction(String name);
 
+	//TODO: Is this ever being done?
 	/**
 	 * Initializes the part of the state dealing with the library.
 	 */

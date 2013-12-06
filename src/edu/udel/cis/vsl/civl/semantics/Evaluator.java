@@ -35,6 +35,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
@@ -165,6 +166,12 @@ public class Evaluator {
 	 */
 	private SymbolicExpression sizeofFunction;
 
+	/**
+	 * An uninterpreted function used to evaluate "BigO" of an expression. It
+	 * takes as input one expression of real type and return a real type.
+	 */
+	private SymbolicExpression bigOFunction;
+
 	private Map<SymbolicType, NumericExpression> sizeofDynamicMap = new HashMap<SymbolicType, NumericExpression>();
 
 	/**
@@ -214,6 +221,11 @@ public class Evaluator {
 		sizeofFunction = universe.symbolicConstant(
 				universe.stringObject("SIZEOF"), dynamicToIntType);
 		sizeofFunction = universe.canonic(sizeofFunction);
+		bigOFunction = universe.symbolicConstant(
+				universe.stringObject("BIG_O"), universe.functionType(
+						new Singleton<SymbolicType>(universe.realType()),
+						universe.realType()));
+		bigOFunction = universe.canonic(bigOFunction);
 		trueReasoner = universe.reasoner(universe.trueExpression());
 		// falseExpr = universe.falseExpression();
 	}
@@ -1344,6 +1356,10 @@ public class Evaluator {
 		case NOT:
 			eval.value = universe.not((BooleanExpression) eval.value);
 			break;
+		case BIG_O:
+			eval.value = universe.apply(bigOFunction,
+					new Singleton<SymbolicExpression>(eval.value));
+			break;
 		default:
 			throw new CIVLInternalException("Unknown unary operator "
 					+ expression.operator(), expression);
@@ -1454,7 +1470,7 @@ public class Evaluator {
 		int vid = variable.vid();
 		SymbolicExpression result;
 
-		if (!variable.isInput()
+		if (!variable.isInput() && !variable.isBound() 
 				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
 			result = nullExpression;
 		} else {
@@ -1502,6 +1518,59 @@ public class Evaluator {
 					variable, typeEval.type, sid);
 
 			result = new Evaluation(typeEval.state, value);
+		}
+		return result;
+	}
+
+	private Evaluation evaluateQuantifiedExpression(State state, int pid,
+			QuantifiedExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation result;
+		Evaluation restriction;
+		Evaluation quantifiedExpression;
+		BooleanExpression context;
+		Reasoner reasoner;
+		Variable variable = expression.boundVariable();
+		SymbolicExpression variableValue = computeInitialValue(state, variable,
+				variable.type().getDynamicType(universe),
+				state.getScopeId(pid, variable));
+		BooleanExpression simplifiedExpression;
+
+		// Since the bound variable is only referenced in this expression, it
+		// should be ok to modify the state with a constant for that variable.
+		state = stateFactory.setVariable(state, variable, pid, variableValue);
+		restriction = evaluate(state, pid, expression.boundRestriction());
+		quantifiedExpression = evaluate(state, pid, expression.expression());
+		// By definition, the restriction should be boolean valued.
+		assert restriction.value instanceof BooleanExpression;
+		context = universe.and(state.pathCondition(),
+				(BooleanExpression) restriction.value);
+		reasoner = universe.reasoner(context);
+		simplifiedExpression = (BooleanExpression) reasoner
+				.simplify(quantifiedExpression.value);
+		assert variableValue instanceof SymbolicConstant;
+		switch (expression.quantifier()) {
+		case EXISTS:
+			result = new Evaluation(state, universe.exists(
+					(SymbolicConstant) variableValue, universe.and(
+							(BooleanExpression) restriction.value,
+							simplifiedExpression)));
+			break;
+		case FORALL:
+			result = new Evaluation(state, universe.forall(
+					(SymbolicConstant) variableValue, universe.and(
+							(BooleanExpression) restriction.value,
+							simplifiedExpression)));
+			break;
+		case UNIFORM:
+			result = new Evaluation(state, universe.forall(
+					(SymbolicConstant) variableValue, universe.and(
+							(BooleanExpression) restriction.value,
+							simplifiedExpression)));
+			break;
+		default:
+			throw new CIVLException("Unknown quantifier ",
+					expression.getSource());
 		}
 		return result;
 	}
@@ -1906,6 +1975,13 @@ public class Evaluator {
 	 * Evaluates the expression and returns the result, which is a symbolic
 	 * expression value.
 	 * 
+	 * If a potential error is encountered while evaluating the expression (e.g.
+	 * possible division by 0 in x/y), the error is logged, a correcting side
+	 * effect (e.g. y!=0) is added to the path condition, and execution
+	 * continues. It is possible for the side effect to make the path condition
+	 * unsatisfiable. When this happens, an UnsatisfiablePathConditionException
+	 * is thrown.
+	 * 
 	 * @param state
 	 *            the state in which the evaluation takes place
 	 * @param pid
@@ -1914,6 +1990,8 @@ public class Evaluator {
 	 *            the (static) expression being evaluated
 	 * @return the result of the evaluation
 	 * @throws UnsatisfiablePathConditionException
+	 *             if a side effect that results from evaluating the expression
+	 *             causes the path condition to become unsatisfiable
 	 */
 	public Evaluation evaluate(State state, int pid, Expression expression)
 			throws UnsatisfiablePathConditionException {
@@ -1990,6 +2068,10 @@ public class Evaluator {
 		case VARIABLE:
 			result = evaluateVariable(state, pid,
 					(VariableExpression) expression);
+			break;
+		case QUANTIFIER:
+			result = evaluateQuantifiedExpression(state, pid,
+					(QuantifiedExpression) expression);
 			break;
 		default:
 			throw new CIVLInternalException("Unknown kind of expression: "

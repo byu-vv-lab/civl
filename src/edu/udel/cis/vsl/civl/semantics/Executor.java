@@ -3,7 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
-import java.util.Vector;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -297,7 +297,7 @@ public class Executor {
 		Process process = state.process(pid);
 		CIVLFunction function = statement.function();
 		int newPid = state.numProcs();
-		Vector<Expression> argumentExpressions = statement.arguments();
+		List<Expression> argumentExpressions = statement.arguments();
 		int numArgs = argumentExpressions.size();
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
 

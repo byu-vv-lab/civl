@@ -77,6 +77,9 @@ public class CommonUnaryExpression extends CommonExpression implements
 		case NOT:
 			op = "!";
 			break;
+		case BIG_O:
+			op ="O";
+			break;
 		default:
 			throw new CIVLInternalException("Unknown unary operator: "
 					+ operator, this);

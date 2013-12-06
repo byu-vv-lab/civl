@@ -52,6 +52,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.QuantifiedExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ResultNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SelfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeableNode;
@@ -112,6 +113,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -790,6 +793,9 @@ public class ModelBuilderWorker {
 			result = castExpression((CastNode) node, scope);
 		} else if (node instanceof SizeofNode) {
 			result = translateSizeof((SizeofNode) node, scope);
+		} else if (node instanceof QuantifiedExpressionNode) {
+			result = quantifiedExpression((QuantifiedExpressionNode) node,
+					scope);
 		} else
 			throw new CIVLUnimplementedFeatureException("expressions of type "
 					+ node.getClass().getSimpleName(), sourceOf(node));
@@ -1190,6 +1196,10 @@ public class ModelBuilderWorker {
 			result = factory.addressOfExpression(source,
 					(LHSExpression) arguments.get(0));
 			break;
+		case BIG_O:
+			result = factory.unaryExpression(source, UNARY_OPERATOR.BIG_O,
+					arguments.get(0));
+			break;
 		case DEREFERENCE:
 			result = factory.dereferenceExpression(source, arguments.get(0));
 			break;
@@ -1380,6 +1390,47 @@ public class ModelBuilderWorker {
 		} else
 			throw new CIVLUnimplementedFeatureException(
 					"type " + convertedType, source);
+		return result;
+	}
+
+	private Expression quantifiedExpression(
+			QuantifiedExpressionNode expression, Scope scope) {
+		QuantifiedExpression result;
+		Quantifier quantifier;
+		Variable variable;
+		Expression restriction;
+		Expression quantifiedExpression;
+		CIVLSource source = sourceOf(expression.getSource());
+		// TODO: Think about the best way to add the quantified variable. In
+		// theory we want a scope just for the quantified expression, but this
+		// creates certain problems. What scope should the location be in? What
+		// if we have a conjunction of quantified statements? For now, we will
+		// add to the existing scope, but this is unsatisfactory.
+
+		// Scope newScope = factory.scope(source, scope,
+		// new LinkedHashSet<Variable>(), scope.function());
+
+		switch (expression.quantifier()) {
+		case EXISTS:
+			quantifier = Quantifier.EXISTS;
+			break;
+		case FORALL:
+			quantifier = Quantifier.FORALL;
+			break;
+		case UNIFORM:
+			quantifier = Quantifier.UNIFORM;
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException("quantifier "
+					+ expression.quantifier(), source);
+		}
+		// TODO: create unique name for quantified variable
+		variable = processVariableDeclaration(scope, expression.variable());
+		variable.setIsBound(true);
+		restriction = expression(expression.restriction(), scope);
+		quantifiedExpression = expression(expression.expression(), scope);
+		result = factory.quantifiedExpression(source, quantifier, variable,
+				restriction, quantifiedExpression);
 		return result;
 	}
 
@@ -1654,6 +1705,7 @@ public class ModelBuilderWorker {
 				expression);
 		if (lastStatement != null) {
 			lastStatement.setTarget(location);
+			function.addLocation(location);
 		} else if (function != null) {
 			function.setStartLocation(location);
 		}
@@ -3014,7 +3066,7 @@ public class ModelBuilderWorker {
 		((CommonModel) model).setMallocStatements(mallocStatements);
 		for (CIVLFunction f : model.functions()) {
 			f.simplify();
-			//identify all purely local variables
+			// identify all purely local variables
 			f.purelyLocalAnalysis();
 			f.setModel(model);
 			for (Statement s : f.statements()) {
@@ -3022,23 +3074,23 @@ public class ModelBuilderWorker {
 				s.caculateDerefs();
 			}
 		}
-		
-		//CommonAssignStatement a;
-		
+
+		// CommonAssignStatement a;
+
 		for (CIVLFunction f : model.functions()) {
-			//purely local statements/locations can only be
-			//identified after ALL variables have been
-			//checked for being purely local or not
-//			for (Statement s : f.statements()) {
-//				s.purelyLocalAnalysis();
-//			}
-			
+			// purely local statements/locations can only be
+			// identified after ALL variables have been
+			// checked for being purely local or not
+			// for (Statement s : f.statements()) {
+			// s.purelyLocalAnalysis();
+			// }
+
 			for (Location loc : f.locations()) {
-				
+
 				for (Statement s : loc.outgoing()) {
 					s.purelyLocalAnalysis();
 				}
-				
+
 				loc.purelyLocalAnalysis();
 			}
 		}

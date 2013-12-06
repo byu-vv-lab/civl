@@ -59,6 +59,8 @@ public interface CIVLType {
 	 */
 	int getDynamicTypeIndex();
 
+	//TODO Add javadocs.
+	
 	boolean isNumericType();
 
 	boolean isIntegerType();

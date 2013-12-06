@@ -13,6 +13,9 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
  * are not specified. It is completed by specifying them. This is necessary to
  * allow circular definitions such as linked lists.
  * 
+ * Two CIVL struct types are considered equal iff they are equal as objects.
+ * They can be different even if the fields and names are equal.
+ * 
  * @author siegel
  * 
  */

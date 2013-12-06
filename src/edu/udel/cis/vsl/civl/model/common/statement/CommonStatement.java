@@ -3,7 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -82,7 +83,7 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	@Override
 	public void setSource(Location source) {
 		if (this.source != null) {
-			this.source.outgoing().remove(this);
+			this.source.removeOutgoing(this);
 		}
 		this.source = source;
 		source.addOutgoing(this);
@@ -95,7 +96,7 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	@Override
 	public void setTarget(Location target) {
 		if (this.target != null) {
-			this.target().incoming().remove(this);
+			this.target().removeIncoming(this);
 		}
 		this.target = target;
 		target.addIncoming(this);
@@ -149,7 +150,7 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	 *         and s1 are null, returns the non-null scope.
 	 */
 	protected Scope join(Scope s0, Scope s1) {
-		Vector<Scope> s0Ancestors = new Vector<Scope>();
+		List<Scope> s0Ancestors = new ArrayList<Scope>();
 		Scope s0Ancestor = s0;
 		Scope s1Ancestor = s1;
 

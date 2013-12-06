@@ -17,11 +17,11 @@ public interface CIVLArrayType extends CIVLType {
 	// * @param baseType
 	// * The type of elements in this array.
 	// */
-	//void setBaseType(CIVLType baseType);
+	// void setBaseType(CIVLType baseType);
 
 	/**
 	 * 
-	 * @return Is this a complete array type?
+	 * @return Is this a complete array type? (i.e. is the length specified?)
 	 */
 	boolean isComplete();
 

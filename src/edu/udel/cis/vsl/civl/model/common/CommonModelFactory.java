@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.udel.cis.vsl.civl.model.common;
 
 import java.math.BigDecimal;
@@ -12,7 +9,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -36,6 +32,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
@@ -78,6 +76,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonDynamicTypeOfExpressi
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonInitialValueExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonQuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
@@ -362,7 +361,7 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public CIVLFunction function(CIVLSource source, Identifier name,
-			Vector<Variable> parameters, CIVLType returnType,
+			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, Location startLocation) {
 		for (Variable v : parameters) {
 			if (v.type() instanceof CIVLArrayType) {
@@ -381,7 +380,7 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public SystemFunction systemFunction(CIVLSource source, Identifier name,
-			Vector<Variable> parameters, CIVLType returnType,
+			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, String libraryName) {
 		return new CommonSystemFunction(source, name, parameters, returnType,
 				containingScope, (Location) null, this, libraryName);
@@ -541,6 +540,7 @@ public class CommonModelFactory implements ModelFactory {
 		result.setExpressionScope(operand.expressionScope());
 		switch (operator) {
 		case NEGATIVE:
+		case BIG_O:
 			result = new CommonUnaryExpression(source, operator, operand);
 			((CommonUnaryExpression) result).setExpressionType(operand
 					.getExpressionType());
@@ -952,7 +952,7 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
 			Location source, boolean isCall, CIVLFunction function,
-			Vector<Expression> arguments) {
+			List<Expression> arguments) {
 		CallOrSpawnStatement result = new CommonCallStatement(civlSource,
 				source, isCall, function, arguments);
 		Scope statementScope = null;
@@ -966,18 +966,17 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	/**
-	 * A choose statement is of the form x = choose(n);
+	 * A choose statement is of the form x = choose(n), where n is an integer.
 	 * 
-	 * When a choose statement is executed, the left hand side will be assigned
-	 * a new symbolic constant. A bound on the values of that symbolic constant
-	 * will be added to the path condition.
+	 * When a choose statement is executed, all possible assignments of the 
 	 * 
 	 * @param source
 	 *            The source location for this statement.
 	 * @param lhs
 	 *            The left hand side of the choose statement.
 	 * @param argument
-	 *            The argument to choose().
+	 *            The argument to choose(). This must be an integer-valued
+	 *            expression.
 	 * @return A new choose statement.
 	 */
 	@Override
@@ -1059,7 +1058,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *         and s1 are null, returns the non-null scope.
 	 */
 	private Scope join(Scope s0, Scope s1) {
-		Vector<Scope> s0Ancestors = new Vector<Scope>();
+		List<Scope> s0Ancestors = new ArrayList<Scope>();
 		Scope s0Ancestor = s0;
 		Scope s1Ancestor = s1;
 
@@ -1142,6 +1141,19 @@ public class CommonModelFactory implements ModelFactory {
 		result.setExpressionScope(operand.expressionScope());
 		((CommonExpression) result).setExpressionType(this.pointerType(operand
 				.getExpressionType()));
+		return result;
+	}
+
+	@Override
+	public QuantifiedExpression quantifiedExpression(CIVLSource source,
+			Quantifier quantifier, Variable variable, Expression restriction,
+			Expression expression) {
+		QuantifiedExpression result = new CommonQuantifiedExpression(source,
+				quantifier, variable, restriction, expression);
+
+		result.setExpressionScope(join(expression.expressionScope(),
+				restriction.expressionScope()));
+		((CommonExpression) result).setExpressionType(booleanType);
 		return result;
 	}
 

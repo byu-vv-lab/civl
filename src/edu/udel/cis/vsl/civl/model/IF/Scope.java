@@ -10,7 +10,8 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
- * A scope.
+ * A scope. A scope contains the variables exclusive to this scope and
+ * references to any subscopes.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
@@ -18,12 +19,14 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public interface Scope extends Sourceable {
 
 	/**
-	 * @return The containing scope of this scope.
+	 * @return The containing scope of this scope. If this is the top-most
+	 *         scope, returns null.
 	 */
 	Scope parent();
 
 	/**
-	 * @return The set of variables contained in this scope.
+	 * @return The set of variables contained in this scope. The iterator over
+	 *         the returned set will iterate in variable ID order.
 	 */
 	Set<Variable> variables();
 
@@ -38,7 +41,7 @@ public interface Scope extends Sourceable {
 	Variable getVariable(int i);
 
 	/**
-	 * @return The id of this scope.
+	 * @return The id of this scope. This id is unique within the model.
 	 */
 	int id();
 
@@ -92,6 +95,7 @@ public interface Scope extends Sourceable {
 	 */
 	Variable variable(Identifier name);
 
+	// TODO: This is a duplicate of getVariable(). Remove one.
 	/**
 	 * Get the variable at the specified array index.
 	 * 
@@ -146,6 +150,10 @@ public interface Scope extends Sourceable {
 	 */
 	void print(String prefix, PrintStream out);
 
+	// TODO: Is this necessary? vid contained in variable.
+	// Maybe, since this can check that the variable is actually a member of
+	// this scope and throw an exception otherwise. If it throws an exception,
+	// that should also be in this contract.
 	int getVid(Variable staticVariable);
 	
 	/**

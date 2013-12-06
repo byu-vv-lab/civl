@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Set;
-import java.util.Vector;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
@@ -22,6 +22,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
@@ -136,11 +138,11 @@ public interface ModelFactory {
 	 * @return The new function.
 	 */
 	CIVLFunction function(CIVLSource source, Identifier name,
-			Vector<Variable> parameters, CIVLType returnType,
+			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, Location startLocation);
 
 	SystemFunction systemFunction(CIVLSource source, Identifier name,
-			Vector<Variable> parameters, CIVLType returnType,
+			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, String libraryName);
 
 	/**
@@ -243,6 +245,9 @@ public interface ModelFactory {
 	/**
 	 * Returns new incomplete struct type with given name. Type can be completed
 	 * later using one of the "complete" methods in CIVLStructType.
+	 * 
+	 * The struct returned is a new instance of struct type that will never be
+	 * equal to another struct type, regardless of identifier or fields.
 	 * 
 	 * @param name
 	 *            identifier, usually the "tag" for this struct type
@@ -560,6 +565,26 @@ public interface ModelFactory {
 	AddressOfExpression addressOfExpression(CIVLSource source,
 			LHSExpression operand);
 
+	/**
+	 * Returns a new quantified expression.
+	 * 
+	 * @param source
+	 *            The source file information for this expression.
+	 * @param quantifier
+	 *            The quantifier for this quantified expression. One of {FORALL,
+	 *            EXISTS, UNIFORM}.
+	 * @param variable
+	 *            The bound variable.
+	 * @param restriction
+	 *            The boolean-valued expression involving the bound variable
+	 *            which is expected to be true.
+	 * @param expression
+	 *            The quantified expression.
+	 */
+	QuantifiedExpression quantifiedExpression(CIVLSource source,
+			Quantifier quantifier, Variable variable, Expression restriction,
+			Expression expression);
+
 	/* *********************************************************************
 	 * Statements
 	 * *********************************************************************
@@ -636,7 +661,7 @@ public interface ModelFactory {
 	 */
 	CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
 			Location source, boolean isCall, CIVLFunction function,
-			Vector<Expression> arguments);
+			List<Expression> arguments);
 
 	/**
 	 * A join statement. Used to wait for a process to complete.

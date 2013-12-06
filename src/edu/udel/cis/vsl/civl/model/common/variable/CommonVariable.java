@@ -23,6 +23,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	private Identifier name;
 	private boolean isConst;
 	private boolean isInput;
+	private boolean isBound;
 	private int vid;
 	private Scope scope;
 	private int hashCode;
@@ -164,6 +165,16 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	@Override
 	public void setPurelyLocal(boolean pl) {
 		this.purelyLocal = pl;
+	}
+
+	@Override
+	public boolean isBound() {
+		return isBound;
+	}
+
+	@Override
+	public void setIsBound(boolean value) {
+		this.isBound = value;
 	}
 	
 

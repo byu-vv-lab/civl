@@ -4,8 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common.location;
 
 import java.io.PrintStream;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -26,8 +25,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	private int id;
 	private Scope scope;
-	private Set<Statement> incoming = new LinkedHashSet<Statement>();
-	private Set<Statement> outgoing = new LinkedHashSet<Statement>();
+	private ArrayList<Statement> incoming = new ArrayList<>();
+	private ArrayList<Statement> outgoing = new ArrayList<>();
 	private CIVLFunction function;
 	private boolean purelyLocal = false;
 
@@ -70,14 +69,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 	/**
 	 * @return The set of incoming statements.
 	 */
-	public Set<Statement> incoming() {
+	public Iterable<Statement> incoming() {
 		return incoming;
 	}
 
 	/**
 	 * @return The set of outgoing statements.
 	 */
-	public Set<Statement> outgoing() {
+	public Iterable<Statement> outgoing() {
 		return outgoing;
 	}
 
@@ -101,24 +100,6 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	/**
-	 * @param incoming
-	 *            The set of incoming statements.
-	 */
-	@Override
-	public void setIncoming(Set<Statement> incoming) {
-		this.incoming = incoming;
-	}
-
-	/**
-	 * @param outgoing
-	 *            The set of outgoing statements.
-	 */
-	@Override
-	public void setOutgoing(Set<Statement> outgoing) {
-		this.outgoing = outgoing;
-	}
-
-	/**
 	 * Print this location and all outgoing transitions.
 	 * 
 	 * @param prefix
@@ -131,13 +112,12 @@ public class CommonLocation extends CommonSourceable implements Location {
 		String guardString = "(true)";
 		String gotoString;
 
-		if(this.purelyLocal){
+		if (this.purelyLocal) {
 			out.println(prefix + "location " + id() + " (scope: " + scope.id()
 					+ ") #");
-		}
-		else
+		} else
 			out.println(prefix + "location " + id() + " (scope: " + scope.id()
-				+ ")");
+					+ ")");
 		for (Statement statement : outgoing) {
 			if (statement.target() != null) {
 				targetLocation = "" + statement.target().id();
@@ -145,15 +125,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 			if (statement.guard() != null) {
 				guardString = "(" + statement.guard() + ")";
 			}
-			
-			if(statement.isPurelyLocal()){
+			if (statement.isPurelyLocal()) {
 				gotoString = prefix + "| " + "when " + guardString + " "
-						+ statement + " @ " + statement.getSource().getLocation() + " ; #";
-			}else
+						+ statement + " @ "
+						+ statement.getSource().getLocation() + " ; #";
+			} else
 				gotoString = prefix + "| " + "when " + guardString + " "
-					+ statement + " @ " + statement.getSource().getLocation() + " ;";
-			
-			
+						+ statement + " @ "
+						+ statement.getSource().getLocation() + " ;";
 			if (targetLocation != null) {
 				gotoString += " goto location " + targetLocation;
 			}
@@ -191,6 +170,16 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
+	public void removeOutgoing(Statement statement) {
+		outgoing.remove(statement);
+	}
+
+	@Override
+	public void removeIncoming(Statement statement) {
+		incoming.remove(statement);
+	}
+
+	@Override
 	public boolean equals(Object that) {
 		if (that instanceof CommonLocation) {
 			return (((CommonLocation) that).id() == id);
@@ -218,26 +207,46 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
+	public int getNumOutgoing() {
+		return outgoing.size();
+	}
+
+	@Override
+	public int getNumIncoming() {
+		return incoming.size();
+	}
+
+	@Override
+	public Statement getOutgoing(int i) {
+		return outgoing.get(i);
+	}
+
+	@Override
+	public Statement getIncoming(int i) {
+		return incoming.get(i);
+	}
+
+	@Override
 	public boolean isPurelyLocal() {
 		return this.purelyLocal;
 	}
 
 	@Override
 	public void purelyLocalAnalysis() {
-		if(incoming.size() > 1)
+		if (incoming.size() > 1)
 			this.purelyLocal = false;
-		else if(outgoing.size() != 1)
+		else if (outgoing.size() != 1)
 			this.purelyLocal = false;
-		else{
-			for(Statement s: outgoing){
-				if(s instanceof WaitStatement)
+		else {
+			for (Statement s : outgoing) {
+				if (s instanceof WaitStatement)
 					this.purelyLocal = false;
-				else{
+				else {
 					this.purelyLocal = s.isPurelyLocal();
 					return;
 				}
 			}
 		}
 	}
-	
+
 }

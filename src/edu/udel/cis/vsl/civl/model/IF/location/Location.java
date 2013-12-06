@@ -4,7 +4,6 @@
 package edu.udel.cis.vsl.civl.model.IF.location;
 
 import java.io.PrintStream;
-import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -37,13 +36,29 @@ public interface Location extends Sourceable {
 	/**
 	 * @return The set of incoming statements.
 	 */
-	public Set<Statement> incoming();
+	public Iterable<Statement> incoming();
 
 	/**
 	 * @return The set of outgoing statements.
 	 */
-	public Set<Statement> outgoing();
+	public Iterable<Statement> outgoing();
 
+	
+	/**
+	 * @return The number of outgoing statements.
+	 */
+	public int getNumOutgoing();
+	
+	/**
+	 * @return The number of incoming statements.
+	 */
+	public int getNumIncoming();
+	
+	public Statement getOutgoing(int i);
+	
+	public Statement getIncoming(int i);
+	
+	// TODO: javadocs
 	/**
 	 * Returns the sole outgoing statement from this location.
 	 * 
@@ -67,18 +82,18 @@ public interface Location extends Sourceable {
 	 *            The scope of this location.
 	 */
 	public void setScope(Scope scope);
-
-	/**
-	 * @param incoming
-	 *            The set of incoming statements.
-	 */
-	public void setIncoming(Set<Statement> incoming);
-
-	/**
-	 * @param outgoing
-	 *            The set of outgoing statements.
-	 */
-	public void setOutgoing(Set<Statement> outgoing);
+//
+//	/**
+//	 * @param incoming
+//	 *            The set of incoming statements.
+//	 */
+//	public void setIncoming(Set<Statement> incoming);
+//
+//	/**
+//	 * @param outgoing
+//	 *            The set of outgoing statements.
+//	 */
+//	public void setOutgoing(Set<Statement> outgoing);
 
 	/**
 	 * @param statement
@@ -105,5 +120,9 @@ public interface Location extends Sourceable {
 	public boolean isPurelyLocal();
 
 	public void purelyLocalAnalysis();
+
+	void removeOutgoing(Statement statement);
+
+	void removeIncoming(Statement statement);
 
 }

@@ -6,6 +6,9 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
+
+//TODO: Document!!
+
 public interface CIVLHeapType extends CIVLType {
 
 	int getNumMallocs();

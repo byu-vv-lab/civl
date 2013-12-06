@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
@@ -42,12 +41,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 public class Enabler implements
-		EnablerIF<State, Transition, TransitionSequence>{
+		EnablerIF<State, Transition, TransitionSequence> {
 
 	private ModelFactory modelFactory;
 
-	public boolean scpPor = false;//true if want to use the new scope POR algorithm
-	
+	public boolean scpPor = false;// true if want to use the new scope POR
+									// algorithm
+
 	private TransitionFactory transitionFactory;
 
 	private StateFactoryIF stateFactory;
@@ -59,7 +59,7 @@ public class Enabler implements
 	private SymbolicUniverse universe;
 
 	private Evaluator evaluator;
-	
+
 	private Executor executor;
 
 	private long enabledTransitionSets = 0;
@@ -73,7 +73,7 @@ public class Enabler implements
 	private Random generator = null;
 
 	public Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
-			Executor executor, boolean sPor){
+			Executor executor, boolean sPor) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
 		this.executor = executor;
@@ -82,12 +82,13 @@ public class Enabler implements
 		this.universe = modelFactory.universe();
 		this.falseValue = universe.falseExpression();
 		this.scpPor = sPor;
-		if(this.scpPor)
+		if (this.scpPor)
 			this.debugOut.println("scoped POR is enabled.");
 	}
 
 	public Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
-			Executor executor, boolean randomMode, Random generator, boolean sPor){
+			Executor executor, boolean randomMode, Random generator,
+			boolean sPor) {
 		this(transitionFactory, evaluator, executor, sPor);
 		this.randomMode = randomMode;
 		this.generator = generator;
@@ -105,25 +106,26 @@ public class Enabler implements
 		if (state.pathCondition().isFalse())
 			// return empty set of transitions:
 			return new TransitionSequence(state);
-		
-		if(!this.scpPor) {
-			
+
+		if (!this.scpPor) {
+
 			if (debugging && enabledTransitionSets % 1000 == 0) {
 				System.out.println("Ample transition sets: " + ampleSets + "/"
 						+ enabledTransitionSets);
 			}
-			
+
 			transitions = enabledTransitionsPOR(state);
-			
-			if(debugging){
-				if(transitions.size() > 1){
-					debugOut.println("Number of transitions at state " + state.getId() + "is " + transitions.size());
+
+			if (debugging) {
+				if (transitions.size() > 1) {
+					debugOut.println("Number of transitions at state "
+							+ state.getId() + "is " + transitions.size());
 					state.print(debugOut);
 				}
 			}
-		}else 
+		} else
 			transitions = enabledTransitionsPORsoped(state);
-		
+
 		if (randomMode && transitions.size() > 0) {
 			TransitionSequence singletonSequence = new TransitionSequence(state);
 			singletonSequence.add(transitions.get(generator.nextInt(transitions
@@ -132,7 +134,6 @@ public class Enabler implements
 		}
 		return transitions;
 	}
-
 
 	/**
 	 * Attempts to form an ample set from the enabled transitions of the given
@@ -145,7 +146,7 @@ public class Enabler implements
 		Process[] processStates = state.processes();
 		Map<Process, TransitionSequence> processTransitions = new LinkedHashMap<Process, TransitionSequence>();
 		int totalTransitions = 0;
-		
+
 		enabledTransitionSets++;
 		for (Process p : processStates) {
 			TransitionSequence localTransitions = transitionFactory
@@ -236,8 +237,9 @@ public class Enabler implements
 				if (localTransitions.size() == 1) {
 					// If the size isn't 1, keep looking for a smaller local
 					// set.
-					//if(debugging)
-						//debugOut.println("Number of transtions at state " + state.getId() + ": " + localTransitions.size());
+					// if(debugging)
+					// debugOut.println("Number of transtions at state " +
+					// state.getId() + ": " + localTransitions.size());
 					return localTransitions;
 				}
 			} else {
@@ -257,27 +259,30 @@ public class Enabler implements
 			assert smallestProcess != null;
 			// System.out.println("Returning " + smallestProcessSetSize +
 			// " transitions for 1 process");
-			//if(debugging)
-				//debugOut.println("Number of transtions at state " + state.getId() + ": " + processTransitions.get(smallestProcess).size());
+			// if(debugging)
+			// debugOut.println("Number of transtions at state " + state.getId()
+			// + ": " + processTransitions.get(smallestProcess).size());
 			return processTransitions.get(smallestProcess);
 		}
 		// System.out.println("Returning " + totalTransitions + " transitions");
-		//if(debugging)
-			//debugOut.println("Number of transtions at state " + state.getId() + ": " + transitions.size());
+		// if(debugging)
+		// debugOut.println("Number of transtions at state " + state.getId() +
+		// ": " + transitions.size());
 		return transitions;
 	}
 
 	/**
 	 * only for debugging purpose
+	 * 
 	 * @param ampleProcesses
 	 * @param state
 	 */
-	private void checkCorrectness(ArrayList<Process> ampleProcesses, State state){
+	private void checkCorrectness(ArrayList<Process> ampleProcesses, State state) {
 		HashSet<Integer> impScopes = new HashSet<Integer>();
 		HashSet<Integer> ampleID = new HashSet<Integer>();
-		
-		for(Process p: ampleProcesses){
-			int pScope=p.scope();
+
+		for (Process p : ampleProcesses) {
+			int pScope = p.scope();
 			ampleID.add(p.id());
 			for (Statement s : p.location().outgoing()) {
 				int impScope = pScope;
@@ -290,36 +295,35 @@ public class Enabler implements
 				}
 			}
 		}
-		
+
 		ArrayList<Integer> nonAmpleIDs = new ArrayList<Integer>();
-		
-		for(Process p: state.processes()){
+
+		for (Process p : state.processes()) {
 			int pid = p.id();
-			if(!ampleID.contains(pid)){
+			if (!ampleID.contains(pid)) {
 				nonAmpleIDs.add(pid);
 			}
 		}
-		
-		for(int iscope: impScopes){
+
+		for (int iscope : impScopes) {
 			BitSet reachers = state.getScope(iscope).reachers();
-			for(int pid : nonAmpleIDs){
-				if(reachers.get(pid)){
+			for (int pid : nonAmpleIDs) {
+				if (reachers.get(pid)) {
 					System.out.println("error ample set found!");
 				}
 			}
 		}
-		
-		
+
 	}
-	
+
 	/**
-	 * The new partial order reduction
-	 * Compute the set of processes that impact a set of scopes
-	 * exclusively accessed by the rest of processes.
+	 * The new partial order reduction Compute the set of processes that impact
+	 * a set of scopes exclusively accessed by the rest of processes.
+	 * 
 	 * @param state
 	 * @return
 	 */
-	private TransitionSequence enabledTransitionsPORsoped(State state){
+	private TransitionSequence enabledTransitionsPORsoped(State state) {
 
 		TransitionSequence transitions = transitionFactory
 				.newTransitionSequence(state);
@@ -327,11 +331,10 @@ public class Enabler implements
 		/**
 		 * Obtain ample processes
 		 */
-				
-		ArrayList<Process> processStates = new ArrayList<Process>(ampleProcesses(state));
-		
-		
-		
+
+		ArrayList<Process> processStates = new ArrayList<Process>(
+				ampleProcesses(state));
+
 		/**
 		 * Compute the ample set (of transitions)
 		 * */
@@ -339,16 +342,17 @@ public class Enabler implements
 			TransitionSequence localTransitions = transitionFactory
 					.newTransitionSequence(state);
 
-			//No need to check if p is null/empty stack, since
-			//it is already checked in ampleProcesses()
+			// No need to check if p is null/empty stack, since
+			// it is already checked in ampleProcesses()
 			// A process with an empty stack has no current location.
 
 			for (Statement s : p.location().outgoing()) {
 				BooleanExpression newPathCondition = newPathCondition(state,
 						p.id(), s);
-				//No need to calculate impact scope, since everything in processStates
-				//is already ample set processes
-				
+				// No need to calculate impact scope, since everything in
+				// processStates
+				// is already ample set processes
+
 				/**
 				 * generate transitions for each statement of each process
 				 * */
@@ -411,59 +415,63 @@ public class Enabler implements
 					}
 				}
 			}
-			
+
 			/**
-			 * add all possible transitions of a process to the ample set (transitions)
+			 * add all possible transitions of a process to the ample set
+			 * (transitions)
 			 */
 			transitions.addAll(localTransitions);
 		}
-		
+
 		if (debugging) {
 			checkCorrectness(processStates, state);
-			//debugOut.println("Number of all processes: " + state.processes().length);
-			
-			
-			if(processStates.size() > 1){
-				debugOut.println("Number of transtions at state " + state.getId() + ": " + transitions.size());
-				debugOut.println("Number of ample processes: " + processStates.size());
+			// debugOut.println("Number of all processes: " +
+			// state.processes().length);
+
+			if (processStates.size() > 1) {
+				debugOut.println("Number of transtions at state "
+						+ state.getId() + ": " + transitions.size());
+				debugOut.println("Number of ample processes: "
+						+ processStates.size());
 				debugOut.println("Ample process set is : "
 						+ processStates.toString());
 				state.print(debugOut);
 			}
 		}
-			
+
 		return transitions;
 	}
-	
+
 	/**
-	 * Obtain the set of processes to generate ample set transitions
-	 * TODO: try to avoid repeatedly calculating things like joinedPid, 
-	 * path condition satisfiability, etc.
+	 * Obtain the set of processes to generate ample set transitions TODO: try
+	 * to avoid repeatedly calculating things like joinedPid, path condition
+	 * satisfiability, etc.
+	 * 
 	 * @param state
 	 * @return
 	 */
-	private LinkedHashSet<Process> ampleProcesses(State state){
+	private LinkedHashSet<Process> ampleProcesses(State state) {
 		LinkedHashSet<Process> ampleProcesses = new LinkedHashSet<Process>();
-		
+
 		Stack<Integer> workingScopes = new Stack<Integer>();
-		
+
 		HashSet<Integer> visitedScopes = new HashSet<Integer>();
-		
+
 		HashSet<Integer> visitedProcesses = new HashSet<Integer>();
-				
+
 		ArrayList<Process> allProcesses = new ArrayList<Process>();
-		
+
 		Process[] stateProcesses = state.processes();
-		for(int k = 0; k < stateProcesses.length; k++){
+		for (int k = 0; k < stateProcesses.length; k++) {
 			Process tmp = stateProcesses[k];
-			if(tmp == null || tmp.hasEmptyStack())
+			if (tmp == null || tmp.hasEmptyStack())
 				continue;
 			allProcesses.add(tmp);
 		}
-		
-		if(allProcesses.isEmpty())
+
+		if (allProcesses.isEmpty())
 			return ampleProcesses;
-		
+
 		int numOfProcs = allProcesses.size();
 		Process p;
 		int i = numOfProcs - 1;
@@ -471,291 +479,294 @@ public class Enabler implements
 		int minProcIndex = i;
 		Process waitProc = null;
 		boolean allDisabled = true;
-		
+
 		/**
-		 * find a good process to start
-		 * 1. if there exist a process whose impact scope is owned by itself, 
-		 * then return the process as the ample process set immediately;
-		 * 2. skip null or empty-stack process
-		 * 3. if all process are disabled (null, empty-stack, or waiting),
-		 * then ample process will contain a waiting process if there is one
-		 * or it will be empty
+		 * find a good process to start 1. if there exist a process whose impact
+		 * scope is owned by itself, then return the process as the ample
+		 * process set immediately; 2. skip null or empty-stack process 3. if
+		 * all process are disabled (null, empty-stack, or waiting), then ample
+		 * process will contain a waiting process if there is one or it will be
+		 * empty
 		 */
 		HashSet<Integer> vScopes = new HashSet<Integer>();
-		do{
+		do {
 			p = allProcesses.get(i);
-			
-			if(blocked(p)){
-				//if p's current statement is Wait and the joined process
-				//has terminated, then p is the ample process set
-				if(isEnabledWait(p, state)){
+
+			if (blocked(p)) {
+				// if p's current statement is Wait and the joined process
+				// has terminated, then p is the ample process set
+				if (isEnabledWait(p, state)) {
 					ampleProcesses.add(p);
 					return ampleProcesses;
 				}
-				
+
 				waitProc = p;
-				
+
 				i--;
-				
-				if(i < 0){
-					if(allDisabled){
-						if(waitProc != null)
+
+				if (i < 0) {
+					if (allDisabled) {
+						if (waitProc != null)
 							ampleProcesses.add(waitProc);
 						return ampleProcesses;
 					}
 				}
 				continue;
 			}
-			
+
 			allDisabled = false;
-			
+
 			int maxReachers = 0;
-			
+
 			ArrayList<Integer> iScopes = impactScopesOfProcess(p, state);
-						
-			if(iScopes.isEmpty()){
+
+			if (iScopes.isEmpty()) {
 				ampleProcesses.add(p);
 				return ampleProcesses;
 			}
-			
+
 			boolean newScope = false;
-			
-			for(int impScope: iScopes){
-				if(vScopes.contains(impScope))
+
+			for (int impScope : iScopes) {
+				if (vScopes.contains(impScope))
 					continue;
 				newScope = true;
 				vScopes.add(impScope);
 				/**
 				 * The root scope is reachable from all processes
 				 */
-				if(impScope == state.rootScopeID()){
+				if (impScope == state.rootScopeID()) {
 					maxReachers = numOfProcs;
 					break;
 				}
-				
-				int currentReachers = state.getScope(impScope).numberOfReachers();
-				
+
+				int currentReachers = state.getScope(impScope)
+						.numberOfReachers();
+
 				/**
 				 * find out the maximal number of reachers that an impact scope
 				 * of process p can have
 				 */
-				if(currentReachers > maxReachers)
+				if (currentReachers > maxReachers)
 					maxReachers = currentReachers;
 			}
-			
+
 			/**
-			 * all impact scopes of p has at most one reacher
-			 * return p immediately as the ample process set
+			 * all impact scopes of p has at most one reacher return p
+			 * immediately as the ample process set
 			 */
-			if(newScope && maxReachers <= 1)
-			{
+			if (newScope && maxReachers <= 1) {
 				ampleProcesses.add(p);
 				return ampleProcesses;
 			}
-			
+
 			/**
 			 * keep track of the process with least-reacher impact scope
 			 */
-			if(newScope && maxReachers < minReachers)
-			{
+			if (newScope && maxReachers < minReachers) {
 				minReachers = maxReachers;
 				minProcIndex = i;
 			}
-			
+
 			i--;
-		}while(i >= 0);
-		
+		} while (i >= 0);
+
 		/**
 		 * If the minimal number of reachers equals to the number of processes
 		 * return all processes as the ample set immediately
 		 */
-		if(minReachers == numOfProcs){
+		if (minReachers == numOfProcs) {
 			ampleProcesses.addAll(allProcesses);
 			return ampleProcesses;
 		}
-		
+
 		/**
 		 * Start from p, whose impact factor has the least number of reachers
 		 */
 		p = allProcesses.get(minProcIndex);
-		
+
 		ampleProcesses.add(p);
-		
+
 		ArrayList<Integer> iScopesP = impactScopesOfProcess(p, state);
-		
+
 		/**
-		 * Push into the working stack the impact scopes of all possible statements of process
+		 * Push into the working stack the impact scopes of all possible
+		 * statements of process
 		 */
 		for (Integer delta : iScopesP) {
-			
+
 			workingScopes.push(delta);
 		}
-		
+
 		/**
-		 * Generate reacher processes of each dyscope in workingScope (impact scope stack)
-		 * the impact scopes of new processes are added to workingScope
-		 * if a wait process is encountered, the process it waits for is considered
-		 * pointer is considered to be "root" scope	
+		 * Generate reacher processes of each dyscope in workingScope (impact
+		 * scope stack) the impact scopes of new processes are added to
+		 * workingScope if a wait process is encountered, the process it waits
+		 * for is considered pointer is considered to be "root" scope
 		 */
-		while(!workingScopes.isEmpty()){
-			
+		while (!workingScopes.isEmpty()) {
+
 			int impScope = workingScopes.pop();
-			
+
 			/**
-			 * If imScope is a descendant of some dyscope in visitedScopes,
-			 * all its owner processes are all in ampleProcesses already.
-			 * Thus skip it.
+			 * If imScope is a descendant of some dyscope in visitedScopes, all
+			 * its owner processes are all in ampleProcesses already. Thus skip
+			 * it.
 			 */
-			if(isDescendantOf(impScope, visitedScopes, state))
+			if (isDescendantOf(impScope, visitedScopes, state))
 				continue;
-						
+
 			visitedScopes.add(impScope);
-			
+
 			/**
 			 * reachersImp is the set of procceses that can reach imScope
 			 */
-			ArrayList<Process> reachersImp = ownerOfScope(impScope, state, allProcesses);
+			ArrayList<Process> reachersImp = ownerOfScope(impScope, state,
+					allProcesses);
 			ArrayList<Process> tmpProcesses = new ArrayList<Process>();
-			
+
 			/**
-			 * For each process in reacher set, if its current statement is wait,
-			 * add the process that it waits for to a new "reacher set" (tmpProcesses).
+			 * For each process in reacher set, if its current statement is
+			 * wait, add the process that it waits for to a new "reacher set"
+			 * (tmpProcesses).
 			 */
-			for(Process proc: reachersImp){
-//				if(proc == null || proc.hasEmptyStack())
-//					continue;
+			for (Process proc : reachersImp) {
+				// if(proc == null || proc.hasEmptyStack())
+				// continue;
 				tmpProcesses.add(proc);
-				
+
 				int pid = proc.id();
-				
-				if(!visitedProcesses.contains(pid)){
-					for(Statement s: proc.location().outgoing()){
-						if(s instanceof WaitStatement){
-							try{
+
+				if (!visitedProcesses.contains(pid)) {
+					for (Statement s : proc.location().outgoing()) {
+						if (s instanceof WaitStatement) {
+							try {
 								WaitStatement wait = (WaitStatement) s;
-								Evaluation eval = evaluator.evaluate(state, pid, wait.process());
+								Evaluation eval = evaluator.evaluate(state,
+										pid, wait.process());
 								SymbolicExpression procVal = eval.value;
-								int joinedPid = modelFactory.getProcessId(wait.process()
-										.getSource(), procVal);
-								
-								if(!visitedProcesses.contains(joinedPid)){
-									Process waitedProcess = state.process(joinedPid);
-									if(proc != null && !proc.hasEmptyStack())
+								int joinedPid = modelFactory.getProcessId(wait
+										.process().getSource(), procVal);
+
+								if (!visitedProcesses.contains(joinedPid)) {
+									Process waitedProcess = state
+											.process(joinedPid);
+									if (proc != null && !proc.hasEmptyStack())
 										tmpProcesses.add(waitedProcess);
 								}
-							}catch(UnsatisfiablePathConditionException ex){
+							} catch (UnsatisfiablePathConditionException ex) {
 							}
 						}
 					}
 				}
-				
-				
+
 			}
-			
+
 			/**
-			 * tmpProcesses contains the reacher set of impScope and
-			 * all processes being waited for by some process in impScope
+			 * tmpProcesses contains the reacher set of impScope and all
+			 * processes being waited for by some process in impScope
 			 */
-			for(Process proc: tmpProcesses){
-				
-//				if(proc == null || proc.hasEmptyStack())
-//					continue;
-				
+			for (Process proc : tmpProcesses) {
+
+				// if(proc == null || proc.hasEmptyStack())
+				// continue;
+
 				ampleProcesses.add(proc);
-				
+
 				int pid = proc.id();
-				
+
 				/**
 				 * 
 				 */
-				if(!visitedProcesses.contains(pid)){
+				if (!visitedProcesses.contains(pid)) {
 					visitedProcesses.add(pid);
-					ArrayList<Integer> impScopes = impactScopesOfProcess(proc, state);
-					for(int iScope : impScopes){
-						if(iScope == state.rootScopeID()){
-							ampleProcesses = new LinkedHashSet<Process> (allProcesses);
+					ArrayList<Integer> impScopes = impactScopesOfProcess(proc,
+							state);
+					for (int iScope : impScopes) {
+						if (iScope == state.rootScopeID()) {
+							ampleProcesses = new LinkedHashSet<Process>(
+									allProcesses);
 							return ampleProcesses;
 						}
-						
-						if(!visitedScopes.contains(iScope)){
+
+						if (!visitedScopes.contains(iScope)) {
 							workingScopes.push(iScope);
 						}
 					}
 				}
 			}
-			
-			//ampleProcesses.addAll(reachersImp);
-			
+
+			// ampleProcesses.addAll(reachersImp);
+
 		}
-		
+
 		return ampleProcesses;
 	}
-	
+
 	/**
-	 * Return true iff p's current statement is Wait
-	 * and is enabled
+	 * Return true iff p's current statement is Wait and is enabled
+	 * 
 	 * @param p
 	 * @return
 	 */
-	private boolean isEnabledWait(Process p, State state){
-//		if(p == null || p.hasEmptyStack())
-//			return false;
-		Set<Statement> statements = p.location().outgoing();
-		
-		if(statements.size() == 1){
+	private boolean isEnabledWait(Process p, State state) {
+		// if(p == null || p.hasEmptyStack())
+		// return false;
+		if (p.location().getNumOutgoing() == 1) {
 			int pid = p.id();
-			for(Statement s: statements){
-				if(s instanceof WaitStatement){
-					try{
-						WaitStatement wait = (WaitStatement) s;
-						Evaluation eval = evaluator.evaluate(state, pid, wait.process());
-						SymbolicExpression procVal = eval.value;
-						int joinedPid = modelFactory.getProcessId(wait.process()
-								.getSource(), procVal);
-						
-						Process joinedProc = state.process(joinedPid);
-						
-						if(joinedProc == null || joinedProc.hasEmptyStack()){
-							return true;
-						}
-						
-					}catch(UnsatisfiablePathConditionException ex){
+			Statement s = p.location().getOutgoing(0);
+			if (s instanceof WaitStatement) {
+				try {
+					WaitStatement wait = (WaitStatement) s;
+					Evaluation eval = evaluator.evaluate(state, pid,
+							wait.process());
+					SymbolicExpression procVal = eval.value;
+					int joinedPid = modelFactory.getProcessId(wait.process()
+							.getSource(), procVal);
+
+					Process joinedProc = state.process(joinedPid);
+
+					if (joinedProc == null || joinedProc.hasEmptyStack()) {
+						return true;
 					}
+
+				} catch (UnsatisfiablePathConditionException ex) {
 				}
 			}
+
 		}
-		
+
 		return false;
 	}
-	
-	private boolean blocked(Process p){
-//		if(p == null || p.hasEmptyStack())
-//			return false;
-		
-		for(Statement s : p.location().outgoing()){
-			if(!(s instanceof WaitStatement))
+
+	private boolean blocked(Process p) {
+		// if(p == null || p.hasEmptyStack())
+		// return false;
+
+		for (Statement s : p.location().outgoing()) {
+			if (!(s instanceof WaitStatement))
 				return false;
 		}
 		return true;
 	}
-	
-	private ArrayList<Integer> impactScopesOfProcess(Process p, State state){
-		ArrayList<Integer> dyscopes = new ArrayList<Integer> ();
-		
+
+	private ArrayList<Integer> impactScopesOfProcess(Process p, State state) {
+		ArrayList<Integer> dyscopes = new ArrayList<Integer>();
+
 		/**
 		 * Obtain the impact scopes of all possible statements of process
 		 */
-		int pScope=0;
+		int pScope = 0;
 
 		pScope = p.scope();
-		
+
 		for (Statement s : p.location().outgoing()) {
-			
-			if(s.hasDerefs()){
+
+			if (s.hasDerefs()) {
 				dyscopes.add(state.rootScopeID());
 				return dyscopes;
 			}
-			
+
 			int impScope = pScope;
 			if (s.statementScope() != null) {
 				while (!state.getScope(impScope).lexicalScope()
@@ -767,51 +778,52 @@ public class Enabler implements
 		}
 		return dyscopes;
 	}
-	
+
 	/**
-	 * Given a dyscope at a state, returns the set of processes 
-	 * that owns the scope.
+	 * Given a dyscope at a state, returns the set of processes that owns the
+	 * scope.
+	 * 
 	 * @param dyscope
 	 * @param state
 	 * @return the owner (set of processes) of the scope
 	 */
-	private ArrayList<Process> ownerOfScope(int dyscope, State state, ArrayList<Process> processes){
+	private ArrayList<Process> ownerOfScope(int dyscope, State state,
+			ArrayList<Process> processes) {
 		BitSet reachers = state.getScope(dyscope).reachers();
 		ArrayList<Process> reacherProcs = new ArrayList<Process>();
 		int length = processes.size();
-		for(int i = 0; i < length; i++){
+		for (int i = 0; i < length; i++) {
 			Process p = processes.get(i);
-			if(reachers.get(p.id()))
+			if (reachers.get(p.id()))
 				reacherProcs.add(p);
 		}
-				
+
 		return reacherProcs;
 	}
-	
+
 	/**
-	 * Given a dyscope and a set of dyscope at a state,
-	 * return true if there exists an element in the given dyscope set,
-	 * such that the given dyscope is a descendant of that element.
-	 * Otherwise, return false.
+	 * Given a dyscope and a set of dyscope at a state, return true if there
+	 * exists an element in the given dyscope set, such that the given dyscope
+	 * is a descendant of that element. Otherwise, return false.
 	 */
-	private boolean isDescendantOf(int dyscope, HashSet<Integer> dyscopeSet, State state){
-		
-		if(dyscopeSet.isEmpty() || dyscopeSet.size() == 0)
+	private boolean isDescendantOf(int dyscope, HashSet<Integer> dyscopeSet,
+			State state) {
+
+		if (dyscopeSet.isEmpty() || dyscopeSet.size() == 0)
 			return false;
-		
+
 		int parentScope = dyscope;
-		
-		while(parentScope != -1){
+
+		while (parentScope != -1) {
 			parentScope = state.getParentId(parentScope);
-			if(dyscopeSet.contains(parentScope))
+			if (dyscopeSet.contains(parentScope))
 				return true;
-			
+
 		}
-		
+
 		return false;
 	}
-	
-	
+
 	/**
 	 * Given a state, a process, and a statement, check if the statement's guard
 	 * is satisfiable under the path condition. If it is, return the conjunction
@@ -827,8 +839,7 @@ public class Enabler implements
 	 * @return The new path condition. False if the guard is not satisfiable
 	 *         under the path condition.
 	 */
-	private BooleanExpression newPathCondition(State state, int pid,
-			Statement statement) {
+	BooleanExpression newPathCondition(State state, int pid, Statement statement) {
 		try {
 			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
 			BooleanExpression pathCondition = eval.state.pathCondition();
@@ -902,7 +913,7 @@ public class Enabler implements
 	public void setDebugging(boolean debugging) {
 		this.debugging = debugging;
 	}
-	
+
 	@Override
 	public State source(TransitionSequence transitionSequence) {
 		return transitionSequence.state();

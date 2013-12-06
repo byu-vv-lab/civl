@@ -3,7 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
-import java.util.Vector;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -44,7 +44,7 @@ public interface CallOrSpawnStatement extends Statement {
 	/**
 	 * @return The arguments to the function.
 	 */
-	Vector<Expression> arguments();
+	List<Expression> arguments();
 
 	/**
 	 * @param lhs
@@ -62,6 +62,6 @@ public interface CallOrSpawnStatement extends Statement {
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
-	void setArguments(Vector<Expression> arguments);
+	void setArguments(List<Expression> arguments);
 
 }

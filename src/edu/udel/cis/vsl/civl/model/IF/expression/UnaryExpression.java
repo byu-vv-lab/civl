@@ -12,7 +12,7 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
 public interface UnaryExpression extends Expression {
 
 	public enum UNARY_OPERATOR {
-		NEGATIVE, NOT
+		NEGATIVE, NOT, BIG_O
 	};
 
 	/**

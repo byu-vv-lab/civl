@@ -27,6 +27,7 @@ public interface Expression extends Sourceable {
 		INITIAL_VALUE,
 		INTEGER_LITERAL,
 		NULL_LITERAL,
+		QUANTIFIER,
 		REAL_LITERAL,
 		RESULT,
 		SELF,

@@ -40,7 +40,12 @@ public interface Variable extends Sourceable {
 	 * @return Whether this variable is an input.
 	 */
 	boolean isInput();
-
+	
+	/**
+	 * @return Whether this variable is a bound variable.
+	 */
+	boolean isBound();
+	
 	/**
 	 * @param type
 	 *            The type of this variable.
@@ -60,6 +65,12 @@ public interface Variable extends Sourceable {
 	void setIsInput(boolean value);
 
 	/**
+	 * @param value
+	 *            Whether this variable is a bound variable.
+	 */
+	void setIsBound(boolean value);
+
+	/**
 	 * @return The name of this variable.
 	 */
 	Identifier name();
@@ -74,15 +85,16 @@ public interface Variable extends Sourceable {
 	 * @return The scope of this variable.
 	 */
 	Scope scope();
-	
+
 	/**
-	 * return true iff the variable is purely local, 
-	 * i.e., v is purely local if there is no &v in the model, 
-	 * and in v's scope, if there are no spawned functions that refer to v
+	 * return true iff the variable is purely local, i.e., v is purely local if
+	 * there is no &v in the model, and in v's scope, if there are no spawned
+	 * functions that refer to v
+	 * 
 	 * @return
 	 */
 	boolean purelyLocal();
-	
+
 	void setPurelyLocal(boolean pl);
 
 }

@@ -3,7 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common;
 
-import java.util.Vector;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -32,7 +32,7 @@ public class CommonSystemFunction extends CommonFunction implements
 	 * @param factory
 	 */
 	public CommonSystemFunction(CIVLSource source, Identifier name,
-			Vector<Variable> parameters, CIVLType returnType,
+			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, Location startLocation,
 			ModelFactory factory, String libraryName) {
 		super(source, name, parameters, returnType, containingScope,

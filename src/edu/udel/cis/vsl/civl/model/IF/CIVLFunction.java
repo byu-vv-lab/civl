@@ -5,7 +5,7 @@ package edu.udel.cis.vsl.civl.model.IF;
 
 import java.io.PrintStream;
 import java.util.Set;
-import java.util.Vector;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -29,7 +29,7 @@ public interface CIVLFunction extends Sourceable {
 	/**
 	 * @return The list of parameters.
 	 */
-	public Vector<Variable> parameters();
+	public List<Variable> parameters();
 
 	/**
 	 * @return The return type of this function.
@@ -121,7 +121,7 @@ public interface CIVLFunction extends Sourceable {
 	 * @param parameters
 	 *            The list of parameters.
 	 */
-	public void setParameters(Vector<Variable> parameters);
+	public void setParameters(List<Variable> parameters);
 
 	/**
 	 * @param returnType

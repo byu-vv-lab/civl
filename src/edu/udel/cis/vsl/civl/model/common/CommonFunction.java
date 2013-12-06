@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -34,7 +34,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 	private Identifier name;
-	private Vector<Variable> parameters;
+	private List<Variable> parameters;
 	private CIVLType returnType;
 	private Set<Scope> scopes;
 	private Scope outerScope;
@@ -62,7 +62,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 *            The first location in the function.
 	 */
 	public CommonFunction(CIVLSource source, Identifier name,
-			Vector<Variable> parameters, CIVLType returnType,
+			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, Location startLocation, ModelFactory factory) {
 		super(source);
 		this.name = name;
@@ -94,7 +94,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	/**
 	 * @return The list of parameters.
 	 */
-	public Vector<Variable> parameters() {
+	public List<Variable> parameters() {
 		return parameters;
 	}
 
@@ -160,7 +160,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Expression postcondition() {
 		return postcondition;
 	}
-	
+
 	/**
 	 * @return The model to which this function belongs.
 	 */
@@ -224,7 +224,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 * @param parameters
 	 *            The list of parameters.
 	 */
-	public void setParameters(Vector<Variable> parameters) {
+	public void setParameters(List<Variable> parameters) {
 		this.parameters = parameters;
 	}
 
@@ -277,13 +277,14 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	}
 
 	/**
-	 * @param model The Model to which this function belongs.
+	 * @param model
+	 *            The Model to which this function belongs.
 	 */
 	@Override
 	public void setModel(Model model) {
 		this.model = model;
 	}
-	
+
 	/**
 	 * Print the function.
 	 * 
@@ -336,7 +337,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public boolean isSystem() {
 		return isSystem;
 	}
-	
+
 	/**
 	 * Remove all locations that satisfy the following conditions:
 	 * 1. has exactly one outgoing statement and
@@ -349,85 +350,94 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 * l1 (s1 -> l4, s2 -> l3), l3(), l4()
 	 */
 	@Override
-	public void simplify(){
-		ArrayList<Location> oldLocations = new ArrayList<Location>(this.locations);
+	public void simplify() {
+		ArrayList<Location> oldLocations = new ArrayList<Location>(
+				this.locations);
 		int count = oldLocations.size();
-		
+
 		/**
 		 * The index of locations that can be removed
 		 */
 		ArrayList<Integer> toRemove = new ArrayList<Integer>();
-		
-		for(int i = 0; i < count; i++){
+
+		for (int i = 0; i < count; i++) {
 			Location loc = oldLocations.get(i);
-			
-			Set<Statement> statements = loc.outgoing();
-			 
+
 			/**
 			 * loc has exactly one statement
 			 */
-			if(statements.size() == 1){
-				for(Statement s: statements){
+			if (loc.getNumOutgoing() == 1) {
+				Statement s = loc.getOutgoing(0);
+				/**
+				 * The only statement of loc is a no-op statement
+				 */
+				if (s instanceof CommonNoopStatement) {
+					Expression guard = s.guard();
+
 					/**
-					 * The only statement of loc is a no-op statement
+					 * The guard of the no-op is true TODO: can be improved by
+					 * checking if guard has any side-effect, e.g., if guard is
+					 * (x + y < 90) then we still can remove this no-op
+					 * statement
 					 */
-					if(s instanceof CommonNoopStatement){
-						Expression guard = s.guard();
-						
-						/**
-						 * The guard of the no-op is true
-						 * TODO: can be improved by checking if guard has any side-effect,
-						 * e.g., if guard is (x + y < 90) then we still can remove this no-op statement
-						 */
-						if(guard instanceof CommonBooleanLiteralExpression){
-							if(((CommonBooleanLiteralExpression)guard).value()){
+					if (guard instanceof CommonBooleanLiteralExpression) {
+						if (((CommonBooleanLiteralExpression) guard).value()) {
+							/**
+							 * Record the index of loc so that it can be removed
+							 * later
+							 */
+							toRemove.add(i);
+
+							/**
+							 * The target of loc
+							 */
+							Location target = s.target();
+
+							for (int j = 0; j < count; j++) {
 								/**
-								 * Record the index of loc so that it can be removed later
+								 * Do nothing to the locations that are to be
+								 * removed
 								 */
-								toRemove.add(i);
-								
+								if (toRemove.contains(j))
+									continue;
+
+								Location curLoc = oldLocations.get(j);
+
 								/**
-								 * The target of loc
+								 * For each statement of curLoc \in
+								 * (this.locations - toRemove)
 								 */
-								Location target = s.target();
-								
-								for(int j = 0; j < count; j++){
+								for (Statement curS : curLoc.outgoing()) {
+									Location curTarget = curS.target();
+
 									/**
-									 * Do nothing to the locations that are to be removed
+									 * Redirect the target location so that
+									 * no-op location is skipped
 									 */
-									if(toRemove.contains(j))
-										continue;
-									
-									Location curLoc = oldLocations.get(j);
-									
-									/**
-									 * For each statement of curLoc \in (this.locations - toRemove)
-									 */
-									for(Statement curS : curLoc.outgoing()){
-										Location curTarget = curS.target();
-										
-										/**
-										 * Redirect the target location so that no-op location is skipped
-										 */
-										if(curTarget != null && curTarget.id() == loc.id()){
-											curS.setTarget(target);//the incoming field is implicitly modified by setTarget()
-										}
+									if (curTarget != null
+											&& curTarget.id() == loc.id()) {
+										curS.setTarget(target);// the incoming
+																// field is
+																// implicitly
+																// modified by
+																// setTarget()
 									}
-								}								
+								}
 							}
 						}
 					}
 				}
+
 			}
 		}
-		
+
 		Set<Location> newLocations = new LinkedHashSet<Location>();
-		for(int k = 0; k < count; k++){
-			if(toRemove.contains(k))
+		for (int k = 0; k < count; k++) {
+			if (toRemove.contains(k))
 				continue;
 			newLocations.add(oldLocations.get(k));
 		}
-		
+
 		this.locations = newLocations;
 	}
 
@@ -439,7 +449,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		
 		for(Location loc: this.locations){
 			
-			Set<Statement> stmts = loc.outgoing();
+			Iterable<Statement> stmts = loc.outgoing();
 			
 			for(Statement s: stmts){
 				s.purelyLocalAnalysisOfVariables(funcScope);

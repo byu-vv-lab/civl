@@ -1,9 +1,6 @@
-/**
- * 
- */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
-import java.util.Vector;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -28,7 +25,7 @@ public class CommonCallStatement extends CommonStatement implements
 
 	private CIVLFunction function;
 
-	private Vector<Expression> arguments;
+	private List<Expression> arguments;
 
 	/**
 	 * A function call. Either of the form f(x) or else v=f(x).
@@ -43,7 +40,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 *            The arguments to the function.
 	 */
 	public CommonCallStatement(CIVLSource civlSource, Location source,
-			boolean isCall, CIVLFunction function, Vector<Expression> arguments) {
+			boolean isCall, CIVLFunction function, List<Expression> arguments) {
 		super(civlSource, source);
 		this.isCall = isCall;
 		this.function = function;
@@ -64,7 +61,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 *            The arguments to the function.
 	 */
 	public CommonCallStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, CIVLFunction function, Vector<Expression> arguments) {
+			LHSExpression lhs, CIVLFunction function, List<Expression> arguments) {
 		super(civlSource, source);
 		this.lhs = lhs;
 		this.function = function;
@@ -91,7 +88,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @return The arguments to the function.
 	 */
 	@Override
-	public Vector<Expression> arguments() {
+	public List<Expression> arguments() {
 		return arguments;
 	}
 
@@ -118,7 +115,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 *            The arguments to the function.
 	 */
 	@Override
-	public void setArguments(Vector<Expression> arguments) {
+	public void setArguments(List<Expression> arguments) {
 		this.arguments = arguments;
 	}
 
