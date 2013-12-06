@@ -1,10 +1,5 @@
 Comments on CommonModelBuilder
 
-Don't use Vector.  Use ArrayList instead.
-
-put a javadoc over each of the private fields describing briefly
-what they are
-
 buildModel: would it make more sense to iterate over the
 entities of the AST rather than over the nodes?  Entities
 provide a more abstract interface.  You can iterate over all

@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Vector;
 
 import edu.udel.cis.vsl.abc.ast.conversion.IF.ArithmeticConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.ArrayConversion;
@@ -181,7 +180,7 @@ public class ModelBuilderWorker {
 	 * This field accumulates the AST definition node of every function
 	 * definition in the AST.
 	 */
-	private Vector<FunctionDefinitionNode> unprocessedFunctions;
+	private ArrayList<FunctionDefinitionNode> unprocessedFunctions;
 
 	/**
 	 * Map whose key set contains all call/spawn statements in the model. The
@@ -220,23 +219,47 @@ public class ModelBuilderWorker {
 	 */
 	private int anonymousStructCounter = 0;
 
+	/**
+	 * List of all malloc statements in the program.
+	 */
 	private ArrayList<MallocStatement> mallocStatements = new ArrayList<MallocStatement>();
 
+	/**
+	 * The types that may be part of a bundle.
+	 */
 	private LinkedList<CIVLType> bundleableTypeList = new LinkedList<CIVLType>();
 
+	/**
+	 * The types that may not be part of a bundle.
+	 */
 	private LinkedList<CIVLType> unbundleableTypeList = new LinkedList<CIVLType>();
 
 	/** Used to shortcut checking whether circular types are bundleable. */
 	private List<CIVLType> bundleableEncountered = new LinkedList<CIVLType>();
 
+	/**
+	 * The unique type for a heap.
+	 */
 	private CIVLHeapType heapType;
 
+	/**
+	 * The unique type for a bundle.
+	 */
 	private CIVLBundleType bundleType;
 
+	/**
+	 * The unique type for a message.
+	 */
 	private CIVLType messageType;
 
+	/**
+	 * The unique type for a queue.
+	 */
 	private CIVLType queueType;
 
+	/**
+	 * The unique type for a comm.
+	 */
 	private CIVLType commType;
 
 	/**
@@ -256,6 +279,9 @@ public class ModelBuilderWorker {
 	 */
 	private Stack<Set<Statement>> breakStatements = new Stack<Set<Statement>>();
 
+	/**
+	 * Configuration information for the generic model checker.
+	 */
 	private GMCConfiguration config;
 
 	/**
@@ -373,7 +399,7 @@ public class ModelBuilderWorker {
 			CIVLSource identifierSource = sourceOf(node.getIdentifier());
 			Identifier functionIdentifier = factory.identifier(
 					identifierSource, functionName);
-			Vector<Variable> parameters = new Vector<Variable>();
+			ArrayList<Variable> parameters = new ArrayList<Variable>();
 			// type should come from entity, not this type node.
 			// if it has a definition node, should probably use that one.
 			FunctionType functionType = entity.getType();
@@ -1180,7 +1206,7 @@ public class ModelBuilderWorker {
 			return subscript(expression, scope);
 
 		int numArgs = expression.getNumberOfArguments();
-		List<Expression> arguments = new Vector<Expression>();
+		List<Expression> arguments = new ArrayList<Expression>();
 		Expression result = null;
 
 		for (int i = 0; i < numArgs; i++) {
@@ -1817,7 +1843,7 @@ public class ModelBuilderWorker {
 
 	private CallOrSpawnStatement callOrSpawn(Location location, boolean isCall,
 			LHSExpression lhs, FunctionCallNode callNode, Scope scope) {
-		Vector<Expression> arguments = new Vector<Expression>();
+		ArrayList<Expression> arguments = new ArrayList<Expression>();
 		ExpressionNode functionExpression = ((FunctionCallNode) callNode)
 				.getFunction();
 		CallOrSpawnStatement result;
@@ -2852,7 +2878,7 @@ public class ModelBuilderWorker {
 	 * @param addFirstLocation
 	 */
 	private void addToFunction(Fragment fragment, CIVLFunction function,
-			boolean addFirstLocation, Vector<Statement> list) {
+			boolean addFirstLocation, ArrayList<Statement> list) {
 		Statement statement = fragment.startLocation.getSoleOutgoing();
 
 		if (addFirstLocation)
@@ -2919,19 +2945,19 @@ public class ModelBuilderWorker {
 		Identifier systemID = factory.identifier(factory.systemSource(),
 				"_CIVL_system");
 		CIVLFunction system = factory.function(sourceOf(program.getAST()
-				.getRootNode()), systemID, new Vector<Variable>(), null, null,
-				null);
+				.getRootNode()), systemID, new ArrayList<Variable>(), null,
+				null, null);
 		ASTNode rootNode = program.getAST().getRootNode();
 		Location returnLocation;
 		Statement returnStatement;
 		FunctionDefinitionNode mainFunction = null;
 		Statement mainBody;
-		Vector<Statement> initializations = new Vector<Statement>();
+		ArrayList<Statement> initializations = new ArrayList<Statement>();
 
 		systemScope = system.outerScope();
 		callStatements = new LinkedHashMap<CallOrSpawnStatement, Function>();
 		functionMap = new LinkedHashMap<Function, CIVLFunction>();
-		unprocessedFunctions = new Vector<FunctionDefinitionNode>();
+		unprocessedFunctions = new ArrayList<FunctionDefinitionNode>();
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
 
@@ -2955,8 +2981,8 @@ public class ModelBuilderWorker {
 					// add locations and statements to fragment and
 					// statements to initializations:
 					if (!initializations.isEmpty())
-						initializations.lastElement().setTarget(
-								fragment.startLocation);
+						initializations.get(initializations.size() - 1)
+								.setTarget(fragment.startLocation);
 					addToFunction(fragment, system, true, initializations);
 				}
 			} else if (node instanceof FunctionDefinitionNode) {
@@ -2975,8 +3001,8 @@ public class ModelBuilderWorker {
 				// lastStatement not updated because null
 				// startLocation not set because function null
 				if (!initializations.isEmpty())
-					initializations.lastElement()
-							.setTarget(assumeStmt.source());
+					initializations.get(initializations.size() - 1).setTarget(
+							assumeStmt.source());
 				initializations.add(assumeStmt);
 				system.addLocation(assumeStmt.source());
 				system.addStatement(assumeStmt);
@@ -3013,8 +3039,9 @@ public class ModelBuilderWorker {
 		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		if (!initializations.isEmpty()) {
-			system.setStartLocation(initializations.firstElement().source());
-			mainBody = statement(system, initializations.lastElement(),
+			system.setStartLocation(initializations.get(0).source());
+			mainBody = statement(system,
+					initializations.get(initializations.size() - 1),
 					mainFunction.getBody(), system.outerScope());
 		} else {
 			mainBody = statement(system, null, mainFunction.getBody(),
