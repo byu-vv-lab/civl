@@ -492,11 +492,6 @@ public class Enabler implements
 		do {
 			p = allProcesses.get(i);
 			
-			if(p.isPurelyLocalProc()){
-				ampleProcesses.add(p);
-				return ampleProcesses;
-			}
-			
 			if(blocked(p)){
 				//if p's current statement is Wait and the joined process
 				//has terminated, then p is the ample process set
@@ -517,6 +512,11 @@ public class Enabler implements
 					}
 				}
 				continue;
+			}
+			
+			if(p.isPurelyLocalProc()){
+				ampleProcesses.add(p);
+				return ampleProcesses;
 			}
 
 			allDisabled = false;
