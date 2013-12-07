@@ -13,6 +13,7 @@ import java.util.Collection;
 
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.ABCException;
+import edu.udel.cis.vsl.abc.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.Activator;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
@@ -530,17 +531,15 @@ public class UserInterface {
 			}
 		} catch (ABCException e) {
 			err.println(e);
-			err.flush();
-			return false;
+		} catch (ABCRuntimeException e) {
+			err.println(e);
 		} catch (IOException e) {
 			err.println(e);
-			err.flush();
-			return false;
 		} catch (MisguidedExecutionException e) {
 			err.println(e);
-			err.flush();
-			return false;
 		}
+		err.flush();
+		return false;
 	}
 
 	/**

@@ -45,7 +45,7 @@ way.)
 (to any part of CIVL). If you don't want to wait, you can trigger it
 manually by executing from vsl, in repos/scripts:
 
- ./run_manager config_civl-0.2.sh 121
+ ./run_manager config_civl-0.2.sh
 
 where 121 is whatever the revision number was for the release.
 
