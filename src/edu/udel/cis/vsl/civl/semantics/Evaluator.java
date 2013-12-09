@@ -1082,7 +1082,8 @@ public class Evaluator {
 								expression.getExpressionType()), denominator);
 				ResultType resultType = universe.reasoner(assumption)
 						.valid(claim).getResultType();
-
+				
+				//TODO: check not negative
 				if (resultType != ResultType.YES) {
 					eval.state = this.logError(expression.getSource(),
 							eval.state, claim, resultType,
