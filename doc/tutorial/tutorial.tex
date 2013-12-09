@@ -12,6 +12,9 @@
   \titlepage
 \end{frame}
 
+
+\section{CIVL User Tutorial}
+
 \begin{frame}{What is CIVL?}
   CIVL is \ldots
   \begin{enumerate}
@@ -292,23 +295,83 @@ to your working directory and try
     \item declares \code{p} to have type ``pointer-to-\code{int}-in-\code{s}''
     \item \code{p} can only hold a pointer to an object in scope \code{s}
     \end{itemize}
+  \item $s_1\leq s_2$ $\implies$
+    \textit{pointer-to-$T$-in-$s_1$} \alert{is a subtype of}
+    \textit{pointer-to-$T$-in-$s_2$}
+  \item the type \textit{pointer-to-$T$} (\code{T*}) is shorthand for
+    \textit{pointer-to-$T$-in-$s_0$} (\code{T*<\(s_0\)>}), where $s_0$
+    is the \alert{root scope}
+  \item \code{\&x} returns a pointer to the declaration scope of \code{x}
+    \begin{itemize}
+    \item scope of \code{\&a[i]} is the scope of \code{\&a}
+    \item scope of \code{\&r.f} is the scope of \code{\&r}
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
+\begin{frame}[containsverbatim]{Pointer safety}
+  \begin{itemize}
+  \item for a CIVL-C program to be \alert{statically type-safe},
+    for all assignments, the type of the right-hand side must be a subtype
+    of that of the left-hand side
+  \item static type-safety can be checked statically
+  \end{itemize}
+  
+  Example:
+  
+  \begin{mycbox}{7cm}
+\begin{verbatim}
+  {
+    $scope s1;
+    double x;
+    {
+      $scope s2;
+      double a[N];
+      double *<s1> p = &x; // OK
+      double *<s2> q = &a[0]; // OK
+      
+      p = &a[1]; // OK
+      q = &x; // static type error
+    }
+  }
+\end{verbatim}
+  \end{mycbox}
+\end{frame}
 
-% static type checking
+\begin{frame}[containsverbatim]{Scope-parameterized functions}
 
-% subtype
+  A function declaration or definition may be parameterized by any number
+  of \alert{formal scope parameters}.   Example:
 
-% semantics ?
+  \begin{mycbox}{7cm}
+\begin{verbatim}
+  <s> int *<s> f(int *<s> p);
+\end{verbatim}
+  \end{mycbox}
 
-% scope-parameterized functions
+  declares $f$ to be a function which, for any scope $s$, takes a
+  \emph{pointer-to-\texttt{int}-in-$s$} and returns a
+  \emph{pointer-to-\texttt{int}-in-$s$}.
 
-% APIs for malloc, free, memcpy
+\end{frame}
 
-% bundles
-
-% message passing
+\begin{frame}{Further ideas}
+  \begin{itemize}
+  \item scope-parameterized \alert{typedefs} and \alert{structs}
+  \item \alert{heap} type (can have ``a heap in every scope'')
+    \begin{itemize}
+    \item \texttt{malloc} and \texttt{free} adjusted to take reference to heap
+    \end{itemize}
+  \item a \alert{bundle type}
+    \begin{itemize}
+    \item wrap up any contiguous region of memory into an object of bundle type
+    \item functions to \alert{pack} and \alert{unpack} bundles
+    \item useful for many abstractions, e.g., messages
+    \end{itemize}
+  \item set of functions and types supporting \alert{message-passing}
+  \item see Trac Wiki and \code{civlc.h}
+  \end{itemize}
+\end{frame}
 
 \begin{frame}[containsverbatim]{Message Passing example: \code{ring.cvl}}
 
@@ -378,6 +441,8 @@ void main() {
 \end{verbatim}
 \end{frame}
 
+\section{CIVL Developer Tutorial}
+
 \begin{frame}{VSL Projects: Uses Relation}
 
   \includegraphics{vsl_projects}
@@ -429,8 +494,19 @@ void main() {
   \end{itemize}
 
   \includegraphics[scale=.3]{civl-trac.pdf}
-
+  
 \end{frame}
+
+\begin{frame}{Civl Test Directory}
+  \includegraphics[scale=.35]{civlTestDir}
+  
+  \includegraphics[scale=.35]{civlTestTrunkDir}
+\end{frame}
+
+\begin{frame}{CIVL Test Directory: Latest (unstable) Release}
+  \includegraphics[scale=.35]{civlTestTrunkLatest}
+\end{frame}
+
 
 \begin{frame}{Automated Build \& Test Script}
 
@@ -450,6 +526,10 @@ void main() {
   \item runs Jacoco coverage anaysis and displays results
   \item generates javadocs
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Coverage Analysis Results}
+  \includegraphics[scale=.4]{civlCoverage}
 \end{frame}
 
 \begin{frame}{Developer Eclipse Set-up}
