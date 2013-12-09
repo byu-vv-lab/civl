@@ -125,14 +125,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 			if (statement.guard() != null) {
 				guardString = "(" + statement.guard() + ")";
 			}
-			if (statement.isPurelyLocal()) {
-				gotoString = prefix + "| " + "when " + guardString + " "
-						+ statement + " @ "
-						+ statement.getSource().getLocation() + " ; #";
-			} else
-				gotoString = prefix + "| " + "when " + guardString + " "
-						+ statement + " @ "
-						+ statement.getSource().getLocation() + " ;";
+			// if (statement.isPurelyLocal()) {
+			// gotoString = prefix + "| " + "when " + guardString + " "
+			// + statement + " @ "
+			// + statement.getSource().getLocation() + " ; #";
+			// } else
+			gotoString = prefix + "| " + "when " + guardString + " "
+					+ statement + " @ " + statement.getSource().getLocation()
+					+ " ;";
 			if (targetLocation != null) {
 				gotoString += " goto location " + targetLocation;
 			}
@@ -233,10 +233,10 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public void purelyLocalAnalysis() {
-//		if(incoming.size() > 1)
-//			this.purelyLocal = false;
-		//else 
-		if(outgoing.size() != 1)
+		// if(incoming.size() > 1)
+		// this.purelyLocal = false;
+		// else
+		if (outgoing.size() != 1)
 
 			this.purelyLocal = false;
 		else {
