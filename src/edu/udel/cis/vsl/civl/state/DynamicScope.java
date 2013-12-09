@@ -20,10 +20,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * 
  * Other components have references to the scope id: StackEntry.
  * 
- * TODO: could use BitSet to record the set of processes that can reach this
- * dynamic scope. Would need to re-do bit set when processes change. Is a sparse
- * representation better?
- * 
  * operations: add a process, remove a process, renumber procs by shifting
  * 
  * @author Timothy K. Zirkel (zirkel)
@@ -141,7 +137,6 @@ public class DynamicScope {
 		return lexicalScope;
 	}
 
-	// TODO: move this to factory....
 	/**
 	 * @return The parent of this dynamic scope. Null only for the topmost
 	 *         dynamic scope.
@@ -151,7 +146,9 @@ public class DynamicScope {
 	}
 
 	/**
-	 * Change to publice, since we need to get the owners of a scope in POR (Enabler.java)
+	 * Change to publice, since we need to get the owners of a scope in POR
+	 * (Enabler.java)
+	 * 
 	 * @return
 	 */
 	public BitSet reachers() {
