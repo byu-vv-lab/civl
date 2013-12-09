@@ -136,6 +136,10 @@ concurrency$
     \item however you want: move it, symlink, \ldots
     \end{itemize}
   \end{enumerate}
+
+  \alert{Note:} You can put \texttt{vsl} and \texttt{CIVL-\textit{tag}}
+  in any directories (not just \texttt{/opt}).  Just edit script \texttt{civl}
+  to use the new paths.
 \end{frame}
 
 \begin{frame}[containsverbatim]{Test your installation}
@@ -209,14 +213,16 @@ to your working directory and try
   \item functions can be declared in any scope
   \item concurrency primitives
     \begin{itemize}
-    \item spawning processes, waiting for a process to terminate, guarded commands
-    \item nondeterministic choice
-    \item explicit naming of scopes
-    \item scope-parameterized pointers
-    \item other primitives useful for verification
-      \begin{itemize}
-      \item input qualifier, assert, assume, procedure contracts
-      \end{itemize}
+    \item spawning processes: \code{\cproc\ p = \cspawn\ f();}
+    \item waiting for a process to terminate: \code{\cwait\ p;}
+    \item guarded commands: \code{\cwhen (x>0) c=1;}
+    \end{itemize}
+  \item nondeterministic choice: \code{\cchoose ...}
+  \item explicit naming of scopes: \code{\cscope\ s;}
+  \item scope-parameterized pointers \code{double *<s> p;}
+  \item other primitives useful for verification
+    \begin{itemize}
+    \item input qualifier, assert, assume, procedure contracts
     \end{itemize}
   \item library-level constructs supporting message-passing, \ldots
   \end{itemize}
@@ -565,6 +571,12 @@ void main() {
       \texttt{LD{\U}LIBRARY{\U}PATH} (linux), specify its value by
       clicking Variables, choose \texttt{vsl{\U}lib} from the list
     \item click ``Run'' to run the tests
+    \end{itemize}
+  \item \alert{optional:} configure to build and run with \texttt{ant}
+    \begin{itemize}
+    \item create file \texttt{build.properties} in root CIVL directory
+    \item base on examples in \texttt{properties} directory
+    \item from command line, type \texttt{ant test}
     \end{itemize}
   \end{enumerate}
 \end{frame}
