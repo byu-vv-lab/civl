@@ -173,7 +173,7 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	}
 	
 	@Override
-	public void caculateDerefs(){
+	public void calculateDerefs(){
 		this.hasDerefs = false;
 	}
 

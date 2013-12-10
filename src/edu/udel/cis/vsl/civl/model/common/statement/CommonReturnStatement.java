@@ -60,7 +60,7 @@ public class CommonReturnStatement extends CommonStatement implements
 	}
 
 	@Override
-	public void caculateDerefs() {
+	public void calculateDerefs() {
 		if(this.expression != null){
 			this.expression.calculateDerefs();
 			this.hasDerefs = this.expression.hasDerefs();

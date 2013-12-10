@@ -110,10 +110,10 @@ public class StatementSet implements Statement {
 	}
 
 	@Override
-	public void caculateDerefs() {
+	public void calculateDerefs() {
 		this.hasDerefs = false;
 		for(Statement s: statements){
-			s.caculateDerefs();
+			s.calculateDerefs();
 			this.hasDerefs = this.hasDerefs || s.hasDerefs();
 			//early return
 			if(this.hasDerefs)

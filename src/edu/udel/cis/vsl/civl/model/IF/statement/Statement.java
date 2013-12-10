@@ -80,7 +80,7 @@ public interface Statement extends Sourceable {
 	 */
 	boolean hasDerefs();
 	
-	void caculateDerefs();
+	void calculateDerefs();
 
 	/**
 	 * if an &(var) is encountered, then var is considered as no purely local

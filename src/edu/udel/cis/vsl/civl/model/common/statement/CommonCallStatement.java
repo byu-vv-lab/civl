@@ -152,7 +152,7 @@ public class CommonCallStatement extends CommonStatement implements
 	}
 
 	@Override
-	public void caculateDerefs() {
+	public void calculateDerefs() {
 		this.hasDerefs = false;
 		if(this.lhs != null){
 			lhs.calculateDerefs();

@@ -57,7 +57,7 @@ public class CommonWaitStatement extends CommonStatement implements
 	}
 	
 	@Override
-	public void caculateDerefs() {
+	public void calculateDerefs() {
 		this.process.calculateDerefs();
 		this.hasDerefs = this.process.hasDerefs();
 	}

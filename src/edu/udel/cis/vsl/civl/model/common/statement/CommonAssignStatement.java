@@ -79,7 +79,7 @@ public class CommonAssignStatement extends CommonStatement implements
 	}
 
 	@Override
-	public void caculateDerefs() {
+	public void calculateDerefs() {
 		this.lhs.calculateDerefs();
 		this.rhs.calculateDerefs();
 		this.hasDerefs = this.lhs.hasDerefs() ||

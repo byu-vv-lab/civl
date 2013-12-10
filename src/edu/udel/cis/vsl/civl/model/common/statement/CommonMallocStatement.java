@@ -101,7 +101,7 @@ public class CommonMallocStatement extends CommonStatement implements
 	}
 
 	@Override
-	public void caculateDerefs() {
+	public void calculateDerefs() {
 		boolean lhsDeref = false;
 		if(lhs != null){
 			lhs.calculateDerefs();
