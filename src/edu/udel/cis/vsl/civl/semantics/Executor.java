@@ -28,10 +28,10 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
-import edu.udel.cis.vsl.civl.state.Process;
-import edu.udel.cis.vsl.civl.state.StackEntry;
-import edu.udel.cis.vsl.civl.state.State;
-import edu.udel.cis.vsl.civl.state.StateFactoryIF;
+import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.common.Process;
+import edu.udel.cis.vsl.civl.state.common.StackEntry;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -61,7 +61,7 @@ public class Executor {
 	private SymbolicUniverse symbolicUniverse;
 
 	/** The factory used to produce and manipulate model states. */
-	private StateFactoryIF stateFactory;
+	private StateFactory stateFactory;
 
 	/** The Evaluator used to evaluate expressions. */
 	private Evaluator evaluator;
@@ -95,7 +95,7 @@ public class Executor {
 	 *            A theorem prover for checking assertions.
 	 */
 	public Executor(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactoryIF stateFactory, ErrorLog log,
+			StateFactory stateFactory, ErrorLog log,
 			LibraryExecutorLoader loader) {
 		this.symbolicUniverse = modelFactory.universe();
 		this.stateFactory = stateFactory;
@@ -120,7 +120,7 @@ public class Executor {
 	 *            A theorem prover for checking assertions.
 	 */
 	public Executor(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactoryIF stateFactory, ErrorLog log) {
+			StateFactory stateFactory, ErrorLog log) {
 		this(config, modelFactory, stateFactory, log, null);
 	}
 
@@ -139,7 +139,7 @@ public class Executor {
 	 *            The end location of the transition.
 	 * @return A new state where the process is at the target location.
 	 */
-	private State transition(State state, Process process, Location target) {
+	private CommonState transition(CommonState state, Process process, Location target) {
 		state = stateFactory.setLocation(state, process.id(), target);
 		// state = stateFactory.canonic(state);
 		return state;
@@ -158,12 +158,12 @@ public class Executor {
 	 *            a value to be assigned to the referenced memory location
 	 * @return the new state
 	 */
-	public State assign(CIVLSource source, State state,
+	public CommonState assign(CIVLSource source, CommonState state,
 			SymbolicExpression pointer, SymbolicExpression value) {
 		int vid = evaluator.getVariableId(source, pointer);
 		int sid = evaluator.getScopeId(source, pointer);
 		ReferenceExpression symRef = evaluator.getSymRef(pointer);
-		State result;
+		CommonState result;
 
 		if (symRef.isIdentityReference()) {
 			result = stateFactory.setVariable(state, vid, sid, value);
@@ -194,7 +194,7 @@ public class Executor {
 	 * @return the new state
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	public State assign(State state, int pid, LHSExpression lhs,
+	public CommonState assign(CommonState state, int pid, LHSExpression lhs,
 			SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.reference(state, pid, lhs);
@@ -217,7 +217,7 @@ public class Executor {
 	 * @return The updated state of the program
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeAssign(State state, int pid, AssignStatement statement)
+	private CommonState executeAssign(CommonState state, int pid, AssignStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Process process = state.process(pid);
 		Evaluation eval = evaluator.evaluate(state, pid, statement.rhs());
@@ -243,7 +243,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCall(State state, int pid,
+	private CommonState executeCall(CommonState state, int pid,
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		if (statement.function() instanceof SystemFunction) {
@@ -270,9 +270,9 @@ public class Executor {
 		return state;
 	}
 
-	private State executeMalloc(State state, int pid, MallocStatement statement)
+	private CommonState executeMalloc(CommonState state, int pid, MallocStatement statement)
 			throws UnsatisfiablePathConditionException {
-		State result = civlcExecutor.executeMalloc(state, pid, statement);
+		CommonState result = civlcExecutor.executeMalloc(state, pid, statement);
 
 		result = transition(result, result.process(pid), statement.target());
 		return result;
@@ -291,7 +291,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeSpawn(State state, int pid,
+	private CommonState executeSpawn(CommonState state, int pid,
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Process process = state.process(pid);
@@ -331,7 +331,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeWait(State state, int pid, WaitStatement statement)
+	private CommonState executeWait(CommonState state, int pid, WaitStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid, statement.process());
 		SymbolicExpression procVal = eval.value;
@@ -356,7 +356,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeReturn(State state, int pid, ReturnStatement statement)
+	private CommonState executeReturn(CommonState state, int pid, ReturnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Expression expr = statement.expression();
 		Process process;
@@ -386,7 +386,7 @@ public class Executor {
 		return state;
 	}
 
-	private State executeAssume(State state, int pid, AssumeStatement statement)
+	private CommonState executeAssume(CommonState state, int pid, AssumeStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
@@ -401,7 +401,7 @@ public class Executor {
 		return state;
 	}
 
-	private State executeAssert(State state, int pid, AssertStatement statement)
+	private CommonState executeAssert(CommonState state, int pid, AssertStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
@@ -460,7 +460,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	public State executeChoose(State state, int pid, ChooseStatement statement,
+	public CommonState executeChoose(CommonState state, int pid, ChooseStatement statement,
 			SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
 		Process process = state.process(pid);
@@ -473,7 +473,7 @@ public class Executor {
 	/**
 	 * @return The state factory associated with this executor.
 	 */
-	public StateFactoryIF stateFactory() {
+	public StateFactory stateFactory() {
 		return stateFactory;
 	}
 
@@ -496,7 +496,7 @@ public class Executor {
 	 * Execute a generic statement. All statements except a Choose should be
 	 * handled by this method.
 	 * 
-	 * @param State
+	 * @param CommonState
 	 *            The state of the program.
 	 * @param pid
 	 *            The process id of the currently executing process.
@@ -504,7 +504,7 @@ public class Executor {
 	 *            The statement to be executed.
 	 * @return The updated state of the program.
 	 */
-	private State executeWork(State state, int pid, Statement statement)
+	private CommonState executeWork(CommonState state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
 		if (statement instanceof AssumeStatement) {
 			return executeAssume(state, pid, (AssumeStatement) statement);
@@ -544,7 +544,7 @@ public class Executor {
 	 * @param statement
 	 * @return
 	 */
-	public State execute(State state, int pid, Statement statement)
+	public CommonState execute(CommonState state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
 		try {
 			return executeWork(state, pid, statement);

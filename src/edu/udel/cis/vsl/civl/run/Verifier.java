@@ -5,7 +5,7 @@ import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.Model;
-import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.civl.state.common.CommonState;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.CommandLineException;
@@ -15,12 +15,12 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 public class Verifier extends Player {
 
-	private DfsSearcher<State, Transition, TransitionSequence> searcher;
+	private DfsSearcher<CommonState, Transition, TransitionSequence> searcher;
 
 	public Verifier(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
 		super(config, model, out);
-		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
+		searcher = new DfsSearcher<CommonState, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
 		if (debug)
 			searcher.setDebugOut(out);
@@ -53,7 +53,7 @@ public class Verifier extends Player {
 	}
 
 	public boolean run() {
-		State initialState = stateFactory.initialState(model);
+		CommonState initialState = stateFactory.initialState(model);
 		boolean violationFound = false;
 
 		try {

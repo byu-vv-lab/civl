@@ -26,9 +26,9 @@ import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 //import edu.udel.cis.vsl.civl.state.DynamicScope;
-import edu.udel.cis.vsl.civl.state.Process;
-import edu.udel.cis.vsl.civl.state.State;
-import edu.udel.cis.vsl.civl.state.StateFactoryIF;
+import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.common.Process;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
@@ -41,7 +41,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 public class Enabler implements
-		EnablerIF<State, Transition, TransitionSequence> {
+		EnablerIF<CommonState, Transition, TransitionSequence> {
 
 	private ModelFactory modelFactory;
 
@@ -50,7 +50,7 @@ public class Enabler implements
 
 	private TransitionFactory transitionFactory;
 
-	private StateFactoryIF stateFactory;
+	private StateFactory stateFactory;
 
 	private boolean debugging = false;
 
@@ -100,7 +100,7 @@ public class Enabler implements
 	}
 
 	@Override
-	public TransitionSequence enabledTransitions(State state) {
+	public TransitionSequence enabledTransitions(CommonState state) {
 		TransitionSequence transitions;
 
 		if (state.pathCondition().isFalse())
@@ -140,7 +140,7 @@ public class Enabler implements
 	 * process, from the given state. If this is not possible, returns all
 	 * transitions.
 	 */
-	private TransitionSequence enabledTransitionsPOR(State state) {
+	private TransitionSequence enabledTransitionsPOR(CommonState state) {
 		TransitionSequence transitions = transitionFactory
 				.newTransitionSequence(state);
 		Process[] processStates = state.processes();
@@ -277,7 +277,7 @@ public class Enabler implements
 	 * @param ampleProcesses
 	 * @param state
 	 */
-	private void checkCorrectness(ArrayList<Process> ampleProcesses, State state) {
+	private void checkCorrectness(ArrayList<Process> ampleProcesses, CommonState state) {
 		HashSet<Integer> impScopes = new HashSet<Integer>();
 		HashSet<Integer> ampleID = new HashSet<Integer>();
 
@@ -323,7 +323,7 @@ public class Enabler implements
 	 * @param state
 	 * @return
 	 */
-	private TransitionSequence enabledTransitionsPORsoped(State state) {
+	private TransitionSequence enabledTransitionsPORsoped(CommonState state) {
 
 		TransitionSequence transitions = transitionFactory
 				.newTransitionSequence(state);
@@ -450,7 +450,7 @@ public class Enabler implements
 	 * @param state
 	 * @return
 	 */
-	private LinkedHashSet<Process> ampleProcesses(State state) {
+	private LinkedHashSet<Process> ampleProcesses(CommonState state) {
 		LinkedHashSet<Process> ampleProcesses = new LinkedHashSet<Process>();
 
 		Stack<Integer> workingScopes = new Stack<Integer>();
@@ -714,7 +714,7 @@ public class Enabler implements
 	 * @param p
 	 * @return
 	 */
-	private boolean isEnabledWait(Process p, State state) {
+	private boolean isEnabledWait(Process p, CommonState state) {
 		// if(p == null || p.hasEmptyStack())
 		// return false;
 		if (p.location().getNumOutgoing() == 1) {
@@ -755,7 +755,7 @@ public class Enabler implements
 		return true;
 	}
 
-	private ArrayList<Integer> impactScopesOfProcess(Process p, State state) {
+	private ArrayList<Integer> impactScopesOfProcess(Process p, CommonState state) {
 		ArrayList<Integer> dyscopes = new ArrayList<Integer>();
 
 		/**
@@ -792,7 +792,7 @@ public class Enabler implements
 	 * @param state
 	 * @return the owner (set of processes) of the scope
 	 */
-	private ArrayList<Process> ownerOfScope(int dyscope, State state,
+	private ArrayList<Process> ownerOfScope(int dyscope, CommonState state,
 			ArrayList<Process> processes) {
 		BitSet reachers = state.getScope(dyscope).reachers();
 		ArrayList<Process> reacherProcs = new ArrayList<Process>();
@@ -812,7 +812,7 @@ public class Enabler implements
 	 * is a descendant of that element. Otherwise, return false.
 	 */
 	private boolean isDescendantOf(int dyscope, HashSet<Integer> dyscopeSet,
-			State state) {
+			CommonState state) {
 
 		if (dyscopeSet.isEmpty() || dyscopeSet.size() == 0)
 			return false;
@@ -844,7 +844,7 @@ public class Enabler implements
 	 * @return The new path condition. False if the guard is not satisfiable
 	 *         under the path condition.
 	 */
-	BooleanExpression newPathCondition(State state, int pid, Statement statement) {
+	BooleanExpression newPathCondition(CommonState state, int pid, Statement statement) {
 		try {
 			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
 			BooleanExpression pathCondition = eval.state.pathCondition();
@@ -920,7 +920,7 @@ public class Enabler implements
 	}
 
 	@Override
-	public State source(TransitionSequence transitionSequence) {
+	public CommonState source(TransitionSequence transitionSequence) {
 		return transitionSequence.state();
 	}
 

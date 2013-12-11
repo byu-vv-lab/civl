@@ -1,12 +1,13 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.state;
+package edu.udel.cis.vsl.civl.state.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.common.CommonState;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -18,7 +19,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public interface StateFactoryIF {
+public interface StateFactory {
 
 	/**
 	 * Returns the symbolic universe used by this factory to manipulate symbolic
@@ -42,14 +43,14 @@ public interface StateFactoryIF {
 	 * @param state
 	 * @return the canonical representative of the given state
 	 */
-	State canonic(State state);
+	CommonState canonic(CommonState state);
 
 	/**
 	 * Creates the canonic, initial state for a CIVL Model.
 	 * 
 	 * @return the initial state
 	 */
-	State initialState(Model model);
+	CommonState initialState(Model model);
 
 	/**
 	 * Update the value of a dynamic variable in the state.
@@ -65,7 +66,7 @@ public interface StateFactoryIF {
 	 * @return A new state that is the old state modified by updating the value
 	 *         of the variable.
 	 */
-	State setVariable(State state, Variable variable, int pid,
+	CommonState setVariable(CommonState state, Variable variable, int pid,
 			SymbolicExpression value);
 
 	/**
@@ -85,7 +86,7 @@ public interface StateFactoryIF {
 	 * @return A new state that is the old state modified by updating the value
 	 *         of the variable.
 	 */
-	State setVariable(State state, int vid, int scopeId,
+	CommonState setVariable(CommonState state, int vid, int scopeId,
 			SymbolicExpression value);
 
 	/**
@@ -117,7 +118,7 @@ public interface StateFactoryIF {
 	 *         new dynamic scope corresponding to the outermost lexical scope of
 	 *         the function.
 	 */
-	State addProcess(State state, CIVLFunction function,
+	CommonState addProcess(CommonState state, CIVLFunction function,
 			SymbolicExpression[] arguments, int callerPid);
 
 	/**
@@ -133,7 +134,7 @@ public interface StateFactoryIF {
 	 * @return A new state that is the same as the old state with the process
 	 *         removed.
 	 */
-	State removeProcess(State state, int pid);
+	CommonState removeProcess(CommonState state, int pid);
 
 	/**
 	 * Sets the location of a process. This changes the top stack frame for the
@@ -154,7 +155,7 @@ public interface StateFactoryIF {
 	 *         process at a new location, and scopes added and removed as
 	 *         necessary
 	 */
-	State setLocation(State state, int pid, Location location);
+	CommonState setLocation(CommonState state, int pid, Location location);
 
 	/**
 	 * Push a new entry on the call stack for a process. Used when a process
@@ -172,7 +173,7 @@ public interface StateFactoryIF {
 	 * @return A new state that is the same as the old state with the given
 	 *         process having a new entry on its call stack.
 	 */
-	State pushCallStack(State state, int pid, CIVLFunction function,
+	CommonState pushCallStack(CommonState state, int pid, CIVLFunction function,
 			SymbolicExpression[] arguments);
 
 	/**
@@ -187,7 +188,7 @@ public interface StateFactoryIF {
 	 * @return A new state that is the same as the old state but with the call
 	 *         stack for the given process popped.
 	 */
-	State popCallStack(State state, int pid);
+	CommonState popCallStack(CommonState state, int pid);
 
 	/**
 	 * Update the path condition of a state.
@@ -199,7 +200,7 @@ public interface StateFactoryIF {
 	 * @return A new state that is the same as the old state but with the new
 	 *         path condition.
 	 */
-	State setPathCondition(State state, BooleanExpression pathCondition);
+	CommonState setPathCondition(CommonState state, BooleanExpression pathCondition);
 
 	/**
 	 * Simplies all variable values in the state, using the path condition as
@@ -209,7 +210,7 @@ public interface StateFactoryIF {
 	 *            The old state.
 	 * @return The simplified state
 	 */
-	State simplify(State state);
+	CommonState simplify(CommonState state);
 
 	/**
 	 * Returns the number of objects of type State that have been instantiated

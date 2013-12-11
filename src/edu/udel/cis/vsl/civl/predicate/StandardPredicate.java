@@ -5,7 +5,7 @@ package edu.udel.cis.vsl.civl.predicate;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
-import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.civl.state.common.CommonState;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -17,7 +17,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  * @author zirkel
  * 
  */
-public class StandardPredicate implements StatePredicateIF<State> {
+public class StandardPredicate implements StatePredicateIF<CommonState> {
 
 //	private ErrorLog log;
 	private Deadlock deadlockPredicate;
@@ -47,7 +47,7 @@ public class StandardPredicate implements StatePredicateIF<State> {
 	}
 
 	@Override
-	public boolean holdsAt(State state) {
+	public boolean holdsAt(CommonState state) {
 		// if (log.numErrors() >= log.errorBound()) {
 		// return true;
 		// }

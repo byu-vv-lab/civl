@@ -13,9 +13,9 @@ import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
-import edu.udel.cis.vsl.civl.state.State;
-import edu.udel.cis.vsl.civl.state.StateFactory;
-import edu.udel.cis.vsl.civl.state.StateFactoryIF;
+import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.common.CommonStateFactory;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
@@ -45,7 +45,7 @@ public abstract class Player {
 
 	protected ModelFactory modelFactory;
 
-	protected StateFactoryIF stateFactory;
+	protected StateFactory stateFactory;
 
 	protected TransitionFactory transitionFactory;
 
@@ -53,7 +53,7 @@ public abstract class Player {
 
 	protected Evaluator evaluator;
 
-	protected EnablerIF<State, Transition, TransitionSequence> enabler;
+	protected EnablerIF<CommonState, Transition, TransitionSequence> enabler;
 
 	protected StandardPredicate predicate;
 
@@ -99,7 +99,7 @@ public abstract class Player {
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
-		this.stateFactory = new StateFactory(modelFactory);
+		this.stateFactory = new CommonStateFactory(modelFactory);
 		this.transitionFactory = new TransitionFactory();
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);

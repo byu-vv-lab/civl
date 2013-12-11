@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.state;
+package edu.udel.cis.vsl.civl.state.common;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;

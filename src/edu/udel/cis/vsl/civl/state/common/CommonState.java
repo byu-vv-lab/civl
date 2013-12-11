@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.state;
+package edu.udel.cis.vsl.civl.state.common;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -40,7 +40,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Tim McClory (tmcclory)
  * 
  */
-public class State {
+public class CommonState {
 
 	/**
 	 * The number of instances of this class that have been created since the
@@ -113,7 +113,7 @@ public class State {
 	 * @param buffers
 	 * @param pathCondition
 	 */
-	State(Process[] processes, DynamicScope[] scopes,
+	CommonState(Process[] processes, DynamicScope[] scopes,
 			BooleanExpression pathCondition) {
 		assert processes != null;
 		assert scopes != null;
@@ -134,7 +134,7 @@ public class State {
 	 * @param buffer
 	 * @param pathCondition
 	 */
-	State(State state, Process[] processes, DynamicScope[] scopes,
+	CommonState(CommonState state, Process[] processes, DynamicScope[] scopes,
 			BooleanExpression pathCondition) {
 		this(processes == null ? state.processes : processes,
 				scopes == null ? state.scopes : scopes,
@@ -148,7 +148,7 @@ public class State {
 	 * @param state
 	 * @param newPatCondition
 	 */
-	State(State state, BooleanExpression newPathCondition) {
+	CommonState(CommonState state, BooleanExpression newPathCondition) {
 		this(state.processes, state.scopes, newPathCondition);
 	}
 
@@ -159,7 +159,7 @@ public class State {
 	 * @param state
 	 * @param newProcesses
 	 */
-	State(State state, Process[] newProcesses) {
+	CommonState(CommonState state, Process[] newProcesses) {
 		this(newProcesses, state.scopes, state.pathCondition);
 	}
 
@@ -180,7 +180,7 @@ public class State {
 	 * @param state
 	 * @param newScopes
 	 */
-	State(State state, DynamicScope[] newScopes) {
+	CommonState(CommonState state, DynamicScope[] newScopes) {
 		this(state.processes, newScopes, state.pathCondition);
 	}
 
@@ -405,8 +405,8 @@ public class State {
 	public boolean equals(Object object) {
 		if (this == object)
 			return true;
-		if (object instanceof State) {
-			State that = (State) object;
+		if (object instanceof CommonState) {
+			CommonState that = (CommonState) object;
 
 			if (canonicId >= 0 && that.canonicId >= 0)
 				return false;

@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.state;
+package edu.udel.cis.vsl.civl.state.common;
 
 import java.io.PrintStream;
 import java.util.Arrays;

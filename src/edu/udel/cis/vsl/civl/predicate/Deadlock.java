@@ -17,8 +17,8 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
-import edu.udel.cis.vsl.civl.state.Process;
-import edu.udel.cis.vsl.civl.state.State;
+import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.common.Process;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -45,7 +45,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class Deadlock implements StatePredicateIF<State> {
+public class Deadlock implements StatePredicateIF<CommonState> {
 
 	private SymbolicUniverse universe;
 
@@ -106,7 +106,7 @@ public class Deadlock implements StatePredicateIF<State> {
 	 *         each process in the state
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private String explanationWork(State state)
+	private String explanationWork(CommonState state)
 			throws UnsatisfiablePathConditionException {
 		StringBuffer explanation = new StringBuffer();
 		boolean first = true;
@@ -177,7 +177,7 @@ public class Deadlock implements StatePredicateIF<State> {
 		return violation.getMessage();
 	}
 
-	private boolean allTerminated(State state) {
+	private boolean allTerminated(CommonState state) {
 		for (Process p : state.processes()) {
 			if (!p.hasEmptyStack())
 				return false;
@@ -185,7 +185,7 @@ public class Deadlock implements StatePredicateIF<State> {
 		return true;
 	}
 
-	private boolean holdsAtWork(State state)
+	private boolean holdsAtWork(CommonState state)
 			throws UnsatisfiablePathConditionException {
 		if (allTerminated(state)) // all processes terminated: no deadlock.
 			return false;
@@ -252,7 +252,7 @@ public class Deadlock implements StatePredicateIF<State> {
 	}
 
 	@Override
-	public boolean holdsAt(State state) {
+	public boolean holdsAt(CommonState state) {
 		try {
 			return holdsAtWork(state);
 		} catch (UnsatisfiablePathConditionException e) {
