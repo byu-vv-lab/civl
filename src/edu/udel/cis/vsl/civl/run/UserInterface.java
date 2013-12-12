@@ -509,6 +509,8 @@ public class UserInterface {
 		out.println("CIVL v" + CIVL.version + " of " + CIVL.date
 				+ " -- http://vsl.cis.udel.edu/civl");
 		out.flush();
+		printCommand(config);
+		
 		if (numFree == 0)
 			throw new CommandLineException("Missing command");
 		command = config.getFreeArg(0);
@@ -540,6 +542,25 @@ public class UserInterface {
 		}
 		err.flush();
 		return false;
+	}
+	
+	/**
+	 * Print the command and options that user has input
+	 * @param config
+	 */
+	public void printCommand(GMCConfiguration config){
+		String command = "civl " + config.getFreeArg(0);
+		Collection<Option> options = config.getOptions();
+		
+		for(Option option : options){
+			Object optionValue = config.getValue(option);
+			
+			if(optionValue != null)
+				command = command + " -" + option.name() + "=" + optionValue.toString();
+		}
+		command = command + " " + config.getFreeArg(1);
+		out.println(command);
+		out.flush();
 	}
 
 	/**
