@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.state.IF;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.state.common.DynamicScope;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -80,6 +79,7 @@ public interface State {
 
 	String identifier();
 
+	@Override
 	String toString();
 
 	void setDepth(int value);
@@ -90,6 +90,5 @@ public interface State {
 
 	DynamicScope getScope(int id);
 
-	// get rid of me?
-	ProcessState[] processes();
+	Iterable<ProcessState> getProcesses();
 }

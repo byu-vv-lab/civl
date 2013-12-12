@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.kripke;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -25,6 +24,7 @@ import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -142,7 +142,7 @@ public class Enabler implements
 	private TransitionSequence enabledTransitionsPOR(State state) {
 		TransitionSequence transitions = transitionFactory
 				.newTransitionSequence(state);
-		ProcessState[] processStates = state.processes();
+		Iterable<ProcessState> processStates = state.getProcesses();
 		Map<ProcessState, TransitionSequence> processTransitions = new LinkedHashMap<ProcessState, TransitionSequence>();
 		int totalTransitions = 0;
 
@@ -276,7 +276,8 @@ public class Enabler implements
 	 * @param ampleProcesses
 	 * @param state
 	 */
-	private void checkCorrectness(ArrayList<ProcessState> ampleProcesses, State state) {
+	private void checkCorrectness(ArrayList<ProcessState> ampleProcesses,
+			State state) {
 		HashSet<Integer> impScopes = new HashSet<Integer>();
 		HashSet<Integer> ampleID = new HashSet<Integer>();
 
@@ -297,7 +298,7 @@ public class Enabler implements
 
 		ArrayList<Integer> nonAmpleIDs = new ArrayList<Integer>();
 
-		for (ProcessState p : state.processes()) {
+		for (ProcessState p : state.getProcesses()) {
 			int pid = p.id();
 			if (!ampleID.contains(pid)) {
 				nonAmpleIDs.add(pid);
@@ -305,9 +306,10 @@ public class Enabler implements
 		}
 
 		for (int iscope : impScopes) {
-			BitSet reachers = state.getScope(iscope).reachers();
+			DynamicScope dyScope = state.getScope(iscope);
+
 			for (int pid : nonAmpleIDs) {
-				if (reachers.get(pid)) {
+				if (dyScope.reachableByProcess(pid)) {
 					System.out.println("error ample set found!");
 				}
 			}
@@ -460,9 +462,7 @@ public class Enabler implements
 
 		ArrayList<ProcessState> allProcesses = new ArrayList<ProcessState>();
 
-		ProcessState[] stateProcesses = state.processes();
-		for (int k = 0; k < stateProcesses.length; k++) {
-			ProcessState tmp = stateProcesses[k];
+		for (ProcessState tmp : state.getProcesses()) {
 			if (tmp == null || tmp.hasEmptyStack())
 				continue;
 			allProcesses.add(tmp);
@@ -793,15 +793,16 @@ public class Enabler implements
 	 */
 	private ArrayList<ProcessState> ownerOfScope(int dyscope, State state,
 			ArrayList<ProcessState> processes) {
-		BitSet reachers = state.getScope(dyscope).reachers();
+		DynamicScope dyScope = state.getScope(dyscope);
 		ArrayList<ProcessState> reacherProcs = new ArrayList<ProcessState>();
 		int length = processes.size();
+
 		for (int i = 0; i < length; i++) {
 			ProcessState p = processes.get(i);
-			if (reachers.get(p.id()))
+
+			if (dyScope.reachableByProcess(p.id()))
 				reacherProcs.add(p);
 		}
-
 		return reacherProcs;
 	}
 

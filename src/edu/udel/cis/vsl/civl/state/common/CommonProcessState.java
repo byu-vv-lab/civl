@@ -9,6 +9,7 @@ import java.util.Arrays;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
+import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 
 /**
  * An instance of Process represents the state of a process (thread of
@@ -18,7 +19,7 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public class Process implements ProcessState {
+public class CommonProcessState implements ProcessState {
 
 	private boolean hashed = false;
 
@@ -39,18 +40,18 @@ public class Process implements ProcessState {
 	 * @param id
 	 *            The unique process ID.
 	 */
-	Process(int id) {
+	CommonProcessState(int id) {
 		this.id = id;
-		callStack = new StackEntry[0];
+		callStack = new CommonStackEntry[0];
 	}
 
-	Process(int id, StackEntry[] stack) {
+	CommonProcessState(int id, StackEntry[] stack) {
 		assert stack != null;
 		this.id = id;
 		callStack = stack;
 	}
 
-	Process(Process oldProcess, int newPid) {
+	CommonProcessState(CommonProcessState oldProcess, int newPid) {
 		this.id = newPid;
 		this.callStack = oldProcess.callStack;
 	}
@@ -58,6 +59,7 @@ public class Process implements ProcessState {
 	/**
 	 * @return The unique process ID.
 	 */
+	@Override
 	public int id() {
 		return id;
 	}
@@ -70,13 +72,14 @@ public class Process implements ProcessState {
 		this.id = id;
 	}
 
-	Process copy() {
-		StackEntry[] newStack = new StackEntry[callStack.length];
+	CommonProcessState copy() {
+		CommonStackEntry[] newStack = new CommonStackEntry[callStack.length];
 
 		System.arraycopy(callStack, 0, newStack, 0, callStack.length);
-		return new Process(id, newStack);
+		return new CommonProcessState(id, newStack);
 	}
 
+	@Override
 	public boolean hasEmptyStack() {
 		return callStack.length == 0;
 	}
@@ -84,6 +87,7 @@ public class Process implements ProcessState {
 	/**
 	 * @return The current location of this process.
 	 */
+	@Override
 	public Location location() {
 		return callStack[0].location();
 	}
@@ -91,6 +95,7 @@ public class Process implements ProcessState {
 	/**
 	 * @return The id of the current dynamic scope of this process.
 	 */
+	@Override
 	public int scope() {
 		return callStack[0].scope();
 	}
@@ -101,10 +106,12 @@ public class Process implements ProcessState {
 	 * @return The first entry on the call stack. Null if empty.
 	 */
 
+	@Override
 	public StackEntry peekStack() {
 		return callStack[0];
 	}
 
+	@Override
 	public int stackSize() {
 		return callStack.length;
 	}
@@ -117,32 +124,33 @@ public class Process implements ProcessState {
 	 *            int in [0,stackSize-1]
 	 * @return i-th entry on stack
 	 */
+	@Override
 	public StackEntry getStackEntry(int i) {
 		return callStack[i];
 	}
 
-	Process pop() {
-		StackEntry[] newStack = new StackEntry[callStack.length - 1];
+	CommonProcessState pop() {
+		CommonStackEntry[] newStack = new CommonStackEntry[callStack.length - 1];
 
 		System.arraycopy(callStack, 1, newStack, 0, callStack.length - 1);
-		return new Process(id, newStack);
+		return new CommonProcessState(id, newStack);
 	}
 
-	Process push(StackEntry newStackEntry) {
-		StackEntry[] newStack = new StackEntry[callStack.length + 1];
+	CommonProcessState push(CommonStackEntry newStackEntry) {
+		CommonStackEntry[] newStack = new CommonStackEntry[callStack.length + 1];
 
 		System.arraycopy(callStack, 0, newStack, 1, callStack.length);
 		newStack[0] = newStackEntry;
-		return new Process(id, newStack);
+		return new CommonProcessState(id, newStack);
 	}
 
-	Process replaceTop(StackEntry newStackEntry) {
+	CommonProcessState replaceTop(CommonStackEntry newStackEntry) {
 		int length = callStack.length;
-		StackEntry[] newStack = new StackEntry[length];
+		CommonStackEntry[] newStack = new CommonStackEntry[length];
 
 		System.arraycopy(callStack, 1, newStack, 1, length - 1);
 		newStack[0] = newStackEntry;
-		return new Process(id, newStack);
+		return new CommonProcessState(id, newStack);
 	}
 
 	/*
@@ -172,8 +180,8 @@ public class Process implements ProcessState {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj instanceof Process) {
-			Process that = (Process) obj;
+		if (obj instanceof CommonProcessState) {
+			CommonProcessState that = (CommonProcessState) obj;
 
 			if (canonic && that.canonic)
 				return false;
@@ -188,6 +196,7 @@ public class Process implements ProcessState {
 		return false;
 	}
 
+	@Override
 	public void print(PrintStream out, String prefix) {
 		out.println(prefix + "process " + id + " call stack");
 		for (int i = 0; i < callStack.length; i++) {
@@ -203,15 +212,16 @@ public class Process implements ProcessState {
 		return "State of process " + id + " (call stack length = "
 				+ callStack.length + ")";
 	}
-	
-	public boolean isPurelyLocalProc(){
+
+	@Override
+	public boolean isPurelyLocalProc() {
 		Iterable<Statement> stmts = this.callStack[0].location().outgoing();
-		
-		for(Statement s: stmts){
-			if(!s.isPurelyLocal())
+
+		for (Statement s : stmts) {
+			if (!s.isPurelyLocal())
 				return false;
 		}
-		
+
 		return true;
 	}
 }

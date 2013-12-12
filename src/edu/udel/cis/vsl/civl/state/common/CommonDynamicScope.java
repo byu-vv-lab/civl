@@ -6,6 +6,7 @@ import java.util.BitSet;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -26,7 +27,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public class DynamicScope {
+public class CommonDynamicScope implements DynamicScope {
 
 	private static boolean debug = false;
 
@@ -67,7 +68,7 @@ public class DynamicScope {
 	 *            The parent of this dynamic scope. -1 only for the topmost
 	 *            dynamic scope.
 	 */
-	DynamicScope(Scope lexicalScope, int parent, BitSet reachers) {
+	CommonDynamicScope(Scope lexicalScope, int parent, BitSet reachers) {
 		assert lexicalScope != null;
 		this.lexicalScope = lexicalScope;
 		this.parent = parent;
@@ -75,7 +76,7 @@ public class DynamicScope {
 		variableValues = new SymbolicExpression[lexicalScope.numVariables()]; // FIX
 	}
 
-	DynamicScope(Scope lexicalScope, int parent,
+	CommonDynamicScope(Scope lexicalScope, int parent,
 			SymbolicExpression[] variableValues, BitSet reachers) {
 		assert variableValues != null
 				&& variableValues.length == lexicalScope.numVariables();
@@ -85,25 +86,28 @@ public class DynamicScope {
 		this.reachers = reachers;
 	}
 
-	DynamicScope changeParent(int newParent) {
-		return new DynamicScope(lexicalScope, newParent, variableValues,
+	CommonDynamicScope changeParent(int newParent) {
+		return new CommonDynamicScope(lexicalScope, newParent, variableValues,
 				reachers);
 	}
 
-	DynamicScope changeReachers(BitSet newBitSet) {
-		return new DynamicScope(lexicalScope, parent, variableValues, newBitSet);
+	CommonDynamicScope changeReachers(BitSet newBitSet) {
+		return new CommonDynamicScope(lexicalScope, parent, variableValues,
+				newBitSet);
 	}
 
-	DynamicScope changeVariableValues(SymbolicExpression[] newVariableValues) {
-		return new DynamicScope(lexicalScope, parent, newVariableValues,
+	CommonDynamicScope changeVariableValues(
+			SymbolicExpression[] newVariableValues) {
+		return new CommonDynamicScope(lexicalScope, parent, newVariableValues,
 				reachers);
 	}
 
+	@Override
 	public SymbolicExpression getValue(int vid) {
 		return variableValues[vid];
 	}
 
-	public int numberOfVariables() {
+	int numberOfVariables() {
 		return variableValues.length;
 	}
 
@@ -115,6 +119,7 @@ public class DynamicScope {
 	 * 
 	 * @return the number of processes which can reach this dynamic scope
 	 */
+	@Override
 	public int numberOfReachers() {
 		return reachers.cardinality();
 	}
@@ -126,6 +131,7 @@ public class DynamicScope {
 	 * @return true iff this dynamic scope is reachable from the process with
 	 *         pid PID
 	 */
+	@Override
 	public boolean reachableByProcess(int pid) {
 		return reachers.get(pid);
 	}
@@ -133,6 +139,7 @@ public class DynamicScope {
 	/**
 	 * @return The lexical scope corresponding to this dynamic scope.
 	 */
+	@Override
 	public Scope lexicalScope() {
 		return lexicalScope;
 	}
@@ -145,13 +152,7 @@ public class DynamicScope {
 		return parent;
 	}
 
-	/**
-	 * Change to publice, since we need to get the owners of a scope in POR
-	 * (Enabler.java)
-	 * 
-	 * @return
-	 */
-	public BitSet reachers() {
+	BitSet reachers() {
 		return reachers;
 	}
 
@@ -194,8 +195,8 @@ public class DynamicScope {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj instanceof DynamicScope) {
-			DynamicScope that = (DynamicScope) obj;
+		if (obj instanceof CommonDynamicScope) {
+			CommonDynamicScope that = (CommonDynamicScope) obj;
 
 			if (canonic && that.canonic)
 				return false;
@@ -214,7 +215,7 @@ public class DynamicScope {
 		return false;
 	}
 
-	public void print(PrintStream out, int id, String prefix) {
+	void print(PrintStream out, int id, String prefix) {
 		int numVars = lexicalScope.numVariables();
 		int bitSetLength = reachers.length();
 		boolean first = true;

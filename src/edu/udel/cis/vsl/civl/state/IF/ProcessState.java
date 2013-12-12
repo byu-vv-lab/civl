@@ -1,7 +1,8 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
+import java.io.PrintStream;
+
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.state.common.StackEntry;
 
 public interface ProcessState {
 
@@ -20,5 +21,7 @@ public interface ProcessState {
 	boolean isPurelyLocalProc();
 
 	int id();
+	
+	void print(PrintStream out, String prefix);
 
 }

@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.state.common;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 
 /**
  * A stack entry has a location, dynamic scope, and (optional) variable to store
@@ -13,7 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class StackEntry {
+public class CommonStackEntry implements StackEntry {
 
 	private boolean hashed = false;
 
@@ -35,7 +36,7 @@ public class StackEntry {
 	 *            The dynamic scope of the process at the time of the function
 	 *            call.
 	 */
-	StackEntry(Location location, int scope) {
+	CommonStackEntry(Location location, int scope) {
 		this.location = location;
 		this.scope = scope;
 	}
@@ -44,6 +45,7 @@ public class StackEntry {
 	 * @return The target location of the function call. i.e. where execution
 	 *         will continue after the function returns.
 	 */
+	@Override
 	public Location location() {
 		return location;
 	}
@@ -52,6 +54,7 @@ public class StackEntry {
 	 * @return The dynamic scope of the process at the time of the function
 	 *         call.
 	 */
+	@Override
 	public int scope() {
 		return scope;
 	}
@@ -82,8 +85,8 @@ public class StackEntry {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj instanceof StackEntry) {
-			StackEntry that = (StackEntry) obj;
+		if (obj instanceof CommonStackEntry) {
+			CommonStackEntry that = (CommonStackEntry) obj;
 
 			if (location == null) {
 				if (that.location != null)

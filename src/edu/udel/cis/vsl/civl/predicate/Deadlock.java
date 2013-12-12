@@ -111,7 +111,7 @@ public class Deadlock implements StatePredicateIF<State> {
 		StringBuffer explanation = new StringBuffer();
 		boolean first = true;
 
-		for (ProcessState p : state.processes()) {
+		for (ProcessState p : state.getProcesses()) {
 			if (p == null)
 				continue;
 
@@ -178,7 +178,7 @@ public class Deadlock implements StatePredicateIF<State> {
 	}
 
 	private boolean allTerminated(State state) {
-		for (ProcessState p : state.processes()) {
+		for (ProcessState p : state.getProcesses()) {
 			if (!p.hasEmptyStack())
 				return false;
 		}
@@ -194,7 +194,7 @@ public class Deadlock implements StatePredicateIF<State> {
 		Reasoner reasoner = universe.reasoner(state.pathCondition());
 		CIVLSource source = null; // location of first non-term proc
 
-		for (ProcessState p : state.processes()) {
+		for (ProcessState p : state.getProcesses()) {
 			if (p == null || p.hasEmptyStack())
 				continue;
 
