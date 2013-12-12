@@ -7,7 +7,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -43,14 +42,14 @@ public interface StateFactory {
 	 * @param state
 	 * @return the canonical representative of the given state
 	 */
-	CommonState canonic(CommonState state);
+	State canonic(State state);
 
 	/**
 	 * Creates the canonic, initial state for a CIVL Model.
 	 * 
 	 * @return the initial state
 	 */
-	CommonState initialState(Model model);
+	State initialState(Model model);
 
 	/**
 	 * Update the value of a dynamic variable in the state.
@@ -66,7 +65,7 @@ public interface StateFactory {
 	 * @return A new state that is the old state modified by updating the value
 	 *         of the variable.
 	 */
-	CommonState setVariable(CommonState state, Variable variable, int pid,
+	State setVariable(State state, Variable variable, int pid,
 			SymbolicExpression value);
 
 	/**
@@ -86,7 +85,7 @@ public interface StateFactory {
 	 * @return A new state that is the old state modified by updating the value
 	 *         of the variable.
 	 */
-	CommonState setVariable(CommonState state, int vid, int scopeId,
+	State setVariable(State state, int vid, int scopeId,
 			SymbolicExpression value);
 
 	/**
@@ -118,7 +117,7 @@ public interface StateFactory {
 	 *         new dynamic scope corresponding to the outermost lexical scope of
 	 *         the function.
 	 */
-	CommonState addProcess(CommonState state, CIVLFunction function,
+	State addProcess(State state, CIVLFunction function,
 			SymbolicExpression[] arguments, int callerPid);
 
 	/**
@@ -134,7 +133,7 @@ public interface StateFactory {
 	 * @return A new state that is the same as the old state with the process
 	 *         removed.
 	 */
-	CommonState removeProcess(CommonState state, int pid);
+	State removeProcess(State state, int pid);
 
 	/**
 	 * Sets the location of a process. This changes the top stack frame for the
@@ -155,7 +154,7 @@ public interface StateFactory {
 	 *         process at a new location, and scopes added and removed as
 	 *         necessary
 	 */
-	CommonState setLocation(CommonState state, int pid, Location location);
+	State setLocation(State state, int pid, Location location);
 
 	/**
 	 * Push a new entry on the call stack for a process. Used when a process
@@ -173,7 +172,7 @@ public interface StateFactory {
 	 * @return A new state that is the same as the old state with the given
 	 *         process having a new entry on its call stack.
 	 */
-	CommonState pushCallStack(CommonState state, int pid, CIVLFunction function,
+	State pushCallStack(State state, int pid, CIVLFunction function,
 			SymbolicExpression[] arguments);
 
 	/**
@@ -188,7 +187,7 @@ public interface StateFactory {
 	 * @return A new state that is the same as the old state but with the call
 	 *         stack for the given process popped.
 	 */
-	CommonState popCallStack(CommonState state, int pid);
+	State popCallStack(State state, int pid);
 
 	/**
 	 * Update the path condition of a state.
@@ -200,7 +199,7 @@ public interface StateFactory {
 	 * @return A new state that is the same as the old state but with the new
 	 *         path condition.
 	 */
-	CommonState setPathCondition(CommonState state, BooleanExpression pathCondition);
+	State setPathCondition(State state, BooleanExpression pathCondition);
 
 	/**
 	 * Simplies all variable values in the state, using the path condition as
@@ -210,7 +209,7 @@ public interface StateFactory {
 	 *            The old state.
 	 * @return The simplified state
 	 */
-	CommonState simplify(CommonState state);
+	State simplify(State state);
 
 	/**
 	 * Returns the number of objects of type State that have been instantiated

@@ -4,7 +4,7 @@
 package edu.udel.cis.vsl.civl.transition;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -69,7 +69,7 @@ public class TransitionFactory {
 	 *            departs.
 	 * @return A new transition sequence.
 	 */
-	public TransitionSequence newTransitionSequence(CommonState state) {
+	public TransitionSequence newTransitionSequence(State state) {
 		return new TransitionSequence(state);
 	}
 

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.model.IF.Model;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.CommandLineException;
@@ -27,9 +27,9 @@ import edu.udel.cis.vsl.gmc.TransitionChooser;
  */
 public class TracePlayer extends Player {
 
-	private TransitionChooser<CommonState, Transition> chooser;
+	private TransitionChooser<State, Transition> chooser;
 
-	private Replayer<CommonState, Transition> replayer;
+	private Replayer<State, Transition> replayer;
 
 	private boolean isRandom = false;
 
@@ -40,7 +40,7 @@ public class TracePlayer extends Player {
 			throws CommandLineException, IOException,
 			MisguidedExecutionException {
 		TracePlayer result = new TracePlayer(config, model, out);
-		GuidedTransitionChooser<CommonState, Transition, TransitionSequence> guidedChooser = new GuidedTransitionChooser<>(
+		GuidedTransitionChooser<State, Transition, TransitionSequence> guidedChooser = new GuidedTransitionChooser<>(
 				result.enabler, traceFile);
 
 		result.chooser = guidedChooser;
@@ -53,7 +53,7 @@ public class TracePlayer extends Player {
 			IOException, MisguidedExecutionException {
 		TracePlayer result = new TracePlayer(config, model, out);
 		String seedString = (String) config.getValue(UserInterface.seedO);
-		RandomTransitionChooser<CommonState, Transition, TransitionSequence> chooser;
+		RandomTransitionChooser<State, Transition, TransitionSequence> chooser;
 
 		if (seedString == null)
 			chooser = new RandomTransitionChooser<>(result.enabler);
@@ -84,13 +84,13 @@ public class TracePlayer extends Player {
 		stateManager.setShowTransitions(false);
 		stateManager.setVerbose(false);
 		log.setSearcher(null);
-		replayer = new Replayer<CommonState, Transition>(stateManager, out);
+		replayer = new Replayer<State, Transition>(stateManager, out);
 		replayer.setPrintAllStates(showStates || verbose || debug);
 		replayer.setPredicate(predicate);
 	}
 
 	public TracePlayer(GMCConfiguration config, Model model,
-			TransitionChooser<CommonState, Transition> chooser, PrintStream out)
+			TransitionChooser<State, Transition> chooser, PrintStream out)
 			throws CommandLineException {
 		this(config, model, out);
 		this.chooser = chooser;
@@ -100,12 +100,12 @@ public class TracePlayer extends Player {
 			PrintStream out) throws CommandLineException, IOException,
 			MisguidedExecutionException {
 		this(config, model, out);
-		this.chooser = new GuidedTransitionChooser<CommonState, Transition, TransitionSequence>(
+		this.chooser = new GuidedTransitionChooser<State, Transition, TransitionSequence>(
 				enabler, traceFile);
 	}
 
 	public boolean run() throws MisguidedExecutionException {
-		CommonState initialState = stateFactory.initialState(model);
+		State initialState = stateFactory.initialState(model);
 		boolean violation = replayer.play(initialState, chooser);
 
 		violation = violation || log.numErrors() > 0;

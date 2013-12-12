@@ -10,9 +10,9 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.state.IF.ProcessState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
-import edu.udel.cis.vsl.civl.state.common.Process;
 import edu.udel.cis.vsl.civl.transition.ChooseTransition;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
@@ -23,7 +23,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class StateManager implements StateManagerIF<CommonState, Transition> {
+public class StateManager implements StateManagerIF<State, Transition> {
 
 	private Executor executor;
 
@@ -123,7 +123,7 @@ public class StateManager implements StateManagerIF<CommonState, Transition> {
 	}
 
 	@Override
-	public CommonState nextState(CommonState state, Transition transition) {
+	public State nextState(State state, Transition transition) {
 		try {
 			return nextStateWork(state, transition);
 		} catch (UnsatisfiablePathConditionException e) {
@@ -136,7 +136,7 @@ public class StateManager implements StateManagerIF<CommonState, Transition> {
 
 	}
 
-	private CommonState nextStateWork(CommonState state, Transition transition)
+	private State nextStateWork(State state, Transition transition)
 			throws UnsatisfiablePathConditionException {
 		int pid;
 		Statement statement;
@@ -165,7 +165,7 @@ public class StateManager implements StateManagerIF<CommonState, Transition> {
 
 		// do nothing when process pid terminates and is removed from the state
 		if (state.numProcs() > pid) {
-			Process p = state.process(pid);
+			ProcessState p = state.process(pid);
 			if (p != null && !p.hasEmptyStack()) {
 
 				Location newLoc = p.peekStack().location();
@@ -173,10 +173,10 @@ public class StateManager implements StateManagerIF<CommonState, Transition> {
 				while (newLoc != null && newLoc.isPurelyLocal()) {
 					// TODO check spawn statement
 					// exactly one statement in newLoc.outgoing()
-					//if(debug)
-//					{System.out.println("intermediate state:");
-//					state.print(System.out);}
-					
+					// if(debug)
+					// {System.out.println("intermediate state:");
+					// state.print(System.out);}
+
 					Statement s = newLoc.getOutgoing(0);
 					BooleanExpression guard = (BooleanExpression) executor
 							.evaluator().evaluate(state, p.id(), s.guard()).value;
@@ -185,7 +185,7 @@ public class StateManager implements StateManagerIF<CommonState, Transition> {
 					state = stateFactory.setPathCondition(state,
 							newPathCondition);
 					state = executor.execute(state, pid, s);
-					
+
 					p = state.process(pid);
 					if (p != null && !p.hasEmptyStack())
 						newLoc = p.peekStack().location();
@@ -230,7 +230,7 @@ public class StateManager implements StateManagerIF<CommonState, Transition> {
 	}
 
 	@Override
-	public boolean onStack(CommonState state) {
+	public boolean onStack(State state) {
 		return state.onStack();
 	}
 
@@ -247,12 +247,12 @@ public class StateManager implements StateManagerIF<CommonState, Transition> {
 	}
 
 	@Override
-	public void printStateLong(PrintStream out, CommonState state) {
+	public void printStateLong(PrintStream out, State state) {
 		state.print(out);
 	}
 
 	@Override
-	public void printStateShort(PrintStream out, CommonState state) {
+	public void printStateShort(PrintStream out, State state) {
 		out.print(state.toString());
 	}
 
@@ -267,17 +267,17 @@ public class StateManager implements StateManagerIF<CommonState, Transition> {
 	}
 
 	@Override
-	public boolean seen(CommonState state) {
+	public boolean seen(State state) {
 		return state.seen();
 	}
 
 	@Override
-	public void setOnStack(CommonState state, boolean value) {
+	public void setOnStack(State state, boolean value) {
 		state.setOnStack(value);
 	}
 
 	@Override
-	public void setSeen(CommonState state, boolean value) {
+	public void setSeen(State state, boolean value) {
 		state.setSeen(value);
 	}
 
@@ -301,12 +301,12 @@ public class StateManager implements StateManagerIF<CommonState, Transition> {
 	}
 
 	@Override
-	public int getDepth(CommonState state) {
+	public int getDepth(State state) {
 		return state.getDepth();
 	}
 
 	@Override
-	public void setDepth(CommonState state, int value) {
+	public void setDepth(State state, int value) {
 		state.setDepth(value);
 	}
 

@@ -17,8 +17,8 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
-import edu.udel.cis.vsl.civl.state.common.Process;
+import edu.udel.cis.vsl.civl.state.IF.ProcessState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -45,7 +45,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class Deadlock implements StatePredicateIF<CommonState> {
+public class Deadlock implements StatePredicateIF<State> {
 
 	private SymbolicUniverse universe;
 
@@ -106,12 +106,12 @@ public class Deadlock implements StatePredicateIF<CommonState> {
 	 *         each process in the state
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private String explanationWork(CommonState state)
+	private String explanationWork(State state)
 			throws UnsatisfiablePathConditionException {
 		StringBuffer explanation = new StringBuffer();
 		boolean first = true;
 
-		for (Process p : state.processes()) {
+		for (ProcessState p : state.processes()) {
 			if (p == null)
 				continue;
 
@@ -127,7 +127,7 @@ public class Deadlock implements StatePredicateIF<CommonState> {
 				explanation.append("\n");
 			if (!p.hasEmptyStack())
 				location = p.location();
-			explanation.append("Process " + pid + ": ");
+			explanation.append("ProcessState " + pid + ": ");
 			if (location == null) {
 				explanation.append("terminated");
 			} else {
@@ -177,15 +177,15 @@ public class Deadlock implements StatePredicateIF<CommonState> {
 		return violation.getMessage();
 	}
 
-	private boolean allTerminated(CommonState state) {
-		for (Process p : state.processes()) {
+	private boolean allTerminated(State state) {
+		for (ProcessState p : state.processes()) {
 			if (!p.hasEmptyStack())
 				return false;
 		}
 		return true;
 	}
 
-	private boolean holdsAtWork(CommonState state)
+	private boolean holdsAtWork(State state)
 			throws UnsatisfiablePathConditionException {
 		if (allTerminated(state)) // all processes terminated: no deadlock.
 			return false;
@@ -194,7 +194,7 @@ public class Deadlock implements StatePredicateIF<CommonState> {
 		Reasoner reasoner = universe.reasoner(state.pathCondition());
 		CIVLSource source = null; // location of first non-term proc
 
-		for (Process p : state.processes()) {
+		for (ProcessState p : state.processes()) {
 			if (p == null || p.hasEmptyStack())
 				continue;
 
@@ -252,7 +252,7 @@ public class Deadlock implements StatePredicateIF<CommonState> {
 	}
 
 	@Override
-	public boolean holdsAt(CommonState state) {
+	public boolean holdsAt(State state) {
 		try {
 			return holdsAtWork(state);
 		} catch (UnsatisfiablePathConditionException e) {

@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.semantics;
 
-import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -13,11 +13,11 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class Evaluation {
 
-	public CommonState state;
+	public State state;
 
 	public SymbolicExpression value;
 
-	public Evaluation(CommonState state, SymbolicExpression value) {
+	public Evaluation(State state, SymbolicExpression value) {
 		this.state = state;
 		this.value = value;
 	}

@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.semantics;
 
-import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
@@ -14,11 +14,11 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  */
 public class TypeEvaluation {
 
-	public CommonState state;
+	public State state;
 
 	public SymbolicType type;
 
-	public TypeEvaluation(CommonState state, SymbolicType type) {
+	public TypeEvaluation(State state, SymbolicType type) {
 		this.state = state;
 		this.type = type;
 	}

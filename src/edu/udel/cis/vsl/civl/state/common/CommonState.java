@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -40,7 +41,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Tim McClory (tmcclory)
  * 
  */
-public class CommonState {
+public class CommonState implements State {
 
 	/**
 	 * The number of instances of this class that have been created since the
@@ -206,6 +207,7 @@ public class CommonState {
 	 * 
 	 * @return
 	 */
+	@Override
 	public int numScopes() {
 		return scopes.length;
 	}
@@ -215,6 +217,7 @@ public class CommonState {
 	 * 
 	 * @return
 	 */
+	@Override
 	public int numProcs() {
 		return processes.length;
 	}
@@ -248,6 +251,7 @@ public class CommonState {
 		return newScopes;
 	}
 
+	@Override
 	public boolean isCanonic() {
 		return canonicId >= 0;
 	}

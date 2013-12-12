@@ -5,7 +5,7 @@ package edu.udel.cis.vsl.civl.transition;
 
 import java.util.LinkedList;
 
-import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 
 /**
  * A transition sequence is a linked list of transitions and the state from
@@ -22,7 +22,7 @@ public class TransitionSequence extends LinkedList<Transition> {
 	 */
 	private static final long serialVersionUID = -1765498780485391615L;
 
-	private CommonState state;
+	private State state;
 
 	/**
 	 * The number of elements removed from this sequence since it was created.
@@ -53,12 +53,12 @@ public class TransitionSequence extends LinkedList<Transition> {
 	 * @param state
 	 *            The state of the program before this transition departs.
 	 */
-	public TransitionSequence(CommonState state) {
+	public TransitionSequence(State state) {
 		this.state = state;
 	}
 
 	/** The source state from which all transitions in this sequence depart. */
-	public CommonState state() {
+	public State state() {
 		return state;
 	}
 

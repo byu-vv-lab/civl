@@ -2,7 +2,7 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
@@ -15,7 +15,7 @@ public interface LibraryExecutor {
 	/** Returns the name associated to this executor, for example, "libstdio". */
 	String name();
 
-	CommonState execute(CommonState state, int pid, Statement statement)
+	State execute(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException;
 
 	/**
@@ -23,7 +23,7 @@ public interface LibraryExecutor {
 	 * to the particular system function, and needs to be checked in addition to
 	 * the "regular" guard in the transition system.
 	 */
-	BooleanExpression getGuard(CommonState state, int pid, Statement statement);
+	BooleanExpression getGuard(State state, int pid, Statement statement);
 
 	/**
 	 * Does the library for which this is the executor contain a function with
@@ -31,11 +31,11 @@ public interface LibraryExecutor {
 	 */
 	boolean containsFunction(String name);
 
-	//TODO: Is this ever being done?
+	// TODO: Is this ever being done?
 	/**
 	 * Initializes the part of the state dealing with the library.
 	 */
-	CommonState initialize(CommonState state);
+	State initialize(State state);
 
 	/**
 	 * A method invoked at any terminal state. The library performs any final
@@ -44,6 +44,6 @@ public interface LibraryExecutor {
 	 * library may check there are no unreceived messages. The stdio library may
 	 * check there are no open streams.
 	 */
-	CommonState wrapUp(CommonState state);
+	State wrapUp(State state);
 
 }

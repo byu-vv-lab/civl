@@ -8,6 +8,7 @@ import java.util.Arrays;
 
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 
 /**
  * An instance of Process represents the state of a process (thread of
@@ -17,7 +18,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public class Process {
+public class Process implements ProcessState {
 
 	private boolean hashed = false;
 

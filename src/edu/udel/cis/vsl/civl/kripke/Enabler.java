@@ -25,10 +25,9 @@ import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
-//import edu.udel.cis.vsl.civl.state.DynamicScope;
+import edu.udel.cis.vsl.civl.state.IF.ProcessState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
-import edu.udel.cis.vsl.civl.state.common.Process;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
@@ -41,7 +40,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 public class Enabler implements
-		EnablerIF<CommonState, Transition, TransitionSequence> {
+		EnablerIF<State, Transition, TransitionSequence> {
 
 	private ModelFactory modelFactory;
 
@@ -100,7 +99,7 @@ public class Enabler implements
 	}
 
 	@Override
-	public TransitionSequence enabledTransitions(CommonState state) {
+	public TransitionSequence enabledTransitions(State state) {
 		TransitionSequence transitions;
 
 		if (state.pathCondition().isFalse())
@@ -140,15 +139,15 @@ public class Enabler implements
 	 * process, from the given state. If this is not possible, returns all
 	 * transitions.
 	 */
-	private TransitionSequence enabledTransitionsPOR(CommonState state) {
+	private TransitionSequence enabledTransitionsPOR(State state) {
 		TransitionSequence transitions = transitionFactory
 				.newTransitionSequence(state);
-		Process[] processStates = state.processes();
-		Map<Process, TransitionSequence> processTransitions = new LinkedHashMap<Process, TransitionSequence>();
+		ProcessState[] processStates = state.processes();
+		Map<ProcessState, TransitionSequence> processTransitions = new LinkedHashMap<ProcessState, TransitionSequence>();
 		int totalTransitions = 0;
 
 		enabledTransitionSets++;
-		for (Process p : processStates) {
+		for (ProcessState p : processStates) {
 			TransitionSequence localTransitions = transitionFactory
 					.newTransitionSequence(state);
 			boolean allLocal = true;
@@ -247,10 +246,10 @@ public class Enabler implements
 			}
 		}
 		if (processTransitions.size() > 0) {
-			Process smallestProcess = null;
+			ProcessState smallestProcess = null;
 			int smallestProcessSetSize = totalTransitions + 1;
 
-			for (Process p : processTransitions.keySet()) {
+			for (ProcessState p : processTransitions.keySet()) {
 				if (processTransitions.get(p).size() < smallestProcessSetSize) {
 					smallestProcess = p;
 					smallestProcessSetSize = processTransitions.get(p).size();
@@ -277,11 +276,11 @@ public class Enabler implements
 	 * @param ampleProcesses
 	 * @param state
 	 */
-	private void checkCorrectness(ArrayList<Process> ampleProcesses, CommonState state) {
+	private void checkCorrectness(ArrayList<ProcessState> ampleProcesses, State state) {
 		HashSet<Integer> impScopes = new HashSet<Integer>();
 		HashSet<Integer> ampleID = new HashSet<Integer>();
 
-		for (Process p : ampleProcesses) {
+		for (ProcessState p : ampleProcesses) {
 			int pScope = p.scope();
 			ampleID.add(p.id());
 			for (Statement s : p.location().outgoing()) {
@@ -298,7 +297,7 @@ public class Enabler implements
 
 		ArrayList<Integer> nonAmpleIDs = new ArrayList<Integer>();
 
-		for (Process p : state.processes()) {
+		for (ProcessState p : state.processes()) {
 			int pid = p.id();
 			if (!ampleID.contains(pid)) {
 				nonAmpleIDs.add(pid);
@@ -323,7 +322,7 @@ public class Enabler implements
 	 * @param state
 	 * @return
 	 */
-	private TransitionSequence enabledTransitionsPORsoped(CommonState state) {
+	private TransitionSequence enabledTransitionsPORsoped(State state) {
 
 		TransitionSequence transitions = transitionFactory
 				.newTransitionSequence(state);
@@ -332,13 +331,13 @@ public class Enabler implements
 		 * Obtain ample processes
 		 */
 
-		ArrayList<Process> processStates = new ArrayList<Process>(
+		ArrayList<ProcessState> processStates = new ArrayList<ProcessState>(
 				ampleProcesses(state));
 
 		/**
 		 * Compute the ample set (of transitions)
 		 * */
-		for (Process p : processStates) {
+		for (ProcessState p : processStates) {
 			TransitionSequence localTransitions = transitionFactory
 					.newTransitionSequence(state);
 
@@ -450,8 +449,8 @@ public class Enabler implements
 	 * @param state
 	 * @return
 	 */
-	private LinkedHashSet<Process> ampleProcesses(CommonState state) {
-		LinkedHashSet<Process> ampleProcesses = new LinkedHashSet<Process>();
+	private LinkedHashSet<ProcessState> ampleProcesses(State state) {
+		LinkedHashSet<ProcessState> ampleProcesses = new LinkedHashSet<ProcessState>();
 
 		Stack<Integer> workingScopes = new Stack<Integer>();
 
@@ -459,11 +458,11 @@ public class Enabler implements
 
 		HashSet<Integer> visitedProcesses = new HashSet<Integer>();
 
-		ArrayList<Process> allProcesses = new ArrayList<Process>();
+		ArrayList<ProcessState> allProcesses = new ArrayList<ProcessState>();
 
-		Process[] stateProcesses = state.processes();
+		ProcessState[] stateProcesses = state.processes();
 		for (int k = 0; k < stateProcesses.length; k++) {
-			Process tmp = stateProcesses[k];
+			ProcessState tmp = stateProcesses[k];
 			if (tmp == null || tmp.hasEmptyStack())
 				continue;
 			allProcesses.add(tmp);
@@ -473,11 +472,11 @@ public class Enabler implements
 			return ampleProcesses;
 
 		int numOfProcs = allProcesses.size();
-		Process p;
+		ProcessState p;
 		int i = numOfProcs - 1;
 		int minReachers = numOfProcs + 1;
 		int minProcIndex = i;
-		Process waitProc = null;
+		ProcessState waitProc = null;
 		boolean allDisabled = true;
 
 		/**
@@ -626,16 +625,16 @@ public class Enabler implements
 			/**
 			 * reachersImp is the set of procceses that can reach imScope
 			 */
-			ArrayList<Process> reachersImp = ownerOfScope(impScope, state,
+			ArrayList<ProcessState> reachersImp = ownerOfScope(impScope, state,
 					allProcesses);
-			ArrayList<Process> tmpProcesses = new ArrayList<Process>();
+			ArrayList<ProcessState> tmpProcesses = new ArrayList<ProcessState>();
 
 			/**
 			 * For each process in reacher set, if its current statement is
 			 * wait, add the process that it waits for to a new "reacher set"
 			 * (tmpProcesses).
 			 */
-			for (Process proc : reachersImp) {
+			for (ProcessState proc : reachersImp) {
 				// if(proc == null || proc.hasEmptyStack())
 				// continue;
 				tmpProcesses.add(proc);
@@ -654,7 +653,7 @@ public class Enabler implements
 										.process().getSource(), procVal);
 
 								if (!visitedProcesses.contains(joinedPid)) {
-									Process waitedProcess = state
+									ProcessState waitedProcess = state
 											.process(joinedPid);
 									if (proc != null && !proc.hasEmptyStack())
 										tmpProcesses.add(waitedProcess);
@@ -671,7 +670,7 @@ public class Enabler implements
 			 * tmpProcesses contains the reacher set of impScope and all
 			 * processes being waited for by some process in impScope
 			 */
-			for (Process proc : tmpProcesses) {
+			for (ProcessState proc : tmpProcesses) {
 
 				// if(proc == null || proc.hasEmptyStack())
 				// continue;
@@ -689,7 +688,7 @@ public class Enabler implements
 							state);
 					for (int iScope : impScopes) {
 						if (iScope == state.rootScopeID()) {
-							ampleProcesses = new LinkedHashSet<Process>(
+							ampleProcesses = new LinkedHashSet<ProcessState>(
 									allProcesses);
 							return ampleProcesses;
 						}
@@ -714,7 +713,7 @@ public class Enabler implements
 	 * @param p
 	 * @return
 	 */
-	private boolean isEnabledWait(Process p, CommonState state) {
+	private boolean isEnabledWait(ProcessState p, State state) {
 		// if(p == null || p.hasEmptyStack())
 		// return false;
 		if (p.location().getNumOutgoing() == 1) {
@@ -729,7 +728,7 @@ public class Enabler implements
 					int joinedPid = modelFactory.getProcessId(wait.process()
 							.getSource(), procVal);
 
-					Process joinedProc = state.process(joinedPid);
+					ProcessState joinedProc = state.process(joinedPid);
 
 					if (joinedProc == null || joinedProc.hasEmptyStack()) {
 						return true;
@@ -744,7 +743,7 @@ public class Enabler implements
 		return false;
 	}
 
-	private boolean blocked(Process p) {
+	private boolean blocked(ProcessState p) {
 		// if(p == null || p.hasEmptyStack())
 		// return false;
 
@@ -755,7 +754,7 @@ public class Enabler implements
 		return true;
 	}
 
-	private ArrayList<Integer> impactScopesOfProcess(Process p, CommonState state) {
+	private ArrayList<Integer> impactScopesOfProcess(ProcessState p, State state) {
 		ArrayList<Integer> dyscopes = new ArrayList<Integer>();
 
 		/**
@@ -792,13 +791,13 @@ public class Enabler implements
 	 * @param state
 	 * @return the owner (set of processes) of the scope
 	 */
-	private ArrayList<Process> ownerOfScope(int dyscope, CommonState state,
-			ArrayList<Process> processes) {
+	private ArrayList<ProcessState> ownerOfScope(int dyscope, State state,
+			ArrayList<ProcessState> processes) {
 		BitSet reachers = state.getScope(dyscope).reachers();
-		ArrayList<Process> reacherProcs = new ArrayList<Process>();
+		ArrayList<ProcessState> reacherProcs = new ArrayList<ProcessState>();
 		int length = processes.size();
 		for (int i = 0; i < length; i++) {
-			Process p = processes.get(i);
+			ProcessState p = processes.get(i);
 			if (reachers.get(p.id()))
 				reacherProcs.add(p);
 		}
@@ -812,7 +811,7 @@ public class Enabler implements
 	 * is a descendant of that element. Otherwise, return false.
 	 */
 	private boolean isDescendantOf(int dyscope, HashSet<Integer> dyscopeSet,
-			CommonState state) {
+			State state) {
 
 		if (dyscopeSet.isEmpty() || dyscopeSet.size() == 0)
 			return false;
@@ -844,7 +843,7 @@ public class Enabler implements
 	 * @return The new path condition. False if the guard is not satisfiable
 	 *         under the path condition.
 	 */
-	BooleanExpression newPathCondition(CommonState state, int pid, Statement statement) {
+	BooleanExpression newPathCondition(State state, int pid, Statement statement) {
 		try {
 			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
 			BooleanExpression pathCondition = eval.state.pathCondition();
@@ -920,7 +919,7 @@ public class Enabler implements
 	}
 
 	@Override
-	public CommonState source(TransitionSequence transitionSequence) {
+	public State source(TransitionSequence transitionSequence) {
 		return transitionSequence.state();
 	}
 

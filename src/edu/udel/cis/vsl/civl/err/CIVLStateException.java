@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 
 /**
  * Extends an execution exception with a state at which error occurred.
@@ -22,10 +22,10 @@ public class CIVLStateException extends CIVLExecutionException {
 	/**
 	 * State at which error occurred
 	 */
-	private CommonState state;
+	private State state;
 
 	public CIVLStateException(ErrorKind kind, Certainty certainty,
-			String message, CommonState state, CIVLSource source) {
+			String message, State state, CIVLSource source) {
 		super(kind, certainty, message, source);
 		assert state != null;
 		this.state = state;
@@ -41,7 +41,7 @@ public class CIVLStateException extends CIVLExecutionException {
 		return result;
 	}
 
-	CommonState getState() {
+	State getState() {
 		return state;
 	}
 

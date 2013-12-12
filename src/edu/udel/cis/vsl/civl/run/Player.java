@@ -13,8 +13,8 @@ import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
 import edu.udel.cis.vsl.civl.state.common.CommonStateFactory;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
@@ -53,7 +53,7 @@ public abstract class Player {
 
 	protected Evaluator evaluator;
 
-	protected EnablerIF<CommonState, Transition, TransitionSequence> enabler;
+	protected EnablerIF<State, Transition, TransitionSequence> enabler;
 
 	protected StandardPredicate predicate;
 

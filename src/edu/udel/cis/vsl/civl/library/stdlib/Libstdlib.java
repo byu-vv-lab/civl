@@ -10,7 +10,7 @@ import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.state.common.CommonState;
+import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
@@ -64,7 +64,7 @@ public class Libstdlib implements LibraryExecutor {
 	 * edu.udel.cis.vsl.civl.model.IF.statement.Statement)
 	 */
 	@Override
-	public CommonState execute(CommonState state, int pid, Statement statement) {
+	public State execute(State state, int pid, Statement statement) {
 		// Identifier name;
 		// State result = null;
 
@@ -115,7 +115,7 @@ public class Libstdlib implements LibraryExecutor {
 	 * .cis.vsl.civl.state.State)
 	 */
 	@Override
-	public CommonState initialize(CommonState state) {
+	public State initialize(State state) {
 		// TODO Auto-generated method stub
 		return state;
 	}
@@ -128,13 +128,13 @@ public class Libstdlib implements LibraryExecutor {
 	 * .vsl.civl.state.State)
 	 */
 	@Override
-	public CommonState wrapUp(CommonState state) {
+	public State wrapUp(State state) {
 		// TODO Auto-generated method stub
 		return state;
 	}
 
 	@Override
-	public BooleanExpression getGuard(CommonState state, int pid, Statement statement) {
+	public BooleanExpression getGuard(State state, int pid, Statement statement) {
 		// TODO Auto-generated method stub
 		return null;
 	}
