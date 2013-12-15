@@ -6,9 +6,14 @@ package edu.udel.cis.vsl.civl.model.IF;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.token.IF.CToken;
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -600,7 +605,7 @@ public interface ModelFactory {
 	 * @return A new assert statement.
 	 */
 	AssertStatement assertStatement(CIVLSource civlSource, Location source,
-			Expression expression);
+			Expression expression, Expression guard);
 
 	/**
 	 * An assignment statement.
@@ -614,7 +619,7 @@ public interface ModelFactory {
 	 * @return A new assignment statement.
 	 */
 	AssignStatement assignStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Expression rhs);
+			LHSExpression lhs, Expression rhs, Expression guard);
 
 	/**
 	 * An assume statement.
@@ -626,7 +631,7 @@ public interface ModelFactory {
 	 * @return A new assume statement.
 	 */
 	AssumeStatement assumeStatement(CIVLSource civlSource, Location source,
-			Expression expression);
+			Expression expression, Expression guard);
 
 	/**
 	 * A choose statement is of the form x = choose(n);
@@ -644,7 +649,7 @@ public interface ModelFactory {
 	 * @return A new choose statement.
 	 */
 	ChooseStatement chooseStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Expression argument);
+			LHSExpression lhs, Expression argument, Expression guard);
 
 	/**
 	 * A fork statement. Used to spawn a new process.
@@ -661,7 +666,7 @@ public interface ModelFactory {
 	 */
 	CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
 			Location source, boolean isCall, CIVLFunction function,
-			List<Expression> arguments);
+			List<Expression> arguments, Expression guard);
 
 	/**
 	 * A join statement. Used to wait for a process to complete.
@@ -673,7 +678,7 @@ public interface ModelFactory {
 	 * @return A new join statement.
 	 */
 	WaitStatement joinStatement(CIVLSource civlSource, Location source,
-			Expression process);
+			Expression process, Expression guard);
 
 	/**
 	 * A noop statement.
@@ -682,7 +687,8 @@ public interface ModelFactory {
 	 *            The source location for this noop statement.
 	 * @return A new noop statement.
 	 */
-	NoopStatement noopStatement(CIVLSource civlSource, Location source);
+	NoopStatement noopStatement(CIVLSource civlSource, Location source,
+			Expression guard);
 
 	/**
 	 * A return statement.
@@ -694,11 +700,43 @@ public interface ModelFactory {
 	 * @return A new return statement.
 	 */
 	ReturnStatement returnStatement(CIVLSource civlSource, Location source,
-			Expression expression);
+			Expression expression, Expression guard);
 
 	MallocStatement mallocStatement(CIVLSource civlSource, Location source,
 			LHSExpression lhs, CIVLType staticElementType,
 			Expression heapPointerExpression, Expression sizeExpression,
-			int mallocId);
+			int mallocId, Expression guard);
+
+	/**
+	 * Translate an expression from the CIVL AST to the CIVL model. The
+	 * resulting expression will always be boolean-valued. If the expression
+	 * evaluates to a numeric type, the result will be the equivalent of
+	 * expression==0. Used for evaluating expression in conditions.
+	 * 
+	 * @param expressionNode
+	 * @param scope
+	 */
+	//TODO change javadoc
+	Expression booleanExpression(Expression expression);
+
+	CIVLSource sourceOf(Source abcSource);
+
+	CIVLSource sourceOfToken(CToken token);
+
+	CIVLSource sourceOf(ASTNode node);
+
+	CIVLSource sourceOfBeginning(ASTNode node);
+
+	CIVLSource sourceOfEnd(ASTNode node);
+
+	CIVLSource sourceOfSpan(Source abcSource1, Source abcSource2);
+
+	CIVLSource sourceOfSpan(ASTNode node1, ASTNode node2);
+
+	CIVLSource sourceOfSpan(CIVLSource source1, CIVLSource source2);
+
+	boolean isTrue(Expression expression);
+
+	void setTokenFactory(TokenFactory tokens);
 
 }

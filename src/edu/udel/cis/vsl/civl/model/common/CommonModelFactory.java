@@ -10,6 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.token.IF.CToken;
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -189,6 +194,8 @@ public class CommonModelFactory implements ModelFactory {
 
 	/** A list of nulls of length CACHE_INCREMENT */
 	private List<SymbolicExpression> nullList = new LinkedList<SymbolicExpression>();
+	
+	private TokenFactory tokenFactory;
 
 	/**
 	 * The factory to create all model components. Usually this is the only way
@@ -239,6 +246,11 @@ public class CommonModelFactory implements ModelFactory {
 		undefinedScopeValue = universe.canonic(universe.tuple(
 				scopeSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
+	}
+	
+	@Override
+	public void setTokenFactory(TokenFactory tokens){
+		this.tokenFactory = tokens;
 	}
 
 	private NumericExpression sizeofExpression(PrimitiveTypeKind kind) {
@@ -886,12 +898,14 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public AssertStatement assertStatement(CIVLSource civlSource,
-			Location source, Expression expression) {
+			Location source, Expression expression, Expression guard) {
 		AssertStatement result = new CommonAssertStatement(civlSource, source,
 				expression);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		result.setStatementScope(expression.expressionScope());
+		if (guard != null)
+			result.setGuard(guard);
 		return result;
 	}
 
@@ -908,13 +922,15 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public AssignStatement assignStatement(CIVLSource civlSource,
-			Location source, LHSExpression lhs, Expression rhs) {
+			Location source, LHSExpression lhs, Expression rhs, Expression guard) {
 		AssignStatement result = new CommonAssignStatement(civlSource, source,
 				lhs, rhs);
 
 		result.setStatementScope(join(lhs.expressionScope(),
 				rhs.expressionScope()));
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
 		return result;
 	}
 
@@ -929,12 +945,14 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public AssumeStatement assumeStatement(CIVLSource civlSource,
-			Location source, Expression expression) {
+			Location source, Expression expression, Expression guard) {
 		AssumeStatement result = new CommonAssumeStatement(civlSource, source,
 				expression);
 
 		result.setStatementScope(expression.expressionScope());
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
 		return result;
 	}
 
@@ -952,7 +970,7 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
 			Location source, boolean isCall, CIVLFunction function,
-			List<Expression> arguments) {
+			List<Expression> arguments, Expression guard) {
 		CallOrSpawnStatement result = new CommonCallStatement(civlSource,
 				source, isCall, function, arguments);
 		Scope statementScope = null;
@@ -962,13 +980,15 @@ public class CommonModelFactory implements ModelFactory {
 			statementScope = join(statementScope, arg.expressionScope());
 		}
 		result.setStatementScope(statementScope);
+		if (guard != null)
+			result.setGuard(guard);
 		return result;
 	}
 
 	/**
 	 * A choose statement is of the form x = choose(n), where n is an integer.
 	 * 
-	 * When a choose statement is executed, all possible assignments of the 
+	 * When a choose statement is executed, all possible assignments of the
 	 * 
 	 * @param source
 	 *            The source location for this statement.
@@ -981,13 +1001,15 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public ChooseStatement chooseStatement(CIVLSource civlSource,
-			Location source, LHSExpression lhs, Expression argument) {
+			Location source, LHSExpression lhs, Expression argument, Expression guard) {
 		ChooseStatement result = new CommonChooseStatement(civlSource, source,
 				lhs, argument, chooseID++);
 
 		result.setStatementScope(join(lhs.expressionScope(),
 				argument.expressionScope()));
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
 		return result;
 	}
 
@@ -1002,12 +1024,14 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public WaitStatement joinStatement(CIVLSource civlSource, Location source,
-			Expression process) {
+			Expression process, Expression guard) {
 		WaitStatement result = new CommonWaitStatement(civlSource, source,
 				process);
 
 		result.setStatementScope(process.expressionScope());
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
 		return result;
 	}
 
@@ -1019,10 +1043,12 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new noop statement.
 	 */
 	@Override
-	public NoopStatement noopStatement(CIVLSource civlSource, Location source) {
+	public NoopStatement noopStatement(CIVLSource civlSource, Location source, Expression guard) {
 		NoopStatement result = new CommonNoopStatement(civlSource, source);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
 		return result;
 	}
 
@@ -1037,7 +1063,7 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public ReturnStatement returnStatement(CIVLSource civlSource,
-			Location source, Expression expression) {
+			Location source, Expression expression, Expression guard) {
 		ReturnStatement result = new CommonReturnStatement(civlSource, source,
 				expression);
 
@@ -1045,6 +1071,8 @@ public class CommonModelFactory implements ModelFactory {
 			result.setStatementScope(expression.expressionScope());
 		}
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
 		return result;
 	}
 
@@ -1281,7 +1309,7 @@ public class CommonModelFactory implements ModelFactory {
 	public MallocStatement mallocStatement(CIVLSource civlSource,
 			Location source, LHSExpression lhs, CIVLType staticElementType,
 			Expression heapPointerExpression, Expression sizeExpression,
-			int mallocId) {
+			int mallocId, Expression guard) {
 		SymbolicType dynamicElementType = staticElementType
 				.getDynamicType(universe);
 		SymbolicArrayType dynamicObjectType = (SymbolicArrayType) universe
@@ -1292,6 +1320,8 @@ public class CommonModelFactory implements ModelFactory {
 				dynamicElementType, dynamicObjectType, sizeExpression,
 				undefinedObject, lhs);
 
+		if(guard != null)
+			result.setGuard(guard);
 		return result;
 	}
 
@@ -1342,4 +1372,75 @@ public class CommonModelFactory implements ModelFactory {
 		bundleType.complete(elementTypes, dynamicType);
 	}
 
+	
+	@Override
+	public Expression booleanExpression(Expression expression) {
+		CIVLSource source = expression.getSource();
+
+		if (!expression.getExpressionType().equals(booleanType())) {
+			if (expression.getExpressionType().equals(integerType())) {
+				expression = binaryExpression(source,
+						BINARY_OPERATOR.NOT_EQUAL, expression, integerLiteralExpression(
+										source,
+										BigInteger.ZERO));
+			} else if (expression.getExpressionType().equals(realType())) {
+				expression = binaryExpression(source,
+						BINARY_OPERATOR.NOT_EQUAL, expression, realLiteralExpression(
+										source,
+										BigDecimal.ZERO));
+			} else {
+				throw new CIVLInternalException(
+						"Unable to convert expression to boolean type",
+						source);
+			}
+		}
+		return expression;
+	}
+	
+	@Override
+	public CIVLSource sourceOf(Source abcSource) {
+		return new ABC_CIVLSource(abcSource);
+	}
+
+	@Override
+	public CIVLSource sourceOfToken(CToken token) {
+		return sourceOf(tokenFactory.newSource(token));
+	}
+
+	@Override
+	public CIVLSource sourceOf(ASTNode node) {
+		return sourceOf(node.getSource());
+	}
+
+	@Override
+	public CIVLSource sourceOfBeginning(ASTNode node) {
+		return sourceOfToken(node.getSource().getFirstToken());
+	}
+
+	@Override
+	public CIVLSource sourceOfEnd(ASTNode node) {
+		return sourceOfToken(node.getSource().getLastToken());
+	}
+
+	@Override
+	public CIVLSource sourceOfSpan(Source abcSource1, Source abcSource2) {
+		return sourceOf(tokenFactory.join(abcSource1, abcSource2));
+	}
+
+	@Override
+	public CIVLSource sourceOfSpan(ASTNode node1, ASTNode node2) {
+		return sourceOfSpan(node1.getSource(), node2.getSource());
+	}
+
+	@Override
+	public CIVLSource sourceOfSpan(CIVLSource source1, CIVLSource source2) {
+		return sourceOfSpan(((ABC_CIVLSource) source1).getABCSource(),
+				((ABC_CIVLSource) source2).getABCSource());
+	}
+
+	@Override
+	public boolean isTrue(Expression expression) {
+		return expression instanceof BooleanLiteralExpression
+				&& ((BooleanLiteralExpression) expression).value();
+	}
 }

@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -96,7 +97,6 @@ import edu.udel.cis.vsl.abc.ast.value.IF.IntegerValue;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
-import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
@@ -107,7 +107,6 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
-import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
@@ -150,9 +149,6 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 public class ModelBuilderWorker {
 
 	// Fields..............................................................
-
-	private TokenFactory tokenFactory;
-
 	/**
 	 * The factory used to create new Model components.
 	 */
@@ -195,19 +191,6 @@ public class ModelBuilderWorker {
 	 * Map from ABC Function entity to corresponding CIVL Function.
 	 */
 	private Map<Function, CIVLFunction> functionMap;
-
-	/**
-	 * This fields stores information for a single function, the current one
-	 * being processed. It maps ABC label nodes to the corresponding CIVL
-	 * locations.
-	 */
-	private Map<LabelNode, Location> labeledLocations;
-
-	/**
-	 * Also being used for single function (the one being processed). Maps from
-	 * CIVL "goto" statements to the corresponding label nodes.
-	 */
-	private Map<Statement, LabelNode> gotoStatements;
 
 	/**
 	 * Mapping from ABC types to corresponding CIVL types.
@@ -263,23 +246,6 @@ public class ModelBuilderWorker {
 	private CIVLType commType;
 
 	/**
-	 * Used to keep track of continue statements in nested loops. Each entry on
-	 * the stack corresponds to a particular loop. The statements in the set for
-	 * that entry are noops which need their target set to the appropriate
-	 * location at the end of the loop processing.
-	 */
-	private Stack<Set<Statement>> continueStatements = new Stack<Set<Statement>>();
-
-	/**
-	 * Used to keep track of break statements in nested loops/switches. Each
-	 * entry on the stack corresponds to a particular loop or switch. The
-	 * statements in the set for that entry are noops which need their target
-	 * set to the appropriate location at the end of the loop or switch
-	 * processing.
-	 */
-	private Stack<Set<Statement>> breakStatements = new Stack<Set<Statement>>();
-
-	/**
 	 * Configuration information for the generic model checker.
 	 */
 	private GMCConfiguration config;
@@ -299,6 +265,11 @@ public class ModelBuilderWorker {
 	 */
 	private Set<String> initializedInputs = new HashSet<String>();
 
+	/**
+	 * Store temporary information of the function being processed
+	 */
+	private FunctionInfo functionInfo;
+
 	/* *********************************************************************
 	 * Constructors
 	 * *********************************************************************
@@ -314,7 +285,7 @@ public class ModelBuilderWorker {
 		this.inputInitMap = config.getMapValue(UserInterface.inputO);
 		this.factory = factory;
 		this.program = program;
-		this.tokenFactory = program.getTokenFactory();
+		this.factory.setTokenFactory(program.getTokenFactory());
 		this.heapType = factory.heapType("model");
 		this.bundleType = factory.newBundleType();
 		this.universe = factory.universe();
@@ -324,44 +295,6 @@ public class ModelBuilderWorker {
 	 * Helper methods
 	 * *********************************************************************
 	 */
-
-	private CIVLSource sourceOf(Source abcSource) {
-		return new ABC_CIVLSource(abcSource);
-	}
-
-	private CIVLSource sourceOfToken(CToken token) {
-		return sourceOf(tokenFactory.newSource(token));
-	}
-
-	private CIVLSource sourceOf(ASTNode node) {
-		return sourceOf(node.getSource());
-	}
-
-	private CIVLSource sourceOfBeginning(ASTNode node) {
-		return sourceOfToken(node.getSource().getFirstToken());
-	}
-
-	private CIVLSource sourceOfEnd(ASTNode node) {
-		return sourceOfToken(node.getSource().getLastToken());
-	}
-
-	private CIVLSource sourceOfSpan(Source abcSource1, Source abcSource2) {
-		return sourceOf(tokenFactory.join(abcSource1, abcSource2));
-	}
-
-	private CIVLSource sourceOfSpan(ASTNode node1, ASTNode node2) {
-		return sourceOfSpan(node1.getSource(), node2.getSource());
-	}
-
-	private CIVLSource sourceOfSpan(CIVLSource source1, CIVLSource source2) {
-		return sourceOfSpan(((ABC_CIVLSource) source1).getABCSource(),
-				((ABC_CIVLSource) source2).getABCSource());
-	}
-
-	private boolean isTrue(Expression expression) {
-		return expression instanceof BooleanLiteralExpression
-				&& ((BooleanLiteralExpression) expression).value();
-	}
 
 	/* *********************************************************************
 	 * Translating ABC Type into CIVL Type
@@ -432,8 +365,9 @@ public class ModelBuilderWorker {
 				Type fieldType = field.getType();
 				CIVLType civlFieldType = translateABCType(source, scope,
 						fieldType);
-				Identifier identifier = factory.identifier(sourceOf(field
-						.getDefinition().getIdentifier()), name);
+				Identifier identifier = factory
+						.identifier(factory.sourceOf(field.getDefinition()
+								.getIdentifier()), name);
 				StructField civlField = factory.structField(identifier,
 						civlFieldType);
 
@@ -595,7 +529,8 @@ public class ModelBuilderWorker {
 	}
 
 	private CIVLType translateTypeNode(TypeNode typeNode, Scope scope) {
-		return translateABCType(sourceOf(typeNode), scope, typeNode.getType());
+		return translateABCType(factory.sourceOf(typeNode), scope,
+				typeNode.getType());
 	}
 
 	/* *********************************************************************
@@ -630,9 +565,9 @@ public class ModelBuilderWorker {
 		} else if (expressionNode instanceof ArrowNode) {
 			result = translateArrowNode((ArrowNode) expressionNode, scope);
 		} else if (expressionNode instanceof ResultNode) {
-			result = factory.resultExpression(sourceOf(expressionNode));
+			result = factory.resultExpression(factory.sourceOf(expressionNode));
 		} else if (expressionNode instanceof SelfNode) {
-			result = factory.selfExpression(sourceOf(expressionNode));
+			result = factory.selfExpression(factory.sourceOf(expressionNode));
 		} else if (expressionNode instanceof CastNode) {
 			result = translateCastNode((CastNode) expressionNode, scope);
 		} else if (expressionNode instanceof SizeofNode) {
@@ -643,7 +578,7 @@ public class ModelBuilderWorker {
 		} else
 			throw new CIVLUnimplementedFeatureException("expressions of type "
 					+ expressionNode.getClass().getSimpleName(),
-					sourceOf(expressionNode));
+					factory.sourceOf(expressionNode));
 		if (translateConversions) {
 			// apply conversions
 			CIVLSource source = result.getSource();
@@ -712,41 +647,6 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * Translate an expression from the CIVL AST to the CIVL model. The
-	 * resulting expression will always be boolean-valued. If the expression
-	 * evaluates to a numeric type, the result will be the equivalent of
-	 * expression==0. Used for evaluating expression in conditions.
-	 * 
-	 * @param expressionNode
-	 * @param scope
-	 */
-	private Expression booleanExpression(ExpressionNode expressionNode,
-			Scope scope) {
-		Expression result = translateExpressionNode(expressionNode, scope, true);
-
-		if (!result.getExpressionType().equals(factory.booleanType())) {
-			if (result.getExpressionType().equals(factory.integerType())) {
-				result = factory.binaryExpression(sourceOf(expressionNode),
-						BINARY_OPERATOR.NOT_EQUAL, result, factory
-								.integerLiteralExpression(
-										sourceOf(expressionNode),
-										BigInteger.ZERO));
-			} else if (result.getExpressionType().equals(factory.realType())) {
-				result = factory.binaryExpression(sourceOf(expressionNode),
-						BINARY_OPERATOR.NOT_EQUAL, result, factory
-								.realLiteralExpression(
-										sourceOf(expressionNode),
-										BigDecimal.ZERO));
-			} else {
-				throw new CIVLInternalException(
-						"Unable to convert expression to boolean type",
-						sourceOf(expressionNode));
-			}
-		}
-		return result;
-	}
-
-	/**
 	 * Translate a cast expression from the CIVL AST to the CIVL model.
 	 * 
 	 * @param castNode
@@ -760,7 +660,7 @@ public class ModelBuilderWorker {
 		ExpressionNode argumentNode = castNode.getArgument();
 		Expression castExpression = translateExpressionNode(argumentNode,
 				scope, true);
-		Expression result = factory.castExpression(sourceOf(castNode),
+		Expression result = factory.castExpression(factory.sourceOf(castNode),
 				castType, castExpression);
 
 		return result;
@@ -768,7 +668,7 @@ public class ModelBuilderWorker {
 
 	private Expression translateSizeofNode(SizeofNode sizeofNode, Scope scope) {
 		SizeableNode argNode = sizeofNode.getArgument();
-		CIVLSource source = sourceOf(sizeofNode);
+		CIVLSource source = factory.sourceOf(sizeofNode);
 		Expression result;
 
 		if (argNode instanceof TypeNode) {
@@ -800,11 +700,10 @@ public class ModelBuilderWorker {
 	private Expression translateArrowNode(ArrowNode arrowNode, Scope scope) {
 		Expression struct = translateExpressionNode(
 				arrowNode.getStructurePointer(), scope, true);
-		Expression result = factory.dotExpression(
-				sourceOf(arrowNode),
+		Expression result = factory.dotExpression(factory.sourceOf(arrowNode),
 				factory.dereferenceExpression(
-						sourceOf(arrowNode.getStructurePointer()), struct),
-				getFieldIndex(arrowNode.getFieldName()));
+						factory.sourceOf(arrowNode.getStructurePointer()),
+						struct), getFieldIndex(arrowNode.getFieldName()));
 
 		return result;
 	}
@@ -821,8 +720,8 @@ public class ModelBuilderWorker {
 	private Expression translateDotNode(DotNode dotNode, Scope scope) {
 		Expression struct = translateExpressionNode(dotNode.getStructure(),
 				scope, true);
-		Expression result = factory.dotExpression(sourceOf(dotNode), struct,
-				getFieldIndex(dotNode.getFieldName()));
+		Expression result = factory.dotExpression(factory.sourceOf(dotNode),
+				struct, getFieldIndex(dotNode.getFieldName()));
 
 		return result;
 	}
@@ -881,7 +780,7 @@ public class ModelBuilderWorker {
 	 */
 	private Expression translateSubscriptNode(OperatorNode subscriptNode,
 			Scope scope) {
-		CIVLSource source = sourceOf(subscriptNode);
+		CIVLSource source = factory.sourceOf(subscriptNode);
 		ExpressionNode leftNode = subscriptNode.getArgument(0);
 		ExpressionNode rightNode = subscriptNode.getArgument(1);
 		Expression lhs = translateExpressionNode(leftNode, scope, true);
@@ -936,7 +835,7 @@ public class ModelBuilderWorker {
 	 */
 	private Expression translateOperatorNode(OperatorNode operatorNode,
 			Scope scope) {
-		CIVLSource source = sourceOf(operatorNode);
+		CIVLSource source = factory.sourceOf(operatorNode);
 		Operator operator = operatorNode.getOperator();
 
 		if (operator == Operator.SUBSCRIPT)
@@ -1084,7 +983,7 @@ public class ModelBuilderWorker {
 
 	private Expression translateIdentifierNode(
 			IdentifierExpressionNode identifierNode, Scope scope) {
-		CIVLSource source = sourceOf(identifierNode);
+		CIVLSource source = factory.sourceOf(identifierNode);
 		Identifier name = factory.identifier(source, identifierNode
 				.getIdentifier().name());
 		VariableExpression result;
@@ -1097,7 +996,7 @@ public class ModelBuilderWorker {
 	}
 
 	private Expression translateConstantNode(ConstantNode constantNode) {
-		CIVLSource source = sourceOf(constantNode);
+		CIVLSource source = factory.sourceOf(constantNode);
 		Type convertedType = constantNode.getConvertedType();
 		Expression result;
 
@@ -1164,15 +1063,12 @@ public class ModelBuilderWorker {
 		Variable variable;
 		Expression restriction;
 		Expression quantifiedExpression;
-		CIVLSource source = sourceOf(expressionNode.getSource());
+		CIVLSource source = factory.sourceOf(expressionNode.getSource());
 		// TODO: Think about the best way to add the quantified variable. In
 		// theory we want a scope just for the quantified expression, but this
 		// creates certain problems. What scope should the location be in? What
 		// if we have a conjunction of quantified statements? For now, we will
 		// add to the existing scope, but this is unsatisfactory.
-
-		// Scope newScope = factory.scope(source, scope,
-		// new LinkedHashSet<Variable>(), scope.function());
 
 		switch (expressionNode.quantifier()) {
 		case EXISTS:
@@ -1205,32 +1101,26 @@ public class ModelBuilderWorker {
 	 * Statements
 	 * *********************************************************************
 	 */
-
 	/**
-	 * Takes a statement node where the start location and extra guard are
-	 * defined elsewhere and returns the appropriate model statement.
+	 * Given a StatementNode, return a Fragment representing it. Takes a
+	 * statement node where the start location and extra guard are defined
+	 * elsewhere and returns the appropriate model statement.
 	 * 
-	 * @param function
-	 *            The function containing this statement.
-	 * @param location
-	 *            The start location of the statement.
 	 * @param guard
 	 *            An extra component of the guard beyond that described in the
 	 *            statement.
 	 * @param scope
 	 *            The scope containing this statement.
-	 * @param lastStatement
-	 *            The previous statement. Null if this is the first statement in
-	 *            a function.
 	 * @param statementNode
 	 *            The statement node.
-	 * @return The model representation of this statement.
+	 * @return The fragment representation of this statement.
 	 */
-	private Statement translateStatementNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, StatementNode statementNode) {
-		Statement result;
-		CIVLSource source = sourceOfBeginning(statementNode);
+	// TODO: is guard necessary?
+	private Fragment translateStatementNode(Expression guard, Scope scope,
+			StatementNode statementNode) {
+		Fragment result = null;
+
+		CIVLSource source = factory.sourceOfBeginning(statementNode);
 
 		if (guard == null)
 			guard = new CommonBooleanLiteralExpression(source, true);
@@ -1238,139 +1128,112 @@ public class ModelBuilderWorker {
 		// TODO replace if-else branches with switch, need to some appropriate
 		// modification in ABC to support this.
 		if (statementNode instanceof AssumeNode) {
-			result = translateAssumeNode(function, location, guard, scope,
-					lastStatement, (AssumeNode) statementNode);
+			result = translateAssumeNode(guard, scope,
+					(AssumeNode) statementNode);
 		} else if (statementNode instanceof AssertNode) {
-			result = translateAssertNode(function, location, guard, scope,
-					lastStatement, (AssertNode) statementNode);
+			result = translateAssertNode(guard, scope,
+					(AssertNode) statementNode);
 		} else if (statementNode instanceof ExpressionStatementNode) {
-			result = translateExpressionStatementNode(function, location,
-					guard, scope, lastStatement,
+			result = translateExpressionStatementNode(guard, scope,
 					((ExpressionStatementNode) statementNode).getExpression());
 		} else if (statementNode instanceof CompoundStatementNode) {
-			result = translateCompoundStatementNode(function, location, guard,
-					scope, lastStatement, (CompoundStatementNode) statementNode);
+			result = translateCompoundStatementNode(guard, scope,
+					(CompoundStatementNode) statementNode);
 		} else if (statementNode instanceof ForLoopNode) {
-			result = translateForLoopNode(function, location, guard, scope,
-					lastStatement, (ForLoopNode) statementNode);
+			result = translateForLoopNode(guard, scope,
+					(ForLoopNode) statementNode);
 		} else if (statementNode instanceof LoopNode) {
-			result = translateWhileNode(function, location, scope,
-					lastStatement, (LoopNode) statementNode);
+			result = translateWhileNode(guard, scope, (LoopNode) statementNode);
 		} else if (statementNode instanceof IfNode) {
-			result = translateIfNode(function, location, guard, scope,
-					lastStatement, (IfNode) statementNode);
+			result = translateIfNode(guard, scope, (IfNode) statementNode);
 		} else if (statementNode instanceof WaitNode) {
-			result = translateWaitNode(function, location, guard, scope,
-					lastStatement, (WaitNode) statementNode);
+			result = translateWaitNode(guard, scope, (WaitNode) statementNode);
 		} else if (statementNode instanceof NullStatementNode) {
-			result = translateNullStatementNode(function, location, guard,
-					scope, lastStatement, (NullStatementNode) statementNode);
+			result = translateNullStatementNode(guard, scope,
+					(NullStatementNode) statementNode);
 		} else if (statementNode instanceof WhenNode) {
-			result = translateWhenNode(function, location, guard, scope,
-					lastStatement, (WhenNode) statementNode);
+			result = translateWhenNode(guard, scope, (WhenNode) statementNode);
 		} else if (statementNode instanceof ChooseStatementNode) {
-			result = translateChooseNode(function, location, guard, scope,
-					lastStatement, (ChooseStatementNode) statementNode);
+			result = translateChooseNode(guard, scope,
+					(ChooseStatementNode) statementNode);
 		} else if (statementNode instanceof GotoNode) {
-			result = translateGotoNode(function, location, guard, scope,
-					lastStatement, (GotoNode) statementNode);
+			result = translateGotoNode(guard, scope, (GotoNode) statementNode);
 		} else if (statementNode instanceof LabeledStatementNode) {
-			result = translateLabelStatementNode(function, location, guard,
-					scope, lastStatement, (LabeledStatementNode) statementNode);
+			result = translateLabelStatementNode(guard, scope,
+					(LabeledStatementNode) statementNode);
 		} else if (statementNode instanceof ReturnNode) {
-			result = translateReturnNode(function, lastStatement,
-					(ReturnNode) statementNode, scope);
+			result = translateReturnNode(guard, scope,
+					(ReturnNode) statementNode);
 		} else if (statementNode instanceof SwitchNode) {
-			result = translateSwitchNode(function, location, guard, scope,
-					lastStatement, (SwitchNode) statementNode);
+			result = translateSwitchNode(guard, scope,
+					(SwitchNode) statementNode);
 		} else if (statementNode instanceof JumpNode) {
-			result = translateJumpNode(function, location, guard, scope,
-					lastStatement, (JumpNode) statementNode);
+			result = translateJumpNode(guard, scope, (JumpNode) statementNode);
 		} else
 			throw new CIVLUnimplementedFeatureException("statements of type "
 					+ statementNode.getClass().getSimpleName(),
-					sourceOf(statementNode));
+					factory.sourceOf(statementNode));
 
-		function.addStatement(result);
 		return result;
 	}
 
 	/**
 	 * A break or continue statement;
 	 */
-	private Statement translateJumpNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, JumpNode jumpNode) {
-		Statement result;
+	private Fragment translateJumpNode(Expression guard, Scope scope,
+			JumpNode jumpNode) {
+		Location location = factory.location(
+				factory.sourceOfBeginning(jumpNode), scope);
+		Statement result = factory.noopStatement(factory.sourceOf(jumpNode),
+				location, guard);
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(jumpNode), scope);
-		result = factory.noopStatement(sourceOf(jumpNode), location);
-		function.addLocation(location);
 		if (jumpNode.getKind() == JumpKind.CONTINUE) {
-			continueStatements.peek().add(result);
+			functionInfo.peekContinueStatck().add(result);
 		} else if (jumpNode.getKind() == JumpKind.BREAK) {
-			breakStatements.peek().add(result);
+			functionInfo.peekBreakStatck().add(result);
 		} else {
 			throw new CIVLInternalException(
 					"Jump nodes other than BREAK and CONTINUE should be handled seperately.",
-					sourceOf(jumpNode.getSource()));
+					factory.sourceOf(jumpNode.getSource()));
 		}
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-		} else {
-			function.setStartLocation(location);
-		}
-		return result;
+		return new Fragment(result);
 	}
 
-	private Statement translateIfNode(CIVLFunction function, Location location,
-			Expression guard, Scope scope, Statement lastStatement,
+	private Fragment translateIfNode(Expression guard, Scope scope,
 			IfNode ifNode) {
 		Expression expression = translateExpressionNode(ifNode.getCondition(),
 				scope, true);
-		Statement trueBranch, trueBranchBody, falseBranch, falseBranchBody, result;
-		Location exitLocation = factory.location(sourceOfEnd(ifNode), scope);
-		Location trueBranchBodyLocation = factory.location(
-				sourceOf(ifNode.getTrueBranch()), scope);
+		Fragment trueBranch, trueBranchBody, falseBranch, falseBranchBody, exit, result;
+		Location exitLocation = factory.location(factory.sourceOfEnd(ifNode),
+				scope);
+		Location location = factory.location(factory.sourceOfBeginning(ifNode),
+				scope);
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(ifNode), scope);
-		trueBranch = factory.noopStatement(
-				sourceOfBeginning(ifNode.getTrueBranch()), location);
-		falseBranch = factory.noopStatement(sourceOfEnd(ifNode), location);
+		trueBranch = new Fragment(factory.noopStatement(
+				factory.sourceOfBeginning(ifNode.getTrueBranch()), location,
+				expression));
+		falseBranch = new Fragment(factory.noopStatement(factory
+				.sourceOfEnd(ifNode), location, factory.unaryExpression(
+				expression.getSource(), UNARY_OPERATOR.NOT, expression)));
+
 		trueBranchBody = translateStatementNode(
-				function,
-				trueBranchBodyLocation,
 				factory.booleanLiteralExpression(
-						sourceOf(ifNode.getTrueBranch()), true), scope,
-				trueBranch, ifNode.getTrueBranch());
-		trueBranch.setGuard(expression);
-		function.addLocation(location);
-		function.addLocation(trueBranchBodyLocation);
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-		} else {
-			function.setStartLocation(location);
-		}
-		falseBranch.setGuard(factory.unaryExpression(expression.getSource(),
-				UNARY_OPERATOR.NOT, expression));
-		if (ifNode.getFalseBranch() == null) {
-			falseBranchBody = falseBranch;
-		} else {
-			Location falseBranchLocation = factory.location(
-					sourceOf(ifNode.getFalseBranch()), scope);
+						factory.sourceOf(ifNode.getTrueBranch()), true), scope,
+				ifNode.getTrueBranch());
 
-			falseBranchBody = translateStatementNode(function,
-					falseBranchLocation, factory.booleanLiteralExpression(
-							expression.getSource(), true), scope, falseBranch,
-					ifNode.getFalseBranch());
+		trueBranch = trueBranch.combineWith(trueBranchBody);
+
+		if (ifNode.getFalseBranch() != null) {
+			falseBranchBody = translateStatementNode(
+					factory.booleanLiteralExpression(expression.getSource(),
+							true), scope, ifNode.getFalseBranch());
+			falseBranch = falseBranch.combineWith(falseBranchBody);
 		}
-		function.addLocation(exitLocation);
-		trueBranchBody.setTarget(exitLocation);
-		falseBranchBody.setTarget(exitLocation);
-		result = factory.noopStatement(sourceOfEnd(ifNode), exitLocation);
-		return result;
+
+		result = trueBranch.parallelCombineWith(falseBranch);
+		exit = new Fragment(factory.noopStatement(factory.sourceOfEnd(ifNode),
+				exitLocation, null));
+		return result.combineWith(exit);
 	}
 
 	/**
@@ -1391,27 +1254,16 @@ public class ModelBuilderWorker {
 	 *            The AST node for the assume statement
 	 * @return The model representation of this statement.
 	 */
-	private Statement translateAssumeNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, AssumeNode assumeNode) {
-		Statement result;
+	private Fragment translateAssumeNode(Expression guard, Scope scope,
+			AssumeNode assumeNode) {
 		Expression expression = translateExpressionNode(
 				assumeNode.getExpression(), scope, true);
+		Location location = factory.location(
+				factory.sourceOfBeginning(assumeNode), scope);
+		Statement assumeStatement = factory.assumeStatement(
+				factory.sourceOf(assumeNode), location, expression, guard);
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(assumeNode), scope);
-		result = factory.assumeStatement(sourceOf(assumeNode), location,
-				expression);
-		if (guard != null)
-			result.setGuard(guard);
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-			function.addLocation(location);
-		} else if (function != null) {
-			function.setStartLocation(location);
-		}
-
-		return result;
+		return new Fragment(location, assumeStatement);
 	}
 
 	/**
@@ -1432,27 +1284,16 @@ public class ModelBuilderWorker {
 	 *            The AST node for the assert statement
 	 * @return The model representation of this statement.
 	 */
-	private Statement translateAssertNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, AssertNode assertNode) {
+	private Fragment translateAssertNode(Expression guard, Scope scope,
+			AssertNode assertNode) {
 		Expression expression = translateExpressionNode(
 				assertNode.getExpression(), scope, true);
-		Statement result;
+		Location location = factory.location(
+				factory.sourceOfBeginning(assertNode), scope);
+		Statement assertStatement = factory.assertStatement(
+				factory.sourceOf(assertNode), location, expression, guard);
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(assertNode), scope);
-		result = factory.assertStatement(sourceOf(assertNode), location,
-				expression);
-		if (guard != null)
-			result.setGuard(guard);
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-			function.addLocation(location);
-		} else if (function != null) {
-			function.setStartLocation(location);
-		}
-
-		return result;
+		return new Fragment(location, assertStatement);
 	}
 
 	/**
@@ -1476,102 +1317,73 @@ public class ModelBuilderWorker {
 	 *            The scope containing this statement.
 	 * @return The model representation of this statement.
 	 */
-	private Statement translateExpressionStatementNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, ExpressionNode expressionNode) {
-		Statement result;
+	private Fragment translateExpressionStatementNode(Expression guard,
+			Scope scope, ExpressionNode expressionNode) {
+		Fragment result;
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(expressionNode),
-					scope);
+		Location location = factory.location(
+				factory.sourceOfBeginning(expressionNode), scope);
+
 		if (expressionNode instanceof OperatorNode) {
 			OperatorNode operatorNode = (OperatorNode) expressionNode;
 
 			switch (operatorNode.getOperator()) {
 			case ASSIGN:
-				result = translateAssignNode(function, location, guard, scope,
-						lastStatement, operatorNode);
+				result = translateAssignNode(guard, scope, operatorNode);
 				break;
 			case POSTINCREMENT:
 			case PREINCREMENT:
 			case POSTDECREMENT:
 			case PREDECREMENT:
 				throw new CIVLInternalException("Side-effect not removed: ",
-						sourceOf(operatorNode));
+						factory.sourceOf(operatorNode));
 			default:
 				// since side-effects have been removed,
 				// the only expressions remaining with side-effects
 				// are assignments. all others are equivalent to no-op
-				result = factory
-						.noopStatement(sourceOf(operatorNode), location);
-				if (guard != null)
-					result.setGuard(guard);
-
-				if (lastStatement != null) {
-					lastStatement.setTarget(location);
-					function.addLocation(location);
-				} else if (function != null) {
-					function.setStartLocation(location);
-				}
+				Statement noopStatement = factory.noopStatement(
+						factory.sourceOf(operatorNode), location, guard);
+				result = new Fragment(location, noopStatement);
 			}
 		} else if (expressionNode instanceof SpawnNode) {
-			result = translateSpawnNode(function, location, guard, scope,
-					lastStatement, (SpawnNode) expressionNode);
-
-			// FunctionCallNode call = ((SpawnNode) expressionNode).getCall();
-			//
-			// result = callOrSpawn(location, false, null, call, scope);
+			result = translateSpawnNode(guard, scope,
+					(SpawnNode) expressionNode);
 		} else if (expressionNode instanceof FunctionCallNode) {
-			result = translateFunctionCallNode(function, location, guard,
-					scope, lastStatement, (FunctionCallNode) expressionNode);
-			// result = callOrSpawn(location, true, null,
-			// (FunctionCallNode) expressionNode, scope);
+			result = translateFunctionCallNode(guard, scope,
+					(FunctionCallNode) expressionNode);
 		} else
 			throw new CIVLInternalException(
 					"expression statement of this kind",
-					sourceOf(expressionNode));
+					factory.sourceOf(expressionNode));
 
 		return result;
 	}
 
-	private Statement translateFunctionCallNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, FunctionCallNode functionCallNode) {
-		Statement result;
+	private Fragment translateFunctionCallNode(Expression guard, Scope scope,
+			FunctionCallNode functionCallNode) {
+		Location location = factory.location(
+				factory.sourceOfBeginning(functionCallNode), scope);
 
-		result = callOrSpawnStatement(location, scope, functionCallNode, null,
-				true);
+		Statement callStatement = callOrSpawnStatement(location, scope,
+				functionCallNode, null, true);
 		if (guard != null)
-			result.setGuard(guard);
+			callStatement.setGuard(guard);
 
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-			function.addLocation(location);
-		} else if (function != null) {
-			function.setStartLocation(location);
-		}
-
-		return result;
+		return new Fragment(location, callStatement);
 	}
 
-	private Statement translateSpawnNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, SpawnNode spawnNode) {
-		Statement result;
+	private Fragment translateSpawnNode(Expression guard, Scope scope,
+			SpawnNode spawnNode) {
+		Statement spawnStatement;
+		Location location = factory.location(
+				factory.sourceOfBeginning(spawnNode), scope);
 
-		result = callOrSpawnStatement(location, scope, spawnNode.getCall(),
-				null, false);
+		spawnStatement = callOrSpawnStatement(location, scope,
+				spawnNode.getCall(), null, false);
 		if (guard != null)
-			result.setGuard(guard);
+			spawnStatement.setGuard(guard);
 
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-			function.addLocation(location);
-		} else if (function != null) {
-			function.setStartLocation(location);
-		}
-
-		return result;
+		return new Fragment(location, spawnStatement);
 	}
 
 	private CallOrSpawnStatement callOrSpawnStatement(Location location,
@@ -1586,7 +1398,7 @@ public class ModelBuilderWorker {
 		if (isMallocCall(callNode))
 			throw new CIVLException(
 					"$malloc can only occur in a cast expression",
-					sourceOf(callNode));
+					factory.sourceOf(callNode));
 		if (functionExpression instanceof IdentifierExpressionNode) {
 			callee = (Function) ((IdentifierExpressionNode) functionExpression)
 					.getIdentifier().getEntity();
@@ -1603,8 +1415,8 @@ public class ModelBuilderWorker {
 			actual = arrayToPointer(actual);
 			arguments.add(actual);
 		}
-		result = factory.callOrSpawnStatement(sourceOf(callNode), location,
-				isCall, null, arguments);
+		result = factory.callOrSpawnStatement(factory.sourceOf(callNode),
+				location, isCall, null, arguments, null);
 		result.setLhs(lhs);
 		callStatements.put(result, callee);
 		return result;
@@ -1625,34 +1437,25 @@ public class ModelBuilderWorker {
 	 * @return The model representation of the assignment, which might also be a
 	 *         fork statement or function call.
 	 */
-	private Statement translateAssignNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, OperatorNode assignNode) {
+	private Fragment translateAssignNode(Expression guard, Scope scope,
+			OperatorNode assignNode) {
 		ExpressionNode lhs = assignNode.getArgument(0);
 		ExpressionNode rhs = assignNode.getArgument(1);
 		Expression leftExpression = translateExpressionNode(lhs, scope, true);
-		Statement result;
+		Statement assignStatement;
+		Location location = factory.location(factory.sourceOfBeginning(lhs),
+				scope);
 
-		if (location == null) {
-			location = factory.location(sourceOfBeginning(lhs), scope);
-		}
 		if (!(leftExpression instanceof LHSExpression))
 			throw new CIVLInternalException("expected LHS expression, not "
-					+ leftExpression, sourceOf(lhs));
+					+ leftExpression, factory.sourceOf(lhs));
 
-		result = assignStatement(sourceOfSpan(lhs, rhs), location,
-				(LHSExpression) leftExpression, rhs, scope);
+		assignStatement = assignStatement(factory.sourceOfSpan(lhs, rhs),
+				location, (LHSExpression) leftExpression, rhs, scope);
 
 		if (guard != null)
-			result.setGuard(guard);
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-			function.addLocation(location);
-		} else if (function != null) {
-			function.setStartLocation(location);
-		}
-
-		return result;
+			assignStatement.setGuard(guard);
+		return new Fragment(location, assignStatement);
 	}
 
 	/**
@@ -1690,7 +1493,7 @@ public class ModelBuilderWorker {
 							location,
 							lhs,
 							arrayToPointer(translateExpressionNode(rhsNode,
-									scope, true)));
+									scope, true)), null);
 		return result;
 	}
 
@@ -1713,7 +1516,7 @@ public class ModelBuilderWorker {
 		sizeExpression = translateExpressionNode(callNode.getArgument(1),
 				scope, true);
 		result = factory.mallocStatement(source, location, lhs, elementType,
-				heapPointerExpression, sizeExpression, mallocId);
+				heapPointerExpression, sizeExpression, mallocId, null);
 
 		mallocStatements.add(result);
 		return result;
@@ -1750,21 +1553,23 @@ public class ModelBuilderWorker {
 	 * @param statementNode
 	 * @return
 	 */
-	private Statement translateCompoundStatementNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, CompoundStatementNode statementNode) {
-		Scope newScope = factory.scope(sourceOf(statementNode), scope,
-				new LinkedHashSet<Variable>(), function);
+	private Fragment translateCompoundStatementNode(Expression guard,
+			Scope scope, CompoundStatementNode statementNode) {
+		Scope newScope = factory.scope(factory.sourceOf(statementNode), scope,
+				new LinkedHashSet<Variable>(), functionInfo.function());
+		Location location = factory.location(
+				factory.sourceOfBeginning(statementNode), newScope);
 		// indicates whether the location argument has been used:
 		boolean usedLocation = false;
+		Fragment result = null;
 
 		for (int i = 0; i < statementNode.numChildren(); i++) {
 			BlockItemNode node = statementNode.getSequenceChild(i);
+			Fragment fragment = null;
 
 			if (node instanceof VariableDeclarationNode
 					|| node instanceof StructureOrUnionTypeNode
 					|| node instanceof TypedefDeclarationNode) {
-				Fragment fragment;
 
 				if (node instanceof VariableDeclarationNode)
 					try {
@@ -1774,7 +1579,7 @@ public class ModelBuilderWorker {
 					} catch (CommandLineException e) {
 						throw new CIVLInternalException(
 								"Saw input variable outside of root scope",
-								sourceOf(node));
+								factory.sourceOf(node));
 					}
 				else if (node instanceof StructureOrUnionTypeNode)
 					fragment = translateCompoundTypeNode(usedLocation ? null
@@ -1786,52 +1591,32 @@ public class ModelBuilderWorker {
 							((TypedefDeclarationNode) node).getTypeNode());
 				else
 					throw new CIVLInternalException("unreachable",
-							sourceOf(node));
-				if (fragment != null) {
-					usedLocation = true;
-					if (lastStatement != null) {
-						lastStatement.setTarget(fragment.startLocation);
-						function.addLocation(fragment.startLocation);
-					} else {
-						function.setStartLocation(fragment.startLocation);
-					}
-					lastStatement = fragment.lastStatement;
-				}
+							factory.sourceOf(node));
 			} else if (node instanceof FunctionDeclarationNode) {
 				translateFunctionDeclarationNode(
 						(FunctionDeclarationNode) node, newScope);
-				// unprocessedFunctions.add((FunctionDefinitionNode) node);
-				// containingScopes.put((FunctionDefinitionNode) node,
-				// newScope);
 			} else if (node instanceof StatementNode) {
-				Statement newStatement;
+				// newStatement;
+				// TODO: check usedLocatin and location
 
-				if (usedLocation || location == null) {
-					newStatement = translateStatementNode(function, null,
-							guard, newScope, lastStatement,
-							(StatementNode) node);
-				} else {
-					newStatement = translateStatementNode(function, location,
-							guard, newScope, lastStatement,
-							(StatementNode) node);
-				}
-				lastStatement = newStatement;
-				usedLocation = true;
+				fragment = translateStatementNode(guard, newScope,
+						(StatementNode) node);
 			} else {
 				throw new CIVLUnimplementedFeatureException(
-						"Unsupported block element", sourceOf(node));
+						"Unsupported block element", factory.sourceOf(node));
+			}
+
+			if (fragment != null) {
+				usedLocation = true;
+
+				if (result != null) {
+					result = result.combineWith(fragment);
+				} else
+					result = fragment;
 			}
 		}
-		if (lastStatement == null) {
-			if (location == null) {
-				location = factory.location(sourceOfBeginning(statementNode),
-						newScope);
-			}
-			lastStatement = factory.noopStatement(location.getSource(),
-					location);
-			function.setStartLocation(location);
-		}
-		return lastStatement;
+
+		return result;
 	}
 
 	/**
@@ -1845,303 +1630,230 @@ public class ModelBuilderWorker {
 	 * @param scope
 	 * @return
 	 */
-	private Statement translateForLoopNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, ForLoopNode forLoopNode) {
-		ForLoopInitializerNode init = forLoopNode.getInitializer();
-		Statement initStatement = lastStatement;
-		Scope newScope = factory.scope(sourceOf(forLoopNode), scope,
-				new LinkedHashSet<Variable>(), function);
-		Statement loopBody;
+	private Fragment translateForLoopNode(Expression guard, Scope scope,
+			ForLoopNode forLoopNode) {
+		ForLoopInitializerNode initNode = forLoopNode.getInitializer();
+		Fragment initFragment = null;
+		Scope newScope = factory.scope(factory.sourceOf(forLoopNode), scope,
+				new LinkedHashSet<Variable>(), functionInfo.function());
+		Fragment loopBody;
 		Expression condition;
 		Location loopEntranceLocation;
-		Statement loopEntrance;
-		Statement incrementer;
-		Statement loopExit;
+		Fragment loopEntrance;
+		Fragment incrementer;
+		Fragment loopExit;
+		Fragment result;
 		Location incrementerLocation;
 		Set<Statement> continues;
 		Set<Statement> breaks;
+		Location location = factory.location(
+				factory.sourceOfBeginning(forLoopNode), newScope);
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(forLoopNode), scope);
-
-		location.setScope(newScope);
-		if (init != null) {
-			if (init instanceof ExpressionNode) {
-				initStatement = translateExpressionStatementNode(function,
-						location, guard, scope, lastStatement,
-						(ExpressionNode) init);
-				if (lastStatement == null)
-					lastStatement = initStatement;
-			} else if (init instanceof DeclarationListNode) {
-				for (int i = 0; i < ((DeclarationListNode) init).numChildren(); i++) {
-					VariableDeclarationNode declaration = ((DeclarationListNode) init)
+		if (initNode != null) {
+			if (initNode instanceof ExpressionNode) {
+				initFragment = translateExpressionStatementNode(guard, scope,
+						(ExpressionNode) initNode);
+			} else if (initNode instanceof DeclarationListNode) {
+				for (int i = 0; i < ((DeclarationListNode) initNode)
+						.numChildren(); i++) {
+					VariableDeclarationNode declaration = ((DeclarationListNode) initNode)
 							.getSequenceChild(i);
 					translateVariableDeclarationNode(declaration, newScope);
 					if (declaration.getInitializer() != null) {
-						initStatement = factory.assignStatement(
-								sourceOf(init),
+						initFragment = new Fragment(factory.assignStatement(
+								factory.sourceOf(initNode),
 								location,
-								factory.variableExpression(sourceOf(declaration
-										.getIdentifier()),
+								factory.variableExpression(factory
+										.sourceOf(declaration.getIdentifier()),
 										newScope.getVariable(newScope
 												.numVariables() - 1)),
 								translateExpressionNode(
 										(ExpressionNode) declaration
 												.getInitializer(), newScope,
-										true));
-						initStatement.setGuard(guard);
-						if (lastStatement != null) {
-							lastStatement.setTarget(location);
-							function.addLocation(location);
-						} else {
-							lastStatement = initStatement;
-							function.setStartLocation(location);
-						}
+										true), guard));
 					}
 				}
 			} else {
 				throw new CIVLInternalException(
 						"A for loop initializer must be an expression or a declaration list.",
-						sourceOf(init));
+						factory.sourceOf(initNode));
 			}
 		}
-		condition = booleanExpression(forLoopNode.getCondition(), newScope);
-		loopEntranceLocation = factory.location(sourceOf(forLoopNode
-				.getCondition().getSource()), newScope);
-		loopEntrance = factory.noopStatement(sourceOf(forLoopNode
-				.getCondition().getSource()), loopEntranceLocation);
-		loopEntrance.setGuard(condition);
-		initStatement.setTarget(loopEntranceLocation);
-		function.addLocation(loopEntranceLocation);
-		continueStatements.add(new LinkedHashSet<Statement>());
-		breakStatements.add(new LinkedHashSet<Statement>());
-		loopBody = translateStatementNode(function, null, null, newScope,
-				loopEntrance, forLoopNode.getBody());
-		continues = continueStatements.pop();
-		breaks = breakStatements.pop();
-		incrementerLocation = factory.location(
-				sourceOfBeginning(forLoopNode.getIncrementer()), newScope);
+		condition = translateExpressionNode(forLoopNode.getCondition(),
+				newScope, true);
+		condition = factory.booleanExpression(condition);
+		loopEntranceLocation = factory.location(
+				factory.sourceOf(forLoopNode.getCondition().getSource()),
+				newScope);
+		loopEntrance = new Fragment(loopEntranceLocation,
+				factory.noopStatement(factory.sourceOf(forLoopNode
+						.getCondition().getSource()), loopEntranceLocation,
+						condition));
+		functionInfo.addContinueSet(new LinkedHashSet<Statement>());
+		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
+		loopBody = translateStatementNode(null, newScope, forLoopNode.getBody());
+
+		continues = functionInfo.popContinueStack();
+
+		incrementer = translateExpressionStatementNode(null, newScope,
+				forLoopNode.getIncrementer());
+
+		incrementerLocation = incrementer.startLocation;
 		for (Statement s : continues) {
 			s.setTarget(incrementerLocation);
 		}
-		incrementer = forLoopIncrementer(incrementerLocation, function,
-				loopBody, forLoopNode.getIncrementer(), newScope);
-		incrementer.setTarget(initStatement.target());
-		loopExit = factory.noopStatement(condition.getSource(),
-				initStatement.target());
-		loopExit.setGuard(factory.unaryExpression(condition.getSource(),
-				UNARY_OPERATOR.NOT, condition));
+
+		loopExit = new Fragment(factory.noopStatement(condition.getSource(),
+				loopEntranceLocation, factory.unaryExpression(
+						condition.getSource(), UNARY_OPERATOR.NOT, condition)));
+
+		breaks = functionInfo.popBreakStack();
 		if (breaks.size() > 0) {
 			StatementSet loopExits = new StatementSet();
-			loopExits.add(loopExit);
+			loopExits.add(loopExit.lastStatement);
 			for (Statement s : breaks) {
 				loopExits.add(s);
 			}
-			return loopExits;
+			loopExit.lastStatement = loopExits;
 		}
-		return loopExit;
-	}
+		//loopBody.Print(System.out);
 
-	// TODO: merge it with assign statement
-	private Statement forLoopIncrementer(Location location,
-			CIVLFunction function, Statement lastStatement,
-			ExpressionNode incrementerNode, Scope scope) {
-		CIVLSource source = sourceOf(incrementerNode);
-		Statement result;
+		loopBody = loopBody.combineWith(incrementer);
+		//loopBody.Print(System.out);
 
-		function.addLocation(location);
-		// TODO: why can't this be treated like any statement?
-		if (incrementerNode instanceof OperatorNode) {
-			OperatorNode expression = (OperatorNode) incrementerNode;
-			switch (expression.getOperator()) {
-			case ASSIGN: {
-				LHSExpression lhs = (LHSExpression) translateExpressionNode(
-						expression.getArgument(0), scope, true);
-				Expression rhs = translateExpressionNode(
-						expression.getArgument(1), scope, true);
+		loopBody = loopBody.combineWith(loopEntrance);
+		//loopBody.Print(System.out);
 
-				result = factory.assignStatement(source, location, lhs, rhs);
-				break;
-			}
-			case PLUSEQ:
-			case MINUSEQ:
-			case TIMESEQ:
-			case DIVEQ:
-			case MODEQ:
-				throw new CIVLInternalException(
-						"Side-effects should have been removed", source);
-			case BITANDEQ:
-			case BITOREQ:
-			case BITXOREQ:
-			case SHIFTLEFTEQ:
-			case SHIFTRIGHTEQ:
-				throw new CIVLUnimplementedFeatureException(
-						"bit-level operations", source);
-			default:
-				// No effect for ops without assignments.
-				result = factory.noopStatement(source, location);
-			}
-		} else {
-			result = factory.noopStatement(source, location);
+		result = loopEntrance.combineWith(loopBody);
+		result.lastStatement = loopExit.lastStatement;
+		//result.Print(System.out);
+
+		if (initFragment != null) {
+			result = initFragment.combineWith(result);
 		}
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-		} else {
-			function.setStartLocation(location);
-		}
+
+		//result.Print(System.out);
+
 		return result;
 	}
 
-	private Statement translateWhileNode(CIVLFunction function,
-			Location location, Scope scope, Statement lastStatement,
+	private Fragment translateWhileNode(Expression guard, Scope scope,
 			LoopNode loopNode) {
-		CIVLSource source = sourceOf(loopNode);
-		Statement loopEntrance;
-		Statement loopExit;
-
-		if (location == null)
-			location = factory.location(sourceOfBeginning(loopNode), scope);
-
+		CIVLSource source = factory.sourceOf(loopNode);
+		Fragment loopEntrance;
+		Fragment loopExit;
 		Scope newScope = factory.scope(source, scope,
-				new LinkedHashSet<Variable>(), function);
-		location.setScope(newScope);
-		Statement loopBody;
+				new LinkedHashSet<Variable>(), functionInfo.function());
+		Location location = factory.location(
+				factory.sourceOfBeginning(loopNode), newScope);
+		Fragment loopBody;
+		Fragment result;
 		Expression condition;
-
 		Set<Statement> continues;
 		Set<Statement> breaks;
 
-		condition = booleanExpression(loopNode.getCondition(), newScope);
+		condition = translateExpressionNode(loopNode.getCondition(), newScope,
+				true);
+		condition = factory.booleanExpression(condition);
 
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-		} else {
-			function.setStartLocation(location);
-		}
-		loopEntrance = factory.noopStatement(sourceOf(loopNode.getCondition()
-				.getSource()), location);
-		loopEntrance.setGuard(condition);
-		continueStatements.add(new LinkedHashSet<Statement>());
-		breakStatements.add(new LinkedHashSet<Statement>());
-		loopBody = translateStatementNode(function, null, null, newScope,
-				loopEntrance, loopNode.getBody());
-		continues = continueStatements.pop();
-		breaks = breakStatements.pop();
+		loopEntrance = new Fragment(factory.noopStatement(
+				factory.sourceOf(loopNode.getCondition().getSource()),
+				location, condition));
+		functionInfo.addContinueSet(new LinkedHashSet<Statement>());
+		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
+
+		loopBody = translateStatementNode(null, newScope, loopNode.getBody());
+
+		continues = functionInfo.popContinueStack();
 		for (Statement s : continues) {
 			s.setTarget(location);
 		}
-		function.addLocation(location);
 		assert location != null;
-		loopBody.setTarget(location);
-		loopExit = factory.noopStatement(location.getSource(), location);
-		loopExit.setGuard(factory.unaryExpression(condition.getSource(),
-				UNARY_OPERATOR.NOT, condition));
+
+		loopExit = new Fragment(factory.noopStatement(location.getSource(),
+				location, factory.unaryExpression(condition.getSource(),
+						UNARY_OPERATOR.NOT, condition)));
+
+		breaks = functionInfo.popBreakStack();
 		if (breaks.size() > 0) {
 			StatementSet loopExits = new StatementSet();
-			loopExits.add(loopExit);
+			loopExits.add(loopExit.lastStatement);
 			for (Statement s : breaks) {
 				loopExits.add(s);
 			}
-			return loopExits;
+			loopExit.lastStatement = loopExits;
 		}
-		return loopExit;
-	}
 
-	private Statement translateWaitNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, WaitNode waitNode) {
-		CIVLSource source = sourceOf(waitNode);
-		Statement result;
+		loopBody = loopBody.combineWith(loopEntrance);
+		result = loopEntrance.combineWith(loopBody);
+		result.lastStatement = loopExit.lastStatement;
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(waitNode), scope);
-
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-		} else {
-			function.setStartLocation(location);
-		}
-		function.addLocation(location);
-		result = factory.joinStatement(source, location,
-				translateExpressionNode(waitNode.getExpression(), scope, true));
 		return result;
 	}
 
-	private Statement translateNullStatementNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, NullStatementNode nullStatementNode) {
+	private Fragment translateWaitNode(Expression guard, Scope scope,
+			WaitNode waitNode) {
+		CIVLSource source = factory.sourceOf(waitNode);
+		Location location = factory.location(
+				factory.sourceOfBeginning(waitNode), scope);
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(nullStatementNode),
-					scope);
-
-		Statement result = factory.noopStatement(sourceOf(nullStatementNode),
-				location);
-		result.setGuard(guard);
-
-		function.addLocation(location);
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-		} else {
-			function.setStartLocation(location);
-		}
-		return result;
+		return new Fragment(factory.joinStatement(source, location,
+				translateExpressionNode(waitNode.getExpression(), scope, true),
+				guard));
 	}
 
-	private Statement translateWhenNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, WhenNode whenNode) {
-		Expression newGuard = booleanExpression(whenNode.getGuard(), scope);
-		Statement result;
+	private Fragment translateNullStatementNode(Expression guard, Scope scope,
+			NullStatementNode nullStatementNode) {
+		Location location = factory.location(
+				factory.sourceOfBeginning(nullStatementNode), scope);
+		return new Fragment(factory.noopStatement(
+				factory.sourceOf(nullStatementNode), location, guard));
+	}
 
-		if (isTrue(newGuard)) {
+	private Fragment translateWhenNode(Expression guard, Scope scope,
+			WhenNode whenNode) {
+		Expression newGuard = translateExpressionNode(whenNode.getGuard(),
+				scope, true);
+
+		newGuard = factory.booleanExpression(newGuard);
+		if (factory.isTrue(newGuard)) {
 			newGuard = guard;
-		} else if (!isTrue(guard)) {
+		} else if (!factory.isTrue(guard)) {
 			newGuard = factory.binaryExpression(
-					sourceOfSpan(guard.getSource(), newGuard.getSource()),
-					BINARY_OPERATOR.AND, guard, newGuard);
+					factory.sourceOfSpan(guard.getSource(),
+							newGuard.getSource()), BINARY_OPERATOR.AND, guard,
+					newGuard);
 		}
-		result = translateStatementNode(function, location, newGuard, scope,
-				lastStatement, whenNode.getBody());
-		return result;
+
+		return translateStatementNode(newGuard, scope, whenNode.getBody());
 	}
 
-	private Statement translateChooseNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, ChooseStatementNode chooseStatementNode) {
-		Location startLocation = location;
+	private Fragment translateChooseNode(Expression guard, Scope scope,
+			ChooseStatementNode chooseStatementNode) {
+		Location startLocation = factory.location(
+				factory.sourceOfBeginning(chooseStatementNode), scope);
 		Location endLocation = factory.location(
-				sourceOfEnd(chooseStatementNode), scope);
-		Statement result = factory.noopStatement(endLocation.getSource(),
-				endLocation);
+				factory.sourceOfEnd(chooseStatementNode), scope);
+		Fragment exit = new Fragment(factory.noopStatement(
+				endLocation.getSource(), endLocation, guard));
 		int defaultOffset = 0;
+		Fragment result = new Fragment();
 
 		if (guard == null)
 			guard = factory.booleanLiteralExpression(startLocation.getSource(),
 					true);
-		if (location == null)
-			location = factory.location(sourceOfBeginning(chooseStatementNode),
-					scope);
-		startLocation = location;
 
-		if (lastStatement != null) {
-			lastStatement.setTarget(startLocation);
-		} else {
-			function.setStartLocation(startLocation);
-		}
-		function.addLocation(startLocation);
 		if (chooseStatementNode.getDefaultCase() != null) {
 			defaultOffset = 1;
 		}
 		for (int i = 0; i < chooseStatementNode.numChildren() - defaultOffset; i++) {
 			StatementNode childNode = chooseStatementNode.getSequenceChild(i);
-			Statement caseStatement = translateStatementNode(function,
-					startLocation, factory.booleanLiteralExpression(
-							sourceOfBeginning(childNode), true), scope,
-					lastStatement, childNode);
-
-			caseStatement.setTarget(endLocation);
+			Fragment caseFragment = translateStatementNode(
+					factory.booleanLiteralExpression(
+							factory.sourceOfBeginning(childNode), true), scope,
+					childNode);
+			caseFragment.updateStartLocation(startLocation);
+			//result = result.parallelCombineWith(caseFragment);
 		}
 
 		Iterator<Statement> iter = startLocation.outgoing().iterator();
@@ -2150,173 +1862,154 @@ public class ModelBuilderWorker {
 		while (iter.hasNext()) {
 			Expression statementGuard = iter.next().guard();
 
-			if (isTrue(guard)) {
+			if (factory.isTrue(guard)) {
 				guard = statementGuard;
-			} else if (isTrue(statementGuard)) {
+			} else if (factory.isTrue(statementGuard)) {
 				// Keep current guard
 			} else {
 				guard = factory.binaryExpression(
-						sourceOfSpan(guard.getSource(),
+						factory.sourceOfSpan(guard.getSource(),
 								statementGuard.getSource()),
 						BINARY_OPERATOR.OR, guard, statementGuard);
 			}
 		}
 		if (chooseStatementNode.getDefaultCase() != null) {
-			Statement defaultStatement = translateStatementNode(function,
-					startLocation, factory.unaryExpression(guard.getSource(),
-							UNARY_OPERATOR.NOT, guard), scope, lastStatement,
+			Fragment defaultStatement = translateStatementNode(
+					factory.unaryExpression(guard.getSource(),
+							UNARY_OPERATOR.NOT, guard), scope,
 					chooseStatementNode.getDefaultCase());
-
-			defaultStatement.setTarget(endLocation);
+			result = result.parallelCombineWith(defaultStatement);
 		}
+
+		result = result.combineWith(exit);
 		return result;
 	}
 
-	private Statement translateGotoNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, GotoNode gotoNode) {
-		Statement noop;
+	private Fragment translateGotoNode(Expression guard, Scope scope,
+			GotoNode gotoNode) {
 		OrdinaryLabelNode label = ((Label) gotoNode.getLabel().getEntity())
 				.getDefinition();
+		Location location = factory.location(
+				factory.sourceOfBeginning(gotoNode), scope);
+		Statement noop = factory.noopStatement(factory.sourceOf(gotoNode),
+				location, guard);
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(gotoNode), scope);
-		noop = factory.noopStatement(sourceOf(gotoNode), location);
-		if (guard != null)
-			noop.setGuard(guard);
-		function.addLocation(location);
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-		} else {
-			function.setStartLocation(location);
-		}
-		gotoStatements.put(noop, label);
+		functionInfo.putToGotoStatements(noop, label);
 
-		return noop;
+		return new Fragment(noop);
 	}
 
-	private Statement translateLabelStatementNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, LabeledStatementNode labelStatementNode) {
-		Statement result = translateStatementNode(function, location, guard,
-				scope, lastStatement, labelStatementNode.getStatement());
+	// TODO check semantics
+	private Fragment translateLabelStatementNode(Expression guard, Scope scope,
+			LabeledStatementNode labelStatementNode) {
+		Fragment result = translateStatementNode(guard, scope,
+				labelStatementNode.getStatement());
 
-		if (lastStatement != null) {
-			labeledLocations.put(labelStatementNode.getLabel(),
-					lastStatement.target());
-		} else {
-			labeledLocations.put(labelStatementNode.getLabel(),
-					function.startLocation());
-		}
+		functionInfo.putToLabeledLocations(labelStatementNode.getLabel(),
+				result.startLocation);
 		return result;
 	}
 
-	private Statement translateReturnNode(CIVLFunction function,
-			Statement lastStatement, ReturnNode returnNode, Scope scope) {
-		Location location = factory.location(sourceOfBeginning(returnNode),
-				scope);
+	private Fragment translateReturnNode(Expression guard, Scope scope,
+			ReturnNode returnNode) {
+		Location location = factory.location(
+				factory.sourceOfBeginning(returnNode), scope);
 		Statement result;
 		Expression expression;
 
-		function.addLocation(location);
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-		} else {
-			function.setStartLocation(location);
-		}
 		if (returnNode.getExpression() != null) {
 			expression = translateExpressionNode(returnNode.getExpression(),
 					scope, true);
 		} else
 			expression = null;
-		result = factory.returnStatement(sourceOf(returnNode), location,
-				expression);
-		return result;
+		result = factory.returnStatement(factory.sourceOf(returnNode),
+				location, expression, guard);
+		return new Fragment(result);
 	}
 
-	private Statement translateSwitchNode(CIVLFunction function,
-			Location location, Expression guard, Scope scope,
-			Statement lastStatement, SwitchNode switchNode) {
-		Statement result = null;
+	private Fragment translateSwitchNode(Expression guard, Scope scope,
+			SwitchNode switchNode) {
+		Fragment result = new Fragment();
 		Iterator<LabeledStatementNode> cases = switchNode.getCases();
 		Expression condition = translateExpressionNode(
 				switchNode.getCondition(), scope, true);
 		/** Collect case guards to determine guard for default case. */
 		Expression combinedCaseGuards = guard;
-		Statement bodyGoto;
+		Fragment bodyGoto;
 		Set<Statement> breaks;
+		Location location = factory.location(
+				factory.sourceOfBeginning(switchNode), scope);
 
-		if (location == null)
-			location = factory.location(sourceOfBeginning(switchNode), scope);
-
-		if (lastStatement != null) {
-			lastStatement.setTarget(location);
-		} else {
-			function.setStartLocation(location);
-		}
-		function.addLocation(location);
-		breakStatements.add(new LinkedHashSet<Statement>());
+		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
 		while (cases.hasNext()) {
 			LabeledStatementNode caseStatement = cases.next();
 			// CIVLSource caseSource = sourceOf(caseStatement);
 			SwitchLabelNode label;
 			Expression caseGuard;
 			Expression combinedGuard;
-			Statement caseGoto;
+			Fragment caseGoto;
 
 			assert caseStatement.getLabel() instanceof SwitchLabelNode;
 			label = (SwitchLabelNode) caseStatement.getLabel();
 			caseGuard = factory
 					.binaryExpression(
-							sourceOf(label.getExpression()),
+							factory.sourceOf(label.getExpression()),
 							BINARY_OPERATOR.EQUAL,
 							condition,
 							translateExpressionNode(label.getExpression(),
 									scope, true));
-			if (!isTrue(guard)) {
+			if (!factory.isTrue(guard)) {
 				combinedGuard = factory.binaryExpression(
-						sourceOfSpan(guard.getSource(), caseGuard.getSource()),
-						BINARY_OPERATOR.AND, guard, caseGuard);
+						factory.sourceOfSpan(guard.getSource(),
+								caseGuard.getSource()), BINARY_OPERATOR.AND,
+						guard, caseGuard);
 			} else {
 				combinedGuard = caseGuard;
 			}
-			if (isTrue(combinedCaseGuards)) {
+			if (factory.isTrue(combinedCaseGuards)) {
 				combinedCaseGuards = caseGuard;
 			} else {
-				combinedCaseGuards = factory.binaryExpression(
-						sourceOfSpan(caseGuard.getSource(),
+				combinedCaseGuards = factory.binaryExpression(factory
+						.sourceOfSpan(caseGuard.getSource(),
 								combinedCaseGuards.getSource()),
 						BINARY_OPERATOR.OR, caseGuard, combinedCaseGuards);
 			}
-			caseGoto = factory.noopStatement(sourceOfBeginning(caseStatement),
-					location);
-			caseGoto.setGuard(combinedGuard);
-			gotoStatements.put(caseGoto, label);
+			caseGoto = new Fragment(factory.noopStatement(
+					factory.sourceOfBeginning(caseStatement), location,
+					combinedGuard));
+			result = result.parallelCombineWith(caseGoto);
+			functionInfo.putToGotoStatements(caseGoto.lastStatement, label);
 		}
 		if (switchNode.getDefaultCase() != null) {
 			LabelNode label = switchNode.getDefaultCase().getLabel();
-			Statement defaultGoto = factory.noopStatement(
-					sourceOf(switchNode.getDefaultCase()), location);
+			Fragment defaultGoto = new Fragment(factory.noopStatement(factory
+					.sourceOf(switchNode.getDefaultCase()), location, factory
+					.unaryExpression(factory.sourceOfBeginning(switchNode
+							.getDefaultCase()), UNARY_OPERATOR.NOT,
+							combinedCaseGuards)));
 
-			defaultGoto.setGuard(factory.unaryExpression(
-					sourceOfBeginning(switchNode.getDefaultCase()),
-					UNARY_OPERATOR.NOT, combinedCaseGuards));
-			gotoStatements.put(defaultGoto, label);
+			result = result.parallelCombineWith(defaultGoto);
+			functionInfo.putToGotoStatements(defaultGoto.lastStatement, label);
 		}
-		bodyGoto = factory.noopStatement(location.getSource(), location);
-		bodyGoto.setGuard(factory.booleanLiteralExpression(
-				bodyGoto.getSource(), false));
-		result = translateStatementNode(function, null, null, scope, bodyGoto,
-				switchNode.getBody());
-		breaks = breakStatements.pop();
+		// TODO check bodyGoto
+		bodyGoto = new Fragment(factory.noopStatement(location.getSource(),
+				location,
+				factory.booleanLiteralExpression(location.getSource(), false)));
+		result = result.combineWith(bodyGoto);
+
+		bodyGoto = translateStatementNode(null, scope, switchNode.getBody());
+
+		result = result.combineWith(bodyGoto);
+
+		breaks = functionInfo.popBreakStack();
 		if (breaks.size() > 0) {
 			StatementSet switchExits = new StatementSet();
 
-			switchExits.add(result);
+			switchExits.add(result.lastStatement);
 			for (Statement s : breaks) {
 				switchExits.add(s);
 			}
-			return switchExits;
+			result.lastStatement = switchExits;
 		}
 		return result;
 	}
@@ -2355,12 +2048,13 @@ public class ModelBuilderWorker {
 
 		if (entity == null)
 			throw new CIVLInternalException("Unresolved function declaration",
-					sourceOf(node));
+					factory.sourceOf(node));
 		result = functionMap.get(entity);
 		if (result == null) {
-			CIVLSource nodeSource = sourceOf(node);
+			CIVLSource nodeSource = factory.sourceOf(node);
 			String functionName = entity.getName();
-			CIVLSource identifierSource = sourceOf(node.getIdentifier());
+			CIVLSource identifierSource = factory
+					.sourceOf(node.getIdentifier());
 			Identifier functionIdentifier = factory.identifier(
 					identifierSource, functionName);
 			ArrayList<Variable> parameters = new ArrayList<Variable>();
@@ -2373,7 +2067,7 @@ public class ModelBuilderWorker {
 			FunctionTypeNode functionTypeNode = (FunctionTypeNode) node
 					.getTypeNode();
 			CIVLType returnType = translateABCType(
-					sourceOf(functionTypeNode.getReturnType()), scope,
+					factory.sourceOf(functionTypeNode.getReturnType()), scope,
 					functionType.getReturnType());
 			SequenceNode<VariableDeclarationNode> abcParameters = functionTypeNode
 					.getParameters();
@@ -2382,9 +2076,9 @@ public class ModelBuilderWorker {
 			for (int i = 0; i < numParameters; i++) {
 				VariableDeclarationNode decl = abcParameters
 						.getSequenceChild(i);
-				CIVLType type = translateABCType(sourceOf(decl), scope,
+				CIVLType type = translateABCType(factory.sourceOf(decl), scope,
 						functionType.getParameterType(i));
-				CIVLSource source = sourceOf(decl.getIdentifier());
+				CIVLSource source = factory.sourceOf(decl.getIdentifier());
 				Identifier variableName = factory.identifier(source,
 						decl.getName());
 
@@ -2431,8 +2125,8 @@ public class ModelBuilderWorker {
 					if (postcondition == null) {
 						postcondition = componentExpression;
 					} else {
-						postcondition = factory.binaryExpression(
-								sourceOfSpan(postcondition.getSource(),
+						postcondition = factory.binaryExpression(factory
+								.sourceOfSpan(postcondition.getSource(),
 										componentExpression.getSource()),
 								BINARY_OPERATOR.AND, postcondition,
 								componentExpression);
@@ -2444,8 +2138,8 @@ public class ModelBuilderWorker {
 					if (precondition == null) {
 						precondition = componentExpression;
 					} else {
-						precondition = factory.binaryExpression(
-								sourceOfSpan(precondition.getSource(),
+						precondition = factory.binaryExpression(factory
+								.sourceOfSpan(precondition.getSource(),
 										componentExpression.getSource()),
 								BINARY_OPERATOR.AND, precondition,
 								componentExpression);
@@ -2469,30 +2163,35 @@ public class ModelBuilderWorker {
 			FunctionDefinitionNode functionNode) {
 		Entity entity = functionNode.getEntity();
 		CIVLFunction result = functionMap.get(entity);
-		Statement body;
+		Fragment body;
 
 		if (result == null)
 			throw new CIVLInternalException("Did not process declaration",
-					sourceOf(functionNode));
-		labeledLocations = new LinkedHashMap<LabelNode, Location>();
-		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
+					factory.sourceOf(functionNode));
+
+		functionInfo = new FunctionInfo(result);
+
 		StatementNode functionBodyNode = functionNode.getBody();
 		Scope scope = result.outerScope();
-		body = translateStatementNode(result, null, null, scope, null,
-				functionBodyNode);
-		if (!(body instanceof ReturnStatement)) {
-			CIVLSource endSource = sourceOfEnd(functionNode.getBody());
+		body = translateStatementNode(null, scope, functionBodyNode);
+
+		if (body == null || !(body.lastStatement instanceof ReturnStatement)) {
+			CIVLSource endSource = factory.sourceOfEnd(functionNode.getBody());
 			Location returnLocation = factory.location(endSource,
 					result.outerScope());
-			ReturnStatement returnStatement = factory.returnStatement(
-					endSource, returnLocation, null);
-
-			body.setTarget(returnLocation);
-			result.addLocation(returnLocation);
-			result.addStatement(returnStatement);
+			Fragment returnFragment = new Fragment(factory.returnStatement(
+					endSource, returnLocation, null, null));
+			if (body != null)
+				body = body.combineWith(returnFragment);
+			else
+				body = returnFragment;
 		}
-		for (Statement s : gotoStatements.keySet()) {
-			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
+
+		functionInfo.completeFunction(body);
+
+		for (Statement s : functionInfo.gotoStatements().keySet()) {
+			s.setTarget(functionInfo.labeledLocations().get(
+					functionInfo.gotoStatements().get(s)));
 		}
 	}
 
@@ -2508,7 +2207,7 @@ public class ModelBuilderWorker {
 	private Variable translateVariableDeclarationNode(
 			VariableDeclarationNode node, Scope scope) {
 		CIVLType type = translateTypeNode(node.getTypeNode(), scope);
-		CIVLSource source = sourceOf(node.getIdentifier());
+		CIVLSource source = factory.sourceOf(node.getIdentifier());
 		Identifier name = factory.identifier(source, node.getName());
 
 		int vid = scope.numVariables();
@@ -2574,7 +2273,7 @@ public class ModelBuilderWorker {
 		} else {
 			throw new CIVLInternalException(
 					"getFieldIndex given identifier that does not correspond to field: ",
-					sourceOf(fieldIdentifier));
+					factory.sourceOf(fieldIdentifier));
 		}
 	}
 
@@ -2672,7 +2371,7 @@ public class ModelBuilderWorker {
 		CIVLType type = variable.type();
 		Fragment result = null;
 		IdentifierNode identifier = node.getIdentifier();
-		CIVLSource source = sourceOf(node);
+		CIVLSource source = factory.sourceOf(node);
 
 		if (variable.isInput() || type instanceof CIVLArrayType
 				|| type instanceof CIVLStructType || type.isHeapType()) {
@@ -2690,12 +2389,11 @@ public class ModelBuilderWorker {
 			if (rhs == null)
 				rhs = factory.initialValueExpression(source, variable);
 			if (sourceLocation == null)
-				sourceLocation = factory.location(sourceOfBeginning(node),
-						scope);
+				sourceLocation = factory.location(
+						factory.sourceOfBeginning(node), scope);
 			result = new Fragment(sourceLocation, factory.assignStatement(
-					source, sourceLocation,
-					factory.variableExpression(sourceOf(identifier), variable),
-					rhs));
+					source, sourceLocation, factory.variableExpression(
+							factory.sourceOf(identifier), variable), rhs, null));
 			sourceLocation = null;
 		}
 		if (init != null) {
@@ -2703,13 +2401,13 @@ public class ModelBuilderWorker {
 
 			if (!(init instanceof ExpressionNode))
 				throw new CIVLUnimplementedFeatureException(
-						"Non-expression initializer", sourceOf(init));
+						"Non-expression initializer", factory.sourceOf(init));
 			if (sourceLocation == null)
-				sourceLocation = factory.location(sourceOfBeginning(node),
-						scope);
-			statement = assignStatement(sourceOf(node), sourceLocation,
-					factory.variableExpression(sourceOf(identifier), variable),
-					(ExpressionNode) init, scope);
+				sourceLocation = factory.location(
+						factory.sourceOfBeginning(node), scope);
+			statement = assignStatement(factory.sourceOf(node), sourceLocation,
+					factory.variableExpression(factory.sourceOf(identifier),
+							variable), (ExpressionNode) init, scope);
 			if (result == null)
 				result = new Fragment(sourceLocation, statement);
 			else {
@@ -2727,7 +2425,7 @@ public class ModelBuilderWorker {
 		String tag;
 
 		CIVLType type = translateTypeNode(typeNode, scope);
-		CIVLSource civlSource = sourceOf(typeNode);
+		CIVLSource civlSource = factory.sourceOf(typeNode);
 
 		if (typeNode instanceof StructureOrUnionTypeNode) {
 			prefix = "__struct_";
@@ -2761,41 +2459,13 @@ public class ModelBuilderWorker {
 			Expression rhs = factory.dynamicTypeOfExpression(civlSource, type);
 
 			if (sourceLocation == null)
-				sourceLocation = factory.location(sourceOfBeginning(typeNode),
-						scope);
+				sourceLocation = factory.location(
+						factory.sourceOfBeginning(typeNode), scope);
 			result = new Fragment(sourceLocation, factory.assignStatement(
-					civlSource, sourceLocation, lhs, rhs));
+					civlSource, sourceLocation, lhs, rhs, null));
 		}
 
 		return result;
-	}
-
-	/**
-	 * Adds the locations and statements in a sequence of statements to a
-	 * function. Also adds the statements to the list.
-	 * 
-	 * @param fragment
-	 * @param function
-	 * @param addFirstLocation
-	 */
-	private void addToFunction(Fragment fragment, CIVLFunction function,
-			boolean addFirstLocation, ArrayList<Statement> list) {
-		Statement statement = fragment.startLocation.getSoleOutgoing();
-
-		if (addFirstLocation)
-			function.addLocation(fragment.startLocation);
-		while (statement != null) {
-			Location location = statement.target();
-
-			list.add(statement);
-			function.addStatement(statement);
-			if (location == null)
-				break;
-			function.addLocation(location);
-			if (statement == fragment.lastStatement)
-				break;
-			statement = location.getSoleOutgoing();
-		}
 	}
 
 	private void completeBundleType() {
@@ -2845,15 +2515,16 @@ public class ModelBuilderWorker {
 	public void buildModel() throws CommandLineException {
 		Identifier systemID = factory.identifier(factory.systemSource(),
 				"_CIVL_system");
-		CIVLFunction system = factory.function(sourceOf(program.getAST()
-				.getRootNode()), systemID, new ArrayList<Variable>(), null,
-				null, null);
+		CIVLFunction system = factory.function(
+				factory.sourceOf(program.getAST().getRootNode()), systemID,
+				new ArrayList<Variable>(), null, null, null);
 		ASTNode rootNode = program.getAST().getRootNode();
 		Location returnLocation;
 		Statement returnStatement;
 		FunctionDefinitionNode mainFunction = null;
-		Statement mainBody;
-		ArrayList<Statement> initializations = new ArrayList<Statement>();
+		Fragment mainBody;
+		Fragment initialization = new Fragment();
+		// ArrayList<Statement> initializations = new ArrayList<Statement>();
 
 		systemScope = system.outerScope();
 		callStatements = new LinkedHashMap<CallOrSpawnStatement, Function>();
@@ -2881,10 +2552,13 @@ public class ModelBuilderWorker {
 				if (fragment != null) {
 					// add locations and statements to fragment and
 					// statements to initializations:
-					if (!initializations.isEmpty())
-						initializations.get(initializations.size() - 1)
-								.setTarget(fragment.startLocation);
-					addToFunction(fragment, system, true, initializations);
+
+					initialization = initialization.combineWith(fragment);
+
+					// if (!initializations.isEmpty())
+					// initializations.get(initializations.size() - 1)
+					// .setTarget(fragment.startLocation);
+					// addToFunction(fragment, system, true, initializations);
 				}
 			} else if (node instanceof FunctionDefinitionNode) {
 				if (((FunctionDefinitionNode) node).getName().equals("main")) {
@@ -2896,28 +2570,18 @@ public class ModelBuilderWorker {
 				translateFunctionDeclarationNode(
 						(FunctionDeclarationNode) node, systemScope);
 			} else if (node instanceof AssumeNode) {
-				Location location = factory.location(sourceOfBeginning(node),
-						systemScope);
+				Fragment assumeFragment = translateAssumeNode(null,
+						systemScope, (AssumeNode) node);
 
-				Statement assumeStmt = translateAssumeNode(null, location,
-						null, systemScope, null, (AssumeNode) node);
-
-				// lastStatement not updated because null
-				// startLocation not set because function null
-				if (!initializations.isEmpty())
-					initializations.get(initializations.size() - 1).setTarget(
-							assumeStmt.source());
-				initializations.add(assumeStmt);
-				system.addLocation(assumeStmt.source());
-				system.addStatement(assumeStmt);
+				initialization = initialization.combineWith(assumeFragment);
 			} else {
 				throw new CIVLInternalException("Unsupported declaration type",
-						sourceOf(node));
+						factory.sourceOf(node));
 			}
 		}
 		if (mainFunction == null) {
 			throw new CIVLException("Program must have a main function.",
-					sourceOf(rootNode));
+					factory.sourceOf(rootNode));
 		}
 		if (inputInitMap != null) {
 			// if commandline specified input variables that do not
@@ -2940,31 +2604,33 @@ public class ModelBuilderWorker {
 				throw new CommandLineException(msg);
 			}
 		}
-		labeledLocations = new LinkedHashMap<LabelNode, Location>();
-		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
-		if (!initializations.isEmpty()) {
-			system.setStartLocation(initializations.get(0).source());
-			mainBody = translateStatementNode(system, null, null,
-					system.outerScope(),
-					initializations.get(initializations.size() - 1),
-					mainFunction.getBody());
-		} else {
-			mainBody = translateStatementNode(system, null, null,
-					system.outerScope(), null, mainFunction.getBody());
-		}
-		if (!(mainBody instanceof ReturnStatement)) {
+
+		functionInfo = new FunctionInfo(system);
+
+		mainBody = translateStatementNode(null, system.outerScope(),
+				mainFunction.getBody());
+		mainBody = initialization.combineWith(mainBody);
+
+		if (mainBody == null
+				|| !(mainBody.lastStatement instanceof ReturnStatement)) {
+			Fragment returnFragment;
+
 			returnLocation = factory.location(
-					sourceOfEnd(mainFunction.getBody()), system.outerScope());
+					factory.sourceOfEnd(mainFunction.getBody()),
+					system.outerScope());
 			returnStatement = factory.returnStatement(
-					returnLocation.getSource(), returnLocation, null);
+					returnLocation.getSource(), returnLocation, null, null);
+			returnFragment = new Fragment(returnStatement);
+
 			if (mainBody != null) {
-				mainBody.setTarget(returnLocation);
+				mainBody = mainBody.combineWith(returnFragment);
 			} else {
-				system.setStartLocation(returnLocation);
+				mainBody = returnFragment;
 			}
-			system.addLocation(returnLocation);
-			system.addStatement(returnStatement);
 		}
+
+		functionInfo.completeFunction(mainBody);
+
 		while (!unprocessedFunctions.isEmpty()) {
 			FunctionDefinitionNode functionDefinition = unprocessedFunctions
 					.remove(0);
@@ -2975,8 +2641,9 @@ public class ModelBuilderWorker {
 			statement
 					.setFunction(functionMap.get(callStatements.get(statement)));
 		}
-		for (Statement s : gotoStatements.keySet()) {
-			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
+		for (Statement s : functionInfo.gotoStatements().keySet()) {
+			s.setTarget(functionInfo.labeledLocations().get(
+					functionInfo.gotoStatements().get(s)));
 		}
 		factory.completeHeapType(heapType, mallocStatements);
 		for (Type t : typeMap.keySet()) {
@@ -2997,6 +2664,7 @@ public class ModelBuilderWorker {
 			model.addFunction(f);
 		((CommonModel) model).setMallocStatements(mallocStatements);
 		for (CIVLFunction f : model.functions()) {
+
 			f.simplify();
 			// identify all purely local variables
 			f.purelyLocalAnalysis();
@@ -3007,15 +2675,10 @@ public class ModelBuilderWorker {
 			}
 		}
 
-		// CommonAssignStatement a;
-
 		for (CIVLFunction f : model.functions()) {
 			// purely local statements/locations can only be
 			// identified after ALL variables have been
 			// checked for being purely local or not
-			// for (Statement s : f.statements()) {
-			// s.purelyLocalAnalysis();
-			// }
 
 			for (Location loc : f.locations()) {
 
@@ -3046,8 +2709,139 @@ class Fragment {
 
 	public Statement lastStatement;
 
+	public Fragment(Statement statement) {
+		this.startLocation = statement.source();
+		this.lastStatement = statement;
+	}
+
 	public Fragment(Location startLocation, Statement lastStatement) {
 		this.startLocation = startLocation;
 		this.lastStatement = lastStatement;
+	}
+
+	public Fragment combineWith(Fragment next) {
+		if (next == null || next.isEmpty())
+			return this;
+
+		if (this.isEmpty())
+			return next;
+
+		this.lastStatement.setTarget(next.startLocation);
+		return new Fragment(this.startLocation, next.lastStatement);
+	}
+
+	public Fragment parallelCombineWith(Fragment parallel) {
+		StatementSet newLastStatement = new StatementSet();
+
+		if (parallel == null || parallel.isEmpty())
+			return this;
+		if (this.isEmpty())
+			return parallel;
+
+		assert this.startLocation.id() == parallel.startLocation.id();
+		newLastStatement.add(this.lastStatement);
+		newLastStatement.add(parallel.lastStatement);
+		return new Fragment(this.startLocation, newLastStatement);
+	}
+
+	public Fragment() {
+
+	}
+
+	public boolean isEmpty() {
+		if (startLocation == null && lastStatement == null)
+			return true;
+		return false;
+	}
+
+	public void Print(PrintStream out) {
+		out.println(this.toString());
+	}
+
+	@Override
+	public String toString() {
+		if (isEmpty())
+			return "========Empty=========\r\n";
+		String result = "=================\r\n";
+		Stack<Location> workings = new Stack<Location>();
+		Set<Integer> locationIds = new HashSet<Integer>();
+
+		workings.push(this.startLocation);
+		locationIds.add(this.startLocation.id());
+
+		while (!workings.isEmpty()) {
+			Location location = workings.pop();
+
+			result += "Location " + location.id() + "\r\n";
+
+			if (location.getNumOutgoing() > 0) {
+				for (Statement s : location.outgoing()) {
+					result += "when(" + s.guard() + ") " + s + " goto ";
+					if (s.target() == null) {
+						result += "null";
+					} else {
+						result += "Location " + s.target().id();
+						if (!locationIds.contains(s.target().id())) {
+							workings.push(s.target());
+							locationIds.add(s.target().id());
+						}
+					}
+				}
+				result += "\r\n";
+			}
+		}
+
+		result += "last statement: " + this.lastStatement + " at Location "
+				+ this.lastStatement.source().id() + " "
+				+ this.lastStatement.getSource() + "\r\n";
+
+		return result;
+
+	}
+	
+	public void updateStartLocation(Location newLocation){
+		if(isEmpty())
+			return;
+		
+		int oldLocationId = this.startLocation.id();
+		int number = startLocation.getNumOutgoing();
+		
+//		for(int i = 0; i < number; i++){
+//			Statement s = startLocation.getOutgoing(i);
+//			
+//			s.setSource(newLocation);
+//		}		
+		
+		Stack<Location> workings = new Stack<Location>();
+		Set<Integer> locationIds = new HashSet<Integer>();
+
+		workings.push(startLocation);
+		locationIds.add(startLocation.id());
+
+		while (!workings.isEmpty()) {
+			Location location = workings.pop();
+
+			if (location.getNumOutgoing() > 0) {
+				number = location.getNumOutgoing();
+				for(int i = 0; i < number; i ++){
+					Statement s = location.getOutgoing(i);
+					
+					if(s.source().id() == oldLocationId){
+						s.setSource(newLocation);
+					}
+					if (s.target() != null) {
+						if(s.target().id() == oldLocationId){
+							s.setTarget(newLocation);
+						}
+						if (!locationIds.contains(s.target().id())) {
+							workings.push(s.target());
+							locationIds.add(s.target().id());
+						}
+					}
+				}
+			}
+		}
+		
+		this.startLocation = newLocation;
 	}
 }
