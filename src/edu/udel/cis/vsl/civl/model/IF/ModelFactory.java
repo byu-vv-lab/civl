@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
@@ -716,7 +715,7 @@ public interface ModelFactory {
 	 * @param expressionNode
 	 * @param scope
 	 */
-	//TODO change javadoc
+	// TODO change javadoc
 	Expression booleanExpression(Expression expression);
 
 	CIVLSource sourceOf(Source abcSource);

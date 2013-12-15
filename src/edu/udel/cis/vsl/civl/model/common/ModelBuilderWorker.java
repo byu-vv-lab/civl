@@ -1716,23 +1716,23 @@ public class ModelBuilderWorker {
 			}
 			loopExit.lastStatement = loopExits;
 		}
-		//loopBody.Print(System.out);
+		// loopBody.Print(System.out);
 
 		loopBody = loopBody.combineWith(incrementer);
-		//loopBody.Print(System.out);
+		// loopBody.Print(System.out);
 
 		loopBody = loopBody.combineWith(loopEntrance);
-		//loopBody.Print(System.out);
+		// loopBody.Print(System.out);
 
 		result = loopEntrance.combineWith(loopBody);
 		result.lastStatement = loopExit.lastStatement;
-		//result.Print(System.out);
+		// result.Print(System.out);
 
 		if (initFragment != null) {
 			result = initFragment.combineWith(result);
 		}
 
-		//result.Print(System.out);
+		// result.Print(System.out);
 
 		return result;
 	}
@@ -1853,7 +1853,7 @@ public class ModelBuilderWorker {
 							factory.sourceOfBeginning(childNode), true), scope,
 					childNode);
 			caseFragment.updateStartLocation(startLocation);
-			//result = result.parallelCombineWith(caseFragment);
+			// result = result.parallelCombineWith(caseFragment);
 		}
 
 		Iterator<Statement> iter = startLocation.outgoing().iterator();
@@ -2798,20 +2798,20 @@ class Fragment {
 		return result;
 
 	}
-	
-	public void updateStartLocation(Location newLocation){
-		if(isEmpty())
+
+	public void updateStartLocation(Location newLocation) {
+		if (isEmpty())
 			return;
-		
+
 		int oldLocationId = this.startLocation.id();
 		int number = startLocation.getNumOutgoing();
-		
-//		for(int i = 0; i < number; i++){
-//			Statement s = startLocation.getOutgoing(i);
-//			
-//			s.setSource(newLocation);
-//		}		
-		
+
+		// for(int i = 0; i < number; i++){
+		// Statement s = startLocation.getOutgoing(i);
+		//
+		// s.setSource(newLocation);
+		// }
+
 		Stack<Location> workings = new Stack<Location>();
 		Set<Integer> locationIds = new HashSet<Integer>();
 
@@ -2823,14 +2823,14 @@ class Fragment {
 
 			if (location.getNumOutgoing() > 0) {
 				number = location.getNumOutgoing();
-				for(int i = 0; i < number; i ++){
+				for (int i = 0; i < number; i++) {
 					Statement s = location.getOutgoing(i);
-					
-					if(s.source().id() == oldLocationId){
+
+					if (s.source().id() == oldLocationId) {
 						s.setSource(newLocation);
 					}
 					if (s.target() != null) {
-						if(s.target().id() == oldLocationId){
+						if (s.target().id() == oldLocationId) {
 							s.setTarget(newLocation);
 						}
 						if (!locationIds.contains(s.target().id())) {
@@ -2841,7 +2841,7 @@ class Fragment {
 				}
 			}
 		}
-		
+
 		this.startLocation = newLocation;
 	}
 }

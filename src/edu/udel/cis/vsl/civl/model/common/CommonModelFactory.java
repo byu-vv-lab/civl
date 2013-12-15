@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
@@ -194,7 +193,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	/** A list of nulls of length CACHE_INCREMENT */
 	private List<SymbolicExpression> nullList = new LinkedList<SymbolicExpression>();
-	
+
 	private TokenFactory tokenFactory;
 
 	/**
@@ -247,9 +246,9 @@ public class CommonModelFactory implements ModelFactory {
 				scopeSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
 	}
-	
+
 	@Override
-	public void setTokenFactory(TokenFactory tokens){
+	public void setTokenFactory(TokenFactory tokens) {
 		this.tokenFactory = tokens;
 	}
 
@@ -1001,7 +1000,8 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public ChooseStatement chooseStatement(CIVLSource civlSource,
-			Location source, LHSExpression lhs, Expression argument, Expression guard) {
+			Location source, LHSExpression lhs, Expression argument,
+			Expression guard) {
 		ChooseStatement result = new CommonChooseStatement(civlSource, source,
 				lhs, argument, chooseID++);
 
@@ -1043,7 +1043,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new noop statement.
 	 */
 	@Override
-	public NoopStatement noopStatement(CIVLSource civlSource, Location source, Expression guard) {
+	public NoopStatement noopStatement(CIVLSource civlSource, Location source,
+			Expression guard) {
 		NoopStatement result = new CommonNoopStatement(civlSource, source);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
@@ -1320,7 +1321,7 @@ public class CommonModelFactory implements ModelFactory {
 				dynamicElementType, dynamicObjectType, sizeExpression,
 				undefinedObject, lhs);
 
-		if(guard != null)
+		if (guard != null)
 			result.setGuard(guard);
 		return result;
 	}
@@ -1372,7 +1373,6 @@ public class CommonModelFactory implements ModelFactory {
 		bundleType.complete(elementTypes, dynamicType);
 	}
 
-	
 	@Override
 	public Expression booleanExpression(Expression expression) {
 		CIVLSource source = expression.getSource();
@@ -1380,23 +1380,20 @@ public class CommonModelFactory implements ModelFactory {
 		if (!expression.getExpressionType().equals(booleanType())) {
 			if (expression.getExpressionType().equals(integerType())) {
 				expression = binaryExpression(source,
-						BINARY_OPERATOR.NOT_EQUAL, expression, integerLiteralExpression(
-										source,
-										BigInteger.ZERO));
+						BINARY_OPERATOR.NOT_EQUAL, expression,
+						integerLiteralExpression(source, BigInteger.ZERO));
 			} else if (expression.getExpressionType().equals(realType())) {
 				expression = binaryExpression(source,
-						BINARY_OPERATOR.NOT_EQUAL, expression, realLiteralExpression(
-										source,
-										BigDecimal.ZERO));
+						BINARY_OPERATOR.NOT_EQUAL, expression,
+						realLiteralExpression(source, BigDecimal.ZERO));
 			} else {
 				throw new CIVLInternalException(
-						"Unable to convert expression to boolean type",
-						source);
+						"Unable to convert expression to boolean type", source);
 			}
 		}
 		return expression;
 	}
-	
+
 	@Override
 	public CIVLSource sourceOf(Source abcSource) {
 		return new ABC_CIVLSource(abcSource);
