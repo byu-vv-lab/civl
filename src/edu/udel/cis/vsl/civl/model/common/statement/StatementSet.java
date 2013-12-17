@@ -33,6 +33,10 @@ public class StatementSet implements Statement {
 		this.statements = statements;
 	}
 	
+	public Set<Statement> statements(){
+		return statements;
+	}
+	
 	public void add(Statement statement) {
 		statements.add(statement);
 	}

@@ -187,6 +187,11 @@ public class FunctionInfo {
 		// start from the start location of the fragment
 		workingLocations.add(functionBody.startLocation);
 		function.setStartLocation(functionBody.startLocation);
+		
+		for (Statement s : gotoStatements.keySet()) {
+			s.setTarget(labeledLocations.get(
+					gotoStatements.get(s)));
+		}
 
 		while (workingLocations.size() > 0) {
 			location = workingLocations.pop();
@@ -207,11 +212,6 @@ public class FunctionInfo {
 					}
 				}
 			}
-		}
-		
-		for (Statement s : gotoStatements.keySet()) {
-			s.setTarget(labeledLocations.get(
-					gotoStatements.get(s)));
 		}
 	}
 }

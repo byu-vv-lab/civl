@@ -2959,8 +2959,27 @@ class Fragment {
 			return parallel;
 
 		assert this.startLocation.id() == parallel.startLocation.id();
-		newLastStatement.add(this.lastStatement);
-		newLastStatement.add(parallel.lastStatement);
+		
+		if(lastStatement instanceof StatementSet){
+			Set<Statement> statements = ((StatementSet)lastStatement).statements();
+			
+			for(Statement s : statements){
+				newLastStatement.add(s);
+			}
+		}else{
+			newLastStatement.add(lastStatement);
+		}
+		
+		if(parallel.lastStatement instanceof StatementSet){
+			Set<Statement> statements = ((StatementSet)parallel.lastStatement).statements();
+			
+			for(Statement s : statements){
+				newLastStatement.add(s);
+			}
+		}else{
+			newLastStatement.add(parallel.lastStatement);
+		}
+		
 		return new Fragment(this.startLocation, newLastStatement);
 	}
 
