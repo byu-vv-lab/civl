@@ -140,7 +140,7 @@ public class Executor {
 	 * @return A new state where the process is at the target location.
 	 */
 	private State transition(State state, ProcessState process, Location target) {
-		state = stateFactory.setLocation(state, process.id(), target);
+		state = stateFactory.setLocation(state, process.getPid(), target);
 		// state = stateFactory.canonic(state);
 		return state;
 	}
@@ -219,7 +219,7 @@ public class Executor {
 	 */
 	private State executeAssign(State state, int pid, AssignStatement statement)
 			throws UnsatisfiablePathConditionException {
-		ProcessState process = state.process(pid);
+		ProcessState process = state.getProcessState(pid);
 		Evaluation eval = evaluator.evaluate(state, pid, statement.rhs());
 
 		state = assign(eval.state, pid, statement.getLhs(), eval.value);
@@ -252,7 +252,8 @@ public class Executor {
 					((SystemFunction) statement.function()).getLibrary(), this);
 
 			state = executor.execute(state, pid, statement);
-			state = transition(state, state.process(pid), statement.target());
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
 		} else {
 			CIVLFunction function = statement.function();
 			SymbolicExpression[] arguments;
@@ -274,7 +275,8 @@ public class Executor {
 			throws UnsatisfiablePathConditionException {
 		State result = civlcExecutor.executeMalloc(state, pid, statement);
 
-		result = transition(result, result.process(pid), statement.target());
+		result = transition(result, result.getProcessState(pid),
+				statement.target());
 		return result;
 	}
 
@@ -294,7 +296,7 @@ public class Executor {
 	private State executeSpawn(State state, int pid,
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
-		ProcessState process = state.process(pid);
+		ProcessState process = state.getProcessState(pid);
 		CIVLFunction function = statement.function();
 		int newPid = state.numProcs();
 		List<Expression> argumentExpressions = statement.arguments();
@@ -338,7 +340,8 @@ public class Executor {
 		int joinedPid = modelFactory.getProcessId(statement.process()
 				.getSource(), procVal);
 
-		state = transition(eval.state, state.process(pid), statement.target());
+		state = transition(eval.state, state.getProcessState(pid),
+				statement.target());
 		state = stateFactory.removeProcess(state, joinedPid);
 		// state = stateFactory.canonic(state);
 		return state;
@@ -371,7 +374,7 @@ public class Executor {
 			state = eval.state;
 		}
 		state = stateFactory.popCallStack(state, pid);
-		process = state.process(pid);
+		process = state.getProcessState(pid);
 		if (!process.hasEmptyStack()) {
 			StackEntry returnContext = process.peekStack();
 			Location returnLocation = returnContext.location();
@@ -394,10 +397,11 @@ public class Executor {
 		BooleanExpression oldPathCondition, newPathCondition;
 
 		state = eval.state;
-		oldPathCondition = state.pathCondition();
+		oldPathCondition = state.getPathCondition();
 		newPathCondition = symbolicUniverse.and(oldPathCondition, assumeValue);
-		state = stateFactory.setPathCondition(state, newPathCondition);
-		state = transition(state, state.process(pid), statement.target());
+		state = state.setPathCondition(newPathCondition);
+		state = transition(state, state.getProcessState(pid),
+				statement.target());
 		return state;
 	}
 
@@ -411,7 +415,7 @@ public class Executor {
 		ResultType resultType;
 
 		state = eval.state;
-		reasoner = symbolicUniverse.reasoner(state.pathCondition());
+		reasoner = symbolicUniverse.reasoner(state.getPathCondition());
 		valid = reasoner.valid(assertValue);
 		resultType = valid.getResultType();
 		if (resultType != ResultType.YES) {
@@ -424,7 +428,7 @@ public class Executor {
 			state = evaluator.logError(statement.getSource(), state,
 					assertValue, resultType, ErrorKind.ASSERTION_VIOLATION,
 					"Cannot prove assertion holds: " + statement.toString()
-							+ "\n  Path condition: " + state.pathCondition()
+							+ "\n  Path condition: " + state.getPathCondition()
 							+ "\n  Assertion: " + assertValue + "\n");
 			// evaluator.reportError(new CIVLStateException(
 			// ErrorKind.ASSERTION_VIOLATION, certainty,
@@ -435,7 +439,8 @@ public class Executor {
 			// state = stateFactory.setPathCondition(state,
 			// symbolicUniverse.and(state.pathCondition(), assertValue));
 		}
-		state = transition(state, state.process(pid), statement.target());
+		state = transition(state, state.getProcessState(pid),
+				statement.target());
 		return state;
 	}
 
@@ -463,7 +468,7 @@ public class Executor {
 	public State executeChoose(State state, int pid, ChooseStatement statement,
 			SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
-		ProcessState process = state.process(pid);
+		ProcessState process = state.getProcessState(pid);
 
 		state = assign(state, pid, statement.getLhs(), value);
 		state = transition(state, process, statement.target());
@@ -524,7 +529,8 @@ public class Executor {
 		} else if (statement instanceof ReturnStatement) {
 			return executeReturn(state, pid, (ReturnStatement) statement);
 		} else if (statement instanceof NoopStatement) {
-			state = transition(state, state.process(pid), statement.target());
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
 
 			return state;
 		} else if (statement instanceof MallocStatement) {

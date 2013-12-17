@@ -151,8 +151,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		}
 
 		pid = ((SimpleTransition) transition).pid();
-		state = stateFactory.setPathCondition(state,
-				((SimpleTransition) transition).pathCondition());
+		state = state.setPathCondition(((SimpleTransition) transition)
+				.pathCondition());
 		statement = ((SimpleTransition) transition).statement();
 		if (transition instanceof ChooseTransition) {
 			assert statement instanceof ChooseStatement;
@@ -165,7 +165,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 		// do nothing when process pid terminates and is removed from the state
 		if (state.numProcs() > pid) {
-			ProcessState p = state.process(pid);
+			ProcessState p = state.getProcessState(pid);
 			if (p != null && !p.hasEmptyStack()) {
 
 				Location newLoc = p.peekStack().location();
@@ -179,14 +179,13 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 					Statement s = newLoc.getOutgoing(0);
 					BooleanExpression guard = (BooleanExpression) executor
-							.evaluator().evaluate(state, p.id(), s.guard()).value;
+							.evaluator().evaluate(state, p.getPid(), s.guard()).value;
 					BooleanExpression newPathCondition = executor.universe()
-							.and(state.pathCondition(), guard);
-					state = stateFactory.setPathCondition(state,
-							newPathCondition);
+							.and(state.getPathCondition(), guard);
+					state = state.setPathCondition(newPathCondition);
 					state = executor.execute(state, pid, s);
 
-					p = state.process(pid);
+					p = state.getProcessState(pid);
 					if (p != null && !p.hasEmptyStack())
 						newLoc = p.peekStack().location();
 					else

@@ -8,7 +8,6 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -189,17 +188,17 @@ public interface StateFactory {
 	 */
 	State popCallStack(State state, int pid);
 
-	/**
-	 * Update the path condition of a state.
-	 * 
-	 * @param state
-	 *            The old state.
-	 * @param pathCondition
-	 *            The new path condition.
-	 * @return A new state that is the same as the old state but with the new
-	 *         path condition.
-	 */
-	State setPathCondition(State state, BooleanExpression pathCondition);
+	// /**
+	// * Update the path condition of a state.
+	// *
+	// * @param state
+	// * The old state.
+	// * @param pathCondition
+	// * The new path condition.
+	// * @return A new state that is the same as the old state but with the new
+	// * path condition.
+	// */
+	// State setPathCondition(State state, BooleanExpression pathCondition);
 
 	/**
 	 * Simplies all variable values in the state, using the path condition as

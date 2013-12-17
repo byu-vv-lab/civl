@@ -27,7 +27,10 @@ public class CommonProcessState implements ProcessState {
 
 	private int hashCode = -1;
 
-	private int id;
+	/**
+	 * The process ID (pid).
+	 */
+	private int pid;
 
 	/**
 	 * A non-null array. Entry 0 is the TOP of the stack.
@@ -40,19 +43,19 @@ public class CommonProcessState implements ProcessState {
 	 * @param id
 	 *            The unique process ID.
 	 */
-	CommonProcessState(int id) {
-		this.id = id;
+	CommonProcessState(int pid) {
+		this.pid = pid;
 		callStack = new CommonStackEntry[0];
 	}
 
-	CommonProcessState(int id, StackEntry[] stack) {
+	CommonProcessState(int pid, StackEntry[] stack) {
 		assert stack != null;
-		this.id = id;
+		this.pid = pid;
 		callStack = stack;
 	}
 
 	CommonProcessState(CommonProcessState oldProcess, int newPid) {
-		this.id = newPid;
+		this.pid = newPid;
 		this.callStack = oldProcess.callStack;
 	}
 
@@ -60,23 +63,23 @@ public class CommonProcessState implements ProcessState {
 	 * @return The unique process ID.
 	 */
 	@Override
-	public int id() {
-		return id;
+	public int getPid() {
+		return pid;
 	}
 
 	/**
 	 * @param id
 	 *            The unique process ID.
 	 */
-	void setId(int id) {
-		this.id = id;
+	void setId(int pid) {
+		this.pid = pid;
 	}
 
 	CommonProcessState copy() {
 		CommonStackEntry[] newStack = new CommonStackEntry[callStack.length];
 
 		System.arraycopy(callStack, 0, newStack, 0, callStack.length);
-		return new CommonProcessState(id, newStack);
+		return new CommonProcessState(pid, newStack);
 	}
 
 	@Override
@@ -88,7 +91,7 @@ public class CommonProcessState implements ProcessState {
 	 * @return The current location of this process.
 	 */
 	@Override
-	public Location location() {
+	public Location getLocation() {
 		return callStack[0].location();
 	}
 
@@ -96,7 +99,7 @@ public class CommonProcessState implements ProcessState {
 	 * @return The id of the current dynamic scope of this process.
 	 */
 	@Override
-	public int scope() {
+	public int getDyscopeId() {
 		return callStack[0].scope();
 	}
 
@@ -133,7 +136,7 @@ public class CommonProcessState implements ProcessState {
 		CommonStackEntry[] newStack = new CommonStackEntry[callStack.length - 1];
 
 		System.arraycopy(callStack, 1, newStack, 0, callStack.length - 1);
-		return new CommonProcessState(id, newStack);
+		return new CommonProcessState(pid, newStack);
 	}
 
 	CommonProcessState push(CommonStackEntry newStackEntry) {
@@ -141,7 +144,7 @@ public class CommonProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 0, newStack, 1, callStack.length);
 		newStack[0] = newStackEntry;
-		return new CommonProcessState(id, newStack);
+		return new CommonProcessState(pid, newStack);
 	}
 
 	CommonProcessState replaceTop(CommonStackEntry newStackEntry) {
@@ -150,7 +153,7 @@ public class CommonProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 1, newStack, 1, length - 1);
 		newStack[0] = newStackEntry;
-		return new CommonProcessState(id, newStack);
+		return new CommonProcessState(pid, newStack);
 	}
 
 	/*
@@ -165,7 +168,7 @@ public class CommonProcessState implements ProcessState {
 
 			hashCode = 1;
 			hashCode = prime * hashCode + Arrays.hashCode(callStack);
-			hashCode = prime * hashCode + id;
+			hashCode = prime * hashCode + pid;
 			hashed = true;
 		}
 		return hashCode;
@@ -189,7 +192,7 @@ public class CommonProcessState implements ProcessState {
 				return false;
 			if (!Arrays.equals(callStack, that.callStack))
 				return false;
-			if (id != that.id)
+			if (pid != that.pid)
 				return false;
 			return true;
 		}
@@ -198,7 +201,7 @@ public class CommonProcessState implements ProcessState {
 
 	@Override
 	public void print(PrintStream out, String prefix) {
-		out.println(prefix + "process " + id + " call stack");
+		out.println(prefix + "process " + pid + " call stack");
 		for (int i = 0; i < callStack.length; i++) {
 			StackEntry frame = callStack[i];
 
@@ -209,7 +212,7 @@ public class CommonProcessState implements ProcessState {
 
 	@Override
 	public String toString() {
-		return "State of process " + id + " (call stack length = "
+		return "State of process " + pid + " (call stack length = "
 				+ callStack.length + ")";
 	}
 
@@ -223,5 +226,44 @@ public class CommonProcessState implements ProcessState {
 		}
 
 		return true;
+	}
+
+	@Override
+	public boolean isMutable() {
+		return false;
+	}
+
+	@Override
+	public void commit() {
+	}
+
+	@Override
+	public boolean isCanonic() {
+		return true;
+	}
+
+	@Override
+	public int getCanonicId() {
+		return 0;
+	}
+
+	@Override
+	public ProcessState setPid(int pid) {
+		return new CommonProcessState(pid, callStack);
+	}
+
+	@Override
+	public ProcessState setStackEntry(int index, StackEntry frame) {
+		int n = callStack.length;
+		StackEntry[] newStack = new StackEntry[n];
+
+		System.arraycopy(callStack, 0, newStack, 0, n);
+		newStack[index] = frame;
+		return new CommonProcessState(pid, newStack);
+	}
+
+	@Override
+	public ProcessState setStackEntries(StackEntry[] frames) {
+		return new CommonProcessState(pid, frames);
 	}
 }

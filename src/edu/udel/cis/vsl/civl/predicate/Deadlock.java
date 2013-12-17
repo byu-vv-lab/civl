@@ -111,7 +111,7 @@ public class Deadlock implements StatePredicateIF<State> {
 		StringBuffer explanation = new StringBuffer();
 		boolean first = true;
 
-		for (ProcessState p : state.getProcesses()) {
+		for (ProcessState p : state.getProcessStates()) {
 			if (p == null)
 				continue;
 
@@ -119,14 +119,14 @@ public class Deadlock implements StatePredicateIF<State> {
 			BooleanExpression predicate = null;
 			// wait on unterminated function, no outgoing edges:
 			String nonGuardExplanation = null;
-			int pid = p.id();
+			int pid = p.getPid();
 
 			if (first)
 				first = false;
 			else
 				explanation.append("\n");
 			if (!p.hasEmptyStack())
-				location = p.location();
+				location = p.getLocation();
 			explanation.append("ProcessState " + pid + ": ");
 			if (location == null) {
 				explanation.append("terminated");
@@ -138,7 +138,7 @@ public class Deadlock implements StatePredicateIF<State> {
 					explanation.append(source.getSummary());
 				for (Statement statement : location.outgoing()) {
 					BooleanExpression guard = (BooleanExpression) evaluator
-							.evaluate(state, p.id(), statement.guard()).value;
+							.evaluate(state, p.getPid(), statement.guard()).value;
 
 					if (statement instanceof WaitStatement) {
 						// TODO: Check that the guard is actually true, but it
@@ -178,7 +178,7 @@ public class Deadlock implements StatePredicateIF<State> {
 	}
 
 	private boolean allTerminated(State state) {
-		for (ProcessState p : state.getProcesses()) {
+		for (ProcessState p : state.getProcessStates()) {
 			if (!p.hasEmptyStack())
 				return false;
 		}
@@ -191,15 +191,15 @@ public class Deadlock implements StatePredicateIF<State> {
 			return false;
 
 		BooleanExpression predicate = falseExpr;
-		Reasoner reasoner = universe.reasoner(state.pathCondition());
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		CIVLSource source = null; // location of first non-term proc
 
-		for (ProcessState p : state.getProcesses()) {
+		for (ProcessState p : state.getProcessStates()) {
 			if (p == null || p.hasEmptyStack())
 				continue;
 
-			int pid = p.id();
-			Location location = p.location();
+			int pid = p.getPid();
+			Location location = p.getLocation();
 
 			if (source == null)
 				source = location.getSource();
@@ -218,7 +218,7 @@ public class Deadlock implements StatePredicateIF<State> {
 					int pidValue = modelFactory.getProcessId(
 							waitExpr.getSource(), joinProcess);
 
-					if (!state.process(pidValue).hasEmptyStack())
+					if (!state.getProcessState(pidValue).hasEmptyStack())
 						continue;
 				}
 				predicate = universe.or(predicate, guard);
@@ -242,7 +242,7 @@ public class Deadlock implements StatePredicateIF<State> {
 				certainty = Certainty.PROVEABLE;
 				message = "A deadlock is possible:\n";
 			}
-			message += "  Path condition: " + state.pathCondition()
+			message += "  Path condition: " + state.getPathCondition()
 					+ "\n  Enabling predicate: " + predicate + "\n";
 			message += explanationWork(state);
 			violation = new CIVLStateException(ErrorKind.DEADLOCK, certainty,

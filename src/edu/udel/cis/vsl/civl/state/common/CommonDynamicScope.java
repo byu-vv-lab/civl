@@ -215,7 +215,8 @@ public class CommonDynamicScope implements DynamicScope {
 		return false;
 	}
 
-	void print(PrintStream out, int id, String prefix) {
+	@Override
+	public void print(PrintStream out, int id, String prefix) {
 		int numVars = lexicalScope.numVariables();
 		int bitSetLength = reachers.length();
 		boolean first = true;
@@ -250,5 +251,45 @@ public class CommonDynamicScope implements DynamicScope {
 	public String toString() {
 		return "DynamicScope[static=" + lexicalScope.id() + ", parent="
 				+ parent + "]";
+	}
+
+	@Override
+	public boolean isMutable() {
+		return true;
+	}
+
+	@Override
+	public boolean isCanonic() {
+		return canonic;
+	}
+
+	@Override
+	public void commit() {
+	}
+
+	@Override
+	public int getCanonicId() {
+		return 0;
+	}
+
+	@Override
+	public DynamicScope setValue(int vid, SymbolicExpression value) {
+		int n = numberOfVariables();
+		SymbolicExpression[] newVariableValues = new SymbolicExpression[n];
+
+		System.arraycopy(variableValues, 0, newVariableValues, 0, n);
+		newVariableValues[vid] = value;
+		return new CommonDynamicScope(lexicalScope, parent, newVariableValues,
+				reachers);
+	}
+
+	@Override
+	public DynamicScope setValues(SymbolicExpression[] values) {
+		return new CommonDynamicScope(lexicalScope, parent, values, reachers);
+	}
+
+	@Override
+	public Iterable<SymbolicExpression> getValues() {
+		return Arrays.asList(variableValues);
 	}
 }

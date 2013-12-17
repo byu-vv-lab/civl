@@ -270,7 +270,7 @@ public class Evaluator {
 	State logError(CIVLSource source, State state, BooleanExpression claim,
 			ResultType resultType, ErrorKind errorKind, String message)
 			throws UnsatisfiablePathConditionException {
-		BooleanExpression pc = state.pathCondition(), newPc;
+		BooleanExpression pc = state.getPathCondition(), newPc;
 		BooleanExpression npc = universe.not(pc);
 		ValidityResult validityResult = trueReasoner.valid(npc);
 		ResultType nsat = validityResult.getResultType();
@@ -319,7 +319,7 @@ public class Evaluator {
 		nsat = trueReasoner.valid(universe.not(newPc)).getResultType();
 		if (nsat == ResultType.YES)
 			throw new UnsatisfiablePathConditionException();
-		state = stateFactory.setPathCondition(state, newPc);
+		state = state.setPathCondition(newPc);
 		return state;
 	}
 
@@ -406,7 +406,7 @@ public class Evaluator {
 		// if startIndex==endIndex return emptyArray
 		// else if startIndex and endIndex are concrete, create concrete array
 		// else need array lambdas or subsequence operation: todo
-		BooleanExpression pathCondition = state.pathCondition();
+		BooleanExpression pathCondition = state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(pathCondition);
 		NumericExpression length = universe.length(array);
 		SymbolicArrayType arrayType = (SymbolicArrayType) array.type();
@@ -422,7 +422,7 @@ public class Evaluator {
 			if (valid != ResultType.YES) {
 				state = logError(source, state, claim, valid,
 						ErrorKind.OUT_OF_BOUNDS, "negative start index");
-				pathCondition = state.pathCondition();
+				pathCondition = state.getPathCondition();
 				reasoner = universe.reasoner(pathCondition);
 			}
 			claim = universe.lessThanEquals(endIndex, length);
@@ -431,7 +431,7 @@ public class Evaluator {
 				state = logError(source, state, claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"end index exceeds length of array");
-				pathCondition = state.pathCondition();
+				pathCondition = state.getPathCondition();
 				reasoner = universe.reasoner(pathCondition);
 			}
 			claim = universe.lessThanEquals(startIndex, endIndex);
@@ -440,7 +440,7 @@ public class Evaluator {
 				state = logError(source, state, claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"start index greater than end index");
-				pathCondition = state.pathCondition();
+				pathCondition = state.getPathCondition();
 				reasoner = universe.reasoner(pathCondition);
 			}
 			if (reasoner.isValid(universe.equals(startIndex, endIndex))) {
@@ -616,7 +616,7 @@ public class Evaluator {
 				BooleanExpression claim = universe.and(
 						universe.lessThanEquals(zero, newIndex),
 						universe.lessThanEquals(newIndex, length));
-				BooleanExpression assumption = eval.state.pathCondition();
+				BooleanExpression assumption = eval.state.getPathCondition();
 				ResultType resultType = universe.reasoner(assumption)
 						.valid(claim).getResultType();
 
@@ -637,7 +637,7 @@ public class Evaluator {
 			BooleanExpression claim = universe.and(
 					universe.lessThanEquals(zero, newOffset),
 					universe.lessThanEquals(newOffset, one));
-			BooleanExpression assumption = state.pathCondition();
+			BooleanExpression assumption = state.getPathCondition();
 			ResultType resultType = universe.reasoner(assumption).valid(claim)
 					.getResultType();
 			Evaluation eval;
@@ -784,7 +784,7 @@ public class Evaluator {
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluate(state, pid, condition);
 		BooleanExpression c = (BooleanExpression) eval.value;
-		BooleanExpression assumption = eval.state.pathCondition();
+		BooleanExpression assumption = eval.state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(assumption);
 
 		if (reasoner.isValid(c))
@@ -793,22 +793,21 @@ public class Evaluator {
 			return evaluate(eval.state, pid, falseBranch);
 		else {
 			BooleanExpression pc1 = universe.and(assumption, c);
-			State s1 = stateFactory.setPathCondition(eval.state, pc1);
+			State s1 = eval.state.setPathCondition(pc1);
 			BooleanExpression pc2 = universe.and(assumption, universe.not(c));
-			State s2 = stateFactory.setPathCondition(eval.state, pc2);
+			State s2 = eval.state.setPathCondition(pc2);
 			Evaluation eval1 = evaluate(s1, pid, trueBranch);
 			Evaluation eval2 = evaluate(s2, pid, falseBranch);
-			BooleanExpression newpc1 = eval1.state.pathCondition();
-			BooleanExpression newpc2 = eval2.state.pathCondition();
+			BooleanExpression newpc1 = eval1.state.getPathCondition();
+			BooleanExpression newpc2 = eval2.state.getPathCondition();
 
 			if (pc1 == newpc1 && pc2 == newpc2) {
 				// no side effects from evaluating either branch
 				// eval.state.pathCondition is assumption
 			} else {
-				eval.state = stateFactory.setPathCondition(
-						eval.state,
-						universe.or(eval1.state.pathCondition(),
-								eval2.state.pathCondition()));
+				eval.state = eval.state.setPathCondition(universe.or(
+						eval1.state.getPathCondition(),
+						eval2.state.getPathCondition()));
 			}
 			eval.value = universe.cond(c, eval1.value, eval2.value);
 			return eval;
@@ -853,7 +852,7 @@ public class Evaluator {
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluate(state, pid, expression.left());
 		BooleanExpression p = (BooleanExpression) eval.value;
-		BooleanExpression assumption = eval.state.pathCondition();
+		BooleanExpression assumption = eval.state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(assumption);
 
 		if (reasoner.isValid(p))
@@ -863,16 +862,15 @@ public class Evaluator {
 			return eval;
 		} else {
 			BooleanExpression assumptionAndp = universe.and(assumption, p);
-			State s1 = stateFactory
-					.setPathCondition(eval.state, assumptionAndp);
+			State s1 = eval.state.setPathCondition(assumptionAndp);
 			Evaluation eval1 = evaluate(s1, pid, expression.right());
-			BooleanExpression pcTemp = eval1.state.pathCondition();
+			BooleanExpression pcTemp = eval1.state.getPathCondition();
 
 			if (!assumptionAndp.equals(pcTemp)) {
 				BooleanExpression pc = universe.or(pcTemp,
 						universe.and(assumption, universe.not(p)));
 
-				eval.state = stateFactory.setPathCondition(eval.state, pc);
+				eval.state = eval.state.setPathCondition(pc);
 			}
 			// Reason for above: In the common case where there
 			// are no side effects, this would set the path condition to
@@ -907,7 +905,7 @@ public class Evaluator {
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluate(state, pid, expression.left());
 		BooleanExpression p = (BooleanExpression) eval.value;
-		BooleanExpression assumption = eval.state.pathCondition();
+		BooleanExpression assumption = eval.state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(assumption);
 
 		// TODO: handle special common case as in evaluateAnd.
@@ -920,13 +918,13 @@ public class Evaluator {
 		if (reasoner.isValid(universe.not(p))) {
 			return evaluate(eval.state, pid, expression.right());
 		} else {
-			State s1 = stateFactory.setPathCondition(eval.state,
-					universe.and(assumption, universe.not(p)));
+			State s1 = eval.state.setPathCondition(universe.and(assumption,
+					universe.not(p)));
 			Evaluation eval1 = evaluate(s1, pid, expression.right());
-			BooleanExpression pc = universe.or(eval1.state.pathCondition(),
+			BooleanExpression pc = universe.or(eval1.state.getPathCondition(),
 					universe.and(assumption, p));
 
-			eval.state = stateFactory.setPathCondition(eval.state, pc);
+			eval.state = eval.state.setPathCondition(pc);
 			eval.value = universe.or(p, (BooleanExpression) eval1.value);
 			return eval;
 		}
@@ -983,7 +981,7 @@ public class Evaluator {
 		index = (NumericExpression) eval.value;
 		if (arrayType.isComplete()) {
 			NumericExpression length = universe.length(array);
-			BooleanExpression assumption = eval.state.pathCondition();
+			BooleanExpression assumption = eval.state.getPathCondition();
 			BooleanExpression claim = universe.and(
 					universe.lessThanEquals(zero, index),
 					universe.lessThan(index, length));
@@ -1043,7 +1041,7 @@ public class Evaluator {
 						(NumericExpression) right);
 				break;
 			case DIVIDE: {
-				BooleanExpression assumption = eval.state.pathCondition();
+				BooleanExpression assumption = eval.state.getPathCondition();
 				NumericExpression denominator = (NumericExpression) right;
 				BooleanExpression claim = universe.neq(
 						zeroOf(expression.getSource(),
@@ -1075,7 +1073,7 @@ public class Evaluator {
 				eval.value = universe.neq(left, right);
 				break;
 			case MODULO: {
-				BooleanExpression assumption = eval.state.pathCondition();
+				BooleanExpression assumption = eval.state.getPathCondition();
 				NumericExpression denominator = (NumericExpression) right;
 				BooleanExpression claim = universe.neq(
 						zeroOf(expression.getSource(),
@@ -1154,7 +1152,7 @@ public class Evaluator {
 		state = typeEval.state;
 		if (argType.isIntegerType() && castType.isPointerType()) {
 			// only good cast is from 0 to null pointer
-			BooleanExpression assumption = state.pathCondition();
+			BooleanExpression assumption = state.getPathCondition();
 			BooleanExpression claim = universe.equals(zero, value);
 			ResultType resultType = universe.reasoner(assumption).valid(claim)
 					.getResultType();
@@ -1231,9 +1229,10 @@ public class Evaluator {
 			NumericExpression value = ((CIVLPrimitiveType) type).getSizeof();
 			BooleanExpression facts = ((CIVLPrimitiveType) type).getFacts();
 			BooleanExpression pathCondition = universe.and(facts,
-					state.pathCondition());
+					state.getPathCondition());
 
-			state = stateFactory.setPathCondition(state, pathCondition);
+			// TODO: this will modify state if state is mutable!
+			state = state.setPathCondition(pathCondition);
 			eval = new Evaluation(state, value);
 		} else if (type instanceof CIVLCompleteArrayType) {
 			NumericExpression extentValue;
@@ -1254,10 +1253,10 @@ public class Evaluator {
 			eval = dynamicTypeOf(state, pid, type, source, false);
 			sizeof = (NumericExpression) universe.apply(sizeofFunction,
 					new Singleton<SymbolicExpression>(eval.value));
-			pathCondition = universe.and(eval.state.pathCondition(),
+			pathCondition = universe.and(eval.state.getPathCondition(),
 					universe.lessThan(zero, sizeof));
 			eval.value = sizeof;
-			eval.state = stateFactory.setPathCondition(state, pathCondition);
+			eval.state = state.setPathCondition(pathCondition);
 		}
 		return eval;
 	}
@@ -1545,7 +1544,7 @@ public class Evaluator {
 		quantifiedExpression = evaluate(state, pid, expression.expression());
 		// By definition, the restriction should be boolean valued.
 		assert restriction.value instanceof BooleanExpression;
-		context = universe.and(state.pathCondition(),
+		context = universe.and(state.getPathCondition(),
 				(BooleanExpression) restriction.value);
 		reasoner = universe.reasoner(context);
 		simplifiedExpression = (BooleanExpression) reasoner

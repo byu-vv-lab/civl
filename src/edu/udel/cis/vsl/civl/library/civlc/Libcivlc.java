@@ -105,7 +105,7 @@ public class Libcivlc implements LibraryExecutor {
 	public State executeMalloc(State state, int pid, MallocStatement statement)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource source = statement.getSource();
-		int sid = state.process(pid).scope();
+		int sid = state.getProcessState(pid).getDyscopeId();
 		int index = statement.getMallocId();
 		IntObject indexObj = universe.intObject(index);
 		LHSExpression lhs = statement.getLHS();
@@ -144,7 +144,7 @@ public class Libcivlc implements LibraryExecutor {
 				statement.getStaticElementType());
 		state = eval.state;
 		elementSize = (NumericExpression) eval.value;
-		pathCondition = state.pathCondition();
+		pathCondition = state.getPathCondition();
 		claim = universe.divides(elementSize, mallocSize);
 		validity = universe.reasoner(pathCondition).valid(claim)
 				.getResultType();
@@ -157,8 +157,7 @@ public class Libcivlc implements LibraryExecutor {
 					eval.state, source);
 
 			evaluator.reportError(e);
-			state = stateFactory.setPathCondition(state,
-					universe.and(pathCondition, claim));
+			state = state.setPathCondition(universe.and(pathCondition, claim));
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
 		heapField = universe.tupleRead(heapValue, indexObj);
@@ -197,7 +196,7 @@ public class Libcivlc implements LibraryExecutor {
 						.getParentPointer(fieldPointer);
 
 				if (actualHeapPointer != null) {
-					BooleanExpression pathCondition = state.pathCondition();
+					BooleanExpression pathCondition = state.getPathCondition();
 					BooleanExpression claim = universe.equals(
 							actualHeapPointer, heapPointer);
 					ResultType valid = universe.reasoner(pathCondition)
@@ -213,8 +212,8 @@ public class Libcivlc implements LibraryExecutor {
 								pointerSource);
 
 						evaluator.reportError(e);
-						state = stateFactory.setPathCondition(state,
-								universe.and(pathCondition, claim));
+						state = state.setPathCondition(universe.and(
+								pathCondition, claim));
 					}
 					symRef = evaluator.getSymRef(pointer);
 					if (symRef instanceof ArrayElementReference) {
@@ -235,8 +234,7 @@ public class Libcivlc implements LibraryExecutor {
 					pointerSource);
 
 			evaluator.reportError(e);
-			state = stateFactory.setPathCondition(state,
-					universe.falseExpression());
+			state = state.setPathCondition(universe.falseExpression());
 			return new Evaluation(state, objectPointer);
 		}
 	}
@@ -475,7 +473,7 @@ public class Libcivlc implements LibraryExecutor {
 		// SymbolicType elementType = ((SymbolicArrayType) array.type())
 		// .elementType();
 		NumericExpression length = universe.length(array);
-		BooleanExpression pathCondition = state.pathCondition();
+		BooleanExpression pathCondition = state.getPathCondition();
 		BooleanExpression zeroLengthClaim = universe.equals(length, zero);
 		Reasoner reasoner = universe.reasoner(pathCondition);
 		ResultType zeroLengthValid = reasoner.valid(zeroLengthClaim)
@@ -510,7 +508,7 @@ public class Libcivlc implements LibraryExecutor {
 					BooleanExpression claim;
 
 					state = eval.state;
-					pathCondition = state.pathCondition();
+					pathCondition = state.getPathCondition();
 					claim = universe.and(
 							universe.equals(pointerIndex, zero),
 							universe.equals(length,
@@ -854,7 +852,7 @@ public class Libcivlc implements LibraryExecutor {
 		SymbolicType elementType = evaluator.referencedType(source, state,
 				pointer);
 		NumericExpression elementSize = evaluator.sizeof(source, elementType);
-		BooleanExpression pathCondition = state.pathCondition();
+		BooleanExpression pathCondition = state.getPathCondition();
 		BooleanExpression zeroSizeClaim = universe.equals(size, zero);
 		Reasoner reasoner = universe.reasoner(pathCondition);
 		ResultType zeroSizeValid = reasoner.valid(zeroSizeClaim)
@@ -874,7 +872,7 @@ public class Libcivlc implements LibraryExecutor {
 				SymbolicExpression element0 = eval.value;
 
 				state = eval.state;
-				pathCondition = state.pathCondition();
+				pathCondition = state.getPathCondition();
 				array = universe.array(elementType,
 						new Singleton<SymbolicExpression>(element0));
 			} else {
@@ -894,7 +892,7 @@ public class Libcivlc implements LibraryExecutor {
 
 					evaluator.reportError(e);
 					pathCondition = universe.and(pathCondition, divisibility);
-					state = stateFactory.setPathCondition(state, pathCondition);
+					state = state.setPathCondition(pathCondition);
 					reasoner = universe.reasoner(pathCondition);
 				}
 				count = universe.divide(size, elementSize);
@@ -930,7 +928,7 @@ public class Libcivlc implements LibraryExecutor {
 
 					evaluator.reportError(e);
 					pathCondition = universe.and(pathCondition, zeroSizeClaim);
-					state = stateFactory.setPathCondition(state, pathCondition);
+					state = state.setPathCondition(pathCondition);
 					reasoner = universe.reasoner(pathCondition);
 					array = universe.emptyArray(elementType);
 				}
