@@ -738,4 +738,7 @@ public interface ModelFactory {
 
 	void setTokenFactory(TokenFactory tokens);
 
+	Expression nullPointerExpression(CIVLPointerType pointerType, Scope scope,
+			CIVLSource source);
+
 }

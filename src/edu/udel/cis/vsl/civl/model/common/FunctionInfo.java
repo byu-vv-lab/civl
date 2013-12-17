@@ -10,23 +10,27 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
+/**
+ * Maintains the information, e.g. labeled location, goto statements,
+ * continue/break statement stack, that is required in the translation of the
+ * definition of a function from ABC AST to CIVL model
+ * 
+ * @author zheng
+ */
 public class FunctionInfo {
 
 	private CIVLFunction function;
-	
+
 	/**
-	 * This fields stores information for a single function, the current one
-	 * being processed. It maps ABC label nodes to the corresponding CIVL
-	 * locations.
+	 * This fields maps ABC label nodes to the corresponding CIVL locations.
 	 */
 	private Map<LabelNode, Location> labeledLocations;
 
 	/**
-	 * Also being used for single function (the one being processed). Maps from
-	 * CIVL "goto" statements to the corresponding label nodes.
+	 * Maps from CIVL "goto" statements to the corresponding label nodes.
 	 */
 	private Map<Statement, LabelNode> gotoStatements;
-	
+
 	/**
 	 * Used to keep track of continue statements in nested loops. Each entry on
 	 * the stack corresponds to a particular loop. The statements in the set for
@@ -43,85 +47,166 @@ public class FunctionInfo {
 	 * processing.
 	 */
 	private Stack<Set<Statement>> breakStatements;
-	
-	public FunctionInfo(CIVLFunction function){
+
+	/**
+	 * Constructor
+	 * 
+	 * @param function
+	 *            the CIVL function object that is being processed
+	 */
+	public FunctionInfo(CIVLFunction function) {
 		this.function = function;
-		labeledLocations = new LinkedHashMap<LabelNode, Location> ();
+		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		continueStatements = new Stack<Set<Statement>>();
 		breakStatements = new Stack<Set<Statement>>();
 	}
-	
-	public CIVLFunction function(){
+
+	/**
+	 * Get the CIVL function that is being processed
+	 * 
+	 * @return
+	 */
+	public CIVLFunction function() {
 		return this.function;
 	}
-	
-	public void addContinueSet(Set<Statement> statementSet){
+
+	/**
+	 * Add a set of statements to the continue statement stack <dt>
+	 * <b>Preconditions:</b>
+	 * <dd>
+	 * A new loop is just encountered
+	 * 
+	 * @param statementSet
+	 *            an empty set of statement
+	 */
+	public void addContinueSet(Set<Statement> statementSet) {
 		this.continueStatements.add(statementSet);
 	}
-	
-	public Set<Statement> peekContinueStatck(){
+
+	/**
+	 * Peek the continue stack, called only when processing a jump node with
+	 * continue kind
+	 * 
+	 * @return the set of continue statements on the top of the stack
+	 */
+	public Set<Statement> peekContinueStatck() {
 		return this.continueStatements.peek();
 	}
-	
-	public Set<Statement> popContinueStack(){
+
+	/**
+	 * Pop the set of continue statements from the stack
+	 * 
+	 * @return the set of continue statements from the top of the stack
+	 */
+	public Set<Statement> popContinueStack() {
 		return this.continueStatements.pop();
 	}
-	
-	public void addBreakSet(Set<Statement> statementSet){
+
+	/**
+	 * Add a set of statements to the break statement stack <dt>
+	 * <b>Preconditions:</b>
+	 * <dd>
+	 * A new loop is just encountered
+	 * 
+	 * @param statementSet
+	 *            an empty set of statements
+	 */
+	public void addBreakSet(Set<Statement> statementSet) {
 		this.breakStatements.add(statementSet);
 	}
-	
-	public Set<Statement> popBreakStack(){
+
+	/**
+	 * Pop the set of break statements from the stack
+	 * 
+	 * @return the set of break statements from the top of the stack
+	 */
+	public Set<Statement> popBreakStack() {
 		return this.breakStatements.pop();
 	}
-	
-	public Set<Statement> peekBreakStatck(){
+
+	/**
+	 * Peek the break stack, called only when processing a jump node with break
+	 * kind
+	 * 
+	 * @return the set of break statements on the top of the stack
+	 */
+	public Set<Statement> peekBreakStatck() {
 		return this.breakStatements.peek();
 	}
-	
-	public  Map<Statement, LabelNode> gotoStatements(){
+
+	/**
+	 * Return the map of goto statements
+	 * 
+	 * @return mapping from goto statement to label node
+	 */
+	public Map<Statement, LabelNode> gotoStatements() {
 		return this.gotoStatements;
 	}
-	
-	public void putToGotoStatements(Statement statement, LabelNode labelNode){
-		this.gotoStatements.put(statement, labelNode);	
+
+	/**
+	 * Add a mapping of a goto statement and a label node to the map of goto
+	 * statements
+	 * 
+	 * @param statement
+	 * @param labelNode
+	 */
+	public void putToGotoStatements(Statement statement, LabelNode labelNode) {
+		this.gotoStatements.put(statement, labelNode);
 	}
-	
-	
-	public Map<LabelNode, Location> labeledLocations(){
+
+	/**
+	 * Return the map of labeled locations
+	 * 
+	 * @return mapping from labeled node to locations
+	 */
+	public Map<LabelNode, Location> labeledLocations() {
 		return this.labeledLocations;
 	}
-	
-	public void putToLabeledLocations(LabelNode labelNode, Location location){
-		this.labeledLocations.put(labelNode, location);	
+
+	/**
+	 * Add a mapping from a label node to a location
+	 * 
+	 * @param labelNode
+	 * @param location
+	 */
+	public void putToLabeledLocations(LabelNode labelNode, Location location) {
+		this.labeledLocations.put(labelNode, location);
 	}
-	
-	public void completeFunction(Fragment functionBody){
+
+	/**
+	 * Complete the function with a fragment
+	 * 
+	 * @param functionBody
+	 *            a fragment translated from the body of the function
+	 */
+	public void completeFunction(Fragment functionBody) {
 		Stack<Location> workingLocations = new Stack<Location>();
 		Location location;
-		
+
+		// start from the start location of the fragment
 		workingLocations.add(functionBody.startLocation);
 		function.setStartLocation(functionBody.startLocation);
-		
-		while(workingLocations.size() > 0){
+
+		while (workingLocations.size() > 0) {
 			location = workingLocations.pop();
 			function.addLocation(location);
-						
-			if(location.getNumOutgoing() > 0){
-				for(Statement statement : location.outgoing()){
+
+			if (location.getNumOutgoing() > 0) {
+				// for each statement in the outgoing set of a location, add
+				// itself to function, and add its target location into the
+				// working stack if it hasn't been encountered before.
+				for (Statement statement : location.outgoing()) {
 					Location newLocation = statement.target();
-					
+
 					function.addStatement(statement);
-					if(newLocation != null){
-						if(!function.locations().contains(newLocation)){
+					if (newLocation != null) {
+						if (!function.locations().contains(newLocation)) {
 							workingLocations.push(newLocation);
 						}
 					}
 				}
 			}
 		}
-		
-		//function.print("", System.out);
 	}
 }

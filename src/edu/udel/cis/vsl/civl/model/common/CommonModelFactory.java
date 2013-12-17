@@ -1265,6 +1265,11 @@ public class CommonModelFactory implements ModelFactory {
 		return extractIntField(source, scopeValue, zeroObj);
 	}
 
+	/**
+	 * generate undefined value of a certain type
+	 * @param type
+	 * @return
+	 */
 	private SymbolicExpression undefinedValue(SymbolicType type) {
 		SymbolicExpression result = universe.symbolicConstant(
 				universe.stringObject("UNDEFINED"), type);
@@ -1439,5 +1444,18 @@ public class CommonModelFactory implements ModelFactory {
 	public boolean isTrue(Expression expression) {
 		return expression instanceof BooleanLiteralExpression
 				&& ((BooleanLiteralExpression) expression).value();
+	}
+	
+	@Override
+	public Expression nullPointerExpression(CIVLPointerType pointerType,
+			Scope scope, CIVLSource source) {
+		Expression zero = integerLiteralExpression(source,
+				BigInteger.ZERO);
+		Expression result;
+
+		zero.setExpressionScope(scope);
+		result = castExpression(source, pointerType, zero);
+		result.setExpressionScope(scope);
+		return result;
 	}
 }

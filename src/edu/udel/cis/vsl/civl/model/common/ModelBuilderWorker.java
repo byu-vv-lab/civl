@@ -292,13 +292,16 @@ public class ModelBuilderWorker {
 	}
 
 	/* *********************************************************************
-	 * Helper methods
+	 * Translating ABC Type into CIVL Type
 	 * *********************************************************************
 	 */
 
-	/* *********************************************************************
-	 * Translating ABC Type into CIVL Type
-	 * *********************************************************************
+	/**
+	 * Translate ABC basic types into CIVL types
+	 * 
+	 * @param source
+	 * @param basicType
+	 * @return CIVL type
 	 */
 	private CIVLType translateABCBasicType(CIVLSource source,
 			StandardBasicType basicType) {
@@ -330,6 +333,14 @@ public class ModelBuilderWorker {
 		}
 	}
 
+	/**
+	 * Translate ABC struct or union type into CIVL type
+	 * 
+	 * @param source
+	 * @param scope
+	 * @param type
+	 * @return CIVL type of struct or union
+	 */
 	private CIVLType translateABCStructureOrUnionType(CIVLSource source,
 			Scope scope, StructureOrUnionType type) {
 		String tag = type.getTag();
@@ -461,6 +472,14 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate the extent of an array type to an expression
+	 * 
+	 * @param source
+	 * @param arrayType
+	 * @param scope
+	 * @return the expression representing the extent
+	 * */
 	private Expression arrayExtent(CIVLSource source, ArrayType arrayType,
 			Scope scope) {
 		Expression result;
@@ -528,6 +547,13 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate a TypeNode object from the AST into a CIVLType object
+	 * 
+	 * @param typeNode
+	 * @param scope
+	 * @return the CIVL type representing the TypeNode
+	 */
 	private CIVLType translateTypeNode(TypeNode typeNode, Scope scope) {
 		return translateABCType(factory.sourceOf(typeNode), scope,
 				typeNode.getType());
@@ -537,18 +563,16 @@ public class ModelBuilderWorker {
 	 * Translate AST Node into CIVL Expression
 	 * *********************************************************************
 	 */
-	private Expression nullPointerExpression(CIVLPointerType pointerType,
-			Scope scope, CIVLSource source) {
-		Expression zero = factory.integerLiteralExpression(source,
-				BigInteger.ZERO);
-		Expression result;
 
-		zero.setExpressionScope(scope);
-		result = factory.castExpression(source, pointerType, zero);
-		result.setExpressionScope(scope);
-		return result;
-	}
-
+	/**
+	 * Translate an ExpressionNode object in the AST into a CIVL Expression
+	 * object
+	 * 
+	 * @param expressionNode
+	 * @param scope
+	 * @param translateConversions
+	 * @return the CIVL Expression object
+	 */
 	private Expression translateExpressionNode(ExpressionNode expressionNode,
 			Scope scope, boolean translateConversions) {
 		Expression result;
@@ -626,15 +650,16 @@ public class ModelBuilderWorker {
 					CIVLPointerType newCIVLType = (CIVLPointerType) translateABCType(
 							source, scope, newType);
 
-					result = nullPointerExpression(newCIVLType, scope, source);
+					result = factory.nullPointerExpression(newCIVLType, scope,
+							source);
 				} else if (conversion instanceof PointerBoolConversion) {
 					// pointer type to boolean type: p!=NULL
-					result = factory.binaryExpression(
-							source,
-							BINARY_OPERATOR.NOT_EQUAL,
-							result,
-							nullPointerExpression((CIVLPointerType) result
-									.getExpressionType(), scope, source));
+					result = factory.binaryExpression(source,
+							BINARY_OPERATOR.NOT_EQUAL, result, factory
+									.nullPointerExpression(
+											(CIVLPointerType) result
+													.getExpressionType(),
+											scope, source));
 				} else if (conversion instanceof VoidPointerConversion) {
 					// void*->T* or T*->void*
 					// ignore, pointer types are all the same
@@ -666,6 +691,13 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate a SizeofNode object from AST into a CIVL expression object
+	 * 
+	 * @param sizeofNode
+	 * @param scope
+	 * @return the CIVL Sizeof expression
+	 */
 	private Expression translateSizeofNode(SizeofNode sizeofNode, Scope scope) {
 		SizeableNode argNode = sizeofNode.getArgument();
 		CIVLSource source = factory.sourceOf(sizeofNode);
@@ -981,6 +1013,15 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate an IdentifierExpressionNode object from the AST into a CIVL
+	 * VariableExpression object.
+	 * 
+	 * @param identifierNode
+	 * @param scope
+	 * @return The CIVL VariableExpression object corresponding to the
+	 *         IdentifierExpressionNode
+	 */
 	private Expression translateIdentifierNode(
 			IdentifierExpressionNode identifierNode, Scope scope) {
 		CIVLSource source = factory.sourceOf(identifierNode);
@@ -995,6 +1036,12 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate a ConstantNode into a CIVL literal expression
+	 * 
+	 * @param constantNode
+	 * @return a CIVL literal expression representing the constant node
+	 */
 	private Expression translateConstantNode(ConstantNode constantNode) {
 		CIVLSource source = factory.sourceOf(constantNode);
 		Type convertedType = constantNode.getConvertedType();
@@ -1056,6 +1103,14 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate a QuantifiedExpressionNode from AST into a CIVL Quantified
+	 * expression
+	 * 
+	 * @param expressionNode
+	 * @param scope
+	 * @return the CIVL QuantifiedExpression
+	 */
 	private Expression translateQuantifiedExpressionNode(
 			QuantifiedExpressionNode expressionNode, Scope scope) {
 		QuantifiedExpression result;
@@ -1115,7 +1170,6 @@ public class ModelBuilderWorker {
 	 *            The statement node.
 	 * @return The fragment representation of this statement.
 	 */
-	// TODO: is guard necessary?
 	private Fragment translateStatementNode(Expression guard, Scope scope,
 			StatementNode statementNode) {
 		Fragment result = null;
@@ -1178,7 +1232,13 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * A break or continue statement;
+	 * Translate a jump node (i.e., a break or continue statement) into a
+	 * fragment
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param jumpNode
+	 * @return
 	 */
 	private Fragment translateJumpNode(Expression guard, Scope scope,
 			JumpNode jumpNode) {
@@ -1199,6 +1259,14 @@ public class ModelBuilderWorker {
 		return new Fragment(result);
 	}
 
+	/**
+	 * Translate an IfNode (i.e., an if-else statement) into a fragment
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param ifNode
+	 * @return
+	 */
 	private Fragment translateIfNode(Expression guard, Scope scope,
 			IfNode ifNode) {
 		Expression expression = translateExpressionNode(ifNode.getCondition(),
@@ -1237,22 +1305,15 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * An assume statement.
+	 * Translate an assume node into a fragment of CIVL statements
 	 * 
-	 * @param function
-	 *            The function containing this statement.
-	 * @param location
-	 *            The source location of the assume statement
 	 * @param guard
 	 *            The guard
 	 * @param scope
 	 *            The scope containing this statement.
-	 * @param lastStatement
-	 *            The previous statement. Null if this is the first statement in
-	 *            a function.
 	 * @param assumeNode
-	 *            The AST node for the assume statement
-	 * @return The model representation of this statement.
+	 *            The scope containing this statement.
+	 * @return the fragment
 	 */
 	private Fragment translateAssumeNode(Expression guard, Scope scope,
 			AssumeNode assumeNode) {
@@ -1267,22 +1328,15 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * An assert statement.
+	 * Translate an assert statement into a fragment of CIVL statements
 	 * 
-	 * @param function
-	 *            The function containing this statement.
-	 * @param location
-	 *            The source location of the assert statement
 	 * @param guard
 	 *            The guard
 	 * @param scope
 	 *            The scope containing this statement.
-	 * @param lastStatement
-	 *            The previous statement. Null if this is the first statement in
-	 *            a function.
 	 * @param assertNode
 	 *            The AST node for the assert statement
-	 * @return The model representation of this statement.
+	 * @return the fragment
 	 */
 	private Fragment translateAssertNode(Expression guard, Scope scope,
 			AssertNode assertNode) {
@@ -1297,25 +1351,18 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * Takes an expression statement and converts it to a model representation
-	 * of that statement. Currently supported expressions for expression
-	 * statements are spawn, assign, function call, increment, decrement. Any
-	 * other expressions have no side effects and thus result in a no-op.
+	 * Takes an expression statement and converts it to a fragment of that
+	 * statement. Currently supported expressions for expression statements are
+	 * spawn, assign, function call, increment, decrement. Any other expressions
+	 * have no side effects and thus result in a no-op.
 	 * 
-	 * @param location
-	 *            The start location for this statement.
 	 * @param guard
 	 *            An extra guard associated with this statement.
-	 * @param function
-	 *            The function containing this statement.
-	 * @param lastStatement
-	 *            The previous statement. Null if this is the first statement in
-	 *            a function.
-	 * @param statement
-	 *            The statement node.
 	 * @param scope
 	 *            The scope containing this statement.
-	 * @return The model representation of this statement.
+	 * @param expressionNode
+	 *            The expression node
+	 * @return the fragment representing the expression node
 	 */
 	private Fragment translateExpressionStatementNode(Expression guard,
 			Scope scope, ExpressionNode expressionNode) {
@@ -1359,6 +1406,15 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate a function call node into a fragment containing the call
+	 * statement
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param functionCallNode
+	 * @return the fragment
+	 */
 	private Fragment translateFunctionCallNode(Expression guard, Scope scope,
 			FunctionCallNode functionCallNode) {
 		Location location = factory.location(
@@ -1372,6 +1428,14 @@ public class ModelBuilderWorker {
 		return new Fragment(location, callStatement);
 	}
 
+	/**
+	 * Translate a spawn node into a fragment containing the spawn statement
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param spawnNode
+	 * @return
+	 */
 	private Fragment translateSpawnNode(Expression guard, Scope scope,
 			SpawnNode spawnNode) {
 		Statement spawnStatement;
@@ -1386,6 +1450,16 @@ public class ModelBuilderWorker {
 		return new Fragment(location, spawnStatement);
 	}
 
+	/**
+	 * Translate a FunctionCall node into a call or spawn statement
+	 * 
+	 * @param location
+	 * @param scope
+	 * @param callNode
+	 * @param lhs
+	 * @param isCall
+	 * @return the CallOrSpawnStatement
+	 */
 	private CallOrSpawnStatement callOrSpawnStatement(Location location,
 			Scope scope, FunctionCallNode callNode, LHSExpression lhs,
 			boolean isCall) {
@@ -1426,12 +1500,12 @@ public class ModelBuilderWorker {
 	 * Sometimes an assignment is actually modeled as a fork or function call
 	 * with an optional left hand side argument. Catch these cases.
 	 * 
-	 * @param location
-	 *            The start location for this assign.
-	 * @param lhs
-	 *            AST expression for the left hand side of the assignment.
-	 * @param rhs
-	 *            AST expression for the right hand side of the assignment.
+	 * @param guard
+	 *            The guard
+	 * @param assignNode
+	 *            The assign node <dt><b>Preconditions:</b>
+	 *            <dd>
+	 *            assignNode.getOperator() == ASSIGN
 	 * @param scope
 	 *            The scope containing this assignment.
 	 * @return The model representation of the assignment, which might also be a
@@ -1462,6 +1536,8 @@ public class ModelBuilderWorker {
 	 * Sometimes an assignment is actually modeled as a fork or function call
 	 * with an optional left hand side argument. Catch these cases.
 	 * 
+	 * @param source
+	 *            the CIVL source information of the assign node
 	 * @param location
 	 *            The start location for this assign.
 	 * @param lhs
@@ -1497,6 +1573,16 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate a cast node into a malloc statement
+	 * 
+	 * @param source
+	 * @param location
+	 * @param lhs
+	 * @param castNode
+	 * @param scope
+	 * @return the malloc statement
+	 */
 	private MallocStatement mallocStatement(CIVLSource source,
 			Location location, LHSExpression lhs, CastNode castNode, Scope scope) {
 		CIVLType pointerType = translateTypeNode(castNode.getCastType(), scope);
@@ -1545,13 +1631,10 @@ public class ModelBuilderWorker {
 	 * saying "v = InitialValue[v]". then insert the variable's initializer if
 	 * present.
 	 * 
-	 * @param function
-	 * @param location
 	 * @param guard
 	 * @param scope
-	 * @param lastStatement
 	 * @param statementNode
-	 * @return
+	 * @return the fragment of the compound statement node
 	 */
 	private Fragment translateCompoundStatementNode(Expression guard,
 			Scope scope, CompoundStatementNode statementNode) {
@@ -1620,15 +1703,12 @@ public class ModelBuilderWorker {
 	}
 
 	/**
+	 * Translate a for loop node into a fragment
 	 * 
-	 * @param location
-	 *            start location for the for loop
 	 * @param guard
-	 * @param function
-	 * @param lastStatement
-	 * @param forLoopNode
 	 * @param scope
-	 * @return
+	 * @param forLoopNode
+	 * @return the fragment representing the for loop
 	 */
 	private Fragment translateForLoopNode(Expression guard, Scope scope,
 			ForLoopNode forLoopNode) {
@@ -1636,16 +1716,7 @@ public class ModelBuilderWorker {
 		Fragment initFragment = null;
 		Scope newScope = factory.scope(factory.sourceOf(forLoopNode), scope,
 				new LinkedHashSet<Variable>(), functionInfo.function());
-		Fragment loopBody;
-		Expression condition;
-		Location loopEntranceLocation;
-		Fragment loopEntrance;
-		Fragment incrementer;
-		Fragment loopExit;
 		Fragment result;
-		Location incrementerLocation;
-		Set<Statement> continues;
-		Set<Statement> breaks;
 		Location location = factory.location(
 				factory.sourceOfBeginning(forLoopNode), newScope);
 
@@ -1658,6 +1729,7 @@ public class ModelBuilderWorker {
 						.numChildren(); i++) {
 					VariableDeclarationNode declaration = ((DeclarationListNode) initNode)
 							.getSequenceChild(i);
+
 					translateVariableDeclarationNode(declaration, newScope);
 					if (declaration.getInitializer() != null) {
 						initFragment = new Fragment(factory.assignStatement(
@@ -1679,118 +1751,128 @@ public class ModelBuilderWorker {
 						factory.sourceOf(initNode));
 			}
 		}
-		condition = translateExpressionNode(forLoopNode.getCondition(),
-				newScope, true);
-		condition = factory.booleanExpression(condition);
-		loopEntranceLocation = factory.location(
-				factory.sourceOf(forLoopNode.getCondition().getSource()),
-				newScope);
-		loopEntrance = new Fragment(loopEntranceLocation,
-				factory.noopStatement(factory.sourceOf(forLoopNode
-						.getCondition().getSource()), loopEntranceLocation,
-						condition));
-		functionInfo.addContinueSet(new LinkedHashSet<Statement>());
-		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
-		loopBody = translateStatementNode(null, newScope, forLoopNode.getBody());
 
-		continues = functionInfo.popContinueStack();
-
-		incrementer = translateExpressionStatementNode(null, newScope,
-				forLoopNode.getIncrementer());
-
-		incrementerLocation = incrementer.startLocation;
-		for (Statement s : continues) {
-			s.setTarget(incrementerLocation);
-		}
-
-		loopExit = new Fragment(factory.noopStatement(condition.getSource(),
-				loopEntranceLocation, factory.unaryExpression(
-						condition.getSource(), UNARY_OPERATOR.NOT, condition)));
-
-		breaks = functionInfo.popBreakStack();
-		if (breaks.size() > 0) {
-			StatementSet loopExits = new StatementSet();
-			loopExits.add(loopExit.lastStatement);
-			for (Statement s : breaks) {
-				loopExits.add(s);
-			}
-			loopExit.lastStatement = loopExits;
-		}
-		// loopBody.Print(System.out);
-
-		loopBody = loopBody.combineWith(incrementer);
-		// loopBody.Print(System.out);
-
-		loopBody = loopBody.combineWith(loopEntrance);
-		// loopBody.Print(System.out);
-
-		result = loopEntrance.combineWith(loopBody);
-		result.lastStatement = loopExit.lastStatement;
-		// result.Print(System.out);
+		result = composeLoopFragment(newScope, forLoopNode.getCondition(),
+				forLoopNode.getBody(), forLoopNode.getIncrementer());
 
 		if (initFragment != null) {
 			result = initFragment.combineWith(result);
 		}
 
-		// result.Print(System.out);
-
 		return result;
 	}
 
-	private Fragment translateWhileNode(Expression guard, Scope scope,
-			LoopNode loopNode) {
-		CIVLSource source = factory.sourceOf(loopNode);
-		Fragment loopEntrance;
-		Fragment loopExit;
-		Scope newScope = factory.scope(source, scope,
-				new LinkedHashSet<Variable>(), functionInfo.function());
-		Location location = factory.location(
-				factory.sourceOfBeginning(loopNode), newScope);
-		Fragment loopBody;
-		Fragment result;
-		Expression condition;
-		Set<Statement> continues;
-		Set<Statement> breaks;
+	/**
+	 * Helper method for translating for-loop and while-loop statement nodes
+	 * Translate a loop structure into a fragment of CIVL statements
+	 * 
+	 * @param loopScope
+	 *            the scope of the loop
+	 * @param conditionNode
+	 *            the condition which is an expression node
+	 * @param loopBodyNode
+	 *            the body of the loop which is a statement node
+	 * @param incrementerNode
+	 *            the incrementer which is an expression node, null for while
+	 *            loop
+	 * @return the fragment of the loop structure
+	 */
+	private Fragment composeLoopFragment(Scope loopScope,
+			ExpressionNode conditionNode, StatementNode loopBodyNode,
+			ExpressionNode incrementerNode) {
+		Expression condition = translateExpressionNode(conditionNode,
+				loopScope, true);
+		Set<Statement> continues, breaks;
+		Fragment loopEntrance, loopBody, incrementer = null, loopExit, result;
+		Location continueLocation;
 
-		condition = translateExpressionNode(loopNode.getCondition(), newScope,
-				true);
 		condition = factory.booleanExpression(condition);
+		Location loopEntranceLocation = factory.location(
+				factory.sourceOf(conditionNode.getSource()), loopScope);
+		loopEntrance = new Fragment(loopEntranceLocation,
+				factory.noopStatement(
+						factory.sourceOf(conditionNode.getSource()),
+						loopEntranceLocation, condition));
 
-		loopEntrance = new Fragment(factory.noopStatement(
-				factory.sourceOf(loopNode.getCondition().getSource()),
-				location, condition));
 		functionInfo.addContinueSet(new LinkedHashSet<Statement>());
 		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
 
-		loopBody = translateStatementNode(null, newScope, loopNode.getBody());
-
+		loopBody = translateStatementNode(null, loopScope, loopBodyNode);
 		continues = functionInfo.popContinueStack();
+
+		// if there is no incrementer statement, continue statements will go to
+		// the loop entrance/exit location
+		if (incrementerNode != null) {
+			incrementer = translateExpressionStatementNode(null, loopScope,
+					incrementerNode);
+			continueLocation = incrementer.startLocation;
+		} else
+			continueLocation = loopEntrance.startLocation;
+
 		for (Statement s : continues) {
-			s.setTarget(location);
+			s.setTarget(continueLocation);
 		}
-		assert location != null;
 
-		loopExit = new Fragment(factory.noopStatement(location.getSource(),
-				location, factory.unaryExpression(condition.getSource(),
-						UNARY_OPERATOR.NOT, condition)));
+		// the loop entrance location is the same as the loop exit location
+		loopExit = new Fragment(factory.noopStatement(condition.getSource(),
+				loopEntranceLocation, factory.unaryExpression(
+						condition.getSource(), UNARY_OPERATOR.NOT, condition)));
 
+		// incrementer comes after the loop body
+		if (incrementer != null)
+			loopBody = loopBody.combineWith(incrementer);
+
+		// loop entrance comes before the loop body, P.S. loopExit is "combined"
+		// implicitly because its start location is the same as loopEntrance
+		loopBody = loopBody.combineWith(loopEntrance);
+
+		// initially loop entrance comes before the loopBody. Now we'll have
+		// loopBody -> loopEntrance -> loopBody and the loop is formed.
+		result = loopEntrance.combineWith(loopBody);
+
+		// break statements will go out of the loop, and thus is considered as
+		// one of the last statement of the fragment
 		breaks = functionInfo.popBreakStack();
 		if (breaks.size() > 0) {
-			StatementSet loopExits = new StatementSet();
-			loopExits.add(loopExit.lastStatement);
-			for (Statement s : breaks) {
-				loopExits.add(s);
-			}
-			loopExit.lastStatement = loopExits;
-		}
+			StatementSet lastStatements = new StatementSet();
 
-		loopBody = loopBody.combineWith(loopEntrance);
-		result = loopEntrance.combineWith(loopBody);
-		result.lastStatement = loopExit.lastStatement;
+			lastStatements.add(loopExit.lastStatement);
+			for (Statement s : breaks) {
+				lastStatements.add(s);
+			}
+			result.lastStatement = lastStatements;
+		} else {
+			result.lastStatement = loopExit.lastStatement;
+		}
 
 		return result;
 	}
 
+	/**
+	 * Translate a while node to a fragment of CIVL statements
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param loopNode
+	 * @return the fragment of the while loop
+	 */
+	private Fragment translateWhileNode(Expression guard, Scope scope,
+			LoopNode loopNode) {
+		Scope newScope = factory.scope(factory.sourceOf(loopNode), scope,
+				new LinkedHashSet<Variable>(), functionInfo.function());
+
+		return composeLoopFragment(newScope, loopNode.getCondition(),
+				loopNode.getBody(), null);
+	}
+
+	/**
+	 * Translate a Wait node to a fragment of a CIVL join statement
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param waitNode
+	 * @return the fragment
+	 */
 	private Fragment translateWaitNode(Expression guard, Scope scope,
 			WaitNode waitNode) {
 		CIVLSource source = factory.sourceOf(waitNode);
@@ -1802,14 +1884,31 @@ public class ModelBuilderWorker {
 				guard));
 	}
 
+	/**
+	 * Translate a null statement node into a fragment of a no-op statement
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param nullStatementNode
+	 * @return the fragment
+	 */
 	private Fragment translateNullStatementNode(Expression guard, Scope scope,
 			NullStatementNode nullStatementNode) {
 		Location location = factory.location(
 				factory.sourceOfBeginning(nullStatementNode), scope);
+
 		return new Fragment(factory.noopStatement(
 				factory.sourceOf(nullStatementNode), location, guard));
 	}
 
+	/**
+	 * Translate a when node into a fragment of a when statement
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param whenNode
+	 * @return the fragment
+	 */
 	private Fragment translateWhenNode(Expression guard, Scope scope,
 			WhenNode whenNode) {
 		Expression newGuard = translateExpressionNode(whenNode.getGuard(),
@@ -1828,6 +1927,15 @@ public class ModelBuilderWorker {
 		return translateStatementNode(newGuard, scope, whenNode.getBody());
 	}
 
+	/**
+	 * Translate a choose node into a fragment that has multiple outgoing
+	 * statements from its start location
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param chooseStatementNode
+	 * @return the fragment
+	 */
 	private Fragment translateChooseNode(Expression guard, Scope scope,
 			ChooseStatementNode chooseStatementNode) {
 		Location startLocation = factory.location(
@@ -1838,6 +1946,7 @@ public class ModelBuilderWorker {
 				endLocation.getSource(), endLocation, guard));
 		int defaultOffset = 0;
 		Fragment result = new Fragment();
+		Iterator<Statement> iter;
 
 		if (guard == null)
 			guard = factory.booleanLiteralExpression(startLocation.getSource(),
@@ -1852,11 +1961,14 @@ public class ModelBuilderWorker {
 					factory.booleanLiteralExpression(
 							factory.sourceOfBeginning(childNode), true), scope,
 					childNode);
+
+			// make all case fragment to start at the same location
 			caseFragment.updateStartLocation(startLocation);
-			// result = result.parallelCombineWith(caseFragment);
+			// combine all case fragments as branches of the start location
+			result = result.parallelCombineWith(caseFragment);
 		}
 
-		Iterator<Statement> iter = startLocation.outgoing().iterator();
+		iter = startLocation.outgoing().iterator();
 
 		// Compute the guard for the default statement
 		while (iter.hasNext()) {
@@ -1874,17 +1986,31 @@ public class ModelBuilderWorker {
 			}
 		}
 		if (chooseStatementNode.getDefaultCase() != null) {
-			Fragment defaultStatement = translateStatementNode(
+			Fragment defaultFragment = translateStatementNode(
 					factory.unaryExpression(guard.getSource(),
 							UNARY_OPERATOR.NOT, guard), scope,
 					chooseStatementNode.getDefaultCase());
-			result = result.parallelCombineWith(defaultStatement);
+
+			// update the start location of default fragment
+			defaultFragment.updateStartLocation(startLocation);
+			// combine the default fragment as a branch of the start location
+			result = result.parallelCombineWith(defaultFragment);
 		}
 
+		// combine all branches with the exit fragment
 		result = result.combineWith(exit);
 		return result;
 	}
 
+	/**
+	 * Translate goto statement, since the labelled location might not have been
+	 * processed, record the no-op statement and the label to be complete later
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param gotoNode
+	 * @return
+	 */
 	private Fragment translateGotoNode(Expression guard, Scope scope,
 			GotoNode gotoNode) {
 		OrdinaryLabelNode label = ((Label) gotoNode.getLabel().getEntity())
@@ -1900,6 +2026,14 @@ public class ModelBuilderWorker {
 	}
 
 	// TODO check semantics
+	/**
+	 * Translate labeled statements
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param labelStatementNode
+	 * @return
+	 */
 	private Fragment translateLabelStatementNode(Expression guard, Scope scope,
 			LabeledStatementNode labelStatementNode) {
 		Fragment result = translateStatementNode(guard, scope,
@@ -1910,6 +2044,14 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate return statements
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param returnNode
+	 * @return
+	 */
 	private Fragment translateReturnNode(Expression guard, Scope scope,
 			ReturnNode returnNode) {
 		Location location = factory.location(
@@ -1927,13 +2069,21 @@ public class ModelBuilderWorker {
 		return new Fragment(result);
 	}
 
+	/**
+	 * Translate switch block into a fragment
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param switchNode
+	 * @return
+	 */
 	private Fragment translateSwitchNode(Expression guard, Scope scope,
 			SwitchNode switchNode) {
 		Fragment result = new Fragment();
 		Iterator<LabeledStatementNode> cases = switchNode.getCases();
 		Expression condition = translateExpressionNode(
 				switchNode.getCondition(), scope, true);
-		/** Collect case guards to determine guard for default case. */
+		// Collect case guards to determine guard for default case.
 		Expression combinedCaseGuards = guard;
 		Fragment bodyGoto;
 		Set<Statement> breaks;
@@ -1998,7 +2148,6 @@ public class ModelBuilderWorker {
 		result = result.combineWith(bodyGoto);
 
 		bodyGoto = translateStatementNode(null, scope, switchNode.getBody());
-
 		result = result.combineWith(bodyGoto);
 
 		breaks = functionInfo.popBreakStack();
@@ -2014,7 +2163,6 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	// ///////////////////////////////////
 	/**
 	 * Processes a function declaration node (whether or not node is also a
 	 * definition node).
@@ -2158,12 +2306,27 @@ public class ModelBuilderWorker {
 	 * Processes the function body of a function definition node. At least one
 	 * function declaration for this function should have been processed
 	 * already, so the corresponding CIVL function should already exist.
+	 * 
+	 * @param functionNode
+	 *            the function definition node in the AST
+	 * @param function
+	 *            the corresponding CIVL function (only not null for system
+	 *            function)
+	 * @param initializationFragment
+	 *            the fragment of initialization statements, only not null for
+	 *            system function
 	 */
 	private void translateFunctionDefinitionNode(
-			FunctionDefinitionNode functionNode) {
+			FunctionDefinitionNode functionNode, CIVLFunction function,
+			Fragment initializationFragment) {
 		Entity entity = functionNode.getEntity();
-		CIVLFunction result = functionMap.get(entity);
+		CIVLFunction result;
 		Fragment body;
+
+		if (function == null)
+			result = functionMap.get(entity);
+		else
+			result = function;
 
 		if (result == null)
 			throw new CIVLInternalException("Did not process declaration",
@@ -2185,6 +2348,10 @@ public class ModelBuilderWorker {
 				body = body.combineWith(returnFragment);
 			else
 				body = returnFragment;
+		}
+
+		if (initializationFragment != null) {
+			body = initializationFragment.combineWith(body);
 		}
 
 		functionInfo.completeFunction(body);
@@ -2262,6 +2429,12 @@ public class ModelBuilderWorker {
 		return false;
 	}
 
+	/**
+	 * Calculate the
+	 * 
+	 * @param fieldIdentifier
+	 * @return
+	 */
 	private int getFieldIndex(IdentifierNode fieldIdentifier) {
 		Entity entity = fieldIdentifier.getEntity();
 		EntityKind kind = entity.getEntityKind();
@@ -2283,7 +2456,14 @@ public class ModelBuilderWorker {
 	// String x: STRING
 	// boolean x : BOOLEAN
 	// else no can do yet
-
+	/**
+	 * Translate command line constants into CIVL literal expression
+	 * 
+	 * @param variable
+	 * @param constant
+	 * @return the literal expression of the constant
+	 * @throws CommandLineException
+	 */
 	private LiteralExpression constant(Variable variable, Object constant)
 			throws CommandLineException {
 		CIVLType type = variable.type();
@@ -2418,6 +2598,14 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Translate type node that is typedef, struct or union
+	 * 
+	 * @param sourceLocation
+	 * @param scope
+	 * @param typeNode
+	 * @return the fragment
+	 */
 	private Fragment translateCompoundTypeNode(Location sourceLocation,
 			Scope scope, TypeNode typeNode) {
 		Fragment result = null;
@@ -2468,6 +2656,9 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
+	/**
+	 * Complete bundle type
+	 */
 	private void completeBundleType() {
 		Map<SymbolicType, Integer> dynamicTypeMap = new LinkedHashMap<SymbolicType, Integer>();
 		int dynamicTypeCount = 0;
@@ -2496,8 +2687,6 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * Returns the configuration.
-	 * 
 	 * @return the configuration
 	 */
 	public GMCConfiguration getConfiguration() {
@@ -2505,11 +2694,9 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * Build the model.
+	 * Build the CIVL model from the AST
 	 * 
-	 * @param unit
-	 *            The translation unit for the AST.
-	 * @return The model.
+	 * @return
 	 * @throws CommandLineException
 	 */
 	public void buildModel() throws CommandLineException {
@@ -2519,12 +2706,8 @@ public class ModelBuilderWorker {
 				factory.sourceOf(program.getAST().getRootNode()), systemID,
 				new ArrayList<Variable>(), null, null, null);
 		ASTNode rootNode = program.getAST().getRootNode();
-		Location returnLocation;
-		Statement returnStatement;
 		FunctionDefinitionNode mainFunction = null;
-		Fragment mainBody;
 		Fragment initialization = new Fragment();
-		// ArrayList<Statement> initializations = new ArrayList<Statement>();
 
 		systemScope = system.outerScope();
 		callStatements = new LinkedHashMap<CallOrSpawnStatement, Function>();
@@ -2554,11 +2737,6 @@ public class ModelBuilderWorker {
 					// statements to initializations:
 
 					initialization = initialization.combineWith(fragment);
-
-					// if (!initializations.isEmpty())
-					// initializations.get(initializations.size() - 1)
-					// .setTarget(fragment.startLocation);
-					// addToFunction(fragment, system, true, initializations);
 				}
 			} else if (node instanceof FunctionDefinitionNode) {
 				if (((FunctionDefinitionNode) node).getName().equals("main")) {
@@ -2605,37 +2783,15 @@ public class ModelBuilderWorker {
 			}
 		}
 
-		functionInfo = new FunctionInfo(system);
-
-		mainBody = translateStatementNode(null, system.outerScope(),
-				mainFunction.getBody());
-		mainBody = initialization.combineWith(mainBody);
-
-		if (mainBody == null
-				|| !(mainBody.lastStatement instanceof ReturnStatement)) {
-			Fragment returnFragment;
-
-			returnLocation = factory.location(
-					factory.sourceOfEnd(mainFunction.getBody()),
-					system.outerScope());
-			returnStatement = factory.returnStatement(
-					returnLocation.getSource(), returnLocation, null, null);
-			returnFragment = new Fragment(returnStatement);
-
-			if (mainBody != null) {
-				mainBody = mainBody.combineWith(returnFragment);
-			} else {
-				mainBody = returnFragment;
-			}
-		}
-
-		functionInfo.completeFunction(mainBody);
+		// translate main function, using system as the CIVL function object, and
+		// combining initialization statements with its body
+		translateFunctionDefinitionNode(mainFunction, system, initialization);
 
 		while (!unprocessedFunctions.isEmpty()) {
 			FunctionDefinitionNode functionDefinition = unprocessedFunctions
 					.remove(0);
 
-			translateFunctionDefinitionNode(functionDefinition);
+			translateFunctionDefinitionNode(functionDefinition, null, null);
 		}
 		for (CallOrSpawnStatement statement : callStatements.keySet()) {
 			statement
@@ -2648,6 +2804,7 @@ public class ModelBuilderWorker {
 		factory.completeHeapType(heapType, mallocStatements);
 		for (Type t : typeMap.keySet()) {
 			CIVLType thisType = typeMap.get(t);
+
 			if (bundleableType(thisType)) {
 				bundleableTypeList.add(thisType);
 			} else {
@@ -2691,6 +2848,9 @@ public class ModelBuilderWorker {
 		}
 	}
 
+	/**
+	 * @return the model
+	 */
 	public Model getModel() {
 		return model;
 	}
@@ -2705,20 +2865,54 @@ public class ModelBuilderWorker {
  */
 class Fragment {
 
+	/**
+	 * The start location of the fragment
+	 */
 	public Location startLocation;
 
+	/**
+	 * The last statement of the fragment
+	 */
 	public Statement lastStatement;
 
+	/**
+	 * Constructor: create an empty fragment
+	 */
+	public Fragment() {
+
+	}
+
+	/**
+	 * Constructor
+	 * 
+	 * @param statement
+	 *            use <code>statement</code> to create a new fragment, with the
+	 *            start location being the source location of
+	 *            <code>statement</code> and the last statement being
+	 *            <code>statement</code>
+	 */
 	public Fragment(Statement statement) {
 		this.startLocation = statement.source();
 		this.lastStatement = statement;
 	}
 
+	/**
+	 * Constructor
+	 * 
+	 * @param startLocation
+	 * @param lastStatement
+	 */
 	public Fragment(Location startLocation, Statement lastStatement) {
 		this.startLocation = startLocation;
 		this.lastStatement = lastStatement;
 	}
 
+	/**
+	 * Combine two fragment in sequential
+	 * 
+	 * @param next
+	 * @return
+	 */
 	public Fragment combineWith(Fragment next) {
 		if (next == null || next.isEmpty())
 			return this;
@@ -2730,6 +2924,19 @@ class Fragment {
 		return new Fragment(this.startLocation, next.lastStatement);
 	}
 
+	/**
+	 * Combine this fragment and another fragment in parallel, i.e., merge the
+	 * start location, and add the last statement of both fragments as the last
+	 * statement of the result fragment
+	 * 
+	 * @param parallel
+	 *            the second fragment to be combined with <dt>
+	 *            <b>Preconditions:</b>
+	 *            <dd>
+	 *            this.startLocation.id() === parallel.startLocation.id()
+	 * 
+	 * @return the new fragment after the combination
+	 */
 	public Fragment parallelCombineWith(Fragment parallel) {
 		StatementSet newLastStatement = new StatementSet();
 
@@ -2744,16 +2951,22 @@ class Fragment {
 		return new Fragment(this.startLocation, newLastStatement);
 	}
 
-	public Fragment() {
-
-	}
-
+	/**
+	 * Check if the fragment is empty
+	 * 
+	 * @return true iff both the start location and the last statement are null
+	 */
 	public boolean isEmpty() {
 		if (startLocation == null && lastStatement == null)
 			return true;
 		return false;
 	}
 
+	/**
+	 * Print the fragment
+	 * 
+	 * @param out
+	 */
 	public void Print(PrintStream out) {
 		out.println(this.toString());
 	}
@@ -2799,18 +3012,17 @@ class Fragment {
 
 	}
 
+	/**
+	 * Update the start location with a new location
+	 * 
+	 * @param newLocation
+	 */
 	public void updateStartLocation(Location newLocation) {
 		if (isEmpty())
 			return;
 
 		int oldLocationId = this.startLocation.id();
 		int number = startLocation.getNumOutgoing();
-
-		// for(int i = 0; i < number; i++){
-		// Statement s = startLocation.getOutgoing(i);
-		//
-		// s.setSource(newLocation);
-		// }
 
 		Stack<Location> workings = new Stack<Location>();
 		Set<Integer> locationIds = new HashSet<Integer>();
