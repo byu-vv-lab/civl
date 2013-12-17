@@ -165,6 +165,11 @@ public class ModelBuilderWorker {
 	 * The model being constructed by this worker
 	 */
 	private Model model;
+	
+	/**
+	 * The name of the model (i.e., core name of the cvl file)
+	 */
+	private String modelName;
 
 	/**
 	 * The outermost scope of the model, root of the static scope tree, known as
@@ -280,13 +285,14 @@ public class ModelBuilderWorker {
 	 * 
 	 */
 	public ModelBuilderWorker(GMCConfiguration config, ModelFactory factory,
-			Program program) {
+			Program program, String name) {
 		this.config = config;
 		this.inputInitMap = config.getMapValue(UserInterface.inputO);
 		this.factory = factory;
 		this.program = program;
 		this.factory.setTokenFactory(program.getTokenFactory());
-		this.heapType = factory.heapType("model");
+		this.modelName = name;
+		this.heapType = factory.heapType(name);
 		this.bundleType = factory.newBundleType();
 		this.universe = factory.universe();
 	}
@@ -2816,6 +2822,7 @@ public class ModelBuilderWorker {
 		model.setMessageType(messageType);
 		model.setQueueType(queueType);
 		model.setCommType(commType);
+		model.setName(modelName);
 		// add all functions to model except main:
 		for (CIVLFunction f : functionMap.values())
 			model.addFunction(f);

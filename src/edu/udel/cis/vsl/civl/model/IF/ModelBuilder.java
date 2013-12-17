@@ -23,15 +23,19 @@ public interface ModelBuilder {
 	/**
 	 * Builds the model.
 	 * 
+	 * @param config
+	 *            The GMC configuration
 	 * @param program
-	 *            The ABC program to translate.
+	 *            The ABC program to translate
+	 * @param name
+	 *            The name of the model
 	 * @return The model.
 	 * @throws CommandLineException
 	 *             if an input variable initial value specified on the command
 	 *             line has a type which is not compatible with the type of the
 	 *             variable
 	 */
-	Model buildModel(GMCConfiguration config, Program program)
+	Model buildModel(GMCConfiguration config, Program program, String name)
 			throws CommandLineException;
 
 }

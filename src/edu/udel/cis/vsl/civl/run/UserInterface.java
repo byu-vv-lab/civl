@@ -245,8 +245,8 @@ public class UserInterface {
 		}
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
-		model = modelBuilder.buildModel(config, program);
-		model.setName(coreName(filename));
+		model = modelBuilder.buildModel(config, program, coreName(filename));
+		//model.setName(coreName(filename));
 		if (verbose || debug)
 			out.println(bar + " Model " + bar + "\n");
 		if (showModel || verbose || debug || parse) {

@@ -40,10 +40,10 @@ public class CommonModelBuilder implements ModelBuilder {
 	// Exported Methods................................................
 
 	@Override
-	public Model buildModel(GMCConfiguration config, Program program)
+	public Model buildModel(GMCConfiguration config, Program program, String name)
 			throws CommandLineException {
 		ModelBuilderWorker worker = new ModelBuilderWorker(config, factory,
-				program);
+				program, name);
 
 		worker.buildModel();
 		return worker.getModel();
