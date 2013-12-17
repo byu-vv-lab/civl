@@ -208,5 +208,10 @@ public class FunctionInfo {
 				}
 			}
 		}
+		
+		for (Statement s : gotoStatements.keySet()) {
+			s.setTarget(labeledLocations.get(
+					gotoStatements.get(s)));
+		}
 	}
 }

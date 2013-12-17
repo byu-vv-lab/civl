@@ -165,7 +165,7 @@ public class ModelBuilderWorker {
 	 * The model being constructed by this worker
 	 */
 	private Model model;
-	
+
 	/**
 	 * The name of the model (i.e., core name of the cvl file)
 	 */
@@ -2243,16 +2243,17 @@ public class ModelBuilderWorker {
 				Source declSource = node.getIdentifier().getSource();
 				CToken token = declSource.getFirstToken();
 				File file = token.getSourceFile();
-				String fileName = file.getName();
-				// fileName will be something like "stdlib.h" or "civlc.h"
-				int dotIndex = fileName.lastIndexOf('.');
+				String fileName = file.getName(); // fileName will be something
+													// like "stdlib.h" or
+													// "civlc.h"
 				String libName;
 
-				if (dotIndex < 0)
+				if (!fileName.contains("."))
 					throw new CIVLInternalException("Malformed file name "
 							+ fileName + " containing system function "
 							+ functionName, nodeSource);
-				libName = fileName.substring(0, dotIndex);
+
+				libName = fileNameWithoutExtension(fileName);
 				result = factory.systemFunction(nodeSource, functionIdentifier,
 						parameters, returnType, scope, libName);
 			} else { // regular function
@@ -2328,6 +2329,7 @@ public class ModelBuilderWorker {
 		Entity entity = functionNode.getEntity();
 		CIVLFunction result;
 		Fragment body;
+		StatementNode functionBodyNode;
 
 		if (function == null)
 			result = functionMap.get(entity);
@@ -2339,8 +2341,7 @@ public class ModelBuilderWorker {
 					factory.sourceOf(functionNode));
 
 		functionInfo = new FunctionInfo(result);
-
-		StatementNode functionBodyNode = functionNode.getBody();
+		functionBodyNode = functionNode.getBody();
 		Scope scope = result.outerScope();
 		body = translateStatementNode(null, scope, functionBodyNode);
 
@@ -2350,6 +2351,7 @@ public class ModelBuilderWorker {
 					result.outerScope());
 			Fragment returnFragment = new Fragment(factory.returnStatement(
 					endSource, returnLocation, null, null));
+
 			if (body != null)
 				body = body.combineWith(returnFragment);
 			else
@@ -2361,11 +2363,6 @@ public class ModelBuilderWorker {
 		}
 
 		functionInfo.completeFunction(body);
-
-		for (Statement s : functionInfo.gotoStatements().keySet()) {
-			s.setTarget(functionInfo.labeledLocations().get(
-					functionInfo.gotoStatements().get(s)));
-		}
 	}
 
 	/**
@@ -2382,8 +2379,8 @@ public class ModelBuilderWorker {
 		CIVLType type = translateTypeNode(node.getTypeNode(), scope);
 		CIVLSource source = factory.sourceOf(node.getIdentifier());
 		Identifier name = factory.identifier(source, node.getName());
-
 		int vid = scope.numVariables();
+
 		Variable variable = factory.variable(source, type, name, vid);
 		scope.addVariable(variable);
 
@@ -2683,6 +2680,14 @@ public class ModelBuilderWorker {
 		factory.complete(bundleType, dynamicTypeMap.keySet());
 	}
 
+	private String fileNameWithoutExtension(String fileName) {
+		int dotIndex = fileName.lastIndexOf('.');
+		String libName;
+
+		libName = fileName.substring(0, dotIndex);
+		return libName;
+	}
+
 	// Exported methods....................................................
 
 	/**
@@ -2789,7 +2794,8 @@ public class ModelBuilderWorker {
 			}
 		}
 
-		// translate main function, using system as the CIVL function object, and
+		// translate main function, using system as the CIVL function object,
+		// and
 		// combining initialization statements with its body
 		translateFunctionDefinitionNode(mainFunction, system, initialization);
 
@@ -2803,10 +2809,10 @@ public class ModelBuilderWorker {
 			statement
 					.setFunction(functionMap.get(callStatements.get(statement)));
 		}
-		for (Statement s : functionInfo.gotoStatements().keySet()) {
-			s.setTarget(functionInfo.labeledLocations().get(
-					functionInfo.gotoStatements().get(s)));
-		}
+		// for (Statement s : functionInfo.gotoStatements().keySet()) {
+		// s.setTarget(functionInfo.labeledLocations().get(
+		// functionInfo.gotoStatements().get(s)));
+		// }
 		factory.completeHeapType(heapType, mallocStatements);
 		for (Type t : typeMap.keySet()) {
 			CIVLType thisType = typeMap.get(t);
