@@ -5,8 +5,10 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
 /**
  * @author zirkel
@@ -15,7 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 public class CommonDotExpression extends CommonExpression implements
 		DotExpression {
 
-	private Expression struct;//TODO shall this be of type LHSExpression?
+	private Expression struct;// TODO shall this be of type LHSExpression?
 	private int fieldIndex;
 
 	/**
@@ -71,7 +73,7 @@ public class CommonDotExpression extends CommonExpression implements
 
 	@Override
 	public void setPurelyLocal(boolean pl) {
-		// TODO what if &(a.index) where a is defined as a struct 
+		// TODO what if &(a.index) where a is defined as a struct
 		// and index is a field of the struct
 	}
 
@@ -82,13 +84,23 @@ public class CommonDotExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		if(this.hasDerefs){
+		if (this.hasDerefs) {
 			this.purelyLocal = false;
 			return;
 		}
-		
+
 		this.struct.purelyLocalAnalysis();
 		this.purelyLocal = this.struct.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (struct == oldExpression) {
+			struct = newExpression;
+			return;
+		}
+		struct.replaceWith(oldExpression, newExpression);
 	}
 
 }

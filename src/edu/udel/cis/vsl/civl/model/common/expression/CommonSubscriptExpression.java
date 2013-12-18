@@ -5,9 +5,11 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
 /**
  * a[i], where "a" is an array and "i" is an expression evaluating to an
@@ -77,13 +79,12 @@ public class CommonSubscriptExpression extends CommonExpression implements
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.SUBSCRIPT;
 	}
-	
+
 	@Override
 	public void calculateDerefs() {
 		this.array.calculateDerefs();
 		this.index.calculateDerefs();
-		this.hasDerefs = this.array.hasDerefs() || 
-				this.index.hasDerefs();
+		this.hasDerefs = this.array.hasDerefs() || this.index.hasDerefs();
 	}
 
 	@Override
@@ -99,18 +100,28 @@ public class CommonSubscriptExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		if(!this.purelyLocal)
+		if (!this.purelyLocal)
 			return;
-		
-		if(this.hasDerefs){
+
+		if (this.hasDerefs) {
 			this.purelyLocal = false;
 			return;
 		}
-		
+
 		this.array.purelyLocalAnalysis();
 		this.index.purelyLocalAnalysis();
-		this.purelyLocal = this.array.isPurelyLocal() 
+		this.purelyLocal = this.array.isPurelyLocal()
 				&& this.index.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (index == oldExpression) {
+			index = newExpression;
+			return;
+		}
+		index.replaceWith(oldExpression, newExpression);
 	}
 
 }

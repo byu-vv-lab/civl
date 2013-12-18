@@ -4,8 +4,10 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -117,6 +119,21 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 		}
 		result += " {" + variable + " | " + restriction + "} " + expression;
 		return result;
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (restriction == oldExpression) {
+			restriction = newExpression;
+			return;
+		}
+		if (expression == oldExpression) {
+			expression = newExpression;
+			return;
+		}
+		restriction.replaceWith(oldExpression, newExpression);
+		expression.replaceWith(oldExpression, newExpression);
 	}
 
 }

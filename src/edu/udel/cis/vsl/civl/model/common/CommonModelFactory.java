@@ -57,6 +57,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
@@ -100,6 +101,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonMallocStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonBundleType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonCompleteArrayType;
@@ -199,6 +201,9 @@ public class CommonModelFactory implements ModelFactory {
 	/**
 	 * The factory to create all model components. Usually this is the only way
 	 * model components will be created.
+	 * 
+	 * @param universe
+	 *            The symbolic universe
 	 */
 	public CommonModelFactory(SymbolicUniverse universe) {
 		Iterable<SymbolicType> intTypeSingleton = new Singleton<SymbolicType>(
@@ -632,14 +637,6 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * A cast of an expression to another type.
-	 * 
-	 * @param type
-	 *            The type to which the expression is cast.
-	 * @param expresssion
-	 *            The expression being cast to a new type.
-	 */
 	@Override
 	public CastExpression castExpression(CIVLSource source, CIVLType type,
 			Expression expression) {
@@ -712,15 +709,6 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * A dot expression is a reference to a struct field.
-	 * 
-	 * @param struct
-	 *            The struct being referenced.
-	 * @param field
-	 *            The field.
-	 * @return The dot expression.
-	 */
 	@Override
 	public DotExpression dotExpression(CIVLSource source, Expression struct,
 			int fieldIndex) {
@@ -1267,6 +1255,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	/**
 	 * generate undefined value of a certain type
+	 * 
 	 * @param type
 	 * @return
 	 */
@@ -1445,17 +1434,56 @@ public class CommonModelFactory implements ModelFactory {
 		return expression instanceof BooleanLiteralExpression
 				&& ((BooleanLiteralExpression) expression).value();
 	}
-	
+
 	@Override
 	public Expression nullPointerExpression(CIVLPointerType pointerType,
 			Scope scope, CIVLSource source) {
-		Expression zero = integerLiteralExpression(source,
-				BigInteger.ZERO);
+		Expression zero = integerLiteralExpression(source, BigInteger.ZERO);
 		Expression result;
 
 		zero.setExpressionScope(scope);
 		result = castExpression(source, pointerType, zero);
 		result.setExpressionScope(scope);
+		return result;
+	}
+
+	@Override
+	public Fragment conditionalExpressionToIf(Expression guard,
+			VariableExpression variable, ConditionalExpression expression) {
+		Expression condition = expression.getCondition();
+		Location startLocation = location(condition.getSource(), variable
+				.variable().scope());
+		Expression ifGuard, elseGuard;
+		Statement ifAssign, elseAssign;
+		Expression ifValue = expression.getTrueBranch(), elseValue = expression
+				.getFalseBranch();
+		Fragment result = new Fragment();
+		StatementSet lastStatement = new StatementSet();
+
+		ifGuard = booleanExpression(condition);
+		elseGuard = unaryExpression(condition.getSource(), UNARY_OPERATOR.NOT,
+				ifGuard);
+
+		if (!isTrue(guard)) {
+			ifGuard = binaryExpression(
+					sourceOfSpan(guard.getSource(), ifGuard.getSource()),
+					BINARY_OPERATOR.AND, guard, ifGuard);
+			elseGuard = binaryExpression(
+					sourceOfSpan(guard.getSource(), elseGuard.getSource()),
+					BINARY_OPERATOR.AND, guard, elseGuard);
+		}
+
+		ifAssign = assignStatement(ifValue.getSource(), startLocation,
+				variable, ifValue, ifGuard);
+		lastStatement.add(ifAssign);
+
+		elseAssign = assignStatement(elseValue.getSource(), startLocation,
+				variable, elseValue, elseGuard);
+		lastStatement.add(elseAssign);
+
+		result.startLocation = startLocation;
+		result.lastStatement = lastStatement;
+
 		return result;
 	}
 }

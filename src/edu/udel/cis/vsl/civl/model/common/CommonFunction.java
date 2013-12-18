@@ -50,6 +50,8 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	/**
 	 * A function.
 	 * 
+	 * @param source
+	 *            The CIVL source of the function
 	 * @param name
 	 *            The name of this function.
 	 * @param parameters
@@ -60,6 +62,8 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 *            The scope containing this function.
 	 * @param startLocation
 	 *            The first location in the function.
+	 * @param factory
+	 *            The model factory
 	 */
 	public CommonFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
@@ -339,15 +343,13 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	}
 
 	/**
-	 * Remove all locations that satisfy the following conditions:
-	 * 1. has exactly one outgoing statement and
-	 * 2. the statement is a no-op with the guard true.
-	 * Meanwhile, have to redirect each statement that targets at the no-op location
-	 * to the target of the no-op location.
-	 * For example, let l(s->l', ...) be a location l with statement s going to l' ...
-	 * l1 (s1 -> l2, s2 -> l3), l2 ([true]no-op -> l4), l3(), l(4)
-	 * After applying simplify(), should be
-	 * l1 (s1 -> l4, s2 -> l3), l3(), l4()
+	 * Remove all locations that satisfy the following conditions: 1. has
+	 * exactly one outgoing statement and 2. the statement is a no-op with the
+	 * guard true. Meanwhile, have to redirect each statement that targets at
+	 * the no-op location to the target of the no-op location. For example, let
+	 * l(s->l', ...) be a location l with statement s going to l' ... l1 (s1 ->
+	 * l2, s2 -> l3), l2 ([true]no-op -> l4), l3(), l(4) After applying
+	 * simplify(), should be l1 (s1 -> l4, s2 -> l3), l3(), l4()
 	 */
 	@Override
 	public void simplify() {
@@ -441,88 +443,86 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		this.locations = newLocations;
 	}
 
-	
-	public void purelyLocalAnalysis(){
-//		HashSet<String> spawnFuncs = new HashSet<String>(); 
-		
+	public void purelyLocalAnalysis() {
+		// HashSet<String> spawnFuncs = new HashSet<String>();
+
 		Scope funcScope = this.outerScope;
-		
-		for(Location loc: this.locations){
-			
+
+		for (Location loc : this.locations) {
+
 			Iterable<Statement> stmts = loc.outgoing();
-			
-			for(Statement s: stmts){
+
+			for (Statement s : stmts) {
 				s.purelyLocalAnalysisOfVariables(funcScope);
-//				TODO functions that are never spawned are to be executed in the same process as the caller
-//				if(s instanceof CallOrSpawnStatement){
-//					CallOrSpawnStatement call = (CallOrSpawnStatement) s;
-//					if(call.isSpawn()){
-//						spawnFuncs.add(call.function().name().name());
-//					}
-//				}
+				// TODO functions that are never spawned are to be executed in
+				// the same process as the caller
+				// if(s instanceof CallOrSpawnStatement){
+				// CallOrSpawnStatement call = (CallOrSpawnStatement) s;
+				// if(call.isSpawn()){
+				// spawnFuncs.add(call.function().name().name());
+				// }
+				// }
 			}
 		}
-		
-//		Map<String, Variable> variables = new HashMap<String, Variable>();
-//		
-//		Set<Variable> vars = outerScope.variables();
-//		for(Variable var: vars){
-//			variables.put(var.name().toString(), var);
-//		}
-//		
-//		vars = containingScope.variables();
-//		for(Variable var: vars){
-//			variables.put(var.name().toString(), var);
-//		}
-//		
-//		//Location loc = this.startLocation;
-//		
-//		Stack<Location> stack = new Stack<Location>();
-//		stack.push(this.startLocation);
-//		Stack<Integer> visitedLocs = new Stack<Integer>();
-//		Scope scope = this.containingScope;//TODO: outerScope vs containingScope
-//		
-//		
-//		
-//		
-//		while(!stack.isEmpty()){
-//			Location loc = stack.pop();
-//			int lid = loc.id();
-//			if(visitedLocs.contains(lid))
-//				continue;
-//			visitedLocs.add(lid);
-//			
-//			Scope newScope = loc.scope();
-//			int scopeId = scope.id();
-//			int newScopeId = newScope.id();
-//			if(newScopeId != scopeId){
-//				if(newScope.parent().id() == scopeId){
-//					
-//				}else if(scope.parent().id() == scopeId){
-//					
-//				}
-//				
-//			}
-//			
-//			scope = newScope;
-//			
-//			
-//			Set<Statement> stmts = loc.outgoing();
-//			
-//			
-//			
-//			for(Statement s: stmts){
-//				Location target = s.target();
-//				int tgid = target.id();
-//				if(!visitedLocs.contains(tgid)){
-//					stack.push(target);
-//				}
-//			}
-//		}
-		
 
-		
+		// Map<String, Variable> variables = new HashMap<String, Variable>();
+		//
+		// Set<Variable> vars = outerScope.variables();
+		// for(Variable var: vars){
+		// variables.put(var.name().toString(), var);
+		// }
+		//
+		// vars = containingScope.variables();
+		// for(Variable var: vars){
+		// variables.put(var.name().toString(), var);
+		// }
+		//
+		// //Location loc = this.startLocation;
+		//
+		// Stack<Location> stack = new Stack<Location>();
+		// stack.push(this.startLocation);
+		// Stack<Integer> visitedLocs = new Stack<Integer>();
+		// Scope scope = this.containingScope;//TODO: outerScope vs
+		// containingScope
+		//
+		//
+		//
+		//
+		// while(!stack.isEmpty()){
+		// Location loc = stack.pop();
+		// int lid = loc.id();
+		// if(visitedLocs.contains(lid))
+		// continue;
+		// visitedLocs.add(lid);
+		//
+		// Scope newScope = loc.scope();
+		// int scopeId = scope.id();
+		// int newScopeId = newScope.id();
+		// if(newScopeId != scopeId){
+		// if(newScope.parent().id() == scopeId){
+		//
+		// }else if(scope.parent().id() == scopeId){
+		//
+		// }
+		//
+		// }
+		//
+		// scope = newScope;
+		//
+		//
+		// Set<Statement> stmts = loc.outgoing();
+		//
+		//
+		//
+		// for(Statement s: stmts){
+		// Location target = s.target();
+		// int tgid = target.id();
+		// if(!visitedLocs.contains(tgid)){
+		// stack.push(target);
+		// }
+		// }
+		// }
+
 	}
-	
 
 }

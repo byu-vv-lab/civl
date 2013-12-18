@@ -2,8 +2,10 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
 public class CommonDereferenceExpression extends CommonExpression implements
 		DereferenceExpression {
@@ -37,7 +39,7 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 	@Override
 	public void setPurelyLocal(boolean pl) {
-		//TODO check &(*p)
+		// TODO check &(*p)
 		this.purelyLocal = pl;
 	}
 
@@ -49,6 +51,16 @@ public class CommonDereferenceExpression extends CommonExpression implements
 	@Override
 	public void purelyLocalAnalysis() {
 		this.purelyLocal = false;
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (pointer == oldExpression) {
+			pointer = newExpression;
+			return;
+		}
+		pointer.replaceWith(oldExpression, newExpression);
 	}
 
 }

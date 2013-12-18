@@ -6,8 +6,10 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
 /**
  * A unary operation.
@@ -78,7 +80,7 @@ public class CommonUnaryExpression extends CommonExpression implements
 			op = "!";
 			break;
 		case BIG_O:
-			op ="O";
+			op = "O";
 			break;
 		default:
 			throw new CIVLInternalException("Unknown unary operator: "
@@ -105,13 +107,23 @@ public class CommonUnaryExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		if(this.hasDerefs){
+		if (this.hasDerefs) {
 			this.purelyLocal = false;
 			return;
 		}
-		
+
 		this.operand.purelyLocalAnalysis();
 		this.purelyLocal = this.operand.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (operand == oldExpression) {
+			operand = newExpression;
+			return;
+		}
+		operand.replaceWith(oldExpression, newExpression);
 	}
 
 }

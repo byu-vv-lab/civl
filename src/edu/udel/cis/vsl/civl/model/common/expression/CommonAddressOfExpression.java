@@ -10,6 +10,14 @@ public class CommonAddressOfExpression extends CommonExpression implements
 
 	private LHSExpression operand;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param source
+	 *            The CIVL source
+	 * @param operand
+	 *            The operand
+	 */
 	public CommonAddressOfExpression(CIVLSource source, LHSExpression operand) {
 		super(source);
 		this.operand = operand;
@@ -41,18 +49,14 @@ public class CommonAddressOfExpression extends CommonExpression implements
 		this.operand.setPurelyLocal(false);
 	}
 
-
-
 	@Override
 	public void purelyLocalAnalysis() {
-		if(this.hasDerefs){
+		if (this.hasDerefs) {
 			this.purelyLocal = false;
 			return;
 		}
 		this.operand.purelyLocalAnalysis();
 		this.purelyLocal = this.operand.isPurelyLocal();
 	}
-	
-	
 
 }

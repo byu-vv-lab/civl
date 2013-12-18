@@ -5,8 +5,10 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 
@@ -82,8 +84,7 @@ public class CommonAssignStatement extends CommonStatement implements
 	public void calculateDerefs() {
 		this.lhs.calculateDerefs();
 		this.rhs.calculateDerefs();
-		this.hasDerefs = this.lhs.hasDerefs() ||
-				this.rhs.hasDerefs();
+		this.hasDerefs = this.lhs.hasDerefs() || this.rhs.hasDerefs();
 	}
 
 	@Override
@@ -97,8 +98,21 @@ public class CommonAssignStatement extends CommonStatement implements
 		this.guard().purelyLocalAnalysis();
 		this.lhs.purelyLocalAnalysis();
 		this.rhs.purelyLocalAnalysis();
-		this.purelyLocal = this.guard().isPurelyLocal() 
+		this.purelyLocal = this.guard().isPurelyLocal()
 				&& this.lhs.isPurelyLocal() && this.rhs.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		super.replaceWith(oldExpression, newExpression);
+		
+		if(rhs == oldExpression){
+			rhs = newExpression;
+			return;
+		}
+		
+		this.rhs.replaceWith(oldExpression, newExpression);
 	}
 
 }

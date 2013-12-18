@@ -32,6 +32,8 @@ public class CommonModelBuilder implements ModelBuilder {
 	 * Constructs new instance of CommonModelBuilder, creating instance of
 	 * ModelFactory in the process, and sets up system functions.
 	 * 
+	 * @param universe
+	 *            The symbolic universe
 	 */
 	public CommonModelBuilder(SymbolicUniverse universe) {
 		factory = new CommonModelFactory(universe);
@@ -40,8 +42,8 @@ public class CommonModelBuilder implements ModelBuilder {
 	// Exported Methods................................................
 
 	@Override
-	public Model buildModel(GMCConfiguration config, Program program, String name)
-			throws CommandLineException {
+	public Model buildModel(GMCConfiguration config, Program program,
+			String name) throws CommandLineException {
 		ModelBuilderWorker worker = new ModelBuilderWorker(config, factory,
 				program, name);
 

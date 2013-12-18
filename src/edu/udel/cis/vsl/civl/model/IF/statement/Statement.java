@@ -6,7 +6,9 @@ package edu.udel.cis.vsl.civl.model.IF.statement;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 
 /**
@@ -31,7 +33,7 @@ public interface Statement extends Sourceable {
 	 * @return The boolean-valued guard expression for this statement.
 	 */
 	Expression guard();
-	
+
 	/**
 	 * @return The model to which this statement belongs.
 	 */
@@ -56,11 +58,11 @@ public interface Statement extends Sourceable {
 	void setGuard(Expression guard);
 
 	/**
-	 * @param model The Model to which this statement belongs.
+	 * @param model
+	 *            The Model to which this statement belongs.
 	 */
 	void setModel(Model model);
-	
-	
+
 	/**
 	 * @return The highest scope accessed by this statement. Null if no
 	 *         variables accessed.
@@ -73,26 +75,50 @@ public interface Statement extends Sourceable {
 	 *            variables accessed.
 	 */
 	void setStatementScope(Scope statementScope);
-	
+
 	/**
 	 * return true iff the statement has at least one dereferences
-	 * @return
+	 * 
+	 * @return True of False
 	 */
 	boolean hasDerefs();
-	
+
+	/**
+	 * Calculate if this statement contains any dereference expression
+	 */
 	void calculateDerefs();
 
 	/**
-	 * if an &(var) is encountered, then var is considered as no purely local
-	 * if a statement inside a function with fscope is accessing some variable
-	 * that is declared in the scope vscope such that fscope.isDescendantOf(vscope),
+	 * if an &(var) is encountered, then var is considered as no purely local if
+	 * a statement inside a function with fscope is accessing some variable that
+	 * is declared in the scope vscope such that fscope.isDescendantOf(vscope),
 	 * then that variable is not purely local
-	 * @param funcScope the function scope of the statement
+	 * 
+	 * @param funcScope
+	 *            the function scope of the statement
 	 */
 	void purelyLocalAnalysisOfVariables(Scope funcScope);
-	
+
+	/**
+	 * @return True iff the statement accesses only purely-local variables
+	 */
 	boolean isPurelyLocal();
-	
+
+	/**
+	 * Analyze if this statement accesses any non-purely-local variables
+	 */
 	void purelyLocalAnalysis();
+
+	/**
+	 * Modify this statement by replacing a certain conditional expression with
+	 * a variable expression
+	 * 
+	 * @param oldExpression
+	 *            The conditional expression
+	 * @param newExpression
+	 *            The variable expression
+	 */
+	void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression);
 
 }

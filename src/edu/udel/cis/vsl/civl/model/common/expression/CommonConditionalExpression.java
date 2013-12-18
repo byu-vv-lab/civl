@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
 /**
  * @author zirkel
@@ -88,9 +89,9 @@ public class CommonConditionalExpression extends CommonExpression implements
 		this.condition.calculateDerefs();
 		this.trueBranch.calculateDerefs();
 		this.falseBranch.calculateDerefs();
-		this.hasDerefs = this.condition.hasDerefs() || this.trueBranch.hasDerefs() 
-				|| this.falseBranch.hasDerefs();
-		
+		this.hasDerefs = this.condition.hasDerefs()
+				|| this.trueBranch.hasDerefs() || this.falseBranch.hasDerefs();
+
 	}
 
 	@Override
@@ -102,17 +103,37 @@ public class CommonConditionalExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		if(this.hasDerefs){
+		if (this.hasDerefs) {
 			this.purelyLocal = false;
 			return;
 		}
-		
+
 		this.condition.purelyLocalAnalysis();
 		this.trueBranch.purelyLocalAnalysis();
 		this.falseBranch.purelyLocalAnalysis();
-		this.purelyLocal = this.condition.isPurelyLocal() 
+		this.purelyLocal = this.condition.isPurelyLocal()
 				&& this.trueBranch.isPurelyLocal()
 				&& this.falseBranch.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (condition == oldExpression) {
+			condition = newExpression;
+			return;
+		}
+		if (trueBranch == oldExpression) {
+			trueBranch = newExpression;
+			return;
+		}
+		if (falseBranch == oldExpression) {
+			falseBranch = newExpression;
+			return;
+		}
+		condition.replaceWith(oldExpression, newExpression);
+		trueBranch.replaceWith(oldExpression, newExpression);
+		falseBranch.replaceWith(oldExpression, newExpression);
 	}
 
 }

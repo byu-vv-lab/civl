@@ -2,8 +2,10 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
 public class CommonSizeofExpressionExpression extends CommonExpression
 		implements SizeofExpressionExpression {
@@ -44,12 +46,22 @@ public class CommonSizeofExpressionExpression extends CommonExpression
 
 	@Override
 	public void purelyLocalAnalysis() {
-		if(this.hasDerefs){
+		if (this.hasDerefs) {
 			this.purelyLocal = false;
 			return;
 		}
-		
+
 		this.argument.purelyLocalAnalysis();
 		this.purelyLocal = this.argument.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (argument == oldExpression) {
+			argument = newExpression;
+			return;
+		}
+		argument.replaceWith(oldExpression, newExpression);
 	}
 }

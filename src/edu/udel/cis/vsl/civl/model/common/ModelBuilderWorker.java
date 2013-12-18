@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common;
 
 import java.io.File;
-import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.ast.conversion.IF.ArithmeticConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.ArrayConversion;
@@ -107,6 +105,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
@@ -275,6 +274,11 @@ public class ModelBuilderWorker {
 	 */
 	private FunctionInfo functionInfo;
 
+	/**
+	 * The function definition node of the main function
+	 */
+	private FunctionDefinitionNode mainFunctionNode = null;
+
 	/* *********************************************************************
 	 * Constructors
 	 * *********************************************************************
@@ -282,7 +286,14 @@ public class ModelBuilderWorker {
 	/**
 	 * Constructs new instance of CommonModelBuilder, creating instance of
 	 * ModelFactory in the process, and sets up system functions.
-	 * 
+	 * @param config 
+	 * 			the GMC configuration
+	 * @param factory 
+	 * 			the model factory
+	 * @param program 
+	 * 			the program
+	 * @param name 
+	 * 			name of the model, i.e. the file name without .cvl extension
 	 */
 	public ModelBuilderWorker(GMCConfiguration config, ModelFactory factory,
 			Program program, String name) {
@@ -905,8 +916,12 @@ public class ModelBuilderWorker {
 			result = factory.dereferenceExpression(source, arguments.get(0));
 			break;
 		case CONDITIONAL:
-			result = factory.conditionalExpression(source, arguments.get(0),
-					arguments.get(1), arguments.get(2));
+			ConditionalExpression expression = factory.conditionalExpression(
+					source, arguments.get(0), arguments.get(1),
+					arguments.get(2));
+
+			functionInfo.addConditionalExpression(expression);
+			result = expression;
 			break;
 		case DIV:
 			result = factory.binaryExpression(source, BINARY_OPERATOR.DIVIDE,
@@ -1185,6 +1200,8 @@ public class ModelBuilderWorker {
 		if (guard == null)
 			guard = new CommonBooleanLiteralExpression(source, true);
 
+		functionInfo.addConditionalExpressionQueue();
+
 		// TODO replace if-else branches with switch, need to some appropriate
 		// modification in ABC to support this.
 		if (statementNode instanceof AssumeNode) {
@@ -1234,6 +1251,14 @@ public class ModelBuilderWorker {
 					+ statementNode.getClass().getSimpleName(),
 					factory.sourceOf(statementNode));
 
+		// TODO: compound statements
+		if (functionInfo.hasConditionalExpressions() == true) {
+			result = functionInfo.refineConditionalExpressionOfStatement(
+					result.lastStatement, result.startLocation);
+		}
+
+		functionInfo.popConditionaExpressionStack();
+
 		return result;
 	}
 
@@ -1277,11 +1302,17 @@ public class ModelBuilderWorker {
 			IfNode ifNode) {
 		Expression expression = translateExpressionNode(ifNode.getCondition(),
 				scope, true);
-		Fragment trueBranch, trueBranchBody, falseBranch, falseBranchBody, exit, result;
+		Fragment beforeCondition = null, trueBranch, trueBranchBody, falseBranch, falseBranchBody, exit, result;
 		Location exitLocation = factory.location(factory.sourceOfEnd(ifNode),
 				scope);
 		Location location = factory.location(factory.sourceOfBeginning(ifNode),
 				scope);
+		Map.Entry<Fragment, Expression> refineConditional = functionInfo
+				.refineConditionalExpression(scope, guard, expression);
+
+		beforeCondition = refineConditional.getKey();
+		expression = refineConditional.getValue();
+		expression = factory.booleanExpression(expression);
 
 		trueBranch = new Fragment(factory.noopStatement(
 				factory.sourceOfBeginning(ifNode.getTrueBranch()), location,
@@ -1305,8 +1336,13 @@ public class ModelBuilderWorker {
 		}
 
 		result = trueBranch.parallelCombineWith(falseBranch);
+
+		if (beforeCondition != null)
+			result = beforeCondition.combineWith(result);
+
 		exit = new Fragment(factory.noopStatement(factory.sourceOfEnd(ifNode),
 				exitLocation, null));
+
 		return result.combineWith(exit);
 	}
 
@@ -1641,6 +1677,7 @@ public class ModelBuilderWorker {
 	 * @param scope
 	 * @param statementNode
 	 * @return the fragment of the compound statement node
+	 * @throws CommandLineException
 	 */
 	private Fragment translateCompoundStatementNode(Expression guard,
 			Scope scope, CompoundStatementNode statementNode) {
@@ -1650,58 +1687,56 @@ public class ModelBuilderWorker {
 				factory.sourceOfBeginning(statementNode), newScope);
 		// indicates whether the location argument has been used:
 		boolean usedLocation = false;
-		Fragment result = null;
+		Fragment result = new Fragment();
 
 		for (int i = 0; i < statementNode.numChildren(); i++) {
 			BlockItemNode node = statementNode.getSequenceChild(i);
-			Fragment fragment = null;
 
-			if (node instanceof VariableDeclarationNode
-					|| node instanceof StructureOrUnionTypeNode
-					|| node instanceof TypedefDeclarationNode) {
+			Fragment fragment = translateASTNode(node, newScope,
+					usedLocation ? null : location, guard);
 
-				if (node instanceof VariableDeclarationNode)
-					try {
-						fragment = translateVariableDeclarationNode(
-								usedLocation ? null : location, newScope,
-								(VariableDeclarationNode) node);
-					} catch (CommandLineException e) {
-						throw new CIVLInternalException(
-								"Saw input variable outside of root scope",
-								factory.sourceOf(node));
-					}
-				else if (node instanceof StructureOrUnionTypeNode)
-					fragment = translateCompoundTypeNode(usedLocation ? null
-							: location, newScope,
-							(StructureOrUnionTypeNode) node);
-				else if (node instanceof TypedefDeclarationNode)
-					fragment = translateCompoundTypeNode(usedLocation ? null
-							: location, newScope,
-							((TypedefDeclarationNode) node).getTypeNode());
-				else
-					throw new CIVLInternalException("unreachable",
-							factory.sourceOf(node));
-			} else if (node instanceof FunctionDeclarationNode) {
-				translateFunctionDeclarationNode(
-						(FunctionDeclarationNode) node, newScope);
-			} else if (node instanceof StatementNode) {
-				// newStatement;
-				// TODO: check usedLocatin and location
-
-				fragment = translateStatementNode(guard, newScope,
-						(StatementNode) node);
-			} else {
-				throw new CIVLUnimplementedFeatureException(
-						"Unsupported block element", factory.sourceOf(node));
-			}
+			// if (node instanceof VariableDeclarationNode
+			// || node instanceof StructureOrUnionTypeNode
+			// || node instanceof TypedefDeclarationNode) {
+			//
+			// if (node instanceof VariableDeclarationNode)
+			// try {
+			// fragment = translateVariableDeclarationNode(
+			// usedLocation ? null : location, newScope,
+			// (VariableDeclarationNode) node);
+			// } catch (CommandLineException e) {
+			// throw new CIVLInternalException(
+			// "Saw input variable outside of root scope",
+			// factory.sourceOf(node));
+			// }
+			// else if (node instanceof StructureOrUnionTypeNode)
+			// fragment = translateCompoundTypeNode(usedLocation ? null
+			// : location, newScope,
+			// (StructureOrUnionTypeNode) node);
+			// else if (node instanceof TypedefDeclarationNode)
+			// fragment = translateCompoundTypeNode(usedLocation ? null
+			// : location, newScope,
+			// ((TypedefDeclarationNode) node).getTypeNode());
+			// else
+			// throw new CIVLInternalException("unreachable",
+			// factory.sourceOf(node));
+			// } else if (node instanceof FunctionDeclarationNode) {
+			// translateFunctionDeclarationNode(
+			// (FunctionDeclarationNode) node, newScope);
+			// } else if (node instanceof StatementNode) {
+			// // newStatement;
+			// // TODO: check usedLocatin and location
+			//
+			// fragment = translateStatementNode(guard, newScope,
+			// (StatementNode) node);
+			// } else {
+			// throw new CIVLUnimplementedFeatureException(
+			// "Unsupported block element", factory.sourceOf(node));
+			// }
 
 			if (fragment != null) {
 				usedLocation = true;
-
-				if (result != null) {
-					result = result.combineWith(fragment);
-				} else
-					result = fragment;
+				result = result.combineWith(fragment);
 			}
 		}
 
@@ -1719,7 +1754,7 @@ public class ModelBuilderWorker {
 	private Fragment translateForLoopNode(Expression guard, Scope scope,
 			ForLoopNode forLoopNode) {
 		ForLoopInitializerNode initNode = forLoopNode.getInitializer();
-		Fragment initFragment = null;
+		Fragment initFragment = new Fragment();
 		Scope newScope = factory.scope(factory.sourceOf(forLoopNode), scope,
 				new LinkedHashSet<Variable>(), functionInfo.function());
 		Fragment result;
@@ -1735,21 +1770,12 @@ public class ModelBuilderWorker {
 						.numChildren(); i++) {
 					VariableDeclarationNode declaration = ((DeclarationListNode) initNode)
 							.getSequenceChild(i);
-
-					translateVariableDeclarationNode(declaration, newScope);
-					if (declaration.getInitializer() != null) {
-						initFragment = new Fragment(factory.assignStatement(
-								factory.sourceOf(initNode),
-								location,
-								factory.variableExpression(factory
-										.sourceOf(declaration.getIdentifier()),
-										newScope.getVariable(newScope
-												.numVariables() - 1)),
-								translateExpressionNode(
-										(ExpressionNode) declaration
-												.getInitializer(), newScope,
-										true), guard));
-					}
+					Variable variable = translateVariableDeclarationNode(
+							declaration, newScope);
+					Fragment fragment = translateVariableInitializationNode(
+							declaration, variable, location, newScope, guard);
+					
+					initFragment = initFragment.combineWith(fragment);
 				}
 			} else {
 				throw new CIVLInternalException(
@@ -1759,7 +1785,7 @@ public class ModelBuilderWorker {
 		}
 
 		result = composeLoopFragment(newScope, forLoopNode.getCondition(),
-				forLoopNode.getBody(), forLoopNode.getIncrementer());
+				forLoopNode.getBody(), forLoopNode.getIncrementer(), guard);
 
 		if (initFragment != null) {
 			result = initFragment.combineWith(result);
@@ -1785,20 +1811,27 @@ public class ModelBuilderWorker {
 	 */
 	private Fragment composeLoopFragment(Scope loopScope,
 			ExpressionNode conditionNode, StatementNode loopBodyNode,
-			ExpressionNode incrementerNode) {
+			ExpressionNode incrementerNode, Expression guard) {
 		Expression condition = translateExpressionNode(conditionNode,
 				loopScope, true);
 		Set<Statement> continues, breaks;
-		Fragment loopEntrance, loopBody, incrementer = null, loopExit, result;
+		Fragment beforeCondition, loopEntrance, loopBody, incrementer = null, loopExit, result;
 		Location continueLocation;
+		Map.Entry<Fragment, Expression> refineConditional = functionInfo
+				.refineConditionalExpression(loopScope, guard, condition);
 
+		beforeCondition = refineConditional.getKey();
+		condition = refineConditional.getValue();
 		condition = factory.booleanExpression(condition);
+		
 		Location loopEntranceLocation = factory.location(
 				factory.sourceOf(conditionNode.getSource()), loopScope);
 		loopEntrance = new Fragment(loopEntranceLocation,
 				factory.noopStatement(
 						factory.sourceOf(conditionNode.getSource()),
 						loopEntranceLocation, condition));
+		if(beforeCondition != null)
+			loopEntrance = beforeCondition.combineWith(loopEntrance);
 
 		functionInfo.addContinueSet(new LinkedHashSet<Statement>());
 		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
@@ -1868,7 +1901,7 @@ public class ModelBuilderWorker {
 				new LinkedHashSet<Variable>(), functionInfo.function());
 
 		return composeLoopFragment(newScope, loopNode.getCondition(),
-				loopNode.getBody(), null);
+				loopNode.getBody(), null, guard);
 	}
 
 	/**
@@ -1961,6 +1994,8 @@ public class ModelBuilderWorker {
 		if (chooseStatementNode.getDefaultCase() != null) {
 			defaultOffset = 1;
 		}
+
+		// TODO caseNode has conditional expression (?:)
 		for (int i = 0; i < chooseStatementNode.numChildren() - defaultOffset; i++) {
 			StatementNode childNode = chooseStatementNode.getSequenceChild(i);
 			Fragment caseFragment = translateStatementNode(
@@ -2340,7 +2375,8 @@ public class ModelBuilderWorker {
 			throw new CIVLInternalException("Did not process declaration",
 					factory.sourceOf(functionNode));
 
-		functionInfo = new FunctionInfo(result);
+		if (function == null)
+			functionInfo = new FunctionInfo(result, this.universe, this.factory);
 		functionBodyNode = functionNode.getBody();
 		Scope scope = result.outerScope();
 		body = translateStatementNode(null, scope, functionBodyNode);
@@ -2388,6 +2424,43 @@ public class ModelBuilderWorker {
 			variable.setIsInput(true);
 		}
 		return variable;
+	}
+
+	private Fragment translateVariableInitializationNode(
+			VariableDeclarationNode node, Variable variable, Location location,
+			Scope scope, Expression guard) {
+		Fragment initFragment = null;
+		InitializerNode init = node.getInitializer();
+
+		if (init != null) {
+			Statement assignStatement;
+
+			if (!(init instanceof ExpressionNode))
+				throw new CIVLUnimplementedFeatureException(
+						"Non-expression initializer", factory.sourceOf(init));
+
+			if (location == null)
+				location = factory.location(factory.sourceOfBeginning(node),
+						scope);
+
+			assignStatement = factory
+					.assignStatement(
+							factory.sourceOf(node),
+							location,
+							factory.variableExpression(factory.sourceOf(init),
+									variable),
+							translateExpressionNode((ExpressionNode) init,
+									scope, true), guard);
+			initFragment = new Fragment(assignStatement);
+
+			if (functionInfo.hasConditionalExpressions()) {
+				initFragment = functionInfo
+						.refineConditionalExpressionOfStatement(
+								assignStatement, location);
+			}
+		}
+
+		return initFragment;
 	}
 
 	/**
@@ -2549,10 +2622,9 @@ public class ModelBuilderWorker {
 	private Fragment translateVariableDeclarationNode(Location sourceLocation,
 			Scope scope, VariableDeclarationNode node)
 			throws CommandLineException {
-		InitializerNode init = node.getInitializer();
 		Variable variable = translateVariableDeclarationNode(node, scope);
 		CIVLType type = variable.type();
-		Fragment result = null;
+		Fragment result = null, initialization;
 		IdentifierNode identifier = node.getIdentifier();
 		CIVLSource source = factory.sourceOf(node);
 
@@ -2579,25 +2651,15 @@ public class ModelBuilderWorker {
 							factory.sourceOf(identifier), variable), rhs, null));
 			sourceLocation = null;
 		}
-		if (init != null) {
-			Statement statement;
 
-			if (!(init instanceof ExpressionNode))
-				throw new CIVLUnimplementedFeatureException(
-						"Non-expression initializer", factory.sourceOf(init));
-			if (sourceLocation == null)
-				sourceLocation = factory.location(
-						factory.sourceOfBeginning(node), scope);
-			statement = assignStatement(factory.sourceOf(node), sourceLocation,
-					factory.variableExpression(factory.sourceOf(identifier),
-							variable), (ExpressionNode) init, scope);
-			if (result == null)
-				result = new Fragment(sourceLocation, statement);
-			else {
-				result.lastStatement.setTarget(sourceLocation);
-				result.lastStatement = statement;
-			}
-		}
+		initialization = translateVariableInitializationNode(node, variable,
+				sourceLocation, scope, null);
+
+		if (result == null)
+			result = initialization;
+		else
+			result = result.combineWith(initialization);
+
 		return result;
 	}
 
@@ -2704,10 +2766,68 @@ public class ModelBuilderWorker {
 		return config;
 	}
 
+	private Fragment translateASTNode(ASTNode node, Scope scope,
+			Location location, Expression guard) {
+		Fragment result = null;
+
+		if (node instanceof VariableDeclarationNode
+				|| node instanceof StructureOrUnionTypeNode
+				|| node instanceof TypedefDeclarationNode) {
+			if (node instanceof VariableDeclarationNode)
+				try {
+					result = translateVariableDeclarationNode(location, scope,
+							(VariableDeclarationNode) node);
+				} catch (CommandLineException e) {
+					throw new CIVLInternalException(
+							"Saw input variable outside of root scope",
+							factory.sourceOf(node));
+				}
+			else if (node instanceof StructureOrUnionTypeNode)
+				result = translateCompoundTypeNode(location, scope,
+						(StructureOrUnionTypeNode) node);
+			else if (node instanceof TypedefDeclarationNode)
+				result = translateCompoundTypeNode(location, scope,
+						((TypedefDeclarationNode) node).getTypeNode());
+			else
+				throw new CIVLInternalException("unreachable",
+						factory.sourceOf(node));
+		} else if (node instanceof FunctionDefinitionNode) {
+			if (((FunctionDefinitionNode) node).getName().equals("main")) {
+				mainFunctionNode = (FunctionDefinitionNode) node;
+			} else
+				translateFunctionDeclarationNode(
+						(FunctionDeclarationNode) node, scope);
+		} else if (node instanceof FunctionDeclarationNode) {
+			translateFunctionDeclarationNode((FunctionDeclarationNode) node,
+					scope);
+		} else if (scope.id() != systemScope.id()
+				&& node instanceof StatementNode) {
+			result = translateStatementNode(guard, scope, (StatementNode) node);
+		} else if (scope.id() == systemScope.id() && node instanceof AssumeNode) {
+			Fragment assumeFragment = translateAssumeNode(guard, scope,
+					(AssumeNode) node);
+
+			assumeFragment = functionInfo
+					.refineConditionalExpressionOfStatement(
+							assumeFragment.lastStatement,
+							assumeFragment.startLocation);
+
+			result = assumeFragment;
+		} else {
+			if (scope.id() == systemScope.id())
+				throw new CIVLInternalException("Unsupported declaration type",
+						factory.sourceOf(node));
+			else
+				throw new CIVLUnimplementedFeatureException(
+						"Unsupported block element", factory.sourceOf(node));
+		}
+
+		return result;
+	}
+
 	/**
 	 * Build the CIVL model from the AST
 	 * 
-	 * @return
 	 * @throws CommandLineException
 	 */
 	public void buildModel() throws CommandLineException {
@@ -2717,58 +2837,72 @@ public class ModelBuilderWorker {
 				factory.sourceOf(program.getAST().getRootNode()), systemID,
 				new ArrayList<Variable>(), null, null, null);
 		ASTNode rootNode = program.getAST().getRootNode();
-		FunctionDefinitionNode mainFunction = null;
+		// FunctionDefinitionNode mainFunction = null;
 		Fragment initialization = new Fragment();
 
 		systemScope = system.outerScope();
 		callStatements = new LinkedHashMap<CallOrSpawnStatement, Function>();
 		functionMap = new LinkedHashMap<Function, CIVLFunction>();
 		unprocessedFunctions = new ArrayList<FunctionDefinitionNode>();
+		functionInfo = new FunctionInfo(system, universe, factory);
+
+		functionInfo.addConditionalExpressionQueue();
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
+			Fragment fragment = translateASTNode(node, systemScope, null, null);
 
-			if (node instanceof VariableDeclarationNode
-					|| node instanceof TypedefDeclarationNode
-					|| node instanceof StructureOrUnionTypeNode) {
-				Fragment fragment;
+			if (fragment != null)
+				initialization = initialization.combineWith(fragment);
 
-				if (node instanceof VariableDeclarationNode)
-					fragment = translateVariableDeclarationNode(null,
-							systemScope, (VariableDeclarationNode) node);
-				else if (node instanceof TypedefDeclarationNode)
-					fragment = translateCompoundTypeNode(null, systemScope,
-							((TypedefDeclarationNode) node).getTypeNode());
-				else if (node instanceof StructureOrUnionTypeNode)
-					fragment = this.translateCompoundTypeNode(null,
-							systemScope, (StructureOrUnionTypeNode) node);
-				else
-					throw new RuntimeException("unreachable");
-				if (fragment != null) {
-					// add locations and statements to fragment and
-					// statements to initializations:
-
-					initialization = initialization.combineWith(fragment);
-				}
-			} else if (node instanceof FunctionDefinitionNode) {
-				if (((FunctionDefinitionNode) node).getName().equals("main")) {
-					mainFunction = (FunctionDefinitionNode) node;
-				} else
-					translateFunctionDeclarationNode(
-							(FunctionDeclarationNode) node, systemScope);
-			} else if (node instanceof FunctionDeclarationNode) {
-				translateFunctionDeclarationNode(
-						(FunctionDeclarationNode) node, systemScope);
-			} else if (node instanceof AssumeNode) {
-				Fragment assumeFragment = translateAssumeNode(null,
-						systemScope, (AssumeNode) node);
-
-				initialization = initialization.combineWith(assumeFragment);
-			} else {
-				throw new CIVLInternalException("Unsupported declaration type",
-						factory.sourceOf(node));
-			}
+			// if (node instanceof VariableDeclarationNode
+			// || node instanceof TypedefDeclarationNode
+			// || node instanceof StructureOrUnionTypeNode) {
+			// Fragment fragment;
+			//
+			// if (node instanceof VariableDeclarationNode)
+			// fragment = translateVariableDeclarationNode(null,
+			// systemScope, (VariableDeclarationNode) node);
+			// else if (node instanceof TypedefDeclarationNode)
+			// fragment = translateCompoundTypeNode(null, systemScope,
+			// ((TypedefDeclarationNode) node).getTypeNode());
+			// else if (node instanceof StructureOrUnionTypeNode)
+			// fragment = this.translateCompoundTypeNode(null,
+			// systemScope, (StructureOrUnionTypeNode) node);
+			// else
+			// throw new RuntimeException("unreachable");
+			// if (fragment != null) {
+			// // add locations and statements to fragment and
+			// // statements to initializations:
+			//
+			// initialization = initialization.combineWith(fragment);
+			// }
+			// } else if (node instanceof FunctionDefinitionNode) {
+			// if (((FunctionDefinitionNode) node).getName().equals("main")) {
+			// mainFunctionNode = (FunctionDefinitionNode) node;
+			// } else
+			// translateFunctionDeclarationNode(
+			// (FunctionDeclarationNode) node, systemScope);
+			// } else if (node instanceof FunctionDeclarationNode) {
+			// translateFunctionDeclarationNode(
+			// (FunctionDeclarationNode) node, systemScope);
+			// } else if (node instanceof AssumeNode) {
+			// Fragment assumeFragment = translateAssumeNode(null,
+			// systemScope, (AssumeNode) node);
+			//
+			// assumeFragment = functionInfo
+			// .refineConditionalExpressionOfStatement(
+			// assumeFragment.lastStatement,
+			// assumeFragment.startLocation);
+			//
+			// initialization = initialization.combineWith(assumeFragment);
+			// } else {
+			// throw new CIVLInternalException("Unsupported declaration type",
+			// factory.sourceOf(node));
+			// }
 		}
-		if (mainFunction == null) {
+		functionInfo.popConditionaExpressionStack();
+
+		if (mainFunctionNode == null) {
 			throw new CIVLException("Program must have a main function.",
 					factory.sourceOf(rootNode));
 		}
@@ -2797,7 +2931,8 @@ public class ModelBuilderWorker {
 		// translate main function, using system as the CIVL function object,
 		// and
 		// combining initialization statements with its body
-		translateFunctionDefinitionNode(mainFunction, system, initialization);
+		translateFunctionDefinitionNode(mainFunctionNode, system,
+				initialization);
 
 		while (!unprocessedFunctions.isEmpty()) {
 			FunctionDefinitionNode functionDefinition = unprocessedFunctions
@@ -2866,226 +3001,5 @@ public class ModelBuilderWorker {
 	 */
 	public Model getModel() {
 		return model;
-	}
-}
-
-/**
- * A fragment of a CIVL model. Consists of a start location and a last
- * statement. Why not always generate next location.
- * 
- * @author siegel
- * 
- */
-class Fragment {
-
-	/**
-	 * The start location of the fragment
-	 */
-	public Location startLocation;
-
-	/**
-	 * The last statement of the fragment
-	 */
-	public Statement lastStatement;
-
-	/**
-	 * Constructor: create an empty fragment
-	 */
-	public Fragment() {
-
-	}
-
-	/**
-	 * Constructor
-	 * 
-	 * @param statement
-	 *            use <code>statement</code> to create a new fragment, with the
-	 *            start location being the source location of
-	 *            <code>statement</code> and the last statement being
-	 *            <code>statement</code>
-	 */
-	public Fragment(Statement statement) {
-		this.startLocation = statement.source();
-		this.lastStatement = statement;
-	}
-
-	/**
-	 * Constructor
-	 * 
-	 * @param startLocation
-	 * @param lastStatement
-	 */
-	public Fragment(Location startLocation, Statement lastStatement) {
-		this.startLocation = startLocation;
-		this.lastStatement = lastStatement;
-	}
-
-	/**
-	 * Combine two fragment in sequential
-	 * 
-	 * @param next
-	 * @return
-	 */
-	public Fragment combineWith(Fragment next) {
-		if (next == null || next.isEmpty())
-			return this;
-
-		if (this.isEmpty())
-			return next;
-
-		this.lastStatement.setTarget(next.startLocation);
-		return new Fragment(this.startLocation, next.lastStatement);
-	}
-
-	/**
-	 * Combine this fragment and another fragment in parallel, i.e., merge the
-	 * start location, and add the last statement of both fragments as the last
-	 * statement of the result fragment
-	 * 
-	 * @param parallel
-	 *            the second fragment to be combined with <dt>
-	 *            <b>Preconditions:</b>
-	 *            <dd>
-	 *            this.startLocation.id() === parallel.startLocation.id()
-	 * 
-	 * @return the new fragment after the combination
-	 */
-	public Fragment parallelCombineWith(Fragment parallel) {
-		StatementSet newLastStatement = new StatementSet();
-
-		if (parallel == null || parallel.isEmpty())
-			return this;
-		if (this.isEmpty())
-			return parallel;
-
-		assert this.startLocation.id() == parallel.startLocation.id();
-		
-		if(lastStatement instanceof StatementSet){
-			Set<Statement> statements = ((StatementSet)lastStatement).statements();
-			
-			for(Statement s : statements){
-				newLastStatement.add(s);
-			}
-		}else{
-			newLastStatement.add(lastStatement);
-		}
-		
-		if(parallel.lastStatement instanceof StatementSet){
-			Set<Statement> statements = ((StatementSet)parallel.lastStatement).statements();
-			
-			for(Statement s : statements){
-				newLastStatement.add(s);
-			}
-		}else{
-			newLastStatement.add(parallel.lastStatement);
-		}
-		
-		return new Fragment(this.startLocation, newLastStatement);
-	}
-
-	/**
-	 * Check if the fragment is empty
-	 * 
-	 * @return true iff both the start location and the last statement are null
-	 */
-	public boolean isEmpty() {
-		if (startLocation == null && lastStatement == null)
-			return true;
-		return false;
-	}
-
-	/**
-	 * Print the fragment
-	 * 
-	 * @param out
-	 */
-	public void Print(PrintStream out) {
-		out.println(this.toString());
-	}
-
-	@Override
-	public String toString() {
-		if (isEmpty())
-			return "========Empty=========\r\n";
-		String result = "=================\r\n";
-		Stack<Location> workings = new Stack<Location>();
-		Set<Integer> locationIds = new HashSet<Integer>();
-
-		workings.push(this.startLocation);
-		locationIds.add(this.startLocation.id());
-
-		while (!workings.isEmpty()) {
-			Location location = workings.pop();
-
-			result += "Location " + location.id() + "\r\n";
-
-			if (location.getNumOutgoing() > 0) {
-				for (Statement s : location.outgoing()) {
-					result += "when(" + s.guard() + ") " + s + " goto ";
-					if (s.target() == null) {
-						result += "null";
-					} else {
-						result += "Location " + s.target().id();
-						if (!locationIds.contains(s.target().id())) {
-							workings.push(s.target());
-							locationIds.add(s.target().id());
-						}
-					}
-				}
-				result += "\r\n";
-			}
-		}
-
-		result += "last statement: " + this.lastStatement + " at Location "
-				+ this.lastStatement.source().id() + " "
-				+ this.lastStatement.getSource() + "\r\n";
-
-		return result;
-
-	}
-
-	/**
-	 * Update the start location with a new location
-	 * 
-	 * @param newLocation
-	 */
-	public void updateStartLocation(Location newLocation) {
-		if (isEmpty())
-			return;
-
-		int oldLocationId = this.startLocation.id();
-		int number = startLocation.getNumOutgoing();
-
-		Stack<Location> workings = new Stack<Location>();
-		Set<Integer> locationIds = new HashSet<Integer>();
-
-		workings.push(startLocation);
-		locationIds.add(startLocation.id());
-
-		while (!workings.isEmpty()) {
-			Location location = workings.pop();
-
-			if (location.getNumOutgoing() > 0) {
-				number = location.getNumOutgoing();
-				for (int i = 0; i < number; i++) {
-					Statement s = location.getOutgoing(i);
-
-					if (s.source().id() == oldLocationId) {
-						s.setSource(newLocation);
-					}
-					if (s.target() != null) {
-						if (s.target().id() == oldLocationId) {
-							s.setTarget(newLocation);
-						}
-						if (!locationIds.contains(s.target().id())) {
-							workings.push(s.target());
-							locationIds.add(s.target().id());
-						}
-					}
-				}
-			}
-		}
-
-		this.startLocation = newLocation;
 	}
 }

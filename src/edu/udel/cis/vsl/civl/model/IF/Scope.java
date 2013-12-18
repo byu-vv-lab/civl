@@ -160,7 +160,7 @@ public interface Scope extends Sourceable {
 	 * Return true if the scope is a descendant of the scope anc
 	 * @param des
 	 * @param anc
-	 * @return
+	 * @return true or false
 	 */
 	boolean isDescendantOf(Scope anc);
 

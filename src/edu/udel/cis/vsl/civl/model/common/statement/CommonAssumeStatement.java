@@ -5,7 +5,9 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 
@@ -73,5 +75,18 @@ public class CommonAssumeStatement extends CommonStatement implements
 		// TODO check
 		this.expression.purelyLocalAnalysis();
 		this.purelyLocal = this.expression.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		super.replaceWith(oldExpression, newExpression);
+		
+		if(expression == oldExpression){
+			expression = newExpression;
+			return;
+		}
+		
+		this.expression.replaceWith(oldExpression, newExpression);
 	}
 }

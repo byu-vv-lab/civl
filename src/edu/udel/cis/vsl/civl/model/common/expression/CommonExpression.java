@@ -5,7 +5,9 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
@@ -22,11 +24,11 @@ public abstract class CommonExpression extends CommonSourceable implements
 	protected CIVLType expressionType = null;
 	protected boolean hasDerefs;
 	protected boolean purelyLocal = false;
-	
+
 	/**
 	 * @return true iff the expression has at least one dereferences
 	 */
-	public boolean hasDerefs(){
+	public boolean hasDerefs() {
 		return hasDerefs;
 	}
 
@@ -67,25 +69,31 @@ public abstract class CommonExpression extends CommonSourceable implements
 	public void setExpressionType(CIVLType expressionType) {
 		this.expressionType = expressionType;
 	}
-	
+
 	@Override
-	public void calculateDerefs(){
+	public void calculateDerefs() {
 		this.hasDerefs = false;
 	}
-	
+
 	@Override
-	public void purelyLocalAnalysisOfVariables(Scope funcScope){
-		
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+
 	}
-	
+
 	@Override
 	public boolean isPurelyLocal() {
 		return this.purelyLocal;
 	}
-	
+
 	@Override
-	public void purelyLocalAnalysis(){
+	public void purelyLocalAnalysis() {
 		this.purelyLocal = !this.hasDerefs;
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+
 	}
 
 }

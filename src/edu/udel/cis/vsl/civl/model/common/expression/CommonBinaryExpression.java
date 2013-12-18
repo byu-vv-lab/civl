@@ -7,7 +7,9 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
 /**
  * A binary operation.
@@ -25,6 +27,8 @@ public class CommonBinaryExpression extends CommonExpression implements
 	/**
 	 * A binary operation.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param operator
 	 *            The binary operator.
 	 * @param left
@@ -164,6 +168,23 @@ public class CommonBinaryExpression extends CommonExpression implements
 		this.right.purelyLocalAnalysis();
 		this.purelyLocal = this.left.isPurelyLocal()
 				&& this.right.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (left == oldExpression) {
+			left = newExpression;
+			return;
+		}
+
+		if (right == oldExpression) {
+			right = newExpression;
+			return;
+		}
+
+		left.replaceWith(oldExpression, newExpression);
+		right.replaceWith(oldExpression, newExpression);
 	}
 
 }

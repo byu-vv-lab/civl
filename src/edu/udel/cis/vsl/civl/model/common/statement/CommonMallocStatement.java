@@ -2,8 +2,10 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -103,19 +105,19 @@ public class CommonMallocStatement extends CommonStatement implements
 	@Override
 	public void calculateDerefs() {
 		boolean lhsDeref = false;
-		if(lhs != null){
+		if (lhs != null) {
 			lhs.calculateDerefs();
 			lhsDeref = lhs.hasDerefs();
 		}
 		this.heapPointerExpression.calculateDerefs();
 		this.sizeExpression.calculateDerefs();
-		this.hasDerefs = lhsDeref || this.heapPointerExpression.hasDerefs() 
+		this.hasDerefs = lhsDeref || this.heapPointerExpression.hasDerefs()
 				|| this.sizeExpression.hasDerefs();
 	}
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
-		if(lhs != null){
+		if (lhs != null) {
 			lhs.purelyLocalAnalysisOfVariables(funcScope);
 		}
 		this.heapPointerExpression.purelyLocalAnalysisOfVariables(funcScope);
@@ -124,21 +126,34 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		
+
 		this.guard().purelyLocalAnalysis();
-		
+
 		boolean lhsPL = true;
-		if(lhs != null){
+		if (lhs != null) {
 			lhs.purelyLocalAnalysis();
 			lhsPL = lhs.isPurelyLocal();
 		}
-		
+
 		this.heapPointerExpression.purelyLocalAnalysis();
 		this.sizeExpression.purelyLocalAnalysis();
-		
+
 		this.purelyLocal = lhsPL && this.guard().isPurelyLocal()
 				&& this.heapPointerExpression.isPurelyLocal()
 				&& this.sizeExpression.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		super.replaceWith(oldExpression, newExpression);
+
+		if (sizeExpression == oldExpression) {
+			sizeExpression = newExpression;
+			return;
+		}
+
+		this.sizeExpression.replaceWith(oldExpression, newExpression);
 	}
 
 }

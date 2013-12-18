@@ -5,8 +5,10 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 
@@ -154,16 +156,16 @@ public class CommonCallStatement extends CommonStatement implements
 	@Override
 	public void calculateDerefs() {
 		this.hasDerefs = false;
-		if(this.lhs != null){
+		if (this.lhs != null) {
 			lhs.calculateDerefs();
 			this.hasDerefs = this.hasDerefs || lhs.hasDerefs();
 		}
-		if(this.arguments != null){
-			for(Expression arg: this.arguments){
+		if (this.arguments != null) {
+			for (Expression arg : this.arguments) {
 				arg.calculateDerefs();
 				this.hasDerefs = this.hasDerefs || arg.hasDerefs();
-				//early return
-				if(this.hasDerefs)
+				// early return
+				if (this.hasDerefs)
 					return;
 			}
 		}
@@ -171,36 +173,52 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
-		if(this.lhs != null)
+		if (this.lhs != null)
 			this.lhs.purelyLocalAnalysisOfVariables(funcScope);
-		for(Expression arg: this.arguments){
+		for (Expression arg : this.arguments) {
 			arg.purelyLocalAnalysisOfVariables(funcScope);
 		}
 	}
 
 	@Override
 	public void purelyLocalAnalysis() {
-		
+
 		this.guard().purelyLocalAnalysis();
-		
-		if(this.lhs != null){
+
+		if (this.lhs != null) {
 			this.lhs.purelyLocalAnalysis();
-			if(!this.lhs.isPurelyLocal()){
+			if (!this.lhs.isPurelyLocal()) {
 				this.purelyLocal = false;
 				return;
 			}
 		}
-		
-		for(Expression arg: this.arguments){
+
+		for (Expression arg : this.arguments) {
 			arg.purelyLocalAnalysis();
-			if(!arg.isPurelyLocal())
-			{
+			if (!arg.isPurelyLocal()) {
 				this.purelyLocal = false;
 				return;
 			}
 		}
-		
+
 		this.purelyLocal = this.guard().isPurelyLocal();
 	}
-	
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		int number = arguments.size();
+
+		super.replaceWith(oldExpression, newExpression);
+		for (int i = 0; i < number; i++) {
+			Expression arg = arguments.get(i);
+
+			if (arg == oldExpression) {
+				arguments.set(i, newExpression);
+				return;
+			}
+			arg.replaceWith(oldExpression, newExpression);
+		}
+	}
+
 }

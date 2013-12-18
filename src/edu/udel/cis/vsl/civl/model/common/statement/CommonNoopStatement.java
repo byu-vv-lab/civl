@@ -30,5 +30,4 @@ public class CommonNoopStatement extends CommonStatement implements
 	public String toString() {
 		return "no-op";
 	}
-
 }

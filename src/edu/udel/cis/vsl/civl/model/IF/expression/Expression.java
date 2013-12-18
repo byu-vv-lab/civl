@@ -16,27 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 public interface Expression extends Sourceable {
 
 	public enum ExpressionKind {
-		ADDRESS_OF,
-		BINARY,
-		BOOLEAN_LITERAL,
-		CAST,
-		COND,
-		DEREFERENCE,
-		DOT,
-		DYNAMIC_TYPE_OF,
-		INITIAL_VALUE,
-		INTEGER_LITERAL,
-		NULL_LITERAL,
-		QUANTIFIER,
-		REAL_LITERAL,
-		RESULT,
-		SELF,
-		SIZEOF_TYPE,
-		SIZEOF_EXPRESSION,
-		STRING_LITERAL,
-		SUBSCRIPT,
-		UNARY,
-		VARIABLE
+		ADDRESS_OF, BINARY, BOOLEAN_LITERAL, CAST, COND, DEREFERENCE, DOT, DYNAMIC_TYPE_OF, INITIAL_VALUE, INTEGER_LITERAL, NULL_LITERAL, QUANTIFIER, REAL_LITERAL, RESULT, SELF, SIZEOF_TYPE, SIZEOF_EXPRESSION, STRING_LITERAL, SUBSCRIPT, UNARY, VARIABLE
 	}
 
 	/**
@@ -54,7 +34,11 @@ public interface Expression extends Sourceable {
 	 */
 	CIVLType getExpressionType();
 
-	/** Returns the kind of this expression */
+	/**
+	 * Returns the kind of this expression
+	 * 
+	 * @return The expression kind
+	 */
 	ExpressionKind expressionKind();
 
 	/**
@@ -63,20 +47,47 @@ public interface Expression extends Sourceable {
 	 *            variables accessed.
 	 */
 	void setExpressionScope(Scope expressionScope);
-	
+
+	/**
+	 * Calculate the existence of dereferences in this expression
+	 */
 	void calculateDerefs();
-	
+
 	/**
 	 * return true iff the expression has at least one dereferences of a certain
 	 * pointer variable
-	 * @return
+	 * 
+	 * @return True of False
 	 */
 	boolean hasDerefs();
 
+	/**
+	 * Analyzes if variables accessed by this expression are purely local
+	 * 
+	 * @param funcScope
+	 *            The function scope of this expression
+	 */
 	void purelyLocalAnalysisOfVariables(Scope funcScope);
-	
+
+	/**
+	 * @return True iff the expression accessed only purely-local variables
+	 */
 	boolean isPurelyLocal();
-	
+
+	/**
+	 * Analyzes if this expression is purely local
+	 */
 	void purelyLocalAnalysis();
-	
+
+	/**
+	 * Replace a certain conditional expression with a variable expression
+	 * 
+	 * @param oldExpression
+	 *            The conditional expression
+	 * @param newExpression
+	 *            The variable expression
+	 */
+	void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression);
+
 }

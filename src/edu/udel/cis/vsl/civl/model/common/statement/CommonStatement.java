@@ -9,7 +9,9 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
@@ -196,6 +198,12 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	public void purelyLocalAnalysis(){
 		this.guard.purelyLocalAnalysis();
 		this.purelyLocal = this.guard.isPurelyLocal();
+	}
+	
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		this.guard.replaceWith(oldExpression, newExpression);
 	}
 
 }

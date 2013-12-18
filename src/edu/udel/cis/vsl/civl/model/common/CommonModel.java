@@ -40,6 +40,8 @@ public class CommonModel extends CommonSourceable implements Model {
 	/**
 	 * A model of a Chapel program.
 	 * 
+	 * @param source
+	 *            The CIVL source of the model
 	 * @param factory
 	 *            The ModelFactory responsible for creating this model.
 	 * @param system
@@ -57,6 +59,8 @@ public class CommonModel extends CommonSourceable implements Model {
 	/**
 	 * A model of a CIVL program.
 	 * 
+	 * @param source
+	 *            The CIVL source of the model
 	 * @param factory
 	 *            The ModelFactory responsible for creating this model.
 	 * @param system
@@ -206,6 +210,12 @@ public class CommonModel extends CommonSourceable implements Model {
 		return externVariables;
 	}
 
+	/**
+	 * Update the list of malloc statements
+	 * 
+	 * @param mallocStatements
+	 *            the list of malloc statements
+	 */
 	public void setMallocStatements(ArrayList<MallocStatement> mallocStatements) {
 		this.mallocStatements = mallocStatements;
 	}

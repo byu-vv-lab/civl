@@ -58,6 +58,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.Fragment;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
@@ -73,6 +74,9 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  */
 public interface ModelFactory {
 
+	/**
+	 * @return The symbolic universe
+	 */
 	SymbolicUniverse universe();
 
 	/**
@@ -86,14 +90,19 @@ public interface ModelFactory {
 	/**
 	 * Create a new model.
 	 * 
+	 * @param source
+	 *            The CIVL source of the model
 	 * @param system
 	 *            The designated outermost function, called "System."
+	 * @return A new model
 	 */
 	Model model(CIVLSource source, CIVLFunction system);
 
 	/**
 	 * Create a new scope.
 	 * 
+	 * @param source
+	 *            The source of the scope
 	 * @param parent
 	 *            The containing scope of this scope. Only null for the
 	 *            outermost scope of the designated "System" function.
@@ -109,26 +118,34 @@ public interface ModelFactory {
 	/**
 	 * Get an identifier with the given name.
 	 * 
+	 * @param source
+	 *            The CIVL source of the identifier
 	 * @param name
 	 *            The name of this identifier.
+	 * @return The new identifier
 	 */
 	Identifier identifier(CIVLSource source, String name);
 
 	/**
 	 * Create a new variable.
 	 * 
+	 * @param source
+	 *            The CIVL source of the variable
 	 * @param type
 	 *            The type of this variable.
 	 * @param name
 	 *            The name of this variable.
 	 * @param vid
 	 *            The index of this variable in its scope.
+	 * @return The variable
 	 */
 	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
 
 	/**
 	 * Create a new function.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param name
 	 *            The name of this function.
 	 * @param parameters
@@ -145,6 +162,23 @@ public interface ModelFactory {
 			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, Location startLocation);
 
+	/**
+	 * Generate the system function
+	 * 
+	 * @param source
+	 *            The CIVL source of the function
+	 * @param name
+	 *            The function name
+	 * @param parameters
+	 *            The parameters of the function
+	 * @param returnType
+	 *            The CIVL return type
+	 * @param containingScope
+	 *            The scope that contains the function
+	 * @param libraryName
+	 *            The name of the library that defines the function
+	 * @return The system function
+	 */
 	SystemFunction systemFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, String libraryName);
@@ -152,6 +186,8 @@ public interface ModelFactory {
 	/**
 	 * Create a new location.
 	 * 
+	 * @param source
+	 *            The CIVL source of the location
 	 * @param scope
 	 *            The scope containing this location.
 	 * @return The new location.
@@ -167,6 +203,8 @@ public interface ModelFactory {
 	 * Returns the void type. Used in places where a type is required
 	 * syntactically but there is no type, such as function which does not
 	 * return a value.
+	 * 
+	 * @return The CIVL void type
 	 */
 	CIVLPrimitiveType voidType();
 
@@ -212,6 +250,11 @@ public interface ModelFactory {
 	 */
 	CIVLPrimitiveType processType();
 
+	/**
+	 * Get the dynamic type.
+	 * 
+	 * @return The dynamic type.
+	 */
 	CIVLPrimitiveType dynamicType();
 
 	/**
@@ -283,6 +326,11 @@ public interface ModelFactory {
 	void completeHeapType(CIVLHeapType heapType,
 			Collection<MallocStatement> mallocs);
 
+	/**
+	 * Create a new bundle type.
+	 * 
+	 * @return The new bundle type.
+	 */
 	CIVLBundleType newBundleType();
 
 	/**
@@ -345,12 +393,34 @@ public interface ModelFactory {
 	 */
 	SymbolicArrayType stringSymbolicType();
 
+	/**
+	 * Translate a process id into symbolic expression
+	 * 
+	 * @param pid
+	 * @return The symbolic expression of the process id
+	 */
 	SymbolicExpression processValue(int pid);
 
+	/**
+	 * Translate a symbolic process id into integer
+	 * 
+	 * @param source
+	 * @param processValue
+	 * @return The integer of the process id
+	 */
 	int getProcessId(CIVLSource source, SymbolicExpression processValue);
 
+	/**
+	 * @param sid
+	 * @return The symbolic scope
+	 */
 	SymbolicExpression scopeValue(int sid);
 
+	/**
+	 * @param source
+	 * @param scopeValue
+	 * @return The concrete scope id
+	 */
 	int getScopeId(CIVLSource source, SymbolicExpression scopeValue);
 
 	/* *********************************************************************
@@ -361,6 +431,8 @@ public interface ModelFactory {
 	/**
 	 * A unary expression. One of {-,!}.
 	 * 
+	 * @param source
+	 *            The CIVL source of the expression
 	 * @param operator
 	 *            The unary operator.
 	 * @param operand
@@ -373,6 +445,8 @@ public interface ModelFactory {
 	/**
 	 * A binary expression. One of {+,-,*,\,<,<=,==,!=,&&,||,%}
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param operator
 	 *            The binary operator.
 	 * @param left
@@ -387,10 +461,13 @@ public interface ModelFactory {
 	/**
 	 * A cast of an expression to another type.
 	 * 
+	 * @param source
+	 * 
 	 * @param type
 	 *            The type to which the expression is cast.
-	 * @param expresssion
+	 * @param expression
 	 *            The expression being cast to a new type.
+	 * @return The cast expression
 	 */
 	CastExpression castExpression(CIVLSource source, CIVLType type,
 			Expression expression);
@@ -441,7 +518,7 @@ public interface ModelFactory {
 	 * 
 	 * @param source
 	 * @param variable
-	 * @return
+	 * @return The initial value expression
 	 */
 	InitialValueExpression initialValueExpression(CIVLSource source,
 			Variable variable);
@@ -449,6 +526,8 @@ public interface ModelFactory {
 	/**
 	 * The ternary conditional expression ("?" in C).
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param condition
 	 *            The condition being evaluated in this conditional.
 	 * @param trueBranch
@@ -463,6 +542,8 @@ public interface ModelFactory {
 	/**
 	 * A dot expression is a reference to a struct field.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param struct
 	 *            The struct being referenced.
 	 * @param fieldIndex
@@ -475,6 +556,8 @@ public interface ModelFactory {
 	/**
 	 * A boolean literal expression.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param value
 	 *            True or false.
 	 * @return The boolean literal expression.
@@ -485,6 +568,8 @@ public interface ModelFactory {
 	/**
 	 * An integer literal expression.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param value
 	 *            The (arbitrary precision) integer value.
 	 * @return The integer literal expression.
@@ -495,6 +580,8 @@ public interface ModelFactory {
 	/**
 	 * A real literal expression.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param value
 	 *            The (arbitrary precision) real value.
 	 * @return The real literal expression.
@@ -506,6 +593,8 @@ public interface ModelFactory {
 	 * This expression is only used in an ensures clause of a function contract
 	 * to refer to the returned value.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @return A result expression.
 	 */
 	ResultExpression resultExpression(CIVLSource source);
@@ -513,6 +602,8 @@ public interface ModelFactory {
 	/**
 	 * A string literal expression.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param value
 	 *            The string.
 	 * @return The string literal expression.
@@ -523,6 +614,8 @@ public interface ModelFactory {
 	/**
 	 * An expression for an array index operation. e.g. a[i]
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param array
 	 *            An expression evaluating to an array.
 	 * @param index
@@ -535,6 +628,8 @@ public interface ModelFactory {
 	/**
 	 * A self expression. Used to referenced the current process.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @return A new self expression.
 	 */
 	SelfExpression selfExpression(CIVLSource source);
@@ -542,6 +637,8 @@ public interface ModelFactory {
 	/**
 	 * A variable expression.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param variable
 	 *            The variable being referenced.
 	 * @return The variable expression.
@@ -551,17 +648,21 @@ public interface ModelFactory {
 	/**
 	 * Returns a new dereference expression (*p) with operand pointer.
 	 * 
+	 * @param source
+	 *            The CIVL source
 	 * @param pointer
-	 *            the operand of the dereference operator, an expression with
+	 *            The operand of the dereference operator, an expression with
 	 *            pointer type
-	 * @return the dereference expression with given operand
+	 * @return The dereference expression with given operand
 	 */
 	DereferenceExpression dereferenceExpression(CIVLSource source,
 			Expression pointer);
 
 	/**
-	 * Returns a new address-of expression (&e) with given operand.
+	 * Returns a new address-of expression <code>(&e)</code> with given operand.
 	 * 
+	 * @param source
+	 *            The CIVL source of the expression
 	 * @param operand
 	 *            the operand of the address-of operator
 	 * @return the address-of expression with given operand
@@ -584,6 +685,7 @@ public interface ModelFactory {
 	 *            which is expected to be true.
 	 * @param expression
 	 *            The quantified expression.
+	 * @return The new quantified expression
 	 */
 	QuantifiedExpression quantifiedExpression(CIVLSource source,
 			Quantifier quantifier, Variable variable, Expression restriction,
@@ -597,10 +699,14 @@ public interface ModelFactory {
 	/**
 	 * An assert statement.
 	 * 
+	 * @param civlSource
+	 *            The CIVL source of the assert statement
 	 * @param source
 	 *            The source location for this statement.
 	 * @param expression
 	 *            The expression being asserted.
+	 * @param guard
+	 *            The guard
 	 * @return A new assert statement.
 	 */
 	AssertStatement assertStatement(CIVLSource civlSource, Location source,
@@ -609,12 +715,16 @@ public interface ModelFactory {
 	/**
 	 * An assignment statement.
 	 * 
+	 * @param civlSource
+	 *            The CIVL source
 	 * @param source
 	 *            The source location for this statement.
 	 * @param lhs
 	 *            The left hand side of the assignment.
 	 * @param rhs
 	 *            The right hand side of the assignment.
+	 * @param guard
+	 *            The guard
 	 * @return A new assignment statement.
 	 */
 	AssignStatement assignStatement(CIVLSource civlSource, Location source,
@@ -623,28 +733,36 @@ public interface ModelFactory {
 	/**
 	 * An assume statement.
 	 * 
+	 * @param civlSource
+	 *            The CIVL source of the assume statement
 	 * @param source
 	 *            The source location for this statement.
 	 * @param expression
 	 *            The expression being added to the path condition.
+	 * @param guard
+	 *            The guard
 	 * @return A new assume statement.
 	 */
 	AssumeStatement assumeStatement(CIVLSource civlSource, Location source,
 			Expression expression, Expression guard);
 
 	/**
-	 * A choose statement is of the form x = choose(n);
+	 * A choose statement is of the form <code>x = choose(n)</code>;
 	 * 
 	 * When a choose statement is executed, the left hand side will be assigned
 	 * a new symbolic constant. A bound on the values of that symbolic constant
 	 * will be added to the path condition.
 	 * 
+	 * @param civlSource
+	 *            The CIVL source of the choose statement
 	 * @param source
 	 *            The source location for this statement.
 	 * @param lhs
 	 *            The left hand side of the choose statement.
 	 * @param argument
 	 *            The argument to choose().
+	 * @param guard
+	 *            The guard
 	 * @return A new choose statement.
 	 */
 	ChooseStatement chooseStatement(CIVLSource civlSource, Location source,
@@ -653,6 +771,8 @@ public interface ModelFactory {
 	/**
 	 * A fork statement. Used to spawn a new process.
 	 * 
+	 * @param civlSource
+	 *            The CIVL source of the fork statement
 	 * @param source
 	 *            The source location for this fork statement.
 	 * @param isCall
@@ -661,6 +781,8 @@ public interface ModelFactory {
 	 *            A function
 	 * @param arguments
 	 *            The arguments to the function.
+	 * @param guard
+	 *            The guard
 	 * @return A new fork statement.
 	 */
 	CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
@@ -670,10 +792,14 @@ public interface ModelFactory {
 	/**
 	 * A join statement. Used to wait for a process to complete.
 	 * 
+	 * @param civlSource
+	 *            The CIVL source of the join statement
 	 * @param source
 	 *            The source location for this join statement.
 	 * @param process
 	 *            An expression evaluating to a process.
+	 * @param guard
+	 *            The guard
 	 * @return A new join statement.
 	 */
 	WaitStatement joinStatement(CIVLSource civlSource, Location source,
@@ -682,8 +808,11 @@ public interface ModelFactory {
 	/**
 	 * A noop statement.
 	 * 
+	 * @param civlSource
+	 *            The CIVL source of the no-op statement
 	 * @param source
 	 *            The source location for this noop statement.
+	 * @param guard
 	 * @return A new noop statement.
 	 */
 	NoopStatement noopStatement(CIVLSource civlSource, Location source,
@@ -692,15 +821,39 @@ public interface ModelFactory {
 	/**
 	 * A return statement.
 	 * 
+	 * @param civlSource
+	 *            The CIVL source of the return statement
 	 * @param source
 	 *            The source location for this return statement.
 	 * @param expression
 	 *            The expression being returned. Null if non-existent.
+	 * @param guard
 	 * @return A new return statement.
 	 */
 	ReturnStatement returnStatement(CIVLSource civlSource, Location source,
 			Expression expression, Expression guard);
 
+	/**
+	 * Create a new malloc statement
+	 * 
+	 * @param civlSource
+	 *            The CIVL source
+	 * @param source
+	 *            The source location of the malloc statement
+	 * @param lhs
+	 *            The left hand side of the malloc statement
+	 * @param staticElementType
+	 *            The static element type
+	 * @param heapPointerExpression
+	 *            The heap pointer
+	 * @param sizeExpression
+	 *            The size argument of the malloc statement
+	 * @param mallocId
+	 *            The id of the malloc statement
+	 * @param guard
+	 *            The guard
+	 * @return The new malloc statement
+	 */
 	MallocStatement mallocStatement(CIVLSource civlSource, Location source,
 			LHSExpression lhs, CIVLType staticElementType,
 			Expression heapPointerExpression, Expression sizeExpression,
@@ -712,33 +865,136 @@ public interface ModelFactory {
 	 * evaluates to a numeric type, the result will be the equivalent of
 	 * expression==0. Used for evaluating expression in conditions.
 	 * 
-	 * @param expressionNode
-	 * @param scope
+	 * @param expression
+	 * 
+	 * @return The boolean expression
 	 */
-	// TODO change javadoc
 	Expression booleanExpression(Expression expression);
 
+	/**
+	 * Translate ABC source into CIVL source
+	 * 
+	 * @param abcSource
+	 *            The ABC source
+	 * @return The CIVL source
+	 */
 	CIVLSource sourceOf(Source abcSource);
 
+	/**
+	 * Get the CIVL source of a C token
+	 * 
+	 * @param token
+	 *            The C token
+	 * @return The CIVL source
+	 */
 	CIVLSource sourceOfToken(CToken token);
 
+	/**
+	 * Get the CIVL source of an AST node
+	 * 
+	 * @param node
+	 *            The AST node
+	 * @return The CIVL source
+	 */
 	CIVLSource sourceOf(ASTNode node);
 
+	/**
+	 * Get the CIVL source of the beginning of an AST node
+	 * 
+	 * @param node
+	 *            The AST node
+	 * @return The CIVL source
+	 */
 	CIVLSource sourceOfBeginning(ASTNode node);
 
+	/**
+	 * Get the CIVL source of the end of an AST node
+	 * 
+	 * @param node
+	 *            The AST node
+	 * @return The CIVL source
+	 */
 	CIVLSource sourceOfEnd(ASTNode node);
 
+	/**
+	 * Translate the span of two ABC sources into CIVL source
+	 * 
+	 * @param abcSource1
+	 *            The first ABC source
+	 * @param abcSource2
+	 *            The second ABC source
+	 * @return The CIVL source
+	 */
 	CIVLSource sourceOfSpan(Source abcSource1, Source abcSource2);
 
+	/**
+	 * Get the CIVL span source of two AST nodes
+	 * 
+	 * @param node1
+	 *            The first AST node
+	 * @param node2
+	 *            The second AST node
+	 * @return The CIVL source
+	 */
 	CIVLSource sourceOfSpan(ASTNode node1, ASTNode node2);
 
+	/**
+	 * Get the span of two CIVL sources
+	 * 
+	 * @param source1
+	 *            The first CIVL source
+	 * @param source2
+	 *            The second CIVL source
+	 * @return The CIVL source
+	 */
 	CIVLSource sourceOfSpan(CIVLSource source1, CIVLSource source2);
 
+	/**
+	 * Check if a certain expression is TRUE.
+	 * 
+	 * @param expression
+	 *            The expression to be checked
+	 * @return True iff the expression is TRUE
+	 */
 	boolean isTrue(Expression expression);
 
+	/**
+	 * Set the token factory
+	 * 
+	 * @param tokens
+	 *            The token factory
+	 */
 	void setTokenFactory(TokenFactory tokens);
 
+	/**
+	 * Generate a null pointer expression
+	 * 
+	 * @param pointerType
+	 *            The type of the pointer
+	 * @param scope
+	 *            The scope of the expression
+	 * @param source
+	 *            The CIVL source of the expression
+	 * @return The null pointer expression
+	 */
 	Expression nullPointerExpression(CIVLPointerType pointerType, Scope scope,
 			CIVLSource source);
+
+	/**
+	 * Translate conditional expression in to if-else statement. E.g.,
+	 * <code>a ? b : c</code> will be translated into
+	 * <code>if(a){temp = b;}else{temp = c;}</code> where <code>temp</code> is
+	 * the temporal variable.
+	 * 
+	 * @param guard
+	 *            The guard
+	 * @param variable
+	 *            The temporal variable for the conditional expression
+	 * @param expression
+	 *            The conditional expression
+	 * @return The fragment
+	 */
+	Fragment conditionalExpressionToIf(Expression guard,
+			VariableExpression variable, ConditionalExpression expression);
 
 }

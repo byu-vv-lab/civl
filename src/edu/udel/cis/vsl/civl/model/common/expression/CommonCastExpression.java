@@ -6,7 +6,9 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
@@ -105,12 +107,22 @@ public class CommonCastExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		if(this.hasDerefs){
+		if (this.hasDerefs) {
 			this.purelyLocal = false;
 			return;
 		}
 		this.expression.purelyLocalAnalysis();
 		this.purelyLocal = this.expression.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (expression == oldExpression) {
+			expression = newExpression;
+			return;
+		}
+		expression.replaceWith(oldExpression, newExpression);
 	}
 
 }
