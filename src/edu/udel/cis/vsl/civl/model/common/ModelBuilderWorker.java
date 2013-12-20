@@ -423,7 +423,7 @@ public class ModelBuilderWorker {
 	}
 
 	// TODO: Improve javadoc
-	//TODO: Get rid of translateTypeNode, just call this.
+	// TODO: Get rid of translateTypeNode, just call this.
 	/**
 	 * Working on replacing process type with this.
 	 * 
@@ -2770,7 +2770,8 @@ public class ModelBuilderWorker {
 			prefix = "__typedef_";
 			tag = ((TypedefDeclarationNode) typeNode.parent()).getName();
 		}
-		//TODO: Explain this in the javadoc.  Give examples of variables with state.
+		// TODO: Explain this in the javadoc. Give examples of variables with
+		// state.
 		// e.g. typedef int[n] foo;
 		// Also, add tests if there aren't already.
 		if (type.hasState()) {
@@ -2869,9 +2870,15 @@ public class ModelBuilderWorker {
 						"Saw input variable outside of root scope",
 						factory.sourceOf(node));
 			}
-		} else if (node instanceof StructureOrUnionTypeNode
-				|| node instanceof TypedefDeclarationNode) {
+		} else if (node instanceof StructureOrUnionTypeNode) {
 			result = translateCompoundTypeNode(location, scope, (TypeNode) node);
+		} else if (node instanceof TypedefDeclarationNode) {
+			// TypedefDeclarationNode node has to be processed separatedly from
+			// StructureOrUnionTypeNode, because TypedefDeclarationNode is not a
+			// sub-type of TypeNode but the one returned by
+			// TypedefDeclarationNode.getTypeNode() is
+			result = translateCompoundTypeNode(location, scope,
+					((TypedefDeclarationNode) node).getTypeNode());
 		} else if (node instanceof FunctionDefinitionNode) {
 			if (((FunctionDefinitionNode) node).getName().equals("main")) {
 				mainFunctionNode = (FunctionDefinitionNode) node;
