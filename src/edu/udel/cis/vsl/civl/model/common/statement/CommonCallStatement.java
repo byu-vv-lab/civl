@@ -244,6 +244,7 @@ public class CommonCallStatement extends CommonStatement implements
 					newArgs.add(arguments.get(i));
 				else {
 					Expression newArg = arguments.get(i);
+					newArg = newArg.replaceWith(oldExpression, newExpression);
 
 					if (newArg != null) {
 						newArgs.add(newArg);

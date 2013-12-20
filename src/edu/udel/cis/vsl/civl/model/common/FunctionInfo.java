@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common;
 
+import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -193,7 +194,7 @@ public class FunctionInfo {
 	 *            a fragment translated from the body of the function
 	 */
 	public void completeFunction(Fragment functionBody) {
-		Stack<Location> workingLocations = new Stack<Location>();
+		ArrayDeque<Location> workingLocations = new ArrayDeque<Location>();
 		Location location;
 
 		// start from the start location of the fragment
@@ -205,7 +206,9 @@ public class FunctionInfo {
 		}
 
 		while (workingLocations.size() > 0) {
-			location = workingLocations.pop();
+			// use first-in-first-out order to traverse locations so that they
+			// are in natural order of the location id's
+			location = workingLocations.pollFirst();
 			function.addLocation(location);
 
 			if (location.getNumOutgoing() > 0) {
@@ -218,7 +221,7 @@ public class FunctionInfo {
 					function.addStatement(statement);
 					if (newLocation != null) {
 						if (!function.locations().contains(newLocation)) {
-							workingLocations.push(newLocation);
+							workingLocations.add(newLocation);
 						}
 					}
 				}

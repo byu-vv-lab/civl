@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
@@ -136,6 +137,8 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  * 
  */
 public class CommonModelFactory implements ModelFactory {
+
+	ModelBuilderWorker modelBuilder;
 
 	/**
 	 * Amount by which to increase the list of cached scope values and process
@@ -1597,7 +1600,7 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public CommonFragment conditionalExpressionToIf(Expression guard,
+	public Fragment conditionalExpressionToIf(Expression guard,
 			VariableExpression variable, ConditionalExpression expression) {
 		Expression condition = expression.getCondition();
 		Location startLocation = location(condition.getSource(), variable
@@ -1606,7 +1609,7 @@ public class CommonModelFactory implements ModelFactory {
 		Statement ifAssign, elseAssign;
 		Expression ifValue = expression.getTrueBranch(), elseValue = expression
 				.getFalseBranch();
-		CommonFragment result = new CommonFragment();
+		Fragment result = new CommonFragment();
 		StatementSet lastStatement = new StatementSet();
 
 		ifGuard = booleanExpression(condition);
@@ -1630,16 +1633,15 @@ public class CommonModelFactory implements ModelFactory {
 				variable, elseValue, elseGuard);
 		lastStatement.add(elseAssign);
 
-		result.startLocation = startLocation;
-		result.lastStatement = lastStatement;
+		result.setStartLocation(startLocation);
+		result.setLastStatement(lastStatement);
 
 		return result;
 	}
 
 	@Override
-	public CommonFragment conditionalExpressionToIf(
-			ConditionalExpression expression, Statement statement) {
-
+	public Fragment conditionalExpressionToIf(ConditionalExpression expression,
+			Statement statement) {
 		Expression guard = statement.guard();
 		Expression condition = expression.getCondition();
 		Location startLocation = statement.source();
@@ -1647,7 +1649,7 @@ public class CommonModelFactory implements ModelFactory {
 		Statement ifBranch, elseBranch;
 		Expression ifValue = expression.getTrueBranch(), elseValue = expression
 				.getFalseBranch();
-		CommonFragment result = new CommonFragment();
+		Fragment result = new CommonFragment();
 		StatementSet lastStatement = new StatementSet();
 
 		ifGuard = booleanExpression(condition);
@@ -1663,17 +1665,49 @@ public class CommonModelFactory implements ModelFactory {
 					BINARY_OPERATOR.AND, guard, elseGuard);
 		}
 
-		ifBranch = statement.replaceWith(expression, ifValue);
-		ifBranch.setGuard(ifGuard);
+		if (statement instanceof CallOrSpawnStatement) {
+			Function function = modelBuilder.callStatements.get(statement);
+			Fragment ifFragment, elseFragment;
+			Location ifLocation, elseLocation;
+			Scope scope = statement.statementScope();
 
-		elseBranch = statement.replaceWith(expression, elseValue);
-		elseBranch.setGuard(elseGuard);
+			ifFragment = new CommonFragment(noopStatement(
+					condition.getSource(), startLocation, ifGuard));
+			ifLocation = location(ifValue.getSource(), scope);
+			ifBranch = statement.replaceWith(expression, ifValue);
+			ifBranch.setGuard(guard);
+			ifBranch.setSource(ifLocation);
+			ifFragment = ifFragment.combineWith(new CommonFragment(ifBranch));
 
-		lastStatement.add(ifBranch);
-		lastStatement.add(elseBranch);
+			elseFragment = new CommonFragment(noopStatement(
+					condition.getSource(), startLocation, elseGuard));
+			elseLocation = location(elseValue.getSource(), scope);
+			elseBranch = statement.replaceWith(expression, elseValue);
+			elseBranch.setGuard(guard);
+			elseBranch.setSource(elseLocation);
+			elseFragment = elseFragment.combineWith(new CommonFragment(
+					elseBranch));
 
-		result.startLocation = startLocation;
-		result.lastStatement = lastStatement;
+			modelBuilder.callStatements.put((CallOrSpawnStatement) ifBranch,
+					function);
+			modelBuilder.callStatements.put((CallOrSpawnStatement) elseBranch,
+					function);
+			modelBuilder.callStatements.remove(statement);
+
+			result = ifFragment.parallelCombineWith(elseFragment);
+
+		} else {
+			ifBranch = statement.replaceWith(expression, ifValue);
+			elseBranch = statement.replaceWith(expression, elseValue);
+			ifBranch.setGuard(ifGuard);
+			elseBranch.setGuard(elseGuard);
+			lastStatement.add(ifBranch);
+			lastStatement.add(elseBranch);
+
+			result.setStartLocation(startLocation);
+			result.setLastStatement(lastStatement);
+		}
+
 		startLocation.removeOutgoing(statement);
 
 		return result;

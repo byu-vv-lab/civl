@@ -193,7 +193,10 @@ public class ModelBuilderWorker {
 	 * over this map and set the function fields of the call/spawn statements to
 	 * the corresponding model Function object.
 	 */
-	private Map<CallOrSpawnStatement, Function> callStatements;
+	Map<CallOrSpawnStatement, Function> callStatements; // make it
+														// package-private since
+														// CommonModelFactory
+														// needs to access it
 
 	/**
 	 * Map from ABC Function entity to corresponding CIVL Function.
@@ -312,6 +315,7 @@ public class ModelBuilderWorker {
 		this.heapType = factory.heapType(name);
 		this.bundleType = factory.newBundleType();
 		this.universe = factory.universe();
+		((CommonModelFactory) factory).modelBuilder = this;
 	}
 
 	/* *********************************************************************
@@ -1995,7 +1999,11 @@ public class ModelBuilderWorker {
 			WhenNode whenNode) {
 		Expression newGuard = translateExpressionNode(whenNode.getGuard(),
 				scope, true);
+		Map.Entry<Fragment, Expression> refineConditional = factory
+				.refineConditionalExpression(scope, guard, newGuard);
+		Fragment beforeGuardFragment = refineConditional.getKey(), result;
 
+		newGuard = refineConditional.getValue();
 		newGuard = factory.booleanExpression(newGuard);
 		if (factory.isTrue(newGuard)) {
 			newGuard = guard;
@@ -2005,8 +2013,11 @@ public class ModelBuilderWorker {
 							newGuard.getSource()), BINARY_OPERATOR.AND, guard,
 					newGuard);
 		}
+		result = translateStatementNode(newGuard, scope, whenNode.getBody());
+		if (beforeGuardFragment != null)
+			result = beforeGuardFragment.combineWith(result);
 
-		return translateStatementNode(newGuard, scope, whenNode.getBody());
+		return result;
 	}
 
 	/**
