@@ -695,6 +695,7 @@ public interface ModelFactory {
 	 * Statements
 	 * *********************************************************************
 	 */
+	//TODO: Make these return a Fragment
 
 	/**
 	 * An assert statement.

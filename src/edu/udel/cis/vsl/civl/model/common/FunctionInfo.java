@@ -169,6 +169,7 @@ public class FunctionInfo {
 	 */
 	public Map.Entry<Fragment, Expression> refineConditionalExpression(
 			Scope scope, Expression guard, Expression expression) {
+		//TODO: Maybe make this "beforeConditionFragment"?
 		Fragment beforeCondition = null;
 
 		while (hasConditionalExpressions()) {
@@ -203,6 +204,7 @@ public class FunctionInfo {
 	 *         expressions
 	 */
 
+	//TODO: Refactor this somewhere else.  It doesn't really fit with function info.
 	/**
 	 * Translate away conditional expressions from a statement. First create a
 	 * temporal variable, then replace the conditional expression with the
@@ -340,7 +342,7 @@ public class FunctionInfo {
 	 * Add a set of statements to the break statement stack <dt>
 	 * <b>Preconditions:</b>
 	 * <dd>
-	 * A new loop is just encountered
+	 * A new loop or switch is just encountered
 	 * 
 	 * @param statementSet
 	 *            an empty set of statements

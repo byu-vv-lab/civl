@@ -272,6 +272,7 @@ public class ModelBuilderWorker {
 	 */
 	private Set<String> initializedInputs = new HashSet<String>();
 
+	// TODO: Refactor this so that it's not a global field.
 	/**
 	 * Store temporary information of the function being processed
 	 */
@@ -421,6 +422,8 @@ public class ModelBuilderWorker {
 		}
 	}
 
+	// TODO: Improve javadoc
+	//TODO: Get rid of translateTypeNode, just call this.
 	/**
 	 * Working on replacing process type with this.
 	 * 
@@ -2745,12 +2748,16 @@ public class ModelBuilderWorker {
 		Fragment result = null;
 		String prefix;
 		String tag;
-
 		CIVLType type = translateTypeNode(typeNode, scope);
 		CIVLSource civlSource = factory.sourceOf(typeNode);
 
 		if (typeNode instanceof StructureOrUnionTypeNode) {
+			// TODO: Check for union type. We need to eventually implement
+			// unions.
 			prefix = "__struct_";
+			// TODO: This is null if this is a "declaration" but not the
+			// "definition". Should we use entities instead of the node? That
+			// would always get the definition.
 			if (((StructureOrUnionTypeNode) typeNode).getStructDeclList() == null)
 				return result;
 			if (!(type instanceof CIVLStructType))
@@ -2763,30 +2770,28 @@ public class ModelBuilderWorker {
 			prefix = "__typedef_";
 			tag = ((TypedefDeclarationNode) typeNode.parent()).getName();
 		}
-
+		//TODO: Explain this in the javadoc.  Give examples of variables with state.
+		// e.g. typedef int[n] foo;
+		// Also, add tests if there aren't already.
 		if (type.hasState()) {
 			Variable variable;
-
 			String name = prefix + tag + "__";
 			Identifier identifier = factory.identifier(civlSource, name);
 			int vid = scope.numVariables();
+			LHSExpression lhs;
+			Expression rhs = factory.dynamicTypeOfExpression(civlSource, type);
 
 			variable = factory.variable(civlSource, factory.dynamicType(),
 					identifier, vid);
+			lhs = factory.variableExpression(civlSource, variable);
 			scope.addVariable(variable);
 			type.setStateVariable(variable);
-
-			LHSExpression lhs = factory
-					.variableExpression(civlSource, variable);
-			Expression rhs = factory.dynamicTypeOfExpression(civlSource, type);
-
 			if (sourceLocation == null)
 				sourceLocation = factory.location(
 						factory.sourceOfBeginning(typeNode), scope);
 			result = new Fragment(sourceLocation, factory.assignStatement(
 					civlSource, sourceLocation, lhs, rhs, null));
 		}
-
 		return result;
 	}
 
@@ -2855,27 +2860,18 @@ public class ModelBuilderWorker {
 			Location location, Expression guard) {
 		Fragment result = null;
 
-		if (node instanceof VariableDeclarationNode
-				|| node instanceof StructureOrUnionTypeNode
-				|| node instanceof TypedefDeclarationNode) {
-			if (node instanceof VariableDeclarationNode)
-				try {
-					result = translateVariableDeclarationNode(location, scope,
-							(VariableDeclarationNode) node);
-				} catch (CommandLineException e) {
-					throw new CIVLInternalException(
-							"Saw input variable outside of root scope",
-							factory.sourceOf(node));
-				}
-			else if (node instanceof StructureOrUnionTypeNode)
-				result = translateCompoundTypeNode(location, scope,
-						(StructureOrUnionTypeNode) node);
-			else if (node instanceof TypedefDeclarationNode)
-				result = translateCompoundTypeNode(location, scope,
-						((TypedefDeclarationNode) node).getTypeNode());
-			else
-				throw new CIVLInternalException("unreachable",
+		if (node instanceof VariableDeclarationNode) {
+			try {
+				result = translateVariableDeclarationNode(location, scope,
+						(VariableDeclarationNode) node);
+			} catch (CommandLineException e) {
+				throw new CIVLInternalException(
+						"Saw input variable outside of root scope",
 						factory.sourceOf(node));
+			}
+		} else if (node instanceof StructureOrUnionTypeNode
+				|| node instanceof TypedefDeclarationNode) {
+			result = translateCompoundTypeNode(location, scope, (TypeNode) node);
 		} else if (node instanceof FunctionDefinitionNode) {
 			if (((FunctionDefinitionNode) node).getName().equals("main")) {
 				mainFunctionNode = (FunctionDefinitionNode) node;
