@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
 /**
  * A return statement.
@@ -100,6 +101,29 @@ public class CommonReturnStatement extends CommonStatement implements
 			}
 			expression.replaceWith(oldExpression, newExpression);
 		}
+	}
+
+	@Override
+	public Statement replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
+		CommonReturnStatement newStatement = null;
+
+		if (newGuard != null) {
+			newStatement = new CommonReturnStatement(this.getSource(),
+					this.source(), this.expression);
+			newStatement.setGuard(newGuard);
+		} else if (expression != null) {
+			Expression newExpressionField = expression.replaceWith(
+					oldExpression, newExpression);
+
+			if (newExpressionField != null) {
+				newStatement = new CommonReturnStatement(this.getSource(),
+						this.source(), newExpressionField);
+				newStatement.setGuard(this.guard());
+			}
+		}
+		return newStatement;
 	}
 
 }

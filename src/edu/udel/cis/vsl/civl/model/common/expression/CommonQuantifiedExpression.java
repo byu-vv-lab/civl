@@ -136,4 +136,25 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 		expression.replaceWith(oldExpression, newExpression);
 	}
 
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newRestriction = restriction.replaceWith(oldExpression,
+				newExpression);
+		CommonQuantifiedExpression result = null;
+
+		if (newRestriction != null) {
+			result = new CommonQuantifiedExpression(this.getSource(),
+					quantifier, variable, newRestriction, expression);
+		} else {
+			Expression newExpressionField = expression.replaceWith(oldExpression,
+					newExpression);
+
+			if (newExpressionField != null)
+				result = new CommonQuantifiedExpression(this.getSource(),
+						quantifier, variable, restriction, newExpressionField);
+		}
+
+		return result;
+	}
 }

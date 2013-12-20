@@ -23,7 +23,8 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpress
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public abstract class CommonStatement extends CommonSourceable implements Statement {
+public abstract class CommonStatement extends CommonSourceable implements
+		Statement {
 
 	private Location source;
 	private Location target;
@@ -69,7 +70,7 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	public Expression guard() {
 		return guard;
 	}
-	
+
 	/**
 	 * @return The model to which this statement belongs.
 	 */
@@ -115,14 +116,14 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	}
 
 	/**
-	 * @param model The Model to which this statement belongs.
+	 * @param model
+	 *            The Model to which this statement belongs.
 	 */
 	@Override
 	public void setModel(Model model) {
 		this.model = model;
 	}
-	
-	
+
 	/**
 	 * @return The highest scope accessed by this statement. Null if no
 	 *         variables accessed.
@@ -173,9 +174,9 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 			s1Ancestor = s1Ancestor.parent();
 		}
 	}
-	
+
 	@Override
-	public void calculateDerefs(){
+	public void calculateDerefs() {
 		this.hasDerefs = false;
 	}
 
@@ -183,27 +184,44 @@ public abstract class CommonStatement extends CommonSourceable implements Statem
 	public boolean hasDerefs() {
 		return this.hasDerefs;
 	}
-	
+
 	@Override
-	public void purelyLocalAnalysisOfVariables(Scope funcScope){
-		
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+
 	}
-	
+
 	@Override
-	public boolean isPurelyLocal(){
+	public boolean isPurelyLocal() {
 		return this.purelyLocal;
 	}
-	
+
 	@Override
-	public void purelyLocalAnalysis(){
+	public void purelyLocalAnalysis() {
 		this.guard.purelyLocalAnalysis();
 		this.purelyLocal = this.guard.isPurelyLocal();
 	}
-	
+
 	@Override
 	public void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression) {
 		this.guard.replaceWith(oldExpression, newExpression);
 	}
 
+	/**
+	 * Attempt to generate a new guard by replacing a certain conditional
+	 * expression with a new expression
+	 * 
+	 * @param oldExpression
+	 *            The conditional expression
+	 * @param newExpression
+	 *            The new expression
+	 * @return Null if guard doesn't contain the given conditional expression,
+	 *         otherwise return the new guard
+	 */
+	protected Expression guardReplaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newGuard = guard.replaceWith(oldExpression, newExpression);
+
+		return newGuard;
+	}
 }

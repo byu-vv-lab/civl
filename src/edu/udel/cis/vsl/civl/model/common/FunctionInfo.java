@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.model.common;
 
-import java.util.AbstractMap;
-import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -9,20 +7,9 @@ import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonVariableExpression;
-import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 
 /**
  * Maintains the information, e.g. labeled location, goto statements,
@@ -49,17 +36,6 @@ public class FunctionInfo {
 	private Map<Statement, LabelNode> gotoStatements;
 
 	/**
-	 * The stack of queues of conditional expression.
-	 */
-	private Stack<ArrayDeque<ConditionalExpression>> conditionalExpressions;
-
-	/**
-	 * The number of conditional expressions that have been encountered, used to
-	 * create temporal variable.
-	 */
-	private int conditionalExpressionCounter = 0;
-
-	/**
 	 * Used to keep track of continue statements in nested loops. Each entry on
 	 * the stack corresponds to a particular loop. The statements in the set for
 	 * that entry are noops which need their target set to the appropriate
@@ -77,16 +53,6 @@ public class FunctionInfo {
 	private Stack<Set<Statement>> breakStatements;
 
 	/**
-	 * The symbolic universe
-	 */
-	private SymbolicUniverse universe;
-
-	/**
-	 * The factory used to create new Model components.
-	 */
-	private ModelFactory factory;
-
-	/**
 	 * Constructor
 	 * 
 	 * @param function
@@ -96,16 +62,12 @@ public class FunctionInfo {
 	 * @param factory
 	 *            The model factory
 	 */
-	public FunctionInfo(CIVLFunction function, SymbolicUniverse universe,
-			ModelFactory factory) {
+	public FunctionInfo(CIVLFunction function) {
 		this.function = function;
 		labeledLocations = new LinkedHashMap<LabelNode, Location>();
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		continueStatements = new Stack<Set<Statement>>();
 		breakStatements = new Stack<Set<Statement>>();
-		conditionalExpressions = new Stack<ArrayDeque<ConditionalExpression>>();
-		this.universe = universe;
-		this.factory = factory;
 	}
 
 	/**
@@ -115,195 +77,6 @@ public class FunctionInfo {
 	 */
 	public CIVLFunction function() {
 		return this.function;
-	}
-
-	/**
-	 * Generate a temporal variable for translating away conditional expression
-	 * 
-	 * @param scope
-	 *            The scope of the temporal variable
-	 * @param source
-	 *            The CIVL source of the conditional expression
-	 * @param type
-	 *            The CIVL type of the conditional expression
-	 * @return The variable expression referring to the temporal variable
-	 */
-	public VariableExpression tempVariable(Scope scope, CIVLSource source,
-			CIVLType type) {
-		String name = "$V" + this.conditionalExpressionCounter++;
-		int vid = scope.numVariables();
-		StringObject stringObject = (StringObject) universe.canonic(universe
-				.stringObject(name));
-		Variable variable = new CommonVariable(source, type,
-				new CommonIdentifier(source, stringObject), vid);
-		VariableExpression result = new CommonVariableExpression(source,
-				variable);
-
-		scope.addVariable(variable);
-		((CommonVariableExpression) result).setExpressionType(variable.type());
-		return result;
-	}
-
-	/**
-	 * Add a new conditional expression
-	 * 
-	 * @param expression
-	 *            The new conditional expression
-	 */
-	public void addConditionalExpression(ConditionalExpression expression) {
-		this.conditionalExpressions.peek().add(expression);
-	}
-
-	/**
-	 * Translate a condition that contains conditional expressions in to an
-	 * if-else statement
-	 * 
-	 * @param scope
-	 *            The scope of the expression
-	 * @param guard
-	 *            The guard
-	 * @param expression
-	 *            The expression
-	 * @return The if-else fragment and the expression without conditional
-	 *         expressions
-	 */
-	public Map.Entry<Fragment, Expression> refineConditionalExpression(
-			Scope scope, Expression guard, Expression expression) {
-		//TODO: Maybe make this "beforeConditionFragment"?
-		Fragment beforeCondition = null;
-
-		while (hasConditionalExpressions()) {
-			ConditionalExpression conditionalExpression = pollConditionaExpression();
-			VariableExpression variable = tempVariable(scope,
-					conditionalExpression.getSource(),
-					conditionalExpression.getExpressionType());
-
-			beforeCondition = factory.conditionalExpressionToIf(guard,
-					variable, conditionalExpression);
-			if (expression == conditionalExpression)
-				expression = variable;
-			else
-				expression.replaceWith(conditionalExpression, variable);
-		}
-
-		return new AbstractMap.SimpleEntry<Fragment, Expression>(
-				beforeCondition, expression);
-	}
-
-	/**
-	 * Translate a condition that contains conditional expressions in to an
-	 * if-else statement
-	 * 
-	 * @param scope
-	 *            The scope of the expression
-	 * @param guard
-	 *            The guard
-	 * @param expression
-	 *            The expression
-	 * @return The if-else fragment and the expression without conditional
-	 *         expressions
-	 */
-
-	//TODO: Refactor this somewhere else.  It doesn't really fit with function info.
-	/**
-	 * Translate away conditional expressions from a statement. First create a
-	 * temporal variable, then replace the conditional expression with the
-	 * temporal variable (recursively), then an if-else statement is created to
-	 * update the value of the temporal variable, and combine it with the
-	 * original statement without condition expressions.
-	 * 
-	 * @param statement
-	 *            The statement that contains conditional expressions
-	 * @param oldLocation
-	 *            The source location of statement
-	 * @return The fragment includes the equivalent if-else statement and the
-	 *         modified statement without conditional expressions
-	 */
-	public Fragment refineConditionalExpressionOfStatement(Statement statement,
-			Location oldLocation) {
-		Fragment result = new Fragment();
-
-		while (hasConditionalExpressions()) {
-			ConditionalExpression conditionalExpression = pollConditionaExpression();
-			VariableExpression variable = tempVariable(
-					statement.statementScope(),
-					conditionalExpression.getSource(),
-					conditionalExpression.getExpressionType());
-			Fragment ifElse = factory.conditionalExpressionToIf(
-					statement.guard(), variable, conditionalExpression);
-
-			statement.replaceWith(conditionalExpression, variable);
-
-			result = result.combineWith(ifElse);
-		}
-
-		result = result.combineWith(new Fragment(oldLocation, statement));
-
-		return result;
-	}
-
-	/*
-	 * if (functionInfo.hasConditionalExpressions() == true) { Statement
-	 * newStatement = result.lastStatement; Location oldLocation =
-	 * result.startLocation;
-	 * 
-	 * result = new Fragment();
-	 * 
-	 * while (functionInfo.hasConditionalExpressions()) { ConditionalExpression
-	 * conditionalExpression = functionInfo .pollConditionaExpression();
-	 * VariableExpression variable = functionInfo.tempVariable(
-	 * newStatement.statementScope(), conditionalExpression.getSource(),
-	 * conditionalExpression.getExpressionType()); Fragment ifElse =
-	 * factory.conditionalExpressionToIf( newStatement.guard(), variable,
-	 * conditionalExpression);
-	 * 
-	 * newStatement.replaceWith(conditionalExpression, variable);
-	 * 
-	 * result = result.combineWith(ifElse); }
-	 * 
-	 * result = result .combineWith(new Fragment(oldLocation, newStatement)); }
-	 */
-	// public void increaseConditionalExpressionCounter(){
-	// this.conditionalExpressionCounter++;
-	// }
-
-	/**
-	 * Add a new queue to store conditional expression. This is invoked at the
-	 * beginning of translating each new statement node, expression node,
-	 * variable declaration node, etc.
-	 */
-	public void addConditionalExpressionQueue() {
-		conditionalExpressions.add(new ArrayDeque<ConditionalExpression>());
-	}
-
-	/**
-	 * Pop the queue of conditional expressions from the stack. This is invoked
-	 * at the end of translating each new statement node, expression node,
-	 * variable declaration node, etc.
-	 */
-	public void popConditionaExpressionStack() {
-		conditionalExpressions.pop();
-	}
-
-	// public ConditionalExpression peekConditionaExpression() {
-	// return conditionalExpressions.peek().peek();
-	// }
-
-	/**
-	 * @return The earliest conditional expression in the latest queue in the
-	 *         stack of conditional expression queues
-	 */
-	public ConditionalExpression pollConditionaExpression() {
-		return conditionalExpressions.peek().pollFirst();
-	}
-
-	/**
-	 * @return True iff the latest queue is empty
-	 */
-	public boolean hasConditionalExpressions() {
-		if (!conditionalExpressions.peek().isEmpty())
-			return true;
-		return false;
 	}
 
 	/**
@@ -424,8 +197,8 @@ public class FunctionInfo {
 		Location location;
 
 		// start from the start location of the fragment
-		workingLocations.add(functionBody.startLocation);
-		function.setStartLocation(functionBody.startLocation);
+		workingLocations.add(functionBody.startLocation());
+		function.setStartLocation(functionBody.startLocation());
 
 		for (Statement s : gotoStatements.keySet()) {
 			s.setTarget(labeledLocations.get(gotoStatements.get(s)));

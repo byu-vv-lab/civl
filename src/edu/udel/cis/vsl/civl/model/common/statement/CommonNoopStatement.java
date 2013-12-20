@@ -4,8 +4,11 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
 /**
  * A noop statement.
@@ -29,5 +32,20 @@ public class CommonNoopStatement extends CommonStatement implements
 	@Override
 	public String toString() {
 		return "no-op";
+	}
+
+	@Override
+	public Statement replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
+		CommonNoopStatement newStatement = null;
+
+		if (newGuard != null) {
+			newStatement = new CommonNoopStatement(this.getSource(),
+					this.source());
+			newStatement.setGuard(newGuard);
+		}
+
+		return newStatement;
 	}
 }

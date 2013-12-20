@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -47,6 +48,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
@@ -58,7 +60,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.Fragment;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
@@ -695,7 +696,7 @@ public interface ModelFactory {
 	 * Statements
 	 * *********************************************************************
 	 */
-	//TODO: Make these return a Fragment
+	// TODO: Make these return a Fragment
 
 	/**
 	 * An assert statement.
@@ -997,5 +998,74 @@ public interface ModelFactory {
 	 */
 	Fragment conditionalExpressionToIf(Expression guard,
 			VariableExpression variable, ConditionalExpression expression);
+
+	Fragment conditionalExpressionToIf(ConditionalExpression expression,
+			Statement statement);
+
+	/**
+	 * Add a new conditional expression
+	 * 
+	 * @param expression
+	 *            The new conditional expression
+	 */
+	void addConditionalExpression(ConditionalExpression expression);
+
+	/**
+	 * @return True iff the latest queue is empty
+	 */
+	boolean hasConditionalExpressions();
+
+	/**
+	 * Translate away conditional expressions from a statement. First create a
+	 * temporal variable, then replace the conditional expression with the
+	 * temporal variable (recursively), then an if-else statement is created to
+	 * update the value of the temporal variable, and combine it with the
+	 * original statement without condition expressions.
+	 * 
+	 * @param statement
+	 *            The statement that contains conditional expressions
+	 * @param oldLocation
+	 *            The source location of statement
+	 * @return The fragment includes the equivalent if-else statement and the
+	 *         modified statement without conditional expressions
+	 */
+	Fragment refineConditionalExpressionOfStatement(Statement lastStatement,
+			Location startLocation);
+
+	/**
+	 * Pop the queue of conditional expressions from the stack. This is invoked
+	 * at the end of translating each new statement node, expression node,
+	 * variable declaration node, etc.
+	 */
+	void popConditionaExpressionStack();
+
+	/**
+	 * Add a new queue to store conditional expression. This is invoked at the
+	 * beginning of translating each new statement node, expression node,
+	 * variable declaration node, etc.
+	 */
+	void addConditionalExpressionQueue();
+
+	/**
+	 * Translate a condition that contains conditional expressions in to an
+	 * if-else statement
+	 * 
+	 * @param scope
+	 *            The scope of the expression
+	 * @param guard
+	 *            The guard
+	 * @param expression
+	 *            The expression
+	 * @return The if-else fragment and the expression without conditional
+	 *         expressions
+	 */
+	Entry<Fragment, Expression> refineConditionalExpression(Scope scope,
+			Expression guard, Expression expression);
+
+	/**
+	 * @return The earliest conditional expression in the latest queue in the
+	 *         stack of conditional expression queues
+	 */
+	ConditionalExpression pollConditionaExpression();
 
 }

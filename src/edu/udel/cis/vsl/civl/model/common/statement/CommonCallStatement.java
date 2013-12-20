@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -11,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
 /**
  * A function call or spawn. Either of the form f(x) or else v=f(x).
@@ -219,6 +221,45 @@ public class CommonCallStatement extends CommonStatement implements
 			}
 			arg.replaceWith(oldExpression, newExpression);
 		}
+	}
+
+	@Override
+	public Statement replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
+		CommonCallStatement newStatement = null;
+
+		if (newGuard != null) {
+			newStatement = new CommonCallStatement(this.getSource(),
+					this.source(), lhs, this.function, this.arguments);
+			newStatement.setGuard(newGuard);
+			newStatement.isCall = this.isCall;
+		} else {
+			boolean hasNewArg = false;
+			ArrayList<Expression> newArgs = new ArrayList<Expression>();
+			int number = this.arguments.size();
+
+			for (int i = 0; i < number; i++) {
+				if (hasNewArg)
+					newArgs.add(arguments.get(i));
+				else {
+					Expression newArg = arguments.get(i);
+
+					if (newArg != null) {
+						newArgs.add(newArg);
+						hasNewArg = true;
+					} else
+						newArgs.add(arguments.get(i));
+				}
+			}
+			if (hasNewArg) {
+				newStatement = new CommonCallStatement(this.getSource(),
+						this.source(), lhs, this.function, newArgs);
+				newStatement.setGuard(this.guard());
+				newStatement.isCall = this.isCall;
+			}
+		}
+		return newStatement;
 	}
 
 }

@@ -126,4 +126,19 @@ public class CommonUnaryExpression extends CommonExpression implements
 		operand.replaceWith(oldExpression, newExpression);
 	}
 
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newOperand = operand.replaceWith(oldExpression,
+				newExpression);
+		CommonUnaryExpression result = null;
+
+		if (newOperand != null) {
+			result = new CommonUnaryExpression(this.getSource(), operator,
+					newOperand);
+		}
+
+		return result;
+	}
+
 }

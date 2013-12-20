@@ -7,13 +7,12 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
-public class CommonSizeofExpressionExpression extends CommonExpression
-		implements SizeofExpressionExpression {
+public class CommonSizeofExpression extends CommonExpression implements
+		SizeofExpressionExpression {
 
 	private Expression argument;
 
-	public CommonSizeofExpressionExpression(CIVLSource source,
-			Expression argument) {
+	public CommonSizeofExpression(CIVLSource source, Expression argument) {
 		super(source);
 		this.argument = argument;
 	}
@@ -63,5 +62,19 @@ public class CommonSizeofExpressionExpression extends CommonExpression
 			return;
 		}
 		argument.replaceWith(oldExpression, newExpression);
+	}
+
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newArgument = argument.replaceWith(oldExpression,
+				newExpression);
+		CommonSizeofExpression result = null;
+
+		if (newArgument != null) {
+			result = new CommonSizeofExpression(this.getSource(), newArgument);
+		}
+
+		return result;
 	}
 }

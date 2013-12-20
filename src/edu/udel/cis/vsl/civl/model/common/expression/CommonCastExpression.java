@@ -125,4 +125,20 @@ public class CommonCastExpression extends CommonExpression implements
 		expression.replaceWith(oldExpression, newExpression);
 	}
 
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newOperand = expression.replaceWith(oldExpression,
+				newExpression);
+		CommonCastExpression result = null;
+
+		if (newOperand != null) {
+			result = new CommonCastExpression(this.getSource(), this.type,
+					newOperand);
+		}
+
+		return result;
+
+	}
+
 }

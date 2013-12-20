@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
 /**
  * An assert statement.
@@ -97,13 +98,36 @@ public class CommonAssertStatement extends CommonStatement implements
 	public void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression) {
 		super.replaceWith(oldExpression, newExpression);
-		
-		if(expression == oldExpression){
+
+		if (expression == oldExpression) {
 			expression = newExpression;
 			return;
 		}
-		
+
 		this.expression.replaceWith(oldExpression, newExpression);
+	}
+
+	@Override
+	public Statement replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
+		CommonAssertStatement newStatement = null;
+
+		if (newGuard != null) {
+			newStatement = new CommonAssertStatement(this.getSource(),
+					this.source(), this.expression);
+			newStatement.setGuard(newGuard);
+		} else {
+			Expression newExpressionField = expression.replaceWith(
+					oldExpression, newExpression);
+
+			if (newExpressionField != null) {
+				newStatement = new CommonAssertStatement(this.getSource(),
+						this.source(), newExpressionField);
+				newStatement.setGuard(this.guard());
+			}
+		}
+		return newStatement;
 	}
 
 }

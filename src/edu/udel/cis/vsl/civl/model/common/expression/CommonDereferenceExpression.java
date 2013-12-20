@@ -63,4 +63,19 @@ public class CommonDereferenceExpression extends CommonExpression implements
 		pointer.replaceWith(oldExpression, newExpression);
 	}
 
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newPointer = pointer.replaceWith(oldExpression,
+				newExpression);
+		CommonDereferenceExpression result = null;
+
+		if (newPointer != null) {
+			result = new CommonDereferenceExpression(this.getSource(),
+					newPointer);
+		}
+
+		return result;
+	}
+
 }

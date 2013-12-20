@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 
 /**
@@ -57,7 +58,7 @@ public class CommonWaitStatement extends CommonStatement implements
 	public String toString() {
 		return "wait " + process;
 	}
-	
+
 	@Override
 	public void calculateDerefs() {
 		this.process.calculateDerefs();
@@ -73,7 +74,7 @@ public class CommonWaitStatement extends CommonStatement implements
 	public void purelyLocalAnalysis() {
 		this.guard().purelyLocalAnalysis();
 		this.process.purelyLocalAnalysis();
-		this.purelyLocal = this.guard().isPurelyLocal() 
+		this.purelyLocal = this.guard().isPurelyLocal()
 				&& this.process.isPurelyLocal();
 	}
 
@@ -81,13 +82,36 @@ public class CommonWaitStatement extends CommonStatement implements
 	public void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression) {
 		super.replaceWith(oldExpression, newExpression);
-		
-		if(process == oldExpression){
+
+		if (process == oldExpression) {
 			process = newExpression;
 			return;
 		}
-		
+
 		this.process.replaceWith(oldExpression, newExpression);
+	}
+
+	@Override
+	public Statement replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
+		CommonAssertStatement newStatement = null;
+
+		if (newGuard != null) {
+			newStatement = new CommonAssertStatement(this.getSource(),
+					this.source(), this.process);
+			newStatement.setGuard(newGuard);
+		} else {
+			Expression newProcessExpression = process.replaceWith(
+					oldExpression, newExpression);
+
+			if (newProcessExpression != null) {
+				newStatement = new CommonAssertStatement(this.getSource(),
+						this.source(), newProcessExpression);
+				newStatement.setGuard(this.guard());
+			}
+		}
+		return newStatement;
 	}
 
 }

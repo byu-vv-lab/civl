@@ -80,14 +80,30 @@ public interface Expression extends Sourceable {
 	void purelyLocalAnalysis();
 
 	/**
-	 * Replace a certain conditional expression with a variable expression
+	 * Replace a certain conditional expression with a variable expression. Used
+	 * when translating away conditional expressions with temporal variable
 	 * 
 	 * @param oldExpression
 	 *            The conditional expression
 	 * @param newExpression
-	 *            The variable expression
+	 *            The variable expression of the temporal variable for the
+	 *            conditional expression
 	 */
 	void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression);
+
+	/**
+	 * Attempt to create a expression by replacing a certain conditional
+	 * expression with a new expression, used when translating away conditional
+	 * expressions without introduction temporal variable
+	 * 
+	 * @param oldExpression
+	 *            The conditional expression
+	 * @param newExpression
+	 *            The new expression
+	 * @return Null if nothing is changed, otherwise the new expression
+	 */
+	Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression);
 
 }

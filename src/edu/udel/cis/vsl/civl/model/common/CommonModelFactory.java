@@ -2,6 +2,8 @@ package edu.udel.cis.vsl.civl.model.common;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.AbstractMap;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
@@ -18,6 +21,7 @@ import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -85,7 +89,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonQuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpressionExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonStringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
@@ -199,6 +203,17 @@ public class CommonModelFactory implements ModelFactory {
 	private TokenFactory tokenFactory;
 
 	/**
+	 * The stack of queues of conditional expression.
+	 */
+	private Stack<ArrayDeque<ConditionalExpression>> conditionalExpressions;
+
+	/**
+	 * The number of conditional expressions that have been encountered, used to
+	 * create temporal variable.
+	 */
+	private int conditionalExpressionCounter = 0;
+
+	/**
 	 * The factory to create all model components. Usually this is the only way
 	 * model components will be created.
 	 * 
@@ -250,6 +265,7 @@ public class CommonModelFactory implements ModelFactory {
 		undefinedScopeValue = universe.canonic(universe.tuple(
 				scopeSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
+		this.conditionalExpressions = new Stack<ArrayDeque<ConditionalExpression>>();
 	}
 
 	@Override
@@ -1340,8 +1356,8 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SizeofExpressionExpression sizeofExpressionExpression(
 			CIVLSource source, Expression argument) {
-		CommonSizeofExpressionExpression result = new CommonSizeofExpressionExpression(
-				source, argument);
+		CommonSizeofExpression result = new CommonSizeofExpression(source,
+				argument);
 
 		result.setExpressionScope(argument.expressionScope());
 		result.setExpressionType(integerType);
@@ -1447,8 +1463,141 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
+	/**
+	 * Generate a temporal variable for translating away conditional expression
+	 * 
+	 * @param scope
+	 *            The scope of the temporal variable
+	 * @param source
+	 *            The CIVL source of the conditional expression
+	 * @param type
+	 *            The CIVL type of the conditional expression
+	 * @return The variable expression referring to the temporal variable
+	 */
+	public VariableExpression tempVariable(Scope scope, CIVLSource source,
+			CIVLType type) {
+		String name = "$V" + this.conditionalExpressionCounter++;
+		int vid = scope.numVariables();
+		StringObject stringObject = (StringObject) universe.canonic(universe
+				.stringObject(name));
+		Variable variable = new CommonVariable(source, type,
+				new CommonIdentifier(source, stringObject), vid);
+		VariableExpression result = new CommonVariableExpression(source,
+				variable);
+
+		scope.addVariable(variable);
+		((CommonVariableExpression) result).setExpressionType(variable.type());
+		return result;
+	}
+
 	@Override
-	public Fragment conditionalExpressionToIf(Expression guard,
+	public void addConditionalExpression(ConditionalExpression expression) {
+		this.conditionalExpressions.peek().add(expression);
+	}
+
+	@Override
+	public Map.Entry<Fragment, Expression> refineConditionalExpression(
+			Scope scope, Expression guard, Expression expression) {
+		Fragment beforeConditionFragment = null;
+
+		while (hasConditionalExpressions()) {
+			ConditionalExpression conditionalExpression = pollConditionaExpression();
+			VariableExpression variable = tempVariable(scope,
+					conditionalExpression.getSource(),
+					conditionalExpression.getExpressionType());
+
+			beforeConditionFragment = conditionalExpressionToIf(guard,
+					variable, conditionalExpression);
+			if (expression == conditionalExpression)
+				expression = variable;
+			else
+				expression.replaceWith(conditionalExpression, variable);
+		}
+
+		return new AbstractMap.SimpleEntry<Fragment, Expression>(
+				beforeConditionFragment, expression);
+	}
+
+	public int sizeOfTopConditionalExpressionQueue() {
+		if (conditionalExpressions.isEmpty())
+			return 0;
+		return conditionalExpressions.peek().size();
+	}
+
+	@Override
+	public Fragment refineConditionalExpressionOfStatement(Statement statement,
+			Location oldLocation) {
+		Fragment result = new CommonFragment();
+
+		if (sizeOfTopConditionalExpressionQueue() == 1)
+			return this.conditionalExpressionToIf(
+					this.pollConditionaExpression(), statement);
+
+		while (hasConditionalExpressions()) {
+			ConditionalExpression conditionalExpression = pollConditionaExpression();
+			VariableExpression variable = tempVariable(
+					statement.statementScope(),
+					conditionalExpression.getSource(),
+					conditionalExpression.getExpressionType());
+			Fragment ifElse = conditionalExpressionToIf(statement.guard(),
+					variable, conditionalExpression);
+
+			statement.replaceWith(conditionalExpression, variable);
+
+			result = result.combineWith(ifElse);
+		}
+
+		result = result.combineWith(new CommonFragment(oldLocation, statement));
+
+		return result;
+	}
+
+	/*
+	 * if (functionInfo.hasConditionalExpressions() == true) { Statement
+	 * newStatement = result.lastStatement; Location oldLocation =
+	 * result.startLocation;
+	 * 
+	 * result = new Fragment();
+	 * 
+	 * while (functionInfo.hasConditionalExpressions()) { ConditionalExpression
+	 * conditionalExpression = functionInfo .pollConditionaExpression();
+	 * VariableExpression variable = functionInfo.tempVariable(
+	 * newStatement.statementScope(), conditionalExpression.getSource(),
+	 * conditionalExpression.getExpressionType()); Fragment ifElse =
+	 * factory.conditionalExpressionToIf( newStatement.guard(), variable,
+	 * conditionalExpression);
+	 * 
+	 * newStatement.replaceWith(conditionalExpression, variable);
+	 * 
+	 * result = result.combineWith(ifElse); }
+	 * 
+	 * result = result .combineWith(new Fragment(oldLocation, newStatement)); }
+	 */
+
+	@Override
+	public void addConditionalExpressionQueue() {
+		conditionalExpressions.add(new ArrayDeque<ConditionalExpression>());
+	}
+
+	@Override
+	public void popConditionaExpressionStack() {
+		conditionalExpressions.pop();
+	}
+
+	@Override
+	public ConditionalExpression pollConditionaExpression() {
+		return conditionalExpressions.peek().pollFirst();
+	}
+
+	@Override
+	public boolean hasConditionalExpressions() {
+		if (!conditionalExpressions.peek().isEmpty())
+			return true;
+		return false;
+	}
+
+	@Override
+	public CommonFragment conditionalExpressionToIf(Expression guard,
 			VariableExpression variable, ConditionalExpression expression) {
 		Expression condition = expression.getCondition();
 		Location startLocation = location(condition.getSource(), variable
@@ -1457,7 +1606,7 @@ public class CommonModelFactory implements ModelFactory {
 		Statement ifAssign, elseAssign;
 		Expression ifValue = expression.getTrueBranch(), elseValue = expression
 				.getFalseBranch();
-		Fragment result = new Fragment();
+		CommonFragment result = new CommonFragment();
 		StatementSet lastStatement = new StatementSet();
 
 		ifGuard = booleanExpression(condition);
@@ -1485,5 +1634,49 @@ public class CommonModelFactory implements ModelFactory {
 		result.lastStatement = lastStatement;
 
 		return result;
+	}
+
+	@Override
+	public CommonFragment conditionalExpressionToIf(
+			ConditionalExpression expression, Statement statement) {
+
+		Expression guard = statement.guard();
+		Expression condition = expression.getCondition();
+		Location startLocation = statement.source();
+		Expression ifGuard, elseGuard;
+		Statement ifBranch, elseBranch;
+		Expression ifValue = expression.getTrueBranch(), elseValue = expression
+				.getFalseBranch();
+		CommonFragment result = new CommonFragment();
+		StatementSet lastStatement = new StatementSet();
+
+		ifGuard = booleanExpression(condition);
+		elseGuard = unaryExpression(condition.getSource(), UNARY_OPERATOR.NOT,
+				ifGuard);
+
+		if (!isTrue(guard)) {
+			ifGuard = binaryExpression(
+					sourceOfSpan(guard.getSource(), ifGuard.getSource()),
+					BINARY_OPERATOR.AND, guard, ifGuard);
+			elseGuard = binaryExpression(
+					sourceOfSpan(guard.getSource(), elseGuard.getSource()),
+					BINARY_OPERATOR.AND, guard, elseGuard);
+		}
+
+		ifBranch = statement.replaceWith(expression, ifValue);
+		ifBranch.setGuard(ifGuard);
+
+		elseBranch = statement.replaceWith(expression, elseValue);
+		elseBranch.setGuard(elseGuard);
+
+		lastStatement.add(ifBranch);
+		lastStatement.add(elseBranch);
+
+		result.startLocation = startLocation;
+		result.lastStatement = lastStatement;
+		startLocation.removeOutgoing(statement);
+
+		return result;
+
 	}
 }

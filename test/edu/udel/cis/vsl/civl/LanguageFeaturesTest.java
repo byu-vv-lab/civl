@@ -205,4 +205,10 @@ public class LanguageFeaturesTest {
 	public void testMemcpy() throws ABCException {
 		assertTrue(ui.run("verify", filename("memcpy.cvl")));
 	}
+
+	@Test
+	public void testConditionalExpression() throws ABCException {
+		assertTrue(ui.run("verify", "-showModel",
+				filename("conditionalExpression.cvl")));
+	}
 }

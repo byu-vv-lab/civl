@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
 /**
  * An assignment statement.
@@ -106,13 +107,35 @@ public class CommonAssignStatement extends CommonStatement implements
 	public void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression) {
 		super.replaceWith(oldExpression, newExpression);
-		
-		if(rhs == oldExpression){
+
+		if (rhs == oldExpression) {
 			rhs = newExpression;
 			return;
 		}
-		
+
 		this.rhs.replaceWith(oldExpression, newExpression);
+	}
+
+	@Override
+	public Statement replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
+		CommonAssignStatement newStatement = null;
+
+		if (newGuard != null) {
+			newStatement = new CommonAssignStatement(this.getSource(),
+					this.source(), lhs, this.rhs);
+			newStatement.setGuard(newGuard);
+		} else {
+			Expression newRhs = rhs.replaceWith(oldExpression, newExpression);
+
+			if (newRhs != null) {
+				newStatement = new CommonAssignStatement(this.getSource(),
+						this.source(), lhs, newRhs);
+				newStatement.setGuard(this.guard());
+			}
+		}
+		return newStatement;
 	}
 
 }

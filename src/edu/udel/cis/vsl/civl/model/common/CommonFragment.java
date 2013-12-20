@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
+import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
@@ -18,7 +19,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
  * @author siegel
  * 
  */
-public class Fragment {
+public class CommonFragment implements Fragment {
 
 	/**
 	 * The start location of the fragment
@@ -33,7 +34,7 @@ public class Fragment {
 	/**
 	 * Constructor: create an empty fragment
 	 */
-	public Fragment() {
+	public CommonFragment() {
 
 	}
 
@@ -46,7 +47,7 @@ public class Fragment {
 	 *            <code>statement</code> and the last statement being
 	 *            <code>statement</code>
 	 */
-	public Fragment(Statement statement) {
+	public CommonFragment(Statement statement) {
 		this.startLocation = statement.source();
 		this.lastStatement = statement;
 	}
@@ -55,23 +56,16 @@ public class Fragment {
 	 * Constructor
 	 * 
 	 * @param startLocation
-	 * 				the start location
+	 *            the start location
 	 * @param lastStatement
-	 * 				the last statement
+	 *            the last statement
 	 */
-	public Fragment(Location startLocation, Statement lastStatement) {
+	public CommonFragment(Location startLocation, Statement lastStatement) {
 		this.startLocation = startLocation;
 		this.lastStatement = lastStatement;
 	}
 
-	/**
-	 * Combine two fragment in sequential
-	 * 
-	 * @param next
-	 * 			the fragment that comes after the current fragment
-	 * @return
-	 * 			the sequential combination of both fragments
-	 */
+	@Override
 	public Fragment combineWith(Fragment next) {
 		if (next == null || next.isEmpty())
 			return this;
@@ -79,23 +73,11 @@ public class Fragment {
 		if (this.isEmpty())
 			return next;
 
-		this.lastStatement.setTarget(next.startLocation);
-		return new Fragment(this.startLocation, next.lastStatement);
+		this.lastStatement.setTarget(next.startLocation());
+		return new CommonFragment(this.startLocation, next.lastStatement());
 	}
 
-	/**
-	 * Combine this fragment and another fragment in parallel, i.e., merge the
-	 * start location, and add the last statement of both fragments as the last
-	 * statement of the result fragment
-	 * 
-	 * @param parallel
-	 *            the second fragment to be combined with <dt>
-	 *            <b>Preconditions:</b>
-	 *            <dd>
-	 *            this.startLocation.id() === parallel.startLocation.id()
-	 * 
-	 * @return the new fragment after the combination
-	 */
+	@Override
 	public Fragment parallelCombineWith(Fragment parallel) {
 		StatementSet newLastStatement = new StatementSet();
 
@@ -104,7 +86,7 @@ public class Fragment {
 		if (this.isEmpty())
 			return parallel;
 
-		assert this.startLocation.id() == parallel.startLocation.id();
+		assert this.startLocation.id() == parallel.startLocation().id();
 
 		if (lastStatement instanceof StatementSet) {
 			Set<Statement> statements = ((StatementSet) lastStatement)
@@ -117,37 +99,28 @@ public class Fragment {
 			newLastStatement.add(lastStatement);
 		}
 
-		if (parallel.lastStatement instanceof StatementSet) {
-			Set<Statement> statements = ((StatementSet) parallel.lastStatement)
-					.statements();
+		if (parallel.lastStatement() instanceof StatementSet) {
+			Set<Statement> statements = ((StatementSet) parallel
+					.lastStatement()).statements();
 
 			for (Statement s : statements) {
 				newLastStatement.add(s);
 			}
 		} else {
-			newLastStatement.add(parallel.lastStatement);
+			newLastStatement.add(parallel.lastStatement());
 		}
 
-		return new Fragment(this.startLocation, newLastStatement);
+		return new CommonFragment(this.startLocation, newLastStatement);
 	}
 
-	/**
-	 * Check if the fragment is empty
-	 * 
-	 * @return true iff both the start location and the last statement are null
-	 */
+	@Override
 	public boolean isEmpty() {
 		if (startLocation == null && lastStatement == null)
 			return true;
 		return false;
 	}
 
-	/**
-	 * Print the fragment
-	 * 
-	 * @param out
-	 * 			the print stream
-	 */
+	@Override
 	public void Print(PrintStream out) {
 		out.println(this.toString());
 	}
@@ -193,12 +166,7 @@ public class Fragment {
 
 	}
 
-	/**
-	 * Update the start location with a new location
-	 * 
-	 * @param newLocation
-	 * 				the new start location
-	 */
+	@Override
 	public void updateStartLocation(Location newLocation) {
 		if (isEmpty())
 			return;
@@ -212,7 +180,7 @@ public class Fragment {
 		workings.push(startLocation);
 		locationIds.add(startLocation.id());
 
-		//TODO: Explain why/how we're doing this loop.
+		// TODO: Explain why/how we're doing this loop.
 		while (!workings.isEmpty()) {
 			Location location = workings.pop();
 
@@ -239,5 +207,24 @@ public class Fragment {
 
 		this.startLocation = newLocation;
 	}
-}
 
+	@Override
+	public Location startLocation() {
+		return startLocation;
+	}
+
+	@Override
+	public Statement lastStatement() {
+		return lastStatement;
+	}
+
+	@Override
+	public void setStartLocation(Location location) {
+		this.startLocation = location;
+	}
+
+	@Override
+	public void setLastStatement(Statement statement) {
+		this.lastStatement = statement;
+	}
+}

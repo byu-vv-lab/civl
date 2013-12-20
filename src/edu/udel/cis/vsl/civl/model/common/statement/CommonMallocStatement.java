@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
@@ -154,6 +155,34 @@ public class CommonMallocStatement extends CommonStatement implements
 		}
 
 		this.sizeExpression.replaceWith(oldExpression, newExpression);
+	}
+
+	@Override
+	public Statement replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
+		CommonMallocStatement newStatement = null;
+
+		if (newGuard != null) {
+			newStatement = new CommonMallocStatement(this.getSource(),
+					this.source(), this.id, this.heapPointerExpression,
+					staticElementType, dynamicElementType, dynamicObjectType,
+					this.sizeExpression, undefinedObject, lhs);
+			newStatement.setGuard(newGuard);
+		} else {
+			Expression newSizeExpression = sizeExpression.replaceWith(
+					oldExpression, newExpression);
+
+			if (newSizeExpression != null) {
+				newStatement = new CommonMallocStatement(this.getSource(),
+						this.source(), id, this.heapPointerExpression,
+						staticElementType, dynamicElementType,
+						dynamicObjectType, newSizeExpression, undefinedObject,
+						lhs);
+				newStatement.setGuard(this.guard());
+			}
+		}
+		return newStatement;
 	}
 
 }

@@ -136,4 +136,36 @@ public class CommonConditionalExpression extends CommonExpression implements
 		falseBranch.replaceWith(oldExpression, newExpression);
 	}
 
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newCondition, newTrue, newFalse, result = null;
+
+		if (this == oldExpression)
+			return newExpression;
+
+		newCondition = condition.replaceWith(oldExpression, newExpression);
+
+		if (newCondition != null) {
+			result = new CommonConditionalExpression(this.getSource(),
+					newCondition, trueBranch, falseBranch);
+		} else {
+			newTrue = trueBranch.replaceWith(oldExpression, newExpression);
+
+			if (newTrue != null) {
+				result = new CommonConditionalExpression(this.getSource(),
+						condition, newTrue, falseBranch);
+			} else {
+				newFalse = falseBranch
+						.replaceWith(oldExpression, newExpression);
+
+				if (newFalse != null)
+					result = new CommonConditionalExpression(this.getSource(),
+							condition, trueBranch, newFalse);
+			}
+		}
+
+		return result;
+	}
+
 }

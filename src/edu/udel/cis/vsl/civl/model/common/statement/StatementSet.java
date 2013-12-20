@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -163,6 +164,35 @@ public class StatementSet implements Statement {
 		for (Statement s : this.statements) {
 			s.replaceWith(oldExpression, newExpression);
 		}
+	}
+
+	@Override
+	public Statement replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		boolean hasNewStatement = false;
+		Set<Statement> newStatements = new HashSet<Statement>();
+		StatementSet result = null;
+
+		for (Statement s : this.statements) {
+			if (hasNewStatement)
+				newStatements.add(s);
+			else {
+				Statement newStatement = s.replaceWith(oldExpression,
+						newExpression);
+
+				if (newStatement != null) {
+					newStatements.add(newStatement);
+					hasNewStatement = true;
+				} else
+					newStatements.add(s);
+			}
+		}
+
+		if (hasNewStatement) {
+			result = new StatementSet(newStatements);
+		}
+
+		return result;
 	}
 
 }

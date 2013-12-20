@@ -187,4 +187,23 @@ public class CommonBinaryExpression extends CommonExpression implements
 		right.replaceWith(oldExpression, newExpression);
 	}
 
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newLeft = left.replaceWith(oldExpression, newExpression);
+		CommonBinaryExpression result = null;
+
+		if (newLeft != null) {
+			result = new CommonBinaryExpression(this.getSource(),
+					this.operator, newLeft, right);
+		}else{
+			Expression newRight = right.replaceWith(oldExpression, newExpression);
+			
+			if(newRight != null)
+				result = new CommonBinaryExpression(this.getSource(),
+						this.operator, left, newRight);
+		}
+
+		return result;
+	}
 }

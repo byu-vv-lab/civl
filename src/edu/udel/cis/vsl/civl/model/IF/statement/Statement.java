@@ -111,14 +111,30 @@ public interface Statement extends Sourceable {
 
 	/**
 	 * Modify this statement by replacing a certain conditional expression with
-	 * a variable expression
+	 * a variable expression, used when translating away conditional expression
+	 * and a temporal variable is introduced.
 	 * 
 	 * @param oldExpression
 	 *            The conditional expression
 	 * @param newExpression
-	 *            The variable expression
+	 *            The variable expression of the temporal variable for the
+	 *            conditional expression
 	 */
 	void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression);
+
+	/**
+	 * Return a new statement by replacing this statement by replacing a certain
+	 * conditional expression with a expression, used when translating away
+	 * conditional expression without introducing temporal variables.
+	 * 
+	 * @param oldExpression
+	 *            The conditional expression
+	 * @param newExpression
+	 *            The new expression
+	 * @return A new statement without the conditional expression
+	 */
+	Statement replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression);
 
 }

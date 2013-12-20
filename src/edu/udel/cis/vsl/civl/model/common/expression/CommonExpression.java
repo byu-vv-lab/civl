@@ -96,4 +96,10 @@ public abstract class CommonExpression extends CommonSourceable implements
 
 	}
 
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		return null;
+	}
+
 }

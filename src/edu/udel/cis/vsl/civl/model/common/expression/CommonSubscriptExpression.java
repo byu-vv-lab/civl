@@ -122,6 +122,27 @@ public class CommonSubscriptExpression extends CommonExpression implements
 			return;
 		}
 		index.replaceWith(oldExpression, newExpression);
+		array.replaceWith(oldExpression, newExpression);
 	}
 
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newIndex = index.replaceWith(oldExpression, newExpression);
+		CommonSubscriptExpression result = null;
+
+		if (newIndex != null) {
+			result = new CommonSubscriptExpression(this.getSource(), array,
+					newIndex);
+		} else {
+			Expression newArray = array.replaceWith(oldExpression,
+					newExpression);
+
+			if (newArray != null)
+				result = new CommonSubscriptExpression(this.getSource(),
+						(LHSExpression) newArray, index);
+		}
+
+		return result;
+	}
 }
