@@ -84,6 +84,9 @@ public class CommonAddressOfExpression extends CommonExpression implements
 					(LHSExpression) newOperand);
 		}
 
+		if (result != null)
+			result.setExpressionType(expressionType);
+
 		return result;
 	}
 

@@ -15,8 +15,8 @@ void main(){
 	// when (!(n > 2)) s = sum(8) goto ...
 	int s = sum(n > 2 ? 5 : 8);
 
-	$when(n >= 2) $assert s == 9*8/2;
-	//$assert s == 9 * (n > 2 ? 5 : 8) / 2; //has exception
+	//$when(n >= 2) $assert s == 9*8/2;
+	$assert s == 9 * (n > 2 ? 5 : 8) / 2; //has exception
 
 	// This should be translated into 
 	// Location X: 

@@ -75,6 +75,9 @@ public class CommonDereferenceExpression extends CommonExpression implements
 					newPointer);
 		}
 
+		if (result != null)
+			result.setExpressionType(expressionType);
+
 		return result;
 	}
 

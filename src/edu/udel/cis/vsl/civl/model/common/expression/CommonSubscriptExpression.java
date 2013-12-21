@@ -143,6 +143,9 @@ public class CommonSubscriptExpression extends CommonExpression implements
 						(LHSExpression) newArray, index);
 		}
 
+		if (result != null)
+			result.setExpressionType(expressionType);
+
 		return result;
 	}
 }

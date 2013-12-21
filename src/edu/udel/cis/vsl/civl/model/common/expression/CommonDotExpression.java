@@ -102,18 +102,20 @@ public class CommonDotExpression extends CommonExpression implements
 		}
 		struct.replaceWith(oldExpression, newExpression);
 	}
-	
+
 	@Override
 	public Expression replaceWith(ConditionalExpression oldExpression,
 			Expression newExpression) {
-		Expression newStruct = struct.replaceWith(oldExpression,
-				newExpression);
+		Expression newStruct = struct.replaceWith(oldExpression, newExpression);
 		CommonDotExpression result = null;
 
 		if (newStruct != null) {
-			result = new CommonDotExpression(this.getSource(),
-					newStruct, this.fieldIndex);
+			result = new CommonDotExpression(this.getSource(), newStruct,
+					this.fieldIndex);
 		}
+
+		if (result != null)
+			result.setExpressionType(expressionType);
 
 		return result;
 	}

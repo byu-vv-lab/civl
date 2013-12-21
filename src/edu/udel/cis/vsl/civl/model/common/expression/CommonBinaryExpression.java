@@ -196,13 +196,17 @@ public class CommonBinaryExpression extends CommonExpression implements
 		if (newLeft != null) {
 			result = new CommonBinaryExpression(this.getSource(),
 					this.operator, newLeft, right);
-		}else{
-			Expression newRight = right.replaceWith(oldExpression, newExpression);
-			
-			if(newRight != null)
+		} else {
+			Expression newRight = right.replaceWith(oldExpression,
+					newExpression);
+
+			if (newRight != null)
 				result = new CommonBinaryExpression(this.getSource(),
 						this.operator, left, newRight);
 		}
+
+		if (result != null)
+			result.setExpressionType(expressionType);
 
 		return result;
 	}

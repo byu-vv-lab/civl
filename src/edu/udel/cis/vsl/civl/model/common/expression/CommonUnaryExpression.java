@@ -137,6 +137,8 @@ public class CommonUnaryExpression extends CommonExpression implements
 			result = new CommonUnaryExpression(this.getSource(), operator,
 					newOperand);
 		}
+		if (result != null)
+			result.setExpressionType(expressionType);
 
 		return result;
 	}

@@ -75,6 +75,9 @@ public class CommonSizeofExpression extends CommonExpression implements
 			result = new CommonSizeofExpression(this.getSource(), newArgument);
 		}
 
+		if (result != null)
+			result.setExpressionType(expressionType);
+
 		return result;
 	}
 }

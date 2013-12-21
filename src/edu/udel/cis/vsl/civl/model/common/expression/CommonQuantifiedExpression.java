@@ -147,13 +147,16 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 			result = new CommonQuantifiedExpression(this.getSource(),
 					quantifier, variable, newRestriction, expression);
 		} else {
-			Expression newExpressionField = expression.replaceWith(oldExpression,
-					newExpression);
+			Expression newExpressionField = expression.replaceWith(
+					oldExpression, newExpression);
 
 			if (newExpressionField != null)
 				result = new CommonQuantifiedExpression(this.getSource(),
 						quantifier, variable, restriction, newExpressionField);
 		}
+
+		if (result != null)
+			result.setExpressionType(expressionType);
 
 		return result;
 	}

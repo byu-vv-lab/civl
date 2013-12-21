@@ -137,6 +137,9 @@ public class CommonCastExpression extends CommonExpression implements
 					newOperand);
 		}
 
+		if (result != null)
+			result.setExpressionType(expressionType);
+
 		return result;
 
 	}
