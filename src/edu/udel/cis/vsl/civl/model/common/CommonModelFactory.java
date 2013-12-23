@@ -1538,9 +1538,8 @@ public class CommonModelFactory implements ModelFactory {
 
 		while (hasConditionalExpressions()) {
 			ConditionalExpression conditionalExpression = pollConditionaExpression();
-			VariableExpression variable = tempVariable(
-					statement.statementScope(),
-					conditionalExpression.getSource(),
+			VariableExpression variable = tempVariable(statement.source()
+					.scope(), conditionalExpression.getSource(),
 					conditionalExpression.getExpressionType());
 			Fragment ifElse = conditionalExpressionToIf(statement.guard(),
 					variable, conditionalExpression);
@@ -1669,7 +1668,7 @@ public class CommonModelFactory implements ModelFactory {
 			Function function = modelBuilder.callStatements.get(statement);
 			Fragment ifFragment, elseFragment;
 			Location ifLocation, elseLocation;
-			Scope scope = statement.statementScope();
+			Scope scope = startLocation.scope();
 
 			ifFragment = new CommonFragment(noopStatement(
 					condition.getSource(), startLocation, ifGuard));

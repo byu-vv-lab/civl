@@ -51,8 +51,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.QuantifiedExpressionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ResultNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.SelfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeableNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeofNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
@@ -83,6 +81,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
@@ -627,32 +626,45 @@ public class ModelBuilderWorker {
 			Scope scope, boolean translateConversions) {
 		Expression result;
 
-		if (expressionNode instanceof OperatorNode) {
+		switch (expressionNode.expressionKind()) {
+		case OPERATOR:
 			result = translateOperatorNode((OperatorNode) expressionNode, scope);
-		} else if (expressionNode instanceof IdentifierExpressionNode) {
+			break;
+		case IDENTIFIER_EXPRESSION:
 			result = translateIdentifierNode(
 					(IdentifierExpressionNode) expressionNode, scope);
-		} else if (expressionNode instanceof ConstantNode) {
+			break;
+		case CONSTANT:
 			result = translateConstantNode((ConstantNode) expressionNode);
-		} else if (expressionNode instanceof DotNode) {
+			break;
+		case DOT:
 			result = translateDotNode((DotNode) expressionNode, scope);
-		} else if (expressionNode instanceof ArrowNode) {
+			break;
+		case ARROW:
 			result = translateArrowNode((ArrowNode) expressionNode, scope);
-		} else if (expressionNode instanceof ResultNode) {
+			break;
+		case RESULT:
 			result = factory.resultExpression(factory.sourceOf(expressionNode));
-		} else if (expressionNode instanceof SelfNode) {
+			break;
+		case SELF:
 			result = factory.selfExpression(factory.sourceOf(expressionNode));
-		} else if (expressionNode instanceof CastNode) {
+			break;
+		case CAST:
 			result = translateCastNode((CastNode) expressionNode, scope);
-		} else if (expressionNode instanceof SizeofNode) {
+			break;
+		case SIZEOF:
 			result = translateSizeofNode((SizeofNode) expressionNode, scope);
-		} else if (expressionNode instanceof QuantifiedExpressionNode) {
+			break;
+		case QUANTIFIED_EXPRESSION:
 			result = translateQuantifiedExpressionNode(
 					(QuantifiedExpressionNode) expressionNode, scope);
-		} else
+			break;
+		default:
 			throw new CIVLUnimplementedFeatureException("expressions of type "
 					+ expressionNode.getClass().getSimpleName(),
 					factory.sourceOf(expressionNode));
+		}
+
 		if (translateConversions) {
 			// apply conversions
 			CIVLSource source = result.getSource();
@@ -757,20 +769,25 @@ public class ModelBuilderWorker {
 		CIVLSource source = factory.sourceOf(sizeofNode);
 		Expression result;
 
-		if (argNode instanceof TypeNode) {
+		switch (argNode.nodeKind()) {
+		case TYPE:
 			TypeNode typeNode = (TypeNode) argNode;
 			CIVLType type = translateABCType(factory.sourceOf(typeNode), scope,
 					typeNode.getType());
 
 			result = factory.sizeofTypeExpression(source, type);
-		} else if (argNode instanceof ExpressionNode) {
+			break;
+		case EXPRESSION:
 			Expression argument = translateExpressionNode(
 					(ExpressionNode) argNode, scope, true);
 
 			result = factory.sizeofExpressionExpression(source, argument);
-		} else
+			break;
+		default:
 			throw new CIVLInternalException("Unknown kind of SizeofNode: "
 					+ sizeofNode, source);
+		}
+
 		result.setExpressionScope(scope);
 		return result;
 	}
@@ -832,7 +849,7 @@ public class ModelBuilderWorker {
 	private Expression arrayToPointer(Expression array) {
 		CIVLType type = array.getExpressionType();
 
-		if (type instanceof CIVLArrayType) {
+		if (type.isArrayType()) {
 			CIVLSource source = array.getSource();
 			CIVLArrayType arrayType = (CIVLArrayType) type;
 			CIVLType elementType = arrayType.elementType();
@@ -876,7 +893,7 @@ public class ModelBuilderWorker {
 		CIVLType lhsType = lhs.getExpressionType();
 		Expression result;
 
-		if (lhsType instanceof CIVLArrayType) {
+		if (lhsType.isArrayType()) {
 			if (!(lhs instanceof LHSExpression))
 				throw new CIVLInternalException(
 						"Expected expression with array type to be LHS",
@@ -887,7 +904,7 @@ public class ModelBuilderWorker {
 			CIVLType rhsType = rhs.getExpressionType();
 			Expression pointerExpr, indexExpr;
 
-			if (lhsType instanceof CIVLPointerType) {
+			if (lhsType.isPointerType()) {
 				if (!rhsType.isIntegerType())
 					throw new CIVLInternalException(
 							"Expected expression of integer type",
@@ -895,7 +912,7 @@ public class ModelBuilderWorker {
 				pointerExpr = lhs;
 				indexExpr = rhs;
 			} else if (lhsType.isIntegerType()) {
-				if (!(rhsType instanceof CIVLPointerType))
+				if (!rhsType.isPointerType())
 					throw new CIVLInternalException(
 							"Expected expression of pointer type",
 							rhs.getSource());
@@ -1039,7 +1056,7 @@ public class ModelBuilderWorker {
 				} else
 					throw new CIVLInternalException(
 							"Expected at least one numeric argument", source);
-				if (!(pointer.getExpressionType() instanceof CIVLPointerType))
+				if (!pointer.getExpressionType().isPointerType())
 					throw new CIVLInternalException(
 							"Expected expression of pointer type",
 							pointer.getSource());
@@ -1246,54 +1263,73 @@ public class ModelBuilderWorker {
 
 		factory.addConditionalExpressionQueue();
 
-		// TODO replace if-else branches with switch, need to some appropriate
-		// modification in ABC to support this.
-		if (statementNode instanceof AssumeNode) {
+		switch (statementNode.statementKind()) {
+		case ASSUME:
 			result = translateAssumeNode(guard, scope,
 					(AssumeNode) statementNode);
-		} else if (statementNode instanceof AssertNode) {
+			break;
+		case ASSERT:
 			result = translateAssertNode(guard, scope,
 					(AssertNode) statementNode);
-		} else if (statementNode instanceof ExpressionStatementNode) {
+			break;
+		case EXPRESSION:
 			result = translateExpressionStatementNode(guard, scope,
 					((ExpressionStatementNode) statementNode).getExpression());
-		} else if (statementNode instanceof CompoundStatementNode) {
+			break;
+		case COMPOUND:
 			result = translateCompoundStatementNode(guard, scope,
 					(CompoundStatementNode) statementNode);
-		} else if (statementNode instanceof ForLoopNode) {
+			break;
+		case FOR:
 			result = translateForLoopNode(guard, scope,
 					(ForLoopNode) statementNode);
-		} else if (statementNode instanceof LoopNode) {
+			break;
+		case LOOP:
 			result = translateWhileNode(guard, scope, (LoopNode) statementNode);
-		} else if (statementNode instanceof IfNode) {
+			break;
+		case WHILE:
+			result = translateWhileNode(guard, scope, (LoopNode) statementNode);
+			break;
+		case IF:
 			result = translateIfNode(guard, scope, (IfNode) statementNode);
-		} else if (statementNode instanceof WaitNode) {
-			result = translateWaitNode(guard, scope, (WaitNode) statementNode);
-		} else if (statementNode instanceof NullStatementNode) {
+			break;
+		case NULL:
 			result = translateNullStatementNode(guard, scope,
 					(NullStatementNode) statementNode);
-		} else if (statementNode instanceof WhenNode) {
+			break;
+		case WHEN:
 			result = translateWhenNode(guard, scope, (WhenNode) statementNode);
-		} else if (statementNode instanceof ChooseStatementNode) {
+			break;
+		case WAIT:
+			result = translateWaitNode(guard, scope, (WaitNode) statementNode);
+			break;
+		case CHOOSE:
 			result = translateChooseNode(guard, scope,
 					(ChooseStatementNode) statementNode);
-		} else if (statementNode instanceof GotoNode) {
+			break;
+		case GOTO:
 			result = translateGotoNode(guard, scope, (GotoNode) statementNode);
-		} else if (statementNode instanceof LabeledStatementNode) {
+			break;
+		case LABELED:
 			result = translateLabelStatementNode(guard, scope,
 					(LabeledStatementNode) statementNode);
-		} else if (statementNode instanceof ReturnNode) {
+			break;
+		case RETURN:
 			result = translateReturnNode(guard, scope,
 					(ReturnNode) statementNode);
-		} else if (statementNode instanceof SwitchNode) {
+			break;
+		case SWITCH:
 			result = translateSwitchNode(guard, scope,
 					(SwitchNode) statementNode);
-		} else if (statementNode instanceof JumpNode) {
+			break;
+		case JUMP:
 			result = translateJumpNode(guard, scope, (JumpNode) statementNode);
-		} else
+			break;
+		default:
 			throw new CIVLUnimplementedFeatureException("statements of type "
 					+ statementNode.getClass().getSimpleName(),
 					factory.sourceOf(statementNode));
+		}
 
 		if (factory.hasConditionalExpressions() == true) {
 			result = factory.refineConditionalExpressionOfStatement(
@@ -1462,7 +1498,8 @@ public class ModelBuilderWorker {
 		Location location = factory.location(
 				factory.sourceOfBeginning(expressionNode), scope);
 
-		if (expressionNode instanceof OperatorNode) {
+		switch (expressionNode.expressionKind()) {
+		case OPERATOR:
 			OperatorNode operatorNode = (OperatorNode) expressionNode;
 
 			switch (operatorNode.getOperator()) {
@@ -1483,16 +1520,21 @@ public class ModelBuilderWorker {
 						factory.sourceOf(operatorNode), location, guard);
 				result = new CommonFragment(location, noopStatement);
 			}
-		} else if (expressionNode instanceof SpawnNode) {
+			break;
+		case SPAWN:
 			result = translateSpawnNode(guard, scope,
 					(SpawnNode) expressionNode);
-		} else if (expressionNode instanceof FunctionCallNode) {
+			break;
+		case FUNCTION_CALL:
 			result = translateFunctionCallNode(guard, scope,
 					(FunctionCallNode) expressionNode);
-		} else
+			break;
+		default:
+
 			throw new CIVLInternalException(
 					"expression statement of this kind",
 					factory.sourceOf(expressionNode));
+		}
 
 		return result;
 	}
@@ -1795,10 +1837,12 @@ public class ModelBuilderWorker {
 				factory.sourceOfBeginning(forLoopNode), newScope);
 
 		if (initNode != null) {
-			if (initNode instanceof ExpressionNode) {
+			switch (initNode.nodeKind()) {
+			case EXPRESSION:
 				initFragment = translateExpressionStatementNode(guard, scope,
 						(ExpressionNode) initNode);
-			} else if (initNode instanceof DeclarationListNode) {
+				break;
+			case DECLARATION_LIST:
 				for (int i = 0; i < ((DeclarationListNode) initNode)
 						.numChildren(); i++) {
 					VariableDeclarationNode declaration = ((DeclarationListNode) initNode)
@@ -1810,7 +1854,8 @@ public class ModelBuilderWorker {
 
 					initFragment = initFragment.combineWith(fragment);
 				}
-			} else {
+				break;
+			default:
 				throw new CIVLInternalException(
 						"A for loop initializer must be an expression or a declaration list.",
 						factory.sourceOf(initNode));
@@ -2888,7 +2933,8 @@ public class ModelBuilderWorker {
 			Location location, Expression guard) {
 		Fragment result = null;
 
-		if (node instanceof VariableDeclarationNode) {
+		switch (node.nodeKind()) {
+		case VARIABLE_DECLARATION:
 			try {
 				result = translateVariableDeclarationNode(location, scope,
 						(VariableDeclarationNode) node);
@@ -2897,37 +2943,38 @@ public class ModelBuilderWorker {
 						"Saw input variable outside of root scope",
 						factory.sourceOf(node));
 			}
-		} else if (node instanceof StructureOrUnionTypeNode) {
-			result = translateCompoundTypeNode(location, scope, (TypeNode) node);
-		} else if (node instanceof TypedefDeclarationNode) {
-			// TypedefDeclarationNode node has to be processed separatedly from
+			break;
+		case TYPE:
+			TypeNode typeNode = (TypeNode) node;
+			if (typeNode.kind() == TypeNodeKind.STRUCTURE_OR_UNION) {
+				result = translateCompoundTypeNode(location, scope,
+						(TypeNode) node);
+				break; // if not structure or union type, then execute default
+						// case to throw an exception
+			}
+		case TYPEDEF:
+			// TypedefDeclarationNode node has to be processed separately from
 			// StructureOrUnionTypeNode, because TypedefDeclarationNode is not a
 			// sub-type of TypeNode but the one returned by
-			// TypedefDeclarationNode.getTypeNode() is
+			// TypedefDeclarationNode.getTypeNode() is.
 			result = translateCompoundTypeNode(location, scope,
 					((TypedefDeclarationNode) node).getTypeNode());
-		} else if (node instanceof FunctionDefinitionNode) {
-			if (((FunctionDefinitionNode) node).getName().equals("main")) {
-				mainFunctionNode = (FunctionDefinitionNode) node;
+			break;
+		case FUNCTION_DEFINITION:
+			FunctionDefinitionNode functionDefinitionNode = (FunctionDefinitionNode) node;
+			if (functionDefinitionNode.getName().equals("main")) {
+				mainFunctionNode = functionDefinitionNode;
 			} else
-				translateFunctionDeclarationNode(
-						(FunctionDeclarationNode) node, scope);
-		} else if (node instanceof FunctionDeclarationNode) {
+				translateFunctionDeclarationNode(functionDefinitionNode, scope);
+			break;
+		case FUNCTION_DECLARATION:
 			translateFunctionDeclarationNode((FunctionDeclarationNode) node,
 					scope);
-		} else if (scope.id() != systemScope.id()
-				&& node instanceof StatementNode) {
+			break;
+		case STATEMENT:
 			result = translateStatementNode(guard, scope, (StatementNode) node);
-		} else if (scope.id() == systemScope.id() && node instanceof AssumeNode) {
-			Fragment assumeFragment = translateAssumeNode(guard, scope,
-					(AssumeNode) node);
-
-			assumeFragment = factory.refineConditionalExpressionOfStatement(
-					assumeFragment.lastStatement(),
-					assumeFragment.startLocation());
-
-			result = assumeFragment;
-		} else {
+			break;
+		default:
 			if (scope.id() == systemScope.id())
 				throw new CIVLInternalException("Unsupported declaration type",
 						factory.sourceOf(node));
