@@ -1,3 +1,6 @@
+int n = 2;
+$assume n > (5 > 7 ? 1 : 0);
+
 int sum(int k){
 	int sum = 0;
 	for(int i = 1; i <= k; i++)
@@ -6,7 +9,6 @@ int sum(int k){
 }
 
 void main(){
-	int n = 2;
 	int i = 1;
 
 	// This would be 
@@ -18,7 +20,7 @@ void main(){
 	//$when(n >= 2) $assert s == 9*8/2;
 	$assert s == 9 * (n > 2 ? 5 : 8) / 2; //has exception
 
-	// This should be translated into 
+	/*// This should be translated into 
 	// Location X: 
 	// when(i>1) n = 1 goto ... 
 	// when (!(i>1)) n = 2
@@ -49,5 +51,5 @@ void main(){
 	
 	// nested conditional expression
 	s = (s < 30 ? 10 : (n < 40 ? 50 : 6));
-	$assert s == 50;
+	$assert s == 50;*/
 }
