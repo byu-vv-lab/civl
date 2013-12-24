@@ -6,7 +6,12 @@ package edu.udel.cis.vsl.civl.kripke;
 import java.io.PrintStream;
 import java.util.Stack;
 
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -167,6 +172,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			// execute atomic block
 			state = executeAtomicBlock(state, pid, currentLocation);
 		} else {
+			// execute a normal transition
 			state = state.setPathCondition(((SimpleTransition) transition)
 					.pathCondition());
 			statement = ((SimpleTransition) transition).statement();
@@ -188,7 +194,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 				Location newLocation = p.peekStack().location();
 
-				// execute purely local statements greedily
+				// execute purely local statements of the current process
+				// greedily
 				if (newLocation != null && newLocation.isPurelyLocal()) {
 					state = executePurelyLocalStatements(state, pid,
 							newLocation);
@@ -196,11 +203,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			}
 		}
 
-		// TODO: Maybe make a loop here for $atomic/Dstep transitions. We could
-		// loop over the transitions and then just simplify and canonic once at
-		// the end. This could greatly increase efficiency.
 		// TODO: try this simplification out, see how it works:
-
 		if (simplify) {
 			state = stateFactory.simplify(state);
 		}
@@ -222,6 +225,18 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		return state;
 	}
 
+	/**
+	 * Execute a sequence of purely local statements of a certain process
+	 * 
+	 * @param state
+	 *            The state to start with
+	 * @param pid
+	 *            id of the executing process
+	 * @param location
+	 *            The start location of the execution
+	 * @return The resulting state
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State executePurelyLocalStatements(State state, int pid,
 			Location location) throws UnsatisfiablePathConditionException {
 		Location newLocation = location;
@@ -237,6 +252,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				// state.print(System.out);}
 
 				if (newLocation.enterAtomic()) {
+					// execute an atomic block
 					newState = executeAtomicBlock(newState, pid, newLocation);
 				} else {
 					Statement s = newLocation.getOutgoing(0);
@@ -244,6 +260,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 							.evaluator().evaluate(newState, pid, s.guard()).value;
 					BooleanExpression newPathCondition = executor.universe()
 							.and(newState.getPathCondition(), guard);
+
 					newState = newState.setPathCondition(newPathCondition);
 					newState = executor.execute(newState, pid, s);
 				}
@@ -284,40 +301,54 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		Stack<Integer> atomicFlags = new Stack<Integer>();// record blocks of
 															// atomic statements
 		ProcessState p;
+		CIVLSource atomicStart = location.getSource();
 		Location newLocation = location;
 		State newState = state;
+		int stateCounter = 0;
 
 		if (newLocation.enterAtomic()) {
 			do {
 				boolean statementExecuted = false;
-				for(Statement s : newLocation.outgoing()){
-					BooleanExpression newPathCondition = executor.newPathCondition(
-							newState, pid, s);
-					
-					if(!newPathCondition.isFalse()){
-						
-						if(statementExecuted){
-							// TODO non-determinism detected, throw an exception here
+				State currentState = newState;
+
+				for (Statement s : newLocation.outgoing()) {
+					BooleanExpression newPathCondition = executor
+							.newPathCondition(newState, pid, s);
+
+					if (!newPathCondition.isFalse()) {
+						if (statementExecuted) {
+							// non-determinism detected
+							CIVLExecutionException e = new CIVLStateException(
+									ErrorKind.OTHER,
+									Certainty.CONCRETE,
+									"Undesired non-determinism is found in atomic block.",
+									currentState, newLocation.getSource());
+
+							throw e;
 						}
-						
+
 						newState = newState.setPathCondition(newPathCondition);
 						newState = executor.execute(newState, pid, s);
 						statementExecuted = true;
 					}
 				}
-								
-				p = newState.getProcessState(pid);
-
-				if (newLocation.leaveAtomic()) {
-					// reache the end of the latest atomic block
-					atomicFlags.pop();
+				// warning for possible infinite atomic block
+				if (stateCounter != 0 && stateCounter % 1024 == 0) {
+					out.println("Warning: " + (stateCounter)
+							+ " states in atomic block at "
+							+ atomicStart.getLocation() + ".");
 				}
 
+				stateCounter++;
+				p = newState.getProcessState(pid);
+				if (newLocation.leaveAtomic()) {
+					// reach the end of the latest atomic block
+					atomicFlags.pop();
+				}
 				if (newLocation.enterAtomic()) {
 					// encounter a new atomic block
 					atomicFlags.push(1);
 				}
-
 				if (p != null && !p.hasEmptyStack())
 					newLocation = p.peekStack().location();
 				else

@@ -1549,7 +1549,8 @@ public class CommonModelFactory implements ModelFactory {
 			result = result.combineWith(ifElse);
 		}
 
-		result = result.combineWith(new CommonFragment(oldLocation, statement));
+		result = result.combineWith(new CommonFragment(statement));
+		result.makeAtomic();
 
 		return result;
 	}

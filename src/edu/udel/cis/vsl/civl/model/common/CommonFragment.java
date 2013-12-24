@@ -227,4 +227,17 @@ public class CommonFragment implements Fragment {
 	public void setLastStatement(Statement statement) {
 		this.lastStatement = statement;
 	}
+
+	@Override
+	public void makeAtomic() {
+		this.startLocation.setEnterAtomic(true);
+		if (this.lastStatement != null) {
+			if (lastStatement instanceof StatementSet) {
+				for(Statement s : ((StatementSet)lastStatement).statements()){
+					s.source().setLeaveAtomic(true);
+				}
+			} else
+				this.lastStatement.source().setLeaveAtomic(true);
+		}
+	}
 }

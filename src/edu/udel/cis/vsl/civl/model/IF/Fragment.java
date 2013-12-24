@@ -13,6 +13,11 @@ public interface Fragment {
 	
 	void setStartLocation(Location location);
 	void setLastStatement(Statement statement);
+	
+	/**
+	 * Make this fragment atomic
+	 */
+	void makeAtomic();
 
 	/**
 	 * Combine two fragment in sequential

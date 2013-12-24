@@ -1359,8 +1359,7 @@ public class ModelBuilderWorker {
 		StatementNode bodyNode = atomicNode.getBody();
 		Fragment bodyFragment = translateStatementNode(guard, scope, bodyNode);
 
-		bodyFragment.startLocation().setEnterAtomic(true);
-		bodyFragment.lastStatement().source().setLeaveAtomic(true);
+		bodyFragment.makeAtomic();
 
 		return bodyFragment;
 	}
@@ -1446,8 +1445,11 @@ public class ModelBuilderWorker {
 
 		result = trueBranch.parallelCombineWith(falseBranch);
 
-		if (beforeCondition != null)
+		if (beforeCondition != null) {
+			beforeCondition.startLocation().setEnterAtomic(true);
+			result.startLocation().setLeaveAtomic(true);
 			result = beforeCondition.combineWith(result);
+		}
 
 		exit = new CommonFragment(factory.noopStatement(
 				factory.sourceOfEnd(ifNode), exitLocation, null));
@@ -1930,8 +1932,10 @@ public class ModelBuilderWorker {
 				factory.noopStatement(
 						factory.sourceOf(conditionNode.getSource()),
 						loopEntranceLocation, condition));
-		if (beforeCondition != null)
+		if (beforeCondition != null) {
 			loopEntrance = beforeCondition.combineWith(loopEntrance);
+			loopEntrance.makeAtomic();
+		}
 
 		functionInfo.addContinueSet(new LinkedHashSet<Statement>());
 		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
@@ -2084,8 +2088,11 @@ public class ModelBuilderWorker {
 					newGuard);
 		}
 		result = translateStatementNode(newGuard, scope, whenNode.getBody());
-		if (beforeGuardFragment != null)
+		if (beforeGuardFragment != null) {
+			beforeGuardFragment.startLocation().setEnterAtomic(true);
+			result.startLocation().setLeaveAtomic(true);
 			result = beforeGuardFragment.combineWith(result);
+		}
 
 		return result;
 	}
