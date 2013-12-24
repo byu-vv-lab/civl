@@ -15,15 +15,12 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -31,7 +28,6 @@ import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.EnablerIF;
-import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -64,7 +60,7 @@ public class Enabler implements
 
 	private long ampleSets = 0;
 
-	private BooleanExpression falseValue;
+	// private BooleanExpression falseValue;
 
 	private boolean randomMode = false;
 
@@ -78,7 +74,7 @@ public class Enabler implements
 		this.modelFactory = evaluator.modelFactory();
 		// this.stateFactory = evaluator.stateFactory();
 		this.universe = modelFactory.universe();
-		this.falseValue = universe.falseExpression();
+		// this.falseValue = universe.falseExpression();
 		this.scpPor = sPor;
 		if (this.scpPor)
 			this.debugOut.println("scoped POR is enabled.");
@@ -156,8 +152,8 @@ public class Enabler implements
 				continue;
 			}
 			for (Statement s : p.getLocation().outgoing()) {
-				BooleanExpression newPathCondition = newPathCondition(state,
-						p.getPid(), s);
+				BooleanExpression newPathCondition = executor.newPathCondition(
+						state, p.getPid(), s);
 				int statementScope = p.getDyscopeId();
 
 				if (s.statementScope() != null) {
@@ -340,8 +336,8 @@ public class Enabler implements
 			// it is already checked in ampleProcesses()
 			// A process with an empty stack has no current location.
 			for (Statement s : p.getLocation().outgoing()) {
-				BooleanExpression newPathCondition = newPathCondition(state,
-						p.getPid(), s);
+				BooleanExpression newPathCondition = executor.newPathCondition(
+						state, p.getPid(), s);
 				// No need to calculate impact scope, since everything in
 				// processStates
 				// is already ample set processes
@@ -783,47 +779,52 @@ public class Enabler implements
 		return false;
 	}
 
-	/**
-	 * Given a state, a process, and a statement, check if the statement's guard
-	 * is satisfiable under the path condition. If it is, return the conjunction
-	 * of the path condition and the guard. This will be the new path condition.
-	 * Otherwise, return false.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param pid
-	 *            The id of the currently executing process.
-	 * @param statement
-	 *            The statement.
-	 * @return The new path condition. False if the guard is not satisfiable
-	 *         under the path condition.
-	 */
-	BooleanExpression newPathCondition(State state, int pid, Statement statement) {
-		try {
-			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
-			BooleanExpression pathCondition = eval.state.getPathCondition();
-			BooleanExpression guard = (BooleanExpression) eval.value;
-			Reasoner reasoner = universe.reasoner(pathCondition);
-
-			if (statement instanceof CallOrSpawnStatement) {
-				if (((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
-					LibraryExecutor libraryExecutor = executor
-							.libraryExecutor((CallOrSpawnStatement) statement);
-					guard = universe.and(guard,
-							libraryExecutor.getGuard(state, pid, statement));
-				}
-			}
-			// System.out.println("Enabler.newPathCondition() : Process " + pid
-			// + " is at " + state.process(pid).peekStack().location());
-			if (reasoner.isValid(guard))
-				return pathCondition;
-			if (reasoner.isValid(universe.not(guard)))
-				return falseValue;
-			return universe.and(pathCondition, guard);
-		} catch (UnsatisfiablePathConditionException e) {
-			return falseValue;
-		}
-	}
+	// /**
+	// * Given a state, a process, and a statement, check if the statement's
+	// guard
+	// * is satisfiable under the path condition. If it is, return the
+	// conjunction
+	// * of the path condition and the guard. This will be the new path
+	// condition.
+	// * Otherwise, return false.
+	// *
+	// * @param state
+	// * The current state.
+	// * @param pid
+	// * The id of the currently executing process.
+	// * @param statement
+	// * The statement.
+	// * @return The new path condition. False if the guard is not satisfiable
+	// * under the path condition.
+	// */
+	// BooleanExpression newPathCondition(State state, int pid, Statement
+	// statement) {
+	// try {
+	// Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
+	// BooleanExpression pathCondition = eval.state.getPathCondition();
+	// BooleanExpression guard = (BooleanExpression) eval.value;
+	// Reasoner reasoner = universe.reasoner(pathCondition);
+	//
+	// if (statement instanceof CallOrSpawnStatement) {
+	// if (((CallOrSpawnStatement) statement).function() instanceof
+	// SystemFunction) {
+	// LibraryExecutor libraryExecutor = executor
+	// .libraryExecutor((CallOrSpawnStatement) statement);
+	// guard = universe.and(guard,
+	// libraryExecutor.getGuard(state, pid, statement));
+	// }
+	// }
+	// // System.out.println("Enabler.newPathCondition() : Process " + pid
+	// // + " is at " + state.process(pid).peekStack().location());
+	// if (reasoner.isValid(guard))
+	// return pathCondition;
+	// if (reasoner.isValid(universe.not(guard)))
+	// return falseValue;
+	// return universe.and(pathCondition, guard);
+	// } catch (UnsatisfiablePathConditionException e) {
+	// return falseValue;
+	// }
+	// }
 
 	@Override
 	public PrintStream getDebugOut() {

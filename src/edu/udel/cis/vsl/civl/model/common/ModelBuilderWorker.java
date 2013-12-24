@@ -59,6 +59,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssertNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ChooseStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
@@ -1287,9 +1288,9 @@ public class ModelBuilderWorker {
 		case LOOP:
 			result = translateWhileNode(guard, scope, (LoopNode) statementNode);
 			break;
-		case WHILE:
-			result = translateWhileNode(guard, scope, (LoopNode) statementNode);
-			break;
+		// case WHILE:
+		// result = translateWhileNode(guard, scope, (LoopNode) statementNode);
+		// break;
 		case IF:
 			result = translateIfNode(guard, scope, (IfNode) statementNode);
 			break;
@@ -1325,6 +1326,10 @@ public class ModelBuilderWorker {
 		case JUMP:
 			result = translateJumpNode(guard, scope, (JumpNode) statementNode);
 			break;
+		case ATOMIC:
+			result = translateAtomicNode(guard, scope,
+					(AtomicNode) statementNode);
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("statements of type "
 					+ statementNode.getClass().getSimpleName(),
@@ -1339,6 +1344,26 @@ public class ModelBuilderWorker {
 		factory.popConditionaExpressionStack();
 
 		return result;
+	}
+
+	/**
+	 * Translate an atomic node (i.e., an atomic block)
+	 * 
+	 * @param guard
+	 * @param scope
+	 * @param statementNode
+	 * @return
+	 */
+	private Fragment translateAtomicNode(Expression guard, Scope scope,
+			AtomicNode atomicNode) {
+		// TODO Auto-generated method stub
+		StatementNode bodyNode = atomicNode.getBody();
+		Fragment bodyFragment = translateStatementNode(guard, scope, bodyNode);
+
+		bodyFragment.startLocation().setEnterAtomic(true);
+		bodyFragment.lastStatement().source().setLeaveAtomic(true);
+
+		return bodyFragment;
 	}
 
 	/**
@@ -1896,7 +1921,7 @@ public class ModelBuilderWorker {
 				loopScope, true);
 		Set<Statement> continues, breaks;
 		Fragment beforeCondition, loopEntrance, loopBody, incrementer = null, loopExit, result;
-		Location continueLocation;
+		Location continueLocation, exitLocation;
 		Map.Entry<Fragment, Expression> refineConditional = factory
 				.refineConditionalExpression(loopScope, guard, condition);
 
@@ -1963,6 +1988,11 @@ public class ModelBuilderWorker {
 		} else {
 			result.setLastStatement(loopExit.lastStatement());
 		}
+
+		exitLocation = factory.location(factory.sourceOfEnd(loopBodyNode),
+				loopScope);
+		result = result.combineWith(new CommonFragment(factory.noopStatement(
+				factory.sourceOfEnd(loopBodyNode), exitLocation, guard)));
 
 		return result;
 	}
@@ -3090,16 +3120,24 @@ public class ModelBuilderWorker {
 		}
 
 		for (CIVLFunction f : model.functions()) {
-			// purely local statements/locations can only be
+			// purely local statements can only be
 			// identified after ALL variables have been
 			// checked for being purely local or not
 
 			for (Location loc : f.locations()) {
-
 				for (Statement s : loc.outgoing()) {
 					s.purelyLocalAnalysis();
 				}
+			}
+		}
 
+		for (CIVLFunction f : model.functions()) {
+			// purely local locations that enters an atomic block needs future
+			// statements to be checked, thus it can only be
+			// identified after ALL statements have been
+			// checked for being purely local or not
+
+			for (Location loc : f.locations()) {
 				loc.purelyLocalAnalysis();
 			}
 		}

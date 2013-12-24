@@ -211,4 +211,10 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", "-showModel",
 				filename("conditionalExpression.cvl")));
 	}
+	
+	@Test
+	public void testAtomicStatements() throws ABCException {
+		assertTrue(ui.run("verify", "-showModel",
+				filename("atomicStatement.cvl")));
+	}
 }

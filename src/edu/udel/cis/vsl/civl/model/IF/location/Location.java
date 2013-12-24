@@ -43,21 +43,20 @@ public interface Location extends Sourceable {
 	 */
 	public Iterable<Statement> outgoing();
 
-	
 	/**
 	 * @return The number of outgoing statements.
 	 */
 	public int getNumOutgoing();
-	
+
 	/**
 	 * @return The number of incoming statements.
 	 */
 	public int getNumIncoming();
-	
+
 	public Statement getOutgoing(int i);
-	
+
 	public Statement getIncoming(int i);
-	
+
 	// TODO: javadocs
 	/**
 	 * Returns the sole outgoing statement from this location.
@@ -82,18 +81,19 @@ public interface Location extends Sourceable {
 	 *            The scope of this location.
 	 */
 	public void setScope(Scope scope);
-//
-//	/**
-//	 * @param incoming
-//	 *            The set of incoming statements.
-//	 */
-//	public void setIncoming(Set<Statement> incoming);
-//
-//	/**
-//	 * @param outgoing
-//	 *            The set of outgoing statements.
-//	 */
-//	public void setOutgoing(Set<Statement> outgoing);
+
+	//
+	// /**
+	// * @param incoming
+	// * The set of incoming statements.
+	// */
+	// public void setIncoming(Set<Statement> incoming);
+	//
+	// /**
+	// * @param outgoing
+	// * The set of outgoing statements.
+	// */
+	// public void setOutgoing(Set<Statement> outgoing);
 
 	/**
 	 * @param statement
@@ -116,7 +116,7 @@ public interface Location extends Sourceable {
 	 *            The PrintStream to use for printing this location.
 	 */
 	public void print(String prefix, PrintStream out);
-	
+
 	public boolean isPurelyLocal();
 
 	public void purelyLocalAnalysis();
@@ -124,5 +124,19 @@ public interface Location extends Sourceable {
 	void removeOutgoing(Statement statement);
 
 	void removeIncoming(Statement statement);
+
+	/**
+	 * This location is the start location of a certain atomic block
+	 */
+	void setEnterAtomic(boolean value);
+
+	/**
+	 * This location is the end location of a certain atomic block
+	 */
+	void setLeaveAtomic(boolean value);
+	
+	boolean enterAtomic();
+	
+	boolean leaveAtomic();
 
 }

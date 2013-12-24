@@ -573,5 +573,46 @@ public class Executor {
 					statement);
 		}
 	}
+	
+	/**
+	 * Given a state, a process, and a statement, check if the statement's guard
+	 * is satisfiable under the path condition. If it is, return the conjunction
+	 * of the path condition and the guard. This will be the new path condition.
+	 * Otherwise, return false.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The id of the currently executing process.
+	 * @param statement
+	 *            The statement.
+	 * @return The new path condition. False if the guard is not satisfiable
+	 *         under the path condition.
+	 */
+	public BooleanExpression newPathCondition(State state, int pid, Statement statement) {
+		try {
+			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
+			BooleanExpression pathCondition = eval.state.getPathCondition();
+			BooleanExpression guard = (BooleanExpression) eval.value;
+			Reasoner reasoner = evaluator.universe().reasoner(pathCondition);
+
+			if (statement instanceof CallOrSpawnStatement) {
+				if (((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
+					LibraryExecutor libraryExecutor = libraryExecutor((CallOrSpawnStatement) statement);
+					
+					guard = evaluator.universe().and(guard,
+							libraryExecutor.getGuard(state, pid, statement));
+				}
+			}
+
+			if (reasoner.isValid(guard))
+				return pathCondition;
+			if (reasoner.isValid(evaluator.universe().not(guard)))
+				return evaluator.universe().falseExpression();
+			return evaluator.universe().and(pathCondition, guard);
+		} catch (UnsatisfiablePathConditionException e) {
+			return evaluator.universe().falseExpression();
+		}
+	}
 
 }

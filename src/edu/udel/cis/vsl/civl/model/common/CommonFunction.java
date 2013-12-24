@@ -357,26 +357,29 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 				this.locations);
 		int count = oldLocations.size();
 
-		/**
+		/*
 		 * The index of locations that can be removed
 		 */
 		ArrayList<Integer> toRemove = new ArrayList<Integer>();
 
 		for (int i = 0; i < count; i++) {
 			Location loc = oldLocations.get(i);
-
-			/**
+			
+			if(loc.enterAtomic() || loc.leaveAtomic())
+				continue;
+			
+			/*
 			 * loc has exactly one statement
 			 */
 			if (loc.getNumOutgoing() == 1) {
 				Statement s = loc.getOutgoing(0);
-				/**
+				/*
 				 * The only statement of loc is a no-op statement
 				 */
 				if (s instanceof CommonNoopStatement) {
 					Expression guard = s.guard();
 
-					/**
+					/*
 					 * The guard of the no-op is true TODO: can be improved by
 					 * checking if guard has any side-effect, e.g., if guard is
 					 * (x + y < 90) then we still can remove this no-op
@@ -384,19 +387,19 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 					 */
 					if (guard instanceof CommonBooleanLiteralExpression) {
 						if (((CommonBooleanLiteralExpression) guard).value()) {
-							/**
+							/*
 							 * Record the index of loc so that it can be removed
 							 * later
 							 */
 							toRemove.add(i);
 
-							/**
+							/*
 							 * The target of loc
 							 */
 							Location target = s.target();
 
 							for (int j = 0; j < count; j++) {
-								/**
+								/*
 								 * Do nothing to the locations that are to be
 								 * removed
 								 */
@@ -405,14 +408,14 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 								Location curLoc = oldLocations.get(j);
 
-								/**
+								/*
 								 * For each statement of curLoc \in
 								 * (this.locations - toRemove)
 								 */
 								for (Statement curS : curLoc.outgoing()) {
 									Location curTarget = curS.target();
 
-									/**
+									/*
 									 * Redirect the target location so that
 									 * no-op location is skipped
 									 */
@@ -444,12 +447,9 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	}
 
 	public void purelyLocalAnalysis() {
-		// HashSet<String> spawnFuncs = new HashSet<String>();
-
 		Scope funcScope = this.outerScope;
 
 		for (Location loc : this.locations) {
-
 			Iterable<Statement> stmts = loc.outgoing();
 
 			for (Statement s : stmts) {
@@ -464,64 +464,6 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 				// }
 			}
 		}
-
-		// Map<String, Variable> variables = new HashMap<String, Variable>();
-		//
-		// Set<Variable> vars = outerScope.variables();
-		// for(Variable var: vars){
-		// variables.put(var.name().toString(), var);
-		// }
-		//
-		// vars = containingScope.variables();
-		// for(Variable var: vars){
-		// variables.put(var.name().toString(), var);
-		// }
-		//
-		// //Location loc = this.startLocation;
-		//
-		// Stack<Location> stack = new Stack<Location>();
-		// stack.push(this.startLocation);
-		// Stack<Integer> visitedLocs = new Stack<Integer>();
-		// Scope scope = this.containingScope;//TODO: outerScope vs
-		// containingScope
-		//
-		//
-		//
-		//
-		// while(!stack.isEmpty()){
-		// Location loc = stack.pop();
-		// int lid = loc.id();
-		// if(visitedLocs.contains(lid))
-		// continue;
-		// visitedLocs.add(lid);
-		//
-		// Scope newScope = loc.scope();
-		// int scopeId = scope.id();
-		// int newScopeId = newScope.id();
-		// if(newScopeId != scopeId){
-		// if(newScope.parent().id() == scopeId){
-		//
-		// }else if(scope.parent().id() == scopeId){
-		//
-		// }
-		//
-		// }
-		//
-		// scope = newScope;
-		//
-		//
-		// Set<Statement> stmts = loc.outgoing();
-		//
-		//
-		//
-		// for(Statement s: stmts){
-		// Location target = s.target();
-		// int tgid = target.id();
-		// if(!visitedLocs.contains(tgid)){
-		// stack.push(target);
-		// }
-		// }
-		// }
 
 	}
 

@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.kripke;
 
 import java.io.PrintStream;
+import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -141,6 +142,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		int pid;
 		Statement statement;
 		int numProcs;
+		Location currentLocation;
+		ProcessState p;
 
 		assert transition instanceof SimpleTransition;
 		if (verbose || debug || showTransitions) {
@@ -151,45 +154,44 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		}
 
 		pid = ((SimpleTransition) transition).pid();
-		state = state.setPathCondition(((SimpleTransition) transition)
-				.pathCondition());
-		statement = ((SimpleTransition) transition).statement();
-		if (transition instanceof ChooseTransition) {
-			assert statement instanceof ChooseStatement;
-			state = executor.executeChoose(state, pid,
-					(ChooseStatement) statement,
-					((ChooseTransition) transition).value());
+		p = state.getProcessState(pid);
+		currentLocation = p.peekStack().location();
+
+		// TODO make printed transition more precise. Currently, the printed
+		// transition is the first statement in the atomic block, and it would
+		// be better if it is the last statement of the atomic block.
+		// The executing of atomic blocks will have to be moved to Enabler to
+		// avoid this issue, which is not straightforward because it returns
+		// transitions instead of states.
+		if (currentLocation.enterAtomic()) {
+			// execute atomic block
+			state = executeAtomicBlock(state, pid, currentLocation);
 		} else {
-			state = executor.execute(state, pid, statement);
+			state = state.setPathCondition(((SimpleTransition) transition)
+					.pathCondition());
+			statement = ((SimpleTransition) transition).statement();
+			if (transition instanceof ChooseTransition) {
+				assert statement instanceof ChooseStatement;
+				state = executor.executeChoose(state, pid,
+						(ChooseStatement) statement,
+						((ChooseTransition) transition).value());
+			} else {
+				state = executor.execute(state, pid, statement);
+			}
 		}
 
 		// do nothing when process pid terminates and is removed from the state
 		if (state.numProcs() > pid) {
-			ProcessState p = state.getProcessState(pid);
+			p = state.getProcessState(pid);
+
 			if (p != null && !p.hasEmptyStack()) {
 
-				Location newLoc = p.peekStack().location();
+				Location newLocation = p.peekStack().location();
 
-				while (newLoc != null && newLoc.isPurelyLocal()) {
-					// TODO check spawn statement
-					// exactly one statement in newLoc.outgoing()
-					// if(debug)
-					// {System.out.println("intermediate state:");
-					// state.print(System.out);}
-
-					Statement s = newLoc.getOutgoing(0);
-					BooleanExpression guard = (BooleanExpression) executor
-							.evaluator().evaluate(state, p.getPid(), s.guard()).value;
-					BooleanExpression newPathCondition = executor.universe()
-							.and(state.getPathCondition(), guard);
-					state = state.setPathCondition(newPathCondition);
-					state = executor.execute(state, pid, s);
-
-					p = state.getProcessState(pid);
-					if (p != null && !p.hasEmptyStack())
-						newLoc = p.peekStack().location();
-					else
-						newLoc = null;
+				// execute purely local statements greedily
+				if (newLocation != null && newLocation.isPurelyLocal()) {
+					state = executePurelyLocalStatements(state, pid,
+							newLocation);
 				}
 			}
 		}
@@ -218,6 +220,115 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		if (numProcs > maxProcs)
 			maxProcs = numProcs;
 		return state;
+	}
+
+	private State executePurelyLocalStatements(State state, int pid,
+			Location location) throws UnsatisfiablePathConditionException {
+		Location newLocation = location;
+		ProcessState p = state.getProcessState(pid);
+		State newState = state;
+
+		if (newLocation.isPurelyLocal()) {
+			while (newLocation != null && newLocation.isPurelyLocal()) {
+				// TODO check spawn statement
+				// exactly one statement in newLoc.outgoing()
+				// if(debug)
+				// {System.out.println("intermediate state:");
+				// state.print(System.out);}
+
+				if (newLocation.enterAtomic()) {
+					newState = executeAtomicBlock(newState, pid, newLocation);
+				} else {
+					Statement s = newLocation.getOutgoing(0);
+					BooleanExpression guard = (BooleanExpression) executor
+							.evaluator().evaluate(newState, pid, s.guard()).value;
+					BooleanExpression newPathCondition = executor.universe()
+							.and(newState.getPathCondition(), guard);
+					newState = newState.setPathCondition(newPathCondition);
+					newState = executor.execute(newState, pid, s);
+				}
+
+				p = newState.getProcessState(pid);
+				if (p != null && !p.hasEmptyStack())
+					newLocation = p.peekStack().location();
+				else
+					newLocation = null;
+			}
+
+			return newState;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Execute an atomic block, supporting nested atomic blocks. Currently only
+	 * consider the case when each location has exactly one outgoing statement.
+	 * TODO implement the case when a location has multiple outgoing statements
+	 * but is still deterministic.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The id of the process being executing
+	 * @param location
+	 *            The start location of the atomic block <dt>
+	 *            <b>Precondition:</b>
+	 *            <dd>
+	 *            <code> location.enterAtomic() == true && location == state.getProcessState(pid).peekStack().location()</code>
+	 * @return The resulting state after executing the atomic block
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeAtomicBlock(State state, int pid, Location location)
+			throws UnsatisfiablePathConditionException {
+		Stack<Integer> atomicFlags = new Stack<Integer>();// record blocks of
+															// atomic statements
+		ProcessState p;
+		Location newLocation = location;
+		State newState = state;
+
+		if (newLocation.enterAtomic()) {
+			do {
+				boolean statementExecuted = false;
+				for(Statement s : newLocation.outgoing()){
+					BooleanExpression newPathCondition = executor.newPathCondition(
+							newState, pid, s);
+					
+					if(!newPathCondition.isFalse()){
+						
+						if(statementExecuted){
+							// TODO non-determinism detected, throw an exception here
+						}
+						
+						newState = newState.setPathCondition(newPathCondition);
+						newState = executor.execute(newState, pid, s);
+						statementExecuted = true;
+					}
+				}
+								
+				p = newState.getProcessState(pid);
+
+				if (newLocation.leaveAtomic()) {
+					// reache the end of the latest atomic block
+					atomicFlags.pop();
+				}
+
+				if (newLocation.enterAtomic()) {
+					// encounter a new atomic block
+					atomicFlags.push(1);
+				}
+
+				if (p != null && !p.hasEmptyStack())
+					newLocation = p.peekStack().location();
+				else
+					newLocation = null;
+
+			} while (newLocation != null && !atomicFlags.isEmpty());
+
+			return newState;
+		}
+
+		return null;
 	}
 
 	/**

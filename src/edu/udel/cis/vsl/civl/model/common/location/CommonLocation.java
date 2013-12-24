@@ -5,6 +5,9 @@ package edu.udel.cis.vsl.civl.model.common.location;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -12,7 +15,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
@@ -29,6 +31,10 @@ public class CommonLocation extends CommonSourceable implements Location {
 	private ArrayList<Statement> outgoing = new ArrayList<>();
 	private CIVLFunction function;
 	private boolean purelyLocal = false;
+	private boolean enteringAtomic = false; // flag to denote the starting point
+											// of a certain atomic block
+	private boolean leavingAtomic = false; // flag to denote the ending point of
+											// a certain atomic block
 
 	/**
 	 * The parent of all locations.
@@ -112,12 +118,22 @@ public class CommonLocation extends CommonSourceable implements Location {
 		String guardString = "(true)";
 		String gotoString;
 
+		String headString = null;
+
 		if (this.purelyLocal) {
-			out.println(prefix + "location " + id() + " (scope: " + scope.id()
-					+ ") #");
+			headString = prefix + "location " + id() + " (scope: " + scope.id()
+					+ ") #";
 		} else
-			out.println(prefix + "location " + id() + " (scope: " + scope.id()
-					+ ")");
+			headString = prefix + "location " + id() + " (scope: " + scope.id()
+					+ ")";
+
+		if (this.enteringAtomic)
+			headString = headString + " enter atomic block;";
+		if (this.leavingAtomic)
+			headString = headString + " leave atomic block;";
+
+		out.println(headString);
+
 		for (Statement statement : outgoing) {
 			if (statement.target() != null) {
 				targetLocation = "" + statement.target().id();
@@ -236,19 +252,67 @@ public class CommonLocation extends CommonSourceable implements Location {
 		// if(incoming.size() > 1)
 		// this.purelyLocal = false;
 		// else
-		if (outgoing.size() != 1)
 
-			this.purelyLocal = false;
-		else {
-			for (Statement s : outgoing) {
-				if (s instanceof WaitStatement)
+		// a location that enters an atomic block is considered as atomic only
+		// if all the statements that are to be executed in the atomic block are
+		// purely local
+		if (this.enteringAtomic) {
+			Stack<Integer> atomicFlags = new Stack<Integer>();
+			Location newLocation = this;
+			Set<Integer> checkedLocations = new HashSet<Integer>();
+
+			do {
+				Statement s = newLocation.getOutgoing(0);
+
+				checkedLocations.add(newLocation.id());
+				if (!s.isPurelyLocal()) {
 					this.purelyLocal = false;
-				else {
-					this.purelyLocal = s.isPurelyLocal();
 					return;
 				}
-			}
+				if (newLocation.leaveAtomic()) {
+					atomicFlags.pop();
+				}
+				if (newLocation.enterAtomic())
+					atomicFlags.push(1);
+				newLocation = s.target();
+				if(checkedLocations.contains(newLocation.id()))
+					newLocation = null;
+
+			} while (newLocation != null && !atomicFlags.isEmpty());
+
+			this.purelyLocal = true;
+			return;
 		}
+
+		// Usually, a location is purely local if it has exactly one outgoing
+		// statement that is purely local
+		if (outgoing.size() != 1)
+			this.purelyLocal = false;
+		else {
+			Statement s = getOutgoing(0);
+
+			this.purelyLocal = s.isPurelyLocal();
+		}
+	}
+
+	@Override
+	public void setEnterAtomic(boolean value) {
+		this.enteringAtomic = value;
+	}
+
+	@Override
+	public void setLeaveAtomic(boolean value) {
+		this.leavingAtomic = value;
+	}
+
+	@Override
+	public boolean enterAtomic() {
+		return this.enteringAtomic;
+	}
+
+	@Override
+	public boolean leaveAtomic() {
+		return this.leavingAtomic;
 	}
 
 }
