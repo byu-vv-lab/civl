@@ -1356,7 +1356,6 @@ public class ModelBuilderWorker {
 	 */
 	private Fragment translateAtomicNode(Expression guard, Scope scope,
 			AtomicNode atomicNode) {
-		// TODO Auto-generated method stub
 		StatementNode bodyNode = atomicNode.getBody();
 		Fragment bodyFragment = translateStatementNode(guard, scope, bodyNode);
 
@@ -1378,7 +1377,7 @@ public class ModelBuilderWorker {
 	 *            The jump node
 	 * @return The fragment of the break or continue statement
 	 */
-	private CommonFragment translateJumpNode(Expression guard, Scope scope,
+	private Fragment translateJumpNode(Expression guard, Scope scope,
 			JumpNode jumpNode) {
 		Location location = factory.location(
 				factory.sourceOfBeginning(jumpNode), scope);
@@ -1467,16 +1466,14 @@ public class ModelBuilderWorker {
 	 *            The scope containing this statement.
 	 * @return the fragment
 	 */
-	private CommonFragment translateAssumeNode(Expression guard, Scope scope,
+	private Fragment translateAssumeNode(Expression guard, Scope scope,
 			AssumeNode assumeNode) {
 		Expression expression = translateExpressionNode(
 				assumeNode.getExpression(), scope, true);
 		Location location = factory.location(
 				factory.sourceOfBeginning(assumeNode), scope);
-		Statement assumeStatement = factory.assumeStatement(
-				factory.sourceOf(assumeNode), location, expression, guard);
-
-		return new CommonFragment(location, assumeStatement);
+		return factory.assumeFragment(factory.sourceOf(assumeNode), location,
+				expression, guard);
 	}
 
 	/**
@@ -1490,16 +1487,14 @@ public class ModelBuilderWorker {
 	 *            The AST node for the assert statement
 	 * @return the fragment
 	 */
-	private CommonFragment translateAssertNode(Expression guard, Scope scope,
+	private Fragment translateAssertNode(Expression guard, Scope scope,
 			AssertNode assertNode) {
 		Expression expression = translateExpressionNode(
 				assertNode.getExpression(), scope, true);
 		Location location = factory.location(
 				factory.sourceOfBeginning(assertNode), scope);
-		Statement assertStatement = factory.assertStatement(
-				factory.sourceOf(assertNode), location, expression, guard);
-
-		return new CommonFragment(location, assertStatement);
+		return factory.assertFragment(factory.sourceOf(assertNode), location,
+				expression, guard);
 	}
 
 	/**
@@ -1516,9 +1511,9 @@ public class ModelBuilderWorker {
 	 *            The expression node
 	 * @return the fragment representing the expression node
 	 */
-	private CommonFragment translateExpressionStatementNode(Expression guard,
+	private Fragment translateExpressionStatementNode(Expression guard,
 			Scope scope, ExpressionNode expressionNode) {
-		CommonFragment result;
+		Fragment result;
 
 		Location location = factory.location(
 				factory.sourceOfBeginning(expressionNode), scope);
@@ -1543,7 +1538,7 @@ public class ModelBuilderWorker {
 				// are assignments. all others are equivalent to no-op
 				Statement noopStatement = factory.noopStatement(
 						factory.sourceOf(operatorNode), location, guard);
-				result = new CommonFragment(location, noopStatement);
+				result = new CommonFragment(noopStatement);
 			}
 			break;
 		case SPAWN:
@@ -1576,8 +1571,8 @@ public class ModelBuilderWorker {
 	 *            The function call node
 	 * @return the fragment containing the function call statement
 	 */
-	private CommonFragment translateFunctionCallNode(Expression guard,
-			Scope scope, FunctionCallNode functionCallNode) {
+	private Fragment translateFunctionCallNode(Expression guard, Scope scope,
+			FunctionCallNode functionCallNode) {
 		Location location = factory.location(
 				factory.sourceOfBeginning(functionCallNode), scope);
 
@@ -1586,7 +1581,7 @@ public class ModelBuilderWorker {
 		if (guard != null)
 			callStatement.setGuard(guard);
 
-		return new CommonFragment(location, callStatement);
+		return new CommonFragment(callStatement);
 	}
 
 	/**
@@ -1600,7 +1595,7 @@ public class ModelBuilderWorker {
 	 *            The spawn node
 	 * @return The fragment of the spawn statement
 	 */
-	private CommonFragment translateSpawnNode(Expression guard, Scope scope,
+	private Fragment translateSpawnNode(Expression guard, Scope scope,
 			SpawnNode spawnNode) {
 		Statement spawnStatement;
 		Location location = factory.location(
@@ -1681,7 +1676,7 @@ public class ModelBuilderWorker {
 	 * @return The model representation of the assignment, which might also be a
 	 *         fork statement or function call.
 	 */
-	private CommonFragment translateAssignNode(Expression guard, Scope scope,
+	private Fragment translateAssignNode(Expression guard, Scope scope,
 			OperatorNode assignNode) {
 		ExpressionNode lhs = assignNode.getArgument(0);
 		ExpressionNode rhs = assignNode.getArgument(1);
@@ -2034,9 +2029,9 @@ public class ModelBuilderWorker {
 		Location location = factory.location(
 				factory.sourceOfBeginning(waitNode), scope);
 
-		return new CommonFragment(factory.joinStatement(source, location,
+		return factory.joinFragment(source, location,
 				translateExpressionNode(waitNode.getExpression(), scope, true),
-				guard));
+				guard);
 	}
 
 	/**
@@ -2050,8 +2045,8 @@ public class ModelBuilderWorker {
 	 *            The null statement node
 	 * @return the fragment of the null statement (i.e. no-op statement)
 	 */
-	private CommonFragment translateNullStatementNode(Expression guard,
-			Scope scope, NullStatementNode nullStatementNode) {
+	private Fragment translateNullStatementNode(Expression guard, Scope scope,
+			NullStatementNode nullStatementNode) {
 		Location location = factory.location(
 				factory.sourceOfBeginning(nullStatementNode), scope);
 
@@ -2127,7 +2122,7 @@ public class ModelBuilderWorker {
 			defaultOffset = 1;
 		}
 
-		// TODO Can a caseNode has conditional expressions (a?b:c) ?
+		// ABC doesn't allow a caseNode with conditional expressions (a?b:c)
 		for (int i = 0; i < chooseStatementNode.numChildren() - defaultOffset; i++) {
 			StatementNode childNode = chooseStatementNode.getSequenceChild(i);
 			Fragment caseFragment = translateStatementNode(
@@ -2187,7 +2182,7 @@ public class ModelBuilderWorker {
 	 *            The goto node
 	 * @return The fragment of the goto statement
 	 */
-	private CommonFragment translateGotoNode(Expression guard, Scope scope,
+	private Fragment translateGotoNode(Expression guard, Scope scope,
 			GotoNode gotoNode) {
 		OrdinaryLabelNode label = ((Label) gotoNode.getLabel().getEntity())
 				.getDefinition();
@@ -2233,11 +2228,10 @@ public class ModelBuilderWorker {
 	 *            The return node
 	 * @return The fragment of the return statement
 	 */
-	private CommonFragment translateReturnNode(Expression guard, Scope scope,
+	private Fragment translateReturnNode(Expression guard, Scope scope,
 			ReturnNode returnNode) {
 		Location location = factory.location(
 				factory.sourceOfBeginning(returnNode), scope);
-		Statement result;
 		Expression expression;
 
 		if (returnNode.getExpression() != null) {
@@ -2245,9 +2239,8 @@ public class ModelBuilderWorker {
 					scope, true);
 		} else
 			expression = null;
-		result = factory.returnStatement(factory.sourceOf(returnNode),
-				location, expression, guard);
-		return new CommonFragment(result);
+		return factory.returnFragment(factory.sourceOf(returnNode), location,
+				expression, guard);
 	}
 
 	/**
@@ -2528,9 +2521,8 @@ public class ModelBuilderWorker {
 			CIVLSource endSource = factory.sourceOfEnd(functionNode.getBody());
 			Location returnLocation = factory.location(endSource,
 					result.outerScope());
-			CommonFragment returnFragment = new CommonFragment(
-					factory.returnStatement(endSource, returnLocation, null,
-							null));
+			Fragment returnFragment = factory.returnFragment(endSource,
+					returnLocation, null, null);
 
 			if (body != null)
 				body = body.combineWith(returnFragment);
@@ -2843,9 +2835,9 @@ public class ModelBuilderWorker {
 	 *            The type node
 	 * @return the fragment
 	 */
-	private CommonFragment translateCompoundTypeNode(Location sourceLocation,
+	private Fragment translateCompoundTypeNode(Location sourceLocation,
 			Scope scope, TypeNode typeNode) {
-		CommonFragment result = null;
+		Fragment result = null;
 		String prefix;
 		String tag;
 		CIVLType type = translateABCType(factory.sourceOf(typeNode), scope,

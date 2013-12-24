@@ -41,7 +41,11 @@ void main(){
 	
 	$assert i == 45;
 	
-	$spawn foo();
+	$atomic{
+		for(int m = 0; m < 5; m++){
+			$spawn foo();
+		}
+	}
 	
 	//nested atomic and non-pure-local atomic block
 	$atomic{

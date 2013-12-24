@@ -40,16 +40,11 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
@@ -696,10 +691,8 @@ public interface ModelFactory {
 	 * Statements
 	 * *********************************************************************
 	 */
-	// TODO: Make these return a Fragment
-
 	/**
-	 * An assert statement.
+	 * Create a one-statement fragment that contains the assert statement.
 	 * 
 	 * @param civlSource
 	 *            The CIVL source of the assert statement
@@ -709,9 +702,9 @@ public interface ModelFactory {
 	 *            The expression being asserted.
 	 * @param guard
 	 *            The guard
-	 * @return A new assert statement.
+	 * @return A new fragment.
 	 */
-	AssertStatement assertStatement(CIVLSource civlSource, Location source,
+	Fragment assertFragment(CIVLSource civlSource, Location source,
 			Expression expression, Expression guard);
 
 	/**
@@ -733,7 +726,7 @@ public interface ModelFactory {
 			LHSExpression lhs, Expression rhs, Expression guard);
 
 	/**
-	 * An assume statement.
+	 * Create a one-statement fragment that contains the assume statement.
 	 * 
 	 * @param civlSource
 	 *            The CIVL source of the assume statement
@@ -745,11 +738,12 @@ public interface ModelFactory {
 	 *            The guard
 	 * @return A new assume statement.
 	 */
-	AssumeStatement assumeStatement(CIVLSource civlSource, Location source,
+	Fragment assumeFragment(CIVLSource civlSource, Location source,
 			Expression expression, Expression guard);
 
 	/**
-	 * A choose statement is of the form <code>x = choose(n)</code>;
+	 * Create a fragment that contains the choose statement. A choose statement
+	 * is of the form <code>x = choose(n)</code>;
 	 * 
 	 * When a choose statement is executed, the left hand side will be assigned
 	 * a new symbolic constant. A bound on the values of that symbolic constant
@@ -765,9 +759,9 @@ public interface ModelFactory {
 	 *            The argument to choose().
 	 * @param guard
 	 *            The guard
-	 * @return A new choose statement.
+	 * @return A new fragment.
 	 */
-	ChooseStatement chooseStatement(CIVLSource civlSource, Location source,
+	Fragment chooseFragment(CIVLSource civlSource, Location source,
 			LHSExpression lhs, Expression argument, Expression guard);
 
 	/**
@@ -792,7 +786,8 @@ public interface ModelFactory {
 			List<Expression> arguments, Expression guard);
 
 	/**
-	 * A join statement. Used to wait for a process to complete.
+	 * Create a one-statement fragment that contains the join statement. A join
+	 * statement is used to wait for a process to complete.
 	 * 
 	 * @param civlSource
 	 *            The CIVL source of the join statement
@@ -802,9 +797,9 @@ public interface ModelFactory {
 	 *            An expression evaluating to a process.
 	 * @param guard
 	 *            The guard
-	 * @return A new join statement.
+	 * @return A new fragment.
 	 */
-	WaitStatement joinStatement(CIVLSource civlSource, Location source,
+	Fragment joinFragment(CIVLSource civlSource, Location source,
 			Expression process, Expression guard);
 
 	/**
@@ -821,7 +816,7 @@ public interface ModelFactory {
 			Expression guard);
 
 	/**
-	 * A return statement.
+	 * Create a one-statement fragment that contains the return statement.
 	 * 
 	 * @param civlSource
 	 *            The CIVL source of the return statement
@@ -830,9 +825,9 @@ public interface ModelFactory {
 	 * @param expression
 	 *            The expression being returned. Null if non-existent.
 	 * @param guard
-	 * @return A new return statement.
+	 * @return A new fragment.
 	 */
-	ReturnStatement returnStatement(CIVLSource civlSource, Location source,
+	Fragment returnFragment(CIVLSource civlSource, Location source,
 			Expression expression, Expression guard);
 
 	/**

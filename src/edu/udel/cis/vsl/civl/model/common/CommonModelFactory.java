@@ -903,7 +903,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new assert statement.
 	 */
 	@Override
-	public AssertStatement assertStatement(CIVLSource civlSource,
+	public Fragment assertFragment(CIVLSource civlSource,
 			Location source, Expression expression, Expression guard) {
 		AssertStatement result = new CommonAssertStatement(civlSource, source,
 				expression);
@@ -912,7 +912,7 @@ public class CommonModelFactory implements ModelFactory {
 		result.setStatementScope(expression.expressionScope());
 		if (guard != null)
 			result.setGuard(guard);
-		return result;
+		return new CommonFragment(result);
 	}
 
 	/**
@@ -950,7 +950,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new assume statement.
 	 */
 	@Override
-	public AssumeStatement assumeStatement(CIVLSource civlSource,
+	public Fragment assumeFragment(CIVLSource civlSource,
 			Location source, Expression expression, Expression guard) {
 		AssumeStatement result = new CommonAssumeStatement(civlSource, source,
 				expression);
@@ -959,7 +959,7 @@ public class CommonModelFactory implements ModelFactory {
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		if (guard != null)
 			result.setGuard(guard);
-		return result;
+		return new CommonFragment(result);
 	}
 
 	/**
@@ -1006,7 +1006,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new choose statement.
 	 */
 	@Override
-	public ChooseStatement chooseStatement(CIVLSource civlSource,
+	public Fragment chooseFragment(CIVLSource civlSource,
 			Location source, LHSExpression lhs, Expression argument,
 			Expression guard) {
 		ChooseStatement result = new CommonChooseStatement(civlSource, source,
@@ -1017,7 +1017,7 @@ public class CommonModelFactory implements ModelFactory {
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		if (guard != null)
 			result.setGuard(guard);
-		return result;
+		return new CommonFragment(result);
 	}
 
 	/**
@@ -1030,7 +1030,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new join statement.
 	 */
 	@Override
-	public WaitStatement joinStatement(CIVLSource civlSource, Location source,
+	public Fragment joinFragment(CIVLSource civlSource, Location source,
 			Expression process, Expression guard) {
 		WaitStatement result = new CommonWaitStatement(civlSource, source,
 				process);
@@ -1039,7 +1039,7 @@ public class CommonModelFactory implements ModelFactory {
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		if (guard != null)
 			result.setGuard(guard);
-		return result;
+		return new CommonFragment(result);
 	}
 
 	/**
@@ -1070,7 +1070,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new return statement.
 	 */
 	@Override
-	public ReturnStatement returnStatement(CIVLSource civlSource,
+	public Fragment returnFragment(CIVLSource civlSource,
 			Location source, Expression expression, Expression guard) {
 		ReturnStatement result = new CommonReturnStatement(civlSource, source,
 				expression);
@@ -1081,7 +1081,7 @@ public class CommonModelFactory implements ModelFactory {
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		if (guard != null)
 			result.setGuard(guard);
-		return result;
+		return new CommonFragment(result);
 	}
 
 	/**
@@ -1553,28 +1553,6 @@ public class CommonModelFactory implements ModelFactory {
 
 		return result;
 	}
-
-	/*
-	 * if (functionInfo.hasConditionalExpressions() == true) { Statement
-	 * newStatement = result.lastStatement; Location oldLocation =
-	 * result.startLocation;
-	 * 
-	 * result = new Fragment();
-	 * 
-	 * while (functionInfo.hasConditionalExpressions()) { ConditionalExpression
-	 * conditionalExpression = functionInfo .pollConditionaExpression();
-	 * VariableExpression variable = functionInfo.tempVariable(
-	 * newStatement.statementScope(), conditionalExpression.getSource(),
-	 * conditionalExpression.getExpressionType()); Fragment ifElse =
-	 * factory.conditionalExpressionToIf( newStatement.guard(), variable,
-	 * conditionalExpression);
-	 * 
-	 * newStatement.replaceWith(conditionalExpression, variable);
-	 * 
-	 * result = result.combineWith(ifElse); }
-	 * 
-	 * result = result .combineWith(new Fragment(oldLocation, newStatement)); }
-	 */
 
 	@Override
 	public void addConditionalExpressionQueue() {
