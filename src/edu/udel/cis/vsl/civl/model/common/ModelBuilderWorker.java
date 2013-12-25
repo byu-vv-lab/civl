@@ -1357,10 +1357,12 @@ public class ModelBuilderWorker {
 	private Fragment translateAtomicNode(Expression guard, Scope scope,
 			AtomicNode atomicNode) {
 		StatementNode bodyNode = atomicNode.getBody();
-		Fragment bodyFragment = translateStatementNode(guard, scope, bodyNode);
-
+		Fragment bodyFragment;
+		
+		factory.enterAtomicBlock();
+		bodyFragment = translateStatementNode(guard, scope, bodyNode);
+		factory.leaveAtomicBlock();
 		bodyFragment.makeAtomic();
-
 		return bodyFragment;
 	}
 
@@ -2033,6 +2035,10 @@ public class ModelBuilderWorker {
 		Location location = factory.location(
 				factory.sourceOfBeginning(waitNode), scope);
 
+		if(factory.inAtomicBlock()){
+			throw new CIVLInternalException("Wait statement is not allowed in atomic block!", source);
+		}
+		
 		return factory.joinFragment(source, location,
 				translateExpressionNode(waitNode.getExpression(), scope, true),
 				guard);

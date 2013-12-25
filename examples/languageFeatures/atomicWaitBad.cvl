@@ -1,0 +1,17 @@
+#include <civlc.h>
+void foo(){
+	void koo(){
+		int o = 0;
+		o++;
+	}
+	
+	$proc p = $spawn koo();
+	$wait p;
+}
+
+void main(){
+
+	$atomic{
+		foo();
+	}
+}

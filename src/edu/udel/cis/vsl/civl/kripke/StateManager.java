@@ -332,6 +332,17 @@ public class StateManager implements StateManagerIF<State, Transition> {
 						statementExecuted = true;
 					}
 				}
+				// current location is blocked
+				if (!statementExecuted) {
+					CIVLExecutionException e = new CIVLStateException(
+							ErrorKind.OTHER,
+							Certainty.CONCRETE,
+							"Undesired blocked location is detected in atomic block.",
+							currentState, newLocation.getSource());
+
+					throw e;
+				}
+
 				// warning for possible infinite atomic block
 				if (stateCounter != 0 && stateCounter % 1024 == 0) {
 					out.println("Warning: " + (stateCounter)
@@ -341,13 +352,13 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 				stateCounter++;
 				p = newState.getProcessState(pid);
-				if (newLocation.leaveAtomic()) {
-					// reach the end of the latest atomic block
-					atomicFlags.pop();
-				}
 				if (newLocation.enterAtomic()) {
 					// encounter a new atomic block
 					atomicFlags.push(1);
+				}
+				if (newLocation.leaveAtomic()) {
+					// reach the end of the latest atomic block
+					atomicFlags.pop();
 				}
 				if (p != null && !p.hasEmptyStack())
 					newLocation = p.peekStack().location();

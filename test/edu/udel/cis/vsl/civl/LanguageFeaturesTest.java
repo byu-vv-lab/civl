@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.abc.ABCException;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class LanguageFeaturesTest {
@@ -211,16 +212,22 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", "-showModel",
 				filename("conditionalExpression.cvl")));
 	}
-	
+
 	@Test
 	public void testAtomicStatements() throws ABCException {
 		assertTrue(ui.run("verify", "-showModel",
 				filename("atomicStatement.cvl")));
 	}
-	
+
 	@Test
 	public void testAtomicStatementsBad() throws ABCException {
 		assertFalse(ui.run("verify", "-showModel",
 				filename("atomicStatementBad.cvl")));
+	}
+
+	@Test(expected = CIVLInternalException.class)
+	public void testAtomicWaitBad() throws ABCException {
+		assertFalse(ui.run("verify", "-showModel",
+				filename("atomicWaitBad.cvl")));
 	}
 }

@@ -217,6 +217,12 @@ public class CommonModelFactory implements ModelFactory {
 	private int conditionalExpressionCounter = 0;
 
 	/**
+	 * The status of the translation, true iff an atomic block is currently
+	 * being processed.
+	 */
+	private Stack<Integer> atomicBlocks;;
+
+	/**
 	 * The factory to create all model components. Usually this is the only way
 	 * model components will be created.
 	 * 
@@ -269,6 +275,7 @@ public class CommonModelFactory implements ModelFactory {
 				scopeSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
 		this.conditionalExpressions = new Stack<ArrayDeque<ConditionalExpression>>();
+		atomicBlocks = new Stack<Integer>();
 	}
 
 	@Override
@@ -903,8 +910,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new assert statement.
 	 */
 	@Override
-	public Fragment assertFragment(CIVLSource civlSource,
-			Location source, Expression expression, Expression guard) {
+	public Fragment assertFragment(CIVLSource civlSource, Location source,
+			Expression expression, Expression guard) {
 		AssertStatement result = new CommonAssertStatement(civlSource, source,
 				expression);
 
@@ -950,8 +957,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new assume statement.
 	 */
 	@Override
-	public Fragment assumeFragment(CIVLSource civlSource,
-			Location source, Expression expression, Expression guard) {
+	public Fragment assumeFragment(CIVLSource civlSource, Location source,
+			Expression expression, Expression guard) {
 		AssumeStatement result = new CommonAssumeStatement(civlSource, source,
 				expression);
 
@@ -1006,9 +1013,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new choose statement.
 	 */
 	@Override
-	public Fragment chooseFragment(CIVLSource civlSource,
-			Location source, LHSExpression lhs, Expression argument,
-			Expression guard) {
+	public Fragment chooseFragment(CIVLSource civlSource, Location source,
+			LHSExpression lhs, Expression argument, Expression guard) {
 		ChooseStatement result = new CommonChooseStatement(civlSource, source,
 				lhs, argument, chooseID++);
 
@@ -1070,8 +1076,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new return statement.
 	 */
 	@Override
-	public Fragment returnFragment(CIVLSource civlSource,
-			Location source, Expression expression, Expression guard) {
+	public Fragment returnFragment(CIVLSource civlSource, Location source,
+			Expression expression, Expression guard) {
 		ReturnStatement result = new CommonReturnStatement(civlSource, source,
 				expression);
 
@@ -1690,5 +1696,20 @@ public class CommonModelFactory implements ModelFactory {
 
 		return result;
 
+	}
+
+	@Override
+	public void enterAtomicBlock() {
+		this.atomicBlocks.push(1);
+	}
+
+	@Override
+	public void leaveAtomicBlock() {
+		this.atomicBlocks.pop();
+	}
+
+	@Override
+	public boolean inAtomicBlock() {
+		return !this.atomicBlocks.isEmpty();
 	}
 }

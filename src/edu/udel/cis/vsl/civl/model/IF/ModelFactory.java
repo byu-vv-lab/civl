@@ -1062,5 +1062,9 @@ public interface ModelFactory {
 	 *         stack of conditional expression queues
 	 */
 	ConditionalExpression pollConditionaExpression();
+	
+	void enterAtomicBlock();
+	void leaveAtomicBlock();
+	boolean inAtomicBlock();
 
 }

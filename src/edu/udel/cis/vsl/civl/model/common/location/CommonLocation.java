@@ -269,11 +269,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 					this.purelyLocal = false;
 					return;
 				}
+				
+				if (newLocation.enterAtomic())
+					atomicFlags.push(1);
+				
 				if (newLocation.leaveAtomic()) {
 					atomicFlags.pop();
 				}
-				if (newLocation.enterAtomic())
-					atomicFlags.push(1);
+				
 				newLocation = s.target();
 				if(checkedLocations.contains(newLocation.id()))
 					newLocation = null;
