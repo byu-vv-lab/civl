@@ -86,7 +86,6 @@ public class CommonIdentifier extends CommonSourceable implements Identifier {
 
 	@Override
 	public StringObject stringObject() {
-		// TODO Auto-generated method stub
 		return stringObject;
 	}
 

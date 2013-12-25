@@ -10,8 +10,6 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 
-//TODO: Make this CommonFragment, create an interface Fragment in model.IF, and have
-// CommonFragment implement Fragment
 /**
  * A fragment of a CIVL model. Consists of a start location and a last
  * statement. Why not always generate next location.
@@ -180,7 +178,8 @@ public class CommonFragment implements Fragment {
 		workings.push(startLocation);
 		locationIds.add(startLocation.id());
 
-		// TODO: Explain why/how we're doing this loop.
+		// For each statement in the fragment, update its source or target
+		// location accordingly if it happens to be the previous start location
 		while (!workings.isEmpty()) {
 			Location location = workings.pop();
 
@@ -233,7 +232,7 @@ public class CommonFragment implements Fragment {
 		this.startLocation.setEnterAtomic(true);
 		if (this.lastStatement != null) {
 			if (lastStatement instanceof StatementSet) {
-				for(Statement s : ((StatementSet)lastStatement).statements()){
+				for (Statement s : ((StatementSet) lastStatement).statements()) {
 					s.source().setLeaveAtomic(true);
 				}
 			} else

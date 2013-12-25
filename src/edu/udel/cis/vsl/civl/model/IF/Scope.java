@@ -35,11 +35,6 @@ public interface Scope extends Sourceable {
 	 */
 	int numVariables();
 
-//	/**
-//	 * @return Get the variable at position i.
-//	 */
-//	Variable getVariable(int i);
-
 	/**
 	 * @return The id of this scope. This id is unique within the model.
 	 */
@@ -95,7 +90,6 @@ public interface Scope extends Sourceable {
 	 */
 	Variable variable(Identifier name);
 
-	// TODO: This is a duplicate of getVariable(). Remove one.
 	/**
 	 * Get the variable at the specified array index.
 	 * 

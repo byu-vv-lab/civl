@@ -85,7 +85,6 @@ public class CommonConditionalExpression extends CommonExpression implements
 
 	@Override
 	public void calculateDerefs() {
-		// TODO Auto-generated method stub
 		this.condition.calculateDerefs();
 		this.trueBranch.calculateDerefs();
 		this.falseBranch.calculateDerefs();

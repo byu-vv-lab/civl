@@ -39,7 +39,6 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 	@Override
 	public void setPurelyLocal(boolean pl) {
-		// TODO check &(*p)
 		this.purelyLocal = pl;
 	}
 

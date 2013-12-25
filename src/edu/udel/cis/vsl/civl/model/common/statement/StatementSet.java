@@ -46,37 +46,31 @@ public class StatementSet implements Statement {
 
 	@Override
 	public CIVLSource getSource() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Location source() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Location target() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Expression guard() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Model model() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setSource(Location source) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -89,25 +83,21 @@ public class StatementSet implements Statement {
 
 	@Override
 	public void setGuard(Expression guard) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void setModel(Model model) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public Scope statementScope() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setStatementScope(Scope statementScope) {
-		// TODO Auto-generated method stub
 
 	}
 

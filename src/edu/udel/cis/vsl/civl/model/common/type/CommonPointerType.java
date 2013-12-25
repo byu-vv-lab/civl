@@ -41,7 +41,6 @@ public class CommonPointerType extends CommonType implements CIVLPointerType {
 
 	@Override
 	public Scope getRegion() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

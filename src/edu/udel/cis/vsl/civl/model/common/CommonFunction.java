@@ -356,76 +356,51 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		ArrayList<Location> oldLocations = new ArrayList<Location>(
 				this.locations);
 		int count = oldLocations.size();
-
-		/*
-		 * The index of locations that can be removed
-		 */
+		Set<Location> newLocations;
+		// The index of locations that can be removed
 		ArrayList<Integer> toRemove = new ArrayList<Integer>();
 
 		for (int i = 0; i < count; i++) {
 			Location loc = oldLocations.get(i);
-			
-			if(loc.enterAtomic() || loc.leaveAtomic())
+
+			if (loc.enterAtomic() || loc.leaveAtomic())
 				continue;
-			
-			/*
-			 * loc has exactly one statement
-			 */
+			// loc has exactly one statement
 			if (loc.getNumOutgoing() == 1) {
 				Statement s = loc.getOutgoing(0);
-				/*
-				 * The only statement of loc is a no-op statement
-				 */
+
+				// The only statement of loc is a no-op statement
 				if (s instanceof CommonNoopStatement) {
 					Expression guard = s.guard();
 
-					/*
-					 * The guard of the no-op is true TODO: can be improved by
-					 * checking if guard has any side-effect, e.g., if guard is
-					 * (x + y < 90) then we still can remove this no-op
-					 * statement
-					 */
+					// The guard of the no-op is true
 					if (guard instanceof CommonBooleanLiteralExpression) {
 						if (((CommonBooleanLiteralExpression) guard).value()) {
-							/*
-							 * Record the index of loc so that it can be removed
-							 * later
-							 */
-							toRemove.add(i);
-
-							/*
-							 * The target of loc
-							 */
 							Location target = s.target();
 
+							// Record the index of loc so that it can be
+							// removed later
+							toRemove.add(i);
 							for (int j = 0; j < count; j++) {
-								/*
-								 * Do nothing to the locations that are to be
-								 * removed
-								 */
+								Location curLoc;
+
+								// Do nothing to the locations that are to be
+								// removed
 								if (toRemove.contains(j))
 									continue;
-
-								Location curLoc = oldLocations.get(j);
-
-								/*
-								 * For each statement of curLoc \in
-								 * (this.locations - toRemove)
-								 */
+								curLoc = oldLocations.get(j);
+								// For each statement of curLoc \in
+								// (this.locations - toRemove)
 								for (Statement curS : curLoc.outgoing()) {
 									Location curTarget = curS.target();
 
-									/*
-									 * Redirect the target location so that
-									 * no-op location is skipped
-									 */
+									// Redirect the target location so that
+									// no-op location is skipped
 									if (curTarget != null
 											&& curTarget.id() == loc.id()) {
-										curS.setTarget(target);// the incoming
-																// field is
-																// implicitly
-																// modified by
-																// setTarget()
+										// the incoming field is implicitly
+										// modified by setTarget()
+										curS.setTarget(target);
 									}
 								}
 							}
@@ -436,7 +411,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 			}
 		}
 
-		Set<Location> newLocations = new LinkedHashSet<Location>();
+		newLocations = new LinkedHashSet<Location>();
 		for (int k = 0; k < count; k++) {
 			if (toRemove.contains(k))
 				continue;

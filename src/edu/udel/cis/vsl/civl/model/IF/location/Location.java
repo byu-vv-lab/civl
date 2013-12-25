@@ -53,11 +53,22 @@ public interface Location extends Sourceable {
 	 */
 	public int getNumIncoming();
 
+	/**
+	 * 
+	 * @param i
+	 *            index of the statement
+	 * @return The i'th outgoing statement
+	 */
 	public Statement getOutgoing(int i);
 
+	/**
+	 * 
+	 * @param i
+	 *            index of the statement
+	 * @return The i'th incoming statement
+	 */
 	public Statement getIncoming(int i);
 
-	// TODO: javadocs
 	/**
 	 * Returns the sole outgoing statement from this location.
 	 * 
@@ -82,19 +93,6 @@ public interface Location extends Sourceable {
 	 */
 	public void setScope(Scope scope);
 
-	//
-	// /**
-	// * @param incoming
-	// * The set of incoming statements.
-	// */
-	// public void setIncoming(Set<Statement> incoming);
-	//
-	// /**
-	// * @param outgoing
-	// * The set of outgoing statements.
-	// */
-	// public void setOutgoing(Set<Statement> outgoing);
-
 	/**
 	 * @param statement
 	 *            A new incoming statement.
@@ -117,12 +115,31 @@ public interface Location extends Sourceable {
 	 */
 	public void print(String prefix, PrintStream out);
 
+	/**
+	 * 
+	 * @return true iff the location is purely local
+	 */
 	public boolean isPurelyLocal();
 
+	/**
+	 * Analyze if the location is purely local
+	 */
 	public void purelyLocalAnalysis();
 
+	/**
+	 * Remove a certain outgoing statement
+	 * 
+	 * @param statement
+	 *            The outgoing statement to be removed
+	 */
 	void removeOutgoing(Statement statement);
 
+	/**
+	 * Remove a certain incoming statement
+	 * 
+	 * @param statement
+	 *            The incoming statement to be removed
+	 */
 	void removeIncoming(Statement statement);
 
 	/**
@@ -134,9 +151,17 @@ public interface Location extends Sourceable {
 	 * This location is the end location of a certain atomic block
 	 */
 	void setLeaveAtomic(boolean value);
-	
+
+	/**
+	 * 
+	 * @return true iff the location is entering an atomic block
+	 */
 	boolean enterAtomic();
-	
+
+	/**
+	 * 
+	 * @return true iff the location is leaving an atomic block
+	 */
 	boolean leaveAtomic();
 
 }

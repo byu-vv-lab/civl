@@ -427,8 +427,6 @@ public class ModelBuilderWorker {
 		}
 	}
 
-	// TODO: Improve javadoc
-	// TODO: Get rid of translateTypeNode, just call this.
 	/**
 	 * Working on replacing process type with this.
 	 * 
@@ -2413,7 +2411,7 @@ public class ModelBuilderWorker {
 			// if it has a definition node, should probably use that one.
 			FunctionType functionType = entity.getType();
 
-			// TODO: deal with parameterized functions....
+			// TODO: deal with scope parameterized functions....
 
 			FunctionTypeNode functionTypeNode = (FunctionTypeNode) node
 					.getTypeNode();

@@ -58,29 +58,71 @@ public interface CIVLType {
 	 * @return the dynamic type index
 	 */
 	int getDynamicTypeIndex();
-
-	//TODO Add javadocs.
 	
+	/**
+	 * 
+	 * @return true iff this type is numeric
+	 */
 	boolean isNumericType();
 
+	/**
+	 * 
+	 * @return true iff this type is integer type
+	 */
 	boolean isIntegerType();
 
+	/**
+	 * 
+	 * @return true iff this type is real type
+	 */
 	boolean isRealType();
 
+	/**
+	 * 
+	 * @return true iff this type is pointer type
+	 */
 	boolean isPointerType();
 
+	/**
+	 * 
+	 * @return true iff this type is process type
+	 */
 	boolean isProcessType();
 
+	/**
+	 * 
+	 * @return true iff this type is scope type
+	 */
 	boolean isScopeType();
 
+	/**
+	 * 
+	 * @return true iff this type is void type
+	 */
 	boolean isVoidType();
 
+	/**
+	 * 
+	 * @return true iff this type is heap type
+	 */
 	boolean isHeapType();
 
+	/**
+	 * 
+	 * @return true iff this type is bundle type
+	 */
 	boolean isBundleType();
 	
+	/**
+	 * 
+	 * @return true iff this type is struct type
+	 */
 	boolean isStructType();
 	
+	/**
+	 * 
+	 * @return true iff this type is array type
+	 */
 	boolean isArrayType();
 
 }

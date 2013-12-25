@@ -86,13 +86,6 @@ public class CommonScope extends CommonSourceable implements Scope {
 	}
 
 	/**
-	 * @return Get the variable at position i.
-	 */
-	public Variable getVariable(int i) {
-		return variables[i];
-	}
-
-	/**
 	 * @return The id of this scope.
 	 */
 	public int id() {
@@ -335,10 +328,10 @@ public class CommonScope extends CommonSourceable implements Scope {
 		}
 		out.println(prefix + "scope " + id + " (parent: " + parentID + ")");
 		for (Variable v : variables) {
-			if(v.purelyLocal()){
+			if (v.purelyLocal()) {
 				out.println(prefix + "| " + v + "#");
-			}
-			else out.println(prefix + "| " + v);
+			} else
+				out.println(prefix + "| " + v);
 		}
 		for (Scope child : children) {
 			if (child.function().equals(function)) {
@@ -369,9 +362,9 @@ public class CommonScope extends CommonSourceable implements Scope {
 	@Override
 	public boolean isDescendantOf(Scope anc) {
 		Scope parent = this.parent;
-		
-		while(parent != null){
-			if(parent.id() == anc.id())
+
+		while (parent != null) {
+			if (parent.id() == anc.id())
 				return true;
 			parent = parent.parent();
 		}
