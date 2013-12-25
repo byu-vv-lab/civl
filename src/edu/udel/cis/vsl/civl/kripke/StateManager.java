@@ -15,6 +15,8 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -246,7 +248,6 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		if (newLocation.isPurelyLocal()) {
 			while (newLocation != null && newLocation.isPurelyLocal()) {
 				// TODO check spawn statement
-				// exactly one statement in newLoc.outgoing()
 				// if(debug)
 				// {System.out.println("intermediate state:");
 				// state.print(System.out);}
@@ -281,8 +282,6 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	/**
 	 * Execute an atomic block, supporting nested atomic blocks. Currently only
 	 * consider the case when each location has exactly one outgoing statement.
-	 * TODO implement the case when a location has multiple outgoing statements
-	 * but is still deterministic.
 	 * 
 	 * @param state
 	 *            The current state
@@ -314,7 +313,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				for (Statement s : newLocation.outgoing()) {
 					BooleanExpression newPathCondition = executor
 							.newPathCondition(newState, pid, s);
-
+					// WaitStatement test;
 					if (!newPathCondition.isFalse()) {
 						if (statementExecuted) {
 							// non-determinism detected
@@ -326,8 +325,46 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 							throw e;
 						}
+						if (s instanceof WaitStatement) {
+							Evaluation eval;
+							int pidValue;
 
-						newState = newState.setPathCondition(newPathCondition);
+							p = newState.getProcessState(pid);
+							eval = executor
+									.evaluator()
+									.evaluate(
+											newState.setPathCondition(newPathCondition),
+											p.getPid(),
+											((WaitStatement) s).process());
+							pidValue = executor.modelFactory().getProcessId(
+									((WaitStatement) s).process().getSource(),
+									eval.value);
+
+							if (pidValue < 0) {
+								CIVLExecutionException e = new CIVLStateException(
+										ErrorKind.INVALID_PID,
+										Certainty.PROVEABLE,
+										"Unable to call $wait on a process that has already been the target of a $wait.",
+										newState, s.getSource());
+
+								executor.evaluator().reportError(e);
+								// TODO: recover: add a no-op transition
+								throw e;
+							}
+							if (!newState.getProcessState(pidValue)
+									.hasEmptyStack()) {
+								CIVLExecutionException e = new CIVLStateException(
+										ErrorKind.OTHER,
+										Certainty.CONCRETE,
+										"Undesired blocked location is detected in atomic block.",
+										currentState, newLocation.getSource());
+
+								throw e;
+							}
+						} else {
+							newState = newState
+									.setPathCondition(newPathCondition);
+						}
 						newState = executor.execute(newState, pid, s);
 						statementExecuted = true;
 					}

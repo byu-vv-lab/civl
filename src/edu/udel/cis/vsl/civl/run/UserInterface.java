@@ -419,7 +419,7 @@ public class UserInterface {
 	 * 
 	 * @param args
 	 *            command line arguments
-	 * @return true iff everything succeeeded and no errors were found
+	 * @return true iff everything succeeded and no errors were found
 	 */
 	public boolean run(String... args) {
 		try {

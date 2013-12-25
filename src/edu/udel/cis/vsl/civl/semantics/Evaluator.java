@@ -1817,7 +1817,7 @@ public class Evaluator {
 			ReferenceExpression symRef = getSymRef(pointer);
 			DynamicScope dyscope = state.getScope(sid);
 			Scope scope = dyscope.lexicalScope();
-			Variable variable = scope.getVariable(vid);
+			Variable variable = scope.variable(vid);
 			String variableName = variable.name().name();
 
 			result = "Ptr[scope=" + sid + ", &" + variableName;

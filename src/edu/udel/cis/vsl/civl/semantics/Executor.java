@@ -491,10 +491,16 @@ public class Executor {
 
 	/**
 	 * @return The evaluator used by this executor.
-	 * @return
 	 */
 	public Evaluator evaluator() {
 		return evaluator;
+	}
+
+	/**
+	 * @return The model factory used by this executor.
+	 */
+	public ModelFactory modelFactory() {
+		return modelFactory;
 	}
 
 	/**
@@ -573,7 +579,7 @@ public class Executor {
 					statement);
 		}
 	}
-	
+
 	/**
 	 * Given a state, a process, and a statement, check if the statement's guard
 	 * is satisfiable under the path condition. If it is, return the conjunction
@@ -589,7 +595,8 @@ public class Executor {
 	 * @return The new path condition. False if the guard is not satisfiable
 	 *         under the path condition.
 	 */
-	public BooleanExpression newPathCondition(State state, int pid, Statement statement) {
+	public BooleanExpression newPathCondition(State state, int pid,
+			Statement statement) {
 		try {
 			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
 			BooleanExpression pathCondition = eval.state.getPathCondition();
@@ -599,7 +606,7 @@ public class Executor {
 			if (statement instanceof CallOrSpawnStatement) {
 				if (((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
 					LibraryExecutor libraryExecutor = libraryExecutor((CallOrSpawnStatement) statement);
-					
+
 					guard = evaluator.universe().and(guard,
 							libraryExecutor.getGuard(state, pid, statement));
 				}

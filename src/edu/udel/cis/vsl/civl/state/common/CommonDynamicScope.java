@@ -235,7 +235,7 @@ public class CommonDynamicScope implements DynamicScope {
 		}
 		out.println();
 		for (int i = 0; i < numVars; i++) {
-			Variable variable = lexicalScope.getVariable(i);
+			Variable variable = lexicalScope.variable(i);
 			SymbolicExpression value = variableValues[i];
 
 			out.print(prefix + "| " + variable.name() + " = ");
