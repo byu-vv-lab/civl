@@ -55,6 +55,11 @@ public interface State {
 	String identifier();
 
 	/**
+	 * Makes this state immutable (if it is not already).
+	 */
+	void commit();
+
+	/**
 	 * Returns the number of dynamic scopes in this state.
 	 * 
 	 * @return the number of dynamic scopes in this state

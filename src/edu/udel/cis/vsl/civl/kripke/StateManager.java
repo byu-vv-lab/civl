@@ -206,15 +206,17 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		}
 
 		state = stateFactory.collectScopes(state);
-		
+
 		// TODO: try this simplification out, see how it works:
-		
+
 		if (simplify) {
 			state = stateFactory.simplify(state);
 		}
 
 		if (saveStates) {
 			state = stateFactory.canonic(state);
+		} else {
+			state.commit();
 		}
 
 		if (verbose || debug || showTransitions) {
