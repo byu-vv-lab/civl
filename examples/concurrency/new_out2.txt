@@ -1,0 +1,7230 @@
+CIVL v0.4 of 2013-12-06 -- http://vsl.cis.udel.edu/civl
+civl verify -input={N=2} -showStates=true -showTransitions=true spawn2.cvl
+
+State 0:0
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 0:0 (static=0)
+| | | | N = NULL : null
+| | | | s1 = NULL : null
+| | | | s2 = NULL : null
+| Process states
+| | Process State 0:0 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=0, spawn2.cvl:8.0-6 "$input", scope=0]
+
+State 0:0 --proc 0: N = 2 at spawn2.cvl:8.0-12--> State 1:1
+
+State 1:1
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 1:1 (static=0)
+| | | | N = 2 : int
+| | | | s1 = NULL : null
+| | | | s2 = NULL : null
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 3
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 4
+| | | parent = 5
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 5
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 2:2 [pid=1] call stack
+| | | Frame[function=f1, location=12, spawn2.cvl:12.2-4 "s1", scope=2]
+| | Process State 3:3 [pid=2] call stack
+| | | Frame[function=f2, location=23, spawn2.cvl:17.2-4 "s2", scope=4]
+
+State 1:1 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 2:3
+
+State 2:3
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 7:7 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = NULL : null
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 4:4 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 5:5 [pid=2] call stack
+| | | Frame[function=f2, location=23, spawn2.cvl:17.2-4 "s2", scope=5]
+
+State 2:3 --proc 1: no-op at spawn2.cvl:13.16-19--> State 3:5
+
+State 3:5
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 7:7 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = NULL : null
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 6:6 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 5:5 [pid=2] call stack
+| | | Frame[function=f2, location=23, spawn2.cvl:17.2-4 "s2", scope=5]
+
+State 3:5 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 4:7
+
+State 4:7
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 7:7 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = NULL : null
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 7:7 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 5:5 [pid=2] call stack
+| | | Frame[function=f2, location=23, spawn2.cvl:17.2-4 "s2", scope=5]
+
+State 4:7 --proc 1: no-op at spawn2.cvl:13.16-19--> State 5:9
+
+State 5:9
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 7:7 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = NULL : null
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 8:8 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 5:5 [pid=2] call stack
+| | | Frame[function=f2, location=23, spawn2.cvl:17.2-4 "s2", scope=5]
+
+State 5:9 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 6:11
+
+State 6:11
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 10:11 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = NULL : null
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 9:9 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 5:5 [pid=2] call stack
+| | | Frame[function=f2, location=23, spawn2.cvl:17.2-4 "s2", scope=5]
+
+State 6:11 --proc 1: no-op at spawn2.cvl:13.16-19--> State 7:13
+
+State 7:13
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 10:11 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = NULL : null
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 3
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 10:10 [pid=1] call stack
+| | Process State 11:11 [pid=2] call stack
+| | | Frame[function=f2, location=23, spawn2.cvl:17.2-4 "s2", scope=2]
+
+State 7:13 --proc 0: wait p at spawn2.cvl:25.2-9--> State 8:15
+
+State 8:15
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 10:11 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = NULL : null
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 3
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 12:12 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 13:13 [pid=1] call stack
+| | | Frame[function=f2, location=23, spawn2.cvl:17.2-4 "s2", scope=2]
+
+State 8:15 --proc 1: s2 = 0 at spawn2.cvl:17.2-4--> State 9:17
+
+State 9:17
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 12:12 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 14:14 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 9:17 --proc 1: no-op at spawn2.cvl:18.16-19--> State 10:19
+
+State 10:19
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 12:12 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 15:15 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 10:19 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 11:21
+
+State 11:21
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 12:12 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 16:16 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 11:21 --proc 1: no-op at spawn2.cvl:18.16-19--> State 12:23
+
+State 12:23
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 12:12 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 17:17 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 12:23 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 13:25
+
+State 13:25
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 12:12 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 18:18 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 13:25 --proc 1: no-op at spawn2.cvl:18.16-19--> State 14:27
+
+State 14:27
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 12:12 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 19:19 [pid=1] call stack
+
+State 14:27 --proc 0: wait q at spawn2.cvl:26.2-9--> State 15:29
+
+State 15:29
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 20:20 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 15:29 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 16:30
+
+State 16:30
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 21:21 [pid=0] call stack
+
+State 5:9 --proc 2: s2 = 0 at spawn2.cvl:17.2-4--> State 17:31
+
+State 17:31
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 8:8 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 22:22 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 17:31 --proc 2: no-op at spawn2.cvl:18.16-19--> State 18:33
+
+State 18:33
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 8:8 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 23:23 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 18:33 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 19:35
+
+State 19:35
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 24:24 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 23:23 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 19:35 --proc 1: no-op at spawn2.cvl:13.16-19--> State 20:37
+
+State 20:37
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 25:25 [pid=1] call stack
+| | Process State 26:26 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 20:37 --proc 0: wait p at spawn2.cvl:25.2-9--> State 21:39
+
+State 21:39
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 27:27 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 28:28 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 21:39 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 22:41
+
+State 22:41
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 27:27 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 29:29 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 22:41 --proc 1: no-op at spawn2.cvl:18.16-19--> State 23:43
+
+State 23:43
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 27:27 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 30:30 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 23:43 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 24:45
+
+State 24:45
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 27:27 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 31:31 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 24:45 --proc 1: no-op at spawn2.cvl:18.16-19--> State 25:47
+
+State 25:47
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 27:27 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 32:32 [pid=1] call stack
+
+State 25:47 --proc 0: wait q at spawn2.cvl:26.2-9--> State 26:49
+
+State 26:49
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 33:33 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 26:49 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 27:50
+
+State 27:50
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 34:34 [pid=0] call stack
+
+State 18:33 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 28:51
+
+State 28:51
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 8:8 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 35:35 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 28:51 --proc 2: no-op at spawn2.cvl:18.16-19--> State 29:53
+
+State 29:53
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 8:8 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 36:36 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 29:53 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 30:55
+
+State 30:55
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 37:37 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 36:36 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 30:55 --proc 1: no-op at spawn2.cvl:13.16-19--> State 31:57
+
+State 31:57
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 38:38 [pid=1] call stack
+| | Process State 39:39 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 31:57 --proc 0: wait p at spawn2.cvl:25.2-9--> State 32:59
+
+State 32:59
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 40:40 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 41:41 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 32:59 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 33:61
+
+State 33:61
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 40:40 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 42:42 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 33:61 --proc 1: no-op at spawn2.cvl:18.16-19--> State 34:63
+
+State 34:63
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 40:40 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 43:43 [pid=1] call stack
+
+State 34:63 --proc 0: wait q at spawn2.cvl:26.2-9--> State 35:65
+
+State 35:65
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 44:44 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 35:65 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 36:66
+
+State 36:66
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 45:45 [pid=0] call stack
+
+State 29:53 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 37:67
+
+State 37:67
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 8:8 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 46:46 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 37:67 --proc 2: no-op at spawn2.cvl:18.16-19--> State 38:69
+
+State 38:69
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 8:8 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 47:47 [pid=2] call stack
+
+State 38:69 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 39:71
+
+State 39:71
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 48:48 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 47:47 [pid=2] call stack
+
+State 39:71 --proc 1: no-op at spawn2.cvl:13.16-19--> State 40:73
+
+State 40:73
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 49:49 [pid=1] call stack
+| | Process State 47:47 [pid=2] call stack
+
+State 40:73 --proc 0: wait p at spawn2.cvl:25.2-9--> State 41:75
+
+State 41:75
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 50:50 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 51:51 [pid=1] call stack
+
+State 41:75 --proc 0: wait q at spawn2.cvl:26.2-9--> State 42:77
+
+State 42:77
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 52:52 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 42:77 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 43:78
+
+State 43:78
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 53:53 [pid=0] call stack
+
+State 3:5 --proc 2: s2 = 0 at spawn2.cvl:17.2-4--> State 44:79
+
+State 44:79
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 6:6 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 54:54 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 44:79 --proc 2: no-op at spawn2.cvl:18.16-19--> State 45:81
+
+State 45:81
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 6:6 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 55:55 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 45:81 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 46:83
+
+State 46:83
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 56:56 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 55:55 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 46:83 --proc 1: no-op at spawn2.cvl:13.16-19--> State 47:85
+
+State 47:85
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 57:57 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 55:55 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 47:85 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 48:87
+
+State 48:87
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 58:58 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 55:55 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 48:87 --proc 1: no-op at spawn2.cvl:13.16-19--> State 49:89
+
+State 49:89
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 59:59 [pid=1] call stack
+| | Process State 60:60 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 49:89 --proc 0: wait p at spawn2.cvl:25.2-9--> State 50:91
+
+State 50:91
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 61:61 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 62:62 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 50:91 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 51:93
+
+State 51:93
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 61:61 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 63:63 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 51:93 --proc 1: no-op at spawn2.cvl:18.16-19--> State 52:95
+
+State 52:95
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 61:61 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 64:64 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 52:95 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 53:97
+
+State 53:97
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 61:61 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 65:65 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 53:97 --proc 1: no-op at spawn2.cvl:18.16-19--> State 54:99
+
+State 54:99
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 61:61 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 66:66 [pid=1] call stack
+
+State 54:99 --proc 0: wait q at spawn2.cvl:26.2-9--> State 55:101
+
+State 55:101
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 67:67 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 55:101 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 56:102
+
+State 56:102
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 68:68 [pid=0] call stack
+
+State 47:85 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 57:103
+
+State 57:103
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 57:57 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 69:69 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 57:103 --proc 2: no-op at spawn2.cvl:18.16-19--> State 58:105
+
+State 58:105
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 57:57 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 70:70 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 58:105 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 59:107
+
+State 59:107
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 71:71 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 70:70 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 59:107 --proc 1: no-op at spawn2.cvl:13.16-19--> State 60:109
+
+State 60:109
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 72:72 [pid=1] call stack
+| | Process State 73:73 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 60:109 --proc 0: wait p at spawn2.cvl:25.2-9--> State 61:111
+
+State 61:111
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 74:74 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 75:75 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 61:111 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 62:113
+
+State 62:113
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 74:74 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 76:76 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 62:113 --proc 1: no-op at spawn2.cvl:18.16-19--> State 63:115
+
+State 63:115
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 74:74 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 77:77 [pid=1] call stack
+
+State 63:115 --proc 0: wait q at spawn2.cvl:26.2-9--> State 64:117
+
+State 64:117
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 78:78 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 64:117 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 65:118
+
+State 65:118
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 79:79 [pid=0] call stack
+
+State 58:105 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 66:119
+
+State 66:119
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 57:57 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 80:80 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 66:119 --proc 2: no-op at spawn2.cvl:18.16-19--> State 67:121
+
+State 67:121
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 57:57 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 81:81 [pid=2] call stack
+
+State 67:121 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 68:123
+
+State 68:123
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 82:82 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 81:81 [pid=2] call stack
+
+State 68:123 --proc 1: no-op at spawn2.cvl:13.16-19--> State 69:125
+
+State 69:125
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 83:83 [pid=1] call stack
+| | Process State 81:81 [pid=2] call stack
+
+State 69:125 --proc 0: wait p at spawn2.cvl:25.2-9--> State 70:127
+
+State 70:127
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 84:84 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 85:85 [pid=1] call stack
+
+State 70:127 --proc 0: wait q at spawn2.cvl:26.2-9--> State 71:129
+
+State 71:129
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 86:86 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 71:129 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 72:130
+
+State 72:130
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 87:87 [pid=0] call stack
+
+State 45:81 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 73:131
+
+State 73:131
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 6:6 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 88:88 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 73:131 --proc 2: no-op at spawn2.cvl:18.16-19--> State 74:133
+
+State 74:133
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 6:6 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 89:89 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 74:133 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 75:135
+
+State 75:135
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 90:90 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 89:89 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 75:135 --proc 1: no-op at spawn2.cvl:13.16-19--> State 76:137
+
+State 76:137
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 91:91 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 89:89 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 76:137 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 77:139
+
+State 77:139
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 92:92 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 89:89 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 77:139 --proc 1: no-op at spawn2.cvl:13.16-19--> State 78:141
+
+State 78:141
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 93:93 [pid=1] call stack
+| | Process State 94:94 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 78:141 --proc 0: wait p at spawn2.cvl:25.2-9--> State 79:143
+
+State 79:143
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 95:95 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 96:96 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 79:143 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 80:145
+
+State 80:145
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 95:95 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 97:97 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 80:145 --proc 1: no-op at spawn2.cvl:18.16-19--> State 81:147
+
+State 81:147
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 95:95 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 98:98 [pid=1] call stack
+
+State 81:147 --proc 0: wait q at spawn2.cvl:26.2-9--> State 82:149
+
+State 82:149
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 99:99 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 82:149 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 83:150
+
+State 83:150
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 100:100 [pid=0] call stack
+
+State 76:137 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 84:151
+
+State 84:151
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 91:91 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 101:101 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 84:151 --proc 2: no-op at spawn2.cvl:18.16-19--> State 85:153
+
+State 85:153
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 91:91 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 102:102 [pid=2] call stack
+
+State 85:153 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 86:155
+
+State 86:155
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 103:103 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 102:102 [pid=2] call stack
+
+State 86:155 --proc 1: no-op at spawn2.cvl:13.16-19--> State 87:157
+
+State 87:157
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 104:104 [pid=1] call stack
+| | Process State 102:102 [pid=2] call stack
+
+State 87:157 --proc 0: wait p at spawn2.cvl:25.2-9--> State 88:159
+
+State 88:159
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 105:105 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 106:106 [pid=1] call stack
+
+State 88:159 --proc 0: wait q at spawn2.cvl:26.2-9--> State 89:161
+
+State 89:161
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 107:107 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 89:161 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 90:162
+
+State 90:162
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 108:108 [pid=0] call stack
+
+State 74:133 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 91:163
+
+State 91:163
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 6:6 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 109:109 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 91:163 --proc 2: no-op at spawn2.cvl:18.16-19--> State 92:165
+
+State 92:165
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 6:6 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 110:110 [pid=2] call stack
+
+State 92:165 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 93:167
+
+State 93:167
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 111:111 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 110:110 [pid=2] call stack
+
+State 93:167 --proc 1: no-op at spawn2.cvl:13.16-19--> State 94:169
+
+State 94:169
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 112:112 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 110:110 [pid=2] call stack
+
+State 94:169 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 95:171
+
+State 95:171
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 113:113 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 110:110 [pid=2] call stack
+
+State 95:171 --proc 1: no-op at spawn2.cvl:13.16-19--> State 96:173
+
+State 96:173
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 114:114 [pid=1] call stack
+| | Process State 110:110 [pid=2] call stack
+
+State 96:173 --proc 0: wait p at spawn2.cvl:25.2-9--> State 97:175
+
+State 97:175
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 115:115 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 116:116 [pid=1] call stack
+
+State 97:175 --proc 0: wait q at spawn2.cvl:26.2-9--> State 98:177
+
+State 98:177
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 117:117 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 98:177 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 99:178
+
+State 99:178
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 118:118 [pid=0] call stack
+
+State 1:1 --proc 2: s2 = 0 at spawn2.cvl:17.2-4--> State 100:179
+
+State 100:179
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 21:95 (static=0)
+| | | | N = 2 : int
+| | | | s1 = NULL : null
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 3
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 4
+| | | parent = 5
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 2:2 [pid=1] call stack
+| | | Frame[function=f1, location=12, spawn2.cvl:12.2-4 "s1", scope=2]
+| | Process State 119:119 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=4]
+
+State 100:179 --proc 2: no-op at spawn2.cvl:18.16-19--> State 101:181
+
+State 101:181
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 21:95 (static=0)
+| | | | N = 2 : int
+| | | | s1 = NULL : null
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 3
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 4
+| | | parent = 5
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 2:2 [pid=1] call stack
+| | | Frame[function=f1, location=12, spawn2.cvl:12.2-4 "s1", scope=2]
+| | Process State 120:120 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=4]
+
+State 101:181 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 102:183
+
+State 102:183
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 121:121 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 122:122 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 102:183 --proc 1: no-op at spawn2.cvl:13.16-19--> State 103:185
+
+State 103:185
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 123:123 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 122:122 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 103:185 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 104:187
+
+State 104:187
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 124:124 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 122:122 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 104:187 --proc 1: no-op at spawn2.cvl:13.16-19--> State 105:189
+
+State 105:189
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 125:125 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 122:122 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 105:189 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 106:191
+
+State 106:191
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 126:126 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 122:122 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 106:191 --proc 1: no-op at spawn2.cvl:13.16-19--> State 107:193
+
+State 107:193
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 127:127 [pid=1] call stack
+| | Process State 128:128 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 107:193 --proc 0: wait p at spawn2.cvl:25.2-9--> State 108:195
+
+State 108:195
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 14:15 (static=7)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 129:129 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 130:130 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 108:195 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 109:197
+
+State 109:197
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 129:129 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 131:131 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 109:197 --proc 1: no-op at spawn2.cvl:18.16-19--> State 110:199
+
+State 110:199
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 129:129 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 132:132 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 110:199 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 111:201
+
+State 111:201
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 129:129 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 133:133 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 111:201 --proc 1: no-op at spawn2.cvl:18.16-19--> State 112:203
+
+State 112:203
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 129:129 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 134:134 [pid=1] call stack
+
+State 112:203 --proc 0: wait q at spawn2.cvl:26.2-9--> State 113:205
+
+State 113:205
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 135:135 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 113:205 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 114:206
+
+State 114:206
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 136:136 [pid=0] call stack
+
+State 105:189 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 115:207
+
+State 115:207
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 125:125 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 137:137 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 115:207 --proc 2: no-op at spawn2.cvl:18.16-19--> State 116:209
+
+State 116:209
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 125:125 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 138:138 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 116:209 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 117:211
+
+State 117:211
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 139:139 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 138:138 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 117:211 --proc 1: no-op at spawn2.cvl:13.16-19--> State 118:213
+
+State 118:213
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 140:140 [pid=1] call stack
+| | Process State 141:141 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 118:213 --proc 0: wait p at spawn2.cvl:25.2-9--> State 119:215
+
+State 119:215
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 142:142 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 143:143 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 119:215 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 120:217
+
+State 120:217
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 142:142 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 144:144 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 120:217 --proc 1: no-op at spawn2.cvl:18.16-19--> State 121:219
+
+State 121:219
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 142:142 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 145:145 [pid=1] call stack
+
+State 121:219 --proc 0: wait q at spawn2.cvl:26.2-9--> State 122:221
+
+State 122:221
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 146:146 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 122:221 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 123:222
+
+State 123:222
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 147:147 [pid=0] call stack
+
+State 116:209 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 124:223
+
+State 124:223
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 125:125 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 148:148 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 124:223 --proc 2: no-op at spawn2.cvl:18.16-19--> State 125:225
+
+State 125:225
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 125:125 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 149:149 [pid=2] call stack
+
+State 125:225 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 126:227
+
+State 126:227
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 150:150 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 149:149 [pid=2] call stack
+
+State 126:227 --proc 1: no-op at spawn2.cvl:13.16-19--> State 127:229
+
+State 127:229
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 151:151 [pid=1] call stack
+| | Process State 149:149 [pid=2] call stack
+
+State 127:229 --proc 0: wait p at spawn2.cvl:25.2-9--> State 128:231
+
+State 128:231
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 152:152 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 153:153 [pid=1] call stack
+
+State 128:231 --proc 0: wait q at spawn2.cvl:26.2-9--> State 129:233
+
+State 129:233
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 154:154 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 129:233 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 130:234
+
+State 130:234
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 155:155 [pid=0] call stack
+
+State 103:185 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 131:235
+
+State 131:235
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 123:123 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 156:156 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 131:235 --proc 2: no-op at spawn2.cvl:18.16-19--> State 132:237
+
+State 132:237
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 123:123 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 157:157 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 132:237 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 133:239
+
+State 133:239
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 158:158 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 157:157 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 133:239 --proc 1: no-op at spawn2.cvl:13.16-19--> State 134:241
+
+State 134:241
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 159:159 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 157:157 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 134:241 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 135:243
+
+State 135:243
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 160:160 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 157:157 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 135:243 --proc 1: no-op at spawn2.cvl:13.16-19--> State 136:245
+
+State 136:245
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 161:161 [pid=1] call stack
+| | Process State 162:162 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 136:245 --proc 0: wait p at spawn2.cvl:25.2-9--> State 137:247
+
+State 137:247
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 163:163 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 164:164 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 137:247 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 138:249
+
+State 138:249
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 163:163 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 165:165 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 138:249 --proc 1: no-op at spawn2.cvl:18.16-19--> State 139:251
+
+State 139:251
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 163:163 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 166:166 [pid=1] call stack
+
+State 139:251 --proc 0: wait q at spawn2.cvl:26.2-9--> State 140:253
+
+State 140:253
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 167:167 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 140:253 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 141:254
+
+State 141:254
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 168:168 [pid=0] call stack
+
+State 134:241 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 142:255
+
+State 142:255
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 159:159 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 169:169 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 142:255 --proc 2: no-op at spawn2.cvl:18.16-19--> State 143:257
+
+State 143:257
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 159:159 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 170:170 [pid=2] call stack
+
+State 143:257 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 144:259
+
+State 144:259
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 171:171 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 170:170 [pid=2] call stack
+
+State 144:259 --proc 1: no-op at spawn2.cvl:13.16-19--> State 145:261
+
+State 145:261
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 172:172 [pid=1] call stack
+| | Process State 170:170 [pid=2] call stack
+
+State 145:261 --proc 0: wait p at spawn2.cvl:25.2-9--> State 146:263
+
+State 146:263
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 173:173 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 174:174 [pid=1] call stack
+
+State 146:263 --proc 0: wait q at spawn2.cvl:26.2-9--> State 147:265
+
+State 147:265
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 175:175 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 147:265 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 148:266
+
+State 148:266
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 176:176 [pid=0] call stack
+
+State 132:237 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 149:267
+
+State 149:267
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 123:123 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 177:177 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 149:267 --proc 2: no-op at spawn2.cvl:18.16-19--> State 150:269
+
+State 150:269
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 123:123 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 178:178 [pid=2] call stack
+
+State 150:269 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 151:271
+
+State 151:271
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 179:179 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 178:178 [pid=2] call stack
+
+State 151:271 --proc 1: no-op at spawn2.cvl:13.16-19--> State 152:273
+
+State 152:273
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 180:180 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 178:178 [pid=2] call stack
+
+State 152:273 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 153:275
+
+State 153:275
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 181:181 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 178:178 [pid=2] call stack
+
+State 153:275 --proc 1: no-op at spawn2.cvl:13.16-19--> State 154:277
+
+State 154:277
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 182:182 [pid=1] call stack
+| | Process State 178:178 [pid=2] call stack
+
+State 154:277 --proc 0: wait p at spawn2.cvl:25.2-9--> State 155:279
+
+State 155:279
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 183:183 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 184:184 [pid=1] call stack
+
+State 155:279 --proc 0: wait q at spawn2.cvl:26.2-9--> State 156:281
+
+State 156:281
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 185:185 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 156:281 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 157:282
+
+State 157:282
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 186:186 [pid=0] call stack
+
+State 101:181 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 158:283
+
+State 158:283
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 21:95 (static=0)
+| | | | N = 2 : int
+| | | | s1 = NULL : null
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 3
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 4
+| | | parent = 5
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 2:2 [pid=1] call stack
+| | | Frame[function=f1, location=12, spawn2.cvl:12.2-4 "s1", scope=2]
+| | Process State 187:187 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=4]
+
+State 158:283 --proc 2: no-op at spawn2.cvl:18.16-19--> State 159:285
+
+State 159:285
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 21:95 (static=0)
+| | | | N = 2 : int
+| | | | s1 = NULL : null
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 3
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 4
+| | | parent = 5
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 2:2 [pid=1] call stack
+| | | Frame[function=f1, location=12, spawn2.cvl:12.2-4 "s1", scope=2]
+| | Process State 188:188 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=4]
+
+State 159:285 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 160:287
+
+State 160:287
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 189:189 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 190:190 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 160:287 --proc 1: no-op at spawn2.cvl:13.16-19--> State 161:289
+
+State 161:289
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 191:191 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 190:190 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 161:289 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 162:291
+
+State 162:291
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 192:192 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 190:190 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 162:291 --proc 1: no-op at spawn2.cvl:13.16-19--> State 163:293
+
+State 163:293
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 19:21 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 193:193 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 190:190 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 163:293 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 164:295
+
+State 164:295
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 194:194 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 190:190 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=5]
+
+State 164:295 --proc 1: no-op at spawn2.cvl:13.16-19--> State 165:297
+
+State 165:297
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {2}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 195:195 [pid=1] call stack
+| | Process State 196:196 [pid=2] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 165:297 --proc 0: wait p at spawn2.cvl:25.2-9--> State 166:299
+
+State 166:299
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 13:14 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 0 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 15:17 (static=7)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 197:197 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 198:198 [pid=1] call stack
+| | | Frame[function=f2, location=27, spawn2.cvl:18.26-28 "s2", scope=2]
+
+State 166:299 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 167:301
+
+State 167:301
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 197:197 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 199:199 [pid=1] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=2]
+
+State 167:301 --proc 1: no-op at spawn2.cvl:18.16-19--> State 168:303
+
+State 168:303
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 197:197 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 200:200 [pid=1] call stack
+
+State 168:303 --proc 0: wait q at spawn2.cvl:26.2-9--> State 169:305
+
+State 169:305
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 201:201 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 169:305 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 170:306
+
+State 170:306
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 202:202 [pid=0] call stack
+
+State 163:293 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 171:307
+
+State 171:307
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 193:193 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 203:203 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 171:307 --proc 2: no-op at spawn2.cvl:18.16-19--> State 172:309
+
+State 172:309
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 193:193 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 204:204 [pid=2] call stack
+
+State 172:309 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 173:311
+
+State 173:311
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 205:205 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 204:204 [pid=2] call stack
+
+State 173:311 --proc 1: no-op at spawn2.cvl:13.16-19--> State 174:313
+
+State 174:313
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 206:206 [pid=1] call stack
+| | Process State 204:204 [pid=2] call stack
+
+State 174:313 --proc 0: wait p at spawn2.cvl:25.2-9--> State 175:315
+
+State 175:315
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 207:207 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 208:208 [pid=1] call stack
+
+State 175:315 --proc 0: wait q at spawn2.cvl:26.2-9--> State 176:317
+
+State 176:317
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 209:209 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 176:317 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 177:318
+
+State 177:318
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 210:210 [pid=0] call stack
+
+State 161:289 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 178:319
+
+State 178:319
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 6
+| | | parent = 7
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 7
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 191:191 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 211:211 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=5]
+
+State 178:319 --proc 2: no-op at spawn2.cvl:18.16-19--> State 179:321
+
+State 179:321
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 191:191 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 212:212 [pid=2] call stack
+
+State 179:321 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 180:323
+
+State 180:323
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 213:213 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 212:212 [pid=2] call stack
+
+State 180:323 --proc 1: no-op at spawn2.cvl:13.16-19--> State 181:325
+
+State 181:325
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 214:214 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 212:212 [pid=2] call stack
+
+State 181:325 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 182:327
+
+State 182:327
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 215:215 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 212:212 [pid=2] call stack
+
+State 182:327 --proc 1: no-op at spawn2.cvl:13.16-19--> State 183:329
+
+State 183:329
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 216:216 [pid=1] call stack
+| | Process State 212:212 [pid=2] call stack
+
+State 183:329 --proc 0: wait p at spawn2.cvl:25.2-9--> State 184:331
+
+State 184:331
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 217:217 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 218:218 [pid=1] call stack
+
+State 184:331 --proc 0: wait q at spawn2.cvl:26.2-9--> State 185:333
+
+State 185:333
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 219:219 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 185:333 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 186:334
+
+State 186:334
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 220:220 [pid=0] call stack
+
+State 159:285 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 187:335
+
+State 187:335
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 22:173 (static=0)
+| | | | N = 2 : int
+| | | | s1 = NULL : null
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 3
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| | Dyscope node 4
+| | | parent = 5
+| | | reachers = {2}
+| | | Dyscope 17:19 (static=7)
+| | | | i = 2 : int
+| | Dyscope node 5
+| | | parent = 6
+| | | reachers = {2}
+| | | Dyscope 5:6 (static=6)
+| | Dyscope node 6
+| | | parent = 0
+| | | reachers = {2}
+| | | Dyscope 6:5 (static=2)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 2:2 [pid=1] call stack
+| | | Frame[function=f1, location=12, spawn2.cvl:12.2-4 "s1", scope=2]
+| | Process State 221:221 [pid=2] call stack
+| | | Frame[function=f2, location=25, spawn2.cvl:18.16-19 "i<n", scope=4]
+
+State 187:335 --proc 2: no-op at spawn2.cvl:18.16-19--> State 188:337
+
+State 188:337
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 22:173 (static=0)
+| | | | N = 2 : int
+| | | | s1 = NULL : null
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 3
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 2:2 [pid=1] call stack
+| | | Frame[function=f1, location=12, spawn2.cvl:12.2-4 "s1", scope=2]
+| | Process State 222:222 [pid=2] call stack
+
+State 188:337 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 189:339
+
+State 189:339
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 223:223 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 222:222 [pid=2] call stack
+
+State 189:339 --proc 1: no-op at spawn2.cvl:13.16-19--> State 190:341
+
+State 190:341
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 8:8 (static=5)
+| | | | i = 0 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 224:224 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 222:222 [pid=2] call stack
+
+State 190:341 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 191:343
+
+State 191:343
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 225:225 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 222:222 [pid=2] call stack
+
+State 191:343 --proc 1: no-op at spawn2.cvl:13.16-19--> State 192:345
+
+State 192:345
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 20:39 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 0 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 9:10 (static=5)
+| | | | i = 1 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 226:226 [pid=1] call stack
+| | | Frame[function=f1, location=16, spawn2.cvl:13.26-28 "s1", scope=2]
+| | Process State 222:222 [pid=2] call stack
+
+State 192:345 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 193:347
+
+State 193:347
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| | Dyscope node 2
+| | | parent = 3
+| | | reachers = {1}
+| | | Dyscope 11:12 (static=5)
+| | | | i = 2 : int
+| | Dyscope node 3
+| | | parent = 4
+| | | reachers = {1}
+| | | Dyscope 3:4 (static=4)
+| | Dyscope node 4
+| | | parent = 0
+| | | reachers = {1}
+| | | Dyscope 4:3 (static=1)
+| | | | n = 2 : int
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 227:227 [pid=1] call stack
+| | | Frame[function=f1, location=14, spawn2.cvl:13.16-19 "i<n", scope=2]
+| | Process State 222:222 [pid=2] call stack
+
+State 193:347 --proc 1: no-op at spawn2.cvl:13.16-19--> State 194:349
+
+State 194:349
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1,2}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 2:2 (static=3)
+| | | | p = (process<int>)<1> : process<int>
+| | | | q = (process<int>)<2> : process<int>
+| Process states
+| | Process State 1:1 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=6, spawn2.cvl:25.2-7 "$wait", scope=1]
+| | Process State 228:228 [pid=1] call stack
+| | Process State 222:222 [pid=2] call stack
+
+State 194:349 --proc 0: wait p at spawn2.cvl:25.2-9--> State 195:351
+
+State 195:351
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0,1}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 12:13 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<1> : process<int>
+| Process states
+| | Process State 229:229 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=7, spawn2.cvl:26.2-7 "$wait", scope=1]
+| | Process State 230:230 [pid=1] call stack
+
+State 195:351 --proc 0: wait q at spawn2.cvl:26.2-9--> State 196:353
+
+State 196:353
+| Path condition
+| | true
+| Dynamic scopes
+| | Dyscope node 0
+| | | parent = null
+| | | reachers = {0}
+| | | Dyscope 16:18 (static=0)
+| | | | N = 2 : int
+| | | | s1 = 1 : int
+| | | | s2 = 1 : int
+| | Dyscope node 1
+| | | parent = 0
+| | | reachers = {0}
+| | | Dyscope 18:20 (static=3)
+| | | | p = (process<int>)<-1> : process<int>
+| | | | q = (process<int>)<-1> : process<int>
+| Process states
+| | Process State 231:231 [pid=0] call stack
+| | | Frame[function=_CIVL_system, location=8, spawn2.cvl:27.2-9 "$assert", scope=1]
+
+State 196:353 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 197:354
+
+State 197:354
+| Path condition
+| | true
+| Dynamic scopes
+| Process states
+| | Process State 232:232 [pid=0] call stack
+=================== Stats ===================
+   validCalls          : 686
+   proverCalls         : 0
+   memory (bytes)      : 128974848
+   time (s)            : 1.52
+   maxProcs            : 3
+   statesInstantiated  : 355
+   statesSaved         : 198
+   statesSeen          : 198
+   statesMatched       : 0
+   transitions         : 197
+
+The standard properties hold for all executions.

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.state.common;
+package edu.udel.cis.vsl.civl.state.immutable;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.trans.TransientState;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -43,7 +44,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Tim McClory (tmcclory)
  * 
  */
-public class CommonState implements State {
+public class ImmutableState implements State {
 
 	/**
 	 * The number of instances of this class that have been created since the
@@ -116,7 +117,7 @@ public class CommonState implements State {
 	 * @param buffers
 	 * @param pathCondition
 	 */
-	CommonState(ProcessState[] processes, DynamicScope[] scopes,
+	ImmutableState(ProcessState[] processes, DynamicScope[] scopes,
 			BooleanExpression pathCondition) {
 		assert processes != null;
 		assert scopes != null;
@@ -137,8 +138,8 @@ public class CommonState implements State {
 	 * @param buffer
 	 * @param pathCondition
 	 */
-	CommonState(CommonState state, ProcessState[] processes,
-			CommonDynamicScope[] scopes, BooleanExpression pathCondition) {
+	ImmutableState(ImmutableState state, ProcessState[] processes,
+			ImmutableDynamicScope[] scopes, BooleanExpression pathCondition) {
 		this(processes == null ? state.processes : processes,
 				scopes == null ? state.scopes : scopes,
 				pathCondition == null ? state.pathCondition : pathCondition);
@@ -151,7 +152,7 @@ public class CommonState implements State {
 	 * @param state
 	 * @param newPatCondition
 	 */
-	CommonState(CommonState state, BooleanExpression newPathCondition) {
+	ImmutableState(ImmutableState state, BooleanExpression newPathCondition) {
 		this(state.processes, state.scopes, newPathCondition);
 	}
 
@@ -162,7 +163,7 @@ public class CommonState implements State {
 	 * @param state
 	 * @param newProcesses
 	 */
-	CommonState(CommonState state, CommonProcessState[] newProcesses) {
+	ImmutableState(ImmutableState state, ImmutableProcessState[] newProcesses) {
 		this(newProcesses, state.scopes, state.pathCondition);
 	}
 
@@ -172,7 +173,6 @@ public class CommonState implements State {
 	 * 
 	 * @return this state's instance ID
 	 */
-	@Override
 	public long getInstanceId() {
 		return instanceId;
 	}
@@ -184,7 +184,7 @@ public class CommonState implements State {
 	 * @param state
 	 * @param newScopes
 	 */
-	CommonState(CommonState state, CommonDynamicScope[] newScopes) {
+	ImmutableState(ImmutableState state, ImmutableDynamicScope[] newScopes) {
 		this(state.processes, newScopes, state.pathCondition);
 	}
 
@@ -198,8 +198,8 @@ public class CommonState implements State {
 	 * 
 	 * @return Copy the set of processes in this state.
 	 */
-	public CommonProcessState[] processes() {
-		CommonProcessState[] newProcesses = new CommonProcessState[processes.length];
+	public ImmutableProcessState[] processes() {
+		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processes.length];
 
 		System.arraycopy(processes, 0, newProcesses, 0, processes.length);
 		return newProcesses;
@@ -228,8 +228,8 @@ public class CommonState implements State {
 	/**
 	 * @return Copy the set of processes in this state.
 	 */
-	public CommonProcessState[] copyAndExpandProcesses() {
-		CommonProcessState[] newProcesses = new CommonProcessState[processes.length + 1];
+	public ImmutableProcessState[] copyAndExpandProcesses() {
+		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processes.length + 1];
 
 		System.arraycopy(processes, 0, newProcesses, 0, processes.length);
 		return newProcesses;
@@ -238,8 +238,8 @@ public class CommonState implements State {
 	/**
 	 * @return Copy the set of scopes in this state.
 	 */
-	public CommonDynamicScope[] copyScopes() {
-		CommonDynamicScope[] newScopes = new CommonDynamicScope[scopes.length];
+	public ImmutableDynamicScope[] copyScopes() {
+		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[scopes.length];
 
 		System.arraycopy(scopes, 0, newScopes, 0, scopes.length);
 		return newScopes;
@@ -247,14 +247,13 @@ public class CommonState implements State {
 
 	/**
 	 */
-	public CommonDynamicScope[] copyAndExpandScopes() {
-		CommonDynamicScope[] newScopes = new CommonDynamicScope[scopes.length + 1];
+	public ImmutableDynamicScope[] copyAndExpandScopes() {
+		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[scopes.length + 1];
 
 		System.arraycopy(scopes, 0, newScopes, 0, scopes.length);
 		return newScopes;
 	}
 
-	@Override
 	public boolean isCanonic() {
 		return canonicId >= 0;
 	}
@@ -264,7 +263,6 @@ public class CommonState implements State {
 	 * 
 	 * @return canonicID of this state
 	 */
-	@Override
 	public int getCanonicId() {
 		return canonicId;
 	}
@@ -350,14 +348,13 @@ public class CommonState implements State {
 	 * @return The corresponding dynamic scope.
 	 */
 	@Override
-	public DynamicScope getScope(int id) {
-		return scopes[id];
+	public ImmutableDynamicScope getScope(int id) {
+		return (ImmutableDynamicScope) scopes[id];
 	}
 
 	@Override
 	public int getParentId(int scopeId) {
-		// TODO: change to state component
-		return ((CommonDynamicScope) getScope(scopeId)).parent();
+		return ((ImmutableDynamicScope) getScope(scopeId)).parent();
 	}
 
 	public DynamicScope getScope(int pid, Variable variable) {
@@ -425,8 +422,8 @@ public class CommonState implements State {
 	public boolean equals(Object object) {
 		if (this == object)
 			return true;
-		if (object instanceof CommonState) {
-			CommonState that = (CommonState) object;
+		if (object instanceof ImmutableState) {
+			ImmutableState that = (ImmutableState) object;
 
 			if (canonicId >= 0 && that.canonicId >= 0)
 				return false;
@@ -467,12 +464,12 @@ public class CommonState implements State {
 		out.println("| | " + pathCondition);
 		out.println("| Dynamic scopes");
 		for (int i = 0; i < numScopes; i++) {
-			DynamicScope scope = scopes[i];
+			ImmutableDynamicScope scope = (ImmutableDynamicScope) scopes[i];
 
 			if (scope == null)
 				out.println("| | scope " + i + ": null");
 			else
-				scope.print(out, i, "| | ");
+				scope.print(out, "" + i, "| | ");
 		}
 		out.println("| Process states");
 		for (int i = 0; i < numProcs; i++) {
@@ -518,47 +515,57 @@ public class CommonState implements State {
 		return Arrays.asList(processes);
 	}
 
-	@Override
 	public boolean isMutable() {
 		return false;
 	}
 
-	@Override
 	public void commit() {
 	}
 
 	@Override
 	public State setPathCondition(BooleanExpression pathCondition) {
-		return new CommonState(processes, scopes, pathCondition);
+		return new ImmutableState(processes, scopes, pathCondition);
 	}
 
-	@Override
 	public State setProcessStates(ProcessState[] processStates) {
-		return new CommonState(processStates, scopes, pathCondition);
+		return new ImmutableState(processStates, scopes, pathCondition);
 	}
 
-	@Override
 	public State setProcessState(int index, ProcessState processState) {
 		int n = processes.length;
 		ProcessState[] newProcessStates = new ProcessState[n];
 
 		System.arraycopy(processes, 0, newProcessStates, 0, n);
 		newProcessStates[index] = processState;
-		return new CommonState(newProcessStates, scopes, pathCondition);
+		return new ImmutableState(newProcessStates, scopes, pathCondition);
 	}
 
-	@Override
 	public State setScopes(DynamicScope[] scopes) {
-		return new CommonState(processes, scopes, pathCondition);
+		return new ImmutableState(processes, scopes, pathCondition);
 	}
 
-	@Override
 	public State setScope(int index, DynamicScope scope) {
 		int n = scopes.length;
 		DynamicScope[] newScopes = new DynamicScope[n];
 
 		System.arraycopy(scopes, 0, newScopes, 0, n);
 		newScopes[index] = scope;
-		return new CommonState(processes, newScopes, pathCondition);
+		return new ImmutableState(processes, newScopes, pathCondition);
+	}
+
+	@Override
+	public int numberOfReachers(int sid) {
+		return getScope(sid).numberOfReachers();
+	}
+
+	@Override
+	public boolean reachableByProcess(int sid, int pid) {
+		return getScope(sid).reachableByProcess(pid);
+	}
+
+	@Override
+	public TransientState setVariable(int vid, int scopeId,
+			SymbolicExpression value) {
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }

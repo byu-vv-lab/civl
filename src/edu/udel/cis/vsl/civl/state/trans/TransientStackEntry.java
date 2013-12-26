@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.state.common;
+package edu.udel.cis.vsl.civl.state.trans;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -11,10 +11,13 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
  * A stack entry has a location, dynamic scope, and (optional) variable to store
  * a return value. It is put on the call stack when a process calls a function.
  * 
+ * Immutable.
+ * 
  * @author Timothy K. Zirkel (zirkel)
+ * @author Stephen F. Siegel (siegel)
  * 
  */
-public class CommonStackEntry implements StackEntry {
+public class TransientStackEntry implements StackEntry {
 
 	private boolean hashed = false;
 
@@ -36,7 +39,7 @@ public class CommonStackEntry implements StackEntry {
 	 *            The dynamic scope of the process at the time of the function
 	 *            call.
 	 */
-	CommonStackEntry(Location location, int scope) {
+	TransientStackEntry(Location location, int scope) {
 		this.location = location;
 		this.scope = scope;
 	}
@@ -59,34 +62,22 @@ public class CommonStackEntry implements StackEntry {
 		return scope;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		if (!hashed) {
-			final int prime = 31;
-
-			hashCode = prime + ((location == null) ? 0 : location.hashCode());
-			hashCode = prime * hashCode + scope;
+			hashCode = (location == null ? 514229 : 31 * location.hashCode())
+					^ (scope * 39916801);
 			hashed = true;
 		}
 		return hashCode;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj instanceof CommonStackEntry) {
-			CommonStackEntry that = (CommonStackEntry) obj;
+		if (obj instanceof TransientStackEntry) {
+			TransientStackEntry that = (TransientStackEntry) obj;
 
 			if (location == null) {
 				if (that.location != null)
@@ -105,10 +96,10 @@ public class CommonStackEntry implements StackEntry {
 		CIVLSource source = location.getSource();
 		String locationString = source == null ? "" : ", "
 				+ source.getSummary();
-		
-//		if(location.isPurelyLocal())
-//			locationString = locationString + " # ";
-		
+
+		// if(location.isPurelyLocal())
+		// locationString = locationString + " # ";
+
 		return "Frame[function=" + location.function().name() + ", location="
 				+ location.id() + locationString + ", scope=" + scope + "]";
 	}

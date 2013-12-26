@@ -56,6 +56,10 @@ public class Verifier extends Player {
 		State initialState = stateFactory.initialState(model);
 		boolean violationFound = false;
 
+		if (debug || showStates || verbose) {
+			out.println();
+			initialState.print(out);
+		}
 		try {
 			while (true) {
 				boolean workRemains;

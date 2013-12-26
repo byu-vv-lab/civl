@@ -1,10 +1,11 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.state.common;
+package edu.udel.cis.vsl.civl.state.immutable;
 
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -19,7 +20,56 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public class CommonProcessState implements ProcessState {
+public class ImmutableProcessState implements ProcessState {
+
+	/**
+	 * An iterator that iterates over the elements of an array in reverse order
+	 * (i.e., starting with highest-index and moving down to 0).
+	 * 
+	 * @author siegel
+	 * 
+	 */
+	class ReverseIterator implements Iterator<StackEntry> {
+
+		/**
+		 * The array over which we are iterating.
+		 */
+		private StackEntry[] array;
+
+		/**
+		 * The index of the next element that will be returned by the next call
+		 * to method {@link #next()}.
+		 */
+		private int i = array.length - 1;
+
+		/**
+		 * Creates a new reverse iterator for the given array.
+		 * 
+		 * @param array
+		 *            array over which to iterate
+		 */
+		ReverseIterator(StackEntry[] array) {
+			this.array = array;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i >= 0;
+		}
+
+		@Override
+		public StackEntry next() {
+			StackEntry result = array[i];
+
+			i--;
+			return result;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
 
 	private boolean hashed = false;
 
@@ -43,18 +93,18 @@ public class CommonProcessState implements ProcessState {
 	 * @param id
 	 *            The unique process ID.
 	 */
-	CommonProcessState(int pid) {
+	ImmutableProcessState(int pid) {
 		this.pid = pid;
-		callStack = new CommonStackEntry[0];
+		callStack = new ImmutableStackEntry[0];
 	}
 
-	CommonProcessState(int pid, StackEntry[] stack) {
+	ImmutableProcessState(int pid, StackEntry[] stack) {
 		assert stack != null;
 		this.pid = pid;
 		callStack = stack;
 	}
 
-	CommonProcessState(CommonProcessState oldProcess, int newPid) {
+	ImmutableProcessState(ImmutableProcessState oldProcess, int newPid) {
 		this.pid = newPid;
 		this.callStack = oldProcess.callStack;
 	}
@@ -75,11 +125,11 @@ public class CommonProcessState implements ProcessState {
 		this.pid = pid;
 	}
 
-	CommonProcessState copy() {
-		CommonStackEntry[] newStack = new CommonStackEntry[callStack.length];
+	ImmutableProcessState copy() {
+		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length];
 
 		System.arraycopy(callStack, 0, newStack, 0, callStack.length);
-		return new CommonProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack);
 	}
 
 	@Override
@@ -127,33 +177,32 @@ public class CommonProcessState implements ProcessState {
 	 *            int in [0,stackSize-1]
 	 * @return i-th entry on stack
 	 */
-	@Override
 	public StackEntry getStackEntry(int i) {
 		return callStack[i];
 	}
 
-	CommonProcessState pop() {
-		CommonStackEntry[] newStack = new CommonStackEntry[callStack.length - 1];
+	ImmutableProcessState pop() {
+		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length - 1];
 
 		System.arraycopy(callStack, 1, newStack, 0, callStack.length - 1);
-		return new CommonProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack);
 	}
 
-	CommonProcessState push(CommonStackEntry newStackEntry) {
-		CommonStackEntry[] newStack = new CommonStackEntry[callStack.length + 1];
+	ImmutableProcessState push(ImmutableStackEntry newStackEntry) {
+		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length + 1];
 
 		System.arraycopy(callStack, 0, newStack, 1, callStack.length);
 		newStack[0] = newStackEntry;
-		return new CommonProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack);
 	}
 
-	CommonProcessState replaceTop(CommonStackEntry newStackEntry) {
+	ImmutableProcessState replaceTop(ImmutableStackEntry newStackEntry) {
 		int length = callStack.length;
-		CommonStackEntry[] newStack = new CommonStackEntry[length];
+		ImmutableStackEntry[] newStack = new ImmutableStackEntry[length];
 
 		System.arraycopy(callStack, 1, newStack, 1, length - 1);
 		newStack[0] = newStackEntry;
-		return new CommonProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack);
 	}
 
 	/*
@@ -183,8 +232,8 @@ public class CommonProcessState implements ProcessState {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj instanceof CommonProcessState) {
-			CommonProcessState that = (CommonProcessState) obj;
+		if (obj instanceof ImmutableProcessState) {
+			ImmutableProcessState that = (ImmutableProcessState) obj;
 
 			if (canonic && that.canonic)
 				return false;
@@ -228,42 +277,42 @@ public class CommonProcessState implements ProcessState {
 		return true;
 	}
 
-	@Override
 	public boolean isMutable() {
 		return false;
 	}
 
-	@Override
 	public void commit() {
 	}
 
-	@Override
 	public boolean isCanonic() {
 		return true;
 	}
 
-	@Override
-	public int getCanonicId() {
-		return 0;
-	}
-
-	@Override
 	public ProcessState setPid(int pid) {
-		return new CommonProcessState(pid, callStack);
+		return new ImmutableProcessState(pid, callStack);
 	}
 
-	@Override
 	public ProcessState setStackEntry(int index, StackEntry frame) {
 		int n = callStack.length;
 		StackEntry[] newStack = new StackEntry[n];
 
 		System.arraycopy(callStack, 0, newStack, 0, n);
 		newStack[index] = frame;
-		return new CommonProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack);
+	}
+
+	public ProcessState setStackEntries(StackEntry[] frames) {
+		return new ImmutableProcessState(pid, frames);
 	}
 
 	@Override
-	public ProcessState setStackEntries(StackEntry[] frames) {
-		return new CommonProcessState(pid, frames);
+	public Iterable<StackEntry> getStackEntries() {
+		return Arrays.asList(callStack);
 	}
+
+	@Override
+	public Iterator<StackEntry> bottomToTopIterator() {
+		return new ReverseIterator(callStack);
+	}
+
 }

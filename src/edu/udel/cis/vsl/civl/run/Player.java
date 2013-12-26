@@ -13,9 +13,9 @@ import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.state.States;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.state.common.CommonStateFactory;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
@@ -99,7 +99,9 @@ public abstract class Player {
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
-		this.stateFactory = new CommonStateFactory(modelFactory);
+		this.stateFactory = config.isTrue(UserInterface.transO) ? States
+				.newTransientStateFactory(modelFactory) : States
+				.newImmutableStateFactory(modelFactory);
 		this.transitionFactory = new TransitionFactory();
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);

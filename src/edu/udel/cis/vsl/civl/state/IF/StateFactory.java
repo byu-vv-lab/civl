@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * 
  * @author Timothy K. Zirkel (zirkel)
  * @author Timothy J. McClory (tmcclory)
+ * @author Stephen F. Siegel (siegel)
  * 
  */
 public interface StateFactory {
@@ -188,18 +189,6 @@ public interface StateFactory {
 	 */
 	State popCallStack(State state, int pid);
 
-	// /**
-	// * Update the path condition of a state.
-	// *
-	// * @param state
-	// * The old state.
-	// * @param pathCondition
-	// * The new path condition.
-	// * @return A new state that is the same as the old state but with the new
-	// * path condition.
-	// */
-	// State setPathCondition(State state, BooleanExpression pathCondition);
-
 	/**
 	 * Simplies all variable values in the state, using the path condition as
 	 * the simplification context.
@@ -224,5 +213,20 @@ public interface StateFactory {
 	 * @return the number of canonic states
 	 */
 	int getNumStatesSaved();
+
+	/**
+	 * Performs a garbage collection and canonicalization of dynamic scopes.
+	 * 
+	 * Compute the set of reachable dynamic scopes, and removes any which are
+	 * unreachable. Renumbers the dynamic scopes in a canonic way. Updates all
+	 * scope references in the state. This operation should be completely
+	 * invisible to the user.
+	 * 
+	 * @param state
+	 *            a state
+	 * @return the state after canonicalizing scopes, which may be this state or
+	 *         a new one
+	 */
+	State collectScopes(State state);
 
 }

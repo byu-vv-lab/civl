@@ -1,0 +1,410 @@
+CIVL v0.4 of 2013-12-06 -- http://vsl.cis.udel.edu/civl
+civl verify -input={N=2} -showTransitions=true spawn2.cvl
+
+State 0:0 --proc 0: N = 2 at spawn2.cvl:8.0-12--> State 1:1
+
+State 1:1 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 2:3
+
+State 2:3 --proc 1: no-op at spawn2.cvl:13.16-19--> State 3:5
+
+State 3:5 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 4:7
+
+State 4:7 --proc 1: no-op at spawn2.cvl:13.16-19--> State 5:9
+
+State 5:9 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 6:11
+
+State 6:11 --proc 1: no-op at spawn2.cvl:13.16-19--> State 7:13
+
+State 7:13 --proc 0: wait p at spawn2.cvl:25.2-9--> State 8:15
+
+State 8:15 --proc 1: s2 = 0 at spawn2.cvl:17.2-4--> State 9:17
+
+State 9:17 --proc 1: no-op at spawn2.cvl:18.16-19--> State 10:19
+
+*** State 10:19 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 11:21 ***
+
+State 11:21 --proc 1: no-op at spawn2.cvl:18.16-19--> State 12:23
+
+State 12:23 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 13:25
+
+State 13:25 --proc 1: no-op at spawn2.cvl:18.16-19--> State 14:27
+
+State 14:27 --proc 0: wait q at spawn2.cvl:26.2-9--> State 15:29
+
+State 15:29 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 16:30
+
+State 5:9 --proc 2: s2 = 0 at spawn2.cvl:17.2-4--> State 17:31
+
+State 17:31 --proc 2: no-op at spawn2.cvl:18.16-19--> State 18:33
+
+State 18:33 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 19:35
+
+State 19:35 --proc 1: no-op at spawn2.cvl:13.16-19--> State 20:37
+
+State 20:37 --proc 0: wait p at spawn2.cvl:25.2-9--> State 21:39*****
+****  21:39 should be same as 10:19 ****
+
+State 21:39 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 22:41
+
+State 22:41 --proc 1: no-op at spawn2.cvl:18.16-19--> State 23:43
+
+State 23:43 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 24:45
+
+State 24:45 --proc 1: no-op at spawn2.cvl:18.16-19--> State 25:47
+
+State 25:47 --proc 0: wait q at spawn2.cvl:26.2-9--> State 26:49
+
+State 26:49 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 27:50
+
+State 18:33 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 28:51
+
+State 28:51 --proc 2: no-op at spawn2.cvl:18.16-19--> State 29:53
+
+State 29:53 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 30:55
+
+State 30:55 --proc 1: no-op at spawn2.cvl:13.16-19--> State 31:57
+
+State 31:57 --proc 0: wait p at spawn2.cvl:25.2-9--> State 32:59
+
+State 32:59 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 33:61
+
+State 33:61 --proc 1: no-op at spawn2.cvl:18.16-19--> State 34:63
+
+State 34:63 --proc 0: wait q at spawn2.cvl:26.2-9--> State 35:65
+
+State 35:65 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 36:66
+
+State 29:53 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 37:67
+
+State 37:67 --proc 2: no-op at spawn2.cvl:18.16-19--> State 38:69
+
+State 38:69 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 39:71
+
+State 39:71 --proc 1: no-op at spawn2.cvl:13.16-19--> State 40:73
+
+State 40:73 --proc 0: wait p at spawn2.cvl:25.2-9--> State 41:75
+
+State 41:75 --proc 0: wait q at spawn2.cvl:26.2-9--> State 42:77
+
+State 42:77 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 43:78
+
+State 3:5 --proc 2: s2 = 0 at spawn2.cvl:17.2-4--> State 44:79
+
+State 44:79 --proc 2: no-op at spawn2.cvl:18.16-19--> State 45:81
+
+State 45:81 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 46:83
+
+State 46:83 --proc 1: no-op at spawn2.cvl:13.16-19--> State 47:85
+
+State 47:85 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 48:87
+
+State 48:87 --proc 1: no-op at spawn2.cvl:13.16-19--> State 49:89
+
+State 49:89 --proc 0: wait p at spawn2.cvl:25.2-9--> State 50:91
+
+State 50:91 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 51:93
+
+State 51:93 --proc 1: no-op at spawn2.cvl:18.16-19--> State 52:95
+
+State 52:95 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 53:97
+
+State 53:97 --proc 1: no-op at spawn2.cvl:18.16-19--> State 54:99
+
+State 54:99 --proc 0: wait q at spawn2.cvl:26.2-9--> State 55:101
+
+State 55:101 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 56:102
+
+State 47:85 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 57:103
+
+State 57:103 --proc 2: no-op at spawn2.cvl:18.16-19--> State 58:105
+
+State 58:105 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 59:107
+
+State 59:107 --proc 1: no-op at spawn2.cvl:13.16-19--> State 60:109
+
+State 60:109 --proc 0: wait p at spawn2.cvl:25.2-9--> State 61:111
+
+State 61:111 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 62:113
+
+State 62:113 --proc 1: no-op at spawn2.cvl:18.16-19--> State 63:115
+
+State 63:115 --proc 0: wait q at spawn2.cvl:26.2-9--> State 64:117
+
+State 64:117 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 65:118
+
+State 58:105 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 66:119
+
+State 66:119 --proc 2: no-op at spawn2.cvl:18.16-19--> State 67:121
+
+State 67:121 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 68:123
+
+State 68:123 --proc 1: no-op at spawn2.cvl:13.16-19--> State 69:125
+
+State 69:125 --proc 0: wait p at spawn2.cvl:25.2-9--> State 70:127
+
+State 70:127 --proc 0: wait q at spawn2.cvl:26.2-9--> State 71:129
+
+State 71:129 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 72:130
+
+State 45:81 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 73:131
+
+State 73:131 --proc 2: no-op at spawn2.cvl:18.16-19--> State 74:133
+
+State 74:133 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 75:135
+
+State 75:135 --proc 1: no-op at spawn2.cvl:13.16-19--> State 76:137
+
+State 76:137 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 77:139
+
+State 77:139 --proc 1: no-op at spawn2.cvl:13.16-19--> State 78:141
+
+State 78:141 --proc 0: wait p at spawn2.cvl:25.2-9--> State 79:143
+
+State 79:143 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 80:145
+
+State 80:145 --proc 1: no-op at spawn2.cvl:18.16-19--> State 81:147
+
+State 81:147 --proc 0: wait q at spawn2.cvl:26.2-9--> State 82:149
+
+State 82:149 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 83:150
+
+State 76:137 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 84:151
+
+State 84:151 --proc 2: no-op at spawn2.cvl:18.16-19--> State 85:153
+
+State 85:153 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 86:155
+
+State 86:155 --proc 1: no-op at spawn2.cvl:13.16-19--> State 87:157
+
+State 87:157 --proc 0: wait p at spawn2.cvl:25.2-9--> State 88:159
+
+State 88:159 --proc 0: wait q at spawn2.cvl:26.2-9--> State 89:161
+
+State 89:161 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 90:162
+
+State 74:133 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 91:163
+
+State 91:163 --proc 2: no-op at spawn2.cvl:18.16-19--> State 92:165
+
+State 92:165 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 93:167
+
+State 93:167 --proc 1: no-op at spawn2.cvl:13.16-19--> State 94:169
+
+State 94:169 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 95:171
+
+State 95:171 --proc 1: no-op at spawn2.cvl:13.16-19--> State 96:173
+
+State 96:173 --proc 0: wait p at spawn2.cvl:25.2-9--> State 97:175
+
+State 97:175 --proc 0: wait q at spawn2.cvl:26.2-9--> State 98:177
+
+State 98:177 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 99:178
+
+State 1:1 --proc 2: s2 = 0 at spawn2.cvl:17.2-4--> State 100:179
+
+State 100:179 --proc 2: no-op at spawn2.cvl:18.16-19--> State 101:181
+
+State 101:181 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 102:183
+
+State 102:183 --proc 1: no-op at spawn2.cvl:13.16-19--> State 103:185
+
+State 103:185 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 104:187
+
+State 104:187 --proc 1: no-op at spawn2.cvl:13.16-19--> State 105:189
+
+State 105:189 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 106:191
+
+State 106:191 --proc 1: no-op at spawn2.cvl:13.16-19--> State 107:193
+
+State 107:193 --proc 0: wait p at spawn2.cvl:25.2-9--> State 108:195
+
+State 108:195 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 109:197
+
+State 109:197 --proc 1: no-op at spawn2.cvl:18.16-19--> State 110:199
+
+State 110:199 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 111:201
+
+State 111:201 --proc 1: no-op at spawn2.cvl:18.16-19--> State 112:203
+
+State 112:203 --proc 0: wait q at spawn2.cvl:26.2-9--> State 113:205
+
+State 113:205 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 114:206
+
+State 105:189 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 115:207
+
+State 115:207 --proc 2: no-op at spawn2.cvl:18.16-19--> State 116:209
+
+State 116:209 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 117:211
+
+State 117:211 --proc 1: no-op at spawn2.cvl:13.16-19--> State 118:213
+
+State 118:213 --proc 0: wait p at spawn2.cvl:25.2-9--> State 119:215
+
+State 119:215 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 120:217
+
+State 120:217 --proc 1: no-op at spawn2.cvl:18.16-19--> State 121:219
+
+State 121:219 --proc 0: wait q at spawn2.cvl:26.2-9--> State 122:221
+
+State 122:221 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 123:222
+
+State 116:209 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 124:223
+
+State 124:223 --proc 2: no-op at spawn2.cvl:18.16-19--> State 125:225
+
+State 125:225 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 126:227
+
+State 126:227 --proc 1: no-op at spawn2.cvl:13.16-19--> State 127:229
+
+State 127:229 --proc 0: wait p at spawn2.cvl:25.2-9--> State 128:231
+
+State 128:231 --proc 0: wait q at spawn2.cvl:26.2-9--> State 129:233
+
+State 129:233 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 130:234
+
+State 103:185 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 131:235
+
+State 131:235 --proc 2: no-op at spawn2.cvl:18.16-19--> State 132:237
+
+State 132:237 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 133:239
+
+State 133:239 --proc 1: no-op at spawn2.cvl:13.16-19--> State 134:241
+
+State 134:241 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 135:243
+
+State 135:243 --proc 1: no-op at spawn2.cvl:13.16-19--> State 136:245
+
+State 136:245 --proc 0: wait p at spawn2.cvl:25.2-9--> State 137:247
+
+State 137:247 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 138:249
+
+State 138:249 --proc 1: no-op at spawn2.cvl:18.16-19--> State 139:251
+
+State 139:251 --proc 0: wait q at spawn2.cvl:26.2-9--> State 140:253
+
+State 140:253 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 141:254
+
+State 134:241 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 142:255
+
+State 142:255 --proc 2: no-op at spawn2.cvl:18.16-19--> State 143:257
+
+State 143:257 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 144:259
+
+State 144:259 --proc 1: no-op at spawn2.cvl:13.16-19--> State 145:261
+
+State 145:261 --proc 0: wait p at spawn2.cvl:25.2-9--> State 146:263
+
+State 146:263 --proc 0: wait q at spawn2.cvl:26.2-9--> State 147:265
+
+State 147:265 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 148:266
+
+State 132:237 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 149:267
+
+State 149:267 --proc 2: no-op at spawn2.cvl:18.16-19--> State 150:269
+
+State 150:269 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 151:271
+
+State 151:271 --proc 1: no-op at spawn2.cvl:13.16-19--> State 152:273
+
+State 152:273 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 153:275
+
+State 153:275 --proc 1: no-op at spawn2.cvl:13.16-19--> State 154:277
+
+State 154:277 --proc 0: wait p at spawn2.cvl:25.2-9--> State 155:279
+
+State 155:279 --proc 0: wait q at spawn2.cvl:26.2-9--> State 156:281
+
+State 156:281 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 157:282
+
+State 101:181 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 158:283
+
+State 158:283 --proc 2: no-op at spawn2.cvl:18.16-19--> State 159:285
+
+State 159:285 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 160:287
+
+State 160:287 --proc 1: no-op at spawn2.cvl:13.16-19--> State 161:289
+
+State 161:289 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 162:291
+
+State 162:291 --proc 1: no-op at spawn2.cvl:13.16-19--> State 163:293
+
+State 163:293 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 164:295
+
+State 164:295 --proc 1: no-op at spawn2.cvl:13.16-19--> State 165:297
+
+State 165:297 --proc 0: wait p at spawn2.cvl:25.2-9--> State 166:299
+
+State 166:299 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 167:301
+
+State 167:301 --proc 1: no-op at spawn2.cvl:18.16-19--> State 168:303
+
+State 168:303 --proc 0: wait q at spawn2.cvl:26.2-9--> State 169:305
+
+State 169:305 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 170:306
+
+State 163:293 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 171:307
+
+State 171:307 --proc 2: no-op at spawn2.cvl:18.16-19--> State 172:309
+
+State 172:309 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 173:311
+
+State 173:311 --proc 1: no-op at spawn2.cvl:13.16-19--> State 174:313
+
+State 174:313 --proc 0: wait p at spawn2.cvl:25.2-9--> State 175:315
+
+State 175:315 --proc 0: wait q at spawn2.cvl:26.2-9--> State 176:317
+
+State 176:317 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 177:318
+
+State 161:289 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 178:319
+
+State 178:319 --proc 2: no-op at spawn2.cvl:18.16-19--> State 179:321
+
+State 179:321 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 180:323
+
+State 180:323 --proc 1: no-op at spawn2.cvl:13.16-19--> State 181:325
+
+State 181:325 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 182:327
+
+State 182:327 --proc 1: no-op at spawn2.cvl:13.16-19--> State 183:329
+
+State 183:329 --proc 0: wait p at spawn2.cvl:25.2-9--> State 184:331
+
+State 184:331 --proc 0: wait q at spawn2.cvl:26.2-9--> State 185:333
+
+State 185:333 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 186:334
+
+State 159:285 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 187:335
+
+State 187:335 --proc 2: no-op at spawn2.cvl:18.16-19--> State 188:337
+
+State 188:337 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 189:339
+
+State 189:339 --proc 1: no-op at spawn2.cvl:13.16-19--> State 190:341
+
+State 190:341 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 191:343
+
+State 191:343 --proc 1: no-op at spawn2.cvl:13.16-19--> State 192:345
+
+State 192:345 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 193:347
+
+State 193:347 --proc 1: no-op at spawn2.cvl:13.16-19--> State 194:349
+
+State 194:349 --proc 0: wait p at spawn2.cvl:25.2-9--> State 195:351
+
+State 195:351 --proc 0: wait q at spawn2.cvl:26.2-9--> State 196:353
+
+State 196:353 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 197:354
+=================== Stats ===================
+   validCalls          : 686
+   proverCalls         : 0
+   memory (bytes)      : 128974848
+   time (s)            : 1.17
+   maxProcs            : 3
+   statesInstantiated  : 355
+   statesSaved         : 198
+   statesSeen          : 198
+   statesMatched       : 0
+   transitions         : 197
+
+The standard properties hold for all executions.

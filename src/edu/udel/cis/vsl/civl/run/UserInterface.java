@@ -40,6 +40,14 @@ public class UserInterface {
 	// Static fields...
 
 	/**
+	 * Should the TransientStateFactory be the default option? If not, the
+	 * ImmutableStateFactory will be used as the default. In either case, the
+	 * kind of factory can be explicitly specified using the "-transient"
+	 * option.
+	 */
+	public final static boolean transientIsDefault = true;
+
+	/**
 	 * A string printed before and after titles of sections of output to make
 	 * them stand out among the clutter.
 	 */
@@ -113,6 +121,10 @@ public class UserInterface {
 	public final static Option traceO = Option.newScalarOption("trace", STRING,
 			"filename of trace to replay", null);
 
+	public final static Option transO = Option
+			.newScalarOption("transient", BOOLEAN,
+					"use the transient pattern for states", transientIsDefault);
+
 	public final static Option userIncludePathO = Option.newScalarOption(
 			"userIncludePath", STRING, "set the user include path", null);
 
@@ -180,7 +192,7 @@ public class UserInterface {
 				sysIncludePathO, showTransitionsO, showStatesO,
 				showSavedStatesO, showQueriesO, showProverQueriesO, inputO,
 				idO, traceO, minO, maxdepthO, porO, saveStatesO, simplifyO,
-				solveO);
+				solveO, transO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -246,7 +258,7 @@ public class UserInterface {
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(config, program, coreName(filename));
-		//model.setName(coreName(filename));
+		// model.setName(coreName(filename));
 		if (verbose || debug)
 			out.println(bar + " Model " + bar + "\n");
 		if (showModel || verbose || debug || parse) {

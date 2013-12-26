@@ -21,7 +21,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
-import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
@@ -162,7 +161,7 @@ public class Enabler implements
 						statementScope = state.getParentId(statementScope);
 					}
 				}
-				if (state.getScope(statementScope).numberOfReachers() > 1) {
+				if (state.numberOfReachers(statementScope) > 1) {
 					allLocal = false;
 				}
 				if (!newPathCondition.isFalse()) {
@@ -303,10 +302,9 @@ public class Enabler implements
 		}
 
 		for (int iscope : impScopes) {
-			DynamicScope dyScope = state.getScope(iscope);
-
+			// DynamicScope dyScope = state.getScope(iscope);
 			for (int pid : nonAmpleIDs) {
-				if (dyScope.reachableByProcess(pid)) {
+				if (state.reachableByProcess(iscope, pid)) {
 					System.out.println("error ample set found!");
 				}
 			}
@@ -525,7 +523,7 @@ public class Enabler implements
 					break;
 				}
 
-				currentReachers = state.getScope(impScope).numberOfReachers();
+				currentReachers = state.numberOfReachers(impScope);
 
 				// find out the maximal number of reachers that an impact scope
 				// of process p can have
@@ -740,14 +738,14 @@ public class Enabler implements
 	 */
 	private ArrayList<ProcessState> ownerOfScope(int dyscope, State state,
 			ArrayList<ProcessState> processes) {
-		DynamicScope dyScope = state.getScope(dyscope);
+		// DynamicScope dyScope = state.getScope(dyscope);
 		ArrayList<ProcessState> reacherProcs = new ArrayList<ProcessState>();
 		int length = processes.size();
 
 		for (int i = 0; i < length; i++) {
 			ProcessState p = processes.get(i);
 
-			if (dyScope.reachableByProcess(p.getPid()))
+			if (state.reachableByProcess(dyscope, i))
 				reacherProcs.add(p);
 		}
 		return reacherProcs;

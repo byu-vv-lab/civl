@@ -5,45 +5,74 @@ import java.io.PrintStream;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
+/**
+ * A DynamicScope is a runtime instance of a static scope. It assigns a value to
+ * each variable in the static scope. The values are symbolic expressions of the
+ * appropriate types.
+ * 
+ * @author siegel
+ * 
+ */
 public interface DynamicScope {
 
-	boolean isMutable();
-
-	boolean isCanonic();
-
-	void commit();
-
-	int getCanonicId();
-
+	/**
+	 * Returns the lexical (static) scope of which this dynamic scope is an
+	 * instance.
+	 * 
+	 * A single static scope may have many (or 0) dynamic scope instances
+	 * associated to it, but each dynamic scope is an instance of exactly one
+	 * static scope.
+	 * 
+	 * @return the static scope associated to this dynamic scope
+	 */
 	Scope lexicalScope();
 
+	/**
+	 * Gets the value of the variable with variable ID vid. The variables
+	 * belonging to a static scope are numbered starting from 0.
+	 * 
+	 * @param vid
+	 *            the variable ID, an integer in the range [0,numVars-1], where
+	 *            numVars is the number of variables in the static scope
+	 * @return the value associated to the specified variable
+	 */
 	SymbolicExpression getValue(int vid);
 
+	/**
+	 * Sets the value assigned to the vid-th variable. If this dynamic scope is
+	 * mutable, this method modifies this dynamic scope and returns this.
+	 * Otherwise, it returns a new dynamic scope which is equivalent to this one
+	 * except that the value assigned to the variable is the given value.
+	 * 
+	 * @param vid
+	 *            the variable ID
+	 * @param value
+	 *            the value to assigne to that variable
+	 * @return an instance of DynamicScope obtained by modifying this instance
+	 *         to reflect the new assignment
+	 */
 	DynamicScope setValue(int vid, SymbolicExpression value);
 
-	DynamicScope setValues(SymbolicExpression[] values);
-
+	/**
+	 * Returns an iterable object over the variable values. The iteration is
+	 * guaranteed to give the values in variable ID order.
+	 * 
+	 * @return iterable over variable values, starting from variable with vid 0
+	 *         and going up
+	 */
 	Iterable<SymbolicExpression> getValues();
 
 	/**
-	 * How many processes can reach this dynamic scope? A process p can reach a
-	 * dynamic scope d iff there is a path starting from a dynamic scope which
-	 * is referenced in a frame on p's call stack to d, following the "parent"
-	 * edges in the scope tree.
+	 * Prints a human-readable representation of this dynamic scope. The prefix
+	 * is a string that pre-pended to each line of the output. It is typically
+	 * something like "|  |  ", used to give a tabbed tree structure to the
+	 * output.
 	 * 
-	 * @return the number of processes which can reach this dynamic scope
+	 * @param out
+	 *            print stream to which output is sent
+	 * @param prefix
+	 *            a string to prepend to each line of output
 	 */
-	int numberOfReachers();
-
-	/**
-	 * Is this dynamic scope reachable by the process with the given PID?
-	 * 
-	 * @param pid
-	 * @return true iff this dynamic scope is reachable from the process with
-	 *         pid PID
-	 */
-	boolean reachableByProcess(int pid);
-
-	void print(PrintStream out, int id, String prefix);
+	void print(PrintStream out, String prefix);
 
 }

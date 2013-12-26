@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.state.common;
+package edu.udel.cis.vsl.civl.state.immutable;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -27,7 +27,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public class CommonDynamicScope implements DynamicScope {
+public class ImmutableDynamicScope implements DynamicScope {
 
 	private static boolean debug = false;
 
@@ -68,7 +68,7 @@ public class CommonDynamicScope implements DynamicScope {
 	 *            The parent of this dynamic scope. -1 only for the topmost
 	 *            dynamic scope.
 	 */
-	CommonDynamicScope(Scope lexicalScope, int parent, BitSet reachers) {
+	ImmutableDynamicScope(Scope lexicalScope, int parent, BitSet reachers) {
 		assert lexicalScope != null;
 		this.lexicalScope = lexicalScope;
 		this.parent = parent;
@@ -76,7 +76,7 @@ public class CommonDynamicScope implements DynamicScope {
 		variableValues = new SymbolicExpression[lexicalScope.numVariables()]; // FIX
 	}
 
-	CommonDynamicScope(Scope lexicalScope, int parent,
+	ImmutableDynamicScope(Scope lexicalScope, int parent,
 			SymbolicExpression[] variableValues, BitSet reachers) {
 		assert variableValues != null
 				&& variableValues.length == lexicalScope.numVariables();
@@ -86,19 +86,19 @@ public class CommonDynamicScope implements DynamicScope {
 		this.reachers = reachers;
 	}
 
-	CommonDynamicScope changeParent(int newParent) {
-		return new CommonDynamicScope(lexicalScope, newParent, variableValues,
+	ImmutableDynamicScope changeParent(int newParent) {
+		return new ImmutableDynamicScope(lexicalScope, newParent, variableValues,
 				reachers);
 	}
 
-	CommonDynamicScope changeReachers(BitSet newBitSet) {
-		return new CommonDynamicScope(lexicalScope, parent, variableValues,
+	ImmutableDynamicScope changeReachers(BitSet newBitSet) {
+		return new ImmutableDynamicScope(lexicalScope, parent, variableValues,
 				newBitSet);
 	}
 
-	CommonDynamicScope changeVariableValues(
+	ImmutableDynamicScope changeVariableValues(
 			SymbolicExpression[] newVariableValues) {
-		return new CommonDynamicScope(lexicalScope, parent, newVariableValues,
+		return new ImmutableDynamicScope(lexicalScope, parent, newVariableValues,
 				reachers);
 	}
 
@@ -119,7 +119,6 @@ public class CommonDynamicScope implements DynamicScope {
 	 * 
 	 * @return the number of processes which can reach this dynamic scope
 	 */
-	@Override
 	public int numberOfReachers() {
 		return reachers.cardinality();
 	}
@@ -131,7 +130,6 @@ public class CommonDynamicScope implements DynamicScope {
 	 * @return true iff this dynamic scope is reachable from the process with
 	 *         pid PID
 	 */
-	@Override
 	public boolean reachableByProcess(int pid) {
 		return reachers.get(pid);
 	}
@@ -195,8 +193,8 @@ public class CommonDynamicScope implements DynamicScope {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (obj instanceof CommonDynamicScope) {
-			CommonDynamicScope that = (CommonDynamicScope) obj;
+		if (obj instanceof ImmutableDynamicScope) {
+			ImmutableDynamicScope that = (ImmutableDynamicScope) obj;
 
 			if (canonic && that.canonic)
 				return false;
@@ -215,8 +213,7 @@ public class CommonDynamicScope implements DynamicScope {
 		return false;
 	}
 
-	@Override
-	public void print(PrintStream out, int id, String prefix) {
+	public void print(PrintStream out, String id, String prefix) {
 		int numVars = lexicalScope.numVariables();
 		int bitSetLength = reachers.length();
 		boolean first = true;
@@ -253,23 +250,15 @@ public class CommonDynamicScope implements DynamicScope {
 				+ parent + "]";
 	}
 
-	@Override
 	public boolean isMutable() {
 		return true;
 	}
 
-	@Override
 	public boolean isCanonic() {
 		return canonic;
 	}
 
-	@Override
 	public void commit() {
-	}
-
-	@Override
-	public int getCanonicId() {
-		return 0;
 	}
 
 	@Override
@@ -279,17 +268,21 @@ public class CommonDynamicScope implements DynamicScope {
 
 		System.arraycopy(variableValues, 0, newVariableValues, 0, n);
 		newVariableValues[vid] = value;
-		return new CommonDynamicScope(lexicalScope, parent, newVariableValues,
+		return new ImmutableDynamicScope(lexicalScope, parent, newVariableValues,
 				reachers);
 	}
 
-	@Override
 	public DynamicScope setValues(SymbolicExpression[] values) {
-		return new CommonDynamicScope(lexicalScope, parent, values, reachers);
+		return new ImmutableDynamicScope(lexicalScope, parent, values, reachers);
 	}
 
 	@Override
 	public Iterable<SymbolicExpression> getValues() {
 		return Arrays.asList(variableValues);
+	}
+
+	@Override
+	public void print(PrintStream out, String prefix) {
+		print(out, "", prefix);
 	}
 }

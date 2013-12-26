@@ -1,0 +1,124 @@
+CIVL v0.4 of 2013-12-06 -- http://vsl.cis.udel.edu/civl
+
+State 3:0 --proc 0: N = 2 at spawn2.cvl:8.0-12--> State 23:1
+
+State 23:1 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 33:2
+
+State 33:2 --proc 1: no-op at spawn2.cvl:13.16-19--> State 37:3
+
+State 37:3 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 45:4
+
+State 45:4 --proc 1: no-op at spawn2.cvl:13.16-19--> State 49:5
+
+State 49:5 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 57:6
+
+State 57:6 --proc 1: no-op at spawn2.cvl:13.16-19--> State 67:7
+
+State 67:7 --proc 0: wait p at spawn2.cvl:25.2-9--> State 72:8
+
+State 72:8 --proc 1: s2 = 0 at spawn2.cvl:17.2-4--> State 82:9
+
+State 82:9 --proc 1: no-op at spawn2.cvl:18.16-19--> State 86:10
+
+State 86:10 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 94:11
+
+State 94:11 --proc 1: no-op at spawn2.cvl:18.16-19--> State 98:12
+
+State 98:12 --proc 1: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 106:13
+
+State 106:13 --proc 1: no-op at spawn2.cvl:18.16-19--> State 116:14
+
+State 116:14 --proc 0: wait q at spawn2.cvl:26.2-9--> State 121:15
+
+State 121:15 --proc 0: $assert (s1==s2) at spawn2.cvl:27.2-16--> State 128:16
+
+State 49:5 --proc 2: s2 = 0 at spawn2.cvl:17.2-4--> State 137:17
+
+State 137:17 --proc 2: no-op at spawn2.cvl:18.16-19--> State 141:18
+
+State 141:18 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 149:19
+
+State 149:19 --proc 1: no-op at spawn2.cvl:13.16-19--> State 159:20
+
+State 159:20 --proc 0: wait p at spawn2.cvl:25.2-9--> State 86:10
+
+State 141:18 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 171:21
+
+State 171:21 --proc 2: no-op at spawn2.cvl:18.16-19--> State 175:22
+
+State 175:22 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 183:23
+
+State 183:23 --proc 1: no-op at spawn2.cvl:13.16-19--> State 193:24
+
+State 193:24 --proc 0: wait p at spawn2.cvl:25.2-9--> State 98:12
+
+State 175:22 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 205:25
+
+State 205:25 --proc 2: no-op at spawn2.cvl:18.16-19--> State 215:26
+
+State 215:26 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 223:27
+
+State 223:27 --proc 1: no-op at spawn2.cvl:13.16-19--> State 233:28
+
+State 233:28 --proc 0: wait p at spawn2.cvl:25.2-9--> State 116:14
+
+State 37:3 --proc 2: s2 = 0 at spawn2.cvl:17.2-4--> State 247:29
+
+State 247:29 --proc 2: no-op at spawn2.cvl:18.16-19--> State 251:30
+
+State 251:30 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 259:31
+
+State 259:31 --proc 1: no-op at spawn2.cvl:13.16-19--> State 141:18
+
+State 251:30 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 270:32
+
+State 270:32 --proc 2: no-op at spawn2.cvl:18.16-19--> State 274:33
+
+State 274:33 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 282:34
+
+State 282:34 --proc 1: no-op at spawn2.cvl:13.16-19--> State 175:22
+
+State 274:33 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 293:35
+
+State 293:35 --proc 2: no-op at spawn2.cvl:18.16-19--> State 303:36
+
+State 303:36 --proc 1: s1 = (s1+i) at spawn2.cvl:13.26-28--> State 311:37
+
+State 311:37 --proc 1: no-op at spawn2.cvl:13.16-19--> State 215:26
+
+State 23:1 --proc 2: s2 = 0 at spawn2.cvl:17.2-4--> State 324:38
+
+State 324:38 --proc 2: no-op at spawn2.cvl:18.16-19--> State 328:39
+
+State 328:39 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 338:40
+
+State 338:40 --proc 1: no-op at spawn2.cvl:13.16-19--> State 251:30
+
+State 328:39 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 349:41
+
+State 349:41 --proc 2: no-op at spawn2.cvl:18.16-19--> State 353:42
+
+State 353:42 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 363:43
+
+State 363:43 --proc 1: no-op at spawn2.cvl:13.16-19--> State 274:33
+
+State 353:42 --proc 2: s2 = (s2+i) at spawn2.cvl:18.26-28--> State 374:44
+
+State 374:44 --proc 2: no-op at spawn2.cvl:18.16-19--> State 384:45
+
+State 384:45 --proc 1: s1 = 0 at spawn2.cvl:12.2-4--> State 394:46
+
+State 394:46 --proc 1: no-op at spawn2.cvl:13.16-19--> State 303:36
+=================== Stats ===================
+   validCalls          : 207
+   proverCalls         : 0
+   memory (bytes)      : 128974848
+   time (s)            : 0.95
+   maxProcs            : 3
+   statesInstantiated  : 399
+   statesSaved         : 47
+   statesSeen          : 47
+   statesMatched       : 9
+   transitions         : 55
+
+The standard properties hold for all executions.

@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.state.common;
+package edu.udel.cis.vsl.civl.state.immutable;
 
 import java.util.BitSet;
 import java.util.Collection;
@@ -27,7 +27,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public class CommonStateFactory implements StateFactory {
+public class ImmutableStateFactory implements StateFactory {
 
 	// *************************** Fields *****************************
 
@@ -37,9 +37,9 @@ public class CommonStateFactory implements StateFactory {
 
 	private SymbolicUniverse universe;
 
-	private Map<CommonDynamicScope, CommonDynamicScope> scopeMap = new HashMap<CommonDynamicScope, CommonDynamicScope>();
+	private Map<ImmutableDynamicScope, ImmutableDynamicScope> scopeMap = new HashMap<ImmutableDynamicScope, ImmutableDynamicScope>();
 
-	private Map<CommonProcessState, CommonProcessState> processMap = new HashMap<CommonProcessState, CommonProcessState>();
+	private Map<ImmutableProcessState, ImmutableProcessState> processMap = new HashMap<ImmutableProcessState, ImmutableProcessState>();
 
 	private Map<State, State> stateMap = new HashMap<State, State>();
 
@@ -50,7 +50,7 @@ public class CommonStateFactory implements StateFactory {
 	/**
 	 * Factory to create all state objects.
 	 */
-	public CommonStateFactory(ModelFactory modelFactory) {
+	public ImmutableStateFactory(ModelFactory modelFactory) {
 		this.modelFactory = modelFactory;
 		this.universe = modelFactory.universe();
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
@@ -69,8 +69,8 @@ public class CommonStateFactory implements StateFactory {
 	 *            the scope to be flyweighted
 	 * @return the unique representative of the scope or the scope itself
 	 */
-	private CommonDynamicScope canonic(CommonDynamicScope scope) {
-		CommonDynamicScope old = scopeMap.get(scope);
+	private ImmutableDynamicScope canonic(ImmutableDynamicScope scope) {
+		ImmutableDynamicScope old = scopeMap.get(scope);
 
 		if (old == null) {
 			scope.canonic = true;
@@ -91,8 +91,8 @@ public class CommonStateFactory implements StateFactory {
 	 *            the process to be flyweighted
 	 * @return the unique representative of the process or the process itself
 	 */
-	private CommonProcessState canonic(CommonProcessState process) {
-		CommonProcessState old = processMap.get(process);
+	private ImmutableProcessState canonic(ImmutableProcessState process) {
+		ImmutableProcessState old = processMap.get(process);
 
 		if (old == null) {
 			process.canonic = true;
@@ -102,8 +102,8 @@ public class CommonStateFactory implements StateFactory {
 		return old;
 	}
 
-	private CommonProcessState process(int id, StackEntry[] stack) {
-		return canonic(new CommonProcessState(id, stack));
+	private ImmutableProcessState process(int id, StackEntry[] stack) {
+		return canonic(new ImmutableProcessState(id, stack));
 	}
 
 	private SymbolicExpression[] initialValues(Scope lexicalScope,
@@ -119,9 +119,9 @@ public class CommonStateFactory implements StateFactory {
 		return values;
 	}
 
-	private CommonDynamicScope dynamicScope(Scope lexicalScope, int parent,
+	private ImmutableDynamicScope dynamicScope(Scope lexicalScope, int parent,
 			SymbolicExpression[] variableValues, BitSet reachers) {
-		return canonic(new CommonDynamicScope(lexicalScope, parent,
+		return canonic(new ImmutableDynamicScope(lexicalScope, parent,
 				variableValues, reachers));
 	}
 
@@ -135,7 +135,7 @@ public class CommonStateFactory implements StateFactory {
 	 *            dynamic scope.
 	 * @return A new dynamic scope.
 	 */
-	private CommonDynamicScope dynamicScope(Scope lexicalScope, int parent,
+	private ImmutableDynamicScope dynamicScope(Scope lexicalScope, int parent,
 			int dynamicScopeId, BitSet reachers) {
 		return dynamicScope(lexicalScope, parent, initialValues(// state,
 				lexicalScope, dynamicScopeId), reachers);
@@ -151,16 +151,16 @@ public class CommonStateFactory implements StateFactory {
 	 * @param lhs
 	 *            The location to store the return value. Null if non-existent.
 	 */
-	private CommonStackEntry stackEntry(Location location, int scope) {
-		return new CommonStackEntry(location, scope);
+	private ImmutableStackEntry stackEntry(Location location, int scope) {
+		return new ImmutableStackEntry(location, scope);
 	}
 
-	private State collectScopes(State state) {
+	private State collectScopesWork(State state) {
 		int oldNumScopes = state.numScopes();
-		int[] oldToNew = numberScopes((CommonState) state);
+		int[] oldToNew = numberScopes((ImmutableState) state);
 		boolean change = false;
 		int newNumScopes = 0;
-		CommonState newState;
+		ImmutableState newState;
 
 		for (int i = 0; i < oldNumScopes; i++) {
 			int id = oldToNew[i];
@@ -173,7 +173,7 @@ public class CommonStateFactory implements StateFactory {
 		if (!change)
 			return state;
 
-		CommonDynamicScope[] newScopes = new CommonDynamicScope[newNumScopes];
+		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[newNumScopes];
 		int numProcs = state.numProcs();
 		ProcessState[] newProcesses = new ProcessState[numProcs];
 
@@ -181,19 +181,19 @@ public class CommonStateFactory implements StateFactory {
 			int newId = oldToNew[i];
 
 			if (newId >= 0) {
-				CommonDynamicScope oldScope = (CommonDynamicScope) ((CommonState) state)
+				ImmutableDynamicScope oldScope = (ImmutableDynamicScope) ((ImmutableState) state)
 						.getScope(i);
 				int oldParent = oldScope.parent();
 				int newParent = (oldParent < 0 ? oldParent
 						: oldToNew[oldParent]);
-				CommonDynamicScope newScope = (oldParent == newParent ? oldScope
+				ImmutableDynamicScope newScope = (oldParent == newParent ? oldScope
 						: canonic(oldScope.changeParent(newParent)));
 
 				newScopes[newId] = newScope;
 			}
 		}
 		for (int pid = 0; pid < numProcs; pid++) {
-			ProcessState oldProcess = ((CommonState) state)
+			ImmutableProcessState oldProcess = (ImmutableProcessState) ((ImmutableState) state)
 					.getProcessState(pid);
 			int stackSize = oldProcess.stackSize();
 			StackEntry[] newStack = new StackEntry[stackSize];
@@ -216,11 +216,11 @@ public class CommonStateFactory implements StateFactory {
 			else
 				newProcesses[pid] = oldProcess;
 		}
-		newState = new CommonState(newProcesses, newScopes,
+		newState = new ImmutableState(newProcesses, newScopes,
 				state.getPathCondition());
 		// Need to go through the pointers and canonicalize scope references
 		newScopes = updateScopeReferencesInScopes(newState, oldToNew);
-		newState = new CommonState(newProcesses, newScopes,
+		newState = new ImmutableState(newProcesses, newScopes,
 				state.getPathCondition());
 		return newState;
 	}
@@ -242,7 +242,7 @@ public class CommonStateFactory implements StateFactory {
 	 *            a state
 	 * @return an array mapping old scope IDs to new.
 	 */
-	private int[] numberScopes(CommonState state) {
+	private int[] numberScopes(ImmutableState state) {
 		int numScopes = state.numScopes();
 		int numProcs = state.numProcs();
 		int[] oldToNew = new int[numScopes];
@@ -254,7 +254,8 @@ public class CommonStateFactory implements StateFactory {
 		for (int i = 1; i < numScopes; i++)
 			oldToNew[i] = -1;
 		for (int pid = 0; pid < numProcs; pid++) {
-			ProcessState process = state.getProcessState(pid);
+			ImmutableProcessState process = (ImmutableProcessState) state
+					.getProcessState(pid);
 			int stackSize;
 
 			if (process == null)
@@ -281,7 +282,7 @@ public class CommonStateFactory implements StateFactory {
 
 	@Override
 	public long getNumStateInstances() {
-		return CommonState.instanceCount;
+		return ImmutableState.instanceCount;
 	}
 
 	@Override
@@ -299,7 +300,7 @@ public class CommonStateFactory implements StateFactory {
 		State old = stateMap.get(state);
 
 		if (old == null) {
-			((CommonState) state).setCanonicId(stateCount);
+			((ImmutableState) state).setCanonicId(stateCount);
 			stateCount++;
 			stateMap.put(state, state);
 			return state;
@@ -309,8 +310,8 @@ public class CommonStateFactory implements StateFactory {
 
 	@Override
 	public State initialState(Model model) {
-		CommonState state = new CommonState(new CommonProcessState[0],
-				new CommonDynamicScope[0], universe.trueExpression());
+		ImmutableState state = new ImmutableState(new ImmutableProcessState[0],
+				new ImmutableDynamicScope[0], universe.trueExpression());
 		CIVLFunction function = model.system();
 		int numArgs = function.parameters().size();
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
@@ -362,29 +363,29 @@ public class CommonStateFactory implements StateFactory {
 	@Override
 	public State setVariable(State state, int vid, int scopeId,
 			SymbolicExpression value) {
-		CommonDynamicScope oldScope = (CommonDynamicScope) ((CommonState) state)
+		ImmutableDynamicScope oldScope = (ImmutableDynamicScope) ((ImmutableState) state)
 				.getScope(scopeId);
-		CommonDynamicScope[] newScopes = ((CommonState) state).copyScopes();
+		ImmutableDynamicScope[] newScopes = ((ImmutableState) state).copyScopes();
 		SymbolicExpression[] newValues = oldScope.copyValues();
-		CommonDynamicScope newScope;
+		ImmutableDynamicScope newScope;
 
 		newValues[vid] = value;
 		newScope = dynamicScope(oldScope.lexicalScope(), oldScope.parent(),
 				newValues, oldScope.reachers());
 		newScopes[scopeId] = newScope;
-		return new CommonState((CommonState) state, newScopes);
+		return new ImmutableState((ImmutableState) state, newScopes);
 	}
 
 	@Override
-	public CommonState addProcess(State state, CIVLFunction function,
+	public ImmutableState addProcess(State state, CIVLFunction function,
 			SymbolicExpression[] arguments, int callerPid) {
 		int numProcs = state.numProcs();
-		CommonProcessState[] newProcesses;
+		ImmutableProcessState[] newProcesses;
 
-		newProcesses = ((CommonState) state).copyAndExpandProcesses();
-		newProcesses[numProcs] = process(numProcs, new CommonStackEntry[0]);
-		state = new CommonState((CommonState) state, newProcesses);
-		return pushCallStack2((CommonState) state, numProcs, function,
+		newProcesses = ((ImmutableState) state).copyAndExpandProcesses();
+		newProcesses[numProcs] = process(numProcs, new ImmutableStackEntry[0]);
+		state = new ImmutableState((ImmutableState) state, newProcesses);
+		return pushCallStack2((ImmutableState) state, numProcs, function,
 				arguments, callerPid);
 	}
 
@@ -392,16 +393,16 @@ public class CommonStateFactory implements StateFactory {
 	public State removeProcess(State state, int pid) {
 		int numProcs = state.numProcs();
 		ProcessState[] newProcesses = new ProcessState[numProcs - 1];
-		CommonDynamicScope[] newScopes = null;
+		ImmutableDynamicScope[] newScopes = null;
 
 		for (int i = 0; i < pid; i++)
-			newProcesses[i] = ((CommonState) state).getProcessState(i);
+			newProcesses[i] = ((ImmutableState) state).getProcessState(i);
 		{
 			int[] oldToNewPidMap = new int[numProcs];
 
 			for (int i = pid; i < numProcs - 1; i++)
-				newProcesses[i] = canonic(new CommonProcessState(
-						(CommonProcessState) ((CommonState) state)
+				newProcesses[i] = canonic(new ImmutableProcessState(
+						(ImmutableProcessState) ((ImmutableState) state)
 								.getProcessState(i + 1),
 						i));
 			for (int i = 0; i < pid; i++)
@@ -411,9 +412,9 @@ public class CommonStateFactory implements StateFactory {
 				oldToNewPidMap[i] = i - 1;
 			newScopes = updateProcessReferencesInScopes(state, oldToNewPidMap);
 		}
-		state = new CommonState((CommonState) state, newProcesses, newScopes,
+		state = new ImmutableState((ImmutableState) state, newProcesses, newScopes,
 				null);
-		return collectScopes((state));
+		return collectScopesWork((state));
 	}
 
 	private Map<SymbolicExpression, SymbolicExpression> procSubMap(
@@ -470,14 +471,14 @@ public class CommonStateFactory implements StateFactory {
 	 *            removed.
 	 * @return new dyanmic scopes or null
 	 */
-	private CommonDynamicScope[] updateProcessReferencesInScopes(State state,
+	private ImmutableDynamicScope[] updateProcessReferencesInScopes(State state,
 			int[] oldToNewPidMap) {
 		Map<SymbolicExpression, SymbolicExpression> procSubMap = procSubMap(oldToNewPidMap);
-		CommonDynamicScope[] newScopes = null;
+		ImmutableDynamicScope[] newScopes = null;
 		int numScopes = state.numScopes();
 
 		for (int i = 0; i < numScopes; i++) {
-			CommonDynamicScope dynamicScope = (CommonDynamicScope) ((CommonState) state)
+			ImmutableDynamicScope dynamicScope = (ImmutableDynamicScope) ((ImmutableState) state)
 					.getScope(i);
 			Scope staticScope = dynamicScope.lexicalScope();
 			Collection<Variable> procrefVariableIter = staticScope
@@ -500,9 +501,9 @@ public class CommonStateFactory implements StateFactory {
 			}
 			if (newValues != null || newBitSet != oldBitSet) {
 				if (newScopes == null) {
-					newScopes = new CommonDynamicScope[numScopes];
+					newScopes = new ImmutableDynamicScope[numScopes];
 					for (int j = 0; j < i; j++)
-						newScopes[j] = (CommonDynamicScope) ((CommonState) state)
+						newScopes[j] = (ImmutableDynamicScope) ((ImmutableState) state)
 								.getScope(j);
 				}
 				if (newValues == null)
@@ -532,15 +533,15 @@ public class CommonStateFactory implements StateFactory {
 	 * 
 	 * @return new dynamic scopes
 	 */
-	private CommonDynamicScope[] updateScopeReferencesInScopes(
-			CommonState state, int[] oldToNewSidMap) {
+	private ImmutableDynamicScope[] updateScopeReferencesInScopes(
+			ImmutableState state, int[] oldToNewSidMap) {
 		Map<SymbolicExpression, SymbolicExpression> scopeSubMap = scopeSubMap(oldToNewSidMap);
-		CommonDynamicScope[] newScopes = null;
+		ImmutableDynamicScope[] newScopes = null;
 		int numScopes = state.numScopes();
 
-		newScopes = new CommonDynamicScope[numScopes];
+		newScopes = new ImmutableDynamicScope[numScopes];
 		for (int i = 0; i < numScopes; i++) {
-			CommonDynamicScope dynamicScope = (CommonDynamicScope) state
+			ImmutableDynamicScope dynamicScope = (ImmutableDynamicScope) state
 					.getScope(i);
 			Scope staticScope = dynamicScope.lexicalScope();
 			Collection<Variable> pointerVariableIter = staticScope
@@ -566,9 +567,9 @@ public class CommonStateFactory implements StateFactory {
 			}
 			if (newValues != null) {
 				if (newScopes == null) {
-					newScopes = new CommonDynamicScope[numScopes];
+					newScopes = new ImmutableDynamicScope[numScopes];
 					for (int j = 0; j < i; j++)
-						newScopes[j] = (CommonDynamicScope) state.getScope(j);
+						newScopes[j] = (ImmutableDynamicScope) state.getScope(j);
 				}
 				newScopes[i] = dynamicScope(staticScope, dynamicScope.parent(),
 						newValues, dynamicScope.reachers());
@@ -634,8 +635,6 @@ public class CommonStateFactory implements StateFactory {
 	 * <li>Remove all unreachable scopes.</li>
 	 * </ol>
 	 * 
-	 * TODO: update reachable
-	 * 
 	 * @param state
 	 * @param pid
 	 * @param location
@@ -643,19 +642,19 @@ public class CommonStateFactory implements StateFactory {
 	 */
 	@Override
 	public State setLocation(State state, int pid, Location location) {
-		CommonProcessState[] processArray = ((CommonState) state).processes();
-		int dynamicScopeId = ((CommonState) state).getProcessState(pid)
+		ImmutableProcessState[] processArray = ((ImmutableState) state).processes();
+		int dynamicScopeId = ((ImmutableState) state).getProcessState(pid)
 				.getDyscopeId();
-		CommonDynamicScope dynamicScope = (CommonDynamicScope) ((CommonState) state)
+		ImmutableDynamicScope dynamicScope = (ImmutableDynamicScope) ((ImmutableState) state)
 				.getScope(dynamicScopeId);
 		Scope ss0 = dynamicScope.lexicalScope();
 		Scope ss1 = location.scope();
 
 		if (ss0 == ss1) {
-			processArray[pid] = canonic(((CommonProcessState) ((CommonState) state)
+			processArray[pid] = canonic(((ImmutableProcessState) ((ImmutableState) state)
 					.getProcessState(pid)).replaceTop(stackEntry(location,
 					dynamicScopeId)));
-			return new CommonState((CommonState) state, processArray);
+			return new ImmutableState((ImmutableState) state, processArray);
 		} else {
 			Scope[] joinSequence = joinSequence(ss0, ss1);
 			Scope join = joinSequence[0];
@@ -665,24 +664,24 @@ public class CommonStateFactory implements StateFactory {
 				dynamicScopeId = state.getParentId(dynamicScopeId);
 				if (dynamicScopeId < 0)
 					throw new RuntimeException("State is inconsistent");
-				dynamicScope = (CommonDynamicScope) ((CommonState) state)
+				dynamicScope = (ImmutableDynamicScope) ((ImmutableState) state)
 						.getScope(dynamicScopeId);
 			}
 			if (joinSequence.length == 1) {
-				processArray[pid] = canonic(((CommonProcessState) ((CommonState) state)
+				processArray[pid] = canonic(((ImmutableProcessState) ((ImmutableState) state)
 						.getProcessState(pid)).replaceTop(stackEntry(location,
 						dynamicScopeId)));
-				state = new CommonState((CommonState) state, processArray);
+				state = new ImmutableState((ImmutableState) state, processArray);
 			} else {
 				// iterate DOWN, adding new dynamic scopes...
 				int oldNumScopes = state.numScopes();
 				int newNumScopes = oldNumScopes + joinSequence.length - 1;
 				int index = 0;
-				CommonDynamicScope[] newScopes = new CommonDynamicScope[newNumScopes];
-				CommonProcessState process = processArray[pid];
+				ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[newNumScopes];
+				ImmutableProcessState process = processArray[pid];
 
 				for (; index < oldNumScopes; index++)
-					newScopes[index] = (CommonDynamicScope) ((CommonState) state)
+					newScopes[index] = (ImmutableDynamicScope) ((ImmutableState) state)
 							.getScope(index);
 				for (int i = 1; i < joinSequence.length; i++) {
 					// only this process can reach the new dyscope
@@ -698,10 +697,10 @@ public class CommonStateFactory implements StateFactory {
 						dynamicScopeId)));
 				setReachablesForProc(newScopes, process);
 				processArray[pid] = process;
-				state = new CommonState(processArray, newScopes,
+				state = new ImmutableState(processArray, newScopes,
 						state.getPathCondition());
 			}
-			return collectScopes((state));
+			return collectScopesWork((state));
 		}
 	}
 
@@ -716,8 +715,8 @@ public class CommonStateFactory implements StateFactory {
 	 * @param process
 	 *            a process state
 	 */
-	private void setReachablesForProc(CommonDynamicScope[] dynamicScopes,
-			CommonProcessState process) {
+	private void setReachablesForProc(ImmutableDynamicScope[] dynamicScopes,
+			ImmutableProcessState process) {
 		int stackSize = process.stackSize();
 		int numScopes = dynamicScopes.length;
 		boolean reached[] = new boolean[numScopes];
@@ -735,7 +734,7 @@ public class CommonStateFactory implements StateFactory {
 			}
 		}
 		for (int j = 0; j < numScopes; j++) {
-			CommonDynamicScope scope = dynamicScopes[j];
+			ImmutableDynamicScope scope = dynamicScopes[j];
 			BitSet bitSet = scope.reachers();
 
 			if (bitSet.get(pid) != reached[j]) {
@@ -814,7 +813,7 @@ public class CommonStateFactory implements StateFactory {
 	@Override
 	public State pushCallStack(State state, int pid, CIVLFunction function,
 			SymbolicExpression[] arguments) {
-		return pushCallStack2((CommonState) state, pid, function, arguments,
+		return pushCallStack2((ImmutableState) state, pid, function, arguments,
 				pid);
 	}
 
@@ -841,28 +840,28 @@ public class CommonStateFactory implements StateFactory {
 	 *            which has no caller
 	 * @return new stack with new frame on call stack of process pid
 	 */
-	private CommonState pushCallStack2(CommonState state, int pid,
+	private ImmutableState pushCallStack2(ImmutableState state, int pid,
 			CIVLFunction function, SymbolicExpression[] arguments, int callerPid) {
 		Scope containingStaticScope = function.containingScope();
 		Scope functionStaticScope = function.outerScope();
-		CommonProcessState[] newProcesses = state.processes();
+		ImmutableProcessState[] newProcesses = state.processes();
 		int numScopes = state.numScopes();
 		SymbolicExpression[] values;
-		CommonDynamicScope[] newScopes;
+		ImmutableDynamicScope[] newScopes;
 		int sid;
 		int containingDynamicScopeId;
 		BitSet bitSet = new BitSet(newProcesses.length);
 
 		if (callerPid >= 0) {
 			ProcessState caller = state.getProcessState(callerPid);
-			CommonDynamicScope containingDynamicScope;
+			ImmutableDynamicScope containingDynamicScope;
 
 			if (caller.stackSize() == 0)
 				throw new IllegalArgumentException(
 						"Calling process has empty stack: " + callerPid);
 			containingDynamicScopeId = caller.getDyscopeId();
 			while (containingDynamicScopeId >= 0) {
-				containingDynamicScope = (CommonDynamicScope) state
+				containingDynamicScope = (ImmutableDynamicScope) state
 						.getScope(containingDynamicScopeId);
 				if (containingStaticScope == containingDynamicScope
 						.lexicalScope())
@@ -889,7 +888,7 @@ public class CommonStateFactory implements StateFactory {
 				containingDynamicScopeId, values, bitSet);
 		{
 			int id = containingDynamicScopeId;
-			CommonDynamicScope scope;
+			ImmutableDynamicScope scope;
 
 			while (id >= 0) {
 				scope = newScopes[id];
@@ -902,26 +901,26 @@ public class CommonStateFactory implements StateFactory {
 				id = scope.parent();
 			}
 		}
-		newProcesses[pid] = canonic(((CommonProcessState) state
+		newProcesses[pid] = canonic(((ImmutableProcessState) state
 				.getProcessState(pid)).push(stackEntry(null, sid)));
-		state = new CommonState(newProcesses, newScopes,
+		state = new ImmutableState(newProcesses, newScopes,
 				state.getPathCondition());
-		state = (CommonState) setLocation(state, pid, function.startLocation());
-		state = (CommonState) collectScopes(state);
+		state = (ImmutableState) setLocation(state, pid, function.startLocation());
+		state = (ImmutableState) collectScopesWork(state);
 		return state;
 	}
 
 	@Override
 	public State popCallStack(State state, int pid) {
-		ProcessState process = ((CommonState) state).getProcessState(pid);
-		CommonProcessState[] processArray = ((CommonState) state).processes();
-		CommonDynamicScope[] newScopes = ((CommonState) state).copyScopes();
+		ProcessState process = ((ImmutableState) state).getProcessState(pid);
+		ImmutableProcessState[] processArray = ((ImmutableState) state).processes();
+		ImmutableDynamicScope[] newScopes = ((ImmutableState) state).copyScopes();
 
-		processArray[pid] = canonic(((CommonProcessState) process).pop());
+		processArray[pid] = canonic(((ImmutableProcessState) process).pop());
 		setReachablesForProc(newScopes, processArray[pid]);
-		state = new CommonState((CommonState) state, processArray, newScopes,
+		state = new ImmutableState((ImmutableState) state, processArray, newScopes,
 				null);
-		return collectScopes(state);
+		return collectScopesWork(state);
 	}
 
 	/**
@@ -949,13 +948,13 @@ public class CommonStateFactory implements StateFactory {
 		// TODO: room for optimization here.
 		// don't create new things unless something changes.
 		int numScopes = state.numScopes();
-		CommonDynamicScope[] newDynamicScopes = new CommonDynamicScope[numScopes];
+		ImmutableDynamicScope[] newDynamicScopes = new ImmutableDynamicScope[numScopes];
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		BooleanExpression newPathCondition;
-		CommonState newState;
+		ImmutableState newState;
 
 		for (int i = 0; i < numScopes; i++) {
-			CommonDynamicScope oldScope = (CommonDynamicScope) ((CommonState) state)
+			ImmutableDynamicScope oldScope = (ImmutableDynamicScope) ((ImmutableState) state)
 					.getScope(i);
 			int numVars = oldScope.numberOfVariables();
 			SymbolicExpression[] newVariableValues = new SymbolicExpression[numVars];
@@ -973,9 +972,16 @@ public class CommonStateFactory implements StateFactory {
 		// TODO: do this here or when you produce new path condition?
 		if (nsat(newPathCondition))
 			newPathCondition = universe.falseExpression();
-		newState = new CommonState((CommonState) state, null, newDynamicScopes,
+		newState = new ImmutableState((ImmutableState) state, null, newDynamicScopes,
 				newPathCondition);
 		return newState;
+	}
+
+	@Override
+	public State collectScopes(State state) {
+		// in this factory, collectScopes is run after each modification
+		// to state that might affect scopes, so nothing to do
+		return state;
 	}
 
 }
