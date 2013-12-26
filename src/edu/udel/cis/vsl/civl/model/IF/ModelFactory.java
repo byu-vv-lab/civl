@@ -42,6 +42,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -742,29 +743,6 @@ public interface ModelFactory {
 			Expression expression, Expression guard);
 
 	/**
-	 * Create a fragment that contains the choose statement. A choose statement
-	 * is of the form <code>x = choose(n)</code>;
-	 * 
-	 * When a choose statement is executed, the left hand side will be assigned
-	 * a new symbolic constant. A bound on the values of that symbolic constant
-	 * will be added to the path condition.
-	 * 
-	 * @param civlSource
-	 *            The CIVL source of the choose statement
-	 * @param source
-	 *            The source location for this statement.
-	 * @param lhs
-	 *            The left hand side of the choose statement.
-	 * @param argument
-	 *            The argument to choose().
-	 * @param guard
-	 *            The guard
-	 * @return A new fragment.
-	 */
-	Fragment chooseFragment(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Expression argument, Expression guard);
-
-	/**
 	 * A fork statement. Used to spawn a new process.
 	 * 
 	 * @param civlSource
@@ -1062,9 +1040,43 @@ public interface ModelFactory {
 	 *         stack of conditional expression queues
 	 */
 	ConditionalExpression pollConditionaExpression();
-	
+
+	/**
+	 * The current translation encounters the starting point of an atomic block
+	 */
 	void enterAtomicBlock();
+
+	/**
+	 * The current translation reaches the ending point of an atomic block
+	 */
 	void leaveAtomicBlock();
+
+	/**
+	 * 
+	 * @return true iff the current translation is inside a certain atomic block
+	 */
 	boolean inAtomicBlock();
+
+	/**
+	 * A choose statement is of the form <code>x = $choose_int(n)</code>;
+	 * 
+	 * When a choose statement is executed, the left hand side will be assigned
+	 * a new symbolic constant. A bound on the values of that symbolic constant
+	 * will be added to the path condition.
+	 * 
+	 * @param civlSource
+	 *            The CIVL source of the choose statement
+	 * @param source
+	 *            The source location for this statement.
+	 * @param lhs
+	 *            The left hand side of the choose statement.
+	 * @param argument
+	 *            The argument to choose().
+	 * @param guard
+	 *            The guard
+	 * @return A new choose statement.
+	 */
+	ChooseStatement chooseStatement(CIVLSource civlSource, Location source,
+			LHSExpression lhs, Expression argument, Expression guard);
 
 }

@@ -14,7 +14,9 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
@@ -269,16 +271,16 @@ public class CommonLocation extends CommonSourceable implements Location {
 					this.purelyLocal = false;
 					return;
 				}
-				
+
 				if (newLocation.enterAtomic())
 					atomicFlags.push(1);
-				
+
 				if (newLocation.leaveAtomic()) {
 					atomicFlags.pop();
 				}
-				
+
 				newLocation = s.target();
-				if(checkedLocations.contains(newLocation.id()))
+				if (checkedLocations.contains(newLocation.id()))
 					newLocation = null;
 
 			} while (newLocation != null && !atomicFlags.isEmpty());
@@ -294,7 +296,10 @@ public class CommonLocation extends CommonSourceable implements Location {
 		else {
 			Statement s = getOutgoing(0);
 
-			this.purelyLocal = s.isPurelyLocal();
+			if (s instanceof ChooseStatement || s instanceof WaitStatement)
+				this.purelyLocal = false;
+			else
+				this.purelyLocal = s.isPurelyLocal();
 		}
 	}
 

@@ -116,6 +116,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -1587,15 +1588,70 @@ public class ModelBuilderWorker {
 	 */
 	private Fragment translateFunctionCallNode(Expression guard, Scope scope,
 			FunctionCallNode functionCallNode) {
-		Location location = factory.location(
-				factory.sourceOfBeginning(functionCallNode), scope);
+		CIVLSource source = factory.sourceOfBeginning(functionCallNode);
+		Location location = factory.location(source, scope);
+		String functionName = ((IdentifierExpressionNode) functionCallNode
+				.getFunction()).getIdentifier().name();
+		Fragment result;
 
-		Statement callStatement = callOrSpawnStatement(location, scope,
-				functionCallNode, null, true);
-		if (guard != null)
-			callStatement.setGuard(guard);
+		if (functionName.equals("$choose_int")) {
+			Statement chooseStatement = translateChooseIntFunctionCall(source,
+					location, guard, scope, null, functionCallNode);
 
-		return new CommonFragment(callStatement);
+			result = new CommonFragment(chooseStatement);
+		} else {
+			Statement callStatement = callOrSpawnStatement(location, scope,
+					functionCallNode, null, true);
+
+			if (guard != null)
+				callStatement.setGuard(guard);
+
+			result = new CommonFragment(callStatement);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Translate a function call of the function $choose_int into a choose
+	 * statement.
+	 * 
+	 * @param source
+	 *            The CIVL source
+	 * @param location
+	 *            The location
+	 * @param guard
+	 *            The guard
+	 * @param scope
+	 *            The scope
+	 * @param lhs
+	 *            The left hand side expression
+	 * @param functionCallNode
+	 *            The $choose_int function call node
+	 * @return The new choose statement
+	 */
+	private ChooseStatement translateChooseIntFunctionCall(CIVLSource source,
+			Location location, Expression guard, Scope scope,
+			LHSExpression lhs, FunctionCallNode functionCallNode) {
+		int numberOfArgs = functionCallNode.getNumberOfArguments();
+		Expression argument;
+
+		if (factory.inAtomicBlock()) {
+			throw new CIVLInternalException(
+					"Non-determinstic function call choose_int is not allowed in atomic blocks.",
+					source);
+		}
+		if (numberOfArgs != 1) {
+			throw new CIVLInternalException(
+					"The function $choose_int should have exactly one argument.",
+					source);
+		}
+		argument = translateExpressionNode(functionCallNode.getArgument(0),
+				scope, true);
+		// TODO: once you translate conversions, you will do this
+		// there and can delete the following line:
+		argument = arrayToPointer(argument);
+		return factory.chooseStatement(source, location, lhs, argument, guard);
 	}
 
 	/**
@@ -1735,13 +1791,29 @@ public class ModelBuilderWorker {
 		if (isCompleteMallocExpression(rhsNode))
 			result = mallocStatement(source, location, lhs, (CastNode) rhsNode,
 					scope);
-		else if (rhsNode instanceof FunctionCallNode)
-			result = callOrSpawnStatement(location, scope,
-					(FunctionCallNode) rhsNode, lhs, true);
-		else if (rhsNode instanceof SpawnNode)
-			result = callOrSpawnStatement(location, scope,
-					((SpawnNode) rhsNode).getCall(), lhs, false);
-		else
+		else if (rhsNode instanceof FunctionCallNode
+				|| rhsNode instanceof SpawnNode) {
+			FunctionCallNode functionCallNode;
+			String functionName;
+			boolean isCall;
+
+			if (rhsNode instanceof FunctionCallNode) {
+				functionCallNode = (FunctionCallNode) rhsNode;
+				isCall = true;
+			} else {
+				functionCallNode = ((SpawnNode) rhsNode).getCall();
+				isCall = false;
+			}
+			functionName = ((IdentifierExpressionNode) functionCallNode
+					.getFunction()).getIdentifier().name();
+			if (functionName.equals("$choose_int")) {
+				result = translateChooseIntFunctionCall(source, location, null,
+						scope, lhs, functionCallNode);
+			} else
+				result = callOrSpawnStatement(location, scope,
+						functionCallNode, lhs, isCall);
+
+		} else
 			result = factory
 					.assignStatement(
 							lhs.getSource(),
@@ -2047,7 +2119,7 @@ public class ModelBuilderWorker {
 
 		if (factory.inAtomicBlock()) {
 			throw new CIVLInternalException(
-					"Wait statement is not allowed in atomic block!", source);
+					"Wait statement is not allowed in atomic blocks.", source);
 		}
 
 		return factory.joinFragment(source, location,
@@ -2990,14 +3062,7 @@ public class ModelBuilderWorker {
 						factory.sourceOf(node));
 			}
 			break;
-		case TYPE:
-			TypeNode typeNode = (TypeNode) node;
-			if (typeNode.kind() == TypeNodeKind.STRUCTURE_OR_UNION) {
-				result = translateCompoundTypeNode(location, scope,
-						(TypeNode) node);
-				break; // if not structure or union type, then execute default
-						// case to throw an exception
-			}
+
 		case TYPEDEF:
 			// TypedefDeclarationNode node has to be processed separately from
 			// StructureOrUnionTypeNode, because TypedefDeclarationNode is not a
@@ -3020,6 +3085,15 @@ public class ModelBuilderWorker {
 		case STATEMENT:
 			result = translateStatementNode(guard, scope, (StatementNode) node);
 			break;
+		case TYPE:
+			TypeNode typeNode = (TypeNode) node;
+			if (typeNode.kind() == TypeNodeKind.STRUCTURE_OR_UNION) {
+				result = translateCompoundTypeNode(location, scope,
+						(TypeNode) node);
+				break;
+			}
+			// if not structure or union type, then execute default
+			// case to throw an exception
 		default:
 			if (scope.id() == systemScope.id())
 				throw new CIVLInternalException("Unsupported declaration type",

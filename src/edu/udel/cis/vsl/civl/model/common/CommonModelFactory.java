@@ -138,6 +138,28 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  */
 public class CommonModelFactory implements ModelFactory {
 
+	/**
+	 * Kinds for temporal variables introduced when translating conditional
+	 * expressions, choose_int function calls that require to temporal variable
+	 * to store some intermediate data
+	 * 
+	 */
+	public enum TempVariableKind {
+		CONDITIONAL, CHOOSE
+	}
+
+	/**
+	 * The prefix of the temporal variables for translating conditional
+	 * expressions
+	 */
+	private final String CONDITIONAL_VARIABLE_PREFIX = "$COND_VAR_";
+
+	/**
+	 * The prefix of the temporal variables for translating $choose_int function
+	 * calls
+	 */
+	private final String CHOOSE_VARIABLE_PREFIX = "$CHOOSE_VAR_";
+
 	ModelBuilderWorker modelBuilder;
 
 	/**
@@ -215,6 +237,11 @@ public class CommonModelFactory implements ModelFactory {
 	 * create temporal variable.
 	 */
 	private int conditionalExpressionCounter = 0;
+
+	/**
+	 * The number of function call $choose_int that needs a temporal variable.
+	 */
+	private int chooseIntegerCounter = 0;
 
 	/**
 	 * The status of the translation, true iff an atomic block is currently
@@ -316,29 +343,11 @@ public class CommonModelFactory implements ModelFactory {
 		return systemSource;
 	}
 
-	/**
-	 * Create a new model.
-	 * 
-	 * @param system
-	 *            The designated outermost function, called "System."
-	 */
 	@Override
 	public Model model(CIVLSource civlSource, CIVLFunction system) {
 		return new CommonModel(civlSource, this, system);
 	}
 
-	/**
-	 * Create a new scope.
-	 * 
-	 * @param parent
-	 *            The containing scope of this scope. Only null for the
-	 *            outermost scope of the designated "System" function.
-	 * @param variables
-	 *            The set of variables in this scope.
-	 * @param function
-	 *            The function containing this scope.
-	 * @return A new scope
-	 */
 	@Override
 	public Scope scope(CIVLSource source, Scope parent,
 			Set<Variable> variables, CIVLFunction function) {
@@ -350,12 +359,6 @@ public class CommonModelFactory implements ModelFactory {
 		return newScope;
 	}
 
-	/**
-	 * Get an identifier with the given name.
-	 * 
-	 * @param name
-	 *            The name of this identifier.
-	 */
 	@Override
 	public Identifier identifier(CIVLSource source, String name) {
 		Identifier result = identifiers.get(name);
@@ -370,37 +373,12 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * Create a new variable.
-	 * 
-	 * @param type
-	 *            The type of this variable.
-	 * @param name
-	 *            The name of this variable.
-	 * @param vid
-	 *            The index of this variable in its scope.
-	 */
 	@Override
 	public Variable variable(CIVLSource source, CIVLType type, Identifier name,
 			int vid) {
 		return new CommonVariable(source, type, name, vid);
 	}
 
-	/**
-	 * Create a new function.
-	 * 
-	 * @param name
-	 *            The name of this function.
-	 * @param parameters
-	 *            The list of parameters.
-	 * @param returnType
-	 *            The return type of this function.
-	 * @param containingScope
-	 *            The scope containing this function.
-	 * @param startLocation
-	 *            The first location in the function.
-	 * @return The new function.
-	 */
 	@Override
 	public CIVLFunction function(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
@@ -414,12 +392,6 @@ public class CommonModelFactory implements ModelFactory {
 				containingScope, startLocation, this);
 	}
 
-	/**
-	 * Create a record of a system function.
-	 * 
-	 * @param name
-	 *            The name of this function.
-	 */
 	@Override
 	public SystemFunction systemFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
@@ -428,13 +400,6 @@ public class CommonModelFactory implements ModelFactory {
 				containingScope, (Location) null, this, libraryName);
 	}
 
-	/**
-	 * Create a new location.
-	 * 
-	 * @param scope
-	 *            The scope containing this location.
-	 * @return The new location.
-	 */
 	@Override
 	public Location location(CIVLSource source, Scope scope) {
 		return new CommonLocation(source, scope, locationID++);
@@ -445,61 +410,31 @@ public class CommonModelFactory implements ModelFactory {
 	 * *********************************************************************
 	 */
 
-	/**
-	 * Get the integer primitive type.
-	 * 
-	 * @return The integer primitive type.
-	 */
 	@Override
 	public CIVLPrimitiveType integerType() {
 		return integerType;
 	}
 
-	/**
-	 * Get the real primitive type.
-	 * 
-	 * @return The real primitive type.
-	 */
 	@Override
 	public CIVLPrimitiveType realType() {
 		return realType;
 	}
 
-	/**
-	 * Get the boolean primitive type.
-	 * 
-	 * @return The boolean primitive type.
-	 */
 	@Override
 	public CIVLPrimitiveType booleanType() {
 		return booleanType;
 	}
 
-	/**
-	 * Get the string primitive type.
-	 * 
-	 * @return The string primitive type.
-	 */
 	@Override
 	public CIVLPrimitiveType stringType() {
 		return stringType;
 	}
 
-	/**
-	 * Get the scope primitive type.
-	 * 
-	 * @return The scope primitive type.
-	 */
 	@Override
 	public CIVLPrimitiveType scopeType() {
 		return scopeType;
 	}
 
-	/**
-	 * Get the process type.
-	 * 
-	 * @return The process type.
-	 */
 	@Override
 	public CIVLPrimitiveType processType() {
 		return processType;
@@ -510,13 +445,6 @@ public class CommonModelFactory implements ModelFactory {
 		return dynamicType;
 	}
 
-	/**
-	 * Get a new array type.
-	 * 
-	 * @param baseType
-	 *            The type of each element in the array.
-	 * @return A new array type with the given base type.
-	 */
 	@Override
 	public CIVLArrayType incompleteArrayType(CIVLType baseType) {
 		return new CommonArrayType(baseType);
@@ -528,13 +456,6 @@ public class CommonModelFactory implements ModelFactory {
 		return new CommonCompleteArrayType(elementType, extent);
 	}
 
-	/**
-	 * Get a new pointer type.
-	 * 
-	 * @param baseType
-	 *            The type of element pointed to by the pointer.
-	 * @return A new pointer type with the given base type.
-	 */
 	@Override
 	public CIVLPointerType pointerType(CIVLType baseType) {
 		return new CommonPointerType(baseType, pointerSymbolicType);
@@ -545,15 +466,6 @@ public class CommonModelFactory implements ModelFactory {
 		return new CommonStructType(name);
 	}
 
-	/**
-	 * Get a struct field.
-	 * 
-	 * @param name
-	 *            Identifier for the name of this struct member.
-	 * @param type
-	 *            The type of this struct member.
-	 * @return A struct field with the given name and type.
-	 */
 	@Override
 	public StructField structField(Identifier name, CIVLType type) {
 		return new CommonStructField(name, type);
@@ -998,43 +910,27 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * A choose statement is of the form x = choose(n), where n is an integer.
-	 * 
-	 * When a choose statement is executed, all possible assignments of the
-	 * 
-	 * @param source
-	 *            The source location for this statement.
-	 * @param lhs
-	 *            The left hand side of the choose statement.
-	 * @param argument
-	 *            The argument to choose(). This must be an integer-valued
-	 *            expression.
-	 * @return A new choose statement.
-	 */
-	@Override
-	public Fragment chooseFragment(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Expression argument, Expression guard) {
-		ChooseStatement result = new CommonChooseStatement(civlSource, source,
-				lhs, argument, chooseID++);
 
+	@Override
+	public ChooseStatement chooseStatement(CIVLSource civlSource,
+			Location source, LHSExpression lhs, Expression argument,
+			Expression guard) {
+		ChooseStatement result;
+
+		if (lhs == null) {
+			lhs = this.tempVariable(TempVariableKind.CHOOSE, source.scope(),
+					civlSource, argument.getExpressionType());
+		}
+		result = new CommonChooseStatement(civlSource, source, lhs, argument,
+				chooseID++);
 		result.setStatementScope(join(lhs.expressionScope(),
 				argument.expressionScope()));
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		if (guard != null)
 			result.setGuard(guard);
-		return new CommonFragment(result);
+		return result;
 	}
 
-	/**
-	 * A join statement. Used to wait for a process to complete.
-	 * 
-	 * @param source
-	 *            The source location for this join statement.
-	 * @param process
-	 *            An expression evaluating to a process.
-	 * @return A new join statement.
-	 */
 	@Override
 	public Fragment joinFragment(CIVLSource civlSource, Location source,
 			Expression process, Expression guard) {
@@ -1475,6 +1371,8 @@ public class CommonModelFactory implements ModelFactory {
 	/**
 	 * Generate a temporal variable for translating away conditional expression
 	 * 
+	 * @param kind
+	 *            The temporal variable kind
 	 * @param scope
 	 *            The scope of the temporal variable
 	 * @param source
@@ -1483,17 +1381,29 @@ public class CommonModelFactory implements ModelFactory {
 	 *            The CIVL type of the conditional expression
 	 * @return The variable expression referring to the temporal variable
 	 */
-	public VariableExpression tempVariable(Scope scope, CIVLSource source,
-			CIVLType type) {
+	private VariableExpression tempVariable(TempVariableKind kind, Scope scope,
+			CIVLSource source, CIVLType type) {
 		String name = "$V" + this.conditionalExpressionCounter++;
 		int vid = scope.numVariables();
-		StringObject stringObject = (StringObject) universe.canonic(universe
-				.stringObject(name));
-		Variable variable = new CommonVariable(source, type,
-				new CommonIdentifier(source, stringObject), vid);
-		VariableExpression result = new CommonVariableExpression(source,
-				variable);
+		StringObject stringObject;
+		Variable variable;
+		VariableExpression result;
 
+		switch (kind) {
+		case CONDITIONAL:
+			name = CONDITIONAL_VARIABLE_PREFIX
+					+ this.conditionalExpressionCounter++;
+			break;
+		case CHOOSE:
+			name = CHOOSE_VARIABLE_PREFIX + this.chooseIntegerCounter++;
+			break;
+		default:
+		}
+		stringObject = (StringObject) universe.canonic(universe
+				.stringObject(name));
+		variable = new CommonVariable(source, type, new CommonIdentifier(
+				source, stringObject), vid);
+		result = new CommonVariableExpression(source, variable);
 		scope.addVariable(variable);
 		((CommonVariableExpression) result).setExpressionType(variable.type());
 		return result;
@@ -1511,7 +1421,8 @@ public class CommonModelFactory implements ModelFactory {
 
 		while (hasConditionalExpressions()) {
 			ConditionalExpression conditionalExpression = pollConditionaExpression();
-			VariableExpression variable = tempVariable(scope,
+			VariableExpression variable = tempVariable(
+					TempVariableKind.CONDITIONAL, scope,
 					conditionalExpression.getSource(),
 					conditionalExpression.getExpressionType());
 
@@ -1544,8 +1455,9 @@ public class CommonModelFactory implements ModelFactory {
 
 		while (hasConditionalExpressions()) {
 			ConditionalExpression conditionalExpression = pollConditionaExpression();
-			VariableExpression variable = tempVariable(statement.source()
-					.scope(), conditionalExpression.getSource(),
+			VariableExpression variable = tempVariable(
+					TempVariableKind.CONDITIONAL, statement.source().scope(),
+					conditionalExpression.getSource(),
 					conditionalExpression.getExpressionType());
 			Fragment ifElse = conditionalExpressionToIf(statement.guard(),
 					variable, conditionalExpression);

@@ -229,4 +229,10 @@ public class LanguageFeaturesTest {
 		assertFalse(ui.run("verify", "-showModel",
 				filename("atomicWaitBad.cvl")));
 	}
+	
+	@Test
+	public void testChooseInt() throws ABCException {
+		assertTrue(ui.run("verify", "-showModel",
+				filename("chooseInt.cvl")));
+	}
 }

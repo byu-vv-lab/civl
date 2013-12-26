@@ -9,6 +9,7 @@ import java.util.Stack;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -16,7 +17,6 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
-import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -316,9 +316,23 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				State currentState = newState;
 
 				for (Statement s : newLocation.outgoing()) {
-					BooleanExpression newPathCondition = executor
-							.newPathCondition(newState, pid, s);
-					// WaitStatement test;
+					BooleanExpression newPathCondition;
+
+					if (s instanceof WaitStatement) {
+						throw new CIVLStateException(
+								ErrorKind.OTHER,
+								Certainty.CONCRETE,
+								"Wait statement is not allowed in atomic blocks.",
+								currentState, newLocation.getSource());
+					}
+
+					if (s instanceof ChooseStatement) {
+						throw new CIVLInternalException(
+								"Non-determinstic function call choose_int is not allowed in atomic blocks.",
+								newLocation.getSource());
+					}
+					newPathCondition = executor.newPathCondition(newState, pid,
+							s);
 					if (!newPathCondition.isFalse()) {
 						if (statementExecuted) {
 							// non-determinism detected
@@ -330,46 +344,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 							throw e;
 						}
-						if (s instanceof WaitStatement) {
-							Evaluation eval;
-							int pidValue;
 
-							p = newState.getProcessState(pid);
-							eval = executor
-									.evaluator()
-									.evaluate(
-											newState.setPathCondition(newPathCondition),
-											p.getPid(),
-											((WaitStatement) s).process());
-							pidValue = executor.modelFactory().getProcessId(
-									((WaitStatement) s).process().getSource(),
-									eval.value);
-
-							if (pidValue < 0) {
-								CIVLExecutionException e = new CIVLStateException(
-										ErrorKind.INVALID_PID,
-										Certainty.PROVEABLE,
-										"Unable to call $wait on a process that has already been the target of a $wait.",
-										newState, s.getSource());
-
-								executor.evaluator().reportError(e);
-								// TODO: recover: add a no-op transition
-								throw e;
-							}
-							if (!newState.getProcessState(pidValue)
-									.hasEmptyStack()) {
-								CIVLExecutionException e = new CIVLStateException(
-										ErrorKind.OTHER,
-										Certainty.CONCRETE,
-										"Undesired blocked location is detected in atomic block.",
-										currentState, newLocation.getSource());
-
-								throw e;
-							}
-						} else {
-							newState = newState
-									.setPathCondition(newPathCondition);
-						}
+						newState = newState.setPathCondition(newPathCondition);
 						newState = executor.execute(newState, pid, s);
 						statementExecuted = true;
 					}

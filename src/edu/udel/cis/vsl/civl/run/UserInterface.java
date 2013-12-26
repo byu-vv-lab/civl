@@ -45,7 +45,7 @@ public class UserInterface {
 	 * kind of factory can be explicitly specified using the "-transient"
 	 * option.
 	 */
-	public final static boolean transientIsDefault = true;
+	public final static boolean transientIsDefault = false;
 
 	/**
 	 * A string printed before and after titles of sections of output to make
