@@ -16,7 +16,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Stephen F. Siegel (siegel)
  * 
  */
-public class TransientDynamicScope extends TransientObject implements DynamicScope {
+public class TransientDynamicScope extends TransientObject implements
+		DynamicScope {
 
 	/*********************** Static Fields **************************/
 
@@ -28,7 +29,7 @@ public class TransientDynamicScope extends TransientObject implements DynamicSco
 	/**
 	 * How many instances of this class have been created?
 	 */
-	private static long instanceCount = 0;
+	static long instanceCount = 0;
 
 	/********************** Instance Fields *************************/
 
@@ -78,7 +79,8 @@ public class TransientDynamicScope extends TransientObject implements DynamicSco
 	 * @param variableValues
 	 *            the array of variable values (in order by vid, from 0, up)
 	 */
-	TransientDynamicScope(Scope lexicalScope, SymbolicExpression[] variableValues) {
+	TransientDynamicScope(Scope lexicalScope,
+			SymbolicExpression[] variableValues) {
 		super(instanceCount++);
 		assert variableValues != null
 				&& variableValues.length == lexicalScope.numVariables();

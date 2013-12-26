@@ -52,6 +52,8 @@ public class TransientStateFactory implements StateFactory {
 
 	private SymbolicExpression nullExpression;
 
+	private long initialNumStateInstances = TransientState.instanceCount;
+
 	// *************************** Constructors ***********************
 
 	/**
@@ -215,7 +217,7 @@ public class TransientStateFactory implements StateFactory {
 
 	@Override
 	public long getNumStateInstances() {
-		return TransientState.instanceCount;
+		return TransientState.instanceCount - initialNumStateInstances;
 	}
 
 	@Override
@@ -392,8 +394,8 @@ public class TransientStateFactory implements StateFactory {
 				theState = theState.addScope(scope, dynamicScopeId, reachers);
 				dynamicScopeId = theState.numScopes() - 1;
 			}
-			theState = theState.replaceTop(pid, new TransientStackEntry(location,
-					dynamicScopeId));
+			theState = theState.replaceTop(pid, new TransientStackEntry(
+					location, dynamicScopeId));
 		}
 		return theState;
 	}

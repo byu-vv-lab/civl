@@ -20,7 +20,8 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
  * @author Timothy J. McClory (tmcclory)
  * 
  */
-public class TransientProcessState extends TransientObject implements ProcessState {
+public class TransientProcessState extends TransientObject implements
+		ProcessState {
 
 	/*********************** Static Fields **************************/
 
@@ -33,7 +34,7 @@ public class TransientProcessState extends TransientObject implements ProcessSta
 	/**
 	 * How many instances of this class have been created?
 	 */
-	private static long instanceCount = 0;
+	static long instanceCount = 0;
 
 	/********************** Instance Fields *************************/
 

@@ -45,6 +45,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private Reasoner trueReasoner;
 
+	private long initialNumStateInstances = ImmutableState.instanceCount;
+
 	// *************************** Constructors ***********************
 
 	/**
@@ -282,7 +284,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 	@Override
 	public long getNumStateInstances() {
-		return ImmutableState.instanceCount;
+		return ImmutableState.instanceCount - initialNumStateInstances;
 	}
 
 	@Override
@@ -365,7 +367,8 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression value) {
 		ImmutableDynamicScope oldScope = (ImmutableDynamicScope) ((ImmutableState) state)
 				.getScope(scopeId);
-		ImmutableDynamicScope[] newScopes = ((ImmutableState) state).copyScopes();
+		ImmutableDynamicScope[] newScopes = ((ImmutableState) state)
+				.copyScopes();
 		SymbolicExpression[] newValues = oldScope.copyValues();
 		ImmutableDynamicScope newScope;
 
@@ -412,8 +415,8 @@ public class ImmutableStateFactory implements StateFactory {
 				oldToNewPidMap[i] = i - 1;
 			newScopes = updateProcessReferencesInScopes(state, oldToNewPidMap);
 		}
-		state = new ImmutableState((ImmutableState) state, newProcesses, newScopes,
-				null);
+		state = new ImmutableState((ImmutableState) state, newProcesses,
+				newScopes, null);
 		return collectScopesWork((state));
 	}
 
@@ -471,8 +474,8 @@ public class ImmutableStateFactory implements StateFactory {
 	 *            removed.
 	 * @return new dyanmic scopes or null
 	 */
-	private ImmutableDynamicScope[] updateProcessReferencesInScopes(State state,
-			int[] oldToNewPidMap) {
+	private ImmutableDynamicScope[] updateProcessReferencesInScopes(
+			State state, int[] oldToNewPidMap) {
 		Map<SymbolicExpression, SymbolicExpression> procSubMap = procSubMap(oldToNewPidMap);
 		ImmutableDynamicScope[] newScopes = null;
 		int numScopes = state.numScopes();
@@ -569,7 +572,8 @@ public class ImmutableStateFactory implements StateFactory {
 				if (newScopes == null) {
 					newScopes = new ImmutableDynamicScope[numScopes];
 					for (int j = 0; j < i; j++)
-						newScopes[j] = (ImmutableDynamicScope) state.getScope(j);
+						newScopes[j] = (ImmutableDynamicScope) state
+								.getScope(j);
 				}
 				newScopes[i] = dynamicScope(staticScope, dynamicScope.parent(),
 						newValues, dynamicScope.reachers());
@@ -642,7 +646,8 @@ public class ImmutableStateFactory implements StateFactory {
 	 */
 	@Override
 	public State setLocation(State state, int pid, Location location) {
-		ImmutableProcessState[] processArray = ((ImmutableState) state).processes();
+		ImmutableProcessState[] processArray = ((ImmutableState) state)
+				.processes();
 		int dynamicScopeId = ((ImmutableState) state).getProcessState(pid)
 				.getDyscopeId();
 		ImmutableDynamicScope dynamicScope = (ImmutableDynamicScope) ((ImmutableState) state)
@@ -905,7 +910,8 @@ public class ImmutableStateFactory implements StateFactory {
 				.getProcessState(pid)).push(stackEntry(null, sid)));
 		state = new ImmutableState(newProcesses, newScopes,
 				state.getPathCondition());
-		state = (ImmutableState) setLocation(state, pid, function.startLocation());
+		state = (ImmutableState) setLocation(state, pid,
+				function.startLocation());
 		state = (ImmutableState) collectScopesWork(state);
 		return state;
 	}
@@ -913,13 +919,15 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public State popCallStack(State state, int pid) {
 		ProcessState process = ((ImmutableState) state).getProcessState(pid);
-		ImmutableProcessState[] processArray = ((ImmutableState) state).processes();
-		ImmutableDynamicScope[] newScopes = ((ImmutableState) state).copyScopes();
+		ImmutableProcessState[] processArray = ((ImmutableState) state)
+				.processes();
+		ImmutableDynamicScope[] newScopes = ((ImmutableState) state)
+				.copyScopes();
 
 		processArray[pid] = canonic(((ImmutableProcessState) process).pop());
 		setReachablesForProc(newScopes, processArray[pid]);
-		state = new ImmutableState((ImmutableState) state, processArray, newScopes,
-				null);
+		state = new ImmutableState((ImmutableState) state, processArray,
+				newScopes, null);
 		return collectScopesWork(state);
 	}
 
@@ -972,8 +980,8 @@ public class ImmutableStateFactory implements StateFactory {
 		// TODO: do this here or when you produce new path condition?
 		if (nsat(newPathCondition))
 			newPathCondition = universe.falseExpression();
-		newState = new ImmutableState((ImmutableState) state, null, newDynamicScopes,
-				newPathCondition);
+		newState = new ImmutableState((ImmutableState) state, null,
+				newDynamicScopes, newPathCondition);
 		return newState;
 	}
 
