@@ -23,12 +23,17 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
- * Factory to create all state objects.
+ * An implementation of StateFactory based on the Transient Pattern.
+ * 
+ * A transient state begins in a mutable state, and become immutable upon
+ * commit. Only the intrinsic data are guaranteed immutable; the extrinsic data
+ * may still be mutable. In particular there are fields "seen" and "onStack"
+ * which can always be set/get, regardless of the mutable bit.
+ * 
  * 
  * @author Timothy K. Zirkel (zirkel)
  * @author Timothy J. McClory (tmcclory)
  * @author Stephen F. Siegel (siegel)
- * 
  */
 public class TransientStateFactory implements StateFactory {
 

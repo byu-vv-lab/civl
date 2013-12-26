@@ -20,11 +20,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * hashCode methods. Those methods should depend only on the three intrinsic
  * data listed above.
  * 
- * An instance begins in a mutable state, and become immutable upon commit. Only
- * the intrinsic data are guaranteed immutable; the extrinsic data may still be
- * mutable. In particular there are fields "seen" and "onStack" which can always
- * be set/get, regardless of the mutable bit.
+ * States may be mutable or immutable (or something in between).
+ * The contract for the state modules does not specify this.
+ * However, states must supply a "commit" method.  After invoking
+ * this method, the state must be essentially immutable, which means
+ * its intrinsic data (and therefore hash code) cannot change.
  * 
+* 
  * The processes and dynamic scopes are ordered within any one State. However
  * their order may change from State to State.
  * 

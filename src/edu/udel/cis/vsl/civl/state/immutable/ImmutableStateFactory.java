@@ -21,10 +21,11 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
- * Factory to create all state objects.
+ * An implementation of StateFactory based on the Immutable Pattern.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * @author Timothy J. McClory (tmcclory)
+ * @author Stephen F. Siegel (siegel)
  * 
  */
 public class ImmutableStateFactory implements StateFactory {
