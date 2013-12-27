@@ -35,6 +35,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	private Variable[] variables;
 	private Set<Scope> children = new LinkedHashSet<Scope>();
 	private Collection<Variable> procRefs = new HashSet<Variable>();
+	private Collection<Variable> scopeRefs = new HashSet<Variable>();
 	private Collection<Variable> pointers = new HashSet<Variable>();
 	private int id;
 	private CIVLFunction function;
@@ -149,6 +150,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 		assert variable.vid() == oldVariables.length;
 		variables[oldVariables.length] = variable;
 		checkProcRef(variable);
+		checkScopeRef(variable);
 		checkPointer(variable);
 		variable.setScope(this);
 	}
@@ -209,13 +211,25 @@ public class CommonScope extends CommonSourceable implements Scope {
 	}
 
 	/**
-	 * A variable has a "procRefType" if it is of type Process or if it is an
-	 * array with element of procRefType.
+	 * A variables has a "procRefType" if it is of type Process, if it is an
+	 * array with element of procRefType, or if it is a struct with fields of
+	 * procRefType.
 	 * 
 	 * @return A collection of the variables in this scope with a procRefType.
 	 */
 	public Collection<Variable> variablesWithProcrefs() {
 		return procRefs;
+	}
+
+	/**
+	 * A variables has a "scopeRefType" if it is of type Scope, if it is an
+	 * array with element of scopeRefType, if it is a struct with fields of
+	 * scopeRefType, or if it contains a pointer.
+	 * 
+	 * @return A collection of the variables in this scope with a scopeRefType.
+	 */
+	public Collection<Variable> variablesWithScoperefs() {
+		return scopeRefs;
 	}
 
 	/**
@@ -238,23 +252,28 @@ public class CommonScope extends CommonSourceable implements Scope {
 	 *            The variable being checked.
 	 */
 	private void checkProcRef(Variable variable) {
-		boolean procRefType = false;
-		CIVLType type = variable.type();
+		boolean procRefType = containsProcType(variable.type());
 
-		if (type.isProcessType()) {
-			procRefType = true;
-		} else if (variable.type() instanceof CIVLArrayType) {
-			CIVLType baseType = ((CIVLArrayType) variable.type()).elementType();
-
-			while (baseType instanceof CIVLArrayType) {
-				baseType = ((CIVLArrayType) baseType).elementType();
-			}
-			if (baseType.isProcessType()) {
-				procRefType = true;
-			}
-		}
 		if (procRefType) {
 			procRefs.add(variable);
+		}
+	}
+
+	/**
+	 * Checks if a variables is a scopeRefType. If it is, it gets added to
+	 * scopeRefs.
+	 * 
+	 * @param v
+	 *            The variable being checked.
+	 */
+	private void checkScopeRef(Variable variable) {
+		CIVLType type = variable.type();
+		boolean scopeRefType = containsScopeType(type);
+
+		if (scopeRefType) {
+			scopeRefs.add(variable);
+		} else if (containsPointerType(type)) {
+			scopeRefs.add(variable);
 		}
 	}
 
@@ -294,6 +313,52 @@ public class CommonScope extends CommonSourceable implements Scope {
 			containsPointerType = true;
 		}
 		return containsPointerType;
+	}
+
+	private boolean containsScopeType(CIVLType type) {
+		boolean containsScopeType = false;
+
+		if (type.isScopeType()) {
+			containsScopeType = true;
+		} else if (type.isArrayType()) {
+			containsScopeType = containsPointerType(((CIVLArrayType) type)
+					.elementType());
+		} else if (type.isStructType()) {
+			for (StructField f : ((CIVLStructType) type).fields()) {
+				boolean fieldContainsScope = containsScopeType(f.type());
+
+				containsScopeType = containsScopeType || fieldContainsScope;
+			}
+		} else if (type instanceof CIVLHeapType) {
+			// Heaps start out incomplete, so let's assume this is true for now.
+			// Ultimately we'd like to only have this be true if the heap
+			// contains scope types.
+			containsScopeType = true;
+		}
+		return containsScopeType;
+	}
+	
+	private boolean containsProcType(CIVLType type) {
+		boolean containsProcType = false;
+
+		if (type.isScopeType()) {
+			containsProcType = true;
+		} else if (type.isArrayType()) {
+			containsProcType = containsProcType(((CIVLArrayType) type)
+					.elementType());
+		} else if (type.isStructType()) {
+			for (StructField f : ((CIVLStructType) type).fields()) {
+				boolean fieldContainsProc = containsProcType(f.type());
+
+				containsProcType = containsProcType || fieldContainsProc;
+			}
+		} else if (type instanceof CIVLHeapType) {
+			// Heaps start out incomplete, so let's assume this is true for now.
+			// Ultimately we'd like to only have this be true if the heap
+			// contains process types.
+			containsProcType = true;
+		}
+		return containsProcType;
 	}
 
 	@Override

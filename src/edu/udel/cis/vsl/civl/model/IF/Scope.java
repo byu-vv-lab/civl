@@ -117,12 +117,22 @@ public interface Scope extends Sourceable {
 	Identifier functionName();
 
 	/**
-	 * A variables has a "procRefType" if it is of type Process or if it is an
-	 * array with element of procRefType.
+	 * A variables has a "procRefType" if it is of type Process, if it is an
+	 * array with element of procRefType, or if it is a struct with fields of
+	 * procRefType.
 	 * 
 	 * @return A collection of the variables in this scope with a procRefType.
 	 */
 	Collection<Variable> variablesWithProcrefs();
+
+	/**
+	 * A variables has a "scopeRefType" if it is of type Scope, if it is an
+	 * array with element of scopeRefType, if it is a struct with fields of
+	 * scopeRefType, or if it contains a pointer.
+	 * 
+	 * @return A collection of the variables in this scope with a scopeRefType.
+	 */
+	Collection<Variable> variablesWithScoperefs();
 
 	/**
 	 * A variable contains a pointer type if it is of type PointerType, if it is
@@ -149,9 +159,10 @@ public interface Scope extends Sourceable {
 	// this scope and throw an exception otherwise. If it throws an exception,
 	// that should also be in this contract.
 	int getVid(Variable staticVariable);
-	
+
 	/**
 	 * Return true if the scope is a descendant of the scope anc
+	 * 
 	 * @param des
 	 * @param anc
 	 * @return true or false
