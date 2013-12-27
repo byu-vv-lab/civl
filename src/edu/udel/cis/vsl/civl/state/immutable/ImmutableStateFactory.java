@@ -548,13 +548,13 @@ public class ImmutableStateFactory implements StateFactory {
 			ImmutableDynamicScope dynamicScope = (ImmutableDynamicScope) state
 					.getScope(i);
 			Scope staticScope = dynamicScope.lexicalScope();
-			Collection<Variable> pointerVariableIter = staticScope
-					.variablesWithPointers();
+			Collection<Variable> scopeVariableIter = staticScope
+					.variablesWithScoperefs();
 			SymbolicExpression[] newValues = null;
 			// BitSet oldBitSet = dynamicScope.reachers();
 			// BitSet newBitSet = updateBitSet(oldBitSet, oldToNewPidMap);
 
-			for (Variable variable : pointerVariableIter) {
+			for (Variable variable : scopeVariableIter) {
 				int vid = variable.vid();
 				SymbolicExpression oldValue = dynamicScope.getValue(vid);
 

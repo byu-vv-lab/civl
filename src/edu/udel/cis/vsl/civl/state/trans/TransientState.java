@@ -375,13 +375,9 @@ public class TransientState extends TransientObject implements State {
 			Map<SymbolicExpression, SymbolicExpression> scopeSubMap,
 			SymbolicUniverse universe, DynamicScope scope) {
 		Scope staticScope = scope.lexicalScope();
-		Collection<Variable> pointerVariableIter = staticScope
-				.variablesWithPointers();
+		Collection<Variable> scopeVariableIter = staticScope.variablesWithScoperefs();
 
-		// TODO: also need other variables that might contain
-		// scope type
-
-		for (Variable variable : pointerVariableIter) {
+		for (Variable variable : scopeVariableIter) {
 			int vid = variable.vid();
 			SymbolicExpression oldValue = scope.getValue(vid);
 
