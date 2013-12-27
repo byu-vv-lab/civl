@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.conversion.IF.ArithmeticConversion;
@@ -3173,13 +3174,13 @@ public class ModelBuilderWorker {
 
 			translateFunctionDefinitionNode(functionDefinition, null, null);
 		}
-		for (CallOrSpawnStatement statement : callStatements.keySet()) {
-			statement
-					.setFunction(functionMap.get(callStatements.get(statement)));
+		for (Entry<CallOrSpawnStatement, Function> entry : callStatements
+				.entrySet()) {
+			entry.getKey().setFunction(functionMap.get(entry.getValue()));
 		}
 		factory.completeHeapType(heapType, mallocStatements);
-		for (Type t : typeMap.keySet()) {
-			CIVLType thisType = typeMap.get(t);
+		for (Entry<Type, CIVLType> entry : typeMap.entrySet()) {
+			CIVLType thisType = entry.getValue();
 
 			if (bundleableType(thisType)) {
 				bundleableTypeList.add(thisType);

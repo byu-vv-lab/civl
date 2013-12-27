@@ -65,6 +65,26 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 /**
  * The factory to create all model components. Usually this is the only way
  * model components will be created.
+ * <p>
+ * A model consists of a set of functions, including a designated "system"
+ * function which is where the execution of the program begins. To create a
+ * model, first create the system function using
+ * {@link #function(CIVLSource, Identifier, List, CIVLType, Scope, Location)}. A
+ * function has a name, parameters, a return type, a containing scope (which is
+ * null only in the case of the system function), and a start location. The
+ * start location is a location that serves as the beginning of the function's
+ * body, and will have one or more outgoing statements.
+ * <p>
+ * All methods to create statements have a parameter for the location that is
+ * the origin location for that statement. Before the new statement is returned,
+ * it will be added as an outgoing statement to the specified location. Thus, to
+ * add the first statement to a function, call the method to create the new
+ * statement and pass the function's start location as a parameter.
+ * <p>
+ * After constructing the system function, use
+ * {@link #model(CIVLSource, CIVLFunction)} to create the model. Additional
+ * functions can then be created in the same manner and added to the model with
+ * {@link Model#addFunction(CIVLFunction)}.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
@@ -96,7 +116,9 @@ public interface ModelFactory {
 	Model model(CIVLSource source, CIVLFunction system);
 
 	/**
-	 * Create a new scope.
+	 * Create a new scope. This is not used for the outermost scope of a
+	 * function, because the outermost scope of a function is created when the
+	 * function is constructed.
 	 * 
 	 * @param source
 	 *            The source of the scope
@@ -139,7 +161,8 @@ public interface ModelFactory {
 	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
 
 	/**
-	 * Create a new function.
+	 * Create a new function. When the function is constructed, its outermost
+	 * scope will be created.
 	 * 
 	 * @param source
 	 *            The CIVL source
