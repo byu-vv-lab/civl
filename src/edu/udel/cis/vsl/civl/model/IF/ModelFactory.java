@@ -1007,7 +1007,7 @@ public interface ModelFactory {
 	void addConditionalExpression(ConditionalExpression expression);
 
 	/**
-	 * @return True iff the latest queue is empty
+	 * @return True iff the latest queue is not empty
 	 */
 	boolean hasConditionalExpressions();
 

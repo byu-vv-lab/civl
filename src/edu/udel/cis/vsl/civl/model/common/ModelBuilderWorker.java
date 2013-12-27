@@ -628,6 +628,7 @@ public class ModelBuilderWorker {
 		Expression result;
 
 		switch (expressionNode.expressionKind()) {
+		// TODO: Put these in alphabetical order.
 		case OPERATOR:
 			result = translateOperatorNode((OperatorNode) expressionNode, scope);
 			break;
@@ -789,6 +790,9 @@ public class ModelBuilderWorker {
 					+ sizeofNode, source);
 		}
 
+		// TODO: This should be moved to factory. Also, it is incorrect.
+		// e.g. sizeof(a) should have an expression scope of the scope
+		// containing a.
 		result.setExpressionScope(scope);
 		return result;
 	}
@@ -838,10 +842,11 @@ public class ModelBuilderWorker {
 	 * If the given CIVL expression e has array type, this returns the
 	 * expression &e[0]. Otherwise returns e unchanged.
 	 * 
-	 * This method should be called on every LHS expression e except in the
-	 * following cases: (1) e is the first argument to the SUBSCRIPT operator
-	 * (i.e., e occurs in the context e[i]), or (2) e is the argument to the
-	 * "sizeof" operator.
+	 * This method should be called on every LHS expression e when it is used in
+	 * a place where a RHS expression is called for, except in the following
+	 * cases: (1) e is the first argument to the SUBSCRIPT operator (i.e., e
+	 * occurs in the context e[i]), or (2) e is the argument to the "sizeof"
+	 * operator.
 	 * 
 	 * @param array
 	 *            any CIVL expression e
@@ -1174,6 +1179,7 @@ public class ModelBuilderWorker {
 				}
 				result = factory.booleanLiteralExpression(source, value);
 				break;
+			// TODO: Add a case for the char type.
 			default:
 				throw new CIVLUnimplementedFeatureException("type "
 						+ convertedType, source);
@@ -1208,6 +1214,9 @@ public class ModelBuilderWorker {
 		// if we have a conjunction of quantified statements? For now, we will
 		// add to the existing scope, but this is unsatisfactory.
 
+		// TODO: Is there an advantage to having separate restriction and
+		// quantifiedExpression? Maybe move this to right hand size and express
+		// in terms of &&, ||?
 		switch (expressionNode.quantifier()) {
 		case EXISTS:
 			quantifier = Quantifier.EXISTS;
@@ -1223,6 +1232,8 @@ public class ModelBuilderWorker {
 					+ expressionNode.quantifier(), source);
 		}
 		// TODO: create unique name for quantified variable
+		// TODO: Set up something like a "quantified scope"?
+		// Can't intermingle ordinary and quantified variables.
 		variable = translateVariableDeclarationNode(expressionNode.variable(),
 				scope);
 		variable.setIsBound(true);
@@ -1488,6 +1499,7 @@ public class ModelBuilderWorker {
 				assumeNode.getExpression(), scope, true);
 		Location location = factory.location(
 				factory.sourceOfBeginning(assumeNode), scope);
+
 		return factory.assumeFragment(factory.sourceOf(assumeNode), location,
 				expression, guard);
 	}
@@ -1509,6 +1521,7 @@ public class ModelBuilderWorker {
 				assertNode.getExpression(), scope, true);
 		Location location = factory.location(
 				factory.sourceOfBeginning(assertNode), scope);
+
 		return factory.assertFragment(factory.sourceOf(assertNode), location,
 				expression, guard);
 	}
@@ -1530,7 +1543,6 @@ public class ModelBuilderWorker {
 	private Fragment translateExpressionStatementNode(Expression guard,
 			Scope scope, ExpressionNode expressionNode) {
 		Fragment result;
-
 		Location location = factory.location(
 				factory.sourceOfBeginning(expressionNode), scope);
 
@@ -1554,6 +1566,7 @@ public class ModelBuilderWorker {
 				// are assignments. all others are equivalent to no-op
 				Statement noopStatement = factory.noopStatement(
 						factory.sourceOf(operatorNode), location, guard);
+
 				result = new CommonFragment(noopStatement);
 			}
 			break;
@@ -1566,12 +1579,10 @@ public class ModelBuilderWorker {
 					(FunctionCallNode) expressionNode);
 			break;
 		default:
-
-			throw new CIVLInternalException(
+			throw new CIVLUnimplementedFeatureException(
 					"expression statement of this kind",
 					factory.sourceOf(expressionNode));
 		}
-
 		return result;
 	}
 
@@ -1659,11 +1670,14 @@ public class ModelBuilderWorker {
 	 * Translate a spawn node into a fragment containing the spawn statement
 	 * 
 	 * @param guard
-	 *            The guard
+	 *            The boolean expression guard to be associated with the new
+	 *            spawn statement. The guard may be null, which is assumed to
+	 *            mean "true."
 	 * @param scope
-	 *            The scope
+	 *            The scope in which this statement occurs. Must be non-null.
 	 * @param spawnNode
-	 *            The spawn node
+	 *            The ABC representation of the spawn, which will be translated
+	 *            to yield a new {@link Fragment}. Must be non-null.
 	 * @return The fragment of the spawn statement
 	 */
 	private Fragment translateSpawnNode(Expression guard, Scope scope,
@@ -1676,7 +1690,6 @@ public class ModelBuilderWorker {
 				spawnNode.getCall(), null, false);
 		if (guard != null)
 			spawnStatement.setGuard(guard);
-
 		return new CommonFragment(location, spawnStatement);
 	}
 
@@ -1684,13 +1697,16 @@ public class ModelBuilderWorker {
 	 * Translate a FunctionCall node into a call or spawn statement
 	 * 
 	 * @param location
-	 *            The location
+	 *            The origin location for this statement. Must be non-null.
 	 * @param scope
-	 *            The scope
+	 *            The scope containing this statement. Must be non-null.
 	 * @param callNode
-	 *            The function call node
+	 *            The ABC node representing the function called or spawned. Must
+	 *            be non-null.
 	 * @param lhs
-	 *            The left-hand-side expression
+	 *            The left-hand-side expression, where the value of the function
+	 *            call or process ID resulting from the spawn is stored. May be
+	 *            null.
 	 * @param isCall
 	 *            True when the node is a call node, otherwise the node is a
 	 *            spawn node
@@ -1723,6 +1739,9 @@ public class ModelBuilderWorker {
 			// TODO: once you translate conversions, you will do this
 			// there and can delete the following line:
 			actual = arrayToPointer(actual);
+			// TODO: shouldn't this assertion hold? The arrayToPointer()
+			// conversion is happening in translateExpressionNode
+			// assert !actual.getExpressionType().isArrayType()
 			arguments.add(actual);
 		}
 		result = factory.callOrSpawnStatement(factory.sourceOf(callNode),
@@ -1733,15 +1752,15 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * Sometimes an assignment is actually modeled as a fork or function call
+	 * Sometimes an assignment is actually modeled as a spawn or function call
 	 * with an optional left hand side argument. Catch these cases.
+	 * 
+	 * Precondition: assignNode.getOperator() == ASSIGN;
 	 * 
 	 * @param guard
 	 *            The guard
 	 * @param assignNode
-	 *            The assign node <dt><b>Preconditions:</b>
-	 *            <dd>
-	 *            assignNode.getOperator() == ASSIGN
+	 *            The assign node
 	 * @param scope
 	 *            The scope containing this assignment.
 	 * @return The model representation of the assignment, which might also be a
@@ -1756,13 +1775,12 @@ public class ModelBuilderWorker {
 		Location location = factory.location(factory.sourceOfBeginning(lhs),
 				scope);
 
+		assert assignNode.getOperator() == Operator.ASSIGN;
 		if (!(leftExpression instanceof LHSExpression))
 			throw new CIVLInternalException("expected LHS expression, not "
 					+ leftExpression, factory.sourceOf(lhs));
-
 		assignStatement = assignStatement(factory.sourceOfSpan(lhs, rhs),
 				location, (LHSExpression) leftExpression, rhs, scope);
-
 		if (guard != null)
 			assignStatement.setGuard(guard);
 		return new CommonFragment(location, assignStatement);
@@ -1813,7 +1831,6 @@ public class ModelBuilderWorker {
 			} else
 				result = callOrSpawnStatement(location, scope,
 						functionCallNode, lhs, isCall);
-
 		} else
 			result = factory
 					.assignStatement(
