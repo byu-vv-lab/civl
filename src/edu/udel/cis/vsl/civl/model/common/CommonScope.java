@@ -341,7 +341,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	private boolean containsProcType(CIVLType type) {
 		boolean containsProcType = false;
 
-		if (type.isScopeType()) {
+		if (type.isProcessType()) {
 			containsProcType = true;
 		} else if (type.isArrayType()) {
 			containsProcType = containsProcType(((CIVLArrayType) type)
