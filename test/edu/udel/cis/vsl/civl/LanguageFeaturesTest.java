@@ -127,7 +127,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void testCast() throws ABCException {
-		assertTrue(ui.run("verify", filename("cast.cvl")));
+		assertTrue(ui.run("verify",  "-verbose", filename("cast.cvl")));
 	}
 
 	@Test

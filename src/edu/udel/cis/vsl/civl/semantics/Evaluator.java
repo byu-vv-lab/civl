@@ -79,13 +79,14 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.expr.UnionMemberReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
+import edu.udel.cis.vsl.sarl.IF.number.NumberFactory;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
-import edu.udel.cis.vsl.sarl.number.real.RealNumberFactory;
+import edu.udel.cis.vsl.sarl.number.Numbers;
 
 /**
  * An evaluator is used to evaluate expressions.
@@ -103,7 +104,7 @@ public class Evaluator {
 
 	private SymbolicUniverse universe;
 
-	private RealNumberFactory numberFactory = new RealNumberFactory();
+	private NumberFactory numberFactory = Numbers.REAL_FACTORY;
 
 	/**
 	 * The process type is a tuple with one component which has integer type. It
