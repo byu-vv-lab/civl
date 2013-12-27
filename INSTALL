@@ -53,35 +53,39 @@ We recommend using the Eclipse IDE for Java/EE developers.
    Make sure that the three projects are put in the workspace
    directory where CIVL will be put. 
 
-	a. Install the C front-end ABC, http://vsl.cis.udel.edu/abc,
-	   following the instructions in its INSTALL file for Eclipse
-	   installation.  This should result in a project named ABC
-	   in your Eclipse workspace.  Build the abc.jar from within
+	a. Install the C front-end ABC. In Eclipse, 
+	   select New Project...from SVN, use the archive 
+	   svn://vsl.cis.udel.edu/abc. After entering that, open it 
+	   up and select the "trunk". After checking out trunk, name 
+	   the project "ABC". Then follow the instructions in the INSTALL
+	   file for Eclipse installation. Build the abc.jar from within
 	   Eclipse by right-clicking (or ctrl-clicking on OS X) on the
 	   build.xml file and selecting Run As->Ant Build.
 	
-	b. Install the symbolic algebra and reasoning library SARL,
-	   http://vsl.cis.udel.edu/sarl, following the instructions in
-	   its INSTALL file for Eclipse installation.  This should
-	   result in a project named SARL in your Eclipse workspace.
-	   Build the sarl.jar from within Eclipse by right-clicking (or
-	   ctrl-clicking) on the build.xml file and selecting
-	   Run As->Ant Build.
+	b. Install the symbolic algebra and reasoning library SARL.
+	   In Eclipse, select New Project...from SVN, use the archive 
+	   svn://vsl.cis.udel.edu/sarl. After entering that, open it 
+	   up and select the "trunk". After checking out trunk, name 
+	   the project "SARL". Then follow the instructions in the INSTALL 
+	   file for Eclipse installation. Build the sarl.jar from within 
+	   Eclipse by right-clicking (or ctrl-clicking) on the build.xml 
+	   file and selecting Run As->Ant Build.
 
-	c. Install the generic model checking utilities package GMC,
-	   http://vsl.cis.udel.edu/gmc in Eclipse.  This one is pure
-	   Java, so is easy.  This should result in a project named GMC
-	   in your Eclipse workspace.  Build the gmc.jar from within Eclipse
+	c. Install the generic model checking utilities package GMC.
+	   In Eclipse, select New Project...from SVN, use the archive 
+	   svn://vsl.cis.udel.edu/gmc. After entering that, open it 
+	   up and select the "trunk". After checking out trunk, name 
+	   the project "GMC". Build the gmc.jar from within Eclipse
 	   by right-clicking (or ctrl-clicking) on the build.xml file and
 	   selecting Run As->Ant Build.
 
-2. From within Eclipse, select New Project...from SVN.  The archive is
+2. From within Eclipse, select New Project...from SVN. The archive is
 svn://vsl.cis.udel.edu/civl.  After entering that, open it up and
 select the "trunk". (It is simplest to just check out the trunk for
 the Eclipse project.)
 
 3. Check out the trunk, and create the project using the New Java
-Project Wizard as usual, naming it "CIVL".  The .project, .classpath,
+Project Wizard as usual, naming it "CIVL". The .project, .classpath,
 and other Eclipse meta-data are already in the SVN archive, saving you
 a bunch of work.
 
