@@ -127,7 +127,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void testCast() throws ABCException {
-		assertTrue(ui.run("verify",  "-verbose", filename("cast.cvl")));
+		assertTrue(ui.run("verify", filename("cast.cvl")));
 	}
 
 	@Test
@@ -208,31 +208,26 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void testConditionalExpression() throws ABCException {
-		assertTrue(ui.run("verify", "-showModel",
-				filename("conditionalExpression.cvl")));
+		assertTrue(ui.run("verify", filename("conditionalExpression.cvl")));
 	}
 
 	@Test
 	public void testAtomicStatements() throws ABCException {
-		assertTrue(ui.run("verify", "-showModel",
-				filename("atomicStatement.cvl")));
+		assertTrue(ui.run("verify", filename("atomicStatement.cvl")));
 	}
 
 	@Test
 	public void testAtomicStatementsBad() throws ABCException {
-		assertFalse(ui.run("verify", "-showModel",
-				filename("atomicStatementBad.cvl")));
+		assertFalse(ui.run("verify", filename("atomicStatementBad.cvl")));
 	}
 
 	@Test
 	public void testAtomicWaitBad() throws ABCException {
-		assertFalse(ui.run("verify", "-showModel",
-				filename("atomicWaitBad.cvl")));
+		assertFalse(ui.run("verify", filename("atomicWaitBad.cvl")));
 	}
-	
+
 	@Test
 	public void testChooseInt() throws ABCException {
-		assertTrue(ui.run("verify", "-showModel",
-				filename("chooseInt.cvl")));
+		assertTrue(ui.run("verify", filename("chooseInt.cvl")));
 	}
 }
