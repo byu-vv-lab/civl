@@ -143,8 +143,8 @@ public class ImmutableStateFactory implements StateFactory {
 	 */
 	private ImmutableDynamicScope dynamicScope(Scope lexicalScope, int parent,
 			int dynamicScopeId, BitSet reachers) {
-		return dynamicScope(lexicalScope, parent, initialValues(// state,
-				lexicalScope, dynamicScopeId), reachers);
+		return dynamicScope(lexicalScope, parent,
+				initialValues(lexicalScope, dynamicScopeId), reachers);
 	}
 
 	/**
@@ -191,8 +191,8 @@ public class ImmutableStateFactory implements StateFactory {
 				int oldParent = oldScope.parent();
 				int newParent = (oldParent < 0 ? oldParent
 						: oldToNew[oldParent]);
-				ImmutableDynamicScope newScope = (oldParent == newParent ? oldScope
-						: canonic(oldScope.changeParent(newParent)));
+				ImmutableDynamicScope newScope = oldParent == newParent ? oldScope
+						: canonic(oldScope.changeParent(newParent));
 
 				newScopes[newId] = newScope;
 			}
@@ -220,12 +220,15 @@ public class ImmutableStateFactory implements StateFactory {
 			else
 				newProcesses[pid] = oldProcess;
 		}
-		newState = new ImmutableState(newProcesses, newScopes,
-				state.getPathCondition());
+		newState = ImmutableState
+				.newState(state, newProcesses, newScopes, null);
+		// newState = new ImmutableState(newProcesses, newScopes,
+		// state.getPathCondition());
 		// Need to go through the pointers and canonicalize scope references
 		newScopes = updateScopeReferencesInScopes(newState, oldToNew);
-		newState = new ImmutableState(newProcesses, newScopes,
-				state.getPathCondition());
+		newState = ImmutableState.newState(newState, null, newScopes, null);
+		// newState = new ImmutableState(newProcesses, newScopes,
+		// state.getPathCondition());
 		return newState;
 	}
 
@@ -304,7 +307,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 		if (canonicState == null) {
 			canonicState = (ImmutableState) state;
-			canonicState.setCanonicId(stateCount);
+			canonicState.makeCanonic(stateCount, universe);
 			stateCount++;
 			stateMap.put(canonicState, canonicState);
 		}
@@ -377,7 +380,8 @@ public class ImmutableStateFactory implements StateFactory {
 		newScope = dynamicScope(oldScope.lexicalScope(), oldScope.parent(),
 				newValues, oldScope.reachers());
 		newScopes[scopeId] = newScope;
-		return new ImmutableState(theState, newScopes);
+		theState = theState.setScopes(newScopes);
+		return theState;
 	}
 
 	@Override
@@ -389,7 +393,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 		newProcesses = theState.copyAndExpandProcesses();
 		newProcesses[numProcs] = process(numProcs, new ImmutableStackEntry[0]);
-		theState = new ImmutableState(theState, newProcesses);
+		theState = theState.setProcessStates(newProcesses);
 		return pushCallStack2(theState, numProcs, function, arguments,
 				callerPid);
 	}
@@ -417,7 +421,8 @@ public class ImmutableStateFactory implements StateFactory {
 			newScopes = updateProcessReferencesInScopes(theState,
 					oldToNewPidMap);
 		}
-		theState = new ImmutableState(theState, newProcesses, newScopes, null);
+		theState = ImmutableState.newState(theState, newProcesses, newScopes,
+				null);
 		return collectScopesWork(theState);
 	}
 
@@ -653,7 +658,7 @@ public class ImmutableStateFactory implements StateFactory {
 		if (ss0 == ss1) {
 			processArray[pid] = canonic(theState.getProcessState(pid)
 					.replaceTop(stackEntry(location, dynamicScopeId)));
-			return new ImmutableState(theState, processArray);
+			return theState.setProcessStates(processArray);
 		} else {
 			Scope[] joinSequence = joinSequence(ss0, ss1);
 			Scope join = joinSequence[0];
@@ -668,7 +673,7 @@ public class ImmutableStateFactory implements StateFactory {
 			if (joinSequence.length == 1) {
 				processArray[pid] = canonic(theState.getProcessState(pid)
 						.replaceTop(stackEntry(location, dynamicScopeId)));
-				theState = new ImmutableState(theState, processArray);
+				theState = theState.setProcessStates(processArray);
 			} else {
 				// iterate DOWN, adding new dynamic scopes...
 				int oldNumScopes = theState.numScopes();
@@ -915,7 +920,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 		processArray[pid] = canonic(process.pop());
 		setReachablesForProc(newScopes, processArray[pid]);
-		theState = new ImmutableState(theState, processArray, newScopes, null);
+		theState = new ImmutableState(processArray, newScopes,
+				theState.getPathCondition());
 		return collectScopesWork(theState);
 	}
 
@@ -941,8 +947,6 @@ public class ImmutableStateFactory implements StateFactory {
 
 	@Override
 	public ImmutableState simplify(State state) {
-		// TODO: room for optimization here.
-		// don't create new things unless something changes.
 		ImmutableState theState = (ImmutableState) state;
 		int numScopes = theState.numScopes();
 		BooleanExpression pathCondition = theState.getPathCondition();
@@ -955,25 +959,29 @@ public class ImmutableStateFactory implements StateFactory {
 			ImmutableDynamicScope oldScope = theState.getScope(i);
 			int numVars = oldScope.numberOfVariables();
 			SymbolicExpression[] newVariableValues = new SymbolicExpression[numVars];
+			boolean scopeChange = false;
 
 			for (int j = 0; j < numVars; j++) {
 				SymbolicExpression oldValue = oldScope.getValue(j);
 				SymbolicExpression newValue = reasoner.simplify(oldValue);
 
-				change = change || newValue != oldValue;
+				scopeChange = scopeChange || newValue != oldValue;
 				newVariableValues[j] = newValue;
 			}
-			newDynamicScopes[i] = oldScope
-					.changeVariableValues(newVariableValues);
+			change = change || scopeChange;
+			newDynamicScopes[i] = scopeChange ? oldScope
+					.changeVariableValues(newVariableValues) : oldScope;
 		}
 		newPathCondition = reasoner.getReducedContext();
-		change = change || newPathCondition != pathCondition;
-		if (change) {
+		if (newPathCondition != pathCondition) {
 			// TODO: do this here or when you produce new path condition?
 			if (nsat(newPathCondition))
 				newPathCondition = universe.falseExpression();
-			theState = new ImmutableState(theState, null, newDynamicScopes,
-					newPathCondition);
+			change = true;
+		}
+		if (change) {
+			theState = ImmutableState.newState(theState, null,
+					newDynamicScopes, newPathCondition);
 		}
 		return theState;
 	}

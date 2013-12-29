@@ -87,8 +87,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 	}
 
 	ImmutableDynamicScope changeParent(int newParent) {
-		return new ImmutableDynamicScope(lexicalScope, newParent, variableValues,
-				reachers);
+		return new ImmutableDynamicScope(lexicalScope, newParent,
+				variableValues, reachers);
 	}
 
 	ImmutableDynamicScope changeReachers(BitSet newBitSet) {
@@ -98,8 +98,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 
 	ImmutableDynamicScope changeVariableValues(
 			SymbolicExpression[] newVariableValues) {
-		return new ImmutableDynamicScope(lexicalScope, parent, newVariableValues,
-				reachers);
+		return new ImmutableDynamicScope(lexicalScope, parent,
+				newVariableValues, reachers);
 	}
 
 	@Override
@@ -164,31 +164,16 @@ public class ImmutableDynamicScope implements DynamicScope {
 		return newValues;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		if (!hashed) {
-			final int prime = 31;
-
-			hashCode = 1;
-			hashCode = prime * hashCode + lexicalScope.hashCode();
-			hashCode = prime * hashCode + parent;
-			hashCode = prime * hashCode + Arrays.hashCode(variableValues);
-			hashCode = prime * hashCode + reachers.hashCode();
+			hashCode = lexicalScope.hashCode() ^ (1017 * parent)
+					^ Arrays.hashCode(variableValues) ^ reachers.hashCode();
 			hashed = true;
 		}
 		return hashCode;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -268,8 +253,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 
 		System.arraycopy(variableValues, 0, newVariableValues, 0, n);
 		newVariableValues[vid] = value;
-		return new ImmutableDynamicScope(lexicalScope, parent, newVariableValues,
-				reachers);
+		return new ImmutableDynamicScope(lexicalScope, parent,
+				newVariableValues, reachers);
 	}
 
 	public DynamicScope setValues(SymbolicExpression[] values) {

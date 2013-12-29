@@ -59,28 +59,18 @@ public class ImmutableStackEntry implements StackEntry {
 		return scope;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		if (!hashed) {
 			final int prime = 31;
 
-			hashCode = prime + ((location == null) ? 0 : location.hashCode());
+			hashCode = prime + (location == null ? 0 : location.hashCode());
 			hashCode = prime * hashCode + scope;
 			hashed = true;
 		}
 		return hashCode;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -105,10 +95,10 @@ public class ImmutableStackEntry implements StackEntry {
 		CIVLSource source = location.getSource();
 		String locationString = source == null ? "" : ", "
 				+ source.getSummary();
-		
-//		if(location.isPurelyLocal())
-//			locationString = locationString + " # ";
-		
+
+		// if(location.isPurelyLocal())
+		// locationString = locationString + " # ";
+
 		return "Frame[function=" + location.function().name() + ", location="
 				+ location.id() + locationString + ", scope=" + scope + "]";
 	}

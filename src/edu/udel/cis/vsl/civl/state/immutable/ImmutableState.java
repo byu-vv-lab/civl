@@ -12,7 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.state.trans.TransientState;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -151,6 +151,35 @@ public class ImmutableState implements State {
 	 */
 	private int depth = -1;
 
+	private boolean procHashed = false;
+
+	private int procHashCode = -1;
+
+	private boolean scopeHashed = false;
+
+	private int scopeHashCode = -1;
+
+	/************************ Static Methods *************************/
+
+	static ImmutableState newState(ImmutableState state,
+			ImmutableProcessState[] processStates,
+			ImmutableDynamicScope[] scopes, BooleanExpression pathCondition) {
+		ImmutableState result = new ImmutableState(
+				processStates == null ? state.processStates : processStates,
+				scopes == null ? state.scopes : scopes,
+				pathCondition == null ? state.pathCondition : pathCondition);
+
+		if (processStates == null && state.procHashed) {
+			result.procHashed = true;
+			result.procHashCode = state.procHashCode;
+		}
+		if (scopes == null && state.scopeHashed) {
+			result.scopeHashed = true;
+			result.scopeHashCode = state.scopeHashCode;
+		}
+		return result;
+	}
+
 	/**
 	 * Basic constructor. The arrays are used as fields---the elements are not
 	 * copied into a new array. All arguments must be non-null. Seen and onStack
@@ -172,46 +201,6 @@ public class ImmutableState implements State {
 	}
 
 	/**
-	 * Produces in a new state in which some fields are taken from an old state
-	 * and some fields are specified. If an argument field is non-null, it is
-	 * used; otherwise, the component from the old state is used.
-	 * 
-	 * @param state
-	 * @param processStates
-	 * @param scopes
-	 * @param buffer
-	 * @param pathCondition
-	 */
-	ImmutableState(ImmutableState state, ImmutableProcessState[] processStates,
-			ImmutableDynamicScope[] scopes, BooleanExpression pathCondition) {
-		this(processStates == null ? state.processStates : processStates,
-				scopes == null ? state.scopes : scopes,
-				pathCondition == null ? state.pathCondition : pathCondition);
-	}
-
-	/**
-	 * A new state same as the old one, but with a new path condition. Seen and
-	 * onStack bits set to false.
-	 * 
-	 * @param state
-	 * @param newPatCondition
-	 */
-	ImmutableState(ImmutableState state, BooleanExpression newPathCondition) {
-		this(state.processStates, state.scopes, newPathCondition);
-	}
-
-	/**
-	 * A new state same as old, but with new process array. Seen and onStack
-	 * bits set to false.
-	 * 
-	 * @param state
-	 * @param newProcessStates
-	 */
-	ImmutableState(ImmutableState state, ImmutableProcessState[] newProcessStates) {
-		this(newProcessStates, state.scopes, state.pathCondition);
-	}
-
-	/**
 	 * Returns the instance ID of this State. The is obtained from a static
 	 * counter that is incremented every time a state is instantiated.
 	 * 
@@ -219,17 +208,6 @@ public class ImmutableState implements State {
 	 */
 	public long getInstanceId() {
 		return instanceId;
-	}
-
-	/**
-	 * A new state same as old, but with new scopes array. Seen/onStack bits set
-	 * to false.
-	 * 
-	 * @param state
-	 * @param newScopes
-	 */
-	ImmutableState(ImmutableState state, ImmutableDynamicScope[] newScopes) {
-		this(state.processStates, newScopes, state.pathCondition);
 	}
 
 	/**
@@ -245,7 +223,8 @@ public class ImmutableState implements State {
 	public ImmutableProcessState[] copyProcessStates() {
 		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processStates.length];
 
-		System.arraycopy(processStates, 0, newProcesses, 0, processStates.length);
+		System.arraycopy(processStates, 0, newProcesses, 0,
+				processStates.length);
 		return newProcesses;
 	}
 
@@ -275,7 +254,8 @@ public class ImmutableState implements State {
 	public ImmutableProcessState[] copyAndExpandProcesses() {
 		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processStates.length + 1];
 
-		System.arraycopy(processStates, 0, newProcesses, 0, processStates.length);
+		System.arraycopy(processStates, 0, newProcesses, 0,
+				processStates.length);
 		return newProcesses;
 	}
 
@@ -311,8 +291,10 @@ public class ImmutableState implements State {
 		return canonicId;
 	}
 
-	void setCanonicId(int id) {
-		this.canonicId = id;
+	void makeCanonic(int canonicId, SymbolicUniverse universe) {
+		// process states and dynamic scopes,etc., are always canonic.
+		pathCondition = (BooleanExpression) universe.canonic(pathCondition);
+		this.canonicId = canonicId;
 	}
 
 	/**
@@ -448,8 +430,15 @@ public class ImmutableState implements State {
 	@Override
 	public int hashCode() {
 		if (!hashed) {
-			hashCode = pathCondition.hashCode() ^ Arrays.hashCode(processStates)
-					^ Arrays.hashCode(scopes);
+			if (!procHashed) {
+				procHashCode = Arrays.hashCode(processStates);
+				procHashed = true;
+			}
+			if (!scopeHashed) {
+				scopeHashCode = Arrays.hashCode(scopes);
+				scopeHashed = true;
+			}
+			hashCode = pathCondition.hashCode() ^ procHashCode ^ scopeHashCode;
 			hashed = true;
 		}
 		return hashCode;
@@ -467,6 +456,12 @@ public class ImmutableState implements State {
 			if (hashed && that.hashed && hashCode != that.hashCode)
 				return false;
 			if (!pathCondition.equals(that.pathCondition))
+				return false;
+			if (procHashed && that.procHashed
+					&& procHashCode != that.procHashCode)
+				return false;
+			if (scopeHashed && that.scopeHashed
+					&& scopeHashCode != that.scopeHashCode)
 				return false;
 			if (!Arrays.equals(processStates, that.processStates))
 				return false;
@@ -564,15 +559,34 @@ public class ImmutableState implements State {
 	}
 
 	@Override
-	public State setPathCondition(BooleanExpression pathCondition) {
-		return new ImmutableState(processStates, scopes, pathCondition);
+	public ImmutableState setPathCondition(BooleanExpression pathCondition) {
+		ImmutableState result = new ImmutableState(processStates, scopes,
+				pathCondition);
+
+		if (scopeHashed) {
+			result.scopeHashed = true;
+			result.scopeHashCode = scopeHashCode;
+		}
+		if (procHashed) {
+			result.procHashed = true;
+			result.procHashCode = procHashCode;
+		}
+		return result;
 	}
 
-	public State setProcessStates(ImmutableProcessState[] processStates) {
-		return new ImmutableState(processStates, scopes, pathCondition);
+	public ImmutableState setProcessStates(ImmutableProcessState[] processStates) {
+		ImmutableState result = new ImmutableState(processStates, scopes,
+				pathCondition);
+
+		if (scopeHashed) {
+			result.scopeHashed = true;
+			result.scopeHashCode = scopeHashCode;
+		}
+		return result;
 	}
 
-	public State setProcessState(int index, ImmutableProcessState processState) {
+	public ImmutableState setProcessState(int index,
+			ImmutableProcessState processState) {
 		int n = processStates.length;
 		ImmutableProcessState[] newProcessStates = new ImmutableProcessState[n];
 
@@ -581,11 +595,18 @@ public class ImmutableState implements State {
 		return new ImmutableState(newProcessStates, scopes, pathCondition);
 	}
 
-	public State setScopes(ImmutableDynamicScope[] scopes) {
-		return new ImmutableState(processStates, scopes, pathCondition);
+	public ImmutableState setScopes(ImmutableDynamicScope[] scopes) {
+		ImmutableState result = new ImmutableState(processStates, scopes,
+				pathCondition);
+
+		if (procHashed) {
+			result.procHashed = true;
+			result.procHashCode = procHashCode;
+		}
+		return result;
 	}
 
-	public State setScope(int index, ImmutableDynamicScope scope) {
+	public ImmutableState setScope(int index, ImmutableDynamicScope scope) {
 		int n = scopes.length;
 		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[n];
 
@@ -605,8 +626,7 @@ public class ImmutableState implements State {
 	}
 
 	@Override
-	public TransientState setVariable(int vid, int scopeId,
-			SymbolicExpression value) {
+	public State setVariable(int vid, int scopeId, SymbolicExpression value) {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }

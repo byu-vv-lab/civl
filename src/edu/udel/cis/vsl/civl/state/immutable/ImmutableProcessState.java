@@ -205,29 +205,15 @@ public class ImmutableProcessState implements ProcessState {
 		return new ImmutableProcessState(pid, newStack);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		if (!hashed) {
-			final int prime = 31;
-
-			hashCode = 1;
-			hashCode = prime * hashCode + Arrays.hashCode(callStack);
-			hashCode = prime * hashCode + pid;
+			hashCode = Arrays.hashCode(callStack) ^ (48729 * pid);
 			hashed = true;
 		}
 		return hashCode;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
