@@ -5,7 +5,9 @@ package edu.udel.cis.vsl.civl.state.immutable;
 
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Iterator;
 
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -53,6 +55,48 @@ public class ImmutableState implements State {
 	static long instanceCount = 0;
 
 	/**
+	 * A simple class implementing Iterable, backed by the array of process
+	 * states. It is needed because this class must implement a method to return
+	 * an Iterable over ProcessState. We have a field which is an array of
+	 * ImmutableProcessState. This is the easiest way to get an Iterable of the
+	 * right type. Only one needs to be created, so once it is created it is
+	 * cached. (Due to Immutable Pattern.)
+	 * 
+	 * @author siegel
+	 * 
+	 */
+	class ProcessStateIterable implements Iterable<ProcessState> {
+		class ProcessStateIterator implements Iterator<ProcessState> {
+			int pos = 0;
+
+			@Override
+			public boolean hasNext() {
+				return pos < processStates.length;
+			}
+
+			@Override
+			public ProcessState next() {
+				ProcessState result = processStates[pos];
+
+				pos++;
+				return result;
+			}
+
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		}
+
+		@Override
+		public Iterator<ProcessState> iterator() {
+			return new ProcessStateIterator();
+		}
+	}
+
+	private Iterable<ProcessState> processStateIterable = null;
+
+	/**
 	 * Has the hashcode on this state already been computed?
 	 */
 	private boolean hashed = false;
@@ -78,13 +122,13 @@ public class ImmutableState implements State {
 	/**
 	 * processes[i] contains the process of pid i. some entries may be null.
 	 */
-	private ProcessState[] processes;
+	private ImmutableProcessState[] processStates;
 
 	/**
 	 * The dynamic scopes that exist in this state. The scope at index 0 is
 	 * always the system scope.
 	 */
-	private DynamicScope[] scopes;
+	private ImmutableDynamicScope[] scopes;
 
 	/**
 	 * Non-null boolean-valued symbolic expression.
@@ -112,17 +156,17 @@ public class ImmutableState implements State {
 	 * copied into a new array. All arguments must be non-null. Seen and onStack
 	 * bits are set to false.
 	 * 
-	 * @param processes
+	 * @param processStates
 	 * @param scopes
 	 * @param buffers
 	 * @param pathCondition
 	 */
-	ImmutableState(ProcessState[] processes, DynamicScope[] scopes,
-			BooleanExpression pathCondition) {
-		assert processes != null;
+	ImmutableState(ImmutableProcessState[] processStates,
+			ImmutableDynamicScope[] scopes, BooleanExpression pathCondition) {
+		assert processStates != null;
 		assert scopes != null;
 		assert pathCondition != null;
-		this.processes = processes;
+		this.processStates = processStates;
 		this.scopes = scopes;
 		this.pathCondition = pathCondition;
 	}
@@ -133,14 +177,14 @@ public class ImmutableState implements State {
 	 * used; otherwise, the component from the old state is used.
 	 * 
 	 * @param state
-	 * @param processes
+	 * @param processStates
 	 * @param scopes
 	 * @param buffer
 	 * @param pathCondition
 	 */
-	ImmutableState(ImmutableState state, ProcessState[] processes,
+	ImmutableState(ImmutableState state, ImmutableProcessState[] processStates,
 			ImmutableDynamicScope[] scopes, BooleanExpression pathCondition) {
-		this(processes == null ? state.processes : processes,
+		this(processStates == null ? state.processStates : processStates,
 				scopes == null ? state.scopes : scopes,
 				pathCondition == null ? state.pathCondition : pathCondition);
 	}
@@ -153,7 +197,7 @@ public class ImmutableState implements State {
 	 * @param newPatCondition
 	 */
 	ImmutableState(ImmutableState state, BooleanExpression newPathCondition) {
-		this(state.processes, state.scopes, newPathCondition);
+		this(state.processStates, state.scopes, newPathCondition);
 	}
 
 	/**
@@ -161,10 +205,10 @@ public class ImmutableState implements State {
 	 * bits set to false.
 	 * 
 	 * @param state
-	 * @param newProcesses
+	 * @param newProcessStates
 	 */
-	ImmutableState(ImmutableState state, ImmutableProcessState[] newProcesses) {
-		this(newProcesses, state.scopes, state.pathCondition);
+	ImmutableState(ImmutableState state, ImmutableProcessState[] newProcessStates) {
+		this(newProcessStates, state.scopes, state.pathCondition);
 	}
 
 	/**
@@ -185,7 +229,7 @@ public class ImmutableState implements State {
 	 * @param newScopes
 	 */
 	ImmutableState(ImmutableState state, ImmutableDynamicScope[] newScopes) {
-		this(state.processes, newScopes, state.pathCondition);
+		this(state.processStates, newScopes, state.pathCondition);
 	}
 
 	/**
@@ -198,10 +242,10 @@ public class ImmutableState implements State {
 	 * 
 	 * @return Copy the set of processes in this state.
 	 */
-	public ImmutableProcessState[] processes() {
-		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processes.length];
+	public ImmutableProcessState[] copyProcessStates() {
+		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processStates.length];
 
-		System.arraycopy(processes, 0, newProcesses, 0, processes.length);
+		System.arraycopy(processStates, 0, newProcesses, 0, processStates.length);
 		return newProcesses;
 	}
 
@@ -222,16 +266,16 @@ public class ImmutableState implements State {
 	 */
 	@Override
 	public int numProcs() {
-		return processes.length;
+		return processStates.length;
 	}
 
 	/**
 	 * @return Copy the set of processes in this state.
 	 */
 	public ImmutableProcessState[] copyAndExpandProcesses() {
-		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processes.length + 1];
+		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processStates.length + 1];
 
-		System.arraycopy(processes, 0, newProcesses, 0, processes.length);
+		System.arraycopy(processStates, 0, newProcesses, 0, processStates.length);
 		return newProcesses;
 	}
 
@@ -278,14 +322,14 @@ public class ImmutableState implements State {
 	 * 
 	 */
 	@Override
-	public ProcessState getProcessState(int pid) {
-		return processes[pid];
+	public ImmutableProcessState getProcessState(int pid) {
+		return processStates[pid];
 	}
 
 	/**
 	 * @return The system scope.
 	 */
-	public DynamicScope rootScope() {
+	public ImmutableDynamicScope rootScope() {
 		return scopes[0];
 	}
 
@@ -349,21 +393,22 @@ public class ImmutableState implements State {
 	 */
 	@Override
 	public ImmutableDynamicScope getScope(int id) {
-		return (ImmutableDynamicScope) scopes[id];
+		return scopes[id];
 	}
 
 	@Override
 	public int getParentId(int scopeId) {
-		return ((ImmutableDynamicScope) getScope(scopeId)).parent();
+		return getScope(scopeId).parent();
 	}
 
-	public DynamicScope getScope(int pid, Variable variable) {
+	public ImmutableDynamicScope getScope(int pid, Variable variable) {
 		int scopeId = getProcessState(pid).getDyscopeId();
-		DynamicScope scope;
+		Scope variableScope = variable.scope();
+		ImmutableDynamicScope scope;
 
 		while (scopeId >= 0) {
 			scope = getScope(scopeId);
-			if (scope.lexicalScope().variables().contains(variable))
+			if (scope.lexicalScope() == variableScope)
 				return scope;
 			scopeId = getParentId(scopeId);
 		}
@@ -373,11 +418,12 @@ public class ImmutableState implements State {
 	@Override
 	public int getScopeId(int pid, Variable variable) {
 		int scopeId = getProcessState(pid).getDyscopeId();
+		Scope variableScope = variable.scope();
 		DynamicScope scope;
 
 		while (scopeId >= 0) {
 			scope = getScope(scopeId);
-			if (scope.lexicalScope().variables().contains(variable))
+			if (scope.lexicalScope() == variableScope)
 				return scopeId;
 			scopeId = getParentId(scopeId);
 		}
@@ -399,20 +445,11 @@ public class ImmutableState implements State {
 		return scope.getValue(variableID);
 	}
 
-	/**
-	 * 
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		if (!hashed) {
-			final int prime = 31;
-
-			hashCode = 1;
-			hashCode = prime * hashCode + pathCondition.hashCode();
-			hashCode = prime * hashCode + Arrays.hashCode(processes);
-			hashCode = prime * hashCode + Arrays.hashCode(scopes);
+			hashCode = pathCondition.hashCode() ^ Arrays.hashCode(processStates)
+					^ Arrays.hashCode(scopes);
 			hashed = true;
 		}
 		return hashCode;
@@ -431,7 +468,7 @@ public class ImmutableState implements State {
 				return false;
 			if (!pathCondition.equals(that.pathCondition))
 				return false;
-			if (!Arrays.equals(processes, that.processes))
+			if (!Arrays.equals(processStates, that.processStates))
 				return false;
 			if (!Arrays.equals(scopes, that.scopes))
 				return false;
@@ -473,7 +510,7 @@ public class ImmutableState implements State {
 		}
 		out.println("| Process states");
 		for (int i = 0; i < numProcs; i++) {
-			ProcessState process = processes[i];
+			ProcessState process = processStates[i];
 
 			if (process == null)
 				out.println("| | process " + i + ": null");
@@ -512,7 +549,10 @@ public class ImmutableState implements State {
 
 	@Override
 	public Iterable<ProcessState> getProcessStates() {
-		return Arrays.asList(processes);
+		if (processStateIterable == null) {
+			processStateIterable = new ProcessStateIterable();
+		}
+		return processStateIterable;
 	}
 
 	public boolean isMutable() {
@@ -525,33 +565,33 @@ public class ImmutableState implements State {
 
 	@Override
 	public State setPathCondition(BooleanExpression pathCondition) {
-		return new ImmutableState(processes, scopes, pathCondition);
-	}
-
-	public State setProcessStates(ProcessState[] processStates) {
 		return new ImmutableState(processStates, scopes, pathCondition);
 	}
 
-	public State setProcessState(int index, ProcessState processState) {
-		int n = processes.length;
-		ProcessState[] newProcessStates = new ProcessState[n];
+	public State setProcessStates(ImmutableProcessState[] processStates) {
+		return new ImmutableState(processStates, scopes, pathCondition);
+	}
 
-		System.arraycopy(processes, 0, newProcessStates, 0, n);
+	public State setProcessState(int index, ImmutableProcessState processState) {
+		int n = processStates.length;
+		ImmutableProcessState[] newProcessStates = new ImmutableProcessState[n];
+
+		System.arraycopy(processStates, 0, newProcessStates, 0, n);
 		newProcessStates[index] = processState;
 		return new ImmutableState(newProcessStates, scopes, pathCondition);
 	}
 
-	public State setScopes(DynamicScope[] scopes) {
-		return new ImmutableState(processes, scopes, pathCondition);
+	public State setScopes(ImmutableDynamicScope[] scopes) {
+		return new ImmutableState(processStates, scopes, pathCondition);
 	}
 
-	public State setScope(int index, DynamicScope scope) {
+	public State setScope(int index, ImmutableDynamicScope scope) {
 		int n = scopes.length;
-		DynamicScope[] newScopes = new DynamicScope[n];
+		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[n];
 
 		System.arraycopy(scopes, 0, newScopes, 0, n);
 		newScopes[index] = scope;
-		return new ImmutableState(processes, newScopes, pathCondition);
+		return new ImmutableState(processStates, newScopes, pathCondition);
 	}
 
 	@Override
