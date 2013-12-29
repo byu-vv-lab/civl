@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.state.trans;
 
-
 public abstract class TransientObject implements Transient {
 
 	/**
@@ -43,9 +42,11 @@ public abstract class TransientObject implements Transient {
 	@Override
 	public int hashCode() {
 		if (!hashed) {
+			// Experiment: try committing:
+			commit();
 			hashCode = computeHashCode();
-			if (!mutable)
-				hashed = true;
+			// if (!mutable)
+			hashed = true;
 		}
 		return hashCode;
 	}

@@ -375,13 +375,15 @@ public class TransientState extends TransientObject implements State {
 			Map<SymbolicExpression, SymbolicExpression> scopeSubMap,
 			SymbolicUniverse universe, DynamicScope scope) {
 		Scope staticScope = scope.lexicalScope();
-		Collection<Variable> scopeVariableIter = staticScope.variablesWithScoperefs();
+		Collection<Variable> scopeVariableIter = staticScope
+				.variablesWithScoperefs();
 
 		for (Variable variable : scopeVariableIter) {
 			int vid = variable.vid();
 			SymbolicExpression oldValue = scope.getValue(vid);
 
-			if (oldValue != null && !oldValue.isNull()) {
+			assert oldValue != null;
+			if (!oldValue.isNull()) {
 				SymbolicExpression newValue = universe.substitute(oldValue,
 						scopeSubMap);
 
@@ -391,11 +393,6 @@ public class TransientState extends TransientObject implements State {
 		}
 		return scope;
 	}
-
-	// private ProcessState updateScopesInProc(int[] oldToNewSidMap,
-	// ProcessState processState) {
-	//
-	// }
 
 	/**
 	 * Updates the scope values occurring in a state. The update is specified by
@@ -568,20 +565,23 @@ public class TransientState extends TransientObject implements State {
 	 * @param canonicId
 	 *            the canonicID for this
 	 */
-	void canonize(int canonicId, Map<ProcessState, ProcessState> processMap,
-			Map<DynamicScope, DynamicScope> scopeMap) {
+	void canonize(int canonicId,
+			Map<TransientObject, TransientObject> canonicMap,
+			SymbolicUniverse universe) {
 		int numProcs = processStates.size();
 
 		assert !mutable;
+		pathCondition = (BooleanExpression) universe.canonic(pathCondition);
 		for (DyscopeNode node : scopeNodes) {
 			TransientDynamicScope scope = (TransientDynamicScope) node.scope;
 
 			if (!scope.isCanonic()) {
-				DynamicScope canonicScope = scopeMap.get(scope);
+				DynamicScope canonicScope = (DynamicScope) canonicMap
+						.get(scope);
 
 				if (canonicScope == null) {
-					scope.makeCanonic(scopeMap.size());
-					scopeMap.put(scope, scope);
+					scope.makeCanonic(canonicMap.size());
+					canonicMap.put(scope, scope);
 					canonicScope = scope;
 				}
 				node.scope = canonicScope;
@@ -592,11 +592,12 @@ public class TransientState extends TransientObject implements State {
 					.get(i);
 
 			if (!processState.isCanonic()) {
-				ProcessState canonicProcessState = processMap.get(processState);
+				ProcessState canonicProcessState = (ProcessState) canonicMap
+						.get(processState);
 
 				if (canonicProcessState == null) {
-					processState.makeCanonic(processMap.size());
-					processMap.put(processState, processState);
+					processState.makeCanonic(canonicMap.size());
+					canonicMap.put(processState, processState);
 					canonicProcessState = processState;
 				}
 				processStates.set(i, canonicProcessState);
@@ -871,14 +872,14 @@ public class TransientState extends TransientObject implements State {
 	}
 
 	public DynamicScope getScope(int pid, Variable variable) {
-		int scopeId = getProcessState(pid).getDyscopeId();
-		DynamicScope scope;
+		int dycopeId = getProcessState(pid).getDyscopeId();
+		DyscopeNode node = scopeNodes.get(dycopeId);
+		Scope variableScope = variable.scope();
 
-		while (scopeId >= 0) {
-			scope = getScope(scopeId);
-			if (scope.lexicalScope().variables().contains(variable))
-				return scope;
-			scopeId = getParentId(scopeId);
+		while (node != null) {
+			if (node.scope.lexicalScope() == variableScope)
+				return node.scope;
+			node = node.parent;
 		}
 		throw new IllegalArgumentException("Variable not in scope: " + variable);
 	}

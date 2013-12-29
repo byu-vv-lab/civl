@@ -43,11 +43,10 @@ public class TransientStateFactory implements StateFactory {
 
 	private SymbolicUniverse universe;
 
-	private Map<DynamicScope, DynamicScope> scopeMap = new HashMap<>();
+	private int numStatesSaved = 0;
 
-	private Map<ProcessState, ProcessState> processMap = new HashMap<>();
-
-	private Map<TransientState, TransientState> stateMap = new HashMap<>();
+	private Map<TransientObject, TransientObject> canonicMap = new HashMap<>(
+			1000000);
 
 	private Reasoner trueReasoner;
 
@@ -218,6 +217,13 @@ public class TransientStateFactory implements StateFactory {
 		return trueReasoner.isValid(universe.not(p));
 	}
 
+	private TransientState collectScopesWork(State state) {
+		TransientState theState = (TransientState) state;
+
+		theState = theState.collectScopes(modelFactory);
+		return theState;
+	}
+
 	// *********************** Exported Methods ***********************
 
 	@Override
@@ -227,7 +233,7 @@ public class TransientStateFactory implements StateFactory {
 
 	@Override
 	public int getNumStatesSaved() {
-		return stateMap.size();
+		return numStatesSaved;
 	}
 
 	@Override
@@ -241,10 +247,11 @@ public class TransientStateFactory implements StateFactory {
 		TransientState old;
 
 		theState.commit();
-		old = stateMap.get(theState);
+		old = (TransientState) canonicMap.get(theState);
 		if (old == null) {
-			theState.canonize(stateMap.size(), processMap, scopeMap);
-			stateMap.put(theState, theState);
+			theState.canonize(numStatesSaved, canonicMap, universe);
+			canonicMap.put(theState, theState);
+			numStatesSaved++;
 			return theState;
 		}
 		return old;
@@ -325,6 +332,7 @@ public class TransientStateFactory implements StateFactory {
 		theState = theState.setProcessState(numProcs, newProcess);
 		theState = pushCallStack2(theState, numProcs, function, arguments,
 				callerPid);
+		theState = collectScopesWork(theState);
 		return theState;
 	}
 
@@ -333,6 +341,7 @@ public class TransientStateFactory implements StateFactory {
 		TransientState theState = (TransientState) state;
 
 		theState = theState.removeProcessState(pid, modelFactory);
+		theState = collectScopesWork(theState);
 		return theState;
 	}
 
@@ -401,6 +410,7 @@ public class TransientStateFactory implements StateFactory {
 			}
 			theState = theState.replaceTop(pid, new TransientStackEntry(
 					location, dynamicScopeId));
+			theState = collectScopesWork(theState);
 		}
 		return theState;
 	}
@@ -427,6 +437,7 @@ public class TransientStateFactory implements StateFactory {
 		TransientState theState = (TransientState) state;
 
 		theState = pushCallStack2(theState, pid, function, arguments, pid);
+		theState = collectScopesWork(theState);
 		return theState;
 	}
 
@@ -464,6 +475,7 @@ public class TransientStateFactory implements StateFactory {
 			staticScope = staticScope.parent();
 		}
 		theState = theState.pop(pid);
+		theState = collectScopesWork(theState);
 		return theState;
 	}
 
@@ -494,12 +506,13 @@ public class TransientStateFactory implements StateFactory {
 		return theState;
 	}
 
+	/**
+	 * Nothing to do, since this factory is already collecting scopes after any
+	 * operation that could possible change the scopes.
+	 */
 	@Override
 	public TransientState collectScopes(State state) {
-		TransientState theState = (TransientState) state;
-
-		theState = theState.collectScopes(modelFactory);
-		return theState;
+		return (TransientState) state;
 	}
 
 }
