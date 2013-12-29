@@ -945,9 +945,11 @@ public class ImmutableStateFactory implements StateFactory {
 		// don't create new things unless something changes.
 		ImmutableState theState = (ImmutableState) state;
 		int numScopes = theState.numScopes();
+		BooleanExpression pathCondition = theState.getPathCondition();
 		ImmutableDynamicScope[] newDynamicScopes = new ImmutableDynamicScope[numScopes];
-		Reasoner reasoner = universe.reasoner(theState.getPathCondition());
+		Reasoner reasoner = universe.reasoner(pathCondition);
 		BooleanExpression newPathCondition;
+		boolean change = false;
 
 		for (int i = 0; i < numScopes; i++) {
 			ImmutableDynamicScope oldScope = theState.getScope(i);
@@ -958,17 +960,21 @@ public class ImmutableStateFactory implements StateFactory {
 				SymbolicExpression oldValue = oldScope.getValue(j);
 				SymbolicExpression newValue = reasoner.simplify(oldValue);
 
+				change = change || newValue != oldValue;
 				newVariableValues[j] = newValue;
 			}
 			newDynamicScopes[i] = oldScope
 					.changeVariableValues(newVariableValues);
 		}
 		newPathCondition = reasoner.getReducedContext();
-		// TODO: do this here or when you produce new path condition?
-		if (nsat(newPathCondition))
-			newPathCondition = universe.falseExpression();
-		theState = new ImmutableState(theState, null, newDynamicScopes,
-				newPathCondition);
+		change = change || newPathCondition != pathCondition;
+		if (change) {
+			// TODO: do this here or when you produce new path condition?
+			if (nsat(newPathCondition))
+				newPathCondition = universe.falseExpression();
+			theState = new ImmutableState(theState, null, newDynamicScopes,
+					newPathCondition);
+		}
 		return theState;
 	}
 
