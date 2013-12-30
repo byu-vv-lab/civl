@@ -133,7 +133,7 @@ a bunch of work.
    by right-clicking (or ctrl-click on OS X) the build.xml file and
    Run As->Ant Build.  
 
-8. Go to Run->Run Configurations.... Create a new JUnit configuration.
+8. Go to Run->Run Configurations... Create a new JUnit configuration.
    Name it CIVL Tests. Select "Run all tests in the selected project..."
    and navigate to the folder "test" in the CIVL project.
    The Test runner should be JUnit 4. Under the Arguments tab, type
