@@ -73,7 +73,7 @@ public class ImmutableProcessState implements ProcessState {
 
 	private boolean hashed = false;
 
-	boolean canonic = false;
+	private boolean canonic = false;
 
 	private int hashCode = -1;
 
@@ -268,6 +268,10 @@ public class ImmutableProcessState implements ProcessState {
 	}
 
 	public void commit() {
+	}
+
+	void makeCanonic() {
+		canonic = true;
 	}
 
 	public boolean isCanonic() {

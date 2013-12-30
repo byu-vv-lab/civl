@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.state.immutable;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -291,9 +292,73 @@ public class ImmutableState implements State {
 		return canonicId;
 	}
 
-	void makeCanonic(int canonicId, SymbolicUniverse universe) {
-		// process states and dynamic scopes,etc., are always canonic.
+	/**
+	 * Implements the flyweight pattern: if there already exists a scope which
+	 * is equivalent to the given scope, return that one, otherwise, add scope
+	 * to table and return it.
+	 * 
+	 * @param map
+	 *            the map used to record the scopes
+	 * @param expression
+	 *            the scope to be flyweighted
+	 * @return the unique representative of the scope or the scope itself
+	 */
+	private ImmutableDynamicScope canonic(ImmutableDynamicScope scope,
+			Map<ImmutableDynamicScope, ImmutableDynamicScope> scopeMap,
+			SymbolicUniverse universe) {
+		ImmutableDynamicScope canonicScope = scopeMap.get(scope);
+
+		if (canonicScope == null) {
+			scope.makeCanonic(universe);
+			scopeMap.put(scope, scope);
+			return scope;
+		}
+		return canonicScope;
+	}
+
+	/**
+	 * Implements the flyweight pattern: if there already exists a process which
+	 * is equivalent to the given process, return that one, otherwise, add
+	 * process to table and return it.
+	 * 
+	 * @param map
+	 *            the map used to record the processes
+	 * @param expression
+	 *            the process to be flyweighted
+	 * @return the unique representative of the process or the process itself
+	 */
+	private ImmutableProcessState canonic(ImmutableProcessState processState,
+			Map<ImmutableProcessState, ImmutableProcessState> processMap) {
+		ImmutableProcessState canonicProcessState = processMap
+				.get(processState);
+
+		if (canonicProcessState == null) {
+			processState.makeCanonic();
+			processMap.put(processState, processState);
+			return processState;
+		}
+		return canonicProcessState;
+	}
+
+	void makeCanonic(int canonicId, SymbolicUniverse universe,
+			Map<ImmutableDynamicScope, ImmutableDynamicScope> scopeMap,
+			Map<ImmutableProcessState, ImmutableProcessState> processMap) {
+		int numProcs = processStates.length;
+		int numScopes = scopes.length;
+
 		pathCondition = (BooleanExpression) universe.canonic(pathCondition);
+		for (int i = 0; i < numProcs; i++) {
+			ImmutableProcessState processState = processStates[i];
+
+			if (!processState.isCanonic())
+				processStates[i] = canonic(processState, processMap);
+		}
+		for (int i = 0; i < numScopes; i++) {
+			ImmutableDynamicScope scope = scopes[i];
+
+			if (!scope.isCanonic())
+				scopes[i] = canonic(scope, scopeMap, universe);
+		}
 		this.canonicId = canonicId;
 	}
 

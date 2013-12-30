@@ -7,6 +7,7 @@ import java.util.BitSet;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -241,6 +242,14 @@ public class ImmutableDynamicScope implements DynamicScope {
 
 	public boolean isCanonic() {
 		return canonic;
+	}
+
+	void makeCanonic(SymbolicUniverse universe) {
+		int numVars = variableValues.length;
+
+		canonic = true;
+		for (int i = 0; i < numVars; i++)
+			variableValues[i] = universe.canonic(variableValues[i]);
 	}
 
 	public void commit() {
