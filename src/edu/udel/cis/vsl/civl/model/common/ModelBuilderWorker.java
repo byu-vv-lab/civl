@@ -1297,11 +1297,10 @@ public class ModelBuilderWorker {
 					(ForLoopNode) statementNode);
 			break;
 		case LOOP:
+			// TODO: At some point we need to distinguish between WHILE and
+			// DO_WHILE
 			result = translateWhileNode(guard, scope, (LoopNode) statementNode);
 			break;
-		// case WHILE:
-		// result = translateWhileNode(guard, scope, (LoopNode) statementNode);
-		// break;
 		case IF:
 			result = translateIfNode(guard, scope, (IfNode) statementNode);
 			break;
@@ -1446,39 +1445,32 @@ public class ModelBuilderWorker {
 		beforeCondition = refineConditional.getKey();
 		expression = refineConditional.getValue();
 		expression = factory.booleanExpression(expression);
-
 		trueBranch = new CommonFragment(factory.noopStatement(
 				factory.sourceOfBeginning(ifNode.getTrueBranch()), location,
 				expression));
 		falseBranch = new CommonFragment(factory.noopStatement(factory
 				.sourceOfEnd(ifNode), location, factory.unaryExpression(
 				expression.getSource(), UNARY_OPERATOR.NOT, expression)));
-
 		trueBranchBody = translateStatementNode(
 				factory.booleanLiteralExpression(
 						factory.sourceOf(ifNode.getTrueBranch()), true), scope,
 				ifNode.getTrueBranch());
-
 		trueBranch = trueBranch.combineWith(trueBranchBody);
-
 		if (ifNode.getFalseBranch() != null) {
 			falseBranchBody = translateStatementNode(
 					factory.booleanLiteralExpression(expression.getSource(),
 							true), scope, ifNode.getFalseBranch());
 			falseBranch = falseBranch.combineWith(falseBranchBody);
 		}
-
 		result = trueBranch.parallelCombineWith(falseBranch);
-
 		if (beforeCondition != null) {
 			beforeCondition.startLocation().setEnterAtomic(true);
 			result.startLocation().setLeaveAtomic(true);
 			result = beforeCondition.combineWith(result);
 		}
-
+		// TODO: Do we need this? Should be able to just return result.
 		exit = new CommonFragment(factory.noopStatement(
 				factory.sourceOfEnd(ifNode), exitLocation, null));
-
 		return result.combineWith(exit);
 	}
 
@@ -1917,16 +1909,24 @@ public class ModelBuilderWorker {
 	 */
 	private Fragment translateCompoundStatementNode(Expression guard,
 			Scope scope, CompoundStatementNode statementNode) {
-		Scope newScope = factory.scope(factory.sourceOf(statementNode), scope,
-				new LinkedHashSet<Variable>(), functionInfo.function());
-		Location location = factory.location(
-				factory.sourceOfBeginning(statementNode), newScope);
-		// indicates whether the location argument has been used:
+		Scope newScope;
+		Location location;
+		// indicates whether the location field has been used:
 		boolean usedLocation = false;
 		Fragment result = new CommonFragment();
 
+		// TODO: In order to eliminate unnecessary scopes, do this loop twice.
+		// The first time, just check if there are any declarations. If there
+		// are, create newScope as usual. Otherwise, let newScope = scope.
+		newScope = factory.scope(factory.sourceOf(statementNode), scope,
+				new LinkedHashSet<Variable>(), functionInfo.function());
+		location = factory.location(factory.sourceOfBeginning(statementNode),
+				newScope);
 		for (int i = 0; i < statementNode.numChildren(); i++) {
 			BlockItemNode node = statementNode.getSequenceChild(i);
+			// TODO: Some of the method javadoc applies to code which has now
+			// been moved into translateASTNode. The corresponding portion of
+			// the javadoc (on types with states) should likewise be moved.
 			Fragment fragment = translateASTNode(node, newScope,
 					usedLocation ? null : location, guard);
 
@@ -1960,6 +1960,8 @@ public class ModelBuilderWorker {
 		Location location = factory.location(
 				factory.sourceOfBeginning(forLoopNode), newScope);
 
+		// TODO: If the initNode does not have a declaration, don't create a new
+		// scope.
 		if (initNode != null) {
 			switch (initNode.nodeKind()) {
 			case EXPRESSION:
@@ -1985,14 +1987,9 @@ public class ModelBuilderWorker {
 						factory.sourceOf(initNode));
 			}
 		}
-
 		result = composeLoopFragment(newScope, forLoopNode.getCondition(),
 				forLoopNode.getBody(), forLoopNode.getIncrementer(), guard);
-
-		if (initFragment != null) {
-			result = initFragment.combineWith(result);
-		}
-
+		result = initFragment.combineWith(result);
 		return result;
 	}
 
@@ -2001,13 +1998,13 @@ public class ModelBuilderWorker {
 	 * Translate a loop structure into a fragment of CIVL statements
 	 * 
 	 * @param loopScope
-	 *            the scope of the loop
+	 *            The scope containing the loop body.
 	 * @param conditionNode
-	 *            the condition which is an expression node
+	 *            The loop condition which is an expression node
 	 * @param loopBodyNode
-	 *            the body of the loop which is a statement node
+	 *            The body of the loop which is a statement node
 	 * @param incrementerNode
-	 *            the incrementer which is an expression node, null for while
+	 *            The incrementer which is an expression node, null for while
 	 *            loop
 	 * @param guard
 	 *            The guard
@@ -2020,15 +2017,14 @@ public class ModelBuilderWorker {
 				loopScope, true);
 		Set<Statement> continues, breaks;
 		Fragment beforeCondition, loopEntrance, loopBody, incrementer = null, loopExit, result;
-		Location continueLocation, exitLocation;
+		Location loopEntranceLocation, continueLocation, exitLocation;
 		Map.Entry<Fragment, Expression> refineConditional = factory
 				.refineConditionalExpression(loopScope, guard, condition);
 
 		beforeCondition = refineConditional.getKey();
 		condition = refineConditional.getValue();
 		condition = factory.booleanExpression(condition);
-
-		Location loopEntranceLocation = factory.location(
+		loopEntranceLocation = factory.location(
 				factory.sourceOf(conditionNode.getSource()), loopScope);
 		loopEntrance = new CommonFragment(loopEntranceLocation,
 				factory.noopStatement(
@@ -2038,13 +2034,10 @@ public class ModelBuilderWorker {
 			loopEntrance = beforeCondition.combineWith(loopEntrance);
 			loopEntrance.makeAtomic();
 		}
-
 		functionInfo.addContinueSet(new LinkedHashSet<Statement>());
 		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
-
 		loopBody = translateStatementNode(null, loopScope, loopBodyNode);
 		continues = functionInfo.popContinueStack();
-
 		// if there is no incrementer statement, continue statements will go to
 		// the loop entrance/exit location
 		if (incrementerNode != null) {
@@ -2053,32 +2046,30 @@ public class ModelBuilderWorker {
 			continueLocation = incrementer.startLocation();
 		} else
 			continueLocation = loopEntrance.startLocation();
-
 		for (Statement s : continues) {
 			s.setTarget(continueLocation);
 		}
-
 		// the loop entrance location is the same as the loop exit location
 		loopExit = new CommonFragment(factory.noopStatement(condition
 				.getSource(), loopEntranceLocation, factory.unaryExpression(
 				condition.getSource(), UNARY_OPERATOR.NOT, condition)));
-
 		// incrementer comes after the loop body
 		if (incrementer != null)
 			loopBody = loopBody.combineWith(incrementer);
-
 		// loop entrance comes before the loop body, P.S. loopExit is "combined"
 		// implicitly because its start location is the same as loopEntrance
 		loopBody = loopBody.combineWith(loopEntrance);
-
 		// initially loop entrance comes before the loopBody. Now we'll have
 		// loopBody -> loopEntrance -> loopBody and the loop is formed.
 		result = loopEntrance.combineWith(loopBody);
-
 		// break statements will go out of the loop, and thus is considered as
 		// one of the last statement of the fragment
 		breaks = functionInfo.popBreakStack();
 		if (breaks.size() > 0) {
+			// The set of all statements that exit the loop. This is the loop
+			// exit statement, plus any breaks. All of these statements will be
+			// set to the same target later when this fragment is combined with
+			// the next fragment.
 			StatementSet lastStatements = new StatementSet();
 
 			lastStatements.add(loopExit.lastStatement());
@@ -2089,12 +2080,12 @@ public class ModelBuilderWorker {
 		} else {
 			result.setLastStatement(loopExit.lastStatement());
 		}
-
+		// TODO: Do we need this? It seems like we could just return the result
+		// fragment at this point without worrying about this extra noop.
 		exitLocation = factory.location(factory.sourceOfEnd(loopBodyNode),
 				loopScope);
 		result = result.combineWith(new CommonFragment(factory.noopStatement(
 				factory.sourceOfEnd(loopBodyNode), exitLocation, guard)));
-
 		return result;
 	}
 
@@ -2111,10 +2102,11 @@ public class ModelBuilderWorker {
 	 */
 	private Fragment translateWhileNode(Expression guard, Scope scope,
 			LoopNode loopNode) {
-		Scope newScope = factory.scope(factory.sourceOf(loopNode), scope,
-				new LinkedHashSet<Variable>(), functionInfo.function());
-
-		return composeLoopFragment(newScope, loopNode.getCondition(),
+		// TODO: Can we just get rid of this method? Maybe make into
+		// translateLoopNode and handle WHILE (just compose loop fragment) and
+		// DO_WHILE (make body fragment, combine with result of compose loop
+		// fragment).
+		return composeLoopFragment(scope, loopNode.getCondition(),
 				loopNode.getBody(), null, guard);
 	}
 
@@ -2139,7 +2131,6 @@ public class ModelBuilderWorker {
 			throw new CIVLInternalException(
 					"Wait statement is not allowed in atomic blocks.", source);
 		}
-
 		return factory.joinFragment(source, location,
 				translateExpressionNode(waitNode.getExpression(), scope, true),
 				guard);
@@ -2194,13 +2185,16 @@ public class ModelBuilderWorker {
 							newGuard.getSource()), BINARY_OPERATOR.AND, guard,
 					newGuard);
 		}
+		// TODO: Each outgoing statement from the first location in this
+		// fragment should have its guard set to the conjunction of guard and
+		// that statement's guard. Once we do this, we can get rid of the
+		// parameter guard in all of the statement translations.
 		result = translateStatementNode(newGuard, scope, whenNode.getBody());
 		if (beforeGuardFragment != null) {
 			beforeGuardFragment.startLocation().setEnterAtomic(true);
 			result.startLocation().setLeaveAtomic(true);
 			result = beforeGuardFragment.combineWith(result);
 		}
-
 		return result;
 	}
 
@@ -2231,12 +2225,9 @@ public class ModelBuilderWorker {
 		if (guard == null)
 			guard = factory.booleanLiteralExpression(startLocation.getSource(),
 					true);
-
 		if (chooseStatementNode.getDefaultCase() != null) {
 			defaultOffset = 1;
 		}
-
-		// ABC doesn't allow a caseNode with conditional expressions (a?b:c)
 		for (int i = 0; i < chooseStatementNode.numChildren() - defaultOffset; i++) {
 			StatementNode childNode = chooseStatementNode.getSequenceChild(i);
 			Fragment caseFragment = translateStatementNode(
@@ -2249,9 +2240,7 @@ public class ModelBuilderWorker {
 			// combine all case fragments as branches of the start location
 			result = result.parallelCombineWith(caseFragment);
 		}
-
 		iter = startLocation.outgoing().iterator();
-
 		// Compute the guard for the default statement
 		while (iter.hasNext()) {
 			Expression statementGuard = iter.next().guard();
@@ -2278,7 +2267,7 @@ public class ModelBuilderWorker {
 			// combine the default fragment as a branch of the start location
 			result = result.parallelCombineWith(defaultFragment);
 		}
-
+		// TODO: Do we need to do this?
 		// combine all branches with the exit fragment
 		result = result.combineWith(exit);
 		return result;
