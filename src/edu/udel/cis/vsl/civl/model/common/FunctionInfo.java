@@ -58,10 +58,6 @@ public class FunctionInfo {
 	 * 
 	 * @param function
 	 *            the CIVL function object that is being processed
-	 * @param universe
-	 *            The symbolic universe
-	 * @param factory
-	 *            The model factory
 	 */
 	public FunctionInfo(CIVLFunction function) {
 		this.function = function;

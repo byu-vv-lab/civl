@@ -414,31 +414,42 @@ public interface ModelFactory {
 	SymbolicArrayType stringSymbolicType();
 
 	/**
-	 * Translate a process id into symbolic expression
+	 * Translate a process id into symbolic expression. When
+	 * <code>pid < 0</code>, returns undefinedProcessValue.
 	 * 
 	 * @param pid
+	 *            The process id to be translated
 	 * @return The symbolic expression of the process id
 	 */
 	SymbolicExpression processValue(int pid);
 
 	/**
-	 * Translate a symbolic process id into integer
+	 * Translate a symbolic process id into an integer
 	 * 
 	 * @param source
+	 *            The CIVL source information of the symbolic process id
 	 * @param processValue
+	 *            The symbolic object of the process id
 	 * @return The integer of the process id
 	 */
 	int getProcessId(CIVLSource source, SymbolicExpression processValue);
 
 	/**
+	 * Translate an integer scope id into a symbolic expression
+	 * 
 	 * @param sid
-	 * @return The symbolic scope
+	 *            The scope id to be translated
+	 * @return The symbolic expression representing the scope id
 	 */
 	SymbolicExpression scopeValue(int sid);
 
 	/**
+	 * Translate a symbolic scope id into an integer
+	 * 
 	 * @param source
+	 *            The CIVL source information of the symbolic process id
 	 * @param scopeValue
+	 *            The symbolic object of the scope id
 	 * @return The concrete scope id
 	 */
 	int getScopeId(CIVLSource source, SymbolicExpression scopeValue);
@@ -479,15 +490,15 @@ public interface ModelFactory {
 			BINARY_OPERATOR operator, Expression left, Expression right);
 
 	/**
-	 * A cast of an expression to another type.
+	 * Create a cast expression
 	 * 
 	 * @param source
-	 * 
+	 *            The CIVL source information of the cast expression
 	 * @param type
 	 *            The type to which the expression is cast.
 	 * @param expression
 	 *            The expression being cast to a new type.
-	 * @return The cast expression
+	 * @return The cast expression created by this method
 	 */
 	CastExpression castExpression(CIVLSource source, CIVLType type,
 			Expression expression);
@@ -724,12 +735,10 @@ public interface ModelFactory {
 	 *            The source location for this statement.
 	 * @param expression
 	 *            The expression being asserted.
-	 * @param guard
-	 *            The guard
 	 * @return A new fragment.
 	 */
 	Fragment assertFragment(CIVLSource civlSource, Location source,
-			Expression expression, Expression guard);
+			Expression expression);
 
 	/**
 	 * An assignment statement.
@@ -742,12 +751,10 @@ public interface ModelFactory {
 	 *            The left hand side of the assignment.
 	 * @param rhs
 	 *            The right hand side of the assignment.
-	 * @param guard
-	 *            The guard
 	 * @return A new assignment statement.
 	 */
 	AssignStatement assignStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Expression rhs, Expression guard);
+			LHSExpression lhs, Expression rhs);
 
 	/**
 	 * Create a one-statement fragment that contains the assume statement.
@@ -758,12 +765,10 @@ public interface ModelFactory {
 	 *            The source location for this statement.
 	 * @param expression
 	 *            The expression being added to the path condition.
-	 * @param guard
-	 *            The guard
 	 * @return A new assume statement.
 	 */
 	Fragment assumeFragment(CIVLSource civlSource, Location source,
-			Expression expression, Expression guard);
+			Expression expression);
 
 	/**
 	 * A fork statement. Used to spawn a new process.
@@ -796,12 +801,10 @@ public interface ModelFactory {
 	 *            The source location for this join statement.
 	 * @param process
 	 *            An expression evaluating to a process.
-	 * @param guard
-	 *            The guard
 	 * @return A new fragment.
 	 */
 	Fragment joinFragment(CIVLSource civlSource, Location source,
-			Expression process, Expression guard);
+			Expression process);
 
 	/**
 	 * A noop statement.
@@ -811,6 +814,9 @@ public interface ModelFactory {
 	 * @param source
 	 *            The source location for this noop statement.
 	 * @param guard
+	 *            The guard of the noop statement, possible NULL. Usually a noop
+	 *            statement has a non-true guard, e.g., the entrance statement
+	 *            of a loop/if-else statement, etc.
 	 * @return A new noop statement.
 	 */
 	NoopStatement noopStatement(CIVLSource civlSource, Location source,
@@ -825,11 +831,10 @@ public interface ModelFactory {
 	 *            The source location for this return statement.
 	 * @param expression
 	 *            The expression being returned. Null if non-existent.
-	 * @param guard
 	 * @return A new fragment.
 	 */
 	Fragment returnFragment(CIVLSource civlSource, Location source,
-			Expression expression, Expression guard);
+			Expression expression);
 
 	/**
 	 * Create a new malloc statement
@@ -864,7 +869,7 @@ public interface ModelFactory {
 	 * expression==0. Used for evaluating expression in conditions.
 	 * 
 	 * @param expression
-	 * 
+	 *            The expression to be translated.
 	 * @return The boolean expression
 	 */
 	Expression booleanExpression(Expression expression);
@@ -979,7 +984,7 @@ public interface ModelFactory {
 			CIVLSource source);
 
 	/**
-	 * Translate conditional expression in to if-else statement. E.g.,
+	 * Translate a conditional expression in to if-else statement. E.g.,
 	 * <code>a ? b : c</code> will be translated into
 	 * <code>if(a){temp = b;}else{temp = c;}</code> where <code>temp</code> is
 	 * the temporal variable.
@@ -995,6 +1000,20 @@ public interface ModelFactory {
 	Fragment conditionalExpressionToIf(Expression guard,
 			VariableExpression variable, ConditionalExpression expression);
 
+	/**
+	 * Translate a conditional expression in to if-else statement, without
+	 * introducing a temporal variable. E.g., <code>x=a ? b : c</code> will be
+	 * translated into <code>if(a){x = b;}else{x = c;}</code>. This method is
+	 * invoked when only one conditional expression is detected in the
+	 * statement.
+	 * 
+	 * @param expression
+	 *            The conditional expression to be translated away.
+	 * @param statement
+	 *            The statement that has the conditional expression as part of
+	 *            it.
+	 * @return A new fragment composed by the translated statements
+	 */
 	Fragment conditionalExpressionToIf(ConditionalExpression expression,
 			Statement statement);
 
@@ -1025,8 +1044,8 @@ public interface ModelFactory {
 	 * @return The fragment includes the equivalent if-else statement and the
 	 *         modified statement without conditional expressions
 	 */
-	Fragment refineConditionalExpressionOfStatement(Statement lastStatement,
-			Location startLocation);
+	Fragment refineConditionalExpressionOfStatement(Statement statement,
+			Location oldLocation);
 
 	/**
 	 * Pop the queue of conditional expressions from the stack. This is invoked
@@ -1048,15 +1067,13 @@ public interface ModelFactory {
 	 * 
 	 * @param scope
 	 *            The scope of the expression
-	 * @param guard
-	 *            The guard
 	 * @param expression
 	 *            The expression
 	 * @return The if-else fragment and the expression without conditional
 	 *         expressions
 	 */
 	Entry<Fragment, Expression> refineConditionalExpression(Scope scope,
-			Expression guard, Expression expression);
+			Expression expression);
 
 	/**
 	 * @return The earliest conditional expression in the latest queue in the
@@ -1094,12 +1111,10 @@ public interface ModelFactory {
 	 * @param lhs
 	 *            The left hand side of the choose statement.
 	 * @param argument
-	 *            The argument to choose().
-	 * @param guard
-	 *            The guard
+	 *            The argument to choose_int().
 	 * @return A new choose statement.
 	 */
 	ChooseStatement chooseStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Expression argument, Expression guard);
+			LHSExpression lhs, Expression argument);
 
 }

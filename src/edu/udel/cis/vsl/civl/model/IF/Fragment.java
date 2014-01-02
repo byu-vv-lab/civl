@@ -2,18 +2,47 @@ package edu.udel.cis.vsl.civl.model.IF;
 
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
+/**
+ * A fragment is a sequence of statements. It has a "pointer" to the start
+ * location and a "pointer" to the last statement of the fragment.
+ * 
+ * @author Manchun Zheng
+ * 
+ */
 public interface Fragment {
 
+	/**
+	 * 
+	 * @return The start location of this fragment
+	 */
 	Location startLocation();
 
+	/**
+	 * 
+	 * @return The last statement of this fragment
+	 */
 	Statement lastStatement();
-	
+
+	/**
+	 * Update the start location of this fragment
+	 * 
+	 * @param location
+	 *            The new start location
+	 */
 	void setStartLocation(Location location);
+
+	/**
+	 * Update the last statement of this fragment
+	 * 
+	 * @param statement
+	 *            The new last statement
+	 */
 	void setLastStatement(Statement statement);
-	
+
 	/**
 	 * Make this fragment atomic
 	 */
@@ -66,4 +95,16 @@ public interface Fragment {
 	 */
 	void updateStartLocation(Location newLocation);
 
+	/**
+	 * Add a specified guard to the all statements of the start location. If a
+	 * statement has an existing guard, then it will have a new guard which is a
+	 * conjunction of the both.
+	 * 
+	 * @param guard
+	 *            The guard that is to be combined with
+	 * @param factory
+	 *            The model factory that provides some helper methods that are
+	 *            useful in checking if an expression is True.
+	 */
+	void addGuardToStartLocation(Expression guard, ModelFactory factory);
 }

@@ -160,6 +160,13 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private final String CHOOSE_VARIABLE_PREFIX = "$CHOOSE_VAR_";
 
+	/**
+	 * When translating a CallOrSpawnStatement that has some conditional
+	 * expressions as its arguments, we need to update the call statement stack
+	 * maintained in the model builder worker, because the function field of
+	 * each call statement is only updated after the whole AST tree is
+	 * traversed.
+	 */
 	ModelBuilderWorker modelBuilder;
 
 	/**
@@ -591,8 +598,16 @@ public class CommonModelFactory implements ModelFactory {
 			CIVLType type) {
 		CommonSizeofTypeExpression result = new CommonSizeofTypeExpression(
 				source, type);
+		Variable typeStateVariable = type.getStateVariable();
 
-		// result.setExpressionScope() don't know
+		// If the type has a state variable, then the scope of the sizeof
+		// expression is the scope of the state variable
+		if (typeStateVariable != null) {
+			result.setExpressionScope(typeStateVariable.scope());
+		} else
+			// If there is no state variable in the type, then the scope of the
+			// sizeof expression is NULL
+			result.setExpressionScope(null);
 		result.setExpressionType(integerType);
 		return result;
 	}
@@ -823,39 +838,24 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public Fragment assertFragment(CIVLSource civlSource, Location source,
-			Expression expression, Expression guard) {
+			Expression expression) {
 		AssertStatement result = new CommonAssertStatement(civlSource, source,
 				expression);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		result.setStatementScope(expression.expressionScope());
-		if (guard != null)
-			result.setGuard(guard);
 		return new CommonFragment(result);
 	}
 
-	/**
-	 * An assignment statement.
-	 * 
-	 * @param source
-	 *            The source location for this statement.
-	 * @param lhs
-	 *            The left hand side of the assignment.
-	 * @param rhs
-	 *            The right hand side of the assignment.
-	 * @return A new assignment statement.
-	 */
 	@Override
 	public AssignStatement assignStatement(CIVLSource civlSource,
-			Location source, LHSExpression lhs, Expression rhs, Expression guard) {
+			Location source, LHSExpression lhs, Expression rhs) {
 		AssignStatement result = new CommonAssignStatement(civlSource, source,
 				lhs, rhs);
 
 		result.setStatementScope(join(lhs.expressionScope(),
 				rhs.expressionScope()));
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null)
-			result.setGuard(guard);
 		return result;
 	}
 
@@ -870,14 +870,12 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public Fragment assumeFragment(CIVLSource civlSource, Location source,
-			Expression expression, Expression guard) {
+			Expression expression) {
 		AssumeStatement result = new CommonAssumeStatement(civlSource, source,
 				expression);
 
 		result.setStatementScope(expression.expressionScope());
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null)
-			result.setGuard(guard);
 		return new CommonFragment(result);
 	}
 
@@ -910,11 +908,9 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-
 	@Override
 	public ChooseStatement chooseStatement(CIVLSource civlSource,
-			Location source, LHSExpression lhs, Expression argument,
-			Expression guard) {
+			Location source, LHSExpression lhs, Expression argument) {
 		ChooseStatement result;
 
 		if (lhs == null) {
@@ -926,21 +922,17 @@ public class CommonModelFactory implements ModelFactory {
 		result.setStatementScope(join(lhs.expressionScope(),
 				argument.expressionScope()));
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null)
-			result.setGuard(guard);
 		return result;
 	}
 
 	@Override
 	public Fragment joinFragment(CIVLSource civlSource, Location source,
-			Expression process, Expression guard) {
+			Expression process) {
 		WaitStatement result = new CommonWaitStatement(civlSource, source,
 				process);
 
 		result.setStatementScope(process.expressionScope());
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null)
-			result.setGuard(guard);
 		return new CommonFragment(result);
 	}
 
@@ -962,18 +954,9 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * A return statement.
-	 * 
-	 * @param source
-	 *            The source location for this return statement.
-	 * @param expression
-	 *            The expression being returned. Null if non-existent.
-	 * @return A new return statement.
-	 */
 	@Override
 	public Fragment returnFragment(CIVLSource civlSource, Location source,
-			Expression expression, Expression guard) {
+			Expression expression) {
 		ReturnStatement result = new CommonReturnStatement(civlSource, source,
 				expression);
 
@@ -981,8 +964,6 @@ public class CommonModelFactory implements ModelFactory {
 			result.setStatementScope(expression.expressionScope());
 		}
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null)
-			result.setGuard(guard);
 		return new CommonFragment(result);
 	}
 
@@ -1020,6 +1001,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	/**
 	 * Gets a Java conrete int from a symbolic expression or throws exception.
+	 * @param source 
 	 * 
 	 * @param expression
 	 *            a numeric expression expected to hold concrete int value
@@ -1040,6 +1022,7 @@ public class CommonModelFactory implements ModelFactory {
 	/**
 	 * Gets a concrete Java int from the field of a symbolic expression of tuple
 	 * type or throws exception.
+	 * @param source 
 	 * 
 	 * @param tuple
 	 *            symbolic expression of tuple type
@@ -1188,6 +1171,10 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
+	/**
+	 * @param heapDynamicType
+	 * @return
+	 */
 	private SymbolicExpression computeInitialHeapValue(
 			SymbolicTupleType heapDynamicType) {
 		LinkedList<SymbolicExpression> fields = new LinkedList<SymbolicExpression>();
@@ -1416,7 +1403,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public Map.Entry<Fragment, Expression> refineConditionalExpression(
-			Scope scope, Expression guard, Expression expression) {
+			Scope scope, Expression expression) {
 		Fragment beforeConditionFragment = null;
 
 		while (hasConditionalExpressions()) {
@@ -1426,8 +1413,8 @@ public class CommonModelFactory implements ModelFactory {
 					conditionalExpression.getSource(),
 					conditionalExpression.getExpressionType());
 
-			beforeConditionFragment = conditionalExpressionToIf(guard,
-					variable, conditionalExpression);
+			beforeConditionFragment = conditionalExpressionToIf(null, variable,
+					conditionalExpression);
 			if (expression == conditionalExpression)
 				expression = variable;
 			else
@@ -1438,7 +1425,11 @@ public class CommonModelFactory implements ModelFactory {
 				beforeConditionFragment, expression);
 	}
 
-	public int sizeOfTopConditionalExpressionQueue() {
+	/**
+	 * 
+	 * @return The size of the top conditional expression queue
+	 */
+	private int sizeOfTopConditionalExpressionQueue() {
 		if (conditionalExpressions.isEmpty())
 			return 0;
 		return conditionalExpressions.peek().size();
@@ -1511,27 +1502,26 @@ public class CommonModelFactory implements ModelFactory {
 		ifGuard = booleanExpression(condition);
 		elseGuard = unaryExpression(condition.getSource(), UNARY_OPERATOR.NOT,
 				ifGuard);
-
-		if (!isTrue(guard)) {
-			ifGuard = binaryExpression(
-					sourceOfSpan(guard.getSource(), ifGuard.getSource()),
-					BINARY_OPERATOR.AND, guard, ifGuard);
-			elseGuard = binaryExpression(
-					sourceOfSpan(guard.getSource(), elseGuard.getSource()),
-					BINARY_OPERATOR.AND, guard, elseGuard);
+		if (guard != null) {
+			if (!isTrue(guard)) {
+				ifGuard = binaryExpression(
+						sourceOfSpan(guard.getSource(), ifGuard.getSource()),
+						BINARY_OPERATOR.AND, guard, ifGuard);
+				elseGuard = binaryExpression(
+						sourceOfSpan(guard.getSource(), elseGuard.getSource()),
+						BINARY_OPERATOR.AND, guard, elseGuard);
+			}
 		}
-
 		ifAssign = assignStatement(ifValue.getSource(), startLocation,
-				variable, ifValue, ifGuard);
+				variable, ifValue);
+		ifAssign.setGuard(ifGuard);
 		lastStatement.add(ifAssign);
-
 		elseAssign = assignStatement(elseValue.getSource(), startLocation,
-				variable, elseValue, elseGuard);
+				variable, elseValue);
+		elseAssign.setGuard(elseGuard);
 		lastStatement.add(elseAssign);
-
 		result.setStartLocation(startLocation);
 		result.setLastStatement(lastStatement);
-
 		return result;
 	}
 

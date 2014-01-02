@@ -6,6 +6,9 @@ import java.util.Set;
 import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
@@ -237,6 +240,28 @@ public class CommonFragment implements Fragment {
 				}
 			} else
 				this.lastStatement.source().setLeaveAtomic(true);
+		}
+	}
+
+	@Override
+	public void addGuardToStartLocation(Expression guard, ModelFactory factory) {
+		int statementCount = this.startLocation.getNumOutgoing();
+
+		// TODO check when statement is an instance of StatementSet
+		for (int i = 0; i < statementCount; i++) {
+			Statement statement = this.startLocation().getOutgoing(i);
+			Expression oldGuard = statement.guard();
+
+			if (factory.isTrue(oldGuard)) {
+				statement.setGuard(guard);
+			} else if (!factory.isTrue(guard)) {
+				Expression newGuard = factory.binaryExpression(
+						factory.sourceOfSpan(guard.getSource(),
+								oldGuard.getSource()), BINARY_OPERATOR.AND,
+						guard, oldGuard);
+
+				statement.setGuard(newGuard);
+			}
 		}
 	}
 }
