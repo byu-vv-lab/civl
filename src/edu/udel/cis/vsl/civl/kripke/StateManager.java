@@ -347,6 +347,22 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		} while (true);
 	}
 
+	/**
+	 * Execute a statement from a certain state and return the resulting state
+	 * 
+	 * @param state
+	 *            The state to execute the statement with
+	 * @param location
+	 *            The location of the statement, satisfying that
+	 *            <code>s.source() == location</code>.
+	 * @param s
+	 *            The statement to be executed
+	 * @param pid
+	 *            The id of the process that the statement <code>s</code>
+	 *            belongs to. Precondition:
+	 *            <code>state.getProcessState(pid).getLocation() == location</code>
+	 * @return
+	 */
 	private State executeStatement(State state, Location location, Statement s,
 			int pid) {
 		State newState = null;
