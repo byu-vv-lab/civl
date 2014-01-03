@@ -229,4 +229,37 @@ public interface StateFactory {
 	 */
 	State collectScopes(State state);
 
+	/**
+	 * Check if any process at the state is holding the atomic lock, i.e, the
+	 * process is executing some atomic blocks.
+	 * <p>
+	 * This information is maintained as a global variable
+	 * {@link CommonModelFactory#ATOMIC_LOCK_VARIABLE} of $proc type in the root
+	 * scope in the CIVL model (always with index 0), and it gets automatically
+	 * updated when process id's are renumbered.
+	 * 
+	 * @param state
+	 *            The state to be checked
+	 * @return True iff the value of the variable $atomicLock is not undefined.
+	 */
+	boolean lockedByAtomic(State state);
+
+	/**
+	 * 
+	 * @param state
+	 * @return
+	 */
+	ProcessState processInAtomic(State state);
+
+	/**
+	 * Process with pid grabs the atomic lock, i.e.,
+	 * 
+	 * @param pid
+	 * @return
+	 */
+	State getAtomicLock(State state, int pid);
+
+	State releaseAtomicLock(State state);
+	
+	State setProcessState(State state, ProcessState p, int pid);
 }

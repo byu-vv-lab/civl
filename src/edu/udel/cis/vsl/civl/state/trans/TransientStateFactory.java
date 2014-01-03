@@ -515,4 +515,34 @@ public class TransientStateFactory implements StateFactory {
 		return (TransientState) state;
 	}
 
+	@Override
+	public boolean lockedByAtomic(State state) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public ProcessState processInAtomic(State state) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public State getAtomicLock(State state, int pid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public State releaseAtomicLock(State state) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public State setProcessState(State state, ProcessState p, int pid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

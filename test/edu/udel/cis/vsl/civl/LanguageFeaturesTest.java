@@ -215,15 +215,20 @@ public class LanguageFeaturesTest {
 	public void testAtomicStatements() throws ABCException {
 		assertTrue(ui.run("verify", filename("atomicStatement.cvl")));
 	}
-
-	@Test
-	public void testAtomicStatementsBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("atomicStatementBad.cvl")));
-	}
-
+	
 	@Test
 	public void testAtomicWaitBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("atomicWaitBad.cvl")));
+	}
+	
+	@Test
+	public void testAtomStatements() throws ABCException {
+		assertTrue(ui.run("verify", filename("atomStatement.cvl")));
+	}
+
+	@Test
+	public void testAtomStatementsBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("atomStatementBad.cvl")));
 	}
 
 	@Test

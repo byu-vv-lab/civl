@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -23,6 +24,7 @@ import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
@@ -99,16 +101,39 @@ public class Enabler implements
 		if (state.getPathCondition().isFalse())
 			// return empty set of transitions:
 			return new TransitionSequence(state);
+		// execute a transition in an atomic block of a certain process without
+		// interleaving with other processes
+		if (executor.stateFactory().lockedByAtomic(state)) {
+			ProcessState p = executor.stateFactory().processInAtomic(state);
+			TransitionSequence localTransitions = transitionFactory
+					.newTransitionSequence(state);
+			Location pLocation = p.getLocation();
+			int pid = p.getPid();
 
+			for (Statement s : pLocation.outgoing()) {
+				BooleanExpression newPathCondition = executor.newPathCondition(
+						state, pid, s);
+
+				if (!newPathCondition.isFalse()) {
+					localTransitions.addAll(executeStatement(state, s,
+							newPathCondition, pid));
+					if (localTransitions.isEmpty()) {
+						throw new CIVLStateException(
+								ErrorKind.OTHER,
+								Certainty.CONCRETE,
+								"Undesired blocked location is detected in $atomic block.",
+								state, pLocation.getSource());
+					}
+				}
+			}
+			return localTransitions;
+		}
 		if (!this.scpPor) {
-
 			if (debugging && enabledTransitionSets % 1000 == 0) {
 				System.out.println("Ample transition sets: " + ampleSets + "/"
 						+ enabledTransitionSets);
 			}
-
 			transitions = enabledTransitionsPOR(state);
-
 			if (debugging) {
 				if (transitions.size() > 1) {
 					debugOut.println("Number of transitions at state "
@@ -118,7 +143,6 @@ public class Enabler implements
 			}
 		} else
 			transitions = enabledTransitionsPORsoped(state);
-
 		if (randomMode && transitions.size() > 0) {
 			TransitionSequence singletonSequence = new TransitionSequence(state);
 			singletonSequence.add(transitions.get(generator.nextInt(transitions
@@ -132,6 +156,8 @@ public class Enabler implements
 	 * Attempts to form an ample set from the enabled transitions of the given
 	 * process, from the given state. If this is not possible, returns all
 	 * transitions.
+	 * 
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private TransitionSequence enabledTransitionsPOR(State state) {
 		TransitionSequence transitions = transitionFactory
@@ -145,14 +171,17 @@ public class Enabler implements
 			TransitionSequence localTransitions = transitionFactory
 					.newTransitionSequence(state);
 			boolean allLocal = true;
+			Location pLocation;
+			int pid = p.getPid();
 
 			// A process with an empty stack has no current location.
 			if (p == null || p.hasEmptyStack()) {
 				continue;
 			}
-			for (Statement s : p.getLocation().outgoing()) {
+			pLocation = p.getLocation();
+			for (Statement s : pLocation.outgoing()) {
 				BooleanExpression newPathCondition = executor.newPathCondition(
-						state, p.getPid(), s);
+						state, pid, s);
 				int statementScope = p.getDyscopeId();
 
 				if (s.statementScope() != null) {
@@ -165,64 +194,11 @@ public class Enabler implements
 					allLocal = false;
 				}
 				if (!newPathCondition.isFalse()) {
-					try {
-						if (s instanceof ChooseStatement) {
-							Evaluation eval = evaluator.evaluate(
-									state.setPathCondition(newPathCondition),
-									p.getPid(), ((ChooseStatement) s).rhs());
-							IntegerNumber upperNumber = (IntegerNumber) universe
-									.reasoner(eval.state.getPathCondition())
-									.extractNumber(
-											(NumericExpression) eval.value);
-							int upper;
-
-							if (upperNumber == null)
-								throw new CIVLStateException(
-										ErrorKind.INTERNAL, Certainty.NONE,
-										"Argument to $choose_int not concrete: "
-												+ eval.value, eval.state,
-										s.getSource());
-							upper = upperNumber.intValue();
-							for (int i = 0; i < upper; i++) {
-								localTransitions.add(transitionFactory
-										.newChooseTransition(
-												eval.state.getPathCondition(),
-												p.getPid(), s,
-												universe.integer(i)));
-							}
-							continue;
-						} else if (s instanceof WaitStatement) {
-							Evaluation eval = evaluator.evaluate(
-									state.setPathCondition(newPathCondition),
-									p.getPid(), ((WaitStatement) s).process());
-							int pidValue = modelFactory.getProcessId(
-									((WaitStatement) s).process().getSource(),
-									eval.value);
-
-							if (pidValue < 0) {
-								CIVLExecutionException e = new CIVLStateException(
-										ErrorKind.INVALID_PID,
-										Certainty.PROVEABLE,
-										"Unable to call $wait on a process that has already been the target of a $wait.",
-										state, s.getSource());
-
-								evaluator.reportError(e);
-								// TODO: recover: add a no-op transition
-								throw e;
-							}
-							if (!state.getProcessState(pidValue)
-									.hasEmptyStack()) {
-								continue;
-							}
-						}
-						localTransitions.add(transitionFactory
-								.newSimpleTransition(newPathCondition,
-										p.getPid(), s));
-					} catch (UnsatisfiablePathConditionException e) {
-						// nothing to do: don't add this transition
-					}
+					localTransitions.addAll(executeStatement(state, s,
+							newPathCondition, pid));
 				}
 			}
+
 			totalTransitions += localTransitions.size();
 			if (allLocal && localTransitions.size() > 0) {
 				ampleSets++;
@@ -262,6 +238,63 @@ public class Enabler implements
 		// debugOut.println("Number of transtions at state " + state.getId() +
 		// ": " + transitions.size());
 		return transitions;
+	}
+
+	private ArrayList<SimpleTransition> executeStatement(State state,
+			Statement s, BooleanExpression pathCondition, int pid) {
+		ArrayList<SimpleTransition> localTransitions = new ArrayList<SimpleTransition>();
+
+		try {
+			if (s instanceof ChooseStatement) {
+				Evaluation eval = evaluator.evaluate(
+						state.setPathCondition(pathCondition), pid,
+						((ChooseStatement) s).rhs());
+				IntegerNumber upperNumber = (IntegerNumber) universe.reasoner(
+						eval.state.getPathCondition()).extractNumber(
+						(NumericExpression) eval.value);
+				int upper;
+
+				if (upperNumber == null)
+					throw new CIVLStateException(ErrorKind.INTERNAL,
+							Certainty.NONE,
+							"Argument to $choose_int not concrete: "
+									+ eval.value, eval.state, s.getSource());
+				upper = upperNumber.intValue();
+				for (int i = 0; i < upper; i++) {
+					localTransitions.add(transitionFactory.newChooseTransition(
+							eval.state.getPathCondition(), pid, s,
+							universe.integer(i)));
+				}
+			} else if (s instanceof WaitStatement) {
+				Evaluation eval = evaluator.evaluate(
+						state.setPathCondition(pathCondition), pid,
+						((WaitStatement) s).process());
+				int pidValue = modelFactory.getProcessId(((WaitStatement) s)
+						.process().getSource(), eval.value);
+
+				if (pidValue < 0) {
+					CIVLExecutionException e = new CIVLStateException(
+							ErrorKind.INVALID_PID,
+							Certainty.PROVEABLE,
+							"Unable to call $wait on a process that has already been the target of a $wait.",
+							state, s.getSource());
+
+					evaluator.reportError(e);
+					// TODO: recover: add a no-op transition
+					throw e;
+				}
+				if (state.getProcessState(pidValue).hasEmptyStack()) {
+					localTransitions.add(transitionFactory.newSimpleTransition(
+							pathCondition, pid, s));
+				}
+			} else {
+				localTransitions.add(transitionFactory.newSimpleTransition(
+						pathCondition, pid, s));
+			}
+		} catch (UnsatisfiablePathConditionException e) {
+			// nothing to do: don't add this transition
+		}
+		return localTransitions;
 	}
 
 	/**
@@ -329,75 +362,22 @@ public class Enabler implements
 		for (ProcessState p : processStates) {
 			TransitionSequence localTransitions = transitionFactory
 					.newTransitionSequence(state);
+			int pid = p.getPid();
 
 			// No need to check if p is null/empty stack, since
 			// it is already checked in ampleProcesses()
 			// A process with an empty stack has no current location.
 			for (Statement s : p.getLocation().outgoing()) {
 				BooleanExpression newPathCondition = executor.newPathCondition(
-						state, p.getPid(), s);
+						state, pid, s);
 				// No need to calculate impact scope, since everything in
 				// processStates
 				// is already ample set processes
 
 				// generate transitions for each statement of each process
 				if (!newPathCondition.isFalse()) {
-					try {
-						if (s instanceof ChooseStatement) {
-							Evaluation eval = evaluator.evaluate(
-									state.setPathCondition(newPathCondition),
-									p.getPid(), ((ChooseStatement) s).rhs());
-							IntegerNumber upperNumber = (IntegerNumber) universe
-									.reasoner(eval.state.getPathCondition())
-									.extractNumber(
-											(NumericExpression) eval.value);
-							int upper;
-
-							if (upperNumber == null)
-								throw new CIVLStateException(
-										ErrorKind.INTERNAL, Certainty.NONE,
-										"Argument to $choose_int not concrete: "
-												+ eval.value, eval.state,
-										s.getSource());
-							upper = upperNumber.intValue();
-							for (int i = 0; i < upper; i++) {
-								localTransitions.add(transitionFactory
-										.newChooseTransition(
-												eval.state.getPathCondition(),
-												p.getPid(), s,
-												universe.integer(i)));
-							}
-							continue;
-						} else if (s instanceof WaitStatement) {
-							Evaluation eval = evaluator.evaluate(
-									state.setPathCondition(newPathCondition),
-									p.getPid(), ((WaitStatement) s).process());
-							int pidValue = modelFactory.getProcessId(
-									((WaitStatement) s).process().getSource(),
-									eval.value);
-
-							if (pidValue < 0) {
-								CIVLExecutionException e = new CIVLStateException(
-										ErrorKind.INVALID_PID,
-										Certainty.PROVEABLE,
-										"Unable to call $wait on a process that has already been the target of a $wait.",
-										state, s.getSource());
-
-								evaluator.reportError(e);
-								// TODO: recover: add a no-op transition
-								throw e;
-							}
-							if (!state.getProcessState(pidValue)
-									.hasEmptyStack()) {
-								continue;
-							}
-						}
-						localTransitions.add(transitionFactory
-								.newSimpleTransition(newPathCondition,
-										p.getPid(), s));
-					} catch (UnsatisfiablePathConditionException e) {
-						// nothing to do: don't add this transition
-					}
+					localTransitions.addAll(executeStatement(state, s,
+							newPathCondition, pid));
 				}
 			}
 

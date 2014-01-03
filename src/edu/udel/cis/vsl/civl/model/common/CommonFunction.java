@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 
 /**
@@ -363,7 +364,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		for (int i = 0; i < count; i++) {
 			Location loc = oldLocations.get(i);
 
-			if (loc.enterAtomic() || loc.leaveAtomic())
+			if (loc.atomicKind() != AtomicKind.NONE)
 				continue;
 			// loc has exactly one statement
 			if (loc.getNumOutgoing() == 1) {

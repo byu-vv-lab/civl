@@ -99,4 +99,35 @@ public interface ProcessState {
 	 */
 	void print(PrintStream out, String prefix);
 
+	/**
+	 * Increase the atomic block counter. Invoked when encountering a new atomic
+	 * block.
+	 * 
+	 * @return A new process state with the atomic block counter increased by
+	 *         one and other fields remain unchanged.
+	 */
+	ProcessState incrementAtomicCount();
+
+	/**
+	 * Decrease the atomic block counter. Invoked when reaching the end of a
+	 * certain atomic block.
+	 * 
+	 * @return A new process state with the atomic block counter decreased by
+	 *         one and other fields remain unchanged.
+	 */
+	ProcessState decrementAtomicCount();
+
+	/**
+	 * Check if the current process is in the execution of some atomic block.
+	 * 
+	 * @return True if the current process is executing some atomic block.
+	 */
+	boolean inAtomic();
+
+	/**
+	 * 
+	 * @return The number of $atomic blocks that are currently being executed in
+	 *         this process
+	 */
+	int atomicCount();
 }

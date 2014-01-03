@@ -88,6 +88,13 @@ public class ImmutableProcessState implements ProcessState {
 	private StackEntry[] callStack;
 
 	/**
+	 * Number of atomic blocks that are being executing in the process.
+	 * Incremented when entering an atomic block, and decremented when leaving
+	 * it.
+	 */
+	private int atomicCount = 0;
+
+	/**
 	 * A new process state with empty stack.
 	 * 
 	 * @param id
@@ -98,15 +105,23 @@ public class ImmutableProcessState implements ProcessState {
 		callStack = new ImmutableStackEntry[0];
 	}
 
-	ImmutableProcessState(int pid, StackEntry[] stack) {
-		assert stack != null;
-		this.pid = pid;
-		callStack = stack;
-	}
+	// ImmutableProcessState(int pid, StackEntry[] stack, int atomicCount) {
+	// assert stack != null;
+	// this.pid = pid;
+	// callStack = stack;
+	// this.atomicCount = atomicCount;
+	// }
 
 	ImmutableProcessState(ImmutableProcessState oldProcess, int newPid) {
 		this.pid = newPid;
 		this.callStack = oldProcess.callStack;
+		this.atomicCount = oldProcess.atomicCount;
+	}
+
+	ImmutableProcessState(int pid, StackEntry[] stack, int atomicCount) {
+		this.pid = pid;
+		this.callStack = stack;
+		this.atomicCount = atomicCount;
 	}
 
 	/**
@@ -129,7 +144,7 @@ public class ImmutableProcessState implements ProcessState {
 		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length];
 
 		System.arraycopy(callStack, 0, newStack, 0, callStack.length);
-		return new ImmutableProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
 
 	@Override
@@ -185,7 +200,7 @@ public class ImmutableProcessState implements ProcessState {
 		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length - 1];
 
 		System.arraycopy(callStack, 1, newStack, 0, callStack.length - 1);
-		return new ImmutableProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
 
 	ImmutableProcessState push(ImmutableStackEntry newStackEntry) {
@@ -193,7 +208,7 @@ public class ImmutableProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 0, newStack, 1, callStack.length);
 		newStack[0] = newStackEntry;
-		return new ImmutableProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
 
 	ImmutableProcessState replaceTop(ImmutableStackEntry newStackEntry) {
@@ -202,7 +217,7 @@ public class ImmutableProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 1, newStack, 1, length - 1);
 		newStack[0] = newStackEntry;
-		return new ImmutableProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
 
 	@Override
@@ -279,7 +294,7 @@ public class ImmutableProcessState implements ProcessState {
 	}
 
 	public ProcessState setPid(int pid) {
-		return new ImmutableProcessState(pid, callStack);
+		return new ImmutableProcessState(pid, callStack, this.atomicCount);
 	}
 
 	public ProcessState setStackEntry(int index, StackEntry frame) {
@@ -288,11 +303,11 @@ public class ImmutableProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 0, newStack, 0, n);
 		newStack[index] = frame;
-		return new ImmutableProcessState(pid, newStack);
+		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
 
 	public ProcessState setStackEntries(StackEntry[] frames) {
-		return new ImmutableProcessState(pid, frames);
+		return new ImmutableProcessState(pid, frames, this.atomicCount);
 	}
 
 	@Override
@@ -303,6 +318,28 @@ public class ImmutableProcessState implements ProcessState {
 	@Override
 	public Iterator<StackEntry> bottomToTopIterator() {
 		return new ReverseIterator(callStack);
+	}
+
+	@Override
+	public ProcessState incrementAtomicCount() {
+		return new ImmutableProcessState(this.pid, this.callStack,
+				this.atomicCount + 1);
+	}
+
+	@Override
+	public ProcessState decrementAtomicCount() {
+		return new ImmutableProcessState(this.pid, this.callStack,
+				this.atomicCount - 1);
+	}
+
+	@Override
+	public boolean inAtomic() {
+		return this.atomicCount > 0;
+	}
+
+	@Override
+	public int atomicCount() {
+		return this.atomicCount;
 	}
 
 }

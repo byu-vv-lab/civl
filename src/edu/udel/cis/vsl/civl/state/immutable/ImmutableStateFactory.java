@@ -64,8 +64,9 @@ public class ImmutableStateFactory implements StateFactory {
 
 	// ************************* Helper Methods ***********************
 
-	private ImmutableProcessState newProcessState(int id, StackEntry[] stack) {
-		return new ImmutableProcessState(id, stack);
+	private ImmutableProcessState newProcessState(int id, StackEntry[] stack,
+			int atomicCount) {
+		return new ImmutableProcessState(id, stack, atomicCount);
 	}
 
 	private SymbolicExpression[] initialValues(Scope lexicalScope,
@@ -171,7 +172,8 @@ public class ImmutableStateFactory implements StateFactory {
 				}
 			}
 			if (stackChange)
-				newProcesses[pid] = newProcessState(pid, newStack);
+				newProcesses[pid] = newProcessState(pid, newStack,
+						oldProcess.atomicCount());
 			else
 				newProcesses[pid] = oldProcess;
 		}
@@ -280,6 +282,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 		// TODO: how to initialize the arguments to system function?
 		state = addProcess(state, function, arguments, -1);
+		state = this.setVariable(state, 0, 0, modelFactory.processValue(-1));
 		return canonic(state);
 	}
 
@@ -349,7 +352,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 		newProcesses = theState.copyAndExpandProcesses();
 		newProcesses[numProcs] = newProcessState(numProcs,
-				new ImmutableStackEntry[0]);
+				new ImmutableStackEntry[0], 0);
 		theState = theState.setProcessStates(newProcesses);
 		return pushCallStack2(theState, numProcs, function, arguments,
 				callerPid);
@@ -937,6 +940,48 @@ public class ImmutableStateFactory implements StateFactory {
 		// in this factory, collectScopes is run after each modification
 		// to state that might affect scopes, so nothing to do
 		return (ImmutableState) state;
+	}
+
+	@Override
+	public boolean lockedByAtomic(State state) {
+		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0, 0);
+		int atomicPid = modelFactory.getProcessId(modelFactory.systemSource(),
+				symbolicAtomicPid);
+
+		return atomicPid >= 0;
+	}
+
+	@Override
+	public ProcessState processInAtomic(State state) {
+		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0, 0);
+		int atomicPid = modelFactory.getProcessId(modelFactory.systemSource(),
+				symbolicAtomicPid);
+
+		assert atomicPid >= 0;
+		return state.getProcessState(atomicPid);
+	}
+
+	@Override
+	public State getAtomicLock(State state, int pid) {
+		// TODO Auto-generated method stub
+		return this.setVariable(state, 0, 0, modelFactory.processValue(pid));
+	}
+
+	@Override
+	public State releaseAtomicLock(State state) {
+		return this.setVariable(state, 0, 0, modelFactory.processValue(-1));
+	}
+
+	@Override
+	public State setProcessState(State state, ProcessState p, int pid) {
+		ImmutableState theState = (ImmutableState) state;
+		ImmutableProcessState[] newProcesses;
+
+		newProcesses = theState.copyProcessStates();
+		newProcesses[pid] = (ImmutableProcessState) p;
+		theState = theState.setProcessStates(newProcesses);
+		return new ImmutableState(newProcesses, theState.copyScopes(),
+				theState.getPathCondition());
 	}
 
 }

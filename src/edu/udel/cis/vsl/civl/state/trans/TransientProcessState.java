@@ -304,4 +304,28 @@ public class TransientProcessState extends TransientObject implements
 	public Iterator<StackEntry> bottomToTopIterator() {
 		return callStack.descendingIterator();
 	}
+
+	@Override
+	public ProcessState incrementAtomicCount() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ProcessState decrementAtomicCount() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean inAtomic() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public int atomicCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

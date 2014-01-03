@@ -646,7 +646,7 @@ public class ModelBuilderWorker {
 		case OPERATOR:
 			result = translateOperatorNode((OperatorNode) expressionNode, scope);
 			break;
-		case RESULT:
+		case RESULT:// TODO make it a variable, re-order cases
 			result = factory.resultExpression(factory.sourceOf(expressionNode));
 			break;
 		case SELF:
@@ -725,6 +725,7 @@ public class ModelBuilderWorker {
 				} else if (conversion instanceof VoidPointerConversion) {
 					// void*->T* or T*->void*
 					// ignore, pointer types are all the same
+					// all pointer types are using the same symbolic object type
 				} else
 					throw new CIVLInternalException("Unknown conversion: "
 							+ conversion, source);
@@ -1339,23 +1340,29 @@ public class ModelBuilderWorker {
 	private Fragment translateAtomicNode(Scope scope, AtomicNode atomicNode) {
 		StatementNode bodyNode = atomicNode.getBody();
 		Fragment bodyFragment;
-		Statement lastStatement;
+		// Statement lastStatement;
+		Location start = factory.location(
+				factory.sourceOfBeginning(atomicNode), scope);
+		Location end = factory.location(factory.sourceOfEnd(atomicNode), scope);
 
-		factory.enterAtomicBlock();
+		// factory.enterAtomicBlock(atomicNode.isDeterministic());
 		bodyFragment = translateStatementNode(scope, bodyNode);
-		factory.leaveAtomicBlock();
-		lastStatement = bodyFragment.lastStatement();
-		if (lastStatement instanceof CallOrSpawnStatement) {
-			CallOrSpawnStatement callStatement = (CallOrSpawnStatement) lastStatement;
-			if (callStatement.isCall()) {
-				CIVLSource sourceOfEnd = factory.sourceOfEnd(bodyNode);
-
-				bodyFragment = bodyFragment.combineWith(new CommonFragment(
-						factory.noopStatement(sourceOfEnd,
-								factory.location(sourceOfEnd, scope), null)));
-			}
-		}
-		bodyFragment.makeAtomic();
+		// factory.leaveAtomicBlock(atomicNode.isDeterministic());
+		// lastStatement = bodyFragment.lastStatement();
+		// if (lastStatement instanceof CallOrSpawnStatement) {
+		// CallOrSpawnStatement callStatement = (CallOrSpawnStatement)
+		// lastStatement;
+		// if (callStatement.isCall()) {
+		// CIVLSource sourceOfEnd = factory.sourceOfEnd(bodyNode);
+		//
+		// bodyFragment = bodyFragment.combineWith(new CommonFragment(
+		// factory.noopStatement(sourceOfEnd,
+		// factory.location(sourceOfEnd, scope), guard)));
+		// }
+		// }
+		// bodyFragment.makeAtomic(atomicNode.isDeterministic());
+		bodyFragment = factory.atomicFragment(atomicNode.isDeterministic(),
+				bodyFragment, start, end);
 		return bodyFragment;
 	}
 
@@ -1397,15 +1404,16 @@ public class ModelBuilderWorker {
 	 * @return The fragment of the if-else statements
 	 */
 	private Fragment translateIfNode(Scope scope, IfNode ifNode) {
-		Expression expression = translateExpressionNode(ifNode.getCondition(),
-				scope, true);
+		ExpressionNode conditionNode = ifNode.getCondition();
+		Expression expression = translateExpressionNode(conditionNode, scope,
+				true);
 		Fragment beforeCondition = null, trueBranch, trueBranchBody, falseBranch, falseBranchBody, result;
 		// Location exitLocation = factory.location(factory.sourceOfEnd(ifNode),
 		// scope);
 		Location location = factory.location(factory.sourceOfBeginning(ifNode),
 				scope);
 		Map.Entry<Fragment, Expression> refineConditional = factory
-				.refineConditionalExpression(scope, expression);
+				.refineConditionalExpression(scope, expression, conditionNode);
 
 		beforeCondition = refineConditional.getKey();
 		expression = refineConditional.getValue();
@@ -1425,8 +1433,6 @@ public class ModelBuilderWorker {
 		}
 		result = trueBranch.parallelCombineWith(falseBranch);
 		if (beforeCondition != null) {
-			beforeCondition.startLocation().setEnterAtomic(true);
-			result.startLocation().setLeaveAtomic(true);
 			result = beforeCondition.combineWith(result);
 		}
 		return result;
@@ -1581,11 +1587,11 @@ public class ModelBuilderWorker {
 		int numberOfArgs = functionCallNode.getNumberOfArguments();
 		Expression argument;
 
-		if (factory.inAtomicBlock()) {
-			throw new CIVLInternalException(
-					"Non-determinstic function call choose_int is not allowed in atomic blocks.",
-					source);
-		}
+		// if (factory.inAtomicBlock()) {
+		// throw new CIVLInternalException(
+		// "Non-determinstic function call choose_int is not allowed in atomic blocks.",
+		// source);
+		// }
 		if (numberOfArgs != 1) {
 			throw new CIVLInternalException(
 					"The function $choose_int should have exactly one argument.",
@@ -1684,7 +1690,10 @@ public class ModelBuilderWorker {
 	 * Precondition: assignNode.getOperator() == ASSIGN;
 	 * 
 	 * @param assignNode
-	 *            The assign node
+	 *            <<<<<<< .mine The assign node <dt><b>Preconditions:</b>
+	 *            <dd>
+	 *            assignNode.getOperator() == ASSIGN ======= The assign node
+	 *            >>>>>>> .r360
 	 * @param scope
 	 *            The scope containing this assignment.
 	 * @return The model representation of the assignment, which might also be a
@@ -1958,7 +1967,7 @@ public class ModelBuilderWorker {
 		Fragment beforeCondition, loopEntrance, loopBody, incrementer = null, loopExit, result;
 		Location loopEntranceLocation, continueLocation;
 		Map.Entry<Fragment, Expression> refineConditional = factory
-				.refineConditionalExpression(loopScope, condition);
+				.refineConditionalExpression(loopScope, condition, conditionNode);
 
 		beforeCondition = refineConditional.getKey();
 		condition = refineConditional.getValue();
@@ -1971,7 +1980,6 @@ public class ModelBuilderWorker {
 						loopEntranceLocation, condition));
 		if (beforeCondition != null) {
 			loopEntrance = beforeCondition.combineWith(loopEntrance);
-			loopEntrance.makeAtomic();
 		}
 		functionInfo.addContinueSet(new LinkedHashSet<Statement>());
 		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
@@ -2064,10 +2072,10 @@ public class ModelBuilderWorker {
 		Location location = factory.location(
 				factory.sourceOfBeginning(waitNode), scope);
 
-		if (factory.inAtomicBlock()) {
-			throw new CIVLInternalException(
-					"Wait statement is not allowed in atomic blocks.", source);
-		}
+		// if (factory.inAtomicBlock()) {
+		// throw new CIVLInternalException(
+		// "Wait statement is not allowed in atomic blocks.", source);
+		// }
 		return factory.joinFragment(source, location,
 				translateExpressionNode(waitNode.getExpression(), scope, true));
 	}
@@ -2100,10 +2108,11 @@ public class ModelBuilderWorker {
 	 * @return the fragment of the when statement
 	 */
 	private Fragment translateWhenNode(Scope scope, WhenNode whenNode) {
+		ExpressionNode whenGuardNode = whenNode.getGuard();
 		Expression whenGuard = translateExpressionNode(whenNode.getGuard(),
 				scope, true);
 		Map.Entry<Fragment, Expression> refineConditional = factory
-				.refineConditionalExpression(scope, whenGuard);
+				.refineConditionalExpression(scope, whenGuard, whenGuardNode);
 		Fragment beforeGuardFragment = refineConditional.getKey(), result;
 
 		whenGuard = refineConditional.getValue();
@@ -2116,7 +2125,7 @@ public class ModelBuilderWorker {
 			result.addGuardToStartLocation(whenGuard, factory);
 		}
 		if (beforeGuardFragment != null) {
-			beforeGuardFragment.makeAtomic();
+			// beforeGuardFragment.makeAtomic();
 			result = beforeGuardFragment.combineWith(result);
 		}
 		return result;
@@ -3027,7 +3036,8 @@ public class ModelBuilderWorker {
 		functionMap = new LinkedHashMap<Function, CIVLFunction>();
 		unprocessedFunctions = new ArrayList<FunctionDefinitionNode>();
 		functionInfo = new FunctionInfo(system);
-
+		// add the global variable for atomic lock
+		factory.createAtomicLockVaraible(systemScope);
 		factory.addConditionalExpressionQueue();
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
@@ -3100,7 +3110,6 @@ public class ModelBuilderWorker {
 			model.addFunction(f);
 		((CommonModel) model).setMallocStatements(mallocStatements);
 		for (CIVLFunction f : model.functions()) {
-
 			f.simplify();
 			// identify all purely local variables
 			f.purelyLocalAnalysis();

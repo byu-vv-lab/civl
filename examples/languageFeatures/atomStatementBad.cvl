@@ -4,7 +4,7 @@ void main(){
 	int x = 3;
 	
 	// non-determinism, an exception will be thrown
-	$atomic{
+	$atom{
 		$choose {
 			$when (n>2) { x=2;  }
 			$when (n>1) { x=1;  }

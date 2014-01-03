@@ -15,6 +15,7 @@ import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
@@ -152,13 +153,18 @@ public class CommonModelFactory implements ModelFactory {
 	 * The prefix of the temporal variables for translating conditional
 	 * expressions
 	 */
-	private final String CONDITIONAL_VARIABLE_PREFIX = "$COND_VAR_";
+	private static final String CONDITIONAL_VARIABLE_PREFIX = "$COND_VAR_";
 
 	/**
 	 * The prefix of the temporal variables for translating $choose_int function
 	 * calls
 	 */
-	private final String CHOOSE_VARIABLE_PREFIX = "$CHOOSE_VAR_";
+	private static final String CHOOSE_VARIABLE_PREFIX = "$CHOOSE_VAR_";
+
+	/**
+	 * The name of the atomic lock variable
+	 */
+	private static final String ATOMIC_LOCK_VARIABLE = "$ATOMIC_LOCK_VAR";
 
 	/**
 	 * When translating a CallOrSpawnStatement that has some conditional
@@ -250,11 +256,11 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private int chooseIntegerCounter = 0;
 
-	/**
-	 * The status of the translation, true iff an atomic block is currently
-	 * being processed.
-	 */
-	private Stack<Integer> atomicBlocks;;
+	// /**
+	// * Maintain a stack of atomic blocks (0 for general atomic, 1 for
+	// * deterministic atomic), which are currently being processed.
+	// */
+	// private Stack<Integer> atomicBlocks;
 
 	/**
 	 * The factory to create all model components. Usually this is the only way
@@ -309,7 +315,7 @@ public class CommonModelFactory implements ModelFactory {
 				scopeSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
 		this.conditionalExpressions = new Stack<ArrayDeque<ConditionalExpression>>();
-		atomicBlocks = new Stack<Integer>();
+		// atomicBlocks = new Stack<Integer>();
 	}
 
 	@Override
@@ -914,8 +920,11 @@ public class CommonModelFactory implements ModelFactory {
 		ChooseStatement result;
 
 		if (lhs == null) {
-			lhs = this.tempVariable(TempVariableKind.CHOOSE, source.scope(),
-					civlSource, argument.getExpressionType());
+			// lhs = this.tempVariable(TempVariableKind.CHOOSE, source.scope(),
+			// civlSource, argument.getExpressionType());
+			throw new CIVLInternalException(
+					"Side-effect remover failed to translate away function calls as expressions",
+					civlSource);
 		}
 		result = new CommonChooseStatement(civlSource, source, lhs, argument,
 				chooseID++);
@@ -1001,7 +1010,8 @@ public class CommonModelFactory implements ModelFactory {
 
 	/**
 	 * Gets a Java conrete int from a symbolic expression or throws exception.
-	 * @param source 
+	 * 
+	 * @param source
 	 * 
 	 * @param expression
 	 *            a numeric expression expected to hold concrete int value
@@ -1022,7 +1032,8 @@ public class CommonModelFactory implements ModelFactory {
 	/**
 	 * Gets a concrete Java int from the field of a symbolic expression of tuple
 	 * type or throws exception.
-	 * @param source 
+	 * 
+	 * @param source
 	 * 
 	 * @param tuple
 	 *            symbolic expression of tuple type
@@ -1403,7 +1414,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public Map.Entry<Fragment, Expression> refineConditionalExpression(
-			Scope scope, Expression expression) {
+			Scope scope, Expression expression, ExpressionNode expressionNode) {
 		Fragment beforeConditionFragment = null;
 
 		while (hasConditionalExpressions()) {
@@ -1420,7 +1431,13 @@ public class CommonModelFactory implements ModelFactory {
 			else
 				expression.replaceWith(conditionalExpression, variable);
 		}
-
+		if (beforeConditionFragment != null) {
+			// make the if-else statements atomic ($atomic)
+			beforeConditionFragment = this.atomicFragment(false,
+					beforeConditionFragment, this.location(
+							this.sourceOfBeginning(expressionNode), scope),
+					this.location(this.sourceOfEnd(expressionNode), scope));
+		}
 		return new AbstractMap.SimpleEntry<Fragment, Expression>(
 				beforeConditionFragment, expression);
 	}
@@ -1439,28 +1456,29 @@ public class CommonModelFactory implements ModelFactory {
 	public Fragment refineConditionalExpressionOfStatement(Statement statement,
 			Location oldLocation) {
 		Fragment result = new CommonFragment();
+		CIVLSource statementSource = statement.getSource();
+		Scope scope = statement.source().scope();
 
 		if (sizeOfTopConditionalExpressionQueue() == 1)
 			return this.conditionalExpressionToIf(
 					this.pollConditionaExpression(), statement);
-
 		while (hasConditionalExpressions()) {
 			ConditionalExpression conditionalExpression = pollConditionaExpression();
 			VariableExpression variable = tempVariable(
-					TempVariableKind.CONDITIONAL, statement.source().scope(),
+					TempVariableKind.CONDITIONAL, scope,
 					conditionalExpression.getSource(),
 					conditionalExpression.getExpressionType());
 			Fragment ifElse = conditionalExpressionToIf(statement.guard(),
 					variable, conditionalExpression);
 
 			statement.replaceWith(conditionalExpression, variable);
-
 			result = result.combineWith(ifElse);
 		}
-
+		// make the if-else statements atomic
+		result = this.atomicFragment(false, result,
+				this.location(statementSource, scope),
+				this.location(statementSource, scope));
 		result = result.combineWith(new CommonFragment(statement));
-		result.makeAtomic();
-
 		return result;
 	}
 
@@ -1600,18 +1618,44 @@ public class CommonModelFactory implements ModelFactory {
 
 	}
 
+	// @Override
+	// public void enterAtomicBlock(boolean deterministic) {
+	// this.atomicBlocks.push(deterministic ? 1 : 0);
+	// }
+	//
+	// @Override
+	// public void leaveAtomicBlock(boolean deterministic) {
+	// this.atomicBlocks.pop();
+	// }
+
+	// @Override
+	// public boolean inAtomicBlock() {
+	// return !this.atomicBlocks.isEmpty();
+	// }
+
 	@Override
-	public void enterAtomicBlock() {
-		this.atomicBlocks.push(1);
+	public Fragment atomicFragment(boolean deterministic, Fragment fragment,
+			Location start, Location end) {
+		Statement noopStart = noopStatement(start.getSource(), start, null);
+		Statement noopEnd = noopStatement(end.getSource(), end, null);
+		Fragment startFragment = new CommonFragment(noopStart);
+		Fragment endFragment = new CommonFragment(noopEnd);
+		Fragment result;
+
+		start.setEnterAtomic(deterministic);
+		end.setLeaveAtomic(deterministic);
+		result = startFragment.combineWith(fragment);
+		result = result.combineWith(endFragment);
+		return result;
 	}
 
 	@Override
-	public void leaveAtomicBlock() {
-		this.atomicBlocks.pop();
-	}
+	public void createAtomicLockVaraible(Scope scope) {
+		// Since the atomic lock variable is not declared explicitly in the CIVL
+		// model specification, the system source will be used here.
+		Variable variable = this.variable(this.systemSource, processType,
+				this.identifier(this.systemSource, ATOMIC_LOCK_VARIABLE), 0);
 
-	@Override
-	public boolean inAtomicBlock() {
-		return !this.atomicBlocks.isEmpty();
+		scope.addVariable(variable);
 	}
 }

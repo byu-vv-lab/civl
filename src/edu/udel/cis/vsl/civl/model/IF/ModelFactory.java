@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
@@ -1069,11 +1070,15 @@ public interface ModelFactory {
 	 *            The scope of the expression
 	 * @param expression
 	 *            The expression
+	 * @param expressionNode
+	 *            The AST node of the expression. Used to construct the start
+	 *            and end location of an atomic block when make the resulting
+	 *            fragment atomic.
 	 * @return The if-else fragment and the expression without conditional
 	 *         expressions
 	 */
 	Entry<Fragment, Expression> refineConditionalExpression(Scope scope,
-			Expression expression);
+			Expression expression, ExpressionNode expressionNode);
 
 	/**
 	 * @return The earliest conditional expression in the latest queue in the
@@ -1081,21 +1086,23 @@ public interface ModelFactory {
 	 */
 	ConditionalExpression pollConditionaExpression();
 
-	/**
-	 * The current translation encounters the starting point of an atomic block
-	 */
-	void enterAtomicBlock();
+	// /**
+	// * The current translation encounters the starting point of an atomic
+	// block
+	// */
+	// void enterAtomicBlock(boolean deterministic);
+	//
+	// /**
+	// * The current translation reaches the ending point of an atomic block
+	// */
+	// void leaveAtomicBlock(boolean deterministic);
 
-	/**
-	 * The current translation reaches the ending point of an atomic block
-	 */
-	void leaveAtomicBlock();
-
-	/**
-	 * 
-	 * @return true iff the current translation is inside a certain atomic block
-	 */
-	boolean inAtomicBlock();
+	// /**
+	// *
+	// * @return true iff the current translation is inside a certain atomic
+	// block
+	// */
+	// boolean inAtomicBlock();
 
 	/**
 	 * A choose statement is of the form <code>x = $choose_int(n)</code>;
@@ -1117,4 +1124,35 @@ public interface ModelFactory {
 	ChooseStatement chooseStatement(CIVLSource civlSource, Location source,
 			LHSExpression lhs, Expression argument);
 
+	/**
+	 * Generate an atomic fragment based on a certain fragment, by adding one
+	 * location at before and after the fragment to denote the boundary of the
+	 * atomic block
+	 * 
+	 * @param deterministic
+	 *            True iff the atomic block is deterministic (i.e., $atom),
+	 *            otherwise it should be a general atomic block (i.e., $atomic).
+	 * @param fragment
+	 *            The fragment representing the body of the atomic block
+	 * @param start
+	 *            The start location of the atomic node
+	 * @param end
+	 *            The end location of the atomic node
+	 * @return The new fragment with atomic signs
+	 */
+	Fragment atomicFragment(boolean deterministic, Fragment fragment,
+			Location start, Location end);
+
+	/**
+	 * An atomic lock variable is used to keep track of the process that
+	 * executes an $atomic block which prevents interleaving with other
+	 * processes. This variable is maintained as a global variable
+	 * {@link ComonModelFactory#ATOMIC_LOCK_VARIABLE} of <code>$proc</code> type
+	 * in the root scope in the CIVL model (always with index 0).
+	 * 
+	 * @param scope
+	 *            The scope of the atomic lock variable, and should always be
+	 *            the root scope.
+	 */
+	void createAtomicLockVaraible(Scope scope);
 }

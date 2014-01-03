@@ -27,16 +27,26 @@ import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
  */
 public class CommonLocation extends CommonSourceable implements Location {
 
+	/**
+	 * Atomic flags of a location: NONE: no atomic boundary; ENTER/DENTER: the
+	 * location is the starting point of an atomic/a deterministic atomic;
+	 * LEAVE/DELAVE: the location is the ending point of an atomic/a
+	 * deterministic atomic.
+	 * 
+	 * @author Zheng
+	 * 
+	 */
+	public enum AtomicKind {
+		NONE, ENTER, LEAVE, DENTER, DLEAVE
+	}
+
 	private int id;
 	private Scope scope;
 	private ArrayList<Statement> incoming = new ArrayList<>();
 	private ArrayList<Statement> outgoing = new ArrayList<>();
 	private CIVLFunction function;
 	private boolean purelyLocal = false;
-	private boolean enteringAtomic = false; // flag to denote the starting point
-											// of a certain atomic block
-	private boolean leavingAtomic = false; // flag to denote the ending point of
-											// a certain atomic block
+	private AtomicKind atomicKind = AtomicKind.NONE;
 
 	/**
 	 * The parent of all locations.
@@ -129,10 +139,21 @@ public class CommonLocation extends CommonSourceable implements Location {
 			headString = prefix + "location " + id() + " (scope: " + scope.id()
 					+ ")";
 
-		if (this.enteringAtomic)
+		switch (this.atomicKind) {
+		case ENTER:
 			headString = headString + " enter atomic block;";
-		if (this.leavingAtomic)
+			break;
+		case DENTER:
+			headString = headString + " enter datomic block;";
+			break;
+		case LEAVE:
 			headString = headString + " leave atomic block;";
+			break;
+		case DLEAVE:
+			headString = headString + " leave datomic block;";
+		default:
+
+		}
 
 		out.println(headString);
 
@@ -251,14 +272,10 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public void purelyLocalAnalysis() {
-		// if(incoming.size() > 1)
-		// this.purelyLocal = false;
-		// else
-
 		// a location that enters an atomic block is considered as atomic only
 		// if all the statements that are to be executed in the atomic block are
 		// purely local
-		if (this.enteringAtomic) {
+		if (this.atomicKind == AtomicKind.DENTER) {
 			Stack<Integer> atomicFlags = new Stack<Integer>();
 			Location newLocation = this;
 			Set<Integer> checkedLocations = new HashSet<Integer>();
@@ -271,20 +288,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 					this.purelyLocal = false;
 					return;
 				}
-
-				if (newLocation.enterAtomic())
+				if (newLocation.enterDatomic())
 					atomicFlags.push(1);
-
-				if (newLocation.leaveAtomic()) {
+				if (newLocation.leaveDatomic())
 					atomicFlags.pop();
-				}
-
 				newLocation = s.target();
 				if (checkedLocations.contains(newLocation.id()))
 					newLocation = null;
-
 			} while (newLocation != null && !atomicFlags.isEmpty());
-
 			this.purelyLocal = true;
 			return;
 		}
@@ -304,23 +315,44 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
-	public void setEnterAtomic(boolean value) {
-		this.enteringAtomic = value;
+	public void setEnterAtomic(boolean deterministic) {
+		if (deterministic)
+			this.atomicKind = AtomicKind.DENTER;
+		else
+			this.atomicKind = AtomicKind.ENTER;
 	}
 
 	@Override
-	public void setLeaveAtomic(boolean value) {
-		this.leavingAtomic = value;
+	public void setLeaveAtomic(boolean deterministic) {
+		if (deterministic)
+			this.atomicKind = AtomicKind.DLEAVE;
+		else
+			this.atomicKind = AtomicKind.LEAVE;
 	}
 
 	@Override
 	public boolean enterAtomic() {
-		return this.enteringAtomic;
+		return this.atomicKind == AtomicKind.ENTER;
 	}
 
 	@Override
 	public boolean leaveAtomic() {
-		return this.leavingAtomic;
+		return this.atomicKind == AtomicKind.LEAVE;
+	}
+
+	@Override
+	public boolean enterDatomic() {
+		return this.atomicKind == AtomicKind.DENTER;
+	}
+
+	@Override
+	public boolean leaveDatomic() {
+		return this.atomicKind == AtomicKind.DLEAVE;
+	}
+
+	@Override
+	public AtomicKind atomicKind() {
+		return this.atomicKind;
 	}
 
 }

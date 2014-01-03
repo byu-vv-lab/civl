@@ -43,10 +43,10 @@ public interface Fragment {
 	 */
 	void setLastStatement(Statement statement);
 
-	/**
-	 * Make this fragment atomic
-	 */
-	void makeAtomic();
+//	/**
+//	 * Make this fragment atomic
+//	 */
+//	void makeAtomic(boolean deterministic);
 
 	/**
 	 * Combine two fragment in sequential

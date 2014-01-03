@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
 /**
  * The parent of all locations.
@@ -144,24 +145,47 @@ public interface Location extends Sourceable {
 
 	/**
 	 * This location is the start location of a certain atomic block
+	 * 
+	 * @param deterministic
+	 *            True iff the atomic block is a $datomic block
 	 */
-	void setEnterAtomic(boolean value);
+	void setEnterAtomic(boolean deterministic);
 
 	/**
 	 * This location is the end location of a certain atomic block
+	 * 
+	 * @param deterministic
+	 *            True iff the atomic block is a $datomic block
 	 */
-	void setLeaveAtomic(boolean value);
+	void setLeaveAtomic(boolean deterministic);
 
 	/**
+	 * Check if the location is entering a deterministic atomic block.
 	 * 
-	 * @return true iff the location is entering an atomic block
+	 * @return true iff the location is entering a deterministic atomic block.
+	 * 
+	 */
+	boolean enterDatomic();
+
+	/**
+	 * Check if the location is entering a general atomic block.
+	 * 
+	 * @return true iff the location is entering a general atomic block.
+	 * 
 	 */
 	boolean enterAtomic();
 
 	/**
 	 * 
-	 * @return true iff the location is leaving an atomic block
+	 * @return true iff the location is leaving a deterministic atomic block
+	 */
+	boolean leaveDatomic();
+	
+	/**
+	 * 
+	 * @return true iff the location is leaving a general atomic block
 	 */
 	boolean leaveAtomic();
-
+	
+	AtomicKind atomicKind();
 }
