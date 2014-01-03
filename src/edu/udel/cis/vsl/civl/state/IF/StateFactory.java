@@ -247,19 +247,45 @@ public interface StateFactory {
 	/**
 	 * 
 	 * @param state
-	 * @return
+	 *            The state to be checked
+	 * @return True iff there the value of atomic lock variable is not undefined
+	 *         process value
 	 */
 	ProcessState processInAtomic(State state);
 
 	/**
-	 * Process with pid grabs the atomic lock, i.e.,
+	 * Process with pid grabs the atomic lock
 	 * 
+	 * @param state
+	 *            The state to be worked on
 	 * @param pid
+	 *            The id of the process that is going to grab the atomic lock
 	 * @return
 	 */
 	State getAtomicLock(State state, int pid);
 
+	/**
+	 * Release the atomic lock, by updating the atomic lock variable with the
+	 * undefined process value
+	 * 
+	 * @param state
+	 *            The state to be worked on
+	 * @return
+	 */
 	State releaseAtomicLock(State state);
-	
+
+	/**
+	 * Update a particular process of a certain state by process id.
+	 * <p>
+	 * Precondition: <code>p.pid() == pid</code>.
+	 * 
+	 * @param state
+	 *            The state to be worked on
+	 * @param p
+	 *            The new process that is to be used to update the state
+	 * @param pid
+	 *            The process id of the process to be updated.
+	 * @return The new state after updating the process with the specified id
+	 */
 	State setProcessState(State state, ProcessState p, int pid);
 }
