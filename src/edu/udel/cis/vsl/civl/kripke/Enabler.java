@@ -162,7 +162,8 @@ public class Enabler implements
 	private TransitionSequence enabledTransitionsPOR(State state) {
 		TransitionSequence transitions = transitionFactory
 				.newTransitionSequence(state);
-		Iterable<ProcessState> processStates = state.getProcessStates();
+		Iterable<? extends ProcessState> processStates = state
+				.getProcessStates();
 		Map<ProcessState, TransitionSequence> processTransitions = new LinkedHashMap<ProcessState, TransitionSequence>();
 		int totalTransitions = 0;
 

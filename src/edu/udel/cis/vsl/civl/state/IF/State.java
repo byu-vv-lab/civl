@@ -20,13 +20,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * hashCode methods. Those methods should depend only on the three intrinsic
  * data listed above.
  * 
- * States may be mutable or immutable (or something in between).
- * The contract for the state modules does not specify this.
- * However, states must supply a "commit" method.  After invoking
- * this method, the state must be essentially immutable, which means
- * its intrinsic data (and therefore hash code) cannot change.
+ * States may be mutable or immutable (or something in between). The contract
+ * for the state modules does not specify this. However, states must supply a
+ * "commit" method. After invoking this method, the state must be essentially
+ * immutable, which means its intrinsic data (and therefore hash code) cannot
+ * change.
  * 
-* 
+ * 
  * The processes and dynamic scopes are ordered within any one State. However
  * their order may change from State to State.
  * 
@@ -201,7 +201,7 @@ public interface State {
 	 * 
 	 * @return iterable object yielding all the process states in this state
 	 */
-	Iterable<ProcessState> getProcessStates();
+	Iterable<? extends ProcessState> getProcessStates();
 
 	/**
 	 * Sets the path condition to the given value. This will either modify this
