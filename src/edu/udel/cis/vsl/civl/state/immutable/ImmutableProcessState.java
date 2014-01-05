@@ -223,7 +223,8 @@ public class ImmutableProcessState implements ProcessState {
 	@Override
 	public int hashCode() {
 		if (!hashed) {
-			hashCode = Arrays.hashCode(callStack) ^ (48729 * pid);
+			hashCode = this.atomicCount
+					^ (31 * (Arrays.hashCode(callStack) ^ (48729 * pid)));
 			hashed = true;
 		}
 		return hashCode;
@@ -243,6 +244,8 @@ public class ImmutableProcessState implements ProcessState {
 			if (!Arrays.equals(callStack, that.callStack))
 				return false;
 			if (pid != that.pid)
+				return false;
+			if (this.atomicCount != that.atomicCount)
 				return false;
 			return true;
 		}
