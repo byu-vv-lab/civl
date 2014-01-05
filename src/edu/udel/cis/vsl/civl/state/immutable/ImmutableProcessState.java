@@ -290,7 +290,7 @@ public class ImmutableProcessState implements ProcessState {
 	}
 
 	public boolean isCanonic() {
-		return true;
+		return canonic;
 	}
 
 	public ProcessState setPid(int pid) {

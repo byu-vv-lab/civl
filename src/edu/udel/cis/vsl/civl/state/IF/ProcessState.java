@@ -26,10 +26,10 @@ public interface ProcessState {
 	boolean hasEmptyStack();
 
 	/**
-	 * Returns the location at the top of the call stack of this process, or
-	 * null if the call stack is empty.
+	 * Returns the location at the top of the call stack of this process.
+	 * Undefined behavior if stack is empty.
 	 * 
-	 * @return location at top of call stack or null
+	 * @return location at top of call stack
 	 */
 	Location getLocation();
 
@@ -66,13 +66,12 @@ public interface ProcessState {
 	int stackSize();
 
 	/**
-	 * Returns an iterable object over the entries in this stack from top to
-	 * bottom. Order is fixed (will be the same each time this method is
-	 * called), but not specified.
+	 * Returns an iterable object over the entries in this stack. Order is fixed
+	 * (will be the same each time this method is called), but not specified.
 	 * 
 	 * @return the entries in the stack
 	 */
-	Iterable<StackEntry> getStackEntries();
+	Iterable<? extends StackEntry> getStackEntries();
 
 	/**
 	 * Returns an iterator over the entries in the call stack from the bottom to
@@ -80,7 +79,7 @@ public interface ProcessState {
 	 * 
 	 * @return iterator from bottom to top
 	 */
-	Iterator<StackEntry> bottomToTopIterator();
+	Iterator<? extends StackEntry> bottomToTopIterator();
 
 	/**
 	 * Determines whether the process state is "purely local". This means: TODO

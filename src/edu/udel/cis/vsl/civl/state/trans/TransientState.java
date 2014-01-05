@@ -287,7 +287,7 @@ public class TransientState extends TransientObject implements State {
 				oldToNew[i] = -1;
 			for (ProcessState processState : processStates) {
 				if (processState != null) {
-					Iterator<StackEntry> iter = processState
+					Iterator<? extends StackEntry> iter = processState
 							.bottomToTopIterator();
 
 					while (iter.hasNext()) {
