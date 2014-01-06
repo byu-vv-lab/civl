@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.ABCException;
@@ -338,17 +339,39 @@ public class UserInterface {
 	 * @param config
 	 */
 	public void printCommand(GMCConfiguration config) {
-		String command = "civl " + config.getFreeArg(0);
-		Collection<Option> options = config.getOptions();
 
+		int numOfArgs = config.getNumFreeArgs();
+		String command = "civl ";
+		Collection<Option> options = config.getOptions();
+		String arg0;
+
+		if (numOfArgs < 1)
+			return;
+		arg0 = config.getFreeArg(0);
+		if (arg0.equalsIgnoreCase("help"))
+			return;
+		command = command + arg0;
 		for (Option option : options) {
 			Object optionValue = config.getValue(option);
 
-			if (optionValue != null)
-				command = command + " -" + option.name() + "="
-						+ optionValue.toString();
+			if (optionValue != null) {
+				if (option.name().equalsIgnoreCase("input")) {
+					@SuppressWarnings("unchecked")
+					LinkedHashMap<Object, Object> hashMap = (LinkedHashMap<Object, Object>) optionValue;
+
+					for (Object key : hashMap.keySet()) {
+						command = command + " -" + option.name()
+								+ key.toString() + "="
+								+ hashMap.get(key).toString();
+					}
+				} else
+					command = command + " -" + option.name() + "="
+							+ optionValue.toString();
+			}
+
 		}
-		command = command + " " + config.getFreeArg(1);
+		if (numOfArgs > 1)
+			command = command + " " + config.getFreeArg(1);
 		out.println(command);
 		out.flush();
 	}
