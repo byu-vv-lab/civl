@@ -1,40 +1,23 @@
 package edu.udel.cis.vsl.civl.state.persistent;
 
 import java.io.PrintStream;
-
-import com.github.krukow.clj_ds.PersistentSet;
-import com.github.krukow.clj_ds.PersistentVector;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
-public class PersistentDynamicScope implements DynamicScope {
+public class PersistentDynamicScope extends PersistentObject implements
+		DynamicScope {
 
 	/************************* Static Fields *************************/
 
-	private static boolean debug = false;
+	// private static boolean debug = false;
+
+	private static int classCode = PersistentDynamicScope.class.hashCode();
 
 	/************************ Instance Fields ************************/
-
-	/**
-	 * Has the hashcode been computed and cached?
-	 */
-	private boolean hashed = false;
-
-	/**
-	 * The hashcode of this object. Since it is immutable, we can cache it. If
-	 * the hash code has not yet been computed, this will be -1.
-	 */
-	private int hashCode = -1;
-
-	/**
-	 * Is this object the unique representative of its equivalence class? Used
-	 * for the Flyweight Pattern, to flyweight these objects.
-	 */
-	private boolean canonic = false;
 
 	/**
 	 * Non-null static scope to which this dynamic scope is associated.
@@ -51,13 +34,13 @@ public class PersistentDynamicScope implements DynamicScope {
 	 * Non-null array of variable values. The symbolic expression in position i
 	 * is the value of the variable of index i. May contain null values.
 	 */
-	private PersistentVector<SymbolicExpression> variableValues;
+	private ValueVector valueVector;
 
 	/**
 	 * Sets of PIDs of processes that can reach this dynamic scope. How to do a
 	 * persistent set of Integers?
 	 */
-	private PersistentSet<Integer> reachers;
+	private IntSet reachers;
 
 	/************************** Constructors *************************/
 
@@ -71,7 +54,7 @@ public class PersistentDynamicScope implements DynamicScope {
 	 * @param parent
 	 *            the dynamic scope ID of the parent dynamic scope, or -1 if
 	 *            this is the root dynamic scope
-	 * @param variableValues
+	 * @param valueVector
 	 *            the values to assign to each variable in the static scope;
 	 *            must have size equal to the number of variables in the static
 	 *            scope; must not contain any null values (but may contain the
@@ -83,49 +66,16 @@ public class PersistentDynamicScope implements DynamicScope {
 	 *            in the dyscope tree
 	 */
 	PersistentDynamicScope(Scope lexicalScope, int parent,
-			PersistentVector<SymbolicExpression> variableValues,
-			PersistentSet<Integer> reachers) {
-		assert variableValues != null
-				&& variableValues.size() == lexicalScope.numVariables();
+			ValueVector valueVector, IntSet reachers) {
+		assert valueVector != null
+				&& valueVector.size() == lexicalScope.numVariables();
 		this.lexicalScope = lexicalScope;
 		this.parent = parent;
-		this.variableValues = variableValues;
+		this.valueVector = valueVector;
 		this.reachers = reachers;
 	}
 
 	/******************** Package-private Methods ********************/
-
-	/**
-	 * Is this object the canonical representative of its equivalence class
-	 * under the "equals" method?
-	 * 
-	 * @return true iff this is canonic
-	 */
-	boolean isCanonic() {
-		return canonic;
-	}
-
-	/**
-	 * Declares this object to be the unique representative of its equivalence
-	 * class under the "equals" method. In addition, make all of its "children"
-	 * fields canonic.
-	 * 
-	 * @param universe
-	 *            the symbolic universe that will be used to "canonize" the
-	 *            variable values
-	 */
-	void makeCanonic(SymbolicUniverse universe) {
-		int numVars = variableValues.size();
-
-		canonic = true;
-		for (int i = 0; i < numVars; i++) {
-			SymbolicExpression value = variableValues.get(i);
-
-			if (!value.isCanonic())
-				variableValues = variableValues.plusN(i,
-						universe.canonic(value));
-		}
-	}
 
 	/**
 	 * Returns the dyscope ID of the parent of this dynamic scope, or -1 if this
@@ -149,7 +99,7 @@ public class PersistentDynamicScope implements DynamicScope {
 	 * 
 	 * @return set of PIDs of procs which can reach this dyscope
 	 */
-	PersistentSet<Integer> getReachers() {
+	IntSet getReachers() {
 		return reachers;
 	}
 
@@ -160,8 +110,8 @@ public class PersistentDynamicScope implements DynamicScope {
 	 * 
 	 * @return the variable values
 	 */
-	PersistentVector<SymbolicExpression> getVariableValues() {
-		return variableValues;
+	ValueVector getValueVector() {
+		return valueVector;
 	}
 
 	/**
@@ -174,10 +124,8 @@ public class PersistentDynamicScope implements DynamicScope {
 	 * @return dynamic scope like this one but with new parent value
 	 */
 	PersistentDynamicScope setParent(int newParent) {
-		if (newParent == parent)
-			return this;
 		return newParent == parent ? this : new PersistentDynamicScope(
-				lexicalScope, newParent, variableValues, reachers);
+				lexicalScope, newParent, valueVector, reachers);
 	}
 
 	/**
@@ -189,9 +137,9 @@ public class PersistentDynamicScope implements DynamicScope {
 	 *            new value for reachers field
 	 * @return dynamic scope like this one but with new reachers value
 	 */
-	PersistentDynamicScope setReachers(PersistentSet<Integer> reachers) {
+	PersistentDynamicScope setReachers(IntSet reachers) {
 		return reachers == this.reachers ? this : new PersistentDynamicScope(
-				lexicalScope, parent, variableValues, reachers);
+				lexicalScope, parent, valueVector, reachers);
 	}
 
 	/**
@@ -203,11 +151,10 @@ public class PersistentDynamicScope implements DynamicScope {
 	 *            new value for variableValues field
 	 * @return dynamic scope like this one but with new variableValues field
 	 */
-	PersistentDynamicScope setVariableValues(
-			PersistentVector<SymbolicExpression> newVariableValues) {
-		return newVariableValues == variableValues ? this
-				: new PersistentDynamicScope(lexicalScope, parent,
-						newVariableValues, reachers);
+	PersistentDynamicScope setValueVector(ValueVector valueVector) {
+		return valueVector == this.valueVector ? this
+				: new PersistentDynamicScope(lexicalScope, parent, valueVector,
+						reachers);
 	}
 
 	/**
@@ -217,7 +164,7 @@ public class PersistentDynamicScope implements DynamicScope {
 	 * @return number of variables
 	 */
 	int numberOfVariables() {
-		return variableValues.size();
+		return valueVector.size();
 	}
 
 	/**
@@ -257,72 +204,48 @@ public class PersistentDynamicScope implements DynamicScope {
 	 *            line of output
 	 */
 	void print(PrintStream out, String id, String prefix) {
-		int numVars = lexicalScope.numVariables();
-		boolean first = true;
-
 		out.println(prefix + "scope " + id + " (parent=" + parent + ", static="
 				+ lexicalScope.id() + ")");
-		out.print(prefix + "| reachers: ");
-		for (Integer j : reachers) {
-			if (first)
-				first = false;
-			else
-				out.print(",");
-			out.print(j);
-		}
-		out.println();
-		for (int i = 0; i < numVars; i++) {
-			Variable variable = lexicalScope.variable(i);
-			SymbolicExpression value = variableValues.get(i);
-
-			out.print(prefix + "| " + variable.name() + " = ");
-			if (debug)
-				out.println(value.toStringBufferLong());
-			else
-				out.println(value + " : " + value.type());
-		}
+		out.println(prefix + "| reachers: " + reachers);
+		valueVector.print(out, prefix + "| ", lexicalScope);
 		out.flush();
 	}
 
-	/*********************** Methods from Object *********************/
+	/****************** Methods from PersistentObject ****************/
 
 	@Override
-	public int hashCode() {
-		if (!hashed) {
-			hashCode = lexicalScope.hashCode() ^ (1017 * parent)
-					^ variableValues.hashCode() ^ reachers.hashCode();
-			hashed = true;
-		}
-		return hashCode;
+	protected void canonizeChildren(SymbolicUniverse universe,
+			Map<PersistentObject, PersistentObject> canonicMap) {
+		valueVector = valueVector.canonize(universe, canonicMap);
+		reachers = reachers.canonize(universe, canonicMap);
 	}
 
-	/**
-	 * Is this dynamic scope equal to the give object? It is equal iff: obj is
-	 * an instance of PersistentDynamicScope, the lexical scopes are equal, the
-	 * parents are equal integers, the variable values are equal as vectors, and
-	 * the reachers are equal as sets.
-	 * 
-	 * @return true iff the given obj is a persistent dynamic scope equal to
-	 *         this one
-	 */
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
+	protected int computeHashCode() {
+		return classCode ^ lexicalScope.hashCode() ^ (1017 * parent)
+				^ valueVector.hashCode() ^ reachers.hashCode();
+	}
+
+	@Override
+	protected boolean computeEquals(PersistentObject obj) {
 		if (obj instanceof PersistentDynamicScope) {
 			PersistentDynamicScope that = (PersistentDynamicScope) obj;
 
-			if (canonic && that.canonic)
-				return false;
-			if (hashed && that.hashed && hashCode != that.hashCode)
-				return false;
 			return lexicalScope.equals(that.lexicalScope)
 					&& parent == that.parent
-					&& variableValues.equals(that.variableValues)
+					&& valueVector.equals(that.valueVector)
 					&& reachers.equals(that.reachers);
 		}
 		return false;
 	}
+
+	@Override
+	protected PersistentDynamicScope canonize(SymbolicUniverse universe,
+			Map<PersistentObject, PersistentObject> canonicMap) {
+		return (PersistentDynamicScope) super.canonize(universe, canonicMap);
+	}
+
+	/*********************** Methods from Object *********************/
 
 	@Override
 	public String toString() {
@@ -334,7 +257,7 @@ public class PersistentDynamicScope implements DynamicScope {
 
 	@Override
 	public SymbolicExpression getValue(int vid) {
-		return variableValues.get(vid);
+		return valueVector.get(vid);
 	}
 
 	@Override
@@ -344,13 +267,12 @@ public class PersistentDynamicScope implements DynamicScope {
 
 	@Override
 	public PersistentDynamicScope setValue(int vid, SymbolicExpression value) {
-		return new PersistentDynamicScope(lexicalScope, parent,
-				variableValues.plusN(vid, value), reachers);
+		return setValueVector(valueVector.set(vid, value));
 	}
 
 	@Override
 	public Iterable<SymbolicExpression> getValues() {
-		return variableValues;
+		return valueVector;
 	}
 
 	@Override

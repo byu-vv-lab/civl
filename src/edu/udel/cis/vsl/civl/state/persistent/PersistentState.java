@@ -3,38 +3,32 @@ package edu.udel.cis.vsl.civl.state.persistent;
 import java.io.PrintStream;
 import java.util.Map;
 
-import com.github.krukow.clj_ds.PersistentVector;
-
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
+import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
-public class PersistentState implements State {
+// extends PersistentObject
+
+public class PersistentState extends PersistentObject implements State {
 
 	/************************* Static Fields *************************/
+
+	private final static int classCode = PersistentState.class.hashCode();
 
 	/**
 	 * The number of instances of this class that have been created since the
 	 * class was loaded.
 	 */
-	static long instanceCount = 0;
+	private static long instanceCount = 0;
 
 	/************************ Instance Fields ************************/
-
-	/**
-	 * Has the hashcode been computed and cached?
-	 */
-	private boolean hashed = false;
-
-	/**
-	 * The hashcode of this object. Since it is immutable, we can cache it. If
-	 * the hash code has not yet been computed, this will be -1.
-	 */
-	private int hashCode = -1;
 
 	/**
 	 * If this is a canonic state (unique representative of its equivalence
@@ -53,13 +47,13 @@ public class PersistentState implements State {
 	 * The process states. Entry at position i ontains the state of process of
 	 * pid i. Some entries may be null.
 	 */
-	private PersistentVector<PersistentProcessState> processStates;
+	private ProcStateVector procVector;
 
 	/**
 	 * The dynamic scopes that exist in this state. The scope at position 0 is
 	 * always the system scope.
 	 */
-	private PersistentVector<PersistentDynamicScope> scopes;
+	private DyscopeTree scopeTree;
 
 	/**
 	 * Non-null boolean-valued symbolic expression.
@@ -84,13 +78,16 @@ public class PersistentState implements State {
 
 	/************************ Static Methods *************************/
 
+	static long getInstanceCount() {
+		return instanceCount;
+	}
+
 	static PersistentState newState(PersistentState state,
-			PersistentVector<PersistentProcessState> processStates,
-			PersistentVector<PersistentDynamicScope> scopes,
+			ProcStateVector procVector, DyscopeTree scopeTree,
 			BooleanExpression pathCondition) {
 		PersistentState result = new PersistentState(
-				processStates == null ? state.processStates : processStates,
-				scopes == null ? state.scopes : scopes,
+				procVector == null ? state.procVector : procVector,
+				scopeTree == null ? state.scopeTree : scopeTree,
 				pathCondition == null ? state.pathCondition : pathCondition);
 
 		return result;
@@ -110,11 +107,10 @@ public class PersistentState implements State {
 	 * @param pathCondition
 	 *            non-null boolean valued symbolic expression
 	 */
-	PersistentState(PersistentVector<PersistentProcessState> processStates,
-			PersistentVector<PersistentDynamicScope> scopes,
+	PersistentState(ProcStateVector procVector, DyscopeTree scopeTree,
 			BooleanExpression pathCondition) {
-		this.processStates = processStates;
-		this.scopes = scopes;
+		this.procVector = procVector;
+		this.scopeTree = scopeTree;
 		this.pathCondition = pathCondition;
 	}
 
@@ -130,10 +126,6 @@ public class PersistentState implements State {
 		return instanceId;
 	}
 
-	boolean isCanonic() {
-		return canonicId >= 0;
-	}
-
 	/**
 	 * Returns the canonicID of this state. Returns -1 if it is not canonic.
 	 * 
@@ -143,75 +135,33 @@ public class PersistentState implements State {
 		return canonicId;
 	}
 
-	/**
-	 * Implements the flyweight pattern: if there already exists a scope which
-	 * is equivalent to the given scope, return that one, otherwise, add scope
-	 * to table and return it.
-	 * 
-	 * @param map
-	 *            the map used to record the scopes
-	 * @param expression
-	 *            the scope to be flyweighted
-	 * @return the unique representative of the scope or the scope itself
-	 */
-	private PersistentDynamicScope canonic(PersistentDynamicScope scope,
-			Map<PersistentDynamicScope, PersistentDynamicScope> scopeMap,
-			SymbolicUniverse universe) {
-		PersistentDynamicScope canonicScope = scopeMap.get(scope);
-
-		if (canonicScope == null) {
-			scope.makeCanonic(universe);
-			scopeMap.put(scope, scope);
-			return scope;
-		}
-		return canonicScope;
+	void setCanonicId(int value) {
+		canonicId = value;
 	}
 
-	/**
-	 * Implements the flyweight pattern: if there already exists a process which
-	 * is equivalent to the given process, return that one, otherwise, add
-	 * process to table and return it.
-	 * 
-	 * @param map
-	 *            the map used to record the processes
-	 * @param expression
-	 *            the process to be flyweighted
-	 * @return the unique representative of the process or the process itself
-	 */
-	private PersistentProcessState canonic(PersistentProcessState processState,
-			Map<PersistentProcessState, PersistentProcessState> processMap) {
-		PersistentProcessState canonicProcessState = processMap
-				.get(processState);
+	// protected abstract void canonizeChildren(SymbolicUniverse universe,
+	// Map<PersistentObject, PersistentObject> canonicMap);
 
-		if (canonicProcessState == null) {
-			processState.makeCanonic();
-			processMap.put(processState, processState);
-			return processState;
-		}
-		return canonicProcessState;
-	}
+	// @Override
+	// protected PersistentState canonize(SymbolicUniverse universe,
+	// Map<PersistentObject, PersistentObject> canonicMap) {
+	// PersistentState result = (PersistentState) super.canonize(universe,
+	// canonicMap);
+	//
+	// if (result.canonicId < 0) {
+	//
+	// }
+	// return result;
+	// }
 
-	void makeCanonic(int canonicId, SymbolicUniverse universe,
-			Map<PersistentDynamicScope, PersistentDynamicScope> scopeMap,
-			Map<PersistentProcessState, PersistentProcessState> processMap) {
-		int numProcs = processStates.size();
-		int numScopes = scopes.size();
+	@Override
+	protected void canonizeChildren(SymbolicUniverse universe,
+			Map<PersistentObject, PersistentObject> canonicMap) {
 
 		pathCondition = (BooleanExpression) universe.canonic(pathCondition);
-		for (int i = 0; i < numProcs; i++) {
-			PersistentProcessState processState = processStates.get(i);
-
-			if (!processState.isCanonic())
-				processStates = processStates.plusN(i,
-						canonic(processState, processMap));
-		}
-		for (int i = 0; i < numScopes; i++) {
-			PersistentDynamicScope scope = scopes.get(i);
-
-			if (!scope.isCanonic())
-				scopes = scopes.plusN(i, canonic(scope, scopeMap, universe));
-		}
-		this.canonicId = canonicId;
+		procVector = procVector.canonize(universe, canonicMap);
+		scopeTree = scopeTree.canonize(universe, canonicMap);
+		// this.canonicId = canonicId;
 	}
 
 	PersistentDynamicScope getScope(int pid, Variable variable) {
@@ -228,14 +178,97 @@ public class PersistentState implements State {
 		throw new IllegalArgumentException("Variable not in scope: " + variable);
 	}
 
+	int[] renumberScopes() {
+		int numScopes = numScopes();
+
+		if (numScopes == 0)
+			return null; // no change
+		else {
+			int numProcs = numProcs();
+			int[] oldToNew = new int[numScopes];
+			int nextScopeId = 1;
+
+			// the root dyscope is forced to be 0
+			oldToNew[0] = 0;
+			for (int i = 1; i < numScopes; i++)
+				oldToNew[i] = -1;
+			for (int pid = 0; pid < numProcs; pid++) {
+				PersistentProcessState process = getProcessState(pid);
+
+				if (process == null)
+					continue;
+				for (StackEntry entry : process.getStackEntries()) {
+					int dynamicScopeId = entry.scope();
+
+					while (oldToNew[dynamicScopeId] < 0) {
+						oldToNew[dynamicScopeId] = nextScopeId;
+						nextScopeId++;
+						dynamicScopeId = getParentId(dynamicScopeId);
+						if (dynamicScopeId < 0)
+							break;
+					}
+				}
+			}
+			for (int i = 0; i < numScopes; i++) {
+				if (oldToNew[i] != i)
+					return oldToNew;
+			}
+			return null; // no change
+		}
+	}
+
+	PersistentState setScopeTree(DyscopeTree scopeTree) {
+		return scopeTree == this.scopeTree ? this : new PersistentState(
+				procVector, scopeTree, pathCondition);
+	}
+
+	PersistentState setProcVector(ProcStateVector procVector) {
+		return procVector == this.procVector ? this : new PersistentState(
+				procVector, scopeTree, pathCondition);
+	}
+
+	PersistentState collectScopes(ModelFactory modelFactory) {
+		int[] oldToNew = renumberScopes();
+
+		if (oldToNew == null) {
+			return this;
+		} else {
+			PersistentState result = this;
+
+			result = result.setScopeTree(scopeTree.renumberScopes(oldToNew,
+					modelFactory));
+			result = result.setProcVector(procVector.renumberScopes(oldToNew));
+			return result;
+		}
+	}
+
 	/*********************** Methods from Object *********************/
+
+	/****************** Methods from PersistentObject ****************/
+
+	@Override
+	protected int computeHashCode() {
+		return classCode ^ pathCondition.hashCode() ^ procVector.hashCode()
+				^ scopeTree.hashCode();
+	}
+
+	@Override
+	protected boolean computeEquals(PersistentObject obj) {
+		if (obj instanceof PersistentState) {
+			PersistentState that = (PersistentState) obj;
+
+			return pathCondition.equals(that.pathCondition)
+					&& procVector.equals(that.procVector)
+					&& scopeTree.equals(that.scopeTree);
+		}
+		return false;
+	}
 
 	/*********************** Methods from State **********************/
 
 	@Override
 	public String identifier() {
-		// TODO Auto-generated method stub
-		return null;
+		return canonicId + ":" + instanceId;
 	}
 
 	@Override
@@ -244,12 +277,12 @@ public class PersistentState implements State {
 
 	@Override
 	public int numScopes() {
-		return scopes.size();
+		return scopeTree.size();
 	}
 
 	@Override
 	public int numProcs() {
-		return processStates.size();
+		return procVector.size();
 	}
 
 	@Override
@@ -290,26 +323,42 @@ public class PersistentState implements State {
 
 	@Override
 	public int getScopeId(int pid, Variable variable) {
-		// TODO Auto-generated method stub
-		return 0;
+		int scopeId = getProcessState(pid).getDyscopeId();
+		Scope variableScope = variable.scope();
+		DynamicScope scope;
+
+		while (scopeId >= 0) {
+			scope = getScope(scopeId);
+			if (scope.lexicalScope() == variableScope)
+				return scopeId;
+			scopeId = getParentId(scopeId);
+		}
+		throw new IllegalArgumentException("Variable not in scope: " + variable);
 	}
 
 	@Override
 	public SymbolicExpression getVariableValue(int scopeId, int variableId) {
-		// TODO Auto-generated method stub
-		return null;
+		DynamicScope scope = getScope(scopeId);
+
+		return scope.getValue(variableId);
 	}
 
 	@Override
 	public SymbolicExpression valueOf(int pid, Variable variable) {
-		// TODO Auto-generated method stub
-		return null;
+		DynamicScope scope = getScope(pid, variable);
+		int variableID = scope.lexicalScope().getVid(variable);
+
+		return scope.getValue(variableID);
 	}
 
 	@Override
 	public void print(PrintStream out) {
-		// TODO Auto-generated method stub
-
+		out.println("State " + identifier());
+		out.println("| Path condition");
+		out.println("| | " + pathCondition);
+		scopeTree.print(out, "| ");
+		procVector.print(out, "| ");
+		out.flush();
 	}
 
 	@Override
@@ -324,39 +373,39 @@ public class PersistentState implements State {
 
 	@Override
 	public PersistentProcessState getProcessState(int pid) {
-		return processStates.get(pid);
+		return procVector.get(pid);
 	}
 
 	@Override
 	public PersistentDynamicScope getScope(int id) {
-		return scopes.get(id);
+		return scopeTree.get(id);
 	}
 
 	@Override
 	public Iterable<? extends ProcessState> getProcessStates() {
-		return processStates;
+		return procVector;
 	}
 
 	@Override
 	public State setPathCondition(BooleanExpression pathCondition) {
-		return new PersistentState(processStates, scopes, pathCondition);
+		return pathCondition == this.pathCondition ? this
+				: new PersistentState(procVector, scopeTree, pathCondition);
 	}
 
 	@Override
 	public int numberOfReachers(int sid) {
-		return scopes.get(sid).numberOfReachers();
+		return scopeTree.get(sid).numberOfReachers();
 	}
 
 	@Override
 	public boolean reachableByProcess(int sid, int pid) {
-		return scopes.get(sid).reachableByProcess(pid);
+		return scopeTree.get(sid).reachableByProcess(pid);
 	}
 
 	@Override
 	public PersistentState setVariable(int vid, int scopeId,
 			SymbolicExpression value) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 }

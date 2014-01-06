@@ -2,35 +2,23 @@ package edu.udel.cis.vsl.civl.state.persistent;
 
 import java.io.PrintStream;
 import java.util.Iterator;
+import java.util.Map;
 
 import com.github.krukow.clj_ds.PersistentStack;
-import com.github.krukow.clj_ds.Persistents;
 
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
-public class PersistentProcessState implements ProcessState {
+public class PersistentProcessState extends PersistentObject implements
+		ProcessState {
+
+	private static final int classCode = PersistentProcessState.class
+			.hashCode();
 
 	/************************ Instance Fields ************************/
-
-	/**
-	 * Has the hashcode been computed and cached?
-	 */
-	private boolean hashed = false;
-
-	/**
-	 * The hashcode of this object. Since it is immutable, we can cache it. If
-	 * the hash code has not yet been computed, this will be -1.
-	 */
-	private int hashCode = -1;
-
-	/**
-	 * Is this object the unique representative of its equivalence class? Used
-	 * for the Flyweight Pattern, to flyweight these objects.
-	 */
-	private boolean canonic = false;
 
 	/**
 	 * The process ID (pid).
@@ -45,7 +33,7 @@ public class PersistentProcessState implements ProcessState {
 	 * returns top entry on stack.
 	 * 
 	 */
-	private PersistentStack<PersistentStackEntry> callStack;
+	private CallStack callStack;
 
 	/**
 	 * Number of atomic blocks that are being executing in the process.
@@ -67,8 +55,7 @@ public class PersistentProcessState implements ProcessState {
 	 * @param atomicCount
 	 *            the atomic count
 	 */
-	PersistentProcessState(int pid,
-			PersistentStack<PersistentStackEntry> callStack, int atomicCount) {
+	PersistentProcessState(int pid, CallStack callStack, int atomicCount) {
 		this.pid = pid;
 		this.callStack = callStack;
 		this.atomicCount = atomicCount;
@@ -82,29 +69,10 @@ public class PersistentProcessState implements ProcessState {
 	 *            the process ID, a nonnegative int
 	 */
 	PersistentProcessState(int pid) {
-		this(pid, Persistents.<PersistentStackEntry> vector(), 0);
+		this(pid, CallStack.emptyStack, 0);
 	}
 
 	/******************** Package-private Methods ********************/
-
-	/**
-	 * Declares this object to be the unique representative of its equivalence
-	 * class under the "equals" method relation. Used for Flyweight Pattern.
-	 */
-	void makeCanonic() {
-		// make stack entries flyweighted?
-		canonic = true;
-	}
-
-	/**
-	 * Is this object the unique representative of its equivalence class under
-	 * the "equals" method relation?
-	 * 
-	 * @return true iff this is canonic
-	 */
-	boolean isCanonic() {
-		return canonic;
-	}
 
 	/**
 	 * Returns process state equivalent to this one except that PID has given
@@ -115,7 +83,8 @@ public class PersistentProcessState implements ProcessState {
 	 * @return process state equivalent to this but with new pid
 	 */
 	PersistentProcessState setPid(int pid) {
-		return new PersistentProcessState(pid, callStack, atomicCount);
+		return pid == this.pid ? this : new PersistentProcessState(pid,
+				callStack, atomicCount);
 	}
 
 	/**
@@ -126,9 +95,9 @@ public class PersistentProcessState implements ProcessState {
 	 *            the new call stack
 	 * @return process state equivalent to this but with new call stack
 	 */
-	PersistentProcessState setCallStack(
-			PersistentStack<PersistentStackEntry> callStack) {
-		return new PersistentProcessState(pid, callStack, atomicCount);
+	PersistentProcessState setCallStack(CallStack callStack) {
+		return callStack == this.callStack ? this : new PersistentProcessState(
+				pid, callStack, atomicCount);
 	}
 
 	/**
@@ -140,7 +109,8 @@ public class PersistentProcessState implements ProcessState {
 	 * @return process state equivalent to this but with new atomic count
 	 */
 	PersistentProcessState setAtomicCount(int atomicCount) {
-		return new PersistentProcessState(pid, callStack, atomicCount);
+		return atomicCount == this.atomicCount ? this
+				: new PersistentProcessState(pid, callStack, atomicCount);
 	}
 
 	/**
@@ -153,7 +123,7 @@ public class PersistentProcessState implements ProcessState {
 	 *         from call stack
 	 */
 	PersistentProcessState pop() {
-		return new PersistentProcessState(pid, callStack.minus(), atomicCount);
+		return new PersistentProcessState(pid, callStack.pop(), atomicCount);
 	}
 
 	/**
@@ -164,7 +134,7 @@ public class PersistentProcessState implements ProcessState {
 	 *         onto top of stack
 	 */
 	PersistentProcessState push(PersistentStackEntry newStackEntry) {
-		return new PersistentProcessState(pid, callStack.plus(newStackEntry),
+		return new PersistentProcessState(pid, callStack.push(newStackEntry),
 				atomicCount);
 	}
 
@@ -177,38 +147,46 @@ public class PersistentProcessState implements ProcessState {
 	 *         replaced by given one
 	 */
 	PersistentProcessState replaceTop(PersistentStackEntry newStackEntry) {
-		return new PersistentProcessState(pid, callStack.minus().plus(
-				newStackEntry), atomicCount);
+		return new PersistentProcessState(pid,
+				callStack.replaceTop(newStackEntry), atomicCount);
 	}
 
-	/*********************** Methods from Object *********************/
+	PersistentProcessState renumberScopes(int[] oldToNew) {
+		return setCallStack(callStack.renumberScopes(oldToNew));
+	}
+
+	/****************** Methods from PersistentObject ****************/
 
 	@Override
-	public int hashCode() {
-		if (!hashed) {
-			hashCode = callStack.hashCode() ^ (514229 * pid)
-					^ (39916801 * atomicCount);
-			hashed = true;
-		}
-		return hashCode;
+	protected PersistentProcessState canonize(SymbolicUniverse universe,
+			Map<PersistentObject, PersistentObject> canonicMap) {
+		return (PersistentProcessState) super.canonize(universe, canonicMap);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
+	protected int computeHashCode() {
+		return classCode ^ callStack.hashCode() ^ (514229 * pid)
+				^ (39916801 * atomicCount);
+	}
+
+	@Override
+	protected boolean computeEquals(PersistentObject obj) {
 		if (obj instanceof PersistentProcessState) {
 			PersistentProcessState that = (PersistentProcessState) obj;
 
-			if (canonic && that.canonic)
-				return false;
-			if (hashed && that.hashed && hashCode != that.hashCode)
-				return false;
 			return pid == that.pid && atomicCount == that.atomicCount
 					&& callStack.equals(that.callStack);
 		}
 		return false;
 	}
+
+	@Override
+	protected void canonizeChildren(SymbolicUniverse universe,
+			Map<PersistentObject, PersistentObject> canonicMap) {
+		callStack = callStack.canonize(universe, canonicMap);
+	}
+
+	/*********************** Methods from Object *********************/
 
 	@Override
 	public String toString() {
@@ -269,12 +247,10 @@ public class PersistentProcessState implements ProcessState {
 
 	@Override
 	public void print(PrintStream out, String prefix) {
-		int numFrames = callStack.size();
-		StackEntry[] entries = callStack.toArray(new StackEntry[numFrames]);
 
-		out.println(prefix + "process " + pid + " call stack");
-		for (int i = numFrames - 1; i >= 0; i--)
-			out.println(prefix + "| " + entries[i]);
+		out.println(prefix + "process " + pid + "(atomicCount=" + atomicCount
+				+ ")");
+		callStack.print(out, prefix + "| ");
 		out.flush();
 	}
 
