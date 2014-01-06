@@ -957,13 +957,13 @@ public class ImmutableStateFactory implements StateFactory {
 		int atomicPid = modelFactory.getProcessId(modelFactory.systemSource(),
 				symbolicAtomicPid);
 
-		assert atomicPid >= 0;
+		if (atomicPid < 0)
+			return null;
 		return state.getProcessState(atomicPid);
 	}
 
 	@Override
 	public State getAtomicLock(State state, int pid) {
-		// TODO Auto-generated method stub
 		return this.setVariable(state, 0, 0, modelFactory.processValue(pid));
 	}
 

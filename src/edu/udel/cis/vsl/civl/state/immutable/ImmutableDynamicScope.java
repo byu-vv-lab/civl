@@ -30,13 +30,17 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class ImmutableDynamicScope implements DynamicScope {
 
+	/************************ Static Fields ************************/
+
 	private static boolean debug = false;
 
-	private boolean hashed = false;
+	/************************ Instance Fields ************************/
+
+	boolean canonic = false;
 
 	private int hashCode = -1;
 
-	boolean canonic = false;
+	private boolean hashed = false;
 
 	/**
 	 * Non-null static scope to which this dynamic scope is associated.
@@ -50,15 +54,17 @@ public class ImmutableDynamicScope implements DynamicScope {
 	private int parent;
 
 	/**
+	 * Sets of PIDs of processes that can reach this dynamic scope.
+	 */
+	private BitSet reachers;
+
+	/**
 	 * Non-null array of variable values. The symbolic expression in position i
 	 * is the value of the variable of index i. May contain null values.
 	 */
 	private SymbolicExpression[] variableValues;
 
-	/**
-	 * Sets of PIDs of processes that can reach this dynamic scope.
-	 */
-	private BitSet reachers;
+	/************************ Constructors ************************/
 
 	/**
 	 * A dynamic scope in which all variable values are null.
@@ -87,6 +93,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 		this.reachers = reachers;
 	}
 
+	/******************** Package-private Methods ********************/
+
 	ImmutableDynamicScope changeParent(int newParent) {
 		return new ImmutableDynamicScope(lexicalScope, newParent,
 				variableValues, reachers);
@@ -103,44 +111,26 @@ public class ImmutableDynamicScope implements DynamicScope {
 				newVariableValues, reachers);
 	}
 
-	@Override
-	public SymbolicExpression getValue(int vid) {
-		return variableValues[vid];
+	/**
+	 * @return Copy the set of values in this scopes.
+	 */
+	SymbolicExpression[] copyValues() {
+		SymbolicExpression[] newValues = new SymbolicExpression[variableValues.length];
+
+		System.arraycopy(variableValues, 0, newValues, 0, variableValues.length);
+		return newValues;
+	}
+
+	void makeCanonic(SymbolicUniverse universe) {
+		int numVars = variableValues.length;
+
+		canonic = true;
+		for (int i = 0; i < numVars; i++)
+			variableValues[i] = universe.canonic(variableValues[i]);
 	}
 
 	int numberOfVariables() {
 		return variableValues.length;
-	}
-
-	/**
-	 * How many processes can reach this dynamic scope? A process p can reach a
-	 * dynamic scope d iff there is a path starting from a dynamic scope which
-	 * is referenced in a frame on p's call stack to d, following the "parent"
-	 * edges in the scope tree.
-	 * 
-	 * @return the number of processes which can reach this dynamic scope
-	 */
-	public int numberOfReachers() {
-		return reachers.cardinality();
-	}
-
-	/**
-	 * Is this dynamic scope reachable by the process with the given PID?
-	 * 
-	 * @param pid
-	 * @return true iff this dynamic scope is reachable from the process with
-	 *         pid PID
-	 */
-	public boolean reachableByProcess(int pid) {
-		return reachers.get(pid);
-	}
-
-	/**
-	 * @return The lexical scope corresponding to this dynamic scope.
-	 */
-	@Override
-	public Scope lexicalScope() {
-		return lexicalScope;
 	}
 
 	/**
@@ -155,25 +145,43 @@ public class ImmutableDynamicScope implements DynamicScope {
 		return reachers;
 	}
 
-	/**
-	 * @return Copy the set of values in this scopes.
-	 */
-	SymbolicExpression[] copyValues() {
-		SymbolicExpression[] newValues = new SymbolicExpression[variableValues.length];
+	/****************** Methods from DynamicScope ****************/
 
-		System.arraycopy(variableValues, 0, newValues, 0, variableValues.length);
-		return newValues;
+	@Override
+	public SymbolicExpression getValue(int vid) {
+		return variableValues[vid];
 	}
 
 	@Override
-	public int hashCode() {
-		if (!hashed) {
-			hashCode = lexicalScope.hashCode() ^ (1017 * parent)
-					^ Arrays.hashCode(variableValues) ^ reachers.hashCode();
-			hashed = true;
-		}
-		return hashCode;
+	public Iterable<SymbolicExpression> getValues() {
+		return Arrays.asList(variableValues);
 	}
+
+	/**
+	 * @return The lexical scope corresponding to this dynamic scope.
+	 */
+	@Override
+	public Scope lexicalScope() {
+		return lexicalScope;
+	}
+
+	@Override
+	public void print(PrintStream out, String prefix) {
+		print(out, "", prefix);
+	}
+
+	@Override
+	public DynamicScope setValue(int vid, SymbolicExpression value) {
+		int n = numberOfVariables();
+		SymbolicExpression[] newVariableValues = new SymbolicExpression[n];
+
+		System.arraycopy(variableValues, 0, newVariableValues, 0, n);
+		newVariableValues[vid] = value;
+		return new ImmutableDynamicScope(lexicalScope, parent,
+				newVariableValues, reachers);
+	}
+
+	/****************** Methods from Object ****************/
 
 	@Override
 	public boolean equals(Object obj) {
@@ -197,6 +205,47 @@ public class ImmutableDynamicScope implements DynamicScope {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		if (!hashed) {
+			hashCode = lexicalScope.hashCode() ^ (1017 * parent)
+					^ Arrays.hashCode(variableValues) ^ reachers.hashCode();
+			hashed = true;
+		}
+		return hashCode;
+	}
+
+	@Override
+	public String toString() {
+		return "DynamicScope[static=" + lexicalScope.id() + ", parent="
+				+ parent + "]";
+	}
+
+	/****************** Public Methods ****************/
+
+	public void commit() {
+	}
+
+	public boolean isCanonic() {
+		return canonic;
+	}
+
+	public boolean isMutable() {
+		return true;
+	}
+
+	/**
+	 * How many processes can reach this dynamic scope? A process p can reach a
+	 * dynamic scope d iff there is a path starting from a dynamic scope which
+	 * is referenced in a frame on p's call stack to d, following the "parent"
+	 * edges in the scope tree.
+	 * 
+	 * @return the number of processes which can reach this dynamic scope
+	 */
+	public int numberOfReachers() {
+		return reachers.cardinality();
 	}
 
 	public void print(PrintStream out, String id, String prefix) {
@@ -230,53 +279,19 @@ public class ImmutableDynamicScope implements DynamicScope {
 		out.flush();
 	}
 
-	@Override
-	public String toString() {
-		return "DynamicScope[static=" + lexicalScope.id() + ", parent="
-				+ parent + "]";
-	}
-
-	public boolean isMutable() {
-		return true;
-	}
-
-	public boolean isCanonic() {
-		return canonic;
-	}
-
-	void makeCanonic(SymbolicUniverse universe) {
-		int numVars = variableValues.length;
-
-		canonic = true;
-		for (int i = 0; i < numVars; i++)
-			variableValues[i] = universe.canonic(variableValues[i]);
-	}
-
-	public void commit() {
-	}
-
-	@Override
-	public DynamicScope setValue(int vid, SymbolicExpression value) {
-		int n = numberOfVariables();
-		SymbolicExpression[] newVariableValues = new SymbolicExpression[n];
-
-		System.arraycopy(variableValues, 0, newVariableValues, 0, n);
-		newVariableValues[vid] = value;
-		return new ImmutableDynamicScope(lexicalScope, parent,
-				newVariableValues, reachers);
+	/**
+	 * Is this dynamic scope reachable by the process with the given PID?
+	 * 
+	 * @param pid
+	 * @return true iff this dynamic scope is reachable from the process with
+	 *         pid PID
+	 */
+	public boolean reachableByProcess(int pid) {
+		return reachers.get(pid);
 	}
 
 	public DynamicScope setValues(SymbolicExpression[] values) {
 		return new ImmutableDynamicScope(lexicalScope, parent, values, reachers);
 	}
 
-	@Override
-	public Iterable<SymbolicExpression> getValues() {
-		return Arrays.asList(variableValues);
-	}
-
-	@Override
-	public void print(PrintStream out, String prefix) {
-		print(out, "", prefix);
-	}
 }

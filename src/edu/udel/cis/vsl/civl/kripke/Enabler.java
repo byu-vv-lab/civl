@@ -12,13 +12,16 @@ import java.util.Stack;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
@@ -97,36 +100,69 @@ public class Enabler implements
 	@Override
 	public TransitionSequence enabledTransitions(State state) {
 		TransitionSequence transitions;
+		ArrayList<Integer> resumableProcesses;
+		ProcessState p;
+		AssignStatement assignStatement;
+		Location pLocation;
+		// TODO updating states in the method introduce uncanonicalized
+		// intermediate states appearing in the output and a missing link
+		// between states and transitions:
+		// e.g.
+		// State 87:99
+		// ...
+		// State 89:-1 --proc 1: sum = (sum+i) ... --> State 99:10
+		// Here State 87:99 is updated (by releasing the atomic lock) to create
+		// State 89:-1
 
 		if (state.getPathCondition().isFalse())
 			// return empty set of transitions:
 			return new TransitionSequence(state);
-		// execute a transition in an atomic block of a certain process without
-		// interleaving with other processes
-		if (executor.stateFactory().lockedByAtomic(state)) {
-			ProcessState p = executor.stateFactory().processInAtomic(state);
+		p = executor.stateFactory().processInAtomic(state);
+		if (p != null) {
+			// execute a transition in an atomic block of a certain process
+			// without
+			// interleaving with other processes
 			TransitionSequence localTransitions = transitionFactory
 					.newTransitionSequence(state);
-			Location pLocation = p.getLocation();
 			int pid = p.getPid();
 
-			for (Statement s : pLocation.outgoing()) {
-				BooleanExpression newPathCondition = executor.newPathCondition(
-						state, pid, s);
+			localTransitions.addAll(getTransitions(state, pid, null));
+			if (localTransitions.isEmpty()) {
+				// release atomic lock if the current location of the process
+				// that holds the lock is blocked
+				state = executor.stateFactory().releaseAtomicLock(state);
+			} else
+				return localTransitions;
+		}
+		// TODO optimize the number of valid/prover calls
+		resumableProcesses = executor.resumableAtomicProcesses(state);
+		if (resumableProcesses.size() == 1) {
+			int pid = resumableProcesses.get(0);
 
-				if (!newPathCondition.isFalse()) {
-					localTransitions.addAll(executeStatement(state, s,
-							newPathCondition, pid));
-					if (localTransitions.isEmpty()) {
-						throw new CIVLStateException(
-								ErrorKind.OTHER,
-								Certainty.CONCRETE,
-								"Undesired blocked location is detected in $atomic block.",
-								state, pLocation.getSource());
-					}
-				}
+			pLocation = state.getProcessState(pid).getLocation();
+			assignStatement = modelFactory.assignAtomicLockVariable(pid,
+					pLocation);
+			// only one process in atomic blocks could be resumed, so let
+			// the process hold the atomic lock
+			// state = executor.stateFactory().getAtomicLock(state, pid);
+			transitions = transitionFactory.newTransitionSequence(state);
+			transitions.addAll(getTransitions(state, pid, assignStatement));
+			if (transitions.isEmpty()) {
+				throw new CIVLInternalException("unreachable", p.getLocation()
+						.getSource());
 			}
-			return localTransitions;
+			return transitions;
+		} else if (resumableProcesses.size() > 1) {
+			// There are more than one processes trying to hold the atomic
+			// lock
+			transitions = transitionFactory.newTransitionSequence(state);
+			for (Integer pid : resumableProcesses) {
+				pLocation = state.getProcessState(pid).getLocation();
+				assignStatement = modelFactory.assignAtomicLockVariable(pid,
+						pLocation);
+				transitions.addAll(getTransitions(state, pid, assignStatement));
+			}
+			return transitions;
 		}
 		if (!this.scpPor) {
 			if (debugging && enabledTransitionSets % 1000 == 0) {
@@ -148,6 +184,32 @@ public class Enabler implements
 			singletonSequence.add(transitions.get(generator.nextInt(transitions
 					.size())));
 			return singletonSequence;
+		}
+		return transitions;
+	}
+
+	/**
+	 * Get the enabled transitions of a certain process at a given state.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @return the list of enabled transitions of the given process at the
+	 *         specified state
+	 */
+	private ArrayList<Transition> getTransitions(State state, int pid,
+			Statement assignAtomicLock) {
+		ProcessState p = state.getProcessState(pid);
+		Location pLocation = p.getLocation();
+		ArrayList<Transition> transitions = new ArrayList<Transition>();
+
+		for (Statement s : pLocation.outgoing()) {
+			BooleanExpression newPathCondition = executor.newPathCondition(
+					state, pid, s);
+
+			if (!newPathCondition.isFalse()) {
+				transitions.addAll(executeStatement(state, s, newPathCondition,
+						pid, assignAtomicLock));
+			}
 		}
 		return transitions;
 	}
@@ -196,7 +258,7 @@ public class Enabler implements
 				}
 				if (!newPathCondition.isFalse()) {
 					localTransitions.addAll(executeStatement(state, s,
-							newPathCondition, pid));
+							newPathCondition, pid, null));
 				}
 			}
 
@@ -242,8 +304,10 @@ public class Enabler implements
 	}
 
 	private ArrayList<SimpleTransition> executeStatement(State state,
-			Statement s, BooleanExpression pathCondition, int pid) {
+			Statement s, BooleanExpression pathCondition, int pid,
+			Statement assignAtomicLock) {
 		ArrayList<SimpleTransition> localTransitions = new ArrayList<SimpleTransition>();
+		Statement transitionStatement;
 
 		try {
 			if (s instanceof ChooseStatement) {
@@ -261,10 +325,19 @@ public class Enabler implements
 							"Argument to $choose_int not concrete: "
 									+ eval.value, eval.state, s.getSource());
 				upper = upperNumber.intValue();
+				if (assignAtomicLock != null) {
+					StatementList statementList = new StatementList(
+							assignAtomicLock);
+
+					statementList.add(s);
+					transitionStatement = statementList;
+				} else {
+					transitionStatement = s;
+				}
 				for (int i = 0; i < upper; i++) {
 					localTransitions.add(transitionFactory.newChooseTransition(
-							eval.state.getPathCondition(), pid, s,
-							universe.integer(i)));
+							eval.state.getPathCondition(), pid,
+							transitionStatement, universe.integer(i)));
 				}
 			} else if (s instanceof WaitStatement) {
 				Evaluation eval = evaluator.evaluate(
@@ -285,12 +358,30 @@ public class Enabler implements
 					throw e;
 				}
 				if (state.getProcessState(pidValue).hasEmptyStack()) {
+					if (assignAtomicLock != null) {
+						StatementList statementList = new StatementList(
+								assignAtomicLock);
+
+						statementList.add(s);
+						transitionStatement = statementList;
+					} else {
+						transitionStatement = s;
+					}
 					localTransitions.add(transitionFactory.newSimpleTransition(
-							pathCondition, pid, s));
+							pathCondition, pid, transitionStatement));
 				}
 			} else {
+				if (assignAtomicLock != null) {
+					StatementList statementList = new StatementList(
+							assignAtomicLock);
+
+					statementList.add(s);
+					transitionStatement = statementList;
+				} else {
+					transitionStatement = s;
+				}
 				localTransitions.add(transitionFactory.newSimpleTransition(
-						pathCondition, pid, s));
+						pathCondition, pid, transitionStatement));
 			}
 		} catch (UnsatisfiablePathConditionException e) {
 			// nothing to do: don't add this transition
@@ -378,7 +469,7 @@ public class Enabler implements
 				// generate transitions for each statement of each process
 				if (!newPathCondition.isFalse()) {
 					localTransitions.addAll(executeStatement(state, s,
-							newPathCondition, pid));
+							newPathCondition, pid, null));
 				}
 			}
 
@@ -477,7 +568,7 @@ public class Enabler implements
 				continue;
 			}
 
-			if (p.isPurelyLocalProc()) {
+			if (p.getLocation().allOutgoingPurelyLocal()) {
 				ampleProcesses.add(p);
 				return ampleProcesses;
 			}

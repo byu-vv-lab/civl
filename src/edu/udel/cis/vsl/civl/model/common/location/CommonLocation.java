@@ -47,6 +47,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 	private CIVLFunction function;
 	private boolean purelyLocal = false;
 	private AtomicKind atomicKind = AtomicKind.NONE;
+	private boolean allOutgoingPurelyLocal = false;
+	private boolean loopPossible = false;
 
 	/**
 	 * The parent of all locations.
@@ -131,32 +133,29 @@ public class CommonLocation extends CommonSourceable implements Location {
 		String gotoString;
 
 		String headString = null;
-
 		if (this.purelyLocal) {
 			headString = prefix + "location " + id() + " (scope: " + scope.id()
 					+ ") #";
 		} else
 			headString = prefix + "location " + id() + " (scope: " + scope.id()
 					+ ")";
-
+		if(this.loopPossible)
+			headString = headString + "loop";
 		switch (this.atomicKind) {
 		case ENTER:
-			headString = headString + " enter atomic block;";
+			headString = headString + "*enter atomic block;";
 			break;
 		case DENTER:
-			headString = headString + " enter datomic block;";
+			headString = headString + "*enter datomic block;";
 			break;
 		case LEAVE:
-			headString = headString + " leave atomic block;";
+			headString = headString + "*leave atomic block;";
 			break;
 		case DLEAVE:
-			headString = headString + " leave datomic block;";
+			headString = headString + "*leave datomic block;";
 		default:
-
 		}
-
 		out.println(headString);
-
 		for (Statement statement : outgoing) {
 			if (statement.target() != null) {
 				targetLocation = "" + statement.target().id();
@@ -300,6 +299,31 @@ public class CommonLocation extends CommonSourceable implements Location {
 			return;
 		}
 
+		if (this.atomicKind == AtomicKind.ENTER) {
+			Stack<Integer> atomicFlags = new Stack<Integer>();
+			Location newLocation = this;
+			Set<Integer> checkedLocations = new HashSet<Integer>();
+
+			do {
+				Statement s = newLocation.getOutgoing(0);
+
+				checkedLocations.add(newLocation.id());
+				if (!s.isPurelyLocal()) {
+					this.purelyLocal = false;
+					return;
+				}
+				if (newLocation.enterAtomic())
+					atomicFlags.push(1);
+				if (newLocation.leaveAtomic())
+					atomicFlags.pop();
+				newLocation = s.target();
+				if (checkedLocations.contains(newLocation.id()))
+					newLocation = null;
+			} while (newLocation != null && !atomicFlags.isEmpty());
+			this.purelyLocal = true;
+			return;
+		}
+
 		// Usually, a location is purely local if it has exactly one outgoing
 		// statement that is purely local
 		if (outgoing.size() != 1)
@@ -355,4 +379,56 @@ public class CommonLocation extends CommonSourceable implements Location {
 		return this.atomicKind;
 	}
 
+	@Override
+	public boolean allOutgoingPurelyLocal() {
+		return this.allOutgoingPurelyLocal;
+	}
+
+	@Override
+	public void purelyLocalAnalysisForOutgoing() {
+		// a location that enters an atomic block is considered as atomic only
+		// if all the statements that are to be executed in the atomic block are
+		// purely local
+		if (this.atomicKind == AtomicKind.DENTER) {
+			Stack<Integer> atomicFlags = new Stack<Integer>();
+			Location newLocation = this;
+			Set<Integer> checkedLocations = new HashSet<Integer>();
+
+			do {
+				Statement s = newLocation.getOutgoing(0);
+
+				checkedLocations.add(newLocation.id());
+				if (!s.isPurelyLocal()) {
+					this.allOutgoingPurelyLocal = false;
+					return;
+				}
+				if (newLocation.enterDatomic())
+					atomicFlags.push(1);
+				if (newLocation.leaveDatomic())
+					atomicFlags.pop();
+				newLocation = s.target();
+				if (checkedLocations.contains(newLocation.id()))
+					newLocation = null;
+			} while (newLocation != null && !atomicFlags.isEmpty());
+			this.allOutgoingPurelyLocal = true;
+			return;
+		}
+
+		for (Statement s : outgoing) {
+			if (!s.isPurelyLocal())
+				this.allOutgoingPurelyLocal = false;
+		}
+		this.allOutgoingPurelyLocal = true;
+	}
+
+	@Override
+	public boolean isLoopPossible() {
+		return this.loopPossible;
+	}
+
+	// TODO improve the static analysis of loop locations
+	@Override
+	public void setLoopPossible(boolean possible) {
+		this.loopPossible = possible;
+	}
 }

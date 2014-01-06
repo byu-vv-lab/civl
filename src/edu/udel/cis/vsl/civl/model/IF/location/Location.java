@@ -180,12 +180,33 @@ public interface Location extends Sourceable {
 	 * @return true iff the location is leaving a deterministic atomic block
 	 */
 	boolean leaveDatomic();
-	
+
 	/**
 	 * 
 	 * @return true iff the location is leaving a general atomic block
 	 */
 	boolean leaveAtomic();
-	
+
 	AtomicKind atomicKind();
+
+	boolean allOutgoingPurelyLocal();
+
+	void purelyLocalAnalysisForOutgoing();
+
+	/**
+	 * 
+	 * @return True if this location is possible to form a loop
+	 */
+	boolean isLoopPossible();
+
+	/**
+	 * During the translation of AST node into CIVL model, it is possible to
+	 * know if a location with more than one incoming statement possible to be a
+	 * loop location
+	 * 
+	 * @param possible
+	 *            The value to be used to mark whether this location is possible
+	 *            to be a loop location or not
+	 */
+	void setLoopPossible(boolean possible);
 }

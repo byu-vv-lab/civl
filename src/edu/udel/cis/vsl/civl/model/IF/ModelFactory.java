@@ -1154,5 +1154,27 @@ public interface ModelFactory {
 	 *            The scope of the atomic lock variable, and should always be
 	 *            the root scope.
 	 */
-	void createAtomicLockVaraible(Scope scope);
+	void createAtomicLockVariable(Scope scope);
+
+	/**
+	 * This method is used in Enabler when a process resumes from being blocked
+	 * and wants to get the atomic lock
+	 * 
+	 * @return The variable expression object of the atomic lock variable
+	 */
+	VariableExpression atomicLockVariableExpression();
+
+	/**
+	 * Create a new statement to assign the atomic lock variable to a specified
+	 * process id. The scope of the source location of the resulting statement
+	 * 
+	 * @param pid
+	 *            The id of the process that wants to grab the atomic lock
+	 * @param target
+	 *            The target location of the resulting statement. The scope of
+	 *            the source location will be the same as the target location.
+	 * @return The new assign statement that updates the atomic lock variable to
+	 *         the specified process id
+	 */
+	AssignStatement assignAtomicLockVariable(Integer pid, Location target);
 }

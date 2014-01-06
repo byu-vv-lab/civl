@@ -155,16 +155,19 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private static final String CONDITIONAL_VARIABLE_PREFIX = "$COND_VAR_";
 
-	/**
-	 * The prefix of the temporal variables for translating $choose_int function
-	 * calls
-	 */
-	private static final String CHOOSE_VARIABLE_PREFIX = "$CHOOSE_VAR_";
+	// /**
+	// * The prefix of the temporal variables for translating $choose_int
+	// function
+	// * calls
+	// */
+	// private static final String CHOOSE_VARIABLE_PREFIX = "$CHOOSE_VAR_";
 
 	/**
 	 * The name of the atomic lock variable
 	 */
 	private static final String ATOMIC_LOCK_VARIABLE = "$ATOMIC_LOCK_VAR";
+
+	private VariableExpression atomicLockVariableExpression;
 
 	/**
 	 * When translating a CallOrSpawnStatement that has some conditional
@@ -251,10 +254,10 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private int conditionalExpressionCounter = 0;
 
-	/**
-	 * The number of function call $choose_int that needs a temporal variable.
-	 */
-	private int chooseIntegerCounter = 0;
+	// /**
+	// * The number of function call $choose_int that needs a temporal variable.
+	// */
+	// private int chooseIntegerCounter = 0;
 
 	// /**
 	// * Maintain a stack of atomic blocks (0 for general atomic, 1 for
@@ -1381,7 +1384,7 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private VariableExpression tempVariable(TempVariableKind kind, Scope scope,
 			CIVLSource source, CIVLType type) {
-		String name = "$V" + this.conditionalExpressionCounter++;
+		String name = "";
 		int vid = scope.numVariables();
 		StringObject stringObject;
 		Variable variable;
@@ -1392,9 +1395,9 @@ public class CommonModelFactory implements ModelFactory {
 			name = CONDITIONAL_VARIABLE_PREFIX
 					+ this.conditionalExpressionCounter++;
 			break;
-		case CHOOSE:
-			name = CHOOSE_VARIABLE_PREFIX + this.chooseIntegerCounter++;
-			break;
+		// case CHOOSE:
+		// name = CHOOSE_VARIABLE_PREFIX + this.chooseIntegerCounter++;
+		// break;
 		default:
 		}
 		stringObject = (StringObject) universe.canonic(universe
@@ -1650,12 +1653,38 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public void createAtomicLockVaraible(Scope scope) {
+	public void createAtomicLockVariable(Scope scope) {
 		// Since the atomic lock variable is not declared explicitly in the CIVL
 		// model specification, the system source will be used here.
 		Variable variable = this.variable(this.systemSource, processType,
 				this.identifier(this.systemSource, ATOMIC_LOCK_VARIABLE), 0);
 
+		this.atomicLockVariableExpression = this.variableExpression(
+				this.systemSource, variable);
 		scope.addVariable(variable);
 	}
+
+	@Override
+	public VariableExpression atomicLockVariableExpression() {
+		return this.atomicLockVariableExpression;
+	}
+
+	@Override
+	public AssignStatement assignAtomicLockVariable(Integer pid, Location target) {
+		// create a new location to avoid breaking the original program graph
+		// and this assign statement is unreachable from the original program
+		// graph
+		AssignStatement assignStatement = this.assignStatement(
+				this.systemSource,
+				this.location(this.systemSource, target.scope()),
+				this.atomicLockVariableExpression,
+				this.selfExpression(this.systemSource));
+
+		assignStatement.setTarget(target);
+		return assignStatement;
+	}
+
+	// private Variable atomicLockVariable(){
+	// return this.atomicLockVariable;
+	// }
 }

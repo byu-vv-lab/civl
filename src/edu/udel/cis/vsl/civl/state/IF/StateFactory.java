@@ -245,11 +245,12 @@ public interface StateFactory {
 	boolean lockedByAtomic(State state);
 
 	/**
+	 * Get the process that holds the atomic lock at a certain state
 	 * 
 	 * @param state
 	 *            The state to be checked
-	 * @return True iff there the value of atomic lock variable is not undefined
-	 *         process value
+	 * @return NULL iff there is no process holding the atomic lock, otherwise
+	 *         return the process that holds the atomic lock
 	 */
 	ProcessState processInAtomic(State state);
 

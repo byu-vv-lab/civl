@@ -1,0 +1,25 @@
+#include <civlc.h>
+
+int x = 1;
+int y = 0;
+int z = 0;
+int sum = 0;
+
+void foo(int i){
+    $atomic{
+        y = y + i;
+        z++;
+        $when(x==0) 
+          switch(y){
+            case 1: sum += 1*i; break;
+            case 2: sum += 2*i; break;
+            case 3: sum += 3*i; break;
+          };
+    }
+}
+
+void main(){
+    $spawn foo(1);
+    $spawn foo(2);
+    $when (z==2) x = 0;
+}

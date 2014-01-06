@@ -31,6 +31,8 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	class ReverseIterator implements Iterator<StackEntry> {
 
+		/************************* Instance Fields *************************/
+
 		/**
 		 * The array over which we are iterating.
 		 */
@@ -42,6 +44,8 @@ public class ImmutableProcessState implements ProcessState {
 		 */
 		private int i = array.length - 1;
 
+		/******************** Package-private Methods ********************/
+
 		/**
 		 * Creates a new reverse iterator for the given array.
 		 * 
@@ -51,6 +55,8 @@ public class ImmutableProcessState implements ProcessState {
 		ReverseIterator(StackEntry[] array) {
 			this.array = array;
 		}
+
+		/****************** Methods from Iterator ****************/
 
 		@Override
 		public boolean hasNext() {
@@ -71,21 +77,7 @@ public class ImmutableProcessState implements ProcessState {
 		}
 	}
 
-	private boolean hashed = false;
-
-	private boolean canonic = false;
-
-	private int hashCode = -1;
-
-	/**
-	 * The process ID (pid).
-	 */
-	private int pid;
-
-	/**
-	 * A non-null array. Entry 0 is the TOP of the stack.
-	 */
-	private StackEntry[] callStack;
+	/************************* Instance Fields *************************/
 
 	/**
 	 * Number of atomic blocks that are being executing in the process.
@@ -93,6 +85,24 @@ public class ImmutableProcessState implements ProcessState {
 	 * it.
 	 */
 	private int atomicCount = 0;
+
+	/**
+	 * A non-null array. Entry 0 is the TOP of the stack.
+	 */
+	private StackEntry[] callStack;
+
+	private boolean canonic = false;
+
+	private int hashCode = -1;
+
+	private boolean hashed = false;
+
+	/**
+	 * The process ID (pid).
+	 */
+	private int pid;
+
+	/************************** Constructors *************************/
 
 	/**
 	 * A new process state with empty stack.
@@ -104,13 +114,6 @@ public class ImmutableProcessState implements ProcessState {
 		this.pid = pid;
 		callStack = new ImmutableStackEntry[0];
 	}
-
-	// ImmutableProcessState(int pid, StackEntry[] stack, int atomicCount) {
-	// assert stack != null;
-	// this.pid = pid;
-	// callStack = stack;
-	// this.atomicCount = atomicCount;
-	// }
 
 	ImmutableProcessState(ImmutableProcessState oldProcess, int newPid) {
 		this.pid = newPid;
@@ -124,76 +127,13 @@ public class ImmutableProcessState implements ProcessState {
 		this.atomicCount = atomicCount;
 	}
 
-	/**
-	 * @return The unique process ID.
-	 */
-	@Override
-	public int getPid() {
-		return pid;
-	}
-
-	/**
-	 * @param id
-	 *            The unique process ID.
-	 */
-	void setId(int pid) {
-		this.pid = pid;
-	}
+	/******************** Package-private Methods ********************/
 
 	ImmutableProcessState copy() {
 		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length];
 
 		System.arraycopy(callStack, 0, newStack, 0, callStack.length);
 		return new ImmutableProcessState(pid, newStack, this.atomicCount);
-	}
-
-	@Override
-	public boolean hasEmptyStack() {
-		return callStack.length == 0;
-	}
-
-	/**
-	 * @return The current location of this process.
-	 */
-	@Override
-	public Location getLocation() {
-		return callStack[0].location();
-	}
-
-	/**
-	 * @return The id of the current dynamic scope of this process.
-	 */
-	@Override
-	public int getDyscopeId() {
-		return callStack[0].scope();
-	}
-
-	/**
-	 * Look at the first entry on the call stack, but do not remove it.
-	 * 
-	 * @return The first entry on the call stack. Null if empty.
-	 */
-
-	@Override
-	public StackEntry peekStack() {
-		return callStack[0];
-	}
-
-	@Override
-	public int stackSize() {
-		return callStack.length;
-	}
-
-	/**
-	 * Returns i-th entry on stack, where 0 is the TOP of the stack, and
-	 * stackSize-1 is the BOTTOM of the stack.
-	 * 
-	 * @param i
-	 *            int in [0,stackSize-1]
-	 * @return i-th entry on stack
-	 */
-	public StackEntry getStackEntry(int i) {
-		return callStack[i];
 	}
 
 	ImmutableProcessState pop() {
@@ -220,15 +160,108 @@ public class ImmutableProcessState implements ProcessState {
 		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
 
-	@Override
-	public int hashCode() {
-		if (!hashed) {
-			hashCode = this.atomicCount
-					^ (31 * (Arrays.hashCode(callStack) ^ (48729 * pid)));
-			hashed = true;
-		}
-		return hashCode;
+	/**
+	 * @param id
+	 *            The unique process ID.
+	 */
+	void setId(int pid) {
+		this.pid = pid;
 	}
+
+	/******************* Methods from ProcessState *******************/
+
+	@Override
+	public int atomicCount() {
+		return this.atomicCount;
+	}
+	
+	@Override
+	public Iterator<StackEntry> bottomToTopIterator() {
+		return new ReverseIterator(callStack);
+	}
+	
+	@Override
+	public ProcessState decrementAtomicCount() {
+		return new ImmutableProcessState(this.pid, this.callStack,
+				this.atomicCount - 1);
+	}
+	
+	@Override
+	public int getDyscopeId() {
+		return callStack[0].scope();
+	}
+
+	@Override
+	public Location getLocation() {
+		return callStack[0].location();
+	}
+
+	@Override
+	public int getPid() {
+		return pid;
+	}
+	
+	@Override
+	public Iterable<StackEntry> getStackEntries() {
+		return Arrays.asList(callStack);
+	}
+
+	@Override
+	public boolean hasEmptyStack() {
+		return callStack.length == 0;
+	}
+	
+	@Override
+	public boolean inAtomic() {
+		return this.atomicCount > 0;
+	}
+	
+	@Override
+	public ProcessState incrementAtomicCount() {
+		return new ImmutableProcessState(this.pid, this.callStack,
+				this.atomicCount + 1);
+	}
+	
+	@Override
+	public boolean isPurelyLocalProc() {
+		Iterable<Statement> stmts = this.callStack[0].location().outgoing();
+
+		for (Statement s : stmts) {
+			if (!s.isPurelyLocal())
+				return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Look at the first entry on the call stack, but do not remove it.
+	 * 
+	 * @return The first entry on the call stack. Null if empty.
+	 */
+
+	@Override
+	public StackEntry peekStack() {
+		return callStack[0];
+	}
+
+	@Override
+	public void print(PrintStream out, String prefix) {
+		out.println(prefix + "process " + pid + " call stack");
+		for (int i = 0; i < callStack.length; i++) {
+			StackEntry frame = callStack[i];
+
+			out.println(prefix + "| " + frame);
+		}
+		out.flush();
+	}
+
+	@Override
+	public int stackSize() {
+		return callStack.length;
+	}
+	
+	/******************* Methods from Object *******************/
 
 	@Override
 	public boolean equals(Object obj) {
@@ -251,42 +284,45 @@ public class ImmutableProcessState implements ProcessState {
 		}
 		return false;
 	}
-
+	
 	@Override
-	public void print(PrintStream out, String prefix) {
-		out.println(prefix + "process " + pid + " call stack");
-		for (int i = 0; i < callStack.length; i++) {
-			StackEntry frame = callStack[i];
-
-			out.println(prefix + "| " + frame);
+	public int hashCode() {
+		if (!hashed) {
+			hashCode = this.atomicCount
+					^ (31 * (Arrays.hashCode(callStack) ^ (48729 * pid)));
+			hashed = true;
 		}
-		out.flush();
+		return hashCode;
 	}
-
+	
 	@Override
 	public String toString() {
 		return "State of process " + pid + " (call stack length = "
 				+ callStack.length + ")";
 	}
 
-	@Override
-	public boolean isPurelyLocalProc() {
-		Iterable<Statement> stmts = this.callStack[0].location().outgoing();
+	/******************** Public Methods ********************/
 
-		for (Statement s : stmts) {
-			if (!s.isPurelyLocal())
-				return false;
-		}
-
-		return true;
+	public void commit() {
+	}
+	
+	/**
+	 * Returns i-th entry on stack, where 0 is the TOP of the stack, and
+	 * stackSize-1 is the BOTTOM of the stack.
+	 * 
+	 * @param i
+	 *            int in [0,stackSize-1]
+	 * @return i-th entry on stack
+	 */
+	public StackEntry getStackEntry(int i) {
+		return callStack[i];
 	}
 
 	public boolean isMutable() {
 		return false;
 	}
 
-	public void commit() {
-	}
+	
 
 	void makeCanonic() {
 		canonic = true;
@@ -313,36 +349,6 @@ public class ImmutableProcessState implements ProcessState {
 		return new ImmutableProcessState(pid, frames, this.atomicCount);
 	}
 
-	@Override
-	public Iterable<StackEntry> getStackEntries() {
-		return Arrays.asList(callStack);
-	}
-
-	@Override
-	public Iterator<StackEntry> bottomToTopIterator() {
-		return new ReverseIterator(callStack);
-	}
-
-	@Override
-	public ProcessState incrementAtomicCount() {
-		return new ImmutableProcessState(this.pid, this.callStack,
-				this.atomicCount + 1);
-	}
-
-	@Override
-	public ProcessState decrementAtomicCount() {
-		return new ImmutableProcessState(this.pid, this.callStack,
-				this.atomicCount - 1);
-	}
-
-	@Override
-	public boolean inAtomic() {
-		return this.atomicCount > 0;
-	}
-
-	@Override
-	public int atomicCount() {
-		return this.atomicCount;
-	}
+	
 
 }

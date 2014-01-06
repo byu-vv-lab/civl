@@ -1996,6 +1996,7 @@ public class ModelBuilderWorker {
 		for (Statement s : continues) {
 			s.setTarget(continueLocation);
 		}
+		loopEntrance.startLocation().setLoopPossible(true);
 		// the loop entrance location is the same as the loop exit location
 		loopExit = new CommonFragment(factory.noopStatement(condition
 				.getSource(), loopEntranceLocation, factory.unaryExpression(
@@ -3037,7 +3038,7 @@ public class ModelBuilderWorker {
 		unprocessedFunctions = new ArrayList<FunctionDefinitionNode>();
 		functionInfo = new FunctionInfo(system);
 		// add the global variable for atomic lock
-		factory.createAtomicLockVaraible(systemScope);
+		factory.createAtomicLockVariable(systemScope);
 		factory.addConditionalExpressionQueue();
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);

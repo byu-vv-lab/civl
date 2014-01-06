@@ -3,10 +3,16 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -26,6 +32,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -53,11 +60,19 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class Executor {
 
+	public enum ExecuteKind {
+		ATOMIC, ATOM, LOCAL
+	}
+
+	public enum StateStatusKind {
+		NORMAL, NONDETERMINISTIC, BLOCKED, END
+	}
+
 	// Fields..............................................................
 
 	private ModelFactory modelFactory;
 
-	/** The symbolic universe used to maange all symbolic expressions. */
+	/** The symbolic universe used to manage all symbolic expressions. */
 	private SymbolicUniverse symbolicUniverse;
 
 	/** The factory used to produce and manipulate model states. */
@@ -541,10 +556,30 @@ public class Executor {
 			return state;
 		} else if (statement instanceof MallocStatement) {
 			return executeMalloc(state, pid, (MallocStatement) statement);
+		} else if (statement instanceof StatementList) {
+			return executeStatementList(state, pid, (StatementList) statement,
+					null);
 		} else if (statement instanceof ChooseStatement) {
 			throw new CIVLInternalException("Should be unreachable", statement);
 		} else
 			throw new CIVLInternalException("Unknown statement kind", statement);
+	}
+
+	public State executeStatementList(State state, int pid,
+			StatementList statement, SymbolicExpression value)
+			throws UnsatisfiablePathConditionException {
+		int count = statement.statements().size();
+
+		for (int i = 0; i < count; i++) {
+			Statement stmt = statement.statements().get(i);
+
+			if (stmt instanceof ChooseStatement) {
+				state = executeChoose(state, pid, (ChooseStatement) stmt, value);
+			} else {
+				state = executeWork(state, pid, stmt);
+			}
+		}
+		return state;
 	}
 
 	/**
@@ -620,6 +655,351 @@ public class Executor {
 		} catch (UnsatisfiablePathConditionException e) {
 			return evaluator.universe().falseExpression();
 		}
+	}
+
+	/**
+	 * Execute a statement from a certain state and return the resulting state
+	 * 
+	 * @param state
+	 *            The state to execute the statement with
+	 * @param location
+	 *            The location of the statement, satisfying that
+	 *            <code>s.source() == location</code>.
+	 * @param s
+	 *            The statement to be executed
+	 * @param pid
+	 *            The id of the process that the statement <code>s</code>
+	 *            belongs to. Precondition:
+	 *            <code>state.getProcessState(pid).getLocation() == location</code>
+	 * @return
+	 */
+	public Entry<StateStatusKind, State> executeStatement(State state,
+			Location location, Statement s, int pid) {
+		State newState = null;
+		BooleanExpression pathCondition = newPathCondition(state, pid, s);
+
+		if (!pathCondition.isFalse()) {
+			try {
+				if (s instanceof ChooseStatement) {
+					// execute deterministic choosestatement
+					return new AbstractMap.SimpleEntry<StateStatusKind, State>(
+							StateStatusKind.NONDETERMINISTIC, null);
+
+					// if(executeKind == ExecuteKind.ATOM)
+					// throw new CIVLStateException(
+					// ErrorKind.OTHER,
+					// Certainty.CONCRETE,
+					// "Undesired non-determinism is found in $atom block.",
+					// state, location.getSource());
+					// else
+					// return newState;
+				} else if (s instanceof WaitStatement) {
+					Evaluation eval = evaluator.evaluate(
+							state.setPathCondition(pathCondition), pid,
+							((WaitStatement) s).process());
+					int pidValue = modelFactory.getProcessId(
+							((WaitStatement) s).process().getSource(),
+							eval.value);
+
+					if (pidValue < 0) {
+						CIVLExecutionException e = new CIVLStateException(
+								ErrorKind.INVALID_PID,
+								Certainty.PROVEABLE,
+								"Unable to call $wait on a process that has already been the target of a $wait.",
+								state, s.getSource());
+
+						evaluator.reportError(e);
+						// TODO: recover: add a no-op transition
+						throw e;
+					}
+					if (state.getProcessState(pidValue).hasEmptyStack()) {
+						newState = state.setPathCondition(pathCondition);
+						newState = execute(newState, pid, s);
+					} else {
+						return new AbstractMap.SimpleEntry<StateStatusKind, State>(
+								StateStatusKind.BLOCKED, null);
+						// if(executeKind == ExecuteKind.ATOMIC)
+						// return newState;
+						// else return null;
+					}
+				} else {
+					newState = state.setPathCondition(pathCondition);
+					newState = execute(newState, pid, s);
+				}
+			} catch (UnsatisfiablePathConditionException e) {
+				return new AbstractMap.SimpleEntry<StateStatusKind, State>(
+						StateStatusKind.BLOCKED, null);
+			}
+		} else {
+			return new AbstractMap.SimpleEntry<StateStatusKind, State>(
+					StateStatusKind.BLOCKED, null);
+		}
+
+		return new AbstractMap.SimpleEntry<StateStatusKind, State>(
+				StateStatusKind.NORMAL, newState);
+	}
+
+	/**
+	 * Execute an deterministic atomic block ($atom), supporting nested atomic
+	 * blocks. Currently only consider the case when each location has exactly
+	 * one outgoing statement.
+	 * 
+	 * Precondition:
+	 * <code> location.enterAtomic() == true && location == state.getProcessState(pid).peekStack().location()</code>
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The id of the process being executing
+	 * @param location
+	 *            The start location of the atomic block
+	 * 
+	 * @return The resulting state after executing the atomic block
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public State executeDAtomicBlock(State state, int pid, Location location) {
+		// // record blocks of atomic statements
+		// Stack<Integer> atomicFlags = new Stack<Integer>();
+		ProcessState p;
+		CIVLSource atomicStart = location.getSource();
+		Location newLocation = location;
+		State newState = state;
+		int stateCounter = 0;
+		BooleanExpression newPathCondition;
+		Statement start = location.getOutgoing(0);
+
+		assert location.enterDatomic() == true
+				&& location.id() == state.getProcessState(pid).getLocation()
+						.id() && location.getNumOutgoing() == 1;
+		newPathCondition = newPathCondition(newState, pid, start);
+		if (!newPathCondition.isFalse()) {
+			newState = newState.setPathCondition(newPathCondition);
+			try {
+				newState = execute(newState, pid, start);
+				newLocation = newState.getProcessState(pid).getLocation();
+			} catch (UnsatisfiablePathConditionException e1) {
+				throw new CIVLStateException(
+						ErrorKind.OTHER,
+						Certainty.CONCRETE,
+						"Undesired blocked location is detected in $atom block.",
+						newState, newLocation.getSource());
+			}
+		} else {
+			throw new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
+					"Undesired blocked location is detected in $atom block.",
+					newState, newLocation.getSource());
+		}
+		do {
+			boolean statementExecuted = false;
+			State currentState = newState;
+
+			switch (newLocation.atomicKind()) {
+			case DENTER:
+				newState = executeDAtomicBlock(newState, pid, newLocation);
+				stateCounter++;
+				statementExecuted = true;
+				break;
+			case DLEAVE:
+				assert (newLocation.getNumOutgoing() == 1);
+				newState = executeStatement(newState, newLocation,
+						newLocation.getOutgoing(0), pid).getValue();
+				assert newState != null;
+				return newState;
+			default:
+				for (Statement s : newLocation.outgoing()) {
+					Entry<StateStatusKind, State> temp = executeStatement(
+							newState, newLocation, s, pid);
+
+					switch (temp.getKey()) {
+					case NONDETERMINISTIC:
+						throw new CIVLStateException(
+								ErrorKind.OTHER,
+								Certainty.CONCRETE,
+								"Undesired non-determinism is found in $atom block.",
+								newState, newLocation.getSource());
+					case NORMAL:
+						if (statementExecuted) {
+							throw new CIVLStateException(
+									ErrorKind.OTHER,
+									Certainty.CONCRETE,
+									"Undesired non-determinism is found in $atom block.",
+									newState, newLocation.getSource());
+						}
+						statementExecuted = true;
+						newState = temp.getValue();
+						break;
+					default:// current statement is blocked, continue to try
+							// executing another statement from the same
+							// location
+						continue;
+					}
+				}
+			}
+			// current location is blocked
+			if (!statementExecuted) {
+				throw new CIVLStateException(
+						ErrorKind.OTHER,
+						Certainty.CONCRETE,
+						"Undesired blocked location is detected in $atom block.",
+						currentState, newLocation.getSource());
+			}
+			// warning for possible infinite atomic block
+			if (stateCounter != 0 && stateCounter % 1024 == 0) {
+				System.out.println("Warning: " + (stateCounter)
+						+ " states in atomic block at "
+						+ atomicStart.getLocation() + ".");
+			}
+			stateCounter++;
+			p = newState.getProcessState(pid);
+			if (p != null && !p.hasEmptyStack())
+				newLocation = p.getLocation();
+			else {
+				throw new CIVLInternalException("Unreachable",
+						newLocation.getSource());
+			}
+		} while (true);
+	}
+
+	/**
+	 * Execute a sequence of purely local statements of a certain process
+	 * 
+	 * @param state
+	 *            The state to start with
+	 * @param pid
+	 *            id of the executing process
+	 * @param location
+	 *            The start location of the execution
+	 * @param atomic
+	 *            True iff executing statements in an atomic block; false iff
+	 *            executing statements found to be purely local
+	 * @return The resulting state
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public State executeAtomicStatements(State state, int pid,
+			Location location, boolean atomic) {
+		Location pLocation = location;
+		ProcessState p = state.getProcessState(pid);
+		State newState = state;
+
+		assert atomic || pLocation.isPurelyLocal();
+
+		while ((!atomic && pLocation != null && pLocation.isPurelyLocal())
+				|| atomic) {
+			if (pLocation.isLoopPossible()) {
+				return newState;
+			}
+			switch (pLocation.atomicKind()) {
+			case NONE:
+				boolean executed = false;
+				State oldState = newState;
+
+				for (Statement s : pLocation.outgoing()) {
+					Entry<StateStatusKind, State> temp = executeStatement(
+							oldState, pLocation, s, pid);
+
+					switch (temp.getKey()) {
+					case NONDETERMINISTIC:
+						// finds non-determinism, go back to previous state
+						return oldState;
+					case NORMAL:
+						if (executed) {
+							// finds non-determinism, go back to previous
+							// state
+							return oldState;
+						}
+						executed = true;
+						newState = temp.getValue();
+						break;
+					default:// BLOCKED, continue to try executing next
+							// statement
+						continue;
+					}
+				}
+				if (!executed) {// blocked
+					oldState = stateFactory.releaseAtomicLock(oldState);
+					return oldState;
+				}
+				break;
+			case DENTER:
+				newState = executeDAtomicBlock(newState, pid, pLocation);
+				break;
+			case ENTER:
+				if (atomic) {
+					assert !stateFactory.lockedByAtomic(newState)
+							|| stateFactory.processInAtomic(newState).getPid() == pid;
+					newState = executeStatement(newState, pLocation,
+							pLocation.getOutgoing(0), pid).getValue();
+					p = newState.getProcessState(pid).incrementAtomicCount();
+					newState = stateFactory.setProcessState(newState, p, pid);
+					newState = stateFactory.getAtomicLock(newState, pid);
+				} else {
+					newState = executeAtomicStatements(newState, pid,
+							pLocation, true);
+				}
+				break;
+			case LEAVE:
+				if (!atomic)
+					throw new CIVLInternalException("Unreachable",
+							pLocation.getSource());
+				assert stateFactory.processInAtomic(newState).getPid() == pid;
+				newState = executeStatement(newState, pLocation,
+						pLocation.getOutgoing(0), pid).getValue();
+				p = newState.getProcessState(pid).decrementAtomicCount();
+				newState = stateFactory.setProcessState(newState, p, pid);
+				if (!p.inAtomic()) {
+					newState = stateFactory.releaseAtomicLock(newState);
+					return newState;
+				}
+				break;
+			default:
+				throw new CIVLInternalException("Unreachable",
+						pLocation.getSource());
+			}
+			p = newState.getProcessState(pid);
+			if (p != null && !p.hasEmptyStack())
+				pLocation = p.peekStack().location();
+			else
+				pLocation = null;
+		}
+		return newState;
+	}
+
+	/**
+	 * Get the list of processes that are in some atomic blocks but blocked in
+	 * some previous states and enabled at the given state.
+	 * 
+	 * @param state
+	 * @return The list of processes as described above. If there is no such
+	 *         process then return an empty list.
+	 */
+	@SuppressWarnings("unchecked")
+	public ArrayList<Integer> resumableAtomicProcesses(State state) {
+		Iterable<ProcessState> processes = (Iterable<ProcessState>) state
+				.getProcessStates();
+		ArrayList<Integer> result = new ArrayList<Integer>();
+
+		assert !stateFactory.lockedByAtomic(state);
+		for (ProcessState p : processes) {
+			if (p.inAtomic()) {
+				Location pLocation = p.getLocation();
+				int pid = p.getPid();
+				boolean resumable = false;
+
+				for (Statement s : pLocation.outgoing()) {
+					Entry<StateStatusKind, State> temp = executeStatement(
+							state, pLocation, s, pid);
+
+					if (temp.getKey() != StateStatusKind.BLOCKED) {
+						result.add(p.getPid());
+						resumable = true;
+						break;
+					}
+				}
+				if (resumable)
+					continue;
+			}
+		}
+		return result;
 	}
 
 }
