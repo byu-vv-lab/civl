@@ -6,12 +6,13 @@ void foo(){
 	}
 	
 	$proc p = $spawn koo();
+	// undesired wait blocked state in $atom block, an exception will be thrown
 	$wait p;
 }
 
 void main(){
 
-	$atomic{
+	$atom{
 		foo();
 	}
 }

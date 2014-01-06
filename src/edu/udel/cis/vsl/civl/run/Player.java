@@ -152,6 +152,7 @@ public abstract class Player {
 			enabler.setDebugging(debug);
 		}
 		stateManager = new StateManager(executor);
+		executor.setOutput(out);
 		stateManager.setOutputStream(out);
 		stateManager.setVerbose(verbose);
 		stateManager.setDebug(debug);

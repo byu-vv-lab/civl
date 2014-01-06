@@ -144,13 +144,13 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		int numProcs;
 		ProcessState p;
 		Location currentLocation;
+		boolean printTransitions = verbose || debug || showTransitions;
 
 		assert transition instanceof SimpleTransition;
-		if (verbose || debug || showTransitions) {
+		if (printTransitions) {
 			out.println();
 			out.print(state + " --");
 			printTransitionLong(out, transition);
-			out.print("--> ");
 		}
 		pid = ((SimpleTransition) transition).pid();
 		p = state.getProcessState(pid);
@@ -158,15 +158,15 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		switch (currentLocation.atomicKind()) {
 		case ENTER:
 			state = executor.executeAtomicStatements(state, pid,
-					currentLocation, true);
+					currentLocation, true, printTransitions);
 			break;
 
 		case LEAVE:
 			state = executor.executeAtomicStatements(state, pid,
-					currentLocation, true);
+					currentLocation, true, printTransitions);
 			break;
 		case DENTER:
-			state = executor.executeDAtomicBlock(state, pid, currentLocation);
+			state = executor.executeDAtomicBlock(state, pid, currentLocation, printTransitions);
 			break;
 		case DLEAVE:
 			throw new CIVLInternalException("Unreachable",
@@ -194,7 +194,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			if (executor.stateFactory().lockedByAtomic(state)) {
 				currentLocation = state.getProcessState(pid).getLocation();
 				state = executor.executeAtomicStatements(state, pid,
-						currentLocation, true);
+						currentLocation, true, printTransitions);
 			}
 		}
 		// do nothing when process pid terminates and is removed from the state
@@ -207,10 +207,15 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				// greedily
 				if (newLocation != null && newLocation.isPurelyLocal()) {
 					state = executor.executeAtomicStatements(state, pid,
-							newLocation, false);
+							newLocation, false, printTransitions);
 				}
 			}
 		}
+		
+		if (printTransitions) {
+			out.print("--> ");
+		}
+		
 		state = stateFactory.collectScopes(state);
 		// TODO: try this simplification out, see how it works:
 		if (simplify) {

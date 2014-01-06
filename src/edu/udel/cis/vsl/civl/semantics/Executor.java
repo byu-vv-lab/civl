@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
+import java.io.PrintStream;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,8 @@ public class Executor {
 	}
 
 	// Fields..............................................................
+
+	private PrintStream out = null;
 
 	private ModelFactory modelFactory;
 
@@ -757,7 +760,8 @@ public class Executor {
 	 * @return The resulting state after executing the atomic block
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	public State executeDAtomicBlock(State state, int pid, Location location) {
+	public State executeDAtomicBlock(State state, int pid, Location location,
+			boolean print) {
 		// // record blocks of atomic statements
 		// Stack<Integer> atomicFlags = new Stack<Integer>();
 		ProcessState p;
@@ -777,6 +781,10 @@ public class Executor {
 			try {
 				newState = execute(newState, pid, start);
 				newLocation = newState.getProcessState(pid).getLocation();
+				if (print) {
+					out.print("; " + start.toString());
+					out.print(" at " + start.source().getSource().getLocation());
+				}
 			} catch (UnsatisfiablePathConditionException e1) {
 				throw new CIVLStateException(
 						ErrorKind.OTHER,
@@ -792,10 +800,12 @@ public class Executor {
 		do {
 			boolean statementExecuted = false;
 			State currentState = newState;
+			Statement executedStatement = null;
 
 			switch (newLocation.atomicKind()) {
 			case DENTER:
-				newState = executeDAtomicBlock(newState, pid, newLocation);
+				newState = executeDAtomicBlock(newState, pid, newLocation,
+						print);
 				stateCounter++;
 				statementExecuted = true;
 				break;
@@ -803,6 +813,13 @@ public class Executor {
 				assert (newLocation.getNumOutgoing() == 1);
 				newState = executeStatement(newState, newLocation,
 						newLocation.getOutgoing(0), pid).getValue();
+				executedStatement = newLocation.getOutgoing(0);
+				if (print) {
+					out.print("; " + executedStatement.toString());
+					out.print(" at "
+							+ executedStatement.source().getSource()
+									.getLocation());
+				}
 				assert newState != null;
 				return newState;
 			default:
@@ -827,6 +844,7 @@ public class Executor {
 						}
 						statementExecuted = true;
 						newState = temp.getValue();
+						executedStatement = s;
 						break;
 					default:// current statement is blocked, continue to try
 							// executing another statement from the same
@@ -850,6 +868,11 @@ public class Executor {
 						+ atomicStart.getLocation() + ".");
 			}
 			stateCounter++;
+			if (print && executedStatement != null) {
+				out.print("; " + executedStatement.toString());
+				out.print(" at "
+						+ executedStatement.source().getSource().getLocation());
+			}
 			p = newState.getProcessState(pid);
 			if (p != null && !p.hasEmptyStack())
 				newLocation = p.getLocation();
@@ -876,10 +899,11 @@ public class Executor {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	public State executeAtomicStatements(State state, int pid,
-			Location location, boolean atomic) {
+			Location location, boolean atomic, boolean print) {
 		Location pLocation = location;
 		ProcessState p = state.getProcessState(pid);
 		State newState = state;
+		Statement executedStatement = null;
 
 		assert atomic || pLocation.isPurelyLocal();
 
@@ -888,6 +912,7 @@ public class Executor {
 			if (pLocation.isLoopPossible()) {
 				return newState;
 			}
+			executedStatement = null;
 			switch (pLocation.atomicKind()) {
 			case NONE:
 				boolean executed = false;
@@ -909,6 +934,7 @@ public class Executor {
 						}
 						executed = true;
 						newState = temp.getValue();
+						executedStatement = s;
 						break;
 					default:// BLOCKED, continue to try executing next
 							// statement
@@ -921,7 +947,7 @@ public class Executor {
 				}
 				break;
 			case DENTER:
-				newState = executeDAtomicBlock(newState, pid, pLocation);
+				newState = executeDAtomicBlock(newState, pid, pLocation, print);
 				break;
 			case ENTER:
 				if (atomic) {
@@ -932,9 +958,10 @@ public class Executor {
 					p = newState.getProcessState(pid).incrementAtomicCount();
 					newState = stateFactory.setProcessState(newState, p, pid);
 					newState = stateFactory.getAtomicLock(newState, pid);
+					executedStatement = pLocation.getOutgoing(0);
 				} else {
 					newState = executeAtomicStatements(newState, pid,
-							pLocation, true);
+							pLocation, true, print);
 				}
 				break;
 			case LEAVE:
@@ -945,15 +972,27 @@ public class Executor {
 				newState = executeStatement(newState, pLocation,
 						pLocation.getOutgoing(0), pid).getValue();
 				p = newState.getProcessState(pid).decrementAtomicCount();
+				executedStatement = pLocation.getOutgoing(0);
 				newState = stateFactory.setProcessState(newState, p, pid);
 				if (!p.inAtomic()) {
 					newState = stateFactory.releaseAtomicLock(newState);
+					if (print) {
+						out.print("; " + executedStatement.toString());
+						out.print(" at "
+								+ executedStatement.source().getSource()
+										.getLocation());
+					}
 					return newState;
 				}
 				break;
 			default:
 				throw new CIVLInternalException("Unreachable",
 						pLocation.getSource());
+			}
+			if (print && executedStatement != null) {
+				out.print("; " + executedStatement.toString());
+				out.print(" at "
+						+ executedStatement.source().getSource().getLocation());
 			}
 			p = newState.getProcessState(pid);
 			if (p != null && !p.hasEmptyStack())
@@ -1002,4 +1041,7 @@ public class Executor {
 		return result;
 	}
 
+	public void setOutput(PrintStream outPut) {
+		this.out = outPut;
+	}
 }

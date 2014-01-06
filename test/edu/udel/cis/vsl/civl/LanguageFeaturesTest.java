@@ -217,8 +217,8 @@ public class LanguageFeaturesTest {
 	}
 	
 	@Test
-	public void testAtomicWaitBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("atomicWaitBad.cvl")));
+	public void testAtomWaitBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("atomWaitBad.cvl")));
 	}
 	
 	@Test

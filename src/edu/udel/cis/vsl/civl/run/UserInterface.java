@@ -339,7 +339,6 @@ public class UserInterface {
 	 * @param config
 	 */
 	public void printCommand(GMCConfiguration config) {
-
 		int numOfArgs = config.getNumFreeArgs();
 		String command = "civl ";
 		Collection<Option> options = config.getOptions();
