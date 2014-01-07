@@ -16,13 +16,17 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
  */
 public class ImmutableStackEntry implements StackEntry {
 
-	private boolean hashed = false;
+	/************************* Instance Fields *************************/
 
 	private int hashCode = -1;
+
+	private boolean hashed = false;
 
 	private Location location;
 
 	private int scope;
+
+	/************************** Constructors *************************/
 
 	/**
 	 * A stack entry has a location, dynamic scope, and (optional) variable to
@@ -40,6 +44,8 @@ public class ImmutableStackEntry implements StackEntry {
 		this.location = location;
 		this.scope = scope;
 	}
+
+	/******************* Methods from StackEntry *******************/
 
 	/**
 	 * @return The target location of the function call. i.e. where execution
@@ -59,18 +65,8 @@ public class ImmutableStackEntry implements StackEntry {
 		return scope;
 	}
 
-	@Override
-	public int hashCode() {
-		if (!hashed) {
-			final int prime = 31;
-
-			hashCode = prime + (location == null ? 0 : location.hashCode());
-			hashCode = prime * hashCode + scope;
-			hashed = true;
-		}
-		return hashCode;
-	}
-
+	/******************* Methods from Object *******************/
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -89,15 +85,24 @@ public class ImmutableStackEntry implements StackEntry {
 		}
 		return false;
 	}
+	
+	@Override
+	public int hashCode() {
+		if (!hashed) {
+			final int prime = 31;
+
+			hashCode = prime + (location == null ? 0 : location.hashCode());
+			hashCode = prime * hashCode + scope;
+			hashed = true;
+		}
+		return hashCode;
+	}
 
 	@Override
 	public String toString() {
 		CIVLSource source = location.getSource();
 		String locationString = source == null ? "" : ", "
 				+ source.getSummary();
-
-		// if(location.isPurelyLocal())
-		// locationString = locationString + " # ";
 
 		return "Frame[function=" + location.function().name() + ", location="
 				+ location.id() + locationString + ", scope=" + scope + "]";

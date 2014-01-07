@@ -135,6 +135,10 @@ public class ImmutableProcessState implements ProcessState {
 		System.arraycopy(callStack, 0, newStack, 0, callStack.length);
 		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
+	
+	void makeCanonic() {
+		canonic = true;
+	}
 
 	ImmutableProcessState pop() {
 		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length - 1];
@@ -235,11 +239,10 @@ public class ImmutableProcessState implements ProcessState {
 	}
 
 	/**
-	 * Look at the first entry on the call stack, but do not remove it.
+	 * {@inheritDoc} Look at the first entry on the call stack, but do not remove it.
 	 * 
-	 * @return The first entry on the call stack. Null if empty.
+	 * @return {@inheritDoc} The first entry on the call stack. Null if empty.
 	 */
-
 	@Override
 	public StackEntry peekStack() {
 		return callStack[0];
@@ -317,23 +320,21 @@ public class ImmutableProcessState implements ProcessState {
 	public StackEntry getStackEntry(int i) {
 		return callStack[i];
 	}
+	
+	public boolean isCanonic() {
+		return canonic;
+	}
 
 	public boolean isMutable() {
 		return false;
 	}
 
-	
-
-	void makeCanonic() {
-		canonic = true;
-	}
-
-	public boolean isCanonic() {
-		return canonic;
-	}
-
 	public ProcessState setPid(int pid) {
 		return new ImmutableProcessState(pid, callStack, this.atomicCount);
+	}
+	
+	public ProcessState setStackEntries(StackEntry[] frames) {
+		return new ImmutableProcessState(pid, frames, this.atomicCount);
 	}
 
 	public ProcessState setStackEntry(int index, StackEntry frame) {
@@ -344,11 +345,5 @@ public class ImmutableProcessState implements ProcessState {
 		newStack[index] = frame;
 		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
-
-	public ProcessState setStackEntries(StackEntry[] frames) {
-		return new ImmutableProcessState(pid, frames, this.atomicCount);
-	}
-
 	
-
 }

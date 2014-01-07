@@ -50,12 +50,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public class ImmutableState implements State {
 
 	/**
-	 * The number of instances of this class that have been created since the
-	 * class was loaded.
-	 */
-	static long instanceCount = 0;
-
-	/**
 	 * A simple class implementing Iterable, backed by the array of process
 	 * states. It is needed because this class must implement a method to return
 	 * an Iterable over ProcessState. We have a field which is an array of
@@ -68,7 +62,12 @@ public class ImmutableState implements State {
 	 */
 	class ProcessStateIterable implements Iterable<ProcessState> {
 		class ProcessStateIterator implements Iterator<ProcessState> {
+
+			/************************* Static Fields *************************/
+
 			int pos = 0;
+
+			/******************* Methods from Iterator *******************/
 
 			@Override
 			public boolean hasNext() {
@@ -89,18 +88,23 @@ public class ImmutableState implements State {
 			}
 		}
 
+		/******************* Methods from Iterable *******************/
+
 		@Override
 		public Iterator<ProcessState> iterator() {
 			return new ProcessStateIterator();
 		}
 	}
 
-	private Iterable<ProcessState> processStateIterable = null;
+	/************************* Static Fields *************************/
 
 	/**
-	 * Has the hashcode on this state already been computed?
+	 * The number of instances of this class that have been created since the
+	 * class was loaded.
 	 */
-	private boolean hashed = false;
+	static long instanceCount = 0;
+
+	/************************* Instance Fields *************************/
 
 	/**
 	 * If this is a canonic state (unique representative of its equivalence
@@ -110,10 +114,10 @@ public class ImmutableState implements State {
 	private int canonicId = -1;
 
 	/**
-	 * The absolutely unique ID number of this state, among all states ever
-	 * created in this run of the JVM.
+	 * Minimum depth at which this state has been encountered in DFS; used for
+	 * finding minimal counterexample.
 	 */
-	private final long instanceId = instanceCount++;
+	private int depth = -1;
 
 	/**
 	 * If the hashcode has been computed, it is cached here.
@@ -121,9 +125,40 @@ public class ImmutableState implements State {
 	private int hashCode = -1;
 
 	/**
+	 * Has the hashcode on this state already been computed?
+	 */
+	private boolean hashed = false;
+
+	/**
+	 * The absolutely unique ID number of this state, among all states ever
+	 * created in this run of the JVM.
+	 */
+	private final long instanceId = instanceCount++;
+
+	/**
+	 * Whether this state is on the DFS search stack.
+	 */
+	private boolean onStack = false;
+
+	/**
+	 * Non-null boolean-valued symbolic expression.
+	 */
+	private BooleanExpression pathCondition;
+
+	private Iterable<ProcessState> processStateIterable = null;
+
+	/**
 	 * processes[i] contains the process of pid i. some entries may be null.
 	 */
 	private ImmutableProcessState[] processStates;
+
+	private int procHashCode = -1;
+
+	private boolean procHashed = false;
+
+	private int scopeHashCode = -1;
+
+	private boolean scopeHashed = false;
 
 	/**
 	 * The dynamic scopes that exist in this state. The scope at index 0 is
@@ -132,54 +167,11 @@ public class ImmutableState implements State {
 	private ImmutableDynamicScope[] scopes;
 
 	/**
-	 * Non-null boolean-valued symbolic expression.
-	 */
-	private BooleanExpression pathCondition;
-
-	/**
 	 * Whether this state has been seen in the DFS search.
 	 */
 	private boolean seen = false;
 
-	/**
-	 * Whether this state is on the DFS search stack.
-	 */
-	private boolean onStack = false;
-
-	/**
-	 * Minimum depth at which this state has been encountered in DFS; used for
-	 * finding minimal counterexample.
-	 */
-	private int depth = -1;
-
-	private boolean procHashed = false;
-
-	private int procHashCode = -1;
-
-	private boolean scopeHashed = false;
-
-	private int scopeHashCode = -1;
-
-	/************************ Static Methods *************************/
-
-	static ImmutableState newState(ImmutableState state,
-			ImmutableProcessState[] processStates,
-			ImmutableDynamicScope[] scopes, BooleanExpression pathCondition) {
-		ImmutableState result = new ImmutableState(
-				processStates == null ? state.processStates : processStates,
-				scopes == null ? state.scopes : scopes,
-				pathCondition == null ? state.pathCondition : pathCondition);
-
-		if (processStates == null && state.procHashed) {
-			result.procHashed = true;
-			result.procHashCode = state.procHashCode;
-		}
-		if (scopes == null && state.scopeHashed) {
-			result.scopeHashed = true;
-			result.scopeHashCode = state.scopeHashCode;
-		}
-		return result;
-	}
+	/************************** Constructors *************************/
 
 	/**
 	 * Basic constructor. The arrays are used as fields---the elements are not
@@ -201,96 +193,7 @@ public class ImmutableState implements State {
 		this.pathCondition = pathCondition;
 	}
 
-	/**
-	 * Returns the instance ID of this State. The is obtained from a static
-	 * counter that is incremented every time a state is instantiated.
-	 * 
-	 * @return this state's instance ID
-	 */
-	public long getInstanceId() {
-		return instanceId;
-	}
-
-	/**
-	 * Returns an array consisting of the processes in this state. The Process
-	 * at entry i is the state of the process with PID i. Some entries may be
-	 * null.
-	 * 
-	 * Modifications to this array cannot affect the state.
-	 * 
-	 * 
-	 * @return Copy the set of processes in this state.
-	 */
-	public ImmutableProcessState[] copyProcessStates() {
-		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processStates.length];
-
-		System.arraycopy(processStates, 0, newProcesses, 0,
-				processStates.length);
-		return newProcesses;
-	}
-
-	/**
-	 * The number of scopes, including blanks.
-	 * 
-	 * @return
-	 */
-	@Override
-	public int numScopes() {
-		return scopes.length;
-	}
-
-	/**
-	 * The number of processes, including blanks.
-	 * 
-	 * @return
-	 */
-	@Override
-	public int numProcs() {
-		return processStates.length;
-	}
-
-	/**
-	 * @return Copy the set of processes in this state.
-	 */
-	public ImmutableProcessState[] copyAndExpandProcesses() {
-		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processStates.length + 1];
-
-		System.arraycopy(processStates, 0, newProcesses, 0,
-				processStates.length);
-		return newProcesses;
-	}
-
-	/**
-	 * @return Copy the set of scopes in this state.
-	 */
-	public ImmutableDynamicScope[] copyScopes() {
-		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[scopes.length];
-
-		System.arraycopy(scopes, 0, newScopes, 0, scopes.length);
-		return newScopes;
-	}
-
-	/**
-	 */
-	public ImmutableDynamicScope[] copyAndExpandScopes() {
-		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[scopes.length + 1];
-
-		System.arraycopy(scopes, 0, newScopes, 0, scopes.length);
-		return newScopes;
-	}
-
-	public boolean isCanonic() {
-		return canonicId >= 0;
-	}
-
-	/**
-	 * Returns the canonicID of this state. Returns -1 if it is not canonic.
-	 * 
-	 * @return canonicID of this state
-	 */
-	public int getCanonicId() {
-		return canonicId;
-	}
+	/************************** Private Methods *************************/
 
 	/**
 	 * Implements the flyweight pattern: if there already exists a scope which
@@ -340,6 +243,27 @@ public class ImmutableState implements State {
 		return canonicProcessState;
 	}
 
+	/************************** Package-private Methods *************************/
+
+	static ImmutableState newState(ImmutableState state,
+			ImmutableProcessState[] processStates,
+			ImmutableDynamicScope[] scopes, BooleanExpression pathCondition) {
+		ImmutableState result = new ImmutableState(
+				processStates == null ? state.processStates : processStates,
+				scopes == null ? state.scopes : scopes,
+				pathCondition == null ? state.pathCondition : pathCondition);
+
+		if (processStates == null && state.procHashed) {
+			result.procHashed = true;
+			result.procHashCode = state.procHashCode;
+		}
+		if (scopes == null && state.scopeHashed) {
+			result.scopeHashed = true;
+			result.scopeHashCode = state.scopeHashCode;
+		}
+		return result;
+	}
+
 	void makeCanonic(int canonicId, SymbolicUniverse universe,
 			Map<ImmutableDynamicScope, ImmutableDynamicScope> scopeMap,
 			Map<ImmutableProcessState, ImmutableProcessState> processMap) {
@@ -362,6 +286,27 @@ public class ImmutableState implements State {
 		this.canonicId = canonicId;
 	}
 
+	/******************* Methods from State *******************/
+
+	@Override
+	public void commit() {
+	}
+
+	@Override
+	public int getDepth() {
+		return depth;
+	}
+
+	@Override
+	public int getParentId(int scopeId) {
+		return getScope(scopeId).parent();
+	}
+
+	@Override
+	public BooleanExpression getPathCondition() {
+		return pathCondition;
+	}
+
 	/**
 	 * @param pid
 	 *            A process ID.
@@ -373,93 +318,17 @@ public class ImmutableState implements State {
 		return processStates[pid];
 	}
 
-	/**
-	 * @return The system scope.
-	 */
-	public ImmutableDynamicScope rootScope() {
-		return scopes[0];
-	}
-
-	/**
-	 * @return The system scope id.
-	 * 
-	 */
 	@Override
-	public int rootScopeID() {
-		return 0;
+	public Iterable<ProcessState> getProcessStates() {
+		if (processStateIterable == null) {
+			processStateIterable = new ProcessStateIterable();
+		}
+		return processStateIterable;
 	}
 
-	/**
-	 * @return The path condition.
-	 */
-	@Override
-	public BooleanExpression getPathCondition() {
-		return pathCondition;
-	}
-
-	/**
-	 * @return Whether this state has been seen in the depth first search.
-	 */
-	@Override
-	public boolean seen() {
-		return seen;
-	}
-
-	/**
-	 * @return Whether this state is on the DFS stack.
-	 */
-	@Override
-	public boolean onStack() {
-		return onStack;
-	}
-
-	/**
-	 * @param seen
-	 *            Whether this state has been seen in the depth first search.
-	 */
-	@Override
-	public void setSeen(boolean seen) {
-		this.seen = seen;
-	}
-
-	/**
-	 * @param onStack
-	 *            Whether this state is on the DFS stack.
-	 */
-	@Override
-	public void setOnStack(boolean onStack) {
-		this.onStack = onStack;
-	}
-
-	/**
-	 * Given the id of a scope, return that dynamic scope.
-	 * 
-	 * @param id
-	 *            The dynamic scope id number.
-	 * @return The corresponding dynamic scope.
-	 */
 	@Override
 	public ImmutableDynamicScope getScope(int id) {
 		return scopes[id];
-	}
-
-	@Override
-	public int getParentId(int scopeId) {
-		return getScope(scopeId).parent();
-	}
-
-	public ImmutableDynamicScope getScope(int pid, Variable variable) {
-		int scopeId = getProcessState(pid).getDyscopeId();
-		Scope variableScope = variable.scope();
-		ImmutableDynamicScope scope;
-
-		while (scopeId >= 0) {
-			scope = getScope(scopeId);
-			if (scope.lexicalScope() == variableScope)
-				return scope;
-			scopeId = getParentId(scopeId);
-		}
-		throw new IllegalArgumentException("Variable not in scope: " + variable);
 	}
 
 	@Override
@@ -484,57 +353,49 @@ public class ImmutableState implements State {
 		return scope.getValue(variableId);
 	}
 
+	/**
+	 * Returns a string of the form instanceId:canonicId. The instanceId alone
+	 * uniquely identifies the state, but the canonicId is also useful, though
+	 * it is only used for canonic states.
+	 * 
+	 * @return the string instanceId:canonicId
+	 */
 	@Override
-	public SymbolicExpression valueOf(int pid, Variable variable) {
-		DynamicScope scope = getScope(pid, variable);
-		int variableID = scope.lexicalScope().getVid(variable);
-
-		return scope.getValue(variableID);
+	public String identifier() {
+		return instanceId + ":" + canonicId;
 	}
 
 	@Override
-	public int hashCode() {
-		if (!hashed) {
-			if (!procHashed) {
-				procHashCode = Arrays.hashCode(processStates);
-				procHashed = true;
-			}
-			if (!scopeHashed) {
-				scopeHashCode = Arrays.hashCode(scopes);
-				scopeHashed = true;
-			}
-			hashCode = pathCondition.hashCode() ^ procHashCode ^ scopeHashCode;
-			hashed = true;
-		}
-		return hashCode;
+	public int numberOfReachers(int sid) {
+		return getScope(sid).numberOfReachers();
 	}
 
+	/**
+	 * {@inheritDoc} The number of processes, including blanks.
+	 * 
+	 * @return
+	 */
 	@Override
-	public boolean equals(Object object) {
-		if (this == object)
-			return true;
-		if (object instanceof ImmutableState) {
-			ImmutableState that = (ImmutableState) object;
+	public int numProcs() {
+		return processStates.length;
+	}
 
-			if (canonicId >= 0 && that.canonicId >= 0)
-				return false;
-			if (hashed && that.hashed && hashCode != that.hashCode)
-				return false;
-			if (!pathCondition.equals(that.pathCondition))
-				return false;
-			if (procHashed && that.procHashed
-					&& procHashCode != that.procHashCode)
-				return false;
-			if (scopeHashed && that.scopeHashed
-					&& scopeHashCode != that.scopeHashCode)
-				return false;
-			if (!Arrays.equals(processStates, that.processStates))
-				return false;
-			if (!Arrays.equals(scopes, that.scopes))
-				return false;
-			return true;
-		}
-		return false;
+	/**
+	 * The number of scopes, including blanks.
+	 * 
+	 * @return
+	 */
+	@Override
+	public int numScopes() {
+		return scopes.length;
+	}
+
+	/**
+	 * @return Whether this state is on the DFS stack.
+	 */
+	@Override
+	public boolean onStack() {
+		return onStack;
 	}
 
 	// Structure:
@@ -580,21 +441,26 @@ public class ImmutableState implements State {
 		out.flush();
 	}
 
-	/**
-	 * Returns a string of the form instanceId:canonicId. The instanceId alone
-	 * uniquely identifies the state, but the canonicId is also useful, though
-	 * it is only used for canonic states.
-	 * 
-	 * @return the string instanceId:canonicId
-	 */
 	@Override
-	public String identifier() {
-		return instanceId + ":" + canonicId;
+	public boolean reachableByProcess(int sid, int pid) {
+		return getScope(sid).reachableByProcess(pid);
 	}
 
+	/**
+	 * @return The system scope id.
+	 * 
+	 */
 	@Override
-	public String toString() {
-		return "State " + identifier();
+	public int rootScopeID() {
+		return 0;
+	}
+
+	/**
+	 * @return Whether this state has been seen in the depth first search.
+	 */
+	@Override
+	public boolean seen() {
+		return seen;
 	}
 
 	@Override
@@ -602,25 +468,13 @@ public class ImmutableState implements State {
 		this.depth = value;
 	}
 
+	/**
+	 * @param onStack
+	 *            Whether this state is on the DFS stack.
+	 */
 	@Override
-	public int getDepth() {
-		return depth;
-	}
-
-	@Override
-	public Iterable<ProcessState> getProcessStates() {
-		if (processStateIterable == null) {
-			processStateIterable = new ProcessStateIterable();
-		}
-		return processStateIterable;
-	}
-
-	public boolean isMutable() {
-		return false;
-	}
-
-	@Override
-	public void commit() {
+	public void setOnStack(boolean onStack) {
+		this.onStack = onStack;
 	}
 
 	@Override
@@ -639,13 +493,187 @@ public class ImmutableState implements State {
 		return result;
 	}
 
-	public ImmutableState setProcessStates(ImmutableProcessState[] processStates) {
+	/**
+	 * @param seen
+	 *            Whether this state has been seen in the depth first search.
+	 */
+	@Override
+	public void setSeen(boolean seen) {
+		this.seen = seen;
+	}
+
+	@Override
+	public State setVariable(int vid, int scopeId, SymbolicExpression value) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	@Override
+	public SymbolicExpression valueOf(int pid, Variable variable) {
+		DynamicScope scope = getScope(pid, variable);
+		int variableID = scope.lexicalScope().getVid(variable);
+
+		return scope.getValue(variableID);
+	}
+
+	/******************** Methods from Object ********************/
+
+	@Override
+	public boolean equals(Object object) {
+		if (this == object)
+			return true;
+		if (object instanceof ImmutableState) {
+			ImmutableState that = (ImmutableState) object;
+
+			if (canonicId >= 0 && that.canonicId >= 0)
+				return false;
+			if (hashed && that.hashed && hashCode != that.hashCode)
+				return false;
+			if (!pathCondition.equals(that.pathCondition))
+				return false;
+			if (procHashed && that.procHashed
+					&& procHashCode != that.procHashCode)
+				return false;
+			if (scopeHashed && that.scopeHashed
+					&& scopeHashCode != that.scopeHashCode)
+				return false;
+			if (!Arrays.equals(processStates, that.processStates))
+				return false;
+			if (!Arrays.equals(scopes, that.scopes))
+				return false;
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		if (!hashed) {
+			if (!procHashed) {
+				procHashCode = Arrays.hashCode(processStates);
+				procHashed = true;
+			}
+			if (!scopeHashed) {
+				scopeHashCode = Arrays.hashCode(scopes);
+				scopeHashed = true;
+			}
+			hashCode = pathCondition.hashCode() ^ procHashCode ^ scopeHashCode;
+			hashed = true;
+		}
+		return hashCode;
+	}
+
+	/******************** Public Methods ********************/
+
+	/**
+	 * @return Copy the set of processes in this state.
+	 */
+	public ImmutableProcessState[] copyAndExpandProcesses() {
+		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processStates.length + 1];
+
+		System.arraycopy(processStates, 0, newProcesses, 0,
+				processStates.length);
+		return newProcesses;
+	}
+
+	public ImmutableDynamicScope[] copyAndExpandScopes() {
+		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[scopes.length + 1];
+
+		System.arraycopy(scopes, 0, newScopes, 0, scopes.length);
+		return newScopes;
+	}
+
+	/**
+	 * Returns an array consisting of the processes in this state. The Process
+	 * at entry i is the state of the process with PID i. Some entries may be
+	 * null.
+	 * 
+	 * Modifications to this array cannot affect the state.
+	 * 
+	 * 
+	 * @return Copy the set of processes in this state.
+	 */
+	public ImmutableProcessState[] copyProcessStates() {
+		ImmutableProcessState[] newProcesses = new ImmutableProcessState[processStates.length];
+
+		System.arraycopy(processStates, 0, newProcesses, 0,
+				processStates.length);
+		return newProcesses;
+	}
+
+	/**
+	 * @return Copy the set of scopes in this state.
+	 */
+	public ImmutableDynamicScope[] copyScopes() {
+		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[scopes.length];
+
+		System.arraycopy(scopes, 0, newScopes, 0, scopes.length);
+		return newScopes;
+	}
+
+	/**
+	 * Returns the canonicID of this state. Returns -1 if it is not canonic.
+	 * 
+	 * @return canonicID of this state
+	 */
+	public int getCanonicId() {
+		return canonicId;
+	}
+
+	/**
+	 * Returns the instance ID of this State. The is obtained from a static
+	 * counter that is incremented every time a state is instantiated.
+	 * 
+	 * @return this state's instance ID
+	 */
+	public long getInstanceId() {
+		return instanceId;
+	}
+
+	public ImmutableDynamicScope getScope(int pid, Variable variable) {
+		int scopeId = getProcessState(pid).getDyscopeId();
+		Scope variableScope = variable.scope();
+		ImmutableDynamicScope scope;
+
+		while (scopeId >= 0) {
+			scope = getScope(scopeId);
+			if (scope.lexicalScope() == variableScope)
+				return scope;
+			scopeId = getParentId(scopeId);
+		}
+		throw new IllegalArgumentException("Variable not in scope: " + variable);
+	}
+
+	public boolean isCanonic() {
+		return canonicId >= 0;
+	}
+
+	public boolean isMutable() {
+		return false;
+	}
+
+	/**
+	 * @return The system scope.
+	 */
+	public ImmutableDynamicScope rootScope() {
+		return scopes[0];
+	}
+
+	public ImmutableState setScope(int index, ImmutableDynamicScope scope) {
+		int n = scopes.length;
+		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[n];
+
+		System.arraycopy(scopes, 0, newScopes, 0, n);
+		newScopes[index] = scope;
+		return new ImmutableState(processStates, newScopes, pathCondition);
+	}
+
+	public ImmutableState setScopes(ImmutableDynamicScope[] scopes) {
 		ImmutableState result = new ImmutableState(processStates, scopes,
 				pathCondition);
 
-		if (scopeHashed) {
-			result.scopeHashed = true;
-			result.scopeHashCode = scopeHashCode;
+		if (procHashed) {
+			result.procHashed = true;
+			result.procHashCode = procHashCode;
 		}
 		return result;
 	}
@@ -660,38 +688,15 @@ public class ImmutableState implements State {
 		return new ImmutableState(newProcessStates, scopes, pathCondition);
 	}
 
-	public ImmutableState setScopes(ImmutableDynamicScope[] scopes) {
+	public ImmutableState setProcessStates(ImmutableProcessState[] processStates) {
 		ImmutableState result = new ImmutableState(processStates, scopes,
 				pathCondition);
 
-		if (procHashed) {
-			result.procHashed = true;
-			result.procHashCode = procHashCode;
+		if (scopeHashed) {
+			result.scopeHashed = true;
+			result.scopeHashCode = scopeHashCode;
 		}
 		return result;
 	}
 
-	public ImmutableState setScope(int index, ImmutableDynamicScope scope) {
-		int n = scopes.length;
-		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[n];
-
-		System.arraycopy(scopes, 0, newScopes, 0, n);
-		newScopes[index] = scope;
-		return new ImmutableState(processStates, newScopes, pathCondition);
-	}
-
-	@Override
-	public int numberOfReachers(int sid) {
-		return getScope(sid).numberOfReachers();
-	}
-
-	@Override
-	public boolean reachableByProcess(int sid, int pid) {
-		return getScope(sid).reachableByProcess(pid);
-	}
-
-	@Override
-	public State setVariable(int vid, int scopeId, SymbolicExpression value) {
-		throw new UnsupportedOperationException("Not yet implemented");
-	}
 }
