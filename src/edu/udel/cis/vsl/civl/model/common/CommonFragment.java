@@ -22,10 +22,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
  */
 public class CommonFragment implements Fragment {
 
-	/**
-	 * The start location of the fragment
-	 */
-	public Location startLocation;
+	/************************* Instance Fields *************************/
 
 	/**
 	 * The last statement of the fragment
@@ -33,14 +30,31 @@ public class CommonFragment implements Fragment {
 	public Statement lastStatement;
 
 	/**
-	 * Constructor: create an empty fragment
+	 * The start location of the fragment
+	 */
+	public Location startLocation;
+
+	/************************** Constructors *************************/
+
+	/**
+	 * create an empty fragment
 	 */
 	public CommonFragment() {
-
 	}
 
 	/**
-	 * Constructor
+	 * 
+	 * @param startLocation
+	 *            the start location
+	 * @param lastStatement
+	 *            the last statement
+	 */
+	public CommonFragment(Location startLocation, Statement lastStatement) {
+		this.startLocation = startLocation;
+		this.lastStatement = lastStatement;
+	}
+
+	/**
 	 * 
 	 * @param statement
 	 *            use <code>statement</code> to create a new fragment, with the
@@ -53,65 +67,37 @@ public class CommonFragment implements Fragment {
 		this.lastStatement = statement;
 	}
 
-	/**
-	 * Constructor
-	 * 
-	 * @param startLocation
-	 *            the start location
-	 * @param lastStatement
-	 *            the last statement
-	 */
-	public CommonFragment(Location startLocation, Statement lastStatement) {
-		this.startLocation = startLocation;
-		this.lastStatement = lastStatement;
+	/******************* Methods from Fragment *******************/
+
+	@Override
+	public void addGuardToStartLocation(Expression guard, ModelFactory factory) {
+		int statementCount = this.startLocation.getNumOutgoing();
+
+		for (int i = 0; i < statementCount; i++) {
+			Statement statement = this.startLocation().getOutgoing(i);
+			Expression oldGuard = statement.guard();
+
+			if (factory.isTrue(oldGuard)) {
+				statement.setGuard(guard);
+			} else if (!factory.isTrue(guard)) {
+				Expression newGuard = factory.binaryExpression(
+						factory.sourceOfSpan(guard.getSource(),
+								oldGuard.getSource()), BINARY_OPERATOR.AND,
+						guard, oldGuard);
+
+				statement.setGuard(newGuard);
+			}
+		}
 	}
 
 	@Override
 	public Fragment combineWith(Fragment next) {
 		if (next == null || next.isEmpty())
 			return this;
-
 		if (this.isEmpty())
 			return next;
-
 		this.lastStatement.setTarget(next.startLocation());
 		return new CommonFragment(this.startLocation, next.lastStatement());
-	}
-
-	@Override
-	public Fragment parallelCombineWith(Fragment parallel) {
-		StatementSet newLastStatement = new StatementSet();
-
-		if (parallel == null || parallel.isEmpty())
-			return this;
-		if (this.isEmpty())
-			return parallel;
-
-		assert this.startLocation.id() == parallel.startLocation().id();
-
-		if (lastStatement instanceof StatementSet) {
-			Set<Statement> statements = ((StatementSet) lastStatement)
-					.statements();
-
-			for (Statement s : statements) {
-				newLastStatement.add(s);
-			}
-		} else {
-			newLastStatement.add(lastStatement);
-		}
-
-		if (parallel.lastStatement() instanceof StatementSet) {
-			Set<Statement> statements = ((StatementSet) parallel
-					.lastStatement()).statements();
-
-			for (Statement s : statements) {
-				newLastStatement.add(s);
-			}
-		} else {
-			newLastStatement.add(parallel.lastStatement());
-		}
-
-		return new CommonFragment(this.startLocation, newLastStatement);
 	}
 
 	@Override
@@ -122,62 +108,75 @@ public class CommonFragment implements Fragment {
 	}
 
 	@Override
+	public Statement lastStatement() {
+		return lastStatement;
+	}
+
+	@Override
+	public Fragment parallelCombineWith(Fragment parallel) {
+		StatementSet newLastStatement = new StatementSet();
+
+		if (parallel == null || parallel.isEmpty())
+			return this;
+		if (this.isEmpty())
+			return parallel;
+		assert this.startLocation.id() == parallel.startLocation().id();
+		if (lastStatement instanceof StatementSet) {
+			Set<Statement> statements = ((StatementSet) lastStatement)
+					.statements();
+
+			for (Statement s : statements) {
+				newLastStatement.add(s);
+			}
+		} else {
+			newLastStatement.add(lastStatement);
+		}
+		if (parallel.lastStatement() instanceof StatementSet) {
+			Set<Statement> statements = ((StatementSet) parallel
+					.lastStatement()).statements();
+
+			for (Statement s : statements) {
+				newLastStatement.add(s);
+			}
+		} else {
+			newLastStatement.add(parallel.lastStatement());
+		}
+		return new CommonFragment(this.startLocation, newLastStatement);
+	}
+
+	@Override
 	public void Print(PrintStream out) {
 		out.println(this.toString());
 	}
 
 	@Override
-	public String toString() {
-		if (isEmpty())
-			return "========Empty=========\r\n";
-		String result = "=================\r\n";
-		Stack<Location> workings = new Stack<Location>();
-		Set<Integer> locationIds = new HashSet<Integer>();
+	public void setLastStatement(Statement statement) {
+		this.lastStatement = statement;
+	}
 
-		workings.push(this.startLocation);
-		locationIds.add(this.startLocation.id());
+	@Override
+	public void setStartLocation(Location location) {
+		this.startLocation = location;
+	}
 
-		while (!workings.isEmpty()) {
-			Location location = workings.pop();
-
-			result += "Location " + location.id() + "\r\n";
-
-			if (location.getNumOutgoing() > 0) {
-				for (Statement s : location.outgoing()) {
-					result += "when(" + s.guard() + ") " + s + " goto ";
-					if (s.target() == null) {
-						result += "null";
-					} else {
-						result += "Location " + s.target().id();
-						if (!locationIds.contains(s.target().id())) {
-							workings.push(s.target());
-							locationIds.add(s.target().id());
-						}
-					}
-				}
-				result += "\r\n";
-			}
-		}
-
-		result += "last statement: " + this.lastStatement + " at Location "
-				+ this.lastStatement.source().id() + " "
-				+ this.lastStatement.getSource() + "\r\n";
-
-		return result;
-
+	@Override
+	public Location startLocation() {
+		return startLocation;
 	}
 
 	@Override
 	public void updateStartLocation(Location newLocation) {
+		int oldLocationId;
+		int number;
+		Stack<Location> workings;
+		Set<Integer> locationIds;
+
 		if (isEmpty())
 			return;
-
-		int oldLocationId = this.startLocation.id();
-		int number = startLocation.getNumOutgoing();
-
-		Stack<Location> workings = new Stack<Location>();
-		Set<Integer> locationIds = new HashSet<Integer>();
-
+		oldLocationId = this.startLocation.id();
+		number = startLocation.getNumOutgoing();
+		workings = new Stack<Location>();
+		locationIds = new HashSet<Integer>();
 		workings.push(startLocation);
 		locationIds.add(startLocation.id());
 
@@ -206,63 +205,45 @@ public class CommonFragment implements Fragment {
 				}
 			}
 		}
-
 		this.startLocation = newLocation;
 	}
 
-	@Override
-	public Location startLocation() {
-		return startLocation;
-	}
+	/******************* Methods from Object *******************/
 
 	@Override
-	public Statement lastStatement() {
-		return lastStatement;
-	}
+	public String toString() {
+		if (isEmpty())
+			return "========Empty=========\r\n";
+		String result = "=================\r\n";
+		Stack<Location> workings = new Stack<Location>();
+		Set<Integer> locationIds = new HashSet<Integer>();
 
-	@Override
-	public void setStartLocation(Location location) {
-		this.startLocation = location;
-	}
+		workings.push(this.startLocation);
+		locationIds.add(this.startLocation.id());
+		while (!workings.isEmpty()) {
+			Location location = workings.pop();
 
-	@Override
-	public void setLastStatement(Statement statement) {
-		this.lastStatement = statement;
-	}
-
-//	@Override
-//	public void makeAtomic(boolean deterministic) {
-//		
-//		this.startLocation.setEnterAtomic(true);
-//		if (this.lastStatement != null) {
-//			if (lastStatement instanceof StatementSet) {
-//				for (Statement s : ((StatementSet) lastStatement).statements()) {
-//					s.source().setLeaveAtomic(true);
-//				}
-//			} else
-//				this.lastStatement.source().setLeaveAtomic(true);
-//		}
-//	}
-
-	@Override
-	public void addGuardToStartLocation(Expression guard, ModelFactory factory) {
-		int statementCount = this.startLocation.getNumOutgoing();
-
-		// TODO check when statement is an instance of StatementSet
-		for (int i = 0; i < statementCount; i++) {
-			Statement statement = this.startLocation().getOutgoing(i);
-			Expression oldGuard = statement.guard();
-
-			if (factory.isTrue(oldGuard)) {
-				statement.setGuard(guard);
-			} else if (!factory.isTrue(guard)) {
-				Expression newGuard = factory.binaryExpression(
-						factory.sourceOfSpan(guard.getSource(),
-								oldGuard.getSource()), BINARY_OPERATOR.AND,
-						guard, oldGuard);
-
-				statement.setGuard(newGuard);
+			result += "Location " + location.id() + "\r\n";
+			if (location.getNumOutgoing() > 0) {
+				for (Statement s : location.outgoing()) {
+					result += "when(" + s.guard() + ") " + s + " goto ";
+					if (s.target() == null) {
+						result += "null";
+					} else {
+						result += "Location " + s.target().id();
+						if (!locationIds.contains(s.target().id())) {
+							workings.push(s.target());
+							locationIds.add(s.target().id());
+						}
+					}
+				}
+				result += "\r\n";
 			}
 		}
+		result += "last statement: " + this.lastStatement + " at Location "
+				+ this.lastStatement.source().id() + " "
+				+ this.lastStatement.getSource() + "\r\n";
+		return result;
 	}
+
 }

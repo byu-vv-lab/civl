@@ -181,9 +181,11 @@ public interface CIVLFunction extends Sourceable {
 	public boolean isSystem();
 	
 	/**
-	 * Remove all locations that satisfiy the following conditions:
-	 * 1. has exactly one outgoing statement and
-	 * 2. the statement is a no-op with the gard true.
+	 * Remove all locations that satisfies the following conditions:
+	 * <ol>
+	 * <li> has exactly one outgoing statement and</li>
+	 * <li> the statement is a no-op with the guard being the true boolean expression.</li>
+	 * </ol>
 	 * Meanwhile, have to redirect each statement that targets at the no-op location
 	 * to the target of the no-op location.
 	 * For example, let l(s->l', ...) be a location l with statement s going to l' ...

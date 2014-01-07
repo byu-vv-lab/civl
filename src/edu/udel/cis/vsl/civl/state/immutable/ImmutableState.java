@@ -561,6 +561,11 @@ public class ImmutableState implements State {
 		}
 		return hashCode;
 	}
+	
+	@Override
+	public String toString() {
+		return "State " + identifier();
+	}
 
 	/******************** Public Methods ********************/
 

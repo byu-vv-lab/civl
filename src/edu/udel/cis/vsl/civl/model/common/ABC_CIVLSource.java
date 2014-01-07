@@ -13,16 +13,17 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
  */
 public class ABC_CIVLSource implements CIVLSource {
 
+	/************************* Instance Fields *************************/
+
 	private Source abcSource;
+
+	/************************** Constructors *************************/
 
 	public ABC_CIVLSource(Source abcSource) {
 		this.abcSource = abcSource;
 	}
 
-	@Override
-	public void print(PrintStream out) {
-		abcSource.print(out);
-	}
+	/************************** Methods from CIVLSource *************************/
 
 	@Override
 	public String getLocation() {
@@ -34,12 +35,21 @@ public class ABC_CIVLSource implements CIVLSource {
 		return abcSource.getSummary();
 	}
 
-	public Source getABCSource() {
-		return abcSource;
+	@Override
+	public void print(PrintStream out) {
+		abcSource.print(out);
 	}
-	
+
+	/************************** Methods from Object *************************/
+
 	public String toString() {
 		return abcSource.toString();
+	}
+
+	/************************** Public Methods *************************/
+
+	public Source getABCSource() {
+		return abcSource;
 	}
 
 }

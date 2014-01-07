@@ -1036,18 +1036,23 @@ public class Executor {
 	}
 
 	private void printStatement(Statement s, AtomicKind atomicKind) {
+		out.print("  " + s.source().id() + "->");
+		if (s.target() != null)
+			out.print(s.target().id() + ": ");
+		else
+			out.print("END: ");
 		if (atomicKind == AtomicKind.ENTER)
-			out.print("enter $atomic block");
+			out.print("ENTER_ATOMIC");
 		else if (atomicKind == AtomicKind.LEAVE)
-			out.print("leave $atomic block");
+			out.print("EXIT_ATOMIC");
 		else if (atomicKind == AtomicKind.DENTER)
-			out.print("enter $atom block");
+			out.print("ENTER_ATOM");
 		else if (atomicKind == AtomicKind.DLEAVE)
-			out.print("leave $atom block");
+			out.print("EXIT_ATOM");
 		else
 			out.print(s.toString());
 		if (s.source() != null)
-			out.print(" at " + s.source().getSource().getLocation());
-		out.println(" from " + s.source() + " to " + s.target() + ";");
+			out.print(" at " + s.source().getSource().getSummary());
+		out.println(";");
 	}
 }

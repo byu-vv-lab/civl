@@ -54,7 +54,7 @@ public interface ProcessState {
 	 * Returns the top frame on the call stack. Undefined behavior if call stack
 	 * is empty.
 	 * 
-	 * @return top frame on call stack
+	 * @return top frame on call stack.
 	 */
 	StackEntry peekStack();
 

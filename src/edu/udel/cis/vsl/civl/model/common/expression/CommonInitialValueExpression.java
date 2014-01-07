@@ -26,7 +26,7 @@ public class CommonInitialValueExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		return "InitialValue(" + variable + ")";
+		return "InitialValue(" + variable.name() + ")";
 	}
 
 	@Override

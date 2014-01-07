@@ -34,20 +34,36 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
  */
 public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
-	private Identifier name;
-	private List<Variable> parameters;
-	private CIVLType returnType;
-	private Set<Scope> scopes;
-	private Scope outerScope;
+	/************************* Instance Fields *************************/
+	
 	private Scope containingScope;
-	private Set<Statement> statements;
-	private Location startLocation;
-	private Set<Location> locations;
-	private Expression precondition = null;
-	private Expression postcondition = null;
-	private Model model;
+	
 	protected boolean isSystem = false;
-
+	
+	private Set<Location> locations;
+	
+	private Model model;
+	
+	private Identifier name;
+	
+	private Scope outerScope;
+	
+	private List<Variable> parameters;
+	
+	private Expression postcondition = null;
+	
+	private Expression precondition = null;
+	
+	private CIVLType returnType;
+	
+	private Set<Scope> scopes;
+	
+	private Location startLocation;
+	
+	private Set<Statement> statements;
+	
+	/************************** Constructors *************************/
+	
 	/**
 	 * A function.
 	 * 
@@ -88,12 +104,59 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		}
 		statements = new LinkedHashSet<Statement>();
 	}
+	
+	/************************** Methods from CIVLFunction *************************/
 
+	/**
+	 * @param location
+	 *            The new location to add.
+	 */
+	public void addLocation(Location location) {
+		locations.add(location);
+	}
+	
+	/**
+	 * @param statement
+	 *            The new statement to add.
+	 */
+	public void addStatement(Statement statement) {
+		statements.add(statement);
+	}
+	
+	/**
+	 * @return The scope containing this function.
+	 */
+	public Scope containingScope() {
+		return containingScope;
+	}
+	
+	/**
+	 * @return The set of locations in this function.
+	 */
+	public Set<Location> locations() {
+		return locations;
+	}
+	
+	/**
+	 * @return The model to which this function belongs.
+	 */
+	@Override
+	public Model model() {
+		return model;
+	}
+	
 	/**
 	 * @return The name of this function.
 	 */
 	public Identifier name() {
 		return name;
+	}
+	
+	/**
+	 * @return The outermost local scope in this function.
+	 */
+	public Scope outerScope() {
+		return outerScope;
 	}
 
 	/**
@@ -101,6 +164,20 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 */
 	public List<Variable> parameters() {
 		return parameters;
+	}
+	
+	/**
+	 * @return The postcondition for this function. Null if not set.
+	 */
+	public Expression postcondition() {
+		return postcondition;
+	}
+	
+	/**
+	 * @return The precondition for this function. Null if not set.
+	 */
+	public Expression precondition() {
+		return precondition;
 	}
 
 	/**
@@ -116,72 +193,23 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Set<Scope> scopes() {
 		return scopes;
 	}
-
+	
 	/**
-	 * @return The outermost local scope in this function.
+	 * @param locations
+	 *            The set of locations in this function.
 	 */
-	public Scope outerScope() {
-		return outerScope;
+	public void setLocations(Set<Location> locations) {
+		this.locations = locations;
 	}
-
+	
 	/**
-	 * @return The scope containing this function.
+	 * @param name
+	 *            The name of this function.
 	 */
-	public Scope containingScope() {
-		return containingScope;
+	public void setName(Identifier name) {
+		this.name = name;
 	}
-
-	/**
-	 * @return The set of statements in this function.
-	 */
-	public Set<Statement> statements() {
-		return statements;
-	}
-
-	/**
-	 * @return The first location in this function.
-	 */
-	public Location startLocation() {
-		return startLocation;
-	}
-
-	/**
-	 * @return The set of locations in this function.
-	 */
-	public Set<Location> locations() {
-		return locations;
-	}
-
-	/**
-	 * @return The precondition for this function. Null if not set.
-	 */
-	public Expression precondition() {
-		return precondition;
-	}
-
-	/**
-	 * @return The postcondition for this function. Null if not set.
-	 */
-	public Expression postcondition() {
-		return postcondition;
-	}
-
-	/**
-	 * @return The model to which this function belongs.
-	 */
-	@Override
-	public Model model() {
-		return model;
-	}
-
-	/**
-	 * @param statements
-	 *            The set of statements in this function.
-	 */
-	public void setStatements(Set<Statement> statements) {
-		this.statements = statements;
-	}
-
+	
 	/**
 	 * @param startLocation
 	 *            The first location in this function.
@@ -192,38 +220,52 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 			locations.add(startLocation);
 		}
 	}
-
+	
 	/**
-	 * @param locations
-	 *            The set of locations in this function.
+	 * @param statements
+	 *            The set of statements in this function.
 	 */
-	public void setLocations(Set<Location> locations) {
-		this.locations = locations;
+	public void setStatements(Set<Statement> statements) {
+		this.statements = statements;
 	}
 
 	/**
-	 * @param location
-	 *            The new location to add.
+	 * @return The first location in this function.
 	 */
-	public void addLocation(Location location) {
-		locations.add(location);
+	public Location startLocation() {
+		return startLocation;
+	}
+	
+	/**
+	 * @return The set of statements in this function.
+	 */
+	public Set<Statement> statements() {
+		return statements;
 	}
 
-	/**
-	 * @param statement
-	 *            The new statement to add.
-	 */
-	public void addStatement(Statement statement) {
-		statements.add(statement);
-	}
+	
+	
+	
+	
 
-	/**
-	 * @param name
-	 *            The name of this function.
-	 */
-	public void setName(Identifier name) {
-		this.name = name;
-	}
+	
+
+	
+
+	
+
+	
+	
+
+
+
+	
+
+	
+
+	
+
+	
 
 	/**
 	 * @param parameters
@@ -324,34 +366,13 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		out.flush();
 	}
 
-	@Override
-	public String toString() {
-		String result = name.name() + "(";
 
-		for (int i = 0; i < parameters.size(); i++) {
-			if (i != 0) {
-				result += ",";
-			}
-			result += parameters.get(i);
-		}
-		result += ")";
-		return result;
-	}
 
 	@Override
 	public boolean isSystem() {
 		return isSystem;
 	}
 
-	/**
-	 * Remove all locations that satisfy the following conditions: 1. has
-	 * exactly one outgoing statement and 2. the statement is a no-op with the
-	 * guard true. Meanwhile, have to redirect each statement that targets at
-	 * the no-op location to the target of the no-op location. For example, let
-	 * l(s->l', ...) be a location l with statement s going to l' ... l1 (s1 ->
-	 * l2, s2 -> l3), l2 ([true]no-op -> l4), l3(), l(4) After applying
-	 * simplify(), should be l1 (s1 -> l4, s2 -> l3), l3(), l4()
-	 */
 	@Override
 	public void simplify() {
 		ArrayList<Location> oldLocations = new ArrayList<Location>(
@@ -408,17 +429,14 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 						}
 					}
 				}
-
 			}
 		}
-
 		newLocations = new LinkedHashSet<Location>();
 		for (int k = 0; k < count; k++) {
 			if (toRemove.contains(k))
 				continue;
 			newLocations.add(oldLocations.get(k));
 		}
-
 		this.locations = newLocations;
 	}
 
@@ -440,7 +458,22 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 				// }
 			}
 		}
+	}
 
+	/************************** Methods from Object *************************/
+	
+	@Override
+	public String toString() {
+		String result = name.name() + "(";
+
+		for (int i = 0; i < parameters.size(); i++) {
+			if (i != 0) {
+				result += ",";
+			}
+			result += parameters.get(i);
+		}
+		result += ")";
+		return result;
 	}
 
 }

@@ -15,34 +15,13 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 /**
  * Maintains the information, e.g. labeled location, goto statements,
  * continue/break statement stack, that is required in the translation of the
- * definition of a function from ABC AST to CIVL model
+ * definition of a function from ABC AST to CIVL model.
  * 
  * @author zheng
  */
 public class FunctionInfo {
 
-	/**
-	 * The current function that is being processed
-	 */
-	private CIVLFunction function;
-
-	/**
-	 * This fields maps ABC label nodes to the corresponding CIVL locations.
-	 */
-	private Map<LabelNode, Location> labeledLocations;
-
-	/**
-	 * Maps from CIVL "goto" statements to the corresponding label nodes.
-	 */
-	private Map<Statement, LabelNode> gotoStatements;
-
-	/**
-	 * Used to keep track of continue statements in nested loops. Each entry on
-	 * the stack corresponds to a particular loop. The statements in the set for
-	 * that entry are noops which need their target set to the appropriate
-	 * location at the end of the loop processing.
-	 */
-	private Stack<Set<Statement>> continueStatements;
+	/************************* Instance Fields *************************/
 
 	/**
 	 * Used to keep track of break statements in nested loops/switches. Each
@@ -54,7 +33,32 @@ public class FunctionInfo {
 	private Stack<Set<Statement>> breakStatements;
 
 	/**
-	 * Constructor
+	 * Used to keep track of continue statements in nested loops. Each entry on
+	 * the stack corresponds to a particular loop. The statements in the set for
+	 * that entry are noops which need their target set to the appropriate
+	 * location at the end of the loop processing.
+	 */
+	private Stack<Set<Statement>> continueStatements;
+
+	/**
+	 * The current function that is being processed
+	 */
+	private CIVLFunction function;
+
+	/**
+	 * Maps from CIVL "goto" statements to the corresponding label nodes.
+	 */
+	private Map<Statement, LabelNode> gotoStatements;
+
+	/**
+	 * This fields maps ABC label nodes to the corresponding CIVL locations.
+	 */
+	private Map<LabelNode, Location> labeledLocations;
+
+	/************************** Constructors *************************/
+
+	/**
+	 * Create a new instance of FunctionInfo
 	 * 
 	 * @param function
 	 *            the CIVL function object that is being processed
@@ -67,13 +71,19 @@ public class FunctionInfo {
 		breakStatements = new Stack<Set<Statement>>();
 	}
 
+	/************************** Public Methods *************************/
+
 	/**
-	 * Get the CIVL function that is being processed
+	 * Add a set of statements to the break statement stack <dt>
+	 * <b>Preconditions:</b>
+	 * <dd>
+	 * A new loop or switch is just encountered
 	 * 
-	 * @return The current function
+	 * @param statementSet
+	 *            an empty set of statements
 	 */
-	public CIVLFunction function() {
-		return this.function;
+	public void addBreakSet(Set<Statement> statementSet) {
+		this.breakStatements.add(statementSet);
 	}
 
 	/**
@@ -90,101 +100,14 @@ public class FunctionInfo {
 	}
 
 	/**
-	 * Peek the continue stack, called only when processing a jump node with
-	 * continue kind
-	 * 
-	 * @return the set of continue statements on the top of the stack
-	 */
-	public Set<Statement> peekContinueStatck() {
-		return this.continueStatements.peek();
-	}
-
-	/**
-	 * Pop the set of continue statements from the stack
-	 * 
-	 * @return the set of continue statements from the top of the stack
-	 */
-	public Set<Statement> popContinueStack() {
-		return this.continueStatements.pop();
-	}
-
-	/**
-	 * Add a set of statements to the break statement stack <dt>
-	 * <b>Preconditions:</b>
-	 * <dd>
-	 * A new loop or switch is just encountered
-	 * 
-	 * @param statementSet
-	 *            an empty set of statements
-	 */
-	public void addBreakSet(Set<Statement> statementSet) {
-		this.breakStatements.add(statementSet);
-	}
-
-	/**
-	 * Pop the set of break statements from the stack
-	 * 
-	 * @return the set of break statements from the top of the stack
-	 */
-	public Set<Statement> popBreakStack() {
-		return this.breakStatements.pop();
-	}
-
-	/**
-	 * Peek the break stack, called only when processing a jump node with break
-	 * kind
-	 * 
-	 * @return the set of break statements on the top of the stack
-	 */
-	public Set<Statement> peekBreakStatck() {
-		return this.breakStatements.peek();
-	}
-
-	/**
-	 * Return the map of goto statements
-	 * 
-	 * @return mapping from goto statement to label node
-	 */
-	public Map<Statement, LabelNode> gotoStatements() {
-		return this.gotoStatements;
-	}
-
-	/**
-	 * Add a mapping of a goto statement and a label node to the map of goto
-	 * statements
-	 * 
-	 * @param statement
-	 *            The goto statement
-	 * @param labelNode
-	 *            The label node of the target of the goto statement
-	 */
-	public void putToGotoStatements(Statement statement, LabelNode labelNode) {
-		this.gotoStatements.put(statement, labelNode);
-	}
-
-	/**
-	 * Return the map of labeled locations
-	 * 
-	 * @return mapping from labeled node to locations
-	 */
-	public Map<LabelNode, Location> labeledLocations() {
-		return this.labeledLocations;
-	}
-
-	/**
-	 * Add a mapping from a label node to a location
-	 * 
-	 * @param labelNode
-	 *            The label node
-	 * @param location
-	 *            The location corresponding to the label node
-	 */
-	public void putToLabeledLocations(LabelNode labelNode, Location location) {
-		this.labeledLocations.put(labelNode, location);
-	}
-
-	/**
-	 * Complete the function with a fragment
+	 * Complete the function with a fragment translated from its body node,
+	 * including:
+	 * <ol>
+	 * <li>set the target location of each goto statement, which can't be
+	 * decided when the goto node is translated;</li>
+	 * <li>add all locations and statements reachable from the start location of
+	 * the body fragment into the function.</li>
+	 * </ol>
 	 * 
 	 * @param functionBody
 	 *            a fragment translated from the body of the function
@@ -196,17 +119,14 @@ public class FunctionInfo {
 		// start from the start location of the fragment
 		workingLocations.add(functionBody.startLocation());
 		function.setStartLocation(functionBody.startLocation());
-
 		for (Statement s : gotoStatements.keySet()) {
 			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
 		}
-
 		while (workingLocations.size() > 0) {
 			// use first-in-first-out order to traverse locations so that they
 			// are in natural order of the location id's
 			location = workingLocations.pollFirst();
 			function.addLocation(location);
-
 			if (location.getNumOutgoing() > 0) {
 				// for each statement in the outgoing set of a location, add
 				// itself to function, and add its target location into the
@@ -224,4 +144,95 @@ public class FunctionInfo {
 			}
 		}
 	}
+
+	/**
+	 * Get the CIVL function that is being processed
+	 * 
+	 * @return The current function
+	 */
+	public CIVLFunction function() {
+		return this.function;
+	}
+
+	/**
+	 * Return the map of goto statements
+	 * 
+	 * @return mapping from goto statement to label node
+	 */
+	public Map<Statement, LabelNode> gotoStatements() {
+		return this.gotoStatements;
+	}
+
+	/**
+	 * Return the map of labeled locations
+	 * 
+	 * @return mapping from labeled node to locations
+	 */
+	public Map<LabelNode, Location> labeledLocations() {
+		return this.labeledLocations;
+	}
+
+	/**
+	 * Peek the break stack, called only when processing a jump node with break
+	 * kind
+	 * 
+	 * @return the set of break statements on the top of the stack
+	 */
+	public Set<Statement> peekBreakStatck() {
+		return this.breakStatements.peek();
+	}
+
+	/**
+	 * Peek the continue stack, called only when processing a jump node with
+	 * continue kind
+	 * 
+	 * @return the set of continue statements on the top of the stack
+	 */
+	public Set<Statement> peekContinueStatck() {
+		return this.continueStatements.peek();
+	}
+
+	/**
+	 * Pop the set of break statements from the stack
+	 * 
+	 * @return the set of break statements from the top of the stack
+	 */
+	public Set<Statement> popBreakStack() {
+		return this.breakStatements.pop();
+	}
+
+	/**
+	 * Pop the set of continue statements from the stack
+	 * 
+	 * @return the set of continue statements from the top of the stack
+	 */
+	public Set<Statement> popContinueStack() {
+		return this.continueStatements.pop();
+	}
+
+	/**
+	 * Add a mapping of a goto statement and a label node to the map of goto
+	 * statements
+	 * 
+	 * @param statement
+	 *            The goto statement
+	 * @param labelNode
+	 *            The label node of the target of the goto statement
+	 */
+	public void putToGotoStatements(Statement statement, LabelNode labelNode) {
+		this.gotoStatements.put(statement, labelNode);
+	}
+
+	/**
+	 * Add a mapping from a label node to a location
+	 * 
+	 * @param labelNode
+	 *            The label node
+	 * @param location
+	 *            The location corresponding to the label node
+	 */
+	public void putToLabeledLocations(LabelNode labelNode, Location location) {
+		this.labeledLocations.put(labelNode, location);
+	}
+
 }

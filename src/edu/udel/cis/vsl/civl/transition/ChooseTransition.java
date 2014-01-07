@@ -54,7 +54,7 @@ public class ChooseTransition extends SimpleTransition {
 		String result = super.toString() + " (" + value + ")";
 
 		if (source != null)
-			result += " at " + source.getLocation();
+			result += " at " + source.getSummary();
 		return result;
 	}
 }
