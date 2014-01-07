@@ -151,6 +151,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			out.println();
 			out.print(state + " --");
 			printTransitionLong(out, transition);
+			out.println(";");
 		}
 		pid = ((SimpleTransition) transition).pid();
 		p = state.getProcessState(pid);

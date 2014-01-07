@@ -783,8 +783,7 @@ public class Executor {
 				newState = execute(newState, pid, start);
 				newLocation = newState.getProcessState(pid).getLocation();
 				if (print) {
-					out.println("enter $atom block at "
-							+ start.source().getSource().getLocation() + ";");
+					printStatement(start, AtomicKind.DENTER);
 				}
 			} catch (UnsatisfiablePathConditionException e1) {
 				throw new CIVLStateException(
@@ -816,9 +815,7 @@ public class Executor {
 						newLocation.getOutgoing(0), pid).getValue();
 				executedStatement = newLocation.getOutgoing(0);
 				if (print) {
-					out.println("leave $atom block at "
-							+ executedStatement.source().getSource()
-									.getLocation() + ";");
+					printStatement(executedStatement, AtomicKind.DLEAVE);
 				}
 				assert newState != null;
 				return newState;
@@ -869,15 +866,7 @@ public class Executor {
 			}
 			stateCounter++;
 			if (print && executedStatement != null) {
-				if (newLocation.atomicKind() == AtomicKind.DENTER)
-					out.print("enter $atom block");
-				else if (newLocation.atomicKind() == AtomicKind.DLEAVE)
-					out.print("leave $atom block");
-				else
-					out.print(executedStatement.toString());
-				out.println(" at "
-						+ executedStatement.source().getSource().getLocation()
-						+ ";");
+				printStatement(executedStatement, newLocation.atomicKind());
 			}
 			p = newState.getProcessState(pid);
 			if (p != null && !p.hasEmptyStack())
@@ -983,9 +972,7 @@ public class Executor {
 				if (!p.inAtomic()) {
 					newState = stateFactory.releaseAtomicLock(newState);
 					if (print) {
-						out.println("leave $atomic block at "
-								+ executedStatement.source().getSource()
-										.getLocation() + ";");
+						printStatement(executedStatement, AtomicKind.LEAVE);
 					}
 					return newState;
 				}
@@ -995,14 +982,7 @@ public class Executor {
 						pLocation.getSource());
 			}
 			if (print && executedStatement != null) {
-				if (pLocation.atomicKind() == AtomicKind.ENTER)
-					out.print("enter $atomic block");
-				else if (pLocation.atomicKind() == AtomicKind.LEAVE)
-					out.print("leave $atomic block");
-				else
-					out.print(executedStatement.toString());
-				out.println(" at "
-						+ executedStatement.source().getSource().getLocation() + ";");
+				printStatement(executedStatement, pLocation.atomicKind());
 			}
 			p = newState.getProcessState(pid);
 			if (p != null && !p.hasEmptyStack())
@@ -1053,5 +1033,21 @@ public class Executor {
 
 	public void setOutput(PrintStream outPut) {
 		this.out = outPut;
+	}
+
+	private void printStatement(Statement s, AtomicKind atomicKind) {
+		if (atomicKind == AtomicKind.ENTER)
+			out.print("enter $atomic block");
+		else if (atomicKind == AtomicKind.LEAVE)
+			out.print("leave $atomic block");
+		else if (atomicKind == AtomicKind.DENTER)
+			out.print("enter $atom block");
+		else if (atomicKind == AtomicKind.DLEAVE)
+			out.print("leave $atom block");
+		else
+			out.print(s.toString());
+		if (s.source() != null)
+			out.print(" at " + s.source().getSource().getLocation());
+		out.println(" from " + s.source() + " to " + s.target() + ";");
 	}
 }
