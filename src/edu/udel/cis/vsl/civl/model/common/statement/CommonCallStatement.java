@@ -175,6 +175,7 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		super.purelyLocalAnalysisOfVariables(funcScope);
 		if (this.lhs != null)
 			this.lhs.purelyLocalAnalysisOfVariables(funcScope);
 		for (Expression arg : this.arguments) {

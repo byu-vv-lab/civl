@@ -187,7 +187,9 @@ public abstract class CommonStatement extends CommonSourceable implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
-
+		if(guard != null){
+			guard.purelyLocalAnalysisOfVariables(funcScope);
+		}
 	}
 
 	@Override

@@ -67,6 +67,7 @@ public class CommonWaitStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		super.purelyLocalAnalysisOfVariables(funcScope);
 		this.process.purelyLocalAnalysisOfVariables(funcScope);
 	}
 
@@ -75,11 +76,6 @@ public class CommonWaitStatement extends CommonStatement implements
 		// For most cases, wait statement is blocked and thus is considered
 		// as not purely local
 		this.purelyLocal = false;
-
-		// this.guard().purelyLocalAnalysis();
-		// this.process.purelyLocalAnalysis();
-		// this.purelyLocal = this.guard().isPurelyLocal()
-		// && this.process.isPurelyLocal();
 	}
 
 	@Override

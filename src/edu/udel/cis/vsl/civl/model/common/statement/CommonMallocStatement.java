@@ -118,6 +118,7 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		super.purelyLocalAnalysisOfVariables(funcScope);
 		if (lhs != null) {
 			lhs.purelyLocalAnalysisOfVariables(funcScope);
 		}

@@ -68,6 +68,7 @@ public class CommonAssumeStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		super.purelyLocalAnalysisOfVariables(funcScope);
 		this.expression.purelyLocalAnalysisOfVariables(funcScope);
 	}
 

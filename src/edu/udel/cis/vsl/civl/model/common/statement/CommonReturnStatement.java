@@ -74,6 +74,7 @@ public class CommonReturnStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		super.purelyLocalAnalysisOfVariables(funcScope);
 		if (this.expression != null)
 			this.expression.purelyLocalAnalysisOfVariables(funcScope);
 	}

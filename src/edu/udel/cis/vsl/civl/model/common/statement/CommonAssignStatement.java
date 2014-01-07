@@ -90,6 +90,7 @@ public class CommonAssignStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		super.purelyLocalAnalysisOfVariables(funcScope);
 		this.lhs.purelyLocalAnalysisOfVariables(funcScope);
 		this.rhs.purelyLocalAnalysisOfVariables(funcScope);
 	}
