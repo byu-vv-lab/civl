@@ -1768,7 +1768,7 @@ public class ModelBuilderWorker {
 							location,
 							lhs,
 							arrayToPointer(translateExpressionNode(rhsNode,
-									scope, true)));
+									scope, true)), false);
 		return result;
 	}
 
@@ -1967,7 +1967,8 @@ public class ModelBuilderWorker {
 		Fragment beforeCondition, loopEntrance, loopBody, incrementer = null, loopExit, result;
 		Location loopEntranceLocation, continueLocation;
 		Map.Entry<Fragment, Expression> refineConditional = factory
-				.refineConditionalExpression(loopScope, condition, conditionNode);
+				.refineConditionalExpression(loopScope, condition,
+						conditionNode);
 
 		beforeCondition = refineConditional.getKey();
 		condition = refineConditional.getValue();
@@ -2606,7 +2607,7 @@ public class ModelBuilderWorker {
 							factory.variableExpression(factory.sourceOf(init),
 									variable),
 							translateExpressionNode((ExpressionNode) init,
-									scope, true));
+									scope, true), true);
 			initFragment = new CommonFragment(assignStatement);
 			if (factory.hasConditionalExpressions()) {
 				initFragment = factory.refineConditionalExpressionOfStatement(
@@ -2808,7 +2809,7 @@ public class ModelBuilderWorker {
 							sourceLocation,
 							factory.variableExpression(
 									factory.sourceOf(identifier), variable),
-							rhs));
+							rhs, true));
 			sourceLocation = null;
 		}
 		initialization = translateVariableInitializationNode(node, variable,
@@ -2895,7 +2896,7 @@ public class ModelBuilderWorker {
 						factory.sourceOfBeginning(typeNode), scope);
 			result = new CommonFragment(sourceLocation,
 					factory.assignStatement(civlSource, sourceLocation, lhs,
-							rhs));
+							rhs, true));
 		}
 		return result;
 	}

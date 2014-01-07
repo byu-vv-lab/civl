@@ -11,6 +11,16 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
+/**
+ * A list of statements that are to be executed in one transition. This class is
+ * only used during the execution of an atomic block: when multiple processes
+ * want to resume from some previously blocked locations, each process creates a
+ * new transition that has two statements, which are an additional atomic lock
+ * variable assignment ($ATOMIC_LOCK_VAR=$self) and the statement as usual.
+ * 
+ * @author Manchun Zheng (zmanchun)
+ * 
+ */
 public class StatementList implements Statement {
 	/**
 	 * The list of statements to be executed sequentially
@@ -38,6 +48,10 @@ public class StatementList implements Statement {
 		this.statements.add(statement);
 	}
 
+	/**
+	 * {@inheritDoc} If the first statement is created by the executor rather
+	 * than a "real" statement, then use the source of the second statement.
+	 */
 	@Override
 	public CIVLSource getSource() {
 		CIVLSource result = null;
@@ -56,7 +70,14 @@ public class StatementList implements Statement {
 	@Override
 	public Location source() {
 		if (!statements.isEmpty()) {
-			return statements.get(0).source();
+			Statement first = statements.get(0);
+
+			if (first.getSource().getLocation() == "CIVL System object") {
+				if (statements.size() > 1) {
+					return statements.get(1).source();
+				}
+			}
+			return first.source();
 		}
 		return null;
 	}
@@ -72,7 +93,14 @@ public class StatementList implements Statement {
 	@Override
 	public Expression guard() {
 		if (!statements.isEmpty()) {
-			return statements.get(0).guard();
+			Statement first = statements.get(0);
+
+			if (first.getSource().getLocation() == "CIVL System object") {
+				if (statements.size() > 1) {
+					return statements.get(1).guard();
+				}
+			}
+			return first.guard();
 		}
 		return null;
 	}
@@ -84,80 +112,61 @@ public class StatementList implements Statement {
 
 	@Override
 	public void setSource(Location source) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void setTarget(Location target) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void setGuard(Expression guard) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void setModel(Model model) {
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public Scope statementScope() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setStatementScope(Scope statementScope) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public boolean hasDerefs() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public void calculateDerefs() {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public boolean isPurelyLocal() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public void purelyLocalAnalysis() {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public Statement replaceWith(ConditionalExpression oldExpression,
 			Expression newExpression) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

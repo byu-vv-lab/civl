@@ -752,10 +752,13 @@ public interface ModelFactory {
 	 *            The left hand side of the assignment.
 	 * @param rhs
 	 *            The right hand side of the assignment.
+	 * @param isInitialization
+	 *            True iff the assign statement to create is translated from a
+	 *            the initialization node of variable declaration node.
 	 * @return A new assignment statement.
 	 */
 	AssignStatement assignStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Expression rhs);
+			LHSExpression lhs, Expression rhs, boolean isInitialization);
 
 	/**
 	 * Create a one-statement fragment that contains the assume statement.

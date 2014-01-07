@@ -24,6 +24,7 @@ public class CommonAssignStatement extends CommonStatement implements
 
 	private LHSExpression lhs;
 	private Expression rhs;
+	private boolean isInitialization;
 
 	/**
 	 * An assignment statement.
@@ -40,6 +41,7 @@ public class CommonAssignStatement extends CommonStatement implements
 		super(civlSource, source);
 		this.lhs = lhs;
 		this.rhs = rhs;
+		this.isInitialization = false;
 	}
 
 	/**
@@ -95,25 +97,34 @@ public class CommonAssignStatement extends CommonStatement implements
 		this.rhs.purelyLocalAnalysisOfVariables(funcScope);
 	}
 
+	/**
+	 * {@inheritDoc} If this is an initialization assignment, this assignment
+	 * can be considered as purely local even if the LHS variable is not purely
+	 * local. For most cases, the RHS is a constant and thus the initialization
+	 * of a variable would be considered as purely local.
+	 */
 	@Override
 	public void purelyLocalAnalysis() {
 		this.guard().purelyLocalAnalysis();
 		this.lhs.purelyLocalAnalysis();
 		this.rhs.purelyLocalAnalysis();
-		this.purelyLocal = this.guard().isPurelyLocal()
-				&& this.lhs.isPurelyLocal() && this.rhs.isPurelyLocal();
+		if (this.isInitialization) {
+			this.purelyLocal = this.guard().isPurelyLocal()
+					&& this.rhs.isPurelyLocal();
+		} else {
+			this.purelyLocal = this.guard().isPurelyLocal()
+					&& this.lhs.isPurelyLocal() && this.rhs.isPurelyLocal();
+		}
 	}
 
 	@Override
 	public void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression) {
 		super.replaceWith(oldExpression, newExpression);
-
 		if (rhs == oldExpression) {
 			rhs = newExpression;
 			return;
 		}
-
 		this.rhs.replaceWith(oldExpression, newExpression);
 	}
 
@@ -139,4 +150,13 @@ public class CommonAssignStatement extends CommonStatement implements
 		return newStatement;
 	}
 
+	@Override
+	public boolean isInitialization() {
+		return this.isInitialization;
+	}
+
+	@Override
+	public void setInitialization(boolean value) {
+		this.isInitialization = value;
+	}
 }

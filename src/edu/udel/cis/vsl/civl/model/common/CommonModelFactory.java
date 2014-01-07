@@ -858,10 +858,12 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public AssignStatement assignStatement(CIVLSource civlSource,
-			Location source, LHSExpression lhs, Expression rhs) {
+			Location source, LHSExpression lhs, Expression rhs,
+			boolean isInitialization) {
 		AssignStatement result = new CommonAssignStatement(civlSource, source,
 				lhs, rhs);
 
+		result.setInitialization(isInitialization);
 		result.setStatementScope(join(lhs.expressionScope(),
 				rhs.expressionScope()));
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
@@ -1534,11 +1536,11 @@ public class CommonModelFactory implements ModelFactory {
 			}
 		}
 		ifAssign = assignStatement(ifValue.getSource(), startLocation,
-				variable, ifValue);
+				variable, ifValue, false);
 		ifAssign.setGuard(ifGuard);
 		lastStatement.add(ifAssign);
 		elseAssign = assignStatement(elseValue.getSource(), startLocation,
-				variable, elseValue);
+				variable, elseValue, false);
 		elseAssign.setGuard(elseGuard);
 		lastStatement.add(elseAssign);
 		result.setStartLocation(startLocation);
@@ -1678,7 +1680,7 @@ public class CommonModelFactory implements ModelFactory {
 				this.systemSource,
 				this.location(this.systemSource, target.scope()),
 				this.atomicLockVariableExpression,
-				this.selfExpression(this.systemSource));
+				this.selfExpression(this.systemSource), false);
 
 		assignStatement.setTarget(target);
 		return assignStatement;

@@ -147,32 +147,41 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		boolean printTransitions = verbose || debug || showTransitions;
 
 		assert transition instanceof SimpleTransition;
-		if (printTransitions) {
-			out.println();
-			out.print(state + " --");
-			printTransitionLong(out, transition);
-			out.println(";");
-		}
 		pid = ((SimpleTransition) transition).pid();
 		p = state.getProcessState(pid);
 		currentLocation = p.getLocation();
 		switch (currentLocation.atomicKind()) {
 		case ENTER:
+			out.println();
+			out.print(state + " --proc");
+			out.println(pid+ ":");
 			state = executor.executeAtomicStatements(state, pid,
 					currentLocation, true, printTransitions);
 			break;
 
 		case LEAVE:
+			out.println();
+			out.print(state + " --proc");
+			out.println(pid+ ":");
 			state = executor.executeAtomicStatements(state, pid,
 					currentLocation, true, printTransitions);
 			break;
 		case DENTER:
+			out.println();
+			out.print(state + " --proc");
+			out.println(pid+ ":");
 			state = executor.executeDAtomicBlock(state, pid, currentLocation, printTransitions);
 			break;
 		case DLEAVE:
 			throw new CIVLInternalException("Unreachable",
 					currentLocation.getSource());
 		default:// execute a normal transition
+			if (printTransitions) {
+				out.println();
+				out.print(state + " --");
+				printTransitionLong(out, transition);
+				out.println(";");
+			}
 			state = state.setPathCondition(((SimpleTransition) transition)
 					.pathCondition());
 			statement = ((SimpleTransition) transition).statement();

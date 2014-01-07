@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -139,7 +140,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 		} else
 			headString = prefix + "location " + id() + " (scope: " + scope.id()
 					+ ")";
-		if(this.loopPossible)
+		if (this.loopPossible)
 			headString = headString + "loop";
 		switch (this.atomicKind) {
 		case ENTER:
@@ -271,7 +272,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public void purelyLocalAnalysis() {
-		// a location that enters an atomic block is considered as atomic only
+		// Usually, a location is purely local if it has exactly one outgoing
+		// statement that is purely local
+		if (incoming.size() != 1) {
+			this.purelyLocal = false;
+			return;
+		}
+		// a location that enters an atomic/atom block is considered as purely
+		// local only
 		// if all the statements that are to be executed in the atomic block are
 		// purely local
 		if (this.atomicKind == AtomicKind.DENTER) {
@@ -281,7 +289,12 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 			do {
 				Statement s = newLocation.getOutgoing(0);
-
+				
+				if(s instanceof CallOrSpawnStatement){
+					if(((CallOrSpawnStatement)s).isCall())
+						this.purelyLocal = false;
+					return;
+				}
 				checkedLocations.add(newLocation.id());
 				if (!s.isPurelyLocal()) {
 					this.purelyLocal = false;
@@ -296,10 +309,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 					newLocation = null;
 			} while (newLocation != null && !atomicFlags.isEmpty());
 			this.purelyLocal = true;
-			return;
-		}
-
-		if (this.atomicKind == AtomicKind.ENTER) {
+		} else if (this.atomicKind == AtomicKind.ENTER) {
 			Stack<Integer> atomicFlags = new Stack<Integer>();
 			Location newLocation = this;
 			Set<Integer> checkedLocations = new HashSet<Integer>();
@@ -307,6 +317,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 			do {
 				Statement s = newLocation.getOutgoing(0);
 
+				if(s instanceof CallOrSpawnStatement){
+					if(((CallOrSpawnStatement)s).isCall())
+						this.purelyLocal = false;
+					return;
+				}
 				checkedLocations.add(newLocation.id());
 				if (!s.isPurelyLocal()) {
 					this.purelyLocal = false;
@@ -321,14 +336,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 					newLocation = null;
 			} while (newLocation != null && !atomicFlags.isEmpty());
 			this.purelyLocal = true;
-			return;
-		}
-
-		// Usually, a location is purely local if it has exactly one outgoing
-		// statement that is purely local
-		if (outgoing.size() != 1)
-			this.purelyLocal = false;
-		else {
+		} else {
 			Statement s = getOutgoing(0);
 
 			if (s instanceof ChooseStatement || s instanceof WaitStatement)
