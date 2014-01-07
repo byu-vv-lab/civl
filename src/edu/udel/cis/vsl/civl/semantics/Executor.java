@@ -33,6 +33,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
@@ -977,8 +978,7 @@ public class Executor {
 				if (!p.inAtomic()) {
 					newState = stateFactory.releaseAtomicLock(newState);
 					if (print) {
-						out.print("; " + executedStatement.toString());
-						out.print(" at "
+						out.print("; leave atomic block at "
 								+ executedStatement.source().getSource()
 										.getLocation());
 					}
@@ -990,7 +990,12 @@ public class Executor {
 						pLocation.getSource());
 			}
 			if (print && executedStatement != null) {
-				out.print("; " + executedStatement.toString());
+				if (pLocation.atomicKind() == AtomicKind.ENTER)
+					out.print("; enter atomic block");
+				else if (pLocation.atomicKind() == AtomicKind.LEAVE)
+					out.print("; leave atomic block");
+				else
+					out.print("; " + executedStatement.toString());
 				out.print(" at "
 						+ executedStatement.source().getSource().getLocation());
 			}
