@@ -149,25 +149,56 @@ public class CommonModelFactory implements ModelFactory {
 		CONDITIONAL, CHOOSE
 	}
 
-	/**
-	 * The prefix of the temporal variables for translating conditional
-	 * expressions
-	 */
-	private static final String CONDITIONAL_VARIABLE_PREFIX = "$COND_VAR_";
-
-	// /**
-	// * The prefix of the temporal variables for translating $choose_int
-	// function
-	// * calls
-	// */
-	// private static final String CHOOSE_VARIABLE_PREFIX = "$CHOOSE_VAR_";
+	/************************* Static Fields *************************/
 
 	/**
 	 * The name of the atomic lock variable
 	 */
 	private static final String ATOMIC_LOCK_VARIABLE = "$ATOMIC_LOCK_VAR";
 
+	/**
+	 * Amount by which to increase the list of cached scope values and process
+	 * values when a new value is requested that is outside of the current
+	 * range.
+	 */
+	private final static int CACHE_INCREMENT = 10;
+
+	/**
+	 * The prefix of the temporal variables for translating conditional
+	 * expressions
+	 */
+	private static final String CONDITIONAL_VARIABLE_PREFIX = "$COND_VAR_";
+
+	/************************* Instance Fields *************************/
+
 	private VariableExpression atomicLockVariableExpression;
+
+	private CIVLPrimitiveType booleanType;
+
+	private int chooseID = 0;
+
+	/**
+	 * The number of conditional expressions that have been encountered, used to
+	 * create temporal variable.
+	 */
+	private int conditionalExpressionCounter = 0;
+
+	/**
+	 * The stack of queues of conditional expression.
+	 */
+	private Stack<ArrayDeque<ConditionalExpression>> conditionalExpressions;
+
+	private SymbolicTupleType dynamicSymbolicType;
+
+	private CIVLPrimitiveType dynamicType;
+
+	/** Keep a set of used identifiers for fly-weighting purposes. */
+	private Map<String, Identifier> identifiers;
+
+	private CIVLPrimitiveType integerType;
+
+	/** Keep a unique number to identify locations. */
+	private int locationID = 0;
 
 	/**
 	 * When translating a CallOrSpawnStatement that has some conditional
@@ -178,92 +209,47 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	ModelBuilderWorker modelBuilder;
 
-	/**
-	 * Amount by which to increase the list of cached scope values and process
-	 * values when a new value is requested that is outside of the current
-	 * range.
-	 */
-	private final static int CACHE_INCREMENT = 10;
-
-	private SymbolicUniverse universe;
-
-	private CIVLSource systemSource = new SystemCIVLSource();
-
-	/* Keep a unique number to identify locations. */
-	private int locationID = 0;
-
-	/* Keep a set of used identifiers for fly-weighting purposes. */
-	private Map<String, Identifier> identifiers;
-
-	private CIVLPrimitiveType voidType;
-
-	private CIVLPrimitiveType integerType;
-
-	private CIVLPrimitiveType booleanType;
-
-	private CIVLPrimitiveType realType;
-
-	private CIVLPrimitiveType scopeType;
-
-	private CIVLPrimitiveType processType;
-
-	private CIVLPrimitiveType dynamicType;
-
-	private CIVLPrimitiveType stringType;
-
-	private SymbolicTupleType scopeSymbolicType;
-
-	private SymbolicTupleType processSymbolicType;
-
-	private SymbolicTupleType dynamicSymbolicType;
-
-	private SymbolicTupleType pointerSymbolicType;
-
-	private SymbolicArrayType stringSymbolicType;
-
-	/* Keep a unique number to identify scopes. */
-	private int scopeID = 0;
-
-	private int chooseID = 0;
-
-	// private Scope systemScope;
-
-	private IntObject zeroObj;
-
-	private ArrayList<SymbolicExpression> processValues = new ArrayList<SymbolicExpression>();
-
-	private ArrayList<SymbolicExpression> scopeValues = new ArrayList<SymbolicExpression>();
-
-	private SymbolicExpression undefinedProcessValue;
-
-	private SymbolicExpression undefinedScopeValue;
-
 	/** A list of nulls of length CACHE_INCREMENT */
 	private List<SymbolicExpression> nullList = new LinkedList<SymbolicExpression>();
 
+	private SymbolicTupleType pointerSymbolicType;
+
+	private SymbolicTupleType processSymbolicType;
+
+	private CIVLPrimitiveType processType;
+
+	private ArrayList<SymbolicExpression> processValues = new ArrayList<SymbolicExpression>();
+
+	private CIVLPrimitiveType realType;
+
+	private SymbolicTupleType scopeSymbolicType;
+
+	/** Keep a unique number to identify scopes. */
+	private int scopeID = 0;
+
+	private CIVLPrimitiveType scopeType;
+
+	private ArrayList<SymbolicExpression> scopeValues = new ArrayList<SymbolicExpression>();
+
+	private SymbolicArrayType stringSymbolicType;
+
+	private CIVLPrimitiveType stringType;
+
+	private CIVLSource systemSource = new SystemCIVLSource();
+
 	private TokenFactory tokenFactory;
 
-	/**
-	 * The stack of queues of conditional expression.
-	 */
-	private Stack<ArrayDeque<ConditionalExpression>> conditionalExpressions;
+	private SymbolicExpression undefinedScopeValue;
 
-	/**
-	 * The number of conditional expressions that have been encountered, used to
-	 * create temporal variable.
-	 */
-	private int conditionalExpressionCounter = 0;
+	private SymbolicExpression undefinedProcessValue;
 
-	// /**
-	// * The number of function call $choose_int that needs a temporal variable.
-	// */
-	// private int chooseIntegerCounter = 0;
+	private SymbolicUniverse universe;
 
-	// /**
-	// * Maintain a stack of atomic blocks (0 for general atomic, 1 for
-	// * deterministic atomic), which are currently being processed.
-	// */
-	// private Stack<Integer> atomicBlocks;
+	private CIVLPrimitiveType voidType;
+
+	private IntObject zeroObj;
+
+	/************************** Constructors *************************/
 
 	/**
 	 * The factory to create all model components. Usually this is the only way
@@ -321,47 +307,21 @@ public class CommonModelFactory implements ModelFactory {
 		// atomicBlocks = new Stack<Integer>();
 	}
 
+	/************************** Methods from ModelFactory *************************/
+
+	@Override
+	public Model model(CIVLSource civlSource, CIVLFunction system) {
+		return new CommonModel(civlSource, this, system);
+	}
+
 	@Override
 	public void setTokenFactory(TokenFactory tokens) {
 		this.tokenFactory = tokens;
 	}
 
-	private NumericExpression sizeofExpression(PrimitiveTypeKind kind) {
-		NumericExpression result = (NumericExpression) universe
-				.symbolicConstant(universe.stringObject("SIZEOF_" + kind),
-						universe.integerType());
-
-		result = (NumericExpression) universe.canonic(result);
-		return result;
-	}
-
-	private CIVLPrimitiveType primitiveType(PrimitiveTypeKind kind,
-			SymbolicType dynamicType) {
-		CIVLPrimitiveType result;
-		NumericExpression size = null;
-		BooleanExpression fact = null;
-
-		if (dynamicType != null)
-			dynamicType = (SymbolicType) universe.canonic(dynamicType);
-		if (kind != PrimitiveTypeKind.VOID)
-			size = sizeofExpression(kind);
-		if (size == null)
-			fact = universe.trueExpression();
-		else
-			fact = universe.lessThan(universe.zeroInt(), size);
-		fact = (BooleanExpression) universe.canonic(fact);
-		result = new CommonPrimitiveType(kind, dynamicType, size, fact);
-		return result;
-	}
-
 	@Override
 	public CIVLSource systemSource() {
 		return systemSource;
-	}
-
-	@Override
-	public Model model(CIVLSource civlSource, CIVLFunction system) {
-		return new CommonModel(civlSource, this, system);
 	}
 
 	@Override
@@ -981,81 +941,6 @@ public class CommonModelFactory implements ModelFactory {
 		return new CommonFragment(result);
 	}
 
-	/**
-	 * @param s0
-	 *            A scope. May be null.
-	 * @param s1
-	 *            A scope. May be null.
-	 * @return The scope that is the join, or least common ancestor in the scope
-	 *         tree, of s0 and s1. Null if both are null. If exactly one of s0
-	 *         and s1 are null, returns the non-null scope.
-	 */
-	private Scope join(Scope s0, Scope s1) {
-		List<Scope> s0Ancestors = new ArrayList<Scope>();
-		Scope s0Ancestor = s0;
-		Scope s1Ancestor = s1;
-
-		if (s0 == null) {
-			return s1;
-		} else if (s1 == null) {
-			return s0;
-		}
-		s0Ancestors.add(s0Ancestor);
-		while (s0Ancestor.parent() != null) {
-			s0Ancestor = s0Ancestor.parent();
-			s0Ancestors.add(s0Ancestor);
-		}
-		while (true) {
-			if (s0Ancestors.contains(s1Ancestor)) {
-				return s1Ancestor;
-			}
-			s1Ancestor = s1Ancestor.parent();
-		}
-	}
-
-	/**
-	 * Gets a Java conrete int from a symbolic expression or throws exception.
-	 * 
-	 * @param source
-	 * 
-	 * @param expression
-	 *            a numeric expression expected to hold concrete int value
-	 * @return the concrete int
-	 * @throws CIVLInternalException
-	 *             if a concrete integer value cannot be extracted
-	 */
-	private int extractInt(CIVLSource source, NumericExpression expression) {
-		IntegerNumber result = (IntegerNumber) universe
-				.extractNumber(expression);
-
-		if (result == null)
-			throw new CIVLInternalException(
-					"Unable to extract concrete int from " + expression, source);
-		return result.intValue();
-	}
-
-	/**
-	 * Gets a concrete Java int from the field of a symbolic expression of tuple
-	 * type or throws exception.
-	 * 
-	 * @param source
-	 * 
-	 * @param tuple
-	 *            symbolic expression of tuple type
-	 * @param fieldIndex
-	 *            index of a field in that tuple
-	 * @return the concrete int value of that field
-	 * @throws CIVLInternalException
-	 *             if a concrete integer value cannot be extracted
-	 */
-	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
-			IntObject fieldIndex) {
-		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
-				fieldIndex);
-
-		return extractInt(source, field);
-	}
-
 	@Override
 	public DereferenceExpression dereferenceExpression(CIVLSource source,
 			Expression pointer) {
@@ -1171,57 +1056,6 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public int getScopeId(CIVLSource source, SymbolicExpression scopeValue) {
 		return extractIntField(source, scopeValue, zeroObj);
-	}
-
-	/**
-	 * generate undefined value of a certain type
-	 * 
-	 * @param type
-	 * @return
-	 */
-	private SymbolicExpression undefinedValue(SymbolicType type) {
-		SymbolicExpression result = universe.symbolicConstant(
-				universe.stringObject("UNDEFINED"), type);
-
-		result = universe.canonic(result);
-		return result;
-	}
-
-	/**
-	 * @param heapDynamicType
-	 * @return
-	 */
-	private SymbolicExpression computeInitialHeapValue(
-			SymbolicTupleType heapDynamicType) {
-		LinkedList<SymbolicExpression> fields = new LinkedList<SymbolicExpression>();
-		SymbolicExpression result;
-
-		for (SymbolicType fieldType : heapDynamicType.sequence()) {
-			SymbolicArrayType arrayType = (SymbolicArrayType) fieldType;
-			SymbolicType objectType = arrayType.elementType();
-			SymbolicExpression emptyArray = universe.emptyArray(objectType);
-
-			fields.add(emptyArray);
-		}
-		result = universe.tuple(heapDynamicType, fields);
-		result = universe.canonic(result);
-		return result;
-	}
-
-	private SymbolicTupleType computeDynamicHeapType(
-			Iterable<MallocStatement> mallocStatements) {
-		LinkedList<SymbolicType> fieldTypes = new LinkedList<SymbolicType>();
-		SymbolicTupleType result;
-
-		for (MallocStatement statement : mallocStatements) {
-			SymbolicType fieldType = universe.arrayType(statement
-					.getDynamicObjectType());
-
-			fieldTypes.add(fieldType);
-		}
-		result = universe.tupleType(universe.stringObject("$heap"), fieldTypes);
-		result = (SymbolicTupleType) universe.canonic(result);
-		return result;
 	}
 
 	@Override
@@ -1371,47 +1205,6 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * Generate a temporal variable for translating away conditional expression
-	 * 
-	 * @param kind
-	 *            The temporal variable kind
-	 * @param scope
-	 *            The scope of the temporal variable
-	 * @param source
-	 *            The CIVL source of the conditional expression
-	 * @param type
-	 *            The CIVL type of the conditional expression
-	 * @return The variable expression referring to the temporal variable
-	 */
-	private VariableExpression tempVariable(TempVariableKind kind, Scope scope,
-			CIVLSource source, CIVLType type) {
-		String name = "";
-		int vid = scope.numVariables();
-		StringObject stringObject;
-		Variable variable;
-		VariableExpression result;
-
-		switch (kind) {
-		case CONDITIONAL:
-			name = CONDITIONAL_VARIABLE_PREFIX
-					+ this.conditionalExpressionCounter++;
-			break;
-		// case CHOOSE:
-		// name = CHOOSE_VARIABLE_PREFIX + this.chooseIntegerCounter++;
-		// break;
-		default:
-		}
-		stringObject = (StringObject) universe.canonic(universe
-				.stringObject(name));
-		variable = new CommonVariable(source, type, new CommonIdentifier(
-				source, stringObject), vid);
-		result = new CommonVariableExpression(source, variable);
-		scope.addVariable(variable);
-		((CommonVariableExpression) result).setExpressionType(variable.type());
-		return result;
-	}
-
 	@Override
 	public void addConditionalExpression(ConditionalExpression expression) {
 		this.conditionalExpressions.peek().add(expression);
@@ -1447,16 +1240,6 @@ public class CommonModelFactory implements ModelFactory {
 				beforeConditionFragment, expression);
 	}
 
-	/**
-	 * 
-	 * @return The size of the top conditional expression queue
-	 */
-	private int sizeOfTopConditionalExpressionQueue() {
-		if (conditionalExpressions.isEmpty())
-			return 0;
-		return conditionalExpressions.peek().size();
-	}
-
 	@Override
 	public Fragment refineConditionalExpressionOfStatement(Statement statement,
 			Location oldLocation) {
@@ -1464,7 +1247,7 @@ public class CommonModelFactory implements ModelFactory {
 		CIVLSource statementSource = statement.getSource();
 		Scope scope = statement.source().scope();
 
-		if (sizeOfTopConditionalExpressionQueue() == 1)
+		if (sizeofTopConditionalExpressionQueue() == 1)
 			return this.conditionalExpressionToIf(
 					this.pollConditionaExpression(), statement);
 		while (hasConditionalExpressions()) {
@@ -1686,7 +1469,208 @@ public class CommonModelFactory implements ModelFactory {
 		return assignStatement;
 	}
 
-	// private Variable atomicLockVariable(){
-	// return this.atomicLockVariable;
-	// }
+	/************************** Private Methods *************************/
+
+	private SymbolicTupleType computeDynamicHeapType(
+			Iterable<MallocStatement> mallocStatements) {
+		LinkedList<SymbolicType> fieldTypes = new LinkedList<SymbolicType>();
+		SymbolicTupleType result;
+
+		for (MallocStatement statement : mallocStatements) {
+			SymbolicType fieldType = universe.arrayType(statement
+					.getDynamicObjectType());
+
+			fieldTypes.add(fieldType);
+		}
+		result = universe.tupleType(universe.stringObject("$heap"), fieldTypes);
+		result = (SymbolicTupleType) universe.canonic(result);
+		return result;
+	}
+
+	/**
+	 * @param heapDynamicType
+	 * @return
+	 */
+	private SymbolicExpression computeInitialHeapValue(
+			SymbolicTupleType heapDynamicType) {
+		LinkedList<SymbolicExpression> fields = new LinkedList<SymbolicExpression>();
+		SymbolicExpression result;
+
+		for (SymbolicType fieldType : heapDynamicType.sequence()) {
+			SymbolicArrayType arrayType = (SymbolicArrayType) fieldType;
+			SymbolicType objectType = arrayType.elementType();
+			SymbolicExpression emptyArray = universe.emptyArray(objectType);
+
+			fields.add(emptyArray);
+		}
+		result = universe.tuple(heapDynamicType, fields);
+		result = universe.canonic(result);
+		return result;
+	}
+
+	/**
+	 * Gets a Java conrete int from a symbolic expression or throws exception.
+	 * 
+	 * @param source
+	 * 
+	 * @param expression
+	 *            a numeric expression expected to hold concrete int value
+	 * @return the concrete int
+	 * @throws CIVLInternalException
+	 *             if a concrete integer value cannot be extracted
+	 */
+	private int extractInt(CIVLSource source, NumericExpression expression) {
+		IntegerNumber result = (IntegerNumber) universe
+				.extractNumber(expression);
+
+		if (result == null)
+			throw new CIVLInternalException(
+					"Unable to extract concrete int from " + expression, source);
+		return result.intValue();
+	}
+
+	/**
+	 * Gets a concrete Java int from the field of a symbolic expression of tuple
+	 * type or throws exception.
+	 * 
+	 * @param source
+	 * 
+	 * @param tuple
+	 *            symbolic expression of tuple type
+	 * @param fieldIndex
+	 *            index of a field in that tuple
+	 * @return the concrete int value of that field
+	 * @throws CIVLInternalException
+	 *             if a concrete integer value cannot be extracted
+	 */
+	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
+			IntObject fieldIndex) {
+		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
+				fieldIndex);
+
+		return extractInt(source, field);
+	}
+
+	/**
+	 * @param s0
+	 *            A scope. May be null.
+	 * @param s1
+	 *            A scope. May be null.
+	 * @return The scope that is the join, or least common ancestor in the scope
+	 *         tree, of s0 and s1. Null if both are null. If exactly one of s0
+	 *         and s1 are null, returns the non-null scope.
+	 */
+	private Scope join(Scope s0, Scope s1) {
+		List<Scope> s0Ancestors = new ArrayList<Scope>();
+		Scope s0Ancestor = s0;
+		Scope s1Ancestor = s1;
+
+		if (s0 == null) {
+			return s1;
+		} else if (s1 == null) {
+			return s0;
+		}
+		s0Ancestors.add(s0Ancestor);
+		while (s0Ancestor.parent() != null) {
+			s0Ancestor = s0Ancestor.parent();
+			s0Ancestors.add(s0Ancestor);
+		}
+		while (true) {
+			if (s0Ancestors.contains(s1Ancestor)) {
+				return s1Ancestor;
+			}
+			s1Ancestor = s1Ancestor.parent();
+		}
+	}
+
+	private CIVLPrimitiveType primitiveType(PrimitiveTypeKind kind,
+			SymbolicType dynamicType) {
+		CIVLPrimitiveType result;
+		NumericExpression size = null;
+		BooleanExpression fact = null;
+
+		if (dynamicType != null)
+			dynamicType = (SymbolicType) universe.canonic(dynamicType);
+		if (kind != PrimitiveTypeKind.VOID)
+			size = sizeofExpression(kind);
+		if (size == null)
+			fact = universe.trueExpression();
+		else
+			fact = universe.lessThan(universe.zeroInt(), size);
+		fact = (BooleanExpression) universe.canonic(fact);
+		result = new CommonPrimitiveType(kind, dynamicType, size, fact);
+		return result;
+	}
+
+	private NumericExpression sizeofExpression(PrimitiveTypeKind kind) {
+		NumericExpression result = (NumericExpression) universe
+				.symbolicConstant(universe.stringObject("SIZEOF_" + kind),
+						universe.integerType());
+
+		result = (NumericExpression) universe.canonic(result);
+		return result;
+	}
+
+	/**
+	 * 
+	 * @return The size of the top conditional expression queue
+	 */
+	private int sizeofTopConditionalExpressionQueue() {
+		if (conditionalExpressions.isEmpty())
+			return 0;
+		return conditionalExpressions.peek().size();
+	}
+	
+	/**
+	 * Generate a temporal variable for translating away conditional expression
+	 * 
+	 * @param kind
+	 *            The temporal variable kind
+	 * @param scope
+	 *            The scope of the temporal variable
+	 * @param source
+	 *            The CIVL source of the conditional expression
+	 * @param type
+	 *            The CIVL type of the conditional expression
+	 * @return The variable expression referring to the temporal variable
+	 */
+	private VariableExpression tempVariable(TempVariableKind kind, Scope scope,
+			CIVLSource source, CIVLType type) {
+		String name = "";
+		int vid = scope.numVariables();
+		StringObject stringObject;
+		Variable variable;
+		VariableExpression result;
+
+		switch (kind) {
+		case CONDITIONAL:
+			name = CONDITIONAL_VARIABLE_PREFIX
+					+ this.conditionalExpressionCounter++;
+			break;
+		default:
+		}
+		stringObject = (StringObject) universe.canonic(universe
+				.stringObject(name));
+		variable = new CommonVariable(source, type, new CommonIdentifier(
+				source, stringObject), vid);
+		result = new CommonVariableExpression(source, variable);
+		scope.addVariable(variable);
+		((CommonVariableExpression) result).setExpressionType(variable.type());
+		return result;
+	}
+
+	/**
+	 * generate undefined value of a certain type
+	 * 
+	 * @param type
+	 * @return
+	 */
+	private SymbolicExpression undefinedValue(SymbolicType type) {
+		SymbolicExpression result = universe.symbolicConstant(
+				universe.stringObject("UNDEFINED"), type);
+
+		result = universe.canonic(result);
+		return result;
+	}
+
 }

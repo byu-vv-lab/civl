@@ -111,6 +111,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 * @param location
 	 *            The new location to add.
 	 */
+	@Override
 	public void addLocation(Location location) {
 		locations.add(location);
 	}
@@ -119,6 +120,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 * @param statement
 	 *            The new statement to add.
 	 */
+	@Override
 	public void addStatement(Statement statement) {
 		statements.add(statement);
 	}
@@ -126,13 +128,20 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	/**
 	 * @return The scope containing this function.
 	 */
+	@Override
 	public Scope containingScope() {
 		return containingScope;
+	}
+	
+	@Override
+	public boolean isSystem() {
+		return isSystem;
 	}
 	
 	/**
 	 * @return The set of locations in this function.
 	 */
+	@Override
 	public Set<Location> locations() {
 		return locations;
 	}
@@ -148,6 +157,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	/**
 	 * @return The name of this function.
 	 */
+	@Override
 	public Identifier name() {
 		return name;
 	}
@@ -155,6 +165,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	/**
 	 * @return The outermost local scope in this function.
 	 */
+	@Override
 	public Scope outerScope() {
 		return outerScope;
 	}
@@ -162,6 +173,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	/**
 	 * @return The list of parameters.
 	 */
+	@Override
 	public List<Variable> parameters() {
 		return parameters;
 	}
@@ -169,6 +181,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	/**
 	 * @return The postcondition for this function. Null if not set.
 	 */
+	@Override
 	public Expression postcondition() {
 		return postcondition;
 	}
@@ -176,162 +189,11 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	/**
 	 * @return The precondition for this function. Null if not set.
 	 */
+	@Override
 	public Expression precondition() {
 		return precondition;
 	}
-
-	/**
-	 * @return The return type of this function.
-	 */
-	public CIVLType returnType() {
-		return returnType;
-	}
-
-	/**
-	 * @return The set of scopes in this function.
-	 */
-	public Set<Scope> scopes() {
-		return scopes;
-	}
 	
-	/**
-	 * @param locations
-	 *            The set of locations in this function.
-	 */
-	public void setLocations(Set<Location> locations) {
-		this.locations = locations;
-	}
-	
-	/**
-	 * @param name
-	 *            The name of this function.
-	 */
-	public void setName(Identifier name) {
-		this.name = name;
-	}
-	
-	/**
-	 * @param startLocation
-	 *            The first location in this function.
-	 */
-	public void setStartLocation(Location startLocation) {
-		this.startLocation = startLocation;
-		if (!locations.contains(startLocation)) {
-			locations.add(startLocation);
-		}
-	}
-	
-	/**
-	 * @param statements
-	 *            The set of statements in this function.
-	 */
-	public void setStatements(Set<Statement> statements) {
-		this.statements = statements;
-	}
-
-	/**
-	 * @return The first location in this function.
-	 */
-	public Location startLocation() {
-		return startLocation;
-	}
-	
-	/**
-	 * @return The set of statements in this function.
-	 */
-	public Set<Statement> statements() {
-		return statements;
-	}
-
-	
-	
-	
-	
-
-	
-
-	
-
-	
-
-	
-	
-
-
-
-	
-
-	
-
-	
-
-	
-
-	/**
-	 * @param parameters
-	 *            The list of parameters.
-	 */
-	public void setParameters(List<Variable> parameters) {
-		this.parameters = parameters;
-	}
-
-	/**
-	 * @param returnType
-	 *            The return type of this function.
-	 */
-	public void setReturnType(CIVLType returnType) {
-		this.returnType = returnType;
-	}
-
-	/**
-	 * @param scopes
-	 *            The set of scopes in this function.
-	 */
-	public void setScopes(Set<Scope> scopes) {
-		this.scopes = scopes;
-	}
-
-	/**
-	 * @param outerScope
-	 *            The outermost local scope of this function.
-	 */
-	public void setOuterScope(Scope outerScope) {
-		this.outerScope = outerScope;
-	}
-
-	/**
-	 * @param containingScope
-	 *            The scope containing this function.
-	 */
-	public void setContainingScope(Scope containingScope) {
-		this.containingScope = containingScope;
-	}
-
-	/**
-	 * @param precondition
-	 *            The precondition for this function.
-	 */
-	public void setPrecondition(Expression precondition) {
-		this.precondition = precondition;
-	}
-
-	/**
-	 * @param postcondition
-	 *            The postcondition for this function.
-	 */
-	public void setPostcondition(Expression postcondition) {
-		this.postcondition = postcondition;
-	}
-
-	/**
-	 * @param model
-	 *            The Model to which this function belongs.
-	 */
-	@Override
-	public void setModel(Model model) {
-		this.model = model;
-	}
-
 	/**
 	 * Print the function.
 	 * 
@@ -365,14 +227,146 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		}
 		out.flush();
 	}
+	
+	public void purelyLocalAnalysis() {
+		Scope funcScope = this.outerScope;
 
+		for (Location loc : this.locations) {
+			Iterable<Statement> stmts = loc.outgoing();
 
-
-	@Override
-	public boolean isSystem() {
-		return isSystem;
+			for (Statement s : stmts) {
+				s.purelyLocalAnalysisOfVariables(funcScope);
+				// TODO functions that are never spawned are to be executed in
+				// the same process as the caller
+			}
+		}
 	}
 
+	/**
+	 * @return The return type of this function.
+	 */
+	@Override
+	public CIVLType returnType() {
+		return returnType;
+	}
+
+	/**
+	 * @return The set of scopes in this function.
+	 */
+	@Override
+	public Set<Scope> scopes() {
+		return scopes;
+	}
+	
+	/**
+	 * @param containingScope
+	 *            The scope containing this function.
+	 */
+	@Override
+	public void setContainingScope(Scope containingScope) {
+		this.containingScope = containingScope;
+	}
+	
+	/**
+	 * @param locations
+	 *            The set of locations in this function.
+	 */
+	@Override
+	public void setLocations(Set<Location> locations) {
+		this.locations = locations;
+	}
+	
+	/**
+	 * @param model
+	 *            The Model to which this function belongs.
+	 */
+	@Override
+	public void setModel(Model model) {
+		this.model = model;
+	}
+	
+	/**
+	 * @param name
+	 *            The name of this function.
+	 */
+	@Override
+	public void setName(Identifier name) {
+		this.name = name;
+	}
+	
+	/**
+	 * @param outerScope
+	 *            The outermost local scope of this function.
+	 */
+	@Override
+	public void setOuterScope(Scope outerScope) {
+		this.outerScope = outerScope;
+	}
+	
+	/**
+	 * @param postcondition
+	 *            The postcondition for this function.
+	 */
+	public void setPostcondition(Expression postcondition) {
+		this.postcondition = postcondition;
+	}
+	
+	/**
+	 * @param precondition
+	 *            The precondition for this function.
+	 */
+	public void setPrecondition(Expression precondition) {
+		this.precondition = precondition;
+	}
+	
+	/**
+	 * @param parameters
+	 *            The list of parameters.
+	 */
+	@Override
+	public void setParameters(List<Variable> parameters) {
+		this.parameters = parameters;
+	}
+	
+	/**
+	 * @param returnType
+	 *            The return type of this function.
+	 */
+	@Override
+	public void setReturnType(CIVLType returnType) {
+		this.returnType = returnType;
+	}
+	
+	/**
+	 * @param scopes
+	 *            The set of scopes in this function.
+	 */
+	@Override
+	public void setScopes(Set<Scope> scopes) {
+		this.scopes = scopes;
+	}
+	
+	/**
+	 * @param startLocation
+	 *            The first location in this function.
+	 */
+	@Override
+	public void setStartLocation(Location startLocation) {
+		this.startLocation = startLocation;
+		if (!locations.contains(startLocation)) {
+			locations.add(startLocation);
+		}
+	}
+	
+	/**
+	 * @param statements
+	 *            The set of statements in this function.
+	 */
+	@Override
+	public void setStatements(Set<Statement> statements) {
+		this.statements = statements;
+	}
+	
 	@Override
 	public void simplify() {
 		ArrayList<Location> oldLocations = new ArrayList<Location>(
@@ -440,24 +434,20 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		this.locations = newLocations;
 	}
 
-	public void purelyLocalAnalysis() {
-		Scope funcScope = this.outerScope;
-
-		for (Location loc : this.locations) {
-			Iterable<Statement> stmts = loc.outgoing();
-
-			for (Statement s : stmts) {
-				s.purelyLocalAnalysisOfVariables(funcScope);
-				// TODO functions that are never spawned are to be executed in
-				// the same process as the caller
-				// if(s instanceof CallOrSpawnStatement){
-				// CallOrSpawnStatement call = (CallOrSpawnStatement) s;
-				// if(call.isSpawn()){
-				// spawnFuncs.add(call.function().name().name());
-				// }
-				// }
-			}
-		}
+	/**
+	 * @return The first location in this function.
+	 */
+	@Override
+	public Location startLocation() {
+		return startLocation;
+	}
+	
+	/**
+	 * @return The set of statements in this function.
+	 */
+	@Override
+	public Set<Statement> statements() {
+		return statements;
 	}
 
 	/************************** Methods from Object *************************/

@@ -158,7 +158,6 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			state = executor.executeAtomicStatements(state, pid,
 					currentLocation, true, printTransitions);
 			break;
-
 		case LEAVE:
 			out.println();
 			out.print(state + " --proc");
@@ -221,7 +220,6 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				}
 			}
 		}
-		
 		if (printTransitions) {
 			out.print("--> ");
 		}

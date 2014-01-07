@@ -76,11 +76,14 @@ public class SimpleTransition extends Transition {
 		CIVLSource source = statement.getSource();
 		String result = "proc " + pid + ": \n";
 		
-		result += "  " + statement.source().id() + "->"
-				+ statement.target().id() + ": " + statement.toString();
+		result += "  " + statement.source().id() + "->";
+		if (statement.target() != null)
+			result += statement.target().id() + ": ";
+		else
+			result += "END: ";
+		result += statement.toString();
 		if (source != null)
 			result += " at " + source.getSummary(); 
-		result += ";";
 		return result;
 	}
 
