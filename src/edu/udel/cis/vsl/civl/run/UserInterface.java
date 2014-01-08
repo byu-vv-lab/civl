@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.abc.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.Activator;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
 import edu.udel.cis.vsl.civl.CIVL;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -537,6 +538,8 @@ public class UserInterface {
 			throws CommandLineException, ABCException, IOException {
 		checkFilenames(1, config);
 		extractModel(out, config, config.getFreeArg(1));
+		if(showShortFileNameList(config))
+			TokenUtils.printShorterFileNameMap(out);
 		return true;
 	}
 
@@ -574,6 +577,8 @@ public class UserInterface {
 				showProverQueriesO));
 		newConfig.read(config);
 		model = extractModel(out, newConfig, sourceFilename);
+		if(showShortFileNameList(config))
+			TokenUtils.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
 		result = replayer.run();
 		printStats(out);
@@ -592,6 +597,8 @@ public class UserInterface {
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
 		model = extractModel(out, config, filename);
+		if(showShortFileNameList(config))
+			TokenUtils.printShorterFileNameMap(out);
 		player = TracePlayer.randomPlayer(config, model, out);
 		out.println("\nRunning random simulation with seed " + player.getSeed()
 				+ " ...");
@@ -613,6 +620,8 @@ public class UserInterface {
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
 		model = extractModel(out, config, filename);
+		if(showShortFileNameList(config))
+			TokenUtils.printShorterFileNameMap(out);
 		verifier = new Verifier(config, model, out);
 		result = verifier.run();
 		printStats(out);
@@ -631,5 +640,20 @@ public class UserInterface {
 
 	private void setToDefault(GMCConfiguration config, Option option) {
 		config.setScalarValue(option, option.defaultValue());
+	}
+
+	private boolean showShortFileNameList(GMCConfiguration config) {
+		boolean parse = "parse".equals(config.getFreeArg(0));
+		boolean debug = config.isTrue(debugO);
+		boolean verbose = config.isTrue(verboseO);
+		boolean showModel = config.isTrue(showModelO);
+		boolean showSavedStates = config.isTrue(showSavedStatesO);
+		boolean showStates = config.isTrue(showStatesO);
+		boolean showTransitions = config.isTrue(showTransitionsO);
+
+		if (parse || debug || verbose || showModel || showSavedStates
+				|| showStates || showTransitions)
+			return true;
+		return false;
 	}
 }

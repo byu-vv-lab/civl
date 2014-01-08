@@ -152,24 +152,31 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		currentLocation = p.getLocation();
 		switch (currentLocation.atomicKind()) {
 		case ENTER:
-			out.println();
-			out.print(state + " --proc");
-			out.println(pid+ ":");
+			if (printTransitions) {
+				out.println();
+				out.print(state + " --proc");
+				out.println(pid + ":");
+			}
 			state = executor.executeAtomicStatements(state, pid,
 					currentLocation, true, printTransitions);
 			break;
 		case LEAVE:
-			out.println();
-			out.print(state + " --proc");
-			out.println(pid+ ":");
+			if (printTransitions) {
+				out.println();
+				out.print(state + " --proc");
+				out.println(pid + ":");
+			}
 			state = executor.executeAtomicStatements(state, pid,
 					currentLocation, true, printTransitions);
 			break;
 		case DENTER:
-			out.println();
-			out.print(state + " --proc");
-			out.println(pid+ ":");
-			state = executor.executeDAtomicBlock(state, pid, currentLocation, printTransitions);
+			if (printTransitions) {
+				out.println();
+				out.print(state + " --proc");
+				out.println(pid + ":");
+			}
+			state = executor.executeDAtomicBlock(state, pid, currentLocation,
+					printTransitions);
 			break;
 		case DLEAVE:
 			throw new CIVLInternalException("Unreachable",
@@ -223,7 +230,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		if (printTransitions) {
 			out.print("--> ");
 		}
-		
+
 		state = stateFactory.collectScopes(state);
 		// TODO: try this simplification out, see how it works:
 		if (simplify) {

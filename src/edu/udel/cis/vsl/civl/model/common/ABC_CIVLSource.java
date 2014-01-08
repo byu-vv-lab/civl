@@ -27,17 +27,22 @@ public class ABC_CIVLSource implements CIVLSource {
 
 	@Override
 	public String getLocation() {
-		return abcSource.getLocation();
+		return abcSource.getLocation(true);
 	}
 
 	@Override
 	public String getSummary() {
-		return abcSource.getSummary();
+		return abcSource.getSummary(true);
 	}
 
 	@Override
 	public void print(PrintStream out) {
 		abcSource.print(out);
+	}
+	
+	@Override
+	public void printShorterFileNameMap(PrintStream out) {
+		abcSource.printShorterFileNameMap(out);
 	}
 
 	/************************** Methods from Object *************************/
