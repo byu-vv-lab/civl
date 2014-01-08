@@ -197,6 +197,8 @@ public class ImmutableProcessState implements ProcessState {
 
 	@Override
 	public Location getLocation() {
+		if(callStack.length == 0)
+			return null;
 		return callStack[0].location();
 	}
 

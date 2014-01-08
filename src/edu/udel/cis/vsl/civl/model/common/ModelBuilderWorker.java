@@ -132,6 +132,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonType;
 import edu.udel.cis.vsl.civl.run.UserInterface;
@@ -2512,18 +2513,15 @@ public class ModelBuilderWorker {
 			result = functionMap.get(entity);
 		else
 			result = function;
-
 		if (result == null)
 			throw new CIVLInternalException("Did not process declaration",
 					factory.sourceOf(functionNode));
-
 		if (function == null)
 			functionInfo = new FunctionInfo(result);
 		functionBodyNode = functionNode.getBody();
 		Scope scope = result.outerScope();
 		body = translateStatementNode(scope, functionBodyNode);
-
-		if (body == null || !(body.lastStatement() instanceof ReturnStatement)) {
+		if (!containsReturn(body)) {
 			CIVLSource endSource = factory.sourceOfEnd(functionNode.getBody());
 			Location returnLocation = factory.location(endSource,
 					result.outerScope());
@@ -2535,12 +2533,46 @@ public class ModelBuilderWorker {
 			else
 				body = returnFragment;
 		}
-
 		if (initializationFragment != null) {
 			body = initializationFragment.combineWith(body);
 		}
-
 		functionInfo.completeFunction(body);
+	}
+	
+	private boolean containsReturn(Fragment functionBody){
+		if(functionBody == null)
+			return false;
+		if(functionBody.lastStatement() instanceof ReturnStatement)
+			return true;
+		if(functionBody.lastStatement() instanceof StatementSet){
+			StatementSet lastStatements = (StatementSet) functionBody.lastStatement();
+			
+			for(Statement statement : lastStatements.statements()){
+				if(!(statement instanceof ReturnStatement))
+					return false;
+			}
+			return true;
+		}
+		if(functionBody.lastStatement().source().getNumOutgoing() == 1)
+		{
+			Location lastLocation = functionBody.lastStatement().source();
+			Set<Integer> locationIds = new HashSet<Integer>();
+			
+			while(lastLocation.atomicKind() == AtomicKind.LEAVE || lastLocation.atomicKind() == AtomicKind.DLEAVE){
+				locationIds.add(lastLocation.id());
+				if(lastLocation.getNumIncoming() == 1){
+					lastLocation = lastLocation.getIncoming(0).source();
+					if(locationIds.contains(lastLocation.id()))
+						return false;
+				}else{
+					return false;
+				}
+			}
+			if(lastLocation.getNumOutgoing() == 1 && lastLocation.getOutgoing(0) instanceof ReturnStatement){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

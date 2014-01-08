@@ -16,6 +16,7 @@ void dine(int id) {
   int left = id;
   int right = (id + 1) % n;
 
+  $atomic{
   while (1) {
     if (id % 2 == 0) {
       $when (forks[left] == 0) {forks[left] = 1;}
@@ -28,7 +29,7 @@ void dine(int id) {
       forks[right] = 0;
       forks[left] = 0;
     }
-  }
+  }}
 }
 
 /* Put all forks on the table. */
@@ -38,10 +39,11 @@ void init() {
 
 void main() {
   $proc philosophers[n];
-  
+  $atomic{
   init();
   for (int i = 0; i < n; i++)
-    philosophers[i] = $spawn dine(i);
+    philosophers[i] = $spawn dine(i);}
+  $atomic{
   for (int i = 0; i < n; i++)
-    $wait philosophers[i];
+    $wait philosophers[i];}
 }

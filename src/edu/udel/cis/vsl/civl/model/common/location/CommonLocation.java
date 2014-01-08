@@ -15,9 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
@@ -29,10 +27,14 @@ import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 public class CommonLocation extends CommonSourceable implements Location {
 
 	/**
-	 * Atomic flags of a location: NONE: no atomic boundary; ENTER/DENTER: the
-	 * location is the starting point of an atomic/a deterministic atomic;
-	 * LEAVE/DELAVE: the location is the ending point of an atomic/a
-	 * deterministic atomic.
+	 * Atomic flags of a location:
+	 * <ul>
+	 * <li>NONE: no $atomic/$atom boundary;</li>
+	 * <li>ENTER/DENTER: the location is the starting point of an $atomic/$atom
+	 * block;</li>
+	 * <li>LEAVE/DELAVE: the location is the ending point of an $atomic/$atom
+	 * block.</li>
+	 * </ul>
 	 * 
 	 * @author Zheng
 	 * 
@@ -41,19 +43,74 @@ public class CommonLocation extends CommonSourceable implements Location {
 		NONE, ENTER, LEAVE, DENTER, DLEAVE
 	}
 
-	private int id;
-	private Scope scope;
-	private ArrayList<Statement> incoming = new ArrayList<>();
-	private ArrayList<Statement> outgoing = new ArrayList<>();
-	private CIVLFunction function;
-	private boolean purelyLocal = false;
-	private AtomicKind atomicKind = AtomicKind.NONE;
+	/************************* Instance Fields *************************/
+
+	/**
+	 * Store the static analysis result. True iff all outgoing statements from
+	 * this location are purely local.
+	 */
 	private boolean allOutgoingPurelyLocal = false;
+
+	/**
+	 * The atomic kind of this location, initialized as NONE.
+	 */
+	private AtomicKind atomicKind = AtomicKind.NONE;
+
+	/**
+	 * The function that this location belongs to
+	 */
+	private CIVLFunction function;
+
+	/**
+	 * The unique id of this location
+	 */
+	private int id;
+
+	/**
+	 * The list of incoming statements, i.e., statements that targeting at this
+	 * location.
+	 */
+	private ArrayList<Statement> incoming = new ArrayList<>();
+
+	/**
+	 * Store the static loop analysis result. True iff this location is possible
+	 * to form a loop.
+	 */
 	private boolean loopPossible = false;
+
+	/**
+	 * The list of outgoing statements, i.e., statements that has this location
+	 * as the source location.
+	 */
+	private ArrayList<Statement> outgoing = new ArrayList<>();
+
+	/**
+	 * The status denoting if this location is purely local, initialized as
+	 * false. A location is considered as purely local if it satisfies the
+	 * following conditions.
+	 * <ol>
+	 * <li>it has exactly one incoming edge; (to avoid loop)</li>
+	 * <li>if it is not the starting point of an $atomic/$atom block, then all
+	 * its outgoing statements should be purely local;</li>
+	 * <li>if it is the starting point of an $atomic/$atom bloc, then all
+	 * statements reachable within that $atomic/$atom block are purely local.</li>
+	 * </ol>
+	 */
+	private boolean purelyLocal = false;
+
+	/**
+	 * The static scope that this location belongs to.
+	 */
+	private Scope scope;
+
+	/************************** Constructors *************************/
 
 	/**
 	 * The parent of all locations.
 	 * 
+	 * @param source
+	 *            The corresponding source (file, line, column, text, etc) of
+	 *            this location
 	 * @param scope
 	 *            The scope containing this location.
 	 * @param id
@@ -66,137 +123,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 		this.function = scope.function();
 	}
 
-	/**
-	 * @return The unique ID number of this location.
-	 */
-	public int id() {
-		return id;
-	}
-
-	/**
-	 * @return The scope of this location.
-	 */
-	public Scope scope() {
-		return scope;
-	}
-
-	/**
-	 * @return The function containing this location.
-	 */
-	public CIVLFunction function() {
-		return function;
-	}
-
-	/**
-	 * @return The set of incoming statements.
-	 */
-	public Iterable<Statement> incoming() {
-		return incoming;
-	}
-
-	/**
-	 * @return The set of outgoing statements.
-	 */
-	public Iterable<Statement> outgoing() {
-		return outgoing;
-	}
-
-	/**
-	 * Set the unique ID number of this location.
-	 * 
-	 * @param id
-	 *            The unique ID number of this location.
-	 */
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	/**
-	 * @param scope
-	 *            The scope of this location.
-	 */
-	public void setScope(Scope scope) {
-		this.scope = scope;
-		this.function = scope.function();
-	}
-
-	/**
-	 * Print this location and all outgoing transitions.
-	 * 
-	 * @param prefix
-	 *            The prefix string for all lines of this printout.
-	 * @param out
-	 *            The PrintStream to use for printing this location.
-	 */
-	public void print(String prefix, PrintStream out) {
-		String targetLocation = null;
-		String guardString = "(true)";
-		String gotoString;
-
-		String headString = null;
-		if (this.purelyLocal) {
-			headString = prefix + "location " + id() + " (scope: " + scope.id()
-					+ ") #";
-		} else
-			headString = prefix + "location " + id() + " (scope: " + scope.id()
-					+ ")";
-		if (this.loopPossible)
-			headString = headString + "loop";
-		switch (this.atomicKind) {
-		case ENTER:
-			headString = headString + "*enter atomic block;";
-			break;
-		case DENTER:
-			headString = headString + "*enter datomic block;";
-			break;
-		case LEAVE:
-			headString = headString + "*leave atomic block;";
-			break;
-		case DLEAVE:
-			headString = headString + "*leave datomic block;";
-		default:
-		}
-		out.println(headString);
-		for (Statement statement : outgoing) {
-			if (statement.target() != null) {
-				targetLocation = "" + statement.target().id();
-			}
-			if (statement.guard() != null) {
-				guardString = "(" + statement.guard() + ")";
-			}
-			// if (statement.isPurelyLocal()) {
-			// gotoString = prefix + "| " + "when " + guardString + " "
-			// + statement + " @ "
-			// + statement.getSource().getLocation() + " ; #";
-			// } else
-			gotoString = prefix + "| " + "when " + guardString + " "
-					+ statement + " @ " + statement.getSource().getLocation()
-					+ " ;";
-			if (targetLocation != null) {
-				gotoString += " goto location " + targetLocation;
-			}
-			out.println(gotoString);
-		}
-	}
-
-	@Override
-	public String toString() {
-		return "Location " + id;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + id;
-		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
-		return result;
-	}
+	/************************** Methods from Location *************************/
 
 	@Override
 	public void addIncoming(Statement statement) {
@@ -209,21 +136,48 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
-	public void removeOutgoing(Statement statement) {
-		outgoing.remove(statement);
+	public boolean allOutgoingPurelyLocal() {
+		return this.allOutgoingPurelyLocal;
 	}
 
 	@Override
-	public void removeIncoming(Statement statement) {
-		incoming.remove(statement);
+	public AtomicKind atomicKind() {
+		return this.atomicKind;
 	}
 
 	@Override
-	public boolean equals(Object that) {
-		if (that instanceof CommonLocation) {
-			return (((CommonLocation) that).id() == id);
-		}
-		return false;
+	public boolean enterAtomic() {
+		return this.atomicKind == AtomicKind.ENTER;
+	}
+
+	@Override
+	public boolean enterDatomic() {
+		return this.atomicKind == AtomicKind.DENTER;
+	}
+
+	@Override
+	public CIVLFunction function() {
+		return function;
+	}
+
+	@Override
+	public Statement getIncoming(int i) {
+		return incoming.get(i);
+	}
+
+	@Override
+	public int getNumIncoming() {
+		return incoming.size();
+	}
+
+	@Override
+	public int getNumOutgoing() {
+		return outgoing.size();
+	}
+
+	@Override
+	public Statement getOutgoing(int i) {
+		return outgoing.get(i);
 	}
 
 	@Override
@@ -246,28 +200,96 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
-	public int getNumOutgoing() {
-		return outgoing.size();
+	public int id() {
+		return id;
 	}
 
 	@Override
-	public int getNumIncoming() {
-		return incoming.size();
+	public Iterable<Statement> incoming() {
+		return incoming;
 	}
 
 	@Override
-	public Statement getOutgoing(int i) {
-		return outgoing.get(i);
-	}
-
-	@Override
-	public Statement getIncoming(int i) {
-		return incoming.get(i);
+	public boolean isLoopPossible() {
+		return this.loopPossible;
 	}
 
 	@Override
 	public boolean isPurelyLocal() {
 		return this.purelyLocal;
+	}
+
+	@Override
+	public boolean leaveAtomic() {
+		return this.atomicKind == AtomicKind.LEAVE;
+	}
+
+	@Override
+	public boolean leaveDatomic() {
+		return this.atomicKind == AtomicKind.DLEAVE;
+	}
+
+	@Override
+	public void loopAnalysis() {
+		if (this.loopPossible) {
+			// this is the loop entrance of a loop statement
+			// check if it is finite
+		} else {
+			// this is not the loop entrance of a loop statement, check if it is
+			// possible to form a loop by other statements like goto
+		}
+	}
+
+	@Override
+	public Iterable<Statement> outgoing() {
+		return outgoing;
+	}
+
+	@Override
+	public void print(String prefix, PrintStream out) {
+		String targetLocation = null;
+		String guardString = "(true)";
+		String gotoString;
+
+		String headString = null;
+		if (this.purelyLocal) {
+			headString = prefix + "location " + id() + " (scope: " + scope.id()
+					+ ") #";
+		} else
+			headString = prefix + "location " + id() + " (scope: " + scope.id()
+					+ ")";
+		if (this.loopPossible)
+			headString = headString + "LOOP;";
+		switch (this.atomicKind) {
+		case ENTER:
+			headString = headString + "ENTER_ATOMIC;";
+			break;
+		case DENTER:
+			headString = headString + "ENTER_ATOM;";
+			break;
+		case LEAVE:
+			headString = headString + "LEAVE_ATOMIC;";
+			break;
+		case DLEAVE:
+			headString = headString + "LEAVE_ATOM;";
+		default:
+		}
+		out.println(headString);
+		for (Statement statement : outgoing) {
+			if (statement.target() != null) {
+				targetLocation = "" + statement.target().id();
+			}
+			if (statement.guard() != null) {
+				guardString = "(" + statement.guard() + ")";
+			}
+			gotoString = prefix + "| " + "when " + guardString + " "
+					+ statement + " @ " + statement.getSource().getLocation()
+					+ " ;";
+			if (targetLocation != null) {
+				gotoString += " goto location " + targetLocation;
+			}
+			out.println(gotoString);
+		}
 	}
 
 	@Override
@@ -289,9 +311,9 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 			do {
 				Statement s = newLocation.getOutgoing(0);
-				
-				if(s instanceof CallOrSpawnStatement){
-					if(((CallOrSpawnStatement)s).isCall())
+
+				if (s instanceof CallOrSpawnStatement) {
+					if (((CallOrSpawnStatement) s).isCall())
 						this.purelyLocal = false;
 					return;
 				}
@@ -317,8 +339,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 			do {
 				Statement s = newLocation.getOutgoing(0);
 
-				if(s instanceof CallOrSpawnStatement){
-					if(((CallOrSpawnStatement)s).isCall())
+				if (s instanceof CallOrSpawnStatement) {
+					if (((CallOrSpawnStatement) s).isCall())
 						this.purelyLocal = false;
 					return;
 				}
@@ -337,59 +359,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 			} while (newLocation != null && !atomicFlags.isEmpty());
 			this.purelyLocal = true;
 		} else {
-			Statement s = getOutgoing(0);
-
-			if (s instanceof ChooseStatement || s instanceof WaitStatement)
-				this.purelyLocal = false;
-			else
-				this.purelyLocal = s.isPurelyLocal();
+			this.purelyLocal = true;
+			for (Statement s : this.outgoing) {
+				this.purelyLocal = this.purelyLocal && s.isPurelyLocal();
+			}
 		}
-	}
-
-	@Override
-	public void setEnterAtomic(boolean deterministic) {
-		if (deterministic)
-			this.atomicKind = AtomicKind.DENTER;
-		else
-			this.atomicKind = AtomicKind.ENTER;
-	}
-
-	@Override
-	public void setLeaveAtomic(boolean deterministic) {
-		if (deterministic)
-			this.atomicKind = AtomicKind.DLEAVE;
-		else
-			this.atomicKind = AtomicKind.LEAVE;
-	}
-
-	@Override
-	public boolean enterAtomic() {
-		return this.atomicKind == AtomicKind.ENTER;
-	}
-
-	@Override
-	public boolean leaveAtomic() {
-		return this.atomicKind == AtomicKind.LEAVE;
-	}
-
-	@Override
-	public boolean enterDatomic() {
-		return this.atomicKind == AtomicKind.DENTER;
-	}
-
-	@Override
-	public boolean leaveDatomic() {
-		return this.atomicKind == AtomicKind.DLEAVE;
-	}
-
-	@Override
-	public AtomicKind atomicKind() {
-		return this.atomicKind;
-	}
-
-	@Override
-	public boolean allOutgoingPurelyLocal() {
-		return this.allOutgoingPurelyLocal;
 	}
 
 	@Override
@@ -430,13 +404,74 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
-	public boolean isLoopPossible() {
-		return this.loopPossible;
+	public void removeIncoming(Statement statement) {
+		incoming.remove(statement);
+	}
+
+	@Override
+	public void removeOutgoing(Statement statement) {
+		outgoing.remove(statement);
+	}
+
+	@Override
+	public Scope scope() {
+		return scope;
+	}
+
+	@Override
+	public void setEnterAtomic(boolean deterministic) {
+		if (deterministic)
+			this.atomicKind = AtomicKind.DENTER;
+		else
+			this.atomicKind = AtomicKind.ENTER;
+	}
+
+	@Override
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	@Override
+	public void setLeaveAtomic(boolean deterministic) {
+		if (deterministic)
+			this.atomicKind = AtomicKind.DLEAVE;
+		else
+			this.atomicKind = AtomicKind.LEAVE;
 	}
 
 	// TODO improve the static analysis of loop locations
 	@Override
 	public void setLoopPossible(boolean possible) {
 		this.loopPossible = possible;
+	}
+
+	@Override
+	public void setScope(Scope scope) {
+		this.scope = scope;
+		this.function = scope.function();
+	}
+
+	/************************** Methods from Object *************************/
+
+	@Override
+	public boolean equals(Object that) {
+		if (that instanceof CommonLocation) {
+			return (((CommonLocation) that).id() == id);
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + id;
+		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
+		return result;
+	}
+
+	@Override
+	public String toString() {
+		return "Location " + id;
 	}
 }

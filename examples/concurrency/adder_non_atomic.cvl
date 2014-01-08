@@ -1,5 +1,5 @@
 /*
- * civl verify -inputB=5 adder.cvl
+ * civl verify -inputB=5 adder_non_atomic.cvl
  * */
 #include <civlc.h>
 
@@ -11,10 +11,9 @@ $input double a[N];
 double adderSeq(double *p, int n) {
   double s = 0.0;
   
-  $atomic{
   for (int i = 0; i < n; i++) {
     s += p[i]; 
-  }}
+  }
   return s;
 }
 
@@ -26,21 +25,17 @@ double adderPar(double *p, int n) {
   void worker(int i) {
     double t;
 
-    $atomic{
     $when (mutex == 0) mutex = 1;
     t = s;
     t += p[i];
     s = t;
-    mutex = 0;}
+    mutex = 0;
   }
   
-  $atomic{
   for (int j = 0; j < n; j++)
-    workers[j] = $spawn worker(j);}
-  
-  $atomic{
+    workers[j] = $spawn worker(j);
   for (int j = 0; j < n; j++)
-    $wait workers[j];}
+    $wait workers[j];
   return s;
 }
 

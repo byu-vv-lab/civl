@@ -202,6 +202,8 @@ public class Enabler implements
 		Location pLocation = p.getLocation();
 		ArrayList<Transition> transitions = new ArrayList<Transition>();
 
+		if(pLocation == null)
+			return transitions;
 		for (Statement s : pLocation.outgoing()) {
 			BooleanExpression newPathCondition = executor.newPathCondition(
 					state, pid, s);

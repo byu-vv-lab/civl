@@ -35,12 +35,12 @@ public interface Location extends Sourceable {
 	public CIVLFunction function();
 
 	/**
-	 * @return The set of incoming statements.
+	 * @return The iterable object of incoming statements.
 	 */
 	public Iterable<Statement> incoming();
 
 	/**
-	 * @return The set of outgoing statements.
+	 * @return The iterable object of outgoing statements.
 	 */
 	public Iterable<Statement> outgoing();
 
@@ -187,10 +187,32 @@ public interface Location extends Sourceable {
 	 */
 	boolean leaveAtomic();
 
+	/**
+	 * Result might be:
+	 * <ol>
+	 * <li>NONE: a normal location</li>
+	 * <li>ENTER: the start location of an $atomic block</li>
+	 * <li>LEAVE: the end location of an $atomic block</li>
+	 * <li>DENTER: the start location of an $atom block</li>
+	 * <li>LEAVE: the end location of an $atom block</li>
+	 * </ol>
+	 * 
+	 * @return the atomic kind of the location
+	 */
 	AtomicKind atomicKind();
 
+	/**
+	 * This is different from isPurelyLocal(), because the latter is more
+	 * restricted. Because the latter requires the location have exactly one
+	 * incoming edge in order to avoid loop.
+	 * 
+	 * @return True iff every outgoing statement is purely local
+	 */
 	boolean allOutgoingPurelyLocal();
 
+	/**
+	 * Analyze each outgoing statement to see if they are purely local
+	 */
 	void purelyLocalAnalysisForOutgoing();
 
 	/**
@@ -209,4 +231,11 @@ public interface Location extends Sourceable {
 	 *            to be a loop location or not
 	 */
 	void setLoopPossible(boolean possible);
+
+	/**
+	 * Static analysis for possible loops form by this location
+	 * 
+	 * @return
+	 */
+	void loopAnalysis();
 }

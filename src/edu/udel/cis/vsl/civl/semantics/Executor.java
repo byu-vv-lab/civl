@@ -903,7 +903,7 @@ public class Executor {
 		assert atomic || pLocation.isPurelyLocal();
 
 		while ((!atomic && pLocation != null && pLocation.isPurelyLocal())
-				|| atomic) {
+				|| (atomic && pLocation != null)) {
 			if (pLocation.isLoopPossible()) {
 				return newState;
 			}
@@ -1014,18 +1014,20 @@ public class Executor {
 				int pid = p.getPid();
 				boolean resumable = false;
 
-				for (Statement s : pLocation.outgoing()) {
-					Entry<StateStatusKind, State> temp = executeStatement(
-							state, pLocation, s, pid);
+				if (pLocation != null) {
+					for (Statement s : pLocation.outgoing()) {
+						Entry<StateStatusKind, State> temp = executeStatement(
+								state, pLocation, s, pid);
 
-					if (temp.getKey() != StateStatusKind.BLOCKED) {
-						result.add(p.getPid());
-						resumable = true;
-						break;
+						if (temp.getKey() != StateStatusKind.BLOCKED) {
+							result.add(p.getPid());
+							resumable = true;
+							break;
+						}
 					}
+					if (resumable)
+						continue;
 				}
-				if (resumable)
-					continue;
 			}
 		}
 		return result;
