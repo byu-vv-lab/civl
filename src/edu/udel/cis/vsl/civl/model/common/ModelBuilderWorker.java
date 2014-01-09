@@ -1765,7 +1765,7 @@ public class ModelBuilderWorker {
 		} else
 			result = factory
 					.assignStatement(
-							lhs.getSource(),
+							source,
 							location,
 							lhs,
 							arrayToPointer(translateExpressionNode(rhsNode,
