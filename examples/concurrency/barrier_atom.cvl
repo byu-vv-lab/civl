@@ -47,8 +47,7 @@ void main() {
     init();
     for (int i=0; i<N; i++) threads[i] = $spawn run(i);
   }
-  //$atomic {
-    //for (int i=0; i<N; i++) $wait threads[i];
-  //}
-  for (int i=0; i<N; i++) $wait threads[i];
+  $atomic {
+    for (int i=0; i<N; i++) $wait threads[i];
+  }
 }

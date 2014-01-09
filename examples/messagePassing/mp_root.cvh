@@ -20,6 +20,7 @@ void finalize() {
 }
 
 void main() {
+$atomic{
   init();
-  finalize();
+  finalize();}
 }

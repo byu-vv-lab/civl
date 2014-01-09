@@ -32,6 +32,7 @@ void CIVL_Barrier_init(int numProcs, CIVL_Barrier *barrier, int *array) {
 }
 
 void CIVL_barrier(CIVL_Barrier *barrier, int tid) {
+$atomic{
   $when (barrier->lock==0) barrier->lock = 1;
   barrier->in_barrier[tid] = 1;
   barrier->num_in_barrier++;
@@ -42,6 +43,7 @@ void CIVL_barrier(CIVL_Barrier *barrier, int tid) {
   }
   barrier->lock = 0;
   $when (barrier->in_barrier[tid] == 0);
+  }
 }
 
 
@@ -65,7 +67,11 @@ void main() {
     }
   }
   
+  $atomic{
   CIVL_Barrier_init(N, &b, barrier_array);
   for (int i=0; i<N; i++) threads[i] = $spawn run(i);
+  }
+  $atomic{
   for (int i=0; i<N; i++) $wait threads[i];
+  }
 }

@@ -2540,7 +2540,7 @@ public class ModelBuilderWorker {
 	}
 	
 	private boolean containsReturn(Fragment functionBody){
-		if(functionBody == null)
+		if(functionBody == null || functionBody.isEmpty())
 			return false;
 		if(functionBody.lastStatement() instanceof ReturnStatement)
 			return true;
@@ -2553,6 +2553,7 @@ public class ModelBuilderWorker {
 			}
 			return true;
 		}
+		
 		if(functionBody.lastStatement().source().getNumOutgoing() == 1)
 		{
 			Location lastLocation = functionBody.lastStatement().source();
