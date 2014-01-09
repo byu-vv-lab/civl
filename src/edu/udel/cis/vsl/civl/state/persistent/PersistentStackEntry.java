@@ -142,5 +142,4 @@ public class PersistentStackEntry implements StackEntry {
 	public int scope() {
 		return scope;
 	}
-
 }

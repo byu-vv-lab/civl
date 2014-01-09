@@ -15,6 +15,14 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 public class PersistentProcessState extends PersistentObject implements
 		ProcessState {
 
+	/************************* Static Fields *************************/
+
+	/**
+	 * The hash code of this class, used in the hash code method to help
+	 * distinguish hash codes of objects in this class from those in other
+	 * classes. This can help because objects from different persistent classes
+	 * will be mixed in the same hash data structures.
+	 */
 	private static final int classCode = PersistentProcessState.class
 			.hashCode();
 
@@ -73,6 +81,10 @@ public class PersistentProcessState extends PersistentObject implements
 	}
 
 	/******************** Package-private Methods ********************/
+
+	CallStack getCallStack() {
+		return callStack;
+	}
 
 	/**
 	 * Returns process state equivalent to this one except that PID has given

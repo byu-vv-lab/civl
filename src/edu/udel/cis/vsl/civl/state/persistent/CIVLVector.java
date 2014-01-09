@@ -6,19 +6,58 @@ import java.util.Iterator;
 import com.github.krukow.clj_ds.PersistentVector;
 import com.github.krukow.clj_ds.Persistents;
 
+/**
+ * Partial implementation of an immutable vector. Wraps a Clojure
+ * PersistentVector and extends PersistentObject. This combines the Clojure
+ * features with the support for caching hash functions and the Flyweight
+ * Pattern.
+ * 
+ * This class is abstract; subclasses still have to implement {#link
+ * {@link PersistentObject#canonizeChildren(edu.udel.cis.vsl.sarl.IF.SymbolicUniverse, java.util.Map)}
+ * 
+ * @author siegel
+ * 
+ * @param <T>
+ *            any type, the type of the elements of this vector
+ */
 public abstract class CIVLVector<T> extends PersistentObject implements
 		Iterable<T> {
 
+	/************************ Instance Fields ************************/
+
+	/**
+	 * The elements of this vector; a Clojure persistent vector.
+	 */
 	protected PersistentVector<T> values;
 
+	/************************** Constructors *************************/
+
+	/**
+	 * Constructs new vector wrapping the given Clojure vector.
+	 * 
+	 * @param values
+	 *            the Clojure vector
+	 */
 	CIVLVector(PersistentVector<T> values) {
 		this.values = values;
 	}
 
+	/**
+	 * Creates new empty vector.
+	 */
 	CIVLVector() {
 		this.values = Persistents.vector();
 	}
 
+	/**
+	 * Creates vector (X,X,...,X) where X occurs multiplicity times.
+	 * 
+	 * @param value
+	 *            the element X
+	 * @param multiplicity
+	 *            number of times to use this element, i.e., the length of the
+	 *            new vector
+	 */
 	CIVLVector(T value, int multiplicity) {
 		ArrayList<T> vals = new ArrayList<T>(multiplicity);
 
@@ -27,26 +66,39 @@ public abstract class CIVLVector<T> extends PersistentObject implements
 		values = Persistents.<T> vector(vals);
 	}
 
-	public PersistentVector<T> getValues() {
+	/************************ Abstract Methods ***********************/
+
+	protected abstract CIVLVector<T> newVector(PersistentVector<T> values);
+
+	/******************** Package-private Methods ********************/
+
+	PersistentVector<T> getValues() {
 		return values;
 	}
 
-	public int size() {
-		return values.size();
+	CIVLVector<T> set(int index, T value) {
+		return value == values.get(index) ? this : newVector(values.plusN(
+				index, value));
 	}
 
-	public T get(int index) {
-		return values.get(index);
+	CIVLVector<T> remove(int index) {
+		PersistentVector<T> newValues = values;
+		int n = values.size() - 1;
+
+		for (int i = index; i < n; i++)
+			newValues = newValues.plusN(i, values.get(i + 1));
+		newValues = newValues.minus();
+		return newVector(newValues);
 	}
 
-	PersistentVector<T> setVector(int index, T value) {
-		// TODO: add here short circuit if old value == new?
-		return values.plusN(index, value);
-	}
+	/********************** Methods from Iterable ********************/
 
+	@Override
 	public Iterator<T> iterator() {
 		return values.iterator();
 	}
+
+	/****************** Methods from PersistentObject ****************/
 
 	@Override
 	protected int computeHashCode() {
@@ -59,41 +111,14 @@ public abstract class CIVLVector<T> extends PersistentObject implements
 				&& values.equals(((CIVLVector<?>) that).values);
 	}
 
-	// protected abstract T canonizeElement(SymbolicUniverse universe,
-	// Map<PersistentObject, PersistentObject> canonicMap, T element);
-	//
-	// @Override
-	// protected void canonizeChildren(SymbolicUniverse universe,
-	// Map<PersistentObject, PersistentObject> canonicMap) {
-	// int size = values.size();
-	//
-	// for (int i = 0; i < size; i++) {
-	// T value = values.get(i);
-	//
-	// if (!value.isCanonic())
-	// variableValues = variableValues.plusN(i,
-	// universe.canonic(value));
-	// }
-	// }
+	/********************** Other public methods *********************/
 
-	// @Override
-	// protected ValueVector canonize(SymbolicUniverse universe,
-	// Map<PersistentObject, PersistentObject> canonicMap) {
-	// return (ValueVector) super.canonize(universe, canonicMap);
-	// }
+	public int size() {
+		return values.size();
+	}
 
-	// void print(PrintStream out, String prefix) {
-	// int size = values.size();
-	//
-	// for (int i = 0; i < size; i++) {
-	// Variable variable = lexicalScope.variable(i);
-	// SymbolicExpression value = variableValues.get(i);
-	//
-	// out.print(prefix + "| " + variable.name() + " = ");
-	// if (debug)
-	// out.println(value.toStringBufferLong());
-	// else
-	// out.println(value + " : " + value.type());
-	// }
-	// }
+	public T get(int index) {
+		return values.get(index);
+	}
+
 }

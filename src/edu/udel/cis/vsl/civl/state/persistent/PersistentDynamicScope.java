@@ -5,15 +5,21 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
+/**
+ * An implementation of {@link DynamicScope} based on the Clojure persistent
+ * data structures.
+ * 
+ * @author siegel
+ * 
+ */
 public class PersistentDynamicScope extends PersistentObject implements
 		DynamicScope {
 
 	/************************* Static Fields *************************/
-
-	// private static boolean debug = false;
 
 	private static int classCode = PersistentDynamicScope.class.hashCode();
 
@@ -191,6 +197,20 @@ public class PersistentDynamicScope extends PersistentObject implements
 		return reachers.contains(pid);
 	}
 
+	PersistentDynamicScope setReachable(int pid) {
+		IntSet newReachers = reachers.add(pid);
+
+		return reachers == newReachers ? this : new PersistentDynamicScope(
+				lexicalScope, parent, valueVector, newReachers);
+	}
+
+	PersistentDynamicScope unsetReachable(int pid) {
+		IntSet newReachers = reachers.remove(pid);
+
+		return reachers == newReachers ? this : new PersistentDynamicScope(
+				lexicalScope, parent, valueVector, newReachers);
+	}
+
 	/**
 	 * Prints human readable representation of this dynamic scope.
 	 * 
@@ -209,6 +229,26 @@ public class PersistentDynamicScope extends PersistentObject implements
 		out.println(prefix + "| reachers: " + reachers);
 		valueVector.print(out, prefix + "| ", lexicalScope);
 		out.flush();
+	}
+
+	PersistentDynamicScope shiftProcReferences(int pid, int nprocs,
+			Map<SymbolicExpression, SymbolicExpression> map,
+			SymbolicUniverse universe) {
+		ValueVector newValueVector = valueVector.substitute(map, universe,
+				lexicalScope.variablesWithProcrefs());
+		IntSet newReachers = reachers.shiftDown(pid);
+
+		return newValueVector == valueVector && newReachers == reachers ? this
+				: new PersistentDynamicScope(lexicalScope, parent,
+						newValueVector, newReachers);
+	}
+
+	PersistentDynamicScope simplify(Reasoner reasoner) {
+		ValueVector newValueVector = valueVector.simplify(reasoner);
+
+		return newValueVector == valueVector ? this
+				: new PersistentDynamicScope(lexicalScope, parent,
+						newValueVector, reachers);
 	}
 
 	/****************** Methods from PersistentObject ****************/

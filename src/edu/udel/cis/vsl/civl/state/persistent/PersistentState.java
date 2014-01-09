@@ -5,6 +5,7 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -139,31 +140,6 @@ public class PersistentState extends PersistentObject implements State {
 		canonicId = value;
 	}
 
-	// protected abstract void canonizeChildren(SymbolicUniverse universe,
-	// Map<PersistentObject, PersistentObject> canonicMap);
-
-	// @Override
-	// protected PersistentState canonize(SymbolicUniverse universe,
-	// Map<PersistentObject, PersistentObject> canonicMap) {
-	// PersistentState result = (PersistentState) super.canonize(universe,
-	// canonicMap);
-	//
-	// if (result.canonicId < 0) {
-	//
-	// }
-	// return result;
-	// }
-
-	@Override
-	protected void canonizeChildren(SymbolicUniverse universe,
-			Map<PersistentObject, PersistentObject> canonicMap) {
-
-		pathCondition = (BooleanExpression) universe.canonic(pathCondition);
-		procVector = procVector.canonize(universe, canonicMap);
-		scopeTree = scopeTree.canonize(universe, canonicMap);
-		// this.canonicId = canonicId;
-	}
-
 	PersistentDynamicScope getScope(int pid, Variable variable) {
 		int scopeId = getProcessState(pid).getDyscopeId();
 		Scope variableScope = variable.scope();
@@ -217,6 +193,14 @@ public class PersistentState extends PersistentObject implements State {
 		}
 	}
 
+	DyscopeTree getScopeTree() {
+		return scopeTree;
+	}
+
+	ProcStateVector getProcStateVector() {
+		return procVector;
+	}
+
 	PersistentState setScopeTree(DyscopeTree scopeTree) {
 		return scopeTree == this.scopeTree ? this : new PersistentState(
 				procVector, scopeTree, pathCondition);
@@ -225,6 +209,44 @@ public class PersistentState extends PersistentObject implements State {
 	PersistentState setProcVector(ProcStateVector procVector) {
 		return procVector == this.procVector ? this : new PersistentState(
 				procVector, scopeTree, pathCondition);
+	}
+
+	/**
+	 * Adds a process state to this state.
+	 * 
+	 * The PID of the given state must be 1 greater than the current highest PID
+	 * in this state, i.e., it must equal the length of the proc state vector,
+	 * i.e., the current number of procs.
+	 * 
+	 * @param processState
+	 *            a process state with PID numProcs
+	 * @return new state same as old but with new process state added
+	 */
+	PersistentState addProcessState(PersistentProcessState processState) {
+		return new PersistentState(new ProcStateVector(
+				procVector.values.plus(processState)), scopeTree, pathCondition);
+	}
+
+	/**
+	 * Removes a process state from this state. The process states with greater
+	 * pid must be shifted down, their pids must be changed.
+	 * 
+	 * @param pid
+	 *            PID in range [0,numProcs-1]
+	 * @return new state same as old but the process state with given pid has
+	 *         been removed, the subsequent processes shifted down and their
+	 *         PIDs decremented, all process references in the state updated,
+	 *         reachers updated in dyscopes?
+	 */
+	PersistentState removeProcessState(int pid, ModelFactory modelFactory) {
+		ProcStateVector newProcVector = procVector.remove(pid);
+		DyscopeTree newTree = scopeTree.shiftProcReferences(pid,
+				newProcVector.size(), modelFactory);
+		PersistentState result = new PersistentState(newProcVector, newTree,
+				pathCondition);
+
+		result = result.collectScopes(modelFactory);
+		return result;
 	}
 
 	PersistentState collectScopes(ModelFactory modelFactory) {
@@ -242,7 +264,34 @@ public class PersistentState extends PersistentObject implements State {
 		}
 	}
 
+	PersistentState setLocation(int pid, Location location) {
+		PersistentProcessState procState = procVector.get(pid);
+		CallStack callStack = procState.getCallStack();
+		PersistentStackEntry entry = callStack.peek();
+
+		if (location == entry.location())
+			return this;
+		else {
+			callStack = callStack.replaceTop(entry.setLocation(location));
+			procState = procState.setCallStack(callStack);
+
+			return setProcVector((ProcStateVector) procVector.set(pid,
+					procState));
+		}
+	}
+
+	// PersistentState addScope(PersistentDynamicScope scope) {
+	// DyscopeTree newTree = scopeTree.addScope(scope);
+	//
+	// return new PersistentState(procVector, newTree, pathCondition);
+	// }
+
 	/*********************** Methods from Object *********************/
+
+	@Override
+	public String toString() {
+		return "State " + identifier();
+	}
 
 	/****************** Methods from PersistentObject ****************/
 
@@ -262,6 +311,16 @@ public class PersistentState extends PersistentObject implements State {
 					&& scopeTree.equals(that.scopeTree);
 		}
 		return false;
+	}
+
+	@Override
+	protected void canonizeChildren(SymbolicUniverse universe,
+			Map<PersistentObject, PersistentObject> canonicMap) {
+
+		pathCondition = (BooleanExpression) universe.canonic(pathCondition);
+		procVector = procVector.canonize(universe, canonicMap);
+		scopeTree = scopeTree.canonize(universe, canonicMap);
+		// this.canonicId = canonicId;
 	}
 
 	/*********************** Methods from State **********************/
@@ -387,7 +446,7 @@ public class PersistentState extends PersistentObject implements State {
 	}
 
 	@Override
-	public State setPathCondition(BooleanExpression pathCondition) {
+	public PersistentState setPathCondition(BooleanExpression pathCondition) {
 		return pathCondition == this.pathCondition ? this
 				: new PersistentState(procVector, scopeTree, pathCondition);
 	}

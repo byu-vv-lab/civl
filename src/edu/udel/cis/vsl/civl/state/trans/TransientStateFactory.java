@@ -209,6 +209,9 @@ public class TransientStateFactory implements StateFactory {
 			theState = theState.setReachable(pid, id, true);
 		}
 		theState = theState.push(pid, new TransientStackEntry(null, sid));
+		// need to do this because the scopes need to be created
+		// because the start location is not necessarily in the outermost
+		// scope of the function:
 		theState = setLocation(theState, pid, function.startLocation());
 		return theState;
 	}
@@ -437,7 +440,6 @@ public class TransientStateFactory implements StateFactory {
 		TransientState theState = (TransientState) state;
 
 		theState = pushCallStack2(theState, pid, function, arguments, pid);
-		theState = collectScopesWork(theState);
 		return theState;
 	}
 

@@ -7,6 +7,13 @@ import com.github.krukow.clj_ds.PersistentVector;
 
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
+/**
+ * A vector of process states. This is one of the two main components of the
+ * state of a CIVL model (the other being the dynamic scope tree).
+ * 
+ * @author siegel
+ * 
+ */
 public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 
 	/************************* Static Fields *************************/
@@ -56,6 +63,11 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 		return newVector == values ? this : new ProcStateVector(newVector);
 	}
 
+	ProcStateVector push(int pid, PersistentStackEntry entry) {
+		return new ProcStateVector(values.plusN(pid, values.get(pid)
+				.push(entry)));
+	}
+
 	/******************** Methods from CIVLVector ********************/
 
 	@Override
@@ -66,6 +78,12 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 	@Override
 	protected boolean computeEquals(PersistentObject that) {
 		return that instanceof ValueVector && super.computeEquals(that);
+	}
+
+	@Override
+	protected ProcStateVector newVector(
+			PersistentVector<PersistentProcessState> values) {
+		return new ProcStateVector(values);
 	}
 
 	/***************** Methods from PersistentObject *****************/
@@ -92,11 +110,28 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 
 	/************************ Public Methods *************************/
 
-	public ProcStateVector set(int index, PersistentProcessState processState) {
-		PersistentVector<PersistentProcessState> newVector = setVector(index,
-				processState);
+	// public ProcStateVector set(int index, PersistentProcessState
+	// processState) {
+	//
+	// PersistentVector<PersistentProcessState> newVector = setVector(index,
+	// processState);
+	//
+	// return newVector == values ? this : new ProcStateVector(newVector);
+	// }
 
-		return newVector == values ? this : new ProcStateVector(newVector);
+	@Override
+	public ProcStateVector remove(int index) {
+		PersistentVector<PersistentProcessState> newValues = values;
+		int n = values.size() - 1;
+
+		for (int i = index; i < n; i++) {
+			PersistentProcessState procState = values.get(i + 1);
+
+			procState = procState.setPid(i);
+			newValues = newValues.plusN(i, procState);
+		}
+		newValues = newValues.minus();
+		return new ProcStateVector(values);
 	}
 
 }
