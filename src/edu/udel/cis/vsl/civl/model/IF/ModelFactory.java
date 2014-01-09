@@ -811,20 +811,31 @@ public interface ModelFactory {
 			Expression process);
 
 	/**
-	 * A noop statement.
+	 * A noop statement with an explicit guard expression.
 	 * 
 	 * @param civlSource
 	 *            The CIVL source of the no-op statement
 	 * @param source
 	 *            The source location for this noop statement.
 	 * @param guard
-	 *            The guard of the noop statement, possible NULL. Usually a noop
-	 *            statement has a non-true guard, e.g., the entrance statement
-	 *            of a loop/if-else statement, etc.
+	 *            The guard of the noop statement. Must be non-null. For the
+	 *            default guard of true, use
+	 *            {@link #noopStatement(CIVLSource, Location)}.
 	 * @return A new noop statement.
 	 */
 	NoopStatement noopStatement(CIVLSource civlSource, Location source,
 			Expression guard);
+
+	/**
+	 * A noop statement with the default guard of true.
+	 * 
+	 * @param civlSource
+	 *            The CIVL source of the no-op statement
+	 * @param source
+	 *            The source location for this noop statement.
+	 * @return A new noop statement with the default guard of true.
+	 */
+	NoopStatement noopStatement(CIVLSource civlSource, Location source);
 
 	/**
 	 * Create a one-statement fragment that contains the return statement.

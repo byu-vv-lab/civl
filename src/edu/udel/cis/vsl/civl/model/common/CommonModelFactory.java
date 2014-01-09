@@ -929,6 +929,14 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public NoopStatement noopStatement(CIVLSource civlSource, Location source) {
+		NoopStatement result = new CommonNoopStatement(civlSource, source);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		return result;
+	}
+
+	@Override
 	public Fragment returnFragment(CIVLSource civlSource, Location source,
 			Expression expression) {
 		ReturnStatement result = new CommonReturnStatement(civlSource, source,
@@ -1424,8 +1432,8 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Fragment atomicFragment(boolean deterministic, Fragment fragment,
 			Location start, Location end) {
-		Statement noopStart = noopStatement(start.getSource(), start, null);
-		Statement noopEnd = noopStatement(end.getSource(), end, null);
+		Statement noopStart = noopStatement(start.getSource(), start);
+		Statement noopEnd = noopStatement(end.getSource(), end);
 		Fragment startFragment = new CommonFragment(noopStart);
 		Fragment endFragment = new CommonFragment(noopEnd);
 		Fragment result;
@@ -1620,7 +1628,7 @@ public class CommonModelFactory implements ModelFactory {
 			return 0;
 		return conditionalExpressions.peek().size();
 	}
-	
+
 	/**
 	 * Generate a temporal variable for translating away conditional expression
 	 * 

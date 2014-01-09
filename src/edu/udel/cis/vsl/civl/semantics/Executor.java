@@ -271,8 +271,8 @@ public class Executor {
 					((SystemFunction) statement.function()).getLibrary(), this);
 
 			state = executor.execute(state, pid, statement);
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
+//			state = transition(state, state.getProcessState(pid),
+//					statement.target());
 		} else {
 			CIVLFunction function = statement.function();
 			SymbolicExpression[] arguments;

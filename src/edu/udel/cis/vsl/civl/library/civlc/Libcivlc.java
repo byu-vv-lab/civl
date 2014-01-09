@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -28,6 +29,7 @@ import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.util.Singleton;
@@ -284,6 +286,23 @@ public class Libcivlc implements LibraryExecutor {
 
 		// TODO: implement me
 		return null;
+	}
+
+	/**
+	 * $exit terminates the calling process.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The process ID of the process to be terminated.
+	 * @return The state resulting from removing the specified process.
+	 */
+	private State executeExit(State state, int pid) {
+		//return stateFactory.removeProcess(state, pid);
+		while (!state.getProcessState(pid).hasEmptyStack()) {
+			state = stateFactory.popCallStack(state, pid);
+		}
+		return state;
 	}
 
 	/**
@@ -787,33 +806,53 @@ public class Libcivlc implements LibraryExecutor {
 		case "$free":
 			state = executeFree(state, pid, arguments, argumentValues,
 					statement.getSource());
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
 			break;
 		case "$bundle_pack":
 			state = executeBundlePack(state, pid, (CIVLBundleType) call
 					.function().returnType(), lhs, arguments, argumentValues,
 					statement.getSource());
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
 			break;
 		case "$bundle_unpack":
 			state = executeBundleUnpack(state, pid, arguments, argumentValues,
 					statement.getSource());
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
 			break;
 		case "$bundle_size":
 			state = executeBundleSize(state, pid, lhs, arguments,
 					argumentValues, statement.getSource());
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
 			break;
 		case "$comm_create":
 			state = executeCommCreate(state, pid, lhs, arguments,
 					argumentValues, statement.getSource());
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
 			break;
 		case "$comm_enqueue":
 			state = executeCommEnqueue(state, pid, arguments, argumentValues);
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
 			break;
 		case "$comm_dequeue":
 			state = executeCommDequeue(state, pid, lhs, arguments,
 					argumentValues);
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
 			break;
 		case "printf":
 			state = executePrintf(state, pid, argumentValues);
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
+			break;
+		case "$exit":
+			state = executeExit(state, pid);
+			// No transition after an exit because the process no longer exists.
 			break;
 		case "$memcpy":
 		case "$message_pack":
@@ -1022,6 +1061,7 @@ public class Libcivlc implements LibraryExecutor {
 		case "$comm_create":
 		case "$comm_enqueue":
 		case "printf":
+		case "$exit":
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":
@@ -1079,4 +1119,22 @@ public class Libcivlc implements LibraryExecutor {
 		return universe.bool(enabled);
 	}
 
+	/**
+	 * Transition a process from one location to another. If the new location is
+	 * in a different scope, create a new scope or move to the parent scope as
+	 * necessary.
+	 * 
+	 * @param state
+	 *            The old state.
+	 * @param process
+	 *            The process undergoing the transition.
+	 * @param target
+	 *            The end location of the transition.
+	 * @return A new state where the process is at the target location.
+	 */
+	private State transition(State state, ProcessState process, Location target) {
+		state = stateFactory.setLocation(state, process.getPid(), target);
+		// state = stateFactory.canonic(state);
+		return state;
+	}
 }

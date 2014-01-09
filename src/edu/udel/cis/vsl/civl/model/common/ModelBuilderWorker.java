@@ -144,9 +144,9 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 /**
  * Does the main work translating a single ABC Program to a model.
  * 
- * TODO: translate all conversions to casts.
- * 
- * @author siegel
+ * @author Stephen F. Siegel (siegel)
+ * @author Manchun Zheng (zmanchun)
+ * @author Timothy K. Zirkel (zirkel)
  */
 public class ModelBuilderWorker {
 
@@ -1199,6 +1199,7 @@ public class ModelBuilderWorker {
 			QuantifiedExpressionNode expressionNode, Scope scope) {
 		QuantifiedExpression result;
 		Quantifier quantifier;
+		Identifier variableName;
 		Variable variable;
 		Expression restriction;
 		Expression quantifiedExpression;
@@ -1209,6 +1210,10 @@ public class ModelBuilderWorker {
 		// if we have a conjunction of quantified statements? For now, we will
 		// add to the existing scope, but this is unsatisfactory.
 
+		variableName = factory.identifier(
+				factory.sourceOf(expressionNode.variable().getSource()),
+				expressionNode.variable().getName());
+		functionInfo.addBoundVariable(variableName);
 		// TODO: Is there an advantage to having separate restriction and
 		// quantifiedExpression? Maybe move this to right hand size and express
 		// in terms of &&, ||?
@@ -1238,6 +1243,7 @@ public class ModelBuilderWorker {
 				expressionNode.expression(), scope, true);
 		result = factory.quantifiedExpression(source, quantifier, variable,
 				restriction, quantifiedExpression);
+		functionInfo.popBoundVariableStack();
 		return result;
 	}
 
@@ -1341,27 +1347,11 @@ public class ModelBuilderWorker {
 	private Fragment translateAtomicNode(Scope scope, AtomicNode atomicNode) {
 		StatementNode bodyNode = atomicNode.getBody();
 		Fragment bodyFragment;
-		// Statement lastStatement;
 		Location start = factory.location(
 				factory.sourceOfBeginning(atomicNode), scope);
 		Location end = factory.location(factory.sourceOfEnd(atomicNode), scope);
 
-		// factory.enterAtomicBlock(atomicNode.isDeterministic());
 		bodyFragment = translateStatementNode(scope, bodyNode);
-		// factory.leaveAtomicBlock(atomicNode.isDeterministic());
-		// lastStatement = bodyFragment.lastStatement();
-		// if (lastStatement instanceof CallOrSpawnStatement) {
-		// CallOrSpawnStatement callStatement = (CallOrSpawnStatement)
-		// lastStatement;
-		// if (callStatement.isCall()) {
-		// CIVLSource sourceOfEnd = factory.sourceOfEnd(bodyNode);
-		//
-		// bodyFragment = bodyFragment.combineWith(new CommonFragment(
-		// factory.noopStatement(sourceOfEnd,
-		// factory.location(sourceOfEnd, scope), guard)));
-		// }
-		// }
-		// bodyFragment.makeAtomic(atomicNode.isDeterministic());
 		bodyFragment = factory.atomicFragment(atomicNode.isDeterministic(),
 				bodyFragment, start, end);
 		return bodyFragment;
@@ -1381,12 +1371,12 @@ public class ModelBuilderWorker {
 		Location location = factory.location(
 				factory.sourceOfBeginning(jumpNode), scope);
 		Statement result = factory.noopStatement(factory.sourceOf(jumpNode),
-				location, null);
+				location);
 
 		if (jumpNode.getKind() == JumpKind.CONTINUE) {
-			functionInfo.peekContinueStatck().add(result);
+			functionInfo.peekContinueStack().add(result);
 		} else if (jumpNode.getKind() == JumpKind.BREAK) {
-			functionInfo.peekBreakStatck().add(result);
+			functionInfo.peekBreakStack().add(result);
 		} else {
 			throw new CIVLInternalException(
 					"Jump nodes other than BREAK and CONTINUE should be handled seperately.",
@@ -1409,8 +1399,6 @@ public class ModelBuilderWorker {
 		Expression expression = translateExpressionNode(conditionNode, scope,
 				true);
 		Fragment beforeCondition = null, trueBranch, trueBranchBody, falseBranch, falseBranchBody, result;
-		// Location exitLocation = factory.location(factory.sourceOfEnd(ifNode),
-		// scope);
 		Location location = factory.location(factory.sourceOfBeginning(ifNode),
 				scope);
 		Map.Entry<Fragment, Expression> refineConditional = factory
@@ -1588,11 +1576,8 @@ public class ModelBuilderWorker {
 		int numberOfArgs = functionCallNode.getNumberOfArguments();
 		Expression argument;
 
-		// if (factory.inAtomicBlock()) {
-		// throw new CIVLInternalException(
-		// "Non-determinstic function call choose_int is not allowed in atomic blocks.",
-		// source);
-		// }
+		// TODO: Add info about whether in $atom to FunctionInfo. If in $atom,
+		// throw exception because $choose_int is nondeterministic.
 		if (numberOfArgs != 1) {
 			throw new CIVLInternalException(
 					"The function $choose_int should have exactly one argument.",
@@ -1600,8 +1585,6 @@ public class ModelBuilderWorker {
 		}
 		argument = translateExpressionNode(functionCallNode.getArgument(0),
 				scope, true);
-		// TODO: once you translate conversions, you will do this
-		// there and can delete the following line:
 		argument = arrayToPointer(argument);
 		return factory.chooseStatement(source, location, lhs, argument);
 	}
@@ -1669,12 +1652,7 @@ public class ModelBuilderWorker {
 			Expression actual = translateExpressionNode(
 					callNode.getArgument(i), scope, true);
 
-			// TODO: once you translate conversions, you will do this
-			// there and can delete the following line:
 			actual = arrayToPointer(actual);
-			// TODO: shouldn't this assertion hold? The arrayToPointer()
-			// conversion is happening in translateExpressionNode
-			// assert !actual.getExpressionType().isArrayType()
 			arguments.add(actual);
 		}
 		result = factory.callOrSpawnStatement(factory.sourceOf(callNode),
@@ -2217,6 +2195,12 @@ public class ModelBuilderWorker {
 		Statement noop = factory.noopStatement(factory.sourceOf(gotoNode),
 				location, null);
 
+		// At this point, the target of the goto may or may not have been
+		// encountered. We store the goto in a map from statements to labels.
+		// When labeled statements are encountered, we store a map from the
+		// label to the corresponding location. When functionInfo.complete() is
+		// called, it will get the label for each goto noop from the map and set
+		// the target to the corresponding location.
 		functionInfo.putToGotoStatements(noop, label);
 		return new CommonFragment(noop);
 	}
@@ -2408,6 +2392,11 @@ public class ModelBuilderWorker {
 			for (int i = 0; i < numParameters; i++) {
 				VariableDeclarationNode decl = abcParameters
 						.getSequenceChild(i);
+
+				// Don't process void types. Should only happen in the prototype
+				// of a function with no parameters.
+				if (decl.getTypeNode().kind() == TypeNodeKind.VOID)
+					continue;
 				CIVLType type = translateABCType(factory.sourceOf(decl), scope,
 						functionType.getParameterType(i));
 				CIVLSource source = factory.sourceOf(decl.getIdentifier());
@@ -2538,38 +2527,39 @@ public class ModelBuilderWorker {
 		}
 		functionInfo.completeFunction(body);
 	}
-	
-	private boolean containsReturn(Fragment functionBody){
-		if(functionBody == null || functionBody.isEmpty())
+
+	private boolean containsReturn(Fragment functionBody) {
+		if (functionBody == null || functionBody.isEmpty())
 			return false;
-		if(functionBody.lastStatement() instanceof ReturnStatement)
+		if (functionBody.lastStatement() instanceof ReturnStatement)
 			return true;
-		if(functionBody.lastStatement() instanceof StatementSet){
-			StatementSet lastStatements = (StatementSet) functionBody.lastStatement();
-			
-			for(Statement statement : lastStatements.statements()){
-				if(!(statement instanceof ReturnStatement))
+		if (functionBody.lastStatement() instanceof StatementSet) {
+			StatementSet lastStatements = (StatementSet) functionBody
+					.lastStatement();
+
+			for (Statement statement : lastStatements.statements()) {
+				if (!(statement instanceof ReturnStatement))
 					return false;
 			}
 			return true;
 		}
-		
-		if(functionBody.lastStatement().source().getNumOutgoing() == 1)
-		{
+		if (functionBody.lastStatement().source().getNumOutgoing() == 1) {
 			Location lastLocation = functionBody.lastStatement().source();
 			Set<Integer> locationIds = new HashSet<Integer>();
-			
-			while(lastLocation.atomicKind() == AtomicKind.LEAVE || lastLocation.atomicKind() == AtomicKind.DLEAVE){
+
+			while (lastLocation.atomicKind() == AtomicKind.LEAVE
+					|| lastLocation.atomicKind() == AtomicKind.DLEAVE) {
 				locationIds.add(lastLocation.id());
-				if(lastLocation.getNumIncoming() == 1){
+				if (lastLocation.getNumIncoming() == 1) {
 					lastLocation = lastLocation.getIncoming(0).source();
-					if(locationIds.contains(lastLocation.id()))
+					if (locationIds.contains(lastLocation.id()))
 						return false;
-				}else{
+				} else {
 					return false;
 				}
 			}
-			if(lastLocation.getNumOutgoing() == 1 && lastLocation.getOutgoing(0) instanceof ReturnStatement){
+			if (lastLocation.getNumOutgoing() == 1
+					&& lastLocation.getOutgoing(0) instanceof ReturnStatement) {
 				return true;
 			}
 		}

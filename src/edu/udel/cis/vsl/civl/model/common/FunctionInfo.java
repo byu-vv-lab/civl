@@ -9,6 +9,7 @@ import java.util.Stack;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
+import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
@@ -39,6 +40,13 @@ public class FunctionInfo {
 	 * location at the end of the loop processing.
 	 */
 	private Stack<Set<Statement>> continueStatements;
+
+	/**
+	 * Used to keep track of bound variables. Each entry on the stack is the
+	 * identifier for a bound variable corresponding to a particular quantifier.
+	 * 
+	 */
+	private Stack<Identifier> boundVariables;
 
 	/**
 	 * The current function that is being processed
@@ -97,6 +105,13 @@ public class FunctionInfo {
 	 */
 	public void addContinueSet(Set<Statement> statementSet) {
 		this.continueStatements.add(statementSet);
+	}
+
+	/**
+	 * Add a bound variable to the stack of bound variables.
+	 */
+	public void addBoundVariable(Identifier name) {
+		this.boundVariables.add(name);
 	}
 
 	/**
@@ -178,7 +193,7 @@ public class FunctionInfo {
 	 * 
 	 * @return the set of break statements on the top of the stack
 	 */
-	public Set<Statement> peekBreakStatck() {
+	public Set<Statement> peekBreakStack() {
 		return this.breakStatements.peek();
 	}
 
@@ -188,7 +203,7 @@ public class FunctionInfo {
 	 * 
 	 * @return the set of continue statements on the top of the stack
 	 */
-	public Set<Statement> peekContinueStatck() {
+	public Set<Statement> peekContinueStack() {
 		return this.continueStatements.peek();
 	}
 
@@ -208,6 +223,25 @@ public class FunctionInfo {
 	 */
 	public Set<Statement> popContinueStack() {
 		return this.continueStatements.pop();
+	}
+
+	/**
+	 * Pop the top identifier from the bound variable stack.
+	 * 
+	 * @return The identifier from the top of the bound variable stack.
+	 */
+	public Identifier popBoundVariableStack() {
+		return boundVariables.pop();
+	}
+
+	/**
+	 * 
+	 * @param name
+	 *            The name of a variable.
+	 * @return Whether or not this variable is on the stack of bound variables.
+	 */
+	public boolean containsBoundVariable(Identifier name) {
+		return boundVariables.contains(name);
 	}
 
 	/**

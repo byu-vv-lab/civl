@@ -15,6 +15,10 @@ public interface LibraryExecutor {
 	/** Returns the name associated to this executor, for example, "libstdio". */
 	String name();
 
+	/**
+	 * Returns the state that results from executing the statement, or null if
+	 * path condition becomes unsatisfiable.
+	 */
 	State execute(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException;
 
