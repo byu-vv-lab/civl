@@ -271,8 +271,8 @@ public class Executor {
 					((SystemFunction) statement.function()).getLibrary(), this);
 
 			state = executor.execute(state, pid, statement);
-//			state = transition(state, state.getProcessState(pid),
-//					statement.target());
+			// state = transition(state, state.getProcessState(pid),
+			// statement.target());
 		} else {
 			CIVLFunction function = statement.function();
 			SymbolicExpression[] arguments;
@@ -783,7 +783,8 @@ public class Executor {
 				newState = execute(newState, pid, start);
 				newLocation = newState.getProcessState(pid).getLocation();
 				if (print) {
-					printStatement(start, AtomicKind.DENTER);
+					printStatement(start, AtomicKind.DENTER,
+							newState.getProcessState(pid));
 				}
 			} catch (UnsatisfiablePathConditionException e1) {
 				throw new CIVLStateException(
@@ -815,7 +816,8 @@ public class Executor {
 						newLocation.getOutgoing(0), pid).getValue();
 				executedStatement = newLocation.getOutgoing(0);
 				if (print) {
-					printStatement(executedStatement, AtomicKind.DLEAVE);
+					printStatement(executedStatement, AtomicKind.DLEAVE,
+							newState.getProcessState(pid));
 				}
 				assert newState != null;
 				return newState;
@@ -865,10 +867,10 @@ public class Executor {
 						+ atomicStart.getLocation() + ".");
 			}
 			stateCounter++;
-			if (print && executedStatement != null) {
-				printStatement(executedStatement, newLocation.atomicKind());
-			}
 			p = newState.getProcessState(pid);
+			if (print && executedStatement != null) {
+				printStatement(executedStatement, newLocation.atomicKind(), p);
+			}
 			if (p != null && !p.hasEmptyStack())
 				newLocation = p.getLocation();
 			else {
@@ -972,7 +974,7 @@ public class Executor {
 				if (!p.inAtomic()) {
 					newState = stateFactory.releaseAtomicLock(newState);
 					if (print) {
-						printStatement(executedStatement, AtomicKind.LEAVE);
+						printStatement(executedStatement, AtomicKind.LEAVE, p);
 					}
 					return newState;
 				}
@@ -981,10 +983,10 @@ public class Executor {
 				throw new CIVLInternalException("Unreachable",
 						pLocation.getSource());
 			}
-			if (print && executedStatement != null) {
-				printStatement(executedStatement, pLocation.atomicKind());
-			}
 			p = newState.getProcessState(pid);
+			if (print && executedStatement != null) {
+				printStatement(executedStatement, pLocation.atomicKind(), p);
+			}
 			if (p != null && !p.hasEmptyStack())
 				pLocation = p.peekStack().location();
 			else
@@ -1037,23 +1039,28 @@ public class Executor {
 		this.out = outPut;
 	}
 
-	private void printStatement(Statement s, AtomicKind atomicKind) {
+	private void printStatement(Statement s, AtomicKind atomicKind,
+			ProcessState p) {
 		out.print("  " + s.source().id() + "->");
 		if (s.target() != null)
 			out.print(s.target().id() + ": ");
 		else
-			out.print("END: ");
-		if (atomicKind == AtomicKind.ENTER)
-			out.print("ENTER_ATOMIC");
-		else if (atomicKind == AtomicKind.LEAVE)
-			out.print("EXIT_ATOMIC");
-		else if (atomicKind == AtomicKind.DENTER)
+			out.print("RET: ");
+		if (atomicKind == AtomicKind.ENTER) {
+			out.print("ENTER_ATOMIC ");
+			out.print(p.atomicCount());
+		} else if (atomicKind == AtomicKind.LEAVE) {
+			out.print("EXIT_ATOMIC ");
+			out.print(p.atomicCount() + 1);
+		} else if (atomicKind == AtomicKind.DENTER)
 			out.print("ENTER_ATOM");
 		else if (atomicKind == AtomicKind.DLEAVE)
 			out.print("EXIT_ATOM");
 		else
 			out.print(s.toString());
-		if (s.source() != null)
+		if (s.getSource() != null)
+			out.print(" at " + s.getSource().getSummary());
+		else if (s.source().getSource() != null)
 			out.print(" at " + s.source().getSource().getSummary());
 		out.println(";");
 	}

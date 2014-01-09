@@ -19,6 +19,12 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 public class CommonNoopStatement extends CommonStatement implements
 		NoopStatement {
 
+	public enum NoopKind {
+		IF_ELSE, SWITCH, ATOMIC, ATOM, LOOP, NONE
+	}
+
+	protected NoopKind noopKind;
+
 	/**
 	 * A noop statement.
 	 * 
@@ -27,6 +33,7 @@ public class CommonNoopStatement extends CommonStatement implements
 	 */
 	public CommonNoopStatement(CIVLSource civlSource, Location source) {
 		super(civlSource, source);
+		noopKind = NoopKind.NONE;
 	}
 
 	@Override
@@ -47,5 +54,10 @@ public class CommonNoopStatement extends CommonStatement implements
 		}
 
 		return newStatement;
+	}
+
+	@Override
+	public NoopKind noopKind() {
+		return this.noopKind;
 	}
 }

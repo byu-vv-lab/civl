@@ -1407,12 +1407,12 @@ public class ModelBuilderWorker {
 		beforeCondition = refineConditional.getKey();
 		expression = refineConditional.getValue();
 		expression = factory.booleanExpression(expression);
-		trueBranch = new CommonFragment(factory.noopStatement(
+		trueBranch = new CommonFragment(factory.ifBranchStatement(
 				factory.sourceOfBeginning(ifNode.getTrueBranch()), location,
-				expression));
-		falseBranch = new CommonFragment(factory.noopStatement(factory
+				expression, true));
+		falseBranch = new CommonFragment(factory.ifBranchStatement(factory
 				.sourceOfEnd(ifNode), location, factory.unaryExpression(
-				expression.getSource(), UNARY_OPERATOR.NOT, expression)));
+				expression.getSource(), UNARY_OPERATOR.NOT, expression), false));
 		trueBranchBody = translateStatementNode(scope, ifNode.getTrueBranch());
 		trueBranch = trueBranch.combineWith(trueBranchBody);
 		if (ifNode.getFalseBranch() != null) {
@@ -1955,9 +1955,9 @@ public class ModelBuilderWorker {
 		loopEntranceLocation = factory.location(
 				factory.sourceOf(conditionNode.getSource()), loopScope);
 		loopEntrance = new CommonFragment(loopEntranceLocation,
-				factory.noopStatement(
+				factory.loopBranchStatement(
 						factory.sourceOf(conditionNode.getSource()),
-						loopEntranceLocation, condition));
+						loopEntranceLocation, condition, true));
 		if (beforeCondition != null) {
 			loopEntrance = beforeCondition.combineWith(loopEntrance);
 		}
@@ -1978,9 +1978,9 @@ public class ModelBuilderWorker {
 		}
 		loopEntrance.startLocation().setLoopPossible(true);
 		// the loop entrance location is the same as the loop exit location
-		loopExit = new CommonFragment(factory.noopStatement(condition
+		loopExit = new CommonFragment(factory.loopBranchStatement(condition
 				.getSource(), loopEntranceLocation, factory.unaryExpression(
-				condition.getSource(), UNARY_OPERATOR.NOT, condition)));
+				condition.getSource(), UNARY_OPERATOR.NOT, condition), false));
 		// incrementer comes after the loop body
 		if (incrementer != null)
 			loopBody = loopBody.combineWith(incrementer);
@@ -2244,7 +2244,7 @@ public class ModelBuilderWorker {
 		} else
 			expression = null;
 		return factory.returnFragment(factory.sourceOf(returnNode), location,
-				expression);
+				expression, this.functionInfo.function());
 	}
 
 	/**
@@ -2265,8 +2265,9 @@ public class ModelBuilderWorker {
 		Expression combinedCaseGuards = null;
 		Fragment bodyGoto;
 		Set<Statement> breaks;
-		Location location = factory.location(
-				factory.sourceOfBeginning(switchNode), scope);
+		Location location = factory.location(factory.sourceOfSpan(
+				factory.sourceOfBeginning(switchNode),
+				factory.sourceOfBeginning(switchNode.child(1))), scope);
 
 		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
 		while (cases.hasNext()) {
@@ -2274,16 +2275,15 @@ public class ModelBuilderWorker {
 			SwitchLabelNode label;
 			Expression caseGuard;
 			Fragment caseGoto;
+			Expression labelExpression;
 
 			assert caseStatement.getLabel() instanceof SwitchLabelNode;
 			label = (SwitchLabelNode) caseStatement.getLabel();
-			caseGuard = factory
-					.binaryExpression(
-							factory.sourceOf(label.getExpression()),
-							BINARY_OPERATOR.EQUAL,
-							condition,
-							translateExpressionNode(label.getExpression(),
-									scope, true));
+			labelExpression = translateExpressionNode(label.getExpression(),
+					scope, true);
+			caseGuard = factory.binaryExpression(
+					factory.sourceOf(label.getExpression()),
+					BINARY_OPERATOR.EQUAL, condition, labelExpression);
 			if (combinedCaseGuards == null) {
 				combinedCaseGuards = caseGuard;
 			} else if (factory.isTrue(combinedCaseGuards)) {
@@ -2294,28 +2294,26 @@ public class ModelBuilderWorker {
 								combinedCaseGuards.getSource()),
 						BINARY_OPERATOR.OR, caseGuard, combinedCaseGuards);
 			}
-			caseGoto = new CommonFragment(factory.noopStatement(
-					factory.sourceOfBeginning(caseStatement), location,
-					caseGuard));
+			caseGoto = new CommonFragment(factory.switchBranchStatement(
+					factory.sourceOf(caseStatement), location, caseGuard,
+					labelExpression));
 			result = result.parallelCombineWith(caseGoto);
 			functionInfo.putToGotoStatements(caseGoto.lastStatement(), label);
 		}
 		if (switchNode.getDefaultCase() != null) {
 			LabelNode label = switchNode.getDefaultCase().getLabel();
-			Fragment defaultGoto = new CommonFragment(factory.noopStatement(
-					factory.sourceOf(switchNode.getDefaultCase()), location,
-					factory.unaryExpression(factory
-							.sourceOfBeginning(switchNode.getDefaultCase()),
-							UNARY_OPERATOR.NOT, combinedCaseGuards)));
+			Fragment defaultGoto = new CommonFragment(
+					factory.switchBranchStatement(factory.sourceOf(switchNode
+							.getDefaultCase()), location, factory
+							.unaryExpression(factory
+									.sourceOfBeginning(switchNode
+											.getDefaultCase()),
+									UNARY_OPERATOR.NOT, combinedCaseGuards)));
 
 			result = result.parallelCombineWith(defaultGoto);
 			functionInfo
 					.putToGotoStatements(defaultGoto.lastStatement(), label);
 		}
-		bodyGoto = new CommonFragment(factory.noopStatement(
-				location.getSource(), location,
-				factory.booleanLiteralExpression(location.getSource(), false)));
-		result = result.combineWith(bodyGoto);
 		bodyGoto = translateStatementNode(scope, switchNode.getBody());
 		result = result.combineWith(bodyGoto);
 		breaks = functionInfo.popBreakStack();
@@ -2515,7 +2513,7 @@ public class ModelBuilderWorker {
 			Location returnLocation = factory.location(endSource,
 					result.outerScope());
 			Fragment returnFragment = factory.returnFragment(endSource,
-					returnLocation, null);
+					returnLocation, null, this.functionInfo.function());
 
 			if (body != null)
 				body = body.combineWith(returnFragment);

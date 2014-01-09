@@ -75,15 +75,17 @@ public class SimpleTransition extends Transition {
 	public String toString() {
 		CIVLSource source = statement.getSource();
 		String result = "proc " + pid + ": \n";
-		
+
 		result += "  " + statement.source().id() + "->";
 		if (statement.target() != null)
 			result += statement.target().id() + ": ";
 		else
-			result += "END: ";
+			result += "RET: ";
 		result += statement.toString();
 		if (source != null)
-			result += " at " + source.getSummary(); 
+			result += " at " + source.getSummary();
+		else if (statement.source().getSource() != null)
+			result += " at " + statement.source().getSource().getSummary();
 		return result;
 	}
 

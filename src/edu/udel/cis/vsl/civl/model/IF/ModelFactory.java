@@ -846,10 +846,12 @@ public interface ModelFactory {
 	 *            The source location for this return statement.
 	 * @param expression
 	 *            The expression being returned. Null if non-existent.
+	 * @param function
+	 *            The CIVL function that this return statement belongs to.
 	 * @return A new fragment.
 	 */
 	Fragment returnFragment(CIVLSource civlSource, Location source,
-			Expression expression);
+			Expression expression, CIVLFunction function);
 
 	/**
 	 * Create a new malloc statement
@@ -1191,4 +1193,16 @@ public interface ModelFactory {
 	 *         the specified process id
 	 */
 	AssignStatement assignAtomicLockVariable(Integer pid, Location target);
+
+	NoopStatement ifBranchStatement(CIVLSource civlSource, Location source,
+			Expression guard, boolean isTrue);
+
+	NoopStatement switchBranchStatement(CIVLSource civlSource, Location source,
+			Expression guard, Expression label);
+
+	NoopStatement switchBranchStatement(CIVLSource civlSource, Location source,
+			Expression guard);
+
+	NoopStatement loopBranchStatement(CIVLSource civlSource, Location source,
+			Expression guard, boolean isTrue);
 }

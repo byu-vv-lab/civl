@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
@@ -23,6 +24,8 @@ public class CommonReturnStatement extends CommonStatement implements
 
 	private Expression expression;
 
+	private CIVLFunction function;
+
 	/**
 	 * A return statement.
 	 * 
@@ -32,9 +35,10 @@ public class CommonReturnStatement extends CommonStatement implements
 	 *            The expression being returned. Null if non-existent.
 	 */
 	public CommonReturnStatement(CIVLSource civlSource, Location source,
-			Expression expression) {
+			Expression expression, CIVLFunction function) {
 		super(civlSource, source);
 		this.expression = expression;
+		this.function = function;
 	}
 
 	/**
@@ -57,9 +61,9 @@ public class CommonReturnStatement extends CommonStatement implements
 	@Override
 	public String toString() {
 		if (expression == null) {
-			return "return";
+			return "return (" + this.function.name().name() + ")";
 		}
-		return "return " + expression;
+		return "return " + expression + " (" + this.function.name().name() + ")";
 	}
 
 	@Override
@@ -112,7 +116,7 @@ public class CommonReturnStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonReturnStatement(this.getSource(),
-					this.source(), this.expression);
+					this.source(), this.expression, this.function);
 			newStatement.setGuard(newGuard);
 		} else if (expression != null) {
 			Expression newExpressionField = expression.replaceWith(
@@ -120,7 +124,7 @@ public class CommonReturnStatement extends CommonStatement implements
 
 			if (newExpressionField != null) {
 				newStatement = new CommonReturnStatement(this.getSource(),
-						this.source(), newExpressionField);
+						this.source(), newExpressionField, this.function);
 				newStatement.setGuard(this.guard());
 			}
 		}

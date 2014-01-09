@@ -103,9 +103,12 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonChooseStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonIfBranchStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonLoopBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonMallocStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonSwitchBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
@@ -929,6 +932,54 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public NoopStatement ifBranchStatement(CIVLSource civlSource,
+			Location source, Expression guard, boolean isTrue) {
+		NoopStatement result = new CommonIfBranchStatement(civlSource, source,
+				isTrue);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
+		return result;
+	}
+
+	@Override
+	public NoopStatement switchBranchStatement(CIVLSource civlSource,
+			Location source, Expression guard, Expression label) {
+		NoopStatement result = new CommonSwitchBranchStatement(civlSource,
+				source, label);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
+		return result;
+	}
+
+	@Override
+	public NoopStatement switchBranchStatement(CIVLSource civlSource,
+			Location source, Expression guard) {
+		NoopStatement result = new CommonSwitchBranchStatement(civlSource,
+				source);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
+		return result;
+	}
+	
+	@Override
+	public NoopStatement loopBranchStatement(CIVLSource civlSource,
+			Location source, Expression guard, boolean isTrue) {
+		NoopStatement result = new CommonLoopBranchStatement(civlSource,
+				source, isTrue);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null)
+			result.setGuard(guard);
+		return result;
+	}
+
+	@Override
 	public NoopStatement noopStatement(CIVLSource civlSource, Location source) {
 		NoopStatement result = new CommonNoopStatement(civlSource, source);
 
@@ -938,9 +989,9 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public Fragment returnFragment(CIVLSource civlSource, Location source,
-			Expression expression) {
+			Expression expression, CIVLFunction function) {
 		ReturnStatement result = new CommonReturnStatement(civlSource, source,
-				expression);
+				expression, function);
 
 		if (expression != null) {
 			result.setStatementScope(expression.expressionScope());
@@ -1371,16 +1422,16 @@ public class CommonModelFactory implements ModelFactory {
 			Location ifLocation, elseLocation;
 			Scope scope = startLocation.scope();
 
-			ifFragment = new CommonFragment(noopStatement(
-					condition.getSource(), startLocation, ifGuard));
+			ifFragment = new CommonFragment(ifBranchStatement(
+					condition.getSource(), startLocation, ifGuard, true));
 			ifLocation = location(ifValue.getSource(), scope);
 			ifBranch = statement.replaceWith(expression, ifValue);
 			ifBranch.setGuard(guard);
 			ifBranch.setSource(ifLocation);
 			ifFragment = ifFragment.combineWith(new CommonFragment(ifBranch));
 
-			elseFragment = new CommonFragment(noopStatement(
-					condition.getSource(), startLocation, elseGuard));
+			elseFragment = new CommonFragment(ifBranchStatement(
+					condition.getSource(), startLocation, elseGuard, false));
 			elseLocation = location(elseValue.getSource(), scope);
 			elseBranch = statement.replaceWith(expression, elseValue);
 			elseBranch.setGuard(guard);
