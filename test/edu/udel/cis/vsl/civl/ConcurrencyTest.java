@@ -51,10 +51,10 @@ public class ConcurrencyTest {
 		assertTrue(ui.run("verify", filename("bank.cvl")));
 	}
 
-	@Test
-	public void barrier() {
-		assertTrue(ui.run("verify", "-inputB=4", filename("barrier.cvl")));
-	}
+//	@Test
+//	public void barrier() {
+//		assertTrue(ui.run("verify", "-inputB=4", filename("barrier.cvl")));
+//	}
 	
 	@Test
 	public void barrierAtomic() {
