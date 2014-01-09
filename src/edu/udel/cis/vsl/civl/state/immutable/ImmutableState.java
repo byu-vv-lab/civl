@@ -362,7 +362,7 @@ public class ImmutableState implements State {
 	 */
 	@Override
 	public String identifier() {
-		return instanceId + ":" + canonicId;
+		return canonicId + ":" + instanceId;
 	}
 
 	@Override
@@ -425,7 +425,7 @@ public class ImmutableState implements State {
 			ImmutableDynamicScope scope = (ImmutableDynamicScope) scopes[i];
 
 			if (scope == null)
-				out.println("| | scope " + i + ": null");
+				out.println("| | dyscope " + i + ": null");
 			else
 				scope.print(out, "" + i, "| | ");
 		}
@@ -561,7 +561,7 @@ public class ImmutableState implements State {
 		}
 		return hashCode;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "State " + identifier();

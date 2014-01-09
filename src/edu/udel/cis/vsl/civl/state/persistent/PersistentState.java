@@ -464,7 +464,11 @@ public class PersistentState extends PersistentObject implements State {
 	@Override
 	public PersistentState setVariable(int vid, int scopeId,
 			SymbolicExpression value) {
-		throw new UnsupportedOperationException("Not yet implemented");
+		PersistentDynamicScope scope = scopeTree.get(scopeId);
+		PersistentDynamicScope newScope = scope.setValue(vid, value);
+
+		return scope == newScope ? this : new PersistentState(procVector,
+				(DyscopeTree) scopeTree.set(scopeId, newScope), pathCondition);
 	}
 
 }

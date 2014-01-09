@@ -92,13 +92,28 @@ public class DyscopeTree extends CIVLVector<PersistentDynamicScope> {
 			}
 		}
 		for (int i = 0; i < size; i++) {
-			PersistentDynamicScope scope = get(i);
+			int newId = oldToNew[i];
 
-			scope = scope.setParent(oldToNew[scope.getParent()]);
-			scope = scope.setValueVector(scope.getValueVector().substitute(
-					substitutionMap, universe,
-					scope.lexicalScope().variablesWithScoperefs()));
-			newVector = newVector.plus(scope);
+			if (newId >= 0) {
+				PersistentDynamicScope scope = values.get(i);
+				int parent = scope.getParent();
+
+				if (parent >= 0) {
+					parent = oldToNew[parent];
+					assert parent >= 0;
+				}
+				scope = scope.setParent(parent);
+				scope = scope.setValueVector(scope.getValueVector().substitute(
+						substitutionMap, universe,
+						scope.lexicalScope().variablesWithScoperefs()));
+				if (newId < newVector.size())
+					newVector = newVector.plusN(newId, scope);
+				else {
+					while (newId > newVector.size())
+						newVector = newVector.plus(null);
+					newVector = newVector.plus(scope);
+				}
+			}
 		}
 		return new DyscopeTree(newVector);
 	}
@@ -193,7 +208,7 @@ public class DyscopeTree extends CIVLVector<PersistentDynamicScope> {
 
 	@Override
 	protected int computeHashCode() {
-		return classCode ^ super.hashCode();
+		return classCode ^ super.computeHashCode();
 	}
 
 	@Override

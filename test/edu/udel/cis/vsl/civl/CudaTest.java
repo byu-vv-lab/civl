@@ -27,6 +27,6 @@ public class CudaTest {
 	
 	@Test
 	public void exitBarrier() {
-		assertTrue(ui.run("verify", filename("exitBarrier.cvl"), "-por=scp"));
+		assertTrue(ui.run("verify", filename("exitBarrier.cvl"), "-por=scp", "-showTransitions", "-showStates"));
 	}
 }

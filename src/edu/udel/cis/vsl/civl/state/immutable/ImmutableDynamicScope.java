@@ -253,9 +253,9 @@ public class ImmutableDynamicScope implements DynamicScope {
 		int bitSetLength = reachers.length();
 		boolean first = true;
 
-		out.println(prefix + "scope " + id + " (parent=" + parent + ", static="
-				+ lexicalScope.id() + ")");
-		out.print(prefix + "| reachers: ");
+		out.println(prefix + "dyscope " + id + " (parent=" + parent
+				+ ", static=" + lexicalScope.id() + ")");
+		out.print(prefix + "| reachers = {");
 		for (int j = 0; j < bitSetLength; j++) {
 			if (reachers.get(j)) {
 				if (first)
@@ -265,16 +265,17 @@ public class ImmutableDynamicScope implements DynamicScope {
 				out.print(j);
 			}
 		}
-		out.println();
+		out.println("}");
+		out.println(prefix + "| variables");
 		for (int i = 0; i < numVars; i++) {
 			Variable variable = lexicalScope.variable(i);
 			SymbolicExpression value = variableValues[i];
 
-			out.print(prefix + "| " + variable.name() + " = ");
+			out.print(prefix + "| | " + variable.name() + " = ");
 			if (debug)
 				out.println(value.toStringBufferLong());
 			else
-				out.println(value + " : " + value.type());
+				out.println(value);
 		}
 		out.flush();
 	}

@@ -108,7 +108,7 @@ public class ValueVector extends CIVLVector<SymbolicExpression> {
 
 	@Override
 	protected int computeHashCode() {
-		return classCode ^ super.hashCode();
+		return classCode ^ super.computeHashCode();
 	}
 
 	@Override
@@ -139,7 +139,7 @@ public class ValueVector extends CIVLVector<SymbolicExpression> {
 			if (debug)
 				out.println(value.toStringBufferLong());
 			else
-				out.println(value + " : " + value.type());
+				out.println(value);
 		}
 	}
 }

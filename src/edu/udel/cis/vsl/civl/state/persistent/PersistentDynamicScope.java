@@ -224,9 +224,10 @@ public class PersistentDynamicScope extends PersistentObject implements
 	 *            line of output
 	 */
 	void print(PrintStream out, String id, String prefix) {
-		out.println(prefix + "scope " + id + " (parent=" + parent + ", static="
+		out.println(prefix + "dyscope " + id + " (parent=" + parent + ", static="
 				+ lexicalScope.id() + ")");
-		out.println(prefix + "| reachers: " + reachers);
+		out.println(prefix + "| reachers = " + reachers);
+		out.println(prefix + "| variables");
 		valueVector.print(out, prefix + "| ", lexicalScope);
 		out.flush();
 	}

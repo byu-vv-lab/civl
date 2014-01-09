@@ -207,7 +207,7 @@ public class CallStack extends PersistentObject implements
 	public void print(PrintStream out, String prefix) {
 		int numFrames = entries.size();
 
-		out.println(prefix + " call stack");
+		out.println(prefix + "call stack");
 		for (int i = numFrames - 1; i >= 0; i--)
 			out.println(prefix + "| " + entries.get(i));
 		out.flush();

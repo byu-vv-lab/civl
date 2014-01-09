@@ -74,7 +74,7 @@ public class IntSet extends PersistentObject implements Iterable<Integer> {
 	@Override
 	public String toString() {
 		StringBuffer buf = new StringBuffer();
-		boolean first = false;
+		boolean first = true;
 
 		buf.append('{');
 		for (Integer j : this) {

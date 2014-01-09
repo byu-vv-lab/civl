@@ -27,7 +27,8 @@ public class States {
 	 */
 	public static StateFactory newImmutableStateFactory(
 			ModelFactory modelFactory) {
-		return new ImmutableStateFactory(modelFactory);
+		 return new ImmutableStateFactory(modelFactory);
+		//return new PersistentStateFactory(modelFactory);
 	}
 
 	/**

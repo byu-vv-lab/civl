@@ -72,7 +72,7 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 
 	@Override
 	protected int computeHashCode() {
-		return classCode ^ super.hashCode();
+		return classCode ^ super.computeHashCode();
 	}
 
 	@Override

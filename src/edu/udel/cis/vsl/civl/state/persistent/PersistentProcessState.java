@@ -260,8 +260,8 @@ public class PersistentProcessState extends PersistentObject implements
 	@Override
 	public void print(PrintStream out, String prefix) {
 
-		out.println(prefix + "process " + pid + "(atomicCount=" + atomicCount
-				+ ")");
+		out.println(prefix + "process " + pid);
+		out.println(prefix + "| atomicCount = " + atomicCount);
 		callStack.print(out, prefix + "| ");
 		out.flush();
 	}
