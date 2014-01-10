@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.state;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.immutable.ImmutableStateFactory;
+import edu.udel.cis.vsl.civl.state.persistent.PersistentStateFactory;
 import edu.udel.cis.vsl.civl.state.trans.TransientStateFactory;
 
 /**
@@ -27,8 +28,12 @@ public class States {
 	 */
 	public static StateFactory newImmutableStateFactory(
 			ModelFactory modelFactory) {
-		 return new ImmutableStateFactory(modelFactory);
-		//return new PersistentStateFactory(modelFactory);
+		return new ImmutableStateFactory(modelFactory);
+	}
+
+	public static StateFactory newPersistentStateFactory(
+			ModelFactory modelFactory) {
+		return new PersistentStateFactory(modelFactory);
 	}
 
 	/**

@@ -20,13 +20,13 @@ public class CudaTest {
 
 	// private PrintStream out = System.out;
 
-//	@Test
-//	public void pathfinder() {
-//		assertTrue(ui.run("verify", filename("pathfinder.cvl"), "-por=scp"));
-//	}
-	
+	// @Test
+	// public void pathfinder() {
+	// assertTrue(ui.run("verify", filename("pathfinder.cvl"), "-por=scp"));
+	// }
+
 	@Test
 	public void exitBarrier() {
-		assertTrue(ui.run("verify", filename("exitBarrier.cvl"), "-por=scp", "-showTransitions", "-showStates"));
+		assertTrue(ui.run("verify", filename("exitBarrier.cvl"), "-por=scp"));
 	}
 }

@@ -42,12 +42,10 @@ public class UserInterface {
 	// Static fields...
 
 	/**
-	 * Should the TransientStateFactory be the default option? If not, the
-	 * ImmutableStateFactory will be used as the default. In either case, the
-	 * kind of factory can be explicitly specified using the "-transient"
-	 * option.
+	 * "persistent", "immutable", or "transient"
 	 */
-	public final static boolean transientIsDefault = false;
+	// public final static String statesDefault = "persistent";
+	public final static String statesDefault = "immutable";
 
 	/**
 	 * A string printed before and after titles of sections of output to make
@@ -117,15 +115,15 @@ public class UserInterface {
 	public final static Option solveO = Option.newScalarOption("solve",
 			BOOLEAN, "try to solve for concrete counterexample", false);
 
+	public final static Option statesO = Option.newScalarOption("states",
+			STRING, "state implementation: immutable, transient, peristent",
+			statesDefault);
+
 	public final static Option sysIncludePathO = Option.newScalarOption(
 			"sysIncludePath", STRING, "set the system include path", null);
 
 	public final static Option traceO = Option.newScalarOption("trace", STRING,
 			"filename of trace to replay", null);
-
-	public final static Option transO = Option
-			.newScalarOption("transient", BOOLEAN,
-					"use the transient pattern for states", transientIsDefault);
 
 	public final static Option userIncludePathO = Option.newScalarOption(
 			"userIncludePath", STRING, "set the user include path", null);
@@ -194,7 +192,7 @@ public class UserInterface {
 				sysIncludePathO, showTransitionsO, showStatesO,
 				showSavedStatesO, showQueriesO, showProverQueriesO, inputO,
 				idO, traceO, minO, maxdepthO, porO, saveStatesO, simplifyO,
-				solveO, transO);
+				solveO, statesO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -538,7 +536,7 @@ public class UserInterface {
 			throws CommandLineException, ABCException, IOException {
 		checkFilenames(1, config);
 		extractModel(out, config, config.getFreeArg(1));
-		if(showShortFileNameList(config))
+		if (showShortFileNameList(config))
 			TokenUtils.printShorterFileNameMap(out);
 		return true;
 	}
@@ -577,7 +575,7 @@ public class UserInterface {
 				showProverQueriesO));
 		newConfig.read(config);
 		model = extractModel(out, newConfig, sourceFilename);
-		if(showShortFileNameList(config))
+		if (showShortFileNameList(config))
 			TokenUtils.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
 		result = replayer.run();
@@ -597,7 +595,7 @@ public class UserInterface {
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
 		model = extractModel(out, config, filename);
-		if(showShortFileNameList(config))
+		if (showShortFileNameList(config))
 			TokenUtils.printShorterFileNameMap(out);
 		player = TracePlayer.randomPlayer(config, model, out);
 		out.println("\nRunning random simulation with seed " + player.getSeed()
@@ -620,7 +618,7 @@ public class UserInterface {
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
 		model = extractModel(out, config, filename);
-		if(showShortFileNameList(config))
+		if (showShortFileNameList(config))
 			TokenUtils.printShorterFileNameMap(out);
 		verifier = new Verifier(config, model, out);
 		result = verifier.run();

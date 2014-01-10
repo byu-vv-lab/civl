@@ -15,8 +15,6 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
-// extends PersistentObject
-
 public class PersistentState extends PersistentObject implements State {
 
 	/************************* Static Fields *************************/

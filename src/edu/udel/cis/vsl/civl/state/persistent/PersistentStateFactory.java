@@ -240,6 +240,7 @@ public class PersistentStateFactory implements StateFactory {
 		// new scopes may need to be created because the start location
 		// is not necessarily in the outermost scope of the function:
 		theState = setLocation(theState, pid, function.startLocation());
+		theState = theState.collectScopes(modelFactory);
 		return theState;
 	}
 
@@ -408,13 +409,14 @@ public class PersistentStateFactory implements StateFactory {
 		Scope staticScope = scope.lexicalScope();
 		CIVLFunction function = staticScope.function();
 		Scope functionScope = function.outerScope();
+		boolean staying = processState.getCallStack().size() > 1;
 
 		while (true) {
 			PersistentDynamicScope newScope = scope.unsetReachable(pid);
 
 			if (newScope != scope)
 				scopeVector = scopeVector.plusN(dyscopeId, newScope);
-			if (staticScope == functionScope)
+			if (staying && staticScope == functionScope)
 				break;
 			dyscopeId = scope.getParent();
 			if (dyscopeId < 0)

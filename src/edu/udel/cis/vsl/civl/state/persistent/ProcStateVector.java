@@ -77,7 +77,7 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 
 	@Override
 	protected boolean computeEquals(PersistentObject that) {
-		return that instanceof ValueVector && super.computeEquals(that);
+		return that instanceof ProcStateVector && super.computeEquals(that);
 	}
 
 	@Override
@@ -131,7 +131,7 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 			newValues = newValues.plusN(i, procState);
 		}
 		newValues = newValues.minus();
-		return new ProcStateVector(values);
+		return new ProcStateVector(newValues);
 	}
 
 }

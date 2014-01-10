@@ -454,8 +454,12 @@ public class TransientStateFactory implements StateFactory {
 	 * here is the FACT: A is the only frame on p's call stack which can reach a
 	 * dyscope in D. (Other processes, e.g., those spawned by p, may be able to
 	 * reach those dyscopes, but not p.) Hence when p is popped, p can no longer
-	 * reach any of the dyscopes in D. Its ability to reach all other dyscopes
-	 * in not affected.
+	 * reach any of the dyscopes in D. 
+	 * 
+	 * Its ability to reach all other dyscopes is not affected.
+	 * TODO: WRONG: it also may not be able to reach other scopes.
+	 * Think of the last frame to be popped from the stack.
+	 * 
 	 */
 	@Override
 	public TransientState popCallStack(State state, int pid) {
