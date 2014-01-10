@@ -11,16 +11,18 @@ $input int N;
 void f(int n) {
   int i = 0;
   
-$atomic{
-  for (i=0; i<n; i++) ;
-  $assert i==n;}
+  $atomic {
+    for (i=0; i<n; i++) ;
+    $assert i==n;
+  }
 }
 
 void main() {
   $proc p = $spawn f(N);
   $proc q = $spawn f(N);
 
-  $atomic{
-  $wait p;
-  $wait q;}
+  $atomic {
+    $wait p;
+    $wait q;
+  }
 }

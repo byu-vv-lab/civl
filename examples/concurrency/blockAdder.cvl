@@ -31,23 +31,23 @@ double adder_par() {
     int stop = ((id+1)*N)/P;
     double localSum = 0.0;
 
-	$atomic{
-    for (int i=start; i<stop; i++)
-      localSum += a[i];
-    $when (lock==0) lock = 1;
-    result += localSum;
-    lock = 0;}
+	$atomic {
+      for (int i=start; i<stop; i++)
+        localSum += a[i];
+      $when (lock==0) lock = 1;
+      result += localSum;
+      lock = 0;
+    }
   }
 
-$atomic{
-  for (int i=0; i<P; i++) ; // hack
-  for (int i=0; i<P; i++)
-    workers[i] = $spawn run_worker(i);
-    }
-    
-  $atomic{  
-  for (int i=0; i<P; i++)
-    $wait workers[i];
+  $atomic {
+    for (int i=0; i<P; i++) ; // hack
+    for (int i=0; i<P; i++)
+      workers[i] = $spawn run_worker(i);
+  } 
+  $atomic {  
+    for (int i=0; i<P; i++)
+      $wait workers[i];
   }
   return result;
 }

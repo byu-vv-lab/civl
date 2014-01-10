@@ -157,18 +157,20 @@ int transfer( int to_account_num, int from_account_num, int amount )
  */
 void main_a()
 {{
-	$atomic{
-   withdraw( 0, 50 );
-   transfer( 0, 1, 50 );
-   deposit( 2, 100 );}
+   $atomic {
+     withdraw( 0, 50 );
+     transfer( 0, 1, 50 );
+     deposit( 2, 100 );
+   }
 }}
 
 void main_b()
 {{
-	$atomic{
-   deposit( 1, 10 );
-   withdraw( 2, 50 );
-   transfer( 2, 0, 20 );}
+   $atomic {
+     deposit( 1, 10 );
+     withdraw( 2, 50 );
+     transfer( 2, 0, 20 );
+   }
 }}
 
 void main() 
@@ -178,22 +180,23 @@ void main()
    $proc proc_a;
    $proc proc_b;
 
-   $atomic{
-	   init();
+   $atomic {
+     init();
 
-   /* give all accounts some money */
-   for ( acct_num= 0; acct_num < NUM_ACCOUNTS; acct_num++ )  {
-      deposit( acct_num, 100 );
+     /* give all accounts some money */
+     for ( acct_num= 0; acct_num < NUM_ACCOUNTS; acct_num++ )  {
+        deposit( acct_num, 100 );
+     }
    }
+
+   $atomic{
+     proc_a= $spawn main_a();
+     proc_b= $spawn main_b();}
+
+   $atomic{
+     $wait proc_a;
+     $wait proc_b;
    }
-
-   $atomic{
-   proc_a= $spawn main_a();
-   proc_b= $spawn main_b();}
-
-   $atomic{
-   $wait proc_a;
-   $wait proc_b;}
    // main_a();
    // main_b();
 }}

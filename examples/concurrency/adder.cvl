@@ -12,9 +12,10 @@ double adderSeq(double *p, int n) {
   double s = 0.0;
   
   $atomic{
-  for (int i = 0; i < n; i++) {
-    s += p[i]; 
-  }}
+    for (int i = 0; i < n; i++) {
+      s += p[i]; 
+    }
+  }
   return s;
 }
 
@@ -26,21 +27,24 @@ double adderPar(double *p, int n) {
   void worker(int i) {
     double t;
 
-    $atomic{
-    $when (mutex == 0) mutex = 1;
-    t = s;
-    t += p[i];
-    s = t;
-    mutex = 0;}
+    $atomic {
+      $when (mutex == 0) mutex = 1;
+      t = s;
+      t += p[i];
+      s = t;
+      mutex = 0;
+    }
   }
   
-  $atomic{
-  for (int j = 0; j < n; j++)
-    workers[j] = $spawn worker(j);}
+  $atomic {
+    for (int j = 0; j < n; j++)
+      workers[j] = $spawn worker(j);
+  }
   
-  $atomic{
-  for (int j = 0; j < n; j++)
-    $wait workers[j];}
+  $atomic {
+    for (int j = 0; j < n; j++)
+      $wait workers[j];
+  }
   return s;
 }
 
