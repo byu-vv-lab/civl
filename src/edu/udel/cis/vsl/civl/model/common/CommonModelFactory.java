@@ -33,6 +33,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
@@ -79,6 +80,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAddressOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonBoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonCastExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonConditionalExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDereferenceExpression;
@@ -794,6 +796,15 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
+	@Override
+	public BoundVariableExpression boundVariableExpression(CIVLSource source,
+			Identifier name, CIVLType type) {
+		CommonBoundVariableExpression result =  new CommonBoundVariableExpression(source, name);
+		
+		result.setExpressionType(type);
+		return result;
+	}
+
 	/* *********************************************************************
 	 * Statements
 	 * *********************************************************************
@@ -1027,10 +1038,12 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public QuantifiedExpression quantifiedExpression(CIVLSource source,
-			Quantifier quantifier, Variable variable, Expression restriction,
+			Quantifier quantifier, Identifier boundVariableName,
+			CIVLType boundVariableType, Expression restriction,
 			Expression expression) {
 		QuantifiedExpression result = new CommonQuantifiedExpression(source,
-				quantifier, variable, restriction, expression);
+				quantifier, boundVariableName, boundVariableType, restriction,
+				expression);
 
 		result.setExpressionScope(join(expression.expressionScope(),
 				restriction.expressionScope()));

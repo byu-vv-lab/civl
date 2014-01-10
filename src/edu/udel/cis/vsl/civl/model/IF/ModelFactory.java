@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
@@ -710,8 +711,10 @@ public interface ModelFactory {
 	 * @param quantifier
 	 *            The quantifier for this quantified expression. One of {FORALL,
 	 *            EXISTS, UNIFORM}.
-	 * @param variable
-	 *            The bound variable.
+	 * @param boundVariableName
+	 *            The name of the bound variable.
+	 * @param boundVariableType
+	 *            The type of the bound variable.
 	 * @param restriction
 	 *            The boolean-valued expression involving the bound variable
 	 *            which is expected to be true.
@@ -720,8 +723,23 @@ public interface ModelFactory {
 	 * @return The new quantified expression
 	 */
 	QuantifiedExpression quantifiedExpression(CIVLSource source,
-			Quantifier quantifier, Variable variable, Expression restriction,
+			Quantifier quantifier, Identifier boundVariableName,
+			CIVLType boundVariableType, Expression restriction,
 			Expression expression);
+
+	/**
+	 * An expression for a bound variable.
+	 * 
+	 * @param source
+	 *            The source file information for this expression.
+	 * @param name
+	 *            The name of the bound variable being referenced.
+	 * @param type
+	 *            The type of the bound variable being referenced.
+	 * @return The new bound variable expression.
+	 */
+	BoundVariableExpression boundVariableExpression(CIVLSource source,
+			Identifier name, CIVLType type);
 
 	/* *********************************************************************
 	 * Statements

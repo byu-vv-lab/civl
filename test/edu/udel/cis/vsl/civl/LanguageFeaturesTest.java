@@ -235,4 +235,14 @@ public class LanguageFeaturesTest {
 	public void testChooseInt() throws ABCException {
 		assertTrue(ui.run("verify", filename("chooseInt.cvl")));
 	}
+	
+	@Test
+	public void testExit() {
+		assertTrue(ui.run("verify", filename("exit.cvl")));
+	}
+	
+	@Test
+	public void testQuantifiers() {
+		assertTrue(ui.run("verify", filename("quantifiers.cvl")));
+	}
 }

@@ -2,16 +2,20 @@ package edu.udel.cis.vsl.civl.model.common;
 
 import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.util.Pair;
 
 /**
  * Maintains the information, e.g. labeled location, goto statements,
@@ -46,7 +50,7 @@ public class FunctionInfo {
 	 * identifier for a bound variable corresponding to a particular quantifier.
 	 * 
 	 */
-	private Stack<Identifier> boundVariables;
+	private LinkedList<Pair<Identifier, CIVLType>> boundVariables;
 
 	/**
 	 * The current function that is being processed
@@ -77,6 +81,7 @@ public class FunctionInfo {
 		gotoStatements = new LinkedHashMap<Statement, LabelNode>();
 		continueStatements = new Stack<Set<Statement>>();
 		breakStatements = new Stack<Set<Statement>>();
+		boundVariables = new LinkedList<Pair<Identifier, CIVLType>>();
 	}
 
 	/************************** Public Methods *************************/
@@ -110,8 +115,8 @@ public class FunctionInfo {
 	/**
 	 * Add a bound variable to the stack of bound variables.
 	 */
-	public void addBoundVariable(Identifier name) {
-		this.boundVariables.add(name);
+	public void addBoundVariable(Identifier name, CIVLType type) {
+		this.boundVariables.add(new Pair<Identifier, CIVLType>(name, type));
 	}
 
 	/**
@@ -231,7 +236,7 @@ public class FunctionInfo {
 	 * @return The identifier from the top of the bound variable stack.
 	 */
 	public Identifier popBoundVariableStack() {
-		return boundVariables.pop();
+		return boundVariables.pop().left;
 	}
 
 	/**
@@ -241,7 +246,26 @@ public class FunctionInfo {
 	 * @return Whether or not this variable is on the stack of bound variables.
 	 */
 	public boolean containsBoundVariable(Identifier name) {
-		return boundVariables.contains(name);
+		for (Pair<Identifier, CIVLType> p : boundVariables) {
+			if (p.left.equals(name)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * 
+	 * @param name The name of a bound variable.
+	 * @return The CIVL type of the bound variable with the given name.
+	 */
+	public CIVLType boundVariableType(Identifier name) {
+		for (Pair<Identifier, CIVLType> p : boundVariables) {
+			if (p.left.equals(name)) {
+				return p.right;
+			}
+		}
+		throw new CIVLInternalException("Unknown bound variable", name.getSource());
 	}
 
 	/**

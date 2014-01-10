@@ -114,7 +114,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
-import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
@@ -1107,12 +1106,16 @@ public class ModelBuilderWorker {
 		CIVLSource source = factory.sourceOf(identifierNode);
 		Identifier name = factory.identifier(source, identifierNode
 				.getIdentifier().name());
-		VariableExpression result;
+		Expression result;
 
-		if (scope.variable(name) == null) {
+		if (functionInfo.containsBoundVariable(name)) {
+			result = factory.boundVariableExpression(source, name,
+					functionInfo.boundVariableType(name));
+		} else if (scope.variable(name) == null) {
 			throw new CIVLInternalException("No such variable ", source);
+		} else {
+			result = factory.variableExpression(source, scope.variable(name));
 		}
-		result = factory.variableExpression(source, scope.variable(name));
 		return result;
 	}
 
@@ -1200,20 +1203,20 @@ public class ModelBuilderWorker {
 		QuantifiedExpression result;
 		Quantifier quantifier;
 		Identifier variableName;
-		Variable variable;
+		TypeNode variableTypeNode;
+		CIVLType variableType;
 		Expression restriction;
 		Expression quantifiedExpression;
 		CIVLSource source = factory.sourceOf(expressionNode.getSource());
-		// TODO: Think about the best way to add the quantified variable. In
-		// theory we want a scope just for the quantified expression, but this
-		// creates certain problems. What scope should the location be in? What
-		// if we have a conjunction of quantified statements? For now, we will
-		// add to the existing scope, but this is unsatisfactory.
 
 		variableName = factory.identifier(
 				factory.sourceOf(expressionNode.variable().getSource()),
 				expressionNode.variable().getName());
-		functionInfo.addBoundVariable(variableName);
+		variableTypeNode = expressionNode.variable().getTypeNode();
+		variableType = translateABCType(
+				factory.sourceOf(variableTypeNode.getSource()), scope,
+				variableTypeNode.getType());
+		functionInfo.addBoundVariable(variableName, variableType);
 		// TODO: Is there an advantage to having separate restriction and
 		// quantifiedExpression? Maybe move this to right hand size and express
 		// in terms of &&, ||?
@@ -1231,18 +1234,12 @@ public class ModelBuilderWorker {
 			throw new CIVLUnimplementedFeatureException("quantifier "
 					+ expressionNode.quantifier(), source);
 		}
-		// TODO: create unique name for quantified variable
-		// TODO: Set up something like a "quantified scope"?
-		// Can't intermingle ordinary and quantified variables.
-		variable = translateVariableDeclarationNode(expressionNode.variable(),
-				scope);
-		variable.setIsBound(true);
 		restriction = translateExpressionNode(expressionNode.restriction(),
 				scope, true);
 		quantifiedExpression = translateExpressionNode(
 				expressionNode.expression(), scope, true);
-		result = factory.quantifiedExpression(source, quantifier, variable,
-				restriction, quantifiedExpression);
+		result = factory.quantifiedExpression(source, quantifier, variableName,
+				variableType, restriction, quantifiedExpression);
 		functionInfo.popBoundVariableStack();
 		return result;
 	}

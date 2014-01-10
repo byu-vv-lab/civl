@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.semantics;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -25,6 +26,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
@@ -182,6 +184,13 @@ public class Evaluator {
 	private Reasoner trueReasoner;
 
 	private GMCConfiguration config;
+
+	/**
+	 * LinkedList used to store a stack of bound variables during evaluation of
+	 * (possibly nested) quantified expressions. LinkedList is used instead of
+	 * Stack because of its more intuitive iteration order.
+	 */
+	private LinkedList<SymbolicConstant> boundVariables = new LinkedList<SymbolicConstant>();
 
 	// private BooleanExpression falseExpr;
 
@@ -1524,6 +1533,28 @@ public class Evaluator {
 		return result;
 	}
 
+	private Evaluation evaluateBoundVariable(State state, int pid,
+			BoundVariableExpression expression) {
+		Iterator<SymbolicConstant> boundVariableIterator = boundVariables
+				.iterator();
+		Evaluation result = null;
+
+		while (boundVariableIterator.hasNext()) {
+			SymbolicConstant boundVariable = boundVariableIterator.next();
+
+			if (boundVariable.name().toString()
+					.equals(expression.name().name())) {
+				result = new Evaluation(state, boundVariable);
+				break;
+			}
+		}
+		if (result != null) {
+			return result;
+		}
+		throw new CIVLException("Unknown bound variable",
+				expression.getSource());
+	}
+
 	private Evaluation evaluateQuantifiedExpression(State state, int pid,
 			QuantifiedExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -1532,17 +1563,20 @@ public class Evaluator {
 		Evaluation quantifiedExpression;
 		BooleanExpression context;
 		Reasoner reasoner;
-		Variable variable = expression.boundVariable();
-		SymbolicExpression variableValue = computeInitialValue(state, variable,
-				variable.type().getDynamicType(universe),
-				state.getScopeId(pid, variable));
 		BooleanExpression simplifiedExpression;
+		SymbolicConstant boundVariable = universe.symbolicConstant(expression
+				.boundVariableName().stringObject(), expression
+				.boundVariableType().getDynamicType(universe));
+		State stateWithRestriction;
 
-		// Since the bound variable is only referenced in this expression, it
-		// should be ok to modify the state with a constant for that variable.
-		state = stateFactory.setVariable(state, variable, pid, variableValue);
+		boundVariables.push(boundVariable);
 		restriction = evaluate(state, pid, expression.boundRestriction());
-		quantifiedExpression = evaluate(state, pid, expression.expression());
+		stateWithRestriction = state
+				.setPathCondition(universe.and(
+						(BooleanExpression) restriction.value,
+						state.getPathCondition()));
+		quantifiedExpression = evaluate(stateWithRestriction, pid,
+				expression.expression());
 		// By definition, the restriction should be boolean valued.
 		assert restriction.value instanceof BooleanExpression;
 		context = universe.and(state.getPathCondition(),
@@ -1550,30 +1584,27 @@ public class Evaluator {
 		reasoner = universe.reasoner(context);
 		simplifiedExpression = (BooleanExpression) reasoner
 				.simplify(quantifiedExpression.value);
-		assert variableValue instanceof SymbolicConstant;
 		switch (expression.quantifier()) {
 		case EXISTS:
-			result = new Evaluation(state, universe.exists(
-					(SymbolicConstant) variableValue, universe.and(
-							(BooleanExpression) restriction.value,
+			result = new Evaluation(state, universe.exists(boundVariable,
+					universe.implies((BooleanExpression) restriction.value,
 							simplifiedExpression)));
 			break;
 		case FORALL:
-			result = new Evaluation(state, universe.forall(
-					(SymbolicConstant) variableValue, universe.and(
-							(BooleanExpression) restriction.value,
+			result = new Evaluation(state, universe.forall(boundVariable,
+					universe.implies((BooleanExpression) restriction.value,
 							simplifiedExpression)));
 			break;
 		case UNIFORM:
-			result = new Evaluation(state, universe.forall(
-					(SymbolicConstant) variableValue, universe.and(
-							(BooleanExpression) restriction.value,
+			result = new Evaluation(state, universe.forall(boundVariable,
+					universe.implies((BooleanExpression) restriction.value,
 							simplifiedExpression)));
 			break;
 		default:
 			throw new CIVLException("Unknown quantifier ",
 					expression.getSource());
 		}
+		boundVariables.pop();
 		return result;
 	}
 
@@ -2011,6 +2042,10 @@ public class Evaluator {
 		case BOOLEAN_LITERAL:
 			result = evaluateBooleanLiteral(state, pid,
 					(BooleanLiteralExpression) expression);
+			break;
+		case BOUND_VARIABLE:
+			result = evaluateBoundVariable(state, pid,
+					(BoundVariableExpression) expression);
 			break;
 		case CAST:
 			result = evaluateCast(state, pid, (CastExpression) expression);
