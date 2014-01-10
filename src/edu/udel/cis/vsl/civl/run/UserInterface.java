@@ -116,7 +116,7 @@ public class UserInterface {
 			BOOLEAN, "try to solve for concrete counterexample", false);
 
 	public final static Option statesO = Option.newScalarOption("states",
-			STRING, "state implementation: immutable, transient, peristent",
+			STRING, "state implementation: immutable, transient, persistent",
 			statesDefault);
 
 	public final static Option sysIncludePathO = Option.newScalarOption(
