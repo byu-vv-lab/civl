@@ -245,4 +245,9 @@ public class LanguageFeaturesTest {
 	public void testQuantifiers() {
 		assertTrue(ui.run("verify", filename("quantifiers.cvl")));
 	}
+	
+	@Test
+	public void testBigO() {
+		assertTrue(ui.run("verify", filename("bigO.cvl")));
+	}
 }
