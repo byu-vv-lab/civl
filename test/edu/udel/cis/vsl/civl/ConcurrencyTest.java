@@ -58,7 +58,7 @@ public class ConcurrencyTest {
 	
 	@Test
 	public void barrierAtomic() {
-		assertTrue(ui.run("verify", "-inputB=4", filename("barrier_atom.cvl")));
+		assertTrue(ui.run("verify", "-inputB=4", filename("barrier.cvl")));
 	}
 
 	@Test

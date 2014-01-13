@@ -25,7 +25,7 @@ public class ArithmeticTest {
 
 	@Test
 	public void diffusion() {
-		check("diffusion_seq.cvl");
+		check("diffusion.cvl");
 	}
 
 	@Test
