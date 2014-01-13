@@ -62,6 +62,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class Executor {
 
+	/********************************* Types *********************************/
+
 	public enum ExecuteKind {
 		ATOMIC, ATOM, LOCAL
 	}
@@ -70,7 +72,7 @@ public class Executor {
 		NORMAL, NONDETERMINISTIC, BLOCKED, END
 	}
 
-	// Fields..............................................................
+	/***************************** Instance Fields ***************************/
 
 	private PrintStream out = null;
 
@@ -99,7 +101,7 @@ public class Executor {
 
 	private Libcivlc civlcExecutor;
 
-	// Constructors........................................................
+	/******************************* Constructors ***************************/
 
 	/**
 	 * Create a new executor.
@@ -143,7 +145,7 @@ public class Executor {
 		this(config, modelFactory, stateFactory, log, null);
 	}
 
-	// Helper methods...
+	/**************************** Private methods ***************************/
 
 	/**
 	 * Transition a process from one location to another. If the new location is
@@ -162,63 +164,6 @@ public class Executor {
 		state = stateFactory.setLocation(state, process.getPid(), target);
 		// state = stateFactory.canonic(state);
 		return state;
-	}
-
-	/**
-	 * Assigns a value to the referenced cell in the state. Returns a new state
-	 * which is equivalent to the old state except that the memory specified by
-	 * the given pointer value is assigned the given value.
-	 * 
-	 * @param state
-	 *            a CIVL model state
-	 * @param pointer
-	 *            a pointer value
-	 * @param value
-	 *            a value to be assigned to the referenced memory location
-	 * @return the new state
-	 */
-	public State assign(CIVLSource source, State state,
-			SymbolicExpression pointer, SymbolicExpression value) {
-		int vid = evaluator.getVariableId(source, pointer);
-		int sid = evaluator.getScopeId(source, pointer);
-		ReferenceExpression symRef = evaluator.getSymRef(pointer);
-		State result;
-
-		if (symRef.isIdentityReference()) {
-			result = stateFactory.setVariable(state, vid, sid, value);
-		} else {
-			SymbolicExpression oldVariableValue = state.getVariableValue(sid,
-					vid);
-			SymbolicExpression newVariableValue = symbolicUniverse.assign(
-					oldVariableValue, symRef, value);
-
-			result = stateFactory
-					.setVariable(state, vid, sid, newVariableValue);
-		}
-		return result;
-	}
-
-	/**
-	 * Assigns a value to the memory location specified by the given
-	 * left-hand-side expression.
-	 * 
-	 * @param state
-	 *            a CIVL model state
-	 * @param pid
-	 *            the PID of the process executing the assignment
-	 * @param lhs
-	 *            a left-hand-side expression
-	 * @param value
-	 *            the value being assigned to the left-hand-side
-	 * @return the new state
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	public State assign(State state, int pid, LHSExpression lhs,
-			SymbolicExpression value)
-			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluator.reference(state, pid, lhs);
-
-		return assign(lhs.getSource(), eval.state, eval.value, value);
 	}
 
 	/**
@@ -404,7 +349,6 @@ public class Executor {
 				state = assign(state, pid, call.lhs(), returnValue);
 			state = stateFactory.setLocation(state, pid, call.target());
 		}
-		// state = stateFactory.canonic(state);
 		return state;
 	}
 
@@ -463,7 +407,137 @@ public class Executor {
 		return state;
 	}
 
-	// Exported Methods................................................
+	private void printStatement(Statement s, AtomicKind atomicKind,
+			ProcessState p) {
+		out.print("  " + s.source().id() + "->");
+		if (s.target() != null)
+			out.print(s.target().id() + ": ");
+		else
+			out.print("RET: ");
+		if (atomicKind == AtomicKind.ENTER) {
+			out.print("ENTER_ATOMIC ");
+			out.print(p.atomicCount() - 1);
+		} else if (atomicKind == AtomicKind.LEAVE) {
+			out.print("EXIT_ATOMIC ");
+			out.print(p.atomicCount());
+		} else if (atomicKind == AtomicKind.DENTER)
+			out.print("ENTER_ATOM");
+		else if (atomicKind == AtomicKind.DLEAVE)
+			out.print("EXIT_ATOM");
+		else
+			out.print(s.toString());
+		if (s.getSource() != null)
+			out.print(" at " + s.getSource().getSummary());
+		else if (s.source().getSource() != null)
+			out.print(" at " + s.source().getSource().getSummary());
+		out.println(";");
+	}
+
+	/**
+	 * Execute a generic statement. All statements except a Choose should be
+	 * handled by this method.
+	 * 
+	 * @param State
+	 *            The state of the program.
+	 * @param pid
+	 *            The process id of the currently executing process.
+	 * @param statement
+	 *            The statement to be executed.
+	 * @return The updated state of the program.
+	 */
+	private State executeWork(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
+		if (statement instanceof AssumeStatement) {
+			return executeAssume(state, pid, (AssumeStatement) statement);
+		} else if (statement instanceof AssertStatement) {
+			return executeAssert(state, pid, (AssertStatement) statement);
+		} else if (statement instanceof CallOrSpawnStatement) {
+			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
+
+			if (call.isCall())
+				return executeCall(state, pid, call);
+			else
+				return executeSpawn(state, pid, call);
+		} else if (statement instanceof AssignStatement) {
+			return executeAssign(state, pid, (AssignStatement) statement);
+		} else if (statement instanceof WaitStatement) {
+			return executeWait(state, pid, (WaitStatement) statement);
+		} else if (statement instanceof ReturnStatement) {
+			return executeReturn(state, pid, (ReturnStatement) statement);
+		} else if (statement instanceof NoopStatement) {
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
+
+			return state;
+		} else if (statement instanceof MallocStatement) {
+			return executeMalloc(state, pid, (MallocStatement) statement);
+		} else if (statement instanceof StatementList) {
+			return executeStatementList(state, pid, (StatementList) statement,
+					null);
+		} else if (statement instanceof ChooseStatement) {
+			throw new CIVLInternalException("Should be unreachable", statement);
+		} else
+			throw new CIVLInternalException("Unknown statement kind", statement);
+	}
+
+	/*************************** Public Methods ******************************/
+
+	/**
+	 * Assigns a value to the referenced cell in the state. Returns a new state
+	 * which is equivalent to the old state except that the memory specified by
+	 * the given pointer value is assigned the given value.
+	 * 
+	 * @param state
+	 *            a CIVL model state
+	 * @param pointer
+	 *            a pointer value
+	 * @param value
+	 *            a value to be assigned to the referenced memory location
+	 * @return the new state
+	 */
+	public State assign(CIVLSource source, State state,
+			SymbolicExpression pointer, SymbolicExpression value) {
+		int vid = evaluator.getVariableId(source, pointer);
+		int sid = evaluator.getScopeId(source, pointer);
+		ReferenceExpression symRef = evaluator.getSymRef(pointer);
+		State result;
+
+		if (symRef.isIdentityReference()) {
+			result = stateFactory.setVariable(state, vid, sid, value);
+		} else {
+			SymbolicExpression oldVariableValue = state.getVariableValue(sid,
+					vid);
+			SymbolicExpression newVariableValue = symbolicUniverse.assign(
+					oldVariableValue, symRef, value);
+
+			result = stateFactory
+					.setVariable(state, vid, sid, newVariableValue);
+		}
+		return result;
+	}
+
+	/**
+	 * Assigns a value to the memory location specified by the given
+	 * left-hand-side expression.
+	 * 
+	 * @param state
+	 *            a CIVL model state
+	 * @param pid
+	 *            the PID of the process executing the assignment
+	 * @param lhs
+	 *            a left-hand-side expression
+	 * @param value
+	 *            the value being assigned to the left-hand-side
+	 * @return the new state
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public State assign(State state, int pid, LHSExpression lhs,
+			SymbolicExpression value)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluator.reference(state, pid, lhs);
+
+		return assign(lhs.getSource(), eval.state, eval.value, value);
+	}
 
 	/**
 	 * Execute a choose statement. This is like an assignment statement where
@@ -522,53 +596,6 @@ public class Executor {
 		return modelFactory;
 	}
 
-	/**
-	 * Execute a generic statement. All statements except a Choose should be
-	 * handled by this method.
-	 * 
-	 * @param State
-	 *            The state of the program.
-	 * @param pid
-	 *            The process id of the currently executing process.
-	 * @param statement
-	 *            The statement to be executed.
-	 * @return The updated state of the program.
-	 */
-	private State executeWork(State state, int pid, Statement statement)
-			throws UnsatisfiablePathConditionException {
-		if (statement instanceof AssumeStatement) {
-			return executeAssume(state, pid, (AssumeStatement) statement);
-		} else if (statement instanceof AssertStatement) {
-			return executeAssert(state, pid, (AssertStatement) statement);
-		} else if (statement instanceof CallOrSpawnStatement) {
-			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
-
-			if (call.isCall())
-				return executeCall(state, pid, call);
-			else
-				return executeSpawn(state, pid, call);
-		} else if (statement instanceof AssignStatement) {
-			return executeAssign(state, pid, (AssignStatement) statement);
-		} else if (statement instanceof WaitStatement) {
-			return executeWait(state, pid, (WaitStatement) statement);
-		} else if (statement instanceof ReturnStatement) {
-			return executeReturn(state, pid, (ReturnStatement) statement);
-		} else if (statement instanceof NoopStatement) {
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
-
-			return state;
-		} else if (statement instanceof MallocStatement) {
-			return executeMalloc(state, pid, (MallocStatement) statement);
-		} else if (statement instanceof StatementList) {
-			return executeStatementList(state, pid, (StatementList) statement,
-					null);
-		} else if (statement instanceof ChooseStatement) {
-			throw new CIVLInternalException("Should be unreachable", statement);
-		} else
-			throw new CIVLInternalException("Unknown statement kind", statement);
-	}
-
 	public State executeStatementList(State state, int pid,
 			StatementList statement, SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
@@ -600,9 +627,12 @@ public class Executor {
 		try {
 			return executeWork(state, pid, statement);
 		} catch (SARLException e) {
-			e.printStackTrace(System.err);
-			System.err.flush();
+			// e.printStackTrace(System.err);
+			// System.err.flush();
 			throw new CIVLInternalException("SARL exception: " + e, statement);
+		} catch (CIVLExecutionException e) {
+			evaluator.reportError(e);
+			throw new UnsatisfiablePathConditionException();
 		}
 	}
 
@@ -713,8 +743,7 @@ public class Executor {
 								state, s.getSource());
 
 						evaluator.reportError(e);
-						// TODO: recover: add a no-op transition
-						throw e;
+						throw new UnsatisfiablePathConditionException();
 					}
 					if (state.getProcessState(pidValue).hasEmptyStack()) {
 						newState = state.setPathCondition(pathCondition);
@@ -762,7 +791,7 @@ public class Executor {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	public State executeDAtomicBlock(State state, int pid, Location location,
-			boolean print) {
+			boolean print) throws UnsatisfiablePathConditionException {
 		// // record blocks of atomic statements
 		// Stack<Integer> atomicFlags = new Stack<Integer>();
 		ProcessState p;
@@ -787,16 +816,19 @@ public class Executor {
 							newState.getProcessState(pid));
 				}
 			} catch (UnsatisfiablePathConditionException e1) {
-				throw new CIVLStateException(
-						ErrorKind.OTHER,
-						Certainty.CONCRETE,
-						"Undesired blocked location is detected in $atom block.",
-						newState, newLocation.getSource());
+				evaluator
+						.reportError(new CIVLStateException(
+								ErrorKind.OTHER,
+								Certainty.CONCRETE,
+								"Undesired blocked location is detected in $atom block.",
+								newState, newLocation.getSource()));
+				throw new UnsatisfiablePathConditionException();
 			}
 		} else {
-			throw new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
-					"Undesired blocked location is detected in $atom block.",
-					newState, newLocation.getSource());
+			evaluator.reportError(new CIVLStateException(ErrorKind.OTHER,
+					Certainty.CONCRETE, "Execution blocked in $atom", newState,
+					newLocation.getSource()));
+			throw new UnsatisfiablePathConditionException();
 		}
 		do {
 			boolean statementExecuted = false;
@@ -828,18 +860,22 @@ public class Executor {
 
 					switch (temp.getKey()) {
 					case NONDETERMINISTIC:
-						throw new CIVLStateException(
-								ErrorKind.OTHER,
-								Certainty.CONCRETE,
-								"Undesired non-determinism is found in $atom block.",
-								newState, newLocation.getSource());
+						evaluator
+								.reportError(new CIVLStateException(
+										ErrorKind.OTHER,
+										Certainty.CONCRETE,
+										"Undesired non-determinism is found in $atom block.",
+										newState, newLocation.getSource()));
+						throw new UnsatisfiablePathConditionException();
 					case NORMAL:
 						if (statementExecuted) {
-							throw new CIVLStateException(
-									ErrorKind.OTHER,
-									Certainty.CONCRETE,
-									"Undesired non-determinism is found in $atom block.",
-									newState, newLocation.getSource());
+							evaluator
+									.reportError(new CIVLStateException(
+											ErrorKind.OTHER,
+											Certainty.CONCRETE,
+											"Undesired non-determinism is found in $atom block.",
+											newState, newLocation.getSource()));
+							throw new UnsatisfiablePathConditionException();
 						}
 						statementExecuted = true;
 						newState = temp.getValue();
@@ -854,11 +890,13 @@ public class Executor {
 			}
 			// current location is blocked
 			if (!statementExecuted) {
-				throw new CIVLStateException(
-						ErrorKind.OTHER,
-						Certainty.CONCRETE,
-						"Undesired blocked location is detected in $atom block.",
-						currentState, newLocation.getSource());
+				evaluator
+						.reportError(new CIVLStateException(
+								ErrorKind.OTHER,
+								Certainty.CONCRETE,
+								"Undesired blocked location is detected in $atom block.",
+								currentState, newLocation.getSource()));
+				throw new UnsatisfiablePathConditionException();
 			}
 			// warning for possible infinite atomic block
 			if (stateCounter != 0 && stateCounter % 1024 == 0) {
@@ -896,7 +934,8 @@ public class Executor {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	public State executeAtomicStatements(State state, int pid,
-			Location location, boolean atomic, boolean print) {
+			Location location, boolean atomic, boolean print)
+			throws UnsatisfiablePathConditionException {
 		Location pLocation = location;
 		ProcessState p = state.getProcessState(pid);
 		State newState = state;
@@ -1039,29 +1078,4 @@ public class Executor {
 		this.out = outPut;
 	}
 
-	private void printStatement(Statement s, AtomicKind atomicKind,
-			ProcessState p) {
-		out.print("  " + s.source().id() + "->");
-		if (s.target() != null)
-			out.print(s.target().id() + ": ");
-		else
-			out.print("RET: ");
-		if (atomicKind == AtomicKind.ENTER) {
-			out.print("ENTER_ATOMIC ");
-			out.print(p.atomicCount() - 1);
-		} else if (atomicKind == AtomicKind.LEAVE) {
-			out.print("EXIT_ATOMIC ");
-			out.print(p.atomicCount());
-		} else if (atomicKind == AtomicKind.DENTER)
-			out.print("ENTER_ATOM");
-		else if (atomicKind == AtomicKind.DLEAVE)
-			out.print("EXIT_ATOM");
-		else
-			out.print(s.toString());
-		if (s.getSource() != null)
-			out.print(" at " + s.getSource().getSummary());
-		else if (s.source().getSource() != null)
-			out.print(" at " + s.source().getSource().getSummary());
-		out.println(";");
-	}
 }

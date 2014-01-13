@@ -298,7 +298,7 @@ public class Libcivlc implements LibraryExecutor {
 	 * @return The state resulting from removing the specified process.
 	 */
 	private State executeExit(State state, int pid) {
-		//return stateFactory.removeProcess(state, pid);
+		// return stateFactory.removeProcess(state, pid);
 		while (!state.getProcessState(pid).hasEmptyStack()) {
 			state = stateFactory.popCallStack(state, pid);
 		}
@@ -478,7 +478,7 @@ public class Libcivlc implements LibraryExecutor {
 
 	private State executeBundleUnpack(State state, int pid,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) {
+			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression bundle = argumentValues[0];
 		// Expression pointerExpr = arguments[1];
 		// Expression sizeExpr = arguments[1];
@@ -622,7 +622,8 @@ public class Libcivlc implements LibraryExecutor {
 	}
 
 	private State executeCommEnqueue(State state, int pid,
-			Expression[] arguments, SymbolicExpression[] argumentValues) {
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression comm;
 		// SymbolicExpression procArray;
 		CIVLSource commArgSource = arguments[0].getSource();
@@ -1043,8 +1044,9 @@ public class Libcivlc implements LibraryExecutor {
 			try {
 				eval = evaluator.evaluate(state, pid, arguments[i]);
 			} catch (UnsatisfiablePathConditionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return universe.falseExpression();
 			}
 			argumentValues[i] = eval.value;
 			state = eval.state;
@@ -1052,7 +1054,13 @@ public class Libcivlc implements LibraryExecutor {
 
 		switch (name.name()) {
 		case "$comm_dequeue":
-			guard = getDequeueGuard(state, pid, arguments, argumentValues);
+			try {
+				guard = getDequeueGuard(state, pid, arguments, argumentValues);
+			} catch (UnsatisfiablePathConditionException e) {
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return universe.falseExpression();
+			}
 			break;
 		case "$free":
 		case "$bundle_pack":
@@ -1085,7 +1093,8 @@ public class Libcivlc implements LibraryExecutor {
 	}
 
 	private BooleanExpression getDequeueGuard(State state, int pid,
-			Expression[] arguments, SymbolicExpression[] argumentValues) {
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression comm;
 		CIVLSource commArgSource = arguments[0].getSource();
 		NumericExpression sourceExpression;

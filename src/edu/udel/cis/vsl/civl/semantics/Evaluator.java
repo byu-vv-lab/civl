@@ -242,6 +242,12 @@ public class Evaluator {
 
 	// Helper methods......................................................
 
+	/**
+	 * Writes the given execution exception to the log.
+	 * 
+	 * @param err
+	 *            a CIVL execution exception
+	 */
 	public void reportError(CIVLExecutionException err) {
 		try {
 			log.report(new CIVLLogEntry(config, err));
@@ -1702,9 +1708,7 @@ public class Evaluator {
 	public ReferenceExpression getSymRef(SymbolicExpression pointer) {
 		SymbolicExpression result = universe.tupleRead(pointer, twoObj);
 
-		if (!(result instanceof ReferenceExpression))
-			throw new RuntimeException("Expected ReferenceExpression, not: "
-					+ result.toStringBufferLong());
+		assert result instanceof ReferenceExpression;
 		return (ReferenceExpression) result;
 	}
 
@@ -1776,9 +1780,11 @@ public class Evaluator {
 	 *            a pointer value which refers to some sub-structure in the
 	 *            state
 	 * @return the value pointed to
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	public Evaluation dereference(CIVLSource source, State state,
-			SymbolicExpression pointer) {
+			SymbolicExpression pointer)
+			throws UnsatisfiablePathConditionException {
 		// how to figure out if pointer is null pointer?
 		try {
 			int sid = getScopeId(source, pointer);
@@ -1786,15 +1792,26 @@ public class Evaluator {
 			ReferenceExpression symRef = getSymRef(pointer);
 			SymbolicExpression variableValue = state.getScope(sid)
 					.getValue(vid);
-			Evaluation result = new Evaluation(state, universe.dereference(
-					variableValue, symRef));
+			SymbolicExpression deref;
 
-			return result;
-			// TODO: this should be an internal exception, it is more
-			// expected if a reference has not been defined:
+			try {
+				deref = universe.dereference(variableValue, symRef);
+			} catch (SARLException e) {
+				CIVLStateException se = new CIVLStateException(
+						ErrorKind.DEREFERENCE, Certainty.MAYBE,
+						"Illegal pointer dereference", state, source);
+
+				reportError(se);
+				throw new UnsatisfiablePathConditionException();
+			}
+			return new Evaluation(state, deref);
 		} catch (CIVLInternalException e) {
-			throw new CIVLStateException(ErrorKind.POINTER, Certainty.MAYBE,
+			CIVLStateException se = new CIVLStateException(
+					ErrorKind.DEREFERENCE, Certainty.MAYBE,
 					"Undefined pointer value?", state, source);
+
+			reportError(se);
+			throw new UnsatisfiablePathConditionException();
 		}
 	}
 
