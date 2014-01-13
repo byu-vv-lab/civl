@@ -141,6 +141,8 @@ The additional language elements are shown in Figure \ref{fig:cc}.
     \ctrue & boolean value true, used in assertions \\
     \cfalse & boolean value false, used in assertions \\
     \cassume & assume something holds \\
+    \catom & defines statements to be executed as one transition\\
+    \catomic & defines statements to be executed without interleaving other processes\\
     \cwhen & guarded statement \\
     \cchoose & nondeterministic choice statement \\
     \cchooseint & nondeterministic choice of integer  \\
@@ -324,6 +326,123 @@ transition system:
 \end{verbatim}
 It takes as input a positive integer \texttt{n} and returns an integer
 in the range $[0,\texttt{n}-1]$.  
+
+\subsection{\catom} This defines a number of statements to be executed as one transition.  An \catom~block has the following form.
+\begin{verbatim}
+  $atom {
+    stmt1;
+    stmt2;
+    ...
+  }
+\end{verbatim}
+
+The statements inside an \catom~block are to be executed as one transition. It is required that the execution of the statements in an \catom~block is deterministic, non-blocking and finite. If one of the requirement is found to be violated, an error or a warning will be reported. For example, an error will be reported  when executing the code below, because the \cwait~statement is blocked.
+
+\begin{verbatim}  
+$atom{
+    for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
+    for(int i = 0; i < 5; i++) $wait p[i];
+}
+\end{verbatim}
+
+
+\subsection{\catomic} This defines a number of statements that will only allow the process to interleave with others when necessary. An \catomic~block has the following form.
+
+\begin{verbatim}
+  $atomic {
+    stmt1;
+    stmt2;
+    ...
+  }
+\end{verbatim}
+
+A process executing an \catomic~block will try to execute statements contained in the \catomic~block without interleaving with other processes, unless the process is blocked. For example, the following loop will be executed without interleaving with other processes.
+
+\begin{verbatim}
+$atomic{
+    for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
+}
+\end{verbatim}
+
+
+When no transition can be enabled, the execution of the \catomic~block will be interrupted. And other processes are allowed to execute, until the process gets enabled again to continue executing its \catomic~block. For example, in the following lines of code, after executing the first loop, the \catomic~block is blocked, because it has to wait for other processes' termination.
+ 
+\begin{verbatim}  
+$atomic{
+    for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
+    for(int i = 0; i < 5; i++) $wait p[i];
+}
+\end{verbatim}
+
+%Ideally, there will be two states saved for [Example 2]. The first is the state after executing the first loop, and the second is after executing the second loop.
+%
+%One question here is, if processes p[0] to p[4] terminates in the order of 0-4, then the loop for(int i = 0; i < 5; i++) $wait p[i]; will have 5 saved states, the transitions of which are like ...p[0] terminates...wait p[0]... p[1] terminates... wait p[1]....
+%Maybe we need some special structure for $wait, like $wait {p[0], p[1], p[2], ...}? That is to wait for a set of processes at a time, instead of one process at a time. Or provide some expression to specify the termination of certain processes as a guard, something to return true if a given process terminates like $terminate(p[0])?
+%
+%Interleaving between processes are enabled when blocking happens, we need to think carefully. When there are more than one processes that have previously blocked atomic sections but gets enabled again at some state, that state is saved, and enabled transitions at that state are all enabled transitions from processes that are in some atomic sections (i.e. the atomic counter of the process is greater than 0). A statement to update the atomic lock variable is also integrated into the transitions  from each process.
+%
+%[Example 3] gives an example for this situation. In [Example 3], p1 and p2 will both execute the first two statements (y = y + i; z++;) in its atomic block, and then they get blocked because x!=0. Then the main process gets to execute when(z==2) x = 0;, which enables both p1 and p2. Then p1 and p2 are non-deterministically chosen to complete its atomic block.
+%
+%If there is only one such process, then that process gets to execute as a normal atomic block, like [Example 2].
+%
+%[Example 3]
+%int x = 1;
+%int y = 0;
+%int z = 0;
+%int sum = 0;
+%void main(){
+%    $proc p1 = $spawn foo(1);
+%    $proc p2 = $spawn foo(2);
+%    when (z==2) x = 0;
+%}
+%
+%void foo(i){
+%    $atomic{
+%        y = y + i;
+%        z++;
+%        when(x==0) 
+%          switch(y){
+%            case 1: sum += 1*i; break;
+%            case 2: sum += 2*i; break;
+%            case 3: sum += 3*i; break;
+%          }
+%    }
+%}
+%
+%3. a loop in the state space is detected: this means that the atomic block is infinite, we shall throw an exception or report a warning for this.
+%
+%Here is how to detect the loop.
+%- if there is no non-determinism or blocking, then the loop can be detected by maintaining a stack of states at this level.
+%
+%- if there is non-determinism or blocking that separates the execution of atomic blocks into several parts, then the stack mentioned above can't identify loops for some case, like [Example 4]. Even in this case, DfsSearcher should be able to tell if a state has been encountered before, and I think we do not introduce bugs here if we don't purposely identify loops. 
+%
+%We may maintain a counter to record the number of states that have been established in a process's atomic block and report warnings if the counter exceeds some upper bound.
+%
+%[Example 4]
+%int a = 0, b = 0;
+%
+%$atomic{
+%  1:  for(int i = 0; i < 5; i--){
+%  2:       a = 1;
+%  3:       choose{
+%  4:            when(2 > 1) b = 2;
+%  5:            when(3 > 1) b = 3;
+%  6:       }
+%  7:       i++;
+%    }
+%}
+%
+%In [Example 4], assume we have the following states during the execution, where s(x,y,z,L) means a state s with a = x, b=y, i=z and location being L.
+%
+%s1(1,0,0,L3) (after executing a=1)
+%s2(1,2,0,L3) (after executing when(2 > 1) b = 2; i++; i--; a=1)
+%s3(1,3,0,L3) (after executing when(3 > 1) b = 3; i++; i--; a=1)
+%s4(1,2,0,L3) (after executing when(2 > 1) b = 2; i++; i--; a=1)
+%s5(1,3,0,L3) (after executing when(3 > 1) b = 3; i++; i--; a=1)
+%
+%Here s2 and s4 are identical, s5 and s6 are identical. And DfsSearcher should be able to detect the loop because s1, s2, s3 are saved.
+
+
 
 \subsection{\cinvariant} This indicates a loop invariant.  Each C loop
 construct has an optional invariant clause as follows:
