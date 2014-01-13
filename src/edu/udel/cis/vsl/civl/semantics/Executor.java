@@ -686,7 +686,7 @@ public class Executor {
 				if (s instanceof ChooseStatement) {
 					// execute deterministic choosestatement
 					return new Pair<StateStatusKind, State>(
-							StateStatusKind.NONDETERMINISTIC, null);
+							StateStatusKind.NONDETERMINISTIC, state);
 
 					// if(executeKind == ExecuteKind.ATOM)
 					// throw new CIVLStateException(
@@ -719,7 +719,7 @@ public class Executor {
 						newState = execute(newState, pid, s);
 					} else {
 						return new Pair<StateStatusKind, State>(
-								StateStatusKind.BLOCKED, null);
+								StateStatusKind.BLOCKED, state);
 						// if(executeKind == ExecuteKind.ATOMIC)
 						// return newState;
 						// else return null;
@@ -730,11 +730,11 @@ public class Executor {
 				}
 			} catch (UnsatisfiablePathConditionException e) {
 				return new Pair<StateStatusKind, State>(
-						StateStatusKind.BLOCKED, null);
+						StateStatusKind.BLOCKED, state);
 			}
 		} else {
 			return new Pair<StateStatusKind, State>(StateStatusKind.BLOCKED,
-					null);
+					state);
 		}
 
 		return new Pair<StateStatusKind, State>(StateStatusKind.NORMAL,
