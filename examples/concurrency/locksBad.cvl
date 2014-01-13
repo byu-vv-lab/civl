@@ -1,4 +1,6 @@
-
+/* Commandline execution:
+ * 		civl verify locksBad.cvl
+ * */
 _Bool lock0 = 0;
 _Bool lock1 = 0;
 

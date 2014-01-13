@@ -1,5 +1,5 @@
-/*
- * civl verify -inputB=5 adder.cvl
+/* Commandline execution:
+ *		civl verify -inputB=5 adder.cvl
  * */
 #include <civlc.h>
 

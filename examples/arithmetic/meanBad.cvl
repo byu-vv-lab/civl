@@ -1,4 +1,6 @@
 /* Commandline execution:
+ * 		civl verify -inputB=10 meanBad.cvl
+ * or (if you want to find the minimal counterexample)
  * 		civl verify -inputB=10 -min meanBad.cvl
  */
 $input int B;

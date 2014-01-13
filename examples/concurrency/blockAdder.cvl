@@ -1,6 +1,6 @@
 /* Compare sequential and parallel sum of array by block partition
  * Example run:
- *      civl verify -inputB=6 -inputW=3 blockAdders.cvl
+ *      civl verify -inputB=6 -inputW=3 blockAdder.cvl
  */
 #include<civlc.h>
 

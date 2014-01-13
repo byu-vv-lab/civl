@@ -1,9 +1,13 @@
 /* Basic flag barrier.  Same algorithm as barrier.cvl, but
  * packaged to be re-used in other code.
- * 
- * civl verify barrier2.cvl
+ * Commandline execution:
+ * 		civl verify -inputB=4 barrier2.cvl
  */
 #include <civlc.h>
+
+$input int B; // upper bound on number of threads
+$input int N; // number of threads
+$assume 1<=N && N<=B;
 
 struct _CIVL_Barrier {
   int numProcs;
@@ -41,7 +45,6 @@ void CIVL_barrier(CIVL_Barrier *barrier, int tid) {
 
 
 void main() {
-  int N=4;
   $proc threads[N];
   int counter = 0;
   CIVL_Barrier b;

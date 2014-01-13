@@ -1,5 +1,7 @@
-/*
- * civl verify -inputB=5 adderBad.cvl
+/* Commandline execution:
+ * 		civl verify -inputB=5 adderBad.cvl
+ * or (if you want to find the minimal counterexample)
+ * 		civl verify -inputB=5 adderBad.cvl -min
  * */
 #include <civlc.h>
 

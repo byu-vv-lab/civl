@@ -11,6 +11,8 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class ConcurrencyTest {
 
+	/************************* Static Fields *************************/
+
 	private static UserInterface ui = new UserInterface();
 
 	private static File rootDir = new File(new File("examples"), "concurrency");
@@ -19,8 +21,7 @@ public class ConcurrencyTest {
 		return new File(rootDir, name).getPath();
 	}
 
-	// private PrintStream out = System.out;
-
+	/************************* Test Methods *************************/
 	@Test
 	public void adder() {
 		assertTrue(ui.run("verify", filename("adder.cvl"), "-inputB=5"));
@@ -34,31 +35,19 @@ public class ConcurrencyTest {
 	}
 
 	@Test
-	public void blockAdder() {
-		assertTrue(ui.run("verify", "-inputB=6", "-inputW=3",
-				filename("blockAdder.cvl")));
-	}
-
-	@Test
-	public void blockAdderBad() {
-		assertFalse(ui.run("verify", "-inputB=6", "-inputW=3",
-				filename("blockAdderBad.cvl"), "-min"));
-		assertFalse(ui.run("replay", filename("blockAdderBad.cvl")));
-	}
-
-	@Test
 	public void bank() {
-		assertTrue(ui.run("verify", filename("bank.cvl")));
+		assertTrue(ui.run("verify", "-inputNUM_ACCOUNTS=3",
+				filename("bank.cvl")));
 	}
 
-//	@Test
-//	public void barrier() {
-//		assertTrue(ui.run("verify", "-inputB=4", filename("barrier.cvl")));
-//	}
-	
 	@Test
-	public void barrierAtomic() {
+	public void barrier() {
 		assertTrue(ui.run("verify", "-inputB=4", filename("barrier.cvl")));
+	}
+
+	@Test
+	public void barrier2() {
+		assertTrue(ui.run("verify", "-inputB=4", filename("barrier2.cvl")));
 	}
 
 	@Test
@@ -70,8 +59,16 @@ public class ConcurrencyTest {
 	}
 
 	@Test
-	public void barrier2() {
-		assertTrue(ui.run("verify", filename("barrier2.cvl")));
+	public void blockAdder() {
+		assertTrue(ui.run("verify", "-inputB=6", "-inputW=3",
+				filename("blockAdder.cvl")));
+	}
+
+	@Test
+	public void blockAdderBad() {
+		assertFalse(ui.run("verify", "-inputB=6", "-inputW=3",
+				filename("blockAdderBad.cvl"), "-min"));
+		assertFalse(ui.run("replay", filename("blockAdderBad.cvl")));
 	}
 
 	@Test
@@ -92,13 +89,13 @@ public class ConcurrencyTest {
 	}
 
 	@Test
-	public void locksGood() {
-		assertTrue(ui.run("verify", filename("locksGood.cvl")));
+	public void locksBad10() {
+		assertFalse(ui.run("verify", filename("locksBad10.cvl")));
 	}
 
 	@Test
-	public void locksBad10() {
-		assertFalse(ui.run("verify", filename("locksBad10.cvl")));
+	public void locksGood() {
+		assertTrue(ui.run("verify", filename("locksGood.cvl")));
 	}
 
 	@Test

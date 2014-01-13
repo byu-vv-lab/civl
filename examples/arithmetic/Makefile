@@ -3,7 +3,7 @@ CIVL=civl
 VERIFY=$(CIVL) verify
 
 all: algebra assoc derivative diffusion division \
-	divisionBad laplace matmat matmatBad mean meanBad  
+	divisionBad laplace matmat matmatBad mean meanBad
 
 algebra: algebra.cvl
 	$(VERIFY) algebra.cvl

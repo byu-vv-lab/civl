@@ -1,5 +1,5 @@
 /* Basic shared-variable flag barrier.   Run as follows:
- *      civl verify -inputB=4 barrier.cvl
+ *      civl verify -inputB=4 barrierBad.cvl
  */
 #include <civlc.h>
 

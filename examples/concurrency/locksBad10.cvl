@@ -1,3 +1,6 @@
+/* Commandline execution:
+ * 		civl verify locksBad10.cvl
+ * */
 #include<civlc.h>
 
 int x;

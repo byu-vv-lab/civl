@@ -1,8 +1,6 @@
-/* spawn2.cvl: simple example of spawning two processes.
- * More difficult to reduce than spawn.cvl, because
- * both are accessing variables in the same scope.
- *      civl verify -inputN=10 spawn2.cvl
- */
+/* Commandline execution:
+ * 		civl verify -inputN=10 spawnBad.cvl
+ * */
 #include<civlc.h>
 
 $input int N;

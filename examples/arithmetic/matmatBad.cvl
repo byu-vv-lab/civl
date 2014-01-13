@@ -2,7 +2,9 @@
  * The first is the standard one, the second uses a complex
  * tiling optimization.  This model is used to determine
  * whether the two are equivalent.   Example:
- *     civl verify matmatBad.cvl -inputBOUND=4
+ * 		civl verify matmatBad.cvl -inputBOUND=4
+ * or (if you want to find the minimal counterexample)
+ * 		civl verify matmatBad.cvl -inputBOUND=4 -min
  * will verify equivalent for all matrix dimensions and tile
  * sizes in the range 1..4.
  */
