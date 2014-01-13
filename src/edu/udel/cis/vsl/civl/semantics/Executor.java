@@ -3,11 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
-import java.io.PrintStream;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
@@ -33,7 +30,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
-import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
@@ -41,6 +37,7 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -73,8 +70,6 @@ public class Executor {
 	}
 
 	/***************************** Instance Fields ***************************/
-
-	private PrintStream out = null;
 
 	private ModelFactory modelFactory;
 
@@ -407,32 +402,6 @@ public class Executor {
 		return state;
 	}
 
-	private void printStatement(Statement s, AtomicKind atomicKind,
-			ProcessState p) {
-		out.print("  " + s.source().id() + "->");
-		if (s.target() != null)
-			out.print(s.target().id() + ": ");
-		else
-			out.print("RET: ");
-		if (atomicKind == AtomicKind.ENTER) {
-			out.print("ENTER_ATOMIC ");
-			out.print(p.atomicCount() - 1);
-		} else if (atomicKind == AtomicKind.LEAVE) {
-			out.print("EXIT_ATOMIC ");
-			out.print(p.atomicCount());
-		} else if (atomicKind == AtomicKind.DENTER)
-			out.print("ENTER_ATOM");
-		else if (atomicKind == AtomicKind.DLEAVE)
-			out.print("EXIT_ATOM");
-		else
-			out.print(s.toString());
-		if (s.getSource() != null)
-			out.print(" at " + s.getSource().getSummary());
-		else if (s.source().getSource() != null)
-			out.print(" at " + s.source().getSource().getSummary());
-		out.println(";");
-	}
-
 	/**
 	 * Execute a generic statement. All statements except a Choose should be
 	 * handled by this method.
@@ -707,7 +676,7 @@ public class Executor {
 	 *            <code>state.getProcessState(pid).getLocation() == location</code>
 	 * @return
 	 */
-	public Entry<StateStatusKind, State> executeStatement(State state,
+	public Pair<StateStatusKind, State> executeStatement(State state,
 			Location location, Statement s, int pid) {
 		State newState = null;
 		BooleanExpression pathCondition = newPathCondition(state, pid, s);
@@ -716,7 +685,7 @@ public class Executor {
 			try {
 				if (s instanceof ChooseStatement) {
 					// execute deterministic choosestatement
-					return new AbstractMap.SimpleEntry<StateStatusKind, State>(
+					return new Pair<StateStatusKind, State>(
 							StateStatusKind.NONDETERMINISTIC, null);
 
 					// if(executeKind == ExecuteKind.ATOM)
@@ -749,7 +718,7 @@ public class Executor {
 						newState = state.setPathCondition(pathCondition);
 						newState = execute(newState, pid, s);
 					} else {
-						return new AbstractMap.SimpleEntry<StateStatusKind, State>(
+						return new Pair<StateStatusKind, State>(
 								StateStatusKind.BLOCKED, null);
 						// if(executeKind == ExecuteKind.ATOMIC)
 						// return newState;
@@ -760,278 +729,16 @@ public class Executor {
 					newState = execute(newState, pid, s);
 				}
 			} catch (UnsatisfiablePathConditionException e) {
-				return new AbstractMap.SimpleEntry<StateStatusKind, State>(
+				return new Pair<StateStatusKind, State>(
 						StateStatusKind.BLOCKED, null);
 			}
 		} else {
-			return new AbstractMap.SimpleEntry<StateStatusKind, State>(
-					StateStatusKind.BLOCKED, null);
+			return new Pair<StateStatusKind, State>(StateStatusKind.BLOCKED,
+					null);
 		}
 
-		return new AbstractMap.SimpleEntry<StateStatusKind, State>(
-				StateStatusKind.NORMAL, newState);
-	}
-
-	/**
-	 * Execute an deterministic atomic block ($atom), supporting nested atomic
-	 * blocks. Currently only consider the case when each location has exactly
-	 * one outgoing statement.
-	 * 
-	 * Precondition:
-	 * <code> location.enterAtomic() == true && location == state.getProcessState(pid).peekStack().location()</code>
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param pid
-	 *            The id of the process being executing
-	 * @param location
-	 *            The start location of the atomic block
-	 * 
-	 * @return The resulting state after executing the atomic block
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	public State executeDAtomicBlock(State state, int pid, Location location,
-			boolean print) throws UnsatisfiablePathConditionException {
-		// // record blocks of atomic statements
-		// Stack<Integer> atomicFlags = new Stack<Integer>();
-		ProcessState p;
-		CIVLSource atomicStart = location.getSource();
-		Location newLocation = location;
-		State newState = state;
-		int stateCounter = 0;
-		BooleanExpression newPathCondition;
-		Statement start = location.getOutgoing(0);
-
-		assert location.enterDatomic() == true
-				&& location.id() == state.getProcessState(pid).getLocation()
-						.id() && location.getNumOutgoing() == 1;
-		newPathCondition = newPathCondition(newState, pid, start);
-		if (!newPathCondition.isFalse()) {
-			newState = newState.setPathCondition(newPathCondition);
-			try {
-				newState = execute(newState, pid, start);
-				newLocation = newState.getProcessState(pid).getLocation();
-				if (print) {
-					printStatement(start, AtomicKind.DENTER,
-							newState.getProcessState(pid));
-				}
-			} catch (UnsatisfiablePathConditionException e1) {
-				evaluator
-						.reportError(new CIVLStateException(
-								ErrorKind.OTHER,
-								Certainty.CONCRETE,
-								"Undesired blocked location is detected in $atom block.",
-								newState, newLocation.getSource()));
-				throw new UnsatisfiablePathConditionException();
-			}
-		} else {
-			evaluator.reportError(new CIVLStateException(ErrorKind.OTHER,
-					Certainty.CONCRETE, "Execution blocked in $atom", newState,
-					newLocation.getSource()));
-			throw new UnsatisfiablePathConditionException();
-		}
-		do {
-			boolean statementExecuted = false;
-			State currentState = newState;
-			Statement executedStatement = null;
-
-			switch (newLocation.atomicKind()) {
-			case DENTER:
-				newState = executeDAtomicBlock(newState, pid, newLocation,
-						print);
-				stateCounter++;
-				statementExecuted = true;
-				break;
-			case DLEAVE:
-				assert (newLocation.getNumOutgoing() == 1);
-				newState = executeStatement(newState, newLocation,
-						newLocation.getOutgoing(0), pid).getValue();
-				executedStatement = newLocation.getOutgoing(0);
-				if (print) {
-					printStatement(executedStatement, AtomicKind.DLEAVE,
-							newState.getProcessState(pid));
-				}
-				assert newState != null;
-				return newState;
-			default:
-				for (Statement s : newLocation.outgoing()) {
-					Entry<StateStatusKind, State> temp = executeStatement(
-							newState, newLocation, s, pid);
-
-					switch (temp.getKey()) {
-					case NONDETERMINISTIC:
-						evaluator
-								.reportError(new CIVLStateException(
-										ErrorKind.OTHER,
-										Certainty.CONCRETE,
-										"Undesired non-determinism is found in $atom block.",
-										newState, newLocation.getSource()));
-						throw new UnsatisfiablePathConditionException();
-					case NORMAL:
-						if (statementExecuted) {
-							evaluator
-									.reportError(new CIVLStateException(
-											ErrorKind.OTHER,
-											Certainty.CONCRETE,
-											"Undesired non-determinism is found in $atom block.",
-											newState, newLocation.getSource()));
-							throw new UnsatisfiablePathConditionException();
-						}
-						statementExecuted = true;
-						newState = temp.getValue();
-						executedStatement = s;
-						break;
-					default:// current statement is blocked, continue to try
-							// executing another statement from the same
-							// location
-						continue;
-					}
-				}
-			}
-			// current location is blocked
-			if (!statementExecuted) {
-				evaluator
-						.reportError(new CIVLStateException(
-								ErrorKind.OTHER,
-								Certainty.CONCRETE,
-								"Undesired blocked location is detected in $atom block.",
-								currentState, newLocation.getSource()));
-				throw new UnsatisfiablePathConditionException();
-			}
-			// warning for possible infinite atomic block
-			if (stateCounter != 0 && stateCounter % 1024 == 0) {
-				System.out.println("Warning: " + (stateCounter)
-						+ " states in atomic block at "
-						+ atomicStart.getLocation() + ".");
-			}
-			stateCounter++;
-			p = newState.getProcessState(pid);
-			if (print && executedStatement != null) {
-				printStatement(executedStatement, newLocation.atomicKind(), p);
-			}
-			if (p != null && !p.hasEmptyStack())
-				newLocation = p.getLocation();
-			else {
-				throw new CIVLInternalException("Unreachable",
-						newLocation.getSource());
-			}
-		} while (true);
-	}
-
-	/**
-	 * Execute a sequence of purely local statements of a certain process
-	 * 
-	 * @param state
-	 *            The state to start with
-	 * @param pid
-	 *            id of the executing process
-	 * @param location
-	 *            The start location of the execution
-	 * @param atomic
-	 *            True iff executing statements in an atomic block; false iff
-	 *            executing statements found to be purely local
-	 * @return The resulting state
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	public State executeAtomicStatements(State state, int pid,
-			Location location, boolean atomic, boolean print)
-			throws UnsatisfiablePathConditionException {
-		Location pLocation = location;
-		ProcessState p = state.getProcessState(pid);
-		State newState = state;
-		Statement executedStatement = null;
-
-		assert atomic || pLocation.isPurelyLocal();
-
-		while ((!atomic && pLocation != null && pLocation.isPurelyLocal())
-				|| (atomic && pLocation != null)) {
-			if (pLocation.isLoopPossible()) {
-				return newState;
-			}
-			executedStatement = null;
-			switch (pLocation.atomicKind()) {
-			case NONE:
-				boolean executed = false;
-				State oldState = newState;
-
-				for (Statement s : pLocation.outgoing()) {
-					Entry<StateStatusKind, State> temp = executeStatement(
-							oldState, pLocation, s, pid);
-
-					switch (temp.getKey()) {
-					case NONDETERMINISTIC:
-						// finds non-determinism, go back to previous state
-						return oldState;
-					case NORMAL:
-						if (executed) {
-							// finds non-determinism, go back to previous
-							// state
-							return oldState;
-						}
-						executed = true;
-						newState = temp.getValue();
-						executedStatement = s;
-						break;
-					default:// BLOCKED, continue to try executing next
-							// statement
-						continue;
-					}
-				}
-				if (!executed) {// blocked
-					oldState = stateFactory.releaseAtomicLock(oldState);
-					return oldState;
-				}
-				break;
-			case DENTER:
-				newState = executeDAtomicBlock(newState, pid, pLocation, print);
-				break;
-			case ENTER:
-				if (atomic) {
-					assert !stateFactory.lockedByAtomic(newState)
-							|| stateFactory.processInAtomic(newState).getPid() == pid;
-					newState = executeStatement(newState, pLocation,
-							pLocation.getOutgoing(0), pid).getValue();
-					p = newState.getProcessState(pid).incrementAtomicCount();
-					newState = stateFactory.setProcessState(newState, p, pid);
-					newState = stateFactory.getAtomicLock(newState, pid);
-					executedStatement = pLocation.getOutgoing(0);
-				} else {
-					newState = executeAtomicStatements(newState, pid,
-							pLocation, true, print);
-				}
-				break;
-			case LEAVE:
-				if (!atomic)
-					throw new CIVLInternalException("Unreachable",
-							pLocation.getSource());
-				assert stateFactory.processInAtomic(newState).getPid() == pid;
-				newState = executeStatement(newState, pLocation,
-						pLocation.getOutgoing(0), pid).getValue();
-				p = newState.getProcessState(pid).decrementAtomicCount();
-				executedStatement = pLocation.getOutgoing(0);
-				newState = stateFactory.setProcessState(newState, p, pid);
-				if (!p.inAtomic()) {
-					newState = stateFactory.releaseAtomicLock(newState);
-					if (print) {
-						printStatement(executedStatement, AtomicKind.LEAVE, p);
-					}
-					return newState;
-				}
-				break;
-			default:
-				throw new CIVLInternalException("Unreachable",
-						pLocation.getSource());
-			}
-			p = newState.getProcessState(pid);
-			if (print && executedStatement != null) {
-				printStatement(executedStatement, pLocation.atomicKind(), p);
-			}
-			if (p != null && !p.hasEmptyStack())
-				pLocation = p.peekStack().location();
-			else
-				pLocation = null;
-		}
-		return newState;
+		return new Pair<StateStatusKind, State>(StateStatusKind.NORMAL,
+				newState);
 	}
 
 	/**
@@ -1057,10 +764,10 @@ public class Executor {
 
 				if (pLocation != null) {
 					for (Statement s : pLocation.outgoing()) {
-						Entry<StateStatusKind, State> temp = executeStatement(
+						Pair<StateStatusKind, State> temp = executeStatement(
 								state, pLocation, s, pid);
 
-						if (temp.getKey() != StateStatusKind.BLOCKED) {
+						if (temp.left != StateStatusKind.BLOCKED) {
 							result.add(p.getPid());
 							resumable = true;
 							break;
@@ -1072,10 +779,6 @@ public class Executor {
 			}
 		}
 		return result;
-	}
-
-	public void setOutput(PrintStream outPut) {
-		this.out = outPut;
 	}
 
 }
