@@ -124,5 +124,11 @@ public interface CIVLType {
 	 * @return true iff this type is array type
 	 */
 	boolean isArrayType();
+	
+	/**
+	 * 
+	 * @return true iff this type is char type
+	 */
+	boolean isCharType();
 
 }

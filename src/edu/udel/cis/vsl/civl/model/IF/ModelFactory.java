@@ -257,6 +257,13 @@ public interface ModelFactory {
 	 * @return The string primitive type.
 	 */
 	CIVLPrimitiveType stringType();
+	
+	/**
+	 * Get the char primitive type.
+	 * 
+	 * @return The char primitive type.
+	 */
+	CIVLPrimitiveType charType();
 
 	/**
 	 * Get the scope primitive type.

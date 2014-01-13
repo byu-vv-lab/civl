@@ -257,6 +257,8 @@ public class CommonModelFactory implements ModelFactory {
 
 	private IntObject zeroObj;
 
+	private CIVLPrimitiveType charType;
+
 	/************************** Constructors *************************/
 
 	/**
@@ -279,7 +281,8 @@ public class CommonModelFactory implements ModelFactory {
 				universe.booleanType());
 		this.realType = primitiveType(PrimitiveTypeKind.REAL,
 				universe.realType());
-
+		this.charType = primitiveType(PrimitiveTypeKind.CHAR,
+				universe.characterType());
 		this.identifiers = new HashMap<String, Identifier>();
 		scopeSymbolicType = (SymbolicTupleType) universe.canonic(universe
 				.tupleType(universe.stringObject("scope"), intTypeSingleton));
@@ -412,6 +415,11 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CIVLPrimitiveType stringType() {
 		return stringType;
+	}
+
+	@Override
+	public CIVLPrimitiveType charType() {
+		return charType;
 	}
 
 	@Override
@@ -802,8 +810,9 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public BoundVariableExpression boundVariableExpression(CIVLSource source,
 			Identifier name, CIVLType type) {
-		CommonBoundVariableExpression result =  new CommonBoundVariableExpression(source, name);
-		
+		CommonBoundVariableExpression result = new CommonBoundVariableExpression(
+				source, name);
+
 		result.setExpressionType(type);
 		return result;
 	}

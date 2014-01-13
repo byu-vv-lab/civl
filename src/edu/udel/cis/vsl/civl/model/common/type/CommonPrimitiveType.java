@@ -84,6 +84,8 @@ public class CommonPrimitiveType extends CommonType implements
 			return "$dynamicType";
 		case VOID:
 			return "void";
+		case CHAR:
+			return "char";
 		default:
 			throw new CIVLInternalException("Unknown primitive type kind: "
 					+ kind, (CIVLSource) null);
@@ -146,5 +148,10 @@ public class CommonPrimitiveType extends CommonType implements
 					"no dynamic type specified for primitive type " + kind,
 					(CIVLSource) null);
 		return dynamicType;
+	}
+
+	@Override
+	public boolean isCharType() {
+		return kind == PrimitiveTypeKind.CHAR;
 	}
 }

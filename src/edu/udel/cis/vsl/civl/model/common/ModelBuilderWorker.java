@@ -89,6 +89,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.QualifiedObjectType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
@@ -352,6 +353,7 @@ public class ModelBuilderWorker {
 		case BOOL:
 			return factory.booleanType();
 		case CHAR:
+			return factory.charType();
 		case DOUBLE_COMPLEX:
 		case FLOAT_COMPLEX:
 		case LONG_DOUBLE_COMPLEX:
@@ -1182,14 +1184,23 @@ public class ModelBuilderWorker {
 				}
 				result = factory.booleanLiteralExpression(source, value);
 				break;
-			// TODO: Add a case for the char type.
+			case CHAR:
+
+				// TODO: Add a case for the char type.
 			default:
 				throw new CIVLUnimplementedFeatureException("type "
 						+ convertedType, source);
 			}
-		} else
+		} else if (convertedType.kind() == TypeKind.POINTER
+				&& ((PointerType) convertedType).referencedType().kind() == TypeKind.BASIC
+				&& ((StandardBasicType) ((PointerType) convertedType)
+						.referencedType()).getBasicTypeKind() == BasicTypeKind.CHAR) {
+			result = factory.stringLiteralExpression(source,
+					constantNode.getStringRepresentation());
+		} else {
 			throw new CIVLUnimplementedFeatureException(
 					"type " + convertedType, source);
+		}
 		return result;
 	}
 
