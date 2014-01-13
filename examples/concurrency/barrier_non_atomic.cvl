@@ -12,20 +12,19 @@ int in_barrier[N]; // am I inside the barrier?
 int num_in_barrier = 0; // how many are inside barrier?
 int counter = 0; // shared variable used to test barrier
 
-
 void init() {
   for (int i=0; i<N; i++) in_barrier[i] = 0;
 }
 
 void barrier(int tid) {
-  $atomic {
-    in_barrier[tid] = 1; // I am in the barrier
-    num_in_barrier++; // increment number in barrier
-    if (num_in_barrier == N) { // I am last to enter
-      for (int i=0; i<N; i++) in_barrier[i] = 0; // release all
-      num_in_barrier = 0; // now none are in barrier
-    }
+  $when (lock==0) lock = 1; // obtains the lock
+  in_barrier[tid] = 1; // I am in the barrier
+  num_in_barrier++; // increment number in barrier
+  if (num_in_barrier == N) { // I am last to enter
+    for (int i=0; i<N; i++) in_barrier[i] = 0; // release all
+    num_in_barrier = 0; // now none are in barrier
   }
+  lock = 0; // release the lock
   $when (in_barrier[tid] == 0); // wait till I am released
 }
 
@@ -43,11 +42,7 @@ void run(int tid) {
 }
 
 void main() {
-  $atomic {
-    init();
-    for (int i=0; i<N; i++) threads[i] = $spawn run(i);
-  }
-  $atomic {
-    for (int i=0; i<N; i++) $wait threads[i];
-  }
+  init();
+  for (int i=0; i<N; i++) threads[i] = $spawn run(i);
+  for (int i=0; i<N; i++) $wait threads[i];
 }
