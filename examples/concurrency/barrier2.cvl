@@ -1,5 +1,7 @@
 /* Basic flag barrier.  Same algorithm as barrier.cvl, but
  * packaged to be re-used in other code.
+ * 
+ * civl verify barrier2.cvl
  */
 #include <civlc.h>
 
@@ -9,15 +11,6 @@ struct _CIVL_Barrier {
   int num_in_barrier;
   int lock;
 };
-
-/*
-typedef struct _CIVL_Barrier {
-  int numProcs;
-  int *in_barrier;
-  int num_in_barrier;
-  int lock;
-} CIVL_Barrier;
-*/
 
 typedef struct _CIVL_Barrier CIVL_Barrier;
 

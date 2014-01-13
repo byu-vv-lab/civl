@@ -1,3 +1,6 @@
+/*
+ * civl verify -inputB=5 adderBad.cvl
+ * */
 #include <civlc.h>
 
 $input int B; // upper bound on array length
