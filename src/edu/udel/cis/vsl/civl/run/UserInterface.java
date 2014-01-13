@@ -502,6 +502,10 @@ public class UserInterface {
 		if (numFree == 0)
 			throw new CommandLineException("Missing command");
 		command = config.getFreeArg(0);
+		if (config.isTrue(showQueriesO))
+			universe.setShowQueries(true);
+		if (config.isTrue(showProverQueriesO))
+			universe.setShowProverQueries(true);
 		try {
 			switch (command) {
 			case "help":
