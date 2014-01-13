@@ -38,7 +38,7 @@ public class CommonNoopStatement extends CommonStatement implements
 
 	@Override
 	public String toString() {
-		return "no-op";
+		return "NO_OP";
 	}
 
 	@Override

@@ -45,9 +45,9 @@ public class CommonIfBranchStatement extends CommonNoopStatement {
 	@Override
 	public String toString() {
 		if (isTrueBranch) {
-			return "if-branch";
+			return "IF_BRANCH";
 		} else
-			return "else-branch";
+			return "ELSE_BRANCH";
 	}
 
 }

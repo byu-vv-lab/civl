@@ -59,9 +59,9 @@ public class CommonSwitchBranchStatement extends CommonNoopStatement {
 	@Override
 	public String toString() {
 		if (label == null)
-			return "default-case";
+			return "DEFAULT";
 		else {
-			return "case " + label.toString();
+			return "CASE_" + label.toString();
 		}
 	}
 }

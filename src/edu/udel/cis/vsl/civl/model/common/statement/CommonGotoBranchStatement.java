@@ -44,7 +44,7 @@ public class CommonGotoBranchStatement extends CommonNoopStatement {
 
 	@Override
 	public String toString() {
-		return "goto " + labelName;
+		return "GOTO_" + labelName;
 	}
 
 }
