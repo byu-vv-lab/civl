@@ -84,7 +84,7 @@ void CIVL_barrier_resign(CIVL_Barrier *barrier, int tid) {
   barrier->lock = 0;  
 }
 
-#define CIVL_barrier_exit(barrier, tid) CIVL_barrier_resign(barrier, tid); return;
+#define CIVL_barrier_exit(barrier, tid) CIVL_barrier_resign(barrier, tid); return
 
 void main() {
   int N=4;

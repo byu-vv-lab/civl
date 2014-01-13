@@ -22,6 +22,7 @@ public class ConcurrencyTest {
 	}
 
 	/************************* Test Methods *************************/
+	
 	@Test
 	public void adder() {
 		assertTrue(ui.run("verify", filename("adder.cvl"), "-inputB=5"));

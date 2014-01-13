@@ -10,6 +10,8 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class CudaTest {
 
+	/************************* Static Fields *************************/
+
 	private static UserInterface ui = new UserInterface();
 
 	private static File rootDir = new File(new File("examples"), "cuda");
@@ -18,15 +20,15 @@ public class CudaTest {
 		return new File(rootDir, name).getPath();
 	}
 
-	// private PrintStream out = System.out;
-
-	// @Test
-	// public void pathfinder() {
-	// assertTrue(ui.run("verify", filename("pathfinder.cvl"), "-por=scp"));
-	// }
+	/************************* Test Methods *************************/
 
 	@Test
 	public void exitBarrier() {
 		assertTrue(ui.run("verify", filename("exitBarrier.cvl"), "-por=scp"));
 	}
+
+	// @Test
+	// public void pathfinder() {
+	// assertTrue(ui.run("verify", filename("pathfinder.cvl"), "-por=scp"));
+	// }
 }
