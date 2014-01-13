@@ -1,3 +1,6 @@
+/* Commandline execution:
+ * 		civl verify -inputB=10 -min meanBad.cvl
+ */
 $input int B;
 $input int n;
 $assume 1<=n && n<=B;

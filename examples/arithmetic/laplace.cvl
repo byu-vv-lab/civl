@@ -1,3 +1,6 @@
+/* Commandline execution:
+ * 		civl verify laplace.cvl
+ */
 int TIME_BOUND = 2;
 #define nx 3 // number of x coordinates (including boundary)
 #define ny 3 // number of rows including boundary

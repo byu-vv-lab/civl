@@ -1,5 +1,8 @@
 /* divisionBad.cvl: denominator in division could be 0,
  * so error should be reported.
+ * 
+ * Commandline execution:
+ * 		civl verify divisionBad.cvl
  */
 $input double x;
 $input double y; // could be 0

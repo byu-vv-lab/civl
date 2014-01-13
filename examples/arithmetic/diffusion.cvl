@@ -1,5 +1,5 @@
 /* Commandline execution:
- * 		civl verify derivative.cvl
+ * 		civl verify diffusion.cvl
  */
 #include<civlc.h>
 

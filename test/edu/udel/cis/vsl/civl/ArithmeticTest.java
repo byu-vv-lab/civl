@@ -11,9 +11,13 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class ArithmeticTest {
 
+	/************************* Static Fields *************************/
+
 	private static UserInterface ui = new UserInterface();
 
 	private static File rootDir = new File(new File("examples"), "arithmetic");
+
+	/************************* Helper Methods *************************/
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
@@ -23,26 +27,11 @@ public class ArithmeticTest {
 		assertTrue(ui.run("verify", filename(name)));
 	}
 
-	@Test
-	public void diffusion() {
-		check("diffusion.cvl");
-	}
+	/************************* Test Methods *************************/
 
 	@Test
-	public void matmat2() {
-		assertTrue(ui.run("verify", "-inputBOUND=3", "-simplify=false",
-				filename("matmat2.cvl")));
-	}
-
-	@Test
-	public void matmat2Bad() {
-		assertFalse(ui.run("verify", "-inputBOUND=3",
-				filename("matmat2bad.cvl")));
-	}
-
-	@Test
-	public void laplace() {
-		check("laplace.cvl");
+	public void algebra() {
+		check("algebra.cvl");
 	}
 
 	@Test
@@ -51,18 +40,40 @@ public class ArithmeticTest {
 	}
 
 	@Test
-	public void algebra() {
-		check("algebra.cvl");
-	}
-
-	@Test
 	public void derivative() {
 		check("derivative.cvl");
 	}
 
 	@Test
+	public void diffusion() {
+		check("diffusion.cvl");
+	}
+
+	@Test
 	public void division() {
 		check("division.cvl");
+	}
+
+	@Test
+	public void divisionBad() {
+		assertFalse(ui.run("verify", filename("divisionBad.cvl")));
+	}
+
+	@Test
+	public void laplace() {
+		check("laplace.cvl");
+	}
+
+	@Test
+	public void matmat() {
+		assertTrue(ui.run("verify", "-inputBOUND=3", "-simplify=false",
+				filename("matmat.cvl")));
+	}
+
+	@Test
+	public void matmatBad() {
+		assertFalse(ui
+				.run("verify", "-inputBOUND=3", filename("matmatBad.cvl")));
 	}
 
 	@Test
@@ -75,4 +86,5 @@ public class ArithmeticTest {
 		assertFalse(ui.run("verify", "-inputB=10", "-min",
 				filename("meanBad.cvl")));
 	}
+
 }
