@@ -690,8 +690,13 @@ public class ModelBuilderWorker {
 							&& newCIVLType.isRealType()) {
 						// nothing to do
 					} else {
-						result = factory.castExpression(source, newCIVLType,
-								result);
+						// Sometimes the conversion might have been done during
+						// the translating the expression node, for example,
+						// when translating a constant node, so only create a
+						// cast expression if necessary.
+						if (!result.getExpressionType().equals(newCIVLType))
+							result = factory.castExpression(source,
+									newCIVLType, result);
 					}
 				} else if (conversion instanceof CompatiblePointerConversion) {
 					// nothing to do
@@ -1499,7 +1504,7 @@ public class ModelBuilderWorker {
 				// the only expressions remaining with side-effects
 				// are assignments. all others are equivalent to no-op
 				Statement noopStatement = factory.noopStatement(
-						factory.sourceOf(operatorNode), location, null);
+						factory.sourceOf(operatorNode), location);
 
 				result = new CommonFragment(noopStatement);
 			}
@@ -2073,7 +2078,7 @@ public class ModelBuilderWorker {
 				factory.sourceOfBeginning(nullStatementNode), scope);
 
 		return new CommonFragment(factory.noopStatement(
-				factory.sourceOf(nullStatementNode), location, null));
+				factory.sourceOf(nullStatementNode), location));
 	}
 
 	/**
@@ -2189,8 +2194,8 @@ public class ModelBuilderWorker {
 				.getDefinition();
 		Location location = factory.location(
 				factory.sourceOfBeginning(gotoNode), scope);
-		Statement noop = factory.noopStatement(factory.sourceOf(gotoNode),
-				location, null);
+		Statement noop = factory.gotoBranchStatement(
+				factory.sourceOf(gotoNode), location, label.getName());
 
 		// At this point, the target of the goto may or may not have been
 		// encountered. We store the goto in a map from statements to labels.

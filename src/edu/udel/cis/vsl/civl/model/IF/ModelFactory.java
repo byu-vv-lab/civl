@@ -1223,4 +1223,7 @@ public interface ModelFactory {
 
 	NoopStatement loopBranchStatement(CIVLSource civlSource, Location source,
 			Expression guard, boolean isTrue);
+
+	NoopStatement gotoBranchStatement(CIVLSource civlSource, Location source,
+			String label);
 }

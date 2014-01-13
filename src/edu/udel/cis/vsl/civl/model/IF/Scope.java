@@ -151,8 +151,12 @@ public interface Scope extends Sourceable {
 	 *            String prefix to print on each line
 	 * @param out
 	 *            The PrintStream to use for printing.
+	 * @param isDebug
+	 *            True iff the debugging option is enabled, when more
+	 *            information will be printed, such as if a variable is purely
+	 *            local
 	 */
-	void print(String prefix, PrintStream out);
+	void print(String prefix, PrintStream out, boolean isDebug);
 
 	// TODO: Is this necessary? vid contained in variable.
 	// Maybe, since this can check that the variable is actually a member of

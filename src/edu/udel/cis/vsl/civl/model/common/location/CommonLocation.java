@@ -246,33 +246,22 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
-	public void print(String prefix, PrintStream out) {
+	public void print(String prefix, PrintStream out, boolean isDebug) {
 		String targetLocation = null;
 		String guardString = "(true)";
 		String gotoString;
-
 		String headString = null;
-		if (this.purelyLocal) {
-			headString = prefix + "location " + id() + " (scope: " + scope.id()
-					+ ") #";
-		} else
+		
+		if(isDebug){
+			headString = prefix + "location " + id() + " (scope: " + scope.id();
+			if(purelyLocal)
+				headString += ", purely local";
+			if(loopPossible)
+				headString += ", loop";
+			headString += ")";
+		}else{
 			headString = prefix + "location " + id() + " (scope: " + scope.id()
 					+ ")";
-		if (this.loopPossible)
-			headString = headString + "LOOP;";
-		switch (this.atomicKind) {
-		case ENTER:
-			headString = headString + "ENTER_ATOMIC;";
-			break;
-		case DENTER:
-			headString = headString + "ENTER_ATOM;";
-			break;
-		case LEAVE:
-			headString = headString + "LEAVE_ATOMIC;";
-			break;
-		case DLEAVE:
-			headString = headString + "LEAVE_ATOM;";
-		default:
 		}
 		out.println(headString);
 		for (Statement statement : outgoing) {

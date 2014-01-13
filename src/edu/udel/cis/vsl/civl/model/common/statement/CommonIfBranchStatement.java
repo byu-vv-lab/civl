@@ -22,7 +22,7 @@ public class CommonIfBranchStatement extends CommonNoopStatement {
 	 */
 	private boolean isTrueBranch;
 
-	/************************** Instance Fields *************************/
+	/************************** Constructors *************************/
 
 	/**
 	 * 

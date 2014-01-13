@@ -1048,10 +1048,10 @@ public class Executor {
 			out.print("RET: ");
 		if (atomicKind == AtomicKind.ENTER) {
 			out.print("ENTER_ATOMIC ");
-			out.print(p.atomicCount());
+			out.print(p.atomicCount() - 1);
 		} else if (atomicKind == AtomicKind.LEAVE) {
 			out.print("EXIT_ATOMIC ");
-			out.print(p.atomicCount() + 1);
+			out.print(p.atomicCount());
 		} else if (atomicKind == AtomicKind.DENTER)
 			out.print("ENTER_ATOM");
 		else if (atomicKind == AtomicKind.DLEAVE)

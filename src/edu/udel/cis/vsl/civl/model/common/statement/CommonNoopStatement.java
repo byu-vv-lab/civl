@@ -20,7 +20,7 @@ public class CommonNoopStatement extends CommonStatement implements
 		NoopStatement {
 
 	public enum NoopKind {
-		IF_ELSE, SWITCH, ATOMIC, ATOM, LOOP, NONE
+		IF_ELSE, SWITCH, LOOP, NONE, GOTO, ATOMIC_ATOM
 	}
 
 	protected NoopKind noopKind;

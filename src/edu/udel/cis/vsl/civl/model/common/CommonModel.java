@@ -182,13 +182,14 @@ public class CommonModel extends CommonSourceable implements Model {
 	 * @param out
 	 *            The PrintStream used to print the model.
 	 */
-	public void print(PrintStream out) {
+	@Override
+	public void print(PrintStream out, boolean isDebug) {
 		out.print("Model");
 		if (name != null)
 			out.print(" " + name);
 		out.println();
 		for (CIVLFunction function : functions) {
-			function.print(" | ", out);
+			function.print(" | ", out, isDebug);
 		}
 		out.flush();
 	}

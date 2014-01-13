@@ -113,8 +113,10 @@ public interface Location extends Sourceable {
 	 *            The prefix string for all lines of this printout.
 	 * @param out
 	 *            The PrintStream to use for printing this location.
+	 * @param isDebug
+	 *            True iff the debugging option is enabled
 	 */
-	public void print(String prefix, PrintStream out);
+	public void print(String prefix, PrintStream out, boolean isDebug);
 
 	/**
 	 * 
@@ -238,4 +240,5 @@ public interface Location extends Sourceable {
 	 * @return
 	 */
 	void loopAnalysis();
+
 }

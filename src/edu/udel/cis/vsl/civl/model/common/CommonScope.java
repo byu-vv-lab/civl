@@ -337,7 +337,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 		}
 		return containsScopeType;
 	}
-	
+
 	private boolean containsProcType(CIVLType type) {
 		boolean containsProcType = false;
 
@@ -375,15 +375,8 @@ public class CommonScope extends CommonSourceable implements Scope {
 		return result;
 	}
 
-	/**
-	 * Print the scope and all children.
-	 * 
-	 * @param prefix
-	 *            String prefix to print on each line
-	 * @param out
-	 *            The PrintStream to use for printing.
-	 */
-	public void print(String prefix, PrintStream out) {
+	@Override
+	public void print(String prefix, PrintStream out, boolean isDebug) {
 		String parentID = "";
 
 		if (parent == null) {
@@ -393,14 +386,15 @@ public class CommonScope extends CommonSourceable implements Scope {
 		}
 		out.println(prefix + "scope " + id + " (parent: " + parentID + ")");
 		for (Variable v : variables) {
-			if (v.purelyLocal()) {
-				out.println(prefix + "| " + v + "#");
-			} else
+			if (isDebug) {
+				out.println(prefix + "| " + v + " (purely local)");
+			} else {
 				out.println(prefix + "| " + v);
+			}
 		}
 		for (Scope child : children) {
 			if (child.function().equals(function)) {
-				child.print(prefix + "| ", out);
+				child.print(prefix + "| ", out, isDebug);
 			}
 		}
 		out.flush();

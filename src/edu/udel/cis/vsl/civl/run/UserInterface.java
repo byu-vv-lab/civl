@@ -262,7 +262,7 @@ public class UserInterface {
 		if (verbose || debug)
 			out.println(bar + " Model " + bar + "\n");
 		if (showModel || verbose || debug || parse) {
-			model.print(out);
+			model.print(out, verbose || debug);
 		}
 		return model;
 	}

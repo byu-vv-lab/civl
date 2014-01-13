@@ -80,7 +80,7 @@ public interface CIVLFunction extends Sourceable {
 	 * @return The model to which this function belongs.
 	 */
 	Model model();
-	
+
 	/**
 	 * @param statements
 	 *            The set of statements in this function.
@@ -160,10 +160,11 @@ public interface CIVLFunction extends Sourceable {
 	public void setPostcondition(Expression postcondition);
 
 	/**
-	 * @param model The Model to which this function belongs.
+	 * @param model
+	 *            The Model to which this function belongs.
 	 */
 	void setModel(Model model);
-	
+
 	/**
 	 * Print the function.
 	 * 
@@ -171,30 +172,33 @@ public interface CIVLFunction extends Sourceable {
 	 *            String prefix to print on each line
 	 * @param out
 	 *            The PrintStream to use for printing.
+	 * @param isDebug
+	 *            True iff the debugging option is enabled, when more
+	 *            information will be printed.
 	 */
-	public void print(String prefix, PrintStream out);
+	public void print(String prefix, PrintStream out, boolean isDebug);
 
 	/**
 	 * 
 	 * @return Is this the outermost function?
 	 */
 	public boolean isSystem();
-	
+
 	/**
 	 * Remove all locations that satisfies the following conditions:
 	 * <ol>
-	 * <li> has exactly one outgoing statement and</li>
-	 * <li> the statement is a no-op with the guard being the true boolean expression.</li>
+	 * <li>has exactly one outgoing statement and</li>
+	 * <li>the statement is a no-op with the guard being the true boolean
+	 * expression.</li>
 	 * </ol>
-	 * Meanwhile, have to redirect each statement that targets at the no-op location
-	 * to the target of the no-op location.
-	 * For example, let l(s->l', ...) be a location l with statement s going to l' ...
-	 * l1 (s1 -> l2, s2 -> l3), l2 ([true]no-op -> l4), l3(), l(4)
-	 * After applying simplify(), should be
-	 * l1 (s1 -> l4, s2 -> l3), l3(), l4()
+	 * Meanwhile, have to redirect each statement that targets at the no-op
+	 * location to the target of the no-op location. For example, let l(s->l',
+	 * ...) be a location l with statement s going to l' ... l1 (s1 -> l2, s2 ->
+	 * l3), l2 ([true]no-op -> l4), l3(), l(4) After applying simplify(), should
+	 * be l1 (s1 -> l4, s2 -> l3), l3(), l4()
 	 */
 	public void simplify();
-	
+
 	public void purelyLocalAnalysis();
 
 }

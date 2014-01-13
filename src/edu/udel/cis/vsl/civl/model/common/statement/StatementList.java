@@ -174,8 +174,9 @@ public class StatementList implements Statement {
 	public String toString() {
 		String result = "";
 		for (Statement s : statements) {
-			result = result + s.toString() + ";";
+			result = result + s.toString() + "; ";
 		}
-		return result;
+		
+		return result.trim();
 	}
 }

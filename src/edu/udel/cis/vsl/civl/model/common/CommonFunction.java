@@ -35,35 +35,35 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 	/************************* Instance Fields *************************/
-	
+
 	private Scope containingScope;
-	
+
 	protected boolean isSystem = false;
-	
+
 	private Set<Location> locations;
-	
+
 	private Model model;
-	
+
 	private Identifier name;
-	
+
 	private Scope outerScope;
-	
+
 	private List<Variable> parameters;
-	
+
 	private Expression postcondition = null;
-	
+
 	private Expression precondition = null;
-	
+
 	private CIVLType returnType;
-	
+
 	private Set<Scope> scopes;
-	
+
 	private Location startLocation;
-	
+
 	private Set<Statement> statements;
-	
+
 	/************************** Constructors *************************/
-	
+
 	/**
 	 * A function.
 	 * 
@@ -104,7 +104,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		}
 		statements = new LinkedHashSet<Statement>();
 	}
-	
+
 	/************************** Methods from CIVLFunction *************************/
 
 	/**
@@ -115,7 +115,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void addLocation(Location location) {
 		locations.add(location);
 	}
-	
+
 	/**
 	 * @param statement
 	 *            The new statement to add.
@@ -124,7 +124,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void addStatement(Statement statement) {
 		statements.add(statement);
 	}
-	
+
 	/**
 	 * @return The scope containing this function.
 	 */
@@ -132,12 +132,12 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Scope containingScope() {
 		return containingScope;
 	}
-	
+
 	@Override
 	public boolean isSystem() {
 		return isSystem;
 	}
-	
+
 	/**
 	 * @return The set of locations in this function.
 	 */
@@ -145,7 +145,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Set<Location> locations() {
 		return locations;
 	}
-	
+
 	/**
 	 * @return The model to which this function belongs.
 	 */
@@ -153,7 +153,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Model model() {
 		return model;
 	}
-	
+
 	/**
 	 * @return The name of this function.
 	 */
@@ -161,7 +161,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Identifier name() {
 		return name;
 	}
-	
+
 	/**
 	 * @return The outermost local scope in this function.
 	 */
@@ -177,7 +177,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public List<Variable> parameters() {
 		return parameters;
 	}
-	
+
 	/**
 	 * @return The postcondition for this function. Null if not set.
 	 */
@@ -185,7 +185,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Expression postcondition() {
 		return postcondition;
 	}
-	
+
 	/**
 	 * @return The precondition for this function. Null if not set.
 	 */
@@ -193,16 +193,9 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Expression precondition() {
 		return precondition;
 	}
-	
-	/**
-	 * Print the function.
-	 * 
-	 * @param prefix
-	 *            String prefix to print on each line
-	 * @param out
-	 *            The PrintStream to use for printing.
-	 */
-	public void print(String prefix, PrintStream out) {
+
+	@Override
+	public void print(String prefix, PrintStream out, boolean isDebug) {
 		Iterator<Variable> iter;
 
 		out.println(prefix + "function " + name);
@@ -217,17 +210,18 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		while (iter.hasNext()) {
 			out.println(prefix + "| | " + iter.next().name());
 		}
-		outerScope.print(prefix + "| ", out);
+		outerScope.print(prefix + "| ", out, isDebug);
 		if (!isSystem()) {
 			out.println(prefix + "| locations (start=" + startLocation.id()
 					+ ")");
 			for (Location loc : locations) {
-				loc.print(prefix + "| | ", out);
+				loc.print(prefix + "| | ", out, isDebug);
 			}
 		}
 		out.flush();
 	}
-	
+
+	@Override
 	public void purelyLocalAnalysis() {
 		Scope funcScope = this.outerScope;
 
@@ -257,7 +251,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Set<Scope> scopes() {
 		return scopes;
 	}
-	
+
 	/**
 	 * @param containingScope
 	 *            The scope containing this function.
@@ -266,7 +260,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setContainingScope(Scope containingScope) {
 		this.containingScope = containingScope;
 	}
-	
+
 	/**
 	 * @param locations
 	 *            The set of locations in this function.
@@ -275,7 +269,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setLocations(Set<Location> locations) {
 		this.locations = locations;
 	}
-	
+
 	/**
 	 * @param model
 	 *            The Model to which this function belongs.
@@ -284,7 +278,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setModel(Model model) {
 		this.model = model;
 	}
-	
+
 	/**
 	 * @param name
 	 *            The name of this function.
@@ -293,7 +287,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setName(Identifier name) {
 		this.name = name;
 	}
-	
+
 	/**
 	 * @param outerScope
 	 *            The outermost local scope of this function.
@@ -302,7 +296,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setOuterScope(Scope outerScope) {
 		this.outerScope = outerScope;
 	}
-	
+
 	/**
 	 * @param postcondition
 	 *            The postcondition for this function.
@@ -310,7 +304,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setPostcondition(Expression postcondition) {
 		this.postcondition = postcondition;
 	}
-	
+
 	/**
 	 * @param precondition
 	 *            The precondition for this function.
@@ -318,7 +312,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setPrecondition(Expression precondition) {
 		this.precondition = precondition;
 	}
-	
+
 	/**
 	 * @param parameters
 	 *            The list of parameters.
@@ -327,7 +321,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setParameters(List<Variable> parameters) {
 		this.parameters = parameters;
 	}
-	
+
 	/**
 	 * @param returnType
 	 *            The return type of this function.
@@ -336,7 +330,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setReturnType(CIVLType returnType) {
 		this.returnType = returnType;
 	}
-	
+
 	/**
 	 * @param scopes
 	 *            The set of scopes in this function.
@@ -345,7 +339,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setScopes(Set<Scope> scopes) {
 		this.scopes = scopes;
 	}
-	
+
 	/**
 	 * @param startLocation
 	 *            The first location in this function.
@@ -357,7 +351,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 			locations.add(startLocation);
 		}
 	}
-	
+
 	/**
 	 * @param statements
 	 *            The set of statements in this function.
@@ -366,7 +360,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public void setStatements(Set<Statement> statements) {
 		this.statements = statements;
 	}
-	
+
 	@Override
 	public void simplify() {
 		ArrayList<Location> oldLocations = new ArrayList<Location>(
@@ -441,7 +435,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	public Location startLocation() {
 		return startLocation;
 	}
-	
+
 	/**
 	 * @return The set of statements in this function.
 	 */
@@ -451,7 +445,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	}
 
 	/************************** Methods from Object *************************/
-	
+
 	@Override
 	public String toString() {
 		String result = name.name() + "(";

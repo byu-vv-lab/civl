@@ -77,8 +77,12 @@ public interface Model extends Sourceable {
 	 * 
 	 * @param out
 	 *            The PrintStream used to print the model.
+	 * @param isDebug
+	 *            True iff the debugigng option is enabled, when more
+	 *            information will be printed, such as purely local marks,
+	 *            location loops, etc.
 	 */
-	public void print(PrintStream out);
+	public void print(PrintStream out, boolean isDebug);
 
 	/**
 	 * @param externVariables
@@ -96,35 +100,39 @@ public interface Model extends Sourceable {
 	int getNumMallocs();
 
 	MallocStatement getMalloc(int index);
-	
+
 	/**
 	 * 
-	 * @param queueType The queue type used by this model.
+	 * @param queueType
+	 *            The queue type used by this model.
 	 */
 	void setQueueType(CIVLType queueType);
-	
+
 	/**
-	 * @param messageType The message type used by this model.
+	 * @param messageType
+	 *            The message type used by this model.
 	 */
 	void setMessageType(CIVLType messageType);
-	
+
 	/**
-	 * @param commType The comm type used by this model.
+	 * @param commType
+	 *            The comm type used by this model.
 	 */
 	void setCommType(CIVLType commType);
-	
+
 	/**
 	 * @return The queue type used by this model.
 	 */
-	 CIVLType queueType();
-	 
-	 /**
-	  * @return The message type used by this model.
-	  */
-	 CIVLType mesageType();
+	CIVLType queueType();
 
-	 /**
-	  * @return The comm type used by this model.
-	  */
-	 CIVLType commType();
+	/**
+	 * @return The message type used by this model.
+	 */
+	CIVLType mesageType();
+
+	/**
+	 * @return The comm type used by this model.
+	 */
+	CIVLType commType();
+
 }

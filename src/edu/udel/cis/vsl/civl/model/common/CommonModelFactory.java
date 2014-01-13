@@ -100,11 +100,14 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonVariableExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssertStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonChooseStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonGotoBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonIfBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonLoopBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonMallocStatement;
@@ -955,6 +958,15 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public NoopStatement gotoBranchStatement(CIVLSource civlSource,
+			Location source, String label) {
+		NoopStatement result = new CommonGotoBranchStatement(civlSource,
+				source, label);
+
+		return result;
+	}
+
+	@Override
 	public NoopStatement switchBranchStatement(CIVLSource civlSource,
 			Location source, Expression guard, Expression label) {
 		NoopStatement result = new CommonSwitchBranchStatement(civlSource,
@@ -977,7 +989,7 @@ public class CommonModelFactory implements ModelFactory {
 			result.setGuard(guard);
 		return result;
 	}
-	
+
 	@Override
 	public NoopStatement loopBranchStatement(CIVLSource civlSource,
 			Location source, Expression guard, boolean isTrue) {
@@ -1496,13 +1508,28 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Fragment atomicFragment(boolean deterministic, Fragment fragment,
 			Location start, Location end) {
-		Statement noopStart = noopStatement(start.getSource(), start);
-		Statement noopEnd = noopStatement(end.getSource(), end);
-		Fragment startFragment = new CommonFragment(noopStart);
-		Fragment endFragment = new CommonFragment(noopEnd);
+		Statement enterAtomic = new CommonAtomicBranchStatement(
+				start.getSource(), start, deterministic ? AtomicKind.DENTER
+						: AtomicKind.ENTER);
+		Statement leaveAtomic = new CommonAtomicBranchStatement(
+				end.getSource(), end, deterministic ? AtomicKind.DLEAVE
+						: AtomicKind.LEAVE);
+		Fragment startFragment = new CommonFragment(enterAtomic);
+		Fragment endFragment = new CommonFragment(leaveAtomic);
 		Fragment result;
+		Expression startGuard = null;
 
 		start.setEnterAtomic(deterministic);
+		for (Statement statement : fragment.startLocation().outgoing()) {
+			if (startGuard == null)
+				startGuard = statement.guard();
+			else {
+				startGuard = this.binaryExpression(startGuard.getSource(),
+						BINARY_OPERATOR.OR, startGuard, statement.guard());
+			}
+		}
+		if (startGuard != null)
+			enterAtomic.setGuard(startGuard);
 		end.setLeaveAtomic(deterministic);
 		result = startFragment.combineWith(fragment);
 		result = result.combineWith(endFragment);

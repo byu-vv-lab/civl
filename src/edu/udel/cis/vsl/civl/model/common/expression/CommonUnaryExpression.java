@@ -86,7 +86,8 @@ public class CommonUnaryExpression extends CommonExpression implements
 			throw new CIVLInternalException("Unknown unary operator: "
 					+ operator, this);
 		}
-		return op + "(" + operand + ")";
+		//return op + "(" + operand + ")";
+		return op + operand;
 	}
 
 	@Override
