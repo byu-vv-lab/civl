@@ -104,15 +104,6 @@ public class Enabler implements
 		ProcessState p;
 		AssignStatement assignStatement;
 		Location pLocation;
-		// TODO updating states in the method introduce uncanonicalized
-		// intermediate states appearing in the output and a missing link
-		// between states and transitions:
-		// e.g.
-		// State 87:99
-		// ...
-		// State 89:-1 --proc 1: sum = (sum+i) ... --> State 99:10
-		// Here State 87:99 is updated (by releasing the atomic lock) to create
-		// State 89:-1
 
 		if (state.getPathCondition().isFalse())
 			// return empty set of transitions:
@@ -202,7 +193,7 @@ public class Enabler implements
 		Location pLocation = p.getLocation();
 		ArrayList<Transition> transitions = new ArrayList<Transition>();
 
-		if(pLocation == null)
+		if (pLocation == null)
 			return transitions;
 		for (Statement s : pLocation.outgoing()) {
 			BooleanExpression newPathCondition = executor.newPathCondition(

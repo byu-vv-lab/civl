@@ -362,7 +362,10 @@ public class ImmutableState implements State {
 	 */
 	@Override
 	public String identifier() {
-		return canonicId + ":" + instanceId;
+		if (canonicId != -1)
+			return String.valueOf(this.canonicId);
+		else
+			return canonicId + ":" + instanceId;
 	}
 
 	@Override

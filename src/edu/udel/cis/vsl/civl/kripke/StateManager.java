@@ -154,7 +154,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		case ENTER:
 			if (printTransitions) {
 				out.println();
-				out.print(state + " proc");
+				out.print(state + ", proc ");
 				out.println(pid + ":");
 			}
 			state = executor.executeAtomicStatements(state, pid,
@@ -163,7 +163,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		case LEAVE:
 			if (printTransitions) {
 				out.println();
-				out.print(state + " proc");
+				out.print(state + ", proc ");
 				out.println(pid + ":");
 			}
 			state = executor.executeAtomicStatements(state, pid,
@@ -172,7 +172,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		case DENTER:
 			if (printTransitions) {
 				out.println();
-				out.print(state + " proc");
+				out.print(state + ", proc ");
 				out.println(pid + ":");
 			}
 			state = executor.executeDAtomicBlock(state, pid, currentLocation,
@@ -184,7 +184,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		default:// execute a normal transition
 			if (printTransitions) {
 				out.println();
-				out.print(state + " ");
+				out.print(state + ", ");
 				printTransitionLong(out, transition);
 				out.println(";");
 			}
