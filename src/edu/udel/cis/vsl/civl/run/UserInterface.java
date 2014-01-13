@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
 import edu.udel.cis.vsl.civl.CIVL;
+import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
@@ -39,12 +40,11 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  */
 public class UserInterface {
 
-	// Static fields...
+	/***************************** Static fields *****************************/
 
 	/**
-	 * "persistent", "immutable", or "transient"
+	 * Default state factory. "persistent", "immutable", or "transient"
 	 */
-	// public final static String statesDefault = "persistent";
 	public final static String statesDefault = "immutable";
 
 	/**
@@ -55,6 +55,9 @@ public class UserInterface {
 
 	public final static Option debugO = Option.newScalarOption("debug",
 			BOOLEAN, "debug mode: print very detailed information", false);
+
+	public final static Option echoO = Option.newScalarOption("echo", BOOLEAN,
+			"print the command line", false);
 
 	public final static Option errorBoundO = Option.newScalarOption(
 			"errorBound", INTEGER, "stop after finding this many errors", 1);
@@ -131,7 +134,47 @@ public class UserInterface {
 	public final static Option verboseO = Option.newScalarOption("verbose",
 			BOOLEAN, "verbose mode", false);
 
-	// Instance fields...
+	/*************************** Instance fields *****************************/
+
+	/**
+	 * Stderr: used only if something goes wrong, like a bad command line arg,
+	 * or internal exception
+	 */
+	private PrintStream err = System.err;
+
+	/** Stdout: where most output is going to go, including error reports */
+	private PrintStream out = System.out;
+
+	/**
+	 * The parser from the Generic Model Checking package used to parse the
+	 * command line.
+	 */
+	private CommandLineParser parser;
+
+	/**
+	 * The time at which this instance of UserInterface was created.
+	 */
+	private final double startTime = System.currentTimeMillis();
+
+	/**
+	 * The symbolic universe used in this session.
+	 */
+	SymbolicUniverse universe = SARL.newStandardUniverse();
+
+	/**************************** Constructors *******************************/
+
+	public UserInterface() {
+		Collection<Option> options = Arrays.asList(errorBoundO, showModelO,
+				verboseO, randomO, guidedO, seedO, debugO, echoO,
+				userIncludePathO, sysIncludePathO, showTransitionsO,
+				showStatesO, showSavedStatesO, showQueriesO,
+				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO, porO,
+				saveStatesO, simplifyO, solveO, statesO);
+
+		parser = new CommandLineParser(options);
+	}
+
+	/*************************** Private Methods *****************************/
 
 	/**
 	 * Extracts from a string the "core" part of a filename by removing any
@@ -158,46 +201,6 @@ public class UserInterface {
 	}
 
 	/**
-	 * Stderr: used only if something goes wrong, like a bad command line arg,
-	 * or internal exception
-	 */
-	private PrintStream err = System.err;
-
-	/** Stdout: where most output is going to go, including error reports */
-	private PrintStream out = System.out;
-
-	/**
-	 * The parser from the Generic Model Checking package used to parse the
-	 * command line.
-	 */
-	private CommandLineParser parser;
-
-	/**
-	 * The time at which this instance of UserInterface was created.
-	 */
-	private final double startTime = System.currentTimeMillis();
-
-	// Constructors...
-
-	/**
-	 * The symbolic universe used in this session.
-	 */
-	SymbolicUniverse universe = SARL.newStandardUniverse();
-
-	// Helper methods...
-
-	public UserInterface() {
-		Collection<Option> options = Arrays.asList(errorBoundO, showModelO,
-				verboseO, randomO, guidedO, seedO, debugO, userIncludePathO,
-				sysIncludePathO, showTransitionsO, showStatesO,
-				showSavedStatesO, showQueriesO, showProverQueriesO, inputO,
-				idO, traceO, minO, maxdepthO, porO, saveStatesO, simplifyO,
-				solveO, statesO);
-
-		parser = new CommandLineParser(options);
-	}
-
-	/**
 	 * Checks that number of filenames (the free arguments in the command line
 	 * after the command itself) is as expected.
 	 * 
@@ -221,8 +224,6 @@ public class UserInterface {
 					+ config.getFreeArg(numExpected + 1));
 	}
 
-	// default of parse: just show model. same as -showModel.
-	// verbose or debug: show everything.
 	private Model extractModel(PrintStream out, GMCConfiguration config,
 			String filename) throws ABCException, IOException,
 			CommandLineException {
@@ -239,26 +240,13 @@ public class UserInterface {
 			// shows absolutely everything
 			program = frontEnd.showTranslation(out);
 		} else {
-			// if (verbose)
-			// out.println("Parsing program...");
 			program = frontEnd.getProgram();
-			// if (verbose)
-			// out.println("Pruning unreachable nodes from AST...");
 			program.prune();
-			// if (verbose)
-			// out.println("Removing side effects from expressions...");
 			program.removeSideEffects();
-			// if (verbose) {
-			// out.println(bar + " Side-effect-free Pruned Program " + bar
-			// + "\n");
-			// program.print(out);
-			// out.println();
-			// }
 		}
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(config, program, coreName(filename));
-		// model.setName(coreName(filename));
 		if (verbose || debug)
 			out.println(bar + " Model " + bar + "\n");
 		if (showModel || verbose || debug || parse) {
@@ -337,7 +325,7 @@ public class UserInterface {
 	 * 
 	 * @param config
 	 */
-	public void printCommand(GMCConfiguration config) {
+	private void printCommand(GMCConfiguration config) {
 		int numOfArgs = config.getNumFreeArgs();
 		String command = "civl ";
 		Collection<Option> options = config.getOptions();
@@ -432,108 +420,36 @@ public class UserInterface {
 		out.flush();
 	}
 
-	/**
-	 * /** Runs the appropriate CIVL tools based on the command line arguments.
-	 * This variant provided in case a collection is more convenient than an
-	 * array.
-	 * 
-	 * @param args
-	 *            command line arguments as collection
-	 * @return true iff everything succeeeded and no errors were found
-	 */
-	public boolean run(Collection<String> args) {
-		return run(args.toArray(new String[args.size()]));
+	private void setToDefault(GMCConfiguration config,
+			Collection<Option> options) {
+		for (Option option : options)
+			setToDefault(config, option);
 	}
 
-	// Public methods...
+	private void setToDefault(GMCConfiguration config, Option option) {
+		config.setScalarValue(option, option.defaultValue());
+	}
 
-	/**
-	 * Runs the appropriate CIVL tools based on the command line arguments.
-	 * 
-	 * @param args
-	 *            command line arguments
-	 * @return true iff everything succeeded and no errors were found
-	 */
-	public boolean run(String... args) {
-		try {
-			return runMain(args);
-		} catch (CommandLineException e) {
-			err.println(e.getMessage());
-			err.println("Type \"civl help\" for command line syntax.");
-			err.flush();
-		}
+	private boolean showShortFileNameList(GMCConfiguration config) {
+		boolean parse = "parse".equals(config.getFreeArg(0));
+		boolean debug = config.isTrue(debugO);
+		boolean verbose = config.isTrue(verboseO);
+		boolean showModel = config.isTrue(showModelO);
+		boolean showSavedStates = config.isTrue(showSavedStatesO);
+		boolean showStates = config.isTrue(showStatesO);
+		boolean showTransitions = config.isTrue(showTransitionsO);
+
+		if (parse || debug || verbose || showModel || showSavedStates
+				|| showStates || showTransitions)
+			return true;
 		return false;
 	}
+
+	/*************************** Public Methods *****************************/
 
 	public boolean runHelp(GMCConfiguration config) {
 		printUsage(out);
 		return true;
-	}
-
-	// tass replay foo.cvl
-	// looks for trace file CIVLREP/foo_0.trace
-	// tass replay foo.cvl -id=2 (default 0)
-	// looks for trace file CIVLREP/foo_id.trace
-	// tass replay foo.cvl -trace=/path/to/whatever.trace
-	// (null default; default is function filename)
-
-	/**
-	 * Parses command line arguments and runs the CIVL tool(s) as specified by
-	 * those arguments.
-	 * 
-	 * @param args
-	 *            the command line arguments, e.g., {"verify", "-verbose",
-	 *            "foo.c"}. This is an array of strings of length at least 1;
-	 *            element 0 should be the name of the command
-	 * @return true iff everything succeeded and no errors discovered
-	 * @throws CommandLineException
-	 *             if the args are not properly formatted commandline arguments
-	 */
-	public boolean runMain(String[] args) throws CommandLineException {
-		GMCConfiguration config = parser.parse(Arrays.asList(args));
-		int numFree = config.getNumFreeArgs();
-		String command;
-
-		out.println("CIVL v" + CIVL.version + " of " + CIVL.date
-				+ " -- http://vsl.cis.udel.edu/civl");
-		out.flush();
-		printCommand(config);
-
-		if (numFree == 0)
-			throw new CommandLineException("Missing command");
-		command = config.getFreeArg(0);
-		if (config.isTrue(showQueriesO))
-			universe.setShowQueries(true);
-		if (config.isTrue(showProverQueriesO))
-			universe.setShowProverQueries(true);
-		try {
-			switch (command) {
-			case "help":
-				return runHelp(config);
-			case "verify":
-				return runVerify(config);
-			case "replay":
-				return runReplay(config);
-			case "run":
-				return runRun(config);
-			case "parse":
-				return runParse(config);
-			case "preprocess":
-				return runPreprocess(config);
-			default:
-				throw new CommandLineException("Unknown command: " + command);
-			}
-		} catch (ABCException e) {
-			err.println(e);
-		} catch (ABCRuntimeException e) {
-			err.println(e);
-		} catch (IOException e) {
-			err.println(e);
-		} catch (MisguidedExecutionException e) {
-			err.println(e);
-		}
-		err.flush();
-		return false;
 	}
 
 	public boolean runParse(GMCConfiguration config)
@@ -634,28 +550,106 @@ public class UserInterface {
 		return result;
 	}
 
-	private void setToDefault(GMCConfiguration config,
-			Collection<Option> options) {
-		for (Option option : options)
-			setToDefault(config, option);
-	}
+	/**
+	 * Parses command line arguments and runs the CIVL tool(s) as specified by
+	 * those arguments.
+	 * 
+	 * @param args
+	 *            the command line arguments, e.g., {"verify", "-verbose",
+	 *            "foo.c"}. This is an array of strings of length at least 1;
+	 *            element 0 should be the name of the command
+	 * @return true iff everything succeeded and no errors discovered
+	 * @throws CommandLineException
+	 *             if the args are not properly formatted commandline arguments
+	 */
+	public boolean runMain(String[] args) throws CommandLineException {
+		GMCConfiguration config = parser.parse(Arrays.asList(args));
+		int numFree = config.getNumFreeArgs();
+		String command;
 
-	private void setToDefault(GMCConfiguration config, Option option) {
-		config.setScalarValue(option, option.defaultValue());
-	}
-
-	private boolean showShortFileNameList(GMCConfiguration config) {
-		boolean parse = "parse".equals(config.getFreeArg(0));
-		boolean debug = config.isTrue(debugO);
-		boolean verbose = config.isTrue(verboseO);
-		boolean showModel = config.isTrue(showModelO);
-		boolean showSavedStates = config.isTrue(showSavedStatesO);
-		boolean showStates = config.isTrue(showStatesO);
-		boolean showTransitions = config.isTrue(showTransitionsO);
-
-		if (parse || debug || verbose || showModel || showSavedStates
-				|| showStates || showTransitions)
-			return true;
+		out.println("CIVL v" + CIVL.version + " of " + CIVL.date
+				+ " -- http://vsl.cis.udel.edu/civl");
+		out.flush();
+		if (config.isTrue(echoO))
+			printCommand(config);
+		if (numFree == 0)
+			throw new CommandLineException("Missing command");
+		command = config.getFreeArg(0);
+		if (config.isTrue(showQueriesO))
+			universe.setShowQueries(true);
+		if (config.isTrue(showProverQueriesO))
+			universe.setShowProverQueries(true);
+		try {
+			switch (command) {
+			case "help":
+				return runHelp(config);
+			case "verify":
+				return runVerify(config);
+			case "replay":
+				return runReplay(config);
+			case "run":
+				return runRun(config);
+			case "parse":
+				return runParse(config);
+			case "preprocess":
+				return runPreprocess(config);
+			default:
+				throw new CommandLineException("Unknown command: " + command);
+			}
+		} catch (ABCException e) {
+			err.println(e);
+		} catch (ABCRuntimeException e) {
+			err.println(e);
+		} catch (IOException e) {
+			err.println(e);
+		} catch (MisguidedExecutionException e) {
+			err.println(e);
+		} catch (CIVLException e) {
+			err.println(e);
+		}
+		err.flush();
 		return false;
+	}
+
+	/**
+	 * Runs the appropriate CIVL tools based on the command line arguments.
+	 * 
+	 * @param args
+	 *            command line arguments
+	 * @return true iff everything succeeded and no errors were found
+	 */
+	public boolean run(String... args) {
+		try {
+			return runMain(args);
+		} catch (CommandLineException e) {
+			err.println(e.getMessage());
+			err.println("Type \"civl help\" for command line syntax.");
+			err.flush();
+		}
+		return false;
+	}
+
+	/**
+	 * Runs the appropriate CIVL tools based on the command line arguments. This
+	 * variant provided in case a collection is more convenient than an array.
+	 * 
+	 * @param args
+	 *            command line arguments as collection
+	 * @return true iff everything succeeeded and no errors were found
+	 */
+	public boolean run(Collection<String> args) {
+		return run(args.toArray(new String[args.size()]));
+	}
+
+	/**
+	 * Runs command specified as one big String.
+	 * 
+	 * @param argsString
+	 * @return
+	 */
+	public boolean run(String argsString) {
+		String[] args = argsString.split(" ");
+
+		return run(args);
 	}
 }

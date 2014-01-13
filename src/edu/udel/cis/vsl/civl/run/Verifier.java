@@ -52,7 +52,7 @@ public class Verifier extends Player {
 		out.println(searcher.numTransitions());
 	}
 
-	public boolean run() {
+	public boolean run() throws FileNotFoundException {
 		State initialState = stateFactory.initialState(model);
 		boolean violationFound = false;
 
@@ -77,12 +77,13 @@ public class Verifier extends Player {
 		} catch (ExcessiveErrorException e) {
 			violationFound = true;
 			out.println("Error bound exceeded: search terminated");
-		} catch (Exception e) {
-			violationFound = true;
-			out.println(e);
-			e.printStackTrace(out);
-			out.println();
 		}
+		// catch (CIVLException e) {
+		// violationFound = true;
+		// out.println(e);
+		// // e.printStackTrace(out);
+		// out.println();
+		// }
 		if (violationFound || log.numEntries() > 0) {
 			result = "The program MAY NOT be correct.  See " + log.getLogFile();
 			try {
