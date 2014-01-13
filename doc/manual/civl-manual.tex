@@ -11,7 +11,7 @@
 \include{preambular}
 
 \title{{\huge\bf CIVL}\\\mbox{The Concurrency Intermediate Verification
-  Language}\\Reference Manual\\ v0.4}
+  Language}\\Reference Manual\\ v0.5}
 \author{%
   Matthew B.\ Dwyer \and
   Ganesh Gopalakrishnan \and
@@ -1587,6 +1587,8 @@ Commands:
 Options:
   -debug or -debug=BOOLEAN (default: false)
     debug mode: print very detailed information
+  -echo or -echo=BOOLEAN (default: false)
+    print the command line
   -errorBound=INTEGER (default: 1)
     stop after finding this many errors
   -guided or -guided=BOOLEAN
@@ -1626,8 +1628,10 @@ Options:
     simplify states?
   -solve or -solve=BOOLEAN (default: false)
     try to solve for concrete counterexample
+  -states=STRING (default: immutable)
+    state implementation: immutable, transient, persistent
   -sysIncludePath=STRING
-    set the user include path
+    set the system include path
   -trace=STRING
     filename of trace to replay
   -userIncludePath=STRING
@@ -1635,6 +1639,42 @@ Options:
   -verbose or -verbose=BOOLEAN (default: false)
     verbose mode
 \end{verbatim}
+
+
+\subsection{Transitions}
+In CIVL, a transition stands for the execution of a number of statements of a certain process from one state, and the execution of each statement is considered as one step. A transition has the following form in the output, where sid and sid' are the identifiers for the source and the target states, pid is the identifier of the process that this transition belongs to, and step 0,1 ... are the steps contained in the transitions.
+
+\begin{verbatim}
+State sid, proc pid: 
+  step 0;
+  step 1;
+  ...
+--> State sid'
+\end{verbatim}
+
+A step of a transition has the following form in the CIVL output, where src and dst is the source and destination location of the statement executed in the step, file is the file that contains the source code of the statement, location and text are the location and summary of text of the statement in the source file.
+
+\begin{verbatim}
+  src->dst: statement at file:location "text";
+\end{verbatim}
+
+For example, the following is a transition from state 0 to state 1, containing 6 steps. File names are renamed with short names and the mapping of short names and the original files is presented in output as well.
+
+\begin{verbatim}
+File name list:
+f0	: atomicBlockedResume.cvl
+
+State 0, proc 0: 
+  0->1: x = 1 at f0:3.0-9 "int x = 1";
+  1->2: y = 0 at f0:4.0-9 "int y = 0";
+  2->3: z = 0 at f0:5.0-9 "int z = 0";
+  3->6: sum = 0 at f0:6.0-11 "int sum = 0";
+  6->8: $spawn foo(1) at f0:22.4-17 "$spawn foo(1)";
+  8->10: $spawn foo(2) at f0:23.4-17 "$spawn foo(2)";
+--> State 1
+\end{verbatim}
+
+To make use of this feature, one needs to specify the option ``-showTransitions'' when running CIVL.
 
 
 
