@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify arrayPointer.cvl
+ * */
 #include<civlc.h>
 
 void foo(int* array) {

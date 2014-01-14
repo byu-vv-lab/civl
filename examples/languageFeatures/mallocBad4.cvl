@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify mallocBad4.cvl
+ * */
 #include <civlc.h>
 
 // Reassign heap before free.

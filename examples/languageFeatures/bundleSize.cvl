@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify bundleSize.cvl
+ * */
 #include<civlc.h>
 
 int N=5;

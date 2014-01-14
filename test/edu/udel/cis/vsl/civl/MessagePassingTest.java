@@ -10,14 +10,20 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class MessagePassingTest {
 
-	private static UserInterface ui = new UserInterface();
+	/************************* Static Fields *************************/
 
 	private static File rootDir = new File(new File("examples"),
 			"messagePassing");
 
+	private static UserInterface ui = new UserInterface();
+
+	/************************* Helper Methods *************************/
+
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
 	}
+
+	/************************* Test Methods *************************/
 
 	@Test
 	public void ring() {

@@ -1,3 +1,7 @@
+/* Commandline execution:
+ *		civl verify assume.cvl
+ * */
+
 #include <civlc.h>
 $input int a[];
 

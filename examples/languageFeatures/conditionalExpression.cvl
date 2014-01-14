@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify conditionalExpression.cvl
+ * */
 int n = 2;
 $assume n > (5 > 7 ? 1 : 0);
 
@@ -18,7 +21,7 @@ void main(){
 	int s = sum(n > 2 ? 5 : 8);
 
 	//$when(n >= 2) $assert s == 9*8/2;
-	$assert s == 9 * (n > 2 ? 5 : 8) / 2; //has exception
+	$assert s == 9 * (n > 2 ? 5 : 8) / 2;
 
 	// This should be translated into 
 	// Location X: 

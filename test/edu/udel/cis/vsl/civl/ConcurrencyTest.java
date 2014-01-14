@@ -13,9 +13,11 @@ public class ConcurrencyTest {
 
 	/************************* Static Fields *************************/
 
+	private static File rootDir = new File(new File("examples"), "concurrency");
+	
 	private static UserInterface ui = new UserInterface();
 
-	private static File rootDir = new File(new File("examples"), "concurrency");
+	/************************* Helper Methods *************************/
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();

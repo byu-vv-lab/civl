@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify malloc.cvl
+ * */
 #include <civlc.h>
 
 void main() {

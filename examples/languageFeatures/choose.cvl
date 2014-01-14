@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify choose.cvl
+ * */
 #include<civlc.h>
 
 int n = 2;
@@ -11,5 +14,6 @@ l1:
     default: {x=0; goto l2; }
   }
 l2: ;
+#assert x == 1;
 }
 

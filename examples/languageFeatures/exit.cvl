@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify exit.cvl
+ * */
 #include<civlc.h>
 
 void f() {

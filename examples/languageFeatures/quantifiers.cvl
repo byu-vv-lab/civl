@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify quantifiers.cvl
+ * */
 #include<civlc.h>
 $input double b[10];
 

@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify switch.cvl
+ * */
 #include <civlc.h>
 $input int i;
 $assume i >= 0 && i < 10;

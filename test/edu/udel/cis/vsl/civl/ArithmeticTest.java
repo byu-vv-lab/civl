@@ -12,19 +12,19 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 public class ArithmeticTest {
 
 	/************************* Static Fields *************************/
+	
+	private static File rootDir = new File(new File("examples"), "arithmetic");
 
 	private static UserInterface ui = new UserInterface();
 
-	private static File rootDir = new File(new File("examples"), "arithmetic");
-
 	/************************* Helper Methods *************************/
-
-	private static String filename(String name) {
-		return new File(rootDir, name).getPath();
-	}
-
+	
 	private void check(String name) {
 		assertTrue(ui.run("verify", filename(name)));
+	}
+	
+	private static String filename(String name) {
+		return new File(rootDir, name).getPath();
 	}
 
 	/************************* Test Methods *************************/

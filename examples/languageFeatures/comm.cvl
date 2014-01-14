@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify comm.cvl
+ * */
 #include <civlc.h>
 
 void worker(int value) {

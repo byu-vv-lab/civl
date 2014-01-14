@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify structStruct.cvl
+ * */
 #include <civlc.h>
 
 typedef struct foo {

@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify linkedList.cvl
+ * */
 #include<civlc.h>
 
 $input int N;

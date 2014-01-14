@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify nonbooleanCondition.cvl
+ * */
 #include<civlc.h>
 
 void main() {

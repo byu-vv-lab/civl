@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify bundleStruct.cvl
+ * */
 #include<civlc.h>
 
 typedef struct Interval {

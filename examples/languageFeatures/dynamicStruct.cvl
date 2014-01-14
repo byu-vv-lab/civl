@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify dynamicStruct.cvl
+ * */
 #include <civlc.h>
 
 void f(int n) {

@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify pointers.cvl
+ * */
 #include<civlc.h>
 
 void passByRef(int * array) {

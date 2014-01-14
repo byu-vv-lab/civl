@@ -18,10 +18,12 @@ public class LanguageFeaturesTest {
 
 	/************************* Static Fields *************************/
 	
-	private static UserInterface ui = new UserInterface();
-
 	private static File rootDir = new File(new File("examples"),
 			"languageFeatures");
+	
+	private static UserInterface ui = new UserInterface();
+	
+	/************************* Helper Methods *************************/
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
@@ -30,10 +32,155 @@ public class LanguageFeaturesTest {
 	/************************* Test Methods *************************/
 
 	@Test
+	public void arrayPointer() throws ABCException {
+		assertTrue(ui.run("verify", filename("arrayPointer.cvl")));
+	}
+	
+	@Test
+	public void arrays() throws ABCException {
+		assertTrue(ui.run("verify", filename("arrays.cvl")));
+	}
+	
+	@Test
+	public void assume() throws ABCException {
+		assertTrue(ui.run("verify", filename("assume.cvl")));
+	}
+	
+	@Test
+	public void atomChooseBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("atomChooseBad.cvl")));
+	}
+	
+	@Test
+	public void atomicBlockedResume() throws ABCException {
+		assertTrue(ui.run("verify", filename("atomicBlockedResume.cvl")));
+	}
+	
+	@Test
+	public void atomicStatement() throws ABCException {
+		assertTrue(ui.run("verify", filename("atomicStatement.cvl")));
+	}
+	
+	@Test
+	public void atomicWait() throws ABCException {
+		assertTrue(ui.run("verify", "-inputN=3", filename("atomicWait.cvl")));
+	}
+	
+	@Test
+	public void atomStatement() throws ABCException {
+		assertTrue(ui.run("verify", filename("atomStatement.cvl")));
+	}
+	
+	@Test
+	public void atomWaitBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("atomWaitBad.cvl")));
+	}
+	
+	@Test
+	public void bigO() {
+		assertTrue(ui.run("verify", filename("bigO.cvl")));
+	}
+	
+	@Test
+	public void breakStatement() throws ABCException {
+		assertTrue(ui.run("verify", filename("break.cvl")));
+	}
+	
+	@Test
+	public void bundleArray() throws ABCException {
+		assertTrue(ui.run("verify", filename("bundleArray.cvl")));
+	}
+	
+	@Test
+	public void bundleConcrete() throws ABCException {
+		assertTrue(ui.run("verify", filename("bundleConcrete.cvl")));
+	}
+
+	@Test
+	public void bundleSize() throws ABCException {
+		assertTrue(ui.run("verify", filename("bundleSize.cvl")));
+	}
+
+	@Test
+	public void bundleStruct() throws ABCException {
+		assertTrue(ui.run("verify", filename("bundleStruct.cvl")));
+	}
+
+	@Test
+	public void bundleStructComponent() throws ABCException {
+		assertFalse(ui.run("verify", filename("bundleStructComponent.cvl")));
+	}
+	
+	@Test
+	public void cast() throws ABCException {
+		assertTrue(ui.run("verify", filename("cast.cvl")));
+	}
+
+	@Test
+	public void choose() throws ABCException {
+		assertTrue(ui.run("verify", filename("choose.cvl")));
+	}
+	
+	@Test
+	public void chooseInt() throws ABCException {
+		assertTrue(ui.run("verify", filename("chooseInt.cvl")));
+	}
+	
+	@Test
+	public void comm() throws ABCException {
+		assertTrue(ui.run("verify", filename("comm.cvl")));
+	}
+	
+	@Test
+	public void compare() throws ABCException {
+		assertTrue(ui.run("verify", filename("compare.cvl")));
+	}
+	
+	@Test
+	public void conditionalExpression() throws ABCException {
+		assertTrue(ui.run("verify", filename("conditionalExpression.cvl")));
+	}
+	
+	@Test
+	public void continueStatement() throws ABCException {
+		assertTrue(ui.run("verify", filename("continue.cvl")));
+	}
+	
+	@Test
+	public void duffs() throws ABCException {
+		assertTrue(ui.run("verify", filename("duffs.cvl")));
+	}
+
+	@Test
+	public void dynamicStruct() throws ABCException {
+		assertTrue(ui.run("verify", filename("dynamicStruct.cvl")));
+	}
+	
+	@Test
+	public void emptyWhen() throws ABCException {
+		assertTrue(ui.run("verify", filename("emptyWhen.cvl")));
+	}
+	
+	@Test
+	public void exit() {
+		assertTrue(ui.run("verify", filename("exit.cvl")));
+	}
+	
+	@Test
+	public void forLoop() throws ABCException {
+		assertTrue(ui.run("verify", filename("for.cvl")));
+	}
+	
+	@Test
+	public void linkedList() throws ABCException {
+		assertTrue(ui.run("verify", filename("linkedList.cvl")));
+	}
+	
+	@Test
 	public void malloc() throws ABCException {
 		assertTrue(ui.run("verify", filename("malloc.cvl")));
 	}
-
+	
 	@Test
 	public void mallocBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("mallocBad.cvl")));
@@ -55,58 +202,39 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void assume() throws ABCException {
-		assertTrue(ui.run("verify", filename("assume.cvl")));
+	public void memcpy() throws ABCException {
+		assertTrue(ui.run("verify", filename("memcpy.cvl")));
 	}
-
-	@Test
-	public void arrays() throws ABCException {
-		assertTrue(ui.run("verify", filename("arrays.cvl")));
-	}
-
-	@Test
-	public void bundleConcrete() throws ABCException {
-		assertTrue(ui.run("verify", filename("bundleConcrete.cvl")));
-	}
-
-	@Test
-	public void bundleArray() throws ABCException {
-		assertTrue(ui.run("verify", filename("bundleArray.cvl")));
-	}
-
-	@Test
-	public void bundleStruct() throws ABCException {
-		assertTrue(ui.run("verify", filename("bundleStruct.cvl")));
-	}
-
-	@Test
-	public void bundleStructComponent() throws ABCException {
-		assertFalse(ui.run("verify", filename("bundleStructComponent.cvl")));
-	}
-
-	@Test
-	public void bundleSize() throws ABCException {
-		assertTrue(ui.run("verify", filename("bundleSize.cvl")));
-	}
-
-	@Test
-	public void choose() throws ABCException {
-		assertTrue(ui.run("verify", filename("choose.cvl")));
-	}
-
+	
 	@Test
 	public void minimal() throws ABCException {
 		assertTrue(ui.run("verify", filename("minimal.cvl")));
 	}
-
+	
+	@Test
+	public void nonbooleanCondition() throws IOException,
+			PreprocessorException, ParseException, SyntaxException {
+		assertTrue(ui.run("verify", filename("nonbooleanCondition.cvl")));
+	}
+	
 	@Test
 	public void pointers() throws ABCException {
 		assertTrue(ui.run("verify", filename("pointers.cvl")));
 	}
-
+	
 	@Test
-	public void linkedList() throws ABCException {
-		assertTrue(ui.run("verify", filename("linkedList.cvl")));
+	public void quantifiers() {
+		assertTrue(ui.run("verify", filename("quantifiers.cvl")));
+	}
+	
+	@Test
+	public void scoping() throws ABCException {
+		assertTrue(ui.run("verify", filename("scoping.cvl")));
+	}
+	
+	@Test
+	public void self() throws ABCException {
+		assertTrue(ui.run("verify", filename("self.cvl")));
 	}
 
 	@Test
@@ -115,51 +243,15 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void forLoop() throws ABCException {
-		assertTrue(ui.run("verify", filename("for.cvl")));
+	public void sizeOf() throws ABCException {
+		assertTrue(ui.run("verify", filename("sizeOf.cvl")));
 	}
-
-	@Test
-	public void compare() throws ABCException {
-		assertTrue(ui.run("verify", filename("compare.cvl")));
-	}
-
-	@Test
-	public void emptyBlock() throws ABCException {
-		assertTrue(ui.run("verify", filename("emptyWhen.cvl")));
-	}
-
-	@Test
-	public void cast() throws ABCException {
-		assertTrue(ui.run("verify", filename("cast.cvl")));
-	}
-
-	@Test
-	public void testSelf() throws ABCException {
-		assertTrue(ui.run("verify", filename("self.cvl")));
-	}
-
-	@Test
-	public void nonbooleanCondition() throws IOException,
-			PreprocessorException, ParseException, SyntaxException {
-		assertTrue(ui.run("verify", filename("nonbooleanCondition.cvl")));
-	}
-
+	
 	@Test
 	public void struct() throws ABCException {
 		assertTrue(ui.run("verify", filename("struct.cvl")));
 	}
-
-	@Test
-	public void arrayPointer() throws ABCException {
-		assertTrue(ui.run("verify", filename("arrayPointer.cvl")));
-	}
-
-	@Test
-	public void scoping() throws ABCException {
-		assertTrue(ui.run("verify", filename("scoping.cvl")));
-	}
-
+	
 	@Test
 	public void structArray() throws ABCException {
 		assertTrue(ui.run("verify", filename("structArray.cvl")));
@@ -171,87 +263,8 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void dynamicStruct() throws ABCException {
-		assertTrue(ui.run("verify", filename("dynamicStruct.cvl")));
-	}
-
-	@Test
-	public void sizeOf() throws ABCException {
-		assertTrue(ui.run("verify", filename("sizeOf.cvl")));
-	}
-
-	@Test
-	public void duffs() throws ABCException {
-		assertTrue(ui.run("verify", filename("duffs.cvl")));
-	}
-
-	@Test
-	public void comm() throws ABCException {
-		assertTrue(ui.run("verify", filename("comm.cvl")));
-	}
-
-	@Test
-	public void breakStatement() throws ABCException {
-		assertTrue(ui.run("verify", filename("break.cvl")));
-	}
-
-	@Test
-	public void continueStatement() throws ABCException {
-		assertTrue(ui.run("verify", filename("continue.cvl")));
-	}
-
-	@Test
 	public void switchBlock() throws ABCException {
 		assertTrue(ui.run("verify", filename("switch.cvl")));
 	}
-
-	@Test
-	public void memcpy() throws ABCException {
-		assertTrue(ui.run("verify", filename("memcpy.cvl")));
-	}
-
-	@Test
-	public void conditionalExpression() throws ABCException {
-		assertTrue(ui.run("verify", filename("conditionalExpression.cvl")));
-	}
-
-	@Test
-	public void atomicStatements() throws ABCException {
-		assertTrue(ui.run("verify", filename("atomicStatement.cvl")));
-	}
 	
-	@Test
-	public void atomWaitBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("atomWaitBad.cvl")));
-	}
-	
-	@Test
-	public void atomStatements() throws ABCException {
-		assertTrue(ui.run("verify", filename("atomStatement.cvl")));
-	}
-
-	@Test
-	public void atomStatementsBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("atomStatementBad.cvl")));
-	}
-
-	@Test
-	public void chooseInt() throws ABCException {
-		assertTrue(ui.run("verify", filename("chooseInt.cvl")));
-	}
-	
-	@Test
-	public void exit() {
-		assertTrue(ui.run("verify", filename("exit.cvl")));
-	}
-	
-	@Test
-	public void quantifiers() {
-		assertTrue(ui.run("verify", filename("quantifiers.cvl")));
-	}
-	
-	@Test
-	public void bigO() {
-		assertTrue(ui.run("verify", filename("bigO.cvl")));
-	}
 }

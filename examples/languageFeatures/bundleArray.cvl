@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify bundleArray.cvl
+ * */
 #include<civlc.h>
 
 $input int N;

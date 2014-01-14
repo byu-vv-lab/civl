@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify -inputN=3 atomicWait.cvl
+ * */
 #include <civlc.h>
 $input int N;
 int sum = 0;
