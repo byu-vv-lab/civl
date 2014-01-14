@@ -15,6 +15,7 @@ public interface BinaryExpression extends Expression {
 		AND,
 		DIVIDE,
 		EQUAL,
+		IMPLIES,
 		LESS_THAN,
 		LESS_THAN_EQUAL,
 		MINUS,

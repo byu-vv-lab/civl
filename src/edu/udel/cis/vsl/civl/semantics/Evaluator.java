@@ -1115,6 +1115,11 @@ public class Evaluator {
 			case POINTER_SUBTRACT:
 				eval = pointerSubtract(state, pid, expression, left, right);
 				break;
+			case IMPLIES:
+				assert left instanceof BooleanExpression;
+				assert right instanceof BooleanExpression;
+				eval.value = universe.implies((BooleanExpression) left,
+						(BooleanExpression) right);
 			case AND:
 			case OR:
 				throw new CIVLInternalException("unreachable", expression);

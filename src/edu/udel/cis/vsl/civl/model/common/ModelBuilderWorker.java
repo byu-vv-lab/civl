@@ -1004,6 +1004,10 @@ public class ModelBuilderWorker {
 					BINARY_OPERATOR.LESS_THAN_EQUAL, arguments.get(1),
 					arguments.get(0));
 			break;
+		case IMPLIES:
+			result = factory.binaryExpression(source, BINARY_OPERATOR.IMPLIES,
+					arguments.get(0), arguments.get(1));
+			break;
 		case LAND:
 			result = factory.binaryExpression(source, BINARY_OPERATOR.AND,
 					arguments.get(0), arguments.get(1));

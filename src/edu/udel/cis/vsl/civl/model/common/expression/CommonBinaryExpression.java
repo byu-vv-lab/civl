@@ -124,6 +124,9 @@ public class CommonBinaryExpression extends CommonExpression implements
 		case OR:
 			op = "||";
 			break;
+		case IMPLIES:
+			op = "=>";
+			break;
 		case MODULO:
 			op = "%";
 			break;
