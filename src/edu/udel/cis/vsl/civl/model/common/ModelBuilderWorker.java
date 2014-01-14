@@ -2558,8 +2558,8 @@ public class ModelBuilderWorker {
 			Location lastLocation = functionBody.lastStatement().source();
 			Set<Integer> locationIds = new HashSet<Integer>();
 
-			while (lastLocation.atomicKind() == AtomicKind.LEAVE
-					|| lastLocation.atomicKind() == AtomicKind.DLEAVE) {
+			while (lastLocation.atomicKind() == AtomicKind.ATOMIC_EXIT
+					|| lastLocation.atomicKind() == AtomicKind.ATOM_EXIT) {
 				locationIds.add(lastLocation.id());
 				if (lastLocation.getNumIncoming() == 1) {
 					lastLocation = lastLocation.getIncoming(0).source();

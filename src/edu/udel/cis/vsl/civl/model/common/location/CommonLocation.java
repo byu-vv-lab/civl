@@ -30,9 +30,9 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 * Atomic flags of a location:
 	 * <ul>
 	 * <li>NONE: no $atomic/$atom boundary;</li>
-	 * <li>ENTER/DENTER: the location is the starting point of an $atomic/$atom
+	 * <li>ATOMIC_ENTER/ATOM_ENTER: the location is the starting point of an $atomic/$atom
 	 * block;</li>
-	 * <li>LEAVE/DELAVE: the location is the ending point of an $atomic/$atom
+	 * <li>ATOMIC_EXIT/ATOM_EXIT: the location is the ending point of an $atomic/$atom
 	 * block.</li>
 	 * </ul>
 	 * 
@@ -40,7 +40,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 * 
 	 */
 	public enum AtomicKind {
-		NONE, ENTER, LEAVE, DENTER, DLEAVE
+		NONE, ATOMIC_ENTER, ATOMIC_EXIT, ATOM_ENTER, ATOM_EXIT
 	}
 
 	/************************* Instance Fields *************************/
@@ -147,12 +147,12 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public boolean enterAtomic() {
-		return this.atomicKind == AtomicKind.ENTER;
+		return this.atomicKind == AtomicKind.ATOMIC_ENTER;
 	}
 
 	@Override
-	public boolean enterDatomic() {
-		return this.atomicKind == AtomicKind.DENTER;
+	public boolean enterAtom() {
+		return this.atomicKind == AtomicKind.ATOM_ENTER;
 	}
 
 	@Override
@@ -221,12 +221,12 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public boolean leaveAtomic() {
-		return this.atomicKind == AtomicKind.LEAVE;
+		return this.atomicKind == AtomicKind.ATOMIC_EXIT;
 	}
 
 	@Override
-	public boolean leaveDatomic() {
-		return this.atomicKind == AtomicKind.DLEAVE;
+	public boolean leaveAtom() {
+		return this.atomicKind == AtomicKind.ATOM_EXIT;
 	}
 
 	@Override
@@ -293,7 +293,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 		// local only
 		// if all the statements that are to be executed in the atomic block are
 		// purely local
-		if (this.atomicKind == AtomicKind.DENTER) {
+		if (this.atomicKind == AtomicKind.ATOM_ENTER) {
 			Stack<Integer> atomicFlags = new Stack<Integer>();
 			Location newLocation = this;
 			Set<Integer> checkedLocations = new HashSet<Integer>();
@@ -311,16 +311,16 @@ public class CommonLocation extends CommonSourceable implements Location {
 					this.purelyLocal = false;
 					return;
 				}
-				if (newLocation.enterDatomic())
+				if (newLocation.enterAtom())
 					atomicFlags.push(1);
-				if (newLocation.leaveDatomic())
+				if (newLocation.leaveAtom())
 					atomicFlags.pop();
 				newLocation = s.target();
 				if (checkedLocations.contains(newLocation.id()))
 					newLocation = null;
 			} while (newLocation != null && !atomicFlags.isEmpty());
 			this.purelyLocal = true;
-		} else if (this.atomicKind == AtomicKind.ENTER) {
+		} else if (this.atomicKind == AtomicKind.ATOMIC_ENTER) {
 			Stack<Integer> atomicFlags = new Stack<Integer>();
 			Location newLocation = this;
 			Set<Integer> checkedLocations = new HashSet<Integer>();
@@ -360,7 +360,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 		// a location that enters an atomic block is considered as atomic only
 		// if all the statements that are to be executed in the atomic block are
 		// purely local
-		if (this.atomicKind == AtomicKind.DENTER) {
+		if (this.atomicKind == AtomicKind.ATOM_ENTER) {
 			Stack<Integer> atomicFlags = new Stack<Integer>();
 			Location newLocation = this;
 			Set<Integer> checkedLocations = new HashSet<Integer>();
@@ -373,9 +373,9 @@ public class CommonLocation extends CommonSourceable implements Location {
 					this.allOutgoingPurelyLocal = false;
 					return;
 				}
-				if (newLocation.enterDatomic())
+				if (newLocation.enterAtom())
 					atomicFlags.push(1);
-				if (newLocation.leaveDatomic())
+				if (newLocation.leaveAtom())
 					atomicFlags.pop();
 				newLocation = s.target();
 				if (checkedLocations.contains(newLocation.id()))
@@ -410,9 +410,9 @@ public class CommonLocation extends CommonSourceable implements Location {
 	@Override
 	public void setEnterAtomic(boolean deterministic) {
 		if (deterministic)
-			this.atomicKind = AtomicKind.DENTER;
+			this.atomicKind = AtomicKind.ATOM_ENTER;
 		else
-			this.atomicKind = AtomicKind.ENTER;
+			this.atomicKind = AtomicKind.ATOMIC_ENTER;
 	}
 
 	@Override
@@ -423,9 +423,9 @@ public class CommonLocation extends CommonSourceable implements Location {
 	@Override
 	public void setLeaveAtomic(boolean deterministic) {
 		if (deterministic)
-			this.atomicKind = AtomicKind.DLEAVE;
+			this.atomicKind = AtomicKind.ATOM_EXIT;
 		else
-			this.atomicKind = AtomicKind.LEAVE;
+			this.atomicKind = AtomicKind.ATOMIC_EXIT;
 	}
 
 	// TODO improve the static analysis of loop locations

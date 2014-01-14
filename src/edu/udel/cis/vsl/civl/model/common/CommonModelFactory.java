@@ -147,6 +147,8 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  */
 public class CommonModelFactory implements ModelFactory {
 
+	/********************************* Types *********************************/
+	
 	/**
 	 * Kinds for temporal variables introduced when translating conditional
 	 * expressions, choose_int function calls that require to temporal variable
@@ -157,7 +159,7 @@ public class CommonModelFactory implements ModelFactory {
 		CONDITIONAL, CHOOSE
 	}
 
-	/************************* Static Fields *************************/
+	/***************************** Static Fields *****************************/
 
 	/**
 	 * The name of the atomic lock variable
@@ -177,7 +179,7 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private static final String CONDITIONAL_VARIABLE_PREFIX = "$COND_VAR_";
 
-	/************************* Instance Fields *************************/
+	/**************************** Instance Fields ****************************/
 
 	private VariableExpression atomicLockVariableExpression;
 
@@ -259,7 +261,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	private CIVLPrimitiveType charType;
 
-	/************************** Constructors *************************/
+	/****************************** Constructors *****************************/
 
 	/**
 	 * The factory to create all model components. Usually this is the only way
@@ -318,7 +320,7 @@ public class CommonModelFactory implements ModelFactory {
 		// atomicBlocks = new Stack<Integer>();
 	}
 
-	/************************** Methods from ModelFactory *************************/
+	/************************ Methods from ModelFactory **********************/
 
 	@Override
 	public Model model(CIVLSource civlSource, CIVLFunction system) {
@@ -1518,11 +1520,11 @@ public class CommonModelFactory implements ModelFactory {
 	public Fragment atomicFragment(boolean deterministic, Fragment fragment,
 			Location start, Location end) {
 		Statement enterAtomic = new CommonAtomicBranchStatement(
-				start.getSource(), start, deterministic ? AtomicKind.DENTER
-						: AtomicKind.ENTER);
+				start.getSource(), start, deterministic ? AtomicKind.ATOM_ENTER
+						: AtomicKind.ATOMIC_ENTER);
 		Statement leaveAtomic = new CommonAtomicBranchStatement(
-				end.getSource(), end, deterministic ? AtomicKind.DLEAVE
-						: AtomicKind.LEAVE);
+				end.getSource(), end, deterministic ? AtomicKind.ATOM_EXIT
+						: AtomicKind.ATOMIC_EXIT);
 		Fragment startFragment = new CommonFragment(enterAtomic);
 		Fragment endFragment = new CommonFragment(leaveAtomic);
 		Fragment result;

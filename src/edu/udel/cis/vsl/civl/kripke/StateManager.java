@@ -26,22 +26,36 @@ import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
  * @author Timothy K. Zirkel (zirkel)
+ * @author Manchun Zheng (zmanchun)
+ * @author Stephen F. Siegel (siegel)
  * 
  */
 public class StateManager implements StateManagerIF<State, Transition> {
 
 	/***************************** Instance Fields ***************************/
 
+	/**
+	 * The unique executor instance used by the system
+	 */
 	private Executor executor;
 
+	/**
+	 * The flag to turn on/off printing of debugging information.
+	 */
 	private boolean debug = false;
 
+	/**
+	 * The maximal number of processes at a state, initialized as 0.
+	 */
 	private int maxProcs = 0;
 
+	/**
+	 * The output stream to be used in this class to print states, transitions,
+	 * warnings, etc.
+	 */
 	private PrintStream out = null;
 
 	/**
@@ -49,10 +63,19 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	private boolean saveStates = true;
 
+	/**
+	 * Print saved states (i.e., canonicalized states)?
+	 */
 	private boolean showSavedStates = false;
 
+	/**
+	 * Print all states (including states that are not saved)?
+	 */
 	private boolean showStates = false;
 
+	/**
+	 * Print transitions?
+	 */
 	private boolean showTransitions = false;
 
 	/**
@@ -60,12 +83,23 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	private boolean simplify = true;
 
+	/**
+	 * The unique state factory used by the system.
+	 */
 	private StateFactory stateFactory;
 
+	/**
+	 * Turn on/off verbose mode.
+	 */
 	private boolean verbose = false;
 
-	/***************************** Constructor ***************************/
+	/******************************* Constructor *****************************/
 
+	/**
+	 * 
+	 * @param executor
+	 *            The unique executor to by used in the system.
+	 */
 	public StateManager(Executor executor) {
 		this.executor = executor;
 		this.stateFactory = executor.stateFactory();
@@ -74,12 +108,12 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	/***************************** Private Methods ***************************/
 
 	/**
-	 * Execute an deterministic atomic block ($atom), supporting nested atomic
-	 * blocks. Currently only consider the case when each location has exactly
-	 * one outgoing statement.
+	 * Execute an deterministic atomic block ($atom), supporting nested atom
+	 * blocks, require that the whole block is finite, non-blocking and
+	 * deterministic. Otherwise, a warning or an error will be reported.
 	 * 
 	 * Precondition:
-	 * <code> location.enterAtomic() == true && location == state.getProcessState(pid).peekStack().location()</code>
+	 * <code> location.enterAtom() == true && location == state.getProcessState(pid).getLocation()</code>
 	 * 
 	 * @param state
 	 *            The current state
@@ -87,67 +121,55 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 *            The id of the process being executing
 	 * @param location
 	 *            The start location of the atomic block
-	 * 
-	 * @return The resulting state after executing the atomic block
+	 * @param print
+	 *            True iff each step is to be printed.
+	 * @return The resulting state after executing the $atom block
 	 */
 	private State executeAtomBlock(State state, int pid, Location location,
-			boolean print) throws UnsatisfiablePathConditionException {
+			boolean print) {
 		ProcessState p;
 		CIVLSource atomicStart = location.getSource();
 		Location newLocation = location;
 		State newState = state;
 		int stateCounter = 0;
-		BooleanExpression newPathCondition;
 		Statement start = location.getOutgoing(0);
+		Pair<StateStatusKind, State> init;
 
-		assert location.enterDatomic() == true
+		assert location.enterAtom() == true
 				&& location.id() == state.getProcessState(pid).getLocation()
 						.id() && location.getNumOutgoing() == 1;
-		newPathCondition = executor.newPathCondition(newState, pid, start);
-		if (!newPathCondition.isFalse()) {
-			newState = newState.setPathCondition(newPathCondition);
-			try {
-				newState = executor.execute(newState, pid, start);
-				newLocation = newState.getProcessState(pid).getLocation();
-				if (print) {
-					printStatement(start, AtomicKind.DENTER,
-							newState.getProcessState(pid));
-				}
-			} catch (UnsatisfiablePathConditionException e1) {
-				executor.evaluator()
-						.reportError(
-								new CIVLStateException(
-										ErrorKind.OTHER,
-										Certainty.CONCRETE,
-										"Undesired blocked location is detected in $atom block.",
-										newState, newLocation.getSource()));
-				throw new UnsatisfiablePathConditionException();
-			}
-		} else {
+		init = executor.executeStatement(state, location, start, pid);
+		if (init.left == StateStatusKind.BLOCKED) {
 			executor.evaluator().reportError(
 					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
 							"Execution blocked in $atom", newState, newLocation
 									.getSource()));
-			throw new UnsatisfiablePathConditionException();
+		} else {
+			newState = init.right;
+			newLocation = newState.getProcessState(pid).getLocation();
+			if (print) {
+				printStatement(start, AtomicKind.ATOM_ENTER,
+						newState.getProcessState(pid));
+			}
 		}
-		do {
+		while (true) {
 			boolean statementExecuted = false;
 			State currentState = newState;
 			Statement executedStatement = null;
 
 			switch (newLocation.atomicKind()) {
-			case DENTER:
+			case ATOM_ENTER:
 				newState = executeAtomBlock(newState, pid, newLocation, print);
 				stateCounter++;
 				statementExecuted = true;
 				break;
-			case DLEAVE:
+			case ATOM_EXIT:
 				assert (newLocation.getNumOutgoing() == 1);
 				newState = executor.executeStatement(newState, newLocation,
 						newLocation.getOutgoing(0), pid).right;
 				executedStatement = newLocation.getOutgoing(0);
 				if (print) {
-					printStatement(executedStatement, AtomicKind.DLEAVE,
+					printStatement(executedStatement, AtomicKind.ATOM_EXIT,
 							newState.getProcessState(pid));
 				}
 				assert newState != null;
@@ -164,10 +186,10 @@ public class StateManager implements StateManagerIF<State, Transition> {
 										new CIVLStateException(
 												ErrorKind.OTHER,
 												Certainty.CONCRETE,
-												"Undesired non-determinism is found in $atom block.",
+												"Non-determinism is found in $atom block.",
 												newState, newLocation
 														.getSource()));
-						throw new UnsatisfiablePathConditionException();
+						// throw new UnsatisfiablePathConditionException();
 					case NORMAL:
 						if (statementExecuted) {
 							executor.evaluator()
@@ -175,10 +197,10 @@ public class StateManager implements StateManagerIF<State, Transition> {
 											new CIVLStateException(
 													ErrorKind.OTHER,
 													Certainty.CONCRETE,
-													"Undesired non-determinism is found in $atom block.",
+													"Non-determinism is found in $atom block.",
 													newState, newLocation
 															.getSource()));
-							throw new UnsatisfiablePathConditionException();
+							// throw new UnsatisfiablePathConditionException();
 						}
 						statementExecuted = true;
 						newState = temp.right;
@@ -200,12 +222,12 @@ public class StateManager implements StateManagerIF<State, Transition> {
 										Certainty.CONCRETE,
 										"Undesired blocked location is detected in $atom block.",
 										currentState, newLocation.getSource()));
-				throw new UnsatisfiablePathConditionException();
+				// throw new UnsatisfiablePathConditionException();
 			}
 			// warning for possible infinite atomic block
 			if (stateCounter != 0 && stateCounter % 1024 == 0) {
-				System.out.println("Warning: " + (stateCounter)
-						+ " states in atomic block at "
+				out.println("Warning: " + (stateCounter)
+						+ " states in $atom block at "
 						+ atomicStart.getLocation() + ".");
 			}
 			stateCounter++;
@@ -219,7 +241,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				throw new CIVLInternalException("Unreachable",
 						newLocation.getSource());
 			}
-		} while (true);
+		}
 	}
 
 	/**
@@ -236,18 +258,15 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 *            True iff executing statements in an atomic block; false iff
 	 *            executing statements found to be purely local
 	 * @return The resulting state
-	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeAtomicOrPurelyLocalStatements(State state, int pid,
-			Location location, boolean atomic, boolean print)
-			throws UnsatisfiablePathConditionException {
+			Location location, boolean atomic, boolean print) {
 		Location pLocation = location;
 		ProcessState p = state.getProcessState(pid);
 		State newState = state;
 		Statement executedStatement = null;
 
 		assert atomic || pLocation.isPurelyLocal();
-
 		while ((!atomic && pLocation != null && pLocation.isPurelyLocal())
 				|| (atomic && pLocation != null)) {
 			if (pLocation.isLoopPossible()) {
@@ -287,10 +306,10 @@ public class StateManager implements StateManagerIF<State, Transition> {
 					return oldState;
 				}
 				break;
-			case DENTER:
+			case ATOM_ENTER:
 				newState = executeAtomBlock(newState, pid, pLocation, print);
 				break;
-			case ENTER:
+			case ATOMIC_ENTER:
 				if (atomic) {
 					assert !stateFactory.lockedByAtomic(newState)
 							|| stateFactory.processInAtomic(newState).getPid() == pid;
@@ -305,7 +324,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 							pid, pLocation, true, print);
 				}
 				break;
-			case LEAVE:
+			case ATOMIC_EXIT:
 				if (!atomic)
 					throw new CIVLInternalException("Unreachable",
 							pLocation.getSource());
@@ -318,7 +337,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				if (!p.inAtomic()) {
 					newState = stateFactory.releaseAtomicLock(newState);
 					if (print) {
-						printStatement(executedStatement, AtomicKind.LEAVE, p);
+						printStatement(executedStatement,
+								AtomicKind.ATOMIC_EXIT, p);
 					}
 					return newState;
 				}
@@ -353,34 +373,22 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		p = state.getProcessState(pid);
 		currentLocation = p.getLocation();
 		switch (currentLocation.atomicKind()) {
-		case ENTER:
-			if (printTransitions) {
-				out.println();
-				out.print(state + ", proc ");
-				out.println(pid + ":");
-			}
+		case ATOMIC_ENTER:
+			printTransitionPrefix(printTransitions, state, pid);
 			state = executeAtomicOrPurelyLocalStatements(state, pid,
 					currentLocation, true, printTransitions);
 			break;
-		case LEAVE:
-			if (printTransitions) {
-				out.println();
-				out.print(state + ", proc ");
-				out.println(pid + ":");
-			}
+		case ATOMIC_EXIT:
+			printTransitionPrefix(printTransitions, state, pid);
 			state = executeAtomicOrPurelyLocalStatements(state, pid,
 					currentLocation, true, printTransitions);
 			break;
-		case DENTER:
-			if (printTransitions) {
-				out.println();
-				out.print(state + ", proc ");
-				out.println(pid + ":");
-			}
+		case ATOM_ENTER:
+			printTransitionPrefix(printTransitions, state, pid);
 			state = executeAtomBlock(state, pid, currentLocation,
 					printTransitions);
 			break;
-		case DLEAVE:
+		case ATOM_EXIT:
 			throw new CIVLInternalException("Unreachable",
 					currentLocation.getSource());
 		default:// execute a normal transition
@@ -458,31 +466,41 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 	private void printStatement(Statement s, AtomicKind atomicKind,
 			ProcessState p) {
+		CIVLSource statementSource = s.getSource();
+
+		if (statementSource == null)
+			statementSource = s.source().getSource();
 		out.print("  " + s.source().id() + "->");
 		if (s.target() != null)
 			out.print(s.target().id() + ": ");
 		else
 			out.print("RET: ");
-		if (atomicKind == AtomicKind.ENTER) {
-			out.print("ENTER_ATOMIC ");
+		switch (atomicKind) {
+		case ATOMIC_ENTER:
+			out.print(s.toString() + " ");
 			out.print(p.atomicCount() - 1);
-		} else if (atomicKind == AtomicKind.LEAVE) {
-			out.print("EXIT_ATOMIC ");
+			break;
+		case ATOMIC_EXIT:
+			out.print(s.toString() + " ");
 			out.print(p.atomicCount());
-		} else if (atomicKind == AtomicKind.DENTER)
-			out.print("ENTER_ATOM");
-		else if (atomicKind == AtomicKind.DLEAVE)
-			out.print("EXIT_ATOM");
-		else
+			break;
+		default:
 			out.print(s.toString());
-		if (s.getSource() != null)
-			out.print(" at " + s.getSource().getSummary());
-		else if (s.source().getSource() != null)
-			out.print(" at " + s.source().getSource().getSummary());
-		out.println(";");
+		}
+		if (statementSource != null)
+			out.println(" at " + statementSource.getSummary() + ";");
 	}
-	
-	/***************************** Methods from StateManagerIF<State, Transition> ***************************/
+
+	private void printTransitionPrefix(boolean printTransitions, State state,
+			int pid) {
+		if (printTransitions) {
+			out.println();
+			out.print(state + ", proc ");
+			out.println(pid + ":");
+		}
+	}
+
+	/*********************** Methods from StateManagerIF *********************/
 
 	@Override
 	public int getDepth(State state) {
@@ -558,7 +576,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		state.setSeen(value);
 	}
 
-	/***************************** Public Methods ***************************/
+	/************************** Other Public Methods *************************/
 
 	public boolean getDebug() {
 		return debug;

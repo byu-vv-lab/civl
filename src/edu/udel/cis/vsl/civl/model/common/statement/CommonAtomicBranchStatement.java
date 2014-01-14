@@ -56,13 +56,13 @@ public class CommonAtomicBranchStatement extends CommonNoopStatement {
 	@Override
 	public String toString() {
 		switch (this.atomicKind) {
-		case ENTER:
+		case ATOMIC_ENTER:
 			return "ENTER_ATOMIC";
-		case LEAVE:
+		case ATOMIC_EXIT:
 			return "LEAVE_ATOMIC";
-		case DENTER:
+		case ATOM_ENTER:
 			return "ENTER_ATOM";
-		case DLEAVE:
+		case ATOM_EXIT:
 			return "LEAVE_ATOM";
 		default:
 			throw new CIVLInternalException("Unreachable", this.getSource());

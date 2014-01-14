@@ -167,7 +167,7 @@ public interface Location extends Sourceable {
 	 * @return true iff the location is entering a deterministic atomic block.
 	 * 
 	 */
-	boolean enterDatomic();
+	boolean enterAtom();
 
 	/**
 	 * Check if the location is entering a general atomic block.
@@ -181,7 +181,7 @@ public interface Location extends Sourceable {
 	 * 
 	 * @return true iff the location is leaving a deterministic atomic block
 	 */
-	boolean leaveDatomic();
+	boolean leaveAtom();
 
 	/**
 	 * 

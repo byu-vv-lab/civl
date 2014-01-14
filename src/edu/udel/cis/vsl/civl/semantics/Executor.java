@@ -61,10 +61,6 @@ public class Executor {
 
 	/********************************* Types *********************************/
 
-	public enum ExecuteKind {
-		ATOMIC, ATOM, LOCAL
-	}
-
 	public enum StateStatusKind {
 		NORMAL, NONDETERMINISTIC, BLOCKED, END
 	}
@@ -96,7 +92,7 @@ public class Executor {
 
 	private Libcivlc civlcExecutor;
 
-	/******************************* Constructors ***************************/
+	/******************************* Constructors ****************************/
 
 	/**
 	 * Create a new executor.
@@ -140,7 +136,7 @@ public class Executor {
 		this(config, modelFactory, stateFactory, log, null);
 	}
 
-	/**************************** Private methods ***************************/
+	/**************************** Private methods ****************************/
 
 	/**
 	 * Transition a process from one location to another. If the new location is
@@ -662,6 +658,7 @@ public class Executor {
 
 	/**
 	 * Execute a statement from a certain state and return the resulting state
+	 * TODO make sure the pid is never changed or return the new pid if changed
 	 * 
 	 * @param state
 	 *            The state to execute the statement with
@@ -684,18 +681,9 @@ public class Executor {
 		if (!pathCondition.isFalse()) {
 			try {
 				if (s instanceof ChooseStatement) {
-					// execute deterministic choosestatement
+					// execute deterministic choose statement
 					return new Pair<StateStatusKind, State>(
 							StateStatusKind.NONDETERMINISTIC, state);
-
-					// if(executeKind == ExecuteKind.ATOM)
-					// throw new CIVLStateException(
-					// ErrorKind.OTHER,
-					// Certainty.CONCRETE,
-					// "Undesired non-determinism is found in $atom block.",
-					// state, location.getSource());
-					// else
-					// return newState;
 				} else if (s instanceof WaitStatement) {
 					Evaluation eval = evaluator.evaluate(
 							state.setPathCondition(pathCondition), pid,
@@ -720,9 +708,6 @@ public class Executor {
 					} else {
 						return new Pair<StateStatusKind, State>(
 								StateStatusKind.BLOCKED, state);
-						// if(executeKind == ExecuteKind.ATOMIC)
-						// return newState;
-						// else return null;
 					}
 				} else {
 					newState = state.setPathCondition(pathCondition);
