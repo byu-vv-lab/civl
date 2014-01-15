@@ -1,6 +1,8 @@
 % LaTeX source for CIVL Reference Manual.
 %
-\documentclass[11pt]{book}
+\documentclass[11pt, oneside, letterpaper]{book}
+\usepackage[letterpaper,textheight=9in,left=1in,%
+  textwidth=6.5in,bottom=1in]{geometry}
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{xcolor}
@@ -129,7 +131,7 @@ C program simply become variables declared in the root scope.
 
 The additional language elements are shown in Figure \ref{fig:cc}.
 
-\begin{figure}
+\begin{figure}[t]
   \begin{tabular}{ll}
     \cproc & the process type \\
     \cself & the evaluating process (constant of type \cproc) \\
@@ -677,6 +679,7 @@ The second and third functions are exactly the same as in C. Note that
 \texttt{free} modifies the heap which was used to allocate \texttt{p}.
 
 Another pointer example:
+\begin{small}
 \begin{verbatim}
 { $heap h;
   { $scope s1;
@@ -693,6 +696,7 @@ Another pointer example:
   }
 }
 \end{verbatim}
+\end{small}
 
 \emph{Status}: Pointer type, \texttt{\&}, \texttt{*}, pointer addition
 all implemented.  Type \cheap{}, \texttt{malloc}, \texttt{free}
@@ -707,139 +711,138 @@ Coming soon.  (Parsed, type checked, not currently used otherwise.)
 
 Coming soon. (Ditto.)
 
-\chapter{Some Translation Examples}
+% \chapter{Some Translation Examples}
 
-\section{Structured parallelism}
-Structured \verb!parbegin!/\verb!parend! statements look like this:
-\begin{verbatim}
-$parbegin
-  S1; S2; S2
-$parend
-\end{verbatim}
-(See Dijkstra, Cooperating Sequential Processes.)  The meaning is: run
-the three statements in parallel, and block at the end until all have
-completed.
+% \section{Structured parallelism}
+% Structured \verb!parbegin!/\verb!parend! statements look like this:
+% \begin{verbatim}
+% $parbegin
+%   S1; S2; S2
+% $parend
+% \end{verbatim}
+% (See Dijkstra, Cooperating Sequential Processes.)  The meaning is: run
+% the three statements in parallel, and block at the end until all have
+% completed.
 
-This can be represented in CIVL-C as follows:
+% This can be represented in CIVL-C as follows:
 
-\begin{verbatim}
-{
-  void f_1() {S1}
-  void f_2() {S2}
-  void f_3() {S3}
-  $proc tmp1 = $fork f_1(), tmp2=$fork f_2(), tmp3=$fork f_3();
-  $join(tmp1); $join(tmp2); $join(tmp3);
-}
-\end{verbatim}
+% \begin{verbatim}
+% {
+%   void f_1() {S1}
+%   void f_2() {S2}
+%   void f_3() {S3}
+%   $proc tmp1 = $fork f_1(), tmp2=$fork f_2(), tmp3=$fork f_3();
+%   $join(tmp1); $join(tmp2); $join(tmp3);
+% }
+% \end{verbatim}
 
-\subsection{Parallel for loops}
-The standard parallel ``for'' loop looks like
-\begin{verbatim}
-  $parfor(T i = e; cond; inc) S
-\end{verbatim}
-It indicates each iteration should be run concurrently, blocking
-at end until all complete.  In CIVL-C:
+% \subsection{Parallel for loops}
+% The standard parallel ``for'' loop looks like
+% \begin{verbatim}
+%   $parfor(T i = e; cond; inc) S
+% \end{verbatim}
+% It indicates each iteration should be run concurrently, blocking
+% at end until all complete.  In CIVL-C:
 
-\begin{verbatim}
-{
-  void f(T i) {S}
-  T i = e;
-  int c = 0;
-  Vector<$proc> list;
+% \begin{verbatim}
+% {
+%   void f(T i) {S}
+%   T i = e;
+%   int c = 0;
+%   Vector<$proc> list;
 
-  while (cond) {
-    list.add($fork f());
-    c++;
-    inc;
-  }
-  for (int j=0; j<c; j++) $join(list.get(j));
-}
-\end{verbatim}
+%   while (cond) {
+%     list.add($fork f());
+%     c++;
+%     inc;
+%   }
+%   for (int j=0; j<c; j++) $join(list.get(j));
+% }
+% \end{verbatim}
 
-(This is assuming we have some sort of Vector datatype.  Need to think
-about that.)
+% (This is assuming we have some sort of Vector datatype.  Need to think
+% about that.)
 
-\subsection{Message Passing}
+% \subsection{Message Passing}
 
-There will be a bunch of standard libraries that can be included
-into CIVL-C.  One of these will be the message-passing library.
-It will define a bunch of primitives that we will fill in shortly.
-Among them will be basic send and receive functions.
+% There will be a bunch of standard libraries that can be included
+% into CIVL-C.  One of these will be the message-passing library.
+% It will define a bunch of primitives that we will fill in shortly.
+% Among them will be basic send and receive functions.
 
-The message-passing library can be defined entirely in CIVL-C.
-(See Figure \ref{fig:mp1}.)
+% The message-passing library can be defined entirely in CIVL-C.
+% (See Figure \ref{fig:mp1}.)
 
-\begin{figure}
-\begin{verbatim}
-typedef struct _CIVL_Message {
-  struct _CIVL_Message *next; // next message in this queue
-  struct _CIVL_Message *prev; // previous message in this queue
-  int tag; // message tag
-  int size; // size of buffer
-  void *data; // pointer to first element
-} *CIVL_Message;
+% \begin{figure}
+% \begin{verbatim}
+% typedef struct _CIVL_Message {
+%   struct _CIVL_Message *next; // next message in this queue
+%   struct _CIVL_Message *prev; // previous message in this queue
+%   int tag; // message tag
+%   int size; // size of buffer
+%   void *data; // pointer to first element
+% } *CIVL_Message;
 
-typedef struct _CIVL_Comm {
-  $heap heap;
-  int numProcs; // number of procs in this communicator
-  $proc *procs; // array of length numProcs
-  CIVL_Message buf_front[][]; // oldest element of each queue
-  CIVL_Message buf_back[][]; // newest element of each queue
-} *CIVL_Comm;
-\end{verbatim}
-  \caption{CIVL Message Passing library: basic definitions}
-  \label{fig:mp1}
-\end{figure}
+% typedef struct _CIVL_Comm {
+%   $heap heap;
+%   int numProcs; // number of procs in this communicator
+%   $proc *procs; // array of length numProcs
+%   CIVL_Message buf_front[][]; // oldest element of each queue
+%   CIVL_Message buf_back[][]; // newest element of each queue
+% } *CIVL_Comm;
+% \end{verbatim}
+%   \caption{CIVL Message Passing library: basic definitions}
+%   \label{fig:mp1}
+% \end{figure}
 
-Message passing functions may be defined with prototypes such as:
-\begin{verbatim}
-  CIVL_Comm CIVL_Comm_create($proc procs[], int numProcs);
-  void CIVL_send(int src, void *buf, int size, int dest,
-                 int tag, CIVL_Comm comm);
-  void CIVL_recv(int dest, void *buf, int size, int src,
-                 int tag, CIVL_Comm comm);
-\end{verbatim}
+% Message passing functions may be defined with prototypes such as:
+% \begin{verbatim}
+%   CIVL_Comm CIVL_Comm_create($proc procs[], int numProcs);
+%   void CIVL_send(int src, void *buf, int size, int dest,
+%                  int tag, CIVL_Comm comm);
+%   void CIVL_recv(int dest, void *buf, int size, int src,
+%                  int tag, CIVL_Comm comm);
+% \end{verbatim}
 
-The arguments for \texttt{send} are:
-\begin{enumerate}
-\item rank of process issuing the send
-\item address of buffer containing data to be sent
-\item size of message
-\item an integer tag
-\item rank of destination process
-\item communicator
-\end{enumerate}
+% The arguments for \texttt{send} are:
+% \begin{enumerate}
+% \item rank of process issuing the send
+% \item address of buffer containing data to be sent
+% \item size of message
+% \item an integer tag
+% \item rank of destination process
+% \item communicator
+% \end{enumerate}
 
-The arguments for \texttt{recv} are:
-\begin{enumerate}
-\item rank of process issuing the receive
-\item address of receive buffer
-\item size of receive buffer (must be large enough to hold any incoming message)
-\item rank of source process or \code{CIVL{\U}ANY{\U}SOURCE}
-\item tag or \code{CIVL{\U}ANY{\U}TAG}
-\item communicator
-\end{enumerate}
+% The arguments for \texttt{recv} are:
+% \begin{enumerate}
+% \item rank of process issuing the receive
+% \item address of receive buffer
+% \item size of receive buffer (must be large enough to hold any incoming message)
+% \item rank of source process or \code{CIVL{\U}ANY{\U}SOURCE}
+% \item tag or \code{CIVL{\U}ANY{\U}TAG}
+% \item communicator
+% \end{enumerate}
 
-Notice one difference from MPI: we have to specify the process to
-which the send or receive is associated in the first argument. This is
-because we need to be more general than MPI. In MPI, that process is
-always the MPI process invoking the send or receive. In CIVL, you
-might want to have threads within processes (for example) and
-associate the message to the MPI process, even though the thread is
-actually invoking the send. Or you might want to associate it to
-something else in some other language/library/API.
+% Notice one difference from MPI: we have to specify the process to
+% which the send or receive is associated in the first argument. This is
+% because we need to be more general than MPI. In MPI, that process is
+% always the MPI process invoking the send or receive. In CIVL, you
+% might want to have threads within processes (for example) and
+% associate the message to the MPI process, even though the thread is
+% actually invoking the send. Or you might want to associate it to
+% something else in some other language/library/API.
 
-How they are implemented: \texttt{CIVL{\U}Comm{\U}create}
-mallocs a new object of type \texttt{struct {\U}CIVL{\U}Comm} and returns
-a pointer to it.
+% How they are implemented: \texttt{CIVL{\U}Comm{\U}create}
+% mallocs a new object of type \texttt{struct {\U}CIVL{\U}Comm} and returns
+% a pointer to it.
 
 
 \part{Semantics}
 
+\chapter{CIVL Model Syntax}
 
-\section{CIVL Model Syntax}
-
-\subsection{Notation and terminology}
+\section{Notation and terminology}
 \label{sec:notation}
 
 Let $\B=\{\true,\false\}$ (the set of boolean values).  Let
@@ -857,7 +860,7 @@ $\len(\xi)$.
 % The elements of the sequence are indexed from $0$ to
 % $\len(\xi)-1$.
 
-\subsection{Definition of Context}
+\section{Definition of Context}
 \label{sec:context}
 
 \begin{definition}
@@ -931,7 +934,7 @@ valuations in that system.
   \label{fig:notation}
 \end{figure}
 
-\subsection{Lexical scopes}
+\section{Lexical scopes}
 \label{sec:scopes}
 
 \begin{definition}
@@ -963,7 +966,7 @@ valuations in that system.
 One way this notion will be used: expressions used in a scope $\sigma$
 can only involve variables visible in $\sigma$.
 
-\subsection{Functions}
+\section{Functions}
 \label{sec:functions}
 
 Fix a CIVL context $\mathcal{C}$ and lexical scope system
@@ -1049,7 +1052,7 @@ Note that the recursion in Definition \ref{def:func} must stop as the
 root scope belongs to the root function and the scopes form a tree.
 
 
-\subsection{Statements}
+\section{Statements}
 
 Fix a CIVL function prototype system.  A \emph{CIVL statement} is
 defined to be a tuple of one of the forms described below.
@@ -1149,7 +1152,7 @@ semantics will be described in \S\ref{sec:semantics}.
   \end{itemize}
 \end{enumerate}
 
-\subsection{Remarks}
+\section{Remarks}
 
 The system described is sufficiently general to model pointers. There
 can be (one or more) pointer types and corresponding values.  The
@@ -1164,7 +1167,7 @@ of that type declared.  Expressions to modify and read from the heap
 can be defined, as can pointers into the heap.
 
 
-\subsection{Transition system representation of functions}
+\section{Transition system representation of functions}
 \label{sec:gts}
 
 \begin{definition}
@@ -1206,10 +1209,10 @@ can be defined, as can pointers into the heap.
   Given a CIVL model $M$, let $\Loc=\bigcup_{f\in\Func}\Loc_f$.
 \end{definition}
 
-\section{CIVL Model Semantics}
+\chapter{CIVL Model Semantics}
 \label{sec:semantics}
 
-\subsection{State}
+\section{State}
 \label{sec:state}
 
 Fix a CIVL model $M$.  Recall that a valuation is a type-respecting
@@ -1334,7 +1337,7 @@ let $(\delta,l)$ be the corresponding frame; set $\Psi(p,i)=[\delta]$.
 % \end{definition}
 
 
-\subsection{Jump protocol}
+\section{Jump protocol}
 \label{sec:jump}
 
 % can only jump if \delta is a leaf node.
@@ -1378,7 +1381,7 @@ let $(\delta,l)$ be the corresponding frame; set $\Psi(p,i)=[\delta]$.
 
 \newcommand{\lub}{\sigma_{\textsf{lub}}}
 
-\begin{figure}
+\begin{figure}[t]
   \begin{algorithm}[H]
     \Procedure{$\textsf{\textup{jump}}(s\colon\State, p\colon\Val_{\proc},
       l'\colon\Loc)\colon\State$}{%
@@ -1497,14 +1500,14 @@ proper descendant of that scope), you have to execute the second half
 of the protocol to push a sequence of scopes from the function scope
 to the scope of the start location.
 
-\subsection{Initial State}
+\section{Initial State}
 
 The \emph{initial state} for $M$ is obtained by creating one process
 (let $P=\{0\}$) and having it call the root function $f_0$. 
 Hence start with the state $s$ in which $P=\{0\}$, $\ldots$.
 The initial state is $\textsf{jump}(s,0,\start_{f_0})$.
 
-\subsection{Transitions}
+\section{Transitions}
 
 The transitions follow the usual ``interleaving'' semantics. Given a
 state $\sigma$, one defines the set of enabled transitions in $\sigma$
@@ -1521,7 +1524,7 @@ For each enabled transition, a new state is generated by executing
 the transition's statement.  For the most part, the semantics are obvious,
 but there are a few details that are a bit subtle.
 
-\subsection{Calls and Forks}
+\section{Calls and Spawns}
 
 Both calls and forks of a function $f$ entail the creation of a new
 frame. First, a new dyscope $d$ corresponding to $\fscope(f)$ is
@@ -1547,7 +1550,7 @@ is ``created'', i.e., you pick a natural number not in $P$ and
 add it to $P$, and push the frame onto the new stack.   To be totally
 deterministic, you could pick the least natural number not in $P$.
 
-\subsection{Garbage collection}
+\section{Garbage collection}
 
 In a state $s$, a dyscope is unreachable if there is no path
 from a frame in a call stack to that dyscope (following the
@@ -1563,6 +1566,8 @@ in a canonic order, etc.
 
 
 \part{Tools}
+
+\chapter{Overiew of CIVL Tools}
 
 Current tools allow one to \emph{run} a CIVL program using random
 choice to resolve nondeterministic choices; \emph{verify} a program
@@ -1641,7 +1646,7 @@ Options:
 \end{verbatim}
 
 
-\subsection{Transitions}
+\chapter{Transitions}
 In CIVL, a transition stands for the execution of a number of statements of a certain process from one state, and the execution of each statement is considered as one step. A transition has the following form in the output, where sid and sid' are the identifiers for the source and the target states, pid is the identifier of the process that this transition belongs to, and step 0,1 ... are the steps contained in the transitions.
 
 \begin{verbatim}
