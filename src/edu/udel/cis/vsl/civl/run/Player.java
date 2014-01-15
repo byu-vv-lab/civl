@@ -119,7 +119,7 @@ public abstract class Player {
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));
 		this.executor = new Executor(config, modelFactory, stateFactory, log,
-				loader);
+				loader, out);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
 		this.debug = config.isTrue(UserInterface.debugO);

@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
+import java.io.PrintStream;
+
 import edu.udel.cis.vsl.civl.semantics.Executor;
 
 /**
@@ -10,6 +12,6 @@ public interface LibraryExecutorLoader {
 	/**
 	 * Get the library executor with the given name.
 	 */
-	LibraryExecutor getLibraryExecutor(String name, Executor primaryExecutor);
+	LibraryExecutor getLibraryExecutor(String name, Executor primaryExecutor, PrintStream output);
 
 }

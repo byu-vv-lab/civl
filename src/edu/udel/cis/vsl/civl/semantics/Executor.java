@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.semantics;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,6 +92,8 @@ public class Executor {
 	private LibraryExecutorLoader loader;
 
 	private Libcivlc civlcExecutor;
+	
+	private PrintStream output;
 
 	/**
 	 * The number of steps that have been executed by this executor. A "step" is
@@ -115,15 +118,16 @@ public class Executor {
 	 */
 	public Executor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log,
-			LibraryExecutorLoader loader) {
+			LibraryExecutorLoader loader, PrintStream output) {
 		this.symbolicUniverse = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
 		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);
 		// this.log = log;
 		this.loader = loader;
+		this.output = output;
 		this.civlcExecutor = (Libcivlc) loader
-				.getLibraryExecutor("civlc", this);
+				.getLibraryExecutor("civlc", this, this.output);
 	}
 
 	/**
@@ -139,8 +143,8 @@ public class Executor {
 	 *            A theorem prover for checking assertions.
 	 */
 	public Executor(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactory stateFactory, ErrorLog log) {
-		this(config, modelFactory, stateFactory, log, null);
+			StateFactory stateFactory, ErrorLog log, PrintStream output) {
+		this(config, modelFactory, stateFactory, log, null, output);
 	}
 
 	/**************************** Private methods ****************************/
@@ -211,7 +215,7 @@ public class Executor {
 		if (statement.function() instanceof SystemFunction) {
 			// TODO: optimize this. store libraryExecutor in SystemFunction?
 			LibraryExecutor executor = loader.getLibraryExecutor(
-					((SystemFunction) statement.function()).getLibrary(), this);
+					((SystemFunction) statement.function()).getLibrary(), this, output);
 
 			state = executor.execute(state, pid, statement);
 			// state = transition(state, state.getProcessState(pid),

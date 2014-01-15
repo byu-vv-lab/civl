@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.library;
 
+import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -22,7 +23,7 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 	@SuppressWarnings("unchecked")
 	@Override
 	public LibraryExecutor getLibraryExecutor(String name,
-			Executor primaryExecutor) {
+			Executor primaryExecutor, PrintStream output) {
 		LibraryExecutor result = libraryExecutorCache.get(name);
 
 		if (result == null) {
@@ -32,9 +33,9 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 				Class<? extends LibraryExecutor> aClass = (Class<? extends LibraryExecutor>) Class
 						.forName(aClassName);
 				Constructor<? extends LibraryExecutor> constructor = aClass
-						.getConstructor(Executor.class);
+						.getConstructor(Executor.class, PrintStream.class);
 
-				result = constructor.newInstance(primaryExecutor);
+				result = constructor.newInstance(primaryExecutor, output);
 			} catch (Exception e) {
 				throw new CIVLInternalException("Unable to load library: "
 						+ name + "\n" + e.getMessage(), (CIVLSource) null);
