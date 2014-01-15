@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.run;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
 import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -102,13 +103,16 @@ public class Verifier extends Player {
 	 */
 	private DfsSearcher<State, Transition, TransitionSequence> searcher;
 
+	private boolean shortFileNamesShown;
+
 	/**
 	 * The time at which execution started, as a double.
 	 */
 	private double startTime;
 
 	public Verifier(GMCConfiguration config, Model model, PrintStream out,
-			double startTime) throws CommandLineException {
+			double startTime, boolean shortFileNamesShown)
+			throws CommandLineException {
 		super(config, model, out);
 		this.startTime = startTime;
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
@@ -122,6 +126,7 @@ public class Verifier extends Player {
 		if (config.getValue(UserInterface.maxdepthO) != null)
 			searcher.boundDepth(maxdepth);
 		stateManager.setUpdater(updater);
+		this.shortFileNamesShown = shortFileNamesShown;
 	}
 
 	/**
@@ -172,6 +177,10 @@ public class Verifier extends Player {
 			}
 		} catch (ExcessiveErrorException e) {
 			violationFound = true;
+			if (!shortFileNamesShown) {
+				TokenUtils.printShorterFileNameMap(out);
+				out.println();
+			}
 			out.println("Error bound exceeded: search terminated");
 		}
 		terminateUpdater();

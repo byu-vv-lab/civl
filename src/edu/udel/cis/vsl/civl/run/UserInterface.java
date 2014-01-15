@@ -533,13 +533,14 @@ public class UserInterface {
 		String filename;
 		Model model;
 		Verifier verifier;
+		boolean showShortFileName = showShortFileNameList(config);
 
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
 		model = extractModel(out, config, filename);
-		if (showShortFileNameList(config))
+		if (showShortFileName)
 			TokenUtils.printShorterFileNameMap(out);
-		verifier = new Verifier(config, model, out, startTime);
+		verifier = new Verifier(config, model, out, startTime, showShortFileName);
 		try {
 			result = verifier.run();
 		} catch (Exception e) {
