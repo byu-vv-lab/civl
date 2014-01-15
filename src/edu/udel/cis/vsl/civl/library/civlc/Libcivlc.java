@@ -1,9 +1,16 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IllegalFormatConversionException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
@@ -84,6 +91,8 @@ public class Libcivlc implements LibraryExecutor {
 	private IntObject zeroObject;
 
 	private IntObject oneObject;
+	
+	private PrintStream output = System.out;
 
 	// private SymbolicType bundleSymbolicType;
 
@@ -769,12 +778,117 @@ public class Libcivlc implements LibraryExecutor {
 	}
 
 	private State executePrintf(State state, int pid,
-			SymbolicExpression[] argumentValues) {
-		for (int i = 0; i < argumentValues.length; i++) {
-			System.out.println(argumentValues[i].toString());
+			SymbolicExpression[] argumentValues){
+		String strFromABC = new String();
+		String strOutput = new String();
+		Vector<Object> arguments = new Vector<Object>();
+		
+		/* get arguments from ABC */
+		strFromABC += argumentValues[0];
+ 		for (int i = 1; i < argumentValues.length; i++) {
+			arguments.add(argumentValues[i]);
 		}
+ 		/* Convert string from abc to string can be printed */
+		strOutput = this.abcArrayAnalyzer(strFromABC);
+		
+		/* convert arguments to corresponding data types */
+		for(int i=0; i<arguments.size(); i++){
+			SymbolicType.SymbolicTypeKind type =
+					((SymbolicExpression)arguments.get(i)).type().typeKind();
+			
+			/* Type is pointer tuple*/
+			if(type == SymbolicType.SymbolicTypeKind.TUPLE){
+			   String arg_str =
+					   arguments.get(i).toString();
+				arguments.remove(i);
+				arguments.insertElementAt(arg_str, i);
+			}
+			
+			/* Type is char array */
+			if(type == SymbolicType.SymbolicTypeKind.ARRAY){
+				String arg_str = 
+						this.abcArrayAnalyzer(arguments.get(i).toString());
+				/* update */
+				arguments.remove(i);
+				arguments.insertElementAt(arg_str, i);
+			}
+			
+			/* Type is integer */
+			if(type == SymbolicType.SymbolicTypeKind.INTEGER){
+				Integer integer = 
+						Integer.parseInt(arguments.get(i).toString());
+				/* update */
+				arguments.remove(i);
+				arguments.insertElementAt(integer, i);
+			}
+
+			/* Type is real */
+			if(type == SymbolicType.SymbolicTypeKind.REAL){
+				String realNumber[] = (arguments.get(i).toString()).split("/");
+				Double numerater = Double.parseDouble(realNumber[0]);
+				Double denominator = Double.parseDouble(realNumber[1]);
+				Double  doubleValue = (numerater/denominator);
+				/* update */
+				arguments.remove(i);
+				arguments.insertElementAt(doubleValue, i);
+			}
+		}
+		/* Print */
+		output.printf(strOutput, arguments.toArray());
+		//System.out.printf("%d,%o,%x", 10,10,10);
 		return state;
 	}
+	
+	/* convert the string from abc to string can be printed */
+	private String abcArrayAnalyzer(String strFromABC){
+		Vector<String> individualChars = new Vector<String>();
+		String strOutput = new String();
+ 		/* Split the output stream into separate characters */
+		char[] chars = (strFromABC.split("'\"'"))[1].toCharArray();
+	    /* step = 4: ,'char' */
+		if((chars.length <= 4 ) || ((chars.length -1)%4 != 0))
+			System.out.println("Printf Exception");
+		for(int i=0; i<chars.length;){
+			if(chars[i] == ',')
+				if(chars[i+1] == '\'')
+					if(chars[i+3] == '\'')
+						individualChars.add(""+chars[i+2]);
+			i+=4;
+			if((i == chars.length - 1) && (chars[i] == ',')) //termination
+				break;
+			else if((i == chars.length - 1) && (chars[i] != ','))
+				System.out.println("Printf Error");
+		}
+		
+		/* convert characters to String, replace '\'+'n' with "\n" */
+		for(int i=0; i<individualChars.size(); i++){
+			if(individualChars.get(i).equals("\\") && (i < individualChars.size() - 1)){
+				if(individualChars.get(i+1).equals("n")){
+					strOutput+="\n"; i++;
+                    continue;
+				}
+				if(individualChars.get(i+1).equals("t")){
+					strOutput+="\t"; i++;
+					continue;
+				}
+				if(individualChars.get(i+1).equals("r")){
+					strOutput+="\r"; i++;
+					continue;
+				}
+				if(individualChars.get(i+1).equals("b")){
+					strOutput+="\b";  i++;
+				}
+				if(individualChars.get(i+1).equals("f")){
+					strOutput+="\f"; i++;
+					continue;
+				}
+			}else{
+			    strOutput += individualChars.get(i);
+			}
+		}
+		return strOutput;
+	}
+	
 
 	private State executeWork(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {

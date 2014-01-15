@@ -231,6 +231,11 @@ public class LanguageFeaturesTest {
 	public void pointers() throws ABCException {
 		assertTrue(ui.run("verify", filename("pointers.cvl")));
 	}
+	
+	@Test
+	public void printf() throws ABCException {
+		assertTrue(ui.run("verify", filename("printf.cvl")));
+	}
 
 	@Test
 	public void quantifiers() {
