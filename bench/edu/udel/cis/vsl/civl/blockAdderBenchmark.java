@@ -6,8 +6,8 @@ public class blockAdderBenchmark {
 	private static UserInterface ui = new UserInterface();
 
 	public static void main(String[] args) {
-		// -inputB=10 -inputW=8: 51 seconds
-		ui.run("verify -inputB=10 -inputW=8 examples/concurrency/blockAdder.cvl");
+		// -inputB=10 -inputW=4: 27 seconds
+		ui.run("verify -inputB=10 -inputW=4 examples/concurrency/blockAdder.cvl");
 	}
 
 }

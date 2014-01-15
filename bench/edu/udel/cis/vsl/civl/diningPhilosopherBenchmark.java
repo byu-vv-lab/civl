@@ -6,9 +6,9 @@ public class diningPhilosopherBenchmark {
 	private static UserInterface ui = new UserInterface();
 
 	public static void main(String[] args) {
-		// -inputB=10: 27 seconds
-		// -inputB=11: 89 seconds
-		ui.run("verify -inputB=11 examples/concurrency/dining.cvl");
+		// -inputB=9: 19 seconds
+		// -inputB=10: 56 seconds
+		ui.run("verify -inputB=9 examples/concurrency/dining.cvl");
 	}
 
 }
