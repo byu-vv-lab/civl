@@ -1016,13 +1016,11 @@ public interface ModelFactory {
 	 * 
 	 * @param pointerType
 	 *            The type of the pointer
-	 * @param scope
-	 *            The scope of the expression
 	 * @param source
 	 *            The CIVL source of the expression
 	 * @return The null pointer expression
 	 */
-	Expression nullPointerExpression(CIVLPointerType pointerType, Scope scope,
+	Expression nullPointerExpression(CIVLPointerType pointerType,
 			CIVLSource source);
 
 	/**

@@ -1307,13 +1307,11 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public Expression nullPointerExpression(CIVLPointerType pointerType,
-			Scope scope, CIVLSource source) {
+			CIVLSource source) {
 		Expression zero = integerLiteralExpression(source, BigInteger.ZERO);
 		Expression result;
 
-		zero.setExpressionScope(scope);
 		result = castExpression(source, pointerType, zero);
-		result.setExpressionScope(scope);
 		return result;
 	}
 

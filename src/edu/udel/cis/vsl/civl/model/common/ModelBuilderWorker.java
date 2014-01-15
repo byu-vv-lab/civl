@@ -720,8 +720,7 @@ public class ModelBuilderWorker {
 					CIVLPointerType newCIVLType = (CIVLPointerType) translateABCType(
 							source, scope, newType);
 
-					result = factory.nullPointerExpression(newCIVLType, scope,
-							source);
+					result = factory.nullPointerExpression(newCIVLType, source);
 				} else if (conversion instanceof PointerBoolConversion) {
 					// pointer type to boolean type: p!=NULL
 					result = factory.binaryExpression(source,
@@ -729,7 +728,7 @@ public class ModelBuilderWorker {
 									.nullPointerExpression(
 											(CIVLPointerType) result
 													.getExpressionType(),
-											scope, source));
+											source));
 				} else if (conversion instanceof VoidPointerConversion) {
 					// void*->T* or T*->void*
 					// ignore, pointer types are all the same
@@ -1136,6 +1135,7 @@ public class ModelBuilderWorker {
 	 * 
 	 * @param constantNode
 	 *            The constant node
+	 * 
 	 * @return a CIVL literal expression representing the constant node
 	 */
 	private Expression translateConstantNode(ConstantNode constantNode) {
@@ -1202,6 +1202,10 @@ public class ModelBuilderWorker {
 						.referencedType()).getBasicTypeKind() == BasicTypeKind.CHAR) {
 			result = factory.stringLiteralExpression(source,
 					constantNode.getStringRepresentation());
+		} else if (convertedType.kind() == TypeKind.POINTER
+				&& constantNode.getStringRepresentation().equals("0")) {
+			result = factory.nullPointerExpression(
+					factory.pointerType(factory.voidType()), source);
 		} else {
 			throw new CIVLUnimplementedFeatureException(
 					"type " + convertedType, source);
