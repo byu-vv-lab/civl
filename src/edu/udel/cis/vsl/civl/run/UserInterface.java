@@ -540,7 +540,12 @@ public class UserInterface {
 		if (showShortFileNameList(config))
 			TokenUtils.printShorterFileNameMap(out);
 		verifier = new Verifier(config, model, out, startTime);
-		result = verifier.run();
+		try {
+			result = verifier.run();
+		} catch (Exception e) {
+			verifier.terminateUpdater();
+			throw e;
+		}
 		printStats(out);
 		verifier.printStats();
 		out.println();

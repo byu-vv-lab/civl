@@ -71,21 +71,30 @@ public class Verifier extends Player {
 		 */
 		@Override
 		public void run() {
-			while (true) {
+			while (alive) {
 				try {
 					Thread.sleep(millis);
 					stateManager.printUpdate();
 				} catch (InterruptedException e) {
-					break;
 				}
 			}
 		}
 	}
 
 	/**
+	 * Should the update thread run?
+	 */
+	private volatile boolean alive = true;
+
+	/**
 	 * The object used to print the update message.
 	 */
 	private Printable updater = new SearchUpdater();
+
+	/**
+	 * The update thread itself.
+	 */
+	private Thread updateThread = null;
 
 	/**
 	 * The object used to perform the depth-first search of the state space.
@@ -140,9 +149,8 @@ public class Verifier extends Player {
 	public boolean run() throws FileNotFoundException {
 		State initialState = stateFactory.initialState(model);
 		boolean violationFound = false;
-		Thread updateThread = new Thread(new UpdaterRunnable(
-				updatePeriod * 1000));
 
+		updateThread = new Thread(new UpdaterRunnable(updatePeriod * 1000));
 		updateThread.start();
 		if (debug || showStates || verbose) {
 			out.println();
@@ -166,7 +174,7 @@ public class Verifier extends Player {
 			violationFound = true;
 			out.println("Error bound exceeded: search terminated");
 		}
-		updateThread.interrupt();
+		terminateUpdater();
 		if (violationFound || log.numEntries() > 0) {
 			result = "The program MAY NOT be correct.  See " + log.getLogFile();
 			try {
@@ -179,5 +187,17 @@ public class Verifier extends Player {
 			result = "The standard properties hold for all executions.";
 		}
 		return !violationFound && log.numEntries() == 0;
+	}
+
+	/**
+	 * Terminates the update thread. This will be called automatically if
+	 * control exits normally from {@link #run()}, but if an exception is thrown
+	 * and caught elsewhere, this method should be called.
+	 */
+	public void terminateUpdater() {
+		alive = false;
+		if (updateThread != null)
+			updateThread.interrupt();
+		updateThread = null;
 	}
 }
