@@ -92,6 +92,13 @@ public class Executor {
 
 	private Libcivlc civlcExecutor;
 
+	/**
+	 * The number of steps that have been executed by this executor. A "step" is
+	 * defined to be a call to method
+	 * {@link #executeWork(State, int, Statement)}.
+	 */
+	private long numSteps = 0;
+
 	/******************************* Constructors ****************************/
 
 	/**
@@ -412,6 +419,7 @@ public class Executor {
 	 */
 	private State executeWork(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
+		numSteps++;
 		if (statement instanceof AssumeStatement) {
 			return executeAssume(state, pid, (AssumeStatement) statement);
 		} else if (statement instanceof AssertStatement) {
@@ -682,8 +690,7 @@ public class Executor {
 			try {
 				if (s instanceof ChooseStatement) {
 					// execute deterministic choose statement
-					return new Pair<StateStatusKind, State>(
-							StateStatusKind.NONDETERMINISTIC, state);
+					return new Pair<>(StateStatusKind.NONDETERMINISTIC, state);
 				} else if (s instanceof WaitStatement) {
 					Evaluation eval = evaluator.evaluate(
 							state.setPathCondition(pathCondition), pid,
@@ -706,24 +713,19 @@ public class Executor {
 						newState = state.setPathCondition(pathCondition);
 						newState = execute(newState, pid, s);
 					} else {
-						return new Pair<StateStatusKind, State>(
-								StateStatusKind.BLOCKED, state);
+						return new Pair<>(StateStatusKind.BLOCKED, state);
 					}
 				} else {
 					newState = state.setPathCondition(pathCondition);
 					newState = execute(newState, pid, s);
 				}
 			} catch (UnsatisfiablePathConditionException e) {
-				return new Pair<StateStatusKind, State>(
-						StateStatusKind.BLOCKED, state);
+				return new Pair<>(StateStatusKind.BLOCKED, state);
 			}
 		} else {
-			return new Pair<StateStatusKind, State>(StateStatusKind.BLOCKED,
-					state);
+			return new Pair<>(StateStatusKind.BLOCKED, state);
 		}
-
-		return new Pair<StateStatusKind, State>(StateStatusKind.NORMAL,
-				newState);
+		return new Pair<>(StateStatusKind.NORMAL, newState);
 	}
 
 	/**
@@ -764,6 +766,15 @@ public class Executor {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Returns the number of "steps" executed since this Executor was created.
+	 * 
+	 * @return the number of steps executed
+	 */
+	public long getNumSteps() {
+		return numSteps;
 	}
 
 }

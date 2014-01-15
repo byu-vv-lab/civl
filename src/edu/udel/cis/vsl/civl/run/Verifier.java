@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
+import edu.udel.cis.vsl.civl.util.Printable;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
 import edu.udel.cis.vsl.gmc.ExcessiveErrorException;
@@ -15,11 +16,92 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 public class Verifier extends Player {
 
+	/**
+	 * Number of seconds between printing of update messages.
+	 */
+	public final static int updatePeriod = 15;
+
+	class SearchUpdater implements Printable {
+		@Override
+		public void print(PrintStream out) {
+			long time = (long) Math
+					.ceil((System.currentTimeMillis() - startTime) / 1000.0);
+			long megabytes = (long) (((double) Runtime.getRuntime()
+					.totalMemory()) / (double) 1048576.0);
+
+			out.print(time + "s: ");
+			out.print("mem=" + megabytes + "Mb");
+			out.print(" steps=" + executor.getNumSteps());
+			out.print(" trans=" + searcher.numTransitions());
+			out.print(" seen=" + searcher.numStatesSeen());
+			out.print(" saved=" + stateManager.getNumStatesSaved());
+			out.print(" prove=" + modelFactory.universe().numProverValidCalls());
+			out.println();
+		}
+	}
+
+	/**
+	 * Runnable to be used to create a thread that every so man seconds tells
+	 * the state manager to print an update message.
+	 * 
+	 * @author siegel
+	 * 
+	 */
+	class UpdaterRunnable implements Runnable {
+
+		/**
+		 * Number of milliseconds between sending update message to state
+		 * manager.
+		 */
+		private long millis;
+
+		/**
+		 * Constructs new runnable with given number of milliseconds.
+		 * 
+		 * @param millis
+		 *            number of milliseconds between update messages
+		 */
+		public UpdaterRunnable(long millis) {
+			this.millis = millis;
+		}
+
+		/**
+		 * Runs this thread. The thread will loop forever until interrupted,
+		 * then it will terminate.
+		 */
+		@Override
+		public void run() {
+			while (true) {
+				try {
+					Thread.sleep(millis);
+					stateManager.printUpdate();
+				} catch (InterruptedException e) {
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * The object used to print the update message.
+	 */
+	private Printable updater = new SearchUpdater();
+
+	/**
+	 * The object used to perform the depth-first search of the state space.
+	 * 
+	 */
 	private DfsSearcher<State, Transition, TransitionSequence> searcher;
 
-	public Verifier(GMCConfiguration config, Model model, PrintStream out)
-			throws CommandLineException {
+	/**
+	 * The time at which execution started, as a double.
+	 */
+	private double startTime;
+
+	public Verifier(GMCConfiguration config, Model model, PrintStream out,
+			double startTime) throws CommandLineException {
 		super(config, model, out);
+		this.startTime = startTime;
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
 		if (debug)
@@ -30,6 +112,7 @@ public class Verifier extends Player {
 			log.setMinimize(true);
 		if (config.getValue(UserInterface.maxdepthO) != null)
 			searcher.boundDepth(maxdepth);
+		stateManager.setUpdater(updater);
 	}
 
 	/**
@@ -48,6 +131,8 @@ public class Verifier extends Player {
 		out.println(searcher.numStatesSeen());
 		out.print("   statesMatched       : ");
 		out.println(searcher.numStatesMatched());
+		out.print("   steps               : ");
+		out.println(executor.getNumSteps());
 		out.print("   transitions         : ");
 		out.println(searcher.numTransitions());
 	}
@@ -55,7 +140,10 @@ public class Verifier extends Player {
 	public boolean run() throws FileNotFoundException {
 		State initialState = stateFactory.initialState(model);
 		boolean violationFound = false;
+		Thread updateThread = new Thread(new UpdaterRunnable(
+				updatePeriod * 1000));
 
+		updateThread.start();
 		if (debug || showStates || verbose) {
 			out.println();
 			initialState.print(out);
@@ -78,12 +166,7 @@ public class Verifier extends Player {
 			violationFound = true;
 			out.println("Error bound exceeded: search terminated");
 		}
-		// catch (CIVLException e) {
-		// violationFound = true;
-		// out.println(e);
-		// // e.printStackTrace(out);
-		// out.println();
-		// }
+		updateThread.interrupt();
 		if (violationFound || log.numEntries() > 0) {
 			result = "The program MAY NOT be correct.  See " + log.getLogFile();
 			try {

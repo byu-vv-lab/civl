@@ -539,7 +539,7 @@ public class UserInterface {
 		model = extractModel(out, config, filename);
 		if (showShortFileNameList(config))
 			TokenUtils.printShorterFileNameMap(out);
-		verifier = new Verifier(config, model, out);
+		verifier = new Verifier(config, model, out, startTime);
 		result = verifier.run();
 		printStats(out);
 		verifier.printStats();

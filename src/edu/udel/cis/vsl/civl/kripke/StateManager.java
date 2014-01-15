@@ -25,6 +25,7 @@ import edu.udel.cis.vsl.civl.transition.ChooseTransition;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.civl.util.Printable;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
 
 /**
@@ -93,6 +94,26 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	private boolean verbose = false;
 
+	/**
+	 * The object whose toString() method will be used to print the periodic
+	 * update. The toString method of this object should print a short
+	 * (one-line) message on the state of the search.
+	 */
+	private Printable updater;
+
+	/**
+	 * If true, print a short one-line update message on the state of the search
+	 * at the next opportunity, and then set this flag back to false. This flag
+	 * is typically set by a separate thread. Access to this thread is protected
+	 * by the lock on this StateManager.
+	 */
+	private boolean printUpdate = false;
+
+	/**
+	 * Number of calls to method {@link #nextState(State, Transition)}
+	 */
+	private int nextStateCalls = 0;
+
 	/******************************* Constructor *****************************/
 
 	/**
@@ -108,7 +129,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	/***************************** Private Methods ***************************/
 
 	/**
-	 * Execute an deterministic atomic block ($atom), supporting nested atom
+	 * Executes a deterministic atom block ($atom), supporting nested atom
 	 * blocks, require that the whole block is finite, non-blocking and
 	 * deterministic. Otherwise, a warning or an error will be reported.
 	 * 
@@ -160,6 +181,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			switch (newLocation.atomicKind()) {
 			case ATOM_ENTER:
 				newState = executeAtomBlock(newState, pid, newLocation, print);
+				// numSteps++???
 				stateCounter++;
 				statementExecuted = true;
 				break;
@@ -403,6 +425,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			statement = ((SimpleTransition) transition).statement();
 			if (transition instanceof ChooseTransition) {
 				if (statement instanceof StatementList) {
+					// TODO need to get counters here: maybe
+					// put counter in executor?
 					state = executor.executeStatementList(state, pid,
 							(StatementList) statement,
 							((ChooseTransition) transition).value());
@@ -500,6 +524,11 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		}
 	}
 
+	private void printUpdateWork() {
+		updater.print(out);
+		out.flush();
+	}
+
 	/*********************** Methods from StateManagerIF *********************/
 
 	@Override
@@ -509,6 +538,15 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 	@Override
 	public State nextState(State state, Transition transition) {
+		nextStateCalls++;
+		if (nextStateCalls % 100 == 0) {
+			synchronized (this) {
+				if (printUpdate) {
+					printUpdateWork();
+					printUpdate = false;
+				}
+			}
+		}
 		try {
 			return nextStateWork(state, transition);
 		} catch (UnsatisfiablePathConditionException e) {
@@ -667,6 +705,21 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 	public void setVerbose(boolean value) {
 		this.verbose = value;
+	}
+
+	public void setUpdater(Printable updater) {
+		this.updater = updater;
+	}
+
+	public Printable getUpdater() {
+		return updater;
+	}
+
+	/**
+	 * Print an update message at your earliest possible convenience.
+	 */
+	public synchronized void printUpdate() {
+		printUpdate = true;
 	}
 
 }
