@@ -175,7 +175,7 @@ public class LanguageFeaturesTest {
 	public void implies() throws ABCException {
 		assertTrue(ui.run("verify", filename("implies.cvl")));
 	}
-	
+
 	@Test
 	public void linkedList() throws ABCException {
 		assertTrue(ui.run("verify", filename("linkedList.cvl")));
@@ -220,6 +220,11 @@ public class LanguageFeaturesTest {
 	public void nonbooleanCondition() throws IOException,
 			PreprocessorException, ParseException, SyntaxException {
 		assertTrue(ui.run("verify", filename("nonbooleanCondition.cvl")));
+	}
+
+	@Test
+	public void nullPointer() throws ABCException {
+		assertTrue(ui.run("verify", filename("null.cvl")));
 	}
 
 	@Test
@@ -272,8 +277,4 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", filename("switch.cvl")));
 	}
 
-	@Test
-	public void nullPointer() throws ABCException {
-		assertTrue(ui.run("verify", filename("null.cvl")));
-	}
 }

@@ -10,7 +10,7 @@ all: arrayPointer arrays assume \
 	continue duffs dynamicStruct emptyWhen exit for \
 	implies linkedList malloc mallocBad mallocBad2 \
 	mallocBad3 mallocBad4 memcpy minimal nonbooleanCondition \
-	pointers quantifiers scoping self sideEffects sizeof \
+	null pointers quantifiers scoping self sideEffects sizeof \
 	struct structArray structStruct switch
 
 arrayPointer: arrayPointer.cvl
@@ -126,6 +126,9 @@ minimal: minimal.cvl
 	
 nonbooleanCondition: nonbooleanCondition.cvl
 	$(VERIFY) nonbooleanCondition.cvl
+	
+null: null.cvl
+	$(VERIFY) null.cvl
 	
 pointers: pointers.cvl
 	$(VERIFY) pointers.cvl
