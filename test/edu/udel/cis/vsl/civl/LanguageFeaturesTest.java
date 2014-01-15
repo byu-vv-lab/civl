@@ -267,4 +267,9 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", filename("switch.cvl")));
 	}
 	
+	@Test
+	public void implies() throws ABCException {
+		assertTrue(ui.run("verify", filename("implies.cvl")));
+	}
+	
 }

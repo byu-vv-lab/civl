@@ -947,6 +947,44 @@ public class Evaluator {
 	}
 
 	/**
+	 * Evaluates a short-circuit "implies" expression "p=?q".
+	 * 
+	 * @param state
+	 *            the pre-state
+	 * @param pid
+	 *            PID of the process evaluating this expression
+	 * @param expression
+	 *            the and expression
+	 * @return the result of applying the IMPLIES operator to the two arguments
+	 *         together with the post-state whose path condition may contain the
+	 *         side-effects resulting from evaluation
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateImplies(State state, int pid,
+			BinaryExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluate(state, pid, expression.left());
+		BooleanExpression p = (BooleanExpression) eval.value;
+		BooleanExpression assumption = eval.state.getPathCondition();
+		Reasoner reasoner = universe.reasoner(assumption);
+
+		// If p is false, the implication will evaluate to true.
+		if (reasoner.isValid(universe.not(p))) {
+			eval.value = universe.trueExpression();
+			return eval;
+		} else {
+			State s1 = eval.state.setPathCondition(universe.and(assumption, p));
+			Evaluation eval1 = evaluate(s1, pid, expression.right());
+			BooleanExpression pc = universe.or(eval1.state.getPathCondition(),
+					universe.and(assumption, p));
+
+			eval.state = eval.state.setPathCondition(pc);
+			eval.value = universe.implies(p, (BooleanExpression) eval1.value);
+			return eval;
+		}
+	}
+
+	/**
 	 * Evaluate a "dot" expression used to navigate to a field in a record,
 	 * "e.f".
 	 * 
@@ -1036,6 +1074,8 @@ public class Evaluator {
 			return evaluateAnd(state, pid, expression);
 		if (operator == BINARY_OPERATOR.OR)
 			return evaluateOr(state, pid, expression);
+		if (operator == BINARY_OPERATOR.IMPLIES)
+			return evaluateImplies(state, pid, expression);
 		else {
 			Evaluation eval = evaluate(state, pid, expression.left());
 			SymbolicExpression left = eval.value;
@@ -1116,10 +1156,6 @@ public class Evaluator {
 				eval = pointerSubtract(state, pid, expression, left, right);
 				break;
 			case IMPLIES:
-				assert left instanceof BooleanExpression;
-				assert right instanceof BooleanExpression;
-				eval.value = universe.implies((BooleanExpression) left,
-						(BooleanExpression) right);
 			case AND:
 			case OR:
 				throw new CIVLInternalException("unreachable", expression);
