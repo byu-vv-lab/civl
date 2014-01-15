@@ -2,6 +2,13 @@ package edu.udel.cis.vsl.civl;
 
 import edu.udel.cis.vsl.civl.run.UserInterface;
 
+/**
+ * Benchmark of the block adder example. Execution time should be within 20 to
+ * 58 seconds.
+ * 
+ * @author zmanchun
+ * 
+ */
 public class blockAdderBenchmark {
 	private static UserInterface ui = new UserInterface();
 
