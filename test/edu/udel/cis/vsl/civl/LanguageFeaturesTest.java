@@ -172,6 +172,11 @@ public class LanguageFeaturesTest {
 	}
 	
 	@Test
+	public void implies() throws ABCException {
+		assertTrue(ui.run("verify", filename("implies.cvl")));
+	}
+	
+	@Test
 	public void linkedList() throws ABCException {
 		assertTrue(ui.run("verify", filename("linkedList.cvl")));
 	}
@@ -265,11 +270,6 @@ public class LanguageFeaturesTest {
 	@Test
 	public void switchBlock() throws ABCException {
 		assertTrue(ui.run("verify", filename("switch.cvl")));
-	}
-	
-	@Test
-	public void implies() throws ABCException {
-		assertTrue(ui.run("verify", filename("implies.cvl")));
 	}
 	
 }

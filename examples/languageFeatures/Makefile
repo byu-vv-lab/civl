@@ -8,7 +8,7 @@ all: arrayPointer arrays assume \
 	bundleSize bundleStruct bundleStructComponent \
 	cast choose chooseInt comm compare conditionalExpression \
 	continue duffs dynamicStruct emptyWhen exit for \
-	linkedList malloc mallocBad mallocBad2 \
+	implies linkedList malloc mallocBad mallocBad2 \
 	mallocBad3 mallocBad4 memcpy minimal nonbooleanCondition \
 	pointers quantifiers scoping self sideEffects sizeof \
 	struct structArray structStruct switch
@@ -96,6 +96,9 @@ exit: exit.cvl
 	
 for: for.cvl
 	$(VERIFY) for.cvl
+
+implies: implies.cvl
+	$(VERIFY) implies.cvl
 	
 linkedList: linkedList.cvl
 	$(VERIFY) linkedList.cvl

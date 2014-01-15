@@ -1233,4 +1233,6 @@ public interface ModelFactory {
 
 	NoopStatement gotoBranchStatement(CIVLSource civlSource, Location source,
 			String label);
+
+	void setSystemScope(Scope scope);
 }

@@ -261,6 +261,8 @@ public class CommonModelFactory implements ModelFactory {
 
 	private CIVLPrimitiveType charType;
 
+	private Scope systemScope;
+
 	/****************************** Constructors *****************************/
 
 	/**
@@ -341,6 +343,7 @@ public class CommonModelFactory implements ModelFactory {
 	public Scope scope(CIVLSource source, Scope parent,
 			Set<Variable> variables, CIVLFunction function) {
 		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
+		
 		if (parent != null) {
 			parent.addChild(newScope);
 		}
@@ -1042,7 +1045,7 @@ public class CommonModelFactory implements ModelFactory {
 		DereferenceExpression result = new CommonDereferenceExpression(source,
 				pointer);
 
-		result.setExpressionScope(null); // indicates unknown scope
+		result.setExpressionScope(this.systemScope); // indicates unknown scope
 		((CommonExpression) result).setExpressionType(pointerType.baseType());
 		return result;
 	}
@@ -1146,6 +1149,11 @@ public class CommonModelFactory implements ModelFactory {
 			scopeValues.set(sid, result);
 		}
 		return result;
+	}
+	
+	@Override
+	public void setSystemScope(Scope scope){
+		this.systemScope = scope;
 	}
 
 	@Override
