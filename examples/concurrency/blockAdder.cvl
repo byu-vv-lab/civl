@@ -34,10 +34,10 @@ double adder_par() {
 	$atomic {
       for (int i=start; i<stop; i++)
         localSum += a[i];
-      $when (lock==0) lock = 1;
-      result += localSum;
-      lock = 0;
     }
+    $when (lock==0) lock = 1;
+    result += localSum;
+    lock = 0;
   }
 
   $atomic {
