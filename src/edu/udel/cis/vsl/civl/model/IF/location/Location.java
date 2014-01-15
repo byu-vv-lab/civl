@@ -241,4 +241,20 @@ public interface Location extends Sourceable {
 	 */
 	void loopAnalysis();
 
+	/**
+	 * The impact scope of a location is required in the enabler when an
+	 * atomic/atom block is encountered, in which case the impact scope of all
+	 * statements in the atomic block should be considered.
+	 * 
+	 * @return
+	 */
+	Scope impactScopeOfAtomicOrAtomBlock();
+
+	/**
+	 * set the impact scope of a location, only called when this.AtomicKind ==
+	 * ATOM_ENTER or ATOMIC_ENTER.
+	 * 
+	 * @return
+	 */
+	void setImpactScopeOfAtomicOrAtomBlock(Scope scope);
 }

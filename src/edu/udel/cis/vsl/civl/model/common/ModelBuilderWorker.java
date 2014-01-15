@@ -136,6 +136,7 @@ import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonType;
 import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -1418,11 +1419,11 @@ public class ModelBuilderWorker {
 		Fragment beforeCondition = null, trueBranch, trueBranchBody, falseBranch, falseBranchBody, result;
 		Location location = factory.location(factory.sourceOfBeginning(ifNode),
 				scope);
-		Map.Entry<Fragment, Expression> refineConditional = factory
+		Pair<Fragment, Expression> refineConditional = factory
 				.refineConditionalExpression(scope, expression, conditionNode);
 
-		beforeCondition = refineConditional.getKey();
-		expression = refineConditional.getValue();
+		beforeCondition = refineConditional.left;
+		expression = refineConditional.right;
 		expression = factory.booleanExpression(expression);
 		trueBranch = new CommonFragment(factory.ifBranchStatement(
 				factory.sourceOfBeginning(ifNode.getTrueBranch()), location,
@@ -1962,12 +1963,12 @@ public class ModelBuilderWorker {
 		Set<Statement> continues, breaks;
 		Fragment beforeCondition, loopEntrance, loopBody, incrementer = null, loopExit, result;
 		Location loopEntranceLocation, continueLocation;
-		Map.Entry<Fragment, Expression> refineConditional = factory
+		Pair<Fragment, Expression> refineConditional = factory
 				.refineConditionalExpression(loopScope, condition,
 						conditionNode);
 
-		beforeCondition = refineConditional.getKey();
-		condition = refineConditional.getValue();
+		beforeCondition = refineConditional.left;
+		condition = refineConditional.right;
 		condition = factory.booleanExpression(condition);
 		loopEntranceLocation = factory.location(
 				factory.sourceOf(conditionNode.getSource()), loopScope);
@@ -2109,11 +2110,11 @@ public class ModelBuilderWorker {
 		ExpressionNode whenGuardNode = whenNode.getGuard();
 		Expression whenGuard = translateExpressionNode(whenNode.getGuard(),
 				scope, true);
-		Map.Entry<Fragment, Expression> refineConditional = factory
+		Pair<Fragment, Expression> refineConditional = factory
 				.refineConditionalExpression(scope, whenGuard, whenGuardNode);
-		Fragment beforeGuardFragment = refineConditional.getKey(), result;
+		Fragment beforeGuardFragment = refineConditional.left, result;
 
-		whenGuard = refineConditional.getValue();
+		whenGuard = refineConditional.right;
 		whenGuard = factory.booleanExpression(whenGuard);
 		result = translateStatementNode(scope, whenNode.getBody());
 		if (!factory.isTrue(whenGuard)) {
@@ -3079,6 +3080,7 @@ public class ModelBuilderWorker {
 		// add the global variable for atomic lock
 		factory.createAtomicLockVariable(systemScope);
 		factory.addConditionalExpressionQueue();
+		factory.setSystemScope(systemScope);
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
 			Fragment fragment = translateASTNode(node, systemScope, null);
@@ -3180,6 +3182,7 @@ public class ModelBuilderWorker {
 
 			for (Location loc : f.locations()) {
 				loc.purelyLocalAnalysis();
+				factory.setImpactScopeOfLocation(loc);
 			}
 		}
 	}

@@ -30,10 +30,10 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 * Atomic flags of a location:
 	 * <ul>
 	 * <li>NONE: no $atomic/$atom boundary;</li>
-	 * <li>ATOMIC_ENTER/ATOM_ENTER: the location is the starting point of an $atomic/$atom
-	 * block;</li>
-	 * <li>ATOMIC_EXIT/ATOM_EXIT: the location is the ending point of an $atomic/$atom
-	 * block.</li>
+	 * <li>ATOMIC_ENTER/ATOM_ENTER: the location is the starting point of an
+	 * $atomic/$atom block;</li>
+	 * <li>ATOMIC_EXIT/ATOM_EXIT: the location is the ending point of an
+	 * $atomic/$atom block.</li>
 	 * </ul>
 	 * 
 	 * @author Zheng
@@ -67,6 +67,13 @@ public class CommonLocation extends CommonSourceable implements Location {
 	private int id;
 
 	/**
+	 * The impact scope of a location is required in the enabler when an
+	 * atomic/atom block is encountered, in which case the impact scope of all
+	 * statements in the atomic block should be considered.
+	 */
+	private Scope impactScopeOfAtomicOrAtomBlock;
+
+	/**
 	 * The list of incoming statements, i.e., statements that targeting at this
 	 * location.
 	 */
@@ -74,7 +81,10 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	/**
 	 * Store the static loop analysis result. True iff this location is possible
-	 * to form a loop.
+	 * to form a loop. When translating a loop node, the loop branch location is
+	 * marked to be loopPossible, which captures most cases of loops. There
+	 * might also be loops caused by goto statements, which only could be
+	 * detected after the whole AST tree is translated.
 	 */
 	private boolean loopPossible = false;
 
@@ -205,6 +215,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
+	public Scope impactScopeOfAtomicOrAtomBlock() {
+		return this.impactScopeOfAtomicOrAtomBlock;
+	}
+
+	@Override
 	public Iterable<Statement> incoming() {
 		return incoming;
 	}
@@ -251,15 +266,19 @@ public class CommonLocation extends CommonSourceable implements Location {
 		String guardString = "(true)";
 		String gotoString;
 		String headString = null;
-		
-		if(isDebug){
+
+		if (isDebug) {
 			headString = prefix + "location " + id() + " (scope: " + scope.id();
-			if(purelyLocal)
+			if (purelyLocal)
 				headString += ", purely local";
-			if(loopPossible)
+			if (loopPossible)
 				headString += ", loop";
+			if (this.enterAtom() || this.enterAtomic()) {
+				headString += ", impact scope: "
+						+ this.impactScopeOfAtomicOrAtomBlock.id();
+			}
 			headString += ")";
-		}else{
+		} else {
 			headString = prefix + "location " + id() + " (scope: " + scope.id()
 					+ ")";
 		}
@@ -421,6 +440,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
+	public void setImpactScopeOfAtomicOrAtomBlock(Scope scope) {
+		this.impactScopeOfAtomicOrAtomBlock = scope;
+	}
+
+	@Override
 	public void setLeaveAtomic(boolean deterministic) {
 		if (deterministic)
 			this.atomicKind = AtomicKind.ATOM_EXIT;
@@ -463,4 +487,5 @@ public class CommonLocation extends CommonSourceable implements Location {
 	public String toString() {
 		return "Location " + id;
 	}
+
 }

@@ -2,11 +2,11 @@ package edu.udel.cis.vsl.civl.model.common;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +125,7 @@ import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructField;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
+import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -148,7 +149,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 public class CommonModelFactory implements ModelFactory {
 
 	/********************************* Types *********************************/
-	
+
 	/**
 	 * Kinds for temporal variables introduced when translating conditional
 	 * expressions, choose_int function calls that require to temporal variable
@@ -343,7 +344,7 @@ public class CommonModelFactory implements ModelFactory {
 	public Scope scope(CIVLSource source, Scope parent,
 			Set<Variable> variables, CIVLFunction function) {
 		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
-		
+
 		if (parent != null) {
 			parent.addChild(newScope);
 		}
@@ -954,8 +955,10 @@ public class CommonModelFactory implements ModelFactory {
 		NoopStatement result = new CommonNoopStatement(civlSource, source);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null)
+		if (guard != null) {
 			result.setGuard(guard);
+			result.setStatementScope(guard.expressionScope());
+		}
 		return result;
 	}
 
@@ -966,8 +969,10 @@ public class CommonModelFactory implements ModelFactory {
 				isTrue);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null)
+		if (guard != null) {
 			result.setGuard(guard);
+			result.setStatementScope(guard.expressionScope());
+		}
 		return result;
 	}
 
@@ -987,8 +992,10 @@ public class CommonModelFactory implements ModelFactory {
 				source, label);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null)
+		if (guard != null) {
 			result.setGuard(guard);
+			result.setStatementScope(guard.expressionScope());
+		}
 		return result;
 	}
 
@@ -1011,8 +1018,10 @@ public class CommonModelFactory implements ModelFactory {
 				source, isTrue);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null)
+		if (guard != null) {
 			result.setGuard(guard);
+			result.setStatementScope(guard.expressionScope());
+		}
 		return result;
 	}
 
@@ -1150,9 +1159,9 @@ public class CommonModelFactory implements ModelFactory {
 		}
 		return result;
 	}
-	
+
 	@Override
-	public void setSystemScope(Scope scope){
+	public void setSystemScope(Scope scope) {
 		this.systemScope = scope;
 	}
 
@@ -1314,9 +1323,10 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public Map.Entry<Fragment, Expression> refineConditionalExpression(
-			Scope scope, Expression expression, ExpressionNode expressionNode) {
-		Fragment beforeConditionFragment = null;
+	public Pair<Fragment, Expression> refineConditionalExpression(Scope scope,
+			Expression expression, ExpressionNode expressionNode) {
+		Fragment beforeConditionFragment = new CommonFragment();
+		;
 
 		while (hasConditionalExpressions()) {
 			ConditionalExpression conditionalExpression = pollConditionaExpression();
@@ -1332,15 +1342,15 @@ public class CommonModelFactory implements ModelFactory {
 			else
 				expression.replaceWith(conditionalExpression, variable);
 		}
-		if (beforeConditionFragment != null) {
+		if (!beforeConditionFragment.isEmpty()) {
 			// make the if-else statements atomic ($atomic)
 			beforeConditionFragment = this.atomicFragment(false,
 					beforeConditionFragment, this.location(
 							this.sourceOfBeginning(expressionNode), scope),
 					this.location(this.sourceOfEnd(expressionNode), scope));
 		}
-		return new AbstractMap.SimpleEntry<Fragment, Expression>(
-				beforeConditionFragment, expression);
+		return new Pair<Fragment, Expression>(beforeConditionFragment,
+				expression);
 	}
 
 	@Override
@@ -1789,6 +1799,79 @@ public class CommonModelFactory implements ModelFactory {
 
 		result = universe.canonic(result);
 		return result;
+	}
+
+	@Override
+	public void setImpactScopeOfLocation(Location location) {
+		if (location.enterAtom() || location.enterAtomic()) {
+			Stack<Integer> atomFlags = new Stack<Integer>();
+			Set<Integer> checkedLocations = new HashSet<Integer>();
+			Scope impactScope = null;
+			Stack<Location> workings = new Stack<Location>();
+
+			workings.add(location);
+			// DFS searching for reachable statements inside the $atomic/$atom
+			// block
+			while (!workings.isEmpty()) {
+				Location currentLocation = workings.pop();
+
+				checkedLocations.add(currentLocation.id());
+				if (location.enterAtom() && currentLocation.enterAtom())
+					atomFlags.push(1);
+				if (location.enterAtomic() && currentLocation.enterAtomic())
+					atomFlags.push(1);
+				if (location.enterAtom() && currentLocation.leaveAtom())
+					atomFlags.pop();
+				if (location.enterAtomic() && currentLocation.leaveAtomic())
+					atomFlags.pop();
+				if (atomFlags.isEmpty()) {
+					if (location.enterAtom()) {
+						if (!currentLocation.enterAtom())
+							atomFlags.push(1);
+					}
+					if (location.enterAtomic()) {
+						if (!currentLocation.enterAtomic())
+							atomFlags.push(1);
+					}
+					continue;
+				}
+				if (currentLocation.getNumOutgoing() > 0) {
+					int number = currentLocation.getNumOutgoing();
+					for (int i = 0; i < number; i++) {
+						Statement s = currentLocation.getOutgoing(i);
+
+						if (s instanceof CallOrSpawnStatement) {
+							if (((CallOrSpawnStatement) s).isCall()) {
+								// calling a function is considered as impact
+								// scope because we don't keep record of the
+								// total impact scope of a function
+								// TODO calculate total impact scope for a
+								// function
+								location.setImpactScopeOfAtomicOrAtomBlock(systemScope);
+								return;
+							}
+						}
+						if (impactScope == null)
+							impactScope = s.statementScope();
+						else
+							impactScope = join(impactScope, s.statementScope());
+						if (impactScope != null
+								&& impactScope.id() == systemScope.id()) {
+							location.setImpactScopeOfAtomicOrAtomBlock(impactScope);
+							return;
+						}
+						if (s.target() != null) {
+							if (!checkedLocations.contains(s.target().id())) {
+								workings.push(s.target());
+
+							}
+						}
+					}
+				}
+			}
+			location.setImpactScopeOfAtomicOrAtomBlock(impactScope);
+			return;
+		}
 	}
 
 }

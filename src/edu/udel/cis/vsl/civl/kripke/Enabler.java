@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
@@ -229,32 +230,62 @@ public class Enabler implements
 			boolean allLocal = true;
 			Location pLocation;
 			int pid = p.getPid();
+			int locationDyScope = -1;
 
 			// A process with an empty stack has no current location.
 			if (p == null || p.hasEmptyStack()) {
 				continue;
 			}
 			pLocation = p.getLocation();
+			if (pLocation.enterAtom() || pLocation.enterAtomic()) {
+				// for a location that enters an atomic/atom block, we need to
+				// obtain the impact scope of the whole atomic/atom block
+				Scope staticImpactScope = pLocation
+						.impactScopeOfAtomicOrAtomBlock();
+				locationDyScope = p.getDyscopeId();
+
+				if (staticImpactScope != null) {
+					while (!state.getScope(locationDyScope).lexicalScope()
+							.equals(staticImpactScope)) {
+						locationDyScope = state.getParentId(locationDyScope);
+						if (locationDyScope < 0) {
+							locationDyScope = p.getDyscopeId();
+							break;
+						}
+					}
+				}
+				if (state.numberOfReachers(locationDyScope) > 1) {
+					allLocal = false;
+				}
+			}
 			for (Statement s : pLocation.outgoing()) {
 				BooleanExpression newPathCondition = executor.newPathCondition(
 						state, pid, s);
-				int statementScope = p.getDyscopeId();
 
-				if (s.statementScope() != null) {
-					while (!state.getScope(statementScope).lexicalScope()
-							.equals(s.statementScope())) {
-						statementScope = state.getParentId(statementScope);
+				if (locationDyScope == -1) { // this implies that pLocation is
+												// not entering any atomic/atom
+												// block
+					int impactDyScope = p.getDyscopeId();
+
+					if (s.statementScope() != null) {
+						while (!state.getScope(impactDyScope).lexicalScope()
+								.equals(s.statementScope())) {
+							impactDyScope = state.getParentId(impactDyScope);
+							if (impactDyScope < 0) {
+								impactDyScope = p.getDyscopeId();
+								break;
+							}
+						}
 					}
-				}
-				if (state.numberOfReachers(statementScope) > 1) {
-					allLocal = false;
+					if (state.numberOfReachers(impactDyScope) > 1) {
+						allLocal = false;
+					}
 				}
 				if (!newPathCondition.isFalse()) {
 					localTransitions.addAll(executeStatement(state, s,
 							newPathCondition, pid, null));
 				}
 			}
-
 			totalTransitions += localTransitions.size();
 			if (allLocal && localTransitions.size() > 0) {
 				ampleSets++;
@@ -515,16 +546,13 @@ public class Enabler implements
 				continue;
 			allProcesses.add(tmp);
 		}
-
 		if (allProcesses.isEmpty())
 			return ampleProcesses;
-
 		numOfProcs = allProcesses.size();
 		i = numOfProcs - 1;
 		minReachers = numOfProcs + 1;
 		minProcIndex = i;
 		waitProc = null;
-
 		// find a good process to start 1. if there exist a process whose impact
 		// scope is owned by itself, then return the process as the ample
 		// process set immediately; 2. skip null or empty-stack process 3. if
@@ -538,7 +566,6 @@ public class Enabler implements
 			boolean newScope;
 
 			p = allProcesses.get(i);
-
 			if (blocked(p)) {
 				// if p's current statement is Wait and the joined process
 				// has terminated, then p is the ample process set
@@ -546,11 +573,8 @@ public class Enabler implements
 					ampleProcesses.add(p);
 					return ampleProcesses;
 				}
-
 				waitProc = p;
-
 				i--;
-
 				if (i < 0) {
 					if (allDisabled) {
 						if (waitProc != null)
@@ -560,77 +584,62 @@ public class Enabler implements
 				}
 				continue;
 			}
-
 			if (p.getLocation().allOutgoingPurelyLocal()) {
 				ampleProcesses.add(p);
 				return ampleProcesses;
 			}
-
 			allDisabled = false;
 			maxReachers = 0;
 			iScopes = impactScopesOfProcess(p, state);
-
 			if (iScopes.isEmpty()) {
 				ampleProcesses.add(p);
 				return ampleProcesses;
 			}
-
 			newScope = false;
 			for (int impScope : iScopes) {
 				if (vScopes.contains(impScope))
 					continue;
 				newScope = true;
 				vScopes.add(impScope);
-
 				// The root scope is reachable from all processes
 				if (impScope == state.rootScopeID()) {
 					maxReachers = numOfProcs;
 					break;
 				}
-
 				currentReachers = state.numberOfReachers(impScope);
-
 				// find out the maximal number of reachers that an impact scope
 				// of process p can have
 				if (currentReachers > maxReachers)
 					maxReachers = currentReachers;
 			}
-
 			// all impact scopes of p has at most one reacher return p
 			// immediately as the ample process set
 			if (newScope && maxReachers <= 1) {
 				ampleProcesses.add(p);
 				return ampleProcesses;
 			}
-
 			// keep track of the process with least-reacher impact scope
 			if (newScope && maxReachers < minReachers) {
 				minReachers = maxReachers;
 				minProcIndex = i;
 			}
-
 			i--;
 		} while (i >= 0);
-
 		// If the minimal number of reachers equals to the number of processes
 		// return all processes as the ample set immediately
 		if (minReachers == numOfProcs) {
 			ampleProcesses.addAll(allProcesses);
 			return ampleProcesses;
 		}
-
 		// Start from p, whose impact factor has the least number of reachers
 		p = allProcesses.get(minProcIndex);
 		ampleProcesses.add(p);
 		iScopesP = impactScopesOfProcess(p, state);
-
 		// Push into the working stack the impact scopes of all possible
 		// statements of process
 		for (Integer delta : iScopesP) {
-
 			workingScopes.push(delta);
 		}
-
 		// Generate reacher processes of each dyscope in workingScope (impact
 		// scope stack) the impact scopes of new processes are added to
 		// workingScope if a wait process is encountered, the process it waits
@@ -645,12 +654,10 @@ public class Enabler implements
 			// it.
 			if (isDescendantOf(impScope, visitedScopes, state))
 				continue;
-
 			visitedScopes.add(impScope);
 			// reachersImp is the set of procceses that can reach imScope
 			reachersImp = ownerOfScope(impScope, state, allProcesses);
 			tmpProcesses = new ArrayList<ProcessState>();
-
 			// For each process in reacher set, if its current statement is
 			// wait, add the process that it waits for to a new "reacher set"
 			// (tmpProcesses).
@@ -682,7 +689,6 @@ public class Enabler implements
 				}
 
 			}
-
 			// tmpProcesses contains the reacher set of impScope and all
 			// processes being waited for by some process in impScope
 			for (ProcessState proc : tmpProcesses) {
@@ -700,7 +706,6 @@ public class Enabler implements
 									allProcesses);
 							return ampleProcesses;
 						}
-
 						if (!visitedScopes.contains(iScope)) {
 							workingScopes.push(iScope);
 						}
@@ -708,7 +713,6 @@ public class Enabler implements
 				}
 			}
 		}
-
 		return ampleProcesses;
 	}
 
@@ -772,22 +776,40 @@ public class Enabler implements
 		ArrayList<Integer> dyscopes = new ArrayList<Integer>();
 		// Obtain the impact scopes of all possible statements of process
 		int pScope = p.getDyscopeId();
-
-		for (Statement s : p.getLocation().outgoing()) {
+		Location pLocation = p.getLocation();
+		
+		if(pLocation.enterAtom() || pLocation.enterAtomic()){
+			Scope locationImpactScope = pLocation.impactScopeOfAtomicOrAtomBlock();
 			int impScope;
-
-			if (s.hasDerefs()) {
-				dyscopes.add(state.rootScopeID());
-				return dyscopes;
-			}
-
-			impScope = pScope;
-			if (s.statementScope() != null) {
+			
+			if(locationImpactScope != null){
+				impScope = pScope;
 				while (!state.getScope(impScope).lexicalScope()
-						.equals(s.statementScope())) {
+						.equals(locationImpactScope)) {
 					impScope = state.getParentId(impScope);
+					if(impScope < 0){
+						impScope = pScope;
+						break;
+					}
 				}
 				dyscopes.add(impScope);
+			}
+		}else{
+			for (Statement s : p.getLocation().outgoing()) {
+				int impScope;
+
+				if (s.hasDerefs()) {
+					dyscopes.add(state.rootScopeID());
+					return dyscopes;
+				}
+				impScope = pScope;
+				if (s.statementScope() != null) {
+					while (!state.getScope(impScope).lexicalScope()
+							.equals(s.statementScope())) {
+						impScope = state.getParentId(impScope);
+					}
+					dyscopes.add(impScope);
+				}
 			}
 		}
 		return dyscopes;

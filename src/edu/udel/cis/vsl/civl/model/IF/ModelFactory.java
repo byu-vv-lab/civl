@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -58,6 +57,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
@@ -257,7 +257,7 @@ public interface ModelFactory {
 	 * @return The string primitive type.
 	 */
 	CIVLPrimitiveType stringType();
-	
+
 	/**
 	 * Get the char primitive type.
 	 * 
@@ -1118,7 +1118,7 @@ public interface ModelFactory {
 	 * @return The if-else fragment and the expression without conditional
 	 *         expressions
 	 */
-	Entry<Fragment, Expression> refineConditionalExpression(Scope scope,
+	Pair<Fragment, Expression> refineConditionalExpression(Scope scope,
 			Expression expression, ExpressionNode expressionNode);
 
 	/**
@@ -1234,5 +1234,8 @@ public interface ModelFactory {
 	NoopStatement gotoBranchStatement(CIVLSource civlSource, Location source,
 			String label);
 
+	void setImpactScopeOfLocation(Location location);
+
 	void setSystemScope(Scope scope);
+
 }
