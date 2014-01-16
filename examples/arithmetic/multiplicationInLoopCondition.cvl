@@ -9,7 +9,7 @@ void main() {
   
   for (int i = 0; i < k; i++) {
     a[i] = i;
-    if(i == 200)
+    if(i == 35) // the upper bound of i should be at least 33 to trigger the exception.
       break;
   }
 }
