@@ -1,6 +1,0 @@
-
-$input int n;
-
-void main() {
-  $assert n==0;
-}

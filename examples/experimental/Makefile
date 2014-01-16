@@ -3,43 +3,31 @@
 CIVL = civl
 
 TARGETS = \
-	minimal \
-	spawn \
-	locks \
-	sideEffects \
-	sideEffects2 \
-	adder \
-	matmat \
-	barrier \
-	barrier2
-
+	collective \
+	contract \
+	count \
+	floatsum \
+	floatsum2 \
+	pathfinder_cuda
+	
 default: all
 
 all: $(TARGETS)
 
-minimal: minimal.cvl
-	$(CIVL) minimal.cvl
-
-spawn: spawn.cvl
-	$(CIVL) spawn.cvl
-
-locks: locks.cvl
-	$(CIVL) locks.cvl
-
-sideEffects: sideEffects.cvl
-	$(CIVL) sideEffects.cvl
-
-sideEffects2: sideEffects2.cvl
-	$(CIVL) sideEffects2.cvl
-
-adder: adder.cvl
-	$(CIVL) adder.cvl
-
-matmat: matmat.cvl
-	$(CIVL) matmat.cvl
-
-barrier: barrier.cvl
-	$(CIVL) barrier.cvl
-
-barrier2: barrier2.cvl
-	$(CIVL) barrier2.cvl
+collective: collective.cvl
+	$(CIVL) collective.cvl
+	
+contract: contract.cvl
+	$(CIVL) contract.cvl
+	
+count: count.cvl
+	$(CIVL) count.cvl
+	
+floatsum: floatsum.cvl
+	$(CIVL) floatsum.cvl
+	
+floatsum2: floatsum2.cvl
+	$(CIVL) floatsum2.cvl
+	
+pathfinder_cuda: pathfinder_cuda.cvl
+	$(CIVL) pathfinder_cuda.cvl
