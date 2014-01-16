@@ -780,10 +780,9 @@ public class Libcivlc implements LibraryExecutor {
 	 * users want to print addresses of pointers with arguments in the form of
 	 * &a, please use %s as their format specifiers.
 	 * 
-	 * TODO CIVL currently dosen't support 'printf("%c" , c)'(where c is a char type
-	 * variable)?
+	 * TODO CIVL currently dosen't support 'printf("%c" , c)'(where c is a char
+	 * type variable)?
 	 * 
-	 * TODO print arguments.get(i) directly, without any re-formatting of the value.
 	 * 
 	 * @param state
 	 * @param pid
@@ -793,78 +792,31 @@ public class Libcivlc implements LibraryExecutor {
 	private State executePrintf(State state, int pid,
 			SymbolicExpression[] argumentValues) {
 
-		String stringFromABC = new String();
+		String stringOfSymbolicExpression = new String();
 		String stringOutput = new String();
 		Vector<Object> arguments = new Vector<Object>();
 
-		// get arguments from ABC
-		stringFromABC += argumentValues[0];
+		// obtain printf() arguments
+		stringOfSymbolicExpression += argumentValues[0];
 		for (int i = 1; i < argumentValues.length; i++) {
 			arguments.add(argumentValues[i]);
 		}
 
-		// Convert string from abc to string can be printed
-		stringOutput = this.abcArrayAnalyzer(stringFromABC);
+		// convert the first argument from
+		// a symbolic expression to a string can be printed
+		stringOutput = this.abcArrayAnalyzer(stringOfSymbolicExpression, true);
 
-		// convert arguments to corresponding data types
+		// convert a char array from a symbolic exrepssion to a string
 		for (int i = 0; i < arguments.size(); i++) {
 			SymbolicType.SymbolicTypeKind type = ((SymbolicExpression) arguments
 					.get(i)).type().typeKind();
-			// Type is pointer tuple
-			if (type == SymbolicType.SymbolicTypeKind.TUPLE) {
-				String arg_str = arguments.get(i).toString();
-				// update
-				arguments.remove(i);
-				arguments.insertElementAt(arg_str, i);
-			}
-
 			// Type is char array
 			if (type == SymbolicType.SymbolicTypeKind.ARRAY) {
 				String arg_str = this.abcArrayAnalyzer(arguments.get(i)
-						.toString());
+						.toString(), false);
 				// update
 				arguments.remove(i);
 				arguments.insertElementAt(arg_str, i);
-			}
-
-			// Type is integer
-			if (type == SymbolicType.SymbolicTypeKind.INTEGER) {
-				Integer integer;
-
-				try {
-					integer = Integer.parseInt(arguments.get(i).toString());
-				} catch (Exception e) {
-					integer = Integer.MIN_VALUE;
-				}
-				// update
-				arguments.remove(i);
-				arguments.insertElementAt(integer, i);
-			}
-
-			// Type is real
-			if (type == SymbolicType.SymbolicTypeKind.REAL) {
-				String realNumber[] = (arguments.get(i).toString()).split("/");
-				Double doubleValue;
-
-				try {
-					Double numerater = Double.parseDouble(realNumber[0]);
-					Double denominator = Double.parseDouble(realNumber[1]);
-					doubleValue = (numerater / denominator);
-				} catch (Exception e) {
-					// TODO print symbolic value 
-					doubleValue = Double.MIN_VALUE;
-				}
-				// update
-				arguments.remove(i);
-				arguments.insertElementAt(doubleValue, i);
-			}
-
-			// Type is char
-			if (type == SymbolicType.SymbolicTypeKind.CHAR) {
-				char arg = arguments.get(i).toString().toCharArray()[0];
-				// update
-				arguments.remove(i);
-				arguments.insertElementAt(arg, i);
 			}
 		}
 
@@ -874,12 +826,14 @@ public class Libcivlc implements LibraryExecutor {
 	}
 
 	/**
-	 * Extract characters from the string of SymbolicExpression.
+	 * Extreact characters from symbolic expression
 	 * 
 	 * @param stringFromABC
+	 * @param convertFormatSpecifier
 	 * @return
 	 */
-	private String abcArrayAnalyzer(String stringFromABC) {
+	private String abcArrayAnalyzer(String stringFromABC,
+			boolean convertFormatSpecifier) {
 		Vector<String> individualChars = new Vector<String>();
 		String stringOutput = new String();
 		int eleNumInCharArray;
@@ -912,7 +866,6 @@ public class Libcivlc implements LibraryExecutor {
 			else if ((i == chars.length - 6) && (chars[i] != '\''))
 				return ("Unknown Exception in characters extraction in printf");
 		}
-
 		// convert characters to String, replace '\'+'n' with "\n"
 		for (int i = 0; i < individualChars.size(); i++) {
 			if (individualChars.get(i).equals("\\")
@@ -955,6 +908,11 @@ public class Libcivlc implements LibraryExecutor {
 				stringOutput += individualChars.get(i);
 			}
 		}
+		/* replace format specifiers with %s */
+		if (convertFormatSpecifier)
+			stringOutput = stringOutput.replaceAll(
+					"%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
+
 		return stringOutput;
 	}
 
