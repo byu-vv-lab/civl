@@ -3,7 +3,8 @@ CIVL=civl
 VERIFY=$(CIVL) verify
 
 all: algebra assoc derivative diffusion division \
-	divisionBad laplace matmat matmatBad mean meanBad
+	divisionBad laplace matmat matmatBad mean meanBad \
+	multiplicationInLoopCondition
 
 algebra: algebra.cvl
 	$(VERIFY) algebra.cvl
@@ -40,6 +41,9 @@ mean: mean.cvl
 meanBad: meanBad.cvl
 	$(VERIFY) -min -inputB=10 meanBad.cvl
 	$(CIVL) replay meanBad.cvl
+	
+multiplicationInLoopCondition: multiplicationInLoopCondition.cvl
+	$(VERIFY) multiplicationInLoopCondition.cvl
 
 clean:
 	rm -rf CIVLREP *~

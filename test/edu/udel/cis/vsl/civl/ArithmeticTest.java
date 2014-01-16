@@ -12,17 +12,17 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 public class ArithmeticTest {
 
 	/************************* Static Fields *************************/
-	
+
 	private static File rootDir = new File(new File("examples"), "arithmetic");
 
 	private static UserInterface ui = new UserInterface();
 
 	/************************* Helper Methods *************************/
-	
+
 	private void check(String name) {
 		assertTrue(ui.run("verify", filename(name)));
 	}
-	
+
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
 	}
@@ -85,6 +85,12 @@ public class ArithmeticTest {
 	public void meanBad() {
 		assertFalse(ui.run("verify", "-inputB=10", "-min",
 				filename("meanBad.cvl")));
+	}
+
+	@Test
+	public void multiplicationInLoopCondition() {
+		assertTrue(ui.run("verify", "-echo",
+				filename("multiplicationInLoopCondition.cvl")));
 	}
 
 }
