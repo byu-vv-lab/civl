@@ -7,7 +7,7 @@ int main(int argc, char * argv[]){
   int i = 58;
   double d = 33.3333333;
   float f = 33.333;
-  char * s = "test String";
+  char * s = "test%dString";
   
   printf("test0 aabb\r\n");
   printf("test1 aa\nbb aa\bbb aa\tbb \' \" \n");
@@ -16,4 +16,5 @@ int main(int argc, char * argv[]){
   printf("test4 %.8f,%e,%g,%a\n", f,f,f,f);
   printf("test5 %c,%s\n", i-20,s);
   printf("test6 %d,%.16f,%s\n", x,y,z);
+  printf("test6 %d\n", &x);
 }
