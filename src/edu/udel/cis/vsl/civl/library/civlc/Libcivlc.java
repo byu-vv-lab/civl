@@ -780,8 +780,10 @@ public class Libcivlc implements LibraryExecutor {
 	 * users want to print addresses of pointers with arguments in the form of
 	 * &a, please use %s as their format specifiers.
 	 * 
-	 * CIVL currently dosen't support 'printf("%c" , c)'(where c is a char type
+	 * TODO CIVL currently dosen't support 'printf("%c" , c)'(where c is a char type
 	 * variable)?
+	 * 
+	 * TODO print arguments.get(i) directly, without any re-formatting of the value.
 	 * 
 	 * @param state
 	 * @param pid
@@ -849,6 +851,7 @@ public class Libcivlc implements LibraryExecutor {
 					Double denominator = Double.parseDouble(realNumber[1]);
 					doubleValue = (numerater / denominator);
 				} catch (Exception e) {
+					// TODO print symbolic value 
 					doubleValue = Double.MIN_VALUE;
 				}
 				// update
