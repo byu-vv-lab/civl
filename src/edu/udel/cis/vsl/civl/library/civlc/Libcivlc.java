@@ -773,120 +773,186 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
+	/**
+	 * Execute Printf() function. Escape Characters can be supported and have
+	 * been tested are: \n, \r, \b, \t, \", \', \\ Format specifiers can be
+	 * supported and have been tested are: %d, %o, %x, %f, %e, %g, %a, %c, %s If
+	 * users want to print addresses of pointers with arguments in the form of
+	 * &a, please use %s as their format specifiers.
+	 * 
+	 * CIVL currently dosen't support 'printf("%c" , c)'(where c is a char type
+	 * variable)?
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param argumentValues
+	 * @return State
+	 */
 	private State executePrintf(State state, int pid,
 			SymbolicExpression[] argumentValues) {
-		String strFromABC = new String();
-		String strOutput = new String();
+
+		String stringFromABC = new String();
+		String stringOutput = new String();
 		Vector<Object> arguments = new Vector<Object>();
 
-		/* get arguments from ABC */
-		strFromABC += argumentValues[0];
+		// get arguments from ABC
+		stringFromABC += argumentValues[0];
 		for (int i = 1; i < argumentValues.length; i++) {
 			arguments.add(argumentValues[i]);
 		}
-		/* Convert string from abc to string can be printed */
-		strOutput = this.abcArrayAnalyzer(strFromABC);
 
-		/* convert arguments to corresponding data types */
+		// Convert string from abc to string can be printed
+		stringOutput = this.abcArrayAnalyzer(stringFromABC);
+
+		// convert arguments to corresponding data types
 		for (int i = 0; i < arguments.size(); i++) {
 			SymbolicType.SymbolicTypeKind type = ((SymbolicExpression) arguments
 					.get(i)).type().typeKind();
-
-			/* Type is pointer tuple */
+			// Type is pointer tuple
 			if (type == SymbolicType.SymbolicTypeKind.TUPLE) {
 				String arg_str = arguments.get(i).toString();
+				// update
 				arguments.remove(i);
 				arguments.insertElementAt(arg_str, i);
 			}
 
-			/* Type is char array */
+			// Type is char array
 			if (type == SymbolicType.SymbolicTypeKind.ARRAY) {
 				String arg_str = this.abcArrayAnalyzer(arguments.get(i)
 						.toString());
-				/* update */
+				// update
 				arguments.remove(i);
 				arguments.insertElementAt(arg_str, i);
 			}
 
-			/* Type is integer */
+			// Type is integer
 			if (type == SymbolicType.SymbolicTypeKind.INTEGER) {
-				Integer integer = Integer.parseInt(arguments.get(i).toString());
-				/* update */
+				Integer integer;
+
+				try {
+					integer = Integer.parseInt(arguments.get(i).toString());
+				} catch (Exception e) {
+					integer = Integer.MIN_VALUE;
+				}
+				// update
 				arguments.remove(i);
 				arguments.insertElementAt(integer, i);
 			}
 
-			/* Type is real */
+			// Type is real
 			if (type == SymbolicType.SymbolicTypeKind.REAL) {
 				String realNumber[] = (arguments.get(i).toString()).split("/");
-				Double numerater = Double.parseDouble(realNumber[0]);
-				Double denominator = Double.parseDouble(realNumber[1]);
-				Double doubleValue = (numerater / denominator);
-				/* update */
+				Double doubleValue;
+
+				try {
+					Double numerater = Double.parseDouble(realNumber[0]);
+					Double denominator = Double.parseDouble(realNumber[1]);
+					doubleValue = (numerater / denominator);
+				} catch (Exception e) {
+					doubleValue = Double.MIN_VALUE;
+				}
+				// update
 				arguments.remove(i);
 				arguments.insertElementAt(doubleValue, i);
 			}
+
+			// Type is char
+			if (type == SymbolicType.SymbolicTypeKind.CHAR) {
+				char arg = arguments.get(i).toString().toCharArray()[0];
+				// update
+				arguments.remove(i);
+				arguments.insertElementAt(arg, i);
+			}
 		}
-		/* Print */
-		output.printf(strOutput, arguments.toArray());
-		// System.out.printf("%d,%o,%x", 10,10,10);
+
+		// Print
+		output.printf(stringOutput, arguments.toArray());
 		return state;
 	}
 
-	/* convert the string from abc to string can be printed */
-	private String abcArrayAnalyzer(String strFromABC) {
+	/**
+	 * Extract characters from the string of SymbolicExpression.
+	 * 
+	 * @param stringFromABC
+	 * @return
+	 */
+	private String abcArrayAnalyzer(String stringFromABC) {
 		Vector<String> individualChars = new Vector<String>();
-		String strOutput = new String();
-		/* Split the output stream into separate characters */
-		char[] chars = (strFromABC.split("'\"'"))[1].toCharArray();
-		/* step = 4: ,'char' */
-		if ((chars.length <= 4) || ((chars.length - 1) % 4 != 0))
-			System.out.println("Printf Exception");
-		for (int i = 0; i < chars.length;) {
-			if (chars[i] == ',')
-				if (chars[i + 1] == '\'')
-					if (chars[i + 3] == '\'')
-						individualChars.add("" + chars[i + 2]);
+		String stringOutput = new String();
+		int eleNumInCharArray;
+		char[] chars;
+		// get the number of characters
+		eleNumInCharArray = Integer.parseInt((((stringFromABC
+				.split("\\u0028CHAR\\u005B"))[1]).split("]\\u0029<"))[0]);
+
+		// Split the output stream into separate characters
+		chars = stringFromABC.split("\\u0028CHAR\\u005B" + eleNumInCharArray
+				+ "]\\u0029<")[1].toCharArray();
+
+		// number check
+		if (chars.length != (eleNumInCharArray * 2 + eleNumInCharArray - 1
+				+ eleNumInCharArray + 1))
+			return "Unknown Exception in character number checking in printf";
+		if ((chars.length <= 4) || ((chars.length) % 4 != 0))
+			return "Unknown Exception in character number checking in printf";
+
+		// start at 4, end at charnum - 6: extract real useful character
+		// step = 4: ,'char'
+		for (int i = 4; i < chars.length - 5;) {
+			if (chars[i] == '\'')
+				if (chars[i + 2] == '\'')
+					if (chars[i + 3] == ',')
+						individualChars.add("" + chars[i + 1]);
 			i += 4;
-			if ((i == chars.length - 1) && (chars[i] == ',')) // termination
+			if ((i == chars.length - 6) && (chars[i] == '\'')) // termination
 				break;
-			else if ((i == chars.length - 1) && (chars[i] != ','))
-				System.out.println("Printf Error");
+			else if ((i == chars.length - 6) && (chars[i] != '\''))
+				return ("Unknown Exception in characters extraction in printf");
 		}
 
-		/* convert characters to String, replace '\'+'n' with "\n" */
+		// convert characters to String, replace '\'+'n' with "\n"
 		for (int i = 0; i < individualChars.size(); i++) {
 			if (individualChars.get(i).equals("\\")
 					&& (i < individualChars.size() - 1)) {
 				if (individualChars.get(i + 1).equals("n")) {
-					strOutput += "\n";
+					stringOutput += "\n";
 					i++;
 					continue;
 				}
 				if (individualChars.get(i + 1).equals("t")) {
-					strOutput += "\t";
+					stringOutput += "\t";
 					i++;
 					continue;
 				}
 				if (individualChars.get(i + 1).equals("r")) {
-					strOutput += "\r";
+					stringOutput += "\r";
 					i++;
 					continue;
 				}
 				if (individualChars.get(i + 1).equals("b")) {
-					strOutput += "\b";
+					stringOutput += "\b";
 					i++;
 				}
 				if (individualChars.get(i + 1).equals("f")) {
-					strOutput += "\f";
+					stringOutput += "\f";
+					i++;
+					continue;
+				}
+				if (individualChars.get(i + 1).equals("\"")) {
+					stringOutput += "\"";
+					i++;
+					continue;
+				}
+				if (individualChars.get(i + 1).equals("\'")) {
+					stringOutput += "\'";
 					i++;
 					continue;
 				}
 			} else {
-				strOutput += individualChars.get(i);
+				stringOutput += individualChars.get(i);
 			}
 		}
-		return strOutput;
+		return stringOutput;
 	}
 
 	private State executeWork(State state, int pid, Statement statement)
