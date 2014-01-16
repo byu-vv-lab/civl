@@ -19,8 +19,9 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * As the name suggests an ImmutableDynamicScope is immutable, at least in all
  * ways visible to the user.
  * 
- * They may also participate in the Flyweight Pattern, so support an immutable
- * method.
+ * Instances of this class may be "flyweighted" (see the Flyweight Pattern). The
+ * methods {@link #makeCanonic(SymbolicUniverse)} and {@link #isCanonic()}
+ * support this pattern.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * @author Timothy J. McClory (tmcclory)
