@@ -91,11 +91,11 @@ public class ImmutableStateFactory implements StateFactory {
 
 			if (newId >= 0) {
 				ImmutableDynamicScope oldScope = state.getScope(i);
-				int oldParent = oldScope.parent();
+				int oldParent = oldScope.getParent();
 				int newParent = (oldParent < 0 ? oldParent
 						: oldToNew[oldParent]);
 				ImmutableDynamicScope newScope = oldParent == newParent ? oldScope
-						: oldScope.changeParent(newParent);
+						: oldScope.setParent(newParent);
 
 				newScopes[newId] = newScope;
 			}
@@ -369,13 +369,13 @@ public class ImmutableStateFactory implements StateFactory {
 
 			while (id >= 0) {
 				scope = newScopes[id];
-				bitSet = newScopes[id].reachers();
+				bitSet = newScopes[id].getReachers();
 				if (bitSet.get(pid))
 					break;
 				bitSet = (BitSet) bitSet.clone();
 				bitSet.set(pid);
-				newScopes[id] = scope.changeReachers(bitSet);
-				id = scope.parent();
+				newScopes[id] = scope.setReachers(bitSet);
+				id = scope.getParent();
 			}
 		}
 		newProcesses[pid] = state.getProcessState(pid).push(
@@ -429,18 +429,18 @@ public class ImmutableStateFactory implements StateFactory {
 				if (reached[id])
 					break;
 				reached[id] = true;
-				id = dynamicScopes[id].parent();
+				id = dynamicScopes[id].getParent();
 			}
 		}
 		for (int j = 0; j < numScopes; j++) {
 			ImmutableDynamicScope scope = dynamicScopes[j];
-			BitSet bitSet = scope.reachers();
+			BitSet bitSet = scope.getReachers();
 
 			if (bitSet.get(pid) != reached[j]) {
 				BitSet newBitSet = (BitSet) bitSet.clone();
 
 				newBitSet.flip(pid);
-				dynamicScopes[j] = dynamicScopes[j].changeReachers(newBitSet);
+				dynamicScopes[j] = dynamicScopes[j].setReachers(newBitSet);
 			}
 		}
 	}
@@ -529,7 +529,7 @@ public class ImmutableStateFactory implements StateFactory {
 			Collection<Variable> procrefVariableIter = staticScope
 					.variablesWithProcrefs();
 			SymbolicExpression[] newValues = null;
-			BitSet oldBitSet = dynamicScope.reachers();
+			BitSet oldBitSet = dynamicScope.getReachers();
 			BitSet newBitSet = updateBitSet(oldBitSet, oldToNewPidMap);
 
 			for (Variable variable : procrefVariableIter) {
@@ -551,10 +551,10 @@ public class ImmutableStateFactory implements StateFactory {
 						newScopes[j] = state.getScope(j);
 				}
 				if (newValues == null)
-					newScopes[i] = dynamicScope.changeReachers(newBitSet);
+					newScopes[i] = dynamicScope.setReachers(newBitSet);
 				else
 					newScopes[i] = newDynamicScope(staticScope,
-							dynamicScope.parent(), newValues, newBitSet);
+							dynamicScope.getParent(), newValues, newBitSet);
 			} else if (newScopes != null) {
 				newScopes[i] = dynamicScope;
 			}
@@ -614,8 +614,8 @@ public class ImmutableStateFactory implements StateFactory {
 						newScopes[j] = state.getScope(j);
 				}
 				newScopes[i] = newDynamicScope(staticScope,
-						dynamicScope.parent(), newValues,
-						dynamicScope.reachers());
+						dynamicScope.getParent(), newValues,
+						dynamicScope.getReachers());
 			} else if (newScopes != null) {
 				newScopes[i] = dynamicScope;
 			}
@@ -903,8 +903,8 @@ public class ImmutableStateFactory implements StateFactory {
 		ImmutableDynamicScope newScope;
 
 		newValues[vid] = value;
-		newScope = newDynamicScope(oldScope.lexicalScope(), oldScope.parent(),
-				newValues, oldScope.reachers());
+		newScope = newDynamicScope(oldScope.lexicalScope(), oldScope.getParent(),
+				newValues, oldScope.getReachers());
 		newScopes[scopeId] = newScope;
 		theState = theState.setScopes(newScopes);
 		return theState;
@@ -970,7 +970,7 @@ public class ImmutableStateFactory implements StateFactory {
 			}
 			if (newDynamicScopes != null)
 				newDynamicScopes[i] = newVariableValues != null ? oldScope
-						.changeVariableValues(newVariableValues) : oldScope;
+						.setVariableValues(newVariableValues) : oldScope;
 		}
 		newPathCondition = reasoner.getReducedContext();
 		if (newPathCondition != pathCondition) {

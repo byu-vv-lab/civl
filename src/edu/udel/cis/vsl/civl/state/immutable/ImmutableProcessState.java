@@ -13,11 +13,19 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 
 /**
- * An instance of Process represents the state of a process (thread of
- * execution) in a Chapel model. The process has an id.
+ * An ImmutableProcessState represents the state of a single process in a CIVL
+ * model. It is one component of a CIVL model state.
+ * 
+ * A immutable process state is composed of a nonnegative integer PID, an
+ * "atomic count" and a call stack. The atomic count records the current atomic
+ * depth of the process: how many atomic blocks it has entered and not exited.
+ * The call stack is a sequence of activation frames (aka "stack entries"). Each
+ * frame in a pair specifying a dyscope ID and a location in the static scope
+ * corresponding to that dyscope.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * @author Timothy J. McClory (tmcclory)
+ * @author Stephen F. Siegel (siegel)
  * 
  */
 public class ImmutableProcessState implements ProcessState {
@@ -31,7 +39,7 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	class ReverseIterator implements Iterator<StackEntry> {
 
-		/************************* Instance Fields *************************/
+		/*************** Instance Fields ***************/
 
 		/**
 		 * The array over which we are iterating.
@@ -44,7 +52,7 @@ public class ImmutableProcessState implements ProcessState {
 		 */
 		private int i = array.length - 1;
 
-		/******************** Package-private Methods ********************/
+		/*********** Package-private Methods ***********/
 
 		/**
 		 * Creates a new reverse iterator for the given array.
@@ -56,7 +64,7 @@ public class ImmutableProcessState implements ProcessState {
 			this.array = array;
 		}
 
-		/****************** Methods from Iterator ****************/
+		/************ Methods from Iterator ************/
 
 		@Override
 		public boolean hasNext() {
@@ -77,30 +85,40 @@ public class ImmutableProcessState implements ProcessState {
 		}
 	}
 
-	/************************* Instance Fields *************************/
+	/**************************** Instance Fields ****************************/
 
 	/**
-	 * Number of atomic blocks that are being executing in the process.
-	 * Incremented when entering an atomic block, and decremented when leaving
-	 * it.
+	 * Is this instance the unique representative of its equivalence class?
 	 */
-	private int atomicCount = 0;
-
-	/**
-	 * A non-null array. Entry 0 is the TOP of the stack.
-	 */
-	private StackEntry[] callStack;
-
 	private boolean canonic = false;
 
+	/**
+	 * If the hash code of this object has been computed, it is cached here.
+	 */
 	private int hashCode = -1;
 
+	/**
+	 * Has the hash code of this object been computed?
+	 */
 	private boolean hashed = false;
 
 	/**
 	 * The process ID (pid).
 	 */
 	private int pid;
+
+	/**
+	 * Number of atomic blocks that have been entered and not exited. This is
+	 * incremented when entering an atomic block, and decremented when leaving
+	 * it.
+	 */
+	private int atomicCount = 0;
+
+	/**
+	 * The call stack of this process: a non-null array in which entry 0 is the
+	 * TOP of the stack.
+	 */
+	private StackEntry[] callStack;
 
 	/************************** Constructors *************************/
 
@@ -127,15 +145,15 @@ public class ImmutableProcessState implements ProcessState {
 		this.atomicCount = atomicCount;
 	}
 
-	/******************** Package-private Methods ********************/
+	/************************ Package-private Methods ************************/
 
-	ImmutableProcessState copy() {
-		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length];
-
-		System.arraycopy(callStack, 0, newStack, 0, callStack.length);
-		return new ImmutableProcessState(pid, newStack, this.atomicCount);
-	}
-
+	/**
+	 * Makes this instance the unique representative of its equivalence class.
+	 * 
+	 * Nothing to do except set canonic flag to true, since the components of
+	 * this class do not contain anything that can be made canonic: locations,
+	 * dynamic scope IDs, ints.
+	 */
 	void makeCanonic() {
 		canonic = true;
 	}
@@ -236,7 +254,6 @@ public class ImmutableProcessState implements ProcessState {
 			if (!s.isPurelyLocal())
 				return false;
 		}
-
 		return true;
 	}
 
@@ -244,7 +261,9 @@ public class ImmutableProcessState implements ProcessState {
 	 * {@inheritDoc} Look at the first entry on the call stack, but do not
 	 * remove it.
 	 * 
-	 * @return {@inheritDoc} The first entry on the call stack. Null if empty.
+	 * @return {@inheritDoc} The first entry on the call stack.
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if stack is empty
 	 */
 	@Override
 	public StackEntry peekStack() {
@@ -311,9 +330,6 @@ public class ImmutableProcessState implements ProcessState {
 
 	/******************** Public Methods ********************/
 
-	public void commit() {
-	}
-
 	/**
 	 * Returns i-th entry on stack, where 0 is the TOP of the stack, and
 	 * stackSize-1 is the BOTTOM of the stack.
@@ -322,27 +338,23 @@ public class ImmutableProcessState implements ProcessState {
 	 *            int in [0,stackSize-1]
 	 * @return i-th entry on stack
 	 */
-	public StackEntry getStackEntry(int i) {
+	StackEntry getStackEntry(int i) {
 		return callStack[i];
 	}
 
-	public boolean isCanonic() {
+	boolean isCanonic() {
 		return canonic;
 	}
 
-	public boolean isMutable() {
-		return false;
-	}
-
-	public ProcessState setPid(int pid) {
+	ProcessState setPid(int pid) {
 		return new ImmutableProcessState(pid, callStack, this.atomicCount);
 	}
 
-	public ProcessState setStackEntries(StackEntry[] frames) {
+	ProcessState setStackEntries(StackEntry[] frames) {
 		return new ImmutableProcessState(pid, frames, this.atomicCount);
 	}
 
-	public ProcessState setStackEntry(int index, StackEntry frame) {
+	ProcessState setStackEntry(int index, StackEntry frame) {
 		int n = callStack.length;
 		StackEntry[] newStack = new StackEntry[n];
 

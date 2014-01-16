@@ -299,7 +299,7 @@ public class ImmutableState implements State {
 
 	@Override
 	public int getParentId(int scopeId) {
-		return getScope(scopeId).parent();
+		return getScope(scopeId).getParent();
 	}
 
 	@Override
