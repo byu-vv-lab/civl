@@ -248,5 +248,7 @@ public interface State {
 	 *         the variable.
 	 */
 	State setVariable(int vid, int scopeId, SymbolicExpression value);
+	
+	int getCanonicId();
 
 }

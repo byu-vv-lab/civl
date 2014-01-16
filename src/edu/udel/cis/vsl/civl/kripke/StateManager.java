@@ -114,6 +114,15 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	private int nextStateCalls = 0;
 
+	/**
+	 * Keep track of the maximal canonic ID of states. Since
+	 * {@link StateFactory#canonic(State)} is only called when savedState option
+	 * is enabled, this is only updated when savedState option is enabled. The
+	 * motivation to have this field is to allow the state manager to print only
+	 * new states in -savedStates mode, for better user experiences.
+	 */
+	private int maxCanonicId = -1;
+
 	/******************************* Constructor *****************************/
 
 	/**
@@ -153,100 +162,52 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		Location newLocation = location;
 		State newState = state;
 		int stateCounter = 0;
-		Statement start = location.getOutgoing(0);
-		Pair<StateStatusKind, State> init;
+		int atomCount = 0;
 
-		assert location.enterAtom() == true
-				&& location.id() == state.getProcessState(pid).getLocation()
-						.id() && location.getNumOutgoing() == 1;
-		init = executor.executeStatement(state, location, start, pid);
-		if (init.left == StateStatusKind.BLOCKED) {
-			executor.evaluator().reportError(
-					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
-							"Execution blocked in $atom", newState, newLocation
-									.getSource()));
-		} else {
-			newState = init.right;
-			newLocation = newState.getProcessState(pid).getLocation();
-			if (print) {
-				printStatement(start, AtomicKind.ATOM_ENTER,
-						newState.getProcessState(pid));
-			}
-		}
 		while (true) {
 			boolean statementExecuted = false;
 			State currentState = newState;
 			Statement executedStatement = null;
+			Pair<StateStatusKind, State> temp;
 
-			switch (newLocation.atomicKind()) {
-			case ATOM_ENTER:
-				newState = executeAtomBlock(newState, pid, newLocation, print);
-				// numSteps++???
-				stateCounter++;
-				statementExecuted = true;
-				break;
-			case ATOM_EXIT:
-				assert (newLocation.getNumOutgoing() == 1);
-				newState = executor.executeStatement(newState, newLocation,
-						newLocation.getOutgoing(0), pid).right;
-				executedStatement = newLocation.getOutgoing(0);
-				if (print) {
-					printStatement(executedStatement, AtomicKind.ATOM_EXIT,
-							newState.getProcessState(pid));
-				}
-				assert newState != null;
-				return newState;
-			default:
-				for (Statement s : newLocation.outgoing()) {
-					Pair<StateStatusKind, State> temp = executor
-							.executeStatement(newState, newLocation, s, pid);
-
-					switch (temp.left) {
-					case NONDETERMINISTIC:
-						executor.evaluator()
-								.reportError(
-										new CIVLStateException(
-												ErrorKind.OTHER,
-												Certainty.CONCRETE,
-												"Non-determinism is found in $atom block.",
-												newState, newLocation
-														.getSource()));
-						// throw new UnsatisfiablePathConditionException();
-					case NORMAL:
-						if (statementExecuted) {
-							executor.evaluator()
-									.reportError(
-											new CIVLStateException(
-													ErrorKind.OTHER,
-													Certainty.CONCRETE,
-													"Non-determinism is found in $atom block.",
-													newState, newLocation
-															.getSource()));
-							// throw new UnsatisfiablePathConditionException();
-						}
-						statementExecuted = true;
-						newState = temp.right;
-						executedStatement = s;
+			for (Statement s : newLocation.outgoing()) {
+				temp = executor.executeStatement(currentState, newLocation, s,
+						pid);
+				switch (temp.left) {
+				case NONDETERMINISTIC:
+					reportError(StateStatusKind.NONDETERMINISTIC, newState,
+							newLocation);
+					break;
+				case NORMAL:
+					if (statementExecuted) {
+						reportError(StateStatusKind.NONDETERMINISTIC, newState,
+								newLocation);
 						break;
-					default:// current statement is blocked, continue to try
-							// executing another statement from the same
-							// location
-						continue;
 					}
+					statementExecuted = true;
+					newState = temp.right;
+					executedStatement = s;
+					break;
+				default:// blocked, continue to try executing another
+						// statement from the same location
+					continue;
 				}
 			}
 			// current location is blocked
 			if (!statementExecuted) {
-				executor.evaluator()
-						.reportError(
-								new CIVLStateException(
-										ErrorKind.OTHER,
-										Certainty.CONCRETE,
-										"Undesired blocked location is detected in $atom block.",
-										currentState, newLocation.getSource()));
-				// throw new UnsatisfiablePathConditionException();
+				reportError(StateStatusKind.BLOCKED, currentState, newLocation);
 			}
-			// warning for possible infinite atomic block
+			switch (newLocation.atomicKind()) {
+			case ATOM_ENTER:
+				atomCount++;
+				break;
+			case ATOM_EXIT:
+				atomCount--;
+			default:
+			}
+			if (atomCount == 0)// end of the $atom block
+				return newState;
+			// warning for possible infinite $atom block
 			if (stateCounter != 0 && stateCounter % 1024 == 0) {
 				out.println("Warning: " + (stateCounter)
 						+ " states in $atom block at "
@@ -255,7 +216,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			stateCounter++;
 			p = newState.getProcessState(pid);
 			if (print && executedStatement != null) {
-				printStatement(executedStatement, newLocation.atomicKind(), p);
+				printStatement(executedStatement, newLocation.atomicKind(),
+						p.atomicCount());
 			}
 			if (p != null && !p.hasEmptyStack())
 				newLocation = p.getLocation();
@@ -263,6 +225,25 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				throw new CIVLInternalException("Unreachable",
 						newLocation.getSource());
 			}
+		}
+	}
+
+	private void reportError(StateStatusKind kind, State state,
+			Location location) {
+		switch (kind) {
+		case NONDETERMINISTIC:
+			executor.evaluator().reportError(
+					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
+							"Non-determinism is encountered in $atom block.",
+							state, location.getSource()));
+			break;
+		case BLOCKED:
+			executor.evaluator().reportError(
+					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
+							"Blocked location is encountered in $atom block.",
+							state, location.getSource()));
+			break;
+		default:
 		}
 	}
 
@@ -310,20 +291,18 @@ public class StateManager implements StateManagerIF<State, Transition> {
 						return oldState;
 					case NORMAL:
 						if (executed) {
-							// finds non-determinism, go back to previous
-							// state
+							// finds non-determinism, go back to previous state
 							return oldState;
 						}
 						executed = true;
 						newState = temp.right;
 						executedStatement = s;
 						break;
-					default:// BLOCKED, continue to try executing next
-							// statement
+					default:// BLOCKED, continue to try executing next statement
 						continue;
 					}
 				}
-				if (!executed) {// blocked
+				if (!executed) {// location is blocked
 					oldState = stateFactory.releaseAtomicLock(oldState);
 					return oldState;
 				}
@@ -360,7 +339,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 					newState = stateFactory.releaseAtomicLock(newState);
 					if (print) {
 						printStatement(executedStatement,
-								AtomicKind.ATOMIC_EXIT, p);
+								AtomicKind.ATOMIC_EXIT, p.atomicCount());
 					}
 					return newState;
 				}
@@ -371,7 +350,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			}
 			p = newState.getProcessState(pid);
 			if (print && executedStatement != null) {
-				printStatement(executedStatement, pLocation.atomicKind(), p);
+				printStatement(executedStatement, pLocation.atomicKind(),
+						p.atomicCount());
 			}
 			if (p != null && !p.hasEmptyStack())
 				pLocation = p.peekStack().location();
@@ -389,6 +369,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		ProcessState p;
 		Location currentLocation;
 		boolean printTransitions = verbose || debug || showTransitions;
+		int oldMaxCanonicId = this.maxCanonicId;
 
 		assert transition instanceof SimpleTransition;
 		pid = ((SimpleTransition) transition).pid();
@@ -472,13 +453,19 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		}
 		if (saveStates) {
 			state = stateFactory.canonic(state);
+			this.maxCanonicId = state.getCanonicId();
 		} else {
 			state.commit();
 		}
 		if (verbose || debug || showTransitions) {
 			out.println(state);
 		}
-		if (debug || verbose || showStates || showSavedStates) {
+		if (debug
+				|| verbose
+				|| (!saveStates && showStates)
+				|| (saveStates && showStates && this.maxCanonicId > oldMaxCanonicId)
+				|| (saveStates && showSavedStates && this.maxCanonicId > oldMaxCanonicId)) {
+			// in -savedStates mode, only print new states.
 			out.println();
 			state.print(out);
 		}
@@ -489,7 +476,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	}
 
 	private void printStatement(Statement s, AtomicKind atomicKind,
-			ProcessState p) {
+			int atomCount) {
 		CIVLSource statementSource = s.getSource();
 
 		if (statementSource == null)
@@ -502,11 +489,19 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		switch (atomicKind) {
 		case ATOMIC_ENTER:
 			out.print(s.toString() + " ");
-			out.print(p.atomicCount() - 1);
+			out.print(atomCount - 1);
 			break;
 		case ATOMIC_EXIT:
 			out.print(s.toString() + " ");
-			out.print(p.atomicCount());
+			out.print(atomCount);
+			break;
+		case ATOM_ENTER:
+			out.print(s.toString() + " ");
+			out.print(atomCount - 1);
+			break;
+		case ATOM_EXIT:
+			out.print(s.toString() + " ");
+			out.print(atomCount);
 			break;
 		default:
 			out.print(s.toString());

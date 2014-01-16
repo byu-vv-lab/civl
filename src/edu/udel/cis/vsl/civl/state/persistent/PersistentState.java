@@ -130,7 +130,7 @@ public class PersistentState extends PersistentObject implements State {
 	 * 
 	 * @return canonicID of this state
 	 */
-	int getCanonicId() {
+	public int getCanonicId() {
 		return canonicId;
 	}
 
