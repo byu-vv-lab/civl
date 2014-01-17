@@ -9,7 +9,6 @@ $input int N;  // number of rows
 $input int M;  // number of columns
 $assume N>0 && N<N_BOUND;
 $assume M>0 && M<M_BOUND;
-$assume N*M <= N_BOUND*M_BOUND;
 $input double inputMatrix[N*M];
 $output double outputMatrix[N*M];
 
@@ -106,8 +105,12 @@ void checkOutput() {
 
 void main() {
   $heap h;
-  double* matrix = (double *) $malloc(&h, N*M*sizeof(double));
+  double* matrix;
   
+  // Need to concretize N & M to help verification.
+  for (int i = 0; i < N; i++);
+  for (int i = 0; i < M; i++);
+  matrix = (double *) $malloc(&h, N*M*sizeof(double));
   for (int i = 0; i < N*M; i++) {
     matrix[i] = inputMatrix[i];
   }
