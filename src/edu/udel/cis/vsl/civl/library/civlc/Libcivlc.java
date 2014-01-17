@@ -808,6 +808,8 @@ public class Libcivlc implements LibraryExecutor {
 		String stringOfSymbolicExpression = new String();
 		String stringOutput = new String();
 		Vector<Object> arguments = new Vector<Object>();
+		CIVLSource source = state.getProcessState(pid).getLocation()
+				.getSource();
 
 		if (!this.enablePrintf)
 			return state;
@@ -819,7 +821,8 @@ public class Libcivlc implements LibraryExecutor {
 
 		// convert the first argument from
 		// a symbolic expression to a string can be printed
-		stringOutput = this.abcArrayAnalyzer(stringOfSymbolicExpression, true);
+		stringOutput = this.abcArrayAnalyzer(stringOfSymbolicExpression, true,
+				source);
 
 		// convert a char array from a symbolic exrepssion to a string
 		for (int i = 0; i < arguments.size(); i++) {
@@ -828,7 +831,7 @@ public class Libcivlc implements LibraryExecutor {
 			// Type is char array
 			if (type == SymbolicType.SymbolicTypeKind.ARRAY) {
 				String arg_str = this.abcArrayAnalyzer(arguments.get(i)
-						.toString(), false);
+						.toString(), false, source);
 				// update
 				arguments.remove(i);
 				arguments.insertElementAt(arg_str, i);
@@ -848,7 +851,7 @@ public class Libcivlc implements LibraryExecutor {
 	 * @return
 	 */
 	private String abcArrayAnalyzer(String stringFromABC,
-			boolean convertFormatSpecifier) {
+			boolean convertFormatSpecifier, CIVLSource source) {
 		Vector<String> individualChars = new Vector<String>();
 		String stringOutput = new String();
 		int eleNumInCharArray;
@@ -914,6 +917,9 @@ public class Libcivlc implements LibraryExecutor {
 					stringOutput += "\'";
 					i++;
 					break;
+				default:
+					throw new CIVLUnimplementedFeatureException(
+							individualChars.get(i + 1) + " in printf()", source);
 				}
 			} else {
 				stringOutput += individualChars.get(i);
