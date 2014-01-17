@@ -54,6 +54,7 @@ import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 /**
@@ -365,13 +366,24 @@ public class Libcivlc implements LibraryExecutor {
 		NumericExpression size = (NumericExpression) argumentValues[1];
 		// ReferenceExpression symRef = evaluator.getSymRef(pointer);
 		// ReferenceKind kind = symRef.referenceKind();
-		SymbolicType elementType = evaluator.referencedType(source, state,
-				pointer);
-		SymbolicType pureElementType = universe.pureType(elementType);
-		SymbolicUnionType symbolicBundleType = bundleType
-				.getDynamicType(universe);
-		int index = bundleType.getIndexOf(pureElementType);
-		IntObject indexObj = universe.intObject(index);
+		SymbolicType elementType;
+		SymbolicType pureElementType;
+		SymbolicUnionType symbolicBundleType;
+		int index;
+		IntObject indexObj;
+		SymbolicExpression array;
+		SymbolicExpression bundle;
+
+		if (pointer.type().typeKind() != SymbolicTypeKind.TUPLE) {
+			throw new CIVLUnimplementedFeatureException("type "
+					+ pointer.type().toString()
+					+ " in message passing function calls,", source);
+		}
+		elementType = evaluator.referencedType(source, state, pointer);
+		pureElementType = universe.pureType(elementType);
+		symbolicBundleType = bundleType.getDynamicType(universe);
+		index = bundleType.getIndexOf(pureElementType);
+		indexObj = universe.intObject(index);
 		// NumericExpression elementSize = evaluator.sizeof(source,
 		// elementType);
 		// BooleanExpression pathCondition = state.pathCondition();
@@ -379,9 +391,7 @@ public class Libcivlc implements LibraryExecutor {
 		// Reasoner reasoner = universe.reasoner(pathCondition);
 		// ResultType zeroSizeValid = reasoner.valid(zeroSizeClaim)
 		// .getResultType();
-		SymbolicExpression array = getArrayFromPointer(state, pointerExpr,
-				pointer, size, source);
-		SymbolicExpression bundle;
+		array = getArrayFromPointer(state, pointerExpr, pointer, size, source);
 		//
 		// if (zeroSizeValid == ResultType.YES) {
 		// array = universe.emptyArray(elementType);

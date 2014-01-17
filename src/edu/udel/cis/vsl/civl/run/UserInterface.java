@@ -549,7 +549,13 @@ public class UserInterface {
 			result = verifier.run();
 		} catch (Exception e) {
 			verifier.terminateUpdater();
-			throw e;
+			if (config.isTrue(debugO))
+				throw e;
+			else {
+				out.println();
+				out.println("Error: " + e.toString());
+				return false;
+			}
 		}
 		printStats(out);
 		verifier.printStats();
