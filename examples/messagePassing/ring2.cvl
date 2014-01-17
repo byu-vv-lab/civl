@@ -1,6 +1,6 @@
 /* Create nprocs processes.  Have them exchange data in a cycle.
  * Commandline example:
- *     civl verify -inputNPROCS=3 ring.cvl -simplify=false
+ *     civl verify -inputNPROCS=3 ring2.cvl -simplify=false
  */
 #include<civlc.h>
 #include "mp_root2.cvh"

@@ -1,3 +1,6 @@
+/* Commandline execution:
+ *		civl verify multInLoopCond.cvl
+ * */
 $input int N;
 $input int M;
 $assume N > 0 && N < 3;
