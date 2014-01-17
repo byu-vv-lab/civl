@@ -9,7 +9,6 @@ void MPI_Process (int rank) {
 #include "mp_proc.cvh"
 
   double x=rank, y;
-  printf("cool");
   send(&x, 1, (rank+1)%NPROCS, 0);
   recv(&y, 1, (rank+NPROCS-1)%NPROCS, 0);
   $assert y==(rank+NPROCS-1)%NPROCS;

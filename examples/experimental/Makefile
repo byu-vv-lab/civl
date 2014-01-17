@@ -1,6 +1,6 @@
 
-# CIVL = java -jar ../civl.jar
-CIVL = civl
+CIVL=civl
+VERIFY=$(CIVL) verify
 
 TARGETS = \
 	collective \
@@ -8,6 +8,8 @@ TARGETS = \
 	count \
 	floatsum \
 	floatsum2 \
+	gaussElim \
+	multInLoopCond \
 	pathfinder_cuda
 	
 default: all
@@ -15,19 +17,25 @@ default: all
 all: $(TARGETS)
 
 collective: collective.cvl
-	$(CIVL) collective.cvl
+	$(VERIFY) collective.cvl
 	
 contract: contract.cvl
-	$(CIVL) contract.cvl
+	$(VERIFY) contract.cvl
 	
 count: count.cvl
-	$(CIVL) count.cvl
+	$(VERIFY) count.cvl
 	
 floatsum: floatsum.cvl
-	$(CIVL) floatsum.cvl
+	$(VERIFY) floatsum.cvl
 	
 floatsum2: floatsum2.cvl
-	$(CIVL) floatsum2.cvl
+	$(VERIFY) floatsum2.cvl
+	
+gaussElim: gaussElim.cvl
+	$(VERIFY) -inputN_BOUND=3 -inputM_BOUND=3 gaussElim.cvl
+	
+multInLoopCond: multInLoopCond.cvl
+	$(VERIFY) multInLoopCond.cvl
 	
 pathfinder_cuda: pathfinder_cuda.cvl
-	$(CIVL) pathfinder_cuda.cvl
+	$(VERIFY) pathfinder_cuda.cvl

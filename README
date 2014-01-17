@@ -39,10 +39,12 @@ licenses.  See directory licenses for the license of each component.
 
 -------------------------- Updates from v 0.4 -------------------------
 
-1. Support new language primitives $atomic and $atom;
-2. Support system functions exit() and printf(); 
-3. Fix various bugs in translating 0 constant to null pointer, static analysis 
-of impact scope, etc.
+1. New language primitives supported: $atomic and $atom;
+2. New system function supported: printf(); 
+3. New command-line options (-echo and -enablePrintf) added;
+4. Improved printing transitions and states;
+5. Various bugs fixed in translating 0 constant to null pointer, 
+static analysis of impact scopes, etc.
 
 For more details, please refer to doc/civl-manual.pdf.
 
