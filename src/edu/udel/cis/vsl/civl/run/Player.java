@@ -89,6 +89,8 @@ public abstract class Player {
 
 	protected boolean solve; // false by default
 
+	protected boolean enablePrintf; // true by default
+
 	public Player(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
 		SymbolicUniverse universe;
@@ -118,8 +120,10 @@ public abstract class Player {
 		this.loader = new CommonLibraryExecutorLoader();
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));
+		this.enablePrintf = (Boolean) config
+				.getValueOrDefault(UserInterface.enablePrintfO);
 		this.executor = new Executor(config, modelFactory, stateFactory, log,
-				loader, out);
+				loader, out, this.enablePrintf);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
 		this.debug = config.isTrue(UserInterface.debugO);
@@ -135,7 +139,7 @@ public abstract class Player {
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
-
+		
 		if (this.random) {
 			long seed;
 			String seedString = (String) config.getValue(UserInterface.seedO);

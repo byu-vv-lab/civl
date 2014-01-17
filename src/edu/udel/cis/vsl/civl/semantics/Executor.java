@@ -68,6 +68,8 @@ public class Executor {
 
 	/***************************** Instance Fields ***************************/
 
+	private boolean enablePrintf; // true by default
+
 	private ModelFactory modelFactory;
 
 	/** The symbolic universe used to manage all symbolic expressions. */
@@ -92,7 +94,7 @@ public class Executor {
 	private LibraryExecutorLoader loader;
 
 	private Libcivlc civlcExecutor;
-	
+
 	private PrintStream output;
 
 	/**
@@ -118,7 +120,8 @@ public class Executor {
 	 */
 	public Executor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log,
-			LibraryExecutorLoader loader, PrintStream output) {
+			LibraryExecutorLoader loader, PrintStream output,
+			boolean enablePrintf) {
 		this.symbolicUniverse = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
@@ -126,8 +129,9 @@ public class Executor {
 		// this.log = log;
 		this.loader = loader;
 		this.output = output;
-		this.civlcExecutor = (Libcivlc) loader
-				.getLibraryExecutor("civlc", this, this.output);
+		this.enablePrintf = enablePrintf;
+		this.civlcExecutor = (Libcivlc) loader.getLibraryExecutor("civlc",
+				this, this.output, this.enablePrintf);
 	}
 
 	/**
@@ -143,8 +147,10 @@ public class Executor {
 	 *            A theorem prover for checking assertions.
 	 */
 	public Executor(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactory stateFactory, ErrorLog log, PrintStream output) {
-		this(config, modelFactory, stateFactory, log, null, output);
+			StateFactory stateFactory, ErrorLog log, PrintStream output,
+			boolean enablePrintf) {
+		this(config, modelFactory, stateFactory, log, null, output,
+				enablePrintf);
 	}
 
 	/**************************** Private methods ****************************/
@@ -215,7 +221,8 @@ public class Executor {
 		if (statement.function() instanceof SystemFunction) {
 			// TODO: optimize this. store libraryExecutor in SystemFunction?
 			LibraryExecutor executor = loader.getLibraryExecutor(
-					((SystemFunction) statement.function()).getLibrary(), this, output);
+					((SystemFunction) statement.function()).getLibrary(), this,
+					output, this.enablePrintf);
 
 			state = executor.execute(state, pid, statement);
 			// state = transition(state, state.getProcessState(pid),

@@ -23,7 +23,7 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 	@SuppressWarnings("unchecked")
 	@Override
 	public LibraryExecutor getLibraryExecutor(String name,
-			Executor primaryExecutor, PrintStream output) {
+			Executor primaryExecutor, PrintStream output, boolean enablePrintf) {
 		LibraryExecutor result = libraryExecutorCache.get(name);
 
 		if (result == null) {
@@ -33,9 +33,11 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 				Class<? extends LibraryExecutor> aClass = (Class<? extends LibraryExecutor>) Class
 						.forName(aClassName);
 				Constructor<? extends LibraryExecutor> constructor = aClass
-						.getConstructor(Executor.class, PrintStream.class);
+						.getConstructor(Executor.class, PrintStream.class,
+								boolean.class);
 
-				result = constructor.newInstance(primaryExecutor, output);
+				result = constructor.newInstance(primaryExecutor, output,
+						enablePrintf);
 			} catch (Exception e) {
 				throw new CIVLInternalException("Unable to load library: "
 						+ name + "\n" + e.getMessage(), (CIVLSource) null);

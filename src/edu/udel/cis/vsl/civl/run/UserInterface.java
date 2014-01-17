@@ -58,6 +58,9 @@ public class UserInterface {
 	public final static Option echoO = Option.newScalarOption("echo", BOOLEAN,
 			"print the command line", false);
 
+	public final static Option enablePrintfO = Option.newScalarOption(
+			"enablePrintf", BOOLEAN, "enable printf function", true);
+
 	public final static Option errorBoundO = Option.newScalarOption(
 			"errorBound", INTEGER, "stop after finding this many errors", 1);
 
@@ -168,7 +171,7 @@ public class UserInterface {
 				userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO, porO,
-				saveStatesO, simplifyO, solveO, statesO);
+				saveStatesO, simplifyO, solveO, statesO, enablePrintfO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -491,7 +494,7 @@ public class UserInterface {
 		parser.parse(newConfig, traceFile); // gets free args verify filename
 		setToDefault(newConfig, Arrays.asList(showModelO, verboseO, debugO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO));
+				showProverQueriesO, enablePrintfO));
 		newConfig.read(config);
 		model = extractModel(out, newConfig, sourceFilename);
 		if (showShortFileNameList(config))
@@ -540,7 +543,8 @@ public class UserInterface {
 		model = extractModel(out, config, filename);
 		if (showShortFileName)
 			TokenUtils.printShorterFileNameMap(out);
-		verifier = new Verifier(config, model, out, startTime, showShortFileName);
+		verifier = new Verifier(config, model, out, startTime,
+				showShortFileName);
 		try {
 			result = verifier.run();
 		} catch (Exception e) {

@@ -12,6 +12,7 @@ public interface LibraryExecutorLoader {
 	/**
 	 * Get the library executor with the given name.
 	 */
-	LibraryExecutor getLibraryExecutor(String name, Executor primaryExecutor, PrintStream output);
+	LibraryExecutor getLibraryExecutor(String name, Executor primaryExecutor,
+			PrintStream output, boolean enablePrintf);
 
 }

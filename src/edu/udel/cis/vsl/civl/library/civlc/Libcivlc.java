@@ -88,10 +88,12 @@ public class Libcivlc implements LibraryExecutor {
 	private IntObject oneObject;
 
 	private PrintStream output = System.out;
+	
+	private boolean enablePrintf; //by default true
 
 	// private SymbolicType bundleSymbolicType;
 
-	public Libcivlc(Executor primaryExecutor, PrintStream output) {
+	public Libcivlc(Executor primaryExecutor, PrintStream output, boolean enablePrintf) {
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		// this.log = evaluator.log();
@@ -102,6 +104,7 @@ public class Libcivlc implements LibraryExecutor {
 		this.zeroObject = universe.intObject(0);
 		this.oneObject = universe.intObject(1);
 		this.output = output;
+		this.enablePrintf = enablePrintf;
 	}
 
 	@Override
@@ -791,11 +794,12 @@ public class Libcivlc implements LibraryExecutor {
 	 */
 	private State executePrintf(State state, int pid,
 			SymbolicExpression[] argumentValues) {
-
 		String stringOfSymbolicExpression = new String();
 		String stringOutput = new String();
 		Vector<Object> arguments = new Vector<Object>();
 
+		if(!this.enablePrintf)
+			return state;
 		// obtain printf() arguments
 		stringOfSymbolicExpression += argumentValues[0];
 		for (int i = 1; i < argumentValues.length; i++) {

@@ -761,7 +761,7 @@ public class Enabler implements
 					// If the size isn't 1, keep looking for a smaller local
 					// set.
 					// if(debugging)
-					// debugOut.println("Number of transtions at state " +
+					// debugOut.println("Number of transitions at state " +
 					// state.getId() + ": " + localTransitions.size());
 					return localTransitions;
 				}
