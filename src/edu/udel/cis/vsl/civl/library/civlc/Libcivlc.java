@@ -375,9 +375,9 @@ public class Libcivlc implements LibraryExecutor {
 		SymbolicExpression bundle;
 
 		if (pointer.type().typeKind() != SymbolicTypeKind.TUPLE) {
-			throw new CIVLUnimplementedFeatureException("type "
-					+ pointer.type().toString()
-					+ " in message passing function calls,", source);
+			throw new CIVLUnimplementedFeatureException(
+					"string literals in message passing function calls,",
+					source);
 		}
 		elementType = evaluator.referencedType(source, state, pointer);
 		pureElementType = universe.pureType(elementType);
