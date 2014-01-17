@@ -31,8 +31,9 @@ cd repos/scripts/
 svn update
 
 7. Update the autotest scripts on vsl:
-ssh siegel@vsl.cis.udel.edu
-cd repos/scripts/
+ssh vsl.cis.udel.edu
+eecis_su svn
+cd ~/scripts/
 svn update
 
 8. On vsl.cis.udel.edu, eecis_su svn, and edit
