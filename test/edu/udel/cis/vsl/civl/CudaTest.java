@@ -10,7 +10,7 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class CudaTest {
 
-	/************************* Static Fields *************************/
+	/***************************** Static Fields *****************************/
 
 	private static UserInterface ui = new UserInterface();
 
@@ -20,7 +20,7 @@ public class CudaTest {
 		return new File(rootDir, name).getPath();
 	}
 
-	/************************* Test Methods *************************/
+	/***************************** Test Methods *****************************/
 
 	@Test
 	public void exitBarrier() {

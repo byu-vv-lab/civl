@@ -16,20 +16,20 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class LanguageFeaturesTest {
 
-	/************************* Static Fields *************************/
+	/***************************** Static Fields *****************************/
 
 	private static File rootDir = new File(new File("examples"),
 			"languageFeatures");
 
 	private static UserInterface ui = new UserInterface();
 
-	/************************* Helper Methods *************************/
+	/***************************** Helper Methods *****************************/
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
 	}
 
-	/************************* Test Methods *************************/
+	/****************************** Test Methods *****************************/
 
 	@Test
 	public void arrayPointer() throws ABCException {
