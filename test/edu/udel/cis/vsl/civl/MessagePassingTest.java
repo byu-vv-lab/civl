@@ -29,5 +29,10 @@ public class MessagePassingTest {
 	public void ring() {
 		assertTrue(ui.run("verify", filename("ring.cvl"), "-inputNPROCS=3"));
 	}
+	
+	@Test
+	public void ring2() {
+		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));
+	}
 
 }
