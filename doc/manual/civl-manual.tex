@@ -133,30 +133,30 @@ The additional language elements are shown in Figure \ref{fig:cc}.
 
 \begin{figure}[t]
   \begin{tabular}{ll}
-    \cproc & the process type \\
-    \cself & the evaluating process (constant of type \cproc) \\
-    \cinput & type qualifier declaring variable to be a program input \\
-    \coutput & type qualifier declaring variable to be a program output \\
-    \cspawn & create a new process running procedure \\
-    \cwait & wait for a process to terminate \\
     \cassert & check something holds \\
-    \ctrue & boolean value true, used in assertions \\
-    \cfalse & boolean value false, used in assertions \\
     \cassume & assume something holds \\
     \catom & defines statements to be executed as one transition\\
     \catomic & defines statements to be executed without interleaving other processes\\
-    \cwhen & guarded statement \\
     \cchoose & nondeterministic choice statement \\
     \cchooseint & nondeterministic choice of integer  \\
-    \cinvariant & declare a loop invariant \\
-    \crequires & procedure precondition \\
-    \censures & procedure postcondition \\
-    \cresult & refers to result returned by procedure in contracts \\
-    \cat & refer to variable in other process, e.g., \texttt{p@x} \\
     \ccollective & a collective expression\\
+    \censures & procedure postcondition \\
+    \cfalse & boolean value false, used in assertions \\
     \cheap & the heap type \\
-    \cscope & the scope type, used to give a name to a scope \\
+    \cinput & type qualifier declaring variable to be a program input \\
+    \cinvariant & declare a loop invariant \\
     \cmalloc & malloc function with additional heap arguments \\
+    \coutput & type qualifier declaring variable to be a program output \\
+    \cproc & the process type \\
+    \crequires & procedure precondition \\
+    \cresult & refers to result returned by procedure in contracts \\
+    \cscope & the scope type, used to give a name to a scope \\
+    \cself & the evaluating process (constant of type \cproc) \\
+    \cspawn & create a new process running procedure \\   
+    \ctrue & boolean value true, used in assertions \\
+    \cwait & wait for a process to terminate \\
+    \cwhen & guarded statement \\
+    \cat & refer to variable in other process, e.g., \texttt{p@x} \\
     \texttt{*<...>} & scope-qualified pointer type
   \end{tabular}
   \caption{CIVL-C primitives.  Some of these are part of the grammar of the language;
@@ -175,9 +175,118 @@ it is not an integer and cannot be cast to one.  Certain expressions
 take an argument of \cproc{} type and some return something of
 \cproc{} type.
 
-\subsection{\cself} This is a constant of type \cproc.  It can be used
-wherever an argument of type \cproc{} is called for.  It refers to the
-process that is evaluating the expression containing ``\cself''.
+\subsection{\cassert} This is an assertion statement.  It takes as its
+sole argument an expression of boolean type.  The expressions have a
+richer syntax than C expressions.  During verification, the assertion
+is checked.  If it does not hold, a violation is reported.
+\begin{verbatim}
+  $assert expr;
+\end{verbatim}
+Boolean values \ctrue{} and \cfalse{} may be used in assertions
+and assumptions.
+
+
+\subsection{\cassume} This is an assume statement. Its syntax is the
+same as that of \cassert.  During verification, the assumed expression
+is assumed to hold.  If this leads to a contradiction on some
+execution, that execution is simply ignored.  It never reports a
+violation, it only restricts the set of possible executions that will
+be explored by the verification algorithm.
+\begin{verbatim}
+  $assume expr;
+\end{verbatim}
+
+\subsection{\catom} This defines a number of statements to be executed as one transition.  An \catom~block has the following form.
+\begin{verbatim}
+  $atom {
+    stmt1;
+    stmt2;
+    ...
+  }
+\end{verbatim}
+
+The statements inside an \catom~block are to be executed as one transition. It is required that the execution of the statements in an \catom~block is deterministic, non-blocking and finite. If one of the requirement is found to be violated, an error or a warning will be reported. For example, an error will be reported  when executing the code below, because the \cwait~statement is blocked.
+
+\begin{verbatim}  
+$atom{
+    for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
+    for(int i = 0; i < 5; i++) $wait p[i];
+}
+\end{verbatim}
+
+
+\subsection{\catomic} This defines a number of statements that will only allow the process to interleave with others when necessary. An \catomic~block has the following form.
+
+\begin{verbatim}
+  $atomic {
+    stmt1;
+    stmt2;
+    ...
+  }
+\end{verbatim}
+
+A process executing an \catomic~block will try to execute statements contained in the \catomic~block without interleaving with other processes, unless the process is blocked. For example, the following loop will be executed without interleaving with other processes.
+
+\begin{verbatim}
+$atomic{
+    for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
+}
+\end{verbatim}
+
+When no transition can be enabled, the execution of the \catomic~block will be interrupted. And other processes are allowed to execute, until the process gets enabled again to continue executing its \catomic~block. For example, in the following lines of code, after executing the first loop, the \catomic~block is blocked, because it has to wait for other processes' termination.
+ 
+\begin{verbatim}  
+$atomic{
+    for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
+    for(int i = 0; i < 5; i++) $wait p[i];
+}
+\end{verbatim}
+
+\subsection{\cchoose}  A \cchoose{} statement has the form
+\begin{verbatim}
+  $choose {
+    stmt1;
+    stmt2;
+    ...
+    default: stmt
+  }
+\end{verbatim}
+The \texttt{default} clause is optional.
+
+The guards of the statements are evaluated and among those that are
+\emph{true}, one is chosen nondeterministically and executed.  If none
+are \emph{true} and the \texttt{default} clause is present, it is
+chosen.  The \texttt{default} clause will only be selected if all
+guards are \emph{false}.  If no \texttt{default} clause is present and
+all guards are \emph{false}, the statement blocks.  Hence the implicit
+guard of the \cchoose{} statement without a \texttt{default} clause is
+the disjunction of the guards of its sub-statements.  The implicit
+guard of the \cchoose{} statement with a default clause is
+\emph{true}.
+
+Example: this shows how to encode a ``low-level'' CIVL guarded
+transition system:
+
+\begin{verbatim}
+  l1: $choose {
+    $when (x>0) {x--; goto l2;}
+    $when (x==0) {y=1; goto l3;}
+    default: {z=1; goto l4;}
+  }
+  l2: $choose {
+    ...
+  }
+  l3: $choose {
+    ...
+  }
+\end{verbatim}
+
+\subsection{\cchooseint} This is a function with the following prototype:
+\begin{verbatim}
+  int $choose_int(int n);
+\end{verbatim}
+It takes as input a positive integer \texttt{n} and non-deterministicaly returns 
+an integer in the range $[0,\texttt{n}-1]$.  
 
 \subsection{\cinput} A variable in the root scope only may be declared
 with this type modifier indicating it is an ``input'' variable, as in
@@ -193,8 +302,27 @@ same outputs (i.e., corresponding \coutput{} variables will end up
 with the same values at termination).  Input variables can also be
 assigned a concrete value on the command line.
 
+\subsection{\cinvariant} This indicates a loop invariant.  Each C loop
+construct has an optional invariant clause as follows:
+\begin{verbatim}
+  while (expr) $invariant (expr) stmt
+  for (e1; e2; e3) $invariant (expr) stmt
+  do stmt while (expr) $invariant (expr) ;
+\end{verbatim}
+The invariant encodes the claim that if \texttt{expr} holds upon
+entering the loop and the loop condition holds, then it will hold
+after completion of execution of the loop body.  The invariant is used
+by certain verification techniques.
+
+\emph{Status:} parsed, but nothing is currently done with this
+information.
+
 \subsection{\coutput} A variable in the root scope may be declared
 with this type modifier to declare it to be an output variable.
+
+\subsection{\cself} This is a constant of type \cproc.  It can be used
+wherever an argument of type \cproc{} is called for.  It refers to the
+process that is evaluating the expression containing ``\cself''.
 
 \subsection{\cspawn} This is an expression with side-effects.  It
 spawns a new process and returns a reference to the new process, i.e.,
@@ -214,26 +342,6 @@ simply ignored.
 \cproc{} and blocks until the referenced process terminates:
 \begin{verbatim}
   $wait expr;
-\end{verbatim}
-
-\subsection{\cassert} This is an assertion statement.  It takes as its
-sole argument an expression of boolean type.  The expressions have a
-richer syntax than C expressions.  During verification, the assertion
-is checked.  If it does not hold, a violation is reported.
-\begin{verbatim}
-  $assert expr;
-\end{verbatim}
-Boolean values \ctrue{} and \cfalse{} may be used in assertions
-and assumptions.
-
-\subsection{\cassume} This is an assume statement. Its syntax is the
-same as that of \cassert.  During verification, the assumed expression
-is assumed to hold.  If this leads to a contradiction on some
-execution, that execution is simply ignored.  It never reports a
-violation, it only restricts the set of possible executions that will
-be explored by the verification algorithm.
-\begin{verbatim}
-  $assume expr;
 \end{verbatim}
 
 \subsection{\cwhen} This represents a guarded command:
@@ -282,184 +390,6 @@ executes the assignment in that state.  It is equivalent to
 \begin{verbatim}
   $when (s>0 && t>0) x=y*t;
 \end{verbatim}
-
-\subsection{\cchoose}  A \cchoose{} statement has the form
-\begin{verbatim}
-  $choose {
-    stmt1;
-    stmt2;
-    ...
-    default: stmt
-  }
-\end{verbatim}
-The \texttt{default} clause is optional.
-
-The guards of the statements are evaluated and among those that are
-\emph{true}, one is chosen nondeterministically and executed.  If none
-are \emph{true} and the \texttt{default} clause is present, it is
-chosen.  The \texttt{default} clause will only be selected if all
-guards are \emph{false}.  If no \texttt{default} clause is present and
-all guards are \emph{false}, the statement blocks.  Hence the implicit
-guard of the \cchoose{} statement without a \texttt{default} clause is
-the disjunction of the guards of its sub-statements.  The implicit
-guard of the \cchoose{} statement with a default clause is
-\emph{true}.
-
-Example: this shows how to encode a ``low-level'' CIVL guarded
-transition system:
-
-\begin{verbatim}
-  l1: $choose {
-    $when (x>0) {x--; goto l2;}
-    $when (x==0) {y=1; goto l3;}
-    default: {z=1; goto l4;}
-  }
-  l2: $choose {
-    ...
-  }
-  l3: $choose {
-    ...
-  }
-\end{verbatim}
-
-\subsection{\cchooseint} This is a function with the following prototype:
-\begin{verbatim}
-  int $choose_int(int n);
-\end{verbatim}
-It takes as input a positive integer \texttt{n} and returns an integer
-in the range $[0,\texttt{n}-1]$.  
-
-\subsection{\catom} This defines a number of statements to be executed as one transition.  An \catom~block has the following form.
-\begin{verbatim}
-  $atom {
-    stmt1;
-    stmt2;
-    ...
-  }
-\end{verbatim}
-
-The statements inside an \catom~block are to be executed as one transition. It is required that the execution of the statements in an \catom~block is deterministic, non-blocking and finite. If one of the requirement is found to be violated, an error or a warning will be reported. For example, an error will be reported  when executing the code below, because the \cwait~statement is blocked.
-
-\begin{verbatim}  
-$atom{
-    for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
-    for(int i = 0; i < 5; i++) $wait p[i];
-}
-\end{verbatim}
-
-
-\subsection{\catomic} This defines a number of statements that will only allow the process to interleave with others when necessary. An \catomic~block has the following form.
-
-\begin{verbatim}
-  $atomic {
-    stmt1;
-    stmt2;
-    ...
-  }
-\end{verbatim}
-
-A process executing an \catomic~block will try to execute statements contained in the \catomic~block without interleaving with other processes, unless the process is blocked. For example, the following loop will be executed without interleaving with other processes.
-
-\begin{verbatim}
-$atomic{
-    for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
-}
-\end{verbatim}
-
-
-When no transition can be enabled, the execution of the \catomic~block will be interrupted. And other processes are allowed to execute, until the process gets enabled again to continue executing its \catomic~block. For example, in the following lines of code, after executing the first loop, the \catomic~block is blocked, because it has to wait for other processes' termination.
- 
-\begin{verbatim}  
-$atomic{
-    for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
-    for(int i = 0; i < 5; i++) $wait p[i];
-}
-\end{verbatim}
-
-%Ideally, there will be two states saved for [Example 2]. The first is the state after executing the first loop, and the second is after executing the second loop.
-%
-%One question here is, if processes p[0] to p[4] terminates in the order of 0-4, then the loop for(int i = 0; i < 5; i++) $wait p[i]; will have 5 saved states, the transitions of which are like ...p[0] terminates...wait p[0]... p[1] terminates... wait p[1]....
-%Maybe we need some special structure for $wait, like $wait {p[0], p[1], p[2], ...}? That is to wait for a set of processes at a time, instead of one process at a time. Or provide some expression to specify the termination of certain processes as a guard, something to return true if a given process terminates like $terminate(p[0])?
-%
-%Interleaving between processes are enabled when blocking happens, we need to think carefully. When there are more than one processes that have previously blocked atomic sections but gets enabled again at some state, that state is saved, and enabled transitions at that state are all enabled transitions from processes that are in some atomic sections (i.e. the atomic counter of the process is greater than 0). A statement to update the atomic lock variable is also integrated into the transitions  from each process.
-%
-%[Example 3] gives an example for this situation. In [Example 3], p1 and p2 will both execute the first two statements (y = y + i; z++;) in its atomic block, and then they get blocked because x!=0. Then the main process gets to execute when(z==2) x = 0;, which enables both p1 and p2. Then p1 and p2 are non-deterministically chosen to complete its atomic block.
-%
-%If there is only one such process, then that process gets to execute as a normal atomic block, like [Example 2].
-%
-%[Example 3]
-%int x = 1;
-%int y = 0;
-%int z = 0;
-%int sum = 0;
-%void main(){
-%    $proc p1 = $spawn foo(1);
-%    $proc p2 = $spawn foo(2);
-%    when (z==2) x = 0;
-%}
-%
-%void foo(i){
-%    $atomic{
-%        y = y + i;
-%        z++;
-%        when(x==0) 
-%          switch(y){
-%            case 1: sum += 1*i; break;
-%            case 2: sum += 2*i; break;
-%            case 3: sum += 3*i; break;
-%          }
-%    }
-%}
-%
-%3. a loop in the state space is detected: this means that the atomic block is infinite, we shall throw an exception or report a warning for this.
-%
-%Here is how to detect the loop.
-%- if there is no non-determinism or blocking, then the loop can be detected by maintaining a stack of states at this level.
-%
-%- if there is non-determinism or blocking that separates the execution of atomic blocks into several parts, then the stack mentioned above can't identify loops for some case, like [Example 4]. Even in this case, DfsSearcher should be able to tell if a state has been encountered before, and I think we do not introduce bugs here if we don't purposely identify loops. 
-%
-%We may maintain a counter to record the number of states that have been established in a process's atomic block and report warnings if the counter exceeds some upper bound.
-%
-%[Example 4]
-%int a = 0, b = 0;
-%
-%$atomic{
-%  1:  for(int i = 0; i < 5; i--){
-%  2:       a = 1;
-%  3:       choose{
-%  4:            when(2 > 1) b = 2;
-%  5:            when(3 > 1) b = 3;
-%  6:       }
-%  7:       i++;
-%    }
-%}
-%
-%In [Example 4], assume we have the following states during the execution, where s(x,y,z,L) means a state s with a = x, b=y, i=z and location being L.
-%
-%s1(1,0,0,L3) (after executing a=1)
-%s2(1,2,0,L3) (after executing when(2 > 1) b = 2; i++; i--; a=1)
-%s3(1,3,0,L3) (after executing when(3 > 1) b = 3; i++; i--; a=1)
-%s4(1,2,0,L3) (after executing when(2 > 1) b = 2; i++; i--; a=1)
-%s5(1,3,0,L3) (after executing when(3 > 1) b = 3; i++; i--; a=1)
-%
-%Here s2 and s4 are identical, s5 and s6 are identical. And DfsSearcher should be able to detect the loop because s1, s2, s3 are saved.
-
-
-
-\subsection{\cinvariant} This indicates a loop invariant.  Each C loop
-construct has an optional invariant clause as follows:
-\begin{verbatim}
-  while (expr) $invariant (expr) stmt
-  for (e1; e2; e3) $invariant (expr) stmt
-  do stmt while (expr) $invariant (expr) ;
-\end{verbatim}
-The invariant encodes the claim that if \texttt{expr} holds upon
-entering the loop and the loop condition holds, then it will hold
-after completion of execution of the loop body.  The invariant is used
-by certain verification techniques.
-
-\emph{Status:} parsed, but nothing is currently done with this
-information.
 
 \subsection{Procedure contracts}
 The \crequires{} and \censures{} primitives are used to encode
