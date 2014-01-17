@@ -88,12 +88,13 @@ public class Libcivlc implements LibraryExecutor {
 	private IntObject oneObject;
 
 	private PrintStream output = System.out;
-	
-	private boolean enablePrintf; //by default true
+
+	private boolean enablePrintf; // by default true
 
 	// private SymbolicType bundleSymbolicType;
 
-	public Libcivlc(Executor primaryExecutor, PrintStream output, boolean enablePrintf) {
+	public Libcivlc(Executor primaryExecutor, PrintStream output,
+			boolean enablePrintf) {
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		// this.log = evaluator.log();
@@ -798,7 +799,7 @@ public class Libcivlc implements LibraryExecutor {
 		String stringOutput = new String();
 		Vector<Object> arguments = new Vector<Object>();
 
-		if(!this.enablePrintf)
+		if (!this.enablePrintf)
 			return state;
 		// obtain printf() arguments
 		stringOfSymbolicExpression += argumentValues[0];
@@ -874,39 +875,35 @@ public class Libcivlc implements LibraryExecutor {
 		for (int i = 0; i < individualChars.size(); i++) {
 			if (individualChars.get(i).equals("\\")
 					&& (i < individualChars.size() - 1)) {
-				if (individualChars.get(i + 1).equals("n")) {
+				switch (individualChars.get(i + 1)) {
+				case "n":
 					stringOutput += "\n";
 					i++;
-					continue;
-				}
-				if (individualChars.get(i + 1).equals("t")) {
+					break;
+				case "t":
 					stringOutput += "\t";
 					i++;
-					continue;
-				}
-				if (individualChars.get(i + 1).equals("r")) {
+					break;
+				case "r":
 					stringOutput += "\r";
 					i++;
-					continue;
-				}
-				if (individualChars.get(i + 1).equals("b")) {
+					break;
+				case "b":
 					stringOutput += "\b";
 					i++;
-				}
-				if (individualChars.get(i + 1).equals("f")) {
+					break;
+				case "f":
 					stringOutput += "\f";
 					i++;
-					continue;
-				}
-				if (individualChars.get(i + 1).equals("\"")) {
+					break;
+				case "\"":
 					stringOutput += "\"";
 					i++;
-					continue;
-				}
-				if (individualChars.get(i + 1).equals("\'")) {
+					break;
+				case "\'":
 					stringOutput += "\'";
 					i++;
-					continue;
+					break;
 				}
 			} else {
 				stringOutput += individualChars.get(i);
