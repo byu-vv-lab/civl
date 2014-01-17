@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
 import edu.udel.cis.vsl.civl.CIVL;
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
@@ -547,15 +548,14 @@ public class UserInterface {
 				showShortFileName);
 		try {
 			result = verifier.run();
+		} catch (CIVLUnimplementedFeatureException unimplemented) {
+			verifier.terminateUpdater();
+			out.println();
+			out.println("Error: " + unimplemented.toString());
+			return false;
 		} catch (Exception e) {
 			verifier.terminateUpdater();
-			if (config.isTrue(debugO))
-				throw e;
-			else {
-				out.println();
-				out.println("Error: " + e.toString());
-				return false;
-			}
+			throw e;
 		}
 		printStats(out);
 		verifier.printStats();
