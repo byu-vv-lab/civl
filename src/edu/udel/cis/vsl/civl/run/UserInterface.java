@@ -388,7 +388,7 @@ public class UserInterface {
 		long numProverCalls = universe.numProverValidCalls();
 		long memory = Runtime.getRuntime().totalMemory();
 
-		out.println(bar + " Stats " + bar);
+		out.println("\n" + bar + " Stats " + bar);
 		out.print("   validCalls          : ");
 		out.println(numValidCalls);
 		out.print("   proverCalls         : ");
