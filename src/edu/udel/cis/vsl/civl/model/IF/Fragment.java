@@ -16,10 +16,36 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 public interface Fragment {
 
 	/**
+	 * Add a specified guard to the all statements of the start location. If a
+	 * statement has an existing guard, then it will have a new guard which is a
+	 * conjunction of the both. This method is used for translating a when
+	 * statement, where it adds the guard of the when statement to the start
+	 * location of its body fragment.
 	 * 
-	 * @return The start location of this fragment
+	 * @param guard
+	 *            The guard that is to be combined with
+	 * @param factory
+	 *            The model factory that provides some helper methods that are
+	 *            useful in checking if an expression is True.
 	 */
-	Location startLocation();
+	void addGuardToStartLocation(Expression guard, ModelFactory factory);
+	
+	/**
+	 * Combine two fragment in sequential order. <br>
+	 * Precondition: <code>this.lastStatement == null</code>
+	 * 
+	 * @param next
+	 *            the fragment that comes after the current fragment
+	 * @return the sequential combination of both fragments
+	 */
+	Fragment combineWith(Fragment next);
+	
+	/**
+	 * Check if the fragment is empty
+	 * 
+	 * @return true iff both the start location and the last statement are null
+	 */
+	boolean isEmpty();
 
 	/**
 	 * 
@@ -27,6 +53,29 @@ public interface Fragment {
 	 */
 	Statement lastStatement();
 
+	/**
+	 * Combine this fragment and another fragment in parallel, i.e., merge the
+	 * start location, and add the last statement of both fragments as the last
+	 * statement of the result fragment
+	 * 
+	 * @param parallel
+	 *            the second fragment to be combined with <dt>
+	 *            <b>Preconditions:</b>
+	 *            <dd>
+	 *            this.startLocation.id() === parallel.startLocation.id()
+	 * 
+	 * @return the new fragment after the combination
+	 */
+	Fragment parallelCombineWith(Fragment parallel);
+	
+	/**
+	 * Print the fragment
+	 * 
+	 * @param out
+	 *            the print stream
+	 */
+	void Print(PrintStream out);
+	
 	/**
 	 * Update the start location of this fragment
 	 * 
@@ -43,49 +92,11 @@ public interface Fragment {
 	 */
 	void setLastStatement(Statement statement);
 
-//	/**
-//	 * Make this fragment atomic
-//	 */
-//	void makeAtomic(boolean deterministic);
-
 	/**
-	 * Combine two fragment in sequential
 	 * 
-	 * @param next
-	 *            the fragment that comes after the current fragment
-	 * @return the sequential combination of both fragments
+	 * @return The start location of this fragment
 	 */
-	Fragment combineWith(Fragment next);
-
-	/**
-	 * Combine this fragment and another fragment in parallel, i.e., merge the
-	 * start location, and add the last statement of both fragments as the last
-	 * statement of the result fragment
-	 * 
-	 * @param parallel
-	 *            the second fragment to be combined with <dt>
-	 *            <b>Preconditions:</b>
-	 *            <dd>
-	 *            this.startLocation.id() === parallel.startLocation.id()
-	 * 
-	 * @return the new fragment after the combination
-	 */
-	Fragment parallelCombineWith(Fragment parallel);
-
-	/**
-	 * Check if the fragment is empty
-	 * 
-	 * @return true iff both the start location and the last statement are null
-	 */
-	boolean isEmpty();
-
-	/**
-	 * Print the fragment
-	 * 
-	 * @param out
-	 *            the print stream
-	 */
-	void Print(PrintStream out);
+	Location startLocation();
 
 	/**
 	 * Update the start location with a new location
@@ -95,16 +106,4 @@ public interface Fragment {
 	 */
 	void updateStartLocation(Location newLocation);
 
-	/**
-	 * Add a specified guard to the all statements of the start location. If a
-	 * statement has an existing guard, then it will have a new guard which is a
-	 * conjunction of the both.
-	 * 
-	 * @param guard
-	 *            The guard that is to be combined with
-	 * @param factory
-	 *            The model factory that provides some helper methods that are
-	 *            useful in checking if an expression is True.
-	 */
-	void addGuardToStartLocation(Expression guard, ModelFactory factory);
 }

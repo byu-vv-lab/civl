@@ -327,32 +327,38 @@ public class CommonModelFactory implements ModelFactory {
 	/************************ Methods from ModelFactory **********************/
 
 	@Override
-	public Model model(CIVLSource civlSource, CIVLFunction system) {
-		return new CommonModel(civlSource, this, system);
+	public void addConditionalExpressionQueue() {
+		conditionalExpressions.add(new ArrayDeque<ConditionalExpression>());
 	}
-
+	
 	@Override
-	public void setTokenFactory(TokenFactory tokens) {
-		this.tokenFactory = tokens;
+	public CIVLPrimitiveType booleanType() {
+		return booleanType;
 	}
-
+	
 	@Override
-	public CIVLSource systemSource() {
-		return systemSource;
+	public CIVLPrimitiveType charType() {
+		return charType;
 	}
-
+	
 	@Override
-	public Scope scope(CIVLSource source, Scope parent,
-			Set<Variable> variables, CIVLFunction function) {
-		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
-
-		if (parent != null) {
-			parent.addChild(newScope);
+	public CIVLPrimitiveType dynamicType() {
+		return dynamicType;
+	}
+	
+	@Override
+	public CIVLFunction function(CIVLSource source, Identifier name,
+			List<Variable> parameters, CIVLType returnType,
+			Scope containingScope, Location startLocation) {
+		for (Variable v : parameters) {
+			if (v.type() instanceof CIVLArrayType) {
+				throw new CIVLInternalException("Parameter of array type.", v);
+			}
 		}
-		newScope.setFunction(function);
-		return newScope;
+		return new CommonFunction(source, name, parameters, returnType,
+				containingScope, startLocation, this);
 	}
-
+	
 	@Override
 	public Identifier identifier(CIVLSource source, String name) {
 		Identifier result = identifiers.get(name);
@@ -366,26 +372,64 @@ public class CommonModelFactory implements ModelFactory {
 		}
 		return result;
 	}
-
+	
 	@Override
-	public Variable variable(CIVLSource source, CIVLType type, Identifier name,
-			int vid) {
-		return new CommonVariable(source, type, name, vid);
+	public CIVLArrayType incompleteArrayType(CIVLType baseType) {
+		return new CommonArrayType(baseType);
+	}
+	
+	@Override
+	public CIVLPrimitiveType integerType() {
+		return integerType;
+	}
+	
+	@Override
+	public Location location(CIVLSource source, Scope scope) {
+		return new CommonLocation(source, scope, locationID++);
+	}
+	
+	@Override
+	public Model model(CIVLSource civlSource, CIVLFunction system) {
+		return new CommonModel(civlSource, this, system);
+	}
+	
+	@Override
+	public CIVLPrimitiveType processType() {
+		return processType;
+	}
+	
+	@Override
+	public CIVLPrimitiveType realType() {
+		return realType;
 	}
 
 	@Override
-	public CIVLFunction function(CIVLSource source, Identifier name,
-			List<Variable> parameters, CIVLType returnType,
-			Scope containingScope, Location startLocation) {
-		for (Variable v : parameters) {
-			if (v.type() instanceof CIVLArrayType) {
-				throw new CIVLInternalException("Parameter of array type.", v);
-			}
+	public Scope scope(CIVLSource source, Scope parent,
+			Set<Variable> variables, CIVLFunction function) {
+		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
+
+		if (parent != null) {
+			parent.addChild(newScope);
 		}
-		return new CommonFunction(source, name, parameters, returnType,
-				containingScope, startLocation, this);
+		newScope.setFunction(function);
+		return newScope;
 	}
-
+	
+	@Override
+	public CIVLPrimitiveType scopeType() {
+		return scopeType;
+	}
+	
+	@Override
+	public void setTokenFactory(TokenFactory tokens) {
+		this.tokenFactory = tokens;
+	}
+	
+	@Override
+	public CIVLPrimitiveType stringType() {
+		return stringType;
+	}
+	
 	@Override
 	public SystemFunction systemFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
@@ -395,60 +439,16 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public Location location(CIVLSource source, Scope scope) {
-		return new CommonLocation(source, scope, locationID++);
-	}
-
-	/* *********************************************************************
-	 * Types
-	 * *********************************************************************
-	 */
-
-	@Override
-	public CIVLPrimitiveType integerType() {
-		return integerType;
+	public CIVLSource systemSource() {
+		return systemSource;
 	}
 
 	@Override
-	public CIVLPrimitiveType realType() {
-		return realType;
+	public Variable variable(CIVLSource source, CIVLType type, Identifier name,
+			int vid) {
+		return new CommonVariable(source, type, name, vid);
 	}
-
-	@Override
-	public CIVLPrimitiveType booleanType() {
-		return booleanType;
-	}
-
-	@Override
-	public CIVLPrimitiveType stringType() {
-		return stringType;
-	}
-
-	@Override
-	public CIVLPrimitiveType charType() {
-		return charType;
-	}
-
-	@Override
-	public CIVLPrimitiveType scopeType() {
-		return scopeType;
-	}
-
-	@Override
-	public CIVLPrimitiveType processType() {
-		return processType;
-	}
-
-	@Override
-	public CIVLPrimitiveType dynamicType() {
-		return dynamicType;
-	}
-
-	@Override
-	public CIVLArrayType incompleteArrayType(CIVLType baseType) {
-		return new CommonArrayType(baseType);
-	}
-
+	
 	@Override
 	public CIVLCompleteArrayType completeArrayType(CIVLType elementType,
 			Expression extent) {
@@ -1382,10 +1382,7 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	@Override
-	public void addConditionalExpressionQueue() {
-		conditionalExpressions.add(new ArrayDeque<ConditionalExpression>());
-	}
+	
 
 	@Override
 	public void popConditionaExpressionStack() {
@@ -1607,8 +1604,86 @@ public class CommonModelFactory implements ModelFactory {
 		assignStatement.setTarget(target);
 		return assignStatement;
 	}
+	
+	@Override
+	public void setImpactScopeOfLocation(Location location) {
+		if (location.enterAtom() || location.enterAtomic()) {
+			Stack<Integer> atomFlags = new Stack<Integer>();
+			Set<Integer> checkedLocations = new HashSet<Integer>();
+			Scope impactScope = null;
+			Stack<Location> workings = new Stack<Location>();
 
-	/************************** Private Methods *************************/
+			workings.add(location);
+			// DFS searching for reachable statements inside the $atomic/$atom
+			// block
+			while (!workings.isEmpty()) {
+				Location currentLocation = workings.pop();
+
+				checkedLocations.add(currentLocation.id());
+				if (location.enterAtom() && currentLocation.enterAtom())
+					atomFlags.push(1);
+				if (location.enterAtomic() && currentLocation.enterAtomic())
+					atomFlags.push(1);
+				if (location.enterAtom() && currentLocation.leaveAtom())
+					atomFlags.pop();
+				if (location.enterAtomic() && currentLocation.leaveAtomic())
+					atomFlags.pop();
+				if (atomFlags.isEmpty()) {
+					if (location.enterAtom()) {
+						if (!currentLocation.enterAtom())
+							atomFlags.push(1);
+					}
+					if (location.enterAtomic()) {
+						if (!currentLocation.enterAtomic())
+							atomFlags.push(1);
+					}
+					continue;
+				}
+				if (currentLocation.getNumOutgoing() > 0) {
+					int number = currentLocation.getNumOutgoing();
+					for (int i = 0; i < number; i++) {
+						Statement s = currentLocation.getOutgoing(i);
+
+						if (s instanceof CallOrSpawnStatement) {
+							if (((CallOrSpawnStatement) s).isCall()) {
+								// calling a function is considered as impact
+								// scope because we don't keep record of the
+								// total impact scope of a function
+								// TODO calculate total impact scope for a
+								// function
+								location.setImpactScopeOfAtomicOrAtomBlock(systemScope);
+								return;
+							}
+						}
+						if (impactScope == null)
+							impactScope = s.statementScope();
+						else
+							impactScope = join(impactScope, s.statementScope());
+						if (impactScope != null
+								&& impactScope.id() == systemScope.id()) {
+							location.setImpactScopeOfAtomicOrAtomBlock(impactScope);
+							return;
+						}
+						if (s.target() != null) {
+							if (!checkedLocations.contains(s.target().id())) {
+								workings.push(s.target());
+
+							}
+						}
+					}
+				}
+			}
+			location.setImpactScopeOfAtomicOrAtomBlock(impactScope);
+			return;
+		}
+	}
+	
+	@Override
+	public SymbolicExpression undefinedProcessValue() {
+		return this.undefinedProcessValue;
+	}
+
+	/***************************** Private Methods ***************************/
 
 	private SymbolicTupleType computeDynamicHeapType(
 			Iterable<MallocStatement> mallocStatements) {
@@ -1810,84 +1885,6 @@ public class CommonModelFactory implements ModelFactory {
 
 		result = universe.canonic(result);
 		return result;
-	}
-
-	@Override
-	public void setImpactScopeOfLocation(Location location) {
-		if (location.enterAtom() || location.enterAtomic()) {
-			Stack<Integer> atomFlags = new Stack<Integer>();
-			Set<Integer> checkedLocations = new HashSet<Integer>();
-			Scope impactScope = null;
-			Stack<Location> workings = new Stack<Location>();
-
-			workings.add(location);
-			// DFS searching for reachable statements inside the $atomic/$atom
-			// block
-			while (!workings.isEmpty()) {
-				Location currentLocation = workings.pop();
-
-				checkedLocations.add(currentLocation.id());
-				if (location.enterAtom() && currentLocation.enterAtom())
-					atomFlags.push(1);
-				if (location.enterAtomic() && currentLocation.enterAtomic())
-					atomFlags.push(1);
-				if (location.enterAtom() && currentLocation.leaveAtom())
-					atomFlags.pop();
-				if (location.enterAtomic() && currentLocation.leaveAtomic())
-					atomFlags.pop();
-				if (atomFlags.isEmpty()) {
-					if (location.enterAtom()) {
-						if (!currentLocation.enterAtom())
-							atomFlags.push(1);
-					}
-					if (location.enterAtomic()) {
-						if (!currentLocation.enterAtomic())
-							atomFlags.push(1);
-					}
-					continue;
-				}
-				if (currentLocation.getNumOutgoing() > 0) {
-					int number = currentLocation.getNumOutgoing();
-					for (int i = 0; i < number; i++) {
-						Statement s = currentLocation.getOutgoing(i);
-
-						if (s instanceof CallOrSpawnStatement) {
-							if (((CallOrSpawnStatement) s).isCall()) {
-								// calling a function is considered as impact
-								// scope because we don't keep record of the
-								// total impact scope of a function
-								// TODO calculate total impact scope for a
-								// function
-								location.setImpactScopeOfAtomicOrAtomBlock(systemScope);
-								return;
-							}
-						}
-						if (impactScope == null)
-							impactScope = s.statementScope();
-						else
-							impactScope = join(impactScope, s.statementScope());
-						if (impactScope != null
-								&& impactScope.id() == systemScope.id()) {
-							location.setImpactScopeOfAtomicOrAtomBlock(impactScope);
-							return;
-						}
-						if (s.target() != null) {
-							if (!checkedLocations.contains(s.target().id())) {
-								workings.push(s.target());
-
-							}
-						}
-					}
-				}
-			}
-			location.setImpactScopeOfAtomicOrAtomBlock(impactScope);
-			return;
-		}
-	}
-
-	@Override
-	public SymbolicExpression undefinedProcessValue() {
-		return this.undefinedProcessValue;
 	}
 
 }
