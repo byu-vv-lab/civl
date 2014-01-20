@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.Executor.StateStatusKind;
@@ -61,26 +62,31 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 	/**
 	 * Save states during search?
+	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#saveStatesO}
 	 */
 	private boolean saveStates = true;
 
 	/**
 	 * Print saved states (i.e., canonicalized states)?
+	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#showSavedStatesO}
 	 */
 	private boolean showSavedStates = false;
 
 	/**
 	 * Print all states (including states that are not saved)?
+	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#showStatesO}
 	 */
 	private boolean showStates = false;
 
 	/**
 	 * Print transitions?
+	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#showTransitionsO}
 	 */
 	private boolean showTransitions = false;
 
 	/**
 	 * Simplify state returned by nextState?
+	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#simplifyO}
 	 */
 	private boolean simplify = true;
 
@@ -91,6 +97,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 	/**
 	 * Turn on/off verbose mode.
+	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#verboseO}
 	 */
 	private boolean verbose = false;
 
@@ -138,9 +145,9 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	/***************************** Private Methods ***************************/
 
 	/**
-	 * Executes a deterministic atom block ($atom), supporting nested atom
-	 * blocks, require that the whole block is finite, non-blocking and
-	 * deterministic. Otherwise, a warning or an error will be reported.
+	 * Executes an $atom block, supporting nested atom blocks. It requires that
+	 * the whole block is finite, non-blocking and deterministic. Otherwise, a
+	 * warning or an error will be reported.
 	 * 
 	 * Precondition:
 	 * <code> location.enterAtom() == true && location == state.getProcessState(pid).getLocation()</code>
@@ -228,23 +235,133 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		}
 	}
 
-	private void reportError(StateStatusKind kind, State state,
-			Location location) {
-		switch (kind) {
-		case NONDETERMINISTIC:
-			executor.evaluator().reportError(
-					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
-							"Non-determinism is encountered in $atom block.",
-							state, location.getSource()));
-			break;
-		case BLOCKED:
-			executor.evaluator().reportError(
-					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
-							"Blocked location is encountered in $atom block.",
-							state, location.getSource()));
-			break;
-		default:
+	/**
+	 * Execute the enabled statements from an ATOMIC_ENTER location of an
+	 * $atomic block. When the process is already in atomic execution, i.e.,
+	 * <code>p.inAtomic() == true</code>, then the atomic lock variable assign
+	 * statement <code>$ATOMIC_LOCK_VAR = $self</code> is ignored.
+	 * 
+	 * @param pLocation
+	 *            The location to work with.
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the current executing process.
+	 * @return A pair of the executed statement and the resulting state.
+	 */
+	private Pair<Statement, State> executeAtomicEnter(Location pLocation,
+			State state, int pid) {
+		State newState = state;
+		ProcessState p = state.getProcessState(pid);
+		Statement executedStatement;
+
+		assert !stateFactory.lockedByAtomic(newState)
+				|| stateFactory.processInAtomic(newState).getPid() == pid;
+		executedStatement = pLocation.getOutgoing(0);
+		if (!p.inAtomic()) {
+			newState = executor.executeStatement(newState, pLocation,
+					executedStatement, pid).right;
+		} else {
+			newState = executor.transition(newState,
+					newState.getProcessState(pid), executedStatement.target());
 		}
+		p = newState.getProcessState(pid).incrementAtomicCount();
+		newState = stateFactory.setProcessState(newState, p, pid);
+		return new Pair<Statement, State>(executedStatement, newState);
+	}
+
+	/**
+	 * Execute the enabled statements from an ATOMIC_EXIT location of an $atomic
+	 * block. When the process already finishes all active atomic execution,
+	 * i.e., <code>p.inAtomic() == false</code>, then the atomic lock variable
+	 * assign statement <code>$ATOMIC_LOCK_VAR = process<-1></code> will be
+	 * executed; otherwise, it is merely ignored.
+	 * 
+	 * @param pLocation
+	 *            The location to work with.
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the current executing process.
+	 * @param print
+	 *            True iff each step is to be printed.
+	 * @return A pair of the executed statement and the resulting state.
+	 */
+	private Pair<Statement, State> executeAtomicExit(Location pLocation,
+			State state, int pid, boolean print) {
+		State newState = state;
+		ProcessState p;
+		Statement executedStatement;
+
+		assert stateFactory.processInAtomic(newState).getPid() == pid;
+		p = newState.getProcessState(pid).decrementAtomicCount();
+		newState = stateFactory.setProcessState(newState, p, pid);
+		executedStatement = pLocation.getOutgoing(0);
+		if (!p.inAtomic()) {
+			newState = executor.executeStatement(newState, pLocation,
+					pLocation.getOutgoing(0), pid).right;
+			if (print) {
+				printStatement(executedStatement, AtomicKind.ATOMIC_EXIT,
+						p.atomicCount(), true);
+			}
+		} else
+			newState = executor.transition(newState,
+					newState.getProcessState(pid), executedStatement.target());
+		return new Pair<Statement, State>(executedStatement, newState);
+	}
+
+	/**
+	 * Execute the enabled statements from a normal location in an $atomic
+	 * block. The result might be:
+	 * <ol>
+	 * <li>a sudo noop statement and the original state, when the location is
+	 * non-deterministic;</li>
+	 * <li>the unique statement that is enabled and the resulting state, when
+	 * the location is deterministic and non-blocked; or</li>
+	 * <li>NULL, when the location is blocked.</li>
+	 * </ol>
+	 * 
+	 * @param pLocation
+	 *            The location to work on.
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the currently working process.
+	 * @return A pair of the executed statement and the resulting state.
+	 */
+	private Pair<Statement, State> executeAtomicNormal(Location pLocation,
+			State state, int pid) {
+		State newState = state;
+		Statement executedStatement = null;
+		State oldState = newState;
+		boolean executed = false;
+
+		for (Statement s : pLocation.outgoing()) {
+			Pair<StateStatusKind, State> temp = executor.executeStatement(
+					oldState, pLocation, s, pid);
+
+			switch (temp.left) {
+			case NONDETERMINISTIC:
+				// finds non-determinism, go back to previous state
+				return new Pair<Statement, State>(new CommonNoopStatement(),
+						oldState);
+			case NORMAL:
+				if (executed) {
+					// finds non-determinism, go back to previous state
+					return new Pair<Statement, State>(
+							new CommonNoopStatement(), oldState);
+				}
+				executed = true;
+				newState = temp.right;
+				executedStatement = s;
+				break;
+			default:// BLOCKED, continue to try executing next statement
+				continue;
+			}
+		}
+		if (executedStatement != null)
+			return new Pair<Statement, State>(executedStatement, newState);
+		return null;
 	}
 
 	/**
@@ -259,7 +376,9 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 *            The start location of the execution
 	 * @param atomic
 	 *            True iff executing statements in an atomic block; false iff
-	 *            executing statements found to be purely local
+	 *            executing purely-local statements in non-atomic context.
+	 * @param print
+	 *            True iff each step is to be printed.
 	 * @return The resulting state
 	 */
 	private State executeAtomicOrPurelyLocalStatements(State state, int pid,
@@ -269,6 +388,9 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		State newState = state;
 		Statement executedStatement = null;
 		boolean atomicLockVarChanged = false;
+		Pair<Statement, State> oneStep;
+		State oldState = null;
+		boolean stepExecuted = false;
 
 		assert atomic || pLocation.isPurelyLocal();
 		while ((!atomic && pLocation != null && pLocation.isPurelyLocal())
@@ -276,97 +398,62 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			if (pLocation.isLoopPossible()) {
 				return newState;
 			}
-			executedStatement = null;
 			atomicLockVarChanged = false;
+			oneStep = null;
+			stepExecuted = true;
 			switch (pLocation.atomicKind()) {
 			case NONE:
-				boolean executed = false;
-				State oldState = newState;
-
-				for (Statement s : pLocation.outgoing()) {
-					Pair<StateStatusKind, State> temp = executor
-							.executeStatement(oldState, pLocation, s, pid);
-
-					switch (temp.left) {
-					case NONDETERMINISTIC:
-						// finds non-determinism, go back to previous state
-						return oldState;
-					case NORMAL:
-						if (executed) {
-							// finds non-determinism, go back to previous state
-							return oldState;
-						}
-						executed = true;
-						newState = temp.right;
-						executedStatement = s;
-						break;
-					default:// BLOCKED, continue to try executing next statement
-						continue;
-					}
-				}
-				if (!executed) {// location is blocked
-					oldState = stateFactory.releaseAtomicLock(oldState);
-					if (print) {
-						out.println("  " + pLocation.id()
-								+ ": ($ATOMIC_LOCK_VAR = process<-1>) at "
-								+ pLocation.getSource().getSummary() + ";");
-					}
-					return oldState;
-				}
+				oldState = newState;
+				oneStep = executeAtomicNormal(pLocation, newState, pid);
 				break;
 			case ATOM_ENTER:
 				newState = executeAtomBlock(newState, pid, pLocation, print);
+				stepExecuted = false;
 				break;
 			case ATOMIC_ENTER:
 				if (atomic) {
-					assert !stateFactory.lockedByAtomic(newState)
-							|| stateFactory.processInAtomic(newState).getPid() == pid;
-					executedStatement = pLocation.getOutgoing(0);
-					if (!p.inAtomic()) {
-						newState = executor.executeStatement(newState,
-								pLocation, executedStatement, pid).right;
+					if (!p.inAtomic())
 						atomicLockVarChanged = true;
-					} else {
-						newState = executor.transition(newState,
-								newState.getProcessState(pid),
-								executedStatement.target());
-					}
-					p = newState.getProcessState(pid).incrementAtomicCount();
-					newState = stateFactory.setProcessState(newState, p, pid);
-					// newState = stateFactory.getAtomicLock(newState, pid);
+					oneStep = executeAtomicEnter(pLocation, newState, pid);
 				} else {
 					newState = executeAtomicOrPurelyLocalStatements(newState,
 							pid, pLocation, true, print);
+					stepExecuted = false;
 				}
 				break;
 			case ATOMIC_EXIT:
 				if (!atomic)
 					throw new CIVLInternalException("Unreachable",
 							pLocation.getSource());
-				assert stateFactory.processInAtomic(newState).getPid() == pid;
-				p = newState.getProcessState(pid).decrementAtomicCount();
-				newState = stateFactory.setProcessState(newState, p, pid);
-				executedStatement = pLocation.getOutgoing(0);
-				if (!p.inAtomic()) {
-					// newState = stateFactory.releaseAtomicLock(newState);
-					newState = executor.executeStatement(newState, pLocation,
-							pLocation.getOutgoing(0), pid).right;
-					if (print) {
-						printStatement(executedStatement,
-								AtomicKind.ATOMIC_EXIT, p.atomicCount(), true);
-					}
-					return newState;
-				} else
-					newState = executor.transition(newState,
-							newState.getProcessState(pid),
-							executedStatement.target());
+				oneStep = executeAtomicExit(pLocation, newState, pid, print);
 				break;
 			default:
 				throw new CIVLInternalException("Unreachable",
 						pLocation.getSource());
 			}
+			if (oneStep == null && stepExecuted) {
+				// location is blocked
+				if (atomic)
+					oldState = stateFactory.releaseAtomicLock(oldState);
+				if (print) {
+					out.println("  " + pLocation.id()
+							+ ": ($ATOMIC_LOCK_VAR = process<-1>) at "
+							+ pLocation.getSource().getSummary() + ";");
+				}
+				return oldState;
+			} else if (oneStep != null) {
+				executedStatement = oneStep.left;
+				newState = oneStep.right;
+				// non-determinism
+				if (newState == oldState)
+					return oldState;
+				if (atomic) {
+					if (!newState.getProcessState(pid).inAtomic())
+						return newState;
+				}
+			}
 			p = newState.getProcessState(pid);
-			if (print && executedStatement != null) {
+			if (print && stepExecuted) {
 				printStatement(executedStatement, pLocation.atomicKind(),
 						p.atomicCount(), atomicLockVarChanged);
 			}
@@ -378,6 +465,19 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		return newState;
 	}
 
+	/**
+	 * Execute a transition (obtained by the enabler) of a state. When the
+	 * corresponding process is in atomic/atom execution, continue to execute
+	 * more statements as many as possible. Also execute more purely local
+	 * statements if possible.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param transition
+	 *            The transition to be executed.
+	 * @return the resulting state after execute
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State nextStateWork(State state, Transition transition)
 			throws UnsatisfiablePathConditionException {
 		int pid;
@@ -462,7 +562,6 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		if (printTransitions) {
 			out.print("--> ");
 		}
-
 		state = stateFactory.collectScopes(state);
 		// TODO: try this simplification out, see how it works:
 		if (simplify) {
@@ -492,6 +591,25 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		return state;
 	}
 
+	/**
+	 * Print a step of a statement, in the following form:
+	 * <code>src->dst: statement at file:location text;</code>For example,<br>
+	 * <code>32->17: sum = (sum+(3*i)) at f0:20.14-24 "sum += 3*i";</code><br>
+	 * When the atomic lock variable is changed during executing the statement,
+	 * then the corresponding information is printed as well. For example,<br>
+	 * <code>13->6: ($ATOMIC_LOCK_VAR = $self) x = 0 at f0:30.17-22 "x = 0";</code>
+	 * 
+	 * @param s
+	 *            The statement that has been executed in the current step.
+	 * @param atomicKind
+	 *            The atomic kind of the source location of the statement.
+	 * @param atomCount
+	 *            The atomic/atom count of the process that the statement
+	 *            belongs to.
+	 * @param atomicLockVarChanged
+	 *            True iff the atomic lock variable is changed during the
+	 *            execution of the statement.
+	 */
 	private void printStatement(Statement s, AtomicKind atomicKind,
 			int atomCount, boolean atomicLockVarChanged) {
 		CIVLSource statementSource = s.getSource();
@@ -533,6 +651,16 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			out.println(" at " + statementSource.getSummary() + ";");
 	}
 
+	/**
+	 * Print the prefix of a transition.
+	 * 
+	 * @param printTransitions
+	 *            True iff each step is to be printed.
+	 * @param state
+	 *            The source state of the transition.
+	 * @param pid
+	 *            The ID of the process that this transition associates with.
+	 */
 	private void printTransitionPrefix(boolean printTransitions, State state,
 			int pid) {
 		if (printTransitions) {
@@ -542,9 +670,45 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		}
 	}
 
+	/**
+	 * Print the updated status.
+	 */
 	private void printUpdateWork() {
 		updater.print(out);
 		out.flush();
+	}
+
+	/**
+	 * Report error message for $atom block execution, when
+	 * <ol>
+	 * <li>non-determinism is detected, or</li>
+	 * <li>a blocked location is encountered.</li>
+	 * </ol>
+	 * 
+	 * @param kind
+	 *            The status kind of the error.
+	 * @param state
+	 *            The state that the error occurs.
+	 * @param location
+	 *            The location that the error occurs.
+	 */
+	private void reportError(StateStatusKind kind, State state,
+			Location location) {
+		switch (kind) {
+		case NONDETERMINISTIC:
+			executor.evaluator().reportError(
+					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
+							"Non-determinism is encountered in $atom block.",
+							state, location.getSource()));
+			break;
+		case BLOCKED:
+			executor.evaluator().reportError(
+					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
+							"Blocked location is encountered in $atom block.",
+							state, location.getSource()));
+			break;
+		default:
+		}
 	}
 
 	/*********************** Methods from StateManagerIF *********************/
@@ -634,6 +798,10 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 	/************************** Other Public Methods *************************/
 
+	/**
+	 * 
+	 * @return the debugging option, true if under debug mode, otherwise false.
+	 */
 	public boolean getDebug() {
 		return debug;
 	}
@@ -657,30 +825,75 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		return stateFactory.getNumStatesSaved();
 	}
 
+	/**
+	 * The whole system should be using the same print stream to print
+	 * information in different components.
+	 * 
+	 * @return the output stream used by the state manager
+	 */
 	public PrintStream getOutputStream() {
 		return out;
 	}
 
+	/**
+	 * -saveStates is always true in depth first search.
+	 * 
+	 * @return the value of the option -saveStates
+	 */
 	public boolean getSaveStates() {
 		return saveStates;
 	}
 
+	/**
+	 * -showSavedStates is false by default
+	 * 
+	 * @return the value of the option -showSavedStates
+	 */
 	public boolean getShowSavedStates() {
 		return showSavedStates;
 	}
 
+	/**
+	 * -showStates is false by default
+	 * 
+	 * @return the value of the option -showStates
+	 */
 	public boolean getShowStates() {
 		return showStates;
 	}
 
+	/**
+	 * -showTransitions is false by default
+	 * 
+	 * @return the value of the option -showTransitions
+	 */
 	public boolean getShowTransitions() {
 		return showTransitions;
 	}
 
+	/**
+	 * -simplify is true by default
+	 * 
+	 * @return the value of the option -simplify
+	 */
 	public boolean getSimplify() {
 		return simplify;
 	}
 
+	/**
+	 * The updater, see also {@link #updater}.
+	 * 
+	 * @return the updater.
+	 */
+	public Printable getUpdater() {
+		return updater;
+	}
+
+	/**
+	 * -verbose is false by default
+	 * 
+	 * @return the value of the option -verbose
+	 */
 	public boolean getVerbose() {
 		return verbose;
 	}
@@ -693,44 +906,94 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		return maxProcs;
 	}
 
+	/**
+	 * Set the field debug.
+	 * 
+	 * @param value
+	 *            The value to be used.
+	 */
 	public void setDebug(boolean value) {
 		this.debug = value;
 	}
 
+	/**
+	 * Set the field savedStates.
+	 * 
+	 * @param value
+	 *            The value to be used.
+	 */
 	public void setSaveStates(boolean value) {
 		this.saveStates = value;
 	}
 
+	/**
+	 * Set the field showSavedStates.
+	 * 
+	 * @param value
+	 *            The value to be used.
+	 */
 	public void setShowSavedStates(boolean value) {
 		this.showSavedStates = value;
 	}
 
+	/**
+	 * Set the field showStates.
+	 * 
+	 * @param value
+	 *            The value to be used.
+	 */
 	public void setShowStates(boolean value) {
 		this.showStates = value;
 	}
 
+	/**
+	 * Set the field showTransitions.
+	 * 
+	 * @param value
+	 *            The value to be used.
+	 */
 	public void setShowTransitions(boolean value) {
 		this.showTransitions = value;
 	}
 
+	/**
+	 * Set the field simplify.
+	 * 
+	 * @param value
+	 *            The value to be used.
+	 */
 	public void setSimplify(boolean value) {
 		simplify = value;
 	}
 
-	public void setOutputStream(PrintStream out) {
-		this.out = out;
-	}
-
-	public void setVerbose(boolean value) {
-		this.verbose = value;
-	}
-
+	/**
+	 * Set the field savedStates.
+	 * 
+	 * @param updater
+	 *            The value to be used.
+	 */
 	public void setUpdater(Printable updater) {
 		this.updater = updater;
 	}
 
-	public Printable getUpdater() {
-		return updater;
+	/**
+	 * Set the field out.
+	 * 
+	 * @param out
+	 *            The output stream to be used.
+	 */
+	public void setOutputStream(PrintStream out) {
+		this.out = out;
+	}
+
+	/**
+	 * Set the field verbose.
+	 * 
+	 * @param value
+	 *            The value to be used.
+	 */
+	public void setVerbose(boolean value) {
+		this.verbose = value;
 	}
 
 	/**
