@@ -32,6 +32,7 @@ import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
+import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -324,11 +325,10 @@ public class Enabler implements
 		HashSet<Integer> visitedScopes = new HashSet<>();
 		HashSet<Integer> visitedProcesses = new HashSet<>();
 		ArrayList<ProcessState> allProcesses = new ArrayList<>();
-		int numOfProcs, i, minReachers, minProcIndex;
-		ProcessState p, waitProc;
-		boolean allDisabled = true;
-		HashSet<Integer> vScopes;
+		int numOfProcs;
+		ProcessState p;
 		ArrayList<Integer> iScopesP;
+		Pair<ProcessState, Integer> minimalReacher;
 
 		for (ProcessState tmp : state.getProcessStates()) {
 			if (tmp == null || tmp.hasEmptyStack())
@@ -338,90 +338,21 @@ public class Enabler implements
 		if (allProcesses.isEmpty())
 			return ampleProcesses;
 		numOfProcs = allProcesses.size();
-		i = numOfProcs - 1;
-		minReachers = numOfProcs + 1;
-		minProcIndex = i;
-		waitProc = null;
-		// find a good process to start 1. if there exist a process whose impact
-		// scope is owned by itself, then return the process as the ample
-		// process set immediately; 2. skip null or empty-stack process 3. if
-		// all process are disabled (null, empty-stack, or waiting), then ample
-		// process will contain a waiting process if there is one or it will be
-		// empty
-		vScopes = new HashSet<>();
-		do {
-			int maxReachers, currentReachers;
-			ArrayList<Integer> iScopes;
-			boolean newScope;
-
-			p = allProcesses.get(i);
-			if (blocked(p)) {
-				// if p's current statement is Wait and the joined process
-				// has terminated, then p is the ample process set
-				if (isEnabledWait(p, state)) {
-					ampleProcesses.add(p);
-					return ampleProcesses;
-				}
-				waitProc = p;
-				i--;
-				if (i < 0) {
-					if (allDisabled) {
-						if (waitProc != null)
-							ampleProcesses.add(waitProc);
-						return ampleProcesses;
-					}
-				}
-				continue;
-			}
-			if (p.getLocation().allOutgoingPurelyLocal()) {
-				ampleProcesses.add(p);
-				return ampleProcesses;
-			}
-			allDisabled = false;
-			maxReachers = 0;
-			iScopes = impactScopesOfProcess(p, state);
-			if (iScopes.isEmpty()) {
-				ampleProcesses.add(p);
-				return ampleProcesses;
-			}
-			newScope = false;
-			for (int impScope : iScopes) {
-				if (vScopes.contains(impScope))
-					continue;
-				newScope = true;
-				vScopes.add(impScope);
-				// The root scope is reachable from all processes
-				if (impScope == state.rootScopeID()) {
-					maxReachers = numOfProcs;
-					break;
-				}
-				currentReachers = state.numberOfReachers(impScope);
-				// find out the maximal number of reachers that an impact scope
-				// of process p can have
-				if (currentReachers > maxReachers)
-					maxReachers = currentReachers;
-			}
-			// all impact scopes of p has at most one reacher return p
-			// immediately as the ample process set
-			if (newScope && maxReachers <= 1) {
-				ampleProcesses.add(p);
-				return ampleProcesses;
-			}
-			// keep track of the process with least-reacher impact scope
-			if (newScope && maxReachers < minReachers) {
-				minReachers = maxReachers;
-				minProcIndex = i;
-			}
-			i--;
-		} while (i >= 0);
+		minimalReacher = minimalReachers(state, allProcesses);
+		if (minimalReacher == null)
+			return ampleProcesses;
+		if (minimalReacher.right == 1) {
+			ampleProcesses.add(minimalReacher.left);
+			return ampleProcesses;
+		}
 		// If the minimal number of reachers equals to the number of processes
 		// return all processes as the ample set immediately
-		if (minReachers == numOfProcs) {
+		if (minimalReacher.right == numOfProcs) {
 			ampleProcesses.addAll(allProcesses);
 			return ampleProcesses;
 		}
 		// Start from p, whose impact factor has the least number of reachers
-		p = allProcesses.get(minProcIndex);
+		p = minimalReacher.left;
 		ampleProcesses.add(p);
 		iScopesP = impactScopesOfProcess(p, state);
 		// Push into the working stack the impact scopes of all possible
@@ -434,53 +365,20 @@ public class Enabler implements
 		// workingScope if a wait process is encountered, the process it waits
 		// for is considered pointer is considered to be "root" scope
 		while (!workingScopes.isEmpty()) {
-			int impScope = workingScopes.pop();
-			ArrayList<ProcessState> reachersImp;
-			ArrayList<ProcessState> tmpProcesses;
+			int impactScope = workingScopes.pop();
+			ArrayList<ProcessState> reachersOfImpactScope;
+			ArrayList<ProcessState> waitDepedentProcesses;
 
 			// If imScope is a descendant of some dyscope in visitedScopes, all
-			// its owner processes are all in ampleProcesses already. Thus skip
-			// it.
-			if (isDescendantOf(impScope, visitedScopes, state))
+			// its owner processes are all in ampleProcesses already, skip it.
+			if (isDescendantOf(impactScope, visitedScopes, state))
 				continue;
-			visitedScopes.add(impScope);
-			// reachersImp is the set of procceses that can reach imScope
-			reachersImp = ownerOfScope(impScope, state, allProcesses);
-			tmpProcesses = new ArrayList<>();
-			// For each process in reacher set, if its current statement is
-			// wait, add the process that it waits for to a new "reacher set"
-			// (tmpProcesses).
-			for (ProcessState proc : reachersImp) {
-				int pid = proc.getPid();
-
-				tmpProcesses.add(proc);
-				if (!visitedProcesses.contains(pid)) {
-					for (Statement s : proc.getLocation().outgoing()) {
-						if (s instanceof WaitStatement) {
-							try {
-								WaitStatement wait = (WaitStatement) s;
-								Evaluation eval = evaluator.evaluate(state,
-										pid, wait.process());
-								SymbolicExpression procVal = eval.value;
-								int joinedPid = modelFactory.getProcessId(wait
-										.process().getSource(), procVal);
-
-								if (!visitedProcesses.contains(joinedPid)) {
-									ProcessState waitedProcess = state
-											.getProcessState(joinedPid);
-									if (proc != null && !proc.hasEmptyStack())
-										tmpProcesses.add(waitedProcess);
-								}
-							} catch (UnsatisfiablePathConditionException ex) {
-							}
-						}
-					}
-				}
-
-			}
-			// tmpProcesses contains the reacher set of impScope and all
-			// processes being waited for by some process in impScope
-			for (ProcessState proc : tmpProcesses) {
+			visitedScopes.add(impactScope);
+			reachersOfImpactScope = ownerOfScope(impactScope, state,
+					allProcesses);
+			waitDepedentProcesses = waitDependentProcesses(state,
+					reachersOfImpactScope, visitedProcesses);
+			for (ProcessState proc : waitDepedentProcesses) {
 				int pid = proc.getPid();
 
 				ampleProcesses.add(proc);
@@ -491,8 +389,7 @@ public class Enabler implements
 					visitedProcesses.add(pid);
 					for (int iScope : impScopes) {
 						if (iScope == state.rootScopeID()) {
-							ampleProcesses = new LinkedHashSet<>(allProcesses);
-							return ampleProcesses;
+							return new LinkedHashSet<>(allProcesses);
 						}
 						if (!visitedScopes.contains(iScope)) {
 							workingScopes.push(iScope);
@@ -701,22 +598,7 @@ public class Enabler implements
 			}
 			pLocation = p.getLocation();
 			if (pLocation.enterAtom() || pLocation.enterAtomic()) {
-				// for a location that enters an atomic/atom block, we need to
-				// obtain the impact scope of the whole atomic/atom block
-				Scope staticImpactScope = pLocation
-						.impactScopeOfAtomicOrAtomBlock();
-				locationDyScope = p.getDyscopeId();
-
-				if (staticImpactScope != null) {
-					while (!state.getScope(locationDyScope).lexicalScope()
-							.equals(staticImpactScope)) {
-						locationDyScope = state.getParentId(locationDyScope);
-						if (locationDyScope < 0) {
-							locationDyScope = p.getDyscopeId();
-							break;
-						}
-					}
-				}
+				locationDyScope = locationImpactDyscopeId(state, p, pLocation);
 				if (state.numberOfReachers(locationDyScope) > 1) {
 					allLocal = false;
 				}
@@ -725,26 +607,16 @@ public class Enabler implements
 				BooleanExpression newPathCondition = executor.newPathCondition(
 						state, pid, s);
 
-				// this implies that pLocation is not entering any atomic/atom
-				// block
-				if (locationDyScope == -1) {
-					int impactDyScope = p.getDyscopeId();
+				if (!newPathCondition.isFalse()) {
+					// pLocation is NOT entering any atomic/atom block
+					if (locationDyScope == -1) {
+						int impactDyScope = statementImpactDyscopeId(state, p,
+								s);
 
-					if (s.statementScope() != null) {
-						while (!state.getScope(impactDyScope).lexicalScope()
-								.equals(s.statementScope())) {
-							impactDyScope = state.getParentId(impactDyScope);
-							if (impactDyScope < 0) {
-								impactDyScope = p.getDyscopeId();
-								break;
-							}
+						if (state.numberOfReachers(impactDyScope) > 1) {
+							allLocal = false;
 						}
 					}
-					if (state.numberOfReachers(impactDyScope) > 1) {
-						allLocal = false;
-					}
-				}
-				if (!newPathCondition.isFalse()) {
 					localTransitions.addAll(enabledTransitionsOfStatement(
 							state, s, newPathCondition, pid, null));
 				}
@@ -810,30 +682,19 @@ public class Enabler implements
 					.newTransitionSequence(state);
 			int pid = p.getPid();
 
-			// No need to check if p is null/empty stack, since
-			// it is already checked in ampleProcesses()
-			// A process with an empty stack has no current location.
 			for (Statement s : p.getLocation().outgoing()) {
 				BooleanExpression newPathCondition = executor.newPathCondition(
 						state, pid, s);
 
-				// No need to calculate impact scope, since everything in
-				// processStates is already ample set processes generate
-				// transitions for each statement of each process
 				if (!newPathCondition.isFalse()) {
 					localTransitions.addAll(enabledTransitionsOfStatement(
 							state, s, newPathCondition, pid, null));
 				}
 			}
-			// add all possible transitions of a process to the ample
-			// set(transitions)
 			transitions.addAll(localTransitions);
 		}
-
 		if (debugging) {
 			checkCorrectness(processStates, state);
-			// debugOut.println("Number of all processes: " +
-			// state.processes().length);
 
 			if (processStates.size() > 1) {
 				debugOut.println("Number of transtions at state "
@@ -842,10 +703,8 @@ public class Enabler implements
 						+ processStates.size());
 				debugOut.println("Ample process set is : "
 						+ processStates.toString());
-				// state.print(debugOut);
 			}
 		}
-
 		return transitions;
 	}
 
@@ -969,39 +828,177 @@ public class Enabler implements
 	}
 
 	/**
-	 * Return true iff p's current statement is Wait and is enabled at a certain
+	 * Return true iff the given wait statement is enabled at the specified
 	 * state.
 	 * 
 	 * @param p
-	 *            The process to be checked.
+	 *            The process that the wait statement belongs to.
 	 * @param state
-	 *            The current state
-	 * @return True iff p's current statement is Wait and is enabled at a
-	 *         certain state.
+	 *            The current state.
+	 * @param wait
+	 *            The wait statement to be checked.
+	 * @return True iff the wait statement is enabled at the given state.
 	 */
-	private boolean isEnabledWait(ProcessState p, State state) {
-		if (p.getLocation().getNumOutgoing() == 1) {
-			int pid = p.getPid();
-			Statement s = p.getLocation().getOutgoing(0);
+	private boolean isEnabledWait(State state, ProcessState p,
+			WaitStatement wait) {
+		int joinedPid = joinedIDofWait(state, p, wait);
+		ProcessState joinedProc = state.getProcessState(joinedPid);
 
-			if (s instanceof WaitStatement) {
-				try {
-					WaitStatement wait = (WaitStatement) s;
-					Evaluation eval = evaluator.evaluate(state, pid,
-							wait.process());
-					SymbolicExpression procVal = eval.value;
-					int joinedPid = modelFactory.getProcessId(wait.process()
-							.getSource(), procVal);
-					ProcessState joinedProc = state.getProcessState(joinedPid);
+		if (joinedProc == null || joinedProc.hasEmptyStack()) {
+			return true;
+		}
+		return false;
+	}
 
-					if (joinedProc == null || joinedProc.hasEmptyStack()) {
-						return true;
-					}
-				} catch (UnsatisfiablePathConditionException ex) {
+	/**
+	 * Calculate the ID of the process that a given wait statement is waiting
+	 * for.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param p
+	 *            The process that the wait statement belongs to.
+	 * @param wait
+	 *            The wait statement to be checked.
+	 * @return The ID of the process that the wait statement is waiting for.
+	 */
+	private int joinedIDofWait(State state, ProcessState p, WaitStatement wait) {
+		Evaluation eval;
+		try {
+			eval = evaluator.evaluate(state, p.getPid(), wait.process());
+			SymbolicExpression procVal = eval.value;
+
+			return modelFactory.getProcessId(wait.process().getSource(),
+					procVal);
+		} catch (UnsatisfiablePathConditionException e) {
+		}
+		return -1;
+	}
+
+	/**
+	 * For a location that enters an atomic/atom block, we need to obtain the
+	 * impact dyscope of the whole atomic/atom block.<br>
+	 * Precondition:
+	 * <code>pLocation.enterAtomic() || pLocation.enterAtom()</code>
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param p
+	 *            The process that the location associates with.
+	 * @param pLocation
+	 *            The location whose impact dyscope is to be calculated.
+	 * @return The impact dyscope of the atomic/atom block starting at the given
+	 *         location.
+	 */
+	private int locationImpactDyscopeId(State state, ProcessState p,
+			Location pLocation) {
+
+		Scope staticImpactScope = pLocation.impactScopeOfAtomicOrAtomBlock();
+		int locationDyScope = p.getDyscopeId();
+
+		if (staticImpactScope != null) {
+			while (!state.getScope(locationDyScope).lexicalScope()
+					.equals(staticImpactScope)) {
+				locationDyScope = state.getParentId(locationDyScope);
+				if (locationDyScope < 0) {
+					locationDyScope = p.getDyscopeId();
+					break;
 				}
 			}
 		}
-		return false;
+		return locationDyScope;
+	}
+
+	/**
+	 * find a good process to start with:
+	 * <ol>
+	 * <li>the process whose impact scope has the minimal number of reachers;</li>
+	 * <li>if all processes are disabled (null, empty-stack, or waiting), then
+	 * return the waiting process if there is one or return NULL</li>
+	 * </ol>
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param allProcesses
+	 *            The list of all active processes (not null or empty-stack) at
+	 *            the state.
+	 * @return The process selected and the number of reachers of its impact
+	 *         scope.
+	 */
+	private Pair<ProcessState, Integer> minimalReachers(State state,
+			ArrayList<ProcessState> allProcesses) {
+		int numOfProcs, i, minReachers, minProcIndex;
+		ProcessState p, waitProc;
+		boolean allDisabled = true;
+		HashSet<Integer> vScopes;
+
+		numOfProcs = allProcesses.size();
+		i = numOfProcs - 1;
+		minReachers = numOfProcs + 1;
+		minProcIndex = i;
+		waitProc = null;
+		vScopes = new HashSet<>();
+		do {
+			int maxReachers, currentReachers;
+			ArrayList<Integer> iScopes;
+			boolean newScope;
+
+			p = allProcesses.get(i);
+			if (blocked(p)) {
+				// if p's current statement is Wait and the joined process
+				// has terminated, then p is the ample process set
+				if (isEnabledWait(state, p, (WaitStatement) p.getLocation()
+						.getOutgoing(0))) {
+					return new Pair<>(p, 1);
+				}
+				waitProc = p;
+				i--;
+				if (i < 0) {
+					if (allDisabled) {
+						return new Pair<>(waitProc, 1);
+					}
+				}
+				continue;
+			}
+			if (p.getLocation().allOutgoingPurelyLocal()) {
+				return new Pair<>(p, 1);
+			}
+			allDisabled = false;
+			maxReachers = 0;
+			iScopes = impactScopesOfProcess(p, state);
+			if (iScopes.isEmpty()) {
+				return new Pair<>(p, 1);
+			}
+			newScope = false;
+			for (int impScope : iScopes) {
+				if (vScopes.contains(impScope))
+					continue;
+				newScope = true;
+				vScopes.add(impScope);
+				// The root scope is reachable from all processes
+				if (impScope == state.rootScopeID()) {
+					maxReachers = numOfProcs;
+					break;
+				}
+				currentReachers = state.numberOfReachers(impScope);
+				// find out the maximal number of reachers that an impact scope
+				// of process p can have
+				if (currentReachers > maxReachers)
+					maxReachers = currentReachers;
+			}
+			// all impact scopes of p has at most one reacher return p
+			// immediately as the ample process set
+			if (newScope && maxReachers <= 1) {
+				return new Pair<>(p, 1);
+			}
+			// keep track of the process with least-reacher impact scope
+			if (newScope && maxReachers < minReachers) {
+				minReachers = maxReachers;
+				minProcIndex = i;
+			}
+			i--;
+		} while (i >= 0);
+		return new Pair<>(state.getProcessState(minProcIndex), minReachers);
 	}
 
 	/**
@@ -1031,6 +1028,75 @@ public class Enabler implements
 				reacherProcs.add(p);
 		}
 		return reacherProcs;
+	}
+
+	/**
+	 * Calculate the impact dyscope ID of a given statement at a certain state.
+	 * 
+	 * @param state
+	 * The current state.
+	 * @param p
+	 * The process that the statement belongs to.
+	 * @param s
+	 * The statement to be checked.
+	 * @return The impact dyscope ID of the statement at a given state.
+	 */
+	private int statementImpactDyscopeId(State state, ProcessState p,
+			Statement s) {
+		int impactDyScope = p.getDyscopeId();
+
+		if (s.statementScope() != null) {
+			while (!state.getScope(impactDyScope).lexicalScope()
+					.equals(s.statementScope())) {
+				impactDyScope = state.getParentId(impactDyScope);
+				if (impactDyScope < 0) {
+					impactDyScope = p.getDyscopeId();
+					break;
+				}
+			}
+		}
+		return impactDyScope;
+	}
+
+	/**
+	 * Compose the list of dependent processes by wait statements. For each
+	 * process in the reacher set, if its current statement is a wait statement,
+	 * then add the non-terminated process that it waits for to the returned
+	 * list.
+	 * 
+	 * @param state
+	 * @param reachersImp
+	 * @param visitedProcesses
+	 * @return The list of dependent processes by wait statements.
+	 */
+	private ArrayList<ProcessState> waitDependentProcesses(State state,
+			ArrayList<ProcessState> reachersImp,
+			HashSet<Integer> visitedProcesses) {
+		ArrayList<ProcessState> tmpProcesses = new ArrayList<>();
+
+		for (ProcessState proc : reachersImp) {
+			int pid = proc.getPid();
+
+			tmpProcesses.add(proc);
+			if (!visitedProcesses.contains(pid)) {
+				for (Statement s : proc.getLocation().outgoing()) {
+					if (s instanceof WaitStatement) {
+						int joinedPid = joinedIDofWait(state, proc,
+								(WaitStatement) s);
+
+						if (!visitedProcesses.contains(joinedPid)) {
+							ProcessState waitedProcess = state
+									.getProcessState(joinedPid);
+
+							if (waitedProcess != null
+									&& !waitedProcess.hasEmptyStack())
+								tmpProcesses.add(waitedProcess);
+						}
+					}
+				}
+			}
+		}
+		return tmpProcesses;
 	}
 
 }
