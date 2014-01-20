@@ -84,6 +84,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
+import edu.udel.cis.vsl.abc.ast.node.common.declaration.CommonFunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
@@ -2374,10 +2375,9 @@ public class ModelBuilderWorker {
 	 *            any ABC function declaration node
 	 * @param scope
 	 *            the scope in which the function declaration occurs
-	 * @return the CIVL Function (whether newly created or old)
 	 */
-	private CIVLFunction translateFunctionDeclarationNode(
-			FunctionDeclarationNode node, Scope scope) {
+	private void translateFunctionDeclarationNode(FunctionDeclarationNode node,
+			Scope scope) {
 		Function entity = node.getEntity();
 		SequenceNode<ContractNode> contract = node.getContract();
 		CIVLFunction result;
@@ -2385,6 +2385,12 @@ public class ModelBuilderWorker {
 		if (entity == null)
 			throw new CIVLInternalException("Unresolved function declaration",
 					factory.sourceOf(node));
+		// ignore pure function declarations for functions that have its
+		// corresponding definition node.
+		if ((entity.getDefinition() != null)
+				&& (!(node instanceof CommonFunctionDefinitionNode)))
+			return;
+
 		result = functionMap.get(entity);
 		if (result == null) {
 			CIVLSource nodeSource = factory.sourceOf(node);
@@ -2493,7 +2499,6 @@ public class ModelBuilderWorker {
 			if (postcondition != null)
 				result.setPostcondition(postcondition);
 		}
-		return result;
 	}
 
 	/**

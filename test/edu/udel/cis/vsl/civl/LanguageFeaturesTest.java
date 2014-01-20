@@ -170,6 +170,11 @@ public class LanguageFeaturesTest {
 	public void forLoop() throws ABCException {
 		assertTrue(ui.run("verify", filename("for.cvl")));
 	}
+	
+	@Test
+	public void functionPrototype() throws ABCException{
+		assertTrue(ui.run("verify", filename("functionPrototype.cvl")));
+	}
 
 	@Test
 	public void implies() throws ABCException {

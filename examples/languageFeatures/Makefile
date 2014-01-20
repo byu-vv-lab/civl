@@ -7,7 +7,7 @@ all: arrayPointer arrays assume \
 	atomWaitBad bigO break bundleArray bundleConcrete \
 	bundleSize bundleStruct bundleStructComponent \
 	cast choose chooseInt comm compare conditionalExpression \
-	continue duffs dynamicStruct emptyWhen exit for \
+	continue duffs dynamicStruct emptyWhen exit for functionPrototype \
 	implies linkedList malloc mallocBad mallocBad2 \
 	mallocBad3 mallocBad4 memcpy minimal nonbooleanCondition \
 	null pointers quantifiers scoping self sideEffects sizeof \
@@ -96,6 +96,9 @@ exit: exit.cvl
 	
 for: for.cvl
 	$(VERIFY) for.cvl
+	
+functionPrototype: functionPrototype.cvl
+	$(VERIFY) functionPrototype.cvl
 
 implies: implies.cvl
 	$(VERIFY) implies.cvl
