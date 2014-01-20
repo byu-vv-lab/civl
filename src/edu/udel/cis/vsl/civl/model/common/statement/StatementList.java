@@ -28,7 +28,7 @@ public class StatementList implements Statement {
 	private ArrayList<Statement> statements;
 
 	public StatementList() {
-		statements = new ArrayList<Statement>();
+		statements = new ArrayList<>();
 	}
 
 	public StatementList(ArrayList<Statement> stmts) {
@@ -36,8 +36,14 @@ public class StatementList implements Statement {
 	}
 
 	public StatementList(Statement statement) {
-		statements = new ArrayList<Statement>();
+		statements = new ArrayList<>();
 		this.statements.add(statement);
+	}
+
+	public StatementList(Statement statement1, Statement statement2) {
+		statements = new ArrayList<>(2);
+		this.statements.add(statement1);
+		this.statements.add(statement2);
 	}
 
 	public ArrayList<Statement> statements() {
@@ -174,9 +180,13 @@ public class StatementList implements Statement {
 	public String toString() {
 		String result = "";
 		for (Statement s : statements) {
-			result = result + s.toString() + "; ";
+			if(s.getSource().getLocation() == "CIVL System object")
+				result = "(" + s.toString() + ") ";
+			else
+				result = result + s.toString() + "; ";
 		}
-		
-		return result.trim();
+		result = result.trim();
+		result = result.substring(0, result.length() - 1);
+		return result;
 	}
 }

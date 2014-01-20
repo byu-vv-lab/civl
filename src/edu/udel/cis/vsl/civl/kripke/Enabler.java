@@ -610,11 +610,7 @@ public class Enabler implements
 									+ eval.value, eval.state, s.getSource());
 				upper = upperNumber.intValue();
 				if (assignAtomicLock != null) {
-					StatementList statementList = new StatementList(
-							assignAtomicLock);
-
-					statementList.add(s);
-					transitionStatement = statementList;
+					transitionStatement = new StatementList(assignAtomicLock, s);
 				} else {
 					transitionStatement = s;
 				}
@@ -729,9 +725,9 @@ public class Enabler implements
 				BooleanExpression newPathCondition = executor.newPathCondition(
 						state, pid, s);
 
-				if (locationDyScope == -1) { // this implies that pLocation is
-												// not entering any atomic/atom
-												// block
+				// this implies that pLocation is not entering any atomic/atom
+				// block
+				if (locationDyScope == -1) {
 					int impactDyScope = p.getDyscopeId();
 
 					if (s.statementScope() != null) {

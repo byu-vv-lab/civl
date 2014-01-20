@@ -217,7 +217,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			p = newState.getProcessState(pid);
 			if (print && executedStatement != null) {
 				printStatement(executedStatement, newLocation.atomicKind(),
-						p.atomicCount());
+						p.atomicCount(), false);
 			}
 			if (p != null && !p.hasEmptyStack())
 				newLocation = p.getLocation();
@@ -268,6 +268,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		ProcessState p = state.getProcessState(pid);
 		State newState = state;
 		Statement executedStatement = null;
+		boolean atomicLockVarChanged = false;
 
 		assert atomic || pLocation.isPurelyLocal();
 		while ((!atomic && pLocation != null && pLocation.isPurelyLocal())
@@ -276,6 +277,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				return newState;
 			}
 			executedStatement = null;
+			atomicLockVarChanged = false;
 			switch (pLocation.atomicKind()) {
 			case NONE:
 				boolean executed = false;
@@ -304,6 +306,11 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				}
 				if (!executed) {// location is blocked
 					oldState = stateFactory.releaseAtomicLock(oldState);
+					if (print) {
+						out.println("  " + pLocation.id()
+								+ ": ($ATOMIC_LOCK_VAR = process<-1>) at "
+								+ pLocation.getSource().getSummary() + ";");
+					}
 					return oldState;
 				}
 				break;
@@ -314,12 +321,19 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				if (atomic) {
 					assert !stateFactory.lockedByAtomic(newState)
 							|| stateFactory.processInAtomic(newState).getPid() == pid;
-					newState = executor.executeStatement(newState, pLocation,
-							pLocation.getOutgoing(0), pid).right;
+					executedStatement = pLocation.getOutgoing(0);
+					if (!p.inAtomic()) {
+						newState = executor.executeStatement(newState,
+								pLocation, executedStatement, pid).right;
+						atomicLockVarChanged = true;
+					} else {
+						newState = executor.transition(newState,
+								newState.getProcessState(pid),
+								executedStatement.target());
+					}
 					p = newState.getProcessState(pid).incrementAtomicCount();
 					newState = stateFactory.setProcessState(newState, p, pid);
-					newState = stateFactory.getAtomicLock(newState, pid);
-					executedStatement = pLocation.getOutgoing(0);
+					// newState = stateFactory.getAtomicLock(newState, pid);
 				} else {
 					newState = executeAtomicOrPurelyLocalStatements(newState,
 							pid, pLocation, true, print);
@@ -330,19 +344,22 @@ public class StateManager implements StateManagerIF<State, Transition> {
 					throw new CIVLInternalException("Unreachable",
 							pLocation.getSource());
 				assert stateFactory.processInAtomic(newState).getPid() == pid;
-				newState = executor.executeStatement(newState, pLocation,
-						pLocation.getOutgoing(0), pid).right;
 				p = newState.getProcessState(pid).decrementAtomicCount();
-				executedStatement = pLocation.getOutgoing(0);
 				newState = stateFactory.setProcessState(newState, p, pid);
+				executedStatement = pLocation.getOutgoing(0);
 				if (!p.inAtomic()) {
-					newState = stateFactory.releaseAtomicLock(newState);
+					// newState = stateFactory.releaseAtomicLock(newState);
+					newState = executor.executeStatement(newState, pLocation,
+							pLocation.getOutgoing(0), pid).right;
 					if (print) {
 						printStatement(executedStatement,
-								AtomicKind.ATOMIC_EXIT, p.atomicCount());
+								AtomicKind.ATOMIC_EXIT, p.atomicCount(), true);
 					}
 					return newState;
-				}
+				} else
+					newState = executor.transition(newState,
+							newState.getProcessState(pid),
+							executedStatement.target());
 				break;
 			default:
 				throw new CIVLInternalException("Unreachable",
@@ -351,7 +368,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			p = newState.getProcessState(pid);
 			if (print && executedStatement != null) {
 				printStatement(executedStatement, pLocation.atomicKind(),
-						p.atomicCount());
+						p.atomicCount(), atomicLockVarChanged);
 			}
 			if (p != null && !p.hasEmptyStack())
 				pLocation = p.peekStack().location();
@@ -476,7 +493,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	}
 
 	private void printStatement(Statement s, AtomicKind atomicKind,
-			int atomCount) {
+			int atomCount, boolean atomicLockVarChanged) {
 		CIVLSource statementSource = s.getSource();
 
 		if (statementSource == null)
@@ -488,11 +505,17 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			out.print("RET: ");
 		switch (atomicKind) {
 		case ATOMIC_ENTER:
-			out.print(s.toString() + " ");
+			if (atomicLockVarChanged) {
+				out.print(s.toString() + " ");
+			} else
+				out.print("ENTER_ATOMIC (atomicCount++) ");
 			out.print(atomCount - 1);
 			break;
 		case ATOMIC_EXIT:
-			out.print(s.toString() + " ");
+			if (atomicLockVarChanged) {
+				out.print(s.toString() + " ");
+			} else
+				out.print("LEAVE_ATOMIC (atomicCount--) ");
 			out.print(atomCount);
 			break;
 		case ATOM_ENTER:

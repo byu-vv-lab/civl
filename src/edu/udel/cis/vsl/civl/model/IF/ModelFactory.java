@@ -1235,5 +1235,7 @@ public interface ModelFactory {
 	void setImpactScopeOfLocation(Location location);
 
 	void setSystemScope(Scope scope);
+	
+	SymbolicExpression undefinedProcessValue();
 
 }

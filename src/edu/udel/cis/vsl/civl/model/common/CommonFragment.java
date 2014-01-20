@@ -99,20 +99,6 @@ public class CommonFragment implements Fragment {
 		this.lastStatement.setTarget(next.startLocation());
 		return new CommonFragment(this.startLocation, next.lastStatement());
 	}
-	
-//	public List<Expression> getStartLocationGuard(){
-//		Expression guard = null;
-//		
-//		if(this.startLocation == null)
-//			return null;
-//		for(Statement statement : startLocation.outgoing()){
-//			if(guard == null)
-//				guard = statement.guard();
-//			else{
-//				guard = 
-//			}
-//		}
-//	}
 
 	@Override
 	public boolean isEmpty() {

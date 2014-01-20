@@ -98,13 +98,14 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonStringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonVariableExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
-import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssertStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicBranchStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonChooseStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonGotoBranchStatement;
@@ -1535,17 +1536,29 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Fragment atomicFragment(boolean deterministic, Fragment fragment,
 			Location start, Location end) {
-		Statement enterAtomic = new CommonAtomicBranchStatement(
-				start.getSource(), start, deterministic ? AtomicKind.ATOM_ENTER
-						: AtomicKind.ATOMIC_ENTER);
-		Statement leaveAtomic = new CommonAtomicBranchStatement(
-				end.getSource(), end, deterministic ? AtomicKind.ATOM_EXIT
-						: AtomicKind.ATOMIC_EXIT);
-		Fragment startFragment = new CommonFragment(enterAtomic);
-		Fragment endFragment = new CommonFragment(leaveAtomic);
+		Statement enterAtomic;
+		Statement leaveAtomic;
+		Fragment startFragment;
+		Fragment endFragment;
 		Fragment result;
 		Expression startGuard = null;
 
+		if (deterministic) {
+			enterAtomic = new CommonAtomBranchStatement(start.getSource(),
+					start, true);
+			leaveAtomic = new CommonAtomBranchStatement(end.getSource(), end,
+					false);
+		} else {
+			enterAtomic = new CommonAtomicLockAssignStatement(
+					start.getSource(), start, true,
+					this.atomicLockVariableExpression,
+					this.selfExpression(systemSource));
+			leaveAtomic = new CommonAtomicLockAssignStatement(end.getSource(),
+					end, false, this.atomicLockVariableExpression,
+					new CommonUndefinedProcessExpression(systemSource));
+		}
+		startFragment = new CommonFragment(enterAtomic);
+		endFragment = new CommonFragment(leaveAtomic);
 		start.setEnterAtomic(deterministic);
 		for (Statement statement : fragment.startLocation().outgoing()) {
 			if (startGuard == null)
@@ -1870,6 +1883,11 @@ public class CommonModelFactory implements ModelFactory {
 			location.setImpactScopeOfAtomicOrAtomBlock(impactScope);
 			return;
 		}
+	}
+
+	@Override
+	public SymbolicExpression undefinedProcessValue() {
+		return this.undefinedProcessValue;
 	}
 
 }

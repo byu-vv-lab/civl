@@ -2160,6 +2160,9 @@ public class Evaluator {
 		case UNARY:
 			result = evaluateUnary(state, pid, (UnaryExpression) expression);
 			break;
+		case UNDEFINED_PROC:
+			result = new Evaluation(state, modelFactory.undefinedProcessValue());
+			break;
 		case VARIABLE:
 			result = evaluateVariable(state, pid,
 					(VariableExpression) expression);

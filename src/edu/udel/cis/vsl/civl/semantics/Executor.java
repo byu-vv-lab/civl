@@ -168,7 +168,7 @@ public class Executor {
 	 *            The end location of the transition.
 	 * @return A new state where the process is at the target location.
 	 */
-	private State transition(State state, ProcessState process, Location target) {
+	public State transition(State state, ProcessState process, Location target) {
 		state = stateFactory.setLocation(state, process.getPid(), target);
 		// state = stateFactory.canonic(state);
 		return state;
