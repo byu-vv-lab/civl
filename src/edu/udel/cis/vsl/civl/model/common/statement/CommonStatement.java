@@ -47,6 +47,10 @@ public abstract class CommonStatement extends CommonSourceable implements
 		source.addOutgoing(this);
 	}
 
+	public CommonStatement() {
+		super(null);
+	}
+
 	/**
 	 * @return The location that is the source of this statement.
 	 */

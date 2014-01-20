@@ -35,6 +35,10 @@ public class CommonNoopStatement extends CommonStatement implements
 		super(civlSource, source);
 		noopKind = NoopKind.NONE;
 	}
+	
+	public CommonNoopStatement(){
+		super();
+	}
 
 	@Override
 	public String toString() {
