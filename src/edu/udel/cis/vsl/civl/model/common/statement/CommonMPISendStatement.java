@@ -29,8 +29,8 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 public class CommonMPISendStatement extends CommonStatement implements
 		MPISendStatement {
 
-	ArrayList<Expression> arguments;
-	LHSExpression lhs;
+	private ArrayList<Expression> arguments;
+	private LHSExpression lhs;
 
 	public CommonMPISendStatement(CIVLSource civlsource, Location source,
 			LHSExpression  lhs, ArrayList<Expression> arguments) {
