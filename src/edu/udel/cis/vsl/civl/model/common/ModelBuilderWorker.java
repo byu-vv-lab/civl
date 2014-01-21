@@ -258,7 +258,10 @@ public class ModelBuilderWorker {
 	 */
 	private String modelName;
 
-	// private MPIStatementFactory mpiFactory;
+	/**
+	 * MPI statement factory
+	 */
+	private MPIStatementFactory mpiFactory;
 
 	/**
 	 * The ABC AST being translated by this model builder worker.
@@ -328,7 +331,7 @@ public class ModelBuilderWorker {
 		this.bundleType = factory.newBundleType();
 		this.universe = factory.universe();
 		((CommonModelFactory) factory).modelBuilder = this;
-		// this.mpiFactory = new MPIStatementFactory(factory);
+		this.mpiFactory = new MPIStatementFactory(factory);
 	}
 
 	/***************************** Public Methods ****************************/
@@ -1262,6 +1265,76 @@ public class ModelBuilderWorker {
 	}
 
 	/**
+	 * Translate a jump node (i.e., a break or continue statement) into a
+	 * fragment.
+	 * 
+	 * @param scope
+	 *            The scope of the source location of jump statement.
+	 * @param jumpNode
+	 *            The jump node to be translated.
+	 * @return The fragment of the break or continue statement
+	 */
+	private Fragment translateJumpNode(Scope scope, JumpNode jumpNode) {
+		Location location = factory.location(
+				factory.sourceOfBeginning(jumpNode), scope);
+		Statement result = factory.noopStatement(factory.sourceOf(jumpNode),
+				location);
+
+		if (jumpNode.getKind() == JumpKind.CONTINUE) {
+			functionInfo.peekContinueStack().add(result);
+		} else if (jumpNode.getKind() == JumpKind.BREAK) {
+			functionInfo.peekBreakStack().add(result);
+		} else {
+			throw new CIVLInternalException(
+					"Jump nodes other than BREAK and CONTINUE should be handled seperately.",
+					factory.sourceOf(jumpNode.getSource()));
+		}
+		return new CommonFragment(result);
+	}
+
+	/**
+	 * Translate an IfNode (i.e., an if-else statement) into a fragment.
+	 * 
+	 * @param scope
+	 *            The scope of the start location of the resulting fragment.
+	 * @param ifNode
+	 *            The if node to be translated.
+	 * @return The fragment of the if-else statements.
+	 */
+	private Fragment translateIfNode(Scope scope, IfNode ifNode) {
+		ExpressionNode conditionNode = ifNode.getCondition();
+		Expression expression = translateExpressionNode(conditionNode, scope,
+				true);
+		Fragment beforeCondition = null, trueBranch, trueBranchBody, falseBranch, falseBranchBody, result;
+		Location location = factory.location(factory.sourceOfBeginning(ifNode),
+				scope);
+		Pair<Fragment, Expression> refineConditional = factory
+				.refineConditionalExpression(scope, expression, conditionNode);
+
+		beforeCondition = refineConditional.left;
+		expression = refineConditional.right;
+		expression = factory.booleanExpression(expression);
+		trueBranch = new CommonFragment(factory.ifBranchStatement(
+				factory.sourceOfBeginning(ifNode.getTrueBranch()), location,
+				expression, true));
+		falseBranch = new CommonFragment(factory.ifBranchStatement(factory
+				.sourceOfEnd(ifNode), location, factory.unaryExpression(
+				expression.getSource(), UNARY_OPERATOR.NOT, expression), false));
+		trueBranchBody = translateStatementNode(scope, ifNode.getTrueBranch());
+		trueBranch = trueBranch.combineWith(trueBranchBody);
+		if (ifNode.getFalseBranch() != null) {
+			falseBranchBody = translateStatementNode(scope,
+					ifNode.getFalseBranch());
+			falseBranch = falseBranch.combineWith(falseBranchBody);
+		}
+		result = trueBranch.parallelCombineWith(falseBranch);
+		if (beforeCondition != null) {
+			result = beforeCondition.combineWith(result);
+		}
+		return result;
+	}
+
+	/**
 	 * Given a StatementNode, return a Fragment representing it. Takes a
 	 * statement node where the start location and extra guard are defined
 	 * elsewhere and returns the appropriate model statement.
@@ -1344,76 +1417,6 @@ public class ModelBuilderWorker {
 					result.lastStatement(), result.startLocation());
 		}
 		factory.popConditionaExpressionStack();
-		return result;
-	}
-
-	/**
-	 * Translate a jump node (i.e., a break or continue statement) into a
-	 * fragment
-	 * 
-	 * @param scope
-	 *            The scope
-	 * @param jumpNode
-	 *            The jump node
-	 * @return The fragment of the break or continue statement
-	 */
-	private Fragment translateJumpNode(Scope scope, JumpNode jumpNode) {
-		Location location = factory.location(
-				factory.sourceOfBeginning(jumpNode), scope);
-		Statement result = factory.noopStatement(factory.sourceOf(jumpNode),
-				location);
-
-		if (jumpNode.getKind() == JumpKind.CONTINUE) {
-			functionInfo.peekContinueStack().add(result);
-		} else if (jumpNode.getKind() == JumpKind.BREAK) {
-			functionInfo.peekBreakStack().add(result);
-		} else {
-			throw new CIVLInternalException(
-					"Jump nodes other than BREAK and CONTINUE should be handled seperately.",
-					factory.sourceOf(jumpNode.getSource()));
-		}
-		return new CommonFragment(result);
-	}
-
-	/**
-	 * Translate an IfNode (i.e., an if-else statement) into a fragment
-	 * 
-	 * @param scope
-	 *            The scope
-	 * @param ifNode
-	 *            The if node
-	 * @return The fragment of the if-else statements
-	 */
-	private Fragment translateIfNode(Scope scope, IfNode ifNode) {
-		ExpressionNode conditionNode = ifNode.getCondition();
-		Expression expression = translateExpressionNode(conditionNode, scope,
-				true);
-		Fragment beforeCondition = null, trueBranch, trueBranchBody, falseBranch, falseBranchBody, result;
-		Location location = factory.location(factory.sourceOfBeginning(ifNode),
-				scope);
-		Pair<Fragment, Expression> refineConditional = factory
-				.refineConditionalExpression(scope, expression, conditionNode);
-
-		beforeCondition = refineConditional.left;
-		expression = refineConditional.right;
-		expression = factory.booleanExpression(expression);
-		trueBranch = new CommonFragment(factory.ifBranchStatement(
-				factory.sourceOfBeginning(ifNode.getTrueBranch()), location,
-				expression, true));
-		falseBranch = new CommonFragment(factory.ifBranchStatement(factory
-				.sourceOfEnd(ifNode), location, factory.unaryExpression(
-				expression.getSource(), UNARY_OPERATOR.NOT, expression), false));
-		trueBranchBody = translateStatementNode(scope, ifNode.getTrueBranch());
-		trueBranch = trueBranch.combineWith(trueBranchBody);
-		if (ifNode.getFalseBranch() != null) {
-			falseBranchBody = translateStatementNode(scope,
-					ifNode.getFalseBranch());
-			falseBranch = falseBranch.combineWith(falseBranchBody);
-		}
-		result = trueBranch.parallelCombineWith(falseBranch);
-		if (beforeCondition != null) {
-			result = beforeCondition.combineWith(result);
-		}
 		return result;
 	}
 
@@ -1524,41 +1527,61 @@ public class ModelBuilderWorker {
 	 */
 	private Fragment translateFunctionCallNode(Scope scope,
 			FunctionCallNode functionCallNode) {
+		Location location = factory.location(
+				factory.sourceOfBeginning(functionCallNode), scope);
+
+		return new CommonFragment(translateFunctionCall(scope, location, null,
+				functionCallNode, true));
+	}
+
+	/**
+	 * Translate a function call node into a fragment containing the call
+	 * statement
+	 * 
+	 * @param scope
+	 *            The scope
+	 * @param functionCallNode
+	 *            The function call node
+	 * @return the fragment containing the function call statement
+	 */
+	private Statement translateFunctionCall(Scope scope, Location location,
+			LHSExpression lhs, FunctionCallNode functionCallNode, boolean isCall) {
 		CIVLSource source = factory.sourceOfBeginning(functionCallNode);
-		Location location = factory.location(source, scope);
 		String functionName = ((IdentifierExpressionNode) functionCallNode
 				.getFunction()).getIdentifier().name();
-		Fragment result;
+		ArrayList<Expression> arguments = new ArrayList<Expression>();
 
+		for (int i = 0; i < functionCallNode.getNumberOfArguments(); i++) {
+			Expression actual = translateExpressionNode(
+					functionCallNode.getArgument(i), scope, true);
+
+			actual = arrayToPointer(actual);
+			arguments.add(actual);
+		}
 		switch (functionName) {
 		case "$choose_int":
-			Statement chooseStatement = translateChooseIntFunctionCall(source,
-					location, scope, null, functionCallNode);
+			return translateChooseIntFunctionCall(source, location, scope, lhs,
+					arguments);
 
-			result = new CommonFragment(chooseStatement);
-			break;
-		// TODO once MPI Statement implementation is done, translate
-		// mpi function call node here to the corresponding MPI Statement.
-		// case MPIStatementFactory.MPI_SEND:
-		// result = mpiFactory.translateMPI_SEND(scope, functionCallNode);
-		// break;
-		// case MPIStatementFactory.MPI_RECV:
-		// break;
-		// case MPIStatementFactory.MPI_IRECV:
-		// break;
-		// case MPIStatementFactory.MPI_ISEND:
-		// break;
-		// case MPIStatementFactory.MPI_BARRIER:
-		// break;
-		// case MPIStatementFactory.MPI_WAIT:
-		// break;
+			// TODO once MPI Statement implementation is done, translate
+			// mpi function call node here to the corresponding MPI Statement.
+		case MPIStatementFactory.MPI_SEND:
+			return mpiFactory.translateMPI_SEND(source, location, scope, lhs,
+					arguments);
+			// case MPIStatementFactory.MPI_RECV:
+			// break;
+			// case MPIStatementFactory.MPI_IRECV:
+			// break;
+			// case MPIStatementFactory.MPI_ISEND:
+			// break;
+			// case MPIStatementFactory.MPI_BARRIER:
+			// break;
+			// case MPIStatementFactory.MPI_WAIT:
+			// break;
 		default:
-			Statement callStatement = callOrSpawnStatement(location, scope,
-					functionCallNode, null, true);
-
-			result = new CommonFragment(callStatement);
+			return callOrSpawnStatement(location, scope, functionCallNode, lhs,
+					arguments, isCall);
 		}
-		return result;
 	}
 
 	/**
@@ -1573,15 +1596,13 @@ public class ModelBuilderWorker {
 	 *            The scope
 	 * @param lhs
 	 *            The left hand side expression
-	 * @param functionCallNode
-	 *            The $choose_int function call node
+	 * @param TODO
 	 * @return The new choose statement
 	 */
 	private ChooseStatement translateChooseIntFunctionCall(CIVLSource source,
 			Location location, Scope scope, LHSExpression lhs,
-			FunctionCallNode functionCallNode) {
-		int numberOfArgs = functionCallNode.getNumberOfArguments();
-		Expression argument;
+			ArrayList<Expression> arguments) {
+		int numberOfArgs = arguments.size();
 
 		if (this.inAtom()) {
 			throw new CIVLInternalException(
@@ -1593,10 +1614,7 @@ public class ModelBuilderWorker {
 					"The function $choose_int should have exactly one argument.",
 					source);
 		}
-		argument = translateExpressionNode(functionCallNode.getArgument(0),
-				scope, true);
-		argument = arrayToPointer(argument);
-		return factory.chooseStatement(source, location, lhs, argument);
+		return factory.chooseStatement(source, location, lhs, arguments.get(0));
 	}
 
 	/**
@@ -1614,8 +1632,8 @@ public class ModelBuilderWorker {
 		Location location = factory.location(
 				factory.sourceOfBeginning(spawnNode), scope);
 
-		spawnStatement = callOrSpawnStatement(location, scope,
-				spawnNode.getCall(), null, false);
+		spawnStatement = translateFunctionCall(scope, location, null,
+				spawnNode.getCall(), false);
 		return new CommonFragment(location, spawnStatement);
 	}
 
@@ -1640,8 +1658,7 @@ public class ModelBuilderWorker {
 	 */
 	private CallOrSpawnStatement callOrSpawnStatement(Location location,
 			Scope scope, FunctionCallNode callNode, LHSExpression lhs,
-			boolean isCall) {
-		ArrayList<Expression> arguments = new ArrayList<Expression>();
+			ArrayList<Expression> arguments, boolean isCall) {
 		ExpressionNode functionExpression = ((FunctionCallNode) callNode)
 				.getFunction();
 		CallOrSpawnStatement result;
@@ -1658,13 +1675,7 @@ public class ModelBuilderWorker {
 			throw new CIVLUnimplementedFeatureException(
 					"Function call must use identifier for now: "
 							+ functionExpression.getSource());
-		for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
-			Expression actual = translateExpressionNode(
-					callNode.getArgument(i), scope, true);
 
-			actual = arrayToPointer(actual);
-			arguments.add(actual);
-		}
 		result = factory.callOrSpawnStatement(factory.sourceOf(callNode),
 				location, isCall, null, arguments, null);
 		result.setLhs(lhs);
@@ -1732,7 +1743,6 @@ public class ModelBuilderWorker {
 		else if (rhsNode instanceof FunctionCallNode
 				|| rhsNode instanceof SpawnNode) {
 			FunctionCallNode functionCallNode;
-			String functionName;
 			boolean isCall;
 
 			if (rhsNode instanceof FunctionCallNode) {
@@ -1742,14 +1752,17 @@ public class ModelBuilderWorker {
 				functionCallNode = ((SpawnNode) rhsNode).getCall();
 				isCall = false;
 			}
-			functionName = ((IdentifierExpressionNode) functionCallNode
-					.getFunction()).getIdentifier().name();
-			if (functionName.equals("$choose_int")) {
-				result = translateChooseIntFunctionCall(source, location,
-						scope, lhs, functionCallNode);
-			} else
-				result = callOrSpawnStatement(location, scope,
-						functionCallNode, lhs, isCall);
+
+			result = translateFunctionCall(scope, location, lhs,
+					functionCallNode, isCall);
+			// functionName = ((IdentifierExpressionNode) functionCallNode
+			// .getFunction()).getIdentifier().name();
+			// if (functionName.equals("$choose_int")) {
+			// result = translateChooseIntFunctionCall(source, location,
+			// scope, lhs, functionCallNode);
+			// } else
+			// result = callOrSpawnStatement(location, scope,
+			// functionCallNode, lhs, isCall);
 		} else
 			result = factory
 					.assignStatement(

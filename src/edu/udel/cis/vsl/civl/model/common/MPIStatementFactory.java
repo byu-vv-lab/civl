@@ -1,9 +1,15 @@
 package edu.udel.cis.vsl.civl.model.common;
 
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
-import edu.udel.cis.vsl.civl.model.IF.Fragment;
+import java.util.ArrayList;
+
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonMPISendStatement;
 
 /**
  * This class translates MPI function call nodes into the corresponding MPI
@@ -24,27 +30,27 @@ public class MPIStatementFactory {
 	/**
 	 * The function name of MPI Receive.
 	 */
-	static final String MPI_RECV = "$MPI_Recv";
+	static final String MPI_RECV = "MPI_Recv";
 
 	/**
 	 * The function name of MPI Barrier.
 	 */
-	static final String MPI_BARRIER = "$MPI_Barrier";
+	static final String MPI_BARRIER = "MPI_Barrier";
 
 	/**
 	 * The function name of MPI Isend.
 	 */
-	static final String MPI_ISEND = "$MPI_Isend";
+	static final String MPI_ISEND = "MPI_Isend";
 
 	/**
 	 * The function name of MPI Ireceive.
 	 */
-	static final String MPI_IRECV = "$MPI_Irecv";
+	static final String MPI_IRECV = "MPI_Irecv";
 
 	/**
 	 * The function name of MPI Wait.
 	 */
-	static final String MPI_WAIT = "$MPI_Wait";
+	static final String MPI_WAIT = "MPI_Wait";
 
 	/**************************** Instance Fields ****************************/
 
@@ -78,9 +84,9 @@ public class MPIStatementFactory {
 	 * @return A fragment containing exactly one statement, i.e., the MPI_Send
 	 *         statement.
 	 */
-	Fragment translateMPI_SEND(Scope scope, FunctionCallNode functionCallNode) {
-		// TODO to be implemented
-		return null;
+	MPISendStatement translateMPI_SEND(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
+		return new CommonMPISendStatement(source, location, lhs, arguments);
 	}
 
 }

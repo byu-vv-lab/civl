@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.model.IF.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 /**
  * An MPI standard-mode blocking send statement. Syntax:
@@ -28,7 +27,7 @@ public interface MPISendStatement extends Statement {
 	 * @return the send buffer argument
 	 */
 	Expression getBuffer();
-	
+
 	/**
 	 * Returns the send data size.
 	 * 
@@ -71,7 +70,7 @@ public interface MPISendStatement extends Statement {
 	 * @return left hand side of assignment or null
 	 */
 	LHSExpression getLeftHandSide();
-	
+
 	void setLeftHandSide(LHSExpression lhs);
-   
+
 }
