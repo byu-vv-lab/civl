@@ -110,28 +110,41 @@ public interface Statement extends Sourceable {
 	void purelyLocalAnalysis();
 
 	/**
-	 * Modify this statement by replacing a certain conditional expression with
-	 * a variable expression, used when translating away conditional expression
-	 * and a temporal variable is introduced.
+	 * Modify this statement including its guard by replacing a certain
+	 * conditional expression with a variable expression, used when translating
+	 * away conditional expression and a temporal variable is introduced.<br>
+	 * For example, <code>x = a ? b : c</code> will be translated into
+	 * <code> if(a) v0 = b; else v0 = c; x = v0; </code><br>
+	 * Another example, <code> $when(a?b:c) x = k;</code> will be translated
+	 * into <code> if(a) v0 = b; else v0 = c; $when(v0) x = k; </code>
 	 * 
 	 * @param oldExpression
-	 *            The conditional expression
+	 *            The conditional expression to be cleared.
 	 * @param newExpression
 	 *            The variable expression of the temporal variable for the
-	 *            conditional expression
+	 *            conditional expression.
 	 */
 	void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression);
 
 	/**
-	 * Return a new statement by replacing this statement by replacing a certain
-	 * conditional expression with a expression, used when translating away
-	 * conditional expression without introducing temporal variables.
+	 * Return a new statement by copying this statement and modifying it as well
+	 * as its guard by replacing a certain conditional expression with a
+	 * expression, used when translating away conditional expression WITHOUT
+	 * introducing temporal variables. The original statement can't be modified,
+	 * because it needs to be used twice to generate the if branch statement and
+	 * the else branch statement.<br>
+	 * For example, <code>x = a ? b : c</code> will be translated into
+	 * <code> if(a) x = b; else x = c; </code><br>
+	 * Another example, <code> $when(a?b:c) x = k;</code> will be translated
+	 * into <code> if(a) $when(b) x=k; else $when(c) x=k; </code>
 	 * 
 	 * @param oldExpression
-	 *            The conditional expression
+	 *            The conditional expression to be cleared.
 	 * @param newExpression
-	 *            The new expression
+	 *            The new expression to take place of the conditional
+	 *            expression. Usually, it is one of the choice expressions of
+	 *            the conditional expression.
 	 * @return A new statement without the conditional expression
 	 */
 	Statement replaceWith(ConditionalExpression oldExpression,

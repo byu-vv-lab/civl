@@ -152,65 +152,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  */
 public class ModelBuilderWorker {
 
-	// Fields..............................................................
-	/**
-	 * The factory used to create new Model components.
-	 */
-	private ModelFactory factory;
-
-	/**
-	 * The symbolic universe
-	 */
-	private SymbolicUniverse universe;
-
-	/**
-	 * The ABC AST being translated by this model builder worker.
-	 */
-	private Program program;
-
-	/**
-	 * The model being constructed by this worker
-	 */
-	private Model model;
-
-	/**
-	 * The name of the model (i.e., core name of the cvl file)
-	 */
-	private String modelName;
-
-	/**
-	 * The outermost scope of the model, root of the static scope tree, known as
-	 * the "system scope".
-	 */
-	private Scope systemScope;
-
-	/**
-	 * This field accumulates the AST definition node of every function
-	 * definition in the AST.
-	 */
-	private ArrayList<FunctionDefinitionNode> unprocessedFunctions;
-
-	/**
-	 * Map whose key set contains all call/spawn statements in the model. The
-	 * value associated to the key is the ABC function definition node. This is
-	 * built up as call statements are processed. On a later pass, we iterate
-	 * over this map and set the function fields of the call/spawn statements to
-	 * the corresponding model Function object.
-	 */
-	Map<CallOrSpawnStatement, Function> callStatements; // make it
-														// package-private since
-														// CommonModelFactory
-														// needs to access it
-
-	/**
-	 * Map from ABC Function entity to corresponding CIVL Function.
-	 */
-	private Map<Function, CIVLFunction> functionMap;
-
-	/**
-	 * Mapping from ABC types to corresponding CIVL types.
-	 */
-	private Map<Type, CIVLType> typeMap = new HashMap<Type, CIVLType>();
+	/**************************** Instance Fields ****************************/
 
 	/**
 	 * Used to give names to anonymous structs and unions.
@@ -218,9 +160,12 @@ public class ModelBuilderWorker {
 	private int anonymousStructCounter = 0;
 
 	/**
-	 * List of all malloc statements in the program.
+	 * Keep track of the number of incomplete $atom block during translation.
 	 */
-	private ArrayList<MallocStatement> mallocStatements = new ArrayList<MallocStatement>();
+	private int atomCount = 0;
+
+	/** Used to shortcut checking whether circular types are bundleable. */
+	private List<CIVLType> bundleableEncountered = new LinkedList<CIVLType>();
 
 	/**
 	 * The types that may be part of a bundle.
@@ -228,32 +173,19 @@ public class ModelBuilderWorker {
 	private LinkedList<CIVLType> bundleableTypeList = new LinkedList<CIVLType>();
 
 	/**
-	 * The types that may not be part of a bundle.
-	 */
-	private LinkedList<CIVLType> unbundleableTypeList = new LinkedList<CIVLType>();
-
-	/** Used to shortcut checking whether circular types are bundleable. */
-	private List<CIVLType> bundleableEncountered = new LinkedList<CIVLType>();
-
-	/**
-	 * The unique type for a heap.
-	 */
-	private CIVLHeapType heapType;
-
-	/**
 	 * The unique type for a bundle.
 	 */
 	private CIVLBundleType bundleType;
 
 	/**
-	 * The unique type for a message.
+	 * Map whose key set contains all call/spawn statements in the model. The
+	 * value associated to the key is the ABC function definition node. This is
+	 * built up as call statements are processed. On a later pass, we iterate
+	 * over this map and set the function fields of the call/spawn statements to
+	 * the corresponding model Function object. Visibility make it
+	 * package-private since CommonModelFactory needs to access it
 	 */
-	private CIVLType messageType;
-
-	/**
-	 * The unique type for a queue.
-	 */
-	private CIVLType queueType;
+	Map<CallOrSpawnStatement, Function> callStatements;
 
 	/**
 	 * The unique type for a comm.
@@ -266,11 +198,25 @@ public class ModelBuilderWorker {
 	private GMCConfiguration config;
 
 	/**
-	 * The map formed from parsing the command line for "-input" options that
-	 * specifies an initial constant value for some input variables. May be null
-	 * if no "-input"s appeared on the command line.
+	 * The factory used to create new Model components.
 	 */
-	private Map<String, Object> inputInitMap;
+	private ModelFactory factory;
+
+	// TODO: Refactor this so that it's not a global field.
+	/**
+	 * Store temporary information of the function being processed
+	 */
+	private FunctionInfo functionInfo;
+
+	/**
+	 * Map from ABC Function entity to corresponding CIVL Function.
+	 */
+	private Map<Function, CIVLFunction> functionMap;
+
+	/**
+	 * The unique type for a heap.
+	 */
+	private CIVLHeapType heapType;
 
 	/**
 	 * Set containing the names of all input variables that were initialized
@@ -280,21 +226,83 @@ public class ModelBuilderWorker {
 	 */
 	private Set<String> initializedInputs = new HashSet<String>();
 
-	// TODO: Refactor this so that it's not a global field.
 	/**
-	 * Store temporary information of the function being processed
+	 * The map formed from parsing the command line for "-input" options that
+	 * specifies an initial constant value for some input variables. May be null
+	 * if no "-input"s appeared on the command line.
 	 */
-	private FunctionInfo functionInfo;
+	private Map<String, Object> inputInitMap;
+
+	/**
+	 * List of all malloc statements in the program.
+	 */
+	private ArrayList<MallocStatement> mallocStatements = new ArrayList<MallocStatement>();
 
 	/**
 	 * The function definition node of the main function
 	 */
 	private FunctionDefinitionNode mainFunctionNode = null;
 
-	/* *********************************************************************
-	 * Constructors
-	 * *********************************************************************
+	/**
+	 * The unique type for a message.
 	 */
+	private CIVLType messageType;
+
+	/**
+	 * The model being constructed by this worker
+	 */
+	private Model model;
+
+	/**
+	 * The name of the model (i.e., core name of the cvl file)
+	 */
+	private String modelName;
+
+	// private MPIStatementFactory mpiFactory;
+
+	/**
+	 * The ABC AST being translated by this model builder worker.
+	 */
+	private Program program;
+
+	/**
+	 * The unique type for a queue.
+	 */
+	private CIVLType queueType;
+
+	/**
+	 * The types that may not be part of a bundle.
+	 */
+	private LinkedList<CIVLType> unbundleableTypeList = new LinkedList<CIVLType>();
+
+	/**
+	 * The symbolic universe
+	 */
+	private SymbolicUniverse universe;
+
+	/**
+	 * This field accumulates the AST definition node of every function
+	 * definition in the AST.
+	 */
+	private ArrayList<FunctionDefinitionNode> unprocessedFunctions;
+
+	/**
+	 * The outermost scope of the model, root of the static scope tree, known as
+	 * the "system scope".
+	 */
+	private Scope systemScope;
+
+	/**
+	 * Mapping from ABC types to corresponding CIVL types.
+	 */
+	private Map<Type, CIVLType> typeMap = new HashMap<Type, CIVLType>();
+
+	private boolean inAtom() {
+		return atomCount > 0;
+	}
+
+	/****************************** Constructors *****************************/
+
 	/**
 	 * Constructs new instance of CommonModelBuilder, creating instance of
 	 * ModelFactory in the process, and sets up system functions.
@@ -320,12 +328,51 @@ public class ModelBuilderWorker {
 		this.bundleType = factory.newBundleType();
 		this.universe = factory.universe();
 		((CommonModelFactory) factory).modelBuilder = this;
+		// this.mpiFactory = new MPIStatementFactory(factory);
 	}
+
+	/***************************** Public Methods ****************************/
 
 	/* *********************************************************************
 	 * Translating ABC Type into CIVL Type
 	 * *********************************************************************
 	 */
+
+	/**
+	 * Translate the extent of an array type to an expression
+	 * 
+	 * @param source
+	 *            The CIVL source
+	 * @param arrayType
+	 *            The array type
+	 * @param scope
+	 *            The scope
+	 * @return the expression representing the extent
+	 * */
+	private Expression arrayExtent(CIVLSource source, ArrayType arrayType,
+			Scope scope) {
+		Expression result;
+
+		if (arrayType.isComplete()) {
+			ExpressionNode variableSize = arrayType.getVariableSize();
+
+			if (variableSize != null) {
+				result = translateExpressionNode(variableSize, scope, true);
+			} else {
+				IntegerValue constantSize = arrayType.getConstantSize();
+
+				if (constantSize != null)
+					result = factory.integerLiteralExpression(source,
+							constantSize.getIntegerValue());
+				else
+					throw new CIVLInternalException(
+							"Complete array type has neither constant size nor variable size: "
+									+ arrayType, source);
+			}
+		} else
+			result = null;
+		return result;
+	}
 
 	/**
 	 * Translate ABC basic types into CIVL types
@@ -514,105 +561,154 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	/**
-	 * Translate the extent of an array type to an expression
-	 * 
-	 * @param source
-	 *            The CIVL source
-	 * @param arrayType
-	 *            The array type
-	 * @param scope
-	 *            The scope
-	 * @return the expression representing the extent
-	 * */
-	private Expression arrayExtent(CIVLSource source, ArrayType arrayType,
-			Scope scope) {
-		Expression result;
-
-		if (arrayType.isComplete()) {
-			ExpressionNode variableSize = arrayType.getVariableSize();
-
-			if (variableSize != null) {
-				result = translateExpressionNode(variableSize, scope, true);
-			} else {
-				IntegerValue constantSize = arrayType.getConstantSize();
-
-				if (constantSize != null)
-					result = factory.integerLiteralExpression(source,
-							constantSize.getIntegerValue());
-				else
-					throw new CIVLInternalException(
-							"Complete array type has neither constant size nor variable size: "
-									+ arrayType, source);
-			}
-		} else
-			result = null;
-		return result;
-	}
-
-	/**
-	 * Returns false if a type contains a bundle or void (but void* is ok).
-	 * 
-	 * @param type
-	 *            The CIVL type to be checked
-	 * @return True of False
-	 */
-	private boolean bundleableType(CIVLType type) {
-		boolean result = true;
-
-		if (bundleableEncountered.contains(type)) {
-			// We are in a recursive evaluation that has already encountered
-			// this type.
-			// E.g. a struct foo with a field of type struct foo, etc.
-			// If this type is not bundleable, that will be determined
-			// elsewhere.
-			return true;
-		} else {
-			bundleableEncountered.add(type);
-		}
-		if (type.isBundleType()) {
-			result = false;
-		} else if (type.isPointerType()) {
-			if (((CIVLPointerType) type).baseType().isVoidType()) {
-				// void* is bundleable, so catch this before checking base type
-				result = true;
-			} else {
-				result = bundleableType(((CIVLPointerType) type).baseType());
-			}
-		} else if (type.isVoidType()) {
-			result = false;
-		} else if (type.isArrayType()) {
-			result = bundleableType(((CIVLArrayType) type).elementType());
-		} else if (type.isStructType()) {
-			for (StructField f : ((CIVLStructType) type).fields()) {
-				result = result && bundleableType(f.type());
-				if (!result)
-					break;
-			}
-		}
-		// Heaps and primitive types can be bundled.
-		bundleableEncountered.remove(type);
-		return result;
-	}
-
-	// /**
-	// * Translate a TypeNode object from the AST into a CIVLType object
-	// *
-	// * @param typeNode
-	// * The type node
-	// * @param scope
-	// * The scope
-	// * @return the CIVL type representing the TypeNode
-	// */
-	// private CIVLType translateTypeNode(TypeNode typeNode, Scope scope) {
-	// return translateABCType(factory.sourceOf(typeNode), scope,
-	// typeNode.getType());
-	// }
-
 	/* *********************************************************************
 	 * Translate AST Node into CIVL Expression
 	 * *********************************************************************
 	 */
+
+	/**
+	 * Translate a struct pointer field reference from the CIVL AST to the CIVL
+	 * model.
+	 * 
+	 * @param arrowNode
+	 *            The arrow expression.
+	 * @param scope
+	 *            The (static) scope containing the expression.
+	 * @return The model representation of the expression.
+	 */
+	private Expression translateArrowNode(ArrowNode arrowNode, Scope scope) {
+		Expression struct = translateExpressionNode(
+				arrowNode.getStructurePointer(), scope, true);
+		Expression result = factory.dotExpression(factory.sourceOf(arrowNode),
+				factory.dereferenceExpression(
+						factory.sourceOf(arrowNode.getStructurePointer()),
+						struct), getFieldIndex(arrowNode.getFieldName()));
+
+		return result;
+	}
+
+	/**
+	 * Translate a cast expression from the CIVL AST to the CIVL model.
+	 * 
+	 * @param castNode
+	 *            The cast expression.
+	 * @param scope
+	 *            The (static) scope containing the expression.
+	 * @return The model representation of the expression.
+	 */
+	private Expression translateCastNode(CastNode castNode, Scope scope) {
+		TypeNode typeNode = castNode.getCastType();
+		CIVLType castType = translateABCType(factory.sourceOf(typeNode), scope,
+				typeNode.getType());
+		ExpressionNode argumentNode = castNode.getArgument();
+		Expression castExpression = translateExpressionNode(argumentNode,
+				scope, true);
+		Expression result = factory.castExpression(factory.sourceOf(castNode),
+				castType, castExpression);
+
+		return result;
+	}
+
+	/**
+	 * Translate a ConstantNode into a CIVL literal expression
+	 * 
+	 * @param constantNode
+	 *            The constant node
+	 * 
+	 * @return a CIVL literal expression representing the constant node
+	 */
+	private Expression translateConstantNode(ConstantNode constantNode) {
+		CIVLSource source = factory.sourceOf(constantNode);
+		Type convertedType = constantNode.getConvertedType();
+		Expression result;
+
+		if (convertedType.kind() == TypeKind.PROCESS) {
+			assert constantNode.getStringRepresentation().equals("$self");
+			result = factory.selfExpression(source);
+		} else if (convertedType.kind() == TypeKind.OTHER_INTEGER) {
+			result = factory.integerLiteralExpression(source, BigInteger
+					.valueOf(Long.parseLong(constantNode
+							.getStringRepresentation())));
+		} else if (convertedType.kind() == TypeKind.BASIC) {
+			switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
+			case SHORT:
+			case UNSIGNED_SHORT:
+			case INT:
+			case UNSIGNED:
+			case LONG:
+			case UNSIGNED_LONG:
+			case LONG_LONG:
+			case UNSIGNED_LONG_LONG:
+				result = factory.integerLiteralExpression(source, BigInteger
+						.valueOf(Long.parseLong(constantNode
+								.getStringRepresentation())));
+				break;
+			case FLOAT:
+			case DOUBLE:
+			case LONG_DOUBLE:
+				result = factory.realLiteralExpression(source, BigDecimal
+						.valueOf(Double.parseDouble(constantNode
+								.getStringRepresentation())));
+				break;
+			case BOOL:
+				boolean value;
+
+				if (constantNode instanceof IntegerConstantNode) {
+					BigInteger integerValue = ((IntegerConstantNode) constantNode)
+							.getConstantValue().getIntegerValue();
+
+					if (integerValue.intValue() == 0) {
+						value = false;
+					} else {
+						value = true;
+					}
+				} else {
+					value = Boolean.parseBoolean(constantNode
+							.getStringRepresentation());
+				}
+				result = factory.booleanLiteralExpression(source, value);
+				break;
+			case CHAR:
+
+				// TODO: Add a case for the char type.
+			default:
+				throw new CIVLUnimplementedFeatureException("type "
+						+ convertedType, source);
+			}
+		} else if (convertedType.kind() == TypeKind.POINTER
+				&& ((PointerType) convertedType).referencedType().kind() == TypeKind.BASIC
+				&& ((StandardBasicType) ((PointerType) convertedType)
+						.referencedType()).getBasicTypeKind() == BasicTypeKind.CHAR) {
+			result = factory.stringLiteralExpression(source,
+					constantNode.getStringRepresentation());
+		} else if (convertedType.kind() == TypeKind.POINTER
+				&& constantNode.getStringRepresentation().equals("0")) {
+			result = factory.nullPointerExpression(
+					factory.pointerType(factory.voidType()), source);
+		} else {
+			throw new CIVLUnimplementedFeatureException(
+					"type " + convertedType, source);
+		}
+		return result;
+	}
+
+	/**
+	 * Translate a struct field reference from the CIVL AST to the CIVL model.
+	 * 
+	 * @param dotNode
+	 *            The dot node to be translated.
+	 * @param scope
+	 *            The (static) scope containing the expression.
+	 * @return The model representation of the expression.
+	 */
+	private Expression translateDotNode(DotNode dotNode, Scope scope) {
+		Expression struct = translateExpressionNode(dotNode.getStructure(),
+				scope, true);
+		Expression result = factory.dotExpression(factory.sourceOf(dotNode),
+				struct, getFieldIndex(dotNode.getFieldName()));
+
+		return result;
+	}
 
 	/**
 	 * Translate an ExpressionNode object in the AST into a CIVL Expression
@@ -743,24 +839,263 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * Translate a cast expression from the CIVL AST to the CIVL model.
+	 * Translate an IdentifierExpressionNode object from the AST into a CIVL
+	 * VariableExpression object.
 	 * 
-	 * @param castNode
-	 *            The cast expression.
+	 * @param identifierNode
+	 *            The identifier node to be translated.
+	 * @param scope
+	 *            The scope of the identifier.
+	 * @return The CIVL VariableExpression object corresponding to the
+	 *         IdentifierExpressionNode
+	 */
+	private Expression translateIdentifierNode(
+			IdentifierExpressionNode identifierNode, Scope scope) {
+		CIVLSource source = factory.sourceOf(identifierNode);
+		Identifier name = factory.identifier(source, identifierNode
+				.getIdentifier().name());
+		Expression result;
+
+		if (functionInfo.containsBoundVariable(name)) {
+			result = factory.boundVariableExpression(source, name,
+					functionInfo.boundVariableType(name));
+		} else if (scope.variable(name) == null) {
+			throw new CIVLInternalException("No such variable ", source);
+		} else {
+			result = factory.variableExpression(source, scope.variable(name));
+		}
+		return result;
+	}
+
+	/**
+	 * Translate an operator expression from the CIVL AST to the CIVL model.
+	 * 
+	 * @param operatorNode
+	 *            The operator expression.
 	 * @param scope
 	 *            The (static) scope containing the expression.
 	 * @return The model representation of the expression.
 	 */
-	private Expression translateCastNode(CastNode castNode, Scope scope) {
-		TypeNode typeNode = castNode.getCastType();
-		CIVLType castType = translateABCType(factory.sourceOf(typeNode), scope,
-				typeNode.getType());
-		ExpressionNode argumentNode = castNode.getArgument();
-		Expression castExpression = translateExpressionNode(argumentNode,
-				scope, true);
-		Expression result = factory.castExpression(factory.sourceOf(castNode),
-				castType, castExpression);
+	private Expression translateOperatorNode(OperatorNode operatorNode,
+			Scope scope) {
+		CIVLSource source = factory.sourceOf(operatorNode);
+		Operator operator = operatorNode.getOperator();
 
+		if (operator == Operator.SUBSCRIPT)
+			return translateSubscriptNode(operatorNode, scope);
+
+		int numArgs = operatorNode.getNumberOfArguments();
+		List<Expression> arguments = new ArrayList<Expression>();
+		Expression result = null;
+
+		for (int i = 0; i < numArgs; i++) {
+			arguments.add(translateExpressionNode(operatorNode.getArgument(i),
+					scope, true));
+		}
+		// TODO: Bitwise ops, =, {%,/,*,+,-}=, pointer ops, comma, ?
+		if (numArgs < 1 || numArgs > 3) {
+			throw new RuntimeException("Unsupported number of arguments: "
+					+ numArgs + " in expression " + operatorNode);
+		}
+		switch (operatorNode.getOperator()) {
+		case ADDRESSOF:
+			result = factory.addressOfExpression(source,
+					(LHSExpression) arguments.get(0));
+			break;
+		case BIG_O:
+			result = factory.unaryExpression(source, UNARY_OPERATOR.BIG_O,
+					arguments.get(0));
+			break;
+		case DEREFERENCE:
+			result = factory.dereferenceExpression(source, arguments.get(0));
+			break;
+		case CONDITIONAL:
+			result = factory.conditionalExpression(source, arguments.get(0),
+					arguments.get(1), arguments.get(2));
+			factory.addConditionalExpression((ConditionalExpression) result);
+			break;
+		case DIV:
+			result = factory.binaryExpression(source, BINARY_OPERATOR.DIVIDE,
+					arguments.get(0), arguments.get(1));
+			break;
+		case EQUALS:
+			result = factory.binaryExpression(source, BINARY_OPERATOR.EQUAL,
+					arguments.get(0), arguments.get(1));
+			break;
+		case GT:
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.LESS_THAN, arguments.get(1),
+					arguments.get(0));
+			break;
+		case GTE:
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.LESS_THAN_EQUAL, arguments.get(1),
+					arguments.get(0));
+			break;
+		case IMPLIES:
+			result = factory.binaryExpression(source, BINARY_OPERATOR.IMPLIES,
+					arguments.get(0), arguments.get(1));
+			break;
+		case LAND:
+			result = factory.binaryExpression(source, BINARY_OPERATOR.AND,
+					arguments.get(0), arguments.get(1));
+			break;
+		case LOR:
+			result = factory.binaryExpression(source, BINARY_OPERATOR.OR,
+					arguments.get(0), arguments.get(1));
+			break;
+		case LT:
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.LESS_THAN, arguments.get(0),
+					arguments.get(1));
+			break;
+		case LTE:
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.LESS_THAN_EQUAL, arguments.get(0),
+					arguments.get(1));
+			break;
+		case MINUS:
+			result = factory.binaryExpression(source, BINARY_OPERATOR.MINUS,
+					arguments.get(0), arguments.get(1));
+			break;
+		case MOD:
+			result = factory.binaryExpression(source, BINARY_OPERATOR.MODULO,
+					arguments.get(0), arguments.get(1));
+			break;
+		case NEQ:
+			result = factory.binaryExpression(source,
+					BINARY_OPERATOR.NOT_EQUAL, arguments.get(0),
+					arguments.get(1));
+			break;
+		case NOT:
+			result = factory.unaryExpression(source, UNARY_OPERATOR.NOT,
+					arguments.get(0));
+			break;
+		case PLUS:
+			result = translatePlusOperation(source, arguments.get(0),
+					arguments.get(1));
+			break;
+		case SUBSCRIPT:
+			throw new CIVLInternalException("unreachable", source);
+		case TIMES:
+			result = factory.binaryExpression(source, BINARY_OPERATOR.TIMES,
+					arguments.get(0), arguments.get(1));
+			break;
+		case UNARYMINUS:
+			result = factory.unaryExpression(source, UNARY_OPERATOR.NEGATIVE,
+					arguments.get(0));
+			break;
+		case UNARYPLUS:
+			result = arguments.get(0);
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"Unsupported operator: " + operatorNode.getOperator()
+							+ " in expression " + operatorNode);
+		}
+		return result;
+	}
+
+	/**
+	 * Translate plus operation into an expression, as a helper method for
+	 * {@link #translateOperatorNode(OperatorNode, Scope)}.
+	 * 
+	 * @param source
+	 *            The CIVL source of the plus operator.
+	 * @param arg0
+	 *            The first argument of the plus operation.
+	 * @param arg1
+	 *            The second argument of the plus operation.
+	 * @return The CIVL expression of the plus operation.
+	 */
+	private Expression translatePlusOperation(CIVLSource source,
+			Expression arg0, Expression arg1) {
+		CIVLType type0 = arg0.getExpressionType();
+		CIVLType type1 = arg1.getExpressionType();
+		boolean isNumeric0 = type0.isNumericType();
+		boolean isNumeric1 = type1.isNumericType();
+
+		if (isNumeric0 && isNumeric1) {
+			return factory.binaryExpression(source, BINARY_OPERATOR.PLUS, arg0,
+					arg1);
+		} else {
+			Expression pointer, offset;
+
+			if (isNumeric1) {
+				pointer = arrayToPointer(arg0);
+				offset = arg1;
+			} else if (isNumeric0) {
+				pointer = arrayToPointer(arg1);
+				offset = arg0;
+			} else
+				throw new CIVLInternalException(
+						"Expected at least one numeric argument", source);
+			if (!pointer.getExpressionType().isPointerType())
+				throw new CIVLInternalException(
+						"Expected expression of pointer type",
+						pointer.getSource());
+			if (!offset.getExpressionType().isIntegerType())
+				throw new CIVLInternalException(
+						"Expected expression of integer type",
+						offset.getSource());
+			return factory.binaryExpression(source,
+					BINARY_OPERATOR.POINTER_ADD, pointer, offset);
+		}
+	}
+
+	/**
+	 * Translate a QuantifiedExpressionNode from AST into a CIVL Quantified
+	 * expression
+	 * 
+	 * @param expressionNode
+	 *            The quantified expression node
+	 * @param scope
+	 *            The scope
+	 * @return the CIVL QuantifiedExpression
+	 */
+	private Expression translateQuantifiedExpressionNode(
+			QuantifiedExpressionNode expressionNode, Scope scope) {
+		QuantifiedExpression result;
+		Quantifier quantifier;
+		Identifier variableName;
+		TypeNode variableTypeNode;
+		CIVLType variableType;
+		Expression restriction;
+		Expression quantifiedExpression;
+		CIVLSource source = factory.sourceOf(expressionNode.getSource());
+
+		variableName = factory.identifier(
+				factory.sourceOf(expressionNode.variable().getSource()),
+				expressionNode.variable().getName());
+		variableTypeNode = expressionNode.variable().getTypeNode();
+		variableType = translateABCType(
+				factory.sourceOf(variableTypeNode.getSource()), scope,
+				variableTypeNode.getType());
+		functionInfo.addBoundVariable(variableName, variableType);
+		// TODO: Is there an advantage to having separate restriction and
+		// quantifiedExpression? Maybe move this to right hand size and express
+		// in terms of &&, ||?
+		switch (expressionNode.quantifier()) {
+		case EXISTS:
+			quantifier = Quantifier.EXISTS;
+			break;
+		case FORALL:
+			quantifier = Quantifier.FORALL;
+			break;
+		case UNIFORM:
+			quantifier = Quantifier.UNIFORM;
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException("quantifier "
+					+ expressionNode.quantifier(), source);
+		}
+		restriction = translateExpressionNode(expressionNode.restriction(),
+				scope, true);
+		quantifiedExpression = translateExpressionNode(
+				expressionNode.expression(), scope, true);
+		result = factory.quantifiedExpression(source, quantifier, variableName,
+				variableType, restriction, quantifiedExpression);
+		functionInfo.popBoundVariableStack();
 		return result;
 	}
 
@@ -797,87 +1132,6 @@ public class ModelBuilderWorker {
 					+ sizeofNode, source);
 		}
 		return result;
-	}
-
-	/**
-	 * Translate a struct pointer field reference from the CIVL AST to the CIVL
-	 * model.
-	 * 
-	 * @param arrowNode
-	 *            The arrow expression.
-	 * @param scope
-	 *            The (static) scope containing the expression.
-	 * @return The model representation of the expression.
-	 */
-	private Expression translateArrowNode(ArrowNode arrowNode, Scope scope) {
-		Expression struct = translateExpressionNode(
-				arrowNode.getStructurePointer(), scope, true);
-		Expression result = factory.dotExpression(factory.sourceOf(arrowNode),
-				factory.dereferenceExpression(
-						factory.sourceOf(arrowNode.getStructurePointer()),
-						struct), getFieldIndex(arrowNode.getFieldName()));
-
-		return result;
-	}
-
-	/**
-	 * Translate a struct field reference from the CIVL AST to the CIVL model.
-	 * 
-	 * @param dotNode
-	 *            The dot node to be translated.
-	 * @param scope
-	 *            The (static) scope containing the expression.
-	 * @return The model representation of the expression.
-	 */
-	private Expression translateDotNode(DotNode dotNode, Scope scope) {
-		Expression struct = translateExpressionNode(dotNode.getStructure(),
-				scope, true);
-		Expression result = factory.dotExpression(factory.sourceOf(dotNode),
-				struct, getFieldIndex(dotNode.getFieldName()));
-
-		return result;
-	}
-
-	// note: argument to & should never have array type
-
-	/**
-	 * If the given CIVL expression e has array type, this returns the
-	 * expression &e[0]. Otherwise returns e unchanged.
-	 * 
-	 * This method should be called on every LHS expression e when it is used in
-	 * a place where a RHS expression is called for, except in the following
-	 * cases: (1) e is the first argument to the SUBSCRIPT operator (i.e., e
-	 * occurs in the context e[i]), or (2) e is the argument to the "sizeof"
-	 * operator.
-	 * 
-	 * @param array
-	 *            any CIVL expression e
-	 * @return either the original expression or &e[0]
-	 */
-	private Expression arrayToPointer(Expression array) {
-		CIVLType type = array.getExpressionType();
-
-		if (type.isArrayType()) {
-			CIVLSource source = array.getSource();
-			CIVLArrayType arrayType = (CIVLArrayType) type;
-			CIVLType elementType = arrayType.elementType();
-			Expression zero = factory.integerLiteralExpression(source,
-					BigInteger.ZERO);
-			LHSExpression subscript = factory.subscriptExpression(source,
-					(LHSExpression) array, zero);
-			Expression pointer = factory.addressOfExpression(source, subscript);
-			Scope scope = array.expressionScope();
-
-			zero.setExpressionScope(scope);
-			subscript.setExpressionScope(scope);
-			pointer.setExpressionScope(scope);
-			((CommonExpression) zero).setExpressionType(factory.integerType());
-			((CommonExpression) subscript).setExpressionType(elementType);
-			((CommonExpression) pointer).setExpressionType(factory
-					.pointerType(elementType));
-			return pointer;
-		}
-		return array;
 	}
 
 	/**
@@ -937,343 +1191,76 @@ public class ModelBuilderWorker {
 		return result;
 	}
 
-	/**
-	 * Translate an operator expression from the CIVL AST to the CIVL model.
-	 * 
-	 * @param operatorNode
-	 *            The operator expression.
-	 * @param scope
-	 *            The (static) scope containing the expression.
-	 * @return The model representation of the expression.
-	 */
-	private Expression translateOperatorNode(OperatorNode operatorNode,
-			Scope scope) {
-		CIVLSource source = factory.sourceOf(operatorNode);
-		Operator operator = operatorNode.getOperator();
-
-		if (operator == Operator.SUBSCRIPT)
-			return translateSubscriptNode(operatorNode, scope);
-
-		int numArgs = operatorNode.getNumberOfArguments();
-		List<Expression> arguments = new ArrayList<Expression>();
-		Expression result = null;
-
-		for (int i = 0; i < numArgs; i++) {
-			arguments.add(translateExpressionNode(operatorNode.getArgument(i),
-					scope, true));
-		}
-		// TODO: Bitwise ops, =, {%,/,*,+,-}=, pointer ops, comma, ?
-		if (numArgs < 1 || numArgs > 3) {
-			throw new RuntimeException("Unsupported number of arguments: "
-					+ numArgs + " in expression " + operatorNode);
-		}
-		switch (operatorNode.getOperator()) {
-		case ADDRESSOF:
-			result = factory.addressOfExpression(source,
-					(LHSExpression) arguments.get(0));
-			break;
-		case BIG_O:
-			result = factory.unaryExpression(source, UNARY_OPERATOR.BIG_O,
-					arguments.get(0));
-			break;
-		case DEREFERENCE:
-			result = factory.dereferenceExpression(source, arguments.get(0));
-			break;
-		case CONDITIONAL:
-			ConditionalExpression expression = factory.conditionalExpression(
-					source, arguments.get(0), arguments.get(1),
-					arguments.get(2));
-
-			factory.addConditionalExpression(expression);
-			result = expression;
-			break;
-		case DIV:
-			result = factory.binaryExpression(source, BINARY_OPERATOR.DIVIDE,
-					arguments.get(0), arguments.get(1));
-			break;
-		case EQUALS:
-			result = factory.binaryExpression(source, BINARY_OPERATOR.EQUAL,
-					arguments.get(0), arguments.get(1));
-			break;
-		case GT:
-			result = factory.binaryExpression(source,
-					BINARY_OPERATOR.LESS_THAN, arguments.get(1),
-					arguments.get(0));
-			break;
-		case GTE:
-			result = factory.binaryExpression(source,
-					BINARY_OPERATOR.LESS_THAN_EQUAL, arguments.get(1),
-					arguments.get(0));
-			break;
-		case IMPLIES:
-			result = factory.binaryExpression(source, BINARY_OPERATOR.IMPLIES,
-					arguments.get(0), arguments.get(1));
-			break;
-		case LAND:
-			result = factory.binaryExpression(source, BINARY_OPERATOR.AND,
-					arguments.get(0), arguments.get(1));
-			break;
-		case LOR:
-			result = factory.binaryExpression(source, BINARY_OPERATOR.OR,
-					arguments.get(0), arguments.get(1));
-			break;
-		case LT:
-			result = factory.binaryExpression(source,
-					BINARY_OPERATOR.LESS_THAN, arguments.get(0),
-					arguments.get(1));
-			break;
-		case LTE:
-			result = factory.binaryExpression(source,
-					BINARY_OPERATOR.LESS_THAN_EQUAL, arguments.get(0),
-					arguments.get(1));
-			break;
-		case MINUS:
-			result = factory.binaryExpression(source, BINARY_OPERATOR.MINUS,
-					arguments.get(0), arguments.get(1));
-			break;
-		case MOD:
-			result = factory.binaryExpression(source, BINARY_OPERATOR.MODULO,
-					arguments.get(0), arguments.get(1));
-			break;
-		case NEQ:
-			result = factory.binaryExpression(source,
-					BINARY_OPERATOR.NOT_EQUAL, arguments.get(0),
-					arguments.get(1));
-			break;
-		case NOT:
-			result = factory.unaryExpression(source, UNARY_OPERATOR.NOT,
-					arguments.get(0));
-			break;
-		case PLUS: {
-			Expression arg0 = arguments.get(0);
-			Expression arg1 = arguments.get(1);
-			CIVLType type0 = arg0.getExpressionType();
-			CIVLType type1 = arg1.getExpressionType();
-			boolean isNumeric0 = type0.isNumericType();
-			boolean isNumeric1 = type1.isNumericType();
-
-			if (isNumeric0 && isNumeric1) {
-				result = factory.binaryExpression(source, BINARY_OPERATOR.PLUS,
-						arg0, arg1);
-				break;
-			} else {
-				Expression pointer, offset;
-
-				if (isNumeric1) {
-					pointer = arrayToPointer(arg0);
-					offset = arg1;
-				} else if (isNumeric0) {
-					pointer = arrayToPointer(arg1);
-					offset = arg0;
-				} else
-					throw new CIVLInternalException(
-							"Expected at least one numeric argument", source);
-				if (!pointer.getExpressionType().isPointerType())
-					throw new CIVLInternalException(
-							"Expected expression of pointer type",
-							pointer.getSource());
-				if (!offset.getExpressionType().isIntegerType())
-					throw new CIVLInternalException(
-							"Expected expression of integer type",
-							offset.getSource());
-				result = factory.binaryExpression(source,
-						BINARY_OPERATOR.POINTER_ADD, pointer, offset);
-			}
-			break;
-		}
-		case SUBSCRIPT:
-			throw new CIVLInternalException("unreachable", source);
-		case TIMES:
-			result = factory.binaryExpression(source, BINARY_OPERATOR.TIMES,
-					arguments.get(0), arguments.get(1));
-			break;
-		case UNARYMINUS:
-			result = factory.unaryExpression(source, UNARY_OPERATOR.NEGATIVE,
-					arguments.get(0));
-			break;
-		case UNARYPLUS:
-			result = arguments.get(0);
-			break;
-		default:
-			throw new CIVLUnimplementedFeatureException(
-					"Unsupported operator: " + operatorNode.getOperator()
-							+ " in expression " + operatorNode);
-		}
-		return result;
-	}
-
-	/**
-	 * Translate an IdentifierExpressionNode object from the AST into a CIVL
-	 * VariableExpression object.
-	 * 
-	 * @param identifierNode
-	 *            The identifier node
-	 * @param scope
-	 *            The scope
-	 * @return The CIVL VariableExpression object corresponding to the
-	 *         IdentifierExpressionNode
-	 */
-	private Expression translateIdentifierNode(
-			IdentifierExpressionNode identifierNode, Scope scope) {
-		CIVLSource source = factory.sourceOf(identifierNode);
-		Identifier name = factory.identifier(source, identifierNode
-				.getIdentifier().name());
-		Expression result;
-
-		if (functionInfo.containsBoundVariable(name)) {
-			result = factory.boundVariableExpression(source, name,
-					functionInfo.boundVariableType(name));
-		} else if (scope.variable(name) == null) {
-			throw new CIVLInternalException("No such variable ", source);
-		} else {
-			result = factory.variableExpression(source, scope.variable(name));
-		}
-		return result;
-	}
-
-	/**
-	 * Translate a ConstantNode into a CIVL literal expression
-	 * 
-	 * @param constantNode
-	 *            The constant node
-	 * 
-	 * @return a CIVL literal expression representing the constant node
-	 */
-	private Expression translateConstantNode(ConstantNode constantNode) {
-		CIVLSource source = factory.sourceOf(constantNode);
-		Type convertedType = constantNode.getConvertedType();
-		Expression result;
-
-		if (convertedType.kind() == TypeKind.PROCESS) {
-			assert constantNode.getStringRepresentation().equals("$self");
-			result = factory.selfExpression(source);
-		} else if (convertedType.kind() == TypeKind.OTHER_INTEGER) {
-			result = factory.integerLiteralExpression(source, BigInteger
-					.valueOf(Long.parseLong(constantNode
-							.getStringRepresentation())));
-		} else if (convertedType.kind() == TypeKind.BASIC) {
-			switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
-			case SHORT:
-			case UNSIGNED_SHORT:
-			case INT:
-			case UNSIGNED:
-			case LONG:
-			case UNSIGNED_LONG:
-			case LONG_LONG:
-			case UNSIGNED_LONG_LONG:
-				result = factory.integerLiteralExpression(source, BigInteger
-						.valueOf(Long.parseLong(constantNode
-								.getStringRepresentation())));
-				break;
-			case FLOAT:
-			case DOUBLE:
-			case LONG_DOUBLE:
-				result = factory.realLiteralExpression(source, BigDecimal
-						.valueOf(Double.parseDouble(constantNode
-								.getStringRepresentation())));
-				break;
-			case BOOL:
-				boolean value;
-
-				if (constantNode instanceof IntegerConstantNode) {
-					BigInteger integerValue = ((IntegerConstantNode) constantNode)
-							.getConstantValue().getIntegerValue();
-
-					if (integerValue.intValue() == 0) {
-						value = false;
-					} else {
-						value = true;
-					}
-				} else {
-					value = Boolean.parseBoolean(constantNode
-							.getStringRepresentation());
-				}
-				result = factory.booleanLiteralExpression(source, value);
-				break;
-			case CHAR:
-
-				// TODO: Add a case for the char type.
-			default:
-				throw new CIVLUnimplementedFeatureException("type "
-						+ convertedType, source);
-			}
-		} else if (convertedType.kind() == TypeKind.POINTER
-				&& ((PointerType) convertedType).referencedType().kind() == TypeKind.BASIC
-				&& ((StandardBasicType) ((PointerType) convertedType)
-						.referencedType()).getBasicTypeKind() == BasicTypeKind.CHAR) {
-			result = factory.stringLiteralExpression(source,
-					constantNode.getStringRepresentation());
-		} else if (convertedType.kind() == TypeKind.POINTER
-				&& constantNode.getStringRepresentation().equals("0")) {
-			result = factory.nullPointerExpression(
-					factory.pointerType(factory.voidType()), source);
-		} else {
-			throw new CIVLUnimplementedFeatureException(
-					"type " + convertedType, source);
-		}
-		return result;
-	}
-
-	/**
-	 * Translate a QuantifiedExpressionNode from AST into a CIVL Quantified
-	 * expression
-	 * 
-	 * @param expressionNode
-	 *            The quantified expression node
-	 * @param scope
-	 *            The scope
-	 * @return the CIVL QuantifiedExpression
-	 */
-	private Expression translateQuantifiedExpressionNode(
-			QuantifiedExpressionNode expressionNode, Scope scope) {
-		QuantifiedExpression result;
-		Quantifier quantifier;
-		Identifier variableName;
-		TypeNode variableTypeNode;
-		CIVLType variableType;
-		Expression restriction;
-		Expression quantifiedExpression;
-		CIVLSource source = factory.sourceOf(expressionNode.getSource());
-
-		variableName = factory.identifier(
-				factory.sourceOf(expressionNode.variable().getSource()),
-				expressionNode.variable().getName());
-		variableTypeNode = expressionNode.variable().getTypeNode();
-		variableType = translateABCType(
-				factory.sourceOf(variableTypeNode.getSource()), scope,
-				variableTypeNode.getType());
-		functionInfo.addBoundVariable(variableName, variableType);
-		// TODO: Is there an advantage to having separate restriction and
-		// quantifiedExpression? Maybe move this to right hand size and express
-		// in terms of &&, ||?
-		switch (expressionNode.quantifier()) {
-		case EXISTS:
-			quantifier = Quantifier.EXISTS;
-			break;
-		case FORALL:
-			quantifier = Quantifier.FORALL;
-			break;
-		case UNIFORM:
-			quantifier = Quantifier.UNIFORM;
-			break;
-		default:
-			throw new CIVLUnimplementedFeatureException("quantifier "
-					+ expressionNode.quantifier(), source);
-		}
-		restriction = translateExpressionNode(expressionNode.restriction(),
-				scope, true);
-		quantifiedExpression = translateExpressionNode(
-				expressionNode.expression(), scope, true);
-		result = factory.quantifiedExpression(source, quantifier, variableName,
-				variableType, restriction, quantifiedExpression);
-		functionInfo.popBoundVariableStack();
-		return result;
-	}
-
 	/* *********************************************************************
-	 * Statements
+	 * Translate ABC Statement Nodes into CIVL Statements
 	 * *********************************************************************
 	 */
+
+	/**
+	 * If the given CIVL expression e has array type, this returns the
+	 * expression &e[0]. Otherwise returns e unchanged.<br>
+	 * This method should be called on every LHS expression e when it is used in
+	 * a place where a RHS expression is called for, except in the following
+	 * cases: (1) e is the first argument to the SUBSCRIPT operator (i.e., e
+	 * occurs in the context e[i]), or (2) e is the argument to the "sizeof"
+	 * operator.<br>
+	 * note: argument to & should never have array type.
+	 * 
+	 * @param array
+	 *            any CIVL expression e
+	 * @return either the original expression or &e[0]
+	 */
+	private Expression arrayToPointer(Expression array) {
+		CIVLType type = array.getExpressionType();
+
+		if (type.isArrayType()) {
+			CIVLSource source = array.getSource();
+			CIVLArrayType arrayType = (CIVLArrayType) type;
+			CIVLType elementType = arrayType.elementType();
+			Expression zero = factory.integerLiteralExpression(source,
+					BigInteger.ZERO);
+			LHSExpression subscript = factory.subscriptExpression(source,
+					(LHSExpression) array, zero);
+			Expression pointer = factory.addressOfExpression(source, subscript);
+			Scope scope = array.expressionScope();
+
+			zero.setExpressionScope(scope);
+			subscript.setExpressionScope(scope);
+			pointer.setExpressionScope(scope);
+			((CommonExpression) zero).setExpressionType(factory.integerType());
+			((CommonExpression) subscript).setExpressionType(elementType);
+			((CommonExpression) pointer).setExpressionType(factory
+					.pointerType(elementType));
+			return pointer;
+		}
+		return array;
+	}
+
+	/**
+	 * Translate an ABC AtomicNode, which represents either an $atomic block or
+	 * an $atom block, dependent on {@link AtomicNode#isDeterministic()}.
+	 * 
+	 * @param scope
+	 * @param statementNode
+	 * @return
+	 */
+	private Fragment translateAtomicNode(Scope scope, AtomicNode atomicNode) {
+		StatementNode bodyNode = atomicNode.getBody();
+		Fragment bodyFragment;
+		Location start = factory.location(
+				factory.sourceOfBeginning(atomicNode), scope);
+		Location end = factory.location(factory.sourceOfEnd(atomicNode), scope);
+
+		if (atomicNode.isAtom())
+			this.atomCount++;
+		bodyFragment = translateStatementNode(scope, bodyNode);
+		if (atomicNode.isAtom())
+			this.atomCount--;
+		bodyFragment = factory.atomicFragment(atomicNode.isAtom(),
+				bodyFragment, start, end);
+		return bodyFragment;
+	}
+
 	/**
 	 * Given a StatementNode, return a Fragment representing it. Takes a
 	 * statement node where the start location and extra guard are defined
@@ -1358,26 +1345,6 @@ public class ModelBuilderWorker {
 		}
 		factory.popConditionaExpressionStack();
 		return result;
-	}
-
-	/**
-	 * Translate an atomic node (i.e., an atomic block)
-	 * 
-	 * @param scope
-	 * @param statementNode
-	 * @return
-	 */
-	private Fragment translateAtomicNode(Scope scope, AtomicNode atomicNode) {
-		StatementNode bodyNode = atomicNode.getBody();
-		Fragment bodyFragment;
-		Location start = factory.location(
-				factory.sourceOfBeginning(atomicNode), scope);
-		Location end = factory.location(factory.sourceOfEnd(atomicNode), scope);
-
-		bodyFragment = translateStatementNode(scope, bodyNode);
-		bodyFragment = factory.atomicFragment(atomicNode.isDeterministic(),
-				bodyFragment, start, end);
-		return bodyFragment;
 	}
 
 	/**
@@ -1563,12 +1530,29 @@ public class ModelBuilderWorker {
 				.getFunction()).getIdentifier().name();
 		Fragment result;
 
-		if (functionName.equals("$choose_int")) {
+		switch (functionName) {
+		case "$choose_int":
 			Statement chooseStatement = translateChooseIntFunctionCall(source,
 					location, scope, null, functionCallNode);
 
 			result = new CommonFragment(chooseStatement);
-		} else {
+			break;
+		// TODO once MPI Statement implementation is done, translate
+		// mpi function call node here to the corresponding MPI Statement.
+		// case MPIStatementFactory.MPI_SEND:
+		// result = mpiFactory.translateMPI_SEND(scope, functionCallNode);
+		// break;
+		// case MPIStatementFactory.MPI_RECV:
+		// break;
+		// case MPIStatementFactory.MPI_IRECV:
+		// break;
+		// case MPIStatementFactory.MPI_ISEND:
+		// break;
+		// case MPIStatementFactory.MPI_BARRIER:
+		// break;
+		// case MPIStatementFactory.MPI_WAIT:
+		// break;
+		default:
 			Statement callStatement = callOrSpawnStatement(location, scope,
 					functionCallNode, null, true);
 
@@ -1599,8 +1583,11 @@ public class ModelBuilderWorker {
 		int numberOfArgs = functionCallNode.getNumberOfArguments();
 		Expression argument;
 
-		// TODO: Add info about whether in $atom to FunctionInfo. If in $atom,
-		// throw exception because $choose_int is nondeterministic.
+		if (this.inAtom()) {
+			throw new CIVLInternalException(
+					"The non-deterministic function $choose_int is not allowed in $atom block.",
+					source);
+		}
 		if (numberOfArgs != 1) {
 			throw new CIVLInternalException(
 					"The function $choose_int should have exactly one argument.",
@@ -2986,20 +2973,6 @@ public class ModelBuilderWorker {
 	// Exported methods....................................................
 
 	/**
-	 * @return The model factory used by this model builder.
-	 */
-	public ModelFactory factory() {
-		return factory;
-	}
-
-	/**
-	 * @return the configuration
-	 */
-	public GMCConfiguration getConfiguration() {
-		return config;
-	}
-
-	/**
 	 * @param node
 	 *            The AST node
 	 * @param scope
@@ -3066,6 +3039,94 @@ public class ModelBuilderWorker {
 
 		return result;
 	}
+
+	/* *********************************************************************
+	 * Post-translation Methods
+	 * *********************************************************************
+	 */
+
+	/**
+	 * Returns false if a type contains a bundle or void (but void* is ok).
+	 * 
+	 * @param type
+	 *            The CIVL type to be checked
+	 * @return True of False
+	 */
+	private boolean bundleableType(CIVLType type) {
+		boolean result = true;
+
+		if (bundleableEncountered.contains(type)) {
+			// We are in a recursive evaluation that has already encountered
+			// this type. E.g. a struct foo with a field of type struct foo,
+			// etc. If this type is not bundleable, that will be determined
+			// elsewhere.
+			return true;
+		} else {
+			bundleableEncountered.add(type);
+		}
+		if (type.isBundleType()) {
+			result = false;
+		} else if (type.isPointerType()) {
+			if (((CIVLPointerType) type).baseType().isVoidType()) {
+				// void* is bundleable, so catch this before checking base type
+				result = true;
+			} else {
+				result = bundleableType(((CIVLPointerType) type).baseType());
+			}
+		} else if (type.isVoidType()) {
+			result = false;
+		} else if (type.isArrayType()) {
+			result = bundleableType(((CIVLArrayType) type).elementType());
+		} else if (type.isStructType()) {
+			for (StructField f : ((CIVLStructType) type).fields()) {
+				result = result && bundleableType(f.type());
+				if (!result)
+					break;
+			}
+		}
+		// Heaps and primitive types can be bundled.
+		bundleableEncountered.remove(type);
+		return result;
+	}
+
+	/**
+	 * Perform static analysis, including: dereferences, purely local
+	 * statements, etc.
+	 */
+	private void staticAnalysis() {
+		for (CIVLFunction f : model.functions()) {
+			f.simplify();
+			// identify all purely local variables
+			f.purelyLocalAnalysis();
+			f.setModel(model);
+			for (Statement s : f.statements()) {
+				s.setModel(model);
+				s.calculateDerefs();
+			}
+		}
+		for (CIVLFunction f : model.functions()) {
+			// purely local statements can only be
+			// identified after ALL variables have been
+			// checked for being purely local or not
+			for (Location loc : f.locations()) {
+				for (Statement s : loc.outgoing()) {
+					s.purelyLocalAnalysis();
+				}
+			}
+		}
+		for (CIVLFunction f : model.functions()) {
+			// purely local locations that enters an atomic block needs future
+			// statements to be checked, thus it can only be
+			// identified after ALL statements have been
+			// checked for being purely local or not
+			for (Location loc : f.locations()) {
+				loc.purelyLocalAnalysis();
+				factory.setImpactScopeOfLocation(loc);
+			}
+		}
+	}
+
+	/***************************** Public Methods ****************************/
 
 	/**
 	 * Build the CIVL model from the AST
@@ -3160,40 +3221,21 @@ public class ModelBuilderWorker {
 		for (CIVLFunction f : functionMap.values())
 			model.addFunction(f);
 		((CommonModel) model).setMallocStatements(mallocStatements);
-		for (CIVLFunction f : model.functions()) {
-			f.simplify();
-			// identify all purely local variables
-			f.purelyLocalAnalysis();
-			f.setModel(model);
-			for (Statement s : f.statements()) {
-				s.setModel(model);
-				s.calculateDerefs();
-			}
-		}
+		this.staticAnalysis();
+	}
 
-		for (CIVLFunction f : model.functions()) {
-			// purely local statements can only be
-			// identified after ALL variables have been
-			// checked for being purely local or not
+	/**
+	 * @return The model factory used by this model builder.
+	 */
+	public ModelFactory factory() {
+		return factory;
+	}
 
-			for (Location loc : f.locations()) {
-				for (Statement s : loc.outgoing()) {
-					s.purelyLocalAnalysis();
-				}
-			}
-		}
-
-		for (CIVLFunction f : model.functions()) {
-			// purely local locations that enters an atomic block needs future
-			// statements to be checked, thus it can only be
-			// identified after ALL statements have been
-			// checked for being purely local or not
-
-			for (Location loc : f.locations()) {
-				loc.purelyLocalAnalysis();
-				factory.setImpactScopeOfLocation(loc);
-			}
-		}
+	/**
+	 * @return the configuration
+	 */
+	public GMCConfiguration getConfiguration() {
+		return config;
 	}
 
 	/**
@@ -3202,4 +3244,5 @@ public class ModelBuilderWorker {
 	public Model getModel() {
 		return model;
 	}
+
 }
