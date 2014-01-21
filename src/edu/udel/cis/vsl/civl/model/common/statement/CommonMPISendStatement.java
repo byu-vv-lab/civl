@@ -30,12 +30,13 @@ public class CommonMPISendStatement extends CommonStatement implements
 		MPISendStatement {
 
 	ArrayList<Expression> arguments;
+	LHSExpression lhs;
 
 	public CommonMPISendStatement(CIVLSource civlsource, Location source,
-			ArrayList<Expression> arguments) {
+			LHSExpression  lhs, ArrayList<Expression> arguments) {
 		super(civlsource, source);
 		this.arguments = new ArrayList<Expression>(arguments);
-
+		this.lhs = lhs;
 	}
 
 	@Override
@@ -75,20 +76,26 @@ public class CommonMPISendStatement extends CommonStatement implements
 	}
 
 	@Override
-	public LHSExpression getLeftHandSize() {
+	public LHSExpression getLeftHandSide() {
 		// TODO Auto-generated method stub
-		return (LHSExpression) this.arguments.get(6);
+		return this.lhs;
+	}	
+
+	@Override
+	public void setLeftHandSide(LHSExpression lhs) {
+		// TODO Auto-generated method stub
+		this.lhs = lhs;
 	}
 	
 	public String toString(){
-		if(this.getLeftHandSize() == null) {
+		if(this.getLeftHandSide() == null) {
 		    return "MPI_Send(" + this.arguments.get(0) + ", " + this.arguments.get(1) +
 				", " + this.arguments.get(2) + ", " + this.arguments.get(3) + 
 				", " +this.arguments.get(4) + ", " + this.arguments.get(5) +
 				")";
 		    }
 		else {
-			return  this.arguments.get(6) +
+			return  this.lhs +
 			   " = MPI_Send(" + this.arguments.get(0) + ", " + this.arguments.get(1) +
 			   ", " + this.arguments.get(2) + ", " + this.arguments.get(3) + 
 			   ", " +this.arguments.get(4) + ", " + this.arguments.get(5) +
@@ -106,7 +113,7 @@ public class CommonMPISendStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonMPISendStatement(this.getSource(),
-					this.source(), this.arguments);
+					this.source(), this.lhs , this.arguments);
 			newStatement.setGuard(newGuard);
 		} else {
 			ArrayList<Expression> newArgs = new ArrayList<Expression>();
@@ -129,12 +136,11 @@ public class CommonMPISendStatement extends CommonStatement implements
 			}
 			if (hasNewArg) {
 				newStatement = new CommonMPISendStatement(this.getSource(),
-						this.source(), this.arguments);
+						this.source(), this.lhs, this.arguments);
 				newStatement.setGuard(newGuard);
 			}
 		}
 
 		return newStatement;
 	}
-
 }
