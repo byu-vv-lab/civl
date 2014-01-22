@@ -20,7 +20,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 public class CallStack extends PersistentObject implements
 		Iterable<PersistentStackEntry> {
 
-	/************************* Static Fields *************************/
+	/* *************************** Static Fields *************************** */
 
 	/**
 	 * The hash code of this class, used in the hash code method to help
@@ -38,7 +38,7 @@ public class CallStack extends PersistentObject implements
 	 */
 	final static CallStack emptyStack = new CallStack();
 
-	/************************ Instance Fields ************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * The immutable data structure containing the actual entries on this call
@@ -51,7 +51,7 @@ public class CallStack extends PersistentObject implements
 	 */
 	private PersistentVector<PersistentStackEntry> entries;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Constructs new CallStack wrapping the given vector of stack entries. The
@@ -72,7 +72,7 @@ public class CallStack extends PersistentObject implements
 		this.entries = Persistents.<PersistentStackEntry> vector();
 	}
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	PersistentStack<PersistentStackEntry> getEntries() {
 		return entries;
@@ -93,14 +93,14 @@ public class CallStack extends PersistentObject implements
 		return newEntries == entries ? this : new CallStack(newEntries);
 	}
 
-	/********************** Methods from Iterable ********************/
+	/* ************************ Methods from Iterable ********************** */
 
 	@Override
 	public Iterator<PersistentStackEntry> iterator() {
 		return entries.iterator();
 	}
 
-	/****************** Methods from PersistentObject ****************/
+	/* ******************** Methods from PersistentObject ****************** */
 
 	@Override
 	protected int computeHashCode() {
@@ -125,7 +125,7 @@ public class CallStack extends PersistentObject implements
 		return (CallStack) super.canonize(universe, canonicMap);
 	}
 
-	/********************** Other public methods *********************/
+	/* ************************ Other public methods *********************** */
 
 	/**
 	 * Returns call stack obtained by popping (removing top entry from) this

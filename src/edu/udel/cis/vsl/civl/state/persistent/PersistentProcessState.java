@@ -15,7 +15,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 public class PersistentProcessState extends PersistentObject implements
 		ProcessState {
 
-	/************************* Static Fields *************************/
+	/* *************************** Static Fields *************************** */
 
 	/**
 	 * The hash code of this class, used in the hash code method to help
@@ -26,7 +26,7 @@ public class PersistentProcessState extends PersistentObject implements
 	private static final int classCode = PersistentProcessState.class
 			.hashCode();
 
-	/************************ Instance Fields ************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * The process ID (pid).
@@ -50,7 +50,7 @@ public class PersistentProcessState extends PersistentObject implements
 	 */
 	private int atomicCount = 0;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Constructs new PersistentProcessState with given fields. The fields are
@@ -80,7 +80,7 @@ public class PersistentProcessState extends PersistentObject implements
 		this(pid, CallStack.emptyStack, 0);
 	}
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	CallStack getCallStack() {
 		return callStack;
@@ -167,7 +167,7 @@ public class PersistentProcessState extends PersistentObject implements
 		return setCallStack(callStack.renumberScopes(oldToNew));
 	}
 
-	/****************** Methods from PersistentObject ****************/
+	/* ******************** Methods from PersistentObject ****************** */
 
 	@Override
 	protected PersistentProcessState canonize(SymbolicUniverse universe,
@@ -198,7 +198,7 @@ public class PersistentProcessState extends PersistentObject implements
 		callStack = callStack.canonize(universe, canonicMap);
 	}
 
-	/*********************** Methods from Object *********************/
+	/* ************************* Methods from Object *********************** */
 
 	@Override
 	public String toString() {
@@ -206,7 +206,7 @@ public class PersistentProcessState extends PersistentObject implements
 				+ callStack.size() + ")";
 	}
 
-	/******************* Methods from ProcessState *******************/
+	/* ********************* Methods from ProcessState ********************* */
 
 	@Override
 	public boolean hasEmptyStack() {

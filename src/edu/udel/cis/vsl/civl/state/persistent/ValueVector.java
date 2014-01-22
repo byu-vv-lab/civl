@@ -21,13 +21,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class ValueVector extends CIVLVector<SymbolicExpression> {
 
-	/************************* Static Fields *************************/
+	/* *************************** Static Fields *************************** */
 
 	public static boolean debug = false;
 
 	private final static int classCode = ValueVector.class.hashCode();
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	ValueVector(PersistentVector<SymbolicExpression> variableValues) {
 		super(variableValues);
@@ -37,7 +37,7 @@ public class ValueVector extends CIVLVector<SymbolicExpression> {
 		super(value, multiplicity);
 	}
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	ValueVector substitute(Map<SymbolicExpression, SymbolicExpression> map,
 			SymbolicUniverse universe) {
@@ -83,7 +83,7 @@ public class ValueVector extends CIVLVector<SymbolicExpression> {
 		return newValues == values ? this : new ValueVector(newValues);
 	}
 
-	/***************** Methods from PersistentObject *****************/
+	/* ******************* Methods from PersistentObject ******************* */
 
 	@Override
 	protected ValueVector canonize(SymbolicUniverse universe,
@@ -104,7 +104,7 @@ public class ValueVector extends CIVLVector<SymbolicExpression> {
 		}
 	}
 
-	/******************** Methods from CIVLVector ********************/
+	/* ********************** Methods from CIVLVector ********************** */
 
 	@Override
 	protected int computeHashCode() {
@@ -122,7 +122,7 @@ public class ValueVector extends CIVLVector<SymbolicExpression> {
 		return new ValueVector(values);
 	}
 
-	/************************ Public Methods *************************/
+	/* ************************** Public Methods *************************** */
 
 	public ValueVector set(int index, SymbolicExpression value) {
 		return (ValueVector) super.set(index, value);

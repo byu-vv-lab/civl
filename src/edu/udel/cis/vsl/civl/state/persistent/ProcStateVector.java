@@ -16,13 +16,13 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  */
 public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 
-	/************************* Static Fields *************************/
+	/* *************************** Static Fields *************************** */
 
 	private final static int classCode = ProcStateVector.class.hashCode();
 
-	/************************ Instance Fields ************************/
+	/* ************************** Instance Fields ************************** */
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	ProcStateVector(PersistentVector<PersistentProcessState> processStates) {
 		super(processStates);
@@ -32,7 +32,7 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 		super();
 	}
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	void print(PrintStream out, String prefix) {
 		int numProcs = size();
@@ -68,7 +68,7 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 				.push(entry)));
 	}
 
-	/******************** Methods from CIVLVector ********************/
+	/* ********************** Methods from CIVLVector ********************** */
 
 	@Override
 	protected int computeHashCode() {
@@ -86,7 +86,7 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 		return new ProcStateVector(values);
 	}
 
-	/***************** Methods from PersistentObject *****************/
+	/* ******************* Methods from PersistentObject ******************* */
 
 	@Override
 	protected void canonizeChildren(SymbolicUniverse universe,
@@ -108,7 +108,7 @@ public class ProcStateVector extends CIVLVector<PersistentProcessState> {
 		return (ProcStateVector) super.canonize(universe, canonicMap);
 	}
 
-	/************************ Public Methods *************************/
+	/* ************************** Public Methods *************************** */
 
 	// public ProcStateVector set(int index, PersistentProcessState
 	// processState) {

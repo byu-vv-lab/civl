@@ -19,11 +19,11 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public class PersistentDynamicScope extends PersistentObject implements
 		DynamicScope {
 
-	/************************* Static Fields *************************/
+	/* *************************** Static Fields *************************** */
 
 	private static int classCode = PersistentDynamicScope.class.hashCode();
 
-	/************************ Instance Fields ************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * Non-null static scope to which this dynamic scope is associated.
@@ -48,7 +48,7 @@ public class PersistentDynamicScope extends PersistentObject implements
 	 */
 	private IntSet reachers;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Creates new PersistentDynamicScope using the given fields. The data is
@@ -81,7 +81,7 @@ public class PersistentDynamicScope extends PersistentObject implements
 		this.reachers = reachers;
 	}
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	/**
 	 * Returns the dyscope ID of the parent of this dynamic scope, or -1 if this
@@ -224,8 +224,8 @@ public class PersistentDynamicScope extends PersistentObject implements
 	 *            line of output
 	 */
 	void print(PrintStream out, String id, String prefix) {
-		out.println(prefix + "dyscope " + id + " (parent=" + parent + ", static="
-				+ lexicalScope.id() + ")");
+		out.println(prefix + "dyscope " + id + " (parent=" + parent
+				+ ", static=" + lexicalScope.id() + ")");
 		out.println(prefix + "| reachers = " + reachers);
 		out.println(prefix + "| variables");
 		valueVector.print(out, prefix + "| ", lexicalScope);
@@ -252,7 +252,7 @@ public class PersistentDynamicScope extends PersistentObject implements
 						newValueVector, reachers);
 	}
 
-	/****************** Methods from PersistentObject ****************/
+	/* ******************** Methods from PersistentObject ****************** */
 
 	@Override
 	protected void canonizeChildren(SymbolicUniverse universe,
@@ -286,7 +286,7 @@ public class PersistentDynamicScope extends PersistentObject implements
 		return (PersistentDynamicScope) super.canonize(universe, canonicMap);
 	}
 
-	/*********************** Methods from Object *********************/
+	/* ************************* Methods from Object *********************** */
 
 	@Override
 	public String toString() {
@@ -294,7 +294,7 @@ public class PersistentDynamicScope extends PersistentObject implements
 				+ parent + "]";
 	}
 
-	/******************** Methods from DynamicScope *******************/
+	/* ********************* Methods from DynamicScope ********************* */
 
 	@Override
 	public SymbolicExpression getValue(int vid) {

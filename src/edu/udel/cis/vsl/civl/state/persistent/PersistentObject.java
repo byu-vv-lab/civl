@@ -15,7 +15,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  */
 public abstract class PersistentObject {
 
-	/************************ Instance Fields ************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * Has the hashcode been computed and cached?
@@ -34,7 +34,7 @@ public abstract class PersistentObject {
 	 */
 	private boolean canonic = false;
 
-	/*********************** Abstract Methods ************************/
+	/* ************************* Abstract Methods ************************** */
 
 	/**
 	 * Computes the hash code for this object. The actual hashCode method uses
@@ -70,7 +70,7 @@ public abstract class PersistentObject {
 	protected abstract void canonizeChildren(SymbolicUniverse universe,
 			Map<PersistentObject, PersistentObject> canonicMap);
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	/**
 	 * Is this object the canonical representative of its equivalence class
@@ -82,7 +82,7 @@ public abstract class PersistentObject {
 		return canonic;
 	}
 
-	/*********************** Protected Methods ***********************/
+	/* ************************* Protected Methods ************************* */
 
 	/**
 	 * Returns the unique representative of the equivalence class (under
@@ -119,7 +119,7 @@ public abstract class PersistentObject {
 		}
 	}
 
-	/********************** Methods from Object **********************/
+	/* ************************ Methods from Object ************************ */
 
 	/**
 	 * Implementation of hash code that looks to see if the hash code has been

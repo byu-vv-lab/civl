@@ -17,7 +17,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public class PersistentState extends PersistentObject implements State {
 
-	/************************* Static Fields *************************/
+	/* *************************** Static Fields *************************** */
 
 	private final static int classCode = PersistentState.class.hashCode();
 
@@ -27,7 +27,7 @@ public class PersistentState extends PersistentObject implements State {
 	 */
 	private static long instanceCount = 0;
 
-	/************************ Instance Fields ************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * If this is a canonic state (unique representative of its equivalence
@@ -75,7 +75,7 @@ public class PersistentState extends PersistentObject implements State {
 	 */
 	private int depth = -1;
 
-	/************************ Static Methods *************************/
+	/* ************************** Static Methods *************************** */
 
 	static long getInstanceCount() {
 		return instanceCount;
@@ -92,7 +92,7 @@ public class PersistentState extends PersistentObject implements State {
 		return result;
 	}
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Constructs new instance with given fields. Nothing is cloned.
@@ -113,7 +113,7 @@ public class PersistentState extends PersistentObject implements State {
 		this.pathCondition = pathCondition;
 	}
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	/**
 	 * Returns the instance ID of this State. The is obtained from a static
@@ -123,15 +123,6 @@ public class PersistentState extends PersistentObject implements State {
 	 */
 	long getInstanceId() {
 		return instanceId;
-	}
-
-	/**
-	 * Returns the canonicID of this state. Returns -1 if it is not canonic.
-	 * 
-	 * @return canonicID of this state
-	 */
-	public int getCanonicId() {
-		return canonicId;
 	}
 
 	void setCanonicId(int value) {
@@ -284,14 +275,14 @@ public class PersistentState extends PersistentObject implements State {
 	// return new PersistentState(procVector, newTree, pathCondition);
 	// }
 
-	/*********************** Methods from Object *********************/
+	/* ************************* Methods from Object *********************** */
 
 	@Override
 	public String toString() {
 		return "State " + identifier();
 	}
 
-	/****************** Methods from PersistentObject ****************/
+	/* ******************** Methods from PersistentObject ****************** */
 
 	@Override
 	protected int computeHashCode() {
@@ -321,7 +312,7 @@ public class PersistentState extends PersistentObject implements State {
 		// this.canonicId = canonicId;
 	}
 
-	/*********************** Methods from State **********************/
+	/* ************************* Methods from State ************************ */
 
 	@Override
 	public String identifier() {
@@ -332,19 +323,25 @@ public class PersistentState extends PersistentObject implements State {
 	public void commit() {
 	}
 
+	/**
+	 * Returns the canonicID of this state. Returns -1 if it is not canonic.
+	 * 
+	 * @return canonicID of this state
+	 */
 	@Override
-	public int numScopes() {
-		return scopeTree.size();
+	public int getCanonicId() {
+		return canonicId;
 	}
 
 	@Override
-	public int numProcs() {
-		return procVector.size();
+	public int getDepth() {
+		return depth;
 	}
 
 	@Override
-	public int rootScopeID() {
-		return 0;
+	public int getParentId(int scopeId) {
+		return getScope(scopeId).getParent();
+	
 	}
 
 	@Override
@@ -353,29 +350,18 @@ public class PersistentState extends PersistentObject implements State {
 	}
 
 	@Override
-	public boolean seen() {
-		return seen;
+	public PersistentProcessState getProcessState(int pid) {
+		return procVector.get(pid);
 	}
 
 	@Override
-	public boolean onStack() {
-		return onStack;
+	public Iterable<? extends ProcessState> getProcessStates() {
+		return procVector;
 	}
 
 	@Override
-	public void setSeen(boolean value) {
-		this.seen = value;
-	}
-
-	@Override
-	public void setOnStack(boolean onStack) {
-		this.onStack = onStack;
-	}
-
-	@Override
-	public int getParentId(int scopeId) {
-		return getScope(scopeId).getParent();
-
+	public PersistentDynamicScope getScope(int id) {
+		return scopeTree.get(id);
 	}
 
 	@Override
@@ -383,7 +369,7 @@ public class PersistentState extends PersistentObject implements State {
 		int scopeId = getProcessState(pid).getDyscopeId();
 		Scope variableScope = variable.scope();
 		DynamicScope scope;
-
+	
 		while (scopeId >= 0) {
 			scope = getScope(scopeId);
 			if (scope.lexicalScope() == variableScope)
@@ -396,16 +382,28 @@ public class PersistentState extends PersistentObject implements State {
 	@Override
 	public SymbolicExpression getVariableValue(int scopeId, int variableId) {
 		DynamicScope scope = getScope(scopeId);
-
+	
 		return scope.getValue(variableId);
 	}
 
 	@Override
-	public SymbolicExpression valueOf(int pid, Variable variable) {
-		DynamicScope scope = getScope(pid, variable);
-		int variableID = scope.lexicalScope().getVid(variable);
+	public int numberOfReachers(int sid) {
+		return scopeTree.get(sid).numberOfReachers();
+	}
 
-		return scope.getValue(variableID);
+	@Override
+	public int numProcs() {
+		return procVector.size();
+	}
+
+	@Override
+	public int numScopes() {
+		return scopeTree.size();
+	}
+
+	@Override
+	public boolean onStack() {
+		return onStack;
 	}
 
 	@Override
@@ -419,28 +417,28 @@ public class PersistentState extends PersistentObject implements State {
 	}
 
 	@Override
+	public boolean reachableByProcess(int sid, int pid) {
+		return scopeTree.get(sid).reachableByProcess(pid);
+	}
+
+	@Override
+	public int rootScopeID() {
+		return 0;
+	}
+
+	@Override
+	public boolean seen() {
+		return seen;
+	}
+
+	@Override
 	public void setDepth(int value) {
 		this.depth = value;
 	}
 
 	@Override
-	public int getDepth() {
-		return depth;
-	}
-
-	@Override
-	public PersistentProcessState getProcessState(int pid) {
-		return procVector.get(pid);
-	}
-
-	@Override
-	public PersistentDynamicScope getScope(int id) {
-		return scopeTree.get(id);
-	}
-
-	@Override
-	public Iterable<? extends ProcessState> getProcessStates() {
-		return procVector;
+	public void setOnStack(boolean onStack) {
+		this.onStack = onStack;
 	}
 
 	@Override
@@ -450,13 +448,8 @@ public class PersistentState extends PersistentObject implements State {
 	}
 
 	@Override
-	public int numberOfReachers(int sid) {
-		return scopeTree.get(sid).numberOfReachers();
-	}
-
-	@Override
-	public boolean reachableByProcess(int sid, int pid) {
-		return scopeTree.get(sid).reachableByProcess(pid);
+	public void setSeen(boolean value) {
+		this.seen = value;
 	}
 
 	@Override
@@ -467,6 +460,14 @@ public class PersistentState extends PersistentObject implements State {
 
 		return scope == newScope ? this : new PersistentState(procVector,
 				(DyscopeTree) scopeTree.set(scopeId, newScope), pathCondition);
+	}
+
+	@Override
+	public SymbolicExpression valueOf(int pid, Variable variable) {
+		DynamicScope scope = getScope(pid, variable);
+		int variableID = scope.lexicalScope().getVid(variable);
+	
+		return scope.getValue(variableID);
 	}
 
 }

@@ -19,7 +19,7 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
  */
 public class PersistentStackEntry implements StackEntry {
 
-	/************************ Instance Fields ************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * Has the hashcode been computed and cached?
@@ -43,7 +43,7 @@ public class PersistentStackEntry implements StackEntry {
 	 */
 	private int scope;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * A stack entry has a location and dynamic scope. It is put on the call
@@ -60,7 +60,7 @@ public class PersistentStackEntry implements StackEntry {
 		this.scope = scope;
 	}
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	/**
 	 * Returns a stack entry which is same as this one but with given location
@@ -88,7 +88,7 @@ public class PersistentStackEntry implements StackEntry {
 				scope);
 	}
 
-	/*********************** Methods from Object *********************/
+	/* ************************* Methods from Object *********************** */
 
 	@Override
 	public int hashCode() {
@@ -131,7 +131,7 @@ public class PersistentStackEntry implements StackEntry {
 				+ location.id() + locationString + ", scope=" + scope + "]";
 	}
 
-	/********************* Methods from StackEntry *******************/
+	/* *********************** Methods from StackEntry ********************* */
 
 	@Override
 	public Location location() {

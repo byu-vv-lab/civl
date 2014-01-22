@@ -24,7 +24,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class DyscopeTree extends CIVLVector<PersistentDynamicScope> {
 
-	/************************* Static Fields *************************/
+	/* *************************** Static Fields *************************** */
 
 	/**
 	 * The hash code of this class, used in the hash code method to help
@@ -34,7 +34,7 @@ public class DyscopeTree extends CIVLVector<PersistentDynamicScope> {
 	 */
 	private final static int classCode = DyscopeTree.class.hashCode();
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	DyscopeTree(PersistentVector<PersistentDynamicScope> scopes) {
 		super(scopes);
@@ -44,7 +44,7 @@ public class DyscopeTree extends CIVLVector<PersistentDynamicScope> {
 		super();
 	}
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	/**
 	 * Returns a dyscope tree obtained by renumbering the scopes in this tree
@@ -183,7 +183,7 @@ public class DyscopeTree extends CIVLVector<PersistentDynamicScope> {
 
 	}
 
-	/****************** Methods from PersistentObject ****************/
+	/* ******************** Methods from PersistentObject ****************** */
 
 	@Override
 	protected void canonizeChildren(SymbolicUniverse universe,
@@ -222,7 +222,7 @@ public class DyscopeTree extends CIVLVector<PersistentDynamicScope> {
 		return new DyscopeTree(values);
 	}
 
-	/********************** Other public methods *********************/
+	/* ************************ Other public methods *********************** */
 
 	public void print(PrintStream out, String prefix) {
 		int numScopes = size();

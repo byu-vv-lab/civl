@@ -17,7 +17,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  */
 public class IntSet extends PersistentObject implements Iterable<Integer> {
 
-	/************************* Static Fields *************************/
+	/* *************************** Static Fields *************************** */
 
 	/**
 	 * The hash code of this class, used in the hash code method to help
@@ -32,11 +32,11 @@ public class IntSet extends PersistentObject implements Iterable<Integer> {
 
 	private static ArrayList<IntSet> singletons = new ArrayList<IntSet>();
 
-	/************************ Instance Fields ************************/
+	/* ************************** Instance Fields ************************** */
 
 	private PersistentSet<Integer> set;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	IntSet(PersistentSet<Integer> set) {
 		this.set = set;
@@ -52,7 +52,7 @@ public class IntSet extends PersistentObject implements Iterable<Integer> {
 		this.set = emptySortedSet.plus(a);
 	}
 
-	/************************ Static Methods *************************/
+	/* ************************** Static Methods *************************** */
 
 	public static IntSet singleton(int n) {
 		IntSet result;
@@ -67,9 +67,7 @@ public class IntSet extends PersistentObject implements Iterable<Integer> {
 		return result;
 	}
 
-	/******************** Package-private Methods ********************/
-
-	/*********************** Methods from Object *********************/
+	/* ************************* Methods from Object *********************** */
 
 	@Override
 	public String toString() {
@@ -88,14 +86,14 @@ public class IntSet extends PersistentObject implements Iterable<Integer> {
 		return buf.toString();
 	}
 
-	/********************** Methods from Iterable ********************/
+	/* ************************ Methods from Iterable ********************** */
 
 	@Override
 	public Iterator<Integer> iterator() {
 		return set.iterator();
 	}
 
-	/****************** Methods from PersistentObject ****************/
+	/* ******************** Methods from PersistentObject ****************** */
 
 	@Override
 	protected int computeHashCode() {
@@ -119,7 +117,7 @@ public class IntSet extends PersistentObject implements Iterable<Integer> {
 		return (IntSet) super.canonize(universe, canonicMap);
 	}
 
-	/********************** Other public methods *********************/
+	/* ************************ Other public methods *********************** */
 
 	public int size() {
 		return set.size();

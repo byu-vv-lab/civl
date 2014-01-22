@@ -23,14 +23,14 @@ import com.github.krukow.clj_ds.Persistents;
 public abstract class CIVLVector<T> extends PersistentObject implements
 		Iterable<T> {
 
-	/************************ Instance Fields ************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * The elements of this vector; a Clojure persistent vector.
 	 */
 	protected PersistentVector<T> values;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Constructs new vector wrapping the given Clojure vector.
@@ -66,11 +66,11 @@ public abstract class CIVLVector<T> extends PersistentObject implements
 		values = Persistents.<T> vector(vals);
 	}
 
-	/************************ Abstract Methods ***********************/
+	/* ************************** Abstract Methods ************************* */
 
 	protected abstract CIVLVector<T> newVector(PersistentVector<T> values);
 
-	/******************** Package-private Methods ********************/
+	/* ********************** Package-private Methods ********************** */
 
 	PersistentVector<T> getValues() {
 		return values;
@@ -91,14 +91,14 @@ public abstract class CIVLVector<T> extends PersistentObject implements
 		return newVector(newValues);
 	}
 
-	/********************** Methods from Iterable ********************/
+	/* ************************ Methods from Iterable ********************** */
 
 	@Override
 	public Iterator<T> iterator() {
 		return values.iterator();
 	}
 
-	/****************** Methods from PersistentObject ****************/
+	/* *********************** Methods from PersistentObject *************** */
 
 	@Override
 	protected int computeHashCode() {
@@ -111,7 +111,7 @@ public abstract class CIVLVector<T> extends PersistentObject implements
 				&& values.equals(((CIVLVector<?>) that).values);
 	}
 
-	/********************** Other public methods *********************/
+	/* ************************ Other public methods *********************** */
 
 	public int size() {
 		return values.size();
