@@ -16,7 +16,7 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
  */
 public class ImmutableStackEntry implements StackEntry {
 
-	/************************* Instance Fields *************************/
+	/* ************************** Instance Fields ************************** */
 
 	private int hashCode = -1;
 
@@ -26,7 +26,7 @@ public class ImmutableStackEntry implements StackEntry {
 
 	private int scope;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * A stack entry has a location, dynamic scope, and (optional) variable to
@@ -45,7 +45,7 @@ public class ImmutableStackEntry implements StackEntry {
 		this.scope = scope;
 	}
 
-	/******************* Methods from StackEntry *******************/
+	/* ********************** Methods from StackEntry ********************** */
 
 	/**
 	 * @return The target location of the function call. i.e. where execution
@@ -65,7 +65,7 @@ public class ImmutableStackEntry implements StackEntry {
 		return scope;
 	}
 
-	/******************* Methods from Object *******************/
+	/* ************************* Methods from Object ************************* */
 	
 	@Override
 	public boolean equals(Object obj) {

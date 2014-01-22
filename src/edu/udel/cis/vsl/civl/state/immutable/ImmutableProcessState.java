@@ -39,7 +39,7 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	class ReverseIterator implements Iterator<StackEntry> {
 
-		/*************** Instance Fields ***************/
+		/* ************************ Instance Fields ************************ */
 
 		/**
 		 * The array over which we are iterating.
@@ -52,7 +52,7 @@ public class ImmutableProcessState implements ProcessState {
 		 */
 		private int i = array.length - 1;
 
-		/*********** Package-private Methods ***********/
+		/* ******************** Package-private Methods ******************** */
 
 		/**
 		 * Creates a new reverse iterator for the given array.
@@ -64,7 +64,7 @@ public class ImmutableProcessState implements ProcessState {
 			this.array = array;
 		}
 
-		/************ Methods from Iterator ************/
+		/* ********************* Methods from Iterator ********************* */
 
 		@Override
 		public boolean hasNext() {
@@ -85,7 +85,7 @@ public class ImmutableProcessState implements ProcessState {
 		}
 	}
 
-	/**************************** Instance Fields ****************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * Is this instance the unique representative of its equivalence class?
@@ -120,7 +120,7 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	private StackEntry[] callStack;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * A new process state with empty stack.
@@ -145,7 +145,7 @@ public class ImmutableProcessState implements ProcessState {
 		this.atomicCount = atomicCount;
 	}
 
-	/************************ Package-private Methods ************************/
+	/* ********************** Package-private Methods ********************** */
 
 	/**
 	 * Makes this instance the unique representative of its equivalence class.
@@ -190,7 +190,7 @@ public class ImmutableProcessState implements ProcessState {
 		this.pid = pid;
 	}
 
-	/******************* Methods from ProcessState *******************/
+	/* ********************* Methods from ProcessState ********************* */
 
 	@Override
 	public int atomicCount() {
@@ -328,7 +328,7 @@ public class ImmutableProcessState implements ProcessState {
 				+ callStack.length + ")";
 	}
 
-	/******************** Public Methods ********************/
+	/* *************************** Public Methods ************************** */
 
 	/**
 	 * Returns i-th entry on stack, where 0 is the TOP of the stack, and

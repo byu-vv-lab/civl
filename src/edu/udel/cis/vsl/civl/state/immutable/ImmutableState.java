@@ -33,7 +33,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * 
  * The class is mostly immutable. The exception to immutability is the two
  * boolean fields, which have set (and get) methods. This means that states are
- * free to share components in any way they like without causing any problmes.
+ * free to share components in any way they like without causing any problems.
  * The interface should export any methods which allow the user to modify the
  * state (with the exception of the two boolean fields).
  * 
@@ -63,11 +63,11 @@ public class ImmutableState implements State {
 	class ProcessStateIterable implements Iterable<ProcessState> {
 		class ProcessStateIterator implements Iterator<ProcessState> {
 
-			/************************* Static Fields *************************/
+			/* *********************** Static Fields *********************** */
 
 			int pos = 0;
 
-			/******************* Methods from Iterator *******************/
+			/* ******************* Methods from Iterator ******************* */
 
 			@Override
 			public boolean hasNext() {
@@ -88,7 +88,7 @@ public class ImmutableState implements State {
 			}
 		}
 
-		/******************* Methods from Iterable *******************/
+		/* ********************* Methods from Iterable ********************* */
 
 		@Override
 		public Iterator<ProcessState> iterator() {
@@ -96,7 +96,7 @@ public class ImmutableState implements State {
 		}
 	}
 
-	/************************* Static Fields *************************/
+	/* *************************** Static Fields *************************** */
 
 	/**
 	 * The number of instances of this class that have been created since the
@@ -104,7 +104,7 @@ public class ImmutableState implements State {
 	 */
 	static long instanceCount = 0;
 
-	/************************* Instance Fields *************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * If this is a canonic state (unique representative of its equivalence
@@ -171,7 +171,7 @@ public class ImmutableState implements State {
 	 */
 	private boolean seen = false;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Basic constructor. The arrays are used as fields---the elements are not
@@ -193,7 +193,7 @@ public class ImmutableState implements State {
 		this.pathCondition = pathCondition;
 	}
 
-	/************************** Private Methods *************************/
+	/* *************************** Private Methods ************************* */
 
 	/**
 	 * Implements the flyweight pattern: if there already exists a scope which
@@ -243,7 +243,7 @@ public class ImmutableState implements State {
 		return canonicProcessState;
 	}
 
-	/************************** Package-private Methods *************************/
+	/* *********************** Package-private Methods ********************* */
 
 	static ImmutableState newState(ImmutableState state,
 			ImmutableProcessState[] processStates,
@@ -286,10 +286,20 @@ public class ImmutableState implements State {
 		this.canonicId = canonicId;
 	}
 
-	/******************* Methods from State *******************/
+	/* ************************ Methods from State ************************* */
 
 	@Override
 	public void commit() {
+	}
+	
+	/**
+	 * Returns the canonicID of this state. Returns -1 if it is not canonic.
+	 * 
+	 * @return canonicID of this state
+	 */
+	@Override
+	public int getCanonicId() {
+		return canonicId;
 	}
 
 	@Override
@@ -570,7 +580,7 @@ public class ImmutableState implements State {
 		return "State " + identifier();
 	}
 
-	/******************** Public Methods ********************/
+	/* *************************** Public Methods ************************** */
 
 	/**
 	 * @return Copy the set of processes in this state.
@@ -616,15 +626,6 @@ public class ImmutableState implements State {
 
 		System.arraycopy(scopes, 0, newScopes, 0, scopes.length);
 		return newScopes;
-	}
-
-	/**
-	 * Returns the canonicID of this state. Returns -1 if it is not canonic.
-	 * 
-	 * @return canonicID of this state
-	 */
-	public int getCanonicId() {
-		return canonicId;
 	}
 
 	/**

@@ -51,7 +51,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private SymbolicUniverse universe;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Factory to create all state objects.
@@ -62,7 +62,7 @@ public class ImmutableStateFactory implements StateFactory {
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
 	}
 
-	/************************** Private Methods *************************/
+	/* *************************** Private Methods ************************* */
 
 	private ImmutableState collectScopesWork(ImmutableState state) {
 		int oldNumScopes = state.numScopes();
@@ -624,7 +624,7 @@ public class ImmutableStateFactory implements StateFactory {
 		return newScopes;
 	}
 
-	/****************** Methods from StateFactory ****************/
+	/* ********************** Methods from StateFactory ******************** */
 
 	@Override
 	public ImmutableState addProcess(State state, CIVLFunction function,
