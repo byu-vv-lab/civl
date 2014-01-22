@@ -13,17 +13,17 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
  */
 public class ABC_CIVLSource implements CIVLSource {
 
-	/************************* Instance Fields *************************/
+	/* ************************** Instance Fields ************************** */
 
 	private Source abcSource;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	public ABC_CIVLSource(Source abcSource) {
 		this.abcSource = abcSource;
 	}
 
-	/************************** Methods from CIVLSource *************************/
+	/* *********************** Methods from CIVLSource ********************* */
 
 	@Override
 	public String getLocation() {
@@ -45,13 +45,13 @@ public class ABC_CIVLSource implements CIVLSource {
 		abcSource.printShorterFileNameMap(out);
 	}
 
-	/************************** Methods from Object *************************/
+	/* ************************* Methods from Object *********************** */
 
 	public String toString() {
 		return abcSource.toString();
 	}
 
-	/************************** Public Methods *************************/
+	/* *************************** Public Methods ************************** */
 
 	public Source getABCSource() {
 		return abcSource;

@@ -34,7 +34,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
  */
 public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
-	/************************* Instance Fields *************************/
+	/* ************************** Instance Fields ************************** */
 
 	private Scope containingScope;
 
@@ -62,7 +62,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 	private Set<Statement> statements;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * A function.
@@ -444,7 +444,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		return statements;
 	}
 
-	/************************** Methods from Object *************************/
+	/* ************************ Methods from Object ************************ */
 
 	@Override
 	public String toString() {

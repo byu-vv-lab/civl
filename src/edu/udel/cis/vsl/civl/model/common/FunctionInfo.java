@@ -26,7 +26,7 @@ import edu.udel.cis.vsl.civl.util.Pair;
  */
 public class FunctionInfo {
 
-	/************************* Instance Fields *************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * Used to keep track of break statements in nested loops/switches. Each
@@ -67,7 +67,7 @@ public class FunctionInfo {
 	 */
 	private Map<LabelNode, Location> labeledLocations;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Create a new instance of FunctionInfo
@@ -84,7 +84,7 @@ public class FunctionInfo {
 		boundVariables = new LinkedList<Pair<Identifier, CIVLType>>();
 	}
 
-	/************************** Public Methods *************************/
+	/* *************************** Public Methods ************************** */
 
 	/**
 	 * Add a set of statements to the break statement stack <dt>
@@ -117,6 +117,20 @@ public class FunctionInfo {
 	 */
 	public void addBoundVariable(Identifier name, CIVLType type) {
 		this.boundVariables.add(new Pair<Identifier, CIVLType>(name, type));
+	}
+
+	/**
+	 * 
+	 * @param name The name of a bound variable.
+	 * @return The CIVL type of the bound variable with the given name.
+	 */
+	public CIVLType boundVariableType(Identifier name) {
+		for (Pair<Identifier, CIVLType> p : boundVariables) {
+			if (p.left.equals(name)) {
+				return p.right;
+			}
+		}
+		throw new CIVLInternalException("Unknown bound variable", name.getSource());
 	}
 
 	/**
@@ -163,6 +177,21 @@ public class FunctionInfo {
 				}
 			}
 		}
+	}
+
+	/**
+	 * 
+	 * @param name
+	 *            The name of a variable.
+	 * @return Whether or not this variable is on the stack of bound variables.
+	 */
+	public boolean containsBoundVariable(Identifier name) {
+		for (Pair<Identifier, CIVLType> p : boundVariables) {
+			if (p.left.equals(name)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -237,35 +266,6 @@ public class FunctionInfo {
 	 */
 	public Identifier popBoundVariableStack() {
 		return boundVariables.pop().left;
-	}
-
-	/**
-	 * 
-	 * @param name
-	 *            The name of a variable.
-	 * @return Whether or not this variable is on the stack of bound variables.
-	 */
-	public boolean containsBoundVariable(Identifier name) {
-		for (Pair<Identifier, CIVLType> p : boundVariables) {
-			if (p.left.equals(name)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * 
-	 * @param name The name of a bound variable.
-	 * @return The CIVL type of the bound variable with the given name.
-	 */
-	public CIVLType boundVariableType(Identifier name) {
-		for (Pair<Identifier, CIVLType> p : boundVariables) {
-			if (p.left.equals(name)) {
-				return p.right;
-			}
-		}
-		throw new CIVLInternalException("Unknown bound variable", name.getSource());
 	}
 
 	/**
