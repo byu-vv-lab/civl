@@ -23,7 +23,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
  */
 public class CommonFragment implements Fragment {
 
-	/**************************** Instance Fields ****************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * The last statement of the fragment
@@ -35,7 +35,7 @@ public class CommonFragment implements Fragment {
 	 */
 	public Location startLocation;
 
-	/****************************** Constructors *****************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * create an empty fragment
@@ -68,7 +68,7 @@ public class CommonFragment implements Fragment {
 		this.lastStatement = statement;
 	}
 
-	/************************* Methods from Fragment *************************/
+	/* *********************** Methods from Fragment *********************** */
 
 	@Override
 	public void addGuardToStartLocation(Expression guard, ModelFactory factory) {
@@ -209,7 +209,7 @@ public class CommonFragment implements Fragment {
 		this.startLocation = newLocation;
 	}
 
-	/************************** Methods from Object **************************/
+	/* ************************ Methods from Object ************************ */
 
 	@Override
 	public String toString() {

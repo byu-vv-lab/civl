@@ -21,7 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
  */
 public class CommonAtomicLockAssignStatement extends CommonAssignStatement {
 
-	/************************** Instance Fields *************************/
+	/* *************************** Instance Fields ************************* */
 
 	/**
 	 * Denote if this statement is
@@ -32,7 +32,7 @@ public class CommonAtomicLockAssignStatement extends CommonAssignStatement {
 	 */
 	private boolean enter;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * 
@@ -51,7 +51,7 @@ public class CommonAtomicLockAssignStatement extends CommonAssignStatement {
 		this.enter = isEntering;
 	}
 
-	/************************** Methods from Object *************************/
+	/* ************************* Methods from Object *********************** */
 
 	@Override
 	public String toString() {

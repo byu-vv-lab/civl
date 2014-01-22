@@ -54,7 +54,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 public class Enabler implements
 		EnablerIF<State, Transition, TransitionSequence> {
 
-	/***************************** Instance Fields ***************************/
+	/* *************************** Instance Fields ************************* */
 
 	/**
 	 * The number of ample sets, initialized as 0.
@@ -113,7 +113,7 @@ public class Enabler implements
 	 */
 	private SymbolicUniverse universe;
 
-	/******************************* Constructors ****************************/
+	/* ***************************** Constructors ************************** */
 
 	/**
 	 * 
@@ -165,7 +165,7 @@ public class Enabler implements
 		this.generator = generator;
 	}
 
-	/************************** Methods from EnablerIF ***********************/
+	/* ************************ Methods from EnablerIF ********************* */
 
 	@Override
 	public boolean debugging() {
@@ -308,7 +308,7 @@ public class Enabler implements
 		return transitionSequence.state();
 	}
 
-	/***************************** Private Methods ***************************/
+	/* *************************** Private Methods ************************* */
 
 	/**
 	 * Obtain the set of processes to generate ample set transitions TODO: try

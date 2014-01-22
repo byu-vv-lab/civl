@@ -5,14 +5,14 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 
 public class CommonLoopBranchStatement extends CommonNoopStatement {
 
-	/************************** Instance Fields *************************/
+	/* *************************** Instance Fields ************************* */
 
 	/**
 	 * Mark this statement to be the if branch or else branch.
 	 */
 	private boolean isTrueBranch;
 
-	/************************** Instance Fields *************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * 
@@ -30,7 +30,7 @@ public class CommonLoopBranchStatement extends CommonNoopStatement {
 		this.isTrueBranch = isTrue;
 	}
 
-	/************************** Methods from Object *************************/
+	/* ************************* Methods from Object *********************** */
 
 	@Override
 	public String toString() {

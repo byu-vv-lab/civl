@@ -109,7 +109,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatem
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonChooseStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonGotoBranchStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonIfBranchStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonIfElseBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonLoopBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonMallocStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
@@ -161,7 +161,7 @@ public class CommonModelFactory implements ModelFactory {
 		CONDITIONAL, CHOOSE
 	}
 
-	/***************************** Static Fields *****************************/
+	/* *************************** Static Fields *************************** */
 
 	/**
 	 * The name of the atomic lock variable
@@ -181,12 +181,28 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private static final String CONDITIONAL_VARIABLE_PREFIX = "$COND_VAR_";
 
-	/**************************** Instance Fields ****************************/
+	/* ************************** Instance Fields ************************** */
 
+	/**
+	 * The unique variable $ATOMIC_LOCK_VAR in the root scope for process that
+	 * the executing of $atomic blocks to have the highest priority for
+	 * execution.
+	 */
 	private VariableExpression atomicLockVariableExpression;
 
+	/**
+	 * The unique boolean type used in the system.
+	 */
 	private CIVLPrimitiveType booleanType;
 
+	/**
+	 * The unique char type used in the system.
+	 */
+	private CIVLPrimitiveType charType;
+
+	/**
+	 * TODO Why do we need an ID for each ChooseStatement?
+	 */
 	private int chooseID = 0;
 
 	/**
@@ -200,13 +216,22 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private Stack<ArrayDeque<ConditionalExpression>> conditionalExpressions;
 
+	/**
+	 * The unique dynamic symbolic type used in the system.
+	 */
 	private SymbolicTupleType dynamicSymbolicType;
 
+	/**
+	 * The unique dynamic type used in the system.
+	 */
 	private CIVLPrimitiveType dynamicType;
 
 	/** Keep a set of used identifiers for fly-weighting purposes. */
 	private Map<String, Identifier> identifiers;
 
+	/**
+	 * The unique integer type used in the system.
+	 */
 	private CIVLPrimitiveType integerType;
 
 	/** Keep a unique number to identify locations. */
@@ -224,48 +249,108 @@ public class CommonModelFactory implements ModelFactory {
 	/** A list of nulls of length CACHE_INCREMENT */
 	private List<SymbolicExpression> nullList = new LinkedList<SymbolicExpression>();
 
+	/**
+	 * The unique symbolic pointer type used in the system.
+	 */
 	private SymbolicTupleType pointerSymbolicType;
 
+	/**
+	 * The unique symbolic process type used in the system.
+	 */
 	private SymbolicTupleType processSymbolicType;
 
+	/**
+	 * The unique process type used in the system.
+	 */
 	private CIVLPrimitiveType processType;
 
+	/**
+	 * The list of canonicalized symbolic expressions of process IDs, will be
+	 * used in Executor, Evaluator and State factory to obtain symbolic process
+	 * ID's.
+	 */
 	private ArrayList<SymbolicExpression> processValues = new ArrayList<SymbolicExpression>();
 
+	/**
+	 * The unique real type used in the system.
+	 */
 	private CIVLPrimitiveType realType;
 
+	/**
+	 * The unique symbolic scope type used in the system.
+	 */
 	private SymbolicTupleType scopeSymbolicType;
 
 	/** Keep a unique number to identify scopes. */
 	private int scopeID = 0;
 
+	/**
+	 * The unique scope type used in the system.
+	 */
 	private CIVLPrimitiveType scopeType;
 
+	/**
+	 * The list of canonicalized symbolic expressions of scope IDs, will be used
+	 * in Executor, Evaluator and State factory to obtain symbolic scope ID's.
+	 */
 	private ArrayList<SymbolicExpression> scopeValues = new ArrayList<SymbolicExpression>();
 
+	/**
+	 * The unique symbolic string type used in the system.
+	 */
 	private SymbolicArrayType stringSymbolicType;
 
+	/**
+	 * The unique string type used in the system.
+	 */
 	private CIVLPrimitiveType stringType;
 
+	/**
+	 * The system source, used to create the identifier of the system function
+	 * (_CIVL_System), and for elements introduced during translation but
+	 * doesn't have real source, e.g., the atomic lock variable, etc.
+	 */
 	private CIVLSource systemSource = new SystemCIVLSource();
 
+	/**
+	 * The unique ABC token factory, used for obtaining source in the
+	 * translation.
+	 */
 	private TokenFactory tokenFactory;
 
+	/**
+	 * The unique symbolic expression for the undefined scope value, which has
+	 * the integer value -1.
+	 */
 	private SymbolicExpression undefinedScopeValue;
 
+	/**
+	 * The unique symbolic expression for the undefined processs value, which
+	 * has the integer value -1.
+	 */
 	private SymbolicExpression undefinedProcessValue;
 
+	/**
+	 * The unique SARL symbolic universe used in the system.
+	 */
 	private SymbolicUniverse universe;
 
+	/**
+	 * The unique void type used in the system.
+	 */
 	private CIVLPrimitiveType voidType;
 
+	/**
+	 * The unique integer object of zero.
+	 */
 	private IntObject zeroObj;
 
-	private CIVLPrimitiveType charType;
-
+	/**
+	 * The system scope of the model, i.e., the root scope.
+	 */
 	private Scope systemScope;
 
-	/****************************** Constructors *****************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * The factory to create all model components. Usually this is the only way
@@ -321,138 +406,66 @@ public class CommonModelFactory implements ModelFactory {
 				scopeSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
 		this.conditionalExpressions = new Stack<ArrayDeque<ConditionalExpression>>();
-		// atomicBlocks = new Stack<Integer>();
 	}
 
-	/************************ Methods from ModelFactory **********************/
+	/* ********************** Methods from ModelFactory ******************** */
 
-	@Override
-	public void addConditionalExpressionQueue() {
-		conditionalExpressions.add(new ArrayDeque<ConditionalExpression>());
-	}
-	
+	/* *********************************************************************
+	 * CIVL Types
+	 * *********************************************************************
+	 */
+
 	@Override
 	public CIVLPrimitiveType booleanType() {
 		return booleanType;
 	}
-	
+
+	@Override
+	public void completeHeapType(CIVLHeapType heapType,
+			Collection<MallocStatement> mallocs) {
+		SymbolicTupleType dynamicType = computeDynamicHeapType(mallocs);
+		SymbolicExpression initialValue = computeInitialHeapValue(dynamicType);
+		SymbolicExpression undefinedValue = universe.symbolicConstant(
+				universe.stringObject("UNDEFINED"), dynamicType);
+
+		undefinedValue = universe.canonic(undefinedValue);
+		heapType.complete(mallocs, dynamicType, initialValue, undefinedValue);
+	}
+
 	@Override
 	public CIVLPrimitiveType charType() {
 		return charType;
 	}
-	
-	@Override
-	public CIVLPrimitiveType dynamicType() {
-		return dynamicType;
-	}
-	
-	@Override
-	public CIVLFunction function(CIVLSource source, Identifier name,
-			List<Variable> parameters, CIVLType returnType,
-			Scope containingScope, Location startLocation) {
-		for (Variable v : parameters) {
-			if (v.type() instanceof CIVLArrayType) {
-				throw new CIVLInternalException("Parameter of array type.", v);
-			}
-		}
-		return new CommonFunction(source, name, parameters, returnType,
-				containingScope, startLocation, this);
-	}
-	
-	@Override
-	public Identifier identifier(CIVLSource source, String name) {
-		Identifier result = identifiers.get(name);
 
-		if (result == null) {
-			StringObject stringObject = (StringObject) universe
-					.canonic(universe.stringObject(name));
-
-			result = new CommonIdentifier(source, stringObject);
-			identifiers.put(name, result);
-		}
-		return result;
-	}
-	
-	@Override
-	public CIVLArrayType incompleteArrayType(CIVLType baseType) {
-		return new CommonArrayType(baseType);
-	}
-	
-	@Override
-	public CIVLPrimitiveType integerType() {
-		return integerType;
-	}
-	
-	@Override
-	public Location location(CIVLSource source, Scope scope) {
-		return new CommonLocation(source, scope, locationID++);
-	}
-	
-	@Override
-	public Model model(CIVLSource civlSource, CIVLFunction system) {
-		return new CommonModel(civlSource, this, system);
-	}
-	
-	@Override
-	public CIVLPrimitiveType processType() {
-		return processType;
-	}
-	
-	@Override
-	public CIVLPrimitiveType realType() {
-		return realType;
-	}
-
-	@Override
-	public Scope scope(CIVLSource source, Scope parent,
-			Set<Variable> variables, CIVLFunction function) {
-		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
-
-		if (parent != null) {
-			parent.addChild(newScope);
-		}
-		newScope.setFunction(function);
-		return newScope;
-	}
-	
-	@Override
-	public CIVLPrimitiveType scopeType() {
-		return scopeType;
-	}
-	
-	@Override
-	public void setTokenFactory(TokenFactory tokens) {
-		this.tokenFactory = tokens;
-	}
-	
-	@Override
-	public CIVLPrimitiveType stringType() {
-		return stringType;
-	}
-	
-	@Override
-	public SystemFunction systemFunction(CIVLSource source, Identifier name,
-			List<Variable> parameters, CIVLType returnType,
-			Scope containingScope, String libraryName) {
-		return new CommonSystemFunction(source, name, parameters, returnType,
-				containingScope, (Location) null, this, libraryName);
-	}
-
-	@Override
-	public CIVLSource systemSource() {
-		return systemSource;
-	}
-
-	@Override
-	public Variable variable(CIVLSource source, CIVLType type, Identifier name,
-			int vid) {
-		return new CommonVariable(source, type, name, vid);
-	}
-	
 	@Override
 	public CIVLCompleteArrayType completeArrayType(CIVLType elementType,
 			Expression extent) {
 		return new CommonCompleteArrayType(elementType, extent);
+	}
+
+	@Override
+	public CIVLPrimitiveType dynamicType() {
+		return dynamicType;
+	}
+
+	@Override
+	public CIVLHeapType heapType(String name) {
+		return new CommonHeapType(name);
+	}
+
+	@Override
+	public CIVLArrayType incompleteArrayType(CIVLType baseType) {
+		return new CommonArrayType(baseType);
+	}
+
+	@Override
+	public CIVLPrimitiveType integerType() {
+		return integerType;
+	}
+
+	@Override
+	public CIVLBundleType newBundleType() {
+		return new CommonBundleType();
 	}
 
 	@Override
@@ -461,61 +474,79 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public CIVLPrimitiveType processType() {
+		return processType;
+	}
+
+	@Override
+	public CIVLPrimitiveType realType() {
+		return realType;
+	}
+
+	@Override
+	public CIVLPrimitiveType scopeType() {
+		return scopeType;
+	}
+
+	@Override
+	public CIVLPrimitiveType stringType() {
+		return stringType;
+	}
+
+	@Override
 	public CIVLStructType structType(Identifier name) {
 		return new CommonStructType(name);
 	}
 
 	@Override
-	public StructField structField(Identifier name, CIVLType type) {
-		return new CommonStructField(name, type);
+	public CIVLPrimitiveType voidType() {
+		return voidType;
 	}
 
 	/* *********************************************************************
-	 * Expressions
+	 * SARL symbolic types
 	 * *********************************************************************
 	 */
 
-	/**
-	 * A unary expression. One of {-,!}.
-	 * 
-	 * @param operator
-	 *            The unary operator.
-	 * @param operand
-	 *            The expression to which the operator is applied.
-	 * @return The unary expression.
-	 */
 	@Override
-	public UnaryExpression unaryExpression(CIVLSource source,
-			UNARY_OPERATOR operator, Expression operand) {
-		UnaryExpression result = new CommonUnaryExpression(source, operator,
+	public SymbolicTupleType dynamicSymbolicType() {
+		return dynamicSymbolicType;
+	}
+
+	@Override
+	public SymbolicTupleType pointerSymbolicType() {
+		return pointerSymbolicType;
+	}
+
+	@Override
+	public SymbolicTupleType processSymbolicType() {
+		return processSymbolicType;
+	}
+
+	@Override
+	public SymbolicTupleType scopeSymbolicType() {
+		return scopeSymbolicType;
+	}
+
+	@Override
+	public SymbolicArrayType stringSymbolicType() {
+		return stringSymbolicType;
+	}
+
+	/* *********************************************************************
+	 * CIVL Expressions
+	 * *********************************************************************
+	 */
+
+	@Override
+	public AddressOfExpression addressOfExpression(CIVLSource source,
+			LHSExpression operand) {
+		AddressOfExpression result = new CommonAddressOfExpression(source,
 				operand);
 
 		result.setExpressionScope(operand.expressionScope());
-		switch (operator) {
-		case NEGATIVE:
-		case BIG_O:
-			result = new CommonUnaryExpression(source, operator, operand);
-			((CommonUnaryExpression) result).setExpressionType(operand
-					.getExpressionType());
-			break;
-		case NOT:
-			if (operand.getExpressionType().equals(booleanType)) {
-				result = new CommonUnaryExpression(source, operator, operand);
-			} else {
-				// TODO: This often won't work. Need to do conversion for e.g.
-				// numeric types
-				Expression castOperand = castExpression(source, booleanType,
-						operand);
-				result = new CommonUnaryExpression(source, operator,
-						castOperand);
-			}
-			((CommonUnaryExpression) result).setExpressionType(booleanType);
-			break;
-		default:
-			throw new CIVLInternalException("Unknown unary operator: "
-					+ operator, source);
-
-		}
+		((CommonExpression) result).setExpressionType(this.pointerType(operand
+				.getExpressionType()));
 		return result;
 	}
 
@@ -575,54 +606,50 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public CastExpression castExpression(CIVLSource source, CIVLType type,
-			Expression expression) {
-		CastExpression result = new CommonCastExpression(source, type,
-				expression);
+	public Expression booleanExpression(Expression expression) {
+		CIVLSource source = expression.getSource();
 
-		result.setExpressionScope(expression.expressionScope());
-		((CommonCastExpression) result).setExpressionType(type);
+		if (!expression.getExpressionType().equals(booleanType())) {
+			if (expression.getExpressionType().equals(integerType())) {
+				expression = binaryExpression(source,
+						BINARY_OPERATOR.NOT_EQUAL, expression,
+						integerLiteralExpression(source, BigInteger.ZERO));
+			} else if (expression.getExpressionType().equals(realType())) {
+				expression = binaryExpression(source,
+						BINARY_OPERATOR.NOT_EQUAL, expression,
+						realLiteralExpression(source, BigDecimal.ZERO));
+			} else {
+				throw new CIVLInternalException(
+						"Unable to convert expression to boolean type", source);
+			}
+		}
+		return expression;
+	}
+
+	/**
+	 * A boolean literal expression.
+	 * 
+	 * @param value
+	 *            True or false.
+	 * @return The boolean literal expression.
+	 */
+	@Override
+	public BooleanLiteralExpression booleanLiteralExpression(CIVLSource source,
+			boolean value) {
+		CommonBooleanLiteralExpression result;
+
+		result = new CommonBooleanLiteralExpression(source, value);
+		result.setExpressionType(booleanType);
 		return result;
 	}
 
 	@Override
-	public SizeofTypeExpression sizeofTypeExpression(CIVLSource source,
-			CIVLType type) {
-		CommonSizeofTypeExpression result = new CommonSizeofTypeExpression(
-				source, type);
-		Variable typeStateVariable = type.getStateVariable();
+	public BoundVariableExpression boundVariableExpression(CIVLSource source,
+			Identifier name, CIVLType type) {
+		CommonBoundVariableExpression result = new CommonBoundVariableExpression(
+				source, name);
 
-		// If the type has a state variable, then the scope of the sizeof
-		// expression is the scope of the state variable
-		if (typeStateVariable != null) {
-			result.setExpressionScope(typeStateVariable.scope());
-		} else
-			// If there is no state variable in the type, then the scope of the
-			// sizeof expression is NULL
-			result.setExpressionScope(null);
-		result.setExpressionType(integerType);
-		return result;
-	}
-
-	@Override
-	public DynamicTypeOfExpression dynamicTypeOfExpression(CIVLSource source,
-			CIVLType type) {
-		CommonDynamicTypeOfExpression result = new CommonDynamicTypeOfExpression(
-				source, type);
-
-		// result.setExpressionScope(expressionScope)
-		result.setExpressionType(dynamicType);
-		return result;
-	}
-
-	@Override
-	public InitialValueExpression initialValueExpression(CIVLSource source,
-			Variable variable) {
-		CommonInitialValueExpression result = new CommonInitialValueExpression(
-				source, variable);
-
-		// result.setExpressionScope(expressionScope)
-		result.setExpressionType(variable.type());
+		result.setExpressionType(type);
 		return result;
 	}
 
@@ -655,6 +682,35 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public CastExpression castExpression(CIVLSource source, CIVLType type,
+			Expression expression) {
+		CastExpression result = new CommonCastExpression(source, type,
+				expression);
+
+		result.setExpressionScope(expression.expressionScope());
+		((CommonCastExpression) result).setExpressionType(type);
+		return result;
+	}
+
+	/* *********************************************************************
+	 * Statements
+	 * *********************************************************************
+	 */
+
+	@Override
+	public DereferenceExpression dereferenceExpression(CIVLSource source,
+			Expression pointer) {
+		CIVLPointerType pointerType = (CIVLPointerType) pointer
+				.getExpressionType();
+		DereferenceExpression result = new CommonDereferenceExpression(source,
+				pointer);
+
+		result.setExpressionScope(this.systemScope); // indicates unknown scope
+		((CommonExpression) result).setExpressionType(pointerType.baseType());
+		return result;
+	}
+
+	@Override
 	public DotExpression dotExpression(CIVLSource source, Expression struct,
 			int fieldIndex) {
 		CommonDotExpression result = new CommonDotExpression(source, struct,
@@ -668,20 +724,25 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * A boolean literal expression.
-	 * 
-	 * @param value
-	 *            True or false.
-	 * @return The boolean literal expression.
-	 */
 	@Override
-	public BooleanLiteralExpression booleanLiteralExpression(CIVLSource source,
-			boolean value) {
-		CommonBooleanLiteralExpression result;
+	public DynamicTypeOfExpression dynamicTypeOfExpression(CIVLSource source,
+			CIVLType type) {
+		CommonDynamicTypeOfExpression result = new CommonDynamicTypeOfExpression(
+				source, type);
 
-		result = new CommonBooleanLiteralExpression(source, value);
-		result.setExpressionType(booleanType);
+		// result.setExpressionScope(expressionScope)
+		result.setExpressionType(dynamicType);
+		return result;
+	}
+
+	@Override
+	public InitialValueExpression initialValueExpression(CIVLSource source,
+			Variable variable) {
+		CommonInitialValueExpression result = new CommonInitialValueExpression(
+				source, variable);
+
+		// result.setExpressionScope(expressionScope)
+		result.setExpressionType(variable.type());
 		return result;
 	}
 
@@ -700,6 +761,36 @@ public class CommonModelFactory implements ModelFactory {
 
 		((CommonIntegerLiteralExpression) result)
 				.setExpressionType(integerType);
+		return result;
+	}
+
+	/* *********************************************************************
+	 * Statements
+	 * *********************************************************************
+	 */
+
+	@Override
+	public Expression nullPointerExpression(CIVLPointerType pointerType,
+			CIVLSource source) {
+		Expression zero = integerLiteralExpression(source, BigInteger.ZERO);
+		Expression result;
+
+		result = castExpression(source, pointerType, zero);
+		return result;
+	}
+
+	@Override
+	public QuantifiedExpression quantifiedExpression(CIVLSource source,
+			Quantifier quantifier, Identifier boundVariableName,
+			CIVLType boundVariableType, Expression restriction,
+			Expression expression) {
+		QuantifiedExpression result = new CommonQuantifiedExpression(source,
+				quantifier, boundVariableName, boundVariableType, restriction,
+				expression);
+
+		result.setExpressionScope(join(expression.expressionScope(),
+				restriction.expressionScope()));
+		((CommonExpression) result).setExpressionType(booleanType);
 		return result;
 	}
 
@@ -729,6 +820,49 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public ResultExpression resultExpression(CIVLSource source) {
 		return new CommonResultExpression(source);
+	}
+
+	/**
+	 * A self expression. Used to referenced the current process.
+	 * 
+	 * @return A new self expression.
+	 */
+	@Override
+	public SelfExpression selfExpression(CIVLSource source) {
+		SelfExpression result = new CommonSelfExpression(source);
+
+		((CommonSelfExpression) result).setExpressionType(processType);
+		return result;
+	}
+
+	@Override
+	public SizeofExpressionExpression sizeofExpressionExpression(
+			CIVLSource source, Expression argument) {
+		CommonSizeofExpression result = new CommonSizeofExpression(source,
+				argument);
+
+		result.setExpressionScope(argument.expressionScope());
+		result.setExpressionType(integerType);
+		return result;
+	}
+
+	@Override
+	public SizeofTypeExpression sizeofTypeExpression(CIVLSource source,
+			CIVLType type) {
+		CommonSizeofTypeExpression result = new CommonSizeofTypeExpression(
+				source, type);
+		Variable typeStateVariable = type.getStateVariable();
+
+		// If the type has a state variable, then the scope of the sizeof
+		// expression is the scope of the state variable
+		if (typeStateVariable != null) {
+			result.setExpressionScope(typeStateVariable.scope());
+		} else
+			// If there is no state variable in the type, then the scope of the
+			// sizeof expression is NULL
+			result.setExpressionScope(null);
+		result.setExpressionType(integerType);
+		return result;
 	}
 
 	/**
@@ -781,15 +915,46 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	/**
-	 * A self expression. Used to referenced the current process.
+	 * A unary expression. One of {-,!}.
 	 * 
-	 * @return A new self expression.
+	 * @param operator
+	 *            The unary operator.
+	 * @param operand
+	 *            The expression to which the operator is applied.
+	 * @return The unary expression.
 	 */
 	@Override
-	public SelfExpression selfExpression(CIVLSource source) {
-		SelfExpression result = new CommonSelfExpression(source);
+	public UnaryExpression unaryExpression(CIVLSource source,
+			UNARY_OPERATOR operator, Expression operand) {
+		UnaryExpression result = new CommonUnaryExpression(source, operator,
+				operand);
 
-		((CommonSelfExpression) result).setExpressionType(processType);
+		result.setExpressionScope(operand.expressionScope());
+		switch (operator) {
+		case NEGATIVE:
+		case BIG_O:
+			result = new CommonUnaryExpression(source, operator, operand);
+			((CommonUnaryExpression) result).setExpressionType(operand
+					.getExpressionType());
+			break;
+		case NOT:
+			if (operand.getExpressionType().equals(booleanType)) {
+				result = new CommonUnaryExpression(source, operator, operand);
+			} else {
+				// TODO: This often won't work. Need to do conversion for e.g.
+				// numeric types
+				Expression castOperand = castExpression(source, booleanType,
+						operand);
+				result = new CommonUnaryExpression(source, operator,
+						castOperand);
+			}
+			((CommonUnaryExpression) result).setExpressionType(booleanType);
+			break;
+		default:
+			throw new CIVLInternalException("Unknown unary operator: "
+					+ operator, source);
+
+		}
 		return result;
 	}
 
@@ -814,18 +979,8 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	@Override
-	public BoundVariableExpression boundVariableExpression(CIVLSource source,
-			Identifier name, CIVLType type) {
-		CommonBoundVariableExpression result = new CommonBoundVariableExpression(
-				source, name);
-
-		result.setExpressionType(type);
-		return result;
-	}
-
 	/* *********************************************************************
-	 * Statements
+	 * Fragments and Statements
 	 * *********************************************************************
 	 */
 
@@ -883,6 +1038,64 @@ public class CommonModelFactory implements ModelFactory {
 		return new CommonFragment(result);
 	}
 
+	// @Override
+	// public void enterAtomicBlock(boolean deterministic) {
+	// this.atomicBlocks.push(deterministic ? 1 : 0);
+	// }
+	//
+	// @Override
+	// public void leaveAtomicBlock(boolean deterministic) {
+	// this.atomicBlocks.pop();
+	// }
+
+	// @Override
+	// public boolean inAtomicBlock() {
+	// return !this.atomicBlocks.isEmpty();
+	// }
+
+	@Override
+	public Fragment atomicFragment(boolean deterministic, Fragment fragment,
+			Location start, Location end) {
+		Statement enterAtomic;
+		Statement leaveAtomic;
+		Fragment startFragment;
+		Fragment endFragment;
+		Fragment result;
+		Expression startGuard = null;
+
+		if (deterministic) {
+			enterAtomic = new CommonAtomBranchStatement(start.getSource(),
+					start, true);
+			leaveAtomic = new CommonAtomBranchStatement(end.getSource(), end,
+					false);
+		} else {
+			enterAtomic = new CommonAtomicLockAssignStatement(
+					start.getSource(), start, true,
+					this.atomicLockVariableExpression,
+					this.selfExpression(systemSource));
+			leaveAtomic = new CommonAtomicLockAssignStatement(end.getSource(),
+					end, false, this.atomicLockVariableExpression,
+					new CommonUndefinedProcessExpression(systemSource));
+		}
+		startFragment = new CommonFragment(enterAtomic);
+		endFragment = new CommonFragment(leaveAtomic);
+		start.setEnterAtomic(deterministic);
+		for (Statement statement : fragment.startLocation().outgoing()) {
+			if (startGuard == null)
+				startGuard = statement.guard();
+			else {
+				startGuard = this.binaryExpression(startGuard.getSource(),
+						BINARY_OPERATOR.OR, startGuard, statement.guard());
+			}
+		}
+		if (startGuard != null)
+			enterAtomic.setGuard(startGuard);
+		end.setLeaveAtomic(deterministic);
+		result = startFragment.combineWith(fragment);
+		result = result.combineWith(endFragment);
+		return result;
+	}
+
 	/**
 	 * A function call.
 	 * 
@@ -933,6 +1146,29 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public NoopStatement gotoBranchStatement(CIVLSource civlSource,
+			Location source, String label) {
+		NoopStatement result = new CommonGotoBranchStatement(civlSource,
+				source, label);
+
+		return result;
+	}
+
+	@Override
+	public NoopStatement ifElseBranchStatement(CIVLSource civlSource,
+			Location source, Expression guard, boolean isTrue) {
+		NoopStatement result = new CommonIfElseBranchStatement(civlSource, source,
+				isTrue);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null) {
+			result.setGuard(guard);
+			result.setStatementScope(guard.expressionScope());
+		}
+		return result;
+	}
+
+	@Override
 	public Fragment joinFragment(CIVLSource civlSource, Location source,
 			Expression process) {
 		WaitStatement result = new CommonWaitStatement(civlSource, source,
@@ -941,6 +1177,48 @@ public class CommonModelFactory implements ModelFactory {
 		result.setStatementScope(process.expressionScope());
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return new CommonFragment(result);
+	}
+
+	@Override
+	public NoopStatement loopBranchStatement(CIVLSource civlSource,
+			Location source, Expression guard, boolean isTrue) {
+		NoopStatement result = new CommonLoopBranchStatement(civlSource,
+				source, isTrue);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		if (guard != null) {
+			result.setGuard(guard);
+			result.setStatementScope(guard.expressionScope());
+		}
+		return result;
+	}
+
+	@Override
+	public MallocStatement mallocStatement(CIVLSource civlSource,
+			Location source, LHSExpression lhs, CIVLType staticElementType,
+			Expression heapPointerExpression, Expression sizeExpression,
+			int mallocId, Expression guard) {
+		SymbolicType dynamicElementType = staticElementType
+				.getDynamicType(universe);
+		SymbolicArrayType dynamicObjectType = (SymbolicArrayType) universe
+				.canonic(universe.arrayType(dynamicElementType));
+		SymbolicExpression undefinedObject = undefinedValue(dynamicObjectType);
+		MallocStatement result = new CommonMallocStatement(civlSource, source,
+				mallocId, heapPointerExpression, staticElementType,
+				dynamicElementType, dynamicObjectType, sizeExpression,
+				undefinedObject, lhs);
+
+		if (guard != null)
+			result.setGuard(guard);
+		return result;
+	}
+
+	@Override
+	public NoopStatement noopStatement(CIVLSource civlSource, Location source) {
+		NoopStatement result = new CommonNoopStatement(civlSource, source);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		return result;
 	}
 
 	/**
@@ -960,29 +1238,6 @@ public class CommonModelFactory implements ModelFactory {
 			result.setGuard(guard);
 			result.setStatementScope(guard.expressionScope());
 		}
-		return result;
-	}
-
-	@Override
-	public NoopStatement ifBranchStatement(CIVLSource civlSource,
-			Location source, Expression guard, boolean isTrue) {
-		NoopStatement result = new CommonIfBranchStatement(civlSource, source,
-				isTrue);
-
-		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null) {
-			result.setGuard(guard);
-			result.setStatementScope(guard.expressionScope());
-		}
-		return result;
-	}
-
-	@Override
-	public NoopStatement gotoBranchStatement(CIVLSource civlSource,
-			Location source, String label) {
-		NoopStatement result = new CommonGotoBranchStatement(civlSource,
-				source, label);
-
 		return result;
 	}
 
@@ -1013,28 +1268,6 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public NoopStatement loopBranchStatement(CIVLSource civlSource,
-			Location source, Expression guard, boolean isTrue) {
-		NoopStatement result = new CommonLoopBranchStatement(civlSource,
-				source, isTrue);
-
-		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		if (guard != null) {
-			result.setGuard(guard);
-			result.setStatementScope(guard.expressionScope());
-		}
-		return result;
-	}
-
-	@Override
-	public NoopStatement noopStatement(CIVLSource civlSource, Location source) {
-		NoopStatement result = new CommonNoopStatement(civlSource, source);
-
-		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		return result;
-	}
-
-	@Override
 	public Fragment returnFragment(CIVLSource civlSource, Location source,
 			Expression expression, CIVLFunction function) {
 		ReturnStatement result = new CommonReturnStatement(civlSource, source,
@@ -1047,231 +1280,19 @@ public class CommonModelFactory implements ModelFactory {
 		return new CommonFragment(result);
 	}
 
-	@Override
-	public DereferenceExpression dereferenceExpression(CIVLSource source,
-			Expression pointer) {
-		CIVLPointerType pointerType = (CIVLPointerType) pointer
-				.getExpressionType();
-		DereferenceExpression result = new CommonDereferenceExpression(source,
-				pointer);
-
-		result.setExpressionScope(this.systemScope); // indicates unknown scope
-		((CommonExpression) result).setExpressionType(pointerType.baseType());
-		return result;
-	}
+	/* *********************************************************************
+	 * CIVL Source
+	 * *********************************************************************
+	 */
 
 	@Override
-	public AddressOfExpression addressOfExpression(CIVLSource source,
-			LHSExpression operand) {
-		AddressOfExpression result = new CommonAddressOfExpression(source,
-				operand);
-
-		result.setExpressionScope(operand.expressionScope());
-		((CommonExpression) result).setExpressionType(this.pointerType(operand
-				.getExpressionType()));
-		return result;
-	}
-
-	@Override
-	public QuantifiedExpression quantifiedExpression(CIVLSource source,
-			Quantifier quantifier, Identifier boundVariableName,
-			CIVLType boundVariableType, Expression restriction,
-			Expression expression) {
-		QuantifiedExpression result = new CommonQuantifiedExpression(source,
-				quantifier, boundVariableName, boundVariableType, restriction,
-				expression);
-
-		result.setExpressionScope(join(expression.expressionScope(),
-				restriction.expressionScope()));
-		((CommonExpression) result).setExpressionType(booleanType);
-		return result;
-	}
-
-	@Override
-	public SymbolicUniverse universe() {
-		return universe;
-	}
-
-	@Override
-	public SymbolicTupleType pointerSymbolicType() {
-		return pointerSymbolicType;
-	}
-
-	@Override
-	public SymbolicTupleType processSymbolicType() {
-		return processSymbolicType;
-	}
-
-	@Override
-	public SymbolicTupleType dynamicSymbolicType() {
-		return dynamicSymbolicType;
-	}
-
-	@Override
-	public SymbolicTupleType scopeSymbolicType() {
-		return scopeSymbolicType;
-	}
-
-	@Override
-	public SymbolicArrayType stringSymbolicType() {
-		return stringSymbolicType;
-	}
-
-	@Override
-	public CIVLPrimitiveType voidType() {
-		return voidType;
-	}
-
-	@Override
-	public SymbolicExpression processValue(int pid) {
-		SymbolicExpression result;
-
-		if (pid < 0)
-			return undefinedProcessValue;
-		while (pid >= processValues.size())
-			processValues.addAll(nullList);
-		result = processValues.get(pid);
-		if (result == null) {
-			result = universe.canonic(universe.tuple(processSymbolicType,
-					new Singleton<SymbolicExpression>(universe.integer(pid))));
-			processValues.set(pid, result);
-		}
-		return result;
-	}
-
-	@Override
-	public int getProcessId(CIVLSource source, SymbolicExpression processValue) {
-		return extractIntField(source, processValue, zeroObj);
-	}
-
-	@Override
-	public SymbolicExpression scopeValue(int sid) {
-		SymbolicExpression result;
-
-		if (sid < 0)
-			return undefinedScopeValue;
-		while (sid >= scopeValues.size())
-			scopeValues.addAll(nullList);
-		result = scopeValues.get(sid);
-		if (result == null) {
-			result = universe.canonic(universe.tuple(scopeSymbolicType,
-					new Singleton<SymbolicExpression>(universe.integer(sid))));
-			scopeValues.set(sid, result);
-		}
-		return result;
-	}
-
-	@Override
-	public void setSystemScope(Scope scope) {
-		this.systemScope = scope;
-	}
-
-	@Override
-	public int getScopeId(CIVLSource source, SymbolicExpression scopeValue) {
-		return extractIntField(source, scopeValue, zeroObj);
-	}
-
-	@Override
-	public MallocStatement mallocStatement(CIVLSource civlSource,
-			Location source, LHSExpression lhs, CIVLType staticElementType,
-			Expression heapPointerExpression, Expression sizeExpression,
-			int mallocId, Expression guard) {
-		SymbolicType dynamicElementType = staticElementType
-				.getDynamicType(universe);
-		SymbolicArrayType dynamicObjectType = (SymbolicArrayType) universe
-				.canonic(universe.arrayType(dynamicElementType));
-		SymbolicExpression undefinedObject = undefinedValue(dynamicObjectType);
-		MallocStatement result = new CommonMallocStatement(civlSource, source,
-				mallocId, heapPointerExpression, staticElementType,
-				dynamicElementType, dynamicObjectType, sizeExpression,
-				undefinedObject, lhs);
-
-		if (guard != null)
-			result.setGuard(guard);
-		return result;
-	}
-
-	@Override
-	public CIVLHeapType heapType(String name) {
-		return new CommonHeapType(name);
-	}
-
-	@Override
-	public void completeHeapType(CIVLHeapType heapType,
-			Collection<MallocStatement> mallocs) {
-		SymbolicTupleType dynamicType = computeDynamicHeapType(mallocs);
-		SymbolicExpression initialValue = computeInitialHeapValue(dynamicType);
-		SymbolicExpression undefinedValue = universe.symbolicConstant(
-				universe.stringObject("UNDEFINED"), dynamicType);
-
-		undefinedValue = universe.canonic(undefinedValue);
-		heapType.complete(mallocs, dynamicType, initialValue, undefinedValue);
-	}
-
-	@Override
-	public SizeofExpressionExpression sizeofExpressionExpression(
-			CIVLSource source, Expression argument) {
-		CommonSizeofExpression result = new CommonSizeofExpression(source,
-				argument);
-
-		result.setExpressionScope(argument.expressionScope());
-		result.setExpressionType(integerType);
-		return result;
-	}
-
-	@Override
-	public CIVLBundleType newBundleType() {
-		return new CommonBundleType();
-	}
-
-	@Override
-	public void complete(CIVLBundleType bundleType,
-			Collection<SymbolicType> elementTypes) {
-		LinkedList<SymbolicType> arrayTypes = new LinkedList<SymbolicType>();
-		SymbolicUnionType dynamicType;
-
-		for (SymbolicType type : elementTypes)
-			arrayTypes.add(universe.arrayType(type));
-		dynamicType = universe.unionType(universe.stringObject("$bundle"),
-				arrayTypes);
-		dynamicType = (SymbolicUnionType) universe.canonic(dynamicType);
-		bundleType.complete(elementTypes, dynamicType);
-	}
-
-	@Override
-	public Expression booleanExpression(Expression expression) {
-		CIVLSource source = expression.getSource();
-
-		if (!expression.getExpressionType().equals(booleanType())) {
-			if (expression.getExpressionType().equals(integerType())) {
-				expression = binaryExpression(source,
-						BINARY_OPERATOR.NOT_EQUAL, expression,
-						integerLiteralExpression(source, BigInteger.ZERO));
-			} else if (expression.getExpressionType().equals(realType())) {
-				expression = binaryExpression(source,
-						BINARY_OPERATOR.NOT_EQUAL, expression,
-						realLiteralExpression(source, BigDecimal.ZERO));
-			} else {
-				throw new CIVLInternalException(
-						"Unable to convert expression to boolean type", source);
-			}
-		}
-		return expression;
+	public CIVLSource sourceOf(ASTNode node) {
+		return sourceOf(node.getSource());
 	}
 
 	@Override
 	public CIVLSource sourceOf(Source abcSource) {
 		return new ABC_CIVLSource(abcSource);
-	}
-
-	@Override
-	public CIVLSource sourceOfToken(CToken token) {
-		return sourceOf(tokenFactory.newSource(token));
-	}
-
-	@Override
-	public CIVLSource sourceOf(ASTNode node) {
-		return sourceOf(node.getSource());
 	}
 
 	@Override
@@ -1282,11 +1303,6 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CIVLSource sourceOfEnd(ASTNode node) {
 		return sourceOfToken(node.getSource().getLastToken());
-	}
-
-	@Override
-	public CIVLSource sourceOfSpan(Source abcSource1, Source abcSource2) {
-		return sourceOf(tokenFactory.join(abcSource1, abcSource2));
 	}
 
 	@Override
@@ -1301,24 +1317,145 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public boolean isTrue(Expression expression) {
-		return expression instanceof BooleanLiteralExpression
-				&& ((BooleanLiteralExpression) expression).value();
+	public CIVLSource sourceOfSpan(Source abcSource1, Source abcSource2) {
+		return sourceOf(tokenFactory.join(abcSource1, abcSource2));
 	}
 
 	@Override
-	public Expression nullPointerExpression(CIVLPointerType pointerType,
-			CIVLSource source) {
-		Expression zero = integerLiteralExpression(source, BigInteger.ZERO);
-		Expression result;
-
-		result = castExpression(source, pointerType, zero);
-		return result;
+	public CIVLSource sourceOfToken(CToken token) {
+		return sourceOf(tokenFactory.newSource(token));
 	}
+
+	/* *********************************************************************
+	 * Translating away conditional expressions
+	 * *********************************************************************
+	 */
 
 	@Override
 	public void addConditionalExpression(ConditionalExpression expression) {
 		this.conditionalExpressions.peek().add(expression);
+	}
+
+	@Override
+	public void addConditionalExpressionQueue() {
+		conditionalExpressions.add(new ArrayDeque<ConditionalExpression>());
+	}
+
+	@Override
+	public Fragment conditionalExpressionToIf(ConditionalExpression expression,
+			Statement statement) {
+		Expression guard = statement.guard();
+		Expression condition = expression.getCondition();
+		Location startLocation = statement.source();
+		Expression ifGuard, elseGuard;
+		Statement ifBranch, elseBranch;
+		Expression ifValue = expression.getTrueBranch(), elseValue = expression
+				.getFalseBranch();
+		Fragment result = new CommonFragment();
+		StatementSet lastStatement = new StatementSet();
+
+		ifGuard = booleanExpression(condition);
+		elseGuard = unaryExpression(condition.getSource(), UNARY_OPERATOR.NOT,
+				ifGuard);
+
+		if (!isTrue(guard)) {
+			ifGuard = binaryExpression(
+					sourceOfSpan(guard.getSource(), ifGuard.getSource()),
+					BINARY_OPERATOR.AND, guard, ifGuard);
+			elseGuard = binaryExpression(
+					sourceOfSpan(guard.getSource(), elseGuard.getSource()),
+					BINARY_OPERATOR.AND, guard, elseGuard);
+		}
+
+		if (statement instanceof CallOrSpawnStatement) {
+			Function function = modelBuilder.callStatements.get(statement);
+			Fragment ifFragment, elseFragment;
+			Location ifLocation, elseLocation;
+			Scope scope = startLocation.scope();
+
+			ifFragment = new CommonFragment(ifElseBranchStatement(
+					condition.getSource(), startLocation, ifGuard, true));
+			ifLocation = location(ifValue.getSource(), scope);
+			ifBranch = statement.replaceWith(expression, ifValue);
+			ifBranch.setGuard(guard);
+			ifBranch.setSource(ifLocation);
+			ifFragment = ifFragment.combineWith(new CommonFragment(ifBranch));
+			elseFragment = new CommonFragment(ifElseBranchStatement(
+					condition.getSource(), startLocation, elseGuard, false));
+			elseLocation = location(elseValue.getSource(), scope);
+			elseBranch = statement.replaceWith(expression, elseValue);
+			elseBranch.setGuard(guard);
+			elseBranch.setSource(elseLocation);
+			elseFragment = elseFragment.combineWith(new CommonFragment(
+					elseBranch));
+			// remove the old call or spawn statement from the callStatements
+			// map and add the two new ones into the map.
+			modelBuilder.callStatements.put((CallOrSpawnStatement) ifBranch,
+					function);
+			modelBuilder.callStatements.put((CallOrSpawnStatement) elseBranch,
+					function);
+			modelBuilder.callStatements.remove(statement);
+			result = ifFragment.parallelCombineWith(elseFragment);
+
+		} else {
+			ifBranch = statement.replaceWith(expression, ifValue);
+			elseBranch = statement.replaceWith(expression, elseValue);
+			ifBranch.setGuard(ifGuard);
+			elseBranch.setGuard(elseGuard);
+			lastStatement.add(ifBranch);
+			lastStatement.add(elseBranch);
+			result.setStartLocation(startLocation);
+			result.setLastStatement(lastStatement);
+		}
+		startLocation.removeOutgoing(statement);
+		return result;
+
+	}
+
+	@Override
+	public Fragment conditionalExpressionToIf(Expression guard,
+			VariableExpression variable, ConditionalExpression expression) {
+		Expression condition = expression.getCondition();
+		Location startLocation = location(condition.getSource(), variable
+				.variable().scope());
+		Expression ifGuard, elseGuard;
+		Statement ifAssign, elseAssign;
+		Expression ifValue = expression.getTrueBranch(), elseValue = expression
+				.getFalseBranch();
+		Fragment result = new CommonFragment();
+		StatementSet lastStatement = new StatementSet();
+
+		ifGuard = booleanExpression(condition);
+		elseGuard = unaryExpression(condition.getSource(), UNARY_OPERATOR.NOT,
+				ifGuard);
+		if (guard != null) {
+			if (!isTrue(guard)) {
+				ifGuard = binaryExpression(
+						sourceOfSpan(guard.getSource(), ifGuard.getSource()),
+						BINARY_OPERATOR.AND, guard, ifGuard);
+				elseGuard = binaryExpression(
+						sourceOfSpan(guard.getSource(), elseGuard.getSource()),
+						BINARY_OPERATOR.AND, guard, elseGuard);
+			}
+		}
+		ifAssign = assignStatement(ifValue.getSource(), startLocation,
+				variable, ifValue, false);
+		ifAssign.setGuard(ifGuard);
+		lastStatement.add(ifAssign);
+		elseAssign = assignStatement(elseValue.getSource(), startLocation,
+				variable, elseValue, false);
+		elseAssign.setGuard(elseGuard);
+		lastStatement.add(elseAssign);
+		result.setStartLocation(startLocation);
+		result.setLastStatement(lastStatement);
+		return result;
+	}
+
+	@Override
+	public boolean hasConditionalExpressions() {
+		if (!conditionalExpressions.peek().isEmpty())
+			return true;
+		return false;
 	}
 
 	@Override
@@ -1382,213 +1519,20 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	
-
-	@Override
-	public void popConditionaExpressionStack() {
-		conditionalExpressions.pop();
-	}
-
 	@Override
 	public ConditionalExpression pollConditionaExpression() {
 		return conditionalExpressions.peek().pollFirst();
 	}
 
 	@Override
-	public boolean hasConditionalExpressions() {
-		if (!conditionalExpressions.peek().isEmpty())
-			return true;
-		return false;
+	public void popConditionaExpressionStack() {
+		conditionalExpressions.pop();
 	}
 
-	@Override
-	public Fragment conditionalExpressionToIf(Expression guard,
-			VariableExpression variable, ConditionalExpression expression) {
-		Expression condition = expression.getCondition();
-		Location startLocation = location(condition.getSource(), variable
-				.variable().scope());
-		Expression ifGuard, elseGuard;
-		Statement ifAssign, elseAssign;
-		Expression ifValue = expression.getTrueBranch(), elseValue = expression
-				.getFalseBranch();
-		Fragment result = new CommonFragment();
-		StatementSet lastStatement = new StatementSet();
-
-		ifGuard = booleanExpression(condition);
-		elseGuard = unaryExpression(condition.getSource(), UNARY_OPERATOR.NOT,
-				ifGuard);
-		if (guard != null) {
-			if (!isTrue(guard)) {
-				ifGuard = binaryExpression(
-						sourceOfSpan(guard.getSource(), ifGuard.getSource()),
-						BINARY_OPERATOR.AND, guard, ifGuard);
-				elseGuard = binaryExpression(
-						sourceOfSpan(guard.getSource(), elseGuard.getSource()),
-						BINARY_OPERATOR.AND, guard, elseGuard);
-			}
-		}
-		ifAssign = assignStatement(ifValue.getSource(), startLocation,
-				variable, ifValue, false);
-		ifAssign.setGuard(ifGuard);
-		lastStatement.add(ifAssign);
-		elseAssign = assignStatement(elseValue.getSource(), startLocation,
-				variable, elseValue, false);
-		elseAssign.setGuard(elseGuard);
-		lastStatement.add(elseAssign);
-		result.setStartLocation(startLocation);
-		result.setLastStatement(lastStatement);
-		return result;
-	}
-
-	@Override
-	public Fragment conditionalExpressionToIf(ConditionalExpression expression,
-			Statement statement) {
-		Expression guard = statement.guard();
-		Expression condition = expression.getCondition();
-		Location startLocation = statement.source();
-		Expression ifGuard, elseGuard;
-		Statement ifBranch, elseBranch;
-		Expression ifValue = expression.getTrueBranch(), elseValue = expression
-				.getFalseBranch();
-		Fragment result = new CommonFragment();
-		StatementSet lastStatement = new StatementSet();
-
-		ifGuard = booleanExpression(condition);
-		elseGuard = unaryExpression(condition.getSource(), UNARY_OPERATOR.NOT,
-				ifGuard);
-
-		if (!isTrue(guard)) {
-			ifGuard = binaryExpression(
-					sourceOfSpan(guard.getSource(), ifGuard.getSource()),
-					BINARY_OPERATOR.AND, guard, ifGuard);
-			elseGuard = binaryExpression(
-					sourceOfSpan(guard.getSource(), elseGuard.getSource()),
-					BINARY_OPERATOR.AND, guard, elseGuard);
-		}
-
-		if (statement instanceof CallOrSpawnStatement) {
-			Function function = modelBuilder.callStatements.get(statement);
-			Fragment ifFragment, elseFragment;
-			Location ifLocation, elseLocation;
-			Scope scope = startLocation.scope();
-
-			ifFragment = new CommonFragment(ifBranchStatement(
-					condition.getSource(), startLocation, ifGuard, true));
-			ifLocation = location(ifValue.getSource(), scope);
-			ifBranch = statement.replaceWith(expression, ifValue);
-			ifBranch.setGuard(guard);
-			ifBranch.setSource(ifLocation);
-			ifFragment = ifFragment.combineWith(new CommonFragment(ifBranch));
-
-			elseFragment = new CommonFragment(ifBranchStatement(
-					condition.getSource(), startLocation, elseGuard, false));
-			elseLocation = location(elseValue.getSource(), scope);
-			elseBranch = statement.replaceWith(expression, elseValue);
-			elseBranch.setGuard(guard);
-			elseBranch.setSource(elseLocation);
-			elseFragment = elseFragment.combineWith(new CommonFragment(
-					elseBranch));
-
-			modelBuilder.callStatements.put((CallOrSpawnStatement) ifBranch,
-					function);
-			modelBuilder.callStatements.put((CallOrSpawnStatement) elseBranch,
-					function);
-			modelBuilder.callStatements.remove(statement);
-
-			result = ifFragment.parallelCombineWith(elseFragment);
-
-		} else {
-			ifBranch = statement.replaceWith(expression, ifValue);
-			elseBranch = statement.replaceWith(expression, elseValue);
-			ifBranch.setGuard(ifGuard);
-			elseBranch.setGuard(elseGuard);
-			lastStatement.add(ifBranch);
-			lastStatement.add(elseBranch);
-
-			result.setStartLocation(startLocation);
-			result.setLastStatement(lastStatement);
-		}
-
-		startLocation.removeOutgoing(statement);
-
-		return result;
-
-	}
-
-	// @Override
-	// public void enterAtomicBlock(boolean deterministic) {
-	// this.atomicBlocks.push(deterministic ? 1 : 0);
-	// }
-	//
-	// @Override
-	// public void leaveAtomicBlock(boolean deterministic) {
-	// this.atomicBlocks.pop();
-	// }
-
-	// @Override
-	// public boolean inAtomicBlock() {
-	// return !this.atomicBlocks.isEmpty();
-	// }
-
-	@Override
-	public Fragment atomicFragment(boolean deterministic, Fragment fragment,
-			Location start, Location end) {
-		Statement enterAtomic;
-		Statement leaveAtomic;
-		Fragment startFragment;
-		Fragment endFragment;
-		Fragment result;
-		Expression startGuard = null;
-
-		if (deterministic) {
-			enterAtomic = new CommonAtomBranchStatement(start.getSource(),
-					start, true);
-			leaveAtomic = new CommonAtomBranchStatement(end.getSource(), end,
-					false);
-		} else {
-			enterAtomic = new CommonAtomicLockAssignStatement(
-					start.getSource(), start, true,
-					this.atomicLockVariableExpression,
-					this.selfExpression(systemSource));
-			leaveAtomic = new CommonAtomicLockAssignStatement(end.getSource(),
-					end, false, this.atomicLockVariableExpression,
-					new CommonUndefinedProcessExpression(systemSource));
-		}
-		startFragment = new CommonFragment(enterAtomic);
-		endFragment = new CommonFragment(leaveAtomic);
-		start.setEnterAtomic(deterministic);
-		for (Statement statement : fragment.startLocation().outgoing()) {
-			if (startGuard == null)
-				startGuard = statement.guard();
-			else {
-				startGuard = this.binaryExpression(startGuard.getSource(),
-						BINARY_OPERATOR.OR, startGuard, statement.guard());
-			}
-		}
-		if (startGuard != null)
-			enterAtomic.setGuard(startGuard);
-		end.setLeaveAtomic(deterministic);
-		result = startFragment.combineWith(fragment);
-		result = result.combineWith(endFragment);
-		return result;
-	}
-
-	@Override
-	public void createAtomicLockVariable(Scope scope) {
-		// Since the atomic lock variable is not declared explicitly in the CIVL
-		// model specification, the system source will be used here.
-		Variable variable = this.variable(this.systemSource, processType,
-				this.identifier(this.systemSource, ATOMIC_LOCK_VARIABLE), 0);
-
-		this.atomicLockVariableExpression = this.variableExpression(
-				this.systemSource, variable);
-		scope.addVariable(variable);
-	}
-
-	@Override
-	public VariableExpression atomicLockVariableExpression() {
-		return this.atomicLockVariableExpression;
-	}
+	/* *********************************************************************
+	 * Atomic Lock Variable
+	 * *********************************************************************
+	 */
 
 	@Override
 	public AssignStatement assignAtomicLockVariable(Integer pid, Location target) {
@@ -1604,7 +1548,29 @@ public class CommonModelFactory implements ModelFactory {
 		assignStatement.setTarget(target);
 		return assignStatement;
 	}
-	
+
+	@Override
+	public VariableExpression atomicLockVariableExpression() {
+		return this.atomicLockVariableExpression;
+	}
+
+	@Override
+	public void createAtomicLockVariable(Scope scope) {
+		// Since the atomic lock variable is not declared explicitly in the CIVL
+		// model specification, the system source will be used here.
+		Variable variable = this.variable(this.systemSource, processType,
+				this.identifier(this.systemSource, ATOMIC_LOCK_VARIABLE), 0);
+
+		this.atomicLockVariableExpression = this.variableExpression(
+				this.systemSource, variable);
+		scope.addVariable(variable);
+	}
+
+	/* *********************************************************************
+	 * Other helper methods
+	 * *********************************************************************
+	 */
+
 	@Override
 	public void setImpactScopeOfLocation(Location location) {
 		if (location.enterAtom() || location.enterAtomic()) {
@@ -1677,14 +1643,174 @@ public class CommonModelFactory implements ModelFactory {
 			return;
 		}
 	}
-	
+
+	@Override
+	public StructField structField(Identifier name, CIVLType type) {
+		return new CommonStructField(name, type);
+	}
+
 	@Override
 	public SymbolicExpression undefinedProcessValue() {
 		return this.undefinedProcessValue;
 	}
 
-	/***************************** Private Methods ***************************/
+	@Override
+	public void complete(CIVLBundleType bundleType,
+			Collection<SymbolicType> elementTypes) {
+		LinkedList<SymbolicType> arrayTypes = new LinkedList<SymbolicType>();
+		SymbolicUnionType dynamicType;
 
+		for (SymbolicType type : elementTypes)
+			arrayTypes.add(universe.arrayType(type));
+		dynamicType = universe.unionType(universe.stringObject("$bundle"),
+				arrayTypes);
+		dynamicType = (SymbolicUnionType) universe.canonic(dynamicType);
+		bundleType.complete(elementTypes, dynamicType);
+	}
+
+	@Override
+	public boolean isTrue(Expression expression) {
+		return expression instanceof BooleanLiteralExpression
+				&& ((BooleanLiteralExpression) expression).value();
+	}
+
+	@Override
+	public SymbolicUniverse universe() {
+		return universe;
+	}
+
+	@Override
+	public CIVLFunction function(CIVLSource source, Identifier name,
+			List<Variable> parameters, CIVLType returnType,
+			Scope containingScope, Location startLocation) {
+		for (Variable v : parameters) {
+			if (v.type() instanceof CIVLArrayType) {
+				throw new CIVLInternalException("Parameter of array type.", v);
+			}
+		}
+		return new CommonFunction(source, name, parameters, returnType,
+				containingScope, startLocation, this);
+	}
+
+	@Override
+	public Identifier identifier(CIVLSource source, String name) {
+		Identifier result = identifiers.get(name);
+
+		if (result == null) {
+			StringObject stringObject = (StringObject) universe
+					.canonic(universe.stringObject(name));
+
+			result = new CommonIdentifier(source, stringObject);
+			identifiers.put(name, result);
+		}
+		return result;
+	}
+
+	@Override
+	public Location location(CIVLSource source, Scope scope) {
+		return new CommonLocation(source, scope, locationID++);
+	}
+
+	@Override
+	public Model model(CIVLSource civlSource, CIVLFunction system) {
+		return new CommonModel(civlSource, this, system);
+	}
+
+	@Override
+	public Scope scope(CIVLSource source, Scope parent,
+			Set<Variable> variables, CIVLFunction function) {
+		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
+
+		if (parent != null) {
+			parent.addChild(newScope);
+		}
+		newScope.setFunction(function);
+		return newScope;
+	}
+
+	@Override
+	public void setTokenFactory(TokenFactory tokens) {
+		this.tokenFactory = tokens;
+	}
+
+	@Override
+	public SystemFunction systemFunction(CIVLSource source, Identifier name,
+			List<Variable> parameters, CIVLType returnType,
+			Scope containingScope, String libraryName) {
+		return new CommonSystemFunction(source, name, parameters, returnType,
+				containingScope, (Location) null, this, libraryName);
+	}
+
+	@Override
+	public CIVLSource systemSource() {
+		return systemSource;
+	}
+
+	@Override
+	public Variable variable(CIVLSource source, CIVLType type, Identifier name,
+			int vid) {
+		return new CommonVariable(source, type, name, vid);
+	}
+
+	@Override
+	public SymbolicExpression processValue(int pid) {
+		SymbolicExpression result;
+
+		if (pid < 0)
+			return undefinedProcessValue;
+		while (pid >= processValues.size())
+			processValues.addAll(nullList);
+		result = processValues.get(pid);
+		if (result == null) {
+			result = universe.canonic(universe.tuple(processSymbolicType,
+					new Singleton<SymbolicExpression>(universe.integer(pid))));
+			processValues.set(pid, result);
+		}
+		return result;
+	}
+
+	@Override
+	public int getProcessId(CIVLSource source, SymbolicExpression processValue) {
+		return extractIntField(source, processValue, zeroObj);
+	}
+
+	@Override
+	public SymbolicExpression scopeValue(int sid) {
+		SymbolicExpression result;
+
+		if (sid < 0)
+			return undefinedScopeValue;
+		while (sid >= scopeValues.size())
+			scopeValues.addAll(nullList);
+		result = scopeValues.get(sid);
+		if (result == null) {
+			result = universe.canonic(universe.tuple(scopeSymbolicType,
+					new Singleton<SymbolicExpression>(universe.integer(sid))));
+			scopeValues.set(sid, result);
+		}
+		return result;
+	}
+
+	@Override
+	public void setSystemScope(Scope scope) {
+		this.systemScope = scope;
+	}
+
+	@Override
+	public int getScopeId(CIVLSource source, SymbolicExpression scopeValue) {
+		return extractIntField(source, scopeValue, zeroObj);
+	}
+
+	/* *************************** Private Methods ************************* */
+
+	/**
+	 * Compute the dynamic heap type, based on the list of malloc statements
+	 * encountered in the model.
+	 * 
+	 * @param mallocStatements
+	 *            The list of malloc statements in the model.
+	 * @return The symbolic heap type.
+	 */
 	private SymbolicTupleType computeDynamicHeapType(
 			Iterable<MallocStatement> mallocStatements) {
 		LinkedList<SymbolicType> fieldTypes = new LinkedList<SymbolicType>();
@@ -1702,8 +1828,11 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	/**
+	 * Compute the symbolic initial value of a specified heap type.
+	 * 
 	 * @param heapDynamicType
-	 * @return
+	 *            The heap type to use.
+	 * @return The initial value of the given help type.
 	 */
 	private SymbolicExpression computeInitialHeapValue(
 			SymbolicTupleType heapDynamicType) {
@@ -1797,6 +1926,18 @@ public class CommonModelFactory implements ModelFactory {
 		}
 	}
 
+	/**
+	 * Create an instance of a CIVL primitive type, including void, integer,
+	 * boolean, real, char, scope, process, and dynamic types.
+	 * 
+	 * @param kind
+	 *            The kind of the primitive type. See also
+	 *            {@link PrimitiveTypeKind}.
+	 * @param dynamicType
+	 *            The corresponding SARL symbolic type of the CIVL primitive
+	 *            type.
+	 * @return The CIVL primitive type of the given kind.
+	 */
 	private CIVLPrimitiveType primitiveType(PrimitiveTypeKind kind,
 			SymbolicType dynamicType) {
 		CIVLPrimitiveType result;
@@ -1816,6 +1957,14 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
+	/**
+	 * Create a new numeric expression for a sizeof expression of a certain
+	 * primitive type.
+	 * 
+	 * @param kind
+	 *            The kind of the primitive type of the sizeof expression.
+	 * @return The numeric expression of the sizeof expression.
+	 */
 	private NumericExpression sizeofExpression(PrimitiveTypeKind kind) {
 		NumericExpression result = (NumericExpression) universe
 				.symbolicConstant(universe.stringObject("SIZEOF_" + kind),

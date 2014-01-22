@@ -19,7 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
  */
 public class CommonAtomBranchStatement extends CommonNoopStatement {
 
-	/************************** Instance Fields *************************/
+	/* *************************** Instance Fields ************************* */
 
 	/**
 	 * Denote if this statement is
@@ -30,7 +30,7 @@ public class CommonAtomBranchStatement extends CommonNoopStatement {
 	 */
 	private boolean enter;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * 
@@ -49,7 +49,7 @@ public class CommonAtomBranchStatement extends CommonNoopStatement {
 		this.enter = isEntering;
 	}
 
-	/************************** Methods from Object *************************/
+	/* ************************* Methods from Object *********************** */
 
 	@Override
 	public String toString() {

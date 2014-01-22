@@ -16,14 +16,14 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
  */
 public class CommonSwitchBranchStatement extends CommonNoopStatement {
 
-	/************************** Instance Fields *************************/
+	/* *************************** Instance Fields ************************* */
 
 	/**
 	 * The corresponding label in the switch block for this noop statements.
 	 */
 	private Expression label;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Basic constructor. Every parameter should be non-null. If there is no
@@ -54,7 +54,7 @@ public class CommonSwitchBranchStatement extends CommonNoopStatement {
 		this.label = null;
 	}
 
-	/************************** Methods from Object *************************/
+	/* ************************ Methods from Object ************************ */
 
 	@Override
 	public String toString() {

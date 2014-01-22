@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.model.common;
 import java.util.ArrayList;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -20,12 +19,12 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonMPISendStatement;
  */
 public class MPIStatementFactory {
 
-	/***************************** Static Fields *****************************/
+	/* *************************** Static Fields *************************** */
 
 	/**
 	 * The function name of MPI Send.
 	 */
-	static final String MPI_SEND = "$MPI_Send";
+	static final String MPI_SEND = "MPI_Send";
 
 	/**
 	 * The function name of MPI Receive.
@@ -52,14 +51,7 @@ public class MPIStatementFactory {
 	 */
 	static final String MPI_WAIT = "MPI_Wait";
 
-	/**************************** Instance Fields ****************************/
-
-	// /**
-	// * The model factory, used in the translation of MPI function calls.
-	// */
-	// private ModelFactory factory;
-
-	/****************************** Constructors *****************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Create a new instance of MPIStatementFactory.
@@ -67,11 +59,10 @@ public class MPIStatementFactory {
 	 * @param factory
 	 *            The model factory to be used for translating AST nodes.
 	 */
-	public MPIStatementFactory(ModelFactory factory) {
-		// this.factory = factory;
+	public MPIStatementFactory() {
 	}
 
-	/************************ Package-private Methods ************************/
+	/* ********************** Package-private Methods ********************** */
 
 	/**
 	 * Translate a MPI_Send function call to an instance of

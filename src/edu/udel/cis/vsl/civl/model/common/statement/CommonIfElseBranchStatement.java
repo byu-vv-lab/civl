@@ -13,16 +13,16 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class CommonIfBranchStatement extends CommonNoopStatement {
+public class CommonIfElseBranchStatement extends CommonNoopStatement {
 
-	/************************** Instance Fields *************************/
+	/* *************************** Instance Fields ************************* */
 
 	/**
 	 * Mark this statement to be the if branch or else branch.
 	 */
-	private boolean isTrueBranch;
+	private boolean isIfBranch;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * 
@@ -33,18 +33,18 @@ public class CommonIfBranchStatement extends CommonNoopStatement {
 	 * @param isTrue
 	 *            true iff this is the if branching, else the else branching.
 	 */
-	public CommonIfBranchStatement(CIVLSource civlSource, Location source,
-			boolean isTrue) {
+	public CommonIfElseBranchStatement(CIVLSource civlSource, Location source,
+			boolean isIf) {
 		super(civlSource, source);
 		this.noopKind = NoopKind.IF_ELSE;
-		this.isTrueBranch = isTrue;
+		this.isIfBranch = isIf;
 	}
 
-	/************************** Methods from Object *************************/
+	/* ************************ Methods from Object ************************ */
 
 	@Override
 	public String toString() {
-		if (isTrueBranch) {
+		if (isIfBranch) {
 			return "IF_BRANCH";
 		} else
 			return "ELSE_BRANCH";

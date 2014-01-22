@@ -152,7 +152,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  */
 public class ModelBuilderWorker {
 
-	/**************************** Instance Fields ****************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * Used to give names to anonymous structs and unions.
@@ -264,6 +264,12 @@ public class ModelBuilderWorker {
 	private MPIStatementFactory mpiFactory;
 
 	/**
+	 * True iff the program to be translated is an MPI program, otherwise, it is
+	 * translating a CIVL program.
+	 */
+	private boolean mpiMode = false;;
+
+	/**
 	 * The ABC AST being translated by this model builder worker.
 	 */
 	private Program program;
@@ -300,11 +306,7 @@ public class ModelBuilderWorker {
 	 */
 	private Map<Type, CIVLType> typeMap = new HashMap<Type, CIVLType>();
 
-	private boolean inAtom() {
-		return atomCount > 0;
-	}
-
-	/****************************** Constructors *****************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * Constructs new instance of CommonModelBuilder, creating instance of
@@ -331,10 +333,13 @@ public class ModelBuilderWorker {
 		this.bundleType = factory.newBundleType();
 		this.universe = factory.universe();
 		((CommonModelFactory) factory).modelBuilder = this;
-		this.mpiFactory = new MPIStatementFactory(factory);
+		// TODO set this.mpiMode when possible.
+		// only create an MPI factory in MPI mode.
+		if (this.mpiMode)
+			this.mpiFactory = new MPIStatementFactory();
 	}
 
-	/***************************** Private Methods ****************************/
+	/* *************************** Private Methods ************************* */
 
 	/* *********************************************************************
 	 * Translating ABC Type into CIVL Type
@@ -1657,6 +1662,15 @@ public class ModelBuilderWorker {
 	}
 
 	/**
+	 * 
+	 * @return True when there are incomplete $atom blocks being translating,
+	 *         i.e, when the number of active $atom blocks is greater than 0.
+	 */
+	private boolean inAtom() {
+		return atomCount > 0;
+	}
+
+	/**
 	 * Is the ABC expression node an expression of the form
 	 * <code>(t)$malloc(...)</code>? I.e., a cast expression for which the
 	 * argument is a malloc call?
@@ -1678,7 +1692,7 @@ public class ModelBuilderWorker {
 	 * Is the ABC expression node a call to the function "$malloc"?
 	 * 
 	 * @param node
-	 *            an expression node
+	 *            The expression node to be checked.
 	 * @return true iff node is a function call to node to a function named
 	 *         "$malloc"
 	 */
@@ -2214,8 +2228,9 @@ public class ModelBuilderWorker {
 			// TODO once MPI Statement implementation is done, translate
 			// mpi function call node here to the corresponding MPI Statement.
 		case MPIStatementFactory.MPI_SEND:
-			return mpiFactory.translateMPI_SEND(source, location, scope, lhs,
-					arguments);
+			if (this.mpiMode)
+				return mpiFactory.translateMPI_SEND(source, location, scope,
+						lhs, arguments);
 			// case MPIStatementFactory.MPI_RECV:
 			// break;
 			// case MPIStatementFactory.MPI_IRECV:
@@ -2502,10 +2517,10 @@ public class ModelBuilderWorker {
 		beforeCondition = refineConditional.left;
 		expression = refineConditional.right;
 		expression = factory.booleanExpression(expression);
-		trueBranch = new CommonFragment(factory.ifBranchStatement(
+		trueBranch = new CommonFragment(factory.ifElseBranchStatement(
 				factory.sourceOfBeginning(ifNode.getTrueBranch()), location,
 				expression, true));
-		falseBranch = new CommonFragment(factory.ifBranchStatement(factory
+		falseBranch = new CommonFragment(factory.ifElseBranchStatement(factory
 				.sourceOfEnd(ifNode), location, factory.unaryExpression(
 				expression.getSource(), UNARY_OPERATOR.NOT, expression), false));
 		trueBranchBody = translateStatementNode(scope, ifNode.getTrueBranch());
@@ -3046,6 +3061,11 @@ public class ModelBuilderWorker {
 		return initialization;
 	}
 
+	/**
+	 * Translate the function definition node of unprocessed functions, which
+	 * are obtained by translating function declaration node, function call
+	 * node, and so on.
+	 */
 	private void translateUndefinedFunctions() {
 		while (!unprocessedFunctions.isEmpty()) {
 			FunctionDefinitionNode functionDefinition = unprocessedFunctions
@@ -3105,7 +3125,7 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * Complete bundle type
+	 * Complete the bundle type.
 	 */
 	private void completeBundleType() {
 		Map<SymbolicType, Integer> dynamicTypeMap = new LinkedHashMap<SymbolicType, Integer>();
@@ -3203,7 +3223,7 @@ public class ModelBuilderWorker {
 		}
 	}
 
-	/***************************** Public Methods ****************************/
+	/* *************************** Public Methods ************************** */
 
 	/**
 	 * Build the CIVL model from the AST

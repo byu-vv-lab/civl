@@ -37,7 +37,7 @@ import edu.udel.cis.vsl.gmc.StateManagerIF;
  */
 public class StateManager implements StateManagerIF<State, Transition> {
 
-	/***************************** Instance Fields ***************************/
+	/* *************************** Instance Fields ************************* */
 
 	/**
 	 * The unique executor instance used by the system
@@ -130,7 +130,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	private int maxCanonicId = -1;
 
-	/******************************* Constructor *****************************/
+	/* ***************************** Constructor *************************** */
 
 	/**
 	 * 
@@ -142,7 +142,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		this.stateFactory = executor.stateFactory();
 	}
 
-	/***************************** Private Methods ***************************/
+	/* *************************** Private Methods ************************* */
 
 	/**
 	 * Executes an $atom block, supporting nested atom blocks. It requires that

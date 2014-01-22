@@ -15,14 +15,14 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
  */
 public class CommonGotoBranchStatement extends CommonNoopStatement {
 
-	/************************** Instance Fields *************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * The label of the target statement of this goto statement
 	 */
 	private String labelName;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * 
@@ -40,7 +40,7 @@ public class CommonGotoBranchStatement extends CommonNoopStatement {
 		this.noopKind = NoopKind.GOTO;
 	}
 
-	/************************** Methods from Object *************************/
+	/* ************************ Methods from Object ************************ */
 
 	@Override
 	public String toString() {
