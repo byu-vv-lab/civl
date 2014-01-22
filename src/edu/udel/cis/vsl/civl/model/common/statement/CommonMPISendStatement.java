@@ -29,9 +29,13 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 public class CommonMPISendStatement extends CommonStatement implements
 		MPISendStatement {
 
+	/* *************************** Instance Fields ************************* */
+	
 	private ArrayList<Expression> arguments;
 	private LHSExpression lhs;
 
+	/* ***************************** Constructors ************************** */
+	
 	public CommonMPISendStatement(CIVLSource civlsource, Location source,
 			LHSExpression  lhs, ArrayList<Expression> arguments) {
 		super(civlsource, source);
@@ -39,78 +43,57 @@ public class CommonMPISendStatement extends CommonStatement implements
 		this.lhs = lhs;
 	}
 
+	/* ******************* Methods from  MPISendStatement ****************** */
+	
 	@Override
 	public Expression getBuffer() {
-		// TODO Auto-generated method stub
 		return this.arguments.get(0);
 	}
 
 	@Override
+	public Expression getCommunicator() {
+		return this.arguments.get(5);
+	}
+
+	@Override
 	public Expression getCount() {
-		// TODO Auto-generated method stub
 		return this.arguments.get(1);
 	}
 
 	@Override
 	public Expression getDatatype() {
-		// TODO Auto-generated method stub
 		return this.arguments.get(2);
 	}
 
 	@Override
 	public Expression getDestination() {
-		// TODO Auto-generated method stub
 		return this.arguments.get(3);
 	}
 
 	@Override
+	public LHSExpression getLeftHandSide() {
+		return this.lhs;
+	}
+
+	@Override
 	public Expression getTag() {
-		// TODO Auto-generated method stub
 		return this.arguments.get(4);
 	}
 
 	@Override
-	public Expression getCommunicator() {
-		// TODO Auto-generated method stub
-		return this.arguments.get(5);
-	}
-
-	@Override
-	public LHSExpression getLeftHandSide() {
-		// TODO Auto-generated method stub
-		return this.lhs;
-	}	
-
-	@Override
 	public void setLeftHandSide(LHSExpression lhs) {
-		// TODO Auto-generated method stub
 		this.lhs = lhs;
 	}
 	
-	public String toString(){
-		if(this.getLeftHandSide() == null) {
-		    return "MPI_Send(" + this.arguments.get(0) + ", " + this.arguments.get(1) +
-				", " + this.arguments.get(2) + ", " + this.arguments.get(3) + 
-				", " +this.arguments.get(4) + ", " + this.arguments.get(5) +
-				")";
-		    }
-		else {
-			return  this.lhs +
-			   " = MPI_Send(" + this.arguments.get(0) + ", " + this.arguments.get(1) +
-			   ", " + this.arguments.get(2) + ", " + this.arguments.get(3) + 
-			   ", " +this.arguments.get(4) + ", " + this.arguments.get(5) +
-			   ")";
-		}
-	}
-
+	/* *********************** Methods from  Statement ********************* */
+	
 	@Override
 	public Statement replaceWith(ConditionalExpression oldExpression,
 			Expression newExpression) {
-		// TODO Auto-generated method stub
 		Expression newGuard = this.guardReplaceWith(oldExpression,
 				newExpression);
 		CommonMPISendStatement newStatement = null;
-
+	
 		if (newGuard != null) {
 			newStatement = new CommonMPISendStatement(this.getSource(),
 					this.source(), this.lhs , this.arguments);
@@ -120,7 +103,7 @@ public class CommonMPISendStatement extends CommonStatement implements
 			int number = this.arguments.size();
 			Expression newArg;
 			boolean hasNewArg = false;
-
+	
 			for (int i = 0; i < number; i++) {
 				if (hasNewArg)
 					newArgs.add(this.arguments.get(i));
@@ -140,7 +123,26 @@ public class CommonMPISendStatement extends CommonStatement implements
 				newStatement.setGuard(newGuard);
 			}
 		}
-
+	
 		return newStatement;
+	}
+
+	/* ************************* Methods from Object *********************** */
+	
+	@Override
+	public String toString(){
+		if(this.getLeftHandSide() == null) {
+		    return "MPI_Send(" + this.arguments.get(0) + ", " + this.arguments.get(1) +
+				", " + this.arguments.get(2) + ", " + this.arguments.get(3) + 
+				", " +this.arguments.get(4) + ", " + this.arguments.get(5) +
+				")";
+		    }
+		else {
+			return  this.lhs +
+			   " = MPI_Send(" + this.arguments.get(0) + ", " + this.arguments.get(1) +
+			   ", " + this.arguments.get(2) + ", " + this.arguments.get(3) + 
+			   ", " +this.arguments.get(4) + ", " + this.arguments.get(5) +
+			   ")";
+		}
 	}
 }
