@@ -20,6 +20,8 @@ import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
 import edu.udel.cis.vsl.civl.CIVL;
+import edu.udel.cis.vsl.civl.err.CIVLException;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -619,10 +621,12 @@ public class UserInterface {
 			err.println(e);
 		} catch (MisguidedExecutionException e) {
 			err.println(e);
+		} catch (CIVLInternalException e) {
+			// Something went wrong, report with full stack trace.
+			throw e;
+		} catch (CIVLException e) {
+			err.println(e);
 		}
-		// catch (CIVLException e) {
-		// err.println(e);
-		// }
 		err.flush();
 		return false;
 	}

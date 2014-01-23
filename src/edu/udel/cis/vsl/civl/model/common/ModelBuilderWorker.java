@@ -2898,6 +2898,8 @@ public class ModelBuilderWorker {
 			Fragment caseGoto;
 			Expression labelExpression;
 
+			// TODO: Put some docs in here explaining everything, in particular
+			// why the processing of caseGoto is ok.
 			assert caseStatement.getLabel() instanceof SwitchLabelNode;
 			label = (SwitchLabelNode) caseStatement.getLabel();
 			labelExpression = translateExpressionNode(label.getExpression(),
@@ -2935,6 +2937,7 @@ public class ModelBuilderWorker {
 			functionInfo
 					.putToGotoStatements(defaultGoto.lastStatement(), label);
 		}
+		// TODO: Take care of case when there's no default.
 		bodyGoto = translateStatementNode(scope, switchNode.getBody());
 		result = result.combineWith(bodyGoto);
 		breaks = functionInfo.popBreakStack();
@@ -3105,10 +3108,11 @@ public class ModelBuilderWorker {
 		Location location = factory.location(
 				factory.sourceOfBeginning(waitNode), scope);
 
-		// if (factory.inAtomicBlock()) {
-		// throw new CIVLInternalException(
-		// "Wait statement is not allowed in atomic blocks.", source);
-		// }
+		if (inAtom()) {
+			// TODO: Create a CIVLSyntaxException and use that.
+			throw new CIVLException(
+					"Wait statement is not allowed in atom blocks.", source);
+		}
 		return factory.joinFragment(source, location,
 				translateExpressionNode(waitNode.getExpression(), scope, true));
 	}
@@ -3140,7 +3144,6 @@ public class ModelBuilderWorker {
 			result.addGuardToStartLocation(whenGuard, factory);
 		}
 		if (beforeGuardFragment != null) {
-			// beforeGuardFragment.makeAtomic();
 			result = beforeGuardFragment.combineWith(result);
 		}
 		return result;
