@@ -13,6 +13,9 @@ package edu.udel.cis.vsl.civl.model.IF;
  */
 public interface AbstractFunction extends CIVLFunction {
 
-	
+	/**
+	 * @return The total number of partial derivatives that may be taken.
+	 */
+	int continuity();
 	
 }

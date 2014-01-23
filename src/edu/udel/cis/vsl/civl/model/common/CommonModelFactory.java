@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
@@ -29,6 +30,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
+import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -37,6 +39,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -77,6 +80,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonAbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAddressOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
@@ -84,6 +88,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonBoundVariableExpressi
 import edu.udel.cis.vsl.civl.model.common.expression.CommonCastExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonConditionalExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDereferenceExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonDerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDotExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
@@ -537,6 +542,25 @@ public class CommonModelFactory implements ModelFactory {
 	 * CIVL Expressions
 	 * *********************************************************************
 	 */
+	
+	@Override
+	public AbstractFunctionCallExpression abstractFunctionCallExpression(
+			CIVLSource source, AbstractFunction function,
+			List<Expression> arguments) {
+		CommonAbstractFunctionCallExpression result = new CommonAbstractFunctionCallExpression(
+				source, function, arguments);
+		Scope expressionScope = null;
+
+		// Note: While the abstract function may be declared in e.g. the
+		// outermost scope, since it has no value or state, it doesn't
+		// contribute anything non-local to the expression scope.
+		for (Expression arg : arguments) {
+			expressionScope = join(expressionScope, arg.expressionScope());
+		}
+		result.setExpressionScope(expressionScope);
+		result.setExpressionType(function.returnType());
+		return result;
+	}
 
 	@Override
 	public AddressOfExpression addressOfExpression(CIVLSource source,
@@ -692,11 +716,6 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/* *********************************************************************
-	 * Statements
-	 * *********************************************************************
-	 */
-
 	@Override
 	public DereferenceExpression dereferenceExpression(CIVLSource source,
 			Expression pointer) {
@@ -707,6 +726,23 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(this.systemScope); // indicates unknown scope
 		((CommonExpression) result).setExpressionType(pointerType.baseType());
+		return result;
+	}
+	
+	@Override
+	public DerivativeCallExpression derivativeCallExpression(CIVLSource source,
+			AbstractFunction function,
+			List<Pair<Variable, IntegerLiteralExpression>> partials,
+			List<Expression> arguments) {
+		CommonDerivativeCallExpression result = new CommonDerivativeCallExpression(
+				source, function, partials, arguments);
+		Scope expressionScope = null;
+		
+		for (Expression arg : arguments) {
+			expressionScope = join(expressionScope, arg.expressionScope());
+		}
+		result.setExpressionScope(expressionScope);
+		result.setExpressionType(function.returnType());
 		return result;
 	}
 
@@ -763,11 +799,6 @@ public class CommonModelFactory implements ModelFactory {
 				.setExpressionType(integerType);
 		return result;
 	}
-
-	/* *********************************************************************
-	 * Statements
-	 * *********************************************************************
-	 */
 
 	@Override
 	public Expression nullPointerExpression(CIVLPointerType pointerType,
@@ -1677,6 +1708,14 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SymbolicUniverse universe() {
 		return universe;
+	}
+	
+	@Override
+	public AbstractFunction abstractFunction(CIVLSource source,
+			Identifier name, List<Variable> parameters, CIVLType returnType,
+			Scope containingScope, int continuity) {
+		return new CommonAbstractFunction(source, name, parameters, returnType,
+				containingScope, continuity, this);
 	}
 
 	@Override

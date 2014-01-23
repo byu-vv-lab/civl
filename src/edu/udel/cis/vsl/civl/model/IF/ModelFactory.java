@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -22,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -158,7 +160,11 @@ public interface ModelFactory {
 	CIVLHeapType heapType(String name);
 
 	/**
+<<<<<<< .mine
+	 * Generate a system function
+=======
 	 * Get a new incomplete array type.
+>>>>>>> .r497
 	 * 
 	 * @param elementType
 	 *            The type of each element in the array.
@@ -167,7 +173,33 @@ public interface ModelFactory {
 	CIVLArrayType incompleteArrayType(CIVLType elementType);
 
 	/**
+<<<<<<< .mine
+	 * Generate an abstract function.
+	 * 
+	 * @param source
+	 *            The CIVL source of the function.
+	 * @param name
+	 *            The function name.
+	 * @param parameters
+	 *            The parameters of the function.
+	 * @param returnType
+	 *            The CIVL return type
+	 * @param containingScope
+	 *            The scope that contains the function.
+	 * @param continuity
+	 *            The total number of partial derivatives of this function that
+	 *            may be taken.
+	 * @return The abstract function.
+	 */
+	AbstractFunction abstractFunction(CIVLSource source, Identifier name,
+			List<Variable> parameters, CIVLType returnType,
+			Scope containingScope, int continuity);
+
+	/**
+	 * Create a new location.
+=======
 	 * Get the integer primitive type.
+>>>>>>> .r497
 	 * 
 	 * @return The integer primitive type.
 	 */
@@ -589,6 +621,42 @@ public interface ModelFactory {
 	 * @return The variable expression.
 	 */
 	VariableExpression variableExpression(CIVLSource source, Variable variable);
+
+	/**
+	 * An expression for a call to an abstract function.
+	 * 
+	 * @param source
+	 *            The source file information for this expression.
+	 * @param function
+	 *            The abstract function being called.
+	 * @param arguments
+	 *            The arguments to the function call.
+	 * @return The new abstract function call expression.
+	 */
+	AbstractFunctionCallExpression abstractFunctionCallExpression(
+			CIVLSource source, AbstractFunction function,
+			List<Expression> arguments);
+
+	/**
+	 * An expression for a call to the derivative of an abstract function.
+	 * 
+	 * @param source
+	 *            The source file information for this expression.
+	 * @param function
+	 *            The abstract function being called.
+	 * @param partials
+	 *            The pairs representing which partial derivatives are taken.
+	 *            Each pair is comprised of the variable for the parameter in
+	 *            which the partial derivative is taken, and an integer
+	 *            indicating how many times that partial is taken.
+	 * @param arguments
+	 *            The arguments to the function call.
+	 * @return The new derivative call expression.
+	 */
+	DerivativeCallExpression derivativeCallExpression(CIVLSource source,
+			AbstractFunction function,
+			List<Pair<Variable, IntegerLiteralExpression>> partials,
+			List<Expression> arguments);
 
 	/* *********************************************************************
 	 * Fragments and Statements

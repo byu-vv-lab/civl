@@ -4,10 +4,12 @@
 package edu.udel.cis.vsl.civl.semantics;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.err.CIVLException;
@@ -19,9 +21,11 @@ import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
+import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -30,6 +34,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -61,6 +66,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -1655,6 +1661,72 @@ public class Evaluator {
 		return result;
 	}
 
+	private Evaluation evaluateAbstractFunctionCall(State state, int pid,
+			AbstractFunctionCallExpression expression)
+			throws UnsatisfiablePathConditionException {
+		AbstractFunction function = expression.function();
+		SymbolicType returnType = function.returnType()
+				.getDynamicType(universe);
+		List<SymbolicType> argumentTypes = new ArrayList<SymbolicType>();
+		List<SymbolicExpression> arguments = new ArrayList<SymbolicExpression>();
+		SymbolicType functionType;
+		SymbolicExpression functionExpression;
+		SymbolicExpression functionApplication;
+		Evaluation result;
+
+		for (Variable param : function.parameters()) {
+			argumentTypes.add(param.type().getDynamicType(universe));
+		}
+		for (Expression arg : expression.arguments()) {
+			Evaluation eval = evaluate(state, pid, arg);
+			arguments.add(eval.value);
+		}
+		functionType = universe.functionType(argumentTypes, returnType);
+		functionExpression = universe.symbolicConstant(
+				universe.stringObject(function.name().name()), functionType);
+		functionApplication = universe.apply(functionExpression, arguments);
+		result = new Evaluation(state, functionApplication);
+		return result;
+	}
+
+	private Evaluation evaluateDerivativeCall(State state, int pid,
+			DerivativeCallExpression expression)
+			throws UnsatisfiablePathConditionException {
+		AbstractFunction function = expression.function();
+		SymbolicType returnType = function.returnType()
+				.getDynamicType(universe);
+		List<SymbolicType> argumentTypes = new ArrayList<SymbolicType>();
+		List<SymbolicExpression> arguments = new ArrayList<SymbolicExpression>();
+		SymbolicType functionType;
+		SymbolicExpression functionExpression;
+		SymbolicExpression functionApplication;
+		Evaluation result;
+		String derivativeName;
+
+		for (Variable param : function.parameters()) {
+			argumentTypes.add(param.type().getDynamicType(universe));
+		}
+		for (Expression arg : expression.arguments()) {
+			Evaluation eval = evaluate(state, pid, arg);
+			arguments.add(eval.value);
+		}
+		functionType = universe.functionType(argumentTypes, returnType);
+		// The derivative name is the name of the function concatenated with the
+		// names and degrees of the partials. e.g. the name of
+		// $D[rho,{x,1},{y,2}]() is "rhox1y2"
+		derivativeName = function.name().name();
+		for (Pair<Variable, IntegerLiteralExpression> partial : expression
+				.partials()) {
+			derivativeName += partial.left.name().name()
+					+ partial.right.value();
+		}
+		functionExpression = universe.symbolicConstant(
+				universe.stringObject(derivativeName), functionType);
+		functionApplication = universe.apply(functionExpression, arguments);
+		result = new Evaluation(state, functionApplication);
+		return result;
+	}
+
 	// Exported methods...
 
 	public ModelFactory modelFactory() {
@@ -2090,6 +2162,10 @@ public class Evaluator {
 		Evaluation result;
 
 		switch (kind) {
+		case ABSTRACT_FUNCTION_CALL:
+			result = evaluateAbstractFunctionCall(state, pid,
+					(AbstractFunctionCallExpression) expression);
+			break;
 		case ADDRESS_OF:
 			result = evaluateAddressOf(state, pid,
 					(AddressOfExpression) expression);
@@ -2115,6 +2191,10 @@ public class Evaluator {
 		case DEREFERENCE:
 			result = evaluateDereference(state, pid,
 					(DereferenceExpression) expression);
+			break;
+		case DERIVATIVE:
+			result = evaluateDerivativeCall(state, pid,
+					(DerivativeCallExpression) expression);
 			break;
 		case DOT:
 			result = evaluateDot(state, pid, (DotExpression) expression);

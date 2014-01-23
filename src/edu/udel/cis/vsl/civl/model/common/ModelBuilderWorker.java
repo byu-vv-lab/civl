@@ -32,7 +32,9 @@ import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Label;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.PairNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.AbstractFunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.EnsuresNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
@@ -44,6 +46,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.DerivativeExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.DotNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
@@ -101,6 +104,7 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
@@ -111,6 +115,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
@@ -846,8 +851,16 @@ public class ModelBuilderWorker {
 		case CONSTANT:
 			result = translateConstantNode((ConstantNode) expressionNode);
 			break;
+		case DERIVATIVE_EXPRESSION:
+			result = translateDerivativeExpressionNode(
+					(DerivativeExpressionNode) expressionNode, scope);
+			break;
 		case DOT:
 			result = translateDotNode((DotNode) expressionNode, scope);
+			break;
+		case FUNCTION_CALL:
+			result = translateFunctionCallExpression(
+					(FunctionCallNode) expressionNode, scope);
 			break;
 		case IDENTIFIER_EXPRESSION:
 			result = translateIdentifierNode(
@@ -856,19 +869,18 @@ public class ModelBuilderWorker {
 		case OPERATOR:
 			result = translateOperatorNode((OperatorNode) expressionNode, scope);
 			break;
+		case QUANTIFIED_EXPRESSION:
+			result = translateQuantifiedExpressionNode(
+					(QuantifiedExpressionNode) expressionNode, scope);
+			break;
 		case RESULT:// TODO make it a variable, re-order cases
 			result = factory.resultExpression(factory.sourceOf(expressionNode));
 			break;
 		case SELF:
 			result = factory.selfExpression(factory.sourceOf(expressionNode));
 			break;
-
 		case SIZEOF:
 			result = translateSizeofNode((SizeofNode) expressionNode, scope);
-			break;
-		case QUANTIFIED_EXPRESSION:
-			result = translateQuantifiedExpressionNode(
-					(QuantifiedExpressionNode) expressionNode, scope);
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("expressions of type "
@@ -945,6 +957,98 @@ public class ModelBuilderWorker {
 							+ conversion, source);
 			}
 		}
+		return result;
+	}
+
+	private Expression translateDerivativeExpressionNode(
+			DerivativeExpressionNode node, Scope scope) {
+		Expression result;
+		ExpressionNode functionExpression = node.getFunction();
+		Function callee;
+		CIVLFunction abstractFunction;
+		List<Pair<Variable, IntegerLiteralExpression>> partials = new ArrayList<Pair<Variable, IntegerLiteralExpression>>();
+		List<Expression> arguments = new ArrayList<Expression>();
+
+		if (functionExpression instanceof IdentifierExpressionNode) {
+			callee = (Function) ((IdentifierExpressionNode) functionExpression)
+					.getIdentifier().getEntity();
+		} else
+			throw new CIVLUnimplementedFeatureException(
+					"Function call must use identifier for now: "
+							+ functionExpression.getSource());
+		abstractFunction = functionMap.get(callee);
+		assert abstractFunction != null;
+		assert abstractFunction instanceof AbstractFunction;
+		for (int i = 0; i < node.getNumberOfPartials(); i++) {
+			PairNode<IdentifierExpressionNode, IntegerConstantNode> partialNode = node
+					.getPartial(i);
+			Variable partialVariable = null;
+			IntegerLiteralExpression partialDegree;
+
+			for (Variable param : abstractFunction.parameters()) {
+				if (param.name().name()
+						.equals(partialNode.getLeft().getIdentifier().name())) {
+					partialVariable = param;
+					break;
+				}
+			}
+			assert partialVariable != null;
+			partialDegree = factory.integerLiteralExpression(
+					factory.sourceOf(partialNode.getRight()), partialNode
+							.getRight().getConstantValue().getIntegerValue());
+			partials.add(new Pair<Variable, IntegerLiteralExpression>(
+					partialVariable, partialDegree));
+		}
+		for (int i = 0; i < node.getNumberOfArguments(); i++) {
+			Expression actual = translateExpressionNode(node.getArgument(i),
+					scope, true);
+
+			actual = arrayToPointer(actual);
+			arguments.add(actual);
+		}
+		result = factory.derivativeCallExpression(factory.sourceOf(node),
+				(AbstractFunction) abstractFunction, partials, arguments);
+		return result;
+	}
+
+	/**
+	 * A function call used as an expression. At present, this should only
+	 * happen when the function is an abstract function.
+	 * 
+	 * @param callNode
+	 *            The AST representation of the function call.
+	 * @param scope
+	 *            The scope containing this expression.
+	 * @return The model representation of the function call expression.
+	 */
+	private Expression translateFunctionCallExpression(
+			FunctionCallNode callNode, Scope scope) {
+		Expression result;
+		ExpressionNode functionExpression = callNode.getFunction();
+		Function callee;
+		CIVLFunction abstractFunction;
+		List<Expression> arguments = new ArrayList<Expression>();
+
+		if (functionExpression instanceof IdentifierExpressionNode) {
+			callee = (Function) ((IdentifierExpressionNode) functionExpression)
+					.getIdentifier().getEntity();
+		} else
+			throw new CIVLUnimplementedFeatureException(
+					"Function call must use identifier for now: "
+							+ functionExpression.getSource());
+		abstractFunction = functionMap.get(callee);
+		assert abstractFunction != null;
+		assert abstractFunction instanceof AbstractFunction;
+		for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
+			Expression actual = translateExpressionNode(
+					callNode.getArgument(i), scope, true);
+
+			actual = arrayToPointer(actual);
+			arguments.add(actual);
+		}
+		result = factory.abstractFunctionCallExpression(
+				factory.sourceOf(callNode),
+				(AbstractFunction) abstractFunction, arguments);
 		return result;
 	}
 
@@ -2346,23 +2450,32 @@ public class ModelBuilderWorker {
 				parameters.add(factory.variable(source, type, variableName,
 						parameters.size()));
 			}
-			if (entity.getDefinition() == null) { // system function
-				Source declSource = node.getIdentifier().getSource();
-				CToken token = declSource.getFirstToken();
-				File file = token.getSourceFile();
-				String fileName = file.getName(); // fileName will be something
-													// like "stdlib.h" or
-													// "civlc.h"
-				String libName;
+			if (entity.getDefinition() == null) { // abstract or system function
+				if (node instanceof AbstractFunctionDefinitionNode) {
+					result = factory.abstractFunction(nodeSource,
+							functionIdentifier, parameters, returnType, scope,
+							((AbstractFunctionDefinitionNode) node)
+									.continuity());
+				} else {
+					Source declSource = node.getIdentifier().getSource();
+					CToken token = declSource.getFirstToken();
+					File file = token.getSourceFile();
+					String fileName = file.getName(); // fileName will be
+														// something
+														// like "stdlib.h" or
+														// "civlc.h"
+					String libName;
 
-				if (!fileName.contains("."))
-					throw new CIVLInternalException("Malformed file name "
-							+ fileName + " containing system function "
-							+ functionName, nodeSource);
+					if (!fileName.contains("."))
+						throw new CIVLInternalException("Malformed file name "
+								+ fileName + " containing system function "
+								+ functionName, nodeSource);
 
-				libName = fileNameWithoutExtension(fileName);
-				result = factory.systemFunction(nodeSource, functionIdentifier,
-						parameters, returnType, scope, libName);
+					libName = fileNameWithoutExtension(fileName);
+					result = factory.systemFunction(nodeSource,
+							functionIdentifier, parameters, returnType, scope,
+							libName);
+				}
 			} else { // regular function
 				result = factory.function(nodeSource, functionIdentifier,
 						parameters, returnType, scope, null);
