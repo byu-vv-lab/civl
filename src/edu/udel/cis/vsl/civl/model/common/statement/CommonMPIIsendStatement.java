@@ -7,68 +7,63 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIIsendStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
 /**
- * * An MPI standard-mode blocking send statement. Syntax:
- * 
- * <pre>
- * int MPI_Send(const void* buf, int count, MPI_Datatype datatype,
- *              int dest, int tag, MPI_Comm comm)
- * </pre>
- * 
- * Note that there is a return value, which is used to return an error code.
- * Under normal circumstances it returns 0.
- * 
- * TODO: complete java-docs
+ * TODO: The MPI_Request type can be translated as expression type?
  * 
  * @author ziqingluo
  * 
  */
-public class CommonMPISendStatement extends CommonStatement implements
-		MPISendStatement {
+public class CommonMPIIsendStatement extends CommonStatement implements
+		MPIIsendStatement {
 	/* ************************* Instance Fields *************************** */
 	private ArrayList<Expression> arguments;
 	private LHSExpression lhs;
 
 	/* ************************* Constructor ******************************* */
-	public CommonMPISendStatement(CIVLSource civlsource, Location source,
+	public CommonMPIIsendStatement(CIVLSource civlsource, Location source,
 			LHSExpression lhs, ArrayList<Expression> arguments) {
 		super(civlsource, source);
 		this.arguments = new ArrayList<Expression>(arguments);
 		this.lhs = lhs;
 	}
-
-	/* ******************* Methods from MPISendStatement ******************* */
+	
+	/* ******************* Methods from MPIIsendStatement ****************** */
 	@Override
 	public Expression getBuffer() {
-		return this.arguments.get(0);
+		return arguments.get(0);
 	}
 
 	@Override
 	public Expression getCount() {
-		return this.arguments.get(1);
+		return arguments.get(1);
 	}
 
 	@Override
 	public Expression getDatatype() {
-		return this.arguments.get(2);
+		return arguments.get(2);
 	}
 
 	@Override
 	public Expression getDestination() {
-		return this.arguments.get(3);
+		return arguments.get(3);
 	}
 
 	@Override
 	public Expression getTag() {
-		return this.arguments.get(4);
+		return arguments.get(4);
 	}
 
 	@Override
 	public Expression getCommunicator() {
-		return this.arguments.get(5);
+		return arguments.get(5);
+	}
+
+	@Override
+	public Expression getRequest() {
+		return arguments.get(6);
 	}
 
 	@Override
@@ -87,10 +82,10 @@ public class CommonMPISendStatement extends CommonStatement implements
 			Expression newExpression) {
 		Expression newGuard = this.guardReplaceWith(oldExpression,
 				newExpression);
-		CommonMPISendStatement newStatement = null;
+		CommonMPIIsendStatement newStatement = null;
 
 		if (newGuard != null) {
-			newStatement = new CommonMPISendStatement(this.getSource(),
+			newStatement = new CommonMPIIsendStatement(this.getSource(),
 					this.source(), this.lhs, this.arguments);
 			newStatement.setGuard(newGuard);
 		} else {
@@ -100,42 +95,43 @@ public class CommonMPISendStatement extends CommonStatement implements
 			boolean hasNewArg = false;
 
 			for (int i = 0; i < number; i++) {
-				if (hasNewArg)
+				if (hasNewArg) {
 					newArgs.add(this.arguments.get(i));
-				else {
+				} else {
 					newArg = this.arguments.get(i).replaceWith(oldExpression,
 							newExpression);
+
 					if (newArg != null) {
 						newArgs.add(newArg);
 						hasNewArg = true;
-					} else
+					} else {
 						newArgs.add(this.arguments.get(i));
+					}
 				}
 			}
 			if (hasNewArg) {
-				newStatement = new CommonMPISendStatement(this.getSource(),
+				newStatement = new CommonMPIIsendStatement(this.getSource(),
 						this.source(), this.lhs, this.arguments);
 				newStatement.setGuard(newGuard);
 			}
 		}
-
 		return newStatement;
 	}
 
 	/* ************************* Methods from Object *********************** */
 	public String toString() {
 		if (this.getLeftHandSide() == null) {
-			return "MPI_Send(" + this.arguments.get(0) + ", "
+			return "MPI_Isend(" + this.arguments.get(0) + ", "
 					+ this.arguments.get(1) + ", " + this.arguments.get(2)
 					+ ", " + this.arguments.get(3) + ", "
 					+ this.arguments.get(4) + ", " + this.arguments.get(5)
-					+ ")";
+					+ this.arguments.get(6) + ")";
 		} else {
-			return this.lhs + " = MPI_Send(" + this.arguments.get(0) + ", "
+			return this.lhs + " = MPI_Isend(" + this.arguments.get(0) + ", "
 					+ this.arguments.get(1) + ", " + this.arguments.get(2)
 					+ ", " + this.arguments.get(3) + ", "
 					+ this.arguments.get(4) + ", " + this.arguments.get(5)
-					+ ")";
+					+ this.arguments.get(6) + ")";
 		}
 	}
 }

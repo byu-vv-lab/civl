@@ -7,90 +7,106 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
 /**
- * * An MPI standard-mode blocking send statement. Syntax:
+ * An MPI standard-mode blocking recv statement. Syntax:
  * 
  * <pre>
- * int MPI_Send(const void* buf, int count, MPI_Datatype datatype,
- *              int dest, int tag, MPI_Comm comm)
+ * int MPI_Recv(const void* buf, int count, MPI_Datatype datatype,
+ *              int dest, int tag, MPI_Comm comm, MPI_Status * status)
  * </pre>
- * 
- * Note that there is a return value, which is used to return an error code.
- * Under normal circumstances it returns 0.
- * 
- * TODO: complete java-docs
  * 
  * @author ziqingluo
  * 
  */
-public class CommonMPISendStatement extends CommonStatement implements
-		MPISendStatement {
+public class CommonMPIRecvStatement extends CommonStatement implements
+		MPIRecvStatement {
 	/* ************************* Instance Fields *************************** */
 	private ArrayList<Expression> arguments;
 	private LHSExpression lhs;
 
 	/* ************************* Constructor ******************************* */
-	public CommonMPISendStatement(CIVLSource civlsource, Location source,
+	public CommonMPIRecvStatement(CIVLSource civlsource, Location source,
 			LHSExpression lhs, ArrayList<Expression> arguments) {
 		super(civlsource, source);
 		this.arguments = new ArrayList<Expression>(arguments);
 		this.lhs = lhs;
 	}
 
-	/* ******************* Methods from MPISendStatement ******************* */
+	/* ******************* Methods from MPIRecvStatement ******************* */
 	@Override
 	public Expression getBuffer() {
+
 		return this.arguments.get(0);
 	}
 
 	@Override
 	public Expression getCount() {
+
 		return this.arguments.get(1);
 	}
 
 	@Override
 	public Expression getDatatype() {
+
 		return this.arguments.get(2);
 	}
 
 	@Override
-	public Expression getDestination() {
+	public Expression getMPISource() {
+
 		return this.arguments.get(3);
 	}
 
 	@Override
 	public Expression getTag() {
+
 		return this.arguments.get(4);
 	}
 
 	@Override
 	public Expression getCommunicator() {
+
 		return this.arguments.get(5);
 	}
 
 	@Override
+	public Expression getStatus() {
+
+		return this.arguments.get(6);
+	}
+
+	@Override
 	public LHSExpression getLeftHandSide() {
+
 		return this.lhs;
 	}
 
 	@Override
 	public void setLeftHandSide(LHSExpression lhs) {
+
 		this.lhs = lhs;
 	}
 
+	/**
+	 * I still don't get why newGuard != null means no change.
+	 * 
+	 * TODO:MPIStatus should not be able to replaced?
+	 * 
+	 * TODO:MPIStatus can be the expression type?
+	 */
 	/* ************************* Methods from Statement ******************** */
 	@Override
 	public Statement replaceWith(ConditionalExpression oldExpression,
 			Expression newExpression) {
 		Expression newGuard = this.guardReplaceWith(oldExpression,
 				newExpression);
-		CommonMPISendStatement newStatement = null;
+		CommonMPIRecvStatement newStatement = null;
 
 		if (newGuard != null) {
-			newStatement = new CommonMPISendStatement(this.getSource(),
+			newStatement = new CommonMPIRecvStatement(this.getSource(),
 					this.source(), this.lhs, this.arguments);
 			newStatement.setGuard(newGuard);
 		} else {
@@ -100,9 +116,9 @@ public class CommonMPISendStatement extends CommonStatement implements
 			boolean hasNewArg = false;
 
 			for (int i = 0; i < number; i++) {
-				if (hasNewArg)
+				if (hasNewArg) {
 					newArgs.add(this.arguments.get(i));
-				else {
+				} else {
 					newArg = this.arguments.get(i).replaceWith(oldExpression,
 							newExpression);
 					if (newArg != null) {
@@ -113,7 +129,7 @@ public class CommonMPISendStatement extends CommonStatement implements
 				}
 			}
 			if (hasNewArg) {
-				newStatement = new CommonMPISendStatement(this.getSource(),
+				newStatement = new CommonMPIRecvStatement(this.getSource(),
 						this.source(), this.lhs, this.arguments);
 				newStatement.setGuard(newGuard);
 			}
@@ -124,18 +140,17 @@ public class CommonMPISendStatement extends CommonStatement implements
 
 	/* ************************* Methods from Object *********************** */
 	public String toString() {
-		if (this.getLeftHandSide() == null) {
-			return "MPI_Send(" + this.arguments.get(0) + ", "
+		if (this.getLeftHandSide() == null)
+			return "MPI_Recv(" + this.arguments.get(0) + ", "
 					+ this.arguments.get(1) + ", " + this.arguments.get(2)
 					+ ", " + this.arguments.get(3) + ", "
 					+ this.arguments.get(4) + ", " + this.arguments.get(5)
-					+ ")";
-		} else {
-			return this.lhs + " = MPI_Send(" + this.arguments.get(0) + ", "
+					+ ", " + this.arguments.get(6) + ")";
+		else
+			return this.lhs + " = MPI_Recv(" + this.arguments.get(0) + ", "
 					+ this.arguments.get(1) + ", " + this.arguments.get(2)
 					+ ", " + this.arguments.get(3) + ", "
 					+ this.arguments.get(4) + ", " + this.arguments.get(5)
-					+ ")";
-		}
+					+ ", " + this.arguments.get(6) + ")";
 	}
 }
