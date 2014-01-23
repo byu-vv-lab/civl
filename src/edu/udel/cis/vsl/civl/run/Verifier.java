@@ -114,6 +114,10 @@ public class Verifier extends Player {
 			double startTime, boolean shortFileNamesShown)
 			throws CommandLineException {
 		super(config, model, out);
+		if (random) {
+			throw new CommandLineException(
+					"\"-random\" mode is incompatible with civl verify command.");
+		}
 		this.startTime = startTime;
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);

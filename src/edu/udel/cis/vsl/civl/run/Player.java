@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.run;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.Random;
 
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
@@ -139,30 +138,10 @@ public abstract class Player {
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
-		
-		if (this.random) {
-			long seed;
-			String seedString = (String) config.getValue(UserInterface.seedO);
-
-			if (seedString == null)
-				seed = System.currentTimeMillis();
-			else
-				try {
-					seed = new Long(seedString);
-				} catch (NumberFormatException e) {
-					throw new CommandLineException(
-							"Expected long value for seed, saw: " + seedString);
-				}
-			out.println("Random execution with seed " + seed + ".");
-			enabler = new Enabler(transitionFactory, evaluator, executor,
-					random, new Random(seed), this.scpPor);
-			enabler.setDebugOut(out);
-		} else {
-			enabler = new Enabler(transitionFactory, evaluator, executor,
-					this.scpPor);
-			enabler.setDebugOut(out);
-			enabler.setDebugging(debug);
-		}
+		enabler = new Enabler(transitionFactory, evaluator, executor,
+				this.scpPor);
+		enabler.setDebugOut(out);
+		enabler.setDebugging(debug);
 		stateManager = new StateManager(executor);
 		stateManager.setOutputStream(out);
 		stateManager.setVerbose(verbose);

@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
@@ -87,16 +86,9 @@ public class Enabler implements
 	private long enabledTransitionSets = 0;
 
 	/**
-	 * The unique random number generator used by the system.
-	 */
-	private Random generator = null;
-
-	/**
 	 * The unique model factory used by the system.
 	 */
 	private ModelFactory modelFactory;
-
-	private boolean randomMode = false;
 
 	/**
 	 * true iff want to use the new scope POR algorithm
@@ -137,32 +129,6 @@ public class Enabler implements
 		this.scpPor = sPor;
 		if (this.scpPor)
 			this.debugOut.println("scoped POR is enabled.");
-	}
-
-	/**
-	 * 
-	 * @param transitionFactory
-	 *            The transition factory to be used in this enabler.
-	 * @param evaluator
-	 *            The evaluator to be used to calculate and evaluate new path
-	 *            condition
-	 * @param executor
-	 *            The executor to be used
-	 * @param randomMode
-	 *            True if want to run in random mode, in which case exactly one
-	 *            transition will be chosen randomly to return
-	 * @param generator
-	 *            The unique random number generator to be used for random mode
-	 *            execution.
-	 * @param sPor
-	 *            True iff want to use scoped POR instead of default POR.
-	 */
-	public Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
-			Executor executor, boolean randomMode, Random generator,
-			boolean sPor) {
-		this(transitionFactory, evaluator, executor, sPor);
-		this.randomMode = randomMode;
-		this.generator = generator;
 	}
 
 	/* ************************ Methods from EnablerIF ********************* */
@@ -242,12 +208,6 @@ public class Enabler implements
 			}
 		} else
 			transitions = enabledTransitionsPORsoped(state);
-		if (randomMode && transitions.size() > 0) {
-			TransitionSequence singletonSequence = new TransitionSequence(state);
-			singletonSequence.add(transitions.get(generator.nextInt(transitions
-					.size())));
-			return singletonSequence;
-		}
 		return transitions;
 	}
 
