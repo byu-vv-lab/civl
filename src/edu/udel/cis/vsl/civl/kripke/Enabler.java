@@ -1034,11 +1034,11 @@ public class Enabler implements
 	 * Calculate the impact dyscope ID of a given statement at a certain state.
 	 * 
 	 * @param state
-	 * The current state.
+	 *            The current state.
 	 * @param p
-	 * The process that the statement belongs to.
+	 *            The process that the statement belongs to.
 	 * @param s
-	 * The statement to be checked.
+	 *            The statement to be checked.
 	 * @return The impact dyscope ID of the statement at a given state.
 	 */
 	private int statementImpactDyscopeId(State state, ProcessState p,
