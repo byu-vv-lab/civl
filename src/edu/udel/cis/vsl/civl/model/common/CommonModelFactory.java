@@ -1942,7 +1942,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *         tree, of s0 and s1. Null if both are null. If exactly one of s0
 	 *         and s1 are null, returns the non-null scope.
 	 */
-	private Scope join(Scope s0, Scope s1) {
+	protected Scope join(Scope s0, Scope s1) {
 		List<Scope> s0Ancestors = new ArrayList<Scope>();
 		Scope s0Ancestor = s0;
 		Scope s1Ancestor = s1;

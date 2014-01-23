@@ -1,14 +1,25 @@
 package edu.udel.cis.vsl.civl.model.common;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonMPISendStatement;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
@@ -19,7 +30,8 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  * @author Ziqing Luo (ziqing)
  * @author Manchun Zheng (zmanchun)
  */
-public class CommonMPIModelFactory extends CommonModelFactory {
+public class CommonMPIModelFactory extends CommonModelFactory implements
+		MPIModelFactory {
 
 	/* *************************** Static Fields *************************** */
 
@@ -79,8 +91,10 @@ public class CommonMPIModelFactory extends CommonModelFactory {
 	 *         statement.
 	 * 
 	 */
-	MPISendStatement translateMPI_SEND(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
+	@Override
+	public MPISendStatement mpiSendStatement(CIVLSource source,
+			Location location, Scope scope, LHSExpression lhs,
+			ArrayList<Expression> arguments) {
 		CommonMPISendStatement sendStatement = new CommonMPISendStatement(
 				source, location, lhs, arguments);
 
@@ -88,27 +102,48 @@ public class CommonMPIModelFactory extends CommonModelFactory {
 		return sendStatement;
 	}
 
-	/* ************************* private methods *************************** */
-	private Scope join(Scope s0, Scope s1) {
-		List<Scope> s0Ancestors = new ArrayList<Scope>();
-		Scope s0Ancestor = s0;
-		Scope s1Ancestor = s1;
+	@Override
+	public Location location(Scope scope) {
+		return location(systemSource(), scope);
+	}
 
-		if (s0 == null) {
-			return s1;
-		} else if (s1 == null) {
-			return s0;
-		}
-		s0Ancestors.add(s0Ancestor);
-		while (s0Ancestor.parent() != null) {
-			s0Ancestor = s0Ancestor.parent();
-			s0Ancestors.add(s0Ancestor);
-		}
-		while (true) {
-			if (s0Ancestors.contains(s1Ancestor)) {
-				return s1Ancestor;
-			}
-			s1Ancestor = s1Ancestor.parent();
-		}
+	@Override
+	public Variable variable(CIVLPrimitiveType type, Identifier name, int vid) {
+		return variable(systemSource(), type, name, vid);
+	}
+
+	@Override
+	public Identifier identifier(String name) {
+		return identifier(systemSource(), name);
+	}
+
+	@Override
+	public Scope scope(Scope parent, LinkedHashSet<Variable> variables,
+			CIVLFunction function) {
+		return scope(systemSource(), parent, variables, function);
+	}
+
+	@Override
+	public IntegerLiteralExpression integerLiteralExpression(BigInteger value) {
+		return integerLiteralExpression(systemSource(), value);
+	}
+
+	@Override
+	public AssignStatement assignStatement(Location source, LHSExpression lhs,
+			Expression rhs, boolean isInitialization) {
+		return assignStatement(systemSource(), source, lhs, rhs,
+				isInitialization);
+	}
+
+	@Override
+	public VariableExpression variableExpression(Variable variable) {
+		return variableExpression(systemSource(), variable);
+	}
+
+	@Override
+	public CallOrSpawnStatement callOrSpawnStatement(Location source,
+			boolean isCall, CIVLFunction function, List<Expression> arguments) {
+		return callOrSpawnStatement(systemSource(), source, isCall, function,
+				arguments, null);
 	}
 }

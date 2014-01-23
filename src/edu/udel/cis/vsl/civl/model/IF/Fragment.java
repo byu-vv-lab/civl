@@ -30,6 +30,8 @@ public interface Fragment {
 	 */
 	void addGuardToStartLocation(Expression guard, ModelFactory factory);
 	
+	void addLastStatement(Statement statement);
+	
 	/**
 	 * Combine two fragment in sequential order. <br>
 	 * Precondition: <code>this.lastStatement == null</code>

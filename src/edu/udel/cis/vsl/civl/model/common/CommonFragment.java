@@ -247,4 +247,18 @@ public class CommonFragment implements Fragment {
 		return result;
 	}
 
+	@Override
+	public void addLastStatement(Statement statement) {
+		if (this.lastStatement == null)
+			this.lastStatement = statement;
+		if (this.lastStatement instanceof StatementSet) {
+			((StatementSet) lastStatement).add(statement);
+		} else {
+			StatementSet lastStatementSet = new StatementSet();
+			lastStatementSet.add(this.lastStatement);
+			lastStatementSet.add(statement);
+			this.lastStatement = lastStatementSet;
+		}
+	}
+
 }
