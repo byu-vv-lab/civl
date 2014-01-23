@@ -266,7 +266,7 @@ public class ModelBuilderWorker {
 	/**
 	 * MPI statement factory
 	 */
-	private MPIStatementFactory mpiFactory;
+	private CommonMPIModelFactory mpiFactory;
 
 	/**
 	 * True iff the program to be translated is an MPI program, otherwise, it is
@@ -341,7 +341,7 @@ public class ModelBuilderWorker {
 		// TODO set this.mpiMode when possible.
 		// only create an MPI factory in MPI mode.
 		if (this.mpiMode)
-			this.mpiFactory = new MPIStatementFactory();
+			this.mpiFactory = new CommonMPIModelFactory(this.universe);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -2331,7 +2331,7 @@ public class ModelBuilderWorker {
 
 			// TODO once MPI Statement implementation is done, translate
 			// mpi function call node here to the corresponding MPI Statement.
-		case MPIStatementFactory.MPI_SEND:
+		case CommonMPIModelFactory.MPI_SEND:
 			if (this.mpiMode)
 				return mpiFactory.translateMPI_SEND(source, location, scope,
 						lhs, arguments);
