@@ -135,20 +135,71 @@ import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 
+/**
+ * This class translates an AST node of a function body and completes the
+ * resulting function accordingly. The only incomplete translation is the call
+ * or spawn statements involved in this function, which dont have the
+ * corresponding function of invocation set appropriately.
+ * 
+ * @author Manchun Zheng (zmanchun)
+ * 
+ */
 public class FunctionTranslator {
+
+	/* ************************** Instance Fields ************************** */
+
 	/**
 	 * Store temporary information of the function being processed
 	 */
-	protected FunctionInfo functionInfo;
-	protected ModelFactory modelFactory;
+	private FunctionInfo functionInfo;
+
+	/**
+	 * The unique model factory to be used in the system.
+	 */
+	private ModelFactory modelFactory;
+
 	/**
 	 * Keep track of the number of incomplete $atom block during translation.
 	 */
 	private int atomCount = 0;
+
+	/**
+	 * The unique model builder of the system.
+	 */
 	private ModelBuilderWorker modelBuilder;
+
+	/**
+	 * The AST node of the function body, which is to be used for translation.
+	 */
 	private StatementNode functionBodyNode;
+
+	/**
+	 * The CIVL function that is the result of this function translator.
+	 */
 	private CIVLFunction function;
 
+	/* **************************** Constructors *************************** */
+
+	/**
+	 * Constructs new instance of function translator. This constructor will be
+	 * used for translating all function nodes except for the system function.
+	 * See also
+	 * {@link #FunctionTranslator(ModelBuilderWorker, ModelFactory, CIVLFunction)}
+	 * .
+	 * 
+	 * @param modelBuilder
+	 *            The model builder worker where this function translator is
+	 *            created.
+	 * @param modelFactory
+	 *            The unique model factory used by the system to create new
+	 *            instances of CIVL expressions, statements, etc.
+	 * @param bodyNode
+	 *            The AST node of the function body that this function
+	 *            translator is going to translate.
+	 * @param function
+	 *            The CIVL function that will be the result of this function
+	 *            translator.
+	 */
 	FunctionTranslator(ModelBuilderWorker modelBuilder,
 			ModelFactory modelFactory, StatementNode bodyNode,
 			CIVLFunction function) {
@@ -159,6 +210,27 @@ public class FunctionTranslator {
 		this.functionInfo = new FunctionInfo(function);
 	}
 
+	/**
+	 * Constructs new instance of function translator. This constructor will be
+	 * used only for translating the system function, because initially the
+	 * model builder worker doesn't know about the function body node of the
+	 * system function (i.e., the body node of the main function). It will have
+	 * to translate the root nodes before processing the main function. See also
+	 * {@link #translateRootFunction(Scope, ASTNode)}.
+	 * 
+	 * @param modelBuilder
+	 *            The model builder worker where this function translator is
+	 *            created.
+	 * @param modelFactory
+	 *            The unique model factory used by the system to create new
+	 *            instances of CIVL expressions, statements, etc.
+	 * @param bodyNode
+	 *            The AST node of the function body that this function
+	 *            translator is going to translate.
+	 * @param function
+	 *            The CIVL function that will be the result of this function
+	 *            translator.
+	 */
 	FunctionTranslator(ModelBuilderWorker modelBuilder,
 			ModelFactory modelFactory, CIVLFunction function) {
 		this.modelBuilder = modelBuilder;
@@ -167,19 +239,12 @@ public class FunctionTranslator {
 		this.functionInfo = new FunctionInfo(function);
 	}
 
+	/* *************************** Public Methods ************************** */
+
 	/**
 	 * Processes the function body of a function definition node. At least one
 	 * function declaration for this function should have been processed
 	 * already, so the corresponding CIVL function should already exist.
-	 * 
-	 * @param functionNode
-	 *            the function definition node in the AST
-	 * @param function
-	 *            the corresponding CIVL function (only not null for system
-	 *            function)
-	 * @param initializationFragment
-	 *            the fragment of initialization statements, only not null for
-	 *            system function
 	 */
 	public void translateFunction() {
 		Fragment body = this.translateFunctionBody();
@@ -187,28 +252,26 @@ public class FunctionTranslator {
 		functionInfo.completeFunction(body);
 	}
 
-	private Fragment translateFunctionBody() {
-		Fragment body;
-		Scope scope = getFunction().outerScope();
-
-		body = translateStatementNode(scope, this.functionBodyNode);
-		if (!containsReturn(body)) {
-
-			CIVLSource endSource = modelFactory
-					.sourceOfEnd(this.functionBodyNode);
-			Location returnLocation = modelFactory.location(endSource,
-					getFunction().outerScope());
-			Fragment returnFragment = modelFactory.returnFragment(endSource,
-					returnLocation, null, this.functionInfo.function());
-
-			if (body != null)
-				body = body.combineWith(returnFragment);
-			else
-				body = returnFragment;
-		}
-		return body;
-	}
-
+	/**
+	 * This method translates the "_CIVL_System" function. The result should be
+	 * a function with the following:
+	 * <ul>
+	 * <li>statements in the global scope, and</li>
+	 * <li>statements in the main function body.</li>
+	 * </ul>
+	 * Initially, the model builder worker have no information about the main
+	 * function node. Thus the translation starts at translating the rootNode,
+	 * obtaining a list of initialization statements declared in the root scope
+	 * and the AST node of the main function.
+	 * 
+	 * @param systemScope
+	 *            The root scope of the model.
+	 * @param rootNode
+	 *            The root node of the AST for translation.
+	 * @throws CIVLSyntaxException
+	 *             if no main function node could be found in the rootNode's
+	 *             children.
+	 */
 	public void translateRootFunction(Scope systemScope, ASTNode rootNode) {
 		Fragment initialization = new CommonFragment();
 		Fragment body;
@@ -222,11 +285,51 @@ public class FunctionTranslator {
 				initialization = initialization.combineWith(fragment);
 		}
 		modelFactory.popConditionaExpressionStack();
+		if (modelBuilder.mainFunctionNode == null) {
+			throw new CIVLSyntaxException("program must have a main function,",
+					modelFactory.sourceOf(rootNode));
+		}
 		this.functionBodyNode = modelBuilder.mainFunctionNode.getBody();
 		body = this.translateFunctionBody();
 		body = initialization.combineWith(body);
 		functionInfo.completeFunction(body);
 	}
+
+	/* *************************** Private Methods ************************* */
+
+	/**
+	 * Translate the function body node associated with this function
+	 * translator.
+	 * 
+	 * @return The fragment of CIVL locations and statements that represents the
+	 *         function body node.
+	 */
+	private Fragment translateFunctionBody() {
+		Fragment body;
+		Scope scope = this.function.outerScope();
+
+		body = translateStatementNode(scope, this.functionBodyNode);
+		if (!containsReturn(body)) {
+
+			CIVLSource endSource = modelFactory
+					.sourceOfEnd(this.functionBodyNode);
+			Location returnLocation = modelFactory.location(endSource,
+					function.outerScope());
+			Fragment returnFragment = modelFactory.returnFragment(endSource,
+					returnLocation, null, this.functionInfo.function());
+
+			if (body != null)
+				body = body.combineWith(returnFragment);
+			else
+				body = returnFragment;
+		}
+		return body;
+	}
+
+	/* *********************************************************************
+	 * Translate ABC Statement Nodes into CIVL Statements
+	 * *********************************************************************
+	 */
 
 	/**
 	 * Given a StatementNode, return a Fragment representing it. Takes a
@@ -313,11 +416,6 @@ public class FunctionTranslator {
 		modelFactory.popConditionaExpressionStack();
 		return result;
 	}
-
-	/* *********************************************************************
-	 * Translate ABC Statement Nodes into CIVL Statements
-	 * *********************************************************************
-	 */
 
 	/**
 	 * If the given CIVL expression e has array type, this returns the
@@ -1895,7 +1993,7 @@ public class FunctionTranslator {
 
 		if (inAtom()) {
 			throw new CIVLSyntaxException(
-					"Wait statement is not allowed in atom blocks.", source);
+					"$wait statement is not allowed in $atom blocks,", source);
 		}
 		return modelFactory.joinFragment(source, location,
 				translateExpressionNode(waitNode.getExpression(), scope, true));
@@ -3006,12 +3104,21 @@ public class FunctionTranslator {
 		return result;
 	}
 
-	public CIVLFunction getFunction() {
+	// Getters and Setters
+
+	protected FunctionInfo functionInfo() {
+		return this.functionInfo;
+	}
+
+	protected CIVLFunction function() {
 		return function;
 	}
 
-	public void setFunction(CIVLFunction function) {
+	protected void setFunction(CIVLFunction function) {
 		this.function = function;
 	}
 
+	protected ModelFactory modelFactory() {
+		return this.modelFactory;
+	}
 }

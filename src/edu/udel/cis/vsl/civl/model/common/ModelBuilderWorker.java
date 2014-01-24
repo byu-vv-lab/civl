@@ -16,10 +16,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
-import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -187,8 +185,7 @@ public class ModelBuilderWorker {
 	/* **************************** Constructors *************************** */
 
 	/**
-	 * Constructs new instance of CommonModelBuilder, creating instance of
-	 * ModelFactory in the process, and sets up system functions.
+	 * Constructs new instance of ModelBuilderWorker.
 	 * 
 	 * @param config
 	 *            the GMC configuration
@@ -240,7 +237,7 @@ public class ModelBuilderWorker {
 			FunctionDefinitionNode functionDefinition = unprocessedFunctions
 					.remove(0);
 
-			translateFunctionDefinitionNode(functionDefinition, null, null);
+			translateFunctionDefinitionNode(functionDefinition);
 		}
 	}
 
@@ -250,30 +247,24 @@ public class ModelBuilderWorker {
 	 * already, so the corresponding CIVL function should already exist.
 	 * 
 	 * @param functionNode
-	 *            the function definition node in the AST
-	 * @param function
-	 *            the corresponding CIVL function (only not null for system
-	 *            function)
-	 * @param initializationFragment
-	 *            the fragment of initialization statements, only not null for
-	 *            system function
+	 *            The function definition node in the AST to be translated.
+	 * @throws CIVLInternalException
+	 *             if no corresponding CIVL function could be found.
 	 */
 	private void translateFunctionDefinitionNode(
-			FunctionDefinitionNode functionNode, CIVLFunction function,
-			Fragment initializationFragment) {
+			FunctionDefinitionNode functionNode) {
 		Entity entity = functionNode.getEntity();
 		CIVLFunction result;
 		FunctionTranslator functionTranslator;
 
-		if (function == null)
-			result = functionMap.get(entity);
-		else
-			result = function;
+		result = functionMap.get(entity);
 		if (result == null)
 			throw new CIVLInternalException("Did not process declaration",
 					factory.sourceOf(functionNode));
 		functionTranslator = new FunctionTranslator(this, factory,
 				functionNode.getBody(), result);
+		// no return value because the result will be stored in the variable
+		// "result" of CIVLFunction type.
 		functionTranslator.translateFunction();
 	}
 
@@ -464,10 +455,6 @@ public class ModelBuilderWorker {
 				}
 				throw new CommandLineException(msg);
 			}
-		}
-		if (mainFunctionNode == null) {
-			throw new CIVLException("Program must have a main function.",
-					factory.sourceOf(rootNode));
 		}
 		// translate main function, using system as the CIVL function object,
 		// and combining initialization statements with its body

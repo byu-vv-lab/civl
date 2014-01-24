@@ -38,11 +38,11 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		Fragment result;
 		Fragment spawnPhase = spawnMpiProcesses(systemScope, numberOfProcs);
 		Fragment waitPhase = waitMpiProcesses(systemScope, numberOfProcs);
-		Location returnLocation = mpiFactory.location(getFunction()
+		Location returnLocation = mpiFactory.location(function()
 				.outerScope());
 		Fragment returnFragment = mpiFactory.returnFragment(
 				mpiFactory.systemSource(), returnLocation, null,
-				this.functionInfo.function());
+				functionInfo().function());
 
 		result = spawnPhase.combineWith(waitPhase);
 		result = result.combineWith(returnFragment);
@@ -50,7 +50,7 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 
 	private Fragment spawnMpiProcesses(Scope scope, Expression numberOfProcs) {
 		Scope newScope = mpiFactory.scope(scope, new LinkedHashSet<Variable>(),
-				functionInfo.function());
+				functionInfo().function());
 		Fragment initFragment, result;
 		Location location = mpiFactory.location(newScope);
 		Variable iVariable = mpiFactory.variable(mpiFactory.integerType(),
@@ -126,7 +126,7 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	@Override
 	protected Statement translateFunctionCall(Scope scope, Location location,
 			LHSExpression lhs, FunctionCallNode functionCallNode, boolean isCall) {
-		CIVLSource source = modelFactory.sourceOfBeginning(functionCallNode);
+		CIVLSource source = modelFactory().sourceOfBeginning(functionCallNode);
 		String functionName = ((IdentifierExpressionNode) functionCallNode
 				.getFunction()).getIdentifier().name();
 		ArrayList<Expression> arguments = new ArrayList<Expression>();

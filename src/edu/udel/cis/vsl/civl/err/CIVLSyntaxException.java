@@ -8,7 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.Sourceable;
  * e.g., calling $choose_int with more than one arguments, executing $wait in
  * $atom block, etc.
  * 
- * @author zmanchun
+ * @author Manchun Zheng (zmanchun)
  * 
  */
 public class CIVLSyntaxException extends CIVLException {
