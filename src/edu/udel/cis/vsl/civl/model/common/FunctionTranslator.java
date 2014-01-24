@@ -1049,8 +1049,7 @@ public class FunctionTranslator {
 	 * variable if the type has some state, as
 	 * {@link ModelBuilderWorker#translateCompoundTypeNode}.
 	 * <p>
-	 * TODO can't find the actual implementation of the following: when
-	 * processing a variable decl: if variable has compound type (array or
+	 * when processing a variable decl: if variable has compound type (array or
 	 * struct), insert statement (into beginning of current compound statement)
 	 * saying "v = InitialValue[v]". then insert the variable's initializer if
 	 * present.
@@ -1330,9 +1329,6 @@ public class FunctionTranslator {
 			// type should come from entity, not this type node.
 			// if it has a definition node, should probably use that one.
 			FunctionType functionType = entity.getType();
-
-			// TODO: deal with scope parameterized functions....
-
 			FunctionTypeNode functionTypeNode = (FunctionTypeNode) node
 					.getTypeNode();
 			CIVLType returnType = translateABCType(
@@ -1898,8 +1894,7 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(waitNode), scope);
 
 		if (inAtom()) {
-			// TODO: Create a CIVLSyntaxException and use that.
-			throw new CIVLException(
+			throw new CIVLSyntaxException(
 					"Wait statement is not allowed in atom blocks.", source);
 		}
 		return modelFactory.joinFragment(source, location,
@@ -2000,14 +1995,17 @@ public class FunctionTranslator {
 		Type convertedType = constantNode.getConvertedType();
 		Expression result;
 
-		if (convertedType.kind() == TypeKind.PROCESS) {
+		switch (convertedType.kind()) {
+		case PROCESS:
 			assert constantNode.getStringRepresentation().equals("$self");
 			result = modelFactory.selfExpression(source);
-		} else if (convertedType.kind() == TypeKind.OTHER_INTEGER) {
+			break;
+		case OTHER_INTEGER:
 			result = modelFactory.integerLiteralExpression(source, BigInteger
 					.valueOf(Long.parseLong(constantNode
 							.getStringRepresentation())));
-		} else if (convertedType.kind() == TypeKind.BASIC) {
+			break;
+		case BASIC: {
 			switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
 			case SHORT:
 			case UNSIGNED_SHORT:
@@ -2048,22 +2046,26 @@ public class FunctionTranslator {
 				break;
 			case CHAR:
 
-				// TODO: Add a case for the char type.
 			default:
 				throw new CIVLUnimplementedFeatureException("type "
 						+ convertedType, source);
 			}
-		} else if (convertedType.kind() == TypeKind.POINTER
-				&& ((PointerType) convertedType).referencedType().kind() == TypeKind.BASIC
-				&& ((StandardBasicType) ((PointerType) convertedType)
-						.referencedType()).getBasicTypeKind() == BasicTypeKind.CHAR) {
-			result = modelFactory.stringLiteralExpression(source,
-					constantNode.getStringRepresentation());
-		} else if (convertedType.kind() == TypeKind.POINTER
-				&& constantNode.getStringRepresentation().equals("0")) {
-			result = modelFactory.nullPointerExpression(
-					modelFactory.pointerType(modelFactory.voidType()), source);
-		} else {
+			break;
+		}
+		case POINTER:
+			if (((PointerType) convertedType).referencedType().kind() == TypeKind.BASIC
+					&& ((StandardBasicType) ((PointerType) convertedType)
+							.referencedType()).getBasicTypeKind() == BasicTypeKind.CHAR) {
+				result = modelFactory.stringLiteralExpression(source,
+						constantNode.getStringRepresentation());
+				break;
+			} else if (constantNode.getStringRepresentation().equals("0")) {
+				result = modelFactory.nullPointerExpression(
+						modelFactory.pointerType(modelFactory.voidType()),
+						source);
+				break;
+			}
+		default:
 			throw new CIVLUnimplementedFeatureException(
 					"type " + convertedType, source);
 		}
@@ -2137,7 +2139,7 @@ public class FunctionTranslator {
 			result = translateQuantifiedExpressionNode(
 					(QuantifiedExpressionNode) expressionNode, scope);
 			break;
-		case RESULT:// TODO make it a variable, re-order cases
+		case RESULT:
 			result = modelFactory.resultExpression(modelFactory
 					.sourceOf(expressionNode));
 			break;
@@ -2375,7 +2377,6 @@ public class FunctionTranslator {
 			arguments.add(translateExpressionNode(operatorNode.getArgument(i),
 					scope, true));
 		}
-		// TODO: Bitwise ops, =, {%,/,*,+,-}=, pointer ops, comma, ?
 		if (numArgs < 1 || numArgs > 3) {
 			throw new RuntimeException("Unsupported number of arguments: "
 					+ numArgs + " in expression " + operatorNode);
@@ -2962,12 +2963,9 @@ public class FunctionTranslator {
 		CIVLSource civlSource = modelFactory.sourceOf(typeNode);
 
 		if (typeNode instanceof StructureOrUnionTypeNode) {
-			// TODO: Check for union type. We need to eventually implement
-			// unions.
 			prefix = "__struct_";
-			// TODO: This is null if this is a "declaration" but not the
-			// "definition". Should we use entities instead of the node? That
-			// would always get the definition.
+			// This is null if this is a "declaration" but not the
+			// "definition".
 			if (((StructureOrUnionTypeNode) typeNode).getStructDeclList() == null)
 				return result;
 			if (!(type instanceof CIVLStructType))
