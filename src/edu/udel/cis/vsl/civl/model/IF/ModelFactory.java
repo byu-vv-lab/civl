@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
@@ -38,6 +39,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
@@ -160,11 +162,8 @@ public interface ModelFactory {
 	CIVLHeapType heapType(String name);
 
 	/**
-<<<<<<< .mine
-	 * Generate a system function
-=======
-	 * Get a new incomplete array type.
->>>>>>> .r497
+	 * <<<<<<< .mine Generate a system function ======= Get a new incomplete
+	 * array type. >>>>>>> .r497
 	 * 
 	 * @param elementType
 	 *            The type of each element in the array.
@@ -173,8 +172,7 @@ public interface ModelFactory {
 	CIVLArrayType incompleteArrayType(CIVLType elementType);
 
 	/**
-<<<<<<< .mine
-	 * Generate an abstract function.
+	 * <<<<<<< .mine Generate an abstract function.
 	 * 
 	 * @param source
 	 *            The CIVL source of the function.
@@ -196,10 +194,8 @@ public interface ModelFactory {
 			Scope containingScope, int continuity);
 
 	/**
-	 * Create a new location.
-=======
-	 * Get the integer primitive type.
->>>>>>> .r497
+	 * Create a new location. ======= Get the integer primitive type. >>>>>>>
+	 * .r497
 	 * 
 	 * @return The integer primitive type.
 	 */
@@ -329,6 +325,22 @@ public interface ModelFactory {
 	 */
 	AddressOfExpression addressOfExpression(CIVLSource source,
 			LHSExpression operand);
+
+	/**
+	 * Create a new instance of array literal expression using an array of
+	 * expressions.
+	 * 
+	 * @param source
+	 *            The CIVL source of the array literal.
+	 * 
+	 * @param arrayType
+	 *            The type of the literal.
+	 * @param elements
+	 *            The elements used to create the array literal expression.
+	 * @return The new array literal expression created.
+	 */
+	ArrayLiteralExpression arrayLiteralExpression(CIVLSource source,
+			CIVLType arrayType, Expression[] elements);
 
 	/**
 	 * A binary expression. One of {+,-,*,\,<,<=,==,!=,&&,||,%}
@@ -582,6 +594,16 @@ public interface ModelFactory {
 	 */
 	StringLiteralExpression stringLiteralExpression(CIVLSource source,
 			String value);
+
+	/**
+	 * Create a new instance of struct literal expression
+	 * 
+	 * @param source
+	 * @param fields
+	 * @return
+	 */
+	StructLiteralExpression structLiteralExpression(CIVLSource source,
+			CIVLType type, Expression[] fields);
 
 	/**
 	 * An expression for an array index operation. e.g. a[i]
@@ -1029,11 +1051,6 @@ public interface ModelFactory {
 	 *            The new conditional expression
 	 */
 	void addConditionalExpression(ConditionalExpression expression);
-
-	/* *********************************************************************
-	 * Translating away conditional expressions
-	 * *********************************************************************
-	 */
 
 	/**
 	 * Add a new queue to store conditional expression. This is invoked at the

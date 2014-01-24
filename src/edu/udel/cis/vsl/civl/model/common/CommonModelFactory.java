@@ -32,6 +32,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
@@ -54,6 +55,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
@@ -82,6 +84,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.StructField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAddressOfExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBoundVariableExpression;
@@ -101,6 +104,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonStringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonStructLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
@@ -154,7 +158,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  */
 public class CommonModelFactory implements ModelFactory {
 
-	/********************************* Types *********************************/
+	/* ******************************* Types ******************************* */
 
 	/**
 	 * Kinds for temporal variables introduced when translating conditional
@@ -972,10 +976,9 @@ public class CommonModelFactory implements ModelFactory {
 			if (operand.getExpressionType().equals(booleanType)) {
 				result = new CommonUnaryExpression(source, operator, operand);
 			} else {
-				// TODO: This often won't work. Need to do conversion for e.g.
-				// numeric types
 				Expression castOperand = castExpression(source, booleanType,
 						operand);
+
 				result = new CommonUnaryExpression(source, operator,
 						castOperand);
 			}
@@ -1644,8 +1647,6 @@ public class CommonModelFactory implements ModelFactory {
 								// calling a function is considered as impact
 								// scope because we don't keep record of the
 								// total impact scope of a function
-								// TODO calculate total impact scope for a
-								// function
 								location.setImpactScopeOfAtomicOrAtomBlock(systemScope);
 								return;
 							}
@@ -2071,4 +2072,38 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
+	@Override
+	public ArrayLiteralExpression arrayLiteralExpression(CIVLSource source,
+			CIVLType arrayType, Expression[] elements) {
+		ArrayLiteralExpression arrayLiteral = new CommonArrayLiteralExpression(
+				source, arrayType, elements);
+		Scope expressionScope = null;
+
+		if (elements != null) {
+			for (Expression element : elements) {
+				expressionScope = join(expressionScope,
+						element.expressionScope());
+			}
+		}
+		if (expressionScope != null)
+			arrayLiteral.setExpressionScope(expressionScope);
+		return arrayLiteral;
+	}
+
+	@Override
+	public StructLiteralExpression structLiteralExpression(CIVLSource source,
+			CIVLType structType, Expression[] fields) {
+		StructLiteralExpression structLiteral = new CommonStructLiteralExpression(
+				source, structType, fields);
+		Scope expressionScope = null;
+
+		if (fields != null) {
+			for (Expression field : fields) {
+				expressionScope = join(expressionScope, field.expressionScope());
+			}
+		}
+		if (expressionScope != null)
+			structLiteral.setExpressionScope(expressionScope);
+		return structLiteral;
+	}
 }

@@ -2657,9 +2657,6 @@ public class FunctionTranslator {
 				modelFactory.sourceOf(variableTypeNode.getSource()), scope,
 				variableTypeNode.getType());
 		functionInfo.addBoundVariable(variableName, variableType);
-		// TODO: Is there an advantage to having separate restriction and
-		// quantifiedExpression? Maybe move this to right hand size and express
-		// in terms of &&, ||?
 		switch (expressionNode.quantifier()) {
 		case EXISTS:
 			quantifier = Quantifier.EXISTS;
@@ -3076,10 +3073,6 @@ public class FunctionTranslator {
 			prefix = "__typedef_";
 			tag = ((TypedefDeclarationNode) typeNode.parent()).getName();
 		}
-		// TODO: Explain this in the javadoc. Give examples of variables with
-		// state.
-		// e.g. typedef int[n] foo;
-		// Also, add tests if there aren't already.
 		if (type.hasState()) {
 			Variable variable;
 			String name = prefix + tag + "__";
