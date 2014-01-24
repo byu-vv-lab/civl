@@ -542,7 +542,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * CIVL Expressions
 	 * *********************************************************************
 	 */
-	
+
 	@Override
 	public AbstractFunctionCallExpression abstractFunctionCallExpression(
 			CIVLSource source, AbstractFunction function,
@@ -728,7 +728,7 @@ public class CommonModelFactory implements ModelFactory {
 		((CommonExpression) result).setExpressionType(pointerType.baseType());
 		return result;
 	}
-	
+
 	@Override
 	public DerivativeCallExpression derivativeCallExpression(CIVLSource source,
 			AbstractFunction function,
@@ -737,7 +737,7 @@ public class CommonModelFactory implements ModelFactory {
 		CommonDerivativeCallExpression result = new CommonDerivativeCallExpression(
 				source, function, partials, arguments);
 		Scope expressionScope = null;
-		
+
 		for (Expression arg : arguments) {
 			expressionScope = join(expressionScope, arg.expressionScope());
 		}
@@ -1162,8 +1162,6 @@ public class CommonModelFactory implements ModelFactory {
 		ChooseStatement result;
 
 		if (lhs == null) {
-			// lhs = this.tempVariable(TempVariableKind.CHOOSE, source.scope(),
-			// civlSource, argument.getExpressionType());
 			throw new CIVLInternalException(
 					"Side-effect remover failed to translate away function calls as expressions",
 					civlSource);
@@ -1188,8 +1186,8 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public NoopStatement ifElseBranchStatement(CIVLSource civlSource,
 			Location source, Expression guard, boolean isTrue) {
-		NoopStatement result = new CommonIfElseBranchStatement(civlSource, source,
-				isTrue);
+		NoopStatement result = new CommonIfElseBranchStatement(civlSource,
+				source, isTrue);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		if (guard != null) {
@@ -1709,7 +1707,7 @@ public class CommonModelFactory implements ModelFactory {
 	public SymbolicUniverse universe() {
 		return universe;
 	}
-	
+
 	@Override
 	public AbstractFunction abstractFunction(CIVLSource source,
 			Identifier name, List<Variable> parameters, CIVLType returnType,
@@ -1922,8 +1920,6 @@ public class CommonModelFactory implements ModelFactory {
 	 * @param fieldIndex
 	 *            index of a field in that tuple
 	 * @return the concrete int value of that field
-	 * @throws CIVLInternalException
-	 *             if a concrete integer value cannot be extracted
 	 */
 	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
 			IntObject fieldIndex) {

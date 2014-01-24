@@ -97,6 +97,7 @@ import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -959,12 +960,12 @@ public class FunctionTranslator {
 		int numberOfArgs = arguments.size();
 
 		if (this.inAtom()) {
-			throw new CIVLInternalException(
+			throw new CIVLSyntaxException(
 					"The non-deterministic function $choose_int is not allowed in $atom block.",
 					source);
 		}
 		if (numberOfArgs != 1) {
-			throw new CIVLInternalException(
+			throw new CIVLSyntaxException(
 					"The function $choose_int should have exactly one argument.",
 					source);
 		}
@@ -1249,7 +1250,7 @@ public class FunctionTranslator {
 			arguments.add(actual);
 		}
 		switch (functionName) {
-		// special translation for some system functions like $choose_int 
+		// special translation for some system functions like $choose_int
 		case "$choose_int":
 			return translateChooseIntFunctionCall(source, location, scope, lhs,
 					arguments);
