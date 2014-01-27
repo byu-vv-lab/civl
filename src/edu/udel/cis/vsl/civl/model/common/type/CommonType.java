@@ -87,6 +87,11 @@ public abstract class CommonType implements CIVLType {
 	}
 	
 	@Override
+	public boolean isUnionType() {
+		return false;
+	}
+	
+	@Override
 	public boolean isCharType() {
 		return false;
 	}

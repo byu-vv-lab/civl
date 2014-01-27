@@ -30,9 +30,9 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.type.CommonType;
 import edu.udel.cis.vsl.civl.run.UserInterface;
@@ -306,7 +306,7 @@ public class ModelBuilderWorker {
 		} else if (type.isArrayType()) {
 			result = bundleableType(((CIVLArrayType) type).elementType());
 		} else if (type.isStructType()) {
-			for (StructField f : ((CIVLStructType) type).fields()) {
+			for (StructOrUnionField f : ((CIVLStructOrUnionType) type).fields()) {
 				result = result && bundleableType(f.type());
 				if (!result)
 					break;

@@ -21,6 +21,9 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 	private Quantifier quantifier;
 	private Identifier boundVariableName;
 	private CIVLType boundVariableType;
+	private boolean isRange;
+	private Expression lower;
+	private Expression upper;
 	private Expression restriction;
 	private Expression expression;
 
@@ -45,7 +48,39 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 		this.quantifier = quantifier;
 		this.boundVariableName = boundVariableName;
 		this.boundVariableType = boundVariableType;
+		isRange = false;
+		this.lower = this.upper = null;
 		this.restriction = restriction;
+		this.expression = expression;
+	}
+
+	/**
+	 * @param source
+	 *            The source file information for this expression.
+	 * @param quantifier
+	 *            The type of quantifier.
+	 * @param boundVariableName
+	 *            The name of the bound variable.
+	 * @param boundVariableType
+	 *            The type of the bound variable.
+	 * @param lower
+	 *            The lower bound on the range of this bound variable.
+	 * @param upper
+	 *            The upper bound on the range of this bound variable.
+	 * @param expression
+	 *            The quantified expression.
+	 */
+	public CommonQuantifiedExpression(CIVLSource source, Quantifier quantifier,
+			Identifier boundVariableName, CIVLType boundVariableType,
+			Expression lower, Expression upper, Expression expression) {
+		super(source);
+		this.quantifier = quantifier;
+		this.boundVariableName = boundVariableName;
+		this.boundVariableType = boundVariableType;
+		isRange = true;
+		this.lower = lower;
+		this.upper = upper;
+		this.restriction = null;
 		this.expression = expression;
 	}
 
@@ -168,5 +203,20 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 	@Override
 	public CIVLType boundVariableType() {
 		return boundVariableType;
+	}
+
+	@Override
+	public boolean isRange() {
+		return isRange;
+	}
+
+	@Override
+	public Expression lower() {
+		return lower;
+	}
+
+	@Override
+	public Expression upper() {
+		return upper;
 	}
 }

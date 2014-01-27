@@ -57,9 +57,9 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -255,7 +255,20 @@ public interface ModelFactory {
 	 *            identifier, usually the "tag" for this struct type
 	 * @return a new incomplete struct type with given name
 	 */
-	CIVLStructType structType(Identifier name);
+	CIVLStructOrUnionType structType(Identifier name);
+	
+	/**
+	 * Returns new incomplete union type with given name. Type can be completed
+	 * later using one of the "complete" methods in CIVLStructType.
+	 * 
+	 * The union returned is a new instance of union type that will never be
+	 * equal to another union type, regardless of identifier or fields.
+	 * 
+	 * @param name
+	 *            identifier, usually the "tag" for this union type
+	 * @return a new incomplete union type with given name
+	 */
+	CIVLStructOrUnionType unionType(Identifier name);
 
 	/**
 	 * Returns the void type. Used in places where a type is required
@@ -526,6 +539,33 @@ public interface ModelFactory {
 	QuantifiedExpression quantifiedExpression(CIVLSource source,
 			Quantifier quantifier, Identifier boundVariableName,
 			CIVLType boundVariableType, Expression restriction,
+			Expression expression);
+
+	/**
+	 * Returns a new quantified expression.
+	 * 
+	 * @param source
+	 *            The source file information for this expression.
+	 * @param quantifier
+	 *            The quantifier for this quantified expression. One of {FORALL,
+	 *            EXISTS, UNIFORM}.
+	 * @param boundVariableName
+	 *            The name of the bound variable.
+	 * @param boundVariableType
+	 *            The type of the bound variable.
+	 * @param lower
+	 *            The integer-valued expression for the lower end of the bound
+	 *            variable range.
+	 * @param upper
+	 *            The integer-valued expression for the upper end of the bound
+	 *            variable range.
+	 * @param expression
+	 *            The quantified expression.
+	 * @return The new quantified expression
+	 */
+	QuantifiedExpression quantifiedExpression(CIVLSource source,
+			Quantifier quantifier, Identifier boundVariableName,
+			CIVLType boundVariableType, Expression lower, Expression upper,
 			Expression expression);
 
 	/**
@@ -1347,7 +1387,7 @@ public interface ModelFactory {
 	 *            The type of this struct member.
 	 * @return A struct field with the given name and type.
 	 */
-	StructField structField(Identifier name, CIVLType type);
+	StructOrUnionField structField(Identifier name, CIVLType type);
 
 	/**
 	 * Generate the system function

@@ -74,20 +74,20 @@ public class CommonUnaryExpression extends CommonExpression implements
 
 		switch (operator) {
 		case NEGATIVE:
-			op = "-";
+			op = "-" + operand;
 			break;
 		case NOT:
-			op = "!";
+			op = "!" + operand;
 			break;
 		case BIG_O:
-			op = "O";
+			op = "$O(" + operand + ")";
 			break;
 		default:
 			throw new CIVLInternalException("Unknown unary operator: "
 					+ operator, this);
 		}
 		//return op + "(" + operand + ")";
-		return op + operand;
+		return op;
 	}
 
 	@Override

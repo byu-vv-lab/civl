@@ -252,6 +252,7 @@ public class UserInterface {
 			program = frontEnd.getProgram();
 			program.prune();
 			program.removeSideEffects();
+			program.annotateForAccuracy();
 		}
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");

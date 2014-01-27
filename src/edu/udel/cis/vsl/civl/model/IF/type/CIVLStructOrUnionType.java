@@ -6,30 +6,30 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 
 /**
- * Represents a "struct" or "record" type. This is essentially a tuple type with
- * a name.
+ * Represents a "record" type (i.e. a struct or union). This is essentially a
+ * tuple type with a name.
  * 
  * This type has state. Initially, it is incomplete, meaning the component types
  * are not specified. It is completed by specifying them. This is necessary to
  * allow circular definitions such as linked lists.
  * 
- * Two CIVL struct types are considered equal iff they are equal as objects.
- * They can be different even if the fields and names are equal.
+ * Two CIVL struct or union types are considered equal iff they are equal as
+ * objects. They can be different even if the fields and names are equal.
  * 
  * @author siegel
  * 
  */
-public interface CIVLStructType extends CIVLType {
+public interface CIVLStructOrUnionType extends CIVLType {
 
 	/**
-	 * Is this struct type complete?
+	 * Is this struct or union type complete?
 	 * 
 	 * @return true iff this is complete
 	 */
 	boolean isComplete();
 
 	/**
-	 * Returns the number of fields in this struct typel
+	 * Returns the number of fields in this struct or union type.
 	 * 
 	 * @throws CIVLInternalException
 	 *             if the type is not complete
@@ -38,7 +38,7 @@ public interface CIVLStructType extends CIVLType {
 	int numFields();
 
 	/**
-	 * Returns the index-th field of this struct type.
+	 * Returns the index-th field of this struct or union type.
 	 * 
 	 * @param index
 	 *            nonnegative integer in range [0,numFields-1].
@@ -47,7 +47,7 @@ public interface CIVLStructType extends CIVLType {
 	 * @throws CIVLInternalException
 	 *             if this type is not complete
 	 */
-	StructField getField(int index);
+	StructOrUnionField getField(int index);
 
 	/**
 	 * Returns an iterable object over all the fields of this struct type, in
@@ -57,15 +57,15 @@ public interface CIVLStructType extends CIVLType {
 	 * @throws CIVLInternalException
 	 *             if this type is not complete
 	 */
-	Iterable<StructField> fields();
+	Iterable<StructOrUnionField> fields();
 
 	/**
-	 * Returns the name of this struct type.
+	 * Returns the name of this struct or union type.
 	 * 
-	 * @return The name of this struct.
+	 * @return The name of this struct or union.
 	 */
 	Identifier name();
-
+	
 	/**
 	 * Completes this struct type by specifying the fields as a collection.
 	 * 
@@ -74,7 +74,7 @@ public interface CIVLStructType extends CIVLType {
 	 * @throws CIVLInternalException
 	 *             if this struct type is already complete
 	 */
-	void complete(Collection<StructField> fields);
+	void complete(Collection<StructOrUnionField> fields);
 
 	/**
 	 * Completes this struct type by specifying the fields as an array. The
@@ -85,5 +85,5 @@ public interface CIVLStructType extends CIVLType {
 	 * @throws CIVLInternalException
 	 *             if this struct type is already complete
 	 */
-	void complete(StructField[] fields);
+	void complete(StructOrUnionField[] fields);
 }

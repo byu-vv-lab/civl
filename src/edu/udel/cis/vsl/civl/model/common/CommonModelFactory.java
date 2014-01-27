@@ -78,9 +78,9 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAddressOfExpression;
@@ -133,7 +133,7 @@ import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructField;
-import edu.udel.cis.vsl.civl.model.common.type.CommonStructType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
 import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.civl.util.Singleton;
@@ -503,8 +503,13 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public CIVLStructType structType(Identifier name) {
-		return new CommonStructType(name);
+	public CIVLStructOrUnionType structType(Identifier name) {
+		return new CommonStructOrUnionType(name, true);
+	}
+	
+	@Override
+	public CIVLStructOrUnionType unionType(Identifier name) {
+		return new CommonStructOrUnionType(name, false);
 	}
 
 	@Override
@@ -758,8 +763,8 @@ public class CommonModelFactory implements ModelFactory {
 		CIVLType structType = struct.getExpressionType();
 
 		result.setExpressionScope(struct.expressionScope());
-		assert structType instanceof CIVLStructType;
-		result.setExpressionType(((CIVLStructType) structType).getField(
+		assert structType instanceof CIVLStructOrUnionType;
+		result.setExpressionType(((CIVLStructOrUnionType) structType).getField(
 				fieldIndex).type());
 		return result;
 	}
@@ -825,6 +830,22 @@ public class CommonModelFactory implements ModelFactory {
 
 		result.setExpressionScope(join(expression.expressionScope(),
 				restriction.expressionScope()));
+		((CommonExpression) result).setExpressionType(booleanType);
+		return result;
+	}
+
+	@Override
+	public QuantifiedExpression quantifiedExpression(CIVLSource source,
+			Quantifier quantifier, Identifier boundVariableName,
+			CIVLType boundVariableType, Expression lower, Expression upper,
+			Expression expression) {
+		QuantifiedExpression result = new CommonQuantifiedExpression(source,
+				quantifier, boundVariableName, boundVariableType, lower, upper,
+				expression);
+
+		result.setExpressionScope(join(
+				join(expression.expressionScope(), lower.expressionScope()),
+				upper.expressionScope()));
 		((CommonExpression) result).setExpressionType(booleanType);
 		return result;
 	}
@@ -1675,7 +1696,7 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public StructField structField(Identifier name, CIVLType type) {
+	public StructOrUnionField structField(Identifier name, CIVLType type) {
 		return new CommonStructField(name, type);
 	}
 

@@ -2,9 +2,9 @@ package edu.udel.cis.vsl.civl.model.common.type;
 
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 
-public class CommonStructField implements StructField {
+public class CommonStructField implements StructOrUnionField {
 
 	private int index = -1;
 	private Identifier name;

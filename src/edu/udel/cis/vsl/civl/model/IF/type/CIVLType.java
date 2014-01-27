@@ -121,6 +121,12 @@ public interface CIVLType {
 	
 	/**
 	 * 
+	 * @return true iff this type is union type
+	 */
+	boolean isUnionType();
+	
+	/**
+	 * 
 	 * @return true iff this type is array type
 	 */
 	boolean isArrayType();

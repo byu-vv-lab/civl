@@ -8,7 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
  * @author zirkel
  * 
  */
-public interface StructField {
+public interface StructOrUnionField {
 
 	Identifier name();
 

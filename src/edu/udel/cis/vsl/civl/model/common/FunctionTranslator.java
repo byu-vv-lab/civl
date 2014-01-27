@@ -125,9 +125,9 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
@@ -1867,7 +1867,7 @@ public class FunctionTranslator {
 		CIVLSource source = modelFactory.sourceOf(node);
 
 		if (variable.isInput() || type instanceof CIVLArrayType
-				|| type instanceof CIVLStructType || type.isHeapType()) {
+				|| type instanceof CIVLStructOrUnionType || type.isHeapType()) {
 			Expression rhs = null;
 
 			if (variable.isInput() && modelBuilder.inputInitMap != null) {
@@ -2645,7 +2645,6 @@ public class FunctionTranslator {
 		Identifier variableName;
 		TypeNode variableTypeNode;
 		CIVLType variableType;
-		Expression restriction;
 		Expression quantifiedExpression;
 		CIVLSource source = modelFactory.sourceOf(expressionNode.getSource());
 
@@ -2671,12 +2670,27 @@ public class FunctionTranslator {
 			throw new CIVLUnimplementedFeatureException("quantifier "
 					+ expressionNode.quantifier(), source);
 		}
-		restriction = translateExpressionNode(expressionNode.restriction(),
-				scope, true);
-		quantifiedExpression = translateExpressionNode(
-				expressionNode.expression(), scope, true);
-		result = modelFactory.quantifiedExpression(source, quantifier,
-				variableName, variableType, restriction, quantifiedExpression);
+		if (expressionNode.isRange()) {
+			Expression lower = translateExpressionNode(expressionNode.lower(),
+					scope, true);
+			Expression upper = translateExpressionNode(expressionNode.upper(),
+					scope, true);
+
+			quantifiedExpression = translateExpressionNode(
+					expressionNode.expression(), scope, true);
+			result = modelFactory.quantifiedExpression(source, quantifier,
+					variableName, variableType, lower, upper,
+					quantifiedExpression);
+		} else {
+			Expression restriction = translateExpressionNode(
+					expressionNode.restriction(), scope, true);
+
+			quantifiedExpression = translateExpressionNode(
+					expressionNode.expression(), scope, true);
+			result = modelFactory.quantifiedExpression(source, quantifier,
+					variableName, variableType, restriction,
+					quantifiedExpression);
+		}
 		functionInfo.popBoundVariableStack();
 		return result;
 	}
@@ -2910,10 +2924,10 @@ public class FunctionTranslator {
 		if ("__bundle__".equals(tag))
 			return modelBuilder.bundleType;
 		else {
-			CIVLStructType result = modelFactory.structType(modelFactory
+			CIVLStructOrUnionType result = modelFactory.structType(modelFactory
 					.identifier(source, tag));
 			int numFields = type.getNumFields();
-			StructField[] civlFields = new StructField[numFields];
+			StructOrUnionField[] civlFields = new StructOrUnionField[numFields];
 
 			modelBuilder.typeMap.put(type, result);
 			for (int i = 0; i < numFields; i++) {
@@ -2924,7 +2938,7 @@ public class FunctionTranslator {
 						fieldType);
 				Identifier identifier = modelFactory.identifier(modelFactory
 						.sourceOf(field.getDefinition().getIdentifier()), name);
-				StructField civlField = modelFactory.structField(identifier,
+				StructOrUnionField civlField = modelFactory.structField(identifier,
 						civlFieldType);
 
 				civlFields[i] = civlField;
@@ -3063,11 +3077,11 @@ public class FunctionTranslator {
 			// "definition".
 			if (((StructureOrUnionTypeNode) typeNode).getStructDeclList() == null)
 				return result;
-			if (!(type instanceof CIVLStructType))
+			if (!(type instanceof CIVLStructOrUnionType))
 				throw new CIVLInternalException("unexpected type: " + type,
 						civlSource);
 			else {
-				tag = ((CIVLStructType) type).name().name();
+				tag = ((CIVLStructOrUnionType) type).name().name();
 			}
 		} else {
 			prefix = "__typedef_";

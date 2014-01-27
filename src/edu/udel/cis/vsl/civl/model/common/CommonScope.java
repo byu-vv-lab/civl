@@ -18,9 +18,9 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -299,8 +299,8 @@ public class CommonScope extends CommonSourceable implements Scope {
 		} else if (type instanceof CIVLArrayType) {
 			containsPointerType = containsPointerType(((CIVLArrayType) type)
 					.elementType());
-		} else if (type instanceof CIVLStructType) {
-			for (StructField f : ((CIVLStructType) type).fields()) {
+		} else if (type instanceof CIVLStructOrUnionType) {
+			for (StructOrUnionField f : ((CIVLStructOrUnionType) type).fields()) {
 				boolean fieldContainsPointer = containsPointerType(f.type());
 
 				containsPointerType = containsPointerType
@@ -324,7 +324,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 			containsScopeType = containsPointerType(((CIVLArrayType) type)
 					.elementType());
 		} else if (type.isStructType()) {
-			for (StructField f : ((CIVLStructType) type).fields()) {
+			for (StructOrUnionField f : ((CIVLStructOrUnionType) type).fields()) {
 				boolean fieldContainsScope = containsScopeType(f.type());
 
 				containsScopeType = containsScopeType || fieldContainsScope;
@@ -347,7 +347,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 			containsProcType = containsProcType(((CIVLArrayType) type)
 					.elementType());
 		} else if (type.isStructType()) {
-			for (StructField f : ((CIVLStructType) type).fields()) {
+			for (StructOrUnionField f : ((CIVLStructOrUnionType) type).fields()) {
 				boolean fieldContainsProc = containsProcType(f.type());
 
 				containsProcType = containsProcType || fieldContainsProc;

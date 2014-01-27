@@ -10,8 +10,8 @@ import java.util.LinkedList;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructField;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -19,18 +19,30 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  * @author zirkel
  * 
  */
-public class CommonStructType extends CommonType implements CIVLStructType {
+public class CommonStructOrUnionType extends CommonType implements
+		CIVLStructOrUnionType {
+
+	private boolean isStruct;
 
 	private Identifier name;
 
-	private StructField[] fields = null;
+	private StructOrUnionField[] fields = null;
 
-	public CommonStructType(Identifier name) {
+	/**
+	 * Create a new (incomplete) struct or union.
+	 * 
+	 * @param name
+	 *            The name of this struct or union.
+	 * @param isStruct
+	 *            True if a struct, false if a union.
+	 */
+	public CommonStructOrUnionType(Identifier name, boolean isStruct) {
 		this.name = name;
+		this.isStruct = isStruct;
 	}
 
 	@Override
-	public Iterable<StructField> fields() {
+	public Iterable<StructOrUnionField> fields() {
 		return Arrays.asList(fields);
 	}
 
@@ -39,8 +51,6 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 		return name;
 	}
 
-	
-	
 	@Override
 	public String toString() {
 		String result = "struct " + name.toString();
@@ -70,7 +80,7 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 	}
 
 	@Override
-	public StructField getField(int index) {
+	public StructOrUnionField getField(int index) {
 		return fields[index];
 	}
 
@@ -79,7 +89,7 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 		if (!isComplete())
 			throw new CIVLInternalException("Struct not complete",
 					(CIVLSource) null);
-		for (StructField field : fields) {
+		for (StructOrUnionField field : fields) {
 			if (field.type().hasState())
 				return true;
 		}
@@ -92,7 +102,7 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 	}
 
 	@Override
-	public void complete(Collection<StructField> fields) {
+	public void complete(Collection<StructOrUnionField> fields) {
 		if (isComplete())
 			throw new CIVLInternalException("Struct already complete",
 					(CIVLSource) null);
@@ -100,8 +110,8 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 			int numFields = fields.size();
 			int count = 0;
 
-			this.fields = new StructField[numFields];
-			for (StructField field : fields) {
+			this.fields = new StructOrUnionField[numFields];
+			for (StructOrUnionField field : fields) {
 				this.fields[count] = field;
 				count++;
 			}
@@ -109,7 +119,7 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 	}
 
 	@Override
-	public void complete(StructField[] fields) {
+	public void complete(StructOrUnionField[] fields) {
 		if (isComplete())
 			throw new CIVLInternalException("Struct already complete",
 					(CIVLSource) null);
@@ -117,8 +127,8 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 			int numFields = fields.length;
 			int count = 0;
 
-			this.fields = new StructField[numFields];
-			for (StructField field : fields) {
+			this.fields = new StructOrUnionField[numFields];
+			for (StructOrUnionField field : fields) {
 				this.fields[count] = field;
 				count++;
 			}
@@ -135,7 +145,7 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 			else {
 				LinkedList<SymbolicType> fieldDynamicTypes = new LinkedList<SymbolicType>();
 
-				for (StructField field : fields) {
+				for (StructOrUnionField field : fields) {
 					SymbolicType fieldDynamicType = field.type()
 							.getDynamicType(universe);
 
@@ -148,10 +158,15 @@ public class CommonStructType extends CommonType implements CIVLStructType {
 		}
 		return dynamicType;
 	}
-	
+
 	@Override
 	public boolean isStructType() {
-		return true;
+		return isStruct;
+	}
+
+	@Override
+	public boolean isUnionType() {
+		return !isStruct;
 	}
 
 }
