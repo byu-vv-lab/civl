@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
@@ -49,6 +50,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -1060,6 +1062,34 @@ public class Evaluator {
 	}
 
 	/**
+	 * Evaluate an array literal expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The array literal expression.
+	 * @return The symbolic representation of the array literal expression.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateArrayLiteral(State state, int pid,
+			ArrayLiteralExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Expression[] elements = expression.elements();
+		SymbolicType dynamicArrayType = expression.getExpressionType()
+				.getDynamicType(universe);
+		ArrayList<SymbolicExpression> symbolicElements = new ArrayList<>();
+
+		for (Expression element : elements) {
+			symbolicElements.add(evaluate(state, pid, element).value);
+		}
+		assert dynamicArrayType instanceof SymbolicTupleType;
+		return new Evaluation(state, universe.tuple(
+				(SymbolicTupleType) dynamicArrayType, symbolicElements));
+	}
+
+	/**
 	 * Evaluate a binary expression.
 	 * 
 	 * @param state
@@ -1393,6 +1423,34 @@ public class Evaluator {
 			StringLiteralExpression expression) {
 		return new Evaluation(state, universe.stringExpression(expression
 				.value()));
+	}
+
+	/**
+	 * Evaluate a struct literal expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The struct literal expression.
+	 * @return The symbolic representation of the struct literal expression.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateStructLiteral(State state, int pid,
+			StructLiteralExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Expression[] fields = expression.fields();
+		SymbolicType dynamicStructType = expression.getExpressionType()
+				.getDynamicType(universe);
+		ArrayList<SymbolicExpression> symbolicFields = new ArrayList<>();
+
+		for (Expression field : fields) {
+			symbolicFields.add(evaluate(state, pid, field).value);
+		}
+		assert dynamicStructType instanceof SymbolicTupleType;
+		return new Evaluation(state, universe.tuple(
+				(SymbolicTupleType) dynamicStructType, symbolicFields));
 	}
 
 	/**
@@ -2170,6 +2228,10 @@ public class Evaluator {
 			result = evaluateAddressOf(state, pid,
 					(AddressOfExpression) expression);
 			break;
+		case ARRAY_LITERAL:
+			result = evaluateArrayLiteral(state, pid,
+					(ArrayLiteralExpression) expression);
+			break;
 		case BINARY:
 			result = evaluateBinary(state, pid, (BinaryExpression) expression);
 			break;
@@ -2232,6 +2294,10 @@ public class Evaluator {
 		case STRING_LITERAL:
 			result = evaluateStringLiteral(state, pid,
 					(StringLiteralExpression) expression);
+			break;
+		case STRUCT_LITERAL:
+			result = evaluateStructLiteral(state, pid,
+					(StructLiteralExpression) expression);
 			break;
 		case SUBSCRIPT:
 			result = evaluateSubscript(state, pid,
