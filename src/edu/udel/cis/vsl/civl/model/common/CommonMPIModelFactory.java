@@ -65,6 +65,12 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 */
 	static final String MPI_WAIT = "MPI_Wait";
 
+	static final String RANK = "$RANK";
+
+	/* ************************** Instance Fields ************************** */
+	
+	private VariableExpression rankVariable;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -145,5 +151,15 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 			boolean isCall, CIVLFunction function, List<Expression> arguments) {
 		return callOrSpawnStatement(systemSource(), source, isCall, function,
 				arguments, null);
+	}
+
+	public void createRankVariable(Scope scope) {
+		Variable rankVariable = this.variable(this.integerType(), this.identifier(RANK), 0);
+		this.rankVariable = this.variableExpression(rankVariable);
+		scope.addVariable(rankVariable);
+	}
+	
+	public VariableExpression rankVariable(){
+		return this.rankVariable;
 	}
 }

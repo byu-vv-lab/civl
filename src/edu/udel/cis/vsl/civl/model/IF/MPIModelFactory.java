@@ -90,4 +90,20 @@ public interface MPIModelFactory extends ModelFactory {
 	CallOrSpawnStatement callOrSpawnStatement(Location source, boolean isCall,
 			CIVLFunction function, List<Expression> arguments);
 
+	/**
+	 * Create the rank variable.
+	 * 
+	 * @param scope
+	 *            The scope that contains the rank variable. It should be the
+	 *            top scope of the main function (i.e., the MPI process
+	 *            function).
+	 */
+	void createRankVariable(Scope scope);
+
+	/**
+	 * Return the rank variable.
+	 * 
+	 * @return
+	 */
+	VariableExpression rankVariable();
 }
