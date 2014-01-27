@@ -10,22 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
-/**
- * * An MPI standard-mode blocking send statement. Syntax:
- * 
- * <pre>
- * int MPI_Send(const void* buf, int count, MPI_Datatype datatype,
- *              int dest, int tag, MPI_Comm comm)
- * </pre>
- * 
- * Note that there is a return value, which is used to return an error code.
- * Under normal circumstances it returns 0.
- * 
- * TODO: complete java-docs
- * 
- * @author ziqingluo
- * 
- */
+
 public class CommonMPISendStatement extends CommonStatement implements
 		MPISendStatement {
 	/* ************************* Instance Fields *************************** */

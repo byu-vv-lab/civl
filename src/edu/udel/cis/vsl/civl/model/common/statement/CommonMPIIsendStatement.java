@@ -10,12 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIIsendStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
-/**
- * TODO: The MPI_Request type can be translated as expression type?
- * 
- * @author ziqingluo
- * 
- */
+
 public class CommonMPIIsendStatement extends CommonStatement implements
 		MPIIsendStatement {
 	/* ************************* Instance Fields *************************** */

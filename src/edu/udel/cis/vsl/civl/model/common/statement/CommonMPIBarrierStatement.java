@@ -8,12 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIBarrierStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
-/**
- * {@link MPIBarrierStatement}
- * 
- * @author ziqingluo
- * 
- */
+
 public class CommonMPIBarrierStatement extends CommonStatement implements
 		MPIBarrierStatement {
 	/* ************************* Instance Fields *************************** */

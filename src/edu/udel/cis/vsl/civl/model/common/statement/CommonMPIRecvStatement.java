@@ -10,17 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 
-/**
- * An MPI standard-mode blocking recv statement. Syntax:
- * 
- * <pre>
- * int MPI_Recv(const void* buf, int count, MPI_Datatype datatype,
- *              int dest, int tag, MPI_Comm comm, MPI_Status * status)
- * </pre>
- * 
- * @author ziqingluo
- * 
- */
+
 public class CommonMPIRecvStatement extends CommonStatement implements
 		MPIRecvStatement {
 	/* ************************* Instance Fields *************************** */
@@ -90,13 +80,6 @@ public class CommonMPIRecvStatement extends CommonStatement implements
 		this.lhs = lhs;
 	}
 
-	/**
-	 * I still don't get why newGuard != null means no change.
-	 * 
-	 * TODO:MPIStatus should not be able to replaced?
-	 * 
-	 * TODO:MPIStatus can be the expression type?
-	 */
 	/* ************************* Methods from Statement ******************** */
 	@Override
 	public Statement replaceWith(ConditionalExpression oldExpression,
