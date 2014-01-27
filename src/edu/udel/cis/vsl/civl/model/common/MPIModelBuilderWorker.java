@@ -9,18 +9,19 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 public class MPIModelBuilderWorker extends ModelBuilderWorker {
-	private CommonMPIModelFactory mpiFactory;
+	private MPIModelFactory mpiFactory;
 
-	public MPIModelBuilderWorker(GMCConfiguration config, CommonMPIModelFactory factory,
-			Program program, String name) {
+	public MPIModelBuilderWorker(GMCConfiguration config,
+			MPIModelFactory factory, Program program, String name) {
 		super(config, factory, program, name);
 	}
-	
+
 	/* *************************** Public Methods ************************** */
 
 	/**
@@ -39,7 +40,7 @@ public class MPIModelBuilderWorker extends ModelBuilderWorker {
 		MPIFunctionTranslator systemFunctionTranslator = new MPIFunctionTranslator(
 				this, mpiFactory, system);
 
-		//initialization(system);
+		// initialization(system);
 		systemFunctionTranslator.translateRootFunction(systemScope, rootNode);
 		if (inputInitMap != null) {
 			// if commandline specified input variables that do not
@@ -66,16 +67,16 @@ public class MPIModelBuilderWorker extends ModelBuilderWorker {
 			throw new CIVLException("Program must have a main function.",
 					mpiFactory.sourceOf(rootNode));
 		}
-//		// translate main function, using system as the CIVL function object,
-//		// and combining initialization statements with its body
-//		// translateFunctionDefinitionNode(mainFunctionNode, system,
-//		// initialization);
-//		translateUndefinedFunctions();
-//		completeCallOrSpawnStatements();
-//		factory.completeHeapType(heapType, mallocStatements);
-//		completeBundleType();
-//		completeModel(system);
-//		this.staticAnalysis();
+		// // translate main function, using system as the CIVL function object,
+		// // and combining initialization statements with its body
+		// // translateFunctionDefinitionNode(mainFunctionNode, system,
+		// // initialization);
+		// translateUndefinedFunctions();
+		// completeCallOrSpawnStatements();
+		// factory.completeHeapType(heapType, mallocStatements);
+		// completeBundleType();
+		// completeModel(system);
+		// this.staticAnalysis();
 	}
 
 }

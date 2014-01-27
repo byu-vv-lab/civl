@@ -67,9 +67,15 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 
 	static final String RANK = "$RANK";
 
+	static final String MPI_COMM_WORLD = "MPI_COMM_WORLD";
+
+	static final String MPI_START = "$MPI_START";
+
 	/* ************************** Instance Fields ************************** */
-	
+
 	private VariableExpression rankVariable;
+
+	private VariableExpression startVariable;
 
 	/* **************************** Constructors *************************** */
 
@@ -153,13 +159,30 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 				arguments, null);
 	}
 
-	public void createRankVariable(Scope scope) {
-		Variable rankVariable = this.variable(this.integerType(), this.identifier(RANK), 0);
+	@Override
+	public void createRankVariable(Scope scope, int vid) {
+		Variable rankVariable = this.variable(this.integerType(),
+				this.identifier(RANK), vid);
 		this.rankVariable = this.variableExpression(rankVariable);
 		scope.addVariable(rankVariable);
 	}
-	
-	public VariableExpression rankVariable(){
+
+	@Override
+	public VariableExpression rankVariable() {
 		return this.rankVariable;
 	}
+
+	@Override
+	public void createStartVariable(Scope scope, int vid) {
+		Variable startVariable = this.variable(this.integerType(),
+				this.identifier(MPI_START), vid);
+		this.startVariable = this.variableExpression(startVariable);
+		scope.addVariable(startVariable);
+	}
+	
+	@Override
+	public VariableExpression startVariable() {
+		return this.startVariable;
+	}
+	
 }

@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.common;
 
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -26,6 +27,8 @@ public class CommonModelBuilder implements ModelBuilder {
 	 */
 	private ModelFactory factory;
 
+	private boolean mpiMode = false;
+
 	// Constructors....................................................
 
 	/**
@@ -35,8 +38,12 @@ public class CommonModelBuilder implements ModelBuilder {
 	 * @param universe
 	 *            The symbolic universe
 	 */
-	public CommonModelBuilder(SymbolicUniverse universe) {
-		factory = new CommonModelFactory(universe);
+	public CommonModelBuilder(SymbolicUniverse universe, boolean mpiMode) {
+		this.mpiMode = mpiMode;
+		if (!mpiMode)
+			factory = new CommonModelFactory(universe);
+		else
+			factory = new CommonMPIModelFactory(universe);
 	}
 
 	// Exported Methods................................................
@@ -44,9 +51,13 @@ public class CommonModelBuilder implements ModelBuilder {
 	@Override
 	public Model buildModel(GMCConfiguration config, Program program,
 			String name) throws CommandLineException {
-		ModelBuilderWorker worker = new ModelBuilderWorker(config, factory,
-				program, name);
+		ModelBuilderWorker worker;
 
+		if (!this.mpiMode)
+			worker = new ModelBuilderWorker(config, factory, program, name);
+		else
+			worker = new MPIModelBuilderWorker(config,
+					(MPIModelFactory) factory, program, name);
 		worker.buildModel();
 		return worker.getModel();
 	}

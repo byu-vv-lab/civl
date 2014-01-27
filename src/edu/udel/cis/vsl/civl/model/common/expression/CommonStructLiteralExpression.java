@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 public class CommonStructLiteralExpression extends CommonExpression implements
@@ -30,6 +31,12 @@ public class CommonStructLiteralExpression extends CommonExpression implements
 	@Override
 	public void setFields(Expression[] fields) {
 		this.fields = fields;
+	}
+
+	@Override
+	public CIVLStructType structType() {
+		assert this.expressionType instanceof CIVLStructType;
+		return (CIVLStructType) this.expressionType;
 	}
 
 }

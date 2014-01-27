@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 public class CommonArrayLiteralExpression extends CommonExpression implements
@@ -19,7 +20,6 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 
 	@Override
 	public ExpressionKind expressionKind() {
-		// TODO Auto-generated method stub
 		return ExpressionKind.ARRAY_LITERAL;
 	};
 
@@ -46,6 +46,12 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	@Override
 	public void setElements(Expression[] elements) {
 		this.elements = elements;
+	}
+
+	@Override
+	public CIVLArrayType arrayType() {
+		assert this.expressionType instanceof CIVLArrayType;
+		return (CIVLArrayType) this.expressionType;
 	}
 
 }

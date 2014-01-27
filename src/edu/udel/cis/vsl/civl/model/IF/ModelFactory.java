@@ -162,8 +162,7 @@ public interface ModelFactory {
 	CIVLHeapType heapType(String name);
 
 	/**
-	 * <<<<<<< .mine Generate a system function ======= Get a new incomplete
-	 * array type. >>>>>>> .r497
+	 * Get a new incomplete array type.
 	 * 
 	 * @param elementType
 	 *            The type of each element in the array.
@@ -172,7 +171,7 @@ public interface ModelFactory {
 	CIVLArrayType incompleteArrayType(CIVLType elementType);
 
 	/**
-	 * <<<<<<< .mine Generate an abstract function.
+	 * Generate an abstract function.
 	 * 
 	 * @param source
 	 *            The CIVL source of the function.

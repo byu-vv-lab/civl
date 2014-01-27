@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
-import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -23,7 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class MPIFunctionTranslator extends FunctionTranslator {
 
-	//private static final String MPI_Process_Name = "MPI_Process";
+	// private static final String MPI_Process_Name = "MPI_Process";
 	private MPIModelFactory mpiFactory;
 	private CIVLFunction mpiProcessFunction;
 
@@ -33,21 +32,66 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		this.mpiFactory = mpiFactory;
 	}
 
-	public void translateRootFunction(Scope systemScope, ASTNode rootNode,
+	/**
+	 * The root function is the system function, which has the equivalent
+	 * functionality as the function below.<br>
+	 * 
+	 * <pre>
+	 * <code>
+	 * void init() {
+	 *   for (int i=0; i<NPROCS; i++)
+	 *     __procs[i] = $spawn MPI_Process(i);
+	 *   __MPI_Comm_World = $comm_create(NPROCS, __procs);
+	 *   __start=1;
+	 * }
+	 * void finalize() {
+	 *   for (int i=0; i<NPROCS; i++)
+	 *     $wait __procs[i];
+	 * }
+	 * void main() {
+	 *   $atomic{
+	 *     init();
+	 *     finalize();
+	 *   }
+	 * }
+	 * </code>
+	 * </pre>
+	 * 
+	 * @param systemScope
+	 *            The root scope.
+	 * @param numberOfProcs
+	 *            The expression of the number of processes. This may be a
+	 *            integer literal for most cases.
+	 */
+	public void translateRootFunction(Scope systemScope,
 			Expression numberOfProcs) {
 		Fragment result;
 		Fragment spawnPhase = spawnMpiProcesses(systemScope, numberOfProcs);
+		Location assignStartLocation = mpiFactory.location(systemScope);
 		Fragment waitPhase = waitMpiProcesses(systemScope, numberOfProcs);
-		Location returnLocation = mpiFactory.location(function()
-				.outerScope());
-		Fragment returnFragment = mpiFactory.returnFragment(
-				mpiFactory.systemSource(), returnLocation, null,
-				functionInfo().function());
+		Location returnLocation = mpiFactory.location(function().outerScope());
+		Fragment returnFragment = mpiFactory.returnFragment(mpiFactory
+				.systemSource(), returnLocation, null, functionInfo()
+				.function());
+		Fragment assignStartFragment;
 
-		result = spawnPhase.combineWith(waitPhase);
+		mpiFactory.createStartVariable(systemScope, systemScope.numVariables());
+		assignStartFragment = new CommonFragment(mpiFactory.assignStatement(
+				assignStartLocation, mpiFactory.startVariable(),
+				mpiFactory.integerLiteralExpression(BigInteger.valueOf(0)),
+				false));
+		// TODO initialize MPI_COMM_WORLD
+		result = spawnPhase.combineWith(assignStartFragment);
+		result = result.combineWith(waitPhase);
 		result = result.combineWith(returnFragment);
 	}
 
+	/**
+	 * 
+	 * @param scope
+	 * @param numberOfProcs
+	 * @return
+	 */
 	private Fragment spawnMpiProcesses(Scope scope, Expression numberOfProcs) {
 		Scope newScope = mpiFactory.scope(scope, new LinkedHashSet<Variable>(),
 				functionInfo().function());

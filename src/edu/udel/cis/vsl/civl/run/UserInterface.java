@@ -83,6 +83,9 @@ public class UserInterface {
 	public final static Option minO = Option.newScalarOption("min", BOOLEAN,
 			"search for minimal counterexample", false);
 
+	public final static Option mpiO = Option.newScalarOption("mpi", BOOLEAN,
+			"MPI mode", false);
+
 	public final static Option porO = Option.newScalarOption("por", STRING,
 			"partial order reduction (por) choices:\n"
 					+ "    std (standard por) or scp (scoped por)", "std");
@@ -174,7 +177,7 @@ public class UserInterface {
 				userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO, porO,
-				saveStatesO, simplifyO, solveO, statesO, enablePrintfO);
+				saveStatesO, simplifyO, solveO, statesO, enablePrintfO, mpiO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -236,7 +239,8 @@ public class UserInterface {
 		boolean debug = config.isTrue(debugO);
 		boolean verbose = config.isTrue(verboseO);
 		boolean showModel = config.isTrue(showModelO);
-		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
+		ModelBuilder modelBuilder = Models.newModelBuilder(universe,
+				config.isTrue(mpiO));
 		Activator frontEnd = getFrontEnd(filename, config);
 		Program program;
 		Model model;

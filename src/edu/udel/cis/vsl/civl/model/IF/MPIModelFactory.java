@@ -97,8 +97,12 @@ public interface MPIModelFactory extends ModelFactory {
 	 *            The scope that contains the rank variable. It should be the
 	 *            top scope of the main function (i.e., the MPI process
 	 *            function).
+	 * 
+	 * @param vid
+	 *            The index of the variable in the scope. Usually vid ==
+	 *            scope.NumOfVaraibles().
 	 */
-	void createRankVariable(Scope scope);
+	void createRankVariable(Scope scope, int vid);
 
 	/**
 	 * Return the rank variable.
@@ -106,4 +110,8 @@ public interface MPIModelFactory extends ModelFactory {
 	 * @return
 	 */
 	VariableExpression rankVariable();
+
+	void createStartVariable(Scope scope, int vid);
+
+	VariableExpression startVariable();
 }
