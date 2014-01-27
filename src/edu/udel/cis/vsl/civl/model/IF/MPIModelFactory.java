@@ -13,7 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public interface MPIModelFactory extends ModelFactory {
@@ -32,7 +32,7 @@ public interface MPIModelFactory extends ModelFactory {
 	 */
 	Location location(Scope scope);
 
-	Variable variable(CIVLPrimitiveType type, Identifier name, int vid);
+	Variable variable(CIVLType type, Identifier name, int vid);
 
 	Identifier identifier(String name);
 
@@ -114,4 +114,8 @@ public interface MPIModelFactory extends ModelFactory {
 	void createStartVariable(Scope scope, int vid);
 
 	VariableExpression startVariable();
+
+	void createProcsVariable(Scope scope, int vid, Expression nprocs);
+
+	VariableExpression procsVariable();
 }

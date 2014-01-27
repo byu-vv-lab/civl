@@ -151,7 +151,7 @@ public class FunctionTranslator {
 	/**
 	 * Store temporary information of the function being processed
 	 */
-	private FunctionInfo functionInfo;
+	protected FunctionInfo functionInfo;
 
 	/**
 	 * The unique model factory to be used in the system.
@@ -171,12 +171,12 @@ public class FunctionTranslator {
 	/**
 	 * The AST node of the function body, which is to be used for translation.
 	 */
-	private StatementNode functionBodyNode;
+	protected StatementNode functionBodyNode;
 
 	/**
 	 * The CIVL function that is the result of this function translator.
 	 */
-	private CIVLFunction function;
+	protected CIVLFunction function;
 
 	/* **************************** Constructors *************************** */
 
@@ -304,7 +304,7 @@ public class FunctionTranslator {
 	 * @return The fragment of CIVL locations and statements that represents the
 	 *         function body node.
 	 */
-	private Fragment translateFunctionBody() {
+	protected Fragment translateFunctionBody() {
 		Fragment body;
 		Scope scope = this.function.outerScope();
 
@@ -947,7 +947,7 @@ public class FunctionTranslator {
 	 *            The location
 	 * @return The fragment of statements translated from the AST node
 	 */
-	private Fragment translateASTNode(ASTNode node, Scope scope,
+	protected Fragment translateASTNode(ASTNode node, Scope scope,
 			Location location) {
 		Fragment result = null;
 
@@ -2938,8 +2938,8 @@ public class FunctionTranslator {
 						fieldType);
 				Identifier identifier = modelFactory.identifier(modelFactory
 						.sourceOf(field.getDefinition().getIdentifier()), name);
-				StructOrUnionField civlField = modelFactory.structField(identifier,
-						civlFieldType);
+				StructOrUnionField civlField = modelFactory.structField(
+						identifier, civlFieldType);
 
 				civlFields[i] = civlField;
 			}
@@ -3072,7 +3072,12 @@ public class FunctionTranslator {
 		CIVLSource civlSource = modelFactory.sourceOf(typeNode);
 
 		if (typeNode instanceof StructureOrUnionTypeNode) {
-			prefix = "__struct_";
+			StructureOrUnionTypeNode structOrUnionTypeNode = (StructureOrUnionTypeNode) typeNode;
+
+			if (structOrUnionTypeNode.isStruct())
+				prefix = "__struct_";
+			else
+				prefix = "__union_";
 			// This is null if this is a "declaration" but not the
 			// "definition".
 			if (((StructureOrUnionTypeNode) typeNode).getStructDeclList() == null)
@@ -3112,7 +3117,6 @@ public class FunctionTranslator {
 	}
 
 	// Getters and Setters
-
 	protected FunctionInfo functionInfo() {
 		return this.functionInfo;
 	}
@@ -3123,6 +3127,10 @@ public class FunctionTranslator {
 
 	protected void setFunction(CIVLFunction function) {
 		this.function = function;
+	}
+
+	protected ModelBuilderWorker modelBuilder() {
+		return this.modelBuilder;
 	}
 
 	protected ModelFactory modelFactory() {

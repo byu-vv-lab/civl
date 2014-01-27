@@ -217,7 +217,7 @@ public class ModelBuilderWorker {
 	 * *********************************************************************
 	 */
 
-	private void initialization(CIVLFunction system) {
+	protected void initialization(CIVLFunction system) {
 		systemScope = system.outerScope();
 		callStatements = new LinkedHashMap<CallOrSpawnStatement, Function>();
 		functionMap = new LinkedHashMap<Function, CIVLFunction>();
@@ -232,7 +232,7 @@ public class ModelBuilderWorker {
 	 * are obtained by translating function declaration node, function call
 	 * node, and so on.
 	 */
-	private void translateUndefinedFunctions() {
+	protected void translateUndefinedFunctions() {
 		while (!unprocessedFunctions.isEmpty()) {
 			FunctionDefinitionNode functionDefinition = unprocessedFunctions
 					.remove(0);
@@ -320,7 +320,7 @@ public class ModelBuilderWorker {
 	/**
 	 * Complete the bundle type.
 	 */
-	private void completeBundleType() {
+	protected void completeBundleType() {
 		Map<SymbolicType, Integer> dynamicTypeMap = new LinkedHashMap<SymbolicType, Integer>();
 		int dynamicTypeCount = 0;
 
@@ -353,7 +353,7 @@ public class ModelBuilderWorker {
 	 * the function might haven't been translated at the time when the function
 	 * call is translated.
 	 */
-	private void completeCallOrSpawnStatements() {
+	protected void completeCallOrSpawnStatements() {
 		for (Entry<CallOrSpawnStatement, Function> entry : callStatements
 				.entrySet()) {
 			entry.getKey().setFunction(functionMap.get(entry.getValue()));
@@ -367,7 +367,7 @@ public class ModelBuilderWorker {
 	 * @param system
 	 *            The system function of the model, i.e. _CIVL_SYSTEM function.
 	 */
-	private void completeModel(CIVLFunction system) {
+	protected void completeModel(CIVLFunction system) {
 		model = factory.model(system.getSource(), system);
 		model.setMessageType(messageType);
 		model.setQueueType(queueType);
@@ -383,7 +383,7 @@ public class ModelBuilderWorker {
 	 * Perform static analysis, including: dereferences, purely local
 	 * statements, etc.
 	 */
-	private void staticAnalysis() {
+	protected void staticAnalysis() {
 		for (CIVLFunction f : model.functions()) {
 			f.simplify();
 			// identify all purely local variables

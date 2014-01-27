@@ -65,7 +65,7 @@ public interface CIVLStructOrUnionType extends CIVLType {
 	 * @return The name of this struct or union.
 	 */
 	Identifier name();
-	
+
 	/**
 	 * Completes this struct type by specifying the fields as a collection.
 	 * 
@@ -86,4 +86,10 @@ public interface CIVLStructOrUnionType extends CIVLType {
 	 *             if this struct type is already complete
 	 */
 	void complete(StructOrUnionField[] fields);
+
+//	/**
+//	 * 
+//	 * @return True if this is a struct type, otherwise return false.
+//	 */
+//	boolean isStruct();
 }

@@ -18,7 +18,8 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonMPISendStatement;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -71,11 +72,15 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 
 	static final String MPI_START = "$MPI_START";
 
+	static final String PROCS = "$PROCS";
+
 	/* ************************** Instance Fields ************************** */
 
 	private VariableExpression rankVariable;
 
 	private VariableExpression startVariable;
+
+	private VariableExpression procsVariable;
 
 	/* **************************** Constructors *************************** */
 
@@ -120,7 +125,7 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	}
 
 	@Override
-	public Variable variable(CIVLPrimitiveType type, Identifier name, int vid) {
+	public Variable variable(CIVLType type, Identifier name, int vid) {
 		return variable(systemSource(), type, name, vid);
 	}
 
@@ -179,10 +184,23 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 		this.startVariable = this.variableExpression(startVariable);
 		scope.addVariable(startVariable);
 	}
-	
+
 	@Override
 	public VariableExpression startVariable() {
 		return this.startVariable;
 	}
-	
+
+	@Override
+	public void createProcsVariable(Scope scope, int vid, Expression nprocs) {
+		CIVLArrayType arrayType = completeArrayType(processType(), nprocs);
+		Variable procsVariable = this.variable(arrayType,
+				this.identifier(PROCS), vid);
+		this.procsVariable = this.variableExpression(procsVariable);
+		scope.addVariable(procsVariable);
+	}
+
+	@Override
+	public VariableExpression procsVariable() {
+		return this.procsVariable;
+	}
 }

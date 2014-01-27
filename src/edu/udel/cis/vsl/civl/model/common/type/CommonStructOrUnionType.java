@@ -53,7 +53,10 @@ public class CommonStructOrUnionType extends CommonType implements
 
 	@Override
 	public String toString() {
-		String result = "struct " + name.toString();
+		if (this.isStruct)
+			return "struct " + name.toString();
+		else
+			return "union " + name.toString();
 
 		// if (isComplete()) {
 		// result += "{";
@@ -71,7 +74,6 @@ public class CommonStructOrUnionType extends CommonType implements
 		// }
 		// result += "}";
 		// }
-		return result;
 	}
 
 	@Override
@@ -87,8 +89,8 @@ public class CommonStructOrUnionType extends CommonType implements
 	@Override
 	public boolean hasState() {
 		if (!isComplete())
-			throw new CIVLInternalException("Struct not complete",
-					(CIVLSource) null);
+			throw new CIVLInternalException((isStruct ? "Struct" : "Union")
+					+ " not complete", (CIVLSource) null);
 		for (StructOrUnionField field : fields) {
 			if (field.type().hasState())
 				return true;
@@ -104,8 +106,8 @@ public class CommonStructOrUnionType extends CommonType implements
 	@Override
 	public void complete(Collection<StructOrUnionField> fields) {
 		if (isComplete())
-			throw new CIVLInternalException("Struct already complete",
-					(CIVLSource) null);
+			throw new CIVLInternalException((isStruct ? "Struct" : "Union")
+					+ " already complete", (CIVLSource) null);
 		else {
 			int numFields = fields.size();
 			int count = 0;
@@ -121,8 +123,8 @@ public class CommonStructOrUnionType extends CommonType implements
 	@Override
 	public void complete(StructOrUnionField[] fields) {
 		if (isComplete())
-			throw new CIVLInternalException("Struct already complete",
-					(CIVLSource) null);
+			throw new CIVLInternalException((isStruct ? "Struct" : "Union")
+					+ "  already complete", (CIVLSource) null);
 		else {
 			int numFields = fields.length;
 			int count = 0;
@@ -140,7 +142,8 @@ public class CommonStructOrUnionType extends CommonType implements
 		if (dynamicType == null) {
 			if (!isComplete())
 				throw new CIVLInternalException(
-						"cannot get dynamic type of incomplete struct type: "
+						"cannot get dynamic type of incomplete "
+								+ (isStruct ? "struct" : "union") + " type: "
 								+ this, (CIVLSource) null);
 			else {
 				LinkedList<SymbolicType> fieldDynamicTypes = new LinkedList<SymbolicType>();
@@ -168,5 +171,4 @@ public class CommonStructOrUnionType extends CommonType implements
 	public boolean isUnionType() {
 		return !isStruct;
 	}
-
 }

@@ -4,11 +4,17 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
+import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
+import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -17,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -24,12 +31,53 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 
 	// private static final String MPI_Process_Name = "MPI_Process";
 	private MPIModelFactory mpiFactory;
-	private CIVLFunction mpiProcessFunction;
+	private MPIModelBuilderWorker mpiModelBuilder;
 
-	MPIFunctionTranslator(ModelBuilderWorker modelBuilder,
+	MPIFunctionTranslator(MPIModelBuilderWorker mpiModelBuilder,
 			MPIModelFactory mpiFactory, CIVLFunction function) {
-		super(modelBuilder, mpiFactory, function);
+		super(mpiModelBuilder, mpiFactory, function);
 		this.mpiFactory = mpiFactory;
+		this.mpiModelBuilder = mpiModelBuilder;
+	}
+
+	MPIFunctionTranslator(MPIModelBuilderWorker mpiModelBuilder,
+			MPIModelFactory mpiFactory, CIVLFunction function,
+			StatementNode functionBody) {
+		super(mpiModelBuilder, mpiFactory, function);
+		this.mpiFactory = mpiFactory;
+		this.mpiModelBuilder = mpiModelBuilder;
+		this.functionBodyNode = functionBody;
+	}
+
+	public CIVLFunction processMainFunction(Scope systemScope, ASTNode rootNode) {
+		FunctionDefinitionNode processMainNode = null;
+		Identifier functionName;
+		ArrayList<Variable> parameters = new ArrayList<>(1);
+
+		for (int i = 0; i < rootNode.numChildren(); i++) {
+			ASTNode node = rootNode.child(i);
+
+			if (node.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
+				FunctionDefinitionNode functionDefinitionNode = (FunctionDefinitionNode) node;
+
+				if (functionDefinitionNode.getName().equals("main")) {
+					mpiModelBuilder.mainFunctionNode = functionDefinitionNode;
+					processMainNode = functionDefinitionNode;
+					break;
+				}
+			}
+		}
+		if (processMainNode == null) {
+			throw new CIVLSyntaxException("program must have a main function,",
+					mpiFactory.sourceOf(rootNode));
+		}
+		functionName = mpiFactory.identifier(
+				mpiFactory.sourceOfBeginning(processMainNode), "main");
+		parameters.add(mpiFactory.variable(mpiFactory.integerType(), mpiFactory
+				.identifier(mpiFactory.sourceOfBeginning(processMainNode),
+						"__rank"), 0));
+		return mpiFactory.function(mpiFactory.sourceOf(rootNode), functionName,
+				parameters, mpiFactory.voidType(), systemScope, null);
 	}
 
 	/**
@@ -40,13 +88,17 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	 * <code>
 	 * void init() {
 	 *   for (int i=0; i<NPROCS; i++)
-	 *     __procs[i] = $spawn MPI_Process(i);
+	 *     $spawn MPI_Process(i);
 	 *   __MPI_Comm_World = $comm_create(NPROCS, __procs);
 	 *   __start=1;
-	 * }
+	 * }</code>
+	 * </pre>
+	 * 
+	 * <pre>
+	 * <code>
 	 * void finalize() {
-	 *   for (int i=0; i<NPROCS; i++)
-	 *     $wait __procs[i];
+	 *   for (int i=1; i<=NPROCS; i++)
+	 *     $wait i;
 	 * }
 	 * void main() {
 	 *   $atomic{
@@ -63,27 +115,73 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	 *            The expression of the number of processes. This may be a
 	 *            integer literal for most cases.
 	 */
-	public void translateRootFunction(Scope systemScope,
+	public Fragment translateRootFunction(Scope systemScope,
+			Expression numberOfProcs, ASTNode rootNode, Scope processMainScope) {
+		translateRootFunctionBody(systemScope, numberOfProcs);
+		return translateRootNodes(mpiModelBuilder.processMainScope(), rootNode);
+	}
+
+	public void translateProcessMainFunction(Fragment initialization) {
+		Fragment body = this.translateFunctionBody();
+		Expression startGuard = mpiFactory.binaryExpression(null,
+				BINARY_OPERATOR.EQUAL, mpiFactory.startVariable(), mpiFactory
+						.integerLiteralExpression(null, BigInteger.valueOf(1)));
+
+		body = initialization.combineWith(body);
+		body.addGuardToStartLocation(startGuard, mpiFactory);
+		functionInfo.completeFunction(body);
+	}
+
+	private Fragment translateRootNodes(Scope mainScope, ASTNode rootNode) {
+		Fragment initialization = new CommonFragment();
+
+		mpiFactory.addConditionalExpressionQueue();
+		for (int i = 0; i < rootNode.numChildren(); i++) {
+			ASTNode node = rootNode.child(i);
+			Fragment fragment = translateASTNode(node, mainScope, null);
+
+			if (fragment != null)
+				initialization = initialization.combineWith(fragment);
+		}
+		mpiFactory.popConditionaExpressionStack();
+		return initialization;
+	}
+
+	private void translateRootFunctionBody(Scope systemScope,
 			Expression numberOfProcs) {
 		Fragment result;
-		Fragment spawnPhase = spawnMpiProcesses(systemScope, numberOfProcs);
-		Location assignStartLocation = mpiFactory.location(systemScope);
-		Fragment waitPhase = waitMpiProcesses(systemScope, numberOfProcs);
-		Location returnLocation = mpiFactory.location(function().outerScope());
-		Fragment returnFragment = mpiFactory.returnFragment(mpiFactory
-				.systemSource(), returnLocation, null, functionInfo()
-				.function());
+		Fragment initStartFragment;
+		Fragment spawnPhase;
+		Fragment waitPhase;
+		Location returnLocation;
+		Fragment returnFragment;
 		Fragment assignStartFragment;
+		Location atomicStart = mpiFactory.location(systemScope);
 
 		mpiFactory.createStartVariable(systemScope, systemScope.numVariables());
-		assignStartFragment = new CommonFragment(mpiFactory.assignStatement(
-				assignStartLocation, mpiFactory.startVariable(),
+		mpiFactory.createProcsVariable(systemScope, systemScope.numVariables(),
+				numberOfProcs);
+		initStartFragment = new CommonFragment(mpiFactory.assignStatement(
+				mpiFactory.location(systemScope), mpiFactory.startVariable(),
 				mpiFactory.integerLiteralExpression(BigInteger.valueOf(0)),
 				false));
+		spawnPhase = spawnMpiProcesses(systemScope, numberOfProcs);
+		assignStartFragment = new CommonFragment(mpiFactory.assignStatement(
+				mpiFactory.location(systemScope), mpiFactory.startVariable(),
+				mpiFactory.integerLiteralExpression(BigInteger.valueOf(1)),
+				false));
 		// TODO initialize MPI_COMM_WORLD
-		result = spawnPhase.combineWith(assignStartFragment);
+		waitPhase = waitMpiProcesses(systemScope, numberOfProcs);
+		result = initStartFragment.combineWith(spawnPhase);
+		result = result.combineWith(assignStartFragment);
 		result = result.combineWith(waitPhase);
+		result = mpiFactory.atomicFragment(false, result, atomicStart,
+				mpiFactory.location(systemScope));
+		returnLocation = mpiFactory.location(function().outerScope());
+		returnFragment = mpiFactory.returnFragment(mpiFactory.systemSource(),
+				returnLocation, null, functionInfo().function());
 		result = result.combineWith(returnFragment);
+		functionInfo().completeFunction(result);
 	}
 
 	/**
@@ -114,15 +212,19 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 				.getSource(), loopEntranceLocation, mpiFactory.unaryExpression(
 				condition.getSource(), UNARY_OPERATOR.NOT, condition), false);
 		ArrayList<Expression> arguments = new ArrayList<>();
+		CallOrSpawnStatement mpiSpawn;
 
-		newScope.addVariable(iVariable);
 		initFragment = new CommonFragment(mpiFactory.assignStatement(location,
 				iVariableExpression,
 				mpiFactory.integerLiteralExpression(BigInteger.valueOf(0)),
 				true));
-		arguments.add(iVariableExpression);
-		loopBody = new CommonFragment(mpiFactory.callOrSpawnStatement(
-				loopBodyLocation, false, mpiProcessFunction, arguments));
+		arguments.add(iVariableExpression);// the argument is the value of rank.
+		mpiSpawn = mpiFactory.callOrSpawnStatement(loopBodyLocation, false,
+				mpiModelBuilder.processMainFunction(), arguments);
+		mpiSpawn.setLhs(mpiFactory.subscriptExpression(null,
+				mpiFactory.procsVariable(), iVariableExpression));
+		newScope.addVariable(iVariable);
+		loopBody = new CommonFragment(mpiSpawn);
 		incrementer = new CommonFragment(mpiFactory.assignStatement(mpiFactory
 				.location(newScope), iVariableExpression, mpiFactory
 				.binaryExpression(mpiFactory.systemSource(),
@@ -135,8 +237,60 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		return result;
 	}
 
+	/**
+	 * *
+	 * 
+	 * <pre>
+	 * <code>
+	 * for (int i=0; i<NPROCS; i++)
+	 *   $wait __procs[i];
+	 * </code>
+	 * </pre>
+	 * 
+	 * @param scope
+	 * @param numberOfProcs
+	 * @return
+	 */
 	private Fragment waitMpiProcesses(Scope scope, Expression numberOfProcs) {
-		return null;// TODO TBC
+		Scope newScope = mpiFactory.scope(scope, new LinkedHashSet<Variable>(),
+				functionInfo().function());
+		Fragment initFragment, result;
+		Location location = mpiFactory.location(newScope);
+		Variable iVariable = mpiFactory.variable(mpiFactory.integerType(),
+				mpiFactory.identifier("i"), newScope.numVariables());
+		VariableExpression iVariableExpression = mpiFactory
+				.variableExpression(iVariable);
+		Expression condition = mpiFactory.binaryExpression(
+				mpiFactory.systemSource(), BINARY_OPERATOR.LESS_THAN,
+				iVariableExpression, numberOfProcs);
+		Location loopEntranceLocation = mpiFactory.location(newScope), loopBodyLocation = mpiFactory
+				.location(newScope);
+		Fragment loopEntrance = new CommonFragment(loopEntranceLocation,
+				mpiFactory.loopBranchStatement(mpiFactory.systemSource(),
+						loopEntranceLocation, condition, true));
+		Fragment loopBody, incrementer;
+		Statement loopExit = mpiFactory.loopBranchStatement(condition
+				.getSource(), loopEntranceLocation, mpiFactory.unaryExpression(
+				condition.getSource(), UNARY_OPERATOR.NOT, condition), false);
+
+		newScope.addVariable(iVariable);
+		initFragment = new CommonFragment(mpiFactory.assignStatement(location,
+				iVariableExpression,
+				mpiFactory.integerLiteralExpression(BigInteger.valueOf(0)),
+				true));
+		loopBody = mpiFactory.joinFragment(mpiFactory.systemSource(),
+				loopBodyLocation, mpiFactory.subscriptExpression(null,
+						mpiFactory.procsVariable(), iVariableExpression));
+		incrementer = new CommonFragment(mpiFactory.assignStatement(mpiFactory
+				.location(newScope), iVariableExpression, mpiFactory
+				.binaryExpression(mpiFactory.systemSource(),
+						BINARY_OPERATOR.PLUS, iVariableExpression,
+						mpiFactory.integerLiteralExpression(BigInteger
+								.valueOf(1))), false));
+		result = composeLoop(initFragment, loopEntrance, loopBody, incrementer,
+				loopExit);
+		result = initFragment.combineWith(result);
+		return result;
 	}
 
 	private Fragment composeLoop(Fragment initFragment, Fragment loopEntrance,

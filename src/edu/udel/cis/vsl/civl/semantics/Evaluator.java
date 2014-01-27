@@ -53,6 +53,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.UnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
@@ -1490,6 +1491,24 @@ public class Evaluator {
 	}
 
 	/**
+	 * Evaluate a union literal expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The union literal expression.
+	 * @return The symbolic representation of the union literal expression.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateUnionLiteral(State state, int pid,
+			UnionLiteralExpression expression)
+			throws UnsatisfiablePathConditionException {
+		return evaluate(state, pid, expression.value());
+	}
+
+	/**
 	 * Evaluate a variable expression.
 	 * 
 	 * @param state
@@ -2354,6 +2373,10 @@ public class Evaluator {
 			break;
 		case UNDEFINED_PROC:
 			result = new Evaluation(state, modelFactory.undefinedProcessValue());
+			break;
+		case UNION_LITERAL:
+			result = evaluateUnionLiteral(state, pid,
+					(UnionLiteralExpression) expression);
 			break;
 		case VARIABLE:
 			result = evaluateVariable(state, pid,

@@ -1515,7 +1515,6 @@ public class CommonModelFactory implements ModelFactory {
 	public Pair<Fragment, Expression> refineConditionalExpression(Scope scope,
 			Expression expression, ExpressionNode expressionNode) {
 		Fragment beforeConditionFragment = new CommonFragment();
-		;
 
 		while (hasConditionalExpressions()) {
 			ConditionalExpression conditionalExpression = pollConditionaExpression();
