@@ -53,6 +53,7 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		FunctionDefinitionNode processMainNode = null;
 		Identifier functionName;
 		ArrayList<Variable> parameters = new ArrayList<>(1);
+		CIVLFunction mainFunction;
 
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
@@ -73,11 +74,14 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		}
 		functionName = mpiFactory.identifier(
 				mpiFactory.sourceOfBeginning(processMainNode), "main");
-		parameters.add(mpiFactory.variable(mpiFactory.integerType(), mpiFactory
-				.identifier(mpiFactory.sourceOfBeginning(processMainNode),
-						"__rank"), 0));
-		return mpiFactory.function(mpiFactory.sourceOf(rootNode), functionName,
-				parameters, mpiFactory.voidType(), systemScope, null);
+		mainFunction = mpiFactory.function(mpiFactory.sourceOf(rootNode),
+				functionName, parameters, mpiFactory.voidType(), systemScope,
+				null);
+		mpiFactory.createRankVariable(mainFunction.outerScope(), mainFunction
+				.outerScope().numVariables());
+		parameters.add(mpiFactory.rankVariable().variable());
+		mainFunction.setParameters(parameters);
+		return mainFunction;
 	}
 
 	/**
@@ -122,12 +126,14 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	}
 
 	public void translateProcessMainFunction(Fragment initialization) {
-		Fragment body = this.translateFunctionBody();
-		Expression startGuard = mpiFactory.binaryExpression(null,
-				BINARY_OPERATOR.EQUAL, mpiFactory.startVariable(), mpiFactory
-						.integerLiteralExpression(null, BigInteger.valueOf(1)));
+		Fragment body;
+		Expression startGuard;
 
+		body = this.translateFunctionBody();
 		body = initialization.combineWith(body);
+		startGuard = mpiFactory.binaryExpression(null, BINARY_OPERATOR.EQUAL,
+				mpiFactory.startVariable(), mpiFactory
+						.integerLiteralExpression(null, BigInteger.valueOf(1)));
 		body.addGuardToStartLocation(startGuard, mpiFactory);
 		functionInfo.completeFunction(body);
 	}
