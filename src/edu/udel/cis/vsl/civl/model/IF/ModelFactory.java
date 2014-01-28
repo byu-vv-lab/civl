@@ -46,6 +46,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
@@ -257,7 +258,7 @@ public interface ModelFactory {
 	 * @return a new incomplete struct type with given name
 	 */
 	CIVLStructOrUnionType structType(Identifier name);
-	
+
 	/**
 	 * Returns new incomplete union type with given name. Type can be completed
 	 * later using one of the "complete" methods in CIVLStructType.
@@ -736,7 +737,7 @@ public interface ModelFactory {
 	 *            The expression being asserted.
 	 * @return A new fragment.
 	 */
-	Fragment assertFragment(CIVLSource civlSource, Location source,
+	AssertStatement assertStatement(CIVLSource civlSource, Location source,
 			Expression expression);
 
 	/**
@@ -1441,8 +1442,8 @@ public interface ModelFactory {
 	 */
 	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
 
-	Fragment assertFragment(CIVLSource sourceOf, Location location,
-			Expression expression, Expression printfExpression,
+	AssertStatement assertStatement(CIVLSource sourceOf, Location location,
+			Expression expression,
 			ArrayList<Expression> arguments);
 
 }

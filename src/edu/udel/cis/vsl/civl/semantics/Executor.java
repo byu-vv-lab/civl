@@ -6,12 +6,14 @@ package edu.udel.cis.vsl.civl.semantics;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
 import edu.udel.cis.vsl.civl.library.stdio.Libstdio;
@@ -50,6 +52,7 @@ import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * An executor is used to execute a CIVL statement. The basic method provided
@@ -401,45 +404,49 @@ public class Executor {
 		valid = reasoner.valid(assertValue);
 		resultType = valid.getResultType();
 		if (resultType != ResultType.YES) {
-//			if (statement.printfExpression() != null) {
-//				String stringOfSymbolicExpression = new String();
-//				String stringOutput = new String();
-//				Vector<Object> arguments = new Vector<Object>();
-//				CIVLSource source = state.getProcessState(pid).getLocation()
-//						.getSource();
-//
-//				if (!this.enablePrintf)
-//					return state;
-//				// obtain printf() arguments
-//				stringOfSymbolicExpression += evaluator.evaluate(state, pid,
-//						statement.printfExpression());
-//				if (statement.printfArguments() != null) {
-//					for (int i = 1; i < statement.printfArguments().length; i++) {
-//						arguments.add(evaluator.evaluate(state, pid,
-//								statement.printfArguments()[i]));
-//					}
-//				}
-//				// convert the first argument from
-//				// a symbolic expression to a string can be printed
-//				stringOutput = this.abcArrayAnalyzer(
-//						stringOfSymbolicExpression, true, source);
-//
-//				// convert a char array from a symbolic exrepssion to a string
-//				for (int i = 0; i < arguments.size(); i++) {
-//					SymbolicType.SymbolicTypeKind type = ((SymbolicExpression) arguments
-//							.get(i)).type().typeKind();
-//					// Type is char array
-//					if (type == SymbolicType.SymbolicTypeKind.ARRAY) {
-//						String arg_str = this.abcArrayAnalyzer(arguments.get(i)
-//								.toString(), false, source);
-//						// update
-//						arguments.remove(i);
-//						arguments.insertElementAt(arg_str, i);
-//					}
-//				}
-//				// Print
-//				output.printf(stringOutput, arguments.toArray());
-//			}
+			if (statement.printfArguments() != null) {
+				String stringOfSymbolicExpression = new String();
+				String stringOutput = new String();
+				Vector<Object> arguments = new Vector<Object>();
+				CIVLSource source = state.getProcessState(pid).getLocation()
+						.getSource();
+
+				if (!this.enablePrintf)
+					return state;
+				// obtain printf() arguments
+				eval = evaluator.evaluate(state, pid,
+						statement.printfArguments()[0]);
+				stringOfSymbolicExpression += eval.value;
+				state = eval.state;
+				if (statement.printfArguments() != null) {
+					for (int i = 1; i < statement.printfArguments().length; i++) {
+						eval = evaluator.evaluate(state, pid,
+								statement.printfArguments()[i]);
+						state = eval.state;
+						arguments.add(eval.value);
+					}
+				}
+				// convert the first argument from
+				// a symbolic expression to a string can be printed
+				stringOutput = this.abcArrayAnalyzer(
+						stringOfSymbolicExpression, true, source);
+
+				// convert a char array from a symbolic exrepssion to a string
+				for (int i = 0; i < arguments.size(); i++) {
+					SymbolicType.SymbolicTypeKind type = ((SymbolicExpression) arguments
+							.get(i)).type().typeKind();
+					// Type is char array
+					if (type == SymbolicType.SymbolicTypeKind.ARRAY) {
+						String arg_str = this.abcArrayAnalyzer(arguments.get(i)
+								.toString(), false, source);
+						// update
+						arguments.remove(i);
+						arguments.insertElementAt(arg_str, i);
+					}
+				}
+				// Print
+				output.printf(stringOutput, arguments.toArray());
+			}
 			// Certainty certainty = resultType == ResultType.NO ?
 			// Certainty.PROVEABLE
 			// : Certainty.MAYBE;
@@ -840,94 +847,94 @@ public class Executor {
 		return numSteps;
 	}
 
-	// /**
-	// * Extreact characters from symbolic expression
-	// *
-	// * @param stringFromABC
-	// * @param convertFormatSpecifier
-	// * @return
-	// */
-	// private String abcArrayAnalyzer(String stringFromABC,
-	// boolean convertFormatSpecifier, CIVLSource source) {
-	// Vector<String> individualChars = new Vector<String>();
-	// String stringOutput = new String();
-	// int eleNumInCharArray;
-	// char[] chars;
-	// // get the number of characters
-	// eleNumInCharArray = Integer.parseInt((((stringFromABC
-	// .split("\\u0028CHAR\\u005B"))[1]).split("]\\u0029<"))[0]);
-	//
-	// // Split the output stream into separate characters
-	// chars = stringFromABC.split("\\u0028CHAR\\u005B" + eleNumInCharArray
-	// + "]\\u0029<")[1].toCharArray();
-	//
-	// // number check
-	// if (chars.length != (eleNumInCharArray * 2 + eleNumInCharArray - 1
-	// + eleNumInCharArray + 1))
-	// return "Unknown Exception in character number checking in printf";
-	// if ((chars.length <= 4) || ((chars.length) % 4 != 0))
-	// return "Unknown Exception in character number checking in printf";
-	//
-	// // start at 4, end at charnum - 6: extract real useful character
-	// // step = 4: ,'char'
-	// for (int i = 4; i < chars.length - 5;) {
-	// if (chars[i] == '\'')
-	// if (chars[i + 2] == '\'')
-	// if (chars[i + 3] == ',')
-	// individualChars.add("" + chars[i + 1]);
-	// i += 4;
-	// if ((i == chars.length - 6) && (chars[i] == '\'')) // termination
-	// break;
-	// else if ((i == chars.length - 6) && (chars[i] != '\''))
-	// return ("Unknown Exception in characters extraction in printf");
-	// }
-	// // convert characters to String, replace '\'+'n' with "\n"
-	// for (int i = 0; i < individualChars.size(); i++) {
-	// if (individualChars.get(i).equals("\\")
-	// && (i < individualChars.size() - 1)) {
-	// switch (individualChars.get(i + 1)) {
-	// case "n":
-	// stringOutput += "\n";
-	// i++;
-	// break;
-	// case "t":
-	// stringOutput += "\t";
-	// i++;
-	// break;
-	// case "r":
-	// stringOutput += "\r";
-	// i++;
-	// break;
-	// case "b":
-	// stringOutput += "\b";
-	// i++;
-	// break;
-	// case "f":
-	// stringOutput += "\f";
-	// i++;
-	// break;
-	// case "\"":
-	// stringOutput += "\"";
-	// i++;
-	// break;
-	// case "\'":
-	// stringOutput += "\'";
-	// i++;
-	// break;
-	// default:
-	// throw new CIVLUnimplementedFeatureException(
-	// individualChars.get(i + 1) + " in printf()", source);
-	// }
-	// } else {
-	// stringOutput += individualChars.get(i);
-	// }
-	// }
-	// /* replace format specifiers with %s */
-	// if (convertFormatSpecifier)
-	// stringOutput = stringOutput.replaceAll(
-	// "%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
-	//
-	// return stringOutput;
-	// }
+	/**
+	 * Extreact characters from symbolic expression
+	 * 
+	 * @param stringFromABC
+	 * @param convertFormatSpecifier
+	 * @return
+	 */
+	private String abcArrayAnalyzer(String stringFromABC,
+			boolean convertFormatSpecifier, CIVLSource source) {
+		Vector<String> individualChars = new Vector<String>();
+		String stringOutput = new String();
+		int eleNumInCharArray;
+		char[] chars;
+		// get the number of characters
+		eleNumInCharArray = Integer.parseInt((((stringFromABC
+				.split("\\u0028CHAR\\u005B"))[1]).split("]\\u0029<"))[0]);
+
+		// Split the output stream into separate characters
+		chars = stringFromABC.split("\\u0028CHAR\\u005B" + eleNumInCharArray
+				+ "]\\u0029<")[1].toCharArray();
+
+		// number check
+		if (chars.length != (eleNumInCharArray * 2 + eleNumInCharArray - 1
+				+ eleNumInCharArray + 1))
+			return "Unknown Exception in character number checking in printf";
+		if ((chars.length <= 4) || ((chars.length) % 4 != 0))
+			return "Unknown Exception in character number checking in printf";
+
+		// start at 4, end at charnum - 6: extract real useful character
+		// step = 4: ,'char'
+		for (int i = 4; i < chars.length - 5;) {
+			if (chars[i] == '\'')
+				if (chars[i + 2] == '\'')
+					if (chars[i + 3] == ',')
+						individualChars.add("" + chars[i + 1]);
+			i += 4;
+			if ((i == chars.length - 6) && (chars[i] == '\'')) // termination
+				break;
+			else if ((i == chars.length - 6) && (chars[i] != '\''))
+				return ("Unknown Exception in characters extraction in printf");
+		}
+		// convert characters to String, replace '\'+'n' with "\n"
+		for (int i = 0; i < individualChars.size(); i++) {
+			if (individualChars.get(i).equals("\\")
+					&& (i < individualChars.size() - 1)) {
+				switch (individualChars.get(i + 1)) {
+				case "n":
+					stringOutput += "\n";
+					i++;
+					break;
+				case "t":
+					stringOutput += "\t";
+					i++;
+					break;
+				case "r":
+					stringOutput += "\r";
+					i++;
+					break;
+				case "b":
+					stringOutput += "\b";
+					i++;
+					break;
+				case "f":
+					stringOutput += "\f";
+					i++;
+					break;
+				case "\"":
+					stringOutput += "\"";
+					i++;
+					break;
+				case "\'":
+					stringOutput += "\'";
+					i++;
+					break;
+				default:
+					throw new CIVLUnimplementedFeatureException(
+							individualChars.get(i + 1) + " in printf()", source);
+				}
+			} else {
+				stringOutput += individualChars.get(i);
+			}
+		}
+		/* replace format specifiers with %s */
+		if (convertFormatSpecifier)
+			stringOutput = stringOutput.replaceAll(
+					"%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
+
+		return stringOutput;
+	}
 
 }

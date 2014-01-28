@@ -54,7 +54,7 @@ public interface MPIModelFactory extends ModelFactory {
 	static final String MPI_WAIT = "MPI_Wait";
 
 	MPISendStatement mpiSendStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
+			LHSExpression lhs, ArrayList<Expression> arguments);
 
 	/**
 	 * Create a new location.
@@ -153,20 +153,20 @@ public interface MPIModelFactory extends ModelFactory {
 	void createProcsVariable(Scope scope, int vid, Expression nprocs);
 
 	VariableExpression procsVariable();
-	
+
 	Expression numberOfProcs();
-	
+
 	void setNumberOfProcs(Expression numberExpression);
 
 	MPIWaitStatement mpiWaitStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
+			LHSExpression lhs, ArrayList<Expression> arguments);
 
 	MPIBarrierStatement mpiBarrierStatement(CIVLSource source,
-			Location location, Scope scope, LHSExpression lhs,
+			Location location, LHSExpression lhs,
 			ArrayList<Expression> arguments);
 
 	MPIIrecvStatement mpiIrecvStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
+			LHSExpression lhs, ArrayList<Expression> arguments);
 
 	/**
 	 * Translate a MPI_Irecv functionn call to an instance of
@@ -180,7 +180,7 @@ public interface MPIModelFactory extends ModelFactory {
 	 *         statement.
 	 */
 	MPIRecvStatement mpiRecvStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
+			LHSExpression lhs, ArrayList<Expression> arguments);
 
 	/**
 	 * Create an instance of
@@ -200,5 +200,5 @@ public interface MPIModelFactory extends ModelFactory {
 	 * @return the new MPI_Isend statement.
 	 */
 	MPIIsendStatement mpiIsendStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
+			LHSExpression lhs, ArrayList<Expression> arguments);
 }

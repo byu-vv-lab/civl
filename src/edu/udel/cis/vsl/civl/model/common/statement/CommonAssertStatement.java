@@ -25,7 +25,6 @@ public class CommonAssertStatement extends CommonStatement implements
 
 	private boolean isCollective = false;
 	private Expression expression;// the expression expected to be true
-	private Expression printfExpression = null;// should be of string type
 	private Expression[] printfArguments = null;
 
 	/**
@@ -47,12 +46,11 @@ public class CommonAssertStatement extends CommonStatement implements
 	 *            The expression being checked.
 	 */
 	public CommonAssertStatement(CIVLSource civlSource, Location source,
-			Expression expression, Expression printfExpression,
-			ArrayList<Expression> arguments) {
+			Expression expression, ArrayList<Expression> arguments) {
 		super(civlSource, source);
 		this.expression = expression;
-		this.printfExpression = printfExpression;
-		this.printfArguments = (Expression[]) arguments.toArray();
+		this.printfArguments = new Expression[arguments.size()];
+		arguments.toArray(printfArguments);
 	}
 
 	/**
@@ -62,11 +60,9 @@ public class CommonAssertStatement extends CommonStatement implements
 	 *            The expression being checked.
 	 */
 	public CommonAssertStatement(CIVLSource civlSource, Location source,
-			Expression expression, Expression printfExpression,
-			Expression[] arguments) {
+			Expression expression, Expression[] arguments) {
 		super(civlSource, source);
 		this.expression = expression;
-		this.printfExpression = printfExpression;
 		this.printfArguments = arguments;
 	}
 
@@ -106,40 +102,84 @@ public class CommonAssertStatement extends CommonStatement implements
 
 	@Override
 	public String toString() {
-		return "$assert " + expression;
+		String result = "$assert(" + expression;
+
+		if (this.printfArguments != null) {
+			for (Expression argument : this.printfArguments) {
+				result += ", " + argument;
+			}
+		}
+		result += ")";
+		return result;
 	}
 
 	@Override
 	public void calculateDerefs() {
 		this.expression.calculateDerefs();
 		this.hasDerefs = this.expression.hasDerefs();
+		if(this.printfArguments != null){
+			for(Expression arg : this.printfArguments){
+				arg.calculateDerefs();
+				this.hasDerefs = this.hasDerefs || arg.hasDerefs();
+				if(this.hasDerefs)
+					return;
+			}
+		}
 	}
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
 		super.purelyLocalAnalysisOfVariables(funcScope);
 		this.expression.purelyLocalAnalysisOfVariables(funcScope);
+		if (this.printfArguments != null) {
+			for (Expression arg : this.printfArguments) {
+				arg.purelyLocalAnalysisOfVariables(funcScope);
+			}
+		}
 	}
 
 	@Override
 	public void purelyLocalAnalysis() {
 		this.guard().purelyLocalAnalysis();
 		this.expression.purelyLocalAnalysis();
-		this.purelyLocal = this.guard().isPurelyLocal()
-				&& this.expression.isPurelyLocal();
+		if (!this.expression.isPurelyLocal()) {
+			this.purelyLocal = false;
+			return;
+		}
+		if (this.printfArguments != null) {
+			for (Expression arg : this.printfArguments) {
+				arg.purelyLocalAnalysis();
+				if (!arg.isPurelyLocal()) {
+					this.purelyLocal = false;
+					return;
+				}
+			}
+		}
+		this.purelyLocal = this.guard().isPurelyLocal();
 	}
 
 	@Override
 	public void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression) {
 		super.replaceWith(oldExpression, newExpression);
-
 		if (expression == oldExpression) {
 			expression = newExpression;
 			return;
 		}
-
 		this.expression.replaceWith(oldExpression, newExpression);
+		if (this.printfArguments != null) {
+			int number = printfArguments.length;
+
+			for (int i = 0; i < number; i++) {
+				Expression arg = printfArguments[i];
+
+				if (arg == oldExpression) {
+					printfArguments[i] = newExpression;
+					return;
+				}
+				arg.replaceWith(oldExpression, newExpression);
+			}
+		}
 	}
 
 	@Override
@@ -160,14 +200,34 @@ public class CommonAssertStatement extends CommonStatement implements
 				newStatement = new CommonAssertStatement(this.getSource(),
 						this.source(), newExpressionField);
 				newStatement.setGuard(this.guard());
+			} else if (this.printfArguments != null) {
+				boolean hasNewArg = false;
+				int number = this.printfArguments.length;
+				Expression[] newArgs = new Expression[number];
+
+				for (int i = 0; i < number; i++) {
+					if (hasNewArg)
+						newArgs[i] = printfArguments[i];
+					else {
+						Expression newArg = printfArguments[i];
+
+						newArg = newArg.replaceWith(oldExpression,
+								newExpression);
+						if (newArg != null) {
+							newArgs[i] = newArg;
+							hasNewArg = true;
+						} else
+							newArgs[i] = printfArguments[i];
+					}
+				}
+				if (hasNewArg) {
+					newStatement = new CommonAssertStatement(this.getSource(),
+							this.source(), expression, newArgs);
+					newStatement.setGuard(this.guard());
+				}
 			}
 		}
 		return newStatement;
-	}
-
-	@Override
-	public Expression printfExpression() {
-		return this.printfExpression;
 	}
 
 	@Override

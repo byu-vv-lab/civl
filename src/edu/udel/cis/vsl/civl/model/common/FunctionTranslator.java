@@ -529,7 +529,7 @@ public class FunctionTranslator {
 	 * @return the CallOrSpawnStatement
 	 */
 	protected CallOrSpawnStatement callOrSpawnStatement(Location location,
-			Scope scope, FunctionCallNode callNode, LHSExpression lhs,
+			FunctionCallNode callNode, LHSExpression lhs,
 			ArrayList<Expression> arguments, boolean isCall) {
 		ExpressionNode functionExpression = ((FunctionCallNode) callNode)
 				.getFunction();
@@ -886,24 +886,25 @@ public class FunctionTranslator {
 		Location location = modelFactory.location(
 				modelFactory.sourceOfBeginning(assertNode), scope);
 
-//		if (assertNode.hasOptionals()) {
-//			Expression printfExpression = translateExpressionNode(
-//					assertNode.printfExpression(), scope, true);
-//			ArrayList<Expression> arguments = new ArrayList<>();
-//
-//			for (int i = 0; i < assertNode.numberOfPrintfArguments(); i++) {
-//				Expression argument = translateExpressionNode(
-//						assertNode.getPrintfArgument(i), scope, true);
-//
-//				arguments.add(argument);
-//			}
-//			return modelFactory.assertFragment(
-//					modelFactory.sourceOf(assertNode), location, expression,
-//					printfExpression, arguments);
-//		}
+		// if (assertNode.hasOptionals()) {
+		// Expression printfExpression = translateExpressionNode(
+		// assertNode.printfExpression(), scope, true);
+		// ArrayList<Expression> arguments = new ArrayList<>();
+		//
+		// for (int i = 0; i < assertNode.numberOfPrintfArguments(); i++) {
+		// Expression argument = translateExpressionNode(
+		// assertNode.getPrintfArgument(i), scope, true);
+		//
+		// arguments.add(argument);
+		// }
+		// return modelFactory.assertFragment(
+		// modelFactory.sourceOf(assertNode), location, expression,
+		// printfExpression, arguments);
+		// }
 
-		return modelFactory.assertFragment(modelFactory.sourceOf(assertNode),
-				location, modelFactory.booleanExpression(expression));
+		return new CommonFragment(modelFactory.assertStatement(
+				modelFactory.sourceOf(assertNode), location,
+				modelFactory.booleanExpression(expression)));
 	}
 
 	/**
@@ -1364,13 +1365,41 @@ public class FunctionTranslator {
 			arguments.add(actual);
 		}
 		switch (functionName) {
-		// special translation for some system functions like $choose_int
+		// special translation for some system functions like $assert,
+		// $choose_int, etc.
+		case "$assert":
+			return translateAssertFunctionCall(source, location, scope, lhs,
+					arguments);
 		case "$choose_int":
 			return translateChooseIntFunctionCall(source, location, scope, lhs,
 					arguments);
 		default:
-			return callOrSpawnStatement(location, scope, functionCallNode, lhs,
+			return callOrSpawnStatement(location, functionCallNode, lhs,
 					arguments, isCall);
+		}
+	}
+
+	private Statement translateAssertFunctionCall(CIVLSource source,
+			Location location, Scope scope, LHSExpression lhs,
+			ArrayList<Expression> arguments) {
+
+		switch (arguments.size()) {
+		case 0:
+			throw new CIVLSyntaxException(
+					"The function $assert should have at least one arguments.",
+					source);
+		case 1:
+			return modelFactory.assertStatement(source, location,
+					modelFactory.booleanExpression(arguments.get(0)));
+		default:
+			ArrayList<Expression> optionalArguments = new ArrayList<>();
+
+			for (int i = 1; i < arguments.size(); i++) {
+				optionalArguments.add(arguments.get(i));
+			}
+			return modelFactory.assertStatement(source, location,
+					modelFactory.booleanExpression(arguments.get(0)),
+					optionalArguments);
 		}
 	}
 

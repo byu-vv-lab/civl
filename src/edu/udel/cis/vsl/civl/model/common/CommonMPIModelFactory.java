@@ -108,18 +108,16 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 */
 	@Override
 	public MPISendStatement mpiSendStatement(CIVLSource source,
-			Location location, Scope scope, LHSExpression lhs,
+			Location location, LHSExpression lhs,
 			ArrayList<Expression> arguments) {
 		CommonMPISendStatement sendStatement = new CommonMPISendStatement(
 				source, location, lhs, arguments);
-		int argLength = arguments.size();
-		Scope finalScope = scope;
-		if(lhs != null){
-		    finalScope = join(lhs.expressionScope(), finalScope);
+		Scope finalScope = null;
+
+		if (lhs != null) {
+			finalScope = join(lhs.expressionScope(), finalScope);
 		}
-		for(int i=0; i<argLength; i++){
-			finalScope = join(finalScope, arguments.get(i).expressionScope());
-		}
+		finalScope = join(finalScope, joinScope(arguments));
 		sendStatement.setStatementScope(finalScope);
 		return sendStatement;
 	}
@@ -137,41 +135,49 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 */
 	@Override
 	public MPIRecvStatement mpiRecvStatement(CIVLSource source,
-			Location location, Scope scope, LHSExpression lhs,
+			Location location, LHSExpression lhs,
 			ArrayList<Expression> arguments) {
 		CommonMPIRecvStatement recvStatement = new CommonMPIRecvStatement(
 				source, location, lhs, arguments);
-		int argLength = arguments.size();
-		Scope finalScope = scope;
-		if(lhs != null){
-		    finalScope = join(lhs.expressionScope(), finalScope);
+		Scope finalScope = null;
+
+		if (lhs != null) {
+			finalScope = join(lhs.expressionScope(), finalScope);
 		}
-		for(int i=0; i<argLength; i++){
-			finalScope = join(finalScope, arguments.get(i).expressionScope());
-		}
+		finalScope = join(finalScope, joinScope(arguments));
 		recvStatement.setStatementScope(finalScope);
 		return recvStatement;
 	}
 
 	@Override
 	public MPIIsendStatement mpiIsendStatement(CIVLSource source,
-			Location location, Scope scope, LHSExpression lhs,
+			Location location, LHSExpression lhs,
 			ArrayList<Expression> arguments) {
 		CommonMPIIsendStatement isendStatement = new CommonMPIIsendStatement(
 				source, location, lhs, arguments);
+		Scope finalScope = null;
 
-		isendStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		if (lhs != null) {
+			finalScope = join(lhs.expressionScope(), finalScope);
+		}
+		finalScope = join(finalScope, joinScope(arguments));
+		isendStatement.setStatementScope(finalScope);
 		return isendStatement;
 	}
 
 	@Override
 	public MPIIrecvStatement mpiIrecvStatement(CIVLSource source,
-			Location location, Scope scope, LHSExpression lhs,
+			Location location, LHSExpression lhs,
 			ArrayList<Expression> arguments) {
 		CommonMPIIrecvStatement irecvStatement = new CommonMPIIrecvStatement(
 				source, location, lhs, arguments);
+		Scope finalScope = null;
 
-		irecvStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		if (lhs != null) {
+			finalScope = join(lhs.expressionScope(), finalScope);
+		}
+		finalScope = join(finalScope, joinScope(arguments));
+		irecvStatement.setStatementScope(finalScope);
 		return irecvStatement;
 	}
 
@@ -188,17 +194,22 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 */
 	@Override
 	public MPIWaitStatement mpiWaitStatement(CIVLSource source,
-			Location location, Scope scope, LHSExpression lhs,
+			Location location, LHSExpression lhs,
 			ArrayList<Expression> arguments) {
 		CommonMPIWaitStatement waitStatement = new CommonMPIWaitStatement(
 				source, location, lhs, arguments);
+		Scope finalScope = null;
 
-		waitStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		if (lhs != null) {
+			finalScope = join(lhs.expressionScope(), finalScope);
+		}
+		finalScope = join(finalScope, joinScope(arguments));
+		waitStatement.setStatementScope(finalScope);
 		return waitStatement;
 	}
 
 	/**
-	 * Translate a MPI_Barrier functionn call to an instance of
+	 * Translate a MPI_Barrier function call to an instance of
 	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIBarrierStatement}
 	 * 
 	 * @param scope
@@ -210,13 +221,18 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 */
 	@Override
 	public MPIBarrierStatement mpiBarrierStatement(CIVLSource source,
-			Location location, Scope scope, LHSExpression lhs,
+			Location location, LHSExpression lhs,
 			ArrayList<Expression> arguments) {
 		// MPI_Barrier just have one argument--communicator
 		CommonMPIBarrierStatement barrierStatement = new CommonMPIBarrierStatement(
 				source, location, lhs, arguments.get(0));
+		Scope finalScope = null;
 
-		barrierStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		if (lhs != null) {
+			finalScope = join(lhs.expressionScope(), finalScope);
+		}
+		finalScope = join(finalScope, joinScope(arguments));
+		barrierStatement.setStatementScope(finalScope);
 		return barrierStatement;
 	}
 

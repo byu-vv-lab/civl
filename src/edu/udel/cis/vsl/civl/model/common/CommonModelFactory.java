@@ -563,9 +563,10 @@ public class CommonModelFactory implements ModelFactory {
 		// Note: While the abstract function may be declared in e.g. the
 		// outermost scope, since it has no value or state, it doesn't
 		// contribute anything non-local to the expression scope.
-		for (Expression arg : arguments) {
-			expressionScope = join(expressionScope, arg.expressionScope());
-		}
+		expressionScope = joinScope(arguments);
+		// for (Expression arg : arguments) {
+		// expressionScope = join(expressionScope, arg.expressionScope());
+		// }
 		result.setExpressionScope(expressionScope);
 		result.setExpressionType(function.returnType());
 		return result;
@@ -1049,14 +1050,14 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new assert statement.
 	 */
 	@Override
-	public Fragment assertFragment(CIVLSource civlSource, Location source,
-			Expression expression) {
+	public AssertStatement assertStatement(CIVLSource civlSource,
+			Location source, Expression expression) {
 		AssertStatement result = new CommonAssertStatement(civlSource, source,
 				expression);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		result.setStatementScope(expression.expressionScope());
-		return new CommonFragment(result);
+		return result;
 	}
 
 	/**
@@ -1069,15 +1070,19 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new assert statement.
 	 */
 	@Override
-	public Fragment assertFragment(CIVLSource civlSource, Location source,
-			Expression expression, Expression printfExpression,
+	public AssertStatement assertStatement(CIVLSource civlSource,
+			Location source, Expression expression,
 			ArrayList<Expression> arguments) {
 		AssertStatement result = new CommonAssertStatement(civlSource, source,
-				expression, printfExpression, arguments);
+				expression, arguments);
+		Scope scope = expression.expressionScope();
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		result.setStatementScope(expression.expressionScope());
-		return new CommonFragment(result);
+		for (Expression arg : arguments) {
+			scope = join(scope, arg.expressionScope());
+		}
+		result.setStatementScope(scope);
+		return result;
 	}
 
 	@Override
@@ -2004,6 +2009,40 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	/**
+	 * Calculate the join scope (the most local common scope) of a list of
+	 * expressions.
+	 * 
+	 * @param expressions
+	 *            The list of expressions whose join scope is to be computed.
+	 * @return The join scope of the list of expressions.
+	 */
+	protected Scope joinScope(List<Expression> expressions) {
+		Scope scope = null;
+
+		for (Expression expression : expressions) {
+			scope = join(scope, expression.expressionScope());
+		}
+		return scope;
+	}
+	
+	/**
+	 * Calculate the join scope (the most local common scope) of an array of
+	 * expressions.
+	 * 
+	 * @param expressions
+	 *            The array of expressions whose join scope is to be computed.
+	 * @return The join scope of the array of expressions.
+	 */
+	protected Scope joinScope(Expression[] expressions) {
+		Scope scope = null;
+
+		for (Expression expression : expressions) {
+			scope = join(scope, expression.expressionScope());
+		}
+		return scope;
+	}
+
+	/**
 	 * Create an instance of a CIVL primitive type, including void, integer,
 	 * boolean, real, char, scope, process, and dynamic types.
 	 * 
@@ -2121,10 +2160,11 @@ public class CommonModelFactory implements ModelFactory {
 		Scope expressionScope = null;
 
 		if (elements != null) {
-			for (Expression element : elements) {
-				expressionScope = join(expressionScope,
-						element.expressionScope());
-			}
+			expressionScope = joinScope(elements);
+			// for (Expression element : elements) {
+			// expressionScope = join(expressionScope,
+			// element.expressionScope());
+			// }
 		}
 		if (expressionScope != null)
 			arrayLiteral.setExpressionScope(expressionScope);

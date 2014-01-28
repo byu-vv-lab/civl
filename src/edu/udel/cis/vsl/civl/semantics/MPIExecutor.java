@@ -7,8 +7,6 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.mpi.Libmpi;
-import edu.udel.cis.vsl.civl.library.stdio.Libstdio;
-import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -46,7 +44,7 @@ public class MPIExecutor extends Executor {
 
 	/* ********************** Instance Field ******************************* */
 	private VariableExpression rankExpression;
-	private  Libmpi mpiExecutor;
+	private Libmpi mpiExecutor;
 
 	/*************************** constructor *********************************/
 	/**
@@ -67,8 +65,8 @@ public class MPIExecutor extends Executor {
 			boolean enablePrintf) {
 		super(config, modelFactory, stateFactory, log, loader, output,
 				enablePrintf);
-		this.mpiExecutor = (Libmpi) loader.getLibraryExecutor("mpi",
-				this, this.output, this.enablePrintf);
+		this.mpiExecutor = (Libmpi) loader.getLibraryExecutor("mpi", this,
+				this.output, this.enablePrintf);
 		rankExpression = ((MPIModelFactory) modelFactory).rankVariable();
 
 	}
@@ -477,7 +475,7 @@ public class MPIExecutor extends Executor {
 		} else
 			throw new CIVLInternalException("Unknown statement kind", statement);
 	}
-	
+
 	@Override
 	protected LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
 		String library;
