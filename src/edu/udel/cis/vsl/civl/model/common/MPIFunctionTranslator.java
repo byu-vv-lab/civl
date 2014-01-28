@@ -150,7 +150,7 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	private void translateRootFunctionBody(Scope systemScope,
 			Expression numberOfProcs) {
 		Fragment result;
-		Fragment initStartFragment;
+		Fragment initStartFragment, initProcsFragment;
 		Fragment spawnPhase;
 		Fragment waitPhase;
 		Location returnLocation;
@@ -164,7 +164,11 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		initStartFragment = new CommonFragment(mpiFactory.assignStatement(
 				mpiFactory.location(systemScope), mpiFactory.startVariable(),
 				mpiFactory.integerLiteralExpression(BigInteger.valueOf(0)),
-				false));
+				true));
+		initProcsFragment = new CommonFragment(mpiFactory.assignStatement(
+				mpiFactory.location(systemScope), mpiFactory.procsVariable(),
+				mpiFactory.initialValueExpression(mpiFactory.systemSource(),
+						mpiFactory.procsVariable().variable()), true));
 		spawnPhase = spawnMpiProcesses(systemScope, numberOfProcs);
 		assignStartFragment = new CommonFragment(mpiFactory.assignStatement(
 				mpiFactory.location(systemScope), mpiFactory.startVariable(),
@@ -172,7 +176,8 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 				false));
 		// TODO initialize MPI_COMM_WORLD
 		waitPhase = waitMpiProcesses(systemScope, numberOfProcs);
-		result = initStartFragment.combineWith(spawnPhase);
+		result = initStartFragment.combineWith(initProcsFragment);
+		result = result.combineWith(spawnPhase);
 		result = result.combineWith(assignStartFragment);
 		result = result.combineWith(waitPhase);
 		result = mpiFactory.atomicFragment(false, result, atomicStart,
