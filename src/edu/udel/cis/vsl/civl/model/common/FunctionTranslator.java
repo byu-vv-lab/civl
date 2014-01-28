@@ -887,7 +887,7 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(assertNode), scope);
 
 		return modelFactory.assertFragment(modelFactory.sourceOf(assertNode),
-				location, expression);
+				location, modelFactory.booleanExpression(expression));
 	}
 
 	/**

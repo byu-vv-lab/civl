@@ -374,7 +374,7 @@ public interface ModelFactory {
 	 * Translate an expression from the CIVL AST to the CIVL model. The
 	 * resulting expression will always be boolean-valued. If the expression
 	 * evaluates to a numeric type, the result will be the equivalent of
-	 * expression==0. Used for evaluating expression in conditions.
+	 * expression!=0. Used for evaluating expression in conditions.
 	 * 
 	 * @param expression
 	 *            The expression to be translated.
