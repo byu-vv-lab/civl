@@ -27,7 +27,7 @@ public interface MPIRecvStatement extends Statement {
 	 * @return the receive buffer argument
 	 */
 	Expression getBuffer();
-
+	
 	/**
 	 * Returns the received data size.
 	 * 
