@@ -12,31 +12,62 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 public class MPIModelBuilderWorker extends ModelBuilderWorker {
+
+	/* *************************** Static Fields ************************** */
+
+	/**
+	 * The name of the input variable for specifying the number of MPI
+	 * processes. e.g., a corresponding command line option may be
+	 * -inputNPROCS=3.
+	 */
 	static final String NPROCS = "NPROCS";
 
+	/* ************************** Instance Fields ************************** */
+
+	/**
+	 * The unique MPI model factory used by the system.
+	 */
 	private MPIModelFactory mpiFactory;
-	private Scope processMainScope;
+
+	/**
+	 * The main function of each MPI process.
+	 */
 	private CIVLFunction processMainFunction;
 
+	/* **************************** Constructors *************************** */
+
+	/**
+	 * Create a new instance of MPI model builder worker.
+	 * 
+	 * @param config
+	 *            The configuration of the system.
+	 * @param factory
+	 *            The MPI model factory to be used.
+	 * @param program
+	 *            The program to be translated.
+	 * @param name
+	 *            The name of the CIVL model, i.e., the file name without the
+	 *            file extension.
+	 */
 	public MPIModelBuilderWorker(GMCConfiguration config,
 			MPIModelFactory factory, Program program, String name) {
 		super(config, factory, program, name);
 		this.mpiFactory = factory;
 	}
 
-	/* *************************** Public Methods ************************** */
+	/* ****************** Methods from ModelBuilderWorker ****************** */
 
 	/**
-	 * Build the MPI model from the AST
+	 * Build the MPI model from the AST tree.
 	 * 
 	 * @throws CommandLineException
+	 *             if command line input has errors.
 	 */
 	@Override
 	public void buildModel() throws CommandLineException {
@@ -53,7 +84,6 @@ public class MPIModelBuilderWorker extends ModelBuilderWorker {
 		MPIFunctionTranslator processMainFunctionTranslator;
 
 		initialization(system);
-		// initialization(system);
 		if (inputInitMap == null || !inputInitMap.containsKey(NPROCS)) {
 			throw new CommandLineException(
 					"NPROCS must be specified for running or verifying MPI programs.");
@@ -63,9 +93,8 @@ public class MPIModelBuilderWorker extends ModelBuilderWorker {
 		this.mpiFactory.setNumberOfProcs(nprocsExpression);
 		this.processMainFunction = systemFunctionTranslator
 				.processMainFunction(systemScope, rootNode);
-		this.processMainScope = this.processMainFunction.outerScope();
 		initialization = systemFunctionTranslator.translateRootFunction(
-				systemScope, rootNode, this.processMainScope);
+				systemScope, rootNode, this.processMainFunction.outerScope());
 		if (inputInitMap != null) {
 			// if commandline specified input variables that do not
 			// exist, throw exception...
@@ -105,7 +134,17 @@ public class MPIModelBuilderWorker extends ModelBuilderWorker {
 		this.staticAnalysis();
 	}
 
-	public Expression nprocsExpression() throws CommandLineException {
+	/* ********************** Package-private Methods ********************** */
+
+	/**
+	 * Obtain the value of the number of processes, i.e., NPROCS, specified in
+	 * the command line.
+	 * 
+	 * @return The integer literal expression of the number of processes.
+	 * @throws CommandLineException
+	 *             if no input variable NPROCS can be found.
+	 */
+	Expression nprocsExpression() throws CommandLineException {
 		Object nprocs = inputInitMap.get(NPROCS);
 
 		if (nprocs != null) {
@@ -127,19 +166,11 @@ public class MPIModelBuilderWorker extends ModelBuilderWorker {
 		}
 	}
 
-	// public void setMpiSpawnStatement(CallOrSpawnStatement spawnMpi) {
-	// this.mpiSpawnStatement = spawnMpi;
-	// }
-	//
-	// public void setMpiProcessFunctionForSpawn(CIVLFunction function) {
-	// this.mpiSpawnStatement.setFunction(function);
-	// }
-
-	public Scope processMainScope() {
-		return this.processMainScope;
-	}
-
-	public CIVLFunction processMainFunction() {
+	/**
+	 * 
+	 * @return The main function of MPI processes.
+	 */
+	CIVLFunction processMainFunction() {
 		return this.processMainFunction;
 	}
 }

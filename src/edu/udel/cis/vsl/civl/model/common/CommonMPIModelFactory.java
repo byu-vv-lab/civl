@@ -56,12 +56,28 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 
 	/* ************************** Instance Fields ************************** */
 
+	/**
+	 * The rank variable that stores the rank of each process. It is a parameter
+	 * of the main function added by MPIFunctionTranslator.
+	 */
 	private VariableExpression rankVariable;
 
+	/**
+	 * A global variable in the root scope added by MPIFunctionTranslator. It
+	 * synchronizes the starting of all MPI processes.
+	 */
 	private VariableExpression startVariable;
 
+	/**
+	 * A variable of array type in the root function's scope that stores the
+	 * process id's of spawned MPI processes.
+	 */
 	private VariableExpression procsVariable;
 
+	/**
+	 * The expression that stores the value of the number of processes specified
+	 * by users from the command line.
+	 */
 	private Expression numberOfProcs;
 
 	/* **************************** Constructors *************************** */
@@ -76,7 +92,7 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 		super(universe);
 	}
 
-	/* ********************** Package-private Methods ********************** */
+	/* ******************* Methods from MPIModelFactory ******************** */
 
 	/**
 	 * Translate a MPI_Send function call to an instance of
@@ -190,7 +206,7 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 		return barrierStatement;
 	}
 
-	/* ************************* private methods *************************** */
+	/* ******************** Methods from ModelFactory ********************** */
 
 	@Override
 	public Location location(Scope scope) {

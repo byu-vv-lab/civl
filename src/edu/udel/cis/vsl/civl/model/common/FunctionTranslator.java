@@ -1325,7 +1325,7 @@ public class FunctionTranslator {
 
 	/**
 	 * Translate a function call node into a fragment containing the call
-	 * statement
+	 * statement.
 	 * 
 	 * @param scope
 	 *            The scope

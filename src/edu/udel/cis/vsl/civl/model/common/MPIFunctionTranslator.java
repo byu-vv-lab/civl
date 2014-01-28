@@ -34,12 +34,39 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
+/**
+ * Translates MPI specific functions. For example, MPI_Send(), MPI_Recv(), etc.
+ * Moreover, generates the function for the "root" process.
+ * 
+ * @author Manchun Zheng (zmanchun)
+ * 
+ */
 public class MPIFunctionTranslator extends FunctionTranslator {
 
-	// private static final String MPI_Process_Name = "MPI_Process";
+	/* ************************** Instance Fields ************************** */
+
+	/**
+	 * The unique MPI model factory used by the system.
+	 */
 	private MPIModelFactory mpiFactory;
+
+	/**
+	 * The unique MPI model builder worker used by the system.
+	 */
 	private MPIModelBuilderWorker mpiModelBuilder;
 
+	/* **************************** Constructors *************************** */
+
+	/**
+	 * Create a new instance of MPI function translator.
+	 * 
+	 * @param mpiModelBuilder
+	 *            The MPI model builder worker to be used..
+	 * @param mpiFactory
+	 *            The MPI model factory to be used.
+	 * @param function
+	 *            The CIVL function that this translator targets.
+	 */
 	MPIFunctionTranslator(MPIModelBuilderWorker mpiModelBuilder,
 			MPIModelFactory mpiFactory, CIVLFunction function) {
 		super(mpiModelBuilder, mpiFactory, function);
@@ -47,6 +74,18 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		this.mpiModelBuilder = mpiModelBuilder;
 	}
 
+	/**
+	 * Create a new instance of MPI function translator.
+	 * 
+	 * @param mpiModelBuilder
+	 *            The MPI model builder worker to be used..
+	 * @param mpiFactory
+	 *            The MPI model factory to be used.
+	 * @param function
+	 *            The CIVL function that this translator targets.
+	 * @param functionBody
+	 *            The AST node of the function body.
+	 */
 	MPIFunctionTranslator(MPIModelBuilderWorker mpiModelBuilder,
 			MPIModelFactory mpiFactory, CIVLFunction function,
 			StatementNode functionBody) {
@@ -56,6 +95,19 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		this.functionBodyNode = functionBody;
 	}
 
+	/* *************************** Public Methods ************************** */
+	/**
+	 * Iterates on the children of the root node of the program to find the main
+	 * function definition node, and create the (incomplete) CIVL function
+	 * accordingly. An extra parameter $RANK is added into the main function.
+	 * 
+	 * @param systemScope
+	 *            The root scope of the system.
+	 * @param rootNode
+	 *            The root node of the AST tree of the program.
+	 * @return The (incomplete) CIVL function representing the main function for
+	 *         MPI processes.
+	 */
 	public CIVLFunction processMainFunction(Scope systemScope, ASTNode rootNode) {
 		FunctionDefinitionNode processMainNode = null;
 		CIVLFunction mainFunction;
@@ -127,46 +179,41 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	}
 
 	/**
-	 * The root function is the system function, which has the equivalent
-	 * functionality as the function below.<br>
-	 * 
-	 * <pre>
-	 * <code>
-	 * void init() {
-	 *   for (int i=0; i<NPROCS; i++)
-	 *     $spawn MPI_Process(i);
-	 *   __MPI_Comm_World = $comm_create(NPROCS, __procs);
-	 *   __start=1;
-	 * }</code>
-	 * </pre>
-	 * 
-	 * <pre>
-	 * <code>
-	 * void finalize() {
-	 *   for (int i=1; i<=NPROCS; i++)
-	 *     $wait i;
-	 * }
-	 * void main() {
-	 *   $atomic{
-	 *     init();
-	 *     finalize();
-	 *   }
-	 * }
-	 * </code>
-	 * </pre>
+	 * The root function is the system function, which is responsible for:
+	 * <ul>
+	 * <li>
+	 * initialize the synchronizing variable $START=0;</li>
+	 * <li>
+	 * spawn MPI processes;</li>
+	 * <li>
+	 * initialize MPI_Comm_Worls;</li>
+	 * <li>
+	 * update the synchronizing variable $START=1;</li>
+	 * <li>
+	 * wait for MPI processes' termination.</li>
+	 * </ul>
 	 * 
 	 * @param systemScope
-	 *            The root scope.
-	 * @param numberOfProcs
-	 *            The expression of the number of processes. This may be a
-	 *            integer literal for most cases.
+	 *            The root scope of the system.
+	 * @param rootNode
+	 *            The root node of the AST tree of the program.
+	 * @param processMainScope
+	 *            The outer scope of the main function of MPI processes.
 	 */
 	public Fragment translateRootFunction(Scope systemScope, ASTNode rootNode,
 			Scope processMainScope) {
 		translateRootFunctionBody(systemScope);
-		return translateRootNodes(mpiModelBuilder.processMainScope(), rootNode);
+		return translateRootNodes(processMainScope, rootNode);
 	}
 
+	/**
+	 * Translate the main function. Making the first statement of the function
+	 * body guarded by $START==1.
+	 * 
+	 * @param initialization
+	 *            The fragment of initialization statements before the main
+	 *            function.
+	 */
 	public void translateProcessMainFunction(Fragment initialization) {
 		Fragment body;
 		Expression startGuard;
@@ -180,67 +227,48 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		functionInfo.completeFunction(body);
 	}
 
-	private Fragment translateRootNodes(Scope mainScope, ASTNode rootNode) {
-		Fragment initialization = new CommonFragment();
+	/* *************************** Private Methods ************************* */
 
-		mpiFactory.addConditionalExpressionQueue();
-		for (int i = 0; i < rootNode.numChildren(); i++) {
-			ASTNode node = rootNode.child(i);
-			Fragment fragment = translateASTNode(node, mainScope, null);
-
-			if (fragment != null)
-				initialization = initialization.combineWith(fragment);
-		}
-		mpiFactory.popConditionaExpressionStack();
-		return initialization;
-	}
-
-	private void translateRootFunctionBody(Scope systemScope) {
+	/**
+	 * Compose a loop fragment.
+	 * 
+	 * @param initFragment
+	 *            The initialization of the loop.
+	 * @param loopEntrance
+	 *            The entrance of the loop.
+	 * @param loopBody
+	 *            The loop body of the loop.
+	 * @param incrementer
+	 *            The incrementer of the loop.
+	 * @param loopExit
+	 *            The exit statement of the loop.
+	 * @return The result-in loop fragment.
+	 */
+	private Fragment composeLoop(Fragment initFragment, Fragment loopEntrance,
+			Fragment loopBody, Fragment incrementer, Statement loopExit) {
 		Fragment result;
-		Fragment initStartFragment, initProcsFragment;
-		Fragment spawnPhase;
-		Fragment waitPhase;
-		Location returnLocation;
-		Fragment returnFragment;
-		Fragment assignStartFragment;
-		Location atomicStart = mpiFactory.location(systemScope);
 
-		mpiFactory.createStartVariable(systemScope, systemScope.numVariables());
-		mpiFactory.createProcsVariable(systemScope, systemScope.numVariables(),
-				mpiFactory.numberOfProcs());
-		initStartFragment = new CommonFragment(mpiFactory.assignStatement(
-				mpiFactory.location(systemScope), mpiFactory.startVariable(),
-				mpiFactory.integerLiteralExpression(BigInteger.valueOf(0)),
-				true));
-		initProcsFragment = new CommonFragment(mpiFactory.assignStatement(
-				mpiFactory.location(systemScope), mpiFactory.procsVariable(),
-				mpiFactory.initialValueExpression(mpiFactory.systemSource(),
-						mpiFactory.procsVariable().variable()), true));
-		spawnPhase = spawnMpiProcesses(systemScope, mpiFactory.numberOfProcs());
-		assignStartFragment = new CommonFragment(mpiFactory.assignStatement(
-				mpiFactory.location(systemScope), mpiFactory.startVariable(),
-				mpiFactory.integerLiteralExpression(BigInteger.valueOf(1)),
-				false));
-		// TODO initialize MPI_COMM_WORLD
-		waitPhase = waitMpiProcesses(systemScope, mpiFactory.numberOfProcs());
-		result = initStartFragment.combineWith(initProcsFragment);
-		result = result.combineWith(spawnPhase);
-		result = result.combineWith(assignStartFragment);
-		result = result.combineWith(waitPhase);
-		result = mpiFactory.atomicFragment(false, result, atomicStart,
-				mpiFactory.location(systemScope));
-		returnLocation = mpiFactory.location(function().outerScope());
-		returnFragment = mpiFactory.returnFragment(mpiFactory.systemSource(),
-				returnLocation, null, functionInfo().function());
-		result = result.combineWith(returnFragment);
-		functionInfo().completeFunction(result);
+		// incrementer comes after the loop body
+		if (incrementer != null)
+			loopBody = loopBody.combineWith(incrementer);
+		// loop entrance comes before the loop body, P.S. loopExit is "combined"
+		// implicitly because its start location is the same as loopEntrance
+		loopBody = loopBody.combineWith(loopEntrance);
+		// initially loop entrance comes before the loopBody. Now we'll have
+		// loopBody -> loopEntrance -> loopBody and the loop is formed.
+		result = loopEntrance.combineWith(loopBody);
+		result.setLastStatement(loopExit);
+		return result;
 	}
 
 	/**
+	 * Create the fragment for spawning MPI processes.
 	 * 
 	 * @param scope
+	 *            The scope of the start location of the result fragment.
 	 * @param numberOfProcs
-	 * @return
+	 *            The number of processes that are to be spawned.
+	 * @return The fragment of statements for spawning MPI processes.
 	 */
 	private Fragment spawnMpiProcesses(Scope scope, Expression numberOfProcs) {
 		Scope newScope = mpiFactory.scope(scope, new LinkedHashSet<Variable>(),
@@ -290,18 +318,85 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	}
 
 	/**
-	 * *
+	 * Translate and complete the root function body.
 	 * 
-	 * <pre>
-	 * <code>
-	 * for (int i=0; i<NPROCS; i++)
-	 *   $wait __procs[i];
-	 * </code>
-	 * </pre>
+	 * @param systemScope
+	 *            The root scope of the system.
+	 */
+	private void translateRootFunctionBody(Scope systemScope) {
+		Fragment result;
+		Fragment initStartFragment, initProcsFragment;
+		Fragment spawnPhase;
+		Fragment waitPhase;
+		Location returnLocation;
+		Fragment returnFragment;
+		Fragment assignStartFragment;
+		Location atomicStart = mpiFactory.location(systemScope);
+
+		mpiFactory.createStartVariable(systemScope, systemScope.numVariables());
+		mpiFactory.createProcsVariable(systemScope, systemScope.numVariables(),
+				mpiFactory.numberOfProcs());
+		initStartFragment = new CommonFragment(mpiFactory.assignStatement(
+				mpiFactory.location(systemScope), mpiFactory.startVariable(),
+				mpiFactory.integerLiteralExpression(BigInteger.valueOf(0)),
+				true));
+		initProcsFragment = new CommonFragment(mpiFactory.assignStatement(
+				mpiFactory.location(systemScope), mpiFactory.procsVariable(),
+				mpiFactory.initialValueExpression(mpiFactory.systemSource(),
+						mpiFactory.procsVariable().variable()), true));
+		spawnPhase = spawnMpiProcesses(systemScope, mpiFactory.numberOfProcs());
+		assignStartFragment = new CommonFragment(mpiFactory.assignStatement(
+				mpiFactory.location(systemScope), mpiFactory.startVariable(),
+				mpiFactory.integerLiteralExpression(BigInteger.valueOf(1)),
+				false));
+		// TODO initialize MPI_COMM_WORLD
+		waitPhase = waitMpiProcesses(systemScope, mpiFactory.numberOfProcs());
+		result = initStartFragment.combineWith(initProcsFragment);
+		result = result.combineWith(spawnPhase);
+		result = result.combineWith(assignStartFragment);
+		result = result.combineWith(waitPhase);
+		result = mpiFactory.atomicFragment(false, result, atomicStart,
+				mpiFactory.location(systemScope));
+		returnLocation = mpiFactory.location(function().outerScope());
+		returnFragment = mpiFactory.returnFragment(mpiFactory.systemSource(),
+				returnLocation, null, functionInfo().function());
+		result = result.combineWith(returnFragment);
+		functionInfo().completeFunction(result);
+	}
+
+	/**
+	 * Iterates over all children, which are variable and function declaration
+	 * nodes and so on, of the root node of the AST tree, except for the main
+	 * function definition node.<br>
+	 * Nodes translated here included:
+	 * 
+	 * @param mainScope
+	 * @param rootNode
+	 * @return
+	 */
+	private Fragment translateRootNodes(Scope mainScope, ASTNode rootNode) {
+		Fragment initialization = new CommonFragment();
+
+		mpiFactory.addConditionalExpressionQueue();
+		for (int i = 0; i < rootNode.numChildren(); i++) {
+			ASTNode node = rootNode.child(i);
+			Fragment fragment = translateASTNode(node, mainScope, null);
+
+			if (fragment != null)
+				initialization = initialization.combineWith(fragment);
+		}
+		mpiFactory.popConditionaExpressionStack();
+		return initialization;
+	}
+
+	/**
+	 * Create the fragment for waiting for MPI processes.
 	 * 
 	 * @param scope
+	 *            The scope of the start location of the result fragment.
 	 * @param numberOfProcs
-	 * @return
+	 *            The number of processes that are to be waited.
+	 * @return The fragment of statements for waiting for MPI processes.
 	 */
 	private Fragment waitMpiProcesses(Scope scope, Expression numberOfProcs) {
 		Scope newScope = mpiFactory.scope(scope, new LinkedHashSet<Variable>(),
@@ -345,33 +440,12 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		return result;
 	}
 
-	private Fragment composeLoop(Fragment initFragment, Fragment loopEntrance,
-			Fragment loopBody, Fragment incrementer, Statement loopExit) {
-		Fragment result;
-
-		// incrementer comes after the loop body
-		if (incrementer != null)
-			loopBody = loopBody.combineWith(incrementer);
-		// loop entrance comes before the loop body, P.S. loopExit is "combined"
-		// implicitly because its start location is the same as loopEntrance
-		loopBody = loopBody.combineWith(loopEntrance);
-		// initially loop entrance comes before the loopBody. Now we'll have
-		// loopBody -> loopEntrance -> loopBody and the loop is formed.
-		result = loopEntrance.combineWith(loopBody);
-		result.setLastStatement(loopExit);
-		return result;
-
-	}
+	/* ****************** Methods from Function Translator ***************** */
 
 	/**
-	 * Translate a function call node into a fragment containing the call
-	 * statement
-	 * 
-	 * @param scope
-	 *            The scope
-	 * @param functionCallNode
-	 *            The function call node
-	 * @return the fragment containing the function call statement
+	 * {@inheritDoc} For MPI function calls, they are translated to the
+	 * corresponding MPI statement, like MPISendStatement, MPIRecvStatement,
+	 * etc.
 	 */
 	@Override
 	protected Statement translateFunctionCall(Scope scope, Location location,

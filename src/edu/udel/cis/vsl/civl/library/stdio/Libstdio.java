@@ -54,8 +54,23 @@ public class Libstdio implements LibraryExecutor {
 	 */
 	private StateFactory stateFactory;
 
+	/**
+	 * The SARL symbolic universe used by this system.
+	 */
 	private SymbolicUniverse universe;
 
+	/* **************************** Constructors *************************** */
+
+	/**
+	 * Create a new instance of library executor for "stdio.h".
+	 * 
+	 * @param primaryExecutor
+	 *            The main executor of the system.
+	 * @param output
+	 *            The output stream for printing.
+	 * @param enablePrintf
+	 *            True iff print is enabled, reflecting command line options.
+	 */
 	public Libstdio(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf) {
 		this.evaluator = primaryExecutor.evaluator();
@@ -65,38 +80,83 @@ public class Libstdio implements LibraryExecutor {
 		this.output = output;
 	}
 
+	/* ******************** Methods from LibraryExecutor ******************* */
+
+	@Override
+	public boolean containsFunction(String name) {
+		switch (name) {
+		case "printf":
+			return true;
+		case "fprintf":
+			throw new CIVLUnimplementedFeatureException(name);
+		default:
+			throw new CIVLInternalException(name, (CIVLSource) null);
+		}
+	}
+
+	@Override
+	public State execute(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
+		return executeWork(state, pid, (CallOrSpawnStatement) statement);
+	}
+
+	@Override
+	public BooleanExpression getGuard(State state, int pid, Statement statement) {
+		return universe.trueExpression();
+	}
+
+	@Override
+	public State initialize(State state) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	@Override
 	public String name() {
 		return "stdio";
 	}
 
 	@Override
-	public State execute(State state, int pid, Statement statement)
-			throws UnsatisfiablePathConditionException {
-		return executeWork(state, pid, statement);
+	public State wrapUp(State state) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	private State executeWork(State state, int pid, Statement statement)
+	/* *************************** Private Methods ************************* */
+
+	/**
+	 * Execute a function call statement for a certain process at a given state.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The Id of the process that the call statement belongs to.
+	 * @param statement
+	 *            The call statement to be executed.
+	 * @return The new state after executing the call statement.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeWork(State state, int pid,
+			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Identifier name;
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
-		CallOrSpawnStatement call;
 		int numArgs;
 
 		if (!(statement instanceof CallOrSpawnStatement)) {
 			throw new CIVLInternalException("Unsupported statement for civlc",
 					statement);
 		}
-		call = (CallOrSpawnStatement) statement;
-		numArgs = call.arguments().size();
-		name = call.function().name();
+		statement = (CallOrSpawnStatement) statement;
+		numArgs = statement.arguments().size();
+		name = statement.function().name();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
 
-			arguments[i] = call.arguments().get(i);
+			arguments[i] = statement.arguments().get(i);
 			eval = evaluator.evaluate(state, pid, arguments[i]);
 			argumentValues[i] = eval.value;
 			state = eval.state;
@@ -252,35 +312,6 @@ public class Libstdio implements LibraryExecutor {
 					"%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
 
 		return stringOutput;
-	}
-
-	@Override
-	public BooleanExpression getGuard(State state, int pid, Statement statement) {
-		return universe.trueExpression();
-	}
-
-	@Override
-	public boolean containsFunction(String name) {
-		switch (name) {
-		case "printf":
-			return true;
-		case "fprintf":
-			throw new CIVLUnimplementedFeatureException(name);
-		default:
-			throw new CIVLInternalException(name, (CIVLSource) null);
-		}
-	}
-
-	@Override
-	public State initialize(State state) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public State wrapUp(State state) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }
