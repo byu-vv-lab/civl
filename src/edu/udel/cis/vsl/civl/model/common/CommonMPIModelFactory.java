@@ -46,8 +46,6 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 
 	/* *************************** Static Fields *************************** */
 
-	
-
 	static final String RANK = "$RANK";
 
 	static final String MPI_COMM_WORLD = "MPI_COMM_WORLD";
@@ -63,6 +61,8 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	private VariableExpression startVariable;
 
 	private VariableExpression procsVariable;
+
+	private Expression numberOfProcs;
 
 	/* **************************** Constructors *************************** */
 
@@ -113,8 +113,9 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 *         statement.
 	 */
 	@Override
-	public MPIRecvStatement mpiRecvStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
+	public MPIRecvStatement mpiRecvStatement(CIVLSource source,
+			Location location, Scope scope, LHSExpression lhs,
+			ArrayList<Expression> arguments) {
 		CommonMPIRecvStatement recvStatement = new CommonMPIRecvStatement(
 				source, location, lhs, arguments);
 
@@ -123,8 +124,9 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	}
 
 	@Override
-	public MPIIsendStatement mpiIsendStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
+	public MPIIsendStatement mpiIsendStatement(CIVLSource source,
+			Location location, Scope scope, LHSExpression lhs,
+			ArrayList<Expression> arguments) {
 		CommonMPIIsendStatement isendStatement = new CommonMPIIsendStatement(
 				source, location, lhs, arguments);
 
@@ -132,10 +134,10 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 		return isendStatement;
 	}
 
-	
 	@Override
-	public MPIIrecvStatement mpiIrecvStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
+	public MPIIrecvStatement mpiIrecvStatement(CIVLSource source,
+			Location location, Scope scope, LHSExpression lhs,
+			ArrayList<Expression> arguments) {
 		CommonMPIIrecvStatement irecvStatement = new CommonMPIIrecvStatement(
 				source, location, lhs, arguments);
 
@@ -155,15 +157,16 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 *         statement.
 	 */
 	@Override
-	public MPIWaitStatement mpiWaitStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments){
+	public MPIWaitStatement mpiWaitStatement(CIVLSource source,
+			Location location, Scope scope, LHSExpression lhs,
+			ArrayList<Expression> arguments) {
 		CommonMPIWaitStatement waitStatement = new CommonMPIWaitStatement(
 				source, location, lhs, arguments);
 
 		waitStatement.setStatementScope(join(lhs.expressionScope(), scope));
 		return waitStatement;
 	}
-	
+
 	/**
 	 * Translate a MPI_Barrier functionn call to an instance of
 	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIBarrierStatement}
@@ -172,21 +175,22 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 *            The scope of this function call.
 	 * @param functionCallNode
 	 *            The AST node to be translated.
-	 * @return A fragment containing exactly one statement, i.e., the MPI_Barrier
-	 *         statement.
+	 * @return A fragment containing exactly one statement, i.e., the
+	 *         MPI_Barrier statement.
 	 */
 	@Override
-	public MPIBarrierStatement mpiBarrierStatement(CIVLSource source, Location location,
-			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments){
-		//MPI_Barrier just have one argument--communicator
+	public MPIBarrierStatement mpiBarrierStatement(CIVLSource source,
+			Location location, Scope scope, LHSExpression lhs,
+			ArrayList<Expression> arguments) {
+		// MPI_Barrier just have one argument--communicator
 		CommonMPIBarrierStatement barrierStatement = new CommonMPIBarrierStatement(
 				source, location, lhs, arguments.get(0));
 
 		barrierStatement.setStatementScope(join(lhs.expressionScope(), scope));
 		return barrierStatement;
 	}
+
 	/* ************************* private methods *************************** */
-	
 
 	@Override
 	public Location location(Scope scope) {
@@ -234,11 +238,10 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	}
 
 	@Override
-	public void createRankVariable(Scope scope, int vid) {
+	public void createRankVariable(int vid) {
 		Variable rankVariable = this.variable(this.integerType(),
 				this.identifier(RANK), vid);
 		this.rankVariable = this.variableExpression(rankVariable);
-		scope.addVariable(rankVariable);
 	}
 
 	@Override
@@ -271,5 +274,15 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	@Override
 	public VariableExpression procsVariable() {
 		return this.procsVariable;
+	}
+
+	@Override
+	public Expression numberOfProcs() {
+		return this.numberOfProcs;
+	}
+
+	@Override
+	public void setNumberOfProcs(Expression numberExpression) {
+		this.numberOfProcs = numberExpression;
 	}
 }

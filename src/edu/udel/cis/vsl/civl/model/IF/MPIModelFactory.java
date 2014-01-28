@@ -22,7 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public interface MPIModelFactory extends ModelFactory {
-	
+
 	/**
 	 * The function name of MPI Send.
 	 */
@@ -137,7 +137,7 @@ public interface MPIModelFactory extends ModelFactory {
 	 *            The index of the variable in the scope. Usually vid ==
 	 *            scope.NumOfVaraibles().
 	 */
-	void createRankVariable(Scope scope, int vid);
+	void createRankVariable(int vid);
 
 	/**
 	 * Return the rank variable.
@@ -153,6 +153,10 @@ public interface MPIModelFactory extends ModelFactory {
 	void createProcsVariable(Scope scope, int vid, Expression nprocs);
 
 	VariableExpression procsVariable();
+	
+	Expression numberOfProcs();
+	
+	void setNumberOfProcs(Expression numberExpression);
 
 	MPIWaitStatement mpiWaitStatement(CIVLSource source, Location location,
 			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);

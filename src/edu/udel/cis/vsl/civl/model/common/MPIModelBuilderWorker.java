@@ -60,11 +60,12 @@ public class MPIModelBuilderWorker extends ModelBuilderWorker {
 		}
 		initializedInputs.add(NPROCS);
 		nprocsExpression = nprocsExpression();
+		this.mpiFactory.setNumberOfProcs(nprocsExpression);
 		this.processMainFunction = systemFunctionTranslator
 				.processMainFunction(systemScope, rootNode);
 		this.processMainScope = this.processMainFunction.outerScope();
 		initialization = systemFunctionTranslator.translateRootFunction(
-				systemScope, nprocsExpression, rootNode, this.processMainScope);
+				systemScope, rootNode, this.processMainScope);
 		if (inputInitMap != null) {
 			// if commandline specified input variables that do not
 			// exist, throw exception...
@@ -126,19 +127,19 @@ public class MPIModelBuilderWorker extends ModelBuilderWorker {
 		}
 	}
 
-//	public void setMpiSpawnStatement(CallOrSpawnStatement spawnMpi) {
-//		this.mpiSpawnStatement = spawnMpi;
-//	}
-//
-//	public void setMpiProcessFunctionForSpawn(CIVLFunction function) {
-//		this.mpiSpawnStatement.setFunction(function);
-//	}
+	// public void setMpiSpawnStatement(CallOrSpawnStatement spawnMpi) {
+	// this.mpiSpawnStatement = spawnMpi;
+	// }
+	//
+	// public void setMpiProcessFunctionForSpawn(CIVLFunction function) {
+	// this.mpiSpawnStatement.setFunction(function);
+	// }
 
 	public Scope processMainScope() {
 		return this.processMainScope;
 	}
-	
-	public CIVLFunction processMainFunction(){
+
+	public CIVLFunction processMainFunction() {
 		return this.processMainFunction;
 	}
 }

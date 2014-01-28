@@ -2972,7 +2972,7 @@ public class FunctionTranslator {
 	 *            The ABC type
 	 * @return The CIVL type
 	 */
-	private CIVLType translateABCType(CIVLSource source, Scope scope,
+	protected CIVLType translateABCType(CIVLSource source, Scope scope,
 			Type abcType) {
 		CIVLType result = modelBuilder.typeMap.get(abcType);
 

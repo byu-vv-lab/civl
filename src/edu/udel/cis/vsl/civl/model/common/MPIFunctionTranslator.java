@@ -4,12 +4,18 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
+import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
 import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -25,6 +31,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class MPIFunctionTranslator extends FunctionTranslator {
@@ -51,8 +58,6 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 
 	public CIVLFunction processMainFunction(Scope systemScope, ASTNode rootNode) {
 		FunctionDefinitionNode processMainNode = null;
-		Identifier functionName;
-		ArrayList<Variable> parameters = new ArrayList<>(1);
 		CIVLFunction mainFunction;
 
 		for (int i = 0; i < rootNode.numChildren(); i++) {
@@ -71,16 +76,53 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		if (processMainNode == null) {
 			throw new CIVLSyntaxException("program must have a main function,",
 					mpiFactory.sourceOf(rootNode));
+		} else {
+			Function entity = processMainNode.getEntity();
+			CIVLSource nodeSource = mpiFactory.sourceOf(processMainNode);
+			CIVLSource identifierSource = mpiFactory.sourceOf(processMainNode
+					.getIdentifier());
+			Identifier functionIdentifier = mpiFactory.identifier(
+					identifierSource, "main");
+			ArrayList<Variable> parameters = new ArrayList<Variable>();
+			// type should come from entity, not this type node.
+			// if it has a definition node, should probably use that one.
+			FunctionType functionType = entity.getType();
+			FunctionTypeNode functionTypeNode = (FunctionTypeNode) processMainNode
+					.getTypeNode();
+			CIVLType returnType = translateABCType(
+					mpiFactory.sourceOf(functionTypeNode.getReturnType()),
+					systemScope, functionType.getReturnType());
+			SequenceNode<VariableDeclarationNode> abcParameters = functionTypeNode
+					.getParameters();
+			int numParameters = abcParameters.numChildren();
+
+			for (int i = 0; i < numParameters; i++) {
+				VariableDeclarationNode decl = abcParameters
+						.getSequenceChild(i);
+
+				// Don't process void types. Should only happen in the prototype
+				// of a function with no parameters.
+				if (decl.getTypeNode().kind() == TypeNodeKind.VOID)
+					continue;
+				CIVLType type = translateABCType(mpiFactory.sourceOf(decl),
+						systemScope, functionType.getParameterType(i));
+				CIVLSource source = mpiFactory.sourceOf(decl.getIdentifier());
+				Identifier variableName = mpiFactory.identifier(source,
+						decl.getName());
+
+				parameters.add(mpiFactory.variable(source, type, variableName,
+						parameters.size()));
+			}
+			if (entity.getDefinition() == null) {
+				throw new CIVLSyntaxException(
+						"The definition of the main function cannot be found.",
+						identifierSource);
+			}
+			mpiFactory.createRankVariable(parameters.size());
+			parameters.add(mpiFactory.rankVariable().variable());
+			mainFunction = mpiFactory.function(nodeSource, functionIdentifier,
+					parameters, returnType, systemScope, null);
 		}
-		functionName = mpiFactory.identifier(
-				mpiFactory.sourceOfBeginning(processMainNode), "main");
-		mainFunction = mpiFactory.function(mpiFactory.sourceOf(rootNode),
-				functionName, parameters, mpiFactory.voidType(), systemScope,
-				null);
-		mpiFactory.createRankVariable(mainFunction.outerScope(), mainFunction
-				.outerScope().numVariables());
-		parameters.add(mpiFactory.rankVariable().variable());
-		mainFunction.setParameters(parameters);
 		return mainFunction;
 	}
 
@@ -119,9 +161,9 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	 *            The expression of the number of processes. This may be a
 	 *            integer literal for most cases.
 	 */
-	public Fragment translateRootFunction(Scope systemScope,
-			Expression numberOfProcs, ASTNode rootNode, Scope processMainScope) {
-		translateRootFunctionBody(systemScope, numberOfProcs);
+	public Fragment translateRootFunction(Scope systemScope, ASTNode rootNode,
+			Scope processMainScope) {
+		translateRootFunctionBody(systemScope);
 		return translateRootNodes(mpiModelBuilder.processMainScope(), rootNode);
 	}
 
@@ -153,8 +195,7 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		return initialization;
 	}
 
-	private void translateRootFunctionBody(Scope systemScope,
-			Expression numberOfProcs) {
+	private void translateRootFunctionBody(Scope systemScope) {
 		Fragment result;
 		Fragment initStartFragment, initProcsFragment;
 		Fragment spawnPhase;
@@ -166,7 +207,7 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 
 		mpiFactory.createStartVariable(systemScope, systemScope.numVariables());
 		mpiFactory.createProcsVariable(systemScope, systemScope.numVariables(),
-				numberOfProcs);
+				mpiFactory.numberOfProcs());
 		initStartFragment = new CommonFragment(mpiFactory.assignStatement(
 				mpiFactory.location(systemScope), mpiFactory.startVariable(),
 				mpiFactory.integerLiteralExpression(BigInteger.valueOf(0)),
@@ -175,13 +216,13 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 				mpiFactory.location(systemScope), mpiFactory.procsVariable(),
 				mpiFactory.initialValueExpression(mpiFactory.systemSource(),
 						mpiFactory.procsVariable().variable()), true));
-		spawnPhase = spawnMpiProcesses(systemScope, numberOfProcs);
+		spawnPhase = spawnMpiProcesses(systemScope, mpiFactory.numberOfProcs());
 		assignStartFragment = new CommonFragment(mpiFactory.assignStatement(
 				mpiFactory.location(systemScope), mpiFactory.startVariable(),
 				mpiFactory.integerLiteralExpression(BigInteger.valueOf(1)),
 				false));
 		// TODO initialize MPI_COMM_WORLD
-		waitPhase = waitMpiProcesses(systemScope, numberOfProcs);
+		waitPhase = waitMpiProcesses(systemScope, mpiFactory.numberOfProcs());
 		result = initStartFragment.combineWith(initProcsFragment);
 		result = result.combineWith(spawnPhase);
 		result = result.combineWith(assignStartFragment);
