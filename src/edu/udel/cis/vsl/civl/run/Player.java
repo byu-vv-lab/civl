@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.MPIExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.States;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -90,6 +91,8 @@ public abstract class Player {
 
 	protected boolean enablePrintf; // true by default
 
+	protected boolean mpiMode; // false by default
+
 	public Player(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
 		SymbolicUniverse universe;
@@ -121,8 +124,13 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.errorBoundO));
 		this.enablePrintf = (Boolean) config
 				.getValueOrDefault(UserInterface.enablePrintfO);
-		this.executor = new Executor(config, modelFactory, stateFactory, log,
-				loader, out, this.enablePrintf);
+		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
+		if (this.mpiMode)
+			this.executor = new MPIExecutor(config, modelFactory, stateFactory,
+					log, loader, out, this.enablePrintf);
+		else
+			this.executor = new Executor(config, modelFactory, stateFactory,
+					log, loader, out, this.enablePrintf);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
 		this.debug = config.isTrue(UserInterface.debugO);

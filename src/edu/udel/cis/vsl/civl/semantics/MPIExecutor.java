@@ -40,7 +40,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 public class MPIExecutor extends Executor {
 
-	/*********************** Instance Field *********************************/
+	/* ********************** Instance Field ******************************* */
 	private VariableExpression rankExpression;
 
 	/*************************** constructor *********************************/
