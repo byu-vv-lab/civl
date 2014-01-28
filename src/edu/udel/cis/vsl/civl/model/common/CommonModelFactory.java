@@ -506,7 +506,7 @@ public class CommonModelFactory implements ModelFactory {
 	public CIVLStructOrUnionType structType(Identifier name) {
 		return new CommonStructOrUnionType(name, true);
 	}
-	
+
 	@Override
 	public CIVLStructOrUnionType unionType(Identifier name) {
 		return new CommonStructOrUnionType(name, false);
@@ -1053,6 +1053,27 @@ public class CommonModelFactory implements ModelFactory {
 			Expression expression) {
 		AssertStatement result = new CommonAssertStatement(civlSource, source,
 				expression);
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		result.setStatementScope(expression.expressionScope());
+		return new CommonFragment(result);
+	}
+
+	/**
+	 * An assert statement.
+	 * 
+	 * @param source
+	 *            The source location for this statement.
+	 * @param expression
+	 *            The expression being asserted.
+	 * @return A new assert statement.
+	 */
+	@Override
+	public Fragment assertFragment(CIVLSource civlSource, Location source,
+			Expression expression, Expression printfExpression,
+			ArrayList<Expression> arguments) {
+		AssertStatement result = new CommonAssertStatement(civlSource, source,
+				expression, printfExpression, arguments);
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		result.setStatementScope(expression.expressionScope());

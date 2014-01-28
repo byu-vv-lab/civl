@@ -886,6 +886,22 @@ public class FunctionTranslator {
 		Location location = modelFactory.location(
 				modelFactory.sourceOfBeginning(assertNode), scope);
 
+//		if (assertNode.hasOptionals()) {
+//			Expression printfExpression = translateExpressionNode(
+//					assertNode.printfExpression(), scope, true);
+//			ArrayList<Expression> arguments = new ArrayList<>();
+//
+//			for (int i = 0; i < assertNode.numberOfPrintfArguments(); i++) {
+//				Expression argument = translateExpressionNode(
+//						assertNode.getPrintfArgument(i), scope, true);
+//
+//				arguments.add(argument);
+//			}
+//			return modelFactory.assertFragment(
+//					modelFactory.sourceOf(assertNode), location, expression,
+//					printfExpression, arguments);
+//		}
+
 		return modelFactory.assertFragment(modelFactory.sourceOf(assertNode),
 				location, modelFactory.booleanExpression(expression));
 	}

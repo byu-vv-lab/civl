@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import java.util.ArrayList;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
@@ -22,7 +24,9 @@ public class CommonAssertStatement extends CommonStatement implements
 		AssertStatement {
 
 	private boolean isCollective = false;
-	private Expression expression;
+	private Expression expression;// the expression expected to be true
+	private Expression printfExpression = null;// should be of string type
+	private Expression[] printfArguments = null;
 
 	/**
 	 * @param source
@@ -34,6 +38,36 @@ public class CommonAssertStatement extends CommonStatement implements
 			Expression expression) {
 		super(civlSource, source);
 		this.expression = expression;
+	}
+
+	/**
+	 * @param source
+	 *            The source location for this statement.
+	 * @param expression
+	 *            The expression being checked.
+	 */
+	public CommonAssertStatement(CIVLSource civlSource, Location source,
+			Expression expression, Expression printfExpression,
+			ArrayList<Expression> arguments) {
+		super(civlSource, source);
+		this.expression = expression;
+		this.printfExpression = printfExpression;
+		this.printfArguments = (Expression[]) arguments.toArray();
+	}
+
+	/**
+	 * @param source
+	 *            The source location for this statement.
+	 * @param expression
+	 *            The expression being checked.
+	 */
+	public CommonAssertStatement(CIVLSource civlSource, Location source,
+			Expression expression, Expression printfExpression,
+			Expression[] arguments) {
+		super(civlSource, source);
+		this.expression = expression;
+		this.printfExpression = printfExpression;
+		this.printfArguments = arguments;
 	}
 
 	/**
@@ -129,6 +163,16 @@ public class CommonAssertStatement extends CommonStatement implements
 			}
 		}
 		return newStatement;
+	}
+
+	@Override
+	public Expression printfExpression() {
+		return this.printfExpression;
+	}
+
+	@Override
+	public Expression[] printfArguments() {
+		return this.printfArguments;
 	}
 
 }

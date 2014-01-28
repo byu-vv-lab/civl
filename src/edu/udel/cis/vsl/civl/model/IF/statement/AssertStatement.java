@@ -35,4 +35,6 @@ public interface AssertStatement extends Statement {
 	 */
 	void setExpression(Expression expression);
 
+	Expression printfExpression();
+	Expression[] printfArguments();
 }

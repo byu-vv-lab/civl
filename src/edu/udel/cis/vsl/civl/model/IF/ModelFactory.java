@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.IF;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -1439,5 +1440,9 @@ public interface ModelFactory {
 	 * @return The variable
 	 */
 	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
+
+	Fragment assertFragment(CIVLSource sourceOf, Location location,
+			Expression expression, Expression printfExpression,
+			ArrayList<Expression> arguments);
 
 }
