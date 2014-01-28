@@ -342,22 +342,26 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 			arguments.add(actual);
 		}
 		switch (functionName) {
-		// TODO once MPI Statement implementation is
-		// done, translate mpi function call node here to the corresponding MPI
+		// translate mpi function calls to the corresponding MPI
 		// Statement.
-		case CommonMPIModelFactory.MPI_SEND:
+		case MPIModelFactory.MPI_SEND:
 			return mpiFactory.mpiSendStatement(source, location, scope, lhs,
 					arguments);
-			// case MPIStatementFactory.MPI_RECV:
-			// break;
-			// case MPIStatementFactory.MPI_IRECV:
-			// break;
-			// case MPIStatementFactory.MPI_ISEND:
-			// break;
-			// case MPIStatementFactory.MPI_BARRIER:
-			// break;
-			// case MPIStatementFactory.MPI_WAIT:
-			// break;
+		case MPIModelFactory.MPI_RECV:
+			return mpiFactory.mpiRecvStatement(source, location, scope, lhs,
+					arguments);
+		case MPIModelFactory.MPI_ISEND:
+			return mpiFactory.mpiIsendStatement(source, location, scope, lhs,
+					arguments);
+		case MPIModelFactory.MPI_IRECV:
+			return mpiFactory.mpiIrecvStatement(source, location, scope, lhs,
+					arguments);
+		case MPIModelFactory.MPI_BARRIER:
+			return mpiFactory.mpiBarrierStatement(source, location, scope, lhs,
+					arguments);
+		case MPIModelFactory.MPI_WAIT:
+			return mpiFactory.mpiWaitStatement(source, location, scope, lhs,
+					arguments);
 		default:
 			return callOrSpawnStatement(location, scope, functionCallNode, lhs,
 					arguments, isCall);

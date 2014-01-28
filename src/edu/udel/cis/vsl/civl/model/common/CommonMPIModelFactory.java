@@ -46,35 +46,7 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 
 	/* *************************** Static Fields *************************** */
 
-	/**
-	 * The function name of MPI Send.
-	 */
-	static final String MPI_SEND = "MPI_Send";
-
-	/**
-	 * The function name of MPI Receive.
-	 */
-	static final String MPI_RECV = "MPI_Recv";
-
-	/**
-	 * The function name of MPI Barrier.
-	 */
-	static final String MPI_BARRIER = "MPI_Barrier";
-
-	/**
-	 * The function name of MPI Isend.
-	 */
-	static final String MPI_ISEND = "MPI_Isend";
-
-	/**
-	 * The function name of MPI Ireceive.
-	 */
-	static final String MPI_IRECV = "MPI_Irecv";
-
-	/**
-	 * The function name of MPI Wait.
-	 */
-	static final String MPI_WAIT = "MPI_Wait";
+	
 
 	static final String RANK = "$RANK";
 
@@ -140,7 +112,8 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 * @return A fragment containing exactly one statement, i.e., the MPI_Recv
 	 *         statement.
 	 */
-	MPIRecvStatement translateMPI_RECV(CIVLSource source, Location location,
+	@Override
+	public MPIRecvStatement mpiRecvStatement(CIVLSource source, Location location,
 			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
 		CommonMPIRecvStatement recvStatement = new CommonMPIRecvStatement(
 				source, location, lhs, arguments);
@@ -149,18 +122,8 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 		return recvStatement;
 	}
 
-	/**
-	 * Translate a MPI_Isend functionn call to an instance of
-	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIIsendStatement}
-	 * 
-	 * @param scope
-	 *            The scope of this function call.
-	 * @param functionCallNode
-	 *            The AST node to be translated.
-	 * @return A fragment containing exactly one statement, i.e., the MPI_Isend
-	 *         statement.
-	 */
-	MPIIsendStatement translateMPI_Isend(CIVLSource source, Location location,
+	@Override
+	public MPIIsendStatement mpiIsendStatement(CIVLSource source, Location location,
 			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
 		CommonMPIIsendStatement isendStatement = new CommonMPIIsendStatement(
 				source, location, lhs, arguments);
@@ -169,18 +132,9 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 		return isendStatement;
 	}
 
-	/**
-	 * Translate a MPI_Irecv functionn call to an instance of
-	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIIrecvStatement}
-	 * 
-	 * @param scope
-	 *            The scope of this function call.
-	 * @param functionCallNode
-	 *            The AST node to be translated.
-	 * @return A fragment containing exactly one statement, i.e., the MPI_Irecv
-	 *         statement.
-	 */
-	MPIIrecvStatement translateMPI_Irecv(CIVLSource source, Location location,
+	
+	@Override
+	public MPIIrecvStatement mpiIrecvStatement(CIVLSource source, Location location,
 			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
 		CommonMPIIrecvStatement irecvStatement = new CommonMPIIrecvStatement(
 				source, location, lhs, arguments);
@@ -200,7 +154,8 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 * @return A fragment containing exactly one statement, i.e., the MPI_Wait
 	 *         statement.
 	 */
-	MPIWaitStatement translateMPI_Wait(CIVLSource source, Location location,
+	@Override
+	public MPIWaitStatement mpiWaitStatement(CIVLSource source, Location location,
 			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments){
 		CommonMPIWaitStatement waitStatement = new CommonMPIWaitStatement(
 				source, location, lhs, arguments);
@@ -220,7 +175,8 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	 * @return A fragment containing exactly one statement, i.e., the MPI_Barrier
 	 *         statement.
 	 */
-	MPIBarrierStatement translateMPI_BArrier(CIVLSource source, Location location,
+	@Override
+	public MPIBarrierStatement mpiBarrierStatement(CIVLSource source, Location location,
 			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments){
 		//MPI_Barrier just have one argument--communicator
 		CommonMPIBarrierStatement barrierStatement = new CommonMPIBarrierStatement(

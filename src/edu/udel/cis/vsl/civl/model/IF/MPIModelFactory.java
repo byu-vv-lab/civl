@@ -12,11 +12,46 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIBarrierStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIIrecvStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIIsendStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIWaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public interface MPIModelFactory extends ModelFactory {
+	
+	/**
+	 * The function name of MPI Send.
+	 */
+	static final String MPI_SEND = "MPI_Send";
+
+	/**
+	 * The function name of MPI Receive.
+	 */
+	static final String MPI_RECV = "MPI_Recv";
+
+	/**
+	 * The function name of MPI Barrier.
+	 */
+	static final String MPI_BARRIER = "MPI_Barrier";
+
+	/**
+	 * The function name of MPI Isend.
+	 */
+	static final String MPI_ISEND = "MPI_Isend";
+
+	/**
+	 * The function name of MPI Ireceive.
+	 */
+	static final String MPI_IRECV = "MPI_Irecv";
+
+	/**
+	 * The function name of MPI Wait.
+	 */
+	static final String MPI_WAIT = "MPI_Wait";
 
 	MPISendStatement mpiSendStatement(CIVLSource source, Location location,
 			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
@@ -118,4 +153,48 @@ public interface MPIModelFactory extends ModelFactory {
 	void createProcsVariable(Scope scope, int vid, Expression nprocs);
 
 	VariableExpression procsVariable();
+
+	MPIWaitStatement mpiWaitStatement(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
+
+	MPIBarrierStatement mpiBarrierStatement(CIVLSource source,
+			Location location, Scope scope, LHSExpression lhs,
+			ArrayList<Expression> arguments);
+
+	MPIIrecvStatement mpiIrecvStatement(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
+
+	/**
+	 * Translate a MPI_Irecv functionn call to an instance of
+	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIIrecvStatement}
+	 * 
+	 * @param scope
+	 *            The scope of this function call.
+	 * @param functionCallNode
+	 *            The AST node to be translated.
+	 * @return A fragment containing exactly one statement, i.e., the MPI_Irecv
+	 *         statement.
+	 */
+	MPIRecvStatement mpiRecvStatement(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
+
+	/**
+	 * Create an instance of
+	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIIsendStatement}.
+	 * Called when translating an MPI_Isend function call.
+	 * 
+	 * @param source
+	 *            The source code information of the MPI_Isend function call.
+	 * @param location
+	 *            The source location of the MPI_Isend statement
+	 * @param scope
+	 *            The scope of the MPI_Isend statement.
+	 * @param lhs
+	 *            The left hand side expression of the MPI_Isend function call.
+	 * @param arguments
+	 *            The list of arguments of the MPI_Isend statement.
+	 * @return the new MPI_Isend statement.
+	 */
+	MPIIsendStatement mpiIsendStatement(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments);
 }
