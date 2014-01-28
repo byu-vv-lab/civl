@@ -17,11 +17,21 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIBarrierStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIIrecvStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIIsendStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIWaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonMPIBarrierStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonMPIIrecvStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonMPIIsendStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonMPIRecvStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonMPISendStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonMPIWaitStatement;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
@@ -115,9 +125,112 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 		CommonMPISendStatement sendStatement = new CommonMPISendStatement(
 				source, location, lhs, arguments);
 
-		sendStatement.setStatementScope(join(scope, lhs.expressionScope()));
+		sendStatement.setStatementScope(join(lhs.expressionScope(), scope));
 		return sendStatement;
 	}
+
+	/**
+	 * Translate a MPI_Recv functionn call to an instance of
+	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement}
+	 * 
+	 * @param scope
+	 *            The scope of this function call.
+	 * @param functionCallNode
+	 *            The AST node to be translated.
+	 * @return A fragment containing exactly one statement, i.e., the MPI_Recv
+	 *         statement.
+	 */
+	MPIRecvStatement translateMPI_RECV(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
+		CommonMPIRecvStatement recvStatement = new CommonMPIRecvStatement(
+				source, location, lhs, arguments);
+
+		recvStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		return recvStatement;
+	}
+
+	/**
+	 * Translate a MPI_Isend functionn call to an instance of
+	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIIsendStatement}
+	 * 
+	 * @param scope
+	 *            The scope of this function call.
+	 * @param functionCallNode
+	 *            The AST node to be translated.
+	 * @return A fragment containing exactly one statement, i.e., the MPI_Isend
+	 *         statement.
+	 */
+	MPIIsendStatement translateMPI_Isend(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
+		CommonMPIIsendStatement isendStatement = new CommonMPIIsendStatement(
+				source, location, lhs, arguments);
+
+		isendStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		return isendStatement;
+	}
+
+	/**
+	 * Translate a MPI_Irecv functionn call to an instance of
+	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIIrecvStatement}
+	 * 
+	 * @param scope
+	 *            The scope of this function call.
+	 * @param functionCallNode
+	 *            The AST node to be translated.
+	 * @return A fragment containing exactly one statement, i.e., the MPI_Irecv
+	 *         statement.
+	 */
+	MPIIrecvStatement translateMPI_Irecv(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments) {
+		CommonMPIIrecvStatement irecvStatement = new CommonMPIIrecvStatement(
+				source, location, lhs, arguments);
+
+		irecvStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		return irecvStatement;
+	}
+
+	/**
+	 * Translate a MPI_Wait functionn call to an instance of
+	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIWaitStatement}
+	 * 
+	 * @param scope
+	 *            The scope of this function call.
+	 * @param functionCallNode
+	 *            The AST node to be translated.
+	 * @return A fragment containing exactly one statement, i.e., the MPI_Wait
+	 *         statement.
+	 */
+	MPIWaitStatement translateMPI_Wait(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments){
+		CommonMPIWaitStatement waitStatement = new CommonMPIWaitStatement(
+				source, location, lhs, arguments);
+
+		waitStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		return waitStatement;
+	}
+	
+	/**
+	 * Translate a MPI_Barrier functionn call to an instance of
+	 * {@link edu.udel.cis.vsl.civl.model.IF.statement.MPIBarrierStatement}
+	 * 
+	 * @param scope
+	 *            The scope of this function call.
+	 * @param functionCallNode
+	 *            The AST node to be translated.
+	 * @return A fragment containing exactly one statement, i.e., the MPI_Barrier
+	 *         statement.
+	 */
+	MPIBarrierStatement translateMPI_BArrier(CIVLSource source, Location location,
+			Scope scope, LHSExpression lhs, ArrayList<Expression> arguments){
+		//MPI_Barrier just have one argument--communicator
+		CommonMPIBarrierStatement barrierStatement = new CommonMPIBarrierStatement(
+				source, location, lhs, arguments.get(0));
+
+		barrierStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		return barrierStatement;
+	}
+	/* ************************* private methods *************************** */
+	
 
 	@Override
 	public Location location(Scope scope) {
