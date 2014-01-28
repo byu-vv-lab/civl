@@ -112,8 +112,15 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 			ArrayList<Expression> arguments) {
 		CommonMPISendStatement sendStatement = new CommonMPISendStatement(
 				source, location, lhs, arguments);
-
-		sendStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		int argLength = arguments.size();
+		Scope finalScope = scope;
+		if(lhs != null){
+		    finalScope = join(lhs.expressionScope(), finalScope);
+		}
+		for(int i=0; i<argLength; i++){
+			finalScope = join(finalScope, arguments.get(i).expressionScope());
+		}
+		sendStatement.setStatementScope(finalScope);
 		return sendStatement;
 	}
 
@@ -134,8 +141,15 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 			ArrayList<Expression> arguments) {
 		CommonMPIRecvStatement recvStatement = new CommonMPIRecvStatement(
 				source, location, lhs, arguments);
-
-		recvStatement.setStatementScope(join(lhs.expressionScope(), scope));
+		int argLength = arguments.size();
+		Scope finalScope = scope;
+		if(lhs != null){
+		    finalScope = join(lhs.expressionScope(), finalScope);
+		}
+		for(int i=0; i<argLength; i++){
+			finalScope = join(finalScope, arguments.get(i).expressionScope());
+		}
+		recvStatement.setStatementScope(finalScope);
 		return recvStatement;
 	}
 

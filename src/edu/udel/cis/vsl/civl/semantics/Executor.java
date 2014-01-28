@@ -94,9 +94,9 @@ public class Executor {
 	 */
 	protected LibraryExecutorLoader loader;
 
-	private Libcivlc civlcExecutor;
+	protected Libcivlc civlcExecutor;
 
-	private Libstdio stdioExecutor;
+	protected Libstdio stdioExecutor;
 
 	protected PrintStream output;
 
@@ -669,7 +669,7 @@ public class Executor {
 		}
 	}
 
-	public LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
+	protected LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
 		String library;
 
 		assert statement.function() instanceof SystemFunction;
