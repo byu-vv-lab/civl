@@ -92,6 +92,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
+import edu.udel.cis.vsl.abc.ast.type.common.CommonCharType;
 import edu.udel.cis.vsl.abc.ast.value.IF.IntegerValue;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
@@ -2154,6 +2155,12 @@ public class FunctionTranslator {
 			if (((PointerType) convertedType).referencedType().kind() == TypeKind.BASIC
 					&& ((StandardBasicType) ((PointerType) convertedType)
 							.referencedType()).getBasicTypeKind() == BasicTypeKind.CHAR) {
+				result = modelFactory.stringLiteralExpression(source,
+						constantNode.getStringRepresentation());
+				break;
+			} else if (((PointerType) convertedType).referencedType().kind() == TypeKind.QUALIFIED
+					&& ((QualifiedObjectType) ((PointerType) convertedType)
+							.referencedType()).getBaseType() instanceof CommonCharType) {
 				result = modelFactory.stringLiteralExpression(source,
 						constantNode.getStringRepresentation());
 				break;
