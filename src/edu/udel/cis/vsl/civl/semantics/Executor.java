@@ -68,18 +68,18 @@ public class Executor {
 
 	/***************************** Instance Fields ***************************/
 
-	private boolean enablePrintf; // true by default
+	protected boolean enablePrintf; // true by default
 
-	private ModelFactory modelFactory;
+	protected ModelFactory modelFactory;
 
 	/** The symbolic universe used to manage all symbolic expressions. */
-	private SymbolicUniverse symbolicUniverse;
+	protected SymbolicUniverse symbolicUniverse;
 
 	/** The factory used to produce and manipulate model states. */
-	private StateFactory stateFactory;
+	protected StateFactory stateFactory;
 
 	/** The Evaluator used to evaluate expressions. */
-	private Evaluator evaluator;
+	protected Evaluator evaluator;
 
 	// /**
 	// * Log used to record property violations encountered as the model is
@@ -91,18 +91,18 @@ public class Executor {
 	 * The loader used to find Executors for system functions declared in
 	 * libraries.
 	 */
-	private LibraryExecutorLoader loader;
+	protected LibraryExecutorLoader loader;
 
 	private Libcivlc civlcExecutor;
 
-	private PrintStream output;
+	protected PrintStream output;
 
 	/**
 	 * The number of steps that have been executed by this executor. A "step" is
 	 * defined to be a call to method
 	 * {@link #executeWork(State, int, Statement)}.
 	 */
-	private long numSteps = 0;
+	protected long numSteps = 0;
 
 	/******************************* Constructors ****************************/
 
@@ -189,7 +189,7 @@ public class Executor {
 	 * @return The updated state of the program
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeAssign(State state, int pid, AssignStatement statement)
+	protected State executeAssign(State state, int pid, AssignStatement statement)
 			throws UnsatisfiablePathConditionException {
 		ProcessState process = state.getProcessState(pid);
 		Evaluation eval = evaluator.evaluate(state, pid, statement.rhs());
@@ -215,7 +215,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCall(State state, int pid,
+	protected State executeCall(State state, int pid,
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		if (statement.function() instanceof SystemFunction) {
@@ -244,7 +244,7 @@ public class Executor {
 		return state;
 	}
 
-	private State executeMalloc(State state, int pid, MallocStatement statement)
+	protected State executeMalloc(State state, int pid, MallocStatement statement)
 			throws UnsatisfiablePathConditionException {
 		State result = civlcExecutor.executeMalloc(state, pid, statement);
 
@@ -266,7 +266,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeSpawn(State state, int pid,
+	protected State executeSpawn(State state, int pid,
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		ProcessState process = state.getProcessState(pid);
@@ -306,7 +306,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeWait(State state, int pid, WaitStatement statement)
+	protected State executeWait(State state, int pid, WaitStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid, statement.process());
 		SymbolicExpression procVal = eval.value;
@@ -332,7 +332,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeReturn(State state, int pid, ReturnStatement statement)
+	protected State executeReturn(State state, int pid, ReturnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Expression expr = statement.expression();
 		ProcessState process;
@@ -361,7 +361,7 @@ public class Executor {
 		return state;
 	}
 
-	private State executeAssume(State state, int pid, AssumeStatement statement)
+	protected State executeAssume(State state, int pid, AssumeStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
@@ -377,7 +377,7 @@ public class Executor {
 		return state;
 	}
 
-	private State executeAssert(State state, int pid, AssertStatement statement)
+	protected State executeAssert(State state, int pid, AssertStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
@@ -428,7 +428,7 @@ public class Executor {
 	 *            The statement to be executed.
 	 * @return The updated state of the program.
 	 */
-	private State executeWork(State state, int pid, Statement statement)
+	protected State executeWork(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
 		numSteps++;
 		if (statement instanceof AssumeStatement) {
