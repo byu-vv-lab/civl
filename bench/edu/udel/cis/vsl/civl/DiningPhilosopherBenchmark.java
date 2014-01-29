@@ -9,7 +9,7 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
  * @author zmanchun
  * 
  */
-public class diningPhilosopherBenchmark {
+public class DiningPhilosopherBenchmark {
 	private static UserInterface ui = new UserInterface();
 
 	public static void main(String[] args) {
