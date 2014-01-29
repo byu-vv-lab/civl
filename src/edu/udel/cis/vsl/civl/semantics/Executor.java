@@ -137,9 +137,9 @@ public class Executor {
 		this.output = output;
 		this.enablePrintf = enablePrintf;
 		this.civlcExecutor = (Libcivlc) loader.getLibraryExecutor("civlc",
-				this, this.output, this.enablePrintf);
+				this, this.output, this.enablePrintf, this.modelFactory);
 		this.stdioExecutor = (Libstdio) loader.getLibraryExecutor("stdio",
-				this, this.output, this.enablePrintf);
+				this, this.output, this.enablePrintf, this.modelFactory);
 	}
 
 	/**
@@ -231,7 +231,7 @@ public class Executor {
 			// TODO: optimize this. store libraryExecutor in SystemFunction?
 			LibraryExecutor executor = loader.getLibraryExecutor(
 					((SystemFunction) statement.function()).getLibrary(), this,
-					output, this.enablePrintf);
+					output, this.enablePrintf, this.modelFactory);
 
 			state = executor.execute(state, pid, statement);
 			// state = transition(state, state.getProcessState(pid),
