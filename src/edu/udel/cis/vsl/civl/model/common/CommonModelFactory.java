@@ -2154,7 +2154,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public ArrayLiteralExpression arrayLiteralExpression(CIVLSource source,
-			CIVLType arrayType, Expression[] elements) {
+			CIVLType arrayType, ArrayList<Expression> elements) {
 		ArrayLiteralExpression arrayLiteral = new CommonArrayLiteralExpression(
 				source, arrayType, elements);
 		Scope expressionScope = null;
@@ -2173,15 +2173,16 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public StructLiteralExpression structLiteralExpression(CIVLSource source,
-			CIVLType structType, Expression[] fields) {
+			CIVLType structType, ArrayList<Expression> fields) {
 		StructLiteralExpression structLiteral = new CommonStructLiteralExpression(
 				source, structType, fields);
 		Scope expressionScope = null;
 
 		if (fields != null) {
-			for (Expression field : fields) {
-				expressionScope = join(expressionScope, field.expressionScope());
-			}
+//			for (Expression field : fields) {
+//				expressionScope = join(expressionScope, field.expressionScope());
+//			}
+			expressionScope = joinScope(fields);
 		}
 		if (expressionScope != null)
 			structLiteral.setExpressionScope(expressionScope);

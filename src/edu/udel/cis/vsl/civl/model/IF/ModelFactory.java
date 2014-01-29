@@ -354,7 +354,7 @@ public interface ModelFactory {
 	 * @return The new array literal expression created.
 	 */
 	ArrayLiteralExpression arrayLiteralExpression(CIVLSource source,
-			CIVLType arrayType, Expression[] elements);
+			CIVLType arrayType, ArrayList<Expression> elements);
 
 	/**
 	 * A binary expression. One of {+,-,*,\,<,<=,==,!=,&&,||,%}
@@ -644,7 +644,7 @@ public interface ModelFactory {
 	 * @return
 	 */
 	StructLiteralExpression structLiteralExpression(CIVLSource source,
-			CIVLType type, Expression[] fields);
+			CIVLType type, ArrayList<Expression> fields);
 
 	/**
 	 * An expression for an array index operation. e.g. a[i]
@@ -1443,7 +1443,6 @@ public interface ModelFactory {
 	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
 
 	AssertStatement assertStatement(CIVLSource sourceOf, Location location,
-			Expression expression,
-			ArrayList<Expression> arguments);
+			Expression expression, ArrayList<Expression> arguments);
 
 }

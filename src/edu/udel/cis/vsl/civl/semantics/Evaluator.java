@@ -1079,16 +1079,18 @@ public class Evaluator {
 			ArrayLiteralExpression expression)
 			throws UnsatisfiablePathConditionException {
 		Expression[] elements = expression.elements();
-		SymbolicType dynamicArrayType = expression.getExpressionType()
+		SymbolicType symbolicElementType = expression.elementType()
 				.getDynamicType(universe);
-		ArrayList<SymbolicExpression> symbolicElements = new ArrayList<>();
+		List<SymbolicExpression> symbolicElements = new ArrayList<>();
+		Evaluation eval;
 
 		for (Expression element : elements) {
-			symbolicElements.add(evaluate(state, pid, element).value);
+			eval = evaluate(state, pid, element);
+			symbolicElements.add(eval.value);
+			state = eval.state;
 		}
-		assert dynamicArrayType instanceof SymbolicTupleType;
-		return new Evaluation(state, universe.tuple(
-				(SymbolicTupleType) dynamicArrayType, symbolicElements));
+		return new Evaluation(state, universe.array(symbolicElementType,
+				symbolicElements));
 	}
 
 	/**
@@ -1446,9 +1448,12 @@ public class Evaluator {
 		SymbolicType dynamicStructType = expression.getExpressionType()
 				.getDynamicType(universe);
 		ArrayList<SymbolicExpression> symbolicFields = new ArrayList<>();
+		Evaluation eval;
 
 		for (Expression field : fields) {
-			symbolicFields.add(evaluate(state, pid, field).value);
+			eval = evaluate(state, pid, field);
+			symbolicFields.add(eval.value);
+			state = eval.state;
 		}
 		assert dynamicStructType instanceof SymbolicTupleType;
 		return new Evaluation(state, universe.tuple(

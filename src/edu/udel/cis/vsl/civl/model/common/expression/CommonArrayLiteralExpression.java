@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.ArrayList;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -12,9 +14,10 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	private Expression[] elements;
 
 	public CommonArrayLiteralExpression(CIVLSource source, CIVLType type,
-			Expression[] elements) {
+			ArrayList<Expression> elements) {
 		super(source);
-		this.elements = elements;
+		this.elements = new Expression[elements.size()];
+		elements.toArray(this.elements);
 		this.setExpressionType(type);
 	}
 
@@ -31,8 +34,7 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 			for (Expression element : elements) {
 				result += element.toString() + ", ";
 			}
-			result = result.substring(0, result.length() - 3);
-			result += " ";
+			result = result.substring(0, result.length() - 2);
 		}
 		result += "}";
 		return result;
@@ -52,6 +54,11 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	public CIVLArrayType arrayType() {
 		assert this.expressionType instanceof CIVLArrayType;
 		return (CIVLArrayType) this.expressionType;
+	}
+
+	@Override
+	public CIVLType elementType() {
+		return this.arrayType().elementType();
 	}
 
 }

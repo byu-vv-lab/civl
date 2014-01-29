@@ -29,6 +29,10 @@ import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.PairNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.compound.CompoundInitializerNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.compound.CompoundLiteralObject;
+import edu.udel.cis.vsl.abc.ast.node.IF.compound.LiteralObject;
+import edu.udel.cis.vsl.abc.ast.node.IF.compound.ScalarLiteralObject;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.AbstractFunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ContractNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.EnsuresNode;
@@ -1926,18 +1930,19 @@ public class FunctionTranslator {
 					modelBuilder.initializedInputs.add(name);
 				}
 			}
-			if (rhs == null)
+			if (rhs == null && node.getInitializer() == null)
 				rhs = modelFactory.initialValueExpression(source, variable);
 			if (sourceLocation == null)
 				sourceLocation = modelFactory.location(
 						modelFactory.sourceOfBeginning(node), scope);
-			result = new CommonFragment(sourceLocation,
-					modelFactory
-							.assignStatement(source, sourceLocation,
-									modelFactory.variableExpression(
-											modelFactory.sourceOf(identifier),
-											variable), rhs, true));
-			sourceLocation = null;
+			if (rhs != null) {
+				result = new CommonFragment(sourceLocation,
+						modelFactory.assignStatement(source, sourceLocation,
+								modelFactory.variableExpression(
+										modelFactory.sourceOf(identifier),
+										variable), rhs, true));
+				sourceLocation = null;
+			}
 		}
 		initialization = translateVariableInitializationNode(node, variable,
 				sourceLocation, scope);
@@ -1998,22 +2003,28 @@ public class FunctionTranslator {
 
 		if (init != null) {
 			Statement assignStatement;
+			Expression rhs;
 
-			if (!(init instanceof ExpressionNode))
+			if (!(init instanceof ExpressionNode)
+					&& !(init instanceof CompoundInitializerNode))
 				throw new CIVLUnimplementedFeatureException(
 						"Non-expression initializer",
 						modelFactory.sourceOf(init));
 			if (location == null)
 				location = modelFactory.location(
 						modelFactory.sourceOfBeginning(node), scope);
-			assignStatement = modelFactory
-					.assignStatement(
-							modelFactory.sourceOf(node),
-							location,
-							modelFactory.variableExpression(
-									modelFactory.sourceOf(init), variable),
-							translateExpressionNode((ExpressionNode) init,
-									scope, true), true);
+
+			if (init instanceof ExpressionNode) {
+				rhs = translateExpressionNode((ExpressionNode) init, scope,
+						true);
+			} else {
+				rhs = translateCompoundLiteralObject(
+						((CompoundInitializerNode) init).getLiteralObject(),
+						scope, variable.type());
+			}
+			assignStatement = modelFactory.assignStatement(modelFactory
+					.sourceOf(node), location, modelFactory.variableExpression(
+					modelFactory.sourceOf(init), variable), rhs, true);
 			initFragment = new CommonFragment(assignStatement);
 			if (modelFactory.hasConditionalExpressions()) {
 				initFragment = modelFactory
@@ -2022,6 +2033,64 @@ public class FunctionTranslator {
 			}
 		}
 		return initFragment;
+	}
+
+	private Expression translateCompoundLiteralObject(
+			CompoundLiteralObject compoundLiteral, Scope scope, CIVLType type) {
+		ASTNode node = compoundLiteral.getSourceNode();
+		CIVLSource source = modelFactory.sourceOf(node);
+		int compoundLiteralSize = compoundLiteral.size();
+
+		if (type.isArrayType()) {
+			CIVLArrayType arrayType = (CIVLArrayType) type;
+			ArrayList<Expression> elements = new ArrayList<>();
+
+			for (int i = 0; i < compoundLiteralSize; i++) {
+				LiteralObject literal = compoundLiteral.get(i);
+				Expression element;
+
+				if (literal instanceof ScalarLiteralObject) {
+					element = translateExpressionNode(
+							((ScalarLiteralObject) literal).getExpression(),
+							scope, true);
+				} else if (literal instanceof CompoundLiteralObject) {
+					element = translateCompoundLiteralObject(
+							((CompoundLiteralObject) literal), scope,
+							arrayType.elementType());
+				} else
+					throw new CIVLInternalException("Unreachable", source);
+				elements.add(element);
+			}
+			return modelFactory.arrayLiteralExpression(source, arrayType,
+					elements);
+		} else if (type.isStructType()) {
+			CIVLStructOrUnionType structType = (CIVLStructOrUnionType) type;
+			ArrayList<Expression> fields = new ArrayList<>();
+
+			for (int i = 0; i < compoundLiteralSize; i++) {
+				LiteralObject literal = compoundLiteral.get(i);
+				Expression field;
+				CIVLType fieldType = structType.getField(i).type();
+
+				if (literal instanceof ScalarLiteralObject) {
+					field = translateExpressionNode(
+							((ScalarLiteralObject) literal).getExpression(),
+							scope, true);
+				} else if (literal instanceof CompoundLiteralObject) {
+					field = translateCompoundLiteralObject(
+							((CompoundLiteralObject) literal), scope, fieldType);
+				} else
+					throw new CIVLInternalException("Unreachable", source);
+				fields.add(field);
+			}
+			return modelFactory.structLiteralExpression(source, structType,
+					fields);
+		} else if (type.isUnionType()) {
+			throw new CIVLUnimplementedFeatureException(
+					"Compound initializer for union type", source);
+		} else
+			throw new CIVLInternalException("Compound initializer of " + type
+					+ " type is invalid.", source);
 	}
 
 	/**
