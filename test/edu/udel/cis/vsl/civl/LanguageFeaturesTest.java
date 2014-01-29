@@ -52,6 +52,11 @@ public class LanguageFeaturesTest {
 //	}
 	
 	@Test
+	public void assertPrintf() throws ABCException {
+		assertFalse(ui.run("verify", filename("assertPrintf.cvl")));
+	}
+	
+	@Test
 	public void assume() throws ABCException {
 		assertTrue(ui.run("verify", filename("assume.cvl")));
 	}
@@ -121,6 +126,12 @@ public class LanguageFeaturesTest {
 		assertFalse(ui.run("verify", filename("bundleStructComponent.cvl")));
 	}
 
+	
+	@Test
+	public void cAssert() throws ABCException {
+		assertFalse(ui.run("verify", filename("cAssert.cvl")));
+	}
+	
 	@Test
 	public void cast() throws ABCException {
 		assertTrue(ui.run("verify", filename("cast.cvl")));

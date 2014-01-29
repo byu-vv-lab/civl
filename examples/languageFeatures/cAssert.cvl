@@ -1,3 +1,7 @@
+/* 
+ * Commandline example:
+ *     civl verify cAssert.cvl
+ */
 #include<assert.h>
 
 void main(){
