@@ -171,6 +171,27 @@ public class ImmutableState implements State {
 	 */
 	private boolean seen = false;
 
+	/* *************************** Static Methods ************************** */
+
+	static ImmutableState newState(ImmutableState state,
+			ImmutableProcessState[] processStates,
+			ImmutableDynamicScope[] scopes, BooleanExpression pathCondition) {
+		ImmutableState result = new ImmutableState(
+				processStates == null ? state.processStates : processStates,
+				scopes == null ? state.scopes : scopes,
+				pathCondition == null ? state.pathCondition : pathCondition);
+
+		if (processStates == null && state.procHashed) {
+			result.procHashed = true;
+			result.procHashCode = state.procHashCode;
+		}
+		if (scopes == null && state.scopeHashed) {
+			result.scopeHashed = true;
+			result.scopeHashCode = state.scopeHashCode;
+		}
+		return result;
+	}
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -245,25 +266,6 @@ public class ImmutableState implements State {
 
 	/* *********************** Package-private Methods ********************* */
 
-	static ImmutableState newState(ImmutableState state,
-			ImmutableProcessState[] processStates,
-			ImmutableDynamicScope[] scopes, BooleanExpression pathCondition) {
-		ImmutableState result = new ImmutableState(
-				processStates == null ? state.processStates : processStates,
-				scopes == null ? state.scopes : scopes,
-				pathCondition == null ? state.pathCondition : pathCondition);
-
-		if (processStates == null && state.procHashed) {
-			result.procHashed = true;
-			result.procHashCode = state.procHashCode;
-		}
-		if (scopes == null && state.scopeHashed) {
-			result.scopeHashed = true;
-			result.scopeHashCode = state.scopeHashCode;
-		}
-		return result;
-	}
-
 	void makeCanonic(int canonicId, SymbolicUniverse universe,
 			Map<ImmutableDynamicScope, ImmutableDynamicScope> scopeMap,
 			Map<ImmutableProcessState, ImmutableProcessState> processMap) {
@@ -291,7 +293,7 @@ public class ImmutableState implements State {
 	@Override
 	public void commit() {
 	}
-	
+
 	/**
 	 * Returns the canonicID of this state. Returns -1 if it is not canonic.
 	 * 
@@ -364,9 +366,9 @@ public class ImmutableState implements State {
 	}
 
 	/**
-	 * Returns a string of the form instanceId:canonicId. The instanceId alone
-	 * uniquely identifies the state, but the canonicId is also useful, though
-	 * it is only used for canonic states.
+	 * TODO: change this Returns a string of the form instanceId:canonicId. The
+	 * instanceId alone uniquely identifies the state, but the canonicId is also
+	 * useful, though it is only used for canonic states.
 	 * 
 	 * @return the string instanceId:canonicId
 	 */

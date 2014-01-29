@@ -108,7 +108,8 @@ public abstract class Player {
 		if ("transient".equals(stateOption))
 			this.stateFactory = States.newTransientStateFactory(modelFactory);
 		else if ("immutable".equals(stateOption))
-			this.stateFactory = States.newImmutableStateFactory(modelFactory);
+			this.stateFactory = States.newImmutableStateFactory(modelFactory,
+					config);
 		else if ("persistent".equals(stateOption))
 			this.stateFactory = States.newPersistentStateFactory(modelFactory);
 		else

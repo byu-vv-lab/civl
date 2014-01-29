@@ -562,11 +562,6 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		if (printTransitions) {
 			out.print("--> ");
 		}
-		state = stateFactory.collectScopes(state);
-		// TODO: try this simplification out, see how it works:
-		if (simplify) {
-			state = stateFactory.simplify(state);
-		}
 		if (saveStates) {
 			state = stateFactory.canonic(state);
 			this.maxCanonicId = state.getCanonicId();

@@ -5,6 +5,7 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.immutable.ImmutableStateFactory;
 import edu.udel.cis.vsl.civl.state.persistent.PersistentStateFactory;
 import edu.udel.cis.vsl.civl.state.trans.TransientStateFactory;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 /**
  * Entry point for the state module: provides a static method to get a new state
@@ -27,8 +28,8 @@ public class States {
 	 * @return a new immutable state factory
 	 */
 	public static StateFactory newImmutableStateFactory(
-			ModelFactory modelFactory) {
-		return new ImmutableStateFactory(modelFactory);
+			ModelFactory modelFactory, GMCConfiguration config) {
+		return new ImmutableStateFactory(modelFactory, config);
 	}
 
 	public static StateFactory newPersistentStateFactory(

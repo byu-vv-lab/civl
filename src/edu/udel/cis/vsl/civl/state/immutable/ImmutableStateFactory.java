@@ -11,10 +11,12 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.run.UserInterface;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -31,6 +33,10 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public class ImmutableStateFactory implements StateFactory {
 
 	/************************* Instance Fields *************************/
+
+	private GMCConfiguration config;
+
+	private boolean simplify;
 
 	private long initialNumStateInstances = ImmutableState.instanceCount;
 
@@ -56,10 +62,13 @@ public class ImmutableStateFactory implements StateFactory {
 	/**
 	 * Factory to create all state objects.
 	 */
-	public ImmutableStateFactory(ModelFactory modelFactory) {
+	public ImmutableStateFactory(ModelFactory modelFactory,
+			GMCConfiguration config) {
 		this.modelFactory = modelFactory;
+		this.config = config;
 		this.universe = modelFactory.universe();
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
+		this.simplify = config.isTrue(UserInterface.simplifyO);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -383,7 +392,7 @@ public class ImmutableStateFactory implements StateFactory {
 		state = new ImmutableState(newProcesses, newScopes,
 				state.getPathCondition());
 		state = setLocation(state, pid, function.startLocation());
-		state = collectScopesWork(state);
+		// state = collectScopesWork(state);
 		return state;
 	}
 
@@ -641,18 +650,31 @@ public class ImmutableStateFactory implements StateFactory {
 				callerPid);
 	}
 
+	private ImmutableState canonicOnly(State state) {
+		ImmutableState theState = (ImmutableState) state;
+		ImmutableState result = stateMap.get(theState);
+
+		if (result == null) {
+			result = theState;
+			result.makeCanonic(stateCount, universe, scopeMap, processMap);
+			stateCount++;
+			stateMap.put(result, result);
+		}
+		return result;
+	}
+
 	@Override
 	public ImmutableState canonic(State state) {
-		ImmutableState canonicState = stateMap.get(state);
+		ImmutableState theState = (ImmutableState) state;
 
-		if (canonicState == null) {
-			canonicState = (ImmutableState) state;
-			canonicState
-					.makeCanonic(stateCount, universe, scopeMap, processMap);
-			stateCount++;
-			stateMap.put(canonicState, canonicState);
+		theState = collectProcesses(theState);
+		theState = collectScopesWork(theState);
+		theState = canonicOnly(theState);
+		if (simplify) {
+			theState = simplify(theState);
+			theState = canonicOnly(theState);
 		}
-		return canonicState;
+		return theState;
 	}
 
 	@Override
@@ -711,7 +733,8 @@ public class ImmutableStateFactory implements StateFactory {
 		setReachablesForProc(newScopes, processArray[pid]);
 		theState = new ImmutableState(processArray, newScopes,
 				theState.getPathCondition());
-		return collectScopesWork(theState);
+		// return collectScopesWork(theState);
+		return theState;
 	}
 
 	@Override
@@ -748,32 +771,67 @@ public class ImmutableStateFactory implements StateFactory {
 				pid);
 	}
 
+	/**
+	 * Finds all process states which are null and removes them, renumbering the
+	 * remaining processes and updating the state.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @return
+	 */
+	public ImmutableState collectProcesses(State state) {
+		ImmutableState theState = (ImmutableState) state;
+		int numProcs = theState.numProcs();
+		boolean change = false;
+		int counter = 0;
+
+		while (counter < numProcs) {
+			if (theState.getProcessState(counter) == null) {
+				change = true;
+				break;
+			}
+			counter++;
+		}
+		if (change) {
+			int newNumProcs = counter;
+			int[] oldToNewPidMap = new int[numProcs];
+			ImmutableProcessState[] newProcesses;
+			ImmutableDynamicScope[] newScopes;
+
+			for (int i = 0; i < counter; i++)
+				oldToNewPidMap[i] = i;
+			oldToNewPidMap[counter] = -1;
+			for (int i = counter + 1; i < numProcs; i++) {
+				if (theState.getProcessState(i) == null) {
+					oldToNewPidMap[i] = -1;
+				} else {
+					oldToNewPidMap[i] = newNumProcs;
+					newNumProcs++;
+				}
+			}
+			newProcesses = new ImmutableProcessState[newNumProcs];
+			for (int i = 0; i < numProcs; i++) {
+				int newPid = oldToNewPidMap[i];
+
+				if (newPid >= 0) {
+					newProcesses[newPid] = new ImmutableProcessState(
+							theState.getProcessState(i), newPid);
+				}
+			}
+			newScopes = updateProcessReferencesInScopes(theState,
+					oldToNewPidMap);
+			theState = ImmutableState.newState(theState, newProcesses,
+					newScopes, null);
+		}
+		return theState;
+	}
+
 	@Override
 	public ImmutableState removeProcess(State state, int pid) {
 		ImmutableState theState = (ImmutableState) state;
-		int numProcs = theState.numProcs();
-		ImmutableProcessState[] newProcesses = new ImmutableProcessState[numProcs - 1];
-		ImmutableDynamicScope[] newScopes = null;
 
-		for (int i = 0; i < pid; i++)
-			newProcesses[i] = theState.getProcessState(i);
-		{
-			int[] oldToNewPidMap = new int[numProcs];
-
-			for (int i = pid; i < numProcs - 1; i++)
-				newProcesses[i] = new ImmutableProcessState(
-						theState.getProcessState(i + 1), i);
-			for (int i = 0; i < pid; i++)
-				oldToNewPidMap[i] = i;
-			oldToNewPidMap[pid] = -1;
-			for (int i = pid + 1; i < numProcs; i++)
-				oldToNewPidMap[i] = i - 1;
-			newScopes = updateProcessReferencesInScopes(theState,
-					oldToNewPidMap);
-		}
-		theState = ImmutableState.newState(theState, newProcesses, newScopes,
-				null);
-		return collectScopesWork(theState);
+		theState.setProcessState(pid, null);
+		return theState;
 	}
 
 	@Override
@@ -859,7 +917,8 @@ public class ImmutableStateFactory implements StateFactory {
 				theState = new ImmutableState(processArray, newScopes,
 						theState.getPathCondition());
 			}
-			return collectScopesWork(theState);
+			// return collectScopesWork(theState);
+			return theState;
 		}
 	}
 
@@ -903,8 +962,8 @@ public class ImmutableStateFactory implements StateFactory {
 		ImmutableDynamicScope newScope;
 
 		newValues[vid] = value;
-		newScope = newDynamicScope(oldScope.lexicalScope(), oldScope.getParent(),
-				newValues, oldScope.getReachers());
+		newScope = newDynamicScope(oldScope.lexicalScope(),
+				oldScope.getParent(), newValues, oldScope.getReachers());
 		newScopes[scopeId] = newScope;
 		theState = theState.setScopes(newScopes);
 		return theState;
@@ -982,6 +1041,12 @@ public class ImmutableStateFactory implements StateFactory {
 			theState = ImmutableState.newState(theState, null,
 					newDynamicScopes, newPathCondition);
 		return theState;
+	}
+
+	/* ************************ Other public methods *********************** */
+
+	public GMCConfiguration getConfiguratio() {
+		return config;
 	}
 
 }
