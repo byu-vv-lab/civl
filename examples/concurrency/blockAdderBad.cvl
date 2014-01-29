@@ -52,5 +52,5 @@ void main() {
   double sum_seq = adder_seq();
   double sum_par = adder_par();  
 
-  $assert sum_seq == sum_par;
+  $assert(sum_seq == sum_par);
 }  

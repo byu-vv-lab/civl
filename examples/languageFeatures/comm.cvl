@@ -26,8 +26,8 @@ void main() {
   $comm_enqueue(&comm, message);
   $comm_enqueue(&comm, message);
   comm_size = $comm_total_size(&comm);
-  $assert comm_size <= 3;
+  $assert(comm_size <= 3);
   message2 = $comm_dequeue(&comm, 0, 1, 0);
-  $assert message.source == message2.source;
+  $assert(message.source == message2.source);
   
 }

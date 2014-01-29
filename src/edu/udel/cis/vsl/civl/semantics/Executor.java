@@ -446,6 +446,7 @@ public class Executor {
 				}
 				// Print
 				output.printf(stringOutput, arguments.toArray());
+				output.println();
 			}
 			// Certainty certainty = resultType == ResultType.NO ?
 			// Certainty.PROVEABLE

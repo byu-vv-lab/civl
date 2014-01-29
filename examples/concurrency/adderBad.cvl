@@ -42,5 +42,5 @@ void main() {
   double seq = adderSeq(&a[0], N);
   double par = adderPar(&a[0], N);
 
-  $assert seq == par;
+  $assert(seq == par);
 }

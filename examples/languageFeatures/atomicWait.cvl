@@ -19,5 +19,5 @@ void main(){
 			$wait ps[j-1];
 		}
 	}
-	$assert sum == N*(N+1)/2;
+	$assert(sum == N*(N+1)/2);
 }

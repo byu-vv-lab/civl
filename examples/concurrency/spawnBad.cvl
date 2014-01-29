@@ -20,7 +20,7 @@ void main() {
   $proc p = $spawn f1(N);
   $proc q = $spawn f2(N);
 
-  $assert s1==s2; // oops, should wait first
+  $assert(s1==s2); // oops, should wait first
   $wait p;
   $wait q;
 }

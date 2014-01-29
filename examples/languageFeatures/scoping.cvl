@@ -9,7 +9,7 @@ void main() {
   for (int i = 0; i < 5; i++) {
     int x = i + 1;
     x++;
-    $assert x == i + 2;
+    $assert(x == i + 2);
   }
-  $assert x == 0;
+  $assert(x == 0);
 }

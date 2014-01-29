@@ -31,6 +31,6 @@ void main() {
   while (final.next != NULL) {
     final = *(final.next);
   }
-  $assert final.value == (N-1)*2.71828;
-  $assert final.value == current->value;
+  $assert(final.value == (N-1)*2.71828);
+  $assert(final.value == current->value);
 }

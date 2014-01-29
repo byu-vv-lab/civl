@@ -14,6 +14,6 @@ void main() {
   result.left = 0;
   result.right = 1;
   
-  $assert result.left == 0;
-  $assert result.right == 1;
+  $assert(result.left == 0);
+  $assert(result.right == 1);
 }

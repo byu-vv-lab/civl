@@ -31,11 +31,11 @@ void barrier(int tid) {
 
 void run(int tid) {
   while ($true) {
-    $assert counter == 0;
+    $assert(counter == 0);
     barrier(tid);
     counter++;
     barrier(tid);
-    $assert counter == N;
+    $assert(counter == N);
     barrier(tid);
     counter--;
     barrier(tid);

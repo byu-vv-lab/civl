@@ -11,5 +11,5 @@ void main() {
   for (i = 0; i < 10; i++) {
     a[i] = i;
   }
-  $assert k > 5 && k < 10 => a[k] > 5;
+  $assert(k > 5 && k < 10 => a[k] > 5);
 }

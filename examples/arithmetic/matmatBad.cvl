@@ -8,7 +8,7 @@
  * will verify equivalent for all matrix dimensions and tile
  * sizes in the range 1..4.
  */
-
+#include<civlc.h>
 #define MIN(lhs, A, B) if ((A)<(B)) lhs=(A); else lhs=(B);
 
 $input int BOUND;
@@ -65,7 +65,7 @@ void main() {
   rowdist();
   for (int i = 0; i < L; i++) {
     for (int j = 0; j < N; j++) {
-      $assert C[i][j] == D[i][j];
+      $assert(C[i][j] == D[i][j]);
     }
   }
 }

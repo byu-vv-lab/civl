@@ -9,6 +9,6 @@ void main() {
   
   a[0][0] = 2;
   b[1] = 5;
-  $assert a[0][0] == 2;
-  $assert b[1] == 5;
+  $assert(a[0][0] == 2);
+  $assert(b[1] == 5);
 }

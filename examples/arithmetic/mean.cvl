@@ -1,6 +1,7 @@
 /* Commandline execution:
  * 		civl verify -inputB=10 mean.cvl
  */
+#include<civlc.h>
 $input int B;
 $input int n;
 $assume 1<=n && n<=B;
@@ -24,5 +25,5 @@ void main() {
   }
   double result1 = mean1();
   double result2 = mean2();
-  $assert result1==result2; 
+  $assert(result1==result2); 
 }

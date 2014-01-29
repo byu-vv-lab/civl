@@ -4,11 +4,12 @@
  * Commandline execution:
  * 		civl verify divisionBad.cvl
  */
+#include<civlc.h>
 $input double x;
 $input double y; // could be 0
 
 void main() {
   double z = x/y;
 
-  $assert y*z==x;
+  $assert(y*z==x);
 }

@@ -11,5 +11,5 @@ void MPI_Process (int rank) {
   double x=rank, y;
   send(&x, 1, (rank+1)%NPROCS, 0);
   recv(&y, 1, (rank+NPROCS-1)%NPROCS, 0);
-  $assert y==(rank+NPROCS-1)%NPROCS;
+  $assert(y==(rank+NPROCS-1)%NPROCS);
 }

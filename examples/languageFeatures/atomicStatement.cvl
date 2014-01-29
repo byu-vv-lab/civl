@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify -inputB=3 atomicStatement.cvl
  * */
-
+#include<civlc.h>
 $input int B;
 $input int N;
 $assume 0<N && N<B;
@@ -17,7 +17,7 @@ void main(){
 			x = N;
 			x = x * 2;
 		}
-		$assert x == 2*N;
+		$assert(x == 2*N);
 		// non-determinism allowed in $atomic block
 		$atomic{
 			x = 3;
@@ -27,6 +27,6 @@ void main(){
 				default: {x=0;  }
 			}
 		}
-		$assert (x == 2 || x == 1);
+		$assert(x == 2 || x == 1);
 	}
 }

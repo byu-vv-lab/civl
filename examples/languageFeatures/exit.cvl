@@ -8,7 +8,7 @@ void f() {
     if (i == 8) {
       $exit();
     }
-    $assert i < 9;
+    $assert(i < 9);
   }
 }
 

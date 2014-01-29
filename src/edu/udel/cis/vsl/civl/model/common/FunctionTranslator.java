@@ -1367,6 +1367,7 @@ public class FunctionTranslator {
 		switch (functionName) {
 		// special translation for some system functions like $assert,
 		// $choose_int, etc.
+		case "assert":
 		case "$assert":
 			return translateAssertFunctionCall(source, location, scope, lhs,
 					arguments);

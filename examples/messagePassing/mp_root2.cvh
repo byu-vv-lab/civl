@@ -46,9 +46,9 @@ int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype,
     break;
   default:
     printf("Unsupported datatype %d\n", datatype);
-    $assert $false;
+    $assert($false);
   }
-  $assert status->size % size == 0;
+  $assert(status->size % size == 0);
   *count = status->size / size;
   return 0; 
 }

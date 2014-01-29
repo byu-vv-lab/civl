@@ -9,6 +9,6 @@ void main() {
   
   $when(i) {i = 0;}
   $when(x) {x = 0.0;}
-  $assert i == 0;
-  $assert x == 0.0;
+  $assert(i == 0);
+  $assert(x == 0.0);
 }

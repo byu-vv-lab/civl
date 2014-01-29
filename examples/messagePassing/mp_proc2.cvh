@@ -36,7 +36,7 @@ int MPI_Send(void *buf, int count, MPI_Datatype datatype,
       break;
     default:
       printf("Unsupported datatype %d\n", datatype);
-      $assert $false;    
+      $assert($false);    
     }
     $message out = $message_pack(__rank, dest, tag, buf, size);
     $comm_enqueue(comm, out);
@@ -69,7 +69,7 @@ int MPI_Recv(void *buf, int count, MPI_Datatype datatype,
       break;
     default:
       printf("Unsupported datatype %d\n", datatype);
-      $assert $false;    
+      $assert($false);    
     }
     $message_unpack(in, buf, size);
     if (status != MPI_STATUS_IGNORE) {

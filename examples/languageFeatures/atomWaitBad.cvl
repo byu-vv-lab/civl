@@ -16,6 +16,7 @@ void foo() {
 
 void main() {
   $atom {
+    $wait $self;
     foo();
   }
 }

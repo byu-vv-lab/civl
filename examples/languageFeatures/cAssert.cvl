@@ -1,0 +1,7 @@
+#include<assert.h>
+
+void main(){
+  int x = 1, y = 2;
+  assert(x < y);
+  assert(x > y);
+}

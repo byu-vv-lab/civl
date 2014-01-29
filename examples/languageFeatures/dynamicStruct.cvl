@@ -20,7 +20,7 @@ void f(int n) {
     s.bar[i] =  i;
     s.sum += s.bar[i];
   }
-  $assert sum == s.sum;
+  $assert(sum == s.sum);
 }
 
 void main() {

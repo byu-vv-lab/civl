@@ -52,11 +52,11 @@ void main() {
   
   void run(int tid) {
     while ($true) {
-      $assert counter == 0;
+      $assert(counter == 0);
       CIVL_barrier(&b, tid);
       counter++;
       CIVL_barrier(&b, tid);
-      $assert counter == N;
+      $assert(counter == N);
       CIVL_barrier(&b, tid);
       counter--;
       CIVL_barrier(&b, tid);

@@ -7,5 +7,5 @@ void main() {
   int *p;
   
   p = 0;
-  $assert p == NULL;
+  $assert(p == NULL);
 }

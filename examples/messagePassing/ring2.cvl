@@ -20,11 +20,11 @@ void MPI_Process (int __rank) {
   x = rank;
   MPI_Send(&x, 1, MPI_DOUBLE, (rank+1)%nprocs, 0, MPI_COMM_WORLD);
   MPI_Recv(&y, 1, MPI_DOUBLE, (rank+nprocs-1)%nprocs, 0, MPI_COMM_WORLD, &stat);
-  $assert y == (rank+nprocs-1)%nprocs;
+  $assert(y == (rank+nprocs-1)%nprocs);
   MPI_Get_count(&stat, MPI_DOUBLE, &count);
-  $assert count == 1;
-  $assert stat.MPI_SOURCE == (rank+nprocs-1)%nprocs;
-  $assert stat.MPI_TAG == 0;
+  $assert(count == 1);
+  $assert(stat.MPI_SOURCE == (rank+nprocs-1)%nprocs);
+  $assert(stat.MPI_TAG == 0);
 
 // ******************** END PROGRAM SOURCE ***************************
 
