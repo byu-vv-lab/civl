@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -90,7 +91,7 @@ public class Libcivlc implements LibraryExecutor {
 	// private SymbolicType bundleSymbolicType;
 
 	public Libcivlc(Executor primaryExecutor, PrintStream output,
-			boolean enablePrintf) {
+			boolean enablePrintf, ModelFactory modelFactory) {
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		// this.log = evaluator.log();

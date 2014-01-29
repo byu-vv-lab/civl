@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -72,7 +73,7 @@ public class Libstdio implements LibraryExecutor {
 	 *            True iff print is enabled, reflecting command line options.
 	 */
 	public Libstdio(Executor primaryExecutor, PrintStream output,
-			boolean enablePrintf) {
+			boolean enablePrintf, ModelFactory modelFactory) {
 		this.evaluator = primaryExecutor.evaluator();
 		this.universe = evaluator.universe();
 		this.stateFactory = evaluator.stateFactory();
