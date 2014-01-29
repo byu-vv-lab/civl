@@ -652,6 +652,12 @@ public class CommonModelFactory implements ModelFactory {
 				expression = binaryExpression(source,
 						BINARY_OPERATOR.NOT_EQUAL, expression,
 						realLiteralExpression(source, BigDecimal.ZERO));
+			} else if(expression.getExpressionType().isPointerType()){
+				CIVLPointerType pointerType = (CIVLPointerType) expression.getExpressionType();
+				
+				expression = binaryExpression(source,
+						BINARY_OPERATOR.NOT_EQUAL, expression,
+						this.nullPointerExpression(pointerType, source));
 			} else {
 				throw new CIVLInternalException(
 						"Unable to convert expression to boolean type", source);
@@ -998,11 +1004,10 @@ public class CommonModelFactory implements ModelFactory {
 			if (operand.getExpressionType().equals(booleanType)) {
 				result = new CommonUnaryExpression(source, operator, operand);
 			} else {
-				Expression castOperand = castExpression(source, booleanType,
-						operand);
-
+//				Expression castOperand = castExpression(source, booleanType,
+//						operand);
 				result = new CommonUnaryExpression(source, operator,
-						castOperand);
+						this.booleanExpression(operand));
 			}
 			((CommonUnaryExpression) result).setExpressionType(booleanType);
 			break;

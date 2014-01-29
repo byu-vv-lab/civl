@@ -23,6 +23,10 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public interface MPIModelFactory extends ModelFactory {
 
+	static final String MPI_COMM_WORLD = "__MPI_Comm_world";
+	
+	static final String COMMM_CREATE = "$comm_create";
+	
 	/**
 	 * The function name of MPI Send.
 	 */
@@ -201,4 +205,7 @@ public interface MPIModelFactory extends ModelFactory {
 	 */
 	MPIIsendStatement mpiIsendStatement(CIVLSource source, Location location,
 			LHSExpression lhs, ArrayList<Expression> arguments);
+
+	CallOrSpawnStatement callOrSpawnStatement(Location source, boolean isCall,
+			LHSExpression lhs, CIVLFunction function, List<Expression> arguments);
 }

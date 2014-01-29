@@ -60,7 +60,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssertNode;
+//import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssertNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
@@ -353,9 +353,9 @@ public class FunctionTranslator {
 
 		modelFactory.addConditionalExpressionQueue();
 		switch (statementNode.statementKind()) {
-		case ASSERT:
-			result = translateAssertNode(scope, (AssertNode) statementNode);
-			break;
+//		case ASSERT:
+//			result = translateAssertNode(scope, (AssertNode) statementNode);
+//			break;
 		case ASSUME:
 			result = translateAssumeNode(scope, (AssumeNode) statementNode);
 			break;
@@ -875,41 +875,41 @@ public class FunctionTranslator {
 		return result;
 	}
 
-	/**
-	 * Translate an assert statement into a fragment of CIVL statements
-	 * 
-	 * @param scope
-	 *            The scope containing this statement.
-	 * @param assertNode
-	 *            The AST node for the assert statement
-	 * @return the fragment
-	 */
-	private Fragment translateAssertNode(Scope scope, AssertNode assertNode) {
-		Expression expression = translateExpressionNode(
-				assertNode.getExpression(), scope, true);
-		Location location = modelFactory.location(
-				modelFactory.sourceOfBeginning(assertNode), scope);
-
-		// if (assertNode.hasOptionals()) {
-		// Expression printfExpression = translateExpressionNode(
-		// assertNode.printfExpression(), scope, true);
-		// ArrayList<Expression> arguments = new ArrayList<>();
-		//
-		// for (int i = 0; i < assertNode.numberOfPrintfArguments(); i++) {
-		// Expression argument = translateExpressionNode(
-		// assertNode.getPrintfArgument(i), scope, true);
-		//
-		// arguments.add(argument);
-		// }
-		// return modelFactory.assertFragment(
-		// modelFactory.sourceOf(assertNode), location, expression,
-		// printfExpression, arguments);
-		// }
-
-		return new CommonFragment(modelFactory.assertStatement(
-				modelFactory.sourceOf(assertNode), location,
-				modelFactory.booleanExpression(expression)));
-	}
+//	/**
+//	 * Translate an assert statement into a fragment of CIVL statements
+//	 * 
+//	 * @param scope
+//	 *            The scope containing this statement.
+//	 * @param assertNode
+//	 *            The AST node for the assert statement
+//	 * @return the fragment
+//	 */
+//	private Fragment translateAssertNode(Scope scope, AssertNode assertNode) {
+//		Expression expression = translateExpressionNode(
+//				assertNode.getExpression(), scope, true);
+//		Location location = modelFactory.location(
+//				modelFactory.sourceOfBeginning(assertNode), scope);
+//
+//		// if (assertNode.hasOptionals()) {
+//		// Expression printfExpression = translateExpressionNode(
+//		// assertNode.printfExpression(), scope, true);
+//		// ArrayList<Expression> arguments = new ArrayList<>();
+//		//
+//		// for (int i = 0; i < assertNode.numberOfPrintfArguments(); i++) {
+//		// Expression argument = translateExpressionNode(
+//		// assertNode.getPrintfArgument(i), scope, true);
+//		//
+//		// arguments.add(argument);
+//		// }
+//		// return modelFactory.assertFragment(
+//		// modelFactory.sourceOf(assertNode), location, expression,
+//		// printfExpression, arguments);
+//		// }
+//
+//		return new CommonFragment(modelFactory.assertStatement(
+//				modelFactory.sourceOf(assertNode), location,
+//				modelFactory.booleanExpression(expression)));
+//	}
 
 	/**
 	 * Sometimes an assignment is actually modeled as a spawn or function call

@@ -151,17 +151,18 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 			for (int i = 0; i < numParameters; i++) {
 				VariableDeclarationNode decl = abcParameters
 						.getSequenceChild(i);
+				CIVLType type;
+				CIVLSource source;
+				Identifier variableName;
 
 				// Don't process void types. Should only happen in the prototype
 				// of a function with no parameters.
 				if (decl.getTypeNode().kind() == TypeNodeKind.VOID)
 					continue;
-				CIVLType type = translateABCType(mpiFactory.sourceOf(decl),
-						systemScope, functionType.getParameterType(i));
-				CIVLSource source = mpiFactory.sourceOf(decl.getIdentifier());
-				Identifier variableName = mpiFactory.identifier(source,
-						decl.getName());
-
+				type = translateABCType(mpiFactory.sourceOf(decl), systemScope,
+						functionType.getParameterType(i));
+				source = mpiFactory.sourceOf(decl.getIdentifier());
+				variableName = mpiFactory.identifier(source, decl.getName());
 				parameters.add(mpiFactory.variable(source, type, variableName,
 						parameters.size()));
 			}
@@ -330,8 +331,13 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		Fragment waitPhase;
 		Location returnLocation;
 		Fragment returnFragment;
-		Fragment assignStartFragment;
+		Fragment createCommFragment, assignStartFragment;
 		Location atomicStart = mpiFactory.location(systemScope);
+		Variable mpiCommWorld = systemScope.variable(mpiFactory
+				.identifier(MPIModelFactory.MPI_COMM_WORLD));
+		ArrayList<Expression> createCommArguments = new ArrayList<>();
+		ArrayList<Variable> commCreateParameters = new ArrayList<>();
+		CIVLFunction createCommFunction;
 
 		mpiFactory.createStartVariable(systemScope, systemScope.numVariables());
 		mpiFactory.createProcsVariable(systemScope, systemScope.numVariables(),
@@ -345,14 +351,33 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 				mpiFactory.initialValueExpression(mpiFactory.systemSource(),
 						mpiFactory.procsVariable().variable()), true));
 		spawnPhase = spawnMpiProcesses(systemScope, mpiFactory.numberOfProcs());
+		commCreateParameters.add(mpiFactory.variable(mpiFactory.numberOfProcs()
+				.getExpressionType(), mpiFactory.identifier("nprocs"),
+				commCreateParameters.size()));
+		commCreateParameters.add(mpiFactory.variable(mpiFactory.procsVariable()
+				.getExpressionType(), mpiFactory.identifier("procs"),
+				commCreateParameters.size()));
+		createCommFunction = mpiFactory
+				.systemFunction(mpiFactory.systemSource(),
+						mpiFactory.identifier(MPIModelFactory.COMMM_CREATE),
+						commCreateParameters, mpiFactory.voidType(),
+						systemScope, "mpi");
+		createCommArguments.add(mpiFactory.numberOfProcs());
+		createCommArguments.add(mpiFactory.procsVariable());
+		createCommFragment = new CommonFragment(
+				mpiFactory.callOrSpawnStatement(mpiFactory
+						.location(systemScope), true, mpiFactory
+						.variableExpression(mpiCommWorld.getSource(),
+								mpiCommWorld), createCommFunction,
+						createCommArguments));
 		assignStartFragment = new CommonFragment(mpiFactory.assignStatement(
 				mpiFactory.location(systemScope), mpiFactory.startVariable(),
 				mpiFactory.integerLiteralExpression(BigInteger.valueOf(1)),
 				false));
-		// TODO initialize MPI_COMM_WORLD
 		waitPhase = waitMpiProcesses(systemScope, mpiFactory.numberOfProcs());
 		result = initStartFragment.combineWith(initProcsFragment);
 		result = result.combineWith(spawnPhase);
+		result = result.combineWith(createCommFragment);
 		result = result.combineWith(assignStartFragment);
 		result = result.combineWith(waitPhase);
 		result = mpiFactory.atomicFragment(false, result, atomicStart,
@@ -466,11 +491,11 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		// translate mpi function calls to the corresponding MPI
 		// Statement.
 		case MPIModelFactory.MPI_SEND:
-			return mpiFactory.mpiSendStatement(source, location, lhs,
-					arguments);
+			return mpiFactory
+					.mpiSendStatement(source, location, lhs, arguments);
 		case MPIModelFactory.MPI_RECV:
-			return mpiFactory.mpiRecvStatement(source, location, lhs,
-					arguments);
+			return mpiFactory
+					.mpiRecvStatement(source, location, lhs, arguments);
 		case MPIModelFactory.MPI_ISEND:
 			return mpiFactory.mpiIsendStatement(source, location, lhs,
 					arguments);
@@ -478,11 +503,11 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 			return mpiFactory.mpiIrecvStatement(source, location, lhs,
 					arguments);
 		case MPIModelFactory.MPI_BARRIER:
-			return mpiFactory.mpiBarrierStatement(source, location,  lhs,
+			return mpiFactory.mpiBarrierStatement(source, location, lhs,
 					arguments);
 		case MPIModelFactory.MPI_WAIT:
-			return mpiFactory.mpiWaitStatement(source, location, lhs,
-					arguments);
+			return mpiFactory
+					.mpiWaitStatement(source, location, lhs, arguments);
 		default:
 			return callOrSpawnStatement(location, functionCallNode, lhs,
 					arguments, isCall);

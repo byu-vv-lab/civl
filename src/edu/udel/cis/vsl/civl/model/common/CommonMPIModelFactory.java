@@ -48,8 +48,6 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 
 	static final String RANK = "$RANK";
 
-	static final String MPI_COMM_WORLD = "MPI_COMM_WORLD";
-
 	static final String MPI_START = "$MPI_START";
 
 	static final String PROCS = "$PROCS";
@@ -281,6 +279,17 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 			boolean isCall, CIVLFunction function, List<Expression> arguments) {
 		return callOrSpawnStatement(systemSource(), source, isCall, function,
 				arguments, null);
+	}
+
+	@Override
+	public CallOrSpawnStatement callOrSpawnStatement(Location source,
+			boolean isCall, LHSExpression lhs, CIVLFunction function,
+			List<Expression> arguments) {
+		CallOrSpawnStatement statement = callOrSpawnStatement(systemSource(),
+				source, isCall, function, arguments, null);
+
+		statement.setLhs(lhs);
+		return statement;
 	}
 
 	@Override
