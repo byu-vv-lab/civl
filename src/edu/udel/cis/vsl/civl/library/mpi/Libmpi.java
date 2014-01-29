@@ -7,10 +7,15 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
@@ -21,7 +26,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * Implementation of system functions declared mpi.h.
@@ -42,27 +47,30 @@ public class Libmpi implements LibraryExecutor {
 
 	private SymbolicUniverse universe;
 
+	private MPIModelFactory mpiFactory;
+	
 	private StateFactory stateFactory;
 
-	private NumericExpression zero;
-
-	private NumericExpression one;
-
-	private IntObject zeroObject;
-
-	private IntObject oneObject;
+//	private NumericExpression zero;
+//
+//	private NumericExpression one;
+//
+//	private IntObject zeroObject;
+//
+//	private IntObject oneObject;
 
 	public Libmpi(Executor primaryExecutor, PrintStream output,
-			boolean enablePrintf) {
+			boolean enablePrintf, ModelFactory modelFactory) {
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		// this.log = evaluator.log();
 		this.universe = evaluator.universe();
 		this.stateFactory = evaluator.stateFactory();
-		this.zero = universe.zeroInt();
-		this.one = universe.oneInt();
-		this.zeroObject = universe.intObject(0);
-		this.oneObject = universe.intObject(1);
+		this.mpiFactory = (MPIModelFactory)modelFactory;
+		// this.zero = universe.zeroInt();
+		// this.one = universe.oneInt();
+		// this.zeroObject = universe.intObject(0);
+		// this.oneObject = universe.intObject(1);
 	}
 
 	@Override
@@ -73,7 +81,7 @@ public class Libmpi implements LibraryExecutor {
 	@Override
 	public State execute(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
-		return state = this.executeWork(state, pid, statement);
+		return this.executeWork(state, pid, statement);
 	}
 
 	@Override
@@ -121,14 +129,18 @@ public class Libmpi implements LibraryExecutor {
 	private State executeMPI_Comm_size(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression nprocsValue = argumentValues[1];
-		Expression nprocs = arguments[0];
+		Evaluation eval = evaluator.evaluate(state, pid, this.mpiFactory.numberOfProcs());
+		state = eval.state;
+		SymbolicExpression nprocsValue = eval.value;
+		AddressOfExpression nprocs = (AddressOfExpression)arguments[1];
 
 		if (lhs != null) {
-			SymbolicExpression lhsValue = evaluator.evaluate(state, pid, lhs).value;
+			eval = evaluator.evaluate(state, pid, lhs);
+			state = eval.state;
+			SymbolicExpression lhsValue = eval.value;
 			state = this.primaryExecutor.assign(state, pid, lhs, lhsValue);
 		}
-		state = this.primaryExecutor.assign(state, pid, (LHSExpression) nprocs,
+		state = this.primaryExecutor.assign(state, pid, nprocs.operand(),
 				nprocsValue);
 		return state;
 	}
@@ -150,17 +162,45 @@ public class Libmpi implements LibraryExecutor {
 	private State executeMPI_Comm_rank(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression rankValue = argumentValues[1];
-		Expression rank = arguments[0];
+		Evaluation eval = evaluator.evaluate(state, pid, this.mpiFactory.rankVariable());
+		state = eval.state;
+		SymbolicExpression rankValue = eval.value;
+		AddressOfExpression rank = (AddressOfExpression)arguments[1];
 
 		if (lhs != null) {
-			SymbolicExpression lhsValue = evaluator.evaluate(state, pid, lhs).value;
+			eval = evaluator.evaluate(state, pid, lhs);
+			state = eval.state;
+			SymbolicExpression lhsValue = eval.value; 
 			state = this.primaryExecutor.assign(state, pid, lhs, lhsValue);
 		}
-		state = this.primaryExecutor.assign(state, pid, (LHSExpression) rank,
+		state = this.primaryExecutor.assign(state, pid, rank.operand(),
 				rankValue);
+		
 		return state;
 	}
+	
+//	private State executeMPI_Init(State state, int pid, LHSExpression lhs,
+//			Expression[] arguments, SymbolicExpression[] argumentValues)
+//			throws UnsatisfiablePathConditionException {
+//		Evaluation eval = evaluator.evaluate(state, pid, this.mpiFactory.numberOfProcs());
+//		state = eval.state;
+//		SymbolicExpression nprocs = eval.value;
+//		SymbolicExpression comm = null;
+//		SymbolicExpression messageBuffer = null;
+//		SymbolicExpression messageBuferRow = null;
+//		NumericExpression size = null;
+//		Model model = state.getScope(0).lexicalScope().model();
+//		CIVLType queueType = model.queueType();
+//		CIVLType messageType = model.mesageType();
+//		CIVLType commType = model.commType();
+//		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
+//		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
+//		SymbolicExpression emptyQueue;
+//		
+//		
+//		
+//		return state;
+//	}
 
 	private State executeWork(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
@@ -202,6 +242,7 @@ public class Libmpi implements LibraryExecutor {
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					statement);
 		}
+		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
 }

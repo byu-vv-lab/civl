@@ -7,6 +7,8 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
@@ -23,7 +25,7 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 	@SuppressWarnings("unchecked")
 	@Override
 	public LibraryExecutor getLibraryExecutor(String name,
-			Executor primaryExecutor, PrintStream output, boolean enablePrintf) {
+			Executor primaryExecutor, PrintStream output, boolean enablePrintf, ModelFactory modelFacotry) {
 		LibraryExecutor result = libraryExecutorCache.get(name);
 
 		if (result == null) {
@@ -34,10 +36,10 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 						.forName(aClassName);
 				Constructor<? extends LibraryExecutor> constructor = aClass
 						.getConstructor(Executor.class, PrintStream.class,
-								boolean.class);
+								boolean.class, ModelFactory.class);
 
 				result = constructor.newInstance(primaryExecutor, output,
-						enablePrintf);
+						enablePrintf, modelFacotry);
 			} catch (Exception e) {
 				throw new CIVLInternalException("Unable to load library: "
 						+ name + "\n" + e.getMessage(), (CIVLSource) null);
