@@ -8,10 +8,5 @@
 void main(){
   double x;
   double *p=&x; 
-  //$assert(p); // OK
-  if(p){
-    printf("true");
-  }else{
-    printf("false");
-  }
+  $assert(p); // OK
 }
