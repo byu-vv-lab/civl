@@ -750,7 +750,7 @@ public class ImmutableStateFactory implements StateFactory {
 	public ImmutableState removeProcess(State state, int pid) {
 		ImmutableState theState = (ImmutableState) state;
 
-		theState.setProcessState(pid, null);
+		theState = theState.setProcessState(pid, null);
 		return theState;
 	}
 
