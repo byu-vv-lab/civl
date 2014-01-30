@@ -682,14 +682,11 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public ProcessState processInAtomic(State state) {
+	public int processInAtomic(State state) {
 		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0, 0);
-		int atomicPid = modelFactory.getProcessId(modelFactory.systemSource(),
+		
+		return  modelFactory.getProcessId(modelFactory.systemSource(),
 				symbolicAtomicPid);
-
-		if (atomicPid < 0)
-			return null;
-		return state.getProcessState(atomicPid);
 	}
 
 	@Override

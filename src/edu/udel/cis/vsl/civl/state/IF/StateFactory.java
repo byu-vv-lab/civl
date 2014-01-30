@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.CommonModelFactory;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -281,7 +282,7 @@ public interface StateFactory {
 	boolean lockedByAtomic(State state);
 
 	/**
-	 * Returns the state of the process that holds the atomic lock at a certain
+	 * Returns the Id of the process that holds the atomic lock at a certain
 	 * state
 	 * 
 	 * @param state
@@ -289,7 +290,7 @@ public interface StateFactory {
 	 * @return NULL iff there is no process holding the atomic lock, otherwise
 	 *         return the process that holds the atomic lock
 	 */
-	ProcessState processInAtomic(State state);
+	int processInAtomic(State state);
 
 	/**
 	 * Declares that the process with the given pid now owns the atomic lock.

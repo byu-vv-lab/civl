@@ -145,19 +145,21 @@ public class Enabler implements
 		ProcessState p;
 		AssignStatement assignStatement;
 		Location pLocation;
+		int pidInAtomic;
 
 		if (state.getPathCondition().isFalse())
 			// return empty set of transitions:
 			return new TransitionSequence(state);
-		p = executor.stateFactory().processInAtomic(state);
-		if (p != null) {
+		pidInAtomic = executor.stateFactory()
+				.processInAtomic(state);
+		if (pidInAtomic >= 0) {
 			// execute a transition in an atomic block of a certain process
 			// without interleaving with other processes
 			TransitionSequence localTransitions = transitionFactory
 					.newTransitionSequence(state);
-			int pid = p.getPid();
-
-			localTransitions.addAll(getTransitions(state, pid, null));
+			
+			p = state.getProcessState(pidInAtomic);
+			localTransitions.addAll(getTransitions(state, pidInAtomic, null));
 			if (localTransitions.isEmpty()) {
 				// release atomic lock if the current location of the process
 				// that holds the lock is blocked
@@ -170,7 +172,8 @@ public class Enabler implements
 		if (resumableProcesses.size() == 1) {
 			int pid = resumableProcesses.get(0);
 
-			pLocation = state.getProcessState(pid).getLocation();
+			p = state.getProcessState(pid);
+			pLocation = p.getLocation();
 			assignStatement = modelFactory.assignAtomicLockVariable(pid,
 					pLocation);
 			// only one process in atomic blocks could be resumed, so let

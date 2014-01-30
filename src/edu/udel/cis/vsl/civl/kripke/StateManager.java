@@ -256,7 +256,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		Statement executedStatement;
 
 		assert !stateFactory.lockedByAtomic(newState)
-				|| stateFactory.processInAtomic(newState).getPid() == pid;
+				|| stateFactory.processInAtomic(newState) == pid;
 		executedStatement = pLocation.getOutgoing(0);
 		if (!p.inAtomic()) {
 			newState = executor.executeStatement(newState, pLocation,
@@ -293,7 +293,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		ProcessState p;
 		Statement executedStatement;
 
-		assert stateFactory.processInAtomic(newState).getPid() == pid;
+		assert stateFactory.processInAtomic(newState) == pid;
 		p = newState.getProcessState(pid).decrementAtomicCount();
 		newState = stateFactory.setProcessState(newState, p, pid);
 		executedStatement = pLocation.getOutgoing(0);

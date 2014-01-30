@@ -38,6 +38,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATO
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
@@ -652,9 +653,10 @@ public class CommonModelFactory implements ModelFactory {
 				expression = binaryExpression(source,
 						BINARY_OPERATOR.NOT_EQUAL, expression,
 						realLiteralExpression(source, BigDecimal.ZERO));
-			} else if(expression.getExpressionType().isPointerType()){
-				CIVLPointerType pointerType = (CIVLPointerType) expression.getExpressionType();
-				
+			} else if (expression.getExpressionType().isPointerType()) {
+				CIVLPointerType pointerType = (CIVLPointerType) expression
+						.getExpressionType();
+
 				expression = binaryExpression(source,
 						BINARY_OPERATOR.NOT_EQUAL, expression,
 						this.nullPointerExpression(pointerType, source));
@@ -1004,8 +1006,8 @@ public class CommonModelFactory implements ModelFactory {
 			if (operand.getExpressionType().equals(booleanType)) {
 				result = new CommonUnaryExpression(source, operator, operand);
 			} else {
-//				Expression castOperand = castExpression(source, booleanType,
-//						operand);
+				// Expression castOperand = castExpression(source, booleanType,
+				// operand);
 				result = new CommonUnaryExpression(source, operator,
 						this.booleanExpression(operand));
 			}
@@ -2029,7 +2031,7 @@ public class CommonModelFactory implements ModelFactory {
 		}
 		return scope;
 	}
-	
+
 	/**
 	 * Calculate the join scope (the most local common scope) of an array of
 	 * expressions.
@@ -2184,13 +2186,21 @@ public class CommonModelFactory implements ModelFactory {
 		Scope expressionScope = null;
 
 		if (fields != null) {
-//			for (Expression field : fields) {
-//				expressionScope = join(expressionScope, field.expressionScope());
-//			}
+			// for (Expression field : fields) {
+			// expressionScope = join(expressionScope, field.expressionScope());
+			// }
 			expressionScope = joinScope(fields);
 		}
 		if (expressionScope != null)
 			structLiteral.setExpressionScope(expressionScope);
 		return structLiteral;
+	}
+
+	@Override
+	public CharLiteralExpression charLiteralExpression(CIVLSource sourceOf,
+			char value) {
+		return null;
+//		return new CommonCharLiteralExpression(
+//				sourceOf, this.charType, value);
 	}
 }

@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATO
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
@@ -1444,5 +1445,7 @@ public interface ModelFactory {
 
 	AssertStatement assertStatement(CIVLSource sourceOf, Location location,
 			Expression expression, ArrayList<Expression> arguments);
+	
+	CharLiteralExpression charLiteralExpression(CIVLSource sourceOf, char value);
 
 }
