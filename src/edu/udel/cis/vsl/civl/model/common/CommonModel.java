@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -34,6 +35,7 @@ public class CommonModel extends CommonSourceable implements Model {
 	private CIVLType queueType;
 	private CIVLType messageType;
 	private CIVLType commType;
+	private CIVLBundleType bundleType;
 
 	private ArrayList<MallocStatement> mallocStatements;
 
@@ -244,6 +246,16 @@ public class CommonModel extends CommonSourceable implements Model {
 	@Override
 	public CIVLType commType() {
 		return commType;
+	}
+
+	@Override
+	public CIVLBundleType bundleType() {
+		return this.bundleType;
+	}
+
+	@Override
+	public void setBundelType(CIVLBundleType type) {
+		this.bundleType = type;
 	}
 
 }

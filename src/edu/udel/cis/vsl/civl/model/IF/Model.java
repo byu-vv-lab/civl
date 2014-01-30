@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -134,5 +135,13 @@ public interface Model extends Sourceable {
 	 * @return The comm type used by this model.
 	 */
 	CIVLType commType();
+
+	/**
+	 * 
+	 * @return The bundle type used by this model.
+	 */
+	CIVLBundleType bundleType();
+
+	void setBundelType(CIVLBundleType type);
 
 }
