@@ -33,6 +33,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.util.Pair;
 
 /**
  * Translates MPI specific functions. For example, MPI_Send(), MPI_Recv(), etc.
@@ -203,8 +204,11 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	 */
 	public Fragment translateRootFunction(Scope systemScope, ASTNode rootNode,
 			Scope processMainScope) {
-		translateRootFunctionBody(systemScope);
-		return translateRootNodes(processMainScope, rootNode);
+		Pair<Fragment, Fragment> init = translateRootNodes(processMainScope,
+				rootNode);
+
+		translateRootFunctionBody(systemScope, init.left);
+		return init.right;
 	}
 
 	/**
@@ -324,7 +328,7 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	 * @param systemScope
 	 *            The root scope of the system.
 	 */
-	private void translateRootFunctionBody(Scope systemScope) {
+	private void translateRootFunctionBody(Scope systemScope, Fragment init) {
 		Fragment result;
 		Fragment initStartFragment, initProcsFragment;
 		Fragment spawnPhase;
@@ -375,7 +379,8 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 				mpiFactory.integerLiteralExpression(BigInteger.valueOf(1)),
 				false));
 		waitPhase = waitMpiProcesses(systemScope, mpiFactory.numberOfProcs());
-		result = initStartFragment.combineWith(initProcsFragment);
+		result = init.combineWith(initStartFragment);
+		result = result.combineWith(initProcsFragment);
 		result = result.combineWith(spawnPhase);
 		result = result.combineWith(createCommFragment);
 		result = result.combineWith(assignStartFragment);
@@ -399,19 +404,31 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	 * @param rootNode
 	 * @return
 	 */
-	private Fragment translateRootNodes(Scope mainScope, ASTNode rootNode) {
-		Fragment initialization = new CommonFragment();
+	private Pair<Fragment, Fragment> translateRootNodes(Scope mainScope,
+			ASTNode rootNode) {
+		Fragment root = new CommonFragment(), main = new CommonFragment();
+		Scope systemScope = mainScope.parent();
 
 		mpiFactory.addConditionalExpressionQueue();
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
-			Fragment fragment = translateASTNode(node, mainScope, null);
+			Scope scope = mainScope;
+			Fragment fragment;
+			boolean isRoot = false;
 
-			if (fragment != null)
-				initialization = initialization.combineWith(fragment);
+			if (node.getSource().getLastToken().getSourceFile().getName()
+					.equalsIgnoreCase("mpi.h")) {
+				isRoot = true;
+				scope = systemScope;
+			}
+			fragment = translateASTNode(node, scope, null);
+			if (isRoot)
+				root = root.combineWith(fragment);
+			else
+				main = main.combineWith(fragment);
 		}
 		mpiFactory.popConditionaExpressionStack();
-		return initialization;
+		return new Pair<>(root, main);
 	}
 
 	/**
