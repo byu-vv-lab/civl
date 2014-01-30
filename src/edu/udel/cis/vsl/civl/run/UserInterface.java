@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.Models;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.gmc.CommandLineException;
@@ -616,7 +617,9 @@ public class UserInterface {
 		} catch (IOException e) {
 			err.println(e);
 		} catch (MisguidedExecutionException e) {
-			err.println(e);
+			// this is almost definitely a bug, so throw it:
+			throw new CIVLInternalException("Error in replay: "
+					+ e.getMessage(), (CIVLSource) null);
 		} catch (CIVLInternalException e) {
 			// Something went wrong, report with full stack trace.
 			throw e;
