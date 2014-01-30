@@ -8,41 +8,52 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 
 /**
- * A stack entry has a location, dynamic scope, and (optional) variable to store
- * a return value. It is put on the call stack when a process calls a function.
+ * A stack entry has a location and dynamic scope ID. It is put on the call
+ * stack when a process calls a function.
  * 
  * @author Timothy K. Zirkel (zirkel)
+ * @author Stephen F. Siegel (siegel)
  * 
  */
 public class ImmutableStackEntry implements StackEntry {
 
 	/* ************************** Instance Fields ************************** */
 
+	/**
+	 * The cached hash code of this object.
+	 */
 	private int hashCode = -1;
 
+	/**
+	 * Has the hash code been computed and cached?
+	 */
 	private boolean hashed = false;
 
+	/**
+	 * The static location in the function that is execution.
+	 */
 	private Location location;
 
-	private int scope;
+	/**
+	 * The ID of the dynamic scope in which the execution is taking place.
+	 */
+	private int dyscopeId;
 
 	/* **************************** Constructors *************************** */
 
 	/**
-	 * A stack entry has a location, dynamic scope, and (optional) variable to
-	 * store a return value. It is put on the call stack when a process calls a
-	 * function.
+	 * Constructs new stack entry with given location and scope.
 	 * 
 	 * @param location
 	 *            The target location of the function call. i.e. where execution
 	 *            will continue after the function returns.
-	 * @param scope
+	 * @param dyscopeId
 	 *            The dynamic scope of the process at the time of the function
 	 *            call.
 	 */
-	ImmutableStackEntry(Location location, int scope) {
+	ImmutableStackEntry(Location location, int dyscopeId) {
 		this.location = location;
-		this.scope = scope;
+		this.dyscopeId = dyscopeId;
 	}
 
 	/* ********************** Methods from StackEntry ********************** */
@@ -62,11 +73,11 @@ public class ImmutableStackEntry implements StackEntry {
 	 */
 	@Override
 	public int scope() {
-		return scope;
+		return dyscopeId;
 	}
 
 	/* ************************* Methods from Object ************************* */
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -79,20 +90,18 @@ public class ImmutableStackEntry implements StackEntry {
 					return false;
 			} else if (!location.equals(that.location))
 				return false;
-			if (scope != that.scope)
+			if (dyscopeId != that.dyscopeId)
 				return false;
 			return true;
 		}
 		return false;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		if (!hashed) {
-			final int prime = 31;
-
-			hashCode = prime + (location == null ? 0 : location.hashCode());
-			hashCode = prime * hashCode + scope;
+			hashCode = (31 * dyscopeId)
+					^ (101 * (location == null ? 0 : location.hashCode()));
 			hashed = true;
 		}
 		return hashCode;
@@ -105,7 +114,7 @@ public class ImmutableStackEntry implements StackEntry {
 				+ source.getSummary();
 
 		return "Frame[function=" + location.function().name() + ", location="
-				+ location.id() + locationString + ", scope=" + scope + "]";
+				+ location.id() + locationString + ", scope=" + dyscopeId + "]";
 	}
 
 }

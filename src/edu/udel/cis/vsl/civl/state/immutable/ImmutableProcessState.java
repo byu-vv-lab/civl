@@ -39,7 +39,7 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	class ReverseIterator implements Iterator<StackEntry> {
 
-		/* ************************ Instance Fields ************************ */
+		/* ******************* Instance Fields ******************* */
 
 		/**
 		 * The array over which we are iterating.
@@ -52,7 +52,7 @@ public class ImmutableProcessState implements ProcessState {
 		 */
 		private int i = array.length - 1;
 
-		/* ******************** Package-private Methods ******************** */
+		/* *************** Package-private Methods *************** */
 
 		/**
 		 * Creates a new reverse iterator for the given array.
@@ -64,7 +64,7 @@ public class ImmutableProcessState implements ProcessState {
 			this.array = array;
 		}
 
-		/* ********************* Methods from Iterator ********************* */
+		/* **************** Methods from Iterator **************** */
 
 		@Override
 		public boolean hasNext() {
@@ -112,7 +112,7 @@ public class ImmutableProcessState implements ProcessState {
 	 * incremented when entering an atomic block, and decremented when leaving
 	 * it.
 	 */
-	private int atomicCount = 0;
+	private int atomicCount;
 
 	/**
 	 * The call stack of this process: a non-null array in which entry 0 is the
@@ -123,26 +123,30 @@ public class ImmutableProcessState implements ProcessState {
 	/* **************************** Constructors *************************** */
 
 	/**
-	 * A new process state with empty stack.
+	 * Constructs new process state from given fields. No information is cloned;
+	 * the given objects just become the fields.
 	 * 
-	 * @param id
-	 *            The unique process ID.
+	 * @param pid
+	 *            the process ID
+	 * @param stack
+	 *            the call stack
+	 * @param atomicCount
+	 *            the atomic count
 	 */
-	ImmutableProcessState(int pid) {
-		this.pid = pid;
-		callStack = new ImmutableStackEntry[0];
-	}
-
-	ImmutableProcessState(ImmutableProcessState oldProcess, int newPid) {
-		this.pid = newPid;
-		this.callStack = oldProcess.callStack;
-		this.atomicCount = oldProcess.atomicCount;
-	}
-
 	ImmutableProcessState(int pid, StackEntry[] stack, int atomicCount) {
 		this.pid = pid;
 		this.callStack = stack;
 		this.atomicCount = atomicCount;
+	}
+
+	/**
+	 * Constructs a new process state with empty stack and atomic count 0.
+	 * 
+	 * @param pid
+	 *            The process ID
+	 */
+	ImmutableProcessState(int pid) {
+		this(pid, new ImmutableStackEntry[0], 0);
 	}
 
 	/* ********************** Package-private Methods ********************** */
@@ -158,6 +162,15 @@ public class ImmutableProcessState implements ProcessState {
 		canonic = true;
 	}
 
+	/**
+	 * Removes top entry from call stack. More precisely, returns a new process
+	 * state equivalent to this one but with the top entry removed from the call
+	 * stack.
+	 * 
+	 * Behavior is undefined if call stack is empty.
+	 * 
+	 * @return new process state will top frame removed from stack
+	 */
 	ImmutableProcessState pop() {
 		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length - 1];
 
@@ -165,6 +178,15 @@ public class ImmutableProcessState implements ProcessState {
 		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
 
+	/**
+	 * Pushes given frame onto call stack. More precisely, returns a new process
+	 * state equivalent to this one, but with new frame pushed onto top of
+	 * stack.
+	 * 
+	 * @param newStackEntry
+	 *            the new stack entry
+	 * @return new process state obtained by pushing entry onto stack
+	 */
 	ImmutableProcessState push(ImmutableStackEntry newStackEntry) {
 		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length + 1];
 
@@ -173,6 +195,18 @@ public class ImmutableProcessState implements ProcessState {
 		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
 
+	/**
+	 * Replaces the top entry on this process state's call stack with the given
+	 * entry. Functionally equivalent to doing a pop, then a push, but this
+	 * version may be more efficient.
+	 * 
+	 * Behavior is undefined if stack is empty.
+	 * 
+	 * @param newStackEntry
+	 *            the new stack entry
+	 * @return new process state obtained by replacing top entry on call stack
+	 *         with given one
+	 */
 	ImmutableProcessState replaceTop(ImmutableStackEntry newStackEntry) {
 		int length = callStack.length;
 		ImmutableStackEntry[] newStack = new ImmutableStackEntry[length];
@@ -183,11 +217,73 @@ public class ImmutableProcessState implements ProcessState {
 	}
 
 	/**
-	 * @param id
-	 *            The unique process ID.
+	 * Returns i-th entry on stack, where 0 is the TOP of the stack, and
+	 * stackSize-1 is the BOTTOM of the stack.
+	 * 
+	 * @param i
+	 *            int in [0,stackSize-1]
+	 * @return i-th entry on stack
 	 */
-	void setId(int pid) {
-		this.pid = pid;
+	StackEntry getStackEntry(int i) {
+		return callStack[i];
+	}
+
+	/**
+	 * Is this object the unique representative of its equivalence class?
+	 * 
+	 * @return true iff this is canonic
+	 */
+	boolean isCanonic() {
+		return canonic;
+	}
+
+	ImmutableProcessState setPid(int pid) {
+		return new ImmutableProcessState(pid, callStack, this.atomicCount);
+	}
+
+	ProcessState setStackEntries(StackEntry[] frames) {
+		return new ImmutableProcessState(pid, frames, this.atomicCount);
+	}
+
+	ProcessState setStackEntry(int index, StackEntry frame) {
+		int n = callStack.length;
+		StackEntry[] newStack = new StackEntry[n];
+
+		System.arraycopy(callStack, 0, newStack, 0, n);
+		newStack[index] = frame;
+		return new ImmutableProcessState(pid, newStack, this.atomicCount);
+	}
+
+	/**
+	 * Updates the call stack entries by substituting new values for dyscope IDs
+	 * according to the given map.
+	 * 
+	 * @param oldToNew
+	 *            an array which maps old dyscope IDs to their new values
+	 * @return an ImmutableProcessState which is equivalent to this one except
+	 *         that the dyscopeIDs in the call stack entries have been replaced
+	 *         with new values according to the given map
+	 */
+	ImmutableProcessState updateDyscopes(int[] oldToNew) {
+		int stackSize = callStack.length;
+		StackEntry[] newStack = new StackEntry[stackSize];
+		boolean stackChange = false;
+
+		for (int j = 0; j < stackSize; j++) {
+			StackEntry oldFrame = callStack[j];
+			int oldScope = oldFrame.scope();
+			int newScope = oldToNew[oldScope];
+
+			if (oldScope == newScope) {
+				newStack[j] = oldFrame;
+			} else {
+				stackChange = true;
+				newStack[j] = new ImmutableStackEntry(oldFrame.location(),
+						newScope);
+			}
+		}
+		return stackChange ? new ImmutableProcessState(pid, newStack,
+				atomicCount) : this;
 	}
 
 	/* ********************* Methods from ProcessState ********************* */
@@ -261,7 +357,6 @@ public class ImmutableProcessState implements ProcessState {
 	 * {@inheritDoc} Look at the first entry on the call stack, but do not
 	 * remove it.
 	 * 
-	 * @return {@inheritDoc} The first entry on the call stack.
 	 * @throws ArrayIndexOutOfBoundsException
 	 *             if stack is empty
 	 */
@@ -288,7 +383,7 @@ public class ImmutableProcessState implements ProcessState {
 		return callStack.length;
 	}
 
-	/******************* Methods from Object *******************/
+	/* ************************ Methods from Object ************************ */
 
 	@Override
 	public boolean equals(Object obj) {
@@ -326,41 +421,6 @@ public class ImmutableProcessState implements ProcessState {
 	public String toString() {
 		return "State of process " + pid + " (call stack length = "
 				+ callStack.length + ")";
-	}
-
-	/* *************************** Public Methods ************************** */
-
-	/**
-	 * Returns i-th entry on stack, where 0 is the TOP of the stack, and
-	 * stackSize-1 is the BOTTOM of the stack.
-	 * 
-	 * @param i
-	 *            int in [0,stackSize-1]
-	 * @return i-th entry on stack
-	 */
-	StackEntry getStackEntry(int i) {
-		return callStack[i];
-	}
-
-	boolean isCanonic() {
-		return canonic;
-	}
-
-	ProcessState setPid(int pid) {
-		return new ImmutableProcessState(pid, callStack, this.atomicCount);
-	}
-
-	ProcessState setStackEntries(StackEntry[] frames) {
-		return new ImmutableProcessState(pid, frames, this.atomicCount);
-	}
-
-	ProcessState setStackEntry(int index, StackEntry frame) {
-		int n = callStack.length;
-		StackEntry[] newStack = new StackEntry[n];
-
-		System.arraycopy(callStack, 0, newStack, 0, n);
-		newStack[index] = frame;
-		return new ImmutableProcessState(pid, newStack, this.atomicCount);
 	}
 
 }

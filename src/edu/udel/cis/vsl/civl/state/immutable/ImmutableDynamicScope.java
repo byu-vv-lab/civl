@@ -3,6 +3,8 @@ package edu.udel.cis.vsl.civl.state.immutable;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -128,8 +130,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 * @return new instance same as original but with new parent value
 	 */
 	ImmutableDynamicScope setParent(int parent) {
-		return new ImmutableDynamicScope(lexicalScope, parent, variableValues,
-				reachers);
+		return parent == this.parent ? this : new ImmutableDynamicScope(
+				lexicalScope, parent, variableValues, reachers);
 	}
 
 	/**
@@ -281,6 +283,33 @@ public class ImmutableDynamicScope implements DynamicScope {
 				out.println(value);
 		}
 		out.flush();
+	}
+
+	ImmutableDynamicScope updateDyscopeIds(
+			Map<SymbolicExpression, SymbolicExpression> scopeSubMap,
+			SymbolicUniverse universe, int newParentId) {
+		Collection<Variable> scopeVariableIter = lexicalScope
+				.variablesWithScoperefs();
+		SymbolicExpression[] newValues = null;
+
+		for (Variable variable : scopeVariableIter) {
+			int vid = variable.vid();
+			SymbolicExpression oldValue = variableValues[vid];
+
+			if (oldValue != null && !oldValue.isNull()) {
+				SymbolicExpression newValue = universe.substitute(oldValue,
+						scopeSubMap);
+
+				if (oldValue != newValue) {
+					if (newValues == null)
+						newValues = copyValues();
+					newValues[vid] = newValue;
+				}
+			}
+		}
+		return newValues == null ? setParent(newParentId)
+				: new ImmutableDynamicScope(lexicalScope, newParentId,
+						newValues, reachers);
 	}
 
 	/*************************** Methods from Object *************************/
