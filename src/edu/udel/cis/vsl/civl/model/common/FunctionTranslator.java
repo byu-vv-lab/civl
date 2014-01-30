@@ -105,6 +105,7 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
+import edu.udel.cis.vsl.civl.model.IF.AccuracyAssumptionBuilder;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
@@ -183,6 +184,12 @@ public class FunctionTranslator {
 	 */
 	protected CIVLFunction function;
 
+	/**
+	 * The accuracy assumption builder, which performs Taylor expansions after
+	 * assumptions involving abstract functions.
+	 */
+	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -213,6 +220,8 @@ public class FunctionTranslator {
 		this.functionBodyNode = bodyNode;
 		this.setFunction(function);
 		this.functionInfo = new FunctionInfo(function);
+		this.accuracyAssumptionBuilder = new CommonAccuracyAssumptionBuilder(
+				modelFactory);
 	}
 
 	/**
@@ -242,6 +251,8 @@ public class FunctionTranslator {
 		this.modelFactory = modelFactory;
 		this.setFunction(function);
 		this.functionInfo = new FunctionInfo(function);
+		this.accuracyAssumptionBuilder = new CommonAccuracyAssumptionBuilder(
+				modelFactory);
 	}
 
 	/* *************************** Public Methods ************************** */
@@ -956,9 +967,12 @@ public class FunctionTranslator {
 				assumeNode.getExpression(), scope, true);
 		Location location = modelFactory.location(
 				modelFactory.sourceOfBeginning(assumeNode), scope);
+		Fragment result = modelFactory.assumeFragment(
+				modelFactory.sourceOf(assumeNode), location, expression);
 
-		return modelFactory.assumeFragment(modelFactory.sourceOf(assumeNode),
-				location, expression);
+		result = result.combineWith(accuracyAssumptionBuilder.accuracyAssumptions(
+				expression, scope));
+		return result;
 	}
 
 	/**

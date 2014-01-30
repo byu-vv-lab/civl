@@ -453,9 +453,12 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				}
 			}
 			p = newState.getProcessState(pid);
-			if (print && stepExecuted) {
+			if (p != null && print && stepExecuted) {
 				printStatement(executedStatement, pLocation.atomicKind(),
 						p.atomicCount(), atomicLockVarChanged);
+			} else if (print && stepExecuted) {
+				printStatement(executedStatement, pLocation.atomicKind(), 0,
+						atomicLockVarChanged);
 			}
 			if (p != null && !p.hasEmptyStack())
 				pLocation = p.peekStack().location();

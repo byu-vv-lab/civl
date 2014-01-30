@@ -302,11 +302,12 @@ public class Libcivlc implements LibraryExecutor {
 	 * @return The state resulting from removing the specified process.
 	 */
 	private State executeExit(State state, int pid) {
-		// return stateFactory.removeProcess(state, pid);
-		while (!state.getProcessState(pid).hasEmptyStack()) {
-			state = stateFactory.popCallStack(state, pid);
+		int atomicPID = stateFactory.processInAtomic(state);
+		
+		if (atomicPID == pid) {
+			state = stateFactory.releaseAtomicLock(state);
 		}
-		return state;
+		return stateFactory.removeProcess(state, pid);
 	}
 
 	/**
