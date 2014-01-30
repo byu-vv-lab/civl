@@ -523,8 +523,6 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			statement = ((SimpleTransition) transition).statement();
 			if (transition instanceof ChooseTransition) {
 				if (statement instanceof StatementList) {
-					// TODO need to get counters here: maybe
-					// put counter in executor?
 					state = executor.executeStatementList(state, pid,
 							(StatementList) statement,
 							((ChooseTransition) transition).value());
@@ -566,6 +564,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			state = stateFactory.canonic(state);
 			this.maxCanonicId = state.getCanonicId();
 		} else {
+			state = stateFactory.collectProcesses(state);
+			state = stateFactory.collectScopes(state);
 			state.commit();
 		}
 		if (verbose || debug || showTransitions) {

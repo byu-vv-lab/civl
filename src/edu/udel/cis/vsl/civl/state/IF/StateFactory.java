@@ -29,67 +29,93 @@ public interface StateFactory {
 	SymbolicUniverse symbolicUniverse();
 
 	/**
-	 * Return a "canonical" version of the given state. This relates to the
-	 * Flyweight Pattern. The state factory maintains a set consisting of one
-	 * canonical representative of each equivalence class of states.
-	 * (Equivalence is defined by the equals relation on State.) This method
-	 * will return the representative from the class containing the given state.
-	 * If this factory does not already posses a canonical state equivalent to
-	 * the given state, it will make the given state the canonical
-	 * representative. The canonical representatives also have a unique stateId
-	 * field.
+	 * Return the "canonical" version of the given state.
+	 * 
+	 * The state returned will satisfy all of the following:
+	 * <ul>
+	 * <li>it will be observationally equivalent to the given state, i.e., there
+	 * is no way a CIVL-C program can distinguish between the two states</li>
+	 * <li>there will be no gaps in the dynamic scope IDs and no null dynamic
+	 * scopes</li>
+	 * <li>there will be no gaps in the PIDs and no null process states</li>
+	 * <li>every dynamic scope will be reachable (starting from the frame of the
+	 * call stack of one of the processes and following parent edges in the
+	 * dyscope tree)
+	 * <li>the state returned will be the unique representative of its
+	 * equivalence class, i.e., if this method is invoked with two equivalent
+	 * states, it will return the same object</li>
+	 * </ul>
+	 * 
+	 * Note that the state returned may in fact be the same as the one given.
+	 * 
+	 * Note that this does everything that methods {@link #collectScopes(State)}
+	 * and {@link #collectProcesses} do. So there is no need to call those
+	 * methods if you are already calling this method.
+	 * 
+	 * This method may go further in simplifying the state. This is up to the
+	 * particular implementation.
 	 * 
 	 * @param state
-	 * @return the canonical representative of the given state
+	 *            any non-null CIVL state
+	 * @return the canonical version of the given state
 	 */
 	State canonic(State state);
 
 	/**
-	 * Creates the canonic, initial state for a CIVL Model.
+	 * Returns the canonic, initial state for a CIVL Model.
 	 * 
 	 * @return the initial state
 	 */
 	State initialState(Model model);
 
 	/**
-	 * Update the value of a dynamic variable in the state.
+	 * Updates the value assigned to a variable in the state. Specifically,
+	 * returns a state which is equivalent to the given one, except that the
+	 * value assigned to the specified variable is replaced by the given value.
 	 * 
 	 * @param state
-	 *            The old state.
+	 *            The old state
 	 * @param variable
-	 *            The dynamic variable to update.
+	 *            The variable to update
 	 * @param pid
-	 *            The pid of the process containing the variable.
+	 *            The pid of the process containing the variable
 	 * @param value
-	 *            The new value of the dynamic variable.
+	 *            The new value to be assigned to the variable
 	 * @return A new state that is the old state modified by updating the value
-	 *         of the variable.
+	 *         of the variable
 	 */
 	State setVariable(State state, Variable variable, int pid,
 			SymbolicExpression value);
 
 	/**
-	 * Update the value of a dynamic variable in the state.
+	 * Updates the value assigned to a variable in the state. Specifically,
+	 * returns a state which is equivalent to the given one, except that the
+	 * value assigned to the specified variable is replaced by the given value.
+	 * 
+	 * In this version of the method, the variable is specified by its dynamic
+	 * scope ID and variable ID.
+	 * 
 	 * 
 	 * @param state
-	 *            The old state.
+	 *            The old state
 	 * @param vid
 	 *            variable ID number
 	 * @param scopeID
 	 *            The ID of the dynamic scope containing the variable. This
 	 *            version of the method is useful when setting the target of a
 	 *            pointer. For a variable in the current lexical scope, use the
-	 *            version of the method without this argument.
+	 *            version of the method without this argument
 	 * @param value
-	 *            The new value of the dynamic variable.
+	 *            The new value to assign to the variable
 	 * @return A new state that is the old state modified by updating the value
-	 *         of the variable.
+	 *         of the variable
+	 * @see #setVariable(State, Variable, int, SymbolicExpression)
 	 */
 	State setVariable(State state, int vid, int scopeId,
 			SymbolicExpression value);
 
 	/**
-	 * Add a new process. The new process is created and one entry is pushed
+	 * Adds a new process. The new process is created and one entry is pushed
 	 * onto its call stack. That entry will have a dynamic scope whose parent is
 	 * determined by the calling process (the process that is executing the
 	 * spawn command to create this new process) and the given function. The
@@ -121,17 +147,16 @@ public interface StateFactory {
 			SymbolicExpression[] arguments, int callerPid);
 
 	/**
-	 * Removes a process from the state. Re-numbers the PIDs to remove the gap
-	 * in the PID sequence, updating any process reference value occurring in
-	 * the state. Removes any scopes that become unreachable and re-numbers the
-	 * scopes in a canonical order.
+	 * Removes a process from the state. The process state associated to that
+	 * process is set to null. No other part of the state is affected. To really
+	 * get rid of the process state you need to call {@link #collectProcesses}.
 	 * 
 	 * @param state
-	 *            The old state.
+	 *            The old state
 	 * @param pid
-	 *            The process ID.
+	 *            The process ID
 	 * @return A new state that is the same as the old state with the process
-	 *         removed.
+	 *         state set to null
 	 */
 	State removeProcess(State state, int pid);
 
@@ -157,18 +182,18 @@ public interface StateFactory {
 	State setLocation(State state, int pid, Location location);
 
 	/**
-	 * Push a new entry on the call stack for a process. Used when a process
+	 * Pushes a new entry onto the call stack for a process. Used when a process
 	 * calls a function. The process should already exist and have a non-empty
 	 * call stack.
 	 * 
 	 * @param state
-	 *            The old state.
+	 *            The old state
 	 * @param pid
-	 *            The pid of the process making the call.
-	 * @param location
-	 *            The location of the function in the new stack frame.
-	 * @param parentScopeId
-	 *            The id of the parent dynamic scope.
+	 *            The pid of the process making the call
+	 * @param function
+	 *            The function being called
+	 * @param arguments
+	 *            The (actual) arguments to the function being called
 	 * @return A new state that is the same as the old state with the given
 	 *         process having a new entry on its call stack.
 	 */
@@ -176,9 +201,9 @@ public interface StateFactory {
 			SymbolicExpression[] arguments);
 
 	/**
-	 * Pop an entry off the call stack for a process. Removes scopes that become
-	 * unreachable. Does NOT remove the process from the state (even if the
-	 * stack becomes empty).
+	 * Pops an entry off the call stack for a process. Does not modify or remove
+	 * and dynamic scopes (even if they become unreachable). Does not nullify or
+	 * remove the process state (even if the call stack becomes empty).
 	 * 
 	 * @param state
 	 *            The old state.
@@ -190,7 +215,7 @@ public interface StateFactory {
 	State popCallStack(State state, int pid);
 
 	/**
-	 * Simplies all variable values in the state, using the path condition as
+	 * Simplifies all variable values in the state, using the path condition as
 	 * the simplification context.
 	 * 
 	 * @param state
@@ -208,9 +233,9 @@ public interface StateFactory {
 	long getNumStateInstances();
 
 	/**
-	 * Returns the number of states saved, i.e., made canonic.
+	 * Returns the number of states stored by this state factory.
 	 * 
-	 * @return the number of canonic states
+	 * @return the number of states stored
 	 */
 	int getNumStatesSaved();
 
@@ -230,7 +255,18 @@ public interface StateFactory {
 	State collectScopes(State state);
 
 	/**
-	 * Check if any process at the state is holding the atomic lock, i.e, the
+	 * Performs a garbage collection and canonicalization of the process states.
+	 * Removes and process state that is null. Renumbers the PIDs so that there
+	 * are no gaps (and start from 0).
+	 * 
+	 * @param state
+	 *            any non-null CIVL state
+	 * @return the state with processes collected
+	 */
+	State collectProcesses(State state);
+
+	/**
+	 * Checks if any process at the state is holding the atomic lock, i.e, the
 	 * process is executing some atomic blocks.
 	 * <p>
 	 * This information is maintained as a global variable
@@ -245,7 +281,8 @@ public interface StateFactory {
 	boolean lockedByAtomic(State state);
 
 	/**
-	 * Get the process that holds the atomic lock at a certain state
+	 * Returns the state of the process that holds the atomic lock at a certain
+	 * state
 	 * 
 	 * @param state
 	 *            The state to be checked
@@ -255,38 +292,41 @@ public interface StateFactory {
 	ProcessState processInAtomic(State state);
 
 	/**
-	 * Process with pid grabs the atomic lock
+	 * Declares that the process with the given pid now owns the atomic lock.
 	 * 
 	 * @param state
-	 *            The state to be worked on
+	 *            any non-null CIVL state
 	 * @param pid
-	 *            The id of the process that is going to grab the atomic lock
-	 * @return
+	 *            The pid of the process that is going to take the atomic lock
+	 * @return a state equivalent to given one except that process pid now owns
+	 *         the atomic lock
 	 */
 	State getAtomicLock(State state, int pid);
 
 	/**
-	 * Release the atomic lock, by updating the atomic lock variable with the
-	 * undefined process value
+	 * Releases the atomic lock, by updating the atomic lock variable with the
+	 * undefined process value.
 	 * 
 	 * @param state
-	 *            The state to be worked on
-	 * @return
+	 *            any non-null CIVL state
+	 * @return a state equivalent to given one except that no state owns the
+	 *         atomic lock
 	 */
 	State releaseAtomicLock(State state);
 
 	/**
-	 * Update a particular process of a certain state by process id.
+	 * Sets the process state assigned to the given PID to the given
+	 * ProcessState value.
 	 * <p>
 	 * Precondition: <code>p.pid() == pid</code>.
 	 * 
 	 * @param state
-	 *            The state to be worked on
-	 * @param p
-	 *            The new process that is to be used to update the state
+	 *            A non-null CIVL state
+	 * @param processState
+	 *            The process state to assign to PID
 	 * @param pid
-	 *            The process id of the process to be updated.
+	 *            The process id of the process to be updated
 	 * @return The new state after updating the process with the specified id
 	 */
-	State setProcessState(State state, ProcessState p, int pid);
+	State setProcessState(State state, ProcessState processState, int pid);
 }

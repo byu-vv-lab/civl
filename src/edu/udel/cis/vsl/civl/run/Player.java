@@ -96,8 +96,6 @@ public abstract class Player {
 	public Player(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
 		SymbolicUniverse universe;
-		String stateOption = (String) config
-				.getValueOrDefault(UserInterface.statesO);
 
 		this.config = config;
 		this.model = model;
@@ -105,16 +103,8 @@ public abstract class Player {
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
-		if ("transient".equals(stateOption))
-			this.stateFactory = States.newTransientStateFactory(modelFactory);
-		else if ("immutable".equals(stateOption))
-			this.stateFactory = States.newImmutableStateFactory(modelFactory,
-					config);
-		else if ("persistent".equals(stateOption))
-			this.stateFactory = States.newPersistentStateFactory(modelFactory);
-		else
-			throw new CommandLineException("Unknown state implementation: "
-					+ stateOption);
+		this.stateFactory = States.newImmutableStateFactory(modelFactory,
+				config);
 		this.transitionFactory = new TransitionFactory();
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);

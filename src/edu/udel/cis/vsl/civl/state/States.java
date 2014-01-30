@@ -3,8 +3,6 @@ package edu.udel.cis.vsl.civl.state;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.immutable.ImmutableStateFactory;
-import edu.udel.cis.vsl.civl.state.persistent.PersistentStateFactory;
-import edu.udel.cis.vsl.civl.state.trans.TransientStateFactory;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 /**
@@ -30,26 +28,6 @@ public class States {
 	public static StateFactory newImmutableStateFactory(
 			ModelFactory modelFactory, GMCConfiguration config) {
 		return new ImmutableStateFactory(modelFactory, config);
-	}
-
-	public static StateFactory newPersistentStateFactory(
-			ModelFactory modelFactory) {
-		return new PersistentStateFactory(modelFactory);
-	}
-
-	/**
-	 * Returns a new transient state factory based on the given model factory.
-	 * This implementation of StateFactory uses the Transient Pattern: states
-	 * (and their components) begin in a mutable state and become immutable
-	 * (mostly) once they are "committed".
-	 * 
-	 * @param modelFactory
-	 *            a model factory
-	 * @return a new transient state factory
-	 */
-	public static StateFactory newTransientStateFactory(
-			ModelFactory modelFactory) {
-		return new TransientStateFactory(modelFactory);
 	}
 
 }

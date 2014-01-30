@@ -171,6 +171,8 @@ public class ImmutableState implements State {
 	 */
 	private boolean seen = false;
 
+	ImmutableState simplifiedState = null;
+
 	/* *************************** Static Methods ************************** */
 
 	static ImmutableState newState(ImmutableState state,

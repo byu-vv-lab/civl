@@ -45,11 +45,6 @@ public class UserInterface {
 	/***************************** Static fields *****************************/
 
 	/**
-	 * Default state factory. "persistent", "immutable", or "transient"
-	 */
-	public final static String statesDefault = "immutable";
-
-	/**
 	 * A string printed before and after titles of sections of output to make
 	 * them stand out among the clutter.
 	 */
@@ -126,10 +121,6 @@ public class UserInterface {
 	public final static Option solveO = Option.newScalarOption("solve",
 			BOOLEAN, "try to solve for concrete counterexample", false);
 
-	public final static Option statesO = Option.newScalarOption("states",
-			STRING, "state implementation: immutable, transient, persistent",
-			statesDefault);
-
 	public final static Option sysIncludePathO = Option.newScalarOption(
 			"sysIncludePath", STRING, "set the system include path", null);
 
@@ -177,7 +168,7 @@ public class UserInterface {
 				userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO, porO,
-				saveStatesO, simplifyO, solveO, statesO, enablePrintfO, mpiO);
+				saveStatesO, simplifyO, solveO, enablePrintfO, mpiO);
 
 		parser = new CommandLineParser(options);
 	}
