@@ -16,7 +16,7 @@ typedef struct IntervalList {
 void main() {
   Interval result={.left = 2, .right = 3};
   IntervalList list1 = {.value ={.left=2, .right=3}, .next = &result};
-  IntervalList list2 = {.value = result, .next = NULL}; //not allowed by ABC for the moment, need to fix it.
+  IntervalList list2 = {.value = result, .next = NULL};
   
   $assert(list1.value.left==list1.next->left && list1.value.right == list1.next->right);
   $assert(result.left == 2 && result.right == 3);

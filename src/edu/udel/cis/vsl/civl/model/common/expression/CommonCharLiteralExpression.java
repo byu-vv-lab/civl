@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.model.common.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 
 public class CommonCharLiteralExpression extends CommonExpression implements
 		CharLiteralExpression {
@@ -13,9 +14,11 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 	 * 
 	 * @param source
 	 */
-	public CommonCharLiteralExpression(CIVLSource source, char value) {
+	public CommonCharLiteralExpression(CIVLSource source, CIVLType type,
+			char value) {
 		super(source);
 		this.value = value;
+		this.expressionType = type;
 	}
 
 	@Override

@@ -45,17 +45,17 @@ public class LanguageFeaturesTest {
 	public void assertNonNullPointer() throws ABCException {
 		assertTrue(ui.run("verify", filename("assertNonNullPointer.cvl")));
 	}
-	
+
 	@Test
 	public void assertNullPointer() throws ABCException {
 		assertFalse(ui.run("verify", filename("assertNullPointer.cvl")));
 	}
-	
+
 	@Test
 	public void assertPrintf() throws ABCException {
 		assertFalse(ui.run("verify", filename("assertPrintf.cvl")));
 	}
-	
+
 	@Test
 	public void assume() throws ABCException {
 		assertTrue(ui.run("verify", filename("assume.cvl")));
@@ -126,15 +126,19 @@ public class LanguageFeaturesTest {
 		assertFalse(ui.run("verify", filename("bundleStructComponent.cvl")));
 	}
 
-	
 	@Test
 	public void cAssert() throws ABCException {
 		assertFalse(ui.run("verify", filename("cAssert.cvl")));
 	}
-	
+
 	@Test
 	public void cast() throws ABCException {
 		assertTrue(ui.run("verify", filename("cast.cvl")));
+	}
+
+	@Test
+	public void charTest() throws ABCException {
+		assertTrue(ui.run("verify", filename("char.cvl")));
 	}
 
 	@Test
@@ -191,9 +195,9 @@ public class LanguageFeaturesTest {
 	public void forLoop() throws ABCException {
 		assertTrue(ui.run("verify", filename("for.cvl")));
 	}
-	
+
 	@Test
-	public void functionPrototype() throws ABCException{
+	public void functionPrototype() throws ABCException {
 		assertTrue(ui.run("verify", filename("functionPrototype.cvl")));
 	}
 
@@ -257,16 +261,16 @@ public class LanguageFeaturesTest {
 	public void pointers() throws ABCException {
 		assertTrue(ui.run("verify", filename("pointers.cvl")));
 	}
-	
+
 	@Test
 	public void printf() throws ABCException {
 		assertTrue(ui.run("verify", filename("printf.cvl")));
 	}
-	
+
 	@Test
 	public void printfBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("printfBad.cvl")));
-	}	
+	}
 
 	@Test
 	public void quantifiers() {

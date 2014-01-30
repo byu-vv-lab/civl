@@ -2263,7 +2263,9 @@ public class FunctionTranslator {
 				result = modelFactory.booleanLiteralExpression(source, value);
 				break;
 			case CHAR:
-
+				result = modelFactory.charLiteralExpression(source,
+						constantNode.getStringRepresentation().charAt(1));
+				break;
 			default:
 				throw new CIVLUnimplementedFeatureException("type "
 						+ convertedType, source);

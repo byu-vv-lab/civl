@@ -33,6 +33,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATO
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
@@ -1279,6 +1280,22 @@ public class Evaluator {
 		}
 		return eval;
 	}
+	
+	/**
+	 * Evaluate a char literal expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The char literal expression.
+	 * @return The symbolic representation of the char literal expression.
+	 */
+	private Evaluation evaluateCharLiteral(State state, int pid,
+			CharLiteralExpression expression) {
+		return new Evaluation(state, universe.character(expression.value()));
+	}
 
 	public NumericExpression sizeof(CIVLSource source, SymbolicType type) {
 		NumericExpression result = sizeofDynamicMap.get(type);
@@ -2315,6 +2332,10 @@ public class Evaluator {
 			break;
 		case CAST:
 			result = evaluateCast(state, pid, (CastExpression) expression);
+			break;
+		case CHAR_LITERAL:
+			result = evaluateCharLiteral(state, pid,
+					(CharLiteralExpression) expression);
 			break;
 		case COND:
 			result = evaluateCond(state, pid,

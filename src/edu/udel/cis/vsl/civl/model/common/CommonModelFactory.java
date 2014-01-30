@@ -90,6 +90,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonBinaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonCastExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonCharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonConditionalExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDereferenceExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDerivativeCallExpression;
@@ -2199,8 +2200,6 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CharLiteralExpression charLiteralExpression(CIVLSource sourceOf,
 			char value) {
-		return null;
-//		return new CommonCharLiteralExpression(
-//				sourceOf, this.charType, value);
+		return new CommonCharLiteralExpression(sourceOf, this.charType, value);
 	}
 }
