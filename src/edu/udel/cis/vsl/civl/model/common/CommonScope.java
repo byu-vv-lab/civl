@@ -16,7 +16,6 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -306,10 +305,13 @@ public class CommonScope extends CommonSourceable implements Scope {
 				containsPointerType = containsPointerType
 						|| fieldContainsPointer;
 			}
-		} else if (type instanceof CIVLHeapType) {
+		} else if (type.isHeapType()) {
 			// Heaps start out incomplete, so let's assume this is true for now.
 			// Ultimately we'd like to only have this be true if the heap
 			// contains pointer types.
+			containsPointerType = true;
+		} else if (type.isBundleType()) {
+			// It is possible for a bundle to contain a pointer.
 			containsPointerType = true;
 		}
 		return containsPointerType;
@@ -329,10 +331,13 @@ public class CommonScope extends CommonSourceable implements Scope {
 
 				containsScopeType = containsScopeType || fieldContainsScope;
 			}
-		} else if (type instanceof CIVLHeapType) {
+		} else if (type.isHeapType()) {
 			// Heaps start out incomplete, so let's assume this is true for now.
 			// Ultimately we'd like to only have this be true if the heap
 			// contains scope types.
+			containsScopeType = true;
+		} else if (type.isBundleType()) {
+			// It is possible for a bundle to contain a scope.
 			containsScopeType = true;
 		}
 		return containsScopeType;
@@ -352,10 +357,13 @@ public class CommonScope extends CommonSourceable implements Scope {
 
 				containsProcType = containsProcType || fieldContainsProc;
 			}
-		} else if (type instanceof CIVLHeapType) {
+		} else if (type.isHeapType()) {
 			// Heaps start out incomplete, so let's assume this is true for now.
 			// Ultimately we'd like to only have this be true if the heap
 			// contains process types.
+			containsProcType = true;
+		} else if (type.isBundleType()) {
+			// It is possible for a bundle to contain a proc.
 			containsProcType = true;
 		}
 		return containsProcType;
