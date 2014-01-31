@@ -55,7 +55,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
@@ -105,7 +104,6 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonStringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonStructLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
@@ -156,6 +154,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  * model components will be created.
  * 
  * @author Timothy K. Zirkel (zirkel)
+ * @author Manchun Zheng (zmanchun)
  * 
  */
 public class CommonModelFactory implements ModelFactory {
@@ -177,7 +176,7 @@ public class CommonModelFactory implements ModelFactory {
 	/**
 	 * The name of the atomic lock variable
 	 */
-	private static final String ATOMIC_LOCK_VARIABLE = "$ATOMIC_LOCK_VAR";
+	private static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
 
 	/**
 	 * Amount by which to increase the list of cached scope values and process
@@ -190,9 +189,20 @@ public class CommonModelFactory implements ModelFactory {
 	 * The prefix of the temporal variables for translating conditional
 	 * expressions
 	 */
-	private static final String CONDITIONAL_VARIABLE_PREFIX = "$COND_VAR_";
+	private static final String CONDITIONAL_VARIABLE_PREFIX = "__cond_var_";
+
+	private static final String ANONYMOUS_VARIABLE_PREFIX = "__anon_";
 
 	/* ************************** Instance Fields ************************** */
+
+	/**
+	 * The list of variables created for array literals used to initialize a
+	 * pointer type variable. E.g., int* p=(int[]){2,3} will introduce an
+	 * anonymous variable int[] __anon0 = {2,3}; int* p = &__anon0[0];
+	 */
+	private int anonymousVariableId = 0;
+
+	private Fragment anonFragment;
 
 	/**
 	 * The unique variable $ATOMIC_LOCK_VAR in the root scope for process that
@@ -226,6 +236,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * The stack of queues of conditional expression.
 	 */
 	private Stack<ArrayDeque<ConditionalExpression>> conditionalExpressions;
+
+	private Scope currentScope;
 
 	/**
 	 * The unique dynamic symbolic type used in the system.
@@ -417,6 +429,7 @@ public class CommonModelFactory implements ModelFactory {
 				scopeSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
 		this.conditionalExpressions = new Stack<ArrayDeque<ConditionalExpression>>();
+		this.anonFragment = new CommonFragment();
 	}
 
 	/* ********************** Methods from ModelFactory ******************** */
@@ -931,22 +944,22 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * A string literal expression.
-	 * 
-	 * @param value
-	 *            The string.
-	 * @return The string literal expression.
-	 */
-	@Override
-	public StringLiteralExpression stringLiteralExpression(CIVLSource source,
-			String value) {
-		StringLiteralExpression result = new CommonStringLiteralExpression(
-				source, value);
-
-		((CommonStringLiteralExpression) result).setExpressionType(stringType);
-		return result;
-	}
+	// /**
+	// * A string literal expression.
+	// *
+	// * @param value
+	// * The string.
+	// * @return The string literal expression.
+	// */
+	// @Override
+	// public StringLiteralExpression stringLiteralExpression(CIVLSource source,
+	// String value) {
+	// StringLiteralExpression result = new CommonStringLiteralExpression(
+	// source, value);
+	//
+	// ((CommonStringLiteralExpression) result).setExpressionType(stringType);
+	// return result;
+	// }
 
 	/**
 	 * An expression for an array index operation. e.g. a[i]
@@ -1817,6 +1830,7 @@ public class CommonModelFactory implements ModelFactory {
 			parent.addChild(newScope);
 		}
 		newScope.setFunction(function);
+//		this.currentScope = newScope;
 		return newScope;
 	}
 
@@ -2201,5 +2215,42 @@ public class CommonModelFactory implements ModelFactory {
 	public CharLiteralExpression charLiteralExpression(CIVLSource sourceOf,
 			char value) {
 		return new CommonCharLiteralExpression(sourceOf, this.charType, value);
+	}
+
+	@Override
+	public Variable newAnonymousVariableForArrayLiteral(CIVLSource sourceOf,
+			Scope scope, CIVLArrayType type) {
+		String name = ANONYMOUS_VARIABLE_PREFIX + this.anonymousVariableId++;
+		Variable variable = this.variable(sourceOf, type,
+				this.identifier(null, name), scope.numVariables());
+
+		variable.setConst(true);
+		scope.addVariable(variable);
+		return variable;
+	}
+
+	@Override
+	public Scope currentScope() {
+		return this.currentScope;
+	}
+
+	@Override
+	public Fragment anonFragment() {
+		return this.anonFragment;
+	}
+
+	@Override
+	public void resetAnonFragment() {
+		this.anonFragment = new CommonFragment();
+	}
+
+	@Override
+	public void addAnonStatement(Statement statement) {
+		this.anonFragment.addNewStatement(statement);
+	}
+
+	@Override
+	public void setCurrentScope(Scope scope) {
+		this.currentScope = scope;
 	}
 }

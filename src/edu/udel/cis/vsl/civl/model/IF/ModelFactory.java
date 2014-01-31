@@ -40,7 +40,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
@@ -625,17 +624,17 @@ public interface ModelFactory {
 	SizeofExpressionExpression sizeofExpressionExpression(CIVLSource source,
 			Expression argument);
 
-	/**
-	 * A string literal expression.
-	 * 
-	 * @param source
-	 *            The CIVL source
-	 * @param value
-	 *            The string.
-	 * @return The string literal expression.
-	 */
-	StringLiteralExpression stringLiteralExpression(CIVLSource source,
-			String value);
+	// /**
+	// * A string literal expression.
+	// *
+	// * @param source
+	// * The CIVL source
+	// * @param value
+	// * The string.
+	// * @return The string literal expression.
+	// */
+	// StringLiteralExpression stringLiteralExpression(CIVLSource source,
+	// String value);
 
 	/**
 	 * Create a new instance of struct literal expression
@@ -1445,7 +1444,19 @@ public interface ModelFactory {
 
 	AssertStatement assertStatement(CIVLSource sourceOf, Location location,
 			Expression expression, ArrayList<Expression> arguments);
-	
+
 	CharLiteralExpression charLiteralExpression(CIVLSource sourceOf, char value);
 
+	Variable newAnonymousVariableForArrayLiteral(CIVLSource sourceOf,
+			Scope scope, CIVLArrayType type);
+
+	Scope currentScope();
+	
+	void setCurrentScope(Scope scope);
+
+	Fragment anonFragment();
+
+	void resetAnonFragment();
+	
+	void addAnonStatement(Statement statment);
 }

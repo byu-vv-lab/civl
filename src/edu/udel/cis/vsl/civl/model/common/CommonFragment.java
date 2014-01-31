@@ -261,4 +261,13 @@ public class CommonFragment implements Fragment {
 		}
 	}
 
+	@Override
+	public void addNewStatement(Statement statement) {
+		if(this.lastStatement != null)
+			this.lastStatement.setTarget(statement.source());
+		else
+			this.startLocation = statement.source();
+		this.lastStatement = statement;
+	}
+
 }

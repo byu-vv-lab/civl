@@ -29,9 +29,11 @@ public interface Fragment {
 	 *            useful in checking if an expression is True.
 	 */
 	void addGuardToStartLocation(Expression guard, ModelFactory factory);
-	
+
 	void addLastStatement(Statement statement);
-	
+
+	void addNewStatement(Statement statement);
+
 	/**
 	 * Combine two fragment in sequential order. <br>
 	 * Precondition: <code>this.lastStatement == null</code>
@@ -41,7 +43,7 @@ public interface Fragment {
 	 * @return the sequential combination of both fragments
 	 */
 	Fragment combineWith(Fragment next);
-	
+
 	/**
 	 * Check if the fragment is empty
 	 * 
@@ -69,7 +71,7 @@ public interface Fragment {
 	 * @return the new fragment after the combination
 	 */
 	Fragment parallelCombineWith(Fragment parallel);
-	
+
 	/**
 	 * Print the fragment
 	 * 
@@ -77,7 +79,7 @@ public interface Fragment {
 	 *            the print stream
 	 */
 	void Print(PrintStream out);
-	
+
 	/**
 	 * Update the start location of this fragment
 	 * 

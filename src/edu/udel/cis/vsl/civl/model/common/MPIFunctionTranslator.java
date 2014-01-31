@@ -490,12 +490,13 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 	 * etc.
 	 */
 	@Override
-	protected Statement translateFunctionCall(Scope scope, Location location,
-			LHSExpression lhs, FunctionCallNode functionCallNode, boolean isCall) {
+	protected Statement translateFunctionCall(Scope scope, LHSExpression lhs,
+			FunctionCallNode functionCallNode, boolean isCall) {
 		CIVLSource source = modelFactory().sourceOfBeginning(functionCallNode);
 		String functionName = ((IdentifierExpressionNode) functionCallNode
 				.getFunction()).getIdentifier().name();
 		ArrayList<Expression> arguments = new ArrayList<Expression>();
+		Location location;
 
 		for (int i = 0; i < functionCallNode.getNumberOfArguments(); i++) {
 			Expression actual = translateExpressionNode(
@@ -504,6 +505,8 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 			actual = arrayToPointer(actual);
 			arguments.add(actual);
 		}
+		location = mpiFactory.location(mpiFactory.sourceOf(functionCallNode),
+				scope);
 		switch (functionName) {
 		// translate mpi function calls to the corresponding MPI
 		// Statement.

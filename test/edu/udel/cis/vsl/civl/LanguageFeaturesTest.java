@@ -42,6 +42,11 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
+	public void arrayLiteral() throws ABCException {
+		assertTrue(ui.run("verify", filename("arrayLiteral.cvl")));
+	}
+
+	@Test
 	public void assertNonNullPointer() throws ABCException {
 		assertTrue(ui.run("verify", filename("assertNonNullPointer.cvl")));
 	}
@@ -269,7 +274,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void printfBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("printfBad.cvl")));
+		assertTrue(ui.run("verify", filename("printfBad.cvl")));
 	}
 
 	@Test

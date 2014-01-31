@@ -46,11 +46,11 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 
 	/* *************************** Static Fields *************************** */
 
-	static final String RANK = "$RANK";
+	static final String RANK = "__rank";
 
-	static final String MPI_START = "$MPI_START";
+	static final String MPI_START = "__mpi_start";
 
-	static final String PROCS = "$PROCS";
+	static final String PROCS = "__procs";
 
 	/* ************************** Instance Fields ************************** */
 

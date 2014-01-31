@@ -61,4 +61,14 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 		return this.arrayType().elementType();
 	}
 
+	// @Override
+	// public int id() {
+	// return this.id;
+	// }
+	//
+	// @Override
+	// public void setId(int id) {
+	// this.id = id;
+	// }
+
 }

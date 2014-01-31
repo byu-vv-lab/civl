@@ -12,6 +12,8 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
@@ -21,7 +23,8 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
  * Executor for stdio function calls.
@@ -164,7 +167,7 @@ public class Libstdio implements LibraryExecutor {
 		}
 		switch (name.name()) {
 		case "printf":
-			state = executePrintf(state, pid, argumentValues);
+			state = executePrintf(state, pid, arguments, argumentValues);
 			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		default:
@@ -189,130 +192,56 @@ public class Libstdio implements LibraryExecutor {
 	 * @param pid
 	 * @param argumentValues
 	 * @return State
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executePrintf(State state, int pid,
-			SymbolicExpression[] argumentValues) {
-		String stringOfSymbolicExpression = new String();
-		String stringOutput = new String();
+	private State executePrintf(State state, int pid, Expression[] expressions,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		String stringOfSymbolicExpression = "";
+		String format = new String();
 		Vector<Object> arguments = new Vector<Object>();
 		CIVLSource source = state.getProcessState(pid).getLocation()
 				.getSource();
+		SymbolicExpression arrayPointer = evaluator.parentPointer(source,
+				argumentValues[0]);
+		Evaluation eval = evaluator.dereference(source, state, arrayPointer);
+		SymbolicSequence<?> originalArray = (SymbolicSequence<?>) eval.value
+				.argument(0);
 
+		state = eval.state;
+		for (int i = 0; i < originalArray.size(); i++) {
+			stringOfSymbolicExpression += originalArray.get(i).toString()
+					.charAt(1);
+		}
 		if (!this.enablePrintf)
 			return state;
 		// obtain printf() arguments
-		stringOfSymbolicExpression += argumentValues[0];
+		// stringOfSymbolicExpression += argumentValues[0];
+		format = stringOfSymbolicExpression;
 		for (int i = 1; i < argumentValues.length; i++) {
-			arguments.add(argumentValues[i]);
-		}
-		// convert the first argument from
-		// a symbolic expression to a string can be printed
-		stringOutput = this.abcArrayAnalyzer(stringOfSymbolicExpression, true,
-				source);
-		// convert a char array from a symbolic exrepssion to a string
-		for (int i = 0; i < arguments.size(); i++) {
-			SymbolicType.SymbolicTypeKind type = ((SymbolicExpression) arguments
-					.get(i)).type().typeKind();
-			// Type is char array
-			if (type == SymbolicType.SymbolicTypeKind.ARRAY) {
-				String arg_str = this.abcArrayAnalyzer(arguments.get(i)
-						.toString(), false, source);
-				// update
-				arguments.remove(i);
-				arguments.insertElementAt(arg_str, i);
-			}
+			SymbolicExpression argument = argumentValues[i];
+			CIVLType argumentType = expressions[i].getExpressionType();
+
+			if ((argumentType instanceof CIVLPointerType)
+					&& ((CIVLPointerType) argumentType).baseType().isCharType()
+					&& argument.operator() == SymbolicOperator.CONCRETE) {
+				arrayPointer = evaluator.parentPointer(source, argument);
+				eval = evaluator.dereference(source, state, arrayPointer);
+				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
+				state = eval.state;
+				stringOfSymbolicExpression = "";
+				for (int j = 0; j < originalArray.size(); j++) {
+					stringOfSymbolicExpression += originalArray.get(j)
+							.toString().charAt(1);
+				}
+				arguments.add(stringOfSymbolicExpression);
+			} else
+				arguments.add(argument.toString());
 		}
 		// Print
-		output.printf(stringOutput, arguments.toArray());
+		format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
+		output.printf(format, arguments.toArray());
 		return state;
-	}
-
-	/**
-	 * Extreact characters from symbolic expression
-	 * 
-	 * @param stringFromABC
-	 * @param convertFormatSpecifier
-	 * @return
-	 */
-	private String abcArrayAnalyzer(String stringFromABC,
-			boolean convertFormatSpecifier, CIVLSource source) {
-		Vector<String> individualChars = new Vector<String>();
-		String stringOutput = new String();
-		int eleNumInCharArray;
-		char[] chars;
-
-		// get the number of characters
-		eleNumInCharArray = Integer.parseInt((((stringFromABC
-				.split("\\u0028CHAR\\u005B"))[1]).split("]\\u0029<"))[0]);
-		// Split the output stream into separate characters
-		chars = stringFromABC.split("\\u0028CHAR\\u005B" + eleNumInCharArray
-				+ "]\\u0029<")[1].toCharArray();
-		// number check
-		if (chars.length != (eleNumInCharArray * 2 + eleNumInCharArray - 1
-				+ eleNumInCharArray + 1))
-			return "Unknown Exception in character number checking in printf";
-		if ((chars.length <= 4) || ((chars.length) % 4 != 0))
-			return "Unknown Exception in character number checking in printf";
-		// start at 4, end at charnum - 6: extract real useful character
-		// step = 4: ,'char'
-		for (int i = 4; i < chars.length - 5;) {
-			if (chars[i] == '\'')
-				if (chars[i + 2] == '\'')
-					if (chars[i + 3] == ',')
-						individualChars.add("" + chars[i + 1]);
-			i += 4;
-			if ((i == chars.length - 6) && (chars[i] == '\'')) // termination
-				break;
-			else if ((i == chars.length - 6) && (chars[i] != '\''))
-				return ("Unknown Exception in characters extraction in printf");
-		}
-		// convert characters to String, replace '\'+'n' with "\n"
-		for (int i = 0; i < individualChars.size(); i++) {
-			if (individualChars.get(i).equals("\\")
-					&& (i < individualChars.size() - 1)) {
-				switch (individualChars.get(i + 1)) {
-				case "n":
-					stringOutput += "\n";
-					i++;
-					break;
-				case "t":
-					stringOutput += "\t";
-					i++;
-					break;
-				case "r":
-					stringOutput += "\r";
-					i++;
-					break;
-				case "b":
-					stringOutput += "\b";
-					i++;
-					break;
-				case "f":
-					stringOutput += "\f";
-					i++;
-					break;
-				case "\"":
-					stringOutput += "\"";
-					i++;
-					break;
-				case "\'":
-					stringOutput += "\'";
-					i++;
-					break;
-				default:
-					throw new CIVLUnimplementedFeatureException(
-							individualChars.get(i + 1) + " in printf()", source);
-				}
-			} else {
-				stringOutput += individualChars.get(i);
-			}
-		}
-		/* replace format specifiers with %s */
-		if (convertFormatSpecifier)
-			stringOutput = stringOutput.replaceAll(
-					"%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
-
-		return stringOutput;
 	}
 
 }

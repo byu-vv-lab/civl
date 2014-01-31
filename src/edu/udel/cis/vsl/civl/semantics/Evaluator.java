@@ -1280,7 +1280,7 @@ public class Evaluator {
 		}
 		return eval;
 	}
-	
+
 	/**
 	 * Evaluate a char literal expression.
 	 * 

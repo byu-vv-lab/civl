@@ -38,6 +38,18 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		return String.valueOf(this.value);
+		switch (value) {
+		case 0:
+			return "'\\0'";
+		case '\n':
+			return "'\\n'";
+		case '\t':
+			return "'\\t'";
+		case '\r':
+			return "'\\r'";
+		case ' ':
+			return "' '";
+		}
+		return Character.toString(value);
 	}
 }
