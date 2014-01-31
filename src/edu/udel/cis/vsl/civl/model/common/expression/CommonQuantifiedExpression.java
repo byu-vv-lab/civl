@@ -148,8 +148,14 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 			result += "UNKNOWN_QUANTIFIER";
 			break;
 		}
-		result += " {" + boundVariableName + " " + boundVariableType + " | "
-				+ restriction + "} " + expression;
+		result += " {" + boundVariableType + " " + boundVariableName;
+
+		if (isRange) {
+			result += "=" + lower + ".." + upper;
+		} else {
+			result += " | " + restriction;
+		}
+		result += "} " + expression;
 		return result;
 	}
 

@@ -36,7 +36,7 @@ public class CommonAccuracyAssumptionBuilder implements
 	private List<AbstractFunctionCallExpression> calls = new LinkedList<AbstractFunctionCallExpression>();
 
 	/** Keep track of all quantified expressions in this assumption. */
-	private List<QuantifiedExpression> quantifiedExpressions = new LinkedList<QuantifiedExpression>();
+	private List<QuantifiedExpression> quantifiedExpressions;
 
 	public CommonAccuracyAssumptionBuilder(ModelFactory factory) {
 		this.factory = factory;
@@ -46,6 +46,7 @@ public class CommonAccuracyAssumptionBuilder implements
 	public Fragment accuracyAssumptions(Expression assumption, Scope scope) {
 		Fragment newAssumptions = new CommonFragment();
 
+		quantifiedExpressions = new LinkedList<QuantifiedExpression>();
 		analyze(assumption);
 		newAssumptions = newAssumptions.combineWith(generateAssumptions(scope));
 		return newAssumptions;
@@ -248,39 +249,89 @@ public class CommonAccuracyAssumptionBuilder implements
 				expansion1 = expansion(false, call, arg,
 						boundVariableExpression.name(), boundVariableType,
 						separatedExpression);
-				if (quant.isRange()) {
-					result = factory.assumeFragment(source, factory.location(
-							source, scope), factory.quantifiedExpression(
-							source, quant.quantifier(),
-							quant.boundVariableName(), boundVariableType,
-							quant.lower(), quant.upper(), expansion0));
-					result = result.combineWith(factory.assumeFragment(source,
-							factory.location(source, scope), factory
-									.quantifiedExpression(source,
-											quant.quantifier(),
-											quant.boundVariableName(),
-											boundVariableType, quant.lower(),
-											quant.upper(), expansion1)));
-				} else {
-					result = factory.assumeFragment(source, factory.location(
-							source, scope), factory.quantifiedExpression(
-							source, quant.quantifier(),
-							quant.boundVariableName(), boundVariableType,
-							quant.boundRestriction(), expansion0));
-					result = result.combineWith(factory.assumeFragment(source,
-							factory.location(source, scope), factory
-									.quantifiedExpression(source,
-											quant.quantifier(),
-											quant.boundVariableName(),
-											boundVariableType,
-											quant.boundRestriction(),
-											expansion1)));
-				}
+				result = createAssumption(source, scope, expansion0);
+				result = result.combineWith(createAssumption(source, scope, expansion1));
+//				if (quant.isRange()) {
+//					result = factory.assumeFragment(source, factory.location(
+//							source, scope), factory.quantifiedExpression(
+//							source, quant.quantifier(),
+//							quant.boundVariableName(), boundVariableType,
+//							quant.lower(), quant.upper(), expansion0));
+//					result = result.combineWith(factory.assumeFragment(source,
+//							factory.location(source, scope), factory
+//									.quantifiedExpression(source,
+//											quant.quantifier(),
+//											quant.boundVariableName(),
+//											boundVariableType, quant.lower(),
+//											quant.upper(), expansion1)));
+//				} else {
+//					result = factory.assumeFragment(source, factory.location(
+//							source, scope), factory.quantifiedExpression(
+//							source, quant.quantifier(),
+//							quant.boundVariableName(), boundVariableType,
+//							quant.boundRestriction(), expansion0));
+//					result = result.combineWith(factory.assumeFragment(source,
+//							factory.location(source, scope), factory
+//									.quantifiedExpression(source,
+//											quant.quantifier(),
+//											quant.boundVariableName(),
+//											boundVariableType,
+//											quant.boundRestriction(),
+//											expansion1)));
+//				}
 				break;
 			}
 		}
 		result = result.combineWith(bigOFacts(source, separatedExpression,
 				scope, function.continuity()));
+		return result;
+	}
+
+	private Fragment createAssumption(CIVLSource source, Scope scope,
+			Expression expression) {
+		return factory.assumeFragment(source, factory.location(source, scope),
+				createAssumptionExpression(source, 0, expression));
+	}
+
+	/**
+	 * Takes an index into the list of quantified expressions. Returns the
+	 * assumption obtained by applying all quantifiers in
+	 * {@link quantifiedExpressions} starting at index {code quantifier} to
+	 * {@code expression}.
+	 * 
+	 * @param source
+	 *            Source file information.
+	 * @param index
+	 *            An index into the list of quantifier expressions.
+	 * @param expression
+	 *            The quantified expression.
+	 * @return A fragment containing the (possibly nested) quantified
+	 *         expression.
+	 */
+	private Expression createAssumptionExpression(CIVLSource source, int index,
+			Expression expression) {
+		Expression result;
+
+		if (index >= quantifiedExpressions.size()) {
+			// No more quantifiers. Just give the expression.
+			return expression;
+		} else {
+			QuantifiedExpression quant = quantifiedExpressions.get(index);
+			Expression innerExpression = createAssumptionExpression(source,
+					index + 1, expression);
+
+			if (quant.isRange()) {
+				result = factory.quantifiedExpression(source,
+						quant.quantifier(), quant.boundVariableName(),
+						quant.boundVariableType(), quant.lower(),
+						quant.upper(), innerExpression);
+			} else {
+				result = factory.quantifiedExpression(source,
+						quant.quantifier(), quant.boundVariableName(),
+						quant.boundVariableType(), quant.boundRestriction(),
+						innerExpression);
+			}
+		}
 		return result;
 	}
 
