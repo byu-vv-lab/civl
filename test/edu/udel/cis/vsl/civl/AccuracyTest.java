@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -29,5 +30,24 @@ public class AccuracyTest {
 		assertTrue(ui.run("verify", "-inputnum_elements=5",
 				filename("derivative.cvl")));
 	}
+
+	@Test
+	public void derivativeBad() {
+		assertFalse(ui.run("verify", "-inputnum_elements=5",
+				filename("derivativeBad.cvl")));
+	}
+	
+	@Test
+	public void secondDerivative() {
+		assertTrue(ui.run("verify", "-inputnum_elements=5",
+				filename("secondDerivative.cvl")));
+	}
+	
+	@Test
+	public void secondDerivativeBad() {
+		assertTrue(ui.run("verify", "-inputnum_elements=5",
+				filename("secondDerivativeBad.cvl")));
+	}
+	
 
 }

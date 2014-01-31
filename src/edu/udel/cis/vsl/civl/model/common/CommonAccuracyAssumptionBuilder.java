@@ -280,7 +280,7 @@ public class CommonAccuracyAssumptionBuilder implements
 			}
 		}
 		result = result.combineWith(bigOFacts(source, separatedExpression,
-				scope));
+				scope, function.continuity()));
 		return result;
 	}
 
@@ -290,24 +290,13 @@ public class CommonAccuracyAssumptionBuilder implements
 	 * h*$O(h) == $O(h*h); 2*$O(h) == $O(h);
 	 */
 	private Fragment bigOFacts(CIVLSource source, Expression expression,
-			Scope scope) {
+			Scope scope, int continuity) {
 		Fragment result;
 		Expression bigOh = factory.unaryExpression(source,
 				UNARY_OPERATOR.BIG_O, expression);
-		Expression bigOhh = factory.unaryExpression(source,
-				UNARY_OPERATOR.BIG_O, factory.binaryExpression(source,
-						BINARY_OPERATOR.TIMES, expression, expression));
 
-		// h*$O(h) == $O(h*h);
-		result = factory.assumeFragment(source,
-				factory.location(source, scope), factory.binaryExpression(
-						source, BINARY_OPERATOR.EQUAL, factory
-								.binaryExpression(source,
-										BINARY_OPERATOR.TIMES, expression,
-										bigOh), bigOhh));
-		// 2*$O(h) == $O(h);
-		result = result
-				.combineWith(factory.assumeFragment(
+		result = factory
+				.assumeFragment(
 						source,
 						factory.location(source, scope),
 						factory.binaryExpression(
@@ -321,7 +310,22 @@ public class CommonAccuracyAssumptionBuilder implements
 												.integerLiteralExpression(
 														source,
 														BigInteger.valueOf(2))),
-										bigOh), bigOh)));
+										bigOh), bigOh));
+		for (int i = 1; 2 * i <= continuity; i++) {
+			// Add assertions h^i*$O(h^i) ==$O(h^(2i)
+			Expression lhs;
+			Expression rhs = factory.unaryExpression(source,
+					UNARY_OPERATOR.BIG_O, multiple(source, expression, 2 * i));
+			Expression hMultiple = multiple(source, expression, i);
+			Expression bigOArg = multiple(source, expression, i);
+
+			lhs = factory.binaryExpression(source, BINARY_OPERATOR.TIMES,
+					hMultiple, factory.unaryExpression(source,
+							UNARY_OPERATOR.BIG_O, bigOArg));
+			result = result.combineWith(factory.assumeFragment(source, factory
+					.location(source, scope), factory.binaryExpression(source,
+					BINARY_OPERATOR.EQUAL, lhs, rhs)));
+		}
 		return result;
 	}
 
