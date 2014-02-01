@@ -12,11 +12,15 @@ import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
@@ -50,6 +54,8 @@ public class Deadlock implements StatePredicateIF<State> {
 	private SymbolicUniverse universe;
 
 	private Evaluator evaluator;
+
+	private Executor executor;
 
 	private ModelFactory modelFactory;
 
@@ -85,11 +91,12 @@ public class Deadlock implements StatePredicateIF<State> {
 	 *            The theorem prover to check validity of statement guards under
 	 *            the path condition.
 	 */
-	public Deadlock(SymbolicUniverse symbolicUniverse, Evaluator evaluator) {
+	public Deadlock(SymbolicUniverse symbolicUniverse, Evaluator evaluator, Executor executor) {
 		this.universe = symbolicUniverse;
 		this.evaluator = evaluator;
 		this.modelFactory = evaluator.modelFactory();
 		this.falseExpr = symbolicUniverse.falseExpression();
+		this.executor = executor;
 	}
 
 	public CIVLExecutionException getViolation() {
@@ -204,10 +211,23 @@ public class Deadlock implements StatePredicateIF<State> {
 			if (source == null)
 				source = location.getSource();
 			for (Statement s : location.outgoing()) {
-				Expression staticGuard = s.guard();
-				BooleanExpression guard = (BooleanExpression) evaluator
-						.evaluate(state, pid, staticGuard).value;
+				Expression staticGuard;
+				BooleanExpression guard;
 
+				// calculate the guard of system function calls.
+				if (s instanceof CallOrSpawnStatement
+						&& ((CallOrSpawnStatement) s).function() instanceof SystemFunction) {
+					LibraryExecutor libExecutor = executor
+							.libraryExecutor((CallOrSpawnStatement) s);
+
+					guard = libExecutor.getGuard(state, pid,
+							(CallOrSpawnStatement) s);
+				} else {
+					//calculate normal statement guards.
+					staticGuard = s.guard();
+					guard = (BooleanExpression) evaluator.evaluate(state, pid,
+							staticGuard).value;
+				}
 				if (guard.isFalse())
 					continue;
 				if (s instanceof WaitStatement) {

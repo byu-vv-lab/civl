@@ -109,7 +109,6 @@ public abstract class Player {
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);
 		evaluator.setSolve(solve);
-		this.predicate = new StandardPredicate(log, universe, evaluator);
 		this.loader = new CommonLibraryExecutorLoader();
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));
@@ -122,6 +121,7 @@ public abstract class Player {
 		else
 			this.executor = new Executor(config, modelFactory, stateFactory,
 					log, loader, out, this.enablePrintf);
+		this.predicate = new StandardPredicate(log, universe, evaluator, this.executor);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
 		this.debug = config.isTrue(UserInterface.debugO);

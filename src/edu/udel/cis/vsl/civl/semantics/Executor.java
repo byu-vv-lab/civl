@@ -701,7 +701,7 @@ public class Executor {
 		}
 	}
 
-	protected LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
+	public LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
 		String library;
 
 		assert statement.function() instanceof SystemFunction;
