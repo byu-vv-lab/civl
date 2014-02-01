@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
 import edu.udel.cis.vsl.civl.library.stdio.Libstdio;
@@ -53,6 +54,7 @@ import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
@@ -425,14 +427,16 @@ public class Executor {
 				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
 				state = eval.state;
 				for (int i = 0; i < originalArray.size(); i++) {
-					stringOfSymbolicExpression += originalArray.get(i)
-							.toString().charAt(1);
+					char current = originalArray.get(i).toString().charAt(1);
+
+					if (current == '\u0007')
+						throw new CIVLUnimplementedFeatureException(
+								"Escape sequence " + current, source);
+					format += current;
 				}
 				if (!this.enablePrintf)
 					return state;
 				// obtain printf() arguments
-				// stringOfSymbolicExpression += argumentValues[0];
-				format = stringOfSymbolicExpression;
 				for (int i = 1; i < statement.printfArguments().length; i++) {
 					SymbolicExpression argument;
 					CIVLType argumentType = statement.printfArguments()[i]
@@ -444,7 +448,8 @@ public class Executor {
 					state = eval.state;
 					if ((argumentType instanceof CIVLPointerType)
 							&& ((CIVLPointerType) argumentType).baseType()
-									.isCharType()) {
+									.isCharType()
+							&& argument.operator() == SymbolicOperator.CONCRETE) {
 						arrayPointer = evaluator
 								.parentPointer(source, argument);
 						eval = evaluator.dereference(source, state,

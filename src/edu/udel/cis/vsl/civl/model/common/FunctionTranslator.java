@@ -44,6 +44,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.CompoundLiteralNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.DerivativeExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.DotNode;
@@ -2040,6 +2041,7 @@ public class FunctionTranslator {
 		if (init != null) {
 			Statement assignStatement, anonStatement = null;
 			Expression rhs;
+			CIVLSource initSource = modelFactory.sourceOf(init);
 
 			if (!(init instanceof ExpressionNode)
 					&& !(init instanceof CompoundInitializerNode))
@@ -2053,9 +2055,30 @@ public class FunctionTranslator {
 			if (init instanceof ExpressionNode) {
 				rhs = translateExpressionNode((ExpressionNode) init, scope,
 						true);
+
+				if (init instanceof CompoundLiteralNode) {
+					CIVLType variableType = variable.type();
+
+					if (variableType.isPointerType()) {
+						Variable anonVariable = modelFactory
+								.newAnonymousVariableForArrayLiteral(
+										initSource, scope,
+										(CIVLArrayType) rhs.getExpressionType());
+
+						anonStatement = modelFactory.assignStatement(
+								initSource, modelFactory.location(initSource,
+										scope), modelFactory
+										.variableExpression(initSource,
+												anonVariable), rhs, true);
+						rhs = arrayToPointer(modelFactory.variableExpression(
+								initSource, anonVariable));
+					}
+				}
+
 			} else {
+				// throw new CIVLUnimplementedFeatureException(init.toString(),
+				// initSource);
 				CIVLType variableType = variable.type();
-				CIVLSource initSource = modelFactory.sourceOf(init);
 
 				rhs = translateCompoundLiteralObject(
 						((CompoundInitializerNode) init).getLiteralObject(),
@@ -2065,7 +2088,6 @@ public class FunctionTranslator {
 							.newAnonymousVariableForArrayLiteral(initSource,
 									scope,
 									(CIVLArrayType) rhs.getExpressionType());
-
 					anonStatement = modelFactory.assignStatement(initSource,
 							modelFactory.location(initSource, scope),
 							modelFactory.variableExpression(initSource,
@@ -2094,6 +2116,16 @@ public class FunctionTranslator {
 			}
 		}
 		return initFragment;
+	}
+
+	private Expression translateCompoundLiteralNode(
+			CompoundLiteralNode compoundNode, Scope scope) {
+		CIVLType type = translateABCType(
+				modelFactory.sourceOf(compoundNode.getTypeNode()), scope,
+				compoundNode.getType());
+
+		return translateCompoundLiteralObject(compoundNode.getInitializerList()
+				.getLiteralObject(), scope, type);
 	}
 
 	private Expression translateCompoundLiteralObject(
@@ -2259,10 +2291,9 @@ public class FunctionTranslator {
 		Expression castExpression, result;
 
 		modelFactory.setCurrentScope(scope);
-		castExpression = translateExpressionNode(argumentNode,
-				scope, true);
-		result = modelFactory.castExpression(
-				modelFactory.sourceOf(castNode), castType, castExpression);
+		castExpression = translateExpressionNode(argumentNode, scope, true);
+		result = modelFactory.castExpression(modelFactory.sourceOf(castNode),
+				castType, castExpression);
 		return result;
 	}
 
@@ -2447,6 +2478,10 @@ public class FunctionTranslator {
 			break;
 		case CAST:
 			result = translateCastNode((CastNode) expressionNode, scope);
+			break;
+		case COMPOUND_LITERAL:
+			result = translateCompoundLiteralNode(
+					(CompoundLiteralNode) expressionNode, scope);
 			break;
 		case CONSTANT:
 			result = translateConstantNode((ConstantNode) expressionNode);

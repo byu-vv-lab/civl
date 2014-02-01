@@ -198,7 +198,7 @@ public class Libstdio implements LibraryExecutor {
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		String stringOfSymbolicExpression = "";
-		String format = new String();
+		String format = "";
 		Vector<Object> arguments = new Vector<Object>();
 		CIVLSource source = state.getProcessState(pid).getLocation()
 				.getSource();
@@ -209,15 +209,19 @@ public class Libstdio implements LibraryExecutor {
 				.argument(0);
 
 		state = eval.state;
-		for (int i = 0; i < originalArray.size(); i++) {
-			stringOfSymbolicExpression += originalArray.get(i).toString()
-					.charAt(1);
-		}
 		if (!this.enablePrintf)
 			return state;
+		for (int i = 0; i < originalArray.size(); i++) {
+			char current = originalArray.get(i).toString().charAt(1);
+
+			if (current == '\u0007')
+				throw new CIVLUnimplementedFeatureException("Escape sequence "
+						+ current, source);
+			format += current;
+		}
 		// obtain printf() arguments
 		// stringOfSymbolicExpression += argumentValues[0];
-		format = stringOfSymbolicExpression;
+		// format = stringOfSymbolicExpression;
 		for (int i = 1; i < argumentValues.length; i++) {
 			SymbolicExpression argument = argumentValues[i];
 			CIVLType argumentType = expressions[i].getExpressionType();

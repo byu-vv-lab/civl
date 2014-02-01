@@ -274,7 +274,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void printfBad() throws ABCException {
-		assertTrue(ui.run("verify", filename("printfBad.cvl")));
+		assertFalse(ui.run("verify", filename("printfBad.cvl")));
 	}
 
 	@Test

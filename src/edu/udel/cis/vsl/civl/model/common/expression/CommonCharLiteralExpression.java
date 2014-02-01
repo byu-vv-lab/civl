@@ -41,6 +41,12 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 		switch (value) {
 		case 0:
 			return "'\\0'";
+		case '\u000C':
+			return "\\f";
+		case '\u0007':
+			return "\\a";
+		case '\b':
+			return "\\b";
 		case '\n':
 			return "'\\n'";
 		case '\t':
