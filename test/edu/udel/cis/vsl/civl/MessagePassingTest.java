@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -36,11 +37,29 @@ public class MessagePassingTest {
 		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));
 	}
 
-	// TODO: get this working
-	@Ignore
 	@Test
 	public void hybrid() {
-		assertTrue(ui.run("run", filename("hybrid.cvl"), "-inputNPROCS=2"));
+		assertFalse(ui.run("verify", filename("hybrid.cvl")));
+	}
+
+	// takes too long (forever?)
+	@Ignore
+	@Test
+	public void hybridMin() {
+		assertFalse(ui.run("verify", "-min", filename("hybrid.cvl")));
+	}
+
+	@Test
+	public void hybrid2() {
+		assertFalse(ui.run("verify", filename("hybrid2.cvl"), "-inputNPROCS=2"));
+	}
+
+	// takes too long (forever?)
+	@Ignore
+	@Test
+	public void hybrid2Min() {
+		assertFalse(ui.run("verify", filename("hybrid2.cvl"), "-inputNPROCS=2",
+				"-min"));
 	}
 
 }
