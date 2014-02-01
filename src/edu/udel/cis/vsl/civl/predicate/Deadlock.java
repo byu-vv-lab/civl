@@ -144,9 +144,19 @@ public class Deadlock implements StatePredicateIF<State> {
 				if (source != null)
 					explanation.append(source.getSummary());
 				for (Statement statement : location.outgoing()) {
-					BooleanExpression guard = (BooleanExpression) evaluator
-							.evaluate(state, p.getPid(), statement.guard()).value;
+					BooleanExpression guard;
+					
+					if (statement instanceof CallOrSpawnStatement
+							&& ((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
+						LibraryExecutor libExecutor = executor
+								.libraryExecutor((CallOrSpawnStatement) statement);
 
+						guard = libExecutor.getGuard(state, pid,
+								(CallOrSpawnStatement) statement);
+					}else{
+						guard = (BooleanExpression) evaluator
+								.evaluate(state, p.getPid(), statement.guard()).value;
+					}
 					if (statement instanceof WaitStatement) {
 						// TODO: Check that the guard is actually true, but it
 						// should be.
