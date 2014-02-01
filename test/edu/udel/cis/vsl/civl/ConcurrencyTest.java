@@ -14,7 +14,7 @@ public class ConcurrencyTest {
 	/***************************** Static Fields *****************************/
 
 	private static File rootDir = new File(new File("examples"), "concurrency");
-	
+
 	private static UserInterface ui = new UserInterface();
 
 	/***************************** Helper Methods ****************************/
@@ -24,7 +24,7 @@ public class ConcurrencyTest {
 	}
 
 	/****************************** Test Methods *****************************/
-	
+
 	@Test
 	public void adder() {
 		assertTrue(ui.run("verify", filename("adder.cvl"), "-inputB=5"));
@@ -58,7 +58,6 @@ public class ConcurrencyTest {
 		assertFalse(ui.run("verify", "-min", "-inputB=4",
 				filename("barrierBad.cvl")));
 		assertFalse(ui.run("replay", filename("barrierBad.cvl"), "-id=0"));
-//		assertFalse(ui.run("replay", filename("barrierBad.cvl"), "-id=1"));
 	}
 
 	@Test
