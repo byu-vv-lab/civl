@@ -160,6 +160,11 @@ public class LanguageFeaturesTest {
 	public void comm() throws ABCException {
 		assertTrue(ui.run("verify", filename("comm.cvl")));
 	}
+	
+	@Test
+	public void commBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("commBad.cvl")));
+	}
 
 	@Test
 	public void compare() throws ABCException {

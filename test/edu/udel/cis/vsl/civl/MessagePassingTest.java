@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.UserInterface;
@@ -33,6 +34,13 @@ public class MessagePassingTest {
 	@Test
 	public void ring2() {
 		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));
+	}
+
+	// TODO: get this working
+	@Ignore
+	@Test
+	public void hybrid() {
+		assertTrue(ui.run("run", filename("hybrid.cvl"), "-inputNPROCS=2"));
 	}
 
 }
