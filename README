@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v 0.5
+                               v 0.6
 
 ------------------------------ Overview -------------------------------
 
@@ -37,16 +37,38 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.4 -------------------------
+-------------------------- Updates from v 0.5 -------------------------
 
-1. New language primitives supported: $atomic and $atom;
-2. New system function supported: printf(); 
-3. New command-line options (-echo and -enablePrintf) added;
-4. Improved printing transitions and states;
-5. Various bugs fixed in translating 0 constant to null pointer, 
-static analysis of impact scopes, etc.
+1. Support struct and array literal expressions.
+   For example:
+   typedef struct Node {int id; Node* next; } Node;
+   Node last = {.id=2, .next=NULL};
+   Node first = {.id = 1, .next = &last};
+   Node* list = (Node[]){[0]=one, [1]=last};
+   More examples can be found in 
+   examples/languageFeatures/arrayLiteral.cvl,
+   arrays.cvl, struct.cvl, etc.
 
-For more details, please refer to doc/civl-manual.pdf.
+2. Support constants of char type. Refer to 
+   examples/languageFeatures/char.cvl for more details.
+
+3. Support quantifier expressions. Refer to 
+   examples/languageFeatures/quantifiers.cvl for more details.
+   
+4. Support abstract functions and derivative operations.
+   Refer to examples/arithmetic/derivative.cvl for more details.
+
+5. A new system function is supported: exit(). Refer to
+   examples/languageFeatures/exit.cvl for more details. 
+
+6. $assert is now a system function declared in civlc.h and can have
+   optional arguments for printing information when the assertion is 
+   violated. Refer to examples/languageFeatures/assertPrintf.cvl
+   for more details. 
+
+7. Bugs fixed: false deadlock predicate for system function calls;
+   false error report when function declaration and function definition
+   are separated.
 
 ------------------------- Binary Installation -------------------------
 
