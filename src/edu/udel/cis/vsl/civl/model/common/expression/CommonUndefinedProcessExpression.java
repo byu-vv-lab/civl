@@ -7,10 +7,10 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.UndefinedProcessExpression;
 
 /**
- * Self expression. Returns a reference to the process in which the expression
- * is evaluated.
+ * Undefined process expression, i.e., a process expression with id -1. Used
+ * when translating atomic statements.
  * 
- * @author Timothy K. Zirkel (zirkel)
+ * @author Manchun Zheng (zheng)
  * 
  */
 public class CommonUndefinedProcessExpression extends CommonExpression

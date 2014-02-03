@@ -257,6 +257,9 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private CIVLPrimitiveType integerType;
 
+	private CIVLHeapType heapType;
+	private SymbolicTupleType heapSymbolicType;
+
 	/** Keep a unique number to identify locations. */
 	private int locationID = 0;
 
@@ -454,6 +457,8 @@ public class CommonModelFactory implements ModelFactory {
 
 		undefinedValue = universe.canonic(undefinedValue);
 		heapType.complete(mallocs, dynamicType, initialValue, undefinedValue);
+		this.heapType = heapType;
+		this.heapSymbolicType = dynamicType;
 	}
 
 	@Override
@@ -1830,7 +1835,7 @@ public class CommonModelFactory implements ModelFactory {
 			parent.addChild(newScope);
 		}
 		newScope.setFunction(function);
-//		this.currentScope = newScope;
+		// this.currentScope = newScope;
 		return newScope;
 	}
 
@@ -2252,5 +2257,15 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public void setCurrentScope(Scope scope) {
 		this.currentScope = scope;
+	}
+
+	@Override
+	public CIVLHeapType heapType() {
+		return this.heapType;
+	}
+
+	@Override
+	public SymbolicTupleType heapSymbolicType() {
+		return this.heapSymbolicType;
 	}
 }

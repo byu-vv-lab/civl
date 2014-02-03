@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.kripke.Enabler;
+import edu.udel.cis.vsl.civl.kripke.ScopedEnabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -121,7 +122,8 @@ public abstract class Player {
 		else
 			this.executor = new Executor(config, modelFactory, stateFactory,
 					log, loader, out, this.enablePrintf);
-		this.predicate = new StandardPredicate(log, universe, evaluator, this.executor);
+		this.predicate = new StandardPredicate(log, universe, evaluator,
+				this.executor);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
 		this.debug = config.isTrue(UserInterface.debugO);
@@ -137,10 +139,11 @@ public abstract class Player {
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
-		enabler = new Enabler(transitionFactory, evaluator, executor,
+		enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
 				this.scpPor);
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);
+		this.executor.setEnabler((Enabler) this.enabler);
 		stateManager = new StateManager(executor);
 		stateManager.setOutputStream(out);
 		stateManager.setVerbose(verbose);

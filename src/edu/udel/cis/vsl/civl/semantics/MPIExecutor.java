@@ -33,7 +33,6 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
-import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -43,7 +42,9 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 public class MPIExecutor extends Executor {
 
 	/* ********************** Instance Field ******************************* */
+
 	private VariableExpression rankExpression;
+
 	private Libmpi mpiExecutor;
 
 	/*************************** constructor *********************************/
@@ -65,8 +66,8 @@ public class MPIExecutor extends Executor {
 			boolean enablePrintf) {
 		super(config, modelFactory, stateFactory, log, loader, output,
 				enablePrintf);
-		this.mpiExecutor = (Libmpi) loader.getLibraryExecutor("mpi",
-				this, this.output, this.enablePrintf, this.modelFactory);
+		this.mpiExecutor = (Libmpi) loader.getLibraryExecutor("mpi", this,
+				this.output, this.enablePrintf, this.modelFactory);
 		rankExpression = ((MPIModelFactory) modelFactory).rankVariable();
 
 	}
@@ -107,20 +108,26 @@ public class MPIExecutor extends Executor {
 				(Expression) rankExpression);
 		state = eval.state;
 		int rank = evaluator.extractInt(civlsource,
-				(NumericExpression)eval.value);
+				(NumericExpression) eval.value);
 
 		// MPI_Send arguments
-		eval = evaluator.evaluate(state, pid,statement.getCommunicator());state = eval.state;
+		eval = evaluator.evaluate(state, pid, statement.getCommunicator());
+		state = eval.state;
 		SymbolicExpression commAddr = eval.value;
-		eval = evaluator.evaluate(state, pid,statement.getCount());state = eval.state;
+		eval = evaluator.evaluate(state, pid, statement.getCount());
+		state = eval.state;
 		SymbolicExpression count = eval.value;
-		eval = evaluator.evaluate(state, pid,statement.getDatatype());state = eval.state;
+		eval = evaluator.evaluate(state, pid, statement.getDatatype());
+		state = eval.state;
 		SymbolicExpression dataType = eval.value;
-		eval = evaluator.evaluate(state, pid,statement.getDestination());state = eval.state;
+		eval = evaluator.evaluate(state, pid, statement.getDestination());
+		state = eval.state;
 		SymbolicExpression destination = eval.value;
-		eval = evaluator.evaluate(state, pid,statement.getTag());state = eval.state;
+		eval = evaluator.evaluate(state, pid, statement.getTag());
+		state = eval.state;
 		SymbolicExpression tag = eval.value;
-		eval = evaluator.evaluate(state, pid,statement.getBuffer());state = eval.state;
+		eval = evaluator.evaluate(state, pid, statement.getBuffer());
+		state = eval.state;
 		SymbolicExpression bufAddr = eval.value;
 		// used for updating message buffer
 		SymbolicExpression messageBuffer;
@@ -134,10 +141,13 @@ public class MPIExecutor extends Executor {
 		ArrayList<SymbolicExpression> messageValues = new ArrayList<SymbolicExpression>();
 		ArrayList<SymbolicType> messageTypes = new ArrayList<SymbolicType>();
 		ArrayList<SymbolicExpression> messageElements = new ArrayList<SymbolicExpression>();
-		SymbolicExpression comm = evaluator.dereference(civlsource, state, commAddr).value;
-		SymbolicExpression buf = evaluator.dereference(civlsource, state, bufAddr).value;
-//		assert symbolicUniverse.tupleRead(comm, symbolicUniverse.intObject(2)) instanceof NumericExpression;
-		
+		SymbolicExpression comm = evaluator.dereference(civlsource, state,
+				commAddr).value;
+		SymbolicExpression buf = evaluator.dereference(civlsource, state,
+				bufAddr).value;
+		// assert symbolicUniverse.tupleRead(comm,
+		// symbolicUniverse.intObject(2)) instanceof NumericExpression;
+
 		// message buffer[][] <- comm[2]
 		messageBuffer = symbolicUniverse.tupleRead(commAddr,
 				symbolicUniverse.intObject(2));
@@ -228,8 +238,7 @@ public class MPIExecutor extends Executor {
 		state = stateFactory.setVariable(state, commVariableID, commScopeID,
 				comm);
 		if (lhs != null) {
-			eval = evaluator.evaluate(state, pid,
-					statement.getLeftHandSide());
+			eval = evaluator.evaluate(state, pid, statement.getLeftHandSide());
 			state = eval.state;
 			SymbolicExpression lhsValue = eval.value;
 			state = this.assign(state, pid, lhs, lhsValue);
@@ -260,14 +269,13 @@ public class MPIExecutor extends Executor {
 			throws UnsatisfiablePathConditionException {
 		CIVLSource civlsource = statement.getSource();
 		int messageSize = -1;
-		Evaluation eval = evaluator.evaluate(state, pid,
-				rankExpression);
+		Evaluation eval = evaluator.evaluate(state, pid, rankExpression);
 		state = eval.state;
 		int rank = evaluator.extractInt(civlsource,
 				(NumericExpression) eval.value);
 		// MPI_Recv arguments
 		SymbolicExpression buf;
-		eval = evaluator.evaluate(state, pid, statement.getCount()); 
+		eval = evaluator.evaluate(state, pid, statement.getCount());
 		state = eval.state;
 		SymbolicExpression count = eval.value;
 		eval = evaluator.evaluate(state, pid, statement.getDatatype());
@@ -434,7 +442,7 @@ public class MPIExecutor extends Executor {
 			SymbolicExpression lhsValue = eval.value;
 			state = this.assign(state, pid, lhs, lhsValue);
 		}
-		//TODO cast Expression to LHSExpression
+		// TODO cast Expression to LHSExpression
 		state = this.assign(state, pid, (LHSExpression) statement.getBuffer(),
 				buf);
 		state = this.assign(state, pid, (LHSExpression) statement.getStatus(),
@@ -543,7 +551,8 @@ public class MPIExecutor extends Executor {
 			MPIRecvStatement statement)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource civlsource = statement.getSource();
-		Evaluation eval = evaluator.evaluate(state, pid, statement.getCommunicator());
+		Evaluation eval = evaluator.evaluate(state, pid,
+				statement.getCommunicator());
 		state = eval.state;
 		SymbolicExpression comm = eval.value;
 		eval = evaluator.evaluate(state, pid, statement.getTag());
@@ -635,40 +644,42 @@ public class MPIExecutor extends Executor {
 		return symbolicUniverse.bool(enabled);
 	}
 
-	/**
-	 * Add checking for guard of MPIRecvStatement to the superclass's version.
-	 */
-	@Override
-	public BooleanExpression newPathCondition(State state, int pid,
-			Statement statement) {
-		try {
-			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
-			BooleanExpression pathCondition = eval.state.getPathCondition();
-			BooleanExpression guard = (BooleanExpression) eval.value;
-			Reasoner reasoner = evaluator.universe().reasoner(pathCondition);
-
-			if (statement instanceof CallOrSpawnStatement) {
-				if (((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
-					LibraryExecutor libraryExecutor = libraryExecutor((CallOrSpawnStatement) statement);
-
-					guard = evaluator.universe().and(guard,
-							libraryExecutor.getGuard(state, pid, statement));
-				}
-			}
-			if (statement instanceof MPIRecvStatement) {
-				guard = evaluator.universe().and(
-						guard,
-						this.getMPIRecvGuard(state, pid,
-								(MPIRecvStatement) statement));
-			}
-
-			if (reasoner.isValid(guard))
-				return pathCondition;
-			if (reasoner.isValid(evaluator.universe().not(guard)))
-				return evaluator.universe().falseExpression();
-			return evaluator.universe().and(pathCondition, guard);
-		} catch (UnsatisfiablePathConditionException e) {
-			return evaluator.universe().falseExpression();
-		}
-	}
+	// /**
+	// * Add checking for guard of MPIRecvStatement to the superclass's version.
+	// */
+	// @Override
+	// public BooleanExpression newPathCondition(State state, int pid,
+	// Statement statement) {
+	// try {
+	// Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
+	// BooleanExpression pathCondition = eval.state.getPathCondition();
+	// BooleanExpression guard = (BooleanExpression) eval.value;
+	// Reasoner reasoner = evaluator.universe().reasoner(pathCondition);
+	//
+	// if (statement instanceof CallOrSpawnStatement) {
+	// if (((CallOrSpawnStatement) statement).function() instanceof
+	// SystemFunction) {
+	// LibraryExecutor libraryExecutor = libraryExecutor((CallOrSpawnStatement)
+	// statement);
+	//
+	// guard = evaluator.universe().and(guard,
+	// libraryExecutor.getGuard(state, pid, statement));
+	// }
+	// }
+	// if (statement instanceof MPIRecvStatement) {
+	// guard = evaluator.universe().and(
+	// guard,
+	// this.getMPIRecvGuard(state, pid,
+	// (MPIRecvStatement) statement));
+	// }
+	//
+	// if (reasoner.isValid(guard))
+	// return pathCondition;
+	// if (reasoner.isValid(evaluator.universe().not(guard)))
+	// return evaluator.universe().falseExpression();
+	// return evaluator.universe().and(pathCondition, guard);
+	// } catch (UnsatisfiablePathConditionException e) {
+	// return evaluator.universe().falseExpression();
+	// }
+	// }
 }

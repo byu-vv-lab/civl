@@ -69,6 +69,8 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnit;
+import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnit.MemoryUnitKind;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -429,11 +431,11 @@ public class Evaluator {
 		switch (object.symbolicObjectKind()) {
 
 		case EXPRESSION:
-			findPointersInExpression((SymbolicExpression) object, set, heapType);
+			findPointersInExpression((SymbolicExpression) object, set);
 			break;
 		case EXPRESSION_COLLECTION:
 			for (SymbolicExpression expr : (SymbolicCollection<?>) object)
-				findPointersInExpression(expr, set, heapType);
+				findPointersInExpression(expr, set);
 			break;
 		default:
 			// ignore types and primitives, they don't have any pointers
@@ -442,8 +444,9 @@ public class Evaluator {
 	}
 
 	private void findPointersInExpression(SymbolicExpression expr,
-			Set<SymbolicExpression> set, SymbolicType heapType) {
+			Set<SymbolicExpression> set) {
 		SymbolicType type = expr.type();
+		SymbolicTupleType heapType = modelFactory.heapSymbolicType();
 
 		if (type != null && !type.equals(heapType)) {
 			// need to eliminate heap type as well. each proc has its own.
@@ -472,11 +475,12 @@ public class Evaluator {
 	 * @return set of pointer values occurring a subexpression of expression
 	 *         (including expression itself) but not in a heap
 	 */
-	Set<SymbolicExpression> pointersInExpression(SymbolicExpression expr,
-			SymbolicType heapType) {
+	// Optimization: you only need to call this method on variables that could
+	// have pointers in them, otherwise don't bother
+	Set<SymbolicExpression> pointersInExpression(SymbolicExpression expr) {
 		Set<SymbolicExpression> result = new HashSet<>();
 
-		findPointersInExpression(expr, result, heapType);
+		findPointersInExpression(expr, result);
 		return result;
 	}
 
@@ -2487,6 +2491,111 @@ public class Evaluator {
 					+ kind, expression.getSource());
 		}
 		return result;
+	}
+
+	Set<MemoryUnit> memoryUnitsOfExpression(State state, int pid,
+			Expression expression) throws UnsatisfiablePathConditionException {
+
+		ExpressionKind kind = expression.expressionKind();
+		Evaluation result;
+		Set<MemoryUnit> memoryUnits = new HashSet<>();
+
+		switch (kind) {
+		case ADDRESS_OF:
+			AddressOfExpression addressOfExpression = (AddressOfExpression) expression;
+			Expression operand = addressOfExpression.operand();
+
+			if (operand instanceof VariableExpression) {
+				Variable variable = ((VariableExpression) operand).variable();
+				int sid = state.getScopeId(pid, variable);
+				int vid = variable.vid();
+
+				result = new Evaluation(state, makePointer(sid, vid,
+						identityReference));
+				memoryUnits.add(new CommonMemoryUnit(result.value,
+						MemoryUnitKind.VARIABLE_OBJECT));
+			} else if (operand instanceof SubscriptExpression) {
+
+			} else if (operand instanceof DereferenceExpression) {
+
+			} else if (operand instanceof DotExpression) {
+
+			} else
+				throw new CIVLInternalException(
+						"Unknown kind of LHSExpression", operand);
+
+			break;
+		case ARRAY_LITERAL:
+
+			break;
+		case BINARY:
+
+			break;
+		case BOOLEAN_LITERAL:
+
+			break;
+		case BOUND_VARIABLE:
+
+			break;
+		case CAST:
+
+			break;
+		case CHAR_LITERAL:
+
+			break;
+
+		case DEREFERENCE:
+
+			break;
+
+		case DOT:
+
+			break;
+		case DYNAMIC_TYPE_OF:
+
+			break;
+		case INITIAL_VALUE:
+
+			break;
+		case INTEGER_LITERAL:
+
+			break;
+		case REAL_LITERAL:
+
+			break;
+		case SELF:
+
+			break;
+		case SIZEOF_TYPE:
+
+			break;
+		case SIZEOF_EXPRESSION:
+
+			break;
+
+		case STRUCT_LITERAL:
+
+			break;
+		case SUBSCRIPT:
+
+			break;
+		case UNARY:
+
+			break;
+		case UNDEFINED_PROC:
+
+			break;
+		case UNION_LITERAL:
+			break;
+		case VARIABLE:
+			break;
+		case QUANTIFIER:
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException("Expression kind: "
+					+ kind, expression.getSource());
+		}
+		return memoryUnits;
 	}
 
 }

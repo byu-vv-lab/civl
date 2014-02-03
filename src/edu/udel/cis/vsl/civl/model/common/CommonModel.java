@@ -254,7 +254,7 @@ public class CommonModel extends CommonSourceable implements Model {
 	}
 
 	@Override
-	public void setBundelType(CIVLBundleType type) {
+	public void setBundleType(CIVLBundleType type) {
 		this.bundleType = type;
 	}
 

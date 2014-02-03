@@ -372,7 +372,7 @@ public class ModelBuilderWorker {
 		model.setMessageType(messageType);
 		model.setQueueType(queueType);
 		model.setCommType(commType);
-		model.setBundelType(this.bundleType);
+		model.setBundleType(this.bundleType);
 		model.setName(modelName);
 		// add all functions to model except main:
 		for (CIVLFunction f : functionMap.values())

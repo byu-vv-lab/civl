@@ -201,6 +201,10 @@ public interface ModelFactory {
 	 * @return The integer primitive type.
 	 */
 	CIVLPrimitiveType integerType();
+	
+	CIVLHeapType heapType();
+	
+	SymbolicTupleType heapSymbolicType();
 
 	/**
 	 * Create a new bundle type.

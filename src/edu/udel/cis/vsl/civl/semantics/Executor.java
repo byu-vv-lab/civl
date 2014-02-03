@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
 import edu.udel.cis.vsl.civl.library.stdio.Libstdio;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -67,15 +68,17 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public class Executor {
 
-	/********************************* Types *********************************/
+	/* ******************************* Types ******************************* */
 
 	public enum StateStatusKind {
 		NORMAL, NONDETERMINISTIC, BLOCKED, END
 	}
 
-	/***************************** Instance Fields ***************************/
+	/* *************************** Instance Fields ************************* */
 
 	protected boolean enablePrintf; // true by default
+
+	protected Enabler enabler;
 
 	protected ModelFactory modelFactory;
 
@@ -113,7 +116,7 @@ public class Executor {
 	 */
 	protected long numSteps = 0;
 
-	/******************************* Constructors ****************************/
+	/* ***************************** Constructors ************************** */
 
 	/**
 	 * Create a new executor.
@@ -164,26 +167,7 @@ public class Executor {
 				enablePrintf);
 	}
 
-	/**************************** Private methods ****************************/
-
-	/**
-	 * Transition a process from one location to another. If the new location is
-	 * in a different scope, create a new scope or move to the parent scope as
-	 * necessary.
-	 * 
-	 * @param state
-	 *            The old state.
-	 * @param process
-	 *            The process undergoing the transition.
-	 * @param target
-	 *            The end location of the transition.
-	 * @return A new state where the process is at the target location.
-	 */
-	public State transition(State state, ProcessState process, Location target) {
-		state = stateFactory.setLocation(state, process.getPid(), target);
-		// state = stateFactory.canonic(state);
-		return state;
-	}
+	/* ************************* Protected methods ************************* */
 
 	/**
 	 * Executes an assignment statement. The state will be updated such that the
@@ -545,7 +529,7 @@ public class Executor {
 			throw new CIVLInternalException("Unknown statement kind", statement);
 	}
 
-	/*************************** Public Methods ******************************/
+	/* ************************* Public Methods **************************** */
 
 	/**
 	 * Assigns a value to the referenced cell in the state. Returns a new state
@@ -718,48 +702,6 @@ public class Executor {
 	}
 
 	/**
-	 * Given a state, a process, and a statement, check if the statement's guard
-	 * is satisfiable under the path condition. If it is, return the conjunction
-	 * of the path condition and the guard. This will be the new path condition.
-	 * Otherwise, return false.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param pid
-	 *            The id of the currently executing process.
-	 * @param statement
-	 *            The statement.
-	 * @return The new path condition. False if the guard is not satisfiable
-	 *         under the path condition.
-	 */
-	public BooleanExpression newPathCondition(State state, int pid,
-			Statement statement) {
-		try {
-			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
-			BooleanExpression pathCondition = eval.state.getPathCondition();
-			BooleanExpression guard = (BooleanExpression) eval.value;
-			Reasoner reasoner = evaluator.universe().reasoner(pathCondition);
-
-			if (statement instanceof CallOrSpawnStatement) {
-				if (((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
-					LibraryExecutor libraryExecutor = libraryExecutor((CallOrSpawnStatement) statement);
-
-					guard = evaluator.universe().and(guard,
-							libraryExecutor.getGuard(state, pid, statement));
-				}
-			}
-
-			if (reasoner.isValid(guard))
-				return pathCondition;
-			if (reasoner.isValid(evaluator.universe().not(guard)))
-				return evaluator.universe().falseExpression();
-			return evaluator.universe().and(pathCondition, guard);
-		} catch (UnsatisfiablePathConditionException e) {
-			return evaluator.universe().falseExpression();
-		}
-	}
-
-	/**
 	 * Execute a statement from a certain state and return the resulting state
 	 * TODO make sure the pid is never changed or return the new pid if changed
 	 * 
@@ -779,7 +721,8 @@ public class Executor {
 	public Pair<StateStatusKind, State> executeStatement(State state,
 			Location location, Statement s, int pid) {
 		State newState = null;
-		BooleanExpression pathCondition = newPathCondition(state, pid, s);
+		BooleanExpression pathCondition = enabler.newPathCondition(state, pid,
+				s);
 
 		if (!pathCondition.isFalse()) {
 			try {
@@ -861,6 +804,29 @@ public class Executor {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Transition a process from one location to another. If the new location is
+	 * in a different scope, create a new scope or move to the parent scope as
+	 * necessary.
+	 * 
+	 * @param state
+	 *            The old state.
+	 * @param process
+	 *            The process undergoing the transition.
+	 * @param target
+	 *            The end location of the transition.
+	 * @return A new state where the process is at the target location.
+	 */
+	public State transition(State state, ProcessState process, Location target) {
+		state = stateFactory.setLocation(state, process.getPid(), target);
+		// state = stateFactory.canonic(state);
+		return state;
+	}
+
+	public void setEnabler(Enabler enabler) {
+		this.enabler = enabler;
 	}
 
 	/**

@@ -142,6 +142,6 @@ public interface Model extends Sourceable {
 	 */
 	CIVLBundleType bundleType();
 
-	void setBundelType(CIVLBundleType type);
+	void setBundleType(CIVLBundleType type);
 
 }
