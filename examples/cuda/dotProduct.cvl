@@ -75,7 +75,7 @@ void gpu(){
     
     $atomic {
       barrier_init(in_barrier, threadsPerBlock);
-      printf("initialized barriers for block %d.\n", blockID);
+      //printf("initialized barriers for block %d.\n", blockID);
       for(int i = 0; i < threadsPerBlock; i++) {
         threads[i] = $spawn gpuThread(i);
       }
@@ -84,7 +84,7 @@ void gpu(){
       for(int i = 0; i < threadsPerBlock; i++) {
         $wait threads[i];
       }
-      printf("block %d done.\n", blockID);
+      //printf("block %d done.\n", blockID);
     }
   }
   $proc blocks[blocksPerGrid];
@@ -132,5 +132,7 @@ int main( void ) {
   }
 
   #define sum_squares(x)  (x*(x+1)*(2*x+1)/6)
-  printf( "Does GPU value %f = %f?\n", c, 2 * sum_squares( (double)(N - 1) ) );
+  //printf( "Does GPU value %f = %f?\n", c, 2 * sum_squares( (double)(N - 1) ) );
+  // check result
+  $assert(c == 2 * sum_squares( (double)(N - 1) ));
 }
