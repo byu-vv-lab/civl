@@ -1783,7 +1783,7 @@ public class Evaluator {
 			switch (expression.quantifier()) {
 			case EXISTS:
 				result = new Evaluation(state, universe.exists(boundVariable,
-						universe.implies((BooleanExpression) restriction.value,
+						universe.and((BooleanExpression) restriction.value,
 								simplifiedExpression)));
 				break;
 			case FORALL:
