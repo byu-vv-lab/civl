@@ -7,10 +7,12 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
@@ -95,10 +97,12 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.NumberFactory;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
+import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicCollection;
 import edu.udel.cis.vsl.sarl.number.Numbers;
 
 /**
@@ -408,6 +412,72 @@ public class Evaluator {
 				fieldIndex);
 
 		return extractInt(source, field);
+	}
+
+	/**
+	 * Finds all the pointers that can be dereferenced inside a symbolic object.
+	 * 
+	 * @param object
+	 *            a symbolic object
+	 * @param set
+	 *            a set to which the pointer values will be added
+	 * @param heapType
+	 *            the heap type, which will be ignored
+	 */
+	private void findPointersInObject(SymbolicObject object,
+			Set<SymbolicExpression> set, SymbolicType heapType) {
+		switch (object.symbolicObjectKind()) {
+
+		case EXPRESSION:
+			findPointersInExpression((SymbolicExpression) object, set, heapType);
+			break;
+		case EXPRESSION_COLLECTION:
+			for (SymbolicExpression expr : (SymbolicCollection<?>) object)
+				findPointersInExpression(expr, set, heapType);
+			break;
+		default:
+			// ignore types and primitives, they don't have any pointers
+			// you can dereference.
+		}
+	}
+
+	private void findPointersInExpression(SymbolicExpression expr,
+			Set<SymbolicExpression> set, SymbolicType heapType) {
+		SymbolicType type = expr.type();
+
+		if (type != null && !type.equals(heapType)) {
+			// need to eliminate heap type as well. each proc has its own.
+			if (pointerType.equals(type)) {
+				set.add(expr);
+			} else {
+				int numArgs = expr.numArguments();
+
+				for (int i = 0; i < numArgs; i++) {
+					SymbolicObject arg = expr.argument(i);
+
+					findPointersInObject(arg, set, heapType);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns the set of pointer values that occur inside a symbolic
+	 * expression, excluding any pointers that occur inside a heap.
+	 * 
+	 * @param expr
+	 *            a symbolic expression
+	 * @param heapType
+	 *            the heap type
+	 * @return set of pointer values occurring a subexpression of expression
+	 *         (including expression itself) but not in a heap
+	 */
+	Set<SymbolicExpression> pointersInExpression(SymbolicExpression expr,
+			SymbolicType heapType) {
+		Set<SymbolicExpression> result = new HashSet<>();
+
+		findPointersInExpression(expr, result, heapType);
+		return result;
 	}
 
 	/**
