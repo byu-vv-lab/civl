@@ -324,6 +324,11 @@ public class ScopedEnabler extends Enabler implements
 					// if(debugging)
 					// debugOut.println("Number of transitions at state " +
 					// state.getId() + ": " + localTransitions.size());
+					if (debugging) {
+						debugOut.println("ample processes at state "
+								+ state.getCanonicId() + ":");
+						debugOut.println(pid);
+					}
 					return localTransitions;
 				}
 			} else {
@@ -346,12 +351,25 @@ public class ScopedEnabler extends Enabler implements
 			// if(debugging)
 			// debugOut.println("Number of transtions at state " + state.getId()
 			// + ": " + processTransitions.get(smallestProcess).size());
+			if (debugging) {
+				debugOut.println("ample processes at state "
+						+ state.getCanonicId() + ":");
+				debugOut.println(smallestProcess.getPid());
+			}
 			return processTransitions.get(smallestProcess);
 		}
 		// System.out.println("Returning " + totalTransitions + " transitions");
 		// if(debugging)
 		// debugOut.println("Number of transtions at state " + state.getId() +
 		// ": " + transitions.size());
+		if (debugging) {
+			debugOut.println("ample processes at state " + state.getCanonicId()
+					+ ":");
+			for (ProcessState p : state.getProcessStates()) {
+				debugOut.print(p.getPid() + "\t");
+			}
+			debugOut.println();
+		}
 		return transitions;
 	}
 

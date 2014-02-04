@@ -43,7 +43,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 		NONE, ATOMIC_ENTER, ATOMIC_EXIT, ATOM_ENTER, ATOM_EXIT
 	}
 
-	/************************* Instance Fields *************************/
+	/* ************************** Instance Fields ************************** */
 
 	/**
 	 * Store the static analysis result. True iff all outgoing statements from
@@ -113,7 +113,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 */
 	private Scope scope;
 
-	/************************** Constructors *************************/
+	/* **************************** Constructors *************************** */
 
 	/**
 	 * The parent of all locations.
@@ -133,7 +133,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 		this.function = scope.function();
 	}
 
-	/************************** Methods from Location *************************/
+	/* ************************ Methods from Location ********************** */
 
 	@Override
 	public void addIncoming(Statement statement) {
@@ -464,7 +464,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 		this.function = scope.function();
 	}
 
-	/************************** Methods from Object *************************/
+	/* ************************ Methods from Object ************************ */
 
 	@Override
 	public boolean equals(Object that) {

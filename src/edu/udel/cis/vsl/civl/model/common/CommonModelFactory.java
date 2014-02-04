@@ -216,6 +216,10 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private CIVLPrimitiveType booleanType;
 
+	private CIVLBundleType bundleType;
+
+	private SymbolicUnionType bundleSymbolicType;
+
 	/**
 	 * The unique char type used in the system.
 	 */
@@ -1757,7 +1761,7 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public void complete(CIVLBundleType bundleType,
+	public void completeBundleType(CIVLBundleType bundleType,
 			Collection<SymbolicType> elementTypes) {
 		LinkedList<SymbolicType> arrayTypes = new LinkedList<SymbolicType>();
 		SymbolicUnionType dynamicType;
@@ -1768,6 +1772,8 @@ public class CommonModelFactory implements ModelFactory {
 				arrayTypes);
 		dynamicType = (SymbolicUnionType) universe.canonic(dynamicType);
 		bundleType.complete(elementTypes, dynamicType);
+		this.bundleType = bundleType;
+		this.bundleSymbolicType = dynamicType;
 	}
 
 	@Override
@@ -2268,4 +2274,15 @@ public class CommonModelFactory implements ModelFactory {
 	public SymbolicTupleType heapSymbolicType() {
 		return this.heapSymbolicType;
 	}
+
+	@Override
+	public CIVLBundleType bundleType() {
+		return this.bundleType;
+	}
+
+	@Override
+	public SymbolicUnionType bundleSymbolicType() {
+		return this.bundleSymbolicType;
+	}
+
 }

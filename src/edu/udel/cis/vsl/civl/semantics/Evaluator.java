@@ -69,8 +69,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnit;
-import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnit.MemoryUnitKind;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -104,6 +102,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicCollection;
 import edu.udel.cis.vsl.sarl.number.Numbers;
 
@@ -153,6 +152,10 @@ public class Evaluator {
 	private SymbolicTupleType pointerType;
 
 	private SymbolicTupleType dynamicType;
+
+	private SymbolicTupleType heapType;
+
+	private SymbolicUnionType bundleType;
 
 	private SymbolicExpression nullExpression;
 
@@ -231,6 +234,8 @@ public class Evaluator {
 		// scopeType = modelFactory.scopeSymbolicType();
 		dynamicType = modelFactory.dynamicSymbolicType();
 		pointerType = modelFactory.pointerSymbolicType();
+		heapType = modelFactory.heapSymbolicType();
+		bundleType = modelFactory.bundleSymbolicType();
 		this.log = log;
 		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
 		oneObj = (IntObject) universe.canonic(universe.intObject(1));
@@ -427,15 +432,15 @@ public class Evaluator {
 	 *            the heap type, which will be ignored
 	 */
 	private void findPointersInObject(SymbolicObject object,
-			Set<SymbolicExpression> set, SymbolicType heapType) {
+			Set<SymbolicExpression> set, State state) {
 		switch (object.symbolicObjectKind()) {
 
 		case EXPRESSION:
-			findPointersInExpression((SymbolicExpression) object, set);
+			findPointersInExpression((SymbolicExpression) object, set, state);
 			break;
 		case EXPRESSION_COLLECTION:
 			for (SymbolicExpression expr : (SymbolicCollection<?>) object)
-				findPointersInExpression(expr, set);
+				findPointersInExpression(expr, set, state);
 			break;
 		default:
 			// ignore types and primitives, they don't have any pointers
@@ -444,21 +449,34 @@ public class Evaluator {
 	}
 
 	private void findPointersInExpression(SymbolicExpression expr,
-			Set<SymbolicExpression> set) {
+			Set<SymbolicExpression> set, State state) {
 		SymbolicType type = expr.type();
-		SymbolicTupleType heapType = modelFactory.heapSymbolicType();
 
-		if (type != null && !type.equals(heapType)) {
+		if (type != null && !type.equals(heapType) && !type.equals(bundleType)) {
 			// need to eliminate heap type as well. each proc has its own.
 			if (pointerType.equals(type)) {
+				SymbolicExpression pointerValue;
+				Evaluation eval;
+
 				set.add(expr);
+				try {
+					eval = this.dereference(null, state, expr);
+					pointerValue = eval.value;
+					state = eval.state;
+					if (pointerValue.type() != null
+							&& pointerValue.type().equals(pointerType))
+						findPointersInExpression(pointerValue, set, state);
+				} catch (UnsatisfiablePathConditionException e) {
+					// // TODO Auto-generated catch block
+					// e.printStackTrace();
+				}
 			} else {
 				int numArgs = expr.numArguments();
 
 				for (int i = 0; i < numArgs; i++) {
 					SymbolicObject arg = expr.argument(i);
 
-					findPointersInObject(arg, set, heapType);
+					findPointersInObject(arg, set, state);
 				}
 			}
 		}
@@ -477,10 +495,11 @@ public class Evaluator {
 	 */
 	// Optimization: you only need to call this method on variables that could
 	// have pointers in them, otherwise don't bother
-	Set<SymbolicExpression> pointersInExpression(SymbolicExpression expr) {
+	Set<SymbolicExpression> pointersInExpression(SymbolicExpression expr,
+			State state) {
 		Set<SymbolicExpression> result = new HashSet<>();
 
-		findPointersInExpression(expr, result);
+		findPointersInExpression(expr, result, state);
 		return result;
 	}
 
@@ -2493,101 +2512,122 @@ public class Evaluator {
 		return result;
 	}
 
-	Set<MemoryUnit> memoryUnitsOfExpression(State state, int pid,
-			Expression expression) throws UnsatisfiablePathConditionException {
-
+	public void memoryUnitsOfExpression(State state, int pid,
+			Expression expression, Set<SymbolicExpression> memoryUnits)
+			throws UnsatisfiablePathConditionException {
 		ExpressionKind kind = expression.expressionKind();
-		Evaluation result;
-		Set<MemoryUnit> memoryUnits = new HashSet<>();
+		Evaluation eval;
 
 		switch (kind) {
 		case ADDRESS_OF:
 			AddressOfExpression addressOfExpression = (AddressOfExpression) expression;
 			Expression operand = addressOfExpression.operand();
 
-			if (operand instanceof VariableExpression) {
-				Variable variable = ((VariableExpression) operand).variable();
-				int sid = state.getScopeId(pid, variable);
-				int vid = variable.vid();
-
-				result = new Evaluation(state, makePointer(sid, vid,
-						identityReference));
-				memoryUnits.add(new CommonMemoryUnit(result.value,
-						MemoryUnitKind.VARIABLE_OBJECT));
-			} else if (operand instanceof SubscriptExpression) {
-
-			} else if (operand instanceof DereferenceExpression) {
-
-			} else if (operand instanceof DotExpression) {
-
-			} else
-				throw new CIVLInternalException(
-						"Unknown kind of LHSExpression", operand);
-
+			memoryUnitsOfExpression(state, pid, operand, memoryUnits);
 			break;
 		case ARRAY_LITERAL:
+			Expression[] elements = ((ArrayLiteralExpression) expression)
+					.elements();
 
+			for (Expression element : elements) {
+				memoryUnitsOfExpression(state, pid, element, memoryUnits);
+			}
 			break;
 		case BINARY:
+			BinaryExpression binaryExpression = (BinaryExpression) expression;
 
+			memoryUnitsOfExpression(state, pid, binaryExpression.left(),
+					memoryUnits);
+			memoryUnitsOfExpression(state, pid, binaryExpression.right(),
+					memoryUnits);
 			break;
 		case BOOLEAN_LITERAL:
-
-			break;
-		case BOUND_VARIABLE:
-
 			break;
 		case CAST:
+			CastExpression castExpression = (CastExpression) expression;
 
+			memoryUnitsOfExpression(state, pid, castExpression.getExpression(),
+					memoryUnits);
 			break;
 		case CHAR_LITERAL:
 
 			break;
 
 		case DEREFERENCE:
+			DereferenceExpression deferenceExpression = (DereferenceExpression) expression;
 
+			memoryUnitsOfExpression(state, pid, deferenceExpression.pointer(),
+					memoryUnits);
 			break;
 
 		case DOT:
+			DotExpression dotExpression = (DotExpression) expression;
 
+			memoryUnitsOfExpression(state, pid, dotExpression.struct(),
+					memoryUnits);
 			break;
 		case DYNAMIC_TYPE_OF:
-
 			break;
 		case INITIAL_VALUE:
-
 			break;
 		case INTEGER_LITERAL:
-
 			break;
 		case REAL_LITERAL:
-
 			break;
 		case SELF:
-
 			break;
 		case SIZEOF_TYPE:
-
 			break;
 		case SIZEOF_EXPRESSION:
+			SizeofExpressionExpression sizeofExpression = (SizeofExpressionExpression) expression;
 
+			memoryUnitsOfExpression(state, pid, sizeofExpression.getArgument(),
+					memoryUnits);
 			break;
-
 		case STRUCT_LITERAL:
+			Expression[] fields = ((StructLiteralExpression) expression)
+					.fields();
 
+			for (Expression field : fields) {
+				memoryUnitsOfExpression(state, pid, field, memoryUnits);
+			}
 			break;
 		case SUBSCRIPT:
+			SubscriptExpression subscriptExpression = (SubscriptExpression) expression;
 
+			memoryUnitsOfExpression(state, pid, subscriptExpression.array(),
+					memoryUnits);
+			memoryUnitsOfExpression(state, pid, subscriptExpression.index(),
+					memoryUnits);
 			break;
 		case UNARY:
+			UnaryExpression unaryExpression = (UnaryExpression) expression;
 
+			memoryUnitsOfExpression(state, pid, unaryExpression.operand(),
+					memoryUnits);
 			break;
 		case UNDEFINED_PROC:
-
 			break;
 		case UNION_LITERAL:
 			break;
 		case VARIABLE:
+			Variable variable = ((VariableExpression) expression).variable();
+			int sid = state.getScopeId(pid, variable);
+			int vid = variable.vid();
+			CIVLType type = variable.type();
+
+			// if (!variable.name().name().equals(
+			// modelFactory.atomicLockVariableExpression().variable()
+			// .name().name())) {
+			// atomic_enter statement is always considered as dependent with all
+			// processes since it accesses the global variable __atomic_lock_var
+			if (!variable.isConst() && !type.equals(modelFactory.heapType())
+					&& !type.equals(modelFactory.bundleType())) {
+				eval = new Evaluation(state, makePointer(sid, vid,
+						identityReference));
+				memoryUnits.addAll(pointersInExpression(eval.value, state));
+			}
+			// }
 			break;
 		case QUANTIFIER:
 			break;
@@ -2595,7 +2635,14 @@ public class Evaluator {
 			throw new CIVLUnimplementedFeatureException("Expression kind: "
 					+ kind, expression.getSource());
 		}
-		return memoryUnits;
 	}
 
+	public Set<SymbolicExpression> memoryUnitOfVariable(
+			SymbolicExpression variableValue, int dyScopeID, int vid,
+			State state) {
+		Evaluation eval = new Evaluation(state, makePointer(dyScopeID, vid,
+				identityReference));
+
+		return pointersInExpression(eval.value, state);
+	}
 }

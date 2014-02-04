@@ -2009,6 +2009,8 @@ public class FunctionTranslator {
 		int vid = scope.numVariables();
 		Variable variable = modelFactory.variable(source, type, name, vid);
 
+		if (typeNode.isConstQualified())
+			variable.setConst(true);
 		scope.addVariable(variable);
 		if (node.getTypeNode().isInputQualified()) {
 			variable.setIsInput(true);

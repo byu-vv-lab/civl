@@ -391,6 +391,11 @@ public class ImmutableDynamicScope implements DynamicScope {
 				newVariableValues, reachers);
 	}
 
+	@Override
+	public int numberOfValues() {
+		return this.variableValues.length;
+	}
+
 	/* ************************ Other Public Methods *********************** */
 	// none
 }

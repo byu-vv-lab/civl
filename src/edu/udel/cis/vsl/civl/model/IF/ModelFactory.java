@@ -69,6 +69,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 /**
  * The factory to create all model components. Usually this is the only way
@@ -111,6 +112,10 @@ public interface ModelFactory {
 	 */
 	CIVLPrimitiveType booleanType();
 
+	CIVLBundleType bundleType();
+
+	SymbolicUnionType bundleSymbolicType();
+
 	/**
 	 * Get the char primitive type.
 	 * 
@@ -131,6 +136,18 @@ public interface ModelFactory {
 	 */
 	CIVLCompleteArrayType completeArrayType(CIVLType elementType,
 			Expression extent);
+	
+	/**
+	 * Completes the bundle type by specifying the list of all dynamic types
+	 * which can occur as bundle elements. If the collections yields a sequence
+	 * of types t_i, then the bundlesymbolic type is union_i(array(t_i)).
+	 * 
+	 * @param bundleType
+	 *            an incomplete bundle type
+	 * @param types
+	 *            the set of all dynamic types which occur as bundle elements
+	 */
+	void completeBundleType(CIVLBundleType bundleType, Collection<SymbolicType> types);
 
 	/**
 	 * Completes the heap type.
@@ -201,9 +218,9 @@ public interface ModelFactory {
 	 * @return The integer primitive type.
 	 */
 	CIVLPrimitiveType integerType();
-	
+
 	CIVLHeapType heapType();
-	
+
 	SymbolicTupleType heapSymbolicType();
 
 	/**
@@ -1232,18 +1249,6 @@ public interface ModelFactory {
 	AssignStatement assignAtomicLockVariable(Integer pid, Location target);
 
 	/**
-	 * Completes the bundle type by specifying the list of all dynamic types
-	 * which can occur as bundle elements. If the collections yields a sequence
-	 * of types t_i, then the bundlesymbolic type is union_i(array(t_i)).
-	 * 
-	 * @param bundleType
-	 *            an incomplete bundle type
-	 * @param types
-	 *            the set of all dynamic types which occur as bundle elements
-	 */
-	void complete(CIVLBundleType bundleType, Collection<SymbolicType> types);
-
-	/**
 	 * Create a new function. When the function is constructed, its outermost
 	 * scope will be created.
 	 * 
@@ -1455,12 +1460,12 @@ public interface ModelFactory {
 			Scope scope, CIVLArrayType type);
 
 	Scope currentScope();
-	
+
 	void setCurrentScope(Scope scope);
 
 	Fragment anonFragment();
 
 	void resetAnonFragment();
-	
+
 	void addAnonStatement(Statement statment);
 }

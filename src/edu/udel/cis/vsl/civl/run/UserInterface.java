@@ -84,7 +84,7 @@ public class UserInterface {
 
 	public final static Option porO = Option.newScalarOption("por", STRING,
 			"partial order reduction (por) choices:\n"
-					+ "    std (standard por) or scp (scoped por)", "std");
+					+ "    std (standard por) or scp (scoped por) or new (new por)", "std");
 
 	public final static Option randomO = Option.newScalarOption("random",
 			BOOLEAN, "select enabled transitions randomly; default for run,\n"

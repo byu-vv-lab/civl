@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.kripke.Enabler;
+import edu.udel.cis.vsl.civl.kripke.PointeredEnabler;
 import edu.udel.cis.vsl.civl.kripke.ScopedEnabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutorLoader;
@@ -84,6 +85,8 @@ public abstract class Player {
 
 	protected boolean scpPor; // false by default
 
+	protected boolean newPor;
+
 	protected boolean saveStates; // true by default
 
 	protected boolean simplify; // true by default
@@ -134,13 +137,20 @@ public abstract class Player {
 		this.maxdepth = (int) config.getValueOrDefault(UserInterface.maxdepthO);
 		this.scpPor = ((String) config.getValueOrDefault(UserInterface.porO))
 				.equalsIgnoreCase("scp");
+		this.newPor = ((String) config.getValueOrDefault(UserInterface.porO))
+				.equalsIgnoreCase("new");
 		this.saveStates = (Boolean) config
 				.getValueOrDefault(UserInterface.saveStatesO);
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
-		enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-				this.scpPor);
+		if (this.newPor) {
+			enabler = new PointeredEnabler(transitionFactory, evaluator,
+					executor);
+		} else {
+			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
+					this.scpPor);
+		}
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);
 		this.executor.setEnabler((Enabler) this.enabler);

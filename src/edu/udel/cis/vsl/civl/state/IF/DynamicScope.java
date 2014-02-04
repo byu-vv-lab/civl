@@ -74,5 +74,7 @@ public interface DynamicScope {
 	 *            a string to prepend to each line of output
 	 */
 	void print(PrintStream out, String prefix);
+	
+	int numberOfValues();
 
 }

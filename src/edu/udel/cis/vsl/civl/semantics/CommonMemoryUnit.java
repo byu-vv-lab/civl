@@ -13,6 +13,17 @@ public class CommonMemoryUnit implements MemoryUnit {
 		this.memoryUnitKind = kind;
 	}
 
+	public CommonMemoryUnit(SymbolicExpression reference) {
+		this.reference = reference;
+	}
+
+	// equals() and hashCode() method of MemoryUnit must be implemented so
+	// that Set.contains() can execute correctly.
+	@Override
+	public int hashCode() {
+		return reference.hashCode();
+	}
+
 	@Override
 	public boolean equals(Object other) {
 		if (other instanceof MemoryUnit) {
@@ -34,5 +45,10 @@ public class CommonMemoryUnit implements MemoryUnit {
 	@Override
 	public SymbolicExpression reference() {
 		return this.reference;
+	}
+
+	@Override
+	public String toString() {
+		return reference.toString();
 	}
 }
