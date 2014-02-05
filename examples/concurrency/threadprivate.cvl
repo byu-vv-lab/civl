@@ -2,7 +2,7 @@
 #include<stdio.h>
 #define OWNS(numIters, threadId, index) ((index)%NTHREADS==threadId)
 $heap h;
-int NTHREADS = 3;
+int NTHREADS = 10;
 $proc threads[NTHREADS];
 
 int calculate_sum(int length, int *_pglobal) {
@@ -14,7 +14,7 @@ int calculate_sum(int length, int *_pglobal) {
 
 
 void main() {
-  int i, j, sum, TID, n=5;
+  int i, j, sum, TID, n=20;
   int length[n], check[n];
 
   for (i=0; i<n; i++) {
@@ -41,9 +41,8 @@ void main() {
     for (int _i=0; _i<n; _i++)
       if (OWNS(n, _TID, _i)) __for_loop_1(_i);
   }
+  
+  for (int t=0; t<NTHREADS; t++) threads[t] = $spawn __par_1(t);
+  for (int t=0; t<NTHREADS; t++) $wait threads[t];
 
-  $atomic {
-    for (int t=0; t<NTHREADS; t++) threads[t] = $spawn __par_1(t);
-    for (int t=0; t<NTHREADS; t++) $wait threads[t];
-  }
 }
