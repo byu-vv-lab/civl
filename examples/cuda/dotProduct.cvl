@@ -1,19 +1,21 @@
 /* dot product of two arrays.
- *
- * civl verify -por=new examples/cuda/dotProduct.cvl -inputBNPG=2 -inputK=4 -inputTNPB=2
- 
- =================== Stats ===================
-   validCalls          : 2466676
+ *   
+maurice:CIVL zmanchun$ civl verify -por=new examples/cuda/dotProduct.cvl -inputBNPG=4 -inputK=8 -inputTNPB=4
+CIVL v0.6 of 2014-02-01 -- http://vsl.cis.udel.edu/civl
+gpu done.
+
+=================== Stats ===================
+   validCalls          : 140788
    proverCalls         : 1
-   memory (bytes)      : 425721856
-   time (s)            : 26.21
-   maxProcs            : 7
-   statesInstantiated  : 3168836
-   statesSaved         : 214297
-   statesSeen          : 214296
-   statesMatched       : 141907
-   steps               : 815990
-   transitions         : 356202
+   memory (bytes)      : 332398592
+   time (s)            : 11.79
+   maxProcs            : 21
+   statesInstantiated  : 98602
+   statesSaved         : 6466
+   statesSeen          : 6463
+   statesMatched       : 3889
+   steps               : 27627
+   transitions         : 10351
  
  */
 
