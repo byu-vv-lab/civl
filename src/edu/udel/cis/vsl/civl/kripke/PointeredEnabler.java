@@ -78,14 +78,14 @@ public class PointeredEnabler extends Enabler implements
 		ArrayList<ProcessState> processStates = new ArrayList<>(
 				ampleProcesses(state));
 
-		// if (debugging) {
-		debugOut.println("ample processes at state " + state.getCanonicId()
-				+ ":");
-		for (ProcessState p : processStates) {
-			debugOut.print(p.getPid() + "\t");
+		if (debugging) {
+			debugOut.println("ample processes at state " + state.getCanonicId()
+					+ ":");
+			for (ProcessState p : processStates) {
+				debugOut.print(p.getPid() + "\t");
+			}
+			debugOut.println();
 		}
-		debugOut.println();
-		// }
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
 			TransitionSequence localTransitions = transitionFactory
