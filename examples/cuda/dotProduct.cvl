@@ -1,6 +1,6 @@
 /* dot product of two arrays.
  *
- * civl verify dot.cvl -inputmBNPG=2 -inputK=4 -inputthreadsPerBlock=2
+ * civl verify -por=new examples/cuda/dotProduct.cvl -inputBNPG=2 -inputK=4 -inputTNPB=2
  
  =================== Stats ===================
    validCalls          : 2466676
@@ -24,14 +24,14 @@
 
 #define imin(a,b) (a<b?a:b)
 
-$input int mBNPG;
+$input int BNPG;
 $input int K;//power of 2
-$input int threadsPerBlock; // thread number per block: for reductions, threadsPerBlock must be a power of 2
+$input int TNPB; // thread number per block: for reductions, threadsPerBlock must be a power of 2
     // because of the following code
-const int N = (mBNPG + 1) * K;
-const int threadsPerBlock = 2;
-const int blocksPerGrid =
-            imin(mBNPG, (N+threadsPerBlock-1) / threadsPerBlock );     
+int N = (BNPG + 1) * K;
+int threadsPerBlock = TNPB;
+int blocksPerGrid =
+            imin(BNPG, (N+threadsPerBlock-1) / threadsPerBlock );     
 double *a, *b, c, *partial_c;
 
 void gpu(){
@@ -89,17 +89,17 @@ void gpu(){
   }
   $proc blocks[blocksPerGrid];
   
-  $atomic {
-    for(int i = 0; i < blocks`PerGrid; i++) {
+  //$atomic {
+    for(int i = 0; i < blocksPerGrid; i++) {
       blocks[i] = $spawn gpuBlock(i);  
     }
-  }
-  $atomic {
+  //}
+  //$atomic {
     for(int i = 0; i < blocksPerGrid; i++) {
       $wait blocks[i];
     }
     printf("gpu done.\n");
-  }
+  //}
 }
 
 int main( void ) {
