@@ -3,6 +3,9 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
@@ -10,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * a[i], where "a" is an array and "i" is an expression evaluating to an
@@ -147,5 +151,23 @@ public class CommonSubscriptExpression extends CommonExpression implements
 			result.setExpressionType(expressionType);
 
 		return result;
+	}
+
+	@Override
+	public Variable variableWritten(Scope scope) {
+		return array.variableWritten(scope);
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = array.variableAddressedOf(scope);
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		operandResult = index.variableAddressedOf(scope);
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
 	}
 }

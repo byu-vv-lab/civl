@@ -1,8 +1,12 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonCharLiteralExpression extends CommonExpression implements
 		CharLiteralExpression {
@@ -57,5 +61,10 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 			return "' '";
 		}
 		return Character.toString(value);
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
 	}
 }

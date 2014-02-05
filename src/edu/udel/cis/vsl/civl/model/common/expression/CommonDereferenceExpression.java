@@ -1,11 +1,15 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonDereferenceExpression extends CommonExpression implements
 		DereferenceExpression {
@@ -80,4 +84,18 @@ public class CommonDereferenceExpression extends CommonExpression implements
 		return result;
 	}
 
+	@Override
+	public Variable variableWritten(Scope scope) {
+		return null;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = pointer.variableAddressedOf(scope);
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
+	}
 }

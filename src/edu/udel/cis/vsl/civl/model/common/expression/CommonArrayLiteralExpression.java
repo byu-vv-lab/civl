@@ -1,12 +1,16 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonArrayLiteralExpression extends CommonExpression implements
 		ArrayLiteralExpression {
@@ -59,6 +63,22 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	@Override
 	public CIVLType elementType() {
 		return this.arrayType().elementType();
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> result = new HashSet<>();
+
+		if (elements != null) {
+			for (Expression element : elements) {
+				Set<Variable> elementResult = element
+						.variableAddressedOf(scope);
+
+				if (elementResult != null)
+					result.addAll(elementResult);
+			}
+		}
+		return result;
 	}
 
 	// @Override

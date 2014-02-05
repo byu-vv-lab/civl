@@ -3,9 +3,12 @@
  */
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * The parent of all expressions.
@@ -16,16 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 public interface Expression extends Sourceable {
 
 	public enum ExpressionKind {
-		ABSTRACT_FUNCTION_CALL, ADDRESS_OF, ARRAY_LITERAL,
-		BINARY, BOOLEAN_LITERAL, BOUND_VARIABLE, 
-		CAST, CHAR_LITERAL, COND, DEREFERENCE, 
-		DERIVATIVE, DOT, DYNAMIC_TYPE_OF, 
-		INITIAL_VALUE, INTEGER_LITERAL, 
-		NULL_LITERAL, QUANTIFIER, 
-		REAL_LITERAL, RESULT, 
-		SELF, SIZEOF_TYPE, SIZEOF_EXPRESSION, STRING_LITERAL, STRUCT_LITERAL, SUBSCRIPT, 
-		UNARY, UNDEFINED_PROC, UNION_LITERAL,
-		VARIABLE
+		ABSTRACT_FUNCTION_CALL, ADDRESS_OF, ARRAY_LITERAL, BINARY, BOOLEAN_LITERAL, BOUND_VARIABLE, CAST, CHAR_LITERAL, COND, DEREFERENCE, DERIVATIVE, DOT, DYNAMIC_TYPE_OF, INITIAL_VALUE, INTEGER_LITERAL, NULL_LITERAL, QUANTIFIER, REAL_LITERAL, RESULT, SELF, SIZEOF_TYPE, SIZEOF_EXPRESSION, STRING_LITERAL, STRUCT_LITERAL, SUBSCRIPT, UNARY, UNDEFINED_PROC, UNION_LITERAL, VARIABLE
 	}
 
 	/**
@@ -115,4 +109,11 @@ public interface Expression extends Sourceable {
 	Expression replaceWith(ConditionalExpression oldExpression,
 			Expression newExpression);
 
+	/**
+	 * Compute the set of variables that are addressed of in the expression.
+	 * e.g., &a + &b will returns {a, b}
+	 * 
+	 * @return
+	 */
+	Set<Variable> variableAddressedOf(Scope scope);
 }

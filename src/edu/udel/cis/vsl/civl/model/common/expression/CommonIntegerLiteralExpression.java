@@ -4,9 +4,12 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import java.math.BigInteger;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * An integer literal.
@@ -53,5 +56,10 @@ public class CommonIntegerLiteralExpression extends CommonExpression implements
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.INTEGER_LITERAL;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
 	}
 }

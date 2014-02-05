@@ -1,11 +1,15 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonSizeofExpression extends CommonExpression implements
 		SizeofExpressionExpression {
@@ -79,5 +83,15 @@ public class CommonSizeofExpression extends CommonExpression implements
 			result.setExpressionType(expressionType);
 
 		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = argument.variableAddressedOf(scope);
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
 	}
 }

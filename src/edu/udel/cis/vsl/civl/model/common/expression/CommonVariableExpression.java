@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -59,21 +61,35 @@ public class CommonVariableExpression extends CommonExpression implements
 	public void setPurelyLocal(boolean pl) {
 		this.variable.setPurelyLocal(pl);
 	}
-	
+
 	@Override
-	public void purelyLocalAnalysisOfVariables(Scope funcScope){
-//		if(this.variable.type().isPointerType())
-//			this.setPurelyLocal(false);
-		if(funcScope.isDescendantOf(this.variable.scope()))
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		// if(this.variable.type().isPointerType())
+		// this.setPurelyLocal(false);
+		if (funcScope.isDescendantOf(this.variable.scope()))
 			this.setPurelyLocal(false);
-		
+
 	}
 
 	@Override
 	public void purelyLocalAnalysis() {
 		this.purelyLocal = this.variable.purelyLocal();
 	}
-	
-	
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
+	}
+
+	@Override
+	public Variable variableWritten(Scope scope) {
+		Scope vScope = variable.scope();
+		
+		if(variable.isConst())
+			return null;
+		if (scope.equals(vScope) || scope.isDescendantOf(vScope))
+			return variable;
+		return null;
+	}
 
 }

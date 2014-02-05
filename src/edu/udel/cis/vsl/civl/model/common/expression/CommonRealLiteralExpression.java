@@ -4,10 +4,13 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A real literal.
@@ -59,5 +62,10 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 	@Override
 	public CIVLPrimitiveType getExpressionType() {
 		return (CIVLPrimitiveType) super.getExpressionType();
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
 	}
 }

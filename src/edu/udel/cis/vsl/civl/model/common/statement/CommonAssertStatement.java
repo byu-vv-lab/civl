@@ -4,6 +4,8 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -13,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * An assert statement.
@@ -117,11 +120,11 @@ public class CommonAssertStatement extends CommonStatement implements
 	public void calculateDerefs() {
 		this.expression.calculateDerefs();
 		this.hasDerefs = this.expression.hasDerefs();
-		if(this.printfArguments != null){
-			for(Expression arg : this.printfArguments){
+		if (this.printfArguments != null) {
+			for (Expression arg : this.printfArguments) {
 				arg.calculateDerefs();
 				this.hasDerefs = this.hasDerefs || arg.hasDerefs();
-				if(this.hasDerefs)
+				if (this.hasDerefs)
 					return;
 			}
 		}
@@ -233,6 +236,23 @@ public class CommonAssertStatement extends CommonStatement implements
 	@Override
 	public Expression[] printfArguments() {
 		return this.printfArguments;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> result = new HashSet<>();
+		Set<Variable> argumentResult = expression.variableAddressedOf(scope);
+
+		if (argumentResult != null)
+			result.addAll(argumentResult);
+		if (printfArguments != null) {
+			for (Expression argument : printfArguments) {
+				argumentResult = argument.variableAddressedOf(scope);
+				if (argumentResult != null)
+					result.addAll(argumentResult);
+			}
+		}
+		return result;
 	}
 
 }

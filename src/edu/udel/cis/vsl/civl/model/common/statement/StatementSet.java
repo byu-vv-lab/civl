@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * Sometimes it is useful for the model builder to return a set of statements.
@@ -183,6 +184,12 @@ public class StatementSet implements Statement {
 		}
 
 		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

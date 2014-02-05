@@ -1,11 +1,14 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import java.util.List;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonAbstractFunctionCallExpression extends CommonExpression
 		implements AbstractFunctionCallExpression {
@@ -47,19 +50,24 @@ public class CommonAbstractFunctionCallExpression extends CommonExpression
 	public List<Expression> arguments() {
 		return arguments;
 	}
-	
+
 	@Override
 	public String toString() {
 		String result = function.name().name() + "(";
-		
+
 		for (int i = 0; i < arguments.size(); i++) {
-			if (i!=0) {
+			if (i != 0) {
 				result += ", ";
 			}
 			result += arguments.get(i);
 		}
 		result += ")";
 		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
 	}
 
 }

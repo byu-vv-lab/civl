@@ -4,12 +4,14 @@
 package edu.udel.cis.vsl.civl.model.IF.location;
 
 import java.io.PrintStream;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
 /**
@@ -257,4 +259,8 @@ public interface Location extends Sourceable {
 	 * @return
 	 */
 	void setImpactScopeOfAtomicOrAtomBlock(Scope scope);
+
+	void computeWritableVariables();
+	
+	Set<Variable> writableVariables();
 }

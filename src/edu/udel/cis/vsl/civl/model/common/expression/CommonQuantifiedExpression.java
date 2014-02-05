@@ -3,13 +3,17 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * @author zirkel
@@ -224,5 +228,11 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 	@Override
 	public Expression upper() {
 		return upper;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

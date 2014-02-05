@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -10,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A list of statements that are to be executed in one step of a transition.
@@ -236,5 +238,11 @@ public class StatementList implements Statement {
 		result = result.trim();
 		result = result.substring(0, result.length() - 1);
 		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

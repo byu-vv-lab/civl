@@ -1,14 +1,17 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIWaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonMPIWaitStatement extends CommonStatement implements
 		MPIWaitStatement {
@@ -95,5 +98,11 @@ public class CommonMPIWaitStatement extends CommonStatement implements
 			return this.lhs + " = MPI_Wait(" + this.arguments.get(0) + ", "
 					+ this.arguments.get(1) + ")";
 		}
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

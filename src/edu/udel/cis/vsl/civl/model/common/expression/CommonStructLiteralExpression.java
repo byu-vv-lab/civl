@@ -1,12 +1,16 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonStructLiteralExpression extends CommonExpression implements
 		StructLiteralExpression {
@@ -58,6 +62,21 @@ public class CommonStructLiteralExpression extends CommonExpression implements
 			result = result.substring(0, result.length() - 2);
 		}
 		result += " }";
+		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> result = new HashSet<>();
+
+		if (fields != null) {
+			for (Expression field : fields) {
+				Set<Variable> elementResult = field.variableAddressedOf(scope);
+
+				if (elementResult != null)
+					result.addAll(elementResult);
+			}
+		}
 		return result;
 	}
 

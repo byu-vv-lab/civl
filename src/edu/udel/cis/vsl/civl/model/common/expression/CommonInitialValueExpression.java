@@ -1,6 +1,9 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -32,5 +35,10 @@ public class CommonInitialValueExpression extends CommonExpression implements
 	@Override
 	public void purelyLocalAnalysis() {
 		this.purelyLocal = true;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
 	}
 }

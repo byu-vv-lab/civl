@@ -3,9 +3,13 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A cast of an expression to a different type.
@@ -36,6 +40,12 @@ public class CommonDynamicTypeOfExpression extends CommonExpression implements
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.DYNAMIC_TYPE_OF;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

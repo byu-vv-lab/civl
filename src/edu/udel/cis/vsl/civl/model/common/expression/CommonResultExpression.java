@@ -3,8 +3,12 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * This expression is only used in an ensures clause of a function contract to
@@ -31,5 +35,10 @@ public class CommonResultExpression extends CommonExpression implements
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.RESULT;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
 	}
 }

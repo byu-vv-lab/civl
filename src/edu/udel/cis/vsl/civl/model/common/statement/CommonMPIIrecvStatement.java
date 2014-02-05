@@ -1,14 +1,17 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIIrecvStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonMPIIrecvStatement extends CommonStatement implements
 		MPIIrecvStatement {
@@ -125,5 +128,11 @@ public class CommonMPIIrecvStatement extends CommonStatement implements
 					+ ", " + this.arguments.get(3) + ", "
 					+ this.arguments.get(4) + ", " + this.arguments.get(5)
 					+ ", " + this.arguments.get(6) + ")";
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

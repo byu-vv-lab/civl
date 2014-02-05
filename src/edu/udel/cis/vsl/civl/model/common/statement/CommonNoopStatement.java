@@ -3,12 +3,16 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A noop statement.
@@ -35,8 +39,8 @@ public class CommonNoopStatement extends CommonStatement implements
 		super(civlSource, source);
 		noopKind = NoopKind.NONE;
 	}
-	
-	public CommonNoopStatement(){
+
+	public CommonNoopStatement() {
 		super();
 	}
 
@@ -63,5 +67,10 @@ public class CommonNoopStatement extends CommonStatement implements
 	@Override
 	public NoopKind noopKind() {
 		return this.noopKind;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
 	}
 }

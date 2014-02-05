@@ -1,7 +1,9 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -13,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A function call or spawn. Either of the form f(x) or else v=f(x).
@@ -258,6 +261,28 @@ public class CommonCallStatement extends CommonStatement implements
 			}
 		}
 		return newStatement;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> result = new HashSet<>();
+
+		if (lhs != null) {
+			Variable lhsVariable = lhs.variableWritten(scope);
+
+			if (lhsVariable != null)
+				result.add(lhsVariable);
+		}
+		if (arguments != null) {
+			Set<Variable> argumentResult;
+
+			for (Expression argument : arguments) {
+				argumentResult = argument.variableAddressedOf(scope);
+				if (argumentResult != null)
+					result.addAll(argumentResult);
+			}
+		}
+		return result;
 	}
 
 }

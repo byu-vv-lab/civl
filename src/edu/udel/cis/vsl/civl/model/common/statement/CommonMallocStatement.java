@@ -1,5 +1,8 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
@@ -10,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -184,6 +188,26 @@ public class CommonMallocStatement extends CommonStatement implements
 			}
 		}
 		return newStatement;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> result = new HashSet<>();
+		Set<Variable> argumentResult;
+
+		if (lhs != null) {
+			Variable lhsVariable = lhs.variableWritten(scope);
+
+			if (lhsVariable != null)
+				result.add(lhsVariable);
+		}
+		argumentResult = heapPointerExpression.variableAddressedOf(scope);
+		if (argumentResult != null)
+			result.addAll(argumentResult);
+		argumentResult = sizeExpression.variableAddressedOf(scope);
+		if (argumentResult != null)
+			result.addAll(argumentResult);
+		return result;
 	}
 
 }

@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
@@ -36,7 +37,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 * $atomic/$atom block.</li>
 	 * </ul>
 	 * 
-	 * @author Zheng
+	 * @author Manchun Zheng
 	 * 
 	 */
 	public enum AtomicKind {
@@ -107,6 +108,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 * </ol>
 	 */
 	private boolean purelyLocal = false;
+
+	private Set<Variable> writableVariables;
 
 	/**
 	 * The static scope that this location belongs to.
@@ -276,6 +279,15 @@ public class CommonLocation extends CommonSourceable implements Location {
 			if (this.enterAtom() || this.enterAtomic()) {
 				headString += ", impact scope: "
 						+ this.impactScopeOfAtomicOrAtomBlock.id();
+			}
+			if (this.writableVariables != null
+					&& !this.writableVariables.isEmpty()) {
+				headString += ", variablesWritten <";
+				for (Variable variable : this.writableVariables) {
+					headString += variable.name() + "-" + variable.scope().id()
+							+ ",";
+				}
+				headString += ">";
 			}
 			headString += ")";
 		} else {
@@ -486,6 +498,70 @@ public class CommonLocation extends CommonSourceable implements Location {
 	@Override
 	public String toString() {
 		return "Location " + id;
+	}
+
+	@Override
+	public void computeWritableVariables() {
+		Set<Integer> checkedLocationIDs = new HashSet<>();
+		Stack<Location> workings = new Stack<>();
+		Set<CIVLFunction> checkedFunctions = new HashSet<>();
+		Stack<CIVLFunction> workingFunctions = new Stack<>();
+		Scope scope = this.scope;
+		Set<Variable> variableWritten = new HashSet<>();
+
+		workings.push(this);
+		while (!workings.isEmpty()) {
+			Location location = workings.pop();
+
+			checkedLocationIDs.add(location.id());
+			for (Statement statement : location.outgoing()) {
+				Set<Variable> statementResult = statement
+						.variableAddressedOf(scope);
+				Location target = statement.target();
+
+				if (statementResult != null)
+					variableWritten.addAll(statementResult);
+				if(target != null)
+					if (!checkedLocationIDs.contains(target.id()))
+						workings.push(target);
+				if (statement instanceof CallOrSpawnStatement) {
+					CIVLFunction function = ((CallOrSpawnStatement) statement)
+							.function();
+
+					if (!checkedFunctions.contains(function)) {
+						workingFunctions.add(function);
+					}
+				}
+			}
+		}
+		while (!workingFunctions.isEmpty()) {
+			CIVLFunction function = workingFunctions.pop();
+
+			checkedFunctions.add(function);
+			for (Location location : function.locations()) {
+				for (Statement statement : location.outgoing()) {
+					Set<Variable> statementResult = statement
+							.variableAddressedOf(scope);
+
+					if (statementResult != null)
+						variableWritten.addAll(statementResult);
+					if (statement instanceof CallOrSpawnStatement) {
+						CIVLFunction newFunction = ((CallOrSpawnStatement) statement)
+								.function();
+
+						if (!checkedFunctions.contains(newFunction)) {
+							workingFunctions.add(newFunction);
+						}
+					}
+				}
+			}
+		}
+		this.writableVariables = variableWritten;
+	}
+
+	@Override
+	public Set<Variable> writableVariables() {
+		return this.writableVariables;
 	}
 
 }

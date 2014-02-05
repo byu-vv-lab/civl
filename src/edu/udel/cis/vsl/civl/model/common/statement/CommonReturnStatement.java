@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -12,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A return statement.
@@ -63,7 +66,8 @@ public class CommonReturnStatement extends CommonStatement implements
 		if (expression == null) {
 			return "return (" + this.function.name().name() + ")";
 		}
-		return "return " + expression + " (" + this.function.name().name() + ")";
+		return "return " + expression + " (" + this.function.name().name()
+				+ ")";
 	}
 
 	@Override
@@ -129,6 +133,13 @@ public class CommonReturnStatement extends CommonStatement implements
 			}
 		}
 		return newStatement;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		if (expression != null)
+			return expression.variableAddressedOf(scope);
+		return null;
 	}
 
 }

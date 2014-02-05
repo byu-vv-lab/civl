@@ -1,5 +1,8 @@
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+
 /**
  * A left-hand-side expression. This can be used on the left hand side of an
  * assignment, or as the argument to address-of (&).
@@ -12,4 +15,14 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
  */
 public interface LHSExpression extends Expression {
 	void setPurelyLocal(boolean pl);
+
+	/**
+	 * Return the variable that is visible from the given scope, which is
+	 * possible the left hand side of an assignment statement.
+	 * 
+	 * @param scope
+	 * The given scope.
+	 * @return
+	 */
+	Variable variableWritten(Scope scope);
 }

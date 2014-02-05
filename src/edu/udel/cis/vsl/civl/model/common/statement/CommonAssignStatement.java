@@ -3,6 +3,9 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
@@ -12,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * An assignment statement.
@@ -158,5 +162,21 @@ public class CommonAssignStatement extends CommonStatement implements
 	@Override
 	public void setInitialization(boolean value) {
 		this.isInitialization = value;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> result = new HashSet<>();
+		Set<Variable> argumentResult = lhs.variableAddressedOf(scope);
+		Variable lhsVariable = lhs.variableWritten(scope);
+
+		if(lhsVariable != null)
+			result.add(lhsVariable);
+		if (argumentResult != null)
+			result.addAll(argumentResult);
+		argumentResult = rhs.variableAddressedOf(scope);
+		if (argumentResult != null)
+			result.addAll(argumentResult);
+		return result;
 	}
 }

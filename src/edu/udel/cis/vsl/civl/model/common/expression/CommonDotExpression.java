@@ -3,12 +3,17 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * @author zirkel
@@ -118,6 +123,24 @@ public class CommonDotExpression extends CommonExpression implements
 			result.setExpressionType(expressionType);
 
 		return result;
+	}
+
+	@Override
+	public Variable variableWritten(Scope scope) {
+		if (struct instanceof LHSExpression) {
+			return ((LHSExpression) struct).variableWritten(scope);
+		}
+		return null;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = struct.variableAddressedOf(scope);
+		
+		if(operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
 	}
 
 }

@@ -3,8 +3,12 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A string literal.
@@ -51,6 +55,12 @@ public class CommonStringLiteralExpression extends CommonExpression implements
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.STRING_LITERAL;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

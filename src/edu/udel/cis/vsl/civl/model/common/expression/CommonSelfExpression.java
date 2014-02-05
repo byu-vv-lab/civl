@@ -3,8 +3,12 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * Self expression. Returns a reference to the process in which the expression
@@ -32,5 +36,10 @@ public class CommonSelfExpression extends CommonExpression implements
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.SELF;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
 	}
 }

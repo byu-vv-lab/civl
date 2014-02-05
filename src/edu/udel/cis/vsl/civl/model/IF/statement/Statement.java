@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
@@ -10,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * The parent of all statements.
@@ -149,5 +152,15 @@ public interface Statement extends Sourceable {
 	 */
 	Statement replaceWith(ConditionalExpression oldExpression,
 			Expression newExpression);
+
+	/**
+	 * Obtain the set of variables visible from a certain scope that are
+	 * possible to be written in the future.
+	 * 
+	 * @param scope
+	 *            The given scope.
+	 * @return
+	 */
+	Set<Variable> variableAddressedOf(Scope scope);
 
 }

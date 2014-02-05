@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
@@ -11,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A wait statement, to wait for another process to complete.
@@ -112,6 +115,11 @@ public class CommonWaitStatement extends CommonStatement implements
 			}
 		}
 		return newStatement;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return process.variableAddressedOf(scope);
 	}
 
 }

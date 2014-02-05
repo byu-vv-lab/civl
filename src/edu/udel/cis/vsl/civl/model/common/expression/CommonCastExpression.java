@@ -3,6 +3,9 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
@@ -10,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A cast of an expression to a different type.
@@ -142,6 +146,16 @@ public class CommonCastExpression extends CommonExpression implements
 
 		return result;
 
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = expression.variableAddressedOf(scope);
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
 	}
 
 }
