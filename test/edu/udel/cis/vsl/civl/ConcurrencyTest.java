@@ -30,7 +30,7 @@ public class ConcurrencyTest {
 		assertTrue(ui.run("verify", filename("adder.cvl"), "-inputB=5",
 				"-por=new"));
 	}
-	
+
 	@Test
 	public void adder2() {
 		assertTrue(ui.run("verify", filename("adder2.cvl"), "-inputN=4",
@@ -134,4 +134,9 @@ public class ConcurrencyTest {
 				filename("threadPrivate.cvl"), "-por=new"));
 	}
 
+	@Test
+	public void pointerShare() {
+		assertFalse(ui.run("verify", "-por=new", filename("pointerShare.cvl"),
+				"-por=new"));
+	}
 }
