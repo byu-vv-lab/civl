@@ -193,9 +193,10 @@ public class PointeredEnabler extends Enabler implements
 								if (thisLocation.writableVariables().contains(
 										variable)
 										|| otherLocation.writableVariables()
-												.contains(variable))
+												.contains(variable)) {
 									workingProcessIDs.add(otherPid);
-								break;
+									break;
+								}
 							}
 						}
 					}

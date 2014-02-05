@@ -5,9 +5,11 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -87,13 +89,34 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 	@Override
 	public Variable variableWritten(Scope scope, CIVLHeapType heapType) {
+		if (pointer instanceof LHSExpression) {
+			return ((LHSExpression) pointer).variableWritten(scope, heapType);
+		}
+		if (pointer instanceof BinaryExpression) {
+			BinaryExpression binaryExpression = (BinaryExpression) pointer;
+
+			if (binaryExpression.operator() == BinaryExpression.BINARY_OPERATOR.POINTER_ADD) {
+				Expression pointerVariable;
+
+				if (binaryExpression.left().getExpressionType().isPointerType()) {
+					pointerVariable = binaryExpression.left();
+				} else {
+					pointerVariable = binaryExpression.right();
+				}
+				if (pointerVariable instanceof LHSExpression) {
+					return ((LHSExpression) pointerVariable).variableWritten(
+							scope, heapType);
+				}
+			}
+		}
 		return null;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = pointer.variableAddressedOf(scope, heapType);
+		Set<Variable> operandResult = pointer.variableAddressedOf(scope,
+				heapType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
