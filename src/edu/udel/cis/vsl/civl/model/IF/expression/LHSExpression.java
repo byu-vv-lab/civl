@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -21,8 +22,8 @@ public interface LHSExpression extends Expression {
 	 * possible the left hand side of an assignment statement.
 	 * 
 	 * @param scope
-	 * The given scope.
+	 *            The given scope.
 	 * @return
 	 */
-	Variable variableWritten(Scope scope);
+	Variable variableWritten(Scope scope, CIVLHeapType heapType);
 }

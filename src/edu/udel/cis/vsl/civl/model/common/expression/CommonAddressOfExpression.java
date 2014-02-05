@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonAddressOfExpression extends CommonExpression implements
@@ -95,9 +96,9 @@ public class CommonAddressOfExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
+	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
 		Set<Variable> variableSet = new HashSet<>();
-		Variable variableWritten = operand.variableWritten(scope);
+		Variable variableWritten = operand.variableWritten(scope, heapType);
 
 		if (variableWritten != null)
 			variableSet.add(variableWritten);

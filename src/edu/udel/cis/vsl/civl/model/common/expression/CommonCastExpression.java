@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -149,9 +150,9 @@ public class CommonCastExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
+	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = expression.variableAddressedOf(scope);
+		Set<Variable> operandResult = expression.variableAddressedOf(scope, heapType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);

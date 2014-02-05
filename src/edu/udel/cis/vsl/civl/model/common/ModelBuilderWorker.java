@@ -400,8 +400,7 @@ public class ModelBuilderWorker {
 			// identified after ALL variables have been
 			// checked for being purely local or not
 			for (Location loc : f.locations()) {
-				loc.computeWritableVariables();
-				
+				loc.computeWritableVariables(this.heapType);
 				for (Statement s : loc.outgoing()) {
 					s.purelyLocalAnalysis();
 				}

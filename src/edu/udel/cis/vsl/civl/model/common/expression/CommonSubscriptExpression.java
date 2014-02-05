@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -154,18 +155,19 @@ public class CommonSubscriptExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Variable variableWritten(Scope scope) {
-		return array.variableWritten(scope);
+	public Variable variableWritten(Scope scope, CIVLHeapType heapType) {
+		return array.variableWritten(scope, heapType);
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
+	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = array.variableAddressedOf(scope);
+		Set<Variable> operandResult = array
+				.variableAddressedOf(scope, heapType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
-		operandResult = index.variableAddressedOf(scope);
+		operandResult = index.variableAddressedOf(scope, heapType);
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
 		return variableSet;

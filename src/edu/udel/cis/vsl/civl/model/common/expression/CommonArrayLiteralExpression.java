@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -66,13 +67,13 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
+	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
 		Set<Variable> result = new HashSet<>();
 
 		if (elements != null) {
 			for (Expression element : elements) {
 				Set<Variable> elementResult = element
-						.variableAddressedOf(scope);
+						.variableAddressedOf(scope, heapType);
 
 				if (elementResult != null)
 					result.addAll(elementResult);

@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -161,6 +162,6 @@ public interface Statement extends Sourceable {
 	 *            The given scope.
 	 * @return
 	 */
-	Set<Variable> variableAddressedOf(Scope scope);
+	Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType);
 
 }

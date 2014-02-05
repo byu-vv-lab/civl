@@ -8,6 +8,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -77,15 +78,17 @@ public class CommonVariableExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
+	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
 		return null;
 	}
 
 	@Override
-	public Variable variableWritten(Scope scope) {
+	public Variable variableWritten(Scope scope, CIVLHeapType heapType) {
 		Scope vScope = variable.scope();
-		
-		if(variable.isConst())
+
+		if (variable.type().equals(heapType))
+			return null;
+		if (variable.isConst())
 			return null;
 		if (scope.equals(vScope) || scope.isDescendantOf(vScope))
 			return variable;

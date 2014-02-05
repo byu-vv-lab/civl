@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
@@ -501,7 +502,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
-	public void computeWritableVariables() {
+	public void computeWritableVariables(CIVLHeapType heapType) {
 		Set<Integer> checkedLocationIDs = new HashSet<>();
 		Stack<Location> workings = new Stack<>();
 		Set<CIVLFunction> checkedFunctions = new HashSet<>();
@@ -516,7 +517,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 			checkedLocationIDs.add(location.id());
 			for (Statement statement : location.outgoing()) {
 				Set<Variable> statementResult = statement
-						.variableAddressedOf(scope);
+						.variableAddressedOf(scope, heapType);
 				Location target = statement.target();
 
 				if (statementResult != null)
@@ -541,7 +542,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 			for (Location location : function.locations()) {
 				for (Statement statement : location.outgoing()) {
 					Set<Variable> statementResult = statement
-							.variableAddressedOf(scope);
+							.variableAddressedOf(scope, heapType);
 
 					if (statementResult != null)
 						variableWritten.addAll(statementResult);

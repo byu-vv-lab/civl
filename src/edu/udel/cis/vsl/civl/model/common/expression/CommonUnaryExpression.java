@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -149,9 +150,9 @@ public class CommonUnaryExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
+	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = operand.variableAddressedOf(scope);
+		Set<Variable> operandResult = operand.variableAddressedOf(scope, heapType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);

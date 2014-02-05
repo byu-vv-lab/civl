@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -126,19 +127,20 @@ public class CommonDotExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Variable variableWritten(Scope scope) {
+	public Variable variableWritten(Scope scope, CIVLHeapType heapType) {
 		if (struct instanceof LHSExpression) {
-			return ((LHSExpression) struct).variableWritten(scope);
+			return ((LHSExpression) struct).variableWritten(scope, heapType);
 		}
 		return null;
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
+	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = struct.variableAddressedOf(scope);
-		
-		if(operandResult != null)
+		Set<Variable> operandResult = struct.variableAddressedOf(scope,
+				heapType);
+
+		if (operandResult != null)
 			variableSet.addAll(operandResult);
 		return variableSet;
 	}

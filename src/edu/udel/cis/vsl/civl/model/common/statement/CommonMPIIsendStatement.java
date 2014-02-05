@@ -11,8 +11,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIIsendStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-
 
 public class CommonMPIIsendStatement extends CommonStatement implements
 		MPIIsendStatement {
@@ -27,7 +27,7 @@ public class CommonMPIIsendStatement extends CommonStatement implements
 		this.arguments = new ArrayList<Expression>(arguments);
 		this.lhs = lhs;
 	}
-	
+
 	/* ******************* Methods from MPIIsendStatement ****************** */
 	@Override
 	public Expression getBuffer() {
@@ -134,7 +134,7 @@ public class CommonMPIIsendStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
+	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
 		// TODO Auto-generated method stub
 		return null;
 	}
