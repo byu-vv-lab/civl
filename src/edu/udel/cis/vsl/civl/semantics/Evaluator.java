@@ -2612,10 +2612,16 @@ public class Evaluator {
 			break;
 		case VARIABLE:
 			Variable variable = ((VariableExpression) expression).variable();
-			int sid = state.getScopeId(pid, variable);
-			int vid = variable.vid();
-			CIVLType type = variable.type();
-
+			int sid, vid;
+			CIVLType type;
+			
+			try{
+				sid = state.getScopeId(pid, variable);
+				vid = variable.vid();
+				type = variable.type();
+			}catch (IllegalArgumentException ex){
+				break;
+			}
 			// if (!variable.name().name().equals(
 			// modelFactory.atomicLockVariableExpression().variable()
 			// .name().name())) {

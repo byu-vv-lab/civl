@@ -185,7 +185,7 @@ public class PointeredEnabler extends Enabler implements
 						for (SymbolicExpression unit : impactMemUnits) {
 							if (reachableMemUnitsOfOther.contains(unit)) {
 								int scopeId = evaluator.getScopeId(null, unit);
-								int vId = evaluator.getScopeId(null, unit);
+								int vId = evaluator.getVariableId(null, unit);
 								Variable variable = state.getScope(scopeId)
 										.lexicalScope().variable(vId);
 								Location otherLocation = otherP.getLocation();
