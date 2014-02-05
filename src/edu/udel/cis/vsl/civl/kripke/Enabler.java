@@ -47,6 +47,9 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
  */
 public abstract class Enabler implements
 		EnablerIF<State, Transition, TransitionSequence> {
+	
+	protected final String COMM_ENQUE = "$comm_enqueue";
+	protected final String COMM_DEQUE = "$comm_dequeue";
 
 	/* *************************** Instance Fields ************************* */
 

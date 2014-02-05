@@ -11,7 +11,7 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class ConcurrencyTest {
 
-	/***************************** Static Fields *****************************/
+	/* **************************** Static Fields **************************** */
 
 	private static File rootDir = new File(new File("examples"), "concurrency");
 
@@ -33,7 +33,7 @@ public class ConcurrencyTest {
 	
 	@Test
 	public void adder2() {
-		assertTrue(ui.run("verify", filename("adder2.cvl"), "-inputB=4",
+		assertTrue(ui.run("verify", filename("adder2.cvl"), "-inputN=4",
 				"-por=new"));
 	}
 

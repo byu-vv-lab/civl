@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.kripke;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +11,8 @@ import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
@@ -79,14 +82,13 @@ public class PointeredEnabler extends Enabler implements
 		ArrayList<ProcessState> processStates = new ArrayList<>(
 				ampleProcesses(state));
 
-		if (debugging) {
-			debugOut.print("ample processes at state " + state.getCanonicId()
-					+ ":");
-			for (ProcessState p : processStates) {
-				debugOut.print(p.getPid() + "\t");
-			}
-			debugOut.println();
+		// if (debugging) {
+		debugOut.print("ample processes at state " + state.getCanonicId() + ":");
+		for (ProcessState p : processStates) {
+			debugOut.print(p.getPid() + "\t");
 		}
+		debugOut.println();
+		// }
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
 			TransitionSequence localTransitions = transitionFactory
@@ -116,22 +118,25 @@ public class PointeredEnabler extends Enabler implements
 	 *            The current state.
 	 * @return
 	 */
-	private ArrayList<ProcessState> ampleProcesses(State state) {
-		ArrayList<ProcessState> processes = activeProcesses(state);
+	private Set<ProcessState> ampleProcesses(State state) {
+		// process and if it contains any comm_enque or comm_deque call
+		Map<ProcessState, Boolean> processes = activeProcesses(state);
+		Set<ProcessState> result = new LinkedHashSet<>();
 
 		if (processes.size() <= 1)
-			return processes;
+			return processes.keySet();
 		else {
 			HashMap<Integer, HashSet<Integer>> ampleProcessesMap = new HashMap<>();
 			int minimalAmpleSetSize = processes.size() + 1;
 			int minAmpleSetId = -1;
+			// map of reachable memory units and whether the memory unit is to
+			// be written.
 			HashMap<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap = new HashMap<>();
+			// map of impact memory units of the each process
 			HashMap<Integer, Set<SymbolicExpression>> impactMemUnitsMap = new HashMap<>();
 			HashSet<Integer> allProcessIDs = new HashSet<>();
-			// HashMap<Integer, Set<SymbolicExpression>> writableMemUnitsMap =
-			// new HashMap<>();
 
-			for (ProcessState p : processes) {
+			for (ProcessState p : processes.keySet()) {
 				int pid = p.getPid();
 				Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemUnitsPair = impactMemoryUnits(
 						state.getProcessState(pid), state);
@@ -144,7 +149,7 @@ public class PointeredEnabler extends Enabler implements
 				reachableMemUnitsMap.put(pid, reachableMemoryUnits(p, state));
 				allProcessIDs.add(pid);
 			}
-			for (ProcessState p : processes) {
+			for (ProcessState p : processes.keySet()) {
 				HashSet<Integer> ampleProcessIDs = new LinkedHashSet<>();
 				Stack<Integer> workingProcessIDs = new Stack<>();
 
@@ -177,7 +182,7 @@ public class PointeredEnabler extends Enabler implements
 								workingProcessIDs.add(joinID);
 						}
 					}
-					for (ProcessState otherP : processes) {
+					for (ProcessState otherP : processes.keySet()) {
 						int otherPid = otherP.getPid();
 						Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther = reachableMemUnitsMap
 								.get(otherPid);
@@ -206,11 +211,10 @@ public class PointeredEnabler extends Enabler implements
 				if (minimalAmpleSetSize == 1)
 					break;
 			}
-			processes = new ArrayList<>();
 			for (int pid : ampleProcessesMap.get(minAmpleSetId)) {
-				processes.add(state.getProcessState(pid));
+				result.add(state.getProcessState(pid));
 			}
-			return processes;
+			return result;
 		}
 	}
 
@@ -222,18 +226,41 @@ public class PointeredEnabler extends Enabler implements
 	 *            The current state.
 	 * @return
 	 */
-	private ArrayList<ProcessState> activeProcesses(State state) {
-		ArrayList<ProcessState> result = new ArrayList<>();
+	private Map<ProcessState, Boolean> activeProcesses(State state) {
+		Map<ProcessState, Boolean> result = new LinkedHashMap<>();
 
 		for (ProcessState p : state.getProcessStates()) {
+			boolean active = false;
+			boolean hasCommOperation = false;
+
 			if (p == null || p.hasEmptyStack())
 				continue;
 			for (Statement s : p.getLocation().outgoing()) {
 				if (!getGuard(s, p.getPid(), state).isFalse()) {
-					result.add(p);
-					break;
+					active = true;
+					if (s instanceof CallOrSpawnStatement) {
+						CallOrSpawnStatement callOrSpawnStatement = (CallOrSpawnStatement) s;
+						CIVLFunction function = callOrSpawnStatement.function();
+
+						if (!hasCommOperation) {
+							if (function instanceof SystemFunction) {
+								SystemFunction systemFunction = (SystemFunction) function;
+								String library = systemFunction.getLibrary();
+								String name = systemFunction.name().name();
+
+								if (library.equals("civlc")) {
+									if (name.equals(COMM_DEQUE)
+											|| name.equals(COMM_ENQUE)) {
+										hasCommOperation = true;
+									}
+								}
+							}
+						}
+					}
 				}
 			}
+			if (active)
+				result.put(p, hasCommOperation);
 		}
 		return result;
 	}
