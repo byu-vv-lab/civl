@@ -73,13 +73,13 @@ void gpu(){
     
     $proc threads[threadsPerBlock];
     
-    $atomic {
+    //$atomic {
       barrier_init(in_barrier, threadsPerBlock);
       //printf("initialized barriers for block %d.\n", blockID);
       for(int i = 0; i < threadsPerBlock; i++) {
         threads[i] = $spawn gpuThread(i);
       }
-    }
+    //}
     $atomic {
       for(int i = 0; i < threadsPerBlock; i++) {
         $wait threads[i];
