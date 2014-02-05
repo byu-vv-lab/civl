@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.Executor;
@@ -77,14 +78,14 @@ public class PointeredEnabler extends Enabler implements
 		ArrayList<ProcessState> processStates = new ArrayList<>(
 				ampleProcesses(state));
 
-		if (debugging) {
-			debugOut.println("ample processes at state " + state.getCanonicId()
-					+ ":");
-			for (ProcessState p : processStates) {
-				debugOut.print(p.getPid() + "\t");
-			}
-			debugOut.println();
+		// if (debugging) {
+		debugOut.println("ample processes at state " + state.getCanonicId()
+				+ ":");
+		for (ProcessState p : processStates) {
+			debugOut.print(p.getPid() + "\t");
 		}
+		debugOut.println();
+		// }
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
 			TransitionSequence localTransitions = transitionFactory
@@ -148,6 +149,7 @@ public class PointeredEnabler extends Enabler implements
 				while (!workingProcessIDs.isEmpty()) {
 					int pid = workingProcessIDs.pop();
 					ProcessState thisProc = state.getProcessState(pid);
+					Location thisLocation = thisProc.getLocation();
 					Set<SymbolicExpression> impactMemUnits = impactMemUnitsMap
 							.get(pid);
 
@@ -182,7 +184,17 @@ public class PointeredEnabler extends Enabler implements
 							continue;
 						for (SymbolicExpression unit : impactMemUnits) {
 							if (reachableMemUnitsOfOther.contains(unit)) {
-								workingProcessIDs.add(otherPid);
+								int scopeId = evaluator.getScopeId(null, unit);
+								int vId = evaluator.getScopeId(null, unit);
+								Variable variable = state.getScope(scopeId)
+										.lexicalScope().variable(vId);
+								Location otherLocation = otherP.getLocation();
+
+								if (thisLocation.writableVariables().contains(
+										variable)
+										|| otherLocation.writableVariables()
+												.contains(variable))
+									workingProcessIDs.add(otherPid);
 								break;
 							}
 						}

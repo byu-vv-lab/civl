@@ -28,16 +28,13 @@ void main() {
     void __for_loop_1 (int _i) {
       int _j, _sum;
 
-      // this $atom really shouldn't be there...
-      $atom {
       _pglobal = (int*)$malloc(&h, length[_i]*sizeof(int));
       _sum = 0;
       for (_j=0; _j<length[_i]; _j++) _pglobal[_j]=_j+1;
         _sum = calculate_sum(length[_i], _pglobal);
-        printf("TID %d: value of sum for i = %d is %8d (check = %8d)\n",
+      printf("TID %d: value of sum for i = %d is %8d (check = %8d)\n",
                _TID, _i, _sum, check[_i]);
-        $assert(_sum == check[_i]);
-      }
+      $assert(_sum == check[_i]);
       $free(&h, _pglobal);
     }
 
