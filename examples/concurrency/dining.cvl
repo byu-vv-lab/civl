@@ -38,13 +38,9 @@ void init() {
 
 void main() {
   $proc philosophers[n];
-  $atomic {
-    init();
-    for (int i = 0; i < n; i++)
-      philosophers[i] = $spawn dine(i);
-  }
-  $atomic {
-    for (int i = 0; i < n; i++)
-      $wait philosophers[i];
-  }
+  init();
+  for (int i = 0; i < n; i++)
+    philosophers[i] = $spawn dine(i);
+  for (int i = 0; i < n; i++)
+    $wait philosophers[i];
 }

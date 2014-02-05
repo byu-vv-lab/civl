@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -79,7 +80,7 @@ public class PointeredEnabler extends Enabler implements
 				ampleProcesses(state));
 
 		if (debugging) {
-			debugOut.println("ample processes at state " + state.getCanonicId()
+			debugOut.print("ample processes at state " + state.getCanonicId()
 					+ ":");
 			for (ProcessState p : processStates) {
 				debugOut.print(p.getPid() + "\t");
@@ -124,9 +125,11 @@ public class PointeredEnabler extends Enabler implements
 			HashMap<Integer, HashSet<Integer>> ampleProcessesMap = new HashMap<>();
 			int minimalAmpleSetSize = processes.size() + 1;
 			int minAmpleSetId = -1;
-			HashMap<Integer, Set<SymbolicExpression>> reachableMemUnitsMap = new HashMap<>();
+			HashMap<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap = new HashMap<>();
 			HashMap<Integer, Set<SymbolicExpression>> impactMemUnitsMap = new HashMap<>();
 			HashSet<Integer> allProcessIDs = new HashSet<>();
+			// HashMap<Integer, Set<SymbolicExpression>> writableMemUnitsMap =
+			// new HashMap<>();
 
 			for (ProcessState p : processes) {
 				int pid = p.getPid();
@@ -149,8 +152,9 @@ public class PointeredEnabler extends Enabler implements
 				while (!workingProcessIDs.isEmpty()) {
 					int pid = workingProcessIDs.pop();
 					ProcessState thisProc = state.getProcessState(pid);
-					Location thisLocation = thisProc.getLocation();
 					Set<SymbolicExpression> impactMemUnits = impactMemUnitsMap
+							.get(pid);
+					Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfThis = reachableMemUnitsMap
 							.get(pid);
 
 					if (impactMemUnits == null) {
@@ -175,7 +179,7 @@ public class PointeredEnabler extends Enabler implements
 					}
 					for (ProcessState otherP : processes) {
 						int otherPid = otherP.getPid();
-						Set<SymbolicExpression> reachableMemUnitsOfOther = reachableMemUnitsMap
+						Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther = reachableMemUnitsMap
 								.get(otherPid);
 
 						if (otherPid == pid
@@ -183,17 +187,10 @@ public class PointeredEnabler extends Enabler implements
 								|| workingProcessIDs.contains(otherPid))
 							continue;
 						for (SymbolicExpression unit : impactMemUnits) {
-							if (reachableMemUnitsOfOther.contains(unit)) {
-								int scopeId = evaluator.getScopeId(null, unit);
-								int vId = evaluator.getVariableId(null, unit);
-								Variable variable = state.getScope(scopeId)
-										.lexicalScope().variable(vId);
-								Location otherLocation = otherP.getLocation();
-
-								if (thisLocation.writableVariables().contains(
-										variable)
-										|| otherLocation.writableVariables()
-												.contains(variable)) {
+							if (reachableMemUnitsMapOfOther.containsKey(unit)) {
+								if (reachableMemUnitsMapOfThis.get(unit)
+										|| reachableMemUnitsMapOfOther
+												.get(unit)) {
 									workingProcessIDs.add(otherPid);
 									break;
 								}
@@ -251,11 +248,13 @@ public class PointeredEnabler extends Enabler implements
 	 *            The current state.
 	 * @return
 	 */
-	private Set<SymbolicExpression> reachableMemoryUnits(ProcessState p,
-			State state) {
+	private Map<SymbolicExpression, Boolean> reachableMemoryUnits(
+			ProcessState p, State state) {
 		Iterable<? extends StackEntry> callStacks = p.getStackEntries();
-		Set<SymbolicExpression> memUnits = new HashSet<>();
+		// Set<SymbolicExpression> memUnits = new HashSet<>();
 		Set<Integer> checkedDyScopes = new HashSet<>();
+		Map<SymbolicExpression, Boolean> memUnitPermissionMap = new HashMap<>();
+		Set<Variable> writableVariables = p.getLocation().writableVariables();
 
 		for (StackEntry callStack : callStacks) {
 			int dyScopeID = callStack.scope();
@@ -269,15 +268,30 @@ public class PointeredEnabler extends Enabler implements
 					int size = dyScope.numberOfValues();
 
 					for (int vid = 0; vid < size; vid++) {
-						memUnits.addAll(evaluator.memoryUnitOfVariable(
-								dyScope.getValue(vid), dyScopeID, vid, state));
+						Variable variable = dyScope.lexicalScope()
+								.variable(vid);
+						Set<SymbolicExpression> varMemUnits = evaluator
+								.memoryUnitOfVariable(dyScope.getValue(vid),
+										dyScopeID, vid, state);
+						boolean permission = writableVariables
+								.contains(variable) ? true : false;
+
+						for (SymbolicExpression unit : varMemUnits) {
+							if (memUnitPermissionMap.containsKey(unit)) {
+								boolean newPermission = permission
+										|| memUnitPermissionMap.get(unit);
+								memUnitPermissionMap.put(unit, newPermission);
+							} else
+								memUnitPermissionMap.put(unit, permission);
+							// memUnits.add(unit);
+						}
 					}
 					checkedDyScopes.add(dyScopeID);
 					dyScopeID = state.getParentId(dyScopeID);
 				}
 			}
 		}
-		return memUnits;
+		return memUnitPermissionMap;
 	}
 
 	/**

@@ -43,11 +43,8 @@ void run(int tid) {
 }
 
 void main() {
-  $atomic {
-    init();
-    for (int i=0; i<N; i++) threads[i] = $spawn run(i);
-  }
-  $atomic {
-    for (int i=0; i<N; i++) $wait threads[i];
-  }
+  init();
+  for (int i=0; i<N; i++) threads[i] = $spawn run(i);
+
+  for (int i=0; i<N; i++) $wait threads[i];
 }
