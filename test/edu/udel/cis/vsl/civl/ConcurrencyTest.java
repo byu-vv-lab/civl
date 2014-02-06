@@ -131,12 +131,16 @@ public class ConcurrencyTest {
 	@Test
 	public void threadPrivate() {
 		assertTrue(ui.run("verify", "-por=new", "-enablePrintf=false",
-				filename("threadPrivate.cvl"), "-por=new"));
+				filename("threadPrivate.cvl")));
 	}
 
 	@Test
 	public void pointerShare() {
-		assertFalse(ui.run("verify", "-por=new", filename("pointerShare.cvl"),
-				"-por=new"));
+		assertFalse(ui.run("verify", "-por=new", filename("pointerShare.cvl")));
+	}
+	
+	@Test
+	public void pointerShare1() {
+		assertFalse(ui.run("verify", "-por=new", filename("pointerShare1.cvl")));
 	}
 }
