@@ -17,7 +17,7 @@ public class ConcurrencyTest {
 
 	private static UserInterface ui = new UserInterface();
 
-	/***************************** Helper Methods ****************************/
+	/* **************************** Helper Methods *************************** */
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
@@ -142,5 +142,10 @@ public class ConcurrencyTest {
 	@Test
 	public void pointerShare1() {
 		assertFalse(ui.run("verify", "-por=new", filename("pointerShare1.cvl")));
+	}
+	
+	@Test
+	public void pointerShare2() {
+		assertFalse(ui.run("verify", "-por=new", filename("pointerShare2.cvl")));
 	}
 }

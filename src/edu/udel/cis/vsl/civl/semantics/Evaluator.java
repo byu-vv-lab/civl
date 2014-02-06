@@ -596,7 +596,7 @@ public class Evaluator {
 	 *            ID number of a variable within that scope
 	 * @param symRef
 	 *            a symbolic reference to a point within the variable
-	 * @return a pointer value as specified by the 3 componentss
+	 * @return a pointer value as specified by the 3 components
 	 */
 	private SymbolicExpression makePointer(int scopeId, int varId,
 			ReferenceExpression symRef) {
@@ -2612,14 +2612,15 @@ public class Evaluator {
 			break;
 		case VARIABLE:
 			Variable variable = ((VariableExpression) expression).variable();
-			int sid, vid;
+			int sid,
+			vid;
 			CIVLType type;
-			
-			try{
+
+			try {
 				sid = state.getScopeId(pid, variable);
 				vid = variable.vid();
 				type = variable.type();
-			}catch (IllegalArgumentException ex){
+			} catch (IllegalArgumentException ex) {
 				break;
 			}
 			// if (!variable.name().name().equals(
@@ -2650,5 +2651,24 @@ public class Evaluator {
 				identityReference));
 
 		return pointersInExpression(eval.value, state);
+	}
+
+	public boolean isHeapObjectReference(SymbolicExpression pointer, State state) {
+		SymbolicExpression deref = pointer;
+		SymbolicType type = pointer.type();
+
+		while (type.equals(this.pointerType)) {
+			deref = this.dereference(deref, state);
+			type = deref.type();
+		}
+		return type.equals(heapType);
+	}
+
+	private SymbolicExpression dereference(SymbolicExpression pointer,
+			State state) {
+		int sid = getScopeId(null, pointer);
+		int vid = getVariableId(null, pointer);
+
+		return state.getScope(sid).getValue(vid);
 	}
 }

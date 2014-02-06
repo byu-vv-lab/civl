@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,6 +90,10 @@ public class ModelBuilderWorker {
 	 * Configuration information for the generic model checker.
 	 */
 	private GMCConfiguration config;
+
+	private boolean debugging = false;
+
+	private PrintStream debugOut = System.out;
 
 	/**
 	 * The factory used to create new Model components.
@@ -195,9 +200,12 @@ public class ModelBuilderWorker {
 	 *            the program
 	 * @param name
 	 *            name of the model, i.e. the file name without .cvl extension
+	 * @param debugOut
+	 * @param debugging
 	 */
 	public ModelBuilderWorker(GMCConfiguration config, ModelFactory factory,
-			Program program, String name) {
+			Program program, String name, boolean debugging,
+			PrintStream debugOut) {
 		this.config = config;
 		this.inputInitMap = config.getMapValue(UserInterface.inputO);
 		this.factory = factory;
@@ -208,6 +216,8 @@ public class ModelBuilderWorker {
 		this.bundleType = factory.newBundleType();
 		this.universe = factory.universe();
 		((CommonModelFactory) factory).modelBuilder = this;
+		this.debugging = debugging;
+		this.debugOut = debugOut;
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -385,22 +395,39 @@ public class ModelBuilderWorker {
 	 * statements, etc.
 	 */
 	protected void staticAnalysis() {
+		Set<Variable> addressedOfVariables = new HashSet<>();
+
 		for (CIVLFunction f : model.functions()) {
 			f.simplify();
 			// identify all purely local variables
 			f.purelyLocalAnalysis();
 			f.setModel(model);
 			for (Statement s : f.statements()) {
+				Set<Variable> statementResult = s.variableAddressedOf(
+						this.heapType, this.bundleType);
+
+				if (statementResult != null) {
+					addressedOfVariables.addAll(statementResult);
+				}
 				s.setModel(model);
 				s.calculateDerefs();
 			}
+		}
+		if (debugging) {
+			debugOut.println("Variable addressed of:");
+			for (Variable variable : addressedOfVariables) {
+				debugOut.print(variable.name() + "-" + variable.scope().id()
+						+ ", ");
+			}
+			debugOut.println();
 		}
 		for (CIVLFunction f : model.functions()) {
 			// purely local statements can only be
 			// identified after ALL variables have been
 			// checked for being purely local or not
 			for (Location loc : f.locations()) {
-				loc.computeWritableVariables(this.heapType);
+				loc.computeWritableVariables(addressedOfVariables,
+						this.heapType, this.bundleType);
 				for (Statement s : loc.outgoing()) {
 					s.purelyLocalAnalysis();
 				}

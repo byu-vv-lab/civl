@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -232,7 +233,15 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
+	public Set<Variable> variableAddressedOf(Scope scope,
+			CIVLHeapType heapType, CIVLBundleType bundleType) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
 		// TODO Auto-generated method stub
 		return null;
 	}

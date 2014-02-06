@@ -82,9 +82,13 @@ public class UserInterface {
 	public final static Option mpiO = Option.newScalarOption("mpi", BOOLEAN,
 			"MPI mode", false);
 
-	public final static Option porO = Option.newScalarOption("por", STRING,
-			"partial order reduction (por) choices:\n"
-					+ "    std (standard por) or scp (scoped por) or new (new por)", "std");
+	public final static Option porO = Option
+			.newScalarOption(
+					"por",
+					STRING,
+					"partial order reduction (por) choices:\n"
+							+ "    std (standard por) or scp (scoped por) or new (new por)",
+					"std");
 
 	public final static Option randomO = Option.newScalarOption("random",
 			BOOLEAN, "select enabled transitions randomly; default for run,\n"
@@ -247,7 +251,8 @@ public class UserInterface {
 		}
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
-		model = modelBuilder.buildModel(config, program, coreName(filename));
+		model = modelBuilder.buildModel(config, program, coreName(filename),
+				debug, out);
 		if (verbose || debug)
 			out.println(bar + " Model " + bar + "\n");
 		if (showModel || verbose || debug || parse) {

@@ -82,13 +82,14 @@ public class PointeredEnabler extends Enabler implements
 		ArrayList<ProcessState> processStates = new ArrayList<>(
 				ampleProcesses(state));
 
-		// if (debugging) {
-		debugOut.print("ample processes at state " + state.getCanonicId() + ":");
-		for (ProcessState p : processStates) {
-			debugOut.print(p.getPid() + "\t");
+		if (debugging) {
+			debugOut.print("ample processes at state " + state.getCanonicId()
+					+ ":");
+			for (ProcessState p : processStates) {
+				debugOut.print(p.getPid() + "\t");
+			}
+			debugOut.println();
 		}
-		debugOut.println();
-		// }
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
 			TransitionSequence localTransitions = transitionFactory
@@ -187,6 +188,7 @@ public class PointeredEnabler extends Enabler implements
 						Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther = reachableMemUnitsMap
 								.get(otherPid);
 
+						// add new ample id earlier
 						if (otherPid == pid
 								|| ampleProcessIDs.contains(otherPid)
 								|| workingProcessIDs.contains(otherPid))
@@ -196,6 +198,13 @@ public class PointeredEnabler extends Enabler implements
 								if (reachableMemUnitsMapOfThis.get(unit)
 										|| reachableMemUnitsMapOfOther
 												.get(unit)) {
+									workingProcessIDs.add(otherPid);
+									break;
+								} else if ((thisProc.getLocation().hasDerefs() || otherP
+										.getLocation().hasDerefs())
+										&& evaluator.isHeapObjectReference(
+												unit, state)) {
+									// check heap object
 									workingProcessIDs.add(otherPid);
 									break;
 								}

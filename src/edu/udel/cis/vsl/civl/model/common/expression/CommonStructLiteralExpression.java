@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -67,13 +68,14 @@ public class CommonStructLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
+	public Set<Variable> variableAddressedOf(Scope scope,
+			CIVLHeapType heapType, CIVLBundleType bundleType) {
 		Set<Variable> result = new HashSet<>();
 
 		if (fields != null) {
 			for (Expression field : fields) {
 				Set<Variable> elementResult = field.variableAddressedOf(scope,
-						heapType);
+						heapType, bundleType);
 
 				if (elementResult != null)
 					result.addAll(elementResult);
@@ -82,4 +84,20 @@ public class CommonStructLiteralExpression extends CommonExpression implements
 		return result;
 	}
 
+	@Override
+	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		Set<Variable> result = new HashSet<>();
+
+		if (fields != null) {
+			for (Expression field : fields) {
+				Set<Variable> elementResult = field.variableAddressedOf(
+						heapType, bundleType);
+
+				if (elementResult != null)
+					result.addAll(elementResult);
+			}
+		}
+		return result;
+	}
 }

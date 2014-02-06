@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
@@ -62,6 +63,12 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 * The function that this location belongs to
 	 */
 	private CIVLFunction function;
+
+	/**
+	 * Return true if the current location or any location reachable from the
+	 * current location has any dereference operation.
+	 */
+	private boolean hasDeref = false;
 
 	/**
 	 * The unique id of this location
@@ -502,7 +509,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
-	public void computeWritableVariables(CIVLHeapType heapType) {
+	public void computeWritableVariables(Set<Variable> addressedOfVariables,
+			CIVLHeapType heapType, CIVLBundleType bundleType) {
 		Set<Integer> checkedLocationIDs = new HashSet<>();
 		Stack<Location> workings = new Stack<>();
 		Set<CIVLFunction> checkedFunctions = new HashSet<>();
@@ -516,13 +524,19 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 			checkedLocationIDs.add(location.id());
 			for (Statement statement : location.outgoing()) {
-				Set<Variable> statementResult = statement
-						.variableAddressedOf(scope, heapType);
+				Set<Variable> statementResult = statement.variableAddressedOf(
+						scope, heapType, bundleType);
 				Location target = statement.target();
 
+				if (statement.hasDerefs()) {
+					if (!this.hasDeref) {
+						this.hasDeref = true;
+						variableWritten.addAll(addressedOfVariables);
+					}
+				}
 				if (statementResult != null)
 					variableWritten.addAll(statementResult);
-				if(target != null)
+				if (target != null)
 					if (!checkedLocationIDs.contains(target.id()))
 						workings.push(target);
 				if (statement instanceof CallOrSpawnStatement) {
@@ -542,8 +556,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 			for (Location location : function.locations()) {
 				for (Statement statement : location.outgoing()) {
 					Set<Variable> statementResult = statement
-							.variableAddressedOf(scope, heapType);
+							.variableAddressedOf(scope, heapType, bundleType);
 
+					if (statement.hasDerefs()) {
+						if (!this.hasDeref) {
+							this.hasDeref = true;
+							variableWritten.addAll(addressedOfVariables);
+						}
+					}
 					if (statementResult != null)
 						variableWritten.addAll(statementResult);
 					if (statement instanceof CallOrSpawnStatement) {
@@ -563,6 +583,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 	@Override
 	public Set<Variable> writableVariables() {
 		return this.writableVariables;
+	}
+
+	@Override
+	public boolean hasDerefs() {
+		return this.hasDeref;
 	}
 
 }

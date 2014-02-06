@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -240,16 +241,38 @@ public class CommonAssertStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
+	public Set<Variable> variableAddressedOf(Scope scope,
+			CIVLHeapType heapType, CIVLBundleType bundleType) {
 		Set<Variable> result = new HashSet<>();
 		Set<Variable> argumentResult = expression.variableAddressedOf(scope,
-				heapType);
+				heapType, bundleType);
 
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		if (printfArguments != null) {
 			for (Expression argument : printfArguments) {
-				argumentResult = argument.variableAddressedOf(scope, heapType);
+				argumentResult = argument.variableAddressedOf(scope, heapType,
+						bundleType);
+				if (argumentResult != null)
+					result.addAll(argumentResult);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		Set<Variable> result = new HashSet<>();
+		Set<Variable> argumentResult = expression.variableAddressedOf(heapType,
+				bundleType);
+
+		if (argumentResult != null)
+			result.addAll(argumentResult);
+		if (printfArguments != null) {
+			for (Expression argument : printfArguments) {
+				argumentResult = argument.variableAddressedOf(heapType,
+						bundleType);
 				if (argumentResult != null)
 					result.addAll(argumentResult);
 			}

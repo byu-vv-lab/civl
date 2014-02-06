@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -155,19 +156,42 @@ public class CommonSubscriptExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Variable variableWritten(Scope scope, CIVLHeapType heapType) {
-		return array.variableWritten(scope, heapType);
+	public Variable variableWritten(Scope scope, CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		return array.variableWritten(scope, heapType, bundleType);
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
+	public Variable variableWritten(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		return array.variableWritten(heapType, bundleType);
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope,
+			CIVLHeapType heapType, CIVLBundleType bundleType) {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = array
-				.variableAddressedOf(scope, heapType);
+		Set<Variable> operandResult = array.variableAddressedOf(scope,
+				heapType, bundleType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
-		operandResult = index.variableAddressedOf(scope, heapType);
+		operandResult = index.variableAddressedOf(scope, heapType, bundleType);
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = array.variableAddressedOf(heapType,
+				bundleType);
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		operandResult = index.variableAddressedOf(heapType, bundleType);
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
 		return variableSet;

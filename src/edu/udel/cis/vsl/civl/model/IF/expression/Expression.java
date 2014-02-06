@@ -7,6 +7,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -116,5 +117,9 @@ public interface Expression extends Sourceable {
 	 * 
 	 * @return
 	 */
-	Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType);
+	Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType,
+			CIVLBundleType bundleType);
+
+	Set<Variable> variableAddressedOf(CIVLHeapType heapType,
+			CIVLBundleType bundleType);
 }

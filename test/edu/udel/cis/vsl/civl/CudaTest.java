@@ -30,7 +30,7 @@ public class CudaTest {
 	@Test
 	public void dotProduct() {
 		assertTrue(ui.run("verify", filename("dotProduct.cvl"), "-por=new",
-				"-inputBNPG=2", "-inputK=4", "-inputTNPB=4"));
+				"-inputBNPG=2", "-inputK=3", "-inputTNPB=2"));
 	}
 
 	// @Test

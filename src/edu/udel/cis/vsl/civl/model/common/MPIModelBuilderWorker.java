@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common;
 
+import java.io.PrintStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -54,10 +55,13 @@ public class MPIModelBuilderWorker extends ModelBuilderWorker {
 	 * @param name
 	 *            The name of the CIVL model, i.e., the file name without the
 	 *            file extension.
+	 * @param debugOut
+	 * @param debugging
 	 */
 	public MPIModelBuilderWorker(GMCConfiguration config,
-			MPIModelFactory factory, Program program, String name) {
-		super(config, factory, program, name);
+			MPIModelFactory factory, Program program, String name,
+			boolean debugging, PrintStream debugOut) {
+		super(config, factory, program, name, debugging, debugOut);
 		this.mpiFactory = factory;
 	}
 

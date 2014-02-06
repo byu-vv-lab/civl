@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.IF;
 
+import java.io.PrintStream;
+
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -29,13 +31,16 @@ public interface ModelBuilder {
 	 *            The ABC program to translate
 	 * @param name
 	 *            The name of the model
+	 * @param out
+	 * @param debug
 	 * @return The model.
 	 * @throws CommandLineException
 	 *             if an input variable initial value specified on the command
 	 *             line has a type which is not compatible with the type of the
 	 *             variable
 	 */
-	Model buildModel(GMCConfiguration config, Program program, String name)
+	Model buildModel(GMCConfiguration config, Program program, String name,
+			boolean debugging, PrintStream debugOut)
 			throws CommandLineException;
 
 }

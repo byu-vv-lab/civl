@@ -8,7 +8,9 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -78,21 +80,46 @@ public class CommonVariableExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
+	public Set<Variable> variableAddressedOf(Scope scope,
+			CIVLHeapType heapType, CIVLBundleType bundleType) {
 		return null;
 	}
 
 	@Override
-	public Variable variableWritten(Scope scope, CIVLHeapType heapType) {
-		Scope vScope = variable.scope();
+	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		return null;
+	}
 
-		if (variable.type().equals(heapType))
+	@Override
+	public Variable variableWritten(Scope scope, CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		Scope vScope = variable.scope();
+		CIVLType vType = variable.type();
+
+		if (vType.equals(heapType))
+			return null;
+		if (vType.equals(bundleType))
 			return null;
 		if (variable.isConst())
 			return null;
 		if (scope.equals(vScope) || scope.isDescendantOf(vScope))
 			return variable;
 		return null;
+	}
+
+	@Override
+	public Variable variableWritten(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		CIVLType vType = variable.type();
+
+		if (vType.equals(heapType))
+			return null;
+		if (vType.equals(bundleType))
+			return null;
+		if (variable.isConst())
+			return null;
+		return variable;
 	}
 
 }

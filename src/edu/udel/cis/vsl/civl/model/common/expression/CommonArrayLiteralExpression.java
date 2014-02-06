@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -67,13 +68,31 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
+	public Set<Variable> variableAddressedOf(Scope scope,
+			CIVLHeapType heapType, CIVLBundleType bundleType) {
 		Set<Variable> result = new HashSet<>();
 
 		if (elements != null) {
 			for (Expression element : elements) {
-				Set<Variable> elementResult = element
-						.variableAddressedOf(scope, heapType);
+				Set<Variable> elementResult = element.variableAddressedOf(
+						scope, heapType, bundleType);
+
+				if (elementResult != null)
+					result.addAll(elementResult);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		Set<Variable> result = new HashSet<>();
+
+		if (elements != null) {
+			for (Expression element : elements) {
+				Set<Variable> elementResult = element.variableAddressedOf(
+						heapType, bundleType);
 
 				if (elementResult != null)
 					result.addAll(elementResult);

@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.common;
 
+import java.io.PrintStream;
+
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -50,14 +52,17 @@ public class CommonModelBuilder implements ModelBuilder {
 
 	@Override
 	public Model buildModel(GMCConfiguration config, Program program,
-			String name) throws CommandLineException {
+			String name, boolean debugging, PrintStream debugOut)
+			throws CommandLineException {
 		ModelBuilderWorker worker;
 
 		if (!this.mpiMode)
-			worker = new ModelBuilderWorker(config, factory, program, name);
+			worker = new ModelBuilderWorker(config, factory, program, name,
+					debugging, debugOut);
 		else
 			worker = new MPIModelBuilderWorker(config,
-					(MPIModelFactory) factory, program, name);
+					(MPIModelFactory) factory, program, name, debugging,
+					debugOut);
 		worker.buildModel();
 		return worker.getModel();
 	}

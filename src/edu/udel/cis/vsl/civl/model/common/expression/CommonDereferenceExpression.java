@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -88,9 +89,11 @@ public class CommonDereferenceExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Variable variableWritten(Scope scope, CIVLHeapType heapType) {
+	public Variable variableWritten(Scope scope, CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
 		if (pointer instanceof LHSExpression) {
-			return ((LHSExpression) pointer).variableWritten(scope, heapType);
+			return ((LHSExpression) pointer).variableWritten(scope, heapType,
+					bundleType);
 		}
 		if (pointer instanceof BinaryExpression) {
 			BinaryExpression binaryExpression = (BinaryExpression) pointer;
@@ -105,7 +108,7 @@ public class CommonDereferenceExpression extends CommonExpression implements
 				}
 				if (pointerVariable instanceof LHSExpression) {
 					return ((LHSExpression) pointerVariable).variableWritten(
-							scope, heapType);
+							scope, heapType, bundleType);
 				}
 			}
 		}
@@ -113,10 +116,50 @@ public class CommonDereferenceExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType) {
+	public Set<Variable> variableAddressedOf(Scope scope,
+			CIVLHeapType heapType, CIVLBundleType bundleType) {
 		Set<Variable> variableSet = new HashSet<>();
 		Set<Variable> operandResult = pointer.variableAddressedOf(scope,
-				heapType);
+				heapType, bundleType);
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
+	}
+
+	@Override
+	public Variable variableWritten(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		if (pointer instanceof LHSExpression) {
+			return ((LHSExpression) pointer).variableWritten(heapType,
+					bundleType);
+		}
+		if (pointer instanceof BinaryExpression) {
+			BinaryExpression binaryExpression = (BinaryExpression) pointer;
+
+			if (binaryExpression.operator() == BinaryExpression.BINARY_OPERATOR.POINTER_ADD) {
+				Expression pointerVariable;
+
+				if (binaryExpression.left().getExpressionType().isPointerType()) {
+					pointerVariable = binaryExpression.left();
+				} else {
+					pointerVariable = binaryExpression.right();
+				}
+				if (pointerVariable instanceof LHSExpression) {
+					return ((LHSExpression) pointerVariable).variableWritten(
+							heapType, bundleType);
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
+			CIVLBundleType bundleType) {
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = pointer.variableAddressedOf(heapType,
+				bundleType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
