@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,6 +18,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -303,7 +305,7 @@ public class Libcivlc implements LibraryExecutor {
 	 */
 	private State executeExit(State state, int pid) {
 		int atomicPID = stateFactory.processInAtomic(state);
-		
+
 		if (atomicPID == pid) {
 			state = stateFactory.releaseAtomicLock(state);
 		}
@@ -601,6 +603,10 @@ public class Libcivlc implements LibraryExecutor {
 		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
 		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
 		SymbolicExpression emptyQueue; // Just need one since immutable.
+		ArrayList<SymbolicExpression> procQueueArrayComponent = new ArrayList<SymbolicExpression>();
+		SymbolicExpression procQueueArray = null;
+		SymbolicExpression procArray = null;
+		SymbolicTupleType procQueueType = null;
 
 		assert nprocs instanceof NumericExpression;
 		size = universe.multiply((NumericExpression) nprocs, evaluator.sizeof(
@@ -610,6 +616,29 @@ public class Libcivlc implements LibraryExecutor {
 				size, source);
 		nprocsConcrete = evaluator.extractInt(source,
 				(NumericExpression) nprocs);
+
+		/* create procQueue array */
+		for (int i = 0; i < nprocsConcrete; i++) {
+			ArrayList<SymbolicExpression> procArrayComponent = new ArrayList<SymbolicExpression>();
+			ArrayList<SymbolicExpression> procQueueComponent = new ArrayList<SymbolicExpression>();
+			ArrayList<SymbolicType> procQueueTypeComponent = new ArrayList<SymbolicType>();
+
+			procQueueComponent.add(universe.integer(1));// procs queue length
+			procQueueTypeComponent.add(universe.integer(1).type());
+			SymbolicExpression singleProc = universe.arrayRead(procs,
+					universe.integer(i));
+			procArrayComponent.add(singleProc);
+			procArray = universe.array(singleProc.type(), procArrayComponent);
+			procQueueComponent.add(procArray);
+			procQueueTypeComponent.add(procArray.type());
+			procQueueType = universe.tupleType(
+					universe.stringObject("__procQueue__"),
+					procQueueTypeComponent);
+			procQueueArrayComponent.add(universe.tuple(procQueueType,
+					procQueueComponent));
+		}
+		procQueueArray = universe.array(procQueueType, procQueueArrayComponent);
+		// SymbolicType test = universe.pureType(procQueueArray.type());
 		queueComponents.add(universe.integer(0));
 		queueComponents.add(universe.emptyArray(dynamicMessageType));
 		assert dynamicQueueType instanceof SymbolicTupleType;
@@ -624,7 +653,7 @@ public class Libcivlc implements LibraryExecutor {
 		}
 		buff = universe.array(universe.arrayType(dynamicQueueType), buff1ds);
 		commComponents.add(nprocs);
-		commComponents.add(procs);
+		commComponents.add(procQueueArray);
 		commComponents.add(buff);
 		assert commType.getDynamicType(universe) instanceof SymbolicTupleType;
 		comm = universe.tuple(
@@ -861,6 +890,12 @@ public class Libcivlc implements LibraryExecutor {
 			state = executeExit(state, pid);
 			// No transition after an exit because the process no longer exists.
 			break;
+		case "$comm_add":
+			state = executeCommAdd(state, pid, lhs, arguments, argumentValues,
+					statement.getSource());
+			state = transition(state, state.getProcessState(pid),
+					statement.target());
+			break;
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":
@@ -892,7 +927,7 @@ public class Libcivlc implements LibraryExecutor {
 			Expression pointerExpr, SymbolicExpression pointer,
 			NumericExpression size, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression array;
+		SymbolicExpression array = null;
 		ReferenceExpression symRef = evaluator.getSymRef(pointer);
 		ReferenceKind kind = symRef.referenceKind();
 		SymbolicType elementType = evaluator.referencedType(source, state,
@@ -953,7 +988,6 @@ public class Libcivlc implements LibraryExecutor {
 					SymbolicExpression originalArray = eval.value;
 					NumericExpression endIndex = universe
 							.add(startIndex, count);
-
 					state = eval.state;
 					array = evaluator.getSubArray(originalArray, startIndex,
 							endIndex, state, source);
@@ -1068,6 +1102,16 @@ public class Libcivlc implements LibraryExecutor {
 				return universe.falseExpression();
 			}
 			break;
+		case "$comm_add":
+			try {
+				guard = getCommAddGuard(state, pid, arguments, argumentValues,
+						statement.getSource());
+			} catch (UnsatisfiablePathConditionException e) {
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return universe.falseExpression();
+			}
+			break;
 		case "$free":
 		case "$bundle_pack":
 		case "$bundle_unpack":
@@ -1091,6 +1135,7 @@ public class Libcivlc implements LibraryExecutor {
 		case "$comm_total_size":
 			guard = universe.trueExpression();
 			break;
+ 
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					statement);
@@ -1151,5 +1196,108 @@ public class Libcivlc implements LibraryExecutor {
 		state = stateFactory.setLocation(state, process.getPid(), target);
 		// state = stateFactory.canonic(state);
 		return state;
+	}
+
+	private State executeCommAdd(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		Expression commPointerExpr = arguments[0];
+		SymbolicExpression procValue = argumentValues[1];
+		DereferenceExpression commExpr = this.evaluator.modelFactory()
+				.dereferenceExpression(source, commPointerExpr);
+		Evaluation eval = this.evaluator.evaluate(state, pid, commExpr);
+		SymbolicExpression comm = eval.value;
+		state = eval.state;
+		SymbolicExpression nprocs = this.universe.tupleRead(comm, zeroObject);
+		int int_nprocs = evaluator.extractInt(source,
+				(NumericExpression) nprocs);
+		SymbolicExpression procs = this.universe.tupleRead(comm, oneObject);
+		/* TODO: Get Real Rank! Now just assume pid is rank */
+		NumericExpression rank = universe.integer(pid - 1);
+		SymbolicExpression procQueue = universe.arrayRead(procs, rank);
+		assert procQueue != null;
+		SymbolicExpression queueLength = universe.tupleRead(procQueue,
+				zeroObject);
+		SymbolicExpression procsArray = universe
+				.tupleRead(procQueue, oneObject);
+		ArrayList<SymbolicExpression> newProcsArrayComponent = new ArrayList<SymbolicExpression>();
+		ArrayList<SymbolicType> newProcsQueueTypeComponent = new ArrayList<SymbolicType>();
+		ArrayList<SymbolicExpression> newProcsQueueComponent = new ArrayList<SymbolicExpression>();
+		ArrayList<SymbolicExpression> newProcsComponent = new ArrayList<SymbolicExpression>();
+		int int_queueLength = this.evaluator.extractInt(source,
+				(NumericExpression) queueLength);
+		SymbolicExpression newProcsArray = null;
+
+		for (int i = 0; i < int_queueLength; i++) {
+			newProcsArrayComponent.add(universe.arrayRead(procsArray,
+					universe.integer(i)));
+		}
+		newProcsArrayComponent.add(procValue);
+		newProcsArray = universe.array(newProcsArrayComponent.get(0).type(),
+				newProcsArrayComponent);
+		int_queueLength++;
+		newProcsQueueTypeComponent.add(universe.integerType());
+		newProcsQueueTypeComponent.add(newProcsArray.type());
+		newProcsQueueComponent.add(universe.integer(int_queueLength));
+		newProcsQueueComponent.add(newProcsArray);
+		SymbolicTupleType newProcQueueType = universe.tupleType(
+				universe.stringObject("__procQueue__"),
+				newProcsQueueTypeComponent);
+		procQueue = universe.tuple(newProcQueueType, newProcsQueueComponent);
+		for (int i = 0; i < int_nprocs; i++) {
+			if (i != evaluator.extractInt(source, rank))
+				newProcsComponent.add(universe.arrayRead(procs,
+						universe.integer(i)));
+			else {
+				newProcsComponent.add(procQueue);
+			}
+		}
+		newProcsArray = universe.array(universe.pureType(procQueue.type()),
+				newProcsComponent);
+		comm = universe.tupleWrite(comm, oneObject, newProcsArray);
+		if (lhs != null) {
+			assert comm != null;
+			state = primaryExecutor.assign(state, pid, lhs, comm);
+		}
+		return state;
+	}
+
+	/**
+	 * The guard of the comm_add I think should be the process must be in the
+	 * communicator and the thread gonna be added into the communicator should
+	 * not be in the communicator at this point
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param arguments
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private BooleanExpression getCommAddGuard(State state, int pid,
+			Expression arguments[], SymbolicExpression argumentValues[],
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		BooleanExpression guard = null;
+		Expression commPointerExpr = arguments[0];
+		SymbolicExpression procValue = argumentValues[1];
+		DereferenceExpression commExpr = this.evaluator.modelFactory()
+				.dereferenceExpression(source, commPointerExpr);
+		Evaluation eval = this.evaluator.evaluate(state, pid, commExpr);
+		SymbolicExpression comm = eval.value;
+		state = eval.state;
+		SymbolicExpression nprocs = this.universe.tupleRead(comm, zeroObject);
+		int int_nprocs = evaluator.extractInt(source,
+				(NumericExpression) nprocs);
+		SymbolicExpression procs = this.universe.tupleRead(comm, oneObject);
+		//TODO: get real rank
+		SymbolicExpression rank = universe.integer(pid);
+		SymbolicExpression procQueue = universe.arrayRead(procs,
+				(NumericExpression)rank);
+		SymbolicExpression threadArray = universe.tupleRead(procQueue,
+				oneObject);
+		SymbolicExpression theProcess = universe.arrayRead(threadArray,
+				universe.integer(0));
+
+		return universe.trueExpression();
 	}
 }
