@@ -1,12 +1,10 @@
 /* Commandline execution:
- *		civl verify -inputnum_elements=5 secondDerivativeBad.cvl
+ *		civl verify -inputnum_elements=5 secondDerivative.cvl
  *
  * Note: based on Quarteroni, Sacco, Saleri. "Numerical Mathematics" 2nd ed. sec 10.10.1
  *
- * This version erroneously assumes that the method is 3rd order accurate in terms of h.
  * */
 #include<civlc.h>
-#include<stdio.h>
 
 $input double h;
 $input int num_elements;
@@ -23,8 +21,8 @@ void secondDerivative(double h, int n, double y[], double result[]){
 	{
 		result[i] = (y[i+1]-2*y[i]+y[i-1])/(h*h);
 	}
-	result[0] = (y[1]-y[0])/h; 
-	result[n-1] = (y[n-1] - y[n-2])/h;
+	result[0] = (y[2]-2*y[1]+y[0])/h; 
+	result[n-1] = (y[n-3] - 2*y[n-2]-y[n-1])/h;
 	$assert($uniform {k=1 .. n-2} result[k]-$D[rho,{x,2}](k*h) == $O(h*h));
 }
 

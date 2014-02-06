@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify -inputnum_elements=5 derivativeBad.cvl
  *
- * The assertion checked in this version erroneously expects the method to be third
+ * The assertion checked in this version erroneously expects the method to be fourth
  * order accurate in terms of h.
  * */
 #include<civlc.h>
@@ -24,7 +24,7 @@ void differentiate(double h, int n, double y[], double result[]){
 	}
 	result[0] = (y[1]-y[0])/h; 
 	result[n-1] = (y[n-1] - y[n-2])/h;
-	$assert($uniform {k=1 .. n-2} result[k]-$D[rho,{x,1}](k*h) == $O(h*h*h));
+	$assert($uniform {k=1 .. n-2} result[k]-$D[rho,{x,1}](k*h) == $O(h*h*h*h));
 }
 
 void main() {

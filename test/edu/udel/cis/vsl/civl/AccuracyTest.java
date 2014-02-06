@@ -36,18 +36,23 @@ public class AccuracyTest {
 		assertFalse(ui.run("verify", "-inputnum_elements=5",
 				filename("derivativeBad.cvl")));
 	}
-	
+
 	@Test
 	public void secondDerivative() {
 		assertTrue(ui.run("verify", "-inputnum_elements=5",
 				filename("secondDerivative.cvl")));
 	}
-	
+
 	@Test
 	public void secondDerivativeBad() {
 		assertTrue(ui.run("verify", "-inputnum_elements=5",
 				filename("secondDerivativeBad.cvl")));
 	}
 	
+	@Test
+	public void diffusion() {
+		assertTrue(ui.run("verify", "-inputn=4",
+				filename("diffusion.cvl")));
+	}
 
 }

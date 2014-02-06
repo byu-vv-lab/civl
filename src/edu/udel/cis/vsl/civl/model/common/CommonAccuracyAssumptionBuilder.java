@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.util.Pair;
@@ -124,6 +125,9 @@ public class CommonAccuracyAssumptionBuilder implements
 			if (matchesPattern(arguments.get(i))) {
 				taylorExpansions = taylorExpansions.combineWith(expand(call, i,
 						scope));
+			} else if (matchesIteratorPattern(arguments.get(i))) {
+				taylorExpansions = taylorExpansions.combineWith(expandIterator(
+						call, i, scope));
 			}
 		}
 
@@ -222,6 +226,163 @@ public class CommonAccuracyAssumptionBuilder implements
 		}
 	}
 
+	/**
+	 * Match a pattern like "iter*dt", where iter is an integer and dt is an
+	 * input variable.
+	 */
+	private boolean matchesIteratorPattern(Expression expression) {
+		switch (expression.expressionKind()) {
+		case BINARY:
+			switch (((BinaryExpression) expression).operator()) {
+			case TIMES:
+				// recognize it if of the form iter*dt or dt*iter, where iter is
+				// an int
+				// variable and dt is an input.
+				Expression left = ((BinaryExpression) expression).left();
+				Expression right = ((BinaryExpression) expression).right();
+				if (left.expressionKind() == ExpressionKind.VARIABLE) {
+					if (right.expressionKind() == ExpressionKind.VARIABLE) {
+						VariableExpression leftVariable = (VariableExpression) left;
+						VariableExpression rightVariable = (VariableExpression) right;
+
+						if (leftVariable.variable().type().isIntegerType()
+								&& rightVariable.variable().isInput()) {
+							return true;
+						} else if (rightVariable.variable().type()
+								.isIntegerType()
+								&& leftVariable.variable().isInput()) {
+							return true;
+						}
+					}
+				} else if (left.expressionKind() == ExpressionKind.CAST) {
+					Expression castExpression = ((CastExpression) left)
+							.getExpression();
+
+					if (castExpression.expressionKind() == ExpressionKind.VARIABLE) {
+						if (right.expressionKind() == ExpressionKind.VARIABLE) {
+							VariableExpression leftVariable = (VariableExpression) castExpression;
+							VariableExpression rightVariable = (VariableExpression) right;
+
+							if (leftVariable.variable().type().isIntegerType()
+									&& rightVariable.variable().isInput()) {
+								return true;
+							} else if (rightVariable.variable().type()
+									.isIntegerType()
+									&& leftVariable.variable().isInput()) {
+								return true;
+							}
+						}
+					}
+				} else if (right.expressionKind() == ExpressionKind.CAST) {
+					Expression castExpression = ((CastExpression) right)
+							.getExpression();
+
+					if (castExpression.expressionKind() == ExpressionKind.VARIABLE) {
+						if (left.expressionKind() == ExpressionKind.VARIABLE) {
+							VariableExpression leftVariable = (VariableExpression) left;
+							VariableExpression rightVariable = (VariableExpression) castExpression;
+
+							if (leftVariable.variable().type().isIntegerType()
+									&& rightVariable.variable().isInput()) {
+								return true;
+							} else if (rightVariable.variable().type()
+									.isIntegerType()
+									&& leftVariable.variable().isInput()) {
+								return true;
+							}
+						}
+					}
+				}
+			default:
+				return false;
+			}
+		default:
+			return false;
+		}
+	}
+
+	/**
+	 * if a patter like "iter*dt", where iter is an integer and dt is an input
+	 * variable, is found, return a pair contaiing the iterator and the
+	 * expression.
+	 */
+	private Pair<Expression, Expression> iteratorPair(Expression expression) {
+		switch (expression.expressionKind()) {
+		case BINARY:
+			switch (((BinaryExpression) expression).operator()) {
+			case TIMES:
+				// recognize it if of the form iter*dt or dt*iter, where iter is
+				// an int
+				// variable and dt is an input.
+				Expression left = ((BinaryExpression) expression).left();
+				Expression right = ((BinaryExpression) expression).right();
+				if (left.expressionKind() == ExpressionKind.VARIABLE) {
+					if (right.expressionKind() == ExpressionKind.VARIABLE) {
+						VariableExpression leftVariable = (VariableExpression) left;
+						VariableExpression rightVariable = (VariableExpression) right;
+
+						if (leftVariable.variable().type().isIntegerType()
+								&& rightVariable.variable().isInput()) {
+							return new Pair<Expression, Expression>(
+									leftVariable, rightVariable);
+						} else if (rightVariable.variable().type()
+								.isIntegerType()
+								&& leftVariable.variable().isInput()) {
+							return new Pair<Expression, Expression>(
+									rightVariable, leftVariable);
+						}
+					}
+				} else if (left.expressionKind() == ExpressionKind.CAST) {
+					Expression castExpression = ((CastExpression) left)
+							.getExpression();
+
+					if (castExpression.expressionKind() == ExpressionKind.VARIABLE) {
+						if (right.expressionKind() == ExpressionKind.VARIABLE) {
+							VariableExpression leftVariable = (VariableExpression) castExpression;
+							VariableExpression rightVariable = (VariableExpression) right;
+
+							if (leftVariable.variable().type().isIntegerType()
+									&& rightVariable.variable().isInput()) {
+								return new Pair<Expression, Expression>(
+										leftVariable, rightVariable);
+							} else if (rightVariable.variable().type()
+									.isIntegerType()
+									&& leftVariable.variable().isInput()) {
+								return new Pair<Expression, Expression>(
+										rightVariable, leftVariable);
+							}
+						}
+					}
+				} else if (right.expressionKind() == ExpressionKind.CAST) {
+					Expression castExpression = ((CastExpression) right)
+							.getExpression();
+
+					if (castExpression.expressionKind() == ExpressionKind.VARIABLE) {
+						if (left.expressionKind() == ExpressionKind.VARIABLE) {
+							VariableExpression leftVariable = (VariableExpression) left;
+							VariableExpression rightVariable = (VariableExpression) castExpression;
+
+							if (leftVariable.variable().type().isIntegerType()
+									&& rightVariable.variable().isInput()) {
+								return new Pair<Expression, Expression>(
+										leftVariable, rightVariable);
+							} else if (rightVariable.variable().type()
+									.isIntegerType()
+									&& leftVariable.variable().isInput()) {
+								return new Pair<Expression, Expression>(
+										rightVariable, leftVariable);
+							}
+						}
+					}
+				}
+			default:
+				return null;
+			}
+		default:
+			return null;
+		}
+	}
+
 	private Fragment expand(AbstractFunctionCallExpression call, int arg,
 			Scope scope) {
 		AbstractFunction function = call.function();
@@ -250,35 +411,8 @@ public class CommonAccuracyAssumptionBuilder implements
 						boundVariableExpression.name(), boundVariableType,
 						separatedExpression);
 				result = createAssumption(source, scope, expansion0);
-				result = result.combineWith(createAssumption(source, scope, expansion1));
-//				if (quant.isRange()) {
-//					result = factory.assumeFragment(source, factory.location(
-//							source, scope), factory.quantifiedExpression(
-//							source, quant.quantifier(),
-//							quant.boundVariableName(), boundVariableType,
-//							quant.lower(), quant.upper(), expansion0));
-//					result = result.combineWith(factory.assumeFragment(source,
-//							factory.location(source, scope), factory
-//									.quantifiedExpression(source,
-//											quant.quantifier(),
-//											quant.boundVariableName(),
-//											boundVariableType, quant.lower(),
-//											quant.upper(), expansion1)));
-//				} else {
-//					result = factory.assumeFragment(source, factory.location(
-//							source, scope), factory.quantifiedExpression(
-//							source, quant.quantifier(),
-//							quant.boundVariableName(), boundVariableType,
-//							quant.boundRestriction(), expansion0));
-//					result = result.combineWith(factory.assumeFragment(source,
-//							factory.location(source, scope), factory
-//									.quantifiedExpression(source,
-//											quant.quantifier(),
-//											quant.boundVariableName(),
-//											boundVariableType,
-//											quant.boundRestriction(),
-//											expansion1)));
-//				}
+				result = result.combineWith(createAssumption(source, scope,
+						expansion1));
 				break;
 			}
 		}
@@ -335,6 +469,25 @@ public class CommonAccuracyAssumptionBuilder implements
 		return result;
 	}
 
+	private Fragment expandIterator(AbstractFunctionCallExpression call,
+			int arg, Scope scope) {
+		AbstractFunction function = call.function();
+		CIVLSource source = function.getSource();
+		Fragment result = new CommonFragment();
+		Expression originalArgument = call.arguments().get(arg);
+		Pair<Expression, Expression> iteratorPair = iteratorPair(originalArgument);
+		Expression expansion;
+
+		assert call.function().continuity() >= 2;
+		expansion = expansionUnbound(true, call, arg,
+				((VariableExpression) iteratorPair.left).variable(),
+				iteratorPair.right, 2);
+		result = result.combineWith(createAssumption(source, scope, expansion));
+		result = result.combineWith(bigOFacts(source, iteratorPair.right,
+				scope, 2));
+		return result;
+	}
+
 	/**
 	 * Add big-O facts:
 	 * 
@@ -342,37 +495,35 @@ public class CommonAccuracyAssumptionBuilder implements
 	 */
 	private Fragment bigOFacts(CIVLSource source, Expression expression,
 			Scope scope, int continuity) {
-		Fragment result;
+		Fragment result = new CommonFragment();
 		Expression bigOh = factory.unaryExpression(source,
 				UNARY_OPERATOR.BIG_O, expression);
 
-		result = factory
-				.assumeFragment(
-						source,
-						factory.location(source, scope),
-						factory.binaryExpression(
-								source,
-								BINARY_OPERATOR.EQUAL,
-								factory.binaryExpression(
-										source,
-										BINARY_OPERATOR.TIMES,
-										factory.castExpression(source, factory
-												.realType(), factory
-												.integerLiteralExpression(
-														source,
-														BigInteger.valueOf(2))),
-										bigOh), bigOh));
-		for (int i = 1; 2 * i <= continuity; i++) {
-			// Add assertions h^i*$O(h^i) ==$O(h^(2i)
-			Expression lhs;
-			Expression rhs = factory.unaryExpression(source,
-					UNARY_OPERATOR.BIG_O, multiple(source, expression, 2 * i));
-			Expression hMultiple = multiple(source, expression, i);
-			Expression bigOArg = multiple(source, expression, i);
+		// result = factory
+		// .assumeFragment(
+		// source,
+		// factory.location(source, scope),
+		// factory.binaryExpression(
+		// source,
+		// BINARY_OPERATOR.EQUAL,
+		// factory.binaryExpression(
+		// source,
+		// BINARY_OPERATOR.TIMES,
+		// factory.castExpression(source, factory
+		// .realType(), factory
+		// .integerLiteralExpression(
+		// source,
+		// BigInteger.valueOf(2))),
+		// bigOh), bigOh));
+		for (int i = 2; i <= continuity; i++) {
+			// Add assertions $O(h^i) == h^(i-1)*$O(h)
+			Expression rhs;
+			Expression lhs = factory.unaryExpression(source,
+					UNARY_OPERATOR.BIG_O, multiple(source, expression, i));
+			Expression hMultiple = multiple(source, expression, i - 1);
 
-			lhs = factory.binaryExpression(source, BINARY_OPERATOR.TIMES,
-					hMultiple, factory.unaryExpression(source,
-							UNARY_OPERATOR.BIG_O, bigOArg));
+			rhs = factory.binaryExpression(source, BINARY_OPERATOR.TIMES,
+					hMultiple, bigOh);
 			result = result.combineWith(factory.assumeFragment(source, factory
 					.location(source, scope), factory.binaryExpression(source,
 					BINARY_OPERATOR.EQUAL, lhs, rhs)));
@@ -380,11 +531,19 @@ public class CommonAccuracyAssumptionBuilder implements
 		return result;
 	}
 
-	/** f((i+1)*x) = .... */
 	private Expression expansion(boolean isPlus,
 			AbstractFunctionCallExpression call, int arg,
 			Identifier boundVariable, CIVLType boundVariableType,
 			Expression separatedExpression) {
+		return expansion(isPlus, call, arg, boundVariable, boundVariableType,
+				separatedExpression, call.function().continuity());
+	}
+
+	/** f((i+1)*x) = .... */
+	private Expression expansion(boolean isPlus,
+			AbstractFunctionCallExpression call, int arg,
+			Identifier boundVariable, CIVLType boundVariableType,
+			Expression separatedExpression, int numExpansions) {
 		AbstractFunction function = call.function();
 		CIVLSource source = function.getSource();
 		List<Expression> originalArguments = call.arguments();
@@ -414,7 +573,7 @@ public class CommonAccuracyAssumptionBuilder implements
 						separatedExpression));
 		lhs = factory.abstractFunctionCallExpression(source, function,
 				lhsArguments);
-		for (int i = 0; i < function.continuity(); i++) {
+		for (int i = 0; i < numExpansions; i++) {
 			if (i == 0) {
 				rhs = call;
 			} else {
@@ -463,6 +622,90 @@ public class CommonAccuracyAssumptionBuilder implements
 						UNARY_OPERATOR.BIG_O,
 						multiple(source, separatedExpression,
 								function.continuity())));
+		return factory
+				.binaryExpression(source, BINARY_OPERATOR.EQUAL, lhs, rhs);
+	}
+
+	private Expression expansionUnbound(boolean isPlus,
+			AbstractFunctionCallExpression call, int arg, Variable variable,
+			Expression separatedExpression, int numExpansions) {
+		AbstractFunction function = call.function();
+		CIVLSource source = function.getSource();
+		List<Expression> originalArguments = call.arguments();
+		VariableExpression variableExpression = factory.variableExpression(
+				source, variable);
+		Expression lhs;
+		Expression rhs = null;
+		List<Expression> lhsArguments;
+		Variable partial = function.parameters().get(arg);
+		BINARY_OPERATOR lhsOp;
+
+		lhsArguments = new LinkedList<Expression>(originalArguments);
+		if (isPlus) {
+			lhsOp = BINARY_OPERATOR.PLUS;
+		} else {
+			lhsOp = BINARY_OPERATOR.MINUS;
+		}
+		// Make this f(...,(i+1)*x,...)
+		lhsArguments
+				.set(arg, factory.binaryExpression(source,
+						BINARY_OPERATOR.TIMES, factory.castExpression(source,
+								factory.realType(), factory.binaryExpression(
+										source, lhsOp, variableExpression,
+										factory.integerLiteralExpression(
+												source, BigInteger.ONE))),
+						separatedExpression));
+		lhs = factory.abstractFunctionCallExpression(source, function,
+				lhsArguments);
+		for (int i = 0; i < numExpansions; i++) {
+			if (i == 0) {
+				rhs = call;
+			} else {
+				Expression derivative;
+				Expression newTerm;
+				BINARY_OPERATOR op;
+				Expression numerator = multiple(source, separatedExpression, i);
+				int denominator = factorial(i);
+				List<Pair<Variable, IntegerLiteralExpression>> partials = new LinkedList<Pair<Variable, IntegerLiteralExpression>>();
+
+				partials.add(new Pair<Variable, IntegerLiteralExpression>(
+						partial, factory.integerLiteralExpression(source,
+								BigInteger.valueOf(i))));
+				derivative = factory.derivativeCallExpression(source, function,
+						partials, originalArguments);
+				newTerm = factory
+						.binaryExpression(
+								source,
+								BINARY_OPERATOR.TIMES,
+								derivative,
+								factory.binaryExpression(
+										source,
+										BINARY_OPERATOR.DIVIDE,
+										numerator,
+										factory.castExpression(
+												source,
+												factory.realType(),
+												factory.integerLiteralExpression(
+														source,
+														BigInteger
+																.valueOf(denominator)))));
+				if (!isPlus && i % 2 == 1) {
+					op = BINARY_OPERATOR.MINUS;
+				} else {
+					op = BINARY_OPERATOR.PLUS;
+				}
+				rhs = factory.binaryExpression(source, op, rhs, newTerm);
+			}
+		}
+		rhs = factory.binaryExpression(
+				source,
+				BINARY_OPERATOR.PLUS,
+				rhs,
+				factory.unaryExpression(
+						source,
+						UNARY_OPERATOR.BIG_O,
+						multiple(source, separatedExpression,
+								numExpansions)));
 		return factory
 				.binaryExpression(source, BINARY_OPERATOR.EQUAL, lhs, rhs);
 	}
