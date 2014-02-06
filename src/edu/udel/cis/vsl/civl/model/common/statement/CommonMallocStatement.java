@@ -111,15 +111,15 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	@Override
 	public void calculateDerefs() {
-		boolean lhsDeref = false;
+		this.hasDerefs = false;
 		if (lhs != null) {
 			lhs.calculateDerefs();
-			lhsDeref = lhs.hasDerefs();
+			hasDerefs = lhs.hasDerefs();
 		}
-		this.heapPointerExpression.calculateDerefs();
-		this.sizeExpression.calculateDerefs();
-		this.hasDerefs = lhsDeref || this.heapPointerExpression.hasDerefs()
-				|| this.sizeExpression.hasDerefs();
+		// this.heapPointerExpression.calculateDerefs();
+		// this.sizeExpression.calculateDerefs();
+		// this.hasDerefs = lhsDeref || this.heapPointerExpression.hasDerefs()
+		// || this.sizeExpression.hasDerefs();
 	}
 
 	@Override

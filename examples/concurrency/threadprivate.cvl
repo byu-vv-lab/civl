@@ -1,8 +1,12 @@
+/*
+ * Command line execution:
+ * civl verify -por=new -inputNTHREADS=10 threadprivate.cvl
+ */
 #include<civlc.h>
 #include<stdio.h>
+$input int NTHREADS;
 #define OWNS(numIters, threadId, index) ((index)%NTHREADS==threadId)
 $heap h;
-int NTHREADS = 10;
 $proc threads[NTHREADS];
 
 int calculate_sum(int length, int *_pglobal) {
@@ -11,7 +15,6 @@ int calculate_sum(int length, int *_pglobal) {
    for (int j=0; j<length; j++) sum += _pglobal[j];
    return(sum);
 }
-
 
 void main() {
   int i, j, sum, TID, n=20;
@@ -44,5 +47,4 @@ void main() {
   
   for (int t=0; t<NTHREADS; t++) threads[t] = $spawn __par_1(t);
   for (int t=0; t<NTHREADS; t++) $wait threads[t];
-
 }

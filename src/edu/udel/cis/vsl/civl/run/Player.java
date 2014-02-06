@@ -82,6 +82,8 @@ public abstract class Player {
 	protected boolean minimize;
 
 	protected int maxdepth;
+	
+	protected boolean showAmpleSet; // false by default
 
 	protected boolean scpPor; // false by default
 
@@ -118,6 +120,7 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.errorBoundO));
 		this.enablePrintf = (Boolean) config
 				.getValueOrDefault(UserInterface.enablePrintfO);
+		this.showAmpleSet = (Boolean) config.getValueOrDefault(UserInterface.showAmpleSetO);
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		if (this.mpiMode)
 			this.executor = new MPIExecutor(config, modelFactory, stateFactory,
@@ -146,10 +149,10 @@ public abstract class Player {
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 		if (this.newPor) {
 			enabler = new PointeredEnabler(transitionFactory, evaluator,
-					executor);
+					executor, showAmpleSet);
 		} else {
 			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					this.scpPor);
+					this.scpPor, showAmpleSet);
 		}
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);

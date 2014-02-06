@@ -101,6 +101,10 @@ public class UserInterface {
 	public final static Option seedO = Option.newScalarOption("seed", STRING,
 			"set the random seed; applies only to run", null);
 
+	public final static Option showAmpleSetO = Option
+			.newScalarOption("showAmpleSet", BOOLEAN,
+					"print the ample set of each state", false);
+
 	public final static Option showModelO = Option.newScalarOption("showModel",
 			BOOLEAN, "print the model", false);
 
@@ -173,7 +177,8 @@ public class UserInterface {
 				userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO, porO,
-				saveStatesO, simplifyO, solveO, enablePrintfO, mpiO);
+				saveStatesO, simplifyO, solveO, enablePrintfO, mpiO,
+				showAmpleSetO);
 
 		parser = new CommandLineParser(options);
 	}

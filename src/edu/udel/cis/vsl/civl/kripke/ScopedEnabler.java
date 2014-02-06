@@ -66,15 +66,17 @@ public class ScopedEnabler extends Enabler implements
 	 *            The executor to be used
 	 * @param sPor
 	 *            True iff want to use scoped POR instead of default POR.
+	 * @param showAmpleSet 
 	 */
 	public ScopedEnabler(TransitionFactory transitionFactory,
-			Evaluator evaluator, Executor executor, boolean sPor) {
+			Evaluator evaluator, Executor executor, boolean sPor, boolean showAmpleSet) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
 		this.executor = executor;
 		this.modelFactory = evaluator.modelFactory();
 		this.universe = modelFactory.universe();
 		this.scpPor = sPor;
+		this.showAmpleSet = showAmpleSet;
 		if (this.scpPor)
 			this.debugOut.println("scoped POR is enabled.");
 	}

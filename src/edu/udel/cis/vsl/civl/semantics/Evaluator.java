@@ -2659,6 +2659,8 @@ public class Evaluator {
 
 		while (type.equals(this.pointerType)) {
 			deref = this.dereference(deref, state);
+			if(deref.isNull())
+				return false;
 			type = deref.type();
 		}
 		return type.equals(heapType);

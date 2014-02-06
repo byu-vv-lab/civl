@@ -80,5 +80,10 @@ public class CommonAtomicLockAssignStatement extends CommonAssignStatement {
 			CIVLBundleType bundleType) {
 		return null;
 	}
+	
+	@Override
+	public void calculateDerefs(){
+		this.hasDerefs = false;
+	}
 
 }

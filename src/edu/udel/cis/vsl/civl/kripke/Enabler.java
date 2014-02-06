@@ -78,6 +78,8 @@ public abstract class Enabler implements
 	 */
 	protected ModelFactory modelFactory;
 
+	protected boolean showAmpleSet = false;;
+	
 	/**
 	 * The unique transition factory used by the system.
 	 */

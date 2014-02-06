@@ -167,15 +167,15 @@ public class CommonCallStatement extends CommonStatement implements
 			lhs.calculateDerefs();
 			this.hasDerefs = this.hasDerefs || lhs.hasDerefs();
 		}
-		if (this.arguments != null) {
-			for (Expression arg : this.arguments) {
-				arg.calculateDerefs();
-				this.hasDerefs = this.hasDerefs || arg.hasDerefs();
-				// early return
-				if (this.hasDerefs)
-					return;
-			}
-		}
+		// if (this.arguments != null) {
+		// for (Expression arg : this.arguments) {
+		// arg.calculateDerefs();
+		// this.hasDerefs = this.hasDerefs || arg.hasDerefs();
+		// // early return
+		// if (this.hasDerefs)
+		// return;
+		// }
+		// }
 	}
 
 	@Override

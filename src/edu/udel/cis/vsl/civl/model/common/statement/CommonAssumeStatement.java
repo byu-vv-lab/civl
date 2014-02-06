@@ -67,8 +67,8 @@ public class CommonAssumeStatement extends CommonStatement implements
 
 	@Override
 	public void calculateDerefs() {
-		this.expression.calculateDerefs();
-		this.hasDerefs = this.expression.hasDerefs();
+//		this.expression.calculateDerefs();
+//		this.hasDerefs = this.expression.hasDerefs();
 	}
 
 	@Override

@@ -1,35 +1,14 @@
 /* dot product of two arrays.
- *   
-maurice:CIVL zmanchun$ civl verify -por=new examples/cuda/dotProduct.cvl -inputBNPG=4 -inputK=8 -inputTNPB=4
-CIVL v0.6 of 2014-02-01 -- http://vsl.cis.udel.edu/civl
-gpu done.
-
-=================== Stats ===================
-   validCalls          : 140788
-   proverCalls         : 1
-   memory (bytes)      : 332398592
-   time (s)            : 11.79
-   maxProcs            : 21
-   statesInstantiated  : 98602
-   statesSaved         : 6466
-   statesSeen          : 6463
-   statesMatched       : 3889
-   steps               : 27627
-   transitions         : 10351
- 
+ *  
  */
-
-//#include "../common/book.h"
-
 #include <civlc.h>
 #include <stdio.h>
 
 #define imin(a,b) (a<b?a:b)
 
 $input int BNPG;
-$input int K;//power of 2
-$input int TNPB; // thread number per block: for reductions, threadsPerBlock must be a power of 2
-    // because of the following code
+$input int K;
+$input int TNPB; // thread number per block: must be a power of 2
 int N = (BNPG + 1) * K;
 int threadsPerBlock = TNPB;
 int blocksPerGrid =
@@ -55,17 +34,14 @@ void gpu(){
         }
         // set cache values
         cache[cacheIndex] = temp;
-        //printf("cache %d of block %d done.\n", cacheIndex, blockID);
       }
-      //printf("thread %d of block %d enter first barrier.\n", threadID, blockID);
-      // TODO synchronize
+      // synchronize threads
       barrier(in_barrier, threadID);
       int i = threadsPerBlock/2;
       while (i != 0) {
         if (cacheIndex < i)
           cache[cacheIndex] += cache[cacheIndex + i];
-         //printf("thread %d of block %d enter second barrier.\n", threadID, blockID);
-        // TODO syncthreads
+        // synchronize threads
         barrier(in_barrier, threadID);
         i /= 2;
       }
@@ -74,61 +50,47 @@ void gpu(){
     }
     
     $proc threads[threadsPerBlock];
-    
-    //$atomic {
-      barrier_init(in_barrier, threadsPerBlock);
-      //printf("initialized barriers for block %d.\n", blockID);
-      for(int i = 0; i < threadsPerBlock; i++) {
-        threads[i] = $spawn gpuThread(i);
-      }
-    //}
-    $atomic {
-      for(int i = 0; i < threadsPerBlock; i++) {
-        $wait threads[i];
-      }
-      //printf("block %d done.\n", blockID);
+
+    barrier_init(in_barrier, threadsPerBlock);
+    for(int i = 0; i < threadsPerBlock; i++) {
+      threads[i] = $spawn gpuThread(i);
+    }
+
+    for(int i = 0; i < threadsPerBlock; i++) {
+      $wait threads[i];
     }
   }
-  $proc blocks[blocksPerGrid];
   
-  //$atomic {
-    for(int i = 0; i < blocksPerGrid; i++) {
-      blocks[i] = $spawn gpuBlock(i);  
-    }
-  //}
-  //$atomic {
-    for(int i = 0; i < blocksPerGrid; i++) {
-      $wait blocks[i];
-    }
-    printf("gpu done.\n");
-  //}
+  $proc blocks[blocksPerGrid];
+
+  for(int i = 0; i < blocksPerGrid; i++) {
+    blocks[i] = $spawn gpuBlock(i);  
+  }
+
+  for(int i = 0; i < blocksPerGrid; i++) {
+    $wait blocks[i];
+  }
 }
 
 int main( void ) {
   $heap host;
-  // float   *dev_a, *dev_b, *dev_partial_c;
     
   // allocate memory on the cpu side
   a = (double *) $malloc(&host, N*sizeof(double));
   b = (double *) $malloc(&host, N*sizeof(double));
   partial_c = (double *) $malloc(&host, blocksPerGrid*sizeof(double));
-
   // fill in the host memory with data
   for (int i=0; i<N; i++) {
     a[i] = i;
     b[i] = i*2;
   }
-  
   gpu();
-  
   // finish up on the CPU side
   c = 0;
   for (int i=0; i<blocksPerGrid; i++) {
     c += partial_c[i];
   }
-
   #define sum_squares(x)  (x*(x+1)*(2*x+1)/6)
-  //printf( "Does GPU value %f = %f?\n", c, 2 * sum_squares( (double)(N - 1) ) );
   // check result
   $assert(c == 2 * sum_squares( (double)(N - 1) ));
 }

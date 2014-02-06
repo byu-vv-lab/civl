@@ -92,8 +92,9 @@ public class CommonAssignStatement extends CommonStatement implements
 	@Override
 	public void calculateDerefs() {
 		this.lhs.calculateDerefs();
-		this.rhs.calculateDerefs();
-		this.hasDerefs = this.lhs.hasDerefs() || this.rhs.hasDerefs();
+		this.hasDerefs = this.lhs.hasDerefs();
+		// this.rhs.calculateDerefs();
+		// this.hasDerefs = this.lhs.hasDerefs() || this.rhs.hasDerefs();
 	}
 
 	@Override
@@ -191,11 +192,18 @@ public class CommonAssignStatement extends CommonStatement implements
 		Set<Variable> argumentResult = lhs.variableAddressedOf(heapType,
 				bundleType);
 
-		if (argumentResult != null)
-			result.addAll(argumentResult);
-		argumentResult = rhs.variableAddressedOf(heapType, bundleType);
-		if (argumentResult != null)
-			result.addAll(argumentResult);
+		if (rhs instanceof VariableExpression) {
+			if (rhs.getExpressionType().isPointerType()) {
+				result.add(((VariableExpression) rhs).variable());
+			}
+		} else {
+			if (argumentResult != null)
+				result.addAll(argumentResult);
+			argumentResult = rhs.variableAddressedOf(heapType, bundleType);
+			if (argumentResult != null)
+				result.addAll(argumentResult);
+		}
+
 		return result;
 	}
 

@@ -57,10 +57,11 @@ public class PointeredEnabler extends Enabler implements
 	/* ***************************** Constructors ************************** */
 
 	public PointeredEnabler(TransitionFactory transitionFactory,
-			Evaluator evaluator, Executor executor) {
+			Evaluator evaluator, Executor executor, boolean showAmpleSet) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
 		this.executor = executor;
+		this.showAmpleSet = showAmpleSet;
 		this.modelFactory = evaluator.modelFactory();
 		this.universe = modelFactory.universe();
 	}
@@ -82,7 +83,7 @@ public class PointeredEnabler extends Enabler implements
 		ArrayList<ProcessState> processStates = new ArrayList<>(
 				ampleProcesses(state));
 
-		if (debugging) {
+		if (debugging || showAmpleSet) {
 			debugOut.print("ample processes at state " + state.getCanonicId()
 					+ ":");
 			for (ProcessState p : processStates) {
@@ -123,6 +124,7 @@ public class PointeredEnabler extends Enabler implements
 		// process and if it contains any comm_enque or comm_deque call
 		Map<ProcessState, Boolean> processes = activeProcesses(state);
 		Set<ProcessState> result = new LinkedHashSet<>();
+		// Map<SymbolicExpression, Boolean> memoryUnitMap = new HashMap<>();
 
 		if (processes.size() <= 1)
 			return processes.keySet();
@@ -155,6 +157,7 @@ public class PointeredEnabler extends Enabler implements
 				Stack<Integer> workingProcessIDs = new Stack<>();
 
 				workingProcessIDs.add(p.getPid());
+				ampleProcessIDs.add(p.getPid());
 				while (!workingProcessIDs.isEmpty()) {
 					int pid = workingProcessIDs.pop();
 					ProcessState thisProc = state.getProcessState(pid);
@@ -170,7 +173,6 @@ public class PointeredEnabler extends Enabler implements
 						ampleProcessIDs = allProcessIDs;
 						break;
 					}
-					ampleProcessIDs.add(pid);
 					if (ampleProcessIDs.size() == processes.size())
 						break;
 					for (Statement s : thisProc.getLocation().outgoing()) {
@@ -179,8 +181,10 @@ public class PointeredEnabler extends Enabler implements
 									(WaitStatement) s);
 
 							if (!ampleProcessIDs.contains(joinID)
-									&& workingProcessIDs.contains(joinID))
+									&& workingProcessIDs.contains(joinID)) {
 								workingProcessIDs.add(joinID);
+								ampleProcessIDs.add(joinID);
+							}
 						}
 					}
 					for (ProcessState otherP : processes.keySet()) {
@@ -195,19 +199,32 @@ public class PointeredEnabler extends Enabler implements
 							continue;
 						for (SymbolicExpression unit : impactMemUnits) {
 							if (reachableMemUnitsMapOfOther.containsKey(unit)) {
-								if (reachableMemUnitsMapOfThis.get(unit)
-										|| reachableMemUnitsMapOfOther
-												.get(unit)) {
+								if ((reachableMemUnitsMapOfThis.get(unit) || reachableMemUnitsMapOfOther
+										.get(unit))) {
 									workingProcessIDs.add(otherPid);
-									break;
-								} else if ((thisProc.getLocation().hasDerefs() || otherP
-										.getLocation().hasDerefs())
-										&& evaluator.isHeapObjectReference(
-												unit, state)) {
-									// check heap object
-									workingProcessIDs.add(otherPid);
+									ampleProcessIDs.add(otherPid);
 									break;
 								}
+								// } else if
+								// ((thisProc.getLocation().hasDerefs() ||
+								// otherP
+								// .getLocation().hasDerefs())) {
+								// boolean isHeapObject = false;
+								//
+								// if (memoryUnitMap.containsKey(unit)) {
+								// isHeapObject = memoryUnitMap.get(unit);
+								// } else {
+								// isHeapObject = evaluator
+								// .isHeapObjectReference(unit,
+								// state);
+								// memoryUnitMap.put(unit, isHeapObject);
+								// }
+								// // check heap object
+								// if (isHeapObject) {
+								// workingProcessIDs.add(otherPid);
+								// break;
+								// }
+								// }
 							}
 						}
 					}

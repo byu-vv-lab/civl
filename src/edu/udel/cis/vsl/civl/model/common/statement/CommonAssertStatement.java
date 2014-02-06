@@ -120,16 +120,16 @@ public class CommonAssertStatement extends CommonStatement implements
 
 	@Override
 	public void calculateDerefs() {
-		this.expression.calculateDerefs();
-		this.hasDerefs = this.expression.hasDerefs();
-		if (this.printfArguments != null) {
-			for (Expression arg : this.printfArguments) {
-				arg.calculateDerefs();
-				this.hasDerefs = this.hasDerefs || arg.hasDerefs();
-				if (this.hasDerefs)
-					return;
-			}
-		}
+//		this.expression.calculateDerefs();
+//		this.hasDerefs = this.expression.hasDerefs();
+//		if (this.printfArguments != null) {
+//			for (Expression arg : this.printfArguments) {
+//				arg.calculateDerefs();
+//				this.hasDerefs = this.hasDerefs || arg.hasDerefs();
+//				if (this.hasDerefs)
+//					return;
+//			}
+//		}
 	}
 
 	@Override
