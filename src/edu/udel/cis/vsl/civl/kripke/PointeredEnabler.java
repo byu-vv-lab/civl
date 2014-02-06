@@ -416,9 +416,16 @@ public class PointeredEnabler extends Enabler implements
 						Statement s = currentLocation.getOutgoing(i);
 
 						if (s instanceof CallOrSpawnStatement) {
-							if (((CallOrSpawnStatement) s).isCall()) {
-								return new Pair<MemoryUnitsStatus, Set<SymbolicExpression>>(
-										MemoryUnitsStatus.INCOMPLETE, memUnits);
+							CallOrSpawnStatement callOrSpawnStatement = (CallOrSpawnStatement) s;
+
+							if (callOrSpawnStatement.isCall()) {
+								// assume that system functions are always ample
+								// TODO check comm_deque and comm_enque for
+								// hybrid mpi processes.
+								if (!(callOrSpawnStatement.function() instanceof SystemFunction))
+									return new Pair<MemoryUnitsStatus, Set<SymbolicExpression>>(
+											MemoryUnitsStatus.INCOMPLETE,
+											memUnits);
 							}
 						}
 						try {

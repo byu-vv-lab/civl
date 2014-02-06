@@ -8,7 +8,6 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -81,25 +80,25 @@ public class CommonVariableExpression extends CommonExpression implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLBundleType bundleType) {
+			CIVLHeapType heapType, CIVLType commType) {
 		return null;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+			CIVLType commType) {
 		return null;
 	}
 
 	@Override
 	public Variable variableWritten(Scope scope, CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+			CIVLType commType) {
 		Scope vScope = variable.scope();
 		CIVLType vType = variable.type();
 
 		if (vType.equals(heapType))
 			return null;
-		if (vType.equals(bundleType))
+		if (vType.equals(commType))
 			return null;
 		if (variable.isConst())
 			return null;
@@ -109,13 +108,12 @@ public class CommonVariableExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Variable variableWritten(CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+	public Variable variableWritten(CIVLHeapType heapType, CIVLType commType) {
 		CIVLType vType = variable.type();
 
 		if (vType.equals(heapType))
 			return null;
-		if (vType.equals(bundleType))
+		if (vType.equals(commType))
 			return null;
 		if (variable.isConst())
 			return null;

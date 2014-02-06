@@ -13,8 +13,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -129,30 +129,28 @@ public class CommonDotExpression extends CommonExpression implements
 
 	@Override
 	public Variable variableWritten(Scope scope, CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+			CIVLType commType) {
 		if (struct instanceof LHSExpression) {
 			return ((LHSExpression) struct).variableWritten(scope, heapType,
-					bundleType);
+					commType);
 		}
 		return null;
 	}
 
 	@Override
-	public Variable variableWritten(CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+	public Variable variableWritten(CIVLHeapType heapType, CIVLType commType) {
 		if (struct instanceof LHSExpression) {
-			return ((LHSExpression) struct).variableWritten(heapType,
-					bundleType);
+			return ((LHSExpression) struct).variableWritten(heapType, commType);
 		}
 		return null;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLBundleType bundleType) {
+			CIVLHeapType heapType, CIVLType commType) {
 		Set<Variable> variableSet = new HashSet<>();
 		Set<Variable> operandResult = struct.variableAddressedOf(scope,
-				heapType, bundleType);
+				heapType, commType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
@@ -161,10 +159,10 @@ public class CommonDotExpression extends CommonExpression implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+			CIVLType commType) {
 		Set<Variable> variableSet = new HashSet<>();
 		Set<Variable> operandResult = struct.variableAddressedOf(heapType,
-				bundleType);
+				commType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);

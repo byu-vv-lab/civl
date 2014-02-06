@@ -15,8 +15,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -169,17 +169,17 @@ public class CommonAssignStatement extends CommonStatement implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLBundleType bundleType) {
+			CIVLHeapType heapType, CIVLType commType) {
 		Set<Variable> result = new HashSet<>();
 		Set<Variable> argumentResult = lhs.variableAddressedOf(scope, heapType,
-				bundleType);
-		Variable lhsVariable = lhs.variableWritten(scope, heapType, bundleType);
+				commType);
+		Variable lhsVariable = lhs.variableWritten(scope, heapType, commType);
 
 		if (lhsVariable != null)
 			result.add(lhsVariable);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
-		argumentResult = rhs.variableAddressedOf(scope, heapType, bundleType);
+		argumentResult = rhs.variableAddressedOf(scope, heapType, commType);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		return result;
@@ -187,10 +187,10 @@ public class CommonAssignStatement extends CommonStatement implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+			CIVLType commType) {
 		Set<Variable> result = new HashSet<>();
 		Set<Variable> argumentResult = lhs.variableAddressedOf(heapType,
-				bundleType);
+				commType);
 
 		if (rhs instanceof VariableExpression) {
 			if (rhs.getExpressionType().isPointerType()) {
@@ -199,7 +199,7 @@ public class CommonAssignStatement extends CommonStatement implements
 		} else {
 			if (argumentResult != null)
 				result.addAll(argumentResult);
-			argumentResult = rhs.variableAddressedOf(heapType, bundleType);
+			argumentResult = rhs.variableAddressedOf(heapType, commType);
 			if (argumentResult != null)
 				result.addAll(argumentResult);
 		}

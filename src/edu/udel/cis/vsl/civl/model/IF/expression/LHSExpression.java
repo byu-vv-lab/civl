@@ -1,8 +1,8 @@
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -28,7 +28,7 @@ public interface LHSExpression extends Expression {
 	 * @return
 	 */
 	Variable variableWritten(Scope scope, CIVLHeapType heapType,
-			CIVLBundleType bundleType);
+			CIVLType commType);
 
 	/**
 	 * Return the variable that is possible the left hand side of an assignment
@@ -38,5 +38,5 @@ public interface LHSExpression extends Expression {
 	 *            The given scope.
 	 * @return
 	 */
-	Variable variableWritten(CIVLHeapType heapType, CIVLBundleType bundleType);
+	Variable variableWritten(CIVLHeapType heapType, CIVLType commType);
 }

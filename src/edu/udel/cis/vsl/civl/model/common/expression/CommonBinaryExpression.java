@@ -13,8 +13,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -222,14 +222,14 @@ public class CommonBinaryExpression extends CommonExpression implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLBundleType bundleType) {
+			CIVLHeapType heapType, CIVLType commType) {
 		Set<Variable> variableSet = new HashSet<>();
 		Set<Variable> operandResult = left.variableAddressedOf(scope, heapType,
-				bundleType);
+				commType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
-		operandResult = right.variableAddressedOf(scope, heapType, bundleType);
+		operandResult = right.variableAddressedOf(scope, heapType, commType);
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
 		return variableSet;
@@ -237,14 +237,14 @@ public class CommonBinaryExpression extends CommonExpression implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+			CIVLType commType) {
 		Set<Variable> variableSet = new HashSet<>();
 		Set<Variable> operandResult = left.variableAddressedOf(heapType,
-				bundleType);
+				commType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
-		operandResult = right.variableAddressedOf(heapType, bundleType);
+		operandResult = right.variableAddressedOf(heapType, commType);
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
 		return variableSet;

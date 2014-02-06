@@ -12,7 +12,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -194,23 +193,23 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLBundleType bundleType) {
+			CIVLHeapType heapType, CIVLType commType) {
 		Set<Variable> result = new HashSet<>();
 		Set<Variable> argumentResult;
 
 		if (lhs != null) {
 			Variable lhsVariable = lhs.variableWritten(scope, heapType,
-					bundleType);
+					commType);
 
 			if (lhsVariable != null)
 				result.add(lhsVariable);
 		}
 		argumentResult = heapPointerExpression.variableAddressedOf(scope,
-				heapType, bundleType);
+				heapType, commType);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		argumentResult = sizeExpression.variableAddressedOf(scope, heapType,
-				bundleType);
+				commType);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		return result;
@@ -218,16 +217,15 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+			CIVLType commType) {
 		Set<Variable> result = new HashSet<>();
 		Set<Variable> argumentResult;
 
 		argumentResult = heapPointerExpression.variableAddressedOf(heapType,
-				bundleType);
+				commType);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
-		argumentResult = sizeExpression.variableAddressedOf(heapType,
-				bundleType);
+		argumentResult = sizeExpression.variableAddressedOf(heapType, commType);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		return result;

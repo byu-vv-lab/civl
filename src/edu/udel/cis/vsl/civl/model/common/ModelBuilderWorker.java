@@ -404,7 +404,7 @@ public class ModelBuilderWorker {
 			f.setModel(model);
 			for (Statement s : f.statements()) {
 				Set<Variable> statementResult = s.variableAddressedOf(
-						this.heapType, this.bundleType);
+						this.heapType, this.commType);
 
 				if (statementResult != null) {
 					addressedOfVariables.addAll(statementResult);
@@ -427,7 +427,7 @@ public class ModelBuilderWorker {
 			// checked for being purely local or not
 			for (Location loc : f.locations()) {
 				loc.computeWritableVariables(addressedOfVariables,
-						this.heapType, this.bundleType);
+						this.heapType, this.commType);
 				for (Statement s : loc.outgoing()) {
 					s.purelyLocalAnalysis();
 				}

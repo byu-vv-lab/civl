@@ -15,8 +15,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -120,16 +120,16 @@ public class CommonAssertStatement extends CommonStatement implements
 
 	@Override
 	public void calculateDerefs() {
-//		this.expression.calculateDerefs();
-//		this.hasDerefs = this.expression.hasDerefs();
-//		if (this.printfArguments != null) {
-//			for (Expression arg : this.printfArguments) {
-//				arg.calculateDerefs();
-//				this.hasDerefs = this.hasDerefs || arg.hasDerefs();
-//				if (this.hasDerefs)
-//					return;
-//			}
-//		}
+		// this.expression.calculateDerefs();
+		// this.hasDerefs = this.expression.hasDerefs();
+		// if (this.printfArguments != null) {
+		// for (Expression arg : this.printfArguments) {
+		// arg.calculateDerefs();
+		// this.hasDerefs = this.hasDerefs || arg.hasDerefs();
+		// if (this.hasDerefs)
+		// return;
+		// }
+		// }
 	}
 
 	@Override
@@ -242,17 +242,17 @@ public class CommonAssertStatement extends CommonStatement implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLBundleType bundleType) {
+			CIVLHeapType heapType, CIVLType commType) {
 		Set<Variable> result = new HashSet<>();
 		Set<Variable> argumentResult = expression.variableAddressedOf(scope,
-				heapType, bundleType);
+				heapType, commType);
 
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		if (printfArguments != null) {
 			for (Expression argument : printfArguments) {
 				argumentResult = argument.variableAddressedOf(scope, heapType,
-						bundleType);
+						commType);
 				if (argumentResult != null)
 					result.addAll(argumentResult);
 			}
@@ -262,17 +262,17 @@ public class CommonAssertStatement extends CommonStatement implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLBundleType bundleType) {
+			CIVLType commType) {
 		Set<Variable> result = new HashSet<>();
 		Set<Variable> argumentResult = expression.variableAddressedOf(heapType,
-				bundleType);
+				commType);
 
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		if (printfArguments != null) {
 			for (Expression argument : printfArguments) {
 				argumentResult = argument.variableAddressedOf(heapType,
-						bundleType);
+						commType);
 				if (argumentResult != null)
 					result.addAll(argumentResult);
 			}

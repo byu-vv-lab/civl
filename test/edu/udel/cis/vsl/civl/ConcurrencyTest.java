@@ -130,7 +130,7 @@ public class ConcurrencyTest {
 
 	@Test
 	public void threadPrivate() {
-		assertTrue(ui.run("verify", "-por=new", "-inputNTHREADS=10", "-enablePrintf=false",
+		assertTrue(ui.run("verify", "-por=new", "-inputNTHREADS=10", "-inputN=20", "-enablePrintf=false",
 				filename("threadPrivate.cvl")));
 	}
 
