@@ -122,22 +122,23 @@ public class PointeredEnabler extends Enabler implements
 	 */
 	private Set<ProcessState> ampleProcesses(State state) {
 		// process and if it contains any comm_enque or comm_deque call
-		Map<ProcessState, Boolean> processes = activeProcesses(state);
+		Map<ProcessState, Set<CallOrSpawnStatement>> processes = activeProcesses(state);
 		Set<ProcessState> result = new LinkedHashSet<>();
 		// Map<SymbolicExpression, Boolean> memoryUnitMap = new HashMap<>();
 
 		if (processes.size() <= 1)
 			return processes.keySet();
 		else {
-			HashMap<Integer, HashSet<Integer>> ampleProcessesMap = new HashMap<>();
+			Map<Integer, Set<Integer>> ampleProcessesMap = new HashMap<>();
 			int minimalAmpleSetSize = processes.size() + 1;
 			int minAmpleSetId = -1;
 			// map of reachable memory units and whether the memory unit is to
 			// be written.
-			HashMap<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap = new HashMap<>();
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap = new HashMap<>();
 			// map of impact memory units of the each process
-			HashMap<Integer, Set<SymbolicExpression>> impactMemUnitsMap = new HashMap<>();
-			HashSet<Integer> allProcessIDs = new HashSet<>();
+			Map<Integer, Set<SymbolicExpression>> impactMemUnitsMap = new HashMap<>();
+			Set<Integer> allProcessIDs = new HashSet<>();
+			Map<SymbolicExpression, Set<Integer>> processesInCommMap = new HashMap<>();
 
 			for (ProcessState p : processes.keySet()) {
 				int pid = p.getPid();
@@ -153,8 +154,12 @@ public class PointeredEnabler extends Enabler implements
 				allProcessIDs.add(pid);
 			}
 			for (ProcessState p : processes.keySet()) {
-				HashSet<Integer> ampleProcessIDs = new LinkedHashSet<>();
+				Set<Integer> ampleProcessIDs = new LinkedHashSet<>();
 				Stack<Integer> workingProcessIDs = new Stack<>();
+				// Set<Integer> processesInComm = new HashSet<>();
+				// the map of communicators and processes in the communicator
+				Set<SymbolicExpression> checkedComm = new HashSet<>();
+				Set<CallOrSpawnStatement> commCalls;
 
 				workingProcessIDs.add(p.getPid());
 				ampleProcessIDs.add(p.getPid());
@@ -175,6 +180,48 @@ public class PointeredEnabler extends Enabler implements
 					}
 					if (ampleProcessIDs.size() == processes.size())
 						break;
+					commCalls = processes.get(thisProc);
+					if (!commCalls.isEmpty()) {
+						// this process has calls to comm_enque or comm_dequeu
+						for (CallOrSpawnStatement call : commCalls) {
+							SymbolicExpression comm = null;
+							try {
+								comm = evaluator.evaluate(state, pid, call
+										.arguments().get(0)).value;
+								comm = evaluator.dereference(call.arguments()
+										.get(0).getSource(), state, comm).value;
+							} catch (UnsatisfiablePathConditionException e) {
+								continue;
+							}
+
+							if (!checkedComm.contains(comm)) {
+								// the communicator has been included in the
+								// ample set yet
+								Set<Integer> processIDsInComm;
+
+								if (processesInCommMap.containsKey(comm)) {
+									processIDsInComm = processesInCommMap
+											.get(comm);
+
+								} else {
+									processIDsInComm = evaluator
+											.processesOfSameRankInComm(comm,
+													pid);
+									processesInCommMap.put(comm,
+											processIDsInComm);
+								}
+								for (int commPid : processIDsInComm) {
+									if (!ampleProcessIDs.contains(commPid)
+											&& !workingProcessIDs
+													.contains(commPid)) {
+										workingProcessIDs.add(commPid);
+										ampleProcessIDs.add(commPid);
+									}
+								}
+								checkedComm.add(comm);
+							}
+						}
+					}
 					for (Statement s : thisProc.getLocation().outgoing()) {
 						if (s instanceof WaitStatement) {
 							int joinID = joinedIDofWait(state, thisProc,
@@ -252,15 +299,17 @@ public class PointeredEnabler extends Enabler implements
 	 *            The current state.
 	 * @return
 	 */
-	private Map<ProcessState, Boolean> activeProcesses(State state) {
-		Map<ProcessState, Boolean> result = new LinkedHashMap<>();
+	private Map<ProcessState, Set<CallOrSpawnStatement>> activeProcesses(
+			State state) {
+		Map<ProcessState, Set<CallOrSpawnStatement>> result = new LinkedHashMap<>();
 
 		for (ProcessState p : state.getProcessStates()) {
 			boolean active = false;
-			boolean hasCommOperation = false;
+			Set<CallOrSpawnStatement> commCalls;
 
 			if (p == null || p.hasEmptyStack())
 				continue;
+			commCalls = new HashSet<>();
 			for (Statement s : p.getLocation().outgoing()) {
 				if (!getGuard(s, p.getPid(), state).isFalse()) {
 					active = true;
@@ -268,17 +317,15 @@ public class PointeredEnabler extends Enabler implements
 						CallOrSpawnStatement callOrSpawnStatement = (CallOrSpawnStatement) s;
 						CIVLFunction function = callOrSpawnStatement.function();
 
-						if (!hasCommOperation) {
-							if (function instanceof SystemFunction) {
-								SystemFunction systemFunction = (SystemFunction) function;
-								String library = systemFunction.getLibrary();
-								String name = systemFunction.name().name();
+						if (function instanceof SystemFunction) {
+							SystemFunction systemFunction = (SystemFunction) function;
+							String library = systemFunction.getLibrary();
+							String name = systemFunction.name().name();
 
-								if (library.equals("civlc")) {
-									if (name.equals(COMM_DEQUE)
-											|| name.equals(COMM_ENQUE)) {
-										hasCommOperation = true;
-									}
+							if (library.equals("civlc")) {
+								if (name.equals(COMM_DEQUE)
+										|| name.equals(COMM_ENQUE)) {
+									commCalls.add((CallOrSpawnStatement) s);
 								}
 							}
 						}
@@ -286,7 +333,7 @@ public class PointeredEnabler extends Enabler implements
 				}
 			}
 			if (active)
-				result.put(p, hasCommOperation);
+				result.put(p, commCalls);
 		}
 		return result;
 	}

@@ -47,7 +47,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
  */
 public abstract class Enabler implements
 		EnablerIF<State, Transition, TransitionSequence> {
-	
+
 	protected final String COMM_ENQUE = "$comm_enqueue";
 	protected final String COMM_DEQUE = "$comm_dequeue";
 
@@ -79,7 +79,7 @@ public abstract class Enabler implements
 	protected ModelFactory modelFactory;
 
 	protected boolean showAmpleSet = false;;
-	
+
 	/**
 	 * The unique transition factory used by the system.
 	 */

@@ -2673,4 +2673,78 @@ public class Evaluator {
 
 		return state.getScope(sid).getValue(vid);
 	}
+
+	/**
+	 * Look up a given communicator to find the rank of a certain process.
+	 * 
+	 * @param comm
+	 * @param pid
+	 * @return
+	 */
+	private int findRank(SymbolicExpression comm, int pid) {
+		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
+				universe.intObject(1));
+		NumericExpression symbolicProcsLength = ((SymbolicCompleteArrayType) procMatrix
+				.type()).extent();
+		int procsLength = this.extractInt(null, symbolicProcsLength);
+
+		for (int rank = 0; rank < procsLength; rank++) {
+			SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
+					universe.integer(rank));
+			int procRowLength = this.extractInt(
+					null,
+					(NumericExpression) universe.tupleRead(procQueue,
+							universe.intObject(0)));
+			SymbolicExpression procRow = universe.tupleRead(procQueue,
+					universe.intObject(1));
+
+			for (int j = 0; j < procRowLength; j++) {
+				SymbolicExpression proc = universe.arrayRead(procRow,
+						universe.integer(j));
+				int procId = this.modelFactory.getProcessId(null, proc);
+
+				if (procId == pid)
+					return rank;
+			}
+
+		}
+		return -1;
+	}
+
+	/**
+	 * Computes the set of process id's in a given communicator with the same
+	 * rank as a certain process.
+	 * 
+	 * @param comm
+	 *            The communicator.
+	 * @param pid
+	 *            The process to be checked (excluded in the result set)
+	 * @param state
+	 * @return
+	 */
+	public Set<Integer> processesOfSameRankInComm(SymbolicExpression comm,
+			int pid) {
+		int rank = this.findRank(comm, pid);
+		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
+				universe.intObject(1));
+		SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
+				universe.integer(rank));
+		int procRowLength = this.extractInt(
+				null,
+				(NumericExpression) universe.tupleRead(procQueue,
+						universe.intObject(0)));
+		SymbolicExpression procRow = universe.tupleRead(procQueue,
+				universe.intObject(1));
+		Set<Integer> pidsInComm = new HashSet<>();
+
+		for (int j = 0; j < procRowLength; j++) {
+			SymbolicExpression proc = universe.arrayRead(procRow,
+					universe.integer(j));
+			int procId = this.modelFactory.getProcessId(null, proc);
+
+			if (procId != pid)
+				pidsInComm.add(procId);
+		}
+		return pidsInComm;
+	}
 }
