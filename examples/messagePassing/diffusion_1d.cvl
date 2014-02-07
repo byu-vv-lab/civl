@@ -9,16 +9,17 @@
 #include<civlc.h>
 #include "mp_root.cvh"
 #define FROM_LEFT 1           /* mpi tag which means the source is send or receive
-				 from left chunk*/
+				                 from left chunk*/
 #define FROM_RIGHT 2          /* mpi tag which means the source is send or receive
-				 from right chunk*/
+				                 from right chunk*/
+#define REDUCE 3              /* reduce tag */
 #define Threshold 1           /* the threshold of difference */
-#define k  0.3                /* k = alpha^2 * dt/(dx^2) */
-#define ELENUM 8              /* the length of the array */
+#define K 0.3                 /* k = alpha^2 * dt/(dx^2) */
+#define ELENUM 7              /* the length of the array */
 #define RELEASE 0             /* sync signal */
 #define HOLD 1                /* sync signal */
+#define NSTEPS 2              /* time */
 
-double total_diff = 0.0;        /* shared by all processes */
 int reduce_count = 0;           /* used for sync */
 short __release = HOLD;         /* used for sync */
 double globle_u[ELENUM];        /* used for store the whole array */
@@ -45,7 +46,7 @@ double update(double * u, double * u_new, int start, int end){
 
     // chunk_length = (the length of u or u_new) - 2
     for(i=1; i<chunk_length+1; i++)
-      u_new [i] = u[i] + k * (u[i-1] + u[i+1] - 2*u[i]);
+      u_new [i] = u[i] + K * (u[i-1] + u[i+1] - 2*u[i]);
 
     // compute the difference between u and u_new
     double max_diff = 0;
@@ -89,7 +90,7 @@ void communicate(double * u, int left, int right, int start,
 
 /* compute the value of start, end, left chunk and right chunk
    return an array with those values in such order*/
-void ChunkManager(int length, int nprocs, int rank, int* results){
+void chunkProperties(int length, int nprocs, int rank, int* results){
   if(length < 3 || nprocs > (length - 2))
     return -1;
   
@@ -146,15 +147,30 @@ int initChunk(double * u, double * u_new, int start, int end,
 }
 
 /* combine all separate chunks from all processes */
-double * combineU(int start, int end, double * u){
-  globle_u[0] = boundaryValues(0);
-  globle_u[ELENUM - 1] = boundaryValues(ELENUM - 1);
+void combineU(int start, int end, double * u, int rank, double * whole_u){
+#include "mp_proc_diffusion.cvh"
+  double receive_whole_u[ELENUM];
+  whole_u[0] = boundaryValues(0);
+  whole_u[ELENUM - 1] = boundaryValues(ELENUM - 1);
   int i = start;
   int j = 1;
- 
+  int k = 1;
+  for(; k<ELENUM - 1; k++){
+		whole_u[k] = 0;
+  }
   for(; i < end+1; i++){
-    globle_u[i] = u[j];
-    j++;
+		whole_u[i] = u[j];
+		j++;
+  }
+  if(rank != 0){
+	reduce_send(whole_u, ELENUM, 0, REDUCE, rank);
+  }else{
+	for(i = 1; i<NPROCS; i++){
+	  reduce_recv(receive_whole_u, ELENUM, i, REDUCE, rank);
+	  for(j = 1; j<ELENUM-1; j++){
+		  whole_u[j] += receive_whole_u[j];
+	  }
+	}
   }
 }
 
@@ -188,6 +204,7 @@ void seqDiffusion1d(double * seq_u){
   double diff,max_diff = 0.0;
   double u[ELENUM], u_new[ELENUM];
   int i;
+	int nsteps = NSTEPS;
 
   //Initiate                                                              
   u[0] = boundaryValues(0);
@@ -199,10 +216,10 @@ void seqDiffusion1d(double * seq_u){
     u_new[i] = 0;
   }
   //Jacobi Iteration             
-  while(1){
+  while(nsteps > 0){
     //update                                         
     for(i=1; i<ELENUM-1; i++){
-      u_new[i] = u[i] + k * (u[i-1] + u[i+1] - 2*u[i]);
+      u_new[i] = u[i] + K * (u[i-1] + u[i+1] - 2*u[i]);
     }
     for(i=1; i<ELENUM-1; i++){
       diff = doubleAbs(u_new[i] - u[i]);
@@ -216,77 +233,90 @@ void seqDiffusion1d(double * seq_u){
       break;
     else
       max_diff = 0;
+	  nsteps --;
   }
   for(i =0 ;i<ELENUM; i++){
     seq_u[i] = u[i];
   }
 }
 
+void MPI_Reduce(double * buf, int rank, int count){
+#include "mp_proc_diffusion.cvh"
+	int nprocs = NPROCS;
+	int i=0;
+	double receive_buf;
+	
+	if(rank != 0){
+		reduce_send(buf, count, 0, REDUCE, rank);
+		reduce_recv(buf, count, 0, REDUCE, rank);
+	}
+	else{
+		for(i=1; i<nprocs; i++){
+		reduce_recv(&receive_buf, count, i, REDUCE, rank);
+			(*buf) += receive_buf;	
+		}
+		for(i=1; i<nprocs; i++){
+			reduce_send(buf, count, i, REDUCE, rank);
+		}
+	}
+}
+
 void MPI_Process (int rank){
   
   $when (__start);
   double diff, myTotalDiff;        /* the max difference between previous 
-				      function and updated function*/
+				                      function and updated function*/
+  double whole_u[ELENUM];
   int nprocs;                      /* number of processes*/
   int start, end;                  /* the index of the chunk*/
   int left_chunk, right_chunk;     /* the index of the left chunk 
                                       and right chunk*/
   int chunk_length;                /* number of elements in this chunk*/
   int temp[4];                     /*temp buffer for start, end, left_chunk and right_chunk */
-
-
+  int nsteps = NSTEPS;
   nprocs = NPROCS;
-  $atomic{
-    ChunkManager(ELENUM, nprocs, rank, temp);
-  }
+	
+  chunkProperties(ELENUM, nprocs, rank, temp);
   start = temp[0];
   end = temp[1];
   left_chunk = temp[2];
   right_chunk = temp[3];
   chunk_length = end - start + 1;
-  
   double u[chunk_length + 2];
   double u_new[chunk_length + 2];
 
-  $atomic{
-    initChunk(u, u_new, start, end, left_chunk, right_chunk);
-  }
+  initChunk(u, u_new, start, end, left_chunk, right_chunk);
   /* Jacobi Iterations*/
-  while(1){
+  while(nsteps > 0){
     communicate(u, left_chunk, right_chunk, start, end, rank);
     diff = update(u, u_new, start, end);
-
+	MPI_Reduce(&diff,rank,1);
     //accumulate diff
-    procsHold(nprocs);
-    total_diff += diff;
-    procsRelease();
-    procsHold(nprocs);
-    myTotalDiff = total_diff;
-    procsRelease();
-    if(myTotalDiff <= Threshold){
+//    procsHold(nprocs);
+//    total_diff += diff;
+//    procsRelease();
+//    procsHold(nprocs);
+//    myTotalDiff = total_diff;
+//    procsRelease();
+    if(diff <= Threshold){
       break;
     }
     else{
-      myTotalDiff = 0;
-      total_diff = 0;
+      diff = 0;
+	  nsteps --;
     }
   }
-  procsHold(nprocs);
-  $atomic{
-    combineU(start,end,u);
-  }
-  procsRelease();
+//  procsHold(nprocs);
+    combineU(start,end,u,rank, whole_u);
+//  procsRelease();
   /* the process with rank 0 takes charge of comparing
      the results of sequential way and MPI way */
   if(rank == 0){
-    $atomic{ 
-      int i;
-
-      seqDiffusion1d(seq_u);
-      for(i=0; i<ELENUM; i++){
-	double test_dif = doubleAbs((seq_u[i] - globle_u[i]));
-	$assert (test_dif < 1);
-      }
+	int i;
+	  
+	seqDiffusion1d(seq_u);
+	for(i=0; i<ELENUM; i++){
+	  double test_dif = doubleAbs((seq_u[i] - whole_u[i]));
     }
   }
 }
