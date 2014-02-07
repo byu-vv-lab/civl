@@ -452,7 +452,7 @@ public class Evaluator {
 			Set<SymbolicExpression> set, State state) {
 		SymbolicType type = expr.type();
 
-		//TODO check comm type
+		// TODO check comm type
 		if (type != null && !type.equals(heapType) && !type.equals(bundleType)) {
 			// need to eliminate heap type as well. each proc has its own.
 			if (pointerType.equals(type)) {
@@ -473,7 +473,7 @@ public class Evaluator {
 				}
 			} else {
 				int numArgs = expr.numArguments();
-				//String typeName = type.toString();
+				// String typeName = type.toString();
 
 				for (int i = 0; i < numArgs; i++) {
 					SymbolicObject arg = expr.argument(i);
@@ -2712,6 +2712,37 @@ public class Evaluator {
 
 		}
 		return -1;
+	}
+
+	/**
+	 * Look up a given communicator to find the rank of a certain process.
+	 * 
+	 * @param comm
+	 * @param pid
+	 * @return
+	 */
+	public boolean isProcInCommWithRank(SymbolicExpression comm, int pid,
+			int rank) {
+		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
+				universe.intObject(1));
+		SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
+				universe.integer(rank));
+		int procRowLength = this.extractInt(
+				null,
+				(NumericExpression) universe.tupleRead(procQueue,
+						universe.intObject(0)));
+		SymbolicExpression procRow = universe.tupleRead(procQueue,
+				universe.intObject(1));
+
+		for (int j = 0; j < procRowLength; j++) {
+			SymbolicExpression proc = universe.arrayRead(procRow,
+					universe.integer(j));
+			int procId = this.modelFactory.getProcessId(null, proc);
+
+			if (procId == pid)
+				return true;
+		}
+		return false;
 	}
 
 	/**

@@ -30,7 +30,7 @@ void MPI_Process (int pid) {
   $when (initialized); 
   for (int i=0; i<2; i++) {
     threads[i] = $spawn Thread(i);
-    $comm_add(&comm, threads[i]);
+    $comm_add(&comm, threads[i], pid);
   }
   threadsInit = $true;
   for (int i=0; i<2; i++) $wait threads[i];

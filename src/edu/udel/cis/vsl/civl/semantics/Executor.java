@@ -44,6 +44,8 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.state.immutable.ImmutableState;
+import edu.udel.cis.vsl.civl.state.immutable.ImmutableStateFactory;
 import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -755,6 +757,11 @@ public class Executor {
 					}
 				} else {
 					newState = state.setPathCondition(pathCondition);
+					// TODO improve coding standards
+					// need to call simplify work in order to have concrete
+					// value of input variables when possible
+					newState = ((ImmutableStateFactory) stateFactory)
+							.simplifyWork((ImmutableState) newState);
 					newState = execute(newState, pid, s);
 				}
 			} catch (UnsatisfiablePathConditionException e) {

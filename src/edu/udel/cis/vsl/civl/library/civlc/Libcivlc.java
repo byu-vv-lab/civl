@@ -690,7 +690,7 @@ public class Libcivlc implements LibraryExecutor {
 				argumentValues[0]);
 		SymbolicExpression comm = evaluator.dereference(commArgSource, state,
 				argumentValues[0]).value;
-		int int_rank = evaluator.findRank(comm, pid);
+		// int int_rank = evaluator.findRank(comm, pid);
 
 		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
 		// nprocs = evaluator.extractInt(commArgSource,
@@ -699,21 +699,22 @@ public class Libcivlc implements LibraryExecutor {
 		// universe.intObject(1));
 		// evaluator.dereference(commArgSource, state,
 		// argumentValues[1]);
-		if (int_rank < 0) {
-			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE,
-					"The process attempting to call $comm_enqueue is not in the communicator "
-							+ arguments[0].toString() + ".", commArgSource);
-		}
+		// if (int_rank < 0) {
+		// throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
+		// Certainty.CONCRETE,
+		// "The process attempting to call $comm_enqueue is not in the communicator "
+		// + arguments[0].toString() + ".", commArgSource);
+		// }
 		newMessage = argumentValues[1];
 		source = evaluator.extractInt(arguments[1].getSource(),
 				(NumericExpression) universe.tupleRead(newMessage, zeroObject));
-		if (int_rank != source) {
+		if (!evaluator.isProcInCommWithRank(comm, pid, source)) {
 			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE, "The process of rank " + int_rank
-							+ " cannot call $comm_enqueue of communicator "
-							+ arguments[0].toString() + " using source "
-							+ source + ".", commArgSource);
+					Certainty.CONCRETE,
+					"The process cannot call $comm_enqueue of communicator "
+							+ arguments[0].toString()
+							+ " using source rank of " + source + ".",
+					commArgSource);
 		}
 		dest = evaluator.extractInt(arguments[1].getSource(),
 				(NumericExpression) universe.tupleRead(newMessage, oneObject));
@@ -1170,25 +1171,26 @@ public class Libcivlc implements LibraryExecutor {
 		SymbolicExpression messages;
 		int numMessages;
 		boolean enabled = false;
-		int int_rank;
+		// int int_rank;
 		int dest;
 
 		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
-		int_rank = evaluator.findRank(comm, pid);
-		if (int_rank < 0) {
-			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE,
-					"The process attempting to call $comm_dequeue is not in the communicator "
-							+ arguments[0].toString() + ".", commArgSource);
-		}
+		// int_rank = evaluator.findRank(comm, pid);
+		// if (int_rank < 0) {
+		// throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
+		// Certainty.CONCRETE,
+		// "The process attempting to call $comm_dequeue is not in the communicator "
+		// + arguments[0].toString() + ".", commArgSource);
+		// }
 		destExpression = (NumericExpression) argumentValues[2];
 		dest = evaluator.extractInt(null, destExpression);
-		if (dest != int_rank) {
+		if (!evaluator.isProcInCommWithRank(comm, pid, dest)) {
 			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE, "The process of rank " + int_rank
-							+ " cannot call $comm_dequeue of communicator "
-							+ arguments[0].toString() + " using destination "
-							+ dest + ".", commArgSource);
+					Certainty.CONCRETE,
+					"The process cannot call $comm_dequeue of communicator "
+							+ arguments[0].toString()
+							+ " using destination rank of " + dest + ".",
+					commArgSource);
 		}
 
 		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
@@ -1239,9 +1241,7 @@ public class Libcivlc implements LibraryExecutor {
 		SymbolicExpression nprocs;
 		int int_nprocs;
 		SymbolicExpression procs;
-		// Get the exact rank
-		int int_rank;
-		NumericExpression rank;
+		NumericExpression rank = (NumericExpression) argumentValues[2];
 		SymbolicExpression procQueue;
 		// assert procQueue != null;
 		SymbolicExpression queueLength;
@@ -1258,6 +1258,7 @@ public class Libcivlc implements LibraryExecutor {
 				argumentValues[0]);
 		int commVariableID = evaluator.getVariableId(arguments[0].getSource(),
 				argumentValues[0]);
+		int pRank = evaluator.extractInt(arguments[2].getSource(), rank);
 
 		eval = evaluator.dereference(arguments[0].getSource(), state,
 				argumentValues[0]);
@@ -1266,13 +1267,15 @@ public class Libcivlc implements LibraryExecutor {
 		nprocs = this.universe.tupleRead(comm, zeroObject);
 		int_nprocs = evaluator.extractInt(source, (NumericExpression) nprocs);
 		procs = this.universe.tupleRead(comm, oneObject);
-		// Get the exact rank
-		int_rank = evaluator.findRank(comm, pid);
-		if (int_rank < 0) {
+		// // Get the exact rank
+		// int_rank = evaluator.findRank(comm, pid);
+		if (!evaluator.isProcInCommWithRank(comm, pid, pRank)) {
 			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
 					Certainty.CONCRETE,
-					"The process attempting to call $comm_add is not in the communicator "
-							+ arguments[0].toString() + ".", source);
+					"The process attempting to call $comm_add of the communicator "
+							+ arguments[0].toString()
+							+ " doesn't have the rank of " + pRank + ".",
+					source);
 		}
 		if (evaluator.findRank(comm, procToAdd) >= 0) {
 			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
@@ -1282,7 +1285,6 @@ public class Libcivlc implements LibraryExecutor {
 							+ " and thus can't be added into it again.",
 					arguments[1].getSource());
 		}
-		rank = universe.integer(int_rank);
 		procQueue = universe.arrayRead(procs, rank);
 		assert procQueue != null;
 		queueLength = universe.tupleRead(procQueue, zeroObject);

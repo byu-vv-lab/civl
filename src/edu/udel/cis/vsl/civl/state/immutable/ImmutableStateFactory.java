@@ -560,7 +560,7 @@ public class ImmutableStateFactory implements StateFactory {
 		return newScopes;
 	}
 
-	private ImmutableState simplifyWork(ImmutableState theState) {
+	public ImmutableState simplifyWork(ImmutableState theState) {
 		int numScopes = theState.numScopes();
 		BooleanExpression pathCondition = theState.getPathCondition();
 		ImmutableDynamicScope[] newDynamicScopes = null;
