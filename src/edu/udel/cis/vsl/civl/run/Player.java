@@ -85,9 +85,9 @@ public abstract class Player {
 
 	protected boolean showAmpleSet; // false by default
 
-	protected boolean scpPor; // false by default
+	protected boolean scpPor1; // false by default
 
-	protected boolean newPor;
+	protected boolean scpPor2; // false by default
 
 	protected boolean saveStates; // true by default
 
@@ -140,21 +140,24 @@ public abstract class Player {
 		this.showTransitions = config.isTrue(UserInterface.showTransitionsO);
 		this.minimize = config.isTrue(UserInterface.minO);
 		this.maxdepth = (int) config.getValueOrDefault(UserInterface.maxdepthO);
-		this.scpPor = ((String) config.getValueOrDefault(UserInterface.porO))
-				.equalsIgnoreCase("scp");
-		this.newPor = ((String) config.getValueOrDefault(UserInterface.porO))
-				.equalsIgnoreCase("new");
+		this.scpPor1 = ((String) config.getValueOrDefault(UserInterface.porO))
+				.equalsIgnoreCase("scp1");
+		this.scpPor2 = ((String) config.getValueOrDefault(UserInterface.porO))
+				.equalsIgnoreCase("scp2");
 		this.saveStates = (Boolean) config
 				.getValueOrDefault(UserInterface.saveStatesO);
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
-		if (this.newPor) {
+		if (this.scpPor1) {
+			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
+					false, showAmpleSet);
+		} else if (this.scpPor2) {
+			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
+					true, showAmpleSet);
+		} else {
 			enabler = new PointeredEnabler(transitionFactory, evaluator,
 					executor, showAmpleSet);
-		} else {
-			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					this.scpPor, showAmpleSet);
 		}
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);

@@ -27,20 +27,18 @@ public class ConcurrencyTest {
 
 	@Test
 	public void adder() {
-		assertTrue(ui.run("verify", filename("adder.cvl"), "-inputB=5",
-				"-por=new"));
+		assertTrue(ui.run("verify", filename("adder.cvl"), "-inputB=5"));
 	}
 
 	@Test
 	public void adder2() {
-		assertTrue(ui.run("verify", filename("adder2.cvl"), "-inputN=4",
-				"-por=new"));
+		assertTrue(ui.run("verify", filename("adder2.cvl"), "-inputN=4"));
 	}
 
 	@Test
 	public void adderBad() {
 		assertFalse(ui.run("verify", filename("adderBad.cvl"), "-inputB=4",
-				"-min", "-por=new"));
+				"-min"));
 		assertFalse(ui.run("replay", filename("adderBad.cvl")));
 	}
 
@@ -97,55 +95,52 @@ public class ConcurrencyTest {
 
 	@Test
 	public void locksBad() {
-		assertFalse(ui.run("verify", filename("locksBad.cvl"), "-por=new"));
+		assertFalse(ui.run("verify", filename("locksBad.cvl")));
 	}
 
 	@Test
 	public void locksBad10() {
-		assertFalse(ui.run("verify", filename("locksBad10.cvl"), "-por=new"));
+		assertFalse(ui.run("verify", filename("locksBad10.cvl")));
 	}
 
 	@Test
 	public void locksGood() {
-		assertTrue(ui.run("verify", filename("locksGood.cvl"), "-por=new"));
+		assertTrue(ui.run("verify", filename("locksGood.cvl")));
 	}
 
 	@Test
 	public void spawn() {
-		assertTrue(ui.run("verify", "-inputN=10", filename("spawn.cvl"),
-				"-por=new"));
+		assertTrue(ui.run("verify", "-inputN=10", filename("spawn.cvl")));
 	}
 
 	@Test
 	public void spawn2() {
-		assertTrue(ui.run("verify", "-inputN=10", filename("spawn2.cvl"),
-				"-por=new"));
+		assertTrue(ui.run("verify", "-inputN=10", filename("spawn2.cvl")));
 	}
 
 	@Test
 	public void spawnBad() {
-		assertFalse(ui.run("verify", "-inputN=10", filename("spawnBad.cvl"),
-				"-por=new"));
+		assertFalse(ui.run("verify", "-inputN=10", filename("spawnBad.cvl")));
 	}
 
 	@Test
 	public void threadPrivate() {
-		assertTrue(ui.run("verify", "-por=new", "-inputNTHREADS=10", "-inputN=20", "-enablePrintf=false",
-				filename("threadPrivate.cvl")));
+		assertTrue(ui.run("verify", "-inputNTHREADS=10", "-inputN=20",
+				"-enablePrintf=false", filename("threadPrivate.cvl")));
 	}
 
 	@Test
 	public void pointerShare() {
-		assertFalse(ui.run("verify", "-por=new", filename("pointerShare.cvl")));
+		assertFalse(ui.run("verify", filename("pointerShare.cvl")));
 	}
-	
+
 	@Test
 	public void pointerShare1() {
-		assertFalse(ui.run("verify", "-por=new", filename("pointerShare1.cvl")));
+		assertFalse(ui.run("verify", filename("pointerShare1.cvl")));
 	}
-	
+
 	@Test
 	public void pointerShare2() {
-		assertFalse(ui.run("verify", "-por=new", filename("pointerShare2.cvl")));
+		assertFalse(ui.run("verify", filename("pointerShare2.cvl")));
 	}
 }

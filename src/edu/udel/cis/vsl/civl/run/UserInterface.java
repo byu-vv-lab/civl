@@ -87,7 +87,7 @@ public class UserInterface {
 					"por",
 					STRING,
 					"partial order reduction (por) choices:\n"
-							+ "    std (standard por) or scp (scoped por) or new (new por)",
+							+ "    std (standard por) or scp1 (scoped por 1) or scp1 (scoped por 2)",
 					"std");
 
 	public final static Option randomO = Option.newScalarOption("random",

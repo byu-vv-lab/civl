@@ -24,13 +24,13 @@ public class CudaTest {
 
 	@Test
 	public void exitBarrier() {
-		assertTrue(ui.run("verify", filename("exitBarrier.cvl"), "-por=new"));
+		assertTrue(ui.run("verify", filename("exitBarrier.cvl")));
 	}
 
 	@Test
 	public void dotProduct() {
-		assertTrue(ui.run("verify", filename("dotProduct.cvl"), "-por=new",
-				"-inputBNPG=2", "-inputK=3", "-inputTNPB=2"));
+		assertTrue(ui.run("verify", filename("dotProduct.cvl"), "-inputBNPG=2",
+				"-inputK=3", "-inputTNPB=2"));
 	}
 
 	// @Test
