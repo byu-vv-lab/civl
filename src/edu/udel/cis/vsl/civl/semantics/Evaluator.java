@@ -452,6 +452,7 @@ public class Evaluator {
 			Set<SymbolicExpression> set, State state) {
 		SymbolicType type = expr.type();
 
+		//TODO check comm type
 		if (type != null && !type.equals(heapType) && !type.equals(bundleType)) {
 			// need to eliminate heap type as well. each proc has its own.
 			if (pointerType.equals(type)) {
@@ -472,6 +473,7 @@ public class Evaluator {
 				}
 			} else {
 				int numArgs = expr.numArguments();
+				//String typeName = type.toString();
 
 				for (int i = 0; i < numArgs; i++) {
 					SymbolicObject arg = expr.argument(i);
@@ -2629,7 +2631,8 @@ public class Evaluator {
 			// atomic_enter statement is always considered as dependent with all
 			// processes since it accesses the global variable __atomic_lock_var
 			if (!variable.isConst() && !type.equals(modelFactory.heapType())
-					&& !type.equals(modelFactory.bundleType())) {
+					&& !type.equals(modelFactory.bundleType())
+					&& !type.equals(variable.scope().model().commType())) {
 				eval = new Evaluation(state, makePointer(sid, vid,
 						identityReference));
 				memoryUnits.addAll(pointersInExpression(eval.value, state));
@@ -2681,7 +2684,7 @@ public class Evaluator {
 	 * @param pid
 	 * @return
 	 */
-	private int findRank(SymbolicExpression comm, int pid) {
+	public int findRank(SymbolicExpression comm, int pid) {
 		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
 				universe.intObject(1));
 		NumericExpression symbolicProcsLength = ((SymbolicCompleteArrayType) procMatrix
@@ -2718,7 +2721,7 @@ public class Evaluator {
 	 * @param comm
 	 *            The communicator.
 	 * @param pid
-	 *            The process to be checked (excluded in the result set)
+	 *            The process to be checked (including in the result set)
 	 * @param state
 	 * @return
 	 */
@@ -2742,8 +2745,7 @@ public class Evaluator {
 					universe.integer(j));
 			int procId = this.modelFactory.getProcessId(null, proc);
 
-			if (procId != pid)
-				pidsInComm.add(procId);
+			pidsInComm.add(procId);
 		}
 		return pidsInComm;
 	}

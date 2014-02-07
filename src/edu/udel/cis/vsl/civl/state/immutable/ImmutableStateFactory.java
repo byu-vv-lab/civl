@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.state.immutable;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -20,7 +22,11 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * An implementation of StateFactory based on the Immutable Pattern.
@@ -35,6 +41,8 @@ public class ImmutableStateFactory implements StateFactory {
 	/************************* Instance Fields *************************/
 
 	private GMCConfiguration config;
+
+	private Evaluator evaluator;
 
 	private boolean simplify;
 
@@ -456,12 +464,77 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression[] newValues = null;
 			BitSet oldBitSet = dynamicScope.getReachers();
 			BitSet newBitSet = updateBitSet(oldBitSet, oldToNewPidMap);
+			Model model = staticScope.model();
 
 			for (Variable variable : procrefVariableIter) {
 				int vid = variable.vid();
 				SymbolicExpression oldValue = dynamicScope.getValue(vid);
 				SymbolicExpression newValue = universe.substitute(oldValue,
 						procSubMap);
+
+				// update communicator
+				if (variable.type().equals(model.commType())) {
+					SymbolicExpression procMatrix = this.universe.tupleRead(
+							newValue, universe.intObject(1));
+					NumericExpression symbolicRankCount = ((SymbolicCompleteArrayType) procMatrix
+							.type()).extent();
+					int rankCount = evaluator.extractInt(null,
+							symbolicRankCount);
+					SymbolicExpression undefinedProc = modelFactory
+							.undefinedProcessValue();
+					int procCount = 0;
+					 ArrayList<SymbolicExpression> newProcQueueArrayComponents
+					 = new ArrayList<>();
+					SymbolicExpression newProcQueueArray = procMatrix;
+					 SymbolicTupleType newProcQueueType = null;
+					// SymbolicExpression buffer = universe.tupleRead(newValue,
+					// universe.intObject(2));
+					SymbolicExpression newComm;
+					// ArrayList<SymbolicExpression> newCommComponents = new
+					// ArrayList<>();
+
+					for (int rank = 0; rank < rankCount; rank++) {
+						SymbolicExpression procQueue = this.universe.arrayRead(
+								procMatrix, universe.integer(rank));
+						int procRowLength = evaluator.extractInt(null,
+								(NumericExpression) universe.tupleRead(
+										procQueue, universe.intObject(0)));
+						SymbolicExpression procRow = universe.tupleRead(
+								procQueue, universe.intObject(1));
+						ArrayList<SymbolicExpression> newProcQueueComponents = new ArrayList<>();
+						ArrayList<SymbolicType> newProcQueueTypeComponents = new ArrayList<>();
+						ArrayList<SymbolicExpression> newProcArrayComponents = new ArrayList<>();
+						SymbolicExpression newProcArray, newProcQueue;
+						int procQueueLength = 0;
+
+						for (int j = 0; j < procRowLength; j++) {
+							SymbolicExpression proc = universe.arrayRead(
+									procRow, universe.integer(j));
+
+							if (!proc.equals(undefinedProc)) {
+								newProcArrayComponents.add(proc);
+								procCount++;
+								procQueueLength++;
+							}
+						}
+						newProcArray = universe.array(
+								modelFactory.processSymbolicType(),
+								newProcArrayComponents);
+						newProcQueueComponents.add(universe.integer(procQueueLength));
+						newProcQueueComponents.add(newProcArray);
+						newProcQueueTypeComponents.add(universe.integerType());
+						newProcQueueTypeComponents.add(newProcArray.type());
+						newProcQueueType = universe.tupleType(universe.stringObject("__procQueue__"), newProcQueueTypeComponents);
+						newProcQueue = universe.tuple(newProcQueueType, newProcQueueComponents);
+						newProcQueueArrayComponents.add(newProcQueue);
+					}
+					newProcQueueArray = universe.array(universe.pureType(newProcQueueType), newProcQueueArrayComponents);
+					newComm = universe.tupleWrite(newValue,
+							universe.intObject(0), universe.integer(procCount));
+					newComm = universe.tupleWrite(newComm,
+							universe.intObject(1), newProcQueueArray);
+					newValue = newComm;
+				}
 
 				if (oldValue != newValue) {
 					if (newValues == null)
@@ -684,8 +757,8 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public int processInAtomic(State state) {
 		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0, 0);
-		
-		return  modelFactory.getProcessId(modelFactory.systemSource(),
+
+		return modelFactory.getProcessId(modelFactory.systemSource(),
 				symbolicAtomicPid);
 	}
 
@@ -898,6 +971,11 @@ public class ImmutableStateFactory implements StateFactory {
 
 	public GMCConfiguration getConfiguration() {
 		return config;
+	}
+
+	@Override
+	public void setEvaluator(Evaluator evaluator) {
+		this.evaluator = evaluator;
 	}
 
 }

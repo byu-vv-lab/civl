@@ -29,29 +29,29 @@ public class MessagePassingTest {
 
 	@Test
 	public void ring() {
-		assertTrue(ui.run("verify", filename("ring.cvl"), "-inputNPROCS=3"));
+		assertTrue(ui.run("verify", filename("ring.cvl"), "-inputNPROCS=3", "-por=new"));
 	}
 
 	@Test
 	public void ring2() {
-		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));
+		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3", "-por=new"));
 	}
 
 	@Test
 	public void hybrid() {
-		assertFalse(ui.run("verify", filename("hybrid.cvl")));
+		assertFalse(ui.run("verify", filename("hybrid.cvl"), "-por=new"));
 	}
 
 	// takes too long (forever?)
-	@Ignore
+	//@Ignore
 	@Test
 	public void hybridMin() {
-		assertFalse(ui.run("verify", "-min", filename("hybrid.cvl")));
+		assertFalse(ui.run("verify", "-min", filename("hybrid.cvl"), "-por=new"));
 	}
 
 	@Test
 	public void hybrid2() {
-		assertFalse(ui.run("verify", filename("hybrid2.cvl"), "-inputNPROCS=2"));
+		assertFalse(ui.run("verify", filename("hybrid2.cvl"), "-inputNPROCS=2", "-por=new"));
 	}
 
 	// takes too long (forever?)
@@ -59,7 +59,7 @@ public class MessagePassingTest {
 	@Test
 	public void hybrid2Min() {
 		assertFalse(ui.run("verify", filename("hybrid2.cvl"), "-inputNPROCS=2",
-				"-min"));
+				"-min", "-por=new"));
 	}
 	
 	@Test

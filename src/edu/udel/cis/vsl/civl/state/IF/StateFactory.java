@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.CommonModelFactory;
+import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -330,4 +331,6 @@ public interface StateFactory {
 	 * @return The new state after updating the process with the specified id
 	 */
 	State setProcessState(State state, ProcessState processState, int pid);
+
+	void setEvaluator(Evaluator evaluator);
 }

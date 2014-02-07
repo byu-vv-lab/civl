@@ -211,11 +211,17 @@ public class PointeredEnabler extends Enabler implements
 											processIDsInComm);
 								}
 								for (int commPid : processIDsInComm) {
-									if (!ampleProcessIDs.contains(commPid)
+									if (commPid != pid
+											&& allProcessIDs.contains(commPid)
+											&& !ampleProcessIDs
+													.contains(commPid)
 											&& !workingProcessIDs
 													.contains(commPid)) {
 										workingProcessIDs.add(commPid);
 										ampleProcessIDs.add(commPid);
+										if (ampleProcessIDs.size() == allProcessIDs
+												.size())
+											break;
 									}
 								}
 								checkedComm.add(comm);
@@ -231,19 +237,23 @@ public class PointeredEnabler extends Enabler implements
 									&& workingProcessIDs.contains(joinID)) {
 								workingProcessIDs.add(joinID);
 								ampleProcessIDs.add(joinID);
+								if (ampleProcessIDs.size() == allProcessIDs
+										.size())
+									break;
 							}
 						}
 					}
 					for (ProcessState otherP : processes.keySet()) {
 						int otherPid = otherP.getPid();
-						Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther = reachableMemUnitsMap
-								.get(otherPid);
+						Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther;
 
 						// add new ample id earlier
 						if (otherPid == pid
 								|| ampleProcessIDs.contains(otherPid)
 								|| workingProcessIDs.contains(otherPid))
 							continue;
+						reachableMemUnitsMapOfOther = reachableMemUnitsMap
+								.get(otherPid);
 						for (SymbolicExpression unit : impactMemUnits) {
 							if (reachableMemUnitsMapOfOther.containsKey(unit)) {
 								if ((reachableMemUnitsMapOfThis.get(unit) || reachableMemUnitsMapOfOther
@@ -274,6 +284,8 @@ public class PointeredEnabler extends Enabler implements
 								// }
 							}
 						}
+						if (ampleProcessIDs.size() == allProcessIDs.size())
+							break;
 					}
 				}
 				ampleProcessesMap.put(p.getPid(), ampleProcessIDs);

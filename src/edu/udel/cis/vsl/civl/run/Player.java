@@ -82,7 +82,7 @@ public abstract class Player {
 	protected boolean minimize;
 
 	protected int maxdepth;
-	
+
 	protected boolean showAmpleSet; // false by default
 
 	protected boolean scpPor; // false by default
@@ -115,12 +115,14 @@ public abstract class Player {
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);
 		evaluator.setSolve(solve);
+		this.stateFactory.setEvaluator(evaluator);
 		this.loader = new CommonLibraryExecutorLoader();
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));
 		this.enablePrintf = (Boolean) config
 				.getValueOrDefault(UserInterface.enablePrintfO);
-		this.showAmpleSet = (Boolean) config.getValueOrDefault(UserInterface.showAmpleSetO);
+		this.showAmpleSet = (Boolean) config
+				.getValueOrDefault(UserInterface.showAmpleSetO);
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		if (this.mpiMode)
 			this.executor = new MPIExecutor(config, modelFactory, stateFactory,

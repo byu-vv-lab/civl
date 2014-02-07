@@ -68,8 +68,8 @@ void finalize() {
 }
 
 void main() {
-  $atomic{
+  //$atomic{
     init();
     finalize();
-  }
+  //}
 }
