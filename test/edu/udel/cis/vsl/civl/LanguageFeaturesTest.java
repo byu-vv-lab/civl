@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.ABCException;
@@ -155,12 +154,6 @@ public class LanguageFeaturesTest {
 	@Test
 	public void chooseInt() throws ABCException {
 		assertTrue(ui.run("verify", filename("chooseInt.cvl")));
-	}
-
-	@Ignore
-	@Test
-	public void comm() throws ABCException {
-		assertTrue(ui.run("verify", filename("comm.cvl")));
 	}
 
 	@Test
