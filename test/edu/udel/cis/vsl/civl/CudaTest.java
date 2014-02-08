@@ -28,9 +28,9 @@ public class CudaTest {
 	}
 
 	@Test
-	public void dotProduct() {
-		assertTrue(ui.run("verify", filename("dotProduct.cvl"), "-inputBNPG=2",
-				"-inputK=3", "-inputTNPB=2"));
+	public void dot() {
+		assertTrue(ui.run("verify", filename("dot.cvl"), "-inputN_BOUND=8",
+				"-inputTHREADS_PER_BLOCK=4"));
 	}
 
 	// @Test

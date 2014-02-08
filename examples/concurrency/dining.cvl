@@ -1,13 +1,13 @@
 /* Dining philosophers with fork switching. Even philosophers pick
  * up left fork first, odd pick up right first.  This breaks deadlock.
  *
- *       civl verify -inputB=4 dining.cvl
+ *       civl verify -inputBOUND=4 dining.cvl
  */
 #include <civlc.h>
 
-$input int B; // upper bound on number of philosophers
+$input int BOUND; // upper bound on number of philosophers
 $input int n; // number of philosophers
-$assume 2<=n && n<=B;
+$assume 2<=n && n<=BOUND;
 
 // Each fork will be on the table (0) or in a hand (1).
 int forks[n];

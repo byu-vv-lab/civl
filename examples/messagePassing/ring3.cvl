@@ -6,6 +6,8 @@
 #define TAG 0
 
 $input int NPROCS;
+$input int NB;
+$assume 1 < NPROCS && NPROCS <= NB;
 _Bool initialized = $false;
 $comm MPI_COMM_WORLD;
 
@@ -22,14 +24,15 @@ void MPI_Process (int rank) {
   $assert(y==(rank+NPROCS-1)%NPROCS);
 }
 
-
 void main() {
   $proc procs[NPROCS];
   
+  $atomic{
   for (int i=0; i<NPROCS; i++)
 	  procs[i] = $spawn MPI_Process(i);
   MPI_COMM_WORLD = $comm_create(NPROCS, procs);
   initialized = $true;
+  }
   for (int i=0; i<NPROCS; i++)
     $wait procs[i];
 }

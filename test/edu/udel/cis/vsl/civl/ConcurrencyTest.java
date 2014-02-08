@@ -82,7 +82,7 @@ public class ConcurrencyTest {
 
 	@Test
 	public void dining() {
-		assertTrue(ui.run("verify", "-inputB=4", filename("dining.cvl"),
+		assertTrue(ui.run("verify", "-inputBOUND=4", filename("dining.cvl"),
 				"-por=new"));
 	}
 
@@ -125,8 +125,9 @@ public class ConcurrencyTest {
 
 	@Test
 	public void threadPrivate() {
-		assertTrue(ui.run("verify", "-inputNTHREADS=10", "-inputN=20",
-				"-enablePrintf=false", filename("threadPrivate.cvl")));
+		assertTrue(ui.run("verify", "-inputTHREADS_BOUND=12",
+				"-inputN_BOUND=15", "-enablePrintf=false",
+				filename("fig4.98-threadprivate.cvl")));
 	}
 
 	@Test

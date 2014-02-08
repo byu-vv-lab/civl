@@ -1,11 +1,15 @@
 /*
  * Command line execution:
- * civl verify -por=new -inputNTHREADS=10 -inputN=20 threadprivate.cvl
+ *     civl verify -inputTHREADS_BOUND=10 -inputN_BOUND=40 fig4.98-threadprivate.cvl -enablePrintf=false
  */
 #include<civlc.h>
 #include<stdio.h>
-$input int NTHREADS;
-$input int N;
+$input int THREADS_BOUND; // upper bound of number of threads 
+$input int NTHREADS;// number of threads
+$assume 0 < NTHREADS && NTHREADS <=THREADS_BOUND;
+$input int N_BOUND; // upper bound of N
+$input int N; // the value of the variable n
+$assume 0 < N && N <=N_BOUND;
 #define OWNS(numIters, threadId, index) ((index)%NTHREADS==threadId)
 $heap h;
 $proc threads[NTHREADS];
@@ -18,7 +22,7 @@ int calculate_sum(int length, int *_pglobal) {
 }
 
 void main() {
-  int i, j, sum, TID, n=N;
+  int i, j, sum, TID, n= N; // the oringial program uses 5 for n, but we need to use a larger value of n for verification when there are more than 5 threads.
   int length[n], check[n];
 
   for (i=0; i<n; i++) {

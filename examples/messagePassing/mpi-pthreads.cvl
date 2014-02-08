@@ -1,5 +1,7 @@
 /* CIVL model of simple hybrid MPI+threads program.
  * The program has a defect.
+ * Commnad line execution:
+ *     civl verify -min mpi-pthreads.cvl
  */
 #include<civlc.h>
 #define TAG 0

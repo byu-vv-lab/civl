@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -234,14 +235,51 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope,
 			CIVLHeapType heapType, CIVLType commType) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult;
+
+		if (expression != null) {
+			operandResult = expression.variableAddressedOf(scope, heapType,
+					commType);
+			if (operandResult != null)
+				variableSet.addAll(operandResult);
+		}
+		if (lower != null) {
+			operandResult = lower
+					.variableAddressedOf(scope, heapType, commType);
+			if (operandResult != null)
+				variableSet.addAll(operandResult);
+		}
+		if (upper != null) {
+			operandResult = upper
+					.variableAddressedOf(scope, heapType, commType);
+			if (operandResult != null)
+				variableSet.addAll(operandResult);
+		}
+		return variableSet;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
 			CIVLType commType) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult;
+
+		if (expression != null) {
+			operandResult = expression.variableAddressedOf(heapType, commType);
+			if (operandResult != null)
+				variableSet.addAll(operandResult);
+		}
+		if (lower != null) {
+			operandResult = lower.variableAddressedOf(heapType, commType);
+			if (operandResult != null)
+				variableSet.addAll(operandResult);
+		}
+		if (upper != null) {
+			operandResult = upper.variableAddressedOf(heapType, commType);
+			if (operandResult != null)
+				variableSet.addAll(operandResult);
+		}
+		return variableSet;
 	}
 }
