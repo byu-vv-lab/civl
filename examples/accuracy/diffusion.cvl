@@ -8,7 +8,7 @@ $input double h; /* Distance between points */
 $input double dt; /* Size of a time step */
 $input double k; /* Constant for rate of diffusion */
 $input double u1[n];
-$abstract $contin(4) double u(double x, double t);
+$abstract $contin(4) $real u($real x, $real t);
 $assume h > 0;
 $assume dt > 0;
 $assume k > 0;

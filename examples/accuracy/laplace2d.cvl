@@ -9,7 +9,7 @@ $input int cols;
 $input double u[rows][cols];
 double result[rows][cols];
 $assume h > 0;
-$abstract $contin(4) double phi(double x, double y);
+$abstract $contin(4) $real phi($real x, $real y);
 $assume $forall {m=0 .. rows-1} $forall {n=0 .. cols-1} u[m][n] == phi(m*h, n*h);
 
 void laplace() {

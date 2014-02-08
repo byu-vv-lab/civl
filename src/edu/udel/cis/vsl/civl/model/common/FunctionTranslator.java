@@ -3149,6 +3149,7 @@ public class FunctionTranslator {
 		case FLOAT:
 		case DOUBLE:
 		case LONG_DOUBLE:
+		case REAL:
 			return modelFactory.realType();
 		case BOOL:
 			return modelFactory.booleanType();
