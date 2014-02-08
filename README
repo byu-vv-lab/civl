@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v 0.6
+                               v 0.7
 
 ------------------------------ Overview -------------------------------
 
@@ -37,38 +37,14 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.5 -------------------------
+-------------------------- Updates from v 0.6 -------------------------
 
-1. Support struct and array literal expressions.
-   For example:
-   typedef struct Node {int id; Node* next; } Node;
-   Node last = {.id=2, .next=NULL};
-   Node first = {.id = 1, .next = &last};
-   Node* list = (Node[]){[0]=one, [1]=last};
-   More examples can be found in 
-   examples/languageFeatures/arrayLiteral.cvl,
-   arrays.cvl, struct.cvl, etc.
+1. A new system function is supported: $comm_add(*comm comm, $proc q, int rank),
+   allowing one process to add another process q into the communicator comm. 
+   Refer to examples/messagePassing/hybrid.cvl for more details.
 
-2. Support constants of char type. Refer to 
-   examples/languageFeatures/char.cvl for more details.
-
-3. Support quantifier expressions. Refer to 
-   examples/languageFeatures/quantifiers.cvl for more details.
-   
-4. Support abstract functions and derivative operations.
-   Refer to examples/arithmetic/derivative.cvl for more details.
-
-5. A new system function is supported: exit(). Refer to
-   examples/languageFeatures/exit.cvl for more details. 
-
-6. $assert is now a system function declared in civlc.h and can have
-   optional arguments for printing information when the assertion is 
-   violated. Refer to examples/languageFeatures/assertPrintf.cvl
-   for more details. 
-
-7. Bugs fixed: false deadlock predicate for system function calls;
-   false error report when function declaration and function definition
-   are separated.
+2. A new partial order reduction algorithm is implemented and performance gets
+   improved greatly.
 
 ------------------------- Binary Installation -------------------------
 
