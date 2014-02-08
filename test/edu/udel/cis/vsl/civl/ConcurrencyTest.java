@@ -125,8 +125,8 @@ public class ConcurrencyTest {
 
 	@Test
 	public void threadPrivate() {
-		assertTrue(ui.run("verify", "-inputTHREADS_BOUND=12",
-				"-inputN_BOUND=15", "-enablePrintf=false",
+		assertTrue(ui.run("verify", "-inputTHREADS_BOUND=2",
+				"-inputN_BOUND=4", "-enablePrintf=false",
 				filename("fig4.98-threadprivate.cvl")));
 	}
 
