@@ -136,7 +136,7 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 			Location location, LHSExpression lhs,
 			ArrayList<Expression> arguments) {
 		CommonMPIRecvStatement recvStatement = new CommonMPIRecvStatement(
-				source, location, lhs, arguments);
+				source, location, lhs, arguments, this);
 		Scope finalScope = null;
 
 		if (lhs != null) {
