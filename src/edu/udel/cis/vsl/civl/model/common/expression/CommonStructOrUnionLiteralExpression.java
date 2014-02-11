@@ -7,19 +7,19 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
-public class CommonStructLiteralExpression extends CommonExpression implements
-		StructLiteralExpression {
+public class CommonStructOrUnionLiteralExpression extends CommonExpression
+		implements StructOrUnionLiteralExpression {
 
 	private Expression[] fields;
 
-	public CommonStructLiteralExpression(CIVLSource source, CIVLType type,
-			ArrayList<Expression> fields) {
+	public CommonStructOrUnionLiteralExpression(CIVLSource source,
+			CIVLType type, ArrayList<Expression> fields) {
 		super(source);
 		this.fields = new Expression[fields.size()];
 		fields.toArray(this.fields);
@@ -42,7 +42,7 @@ public class CommonStructLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public CIVLStructOrUnionType structType() {
+	public CIVLStructOrUnionType structOrUnionType() {
 		assert this.expressionType instanceof CIVLStructOrUnionType;
 		return (CIVLStructOrUnionType) this.expressionType;
 	}
@@ -51,7 +51,7 @@ public class CommonStructLiteralExpression extends CommonExpression implements
 	public String toString() {
 		String result = "{";
 		if (fields != null) {
-			CIVLStructOrUnionType structType = this.structType();
+			CIVLStructOrUnionType structType = this.structOrUnionType();
 			String fieldName;
 			int i = 0;
 
@@ -98,5 +98,10 @@ public class CommonStructLiteralExpression extends CommonExpression implements
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public boolean isStruct() {
+		return this.structOrUnionType().isStructType();
 	}
 }

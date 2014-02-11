@@ -50,46 +50,43 @@ public class ConcurrencyTest {
 
 	@Test
 	public void barrier() {
-		assertTrue(ui.run("verify", "-inputB=4", filename("barrier.cvl"),
-				"-por=new"));
+		assertTrue(ui.run("verify", "-inputB=4", filename("barrier.cvl")));
 	}
 
 	@Test
 	public void barrier2() {
-		assertTrue(ui.run("verify", "-inputB=4", filename("barrier2.cvl"),
-				"-por=new"));
+		assertTrue(ui.run("verify", "-inputB=4", filename("barrier2.cvl")));
 	}
 
 	@Test
 	public void barrierBad() {
 		assertFalse(ui.run("verify", "-min", "-inputB=4",
-				filename("barrierBad.cvl"), "-por=new"));
+				filename("barrierBad.cvl")));
 		assertFalse(ui.run("replay", filename("barrierBad.cvl"), "-id=0"));
 	}
 
 	@Test
 	public void blockAdder() {
 		assertTrue(ui.run("verify", "-inputB=6", "-inputW=3",
-				filename("blockAdder.cvl"), "-por=new"));
+				filename("blockAdder.cvl")));
 	}
 
 	@Test
 	public void blockAdderBad() {
 		assertFalse(ui.run("verify", "-inputB=6", "-inputW=3",
-				filename("blockAdderBad.cvl"), "-min", "-por=new"));
+				filename("blockAdderBad.cvl"), "-min"));
 		assertFalse(ui.run("replay", filename("blockAdderBad.cvl")));
 	}
 
 	@Test
 	public void dining() {
-		assertTrue(ui.run("verify", "-inputBOUND=4", filename("dining.cvl"),
-				"-por=new"));
+		assertTrue(ui.run("verify", "-inputBOUND=4", filename("dining.cvl")));
 	}
 
 	@Test
 	public void diningBad() {
 		assertFalse(ui.run("verify", "-inputB=4", filename("diningBad.cvl"),
-				"-min", "-por=new"));
+				"-min"));
 		assertFalse(ui.run("replay", filename("diningBad.cvl")));
 	}
 

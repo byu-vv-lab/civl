@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -53,11 +54,12 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
@@ -70,6 +72,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
+import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.util.Pair;
@@ -1112,8 +1115,14 @@ public class Evaluator {
 		SymbolicExpression structValue = eval.value;
 		int fieldIndex = expression.fieldIndex();
 
-		eval.value = universe.tupleRead(structValue,
-				universe.intObject(fieldIndex));
+		if (expression.struct().getExpressionType().isStructType()) {
+			eval.value = universe.tupleRead(structValue,
+					universe.intObject(fieldIndex));
+		} else {
+			assert expression.struct().getExpressionType().isUnionType();
+			eval.value = universe.unionExtract(universe.intObject(fieldIndex),
+					structValue);
+		}
 		return eval;
 	}
 
@@ -1553,8 +1562,8 @@ public class Evaluator {
 	 * @return The symbolic representation of the struct literal expression.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Evaluation evaluateStructLiteral(State state, int pid,
-			StructLiteralExpression expression)
+	private Evaluation evaluateStructOrUnionLiteral(State state, int pid,
+			StructOrUnionLiteralExpression expression)
 			throws UnsatisfiablePathConditionException {
 		Expression[] fields = expression.fields();
 		SymbolicType dynamicStructType = expression.getExpressionType()
@@ -1562,14 +1571,33 @@ public class Evaluator {
 		ArrayList<SymbolicExpression> symbolicFields = new ArrayList<>();
 		Evaluation eval;
 
-		for (Expression field : fields) {
-			eval = evaluate(state, pid, field);
-			symbolicFields.add(eval.value);
+		if (expression.isStruct()) {
+			for (Expression field : fields) {
+				eval = evaluate(state, pid, field);
+				symbolicFields.add(eval.value);
+				state = eval.state;
+			}
+			assert dynamicStructType instanceof SymbolicTupleType;
+			return new Evaluation(state, universe.tuple(
+					(SymbolicTupleType) dynamicStructType, symbolicFields));
+		} else {
+			int numberOfMembers = fields.length;
+			SymbolicExpression unionValue;
+			SymbolicUnionType unionType = (SymbolicUnionType) dynamicStructType;
+
+			eval = evaluate(state, pid, fields[0]);
 			state = eval.state;
+			unionValue = universe.unionInject(unionType, universe.intObject(0),
+					eval.value);
+			assert dynamicStructType instanceof SymbolicUnionType;
+			for (int i = 0; i < numberOfMembers; i++) {
+				eval = evaluate(state, pid, fields[i]);
+				unionValue = universe.unionInject(unionType,
+						universe.intObject(i), eval.value);
+				state = eval.state;
+			}
+			return new Evaluation(state, unionValue);
 		}
-		assert dynamicStructType instanceof SymbolicTupleType;
-		return new Evaluation(state, universe.tuple(
-				(SymbolicTupleType) dynamicStructType, symbolicFields));
 	}
 
 	/**
@@ -2482,8 +2510,8 @@ public class Evaluator {
 					(StringLiteralExpression) expression);
 			break;
 		case STRUCT_LITERAL:
-			result = evaluateStructLiteral(state, pid,
-					(StructLiteralExpression) expression);
+			result = evaluateStructOrUnionLiteral(state, pid,
+					(StructOrUnionLiteralExpression) expression);
 			break;
 		case SUBSCRIPT:
 			result = evaluateSubscript(state, pid,
@@ -2587,7 +2615,7 @@ public class Evaluator {
 					memoryUnits);
 			break;
 		case STRUCT_LITERAL:
-			Expression[] fields = ((StructLiteralExpression) expression)
+			Expression[] fields = ((StructOrUnionLiteralExpression) expression)
 					.fields();
 
 			for (Expression field : fields) {
@@ -2757,8 +2785,8 @@ public class Evaluator {
 	 * @return
 	 */
 	public Set<Integer> processesOfSameRankInComm(SymbolicExpression comm,
-			int pid) {
-		int rank = this.findRank(comm, pid);
+			int pid, int rank) {
+		// int rank = this.findRank(comm, pid);
 		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
 				universe.intObject(1));
 		SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
@@ -2769,7 +2797,7 @@ public class Evaluator {
 						universe.intObject(0)));
 		SymbolicExpression procRow = universe.tupleRead(procQueue,
 				universe.intObject(1));
-		Set<Integer> pidsInComm = new HashSet<>();
+		Set<Integer> pidsInComm = new LinkedHashSet<>();
 
 		for (int j = 0; j < procRowLength; j++) {
 			SymbolicExpression proc = universe.arrayRead(procRow,
@@ -2779,5 +2807,30 @@ public class Evaluator {
 			pidsInComm.add(procId);
 		}
 		return pidsInComm;
+	}
+
+	/**
+	 * Calculate the ID of the process that a given wait statement is waiting
+	 * for.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param p
+	 *            The process that the wait statement belongs to.
+	 * @param wait
+	 *            The wait statement to be checked.
+	 * @return The ID of the process that the wait statement is waiting for.
+	 */
+	public int joinedIDofWait(State state, ProcessState p, WaitStatement wait) {
+		Evaluation eval;
+		try {
+			eval = evaluate(state, p.getPid(), wait.process());
+			SymbolicExpression procVal = eval.value;
+
+			return modelFactory.getProcessId(wait.process().getSource(),
+					procVal);
+		} catch (UnsatisfiablePathConditionException e) {
+		}
+		return -1;
 	}
 }

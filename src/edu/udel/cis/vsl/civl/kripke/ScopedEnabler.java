@@ -520,7 +520,7 @@ public class ScopedEnabler extends Enabler implements
 	 */
 	private boolean isEnabledWait(State state, ProcessState p,
 			WaitStatement wait) {
-		int joinedPid = joinedIDofWait(state, p, wait);
+		int joinedPid = evaluator.joinedIDofWait(state, p, wait);
 		ProcessState joinedProc = state.getProcessState(joinedPid);
 
 		if (joinedProc == null || joinedProc.hasEmptyStack()) {
@@ -735,7 +735,7 @@ public class ScopedEnabler extends Enabler implements
 			if (!visitedProcesses.contains(pid)) {
 				for (Statement s : proc.getLocation().outgoing()) {
 					if (s instanceof WaitStatement) {
-						int joinedPid = joinedIDofWait(state, proc,
+						int joinedPid = evaluator.joinedIDofWait(state, proc,
 								(WaitStatement) s);
 
 						if (!visitedProcesses.contains(joinedPid)) {

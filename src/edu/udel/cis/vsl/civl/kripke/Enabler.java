@@ -48,8 +48,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 public abstract class Enabler implements
 		EnablerIF<State, Transition, TransitionSequence> {
 
-	protected final String COMM_ENQUE = "$comm_enqueue";
-	protected final String COMM_DEQUE = "$comm_dequeue";
+
 
 	/* *************************** Instance Fields ************************* */
 
@@ -355,31 +354,6 @@ public abstract class Enabler implements
 	 * @return
 	 */
 	abstract TransitionSequence enabledTransitionsPOR(State state);
-
-	/**
-	 * Calculate the ID of the process that a given wait statement is waiting
-	 * for.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param p
-	 *            The process that the wait statement belongs to.
-	 * @param wait
-	 *            The wait statement to be checked.
-	 * @return The ID of the process that the wait statement is waiting for.
-	 */
-	int joinedIDofWait(State state, ProcessState p, WaitStatement wait) {
-		Evaluation eval;
-		try {
-			eval = evaluator.evaluate(state, p.getPid(), wait.process());
-			SymbolicExpression procVal = eval.value;
-
-			return modelFactory.getProcessId(wait.process().getSource(),
-					procVal);
-		} catch (UnsatisfiablePathConditionException e) {
-		}
-		return -1;
-	}
 
 	/* **************************** Private Methods ************************ */
 

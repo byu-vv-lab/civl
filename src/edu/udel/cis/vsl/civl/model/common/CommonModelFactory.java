@@ -55,7 +55,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
@@ -104,7 +104,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonStructLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonStructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
@@ -527,13 +527,9 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public CIVLStructOrUnionType structType(Identifier name) {
-		return new CommonStructOrUnionType(name, true);
-	}
-
-	@Override
-	public CIVLStructOrUnionType unionType(Identifier name) {
-		return new CommonStructOrUnionType(name, false);
+	public CIVLStructOrUnionType structOrUnionType(Identifier name,
+			boolean isStruct) {
+		return new CommonStructOrUnionType(name, isStruct);
 	}
 
 	@Override
@@ -2205,9 +2201,9 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public StructLiteralExpression structLiteralExpression(CIVLSource source,
-			CIVLType structType, ArrayList<Expression> fields) {
-		StructLiteralExpression structLiteral = new CommonStructLiteralExpression(
+	public StructOrUnionLiteralExpression structOrUnionLiteralExpression(
+			CIVLSource source, CIVLType structType, ArrayList<Expression> fields) {
+		StructOrUnionLiteralExpression structLiteral = new CommonStructOrUnionLiteralExpression(
 				source, structType, fields);
 		Scope expressionScope = null;
 

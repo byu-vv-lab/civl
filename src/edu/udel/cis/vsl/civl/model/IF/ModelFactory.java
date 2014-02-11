@@ -40,7 +40,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.StructLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
@@ -136,7 +136,7 @@ public interface ModelFactory {
 	 */
 	CIVLCompleteArrayType completeArrayType(CIVLType elementType,
 			Expression extent);
-	
+
 	/**
 	 * Completes the bundle type by specifying the list of all dynamic types
 	 * which can occur as bundle elements. If the collections yields a sequence
@@ -147,7 +147,8 @@ public interface ModelFactory {
 	 * @param types
 	 *            the set of all dynamic types which occur as bundle elements
 	 */
-	void completeBundleType(CIVLBundleType bundleType, Collection<SymbolicType> types);
+	void completeBundleType(CIVLBundleType bundleType,
+			Collection<SymbolicType> types);
 
 	/**
 	 * Completes the heap type.
@@ -268,30 +269,33 @@ public interface ModelFactory {
 	CIVLPrimitiveType stringType();
 
 	/**
-	 * Returns new incomplete struct type with given name. Type can be completed
-	 * later using one of the "complete" methods in CIVLStructType.
+	 * Returns new incomplete struct or union type with given name. Type can be
+	 * completed later using one of the "complete" methods in
+	 * CIVLStructOrUnionType.
 	 * 
-	 * The struct returned is a new instance of struct type that will never be
-	 * equal to another struct type, regardless of identifier or fields.
+	 * The struct or union returned is a new instance of struct or union type
+	 * that will never be equal to another struct or union type, regardless of
+	 * identifier or fields.
 	 * 
 	 * @param name
-	 *            identifier, usually the "tag" for this struct type
-	 * @return a new incomplete struct type with given name
+	 *            identifier, usually the "tag" for this struct or union type
+	 * @return a new incomplete struct or union type with given name
 	 */
-	CIVLStructOrUnionType structType(Identifier name);
+	CIVLStructOrUnionType structOrUnionType(Identifier name, boolean isStruct);
 
-	/**
-	 * Returns new incomplete union type with given name. Type can be completed
-	 * later using one of the "complete" methods in CIVLStructType.
-	 * 
-	 * The union returned is a new instance of union type that will never be
-	 * equal to another union type, regardless of identifier or fields.
-	 * 
-	 * @param name
-	 *            identifier, usually the "tag" for this union type
-	 * @return a new incomplete union type with given name
-	 */
-	CIVLStructOrUnionType unionType(Identifier name);
+	// /**
+	// * Returns new incomplete union type with given name. Type can be
+	// completed
+	// * later using one of the "complete" methods in CIVLStructType.
+	// *
+	// * The union returned is a new instance of union type that will never be
+	// * equal to another union type, regardless of identifier or fields.
+	// *
+	// * @param name
+	// * identifier, usually the "tag" for this union type
+	// * @return a new incomplete union type with given name
+	// */
+	// CIVLStructOrUnionType unionType(Identifier name);
 
 	/**
 	 * Returns the void type. Used in places where a type is required
@@ -658,14 +662,14 @@ public interface ModelFactory {
 	// String value);
 
 	/**
-	 * Create a new instance of struct literal expression
+	 * Create a new instance of struct or union literal expression
 	 * 
 	 * @param source
 	 * @param fields
 	 * @return
 	 */
-	StructLiteralExpression structLiteralExpression(CIVLSource source,
-			CIVLType type, ArrayList<Expression> fields);
+	StructOrUnionLiteralExpression structOrUnionLiteralExpression(
+			CIVLSource source, CIVLType type, ArrayList<Expression> fields);
 
 	/**
 	 * An expression for an array index operation. e.g. a[i]

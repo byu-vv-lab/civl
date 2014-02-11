@@ -154,8 +154,15 @@ public class CommonStructOrUnionType extends CommonType implements
 
 					fieldDynamicTypes.add(fieldDynamicType);
 				}
-				dynamicType = universe.tupleType(
-						universe.stringObject(name.name()), fieldDynamicTypes);
+				if (this.isStruct) {
+					dynamicType = universe.tupleType(
+							universe.stringObject(name.name()),
+							fieldDynamicTypes);
+				} else {
+					dynamicType = universe.unionType(
+							universe.stringObject(name.name()),
+							fieldDynamicTypes);
+				}
 				dynamicType = (SymbolicType) universe.canonic(dynamicType);
 			}
 		}

@@ -2165,7 +2165,7 @@ public class FunctionTranslator {
 			}
 			return modelFactory.arrayLiteralExpression(source, arrayType,
 					elements);
-		} else if (type.isStructType()) {
+		} else if (type.isStructType() || type.isUnionType()) {
 			CIVLStructOrUnionType structType = (CIVLStructOrUnionType) type;
 			ArrayList<Expression> fields = new ArrayList<>();
 
@@ -2185,11 +2185,8 @@ public class FunctionTranslator {
 					throw new CIVLInternalException("Unreachable", source);
 				fields.add(field);
 			}
-			return modelFactory.structLiteralExpression(source, structType,
-					fields);
-		} else if (type.isUnionType()) {
-			throw new CIVLUnimplementedFeatureException(
-					"Compound initializer for union type", source);
+			return modelFactory.structOrUnionLiteralExpression(source,
+					structType, fields);
 		} else
 			throw new CIVLInternalException("Compound initializer of " + type
 					+ " type is invalid.", source);
@@ -3188,8 +3185,8 @@ public class FunctionTranslator {
 				tag = "__union_" + modelBuilder.anonymousStructCounter + "__";
 			modelBuilder.anonymousStructCounter++;
 		}
-		if (type.isUnion())
-			throw new CIVLUnimplementedFeatureException("Union types", source);
+		// if (type.isUnion())
+		// throw new CIVLUnimplementedFeatureException("Union types", source);
 		// civlc.h defines $proc as struct __proc__, etc.
 		if ("__proc__".equals(tag))
 			return modelFactory.processType();
@@ -3200,8 +3197,8 @@ public class FunctionTranslator {
 		if ("__bundle__".equals(tag))
 			return modelBuilder.bundleType;
 		else {
-			CIVLStructOrUnionType result = modelFactory.structType(modelFactory
-					.identifier(source, tag));
+			CIVLStructOrUnionType result = modelFactory.structOrUnionType(
+					modelFactory.identifier(source, tag), type.isStruct());
 			int numFields = type.getNumFields();
 			StructOrUnionField[] civlFields = new StructOrUnionField[numFields];
 
