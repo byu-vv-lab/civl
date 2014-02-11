@@ -255,4 +255,10 @@ public class StatementList implements Statement {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.STATEMENT_LIST;
+	}
+
 }

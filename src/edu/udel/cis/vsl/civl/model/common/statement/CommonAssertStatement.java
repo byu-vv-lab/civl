@@ -280,4 +280,9 @@ public class CommonAssertStatement extends CommonStatement implements
 		return result;
 	}
 
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.ASSERT;
+	}
+
 }

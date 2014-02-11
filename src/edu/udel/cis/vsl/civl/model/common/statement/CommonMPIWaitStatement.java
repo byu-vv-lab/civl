@@ -115,4 +115,10 @@ public class CommonMPIWaitStatement extends CommonStatement implements
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.MPI_WAIT;
+	}
+
 }

@@ -147,4 +147,10 @@ public class CommonMPIIsendStatement extends CommonStatement implements
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.MPI_ISEND;
+	}
+
 }

@@ -153,4 +153,9 @@ public class CommonReturnStatement extends CommonStatement implements
 		return null;
 	}
 
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.RETURN;
+	}
+
 }

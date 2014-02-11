@@ -22,7 +22,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -568,12 +567,14 @@ public class AmpleSetWorker {
 		if (memUnitsPartial != null) {
 			memUnits.addAll(memUnitsPartial);
 		}
-		if (statement instanceof AssertStatement) {
+
+		switch (statement.statementKind()) {
+		case ASSERT:
 			AssertStatement assertStatement = (AssertStatement) statement;
-			Expression expression = assertStatement.getExpression();
+			Expression assertExpression = assertStatement.getExpression();
 			Expression[] printfArgs = assertStatement.printfArguments();
 
-			memUnitsPartial = memoryUnit(expression, pid);
+			memUnitsPartial = memoryUnit(assertExpression, pid);
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
@@ -585,25 +586,9 @@ public class AmpleSetWorker {
 					}
 				}
 			}
-		} else if (statement instanceof AssumeStatement) {
-			AssumeStatement assumeStatement = (AssumeStatement) statement;
-			Expression expression = assumeStatement.getExpression();
-
-			memUnitsPartial = memoryUnit(expression, pid);
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-		} else if (statement instanceof CallOrSpawnStatement) {
-			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
-
-			// TODO special function calls
-			for (Expression argument : call.arguments()) {
-				memUnitsPartial = memoryUnit(argument, pid);
-				if (memUnitsPartial != null) {
-					memUnits.addAll(memUnitsPartial);
-				}
-			}
-		} else if (statement instanceof AssignStatement) {
+			break;
+		case ASSIGN:
+		case CHOOSE:
 			AssignStatement assignStatement = (AssignStatement) statement;
 
 			memUnitsPartial = memoryUnit(assignStatement.getLhs(), pid);
@@ -614,23 +599,28 @@ public class AmpleSetWorker {
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
-		} else if (statement instanceof WaitStatement) {
-			memUnitsPartial = memoryUnit(((WaitStatement) statement).process(),
-					pid);
+			break;
+		case ASSUME:
+			AssumeStatement assumeStatement = (AssumeStatement) statement;
+			Expression assumeExpression = assumeStatement.getExpression();
+
+			memUnitsPartial = memoryUnit(assumeExpression, pid);
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
-		} else if (statement instanceof ReturnStatement) {
-			ReturnStatement returnStatement = (ReturnStatement) statement;
+			break;
+		case CALL_OR_SPAWN:
+			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
-			if (returnStatement.expression() != null) {
-				memUnitsPartial = memoryUnit(returnStatement.expression(), pid);
+			// TODO special function calls
+			for (Expression argument : call.arguments()) {
+				memUnitsPartial = memoryUnit(argument, pid);
 				if (memUnitsPartial != null) {
 					memUnits.addAll(memUnitsPartial);
 				}
 			}
-		} else if (statement instanceof NoopStatement) {
-		} else if (statement instanceof MallocStatement) {
+			break;
+		case MALLOC:
 			MallocStatement mallocStatement = (MallocStatement) statement;
 
 			memUnitsPartial = memoryUnit(mallocStatement.getLHS(), pid);
@@ -647,32 +637,65 @@ public class AmpleSetWorker {
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
-		} else if (statement instanceof StatementList) {
-			StatementList statementList = (StatementList) statement;
-
-			for (Statement subStatement : statementList.statements()) {
-				memUnits.addAll(impactMemoryUnitsOfStatement(subStatement, pid));
-			}
-		} else if (statement instanceof MPISendStatement) {
-			// TODO: why the program never goes there ?
-			MPISendStatement mpiSendStatement = (MPISendStatement) statement;
-			for (Expression argument : mpiSendStatement.getArgumentsList()) {
-				memUnitsPartial = memoryUnit(argument, pid);
-				if (memUnitsPartial != null) {
-					memUnits.addAll(memUnitsPartial);
-				}
-			}
-		} else if (statement instanceof MPIRecvStatement) {
+			break;
+		case MPI_IBARRIER:
+			break;
+		case MPI_IRECV:
+			break;
+		case MPI_ISEND:
+			break;
+		case MPI_RECV:
 			MPIRecvStatement mpiRecvStatement = (MPIRecvStatement) statement;
+
 			for (Expression argument : mpiRecvStatement.getArgumentsList()) {
 				memUnitsPartial = memoryUnit(argument, pid);
 				if (memUnitsPartial != null) {
 					memUnits.addAll(memUnitsPartial);
 				}
 			}
-		} else {
-			throw new CIVLUnimplementedFeatureException("Statement kind",
-					statement);
+			break;
+		case MPI_SEND:
+			// TODO: why the program never goes there ?
+			MPISendStatement mpiSendStatement = (MPISendStatement) statement;
+
+			for (Expression argument : mpiSendStatement.getArgumentsList()) {
+				memUnitsPartial = memoryUnit(argument, pid);
+				if (memUnitsPartial != null) {
+					memUnits.addAll(memUnitsPartial);
+				}
+			}
+			break;
+		case MPI_WAIT:
+			break;
+		case NOOP:
+			break;
+		case RETURN:
+			ReturnStatement returnStatement = (ReturnStatement) statement;
+
+			if (returnStatement.expression() != null) {
+				memUnitsPartial = memoryUnit(returnStatement.expression(), pid);
+				if (memUnitsPartial != null) {
+					memUnits.addAll(memUnitsPartial);
+				}
+			}
+			break;
+		case STATEMENT_LIST:
+			StatementList statementList = (StatementList) statement;
+
+			for (Statement subStatement : statementList.statements()) {
+				memUnits.addAll(impactMemoryUnitsOfStatement(subStatement, pid));
+			}
+			break;
+		case WAIT:
+			memUnitsPartial = memoryUnit(((WaitStatement) statement).process(),
+					pid);
+			if (memUnitsPartial != null) {
+				memUnits.addAll(memUnitsPartial);
+			}
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"Impact memory units for statement: ", statement);
 		}
 
 		return memUnits;

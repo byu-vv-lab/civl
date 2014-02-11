@@ -202,4 +202,9 @@ public class StatementSet implements Statement {
 		return null;
 	}
 
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.OTHERS;
+	}
+
 }

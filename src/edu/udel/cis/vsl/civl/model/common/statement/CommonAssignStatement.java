@@ -207,4 +207,9 @@ public class CommonAssignStatement extends CommonStatement implements
 		return result;
 	}
 
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.ASSIGN;
+	}
+
 }

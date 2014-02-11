@@ -308,4 +308,9 @@ public class CommonCallStatement extends CommonStatement implements
 		return result;
 	}
 
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.CALL_OR_SPAWN;
+	}
+	
 }

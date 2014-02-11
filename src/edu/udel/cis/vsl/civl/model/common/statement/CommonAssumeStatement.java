@@ -131,4 +131,9 @@ public class CommonAssumeStatement extends CommonStatement implements
 			CIVLType commType) {
 		return expression.variableAddressedOf(heapType, commType);
 	}
+
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.ASSUME;
+	}
 }

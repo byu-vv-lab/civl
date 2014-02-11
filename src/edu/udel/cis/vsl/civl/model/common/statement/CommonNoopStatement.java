@@ -82,4 +82,10 @@ public class CommonNoopStatement extends CommonStatement implements
 			CIVLType commType) {
 		return null;
 	}
+
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.NOOP;
+	}
+
 }

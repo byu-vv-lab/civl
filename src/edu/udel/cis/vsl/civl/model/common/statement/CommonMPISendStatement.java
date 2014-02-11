@@ -144,7 +144,13 @@ public class CommonMPISendStatement extends CommonStatement implements
 
 	/* *************************** public methods ************************** */
 	@Override
-	public ArrayList<Expression> getArgumentsList(){
+	public ArrayList<Expression> getArgumentsList() {
 		return this.arguments;
 	}
+
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.MPI_SEND;
+	}
+
 }

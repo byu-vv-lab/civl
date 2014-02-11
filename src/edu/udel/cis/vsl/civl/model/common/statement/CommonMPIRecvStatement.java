@@ -27,7 +27,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
 
-
 public class CommonMPIRecvStatement extends CommonStatement implements
 		MPIRecvStatement {
 	/* ************************* Instance Fields *************************** */
@@ -163,7 +162,6 @@ public class CommonMPIRecvStatement extends CommonStatement implements
 					+ ", " + this.arguments.get(6) + ")";
 	}
 
-
 	/* ************************ Private Methods ****************************** */
 	private Expression myGuard(CIVLSource civlsource) {
 		Expression commAddr = this.getCommunicator();
@@ -183,106 +181,139 @@ public class CommonMPIRecvStatement extends CommonStatement implements
 		BoundVariableExpression i = this.modelFactory.boundVariableExpression(
 				civlsource, boundVariable_i, boundType);
 		Identifier boundVariable_j = this.modelFactory.identifier("j");
-		BoundVariableExpression j = this.modelFactory.boundVariableExpression(civlsource, boundVariable_j, boundType);
+		BoundVariableExpression j = this.modelFactory.boundVariableExpression(
+				civlsource, boundVariable_j, boundType);
 		IntegerLiteralExpression zero = this.modelFactory
 				.integerLiteralExpression(BigInteger.ZERO);
-		
-        /* different situations come from various combination of tag and source */
-		BinaryExpression isAnySource = this.modelFactory.binaryExpression(civlsource, 
-				BinaryExpression.BINARY_OPERATOR.EQUAL, source, MPI_ANY_SOURCE);
-		BinaryExpression isAnyTag = this.modelFactory.binaryExpression(civlsource, 
-				BinaryExpression.BINARY_OPERATOR.EQUAL, tag, MPI_ANY_TAG);
-		BinaryExpression isSpecSource = this.modelFactory.binaryExpression(civlsource, 
-				BinaryExpression.BINARY_OPERATOR.NOT_EQUAL, source, MPI_ANY_SOURCE);
-		BinaryExpression isSpecTag = this.modelFactory.binaryExpression(civlsource, 
-				BinaryExpression.BINARY_OPERATOR.NOT_EQUAL, tag, MPI_ANY_TAG);
-		BinaryExpression specSourceAndSpecTag = this.modelFactory.binaryExpression(civlsource, 
-				BinaryExpression.BINARY_OPERATOR.AND, isSpecSource, isSpecTag);
-		BinaryExpression specSourceAndAnyTag = this.modelFactory.binaryExpression(civlsource,
-				BinaryExpression.BINARY_OPERATOR.AND, isSpecSource, isAnyTag);
-		BinaryExpression anySourceAndSpecTag = this.modelFactory.binaryExpression(civlsource,
-				BinaryExpression.BINARY_OPERATOR.AND, isAnySource, isSpecTag);
-		BinaryExpression anySourceAndAnyTag = this.modelFactory.binaryExpression(civlsource,
-				BinaryExpression.BINARY_OPERATOR.AND, isAnySource, isAnyTag); 
-		
-		/* specific source and specific tag*/
-		Expression queueLength = this.getQueueLengthAndMessages(civlsource, comm, source, rank)[0];
-		Expression messages = this.getQueueLengthAndMessages(civlsource, comm, source, rank)[1];
+
+		/* different situations come from various combination of tag and source */
+		BinaryExpression isAnySource = this.modelFactory.binaryExpression(
+				civlsource, BinaryExpression.BINARY_OPERATOR.EQUAL, source,
+				MPI_ANY_SOURCE);
+		BinaryExpression isAnyTag = this.modelFactory.binaryExpression(
+				civlsource, BinaryExpression.BINARY_OPERATOR.EQUAL, tag,
+				MPI_ANY_TAG);
+		BinaryExpression isSpecSource = this.modelFactory.binaryExpression(
+				civlsource, BinaryExpression.BINARY_OPERATOR.NOT_EQUAL, source,
+				MPI_ANY_SOURCE);
+		BinaryExpression isSpecTag = this.modelFactory.binaryExpression(
+				civlsource, BinaryExpression.BINARY_OPERATOR.NOT_EQUAL, tag,
+				MPI_ANY_TAG);
+		BinaryExpression specSourceAndSpecTag = this.modelFactory
+				.binaryExpression(civlsource,
+						BinaryExpression.BINARY_OPERATOR.AND, isSpecSource,
+						isSpecTag);
+		BinaryExpression specSourceAndAnyTag = this.modelFactory
+				.binaryExpression(civlsource,
+						BinaryExpression.BINARY_OPERATOR.AND, isSpecSource,
+						isAnyTag);
+		BinaryExpression anySourceAndSpecTag = this.modelFactory
+				.binaryExpression(civlsource,
+						BinaryExpression.BINARY_OPERATOR.AND, isAnySource,
+						isSpecTag);
+		BinaryExpression anySourceAndAnyTag = this.modelFactory
+				.binaryExpression(civlsource,
+						BinaryExpression.BINARY_OPERATOR.AND, isAnySource,
+						isAnyTag);
+
+		/* specific source and specific tag */
+		Expression queueLength = this.getQueueLengthAndMessages(civlsource,
+				comm, source, rank)[0];
+		Expression messages = this.getQueueLengthAndMessages(civlsource, comm,
+				source, rank)[1];
 		BinaryExpression leftRange = this.modelFactory.binaryExpression(
 				civlsource, BinaryExpression.BINARY_OPERATOR.LESS_THAN_EQUAL,
 				zero, i);
 		BinaryExpression rightRange = this.modelFactory.binaryExpression(
 				civlsource, BinaryExpression.BINARY_OPERATOR.LESS_THAN, i,
 				queueLength);
-		BinaryExpression restriction = this.modelFactory.binaryExpression(civlsource,
-				BinaryExpression.BINARY_OPERATOR.AND, leftRange, rightRange);
-		SubscriptExpression message = this.modelFactory.subscriptExpression(civlsource, (DotExpression)messages, i);
-		DotExpression messageTag = this.modelFactory.dotExpression(civlsource, message, 2);
-		BinaryExpression quantifiedExpression = this.modelFactory.binaryExpression(civlsource, 
-				BinaryExpression.BINARY_OPERATOR.EQUAL, messageTag, tag);	
-		checker = this.modelFactory.quantifiedExpression(civlsource, 
-				QuantifiedExpression.Quantifier.EXISTS,
-				boundVariable_i, boundType, restriction, quantifiedExpression);
-		result = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.AND,
-				specSourceAndSpecTag, checker);
-		/* specific source and ant tag. In this situation, the guard for this statement is the queue length of 
-		 * the specific queue must larger than 0*/
-		BinaryExpression guard = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.LESS_THAN,
-				zero, queueLength);
-		guard = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.AND, 
-				specSourceAndAnyTag, guard);
-		result = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.OR, 
-				result, guard);
-		/* specific any source and specific tag. The guard for this statement is exits such a queue in
-		 *  all the message buffers of the process that has at least one message with the specific tag.*/;
-		 queueLength = this.getQueueLengthAndMessages(civlsource, comm, j, rank)[0];
-		 messages = this.getQueueLengthAndMessages(civlsource, comm, j, rank)[1];
-		 leftRange = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.LESS_THAN_EQUAL
-				 , zero, i);
-		 rightRange = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.LESS_THAN,
-				 i, queueLength);
-		 BinaryExpression restriction_i = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.AND, 
-				 leftRange, rightRange);
-		 leftRange = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.LESS_THAN_EQUAL
-				 , zero, j);
-		 rightRange = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.LESS_THAN,
-				 j, nprocs);
-		 BinaryExpression restriction_j = this.modelFactory.binaryExpression(civlsource, 
-				 BinaryExpression.BINARY_OPERATOR.AND, 
-				 leftRange, rightRange);
-		 message = this.modelFactory.subscriptExpression(civlsource, (DotExpression)messages, i);
-		 messageTag = this.modelFactory.dotExpression(civlsource, message, 2);
-		 quantifiedExpression = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.EQUAL,
-				 messageTag, tag);
-		 checker = this.modelFactory.quantifiedExpression(civlsource,
-				 QuantifiedExpression.Quantifier.EXISTS,
-				 boundVariable_i, boundType, restriction_i,
-				 quantifiedExpression);
-		 checker = this.modelFactory.quantifiedExpression(civlsource,
-				 QuantifiedExpression.Quantifier.EXISTS,
-				 boundVariable_j, boundType, restriction_j, 
-				 checker);
-		 guard = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.AND,
-				 anySourceAndSpecTag, checker);
-		 result = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.OR, result, guard);
-		 /* Any source and any tag. The guard of this kind of 
-		  * statements is there are at least one message in 
-		  * any queue of the message buffer of the process.*/
-		 quantifiedExpression = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.LESS_THAN, 
-				 zero, queueLength);
-		 checker = this.modelFactory.quantifiedExpression(civlsource,
-				 QuantifiedExpression.Quantifier.EXISTS,
-				 boundVariable_j, boundType, restriction_j, 
-				 quantifiedExpression);
-		 guard = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.AND,
-				 anySourceAndAnyTag, checker);
-		 result = this.modelFactory.binaryExpression(civlsource, BinaryExpression.BINARY_OPERATOR.OR, result, guard);
-		 return result;
+		BinaryExpression restriction = this.modelFactory.binaryExpression(
+				civlsource, BinaryExpression.BINARY_OPERATOR.AND, leftRange,
+				rightRange);
+		SubscriptExpression message = this.modelFactory.subscriptExpression(
+				civlsource, (DotExpression) messages, i);
+		DotExpression messageTag = this.modelFactory.dotExpression(civlsource,
+				message, 2);
+		BinaryExpression quantifiedExpression = this.modelFactory
+				.binaryExpression(civlsource,
+						BinaryExpression.BINARY_OPERATOR.EQUAL, messageTag, tag);
+		checker = this.modelFactory.quantifiedExpression(civlsource,
+				QuantifiedExpression.Quantifier.EXISTS, boundVariable_i,
+				boundType, restriction, quantifiedExpression);
+		result = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.AND, specSourceAndSpecTag,
+				checker);
+		/*
+		 * specific source and ant tag. In this situation, the guard for this
+		 * statement is the queue length of the specific queue must larger than
+		 * 0
+		 */
+		BinaryExpression guard = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.LESS_THAN, zero, queueLength);
+		guard = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.AND, specSourceAndAnyTag,
+				guard);
+		result = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.OR, result, guard);
+		/*
+		 * specific any source and specific tag. The guard for this statement is
+		 * exits such a queue in all the message buffers of the process that has
+		 * at least one message with the specific tag.
+		 */;
+		queueLength = this.getQueueLengthAndMessages(civlsource, comm, j, rank)[0];
+		messages = this.getQueueLengthAndMessages(civlsource, comm, j, rank)[1];
+		leftRange = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.LESS_THAN_EQUAL, zero, i);
+		rightRange = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.LESS_THAN, i, queueLength);
+		BinaryExpression restriction_i = this.modelFactory.binaryExpression(
+				civlsource, BinaryExpression.BINARY_OPERATOR.AND, leftRange,
+				rightRange);
+		leftRange = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.LESS_THAN_EQUAL, zero, j);
+		rightRange = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.LESS_THAN, j, nprocs);
+		BinaryExpression restriction_j = this.modelFactory.binaryExpression(
+				civlsource, BinaryExpression.BINARY_OPERATOR.AND, leftRange,
+				rightRange);
+		message = this.modelFactory.subscriptExpression(civlsource,
+				(DotExpression) messages, i);
+		messageTag = this.modelFactory.dotExpression(civlsource, message, 2);
+		quantifiedExpression = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.EQUAL, messageTag, tag);
+		checker = this.modelFactory.quantifiedExpression(civlsource,
+				QuantifiedExpression.Quantifier.EXISTS, boundVariable_i,
+				boundType, restriction_i, quantifiedExpression);
+		checker = this.modelFactory.quantifiedExpression(civlsource,
+				QuantifiedExpression.Quantifier.EXISTS, boundVariable_j,
+				boundType, restriction_j, checker);
+		guard = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.AND, anySourceAndSpecTag,
+				checker);
+		result = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.OR, result, guard);
+		/*
+		 * Any source and any tag. The guard of this kind of statements is there
+		 * are at least one message in any queue of the message buffer of the
+		 * process.
+		 */
+		quantifiedExpression = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.LESS_THAN, zero, queueLength);
+		checker = this.modelFactory.quantifiedExpression(civlsource,
+				QuantifiedExpression.Quantifier.EXISTS, boundVariable_j,
+				boundType, restriction_j, quantifiedExpression);
+		guard = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.AND, anySourceAndAnyTag,
+				checker);
+		result = this.modelFactory.binaryExpression(civlsource,
+				BinaryExpression.BINARY_OPERATOR.OR, result, guard);
+		return result;
 	}
-	
-	private Expression[] getQueueLengthAndMessages(CIVLSource civlsource, Expression comm,
-			Expression source, Expression rank){
-		DotExpression messageBuffer = this.modelFactory.dotExpression(civlsource, comm, 2);
+
+	private Expression[] getQueueLengthAndMessages(CIVLSource civlsource,
+			Expression comm, Expression source, Expression rank) {
+		DotExpression messageBuffer = this.modelFactory.dotExpression(
+				civlsource, comm, 2);
 		SubscriptExpression messageBufferRow = this.modelFactory
 				.subscriptExpression(civlsource, messageBuffer, source);
 		SubscriptExpression messageQueue = this.modelFactory
@@ -291,10 +322,9 @@ public class CommonMPIRecvStatement extends CommonStatement implements
 				messageQueue, 0);
 		DotExpression messages = this.modelFactory.dotExpression(civlsource,
 				messageQueue, 1);
-		Expression[] result = {queueLength, messages};
+		Expression[] result = { queueLength, messages };
 		return result;
 	}
-
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope,
@@ -309,10 +339,14 @@ public class CommonMPIRecvStatement extends CommonStatement implements
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-    @Override
-	public ArrayList<Expression> getArgumentsList(){
+
+	@Override
+	public ArrayList<Expression> getArgumentsList() {
 		return this.arguments;
 	}
 
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.MPI_RECV;
+	}
 }

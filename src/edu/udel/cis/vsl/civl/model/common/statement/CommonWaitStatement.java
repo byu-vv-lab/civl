@@ -131,4 +131,9 @@ public class CommonWaitStatement extends CommonStatement implements
 		return process.variableAddressedOf(heapType, commType);
 	}
 
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.WAIT;
+	}
+
 }

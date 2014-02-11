@@ -90,4 +90,10 @@ public class CommonMPIBarrierStatement extends CommonStatement implements
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.MPI_IBARRIER;
+	}
+	
 }

@@ -57,5 +57,9 @@ public class CommonChooseStatement extends CommonAssignStatement implements
 	public int chooseID() {
 		return chooseID;
 	}
-	
+
+	@Override
+	public StatementKind statementKind() {
+		return StatementKind.CHOOSE;
+	}
 }

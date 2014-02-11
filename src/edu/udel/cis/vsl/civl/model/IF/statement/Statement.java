@@ -24,6 +24,20 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  */
 public interface Statement extends Sourceable {
 
+	/* ********************************* Types ***************************** */
+
+	/**
+	 * Different kinds of statements.
+	 * 
+	 * @author zmanchun
+	 * 
+	 */
+	public enum StatementKind {
+		ASSERT, ASSIGN, ASSUME, CALL_OR_SPAWN, CHOOSE, MALLOC, MPI_IBARRIER, MPI_IRECV, MPI_ISEND, MPI_RECV, MPI_SEND, MPI_WAIT, NOOP, RETURN, WAIT, OTHERS, STATEMENT_LIST
+	}
+
+	/* **************************** Public Methods ************************* */
+
 	/**
 	 * @return The location that is the source of this statement.
 	 */
@@ -172,5 +186,12 @@ public interface Statement extends Sourceable {
 	 * @return
 	 */
 	Set<Variable> variableAddressedOf(CIVLHeapType heapType, CIVLType commType);
+
+	/**
+	 * Obtain the kind of the statement.
+	 * 
+	 * @return The statement's kind.
+	 */
+	StatementKind statementKind();
 
 }
