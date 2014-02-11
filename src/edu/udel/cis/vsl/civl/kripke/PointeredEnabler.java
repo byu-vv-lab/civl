@@ -19,6 +19,8 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
@@ -619,9 +621,27 @@ public class PointeredEnabler extends Enabler implements
 				memUnits.addAll(impactMemoryUnitsOfStatement(subStatement, pid,
 						state));
 			}
-		} else
+		} else if (statement instanceof MPISendStatement){
+			//TODO: why the program never goes there ?
+			MPISendStatement mpiSendStatement = (MPISendStatement) statement;
+			for (Expression argument : mpiSendStatement.getArgumentsList()) {
+				memUnitsPartial = memoryUnit(argument, pid, state);
+				if (memUnitsPartial != null) {
+					memUnits.addAll(memUnitsPartial);
+				}
+			}
+		} else if (statement instanceof MPIRecvStatement){
+			MPIRecvStatement mpiRecvStatement = (MPIRecvStatement) statement;
+			for (Expression argument : mpiRecvStatement.getArgumentsList()) {
+				memUnitsPartial = memoryUnit(argument, pid, state);
+				if (memUnitsPartial != null) {
+					memUnits.addAll(memUnitsPartial);
+				}
+			}
+		}else {
 			throw new CIVLUnimplementedFeatureException("Statement kind",
 					statement);
+		}
 
 		return memUnits;
 	}
