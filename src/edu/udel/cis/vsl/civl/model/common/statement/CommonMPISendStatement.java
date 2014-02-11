@@ -141,4 +141,10 @@ public class CommonMPISendStatement extends CommonStatement implements
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	/* *************************** public methods ************************** */
+	@Override
+	public ArrayList<Expression> getArgumentsList(){
+		return this.arguments;
+	}
 }

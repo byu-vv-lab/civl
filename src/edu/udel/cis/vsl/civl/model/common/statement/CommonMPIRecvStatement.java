@@ -282,7 +282,7 @@ public class CommonMPIRecvStatement extends CommonStatement implements
 	
 	private Expression[] getQueueLengthAndMessages(CIVLSource civlsource, Expression comm,
 			Expression source, Expression rank){
-		DotExpression messageBuffer = this.modelFactory.dotExpression(civlsource, comm, 3);
+		DotExpression messageBuffer = this.modelFactory.dotExpression(civlsource, comm, 2);
 		SubscriptExpression messageBufferRow = this.modelFactory
 				.subscriptExpression(civlsource, messageBuffer, source);
 		SubscriptExpression messageQueue = this.modelFactory
@@ -308,6 +308,11 @@ public class CommonMPIRecvStatement extends CommonStatement implements
 			CIVLType commType) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+    @Override
+	public ArrayList<Expression> getArgumentsList(){
+		return this.arguments;
 	}
 
 }

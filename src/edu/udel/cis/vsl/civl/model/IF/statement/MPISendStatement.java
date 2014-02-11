@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
+import java.util.ArrayList;
+
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 
@@ -72,5 +74,12 @@ public interface MPISendStatement extends Statement {
 	LHSExpression getLeftHandSide();
 
 	void setLeftHandSide(LHSExpression lhs);
+
+	/**
+	 * Get arguments in the form of a expression list.
+	 * 
+	 * @return arguments list
+	 */
+	ArrayList<Expression> getArgumentsList();
 
 }

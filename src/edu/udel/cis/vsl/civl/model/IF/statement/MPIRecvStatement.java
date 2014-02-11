@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
+import java.util.ArrayList;
+
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 
@@ -27,7 +29,7 @@ public interface MPIRecvStatement extends Statement {
 	 * @return the receive buffer argument
 	 */
 	Expression getBuffer();
-	
+
 	/**
 	 * Returns the received data size.
 	 * 
@@ -81,4 +83,10 @@ public interface MPIRecvStatement extends Statement {
 
 	void setLeftHandSide(LHSExpression lhs);
 
+	/**
+	 * Get arguments in the form of an expression list
+	 * 
+	 * @return the arguments list
+	 */
+	ArrayList<Expression> getArgumentsList();
 }
