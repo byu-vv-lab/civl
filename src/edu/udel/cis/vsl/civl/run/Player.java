@@ -115,7 +115,6 @@ public abstract class Player {
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);
 		evaluator.setSolve(solve);
-		this.stateFactory.setEvaluator(evaluator);
 		this.loader = new CommonLibraryExecutorLoader();
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));

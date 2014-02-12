@@ -6,14 +6,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.run.UserInterface;
-import edu.udel.cis.vsl.civl.semantics.Evaluator;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -24,6 +25,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -41,8 +43,6 @@ public class ImmutableStateFactory implements StateFactory {
 	/************************* Instance Fields *************************/
 
 	private GMCConfiguration config;
-
-	private Evaluator evaluator;
 
 	private boolean simplify;
 
@@ -478,11 +478,9 @@ public class ImmutableStateFactory implements StateFactory {
 							newValue, universe.intObject(1));
 					NumericExpression symbolicRankCount = ((SymbolicCompleteArrayType) procMatrix
 							.type()).extent();
-					int rankCount = evaluator.extractInt(null,
-							symbolicRankCount);
+					int rankCount;
 					SymbolicExpression undefinedProc = modelFactory
 							.undefinedProcessValue();
-					int procCount = 0;
 					ArrayList<SymbolicExpression> newProcQueueArrayComponents = new ArrayList<>();
 					SymbolicExpression newProcQueueArray = procMatrix;
 					SymbolicTupleType newProcQueueType = null;
@@ -492,12 +490,19 @@ public class ImmutableStateFactory implements StateFactory {
 					// ArrayList<SymbolicExpression> newCommComponents = new
 					// ArrayList<>();
 
+					IntegerNumber rankIntegerNumber = (IntegerNumber) universe
+							.extractNumber(symbolicRankCount);
+
+					if (rankIntegerNumber == null)
+						throw new CIVLInternalException(
+								"Unable to extract concrete int from "
+										+ symbolicRankCount, (CIVLSource) null);
+					else
+						rankCount = rankIntegerNumber.intValue();
 					for (int rank = 0; rank < rankCount; rank++) {
 						SymbolicExpression procQueue = this.universe.arrayRead(
 								procMatrix, universe.integer(rank));
-						int procRowLength = evaluator.extractInt(null,
-								(NumericExpression) universe.tupleRead(
-										procQueue, universe.intObject(0)));
+						int procRowLength;
 						SymbolicExpression procRow = universe.tupleRead(
 								procQueue, universe.intObject(1));
 						ArrayList<SymbolicExpression> newProcQueueComponents = new ArrayList<>();
@@ -505,6 +510,19 @@ public class ImmutableStateFactory implements StateFactory {
 						ArrayList<SymbolicExpression> newProcArrayComponents = new ArrayList<>();
 						SymbolicExpression newProcArray, newProcQueue;
 						int procQueueLength = 0;
+						IntegerNumber procRowLengthIntegerNumber = (IntegerNumber) universe
+								.extractNumber((NumericExpression) universe
+										.tupleRead(procQueue,
+												universe.intObject(0)));
+
+						if (procRowLengthIntegerNumber == null)
+							throw new CIVLInternalException(
+									"Unable to extract concrete int from "
+											+ symbolicRankCount,
+									(CIVLSource) null);
+						else
+							procRowLength = procRowLengthIntegerNumber
+									.intValue();
 
 						for (int j = 0; j < procRowLength; j++) {
 							SymbolicExpression proc = universe.arrayRead(
@@ -512,7 +530,6 @@ public class ImmutableStateFactory implements StateFactory {
 
 							if (!proc.equals(undefinedProc)) {
 								newProcArrayComponents.add(proc);
-								procCount++;
 								procQueueLength++;
 							}
 						}
@@ -535,8 +552,6 @@ public class ImmutableStateFactory implements StateFactory {
 							universe.pureType(newProcQueueType),
 							newProcQueueArrayComponents);
 					newComm = universe.tupleWrite(newValue,
-							universe.intObject(0), universe.integer(procCount));
-					newComm = universe.tupleWrite(newComm,
 							universe.intObject(1), newProcQueueArray);
 					newValue = newComm;
 				}
@@ -975,17 +990,10 @@ public class ImmutableStateFactory implements StateFactory {
 		return universe;
 	}
 
-
-
 	/* ************************ Other public methods *********************** */
 
 	public GMCConfiguration getConfiguration() {
 		return config;
-	}
-
-	@Override
-	public void setEvaluator(Evaluator evaluator) {
-		this.evaluator = evaluator;
 	}
 
 }
