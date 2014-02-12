@@ -322,4 +322,8 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", filename("switch.cvl")));
 	}
 
+	@Test
+	public void removedHeapPointer() throws ABCException {
+		assertFalse(ui.run("verify", filename("removedHeapPointer.cvl")));
+	}
 }
