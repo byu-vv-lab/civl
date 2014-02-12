@@ -218,10 +218,13 @@ public interface StateFactory {
 
 	/**
 	 * Simplifies all variable values in the state, using the path condition as
-	 * the simplification context.
+	 * the simplification context. A symbolic constant which is determined to
+	 * have a concrete value (based on the path condition), may be entirely
+	 * removed from the state by replacing every occurrence of that symbol with
+	 * the concrete value.
 	 * 
 	 * @param state
-	 *            The old state.
+	 *            Any State
 	 * @return The simplified state
 	 */
 	State simplify(State state);

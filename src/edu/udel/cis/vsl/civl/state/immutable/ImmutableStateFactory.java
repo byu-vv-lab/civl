@@ -483,10 +483,9 @@ public class ImmutableStateFactory implements StateFactory {
 					SymbolicExpression undefinedProc = modelFactory
 							.undefinedProcessValue();
 					int procCount = 0;
-					 ArrayList<SymbolicExpression> newProcQueueArrayComponents
-					 = new ArrayList<>();
+					ArrayList<SymbolicExpression> newProcQueueArrayComponents = new ArrayList<>();
 					SymbolicExpression newProcQueueArray = procMatrix;
-					 SymbolicTupleType newProcQueueType = null;
+					SymbolicTupleType newProcQueueType = null;
 					// SymbolicExpression buffer = universe.tupleRead(newValue,
 					// universe.intObject(2));
 					SymbolicExpression newComm;
@@ -520,15 +519,21 @@ public class ImmutableStateFactory implements StateFactory {
 						newProcArray = universe.array(
 								modelFactory.processSymbolicType(),
 								newProcArrayComponents);
-						newProcQueueComponents.add(universe.integer(procQueueLength));
+						newProcQueueComponents.add(universe
+								.integer(procQueueLength));
 						newProcQueueComponents.add(newProcArray);
 						newProcQueueTypeComponents.add(universe.integerType());
 						newProcQueueTypeComponents.add(newProcArray.type());
-						newProcQueueType = universe.tupleType(universe.stringObject("__procQueue__"), newProcQueueTypeComponents);
-						newProcQueue = universe.tuple(newProcQueueType, newProcQueueComponents);
+						newProcQueueType = universe.tupleType(
+								universe.stringObject("__procQueue__"),
+								newProcQueueTypeComponents);
+						newProcQueue = universe.tuple(newProcQueueType,
+								newProcQueueComponents);
 						newProcQueueArrayComponents.add(newProcQueue);
 					}
-					newProcQueueArray = universe.array(universe.pureType(newProcQueueType), newProcQueueArrayComponents);
+					newProcQueueArray = universe.array(
+							universe.pureType(newProcQueueType),
+							newProcQueueArrayComponents);
 					newComm = universe.tupleWrite(newValue,
 							universe.intObject(0), universe.integer(procCount));
 					newComm = universe.tupleWrite(newComm,
@@ -560,51 +565,58 @@ public class ImmutableStateFactory implements StateFactory {
 		return newScopes;
 	}
 
-	public ImmutableState simplifyWork(ImmutableState theState) {
-		int numScopes = theState.numScopes();
-		BooleanExpression pathCondition = theState.getPathCondition();
-		ImmutableDynamicScope[] newDynamicScopes = null;
-		Reasoner reasoner = universe.reasoner(pathCondition);
-		BooleanExpression newPathCondition;
+	@Override
+	public ImmutableState simplify(State state) {
+		ImmutableState theState = (ImmutableState) state;
 
-		for (int i = 0; i < numScopes; i++) {
-			ImmutableDynamicScope oldScope = theState.getScope(i);
-			int numVars = oldScope.numberOfVariables();
-			SymbolicExpression[] newVariableValues = null;
+		if (theState.simplifiedState != null)
+			return theState.simplifiedState;
+		else {
+			int numScopes = theState.numScopes();
+			BooleanExpression pathCondition = theState.getPathCondition();
+			ImmutableDynamicScope[] newDynamicScopes = null;
+			Reasoner reasoner = universe.reasoner(pathCondition);
+			BooleanExpression newPathCondition;
 
-			for (int j = 0; j < numVars; j++) {
-				SymbolicExpression oldValue = oldScope.getValue(j);
-				SymbolicExpression newValue = reasoner.simplify(oldValue);
+			for (int i = 0; i < numScopes; i++) {
+				ImmutableDynamicScope oldScope = theState.getScope(i);
+				int numVars = oldScope.numberOfVariables();
+				SymbolicExpression[] newVariableValues = null;
 
-				if (oldValue != newValue && newVariableValues == null) {
-					newVariableValues = new SymbolicExpression[numVars];
-					for (int j2 = 0; j2 < j; j2++)
-						newVariableValues[j2] = oldScope.getValue(j2);
+				for (int j = 0; j < numVars; j++) {
+					SymbolicExpression oldValue = oldScope.getValue(j);
+					SymbolicExpression newValue = reasoner.simplify(oldValue);
+
+					if (oldValue != newValue && newVariableValues == null) {
+						newVariableValues = new SymbolicExpression[numVars];
+						for (int j2 = 0; j2 < j; j2++)
+							newVariableValues[j2] = oldScope.getValue(j2);
+					}
+					if (newVariableValues != null)
+						newVariableValues[j] = newValue;
 				}
-				if (newVariableValues != null)
-					newVariableValues[j] = newValue;
+				if (newVariableValues != null && newDynamicScopes == null) {
+					newDynamicScopes = new ImmutableDynamicScope[numScopes];
+					for (int i2 = 0; i2 < i; i2++)
+						newDynamicScopes[i2] = theState.getScope(i2);
+				}
+				if (newDynamicScopes != null)
+					newDynamicScopes[i] = newVariableValues != null ? oldScope
+							.setVariableValues(newVariableValues) : oldScope;
 			}
-			if (newVariableValues != null && newDynamicScopes == null) {
-				newDynamicScopes = new ImmutableDynamicScope[numScopes];
-				for (int i2 = 0; i2 < i; i2++)
-					newDynamicScopes[i2] = theState.getScope(i2);
+			newPathCondition = reasoner.getReducedContext();
+			if (newPathCondition != pathCondition) {
+				if (nsat(newPathCondition))
+					newPathCondition = universe.falseExpression();
+			} else
+				newPathCondition = null;
+			if (newDynamicScopes != null || newPathCondition != null) {
+				theState = ImmutableState.newState(theState, null,
+						newDynamicScopes, newPathCondition);
+				theState.simplifiedState = theState;
 			}
-			if (newDynamicScopes != null)
-				newDynamicScopes[i] = newVariableValues != null ? oldScope
-						.setVariableValues(newVariableValues) : oldScope;
+			return theState;
 		}
-		newPathCondition = reasoner.getReducedContext();
-		if (newPathCondition != pathCondition) {
-			if (nsat(newPathCondition))
-				newPathCondition = universe.falseExpression();
-		} else
-			newPathCondition = null;
-		if (newDynamicScopes != null || newPathCondition != null) {
-			theState = ImmutableState.newState(theState, null,
-					newDynamicScopes, newPathCondition);
-			theState.simplifiedState = theState;
-		}
-		return theState;
 	}
 
 	private ImmutableState flyweight(State state) {
@@ -654,8 +666,17 @@ public class ImmutableStateFactory implements StateFactory {
 		theState = collectProcesses(theState);
 		theState = collectScopes(theState);
 		theState = flyweight(theState);
-		if (simplify)
-			theState = simplify(theState);
+		if (simplify) {
+			ImmutableState simplifiedState = theState.simplifiedState;
+
+			if (simplifiedState == null) {
+				simplifiedState = simplify(theState);
+				simplifiedState = flyweight(simplifiedState);
+				theState.simplifiedState = simplifiedState;
+				simplifiedState.simplifiedState = simplifiedState;
+				return simplifiedState;
+			}
+		}
 		return theState;
 	}
 
@@ -954,18 +975,7 @@ public class ImmutableStateFactory implements StateFactory {
 		return universe;
 	}
 
-	@Override
-	public ImmutableState simplify(State state) {
-		ImmutableState theState = flyweight(state);
-		ImmutableState result = theState.simplifiedState;
 
-		if (result == null) {
-			result = simplifyWork(theState);
-			result = flyweight(result);
-			theState.simplifiedState = result;
-		}
-		return result;
-	}
 
 	/* ************************ Other public methods *********************** */
 
