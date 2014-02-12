@@ -364,6 +364,48 @@ public class Evaluator {
 		return state;
 	}
 
+	/**
+	 * Checks whether the path condition is satisfiable and logs an error if it
+	 * is (or might be). If the path condition is definitely unsatisfiable,
+	 * there is no error to log, and an UnsatisfiablePathConditionException is
+	 * thrown.
+	 * 
+	 * @param source
+	 *            source code element used to report the error
+	 * @param state
+	 *            the current state in which the possible error is detected
+	 * @param errorKind
+	 *            the kind of error (e.g., DEREFERENCE)
+	 * @param message
+	 *            the message to include in the error report
+	 * @throws UnsatisfiablePathConditionException
+	 *             if the path condition is definitely unsatisfiable
+	 */
+	void logSimpleError(CIVLSource source, State state, ErrorKind errorKind,
+			String message) throws UnsatisfiablePathConditionException {
+		BooleanExpression pc = state.getPathCondition();
+		BooleanExpression npc = universe.not(pc);
+		ValidityResult validityResult = trueReasoner.valid(npc);
+		ResultType nsat = validityResult.getResultType();
+		Certainty certainty;
+		CIVLStateException error;
+
+		// performance! need to cache the satisfiability of each pc somewhere
+		// negation is slow
+		// maybe add "nsat" to Reasoner.
+		if (nsat == ResultType.YES)
+			// no error to report---an infeasible path
+			throw new UnsatisfiablePathConditionException();
+		if (nsat == ResultType.MAYBE)
+			certainty = Certainty.MAYBE;
+		else { // pc is definitely satisfiable
+			certainty = Certainty.PROVEABLE;
+		}
+		error = new CIVLStateException(errorKind, certainty, message, state,
+				source);
+		reportError(error);
+	}
+
 	private NumericExpression zeroOf(CIVLSource source, CIVLType type) {
 		if (type instanceof CIVLPrimitiveType) {
 			if (((CIVLPrimitiveType) type).primitiveTypeKind() == PrimitiveTypeKind.INT)
@@ -2169,23 +2211,27 @@ public class Evaluator {
 		// how to figure out if pointer is null pointer?
 		try {
 			int sid = getScopeId(source, pointer);
-			int vid = getVariableId(source, pointer);
-			ReferenceExpression symRef = getSymRef(pointer);
-			SymbolicExpression variableValue = state.getScope(sid)
-					.getValue(vid);
-			SymbolicExpression deref;
 
-			try {
-				deref = universe.dereference(variableValue, symRef);
-			} catch (SARLException e) {
-				CIVLStateException se = new CIVLStateException(
-						ErrorKind.DEREFERENCE, Certainty.MAYBE,
-						"Illegal pointer dereference", state, source);
-
-				reportError(se);
+			if (sid < 0) {
+				logSimpleError(source, state, ErrorKind.DEREFERENCE,
+						"Attempt to dereference pointer into scope which has been removed from state");
 				throw new UnsatisfiablePathConditionException();
+			} else {
+				int vid = getVariableId(source, pointer);
+				ReferenceExpression symRef = getSymRef(pointer);
+				SymbolicExpression variableValue = state.getScope(sid)
+						.getValue(vid);
+				SymbolicExpression deref;
+
+				try {
+					deref = universe.dereference(variableValue, symRef);
+				} catch (SARLException e) {
+					logSimpleError(source, state, ErrorKind.DEREFERENCE,
+							"Illegal pointer dereference");
+					throw new UnsatisfiablePathConditionException();
+				}
+				return new Evaluation(state, deref);
 			}
-			return new Evaluation(state, deref);
 		} catch (CIVLInternalException e) {
 			CIVLStateException se = new CIVLStateException(
 					ErrorKind.DEREFERENCE, Certainty.MAYBE,
