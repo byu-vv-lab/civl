@@ -46,7 +46,7 @@ way.)
 
 9. The autotest script will create the release at the next CIVL commit
 (to any part of CIVL). If you don't want to wait, you can trigger it
-manually by executing from vsl, in repos/scripts:
+manually by executing from vsl, in ~/scripts:
 
  ./run_manager.sh FullPathTo/config_civl-0.2.sh 121
 
