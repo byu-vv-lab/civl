@@ -21,13 +21,14 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
-import edu.udel.cis.vsl.civl.semantics.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
@@ -158,8 +159,8 @@ public class AmpleSetWorker {
 	 * @param debugOut
 	 *            The print stream for debugging information.
 	 */
-	public AmpleSetWorker(State state, Enabler enabler, Evaluator evaluator,
-			boolean debug, PrintStream debugOut) {
+	public AmpleSetWorker(State state, Enabler enabler,
+			Evaluator evaluator, boolean debug, PrintStream debugOut) {
 		this.state = state;
 		this.enabler = enabler;
 		this.evaluator = evaluator;
@@ -544,8 +545,6 @@ public class AmpleSetWorker {
 		return null;
 	}
 
-	// equals() and hashCode() method of MemoryUnit must be implemented so
-	// that Set.contains() can execute correctly.
 	/**
 	 * Compute the impact memory units of a given statement of a certain process
 	 * at the current state.
@@ -638,34 +637,13 @@ public class AmpleSetWorker {
 				memUnits.addAll(memUnitsPartial);
 			}
 			break;
-		case MPI_IBARRIER:
-			break;
-		case MPI_IRECV:
-			break;
-		case MPI_ISEND:
-			break;
-		case MPI_RECV:
-			MPIRecvStatement mpiRecvStatement = (MPIRecvStatement) statement;
 
-			for (Expression argument : mpiRecvStatement.getArgumentsList()) {
-				memUnitsPartial = memoryUnit(argument, pid);
-				if (memUnitsPartial != null) {
-					memUnits.addAll(memUnitsPartial);
-				}
+		case MPI:
+			memUnitsPartial = impactMemoryUnitsOfMPIStatement(
+					(MPIStatement) statement, pid);
+			if (memUnitsPartial != null) {
+				memUnits.addAll(memUnitsPartial);
 			}
-			break;
-		case MPI_SEND:
-			// TODO: why the program never goes there ?
-			MPISendStatement mpiSendStatement = (MPISendStatement) statement;
-
-			for (Expression argument : mpiSendStatement.getArgumentsList()) {
-				memUnitsPartial = memoryUnit(argument, pid);
-				if (memUnitsPartial != null) {
-					memUnits.addAll(memUnitsPartial);
-				}
-			}
-			break;
-		case MPI_WAIT:
 			break;
 		case NOOP:
 			break;
@@ -698,6 +676,49 @@ public class AmpleSetWorker {
 					"Impact memory units for statement: ", statement);
 		}
 
+		return memUnits;
+	}
+
+	private Set<SymbolicExpression> impactMemoryUnitsOfMPIStatement(
+			MPIStatement statement, int pid)
+			throws UnsatisfiablePathConditionException {
+		Set<SymbolicExpression> memUnits = new HashSet<>();
+		Set<SymbolicExpression> memUnitsPartial;
+
+		switch (statement.mpiStatementKind()) {
+		case IBARRIER:
+			break;
+		case IRECV:
+			break;
+		case ISEND:
+			break;
+		case RECV:
+			MPIRecvStatement mpiRecvStatement = (MPIRecvStatement) statement;
+
+			for (Expression argument : mpiRecvStatement.getArgumentsList()) {
+				memUnitsPartial = memoryUnit(argument, pid);
+				if (memUnitsPartial != null) {
+					memUnits.addAll(memUnitsPartial);
+				}
+			}
+			break;
+		case SEND:
+			// TODO: why the program never goes there ?
+			MPISendStatement mpiSendStatement = (MPISendStatement) statement;
+
+			for (Expression argument : mpiSendStatement.getArgumentsList()) {
+				memUnitsPartial = memoryUnit(argument, pid);
+				if (memUnitsPartial != null) {
+					memUnits.addAll(memUnitsPartial);
+				}
+			}
+			break;
+		case WAIT:
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"Impact memory units for statement: ", statement);
+		}
 		return memUnits;
 	}
 
@@ -791,7 +812,7 @@ public class AmpleSetWorker {
 						Variable variable = dyScope.lexicalScope()
 								.variable(vid);
 						Set<SymbolicExpression> varMemUnits = evaluator
-								.memoryUnitOfVariable(dyScope.getValue(vid),
+								.memoryUnitsOfVariable(dyScope.getValue(vid),
 										dyScopeID, vid, state);
 						boolean permission = writableVariables
 								.contains(variable) ? true : false;
@@ -813,4 +834,5 @@ public class AmpleSetWorker {
 		}
 		return memUnitPermissionMap;
 	}
+
 }

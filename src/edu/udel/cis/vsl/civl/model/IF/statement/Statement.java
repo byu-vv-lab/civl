@@ -33,7 +33,7 @@ public interface Statement extends Sourceable {
 	 * 
 	 */
 	public enum StatementKind {
-		ASSERT, ASSIGN, ASSUME, CALL_OR_SPAWN, CHOOSE, MALLOC, MPI_IBARRIER, MPI_IRECV, MPI_ISEND, MPI_RECV, MPI_SEND, MPI_WAIT, NOOP, RETURN, WAIT, OTHERS, STATEMENT_LIST
+		ASSERT, ASSIGN, ASSUME, CALL_OR_SPAWN, CHOOSE, MALLOC, MPI, NOOP, RETURN, WAIT, OTHERS, STATEMENT_LIST
 	}
 
 	/* **************************** Public Methods ************************* */

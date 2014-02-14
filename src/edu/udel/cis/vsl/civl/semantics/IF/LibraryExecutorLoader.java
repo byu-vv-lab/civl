@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.semantics.Executor;
 
 /**
  * A library executor loader is used to load library executors by name.

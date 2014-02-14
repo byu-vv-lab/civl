@@ -347,6 +347,12 @@ public class CommonMPIRecvStatement extends CommonStatement implements
 
 	@Override
 	public StatementKind statementKind() {
-		return StatementKind.MPI_RECV;
+		return StatementKind.MPI;
 	}
+	
+	@Override
+	public MPIStatementKind mpiStatementKind() {
+		return MPIStatementKind.RECV;
+	}
+	
 }

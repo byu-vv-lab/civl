@@ -31,13 +31,14 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -66,7 +67,7 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class Executor {
+public class CommonExecutor implements Executor {
 
 	/* ******************************* Types ******************************* */
 
@@ -76,26 +77,24 @@ public class Executor {
 
 	/* *************************** Instance Fields ************************* */
 
-	protected boolean enablePrintf; // true by default
+	/**
+	 * The unique library executor for civlc.h.
+	 */
+	protected Libcivlc civlcExecutor;
 
+	/**
+	 * Enable or disable printing. True by default.
+	 */
+	protected boolean enablePrintf;
+
+	/**
+	 * The unique enabler used in the system. Used in this class to evaluate the
+	 * guard of a statement.
+	 */
 	protected Enabler enabler;
-
-	protected ModelFactory modelFactory;
-
-	/** The symbolic universe used to manage all symbolic expressions. */
-	protected SymbolicUniverse symbolicUniverse;
-
-	/** The factory used to produce and manipulate model states. */
-	protected StateFactory stateFactory;
 
 	/** The Evaluator used to evaluate expressions. */
 	protected Evaluator evaluator;
-
-	// /**
-	// * Log used to record property violations encountered as the model is
-	// * executed.
-	// */
-	// private ErrorLog log;
 
 	/**
 	 * The loader used to find Executors for system functions declared in
@@ -103,11 +102,10 @@ public class Executor {
 	 */
 	protected LibraryExecutorLoader loader;
 
-	protected Libcivlc civlcExecutor;
-
-	protected Libstdio stdioExecutor;
-
-	protected PrintStream output;
+	/**
+	 * The unique model factory used in the system.
+	 */
+	protected ModelFactory modelFactory;
 
 	/**
 	 * The number of steps that have been executed by this executor. A "step" is
@@ -115,6 +113,22 @@ public class Executor {
 	 * {@link #executeWork(State, int, Statement)}.
 	 */
 	protected long numSteps = 0;
+
+	/**
+	 * The printing stream to be used.
+	 */
+	protected PrintStream output;
+
+	/** The factory used to produce and manipulate model states. */
+	protected StateFactory stateFactory;
+
+	/**
+	 * The unique library executor for stdio.h.
+	 */
+	protected Libstdio stdioExecutor;
+
+	/** The symbolic universe used to manage all symbolic expressions. */
+	protected SymbolicUniverse symbolicUniverse;
 
 	/* ***************************** Constructors ************************** */
 
@@ -130,14 +144,15 @@ public class Executor {
 	 * @param prover
 	 *            A theorem prover for checking assertions.
 	 */
-	public Executor(GMCConfiguration config, ModelFactory modelFactory,
+	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log,
 			LibraryExecutorLoader loader, PrintStream output,
 			boolean enablePrintf) {
 		this.symbolicUniverse = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
-		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);
+		this.evaluator = new CommonEvaluator(config, modelFactory,
+				stateFactory, log);
 		// this.log = log;
 		this.loader = loader;
 		this.output = output;
@@ -160,14 +175,14 @@ public class Executor {
 	 * @param prover
 	 *            A theorem prover for checking assertions.
 	 */
-	public Executor(GMCConfiguration config, ModelFactory modelFactory,
+	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log, PrintStream output,
 			boolean enablePrintf) {
 		this(config, modelFactory, stateFactory, log, null, output,
 				enablePrintf);
 	}
 
-	/* ************************* Protected methods ************************* */
+	/* ************************* Private methods ************************* */
 
 	/**
 	 * Executes an assignment statement. The state will be updated such that the
@@ -184,15 +199,12 @@ public class Executor {
 	 * @return The updated state of the program
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	protected State executeAssign(State state, int pid,
-			AssignStatement statement)
+	private State executeAssign(State state, int pid, AssignStatement statement)
 			throws UnsatisfiablePathConditionException {
-		ProcessState process = state.getProcessState(pid);
 		Evaluation eval = evaluator.evaluate(state, pid, statement.rhs());
 
 		state = assign(eval.state, pid, statement.getLhs(), eval.value);
-		state = transition(state, process, statement.target());
-		// state = stateFactory.canonic(state);
+		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
 
@@ -211,7 +223,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	protected State executeCall(State state, int pid,
+	private State executeCall(State state, int pid,
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		if (statement.function() instanceof SystemFunction) {
@@ -221,8 +233,6 @@ public class Executor {
 					output, this.enablePrintf, this.modelFactory);
 
 			state = executor.execute(state, pid, statement);
-			// state = transition(state, state.getProcessState(pid),
-			// statement.target());
 		} else {
 			CIVLFunction function = statement.function();
 			SymbolicExpression[] arguments;
@@ -240,13 +250,11 @@ public class Executor {
 		return state;
 	}
 
-	protected State executeMalloc(State state, int pid,
-			MallocStatement statement)
+	private State executeMalloc(State state, int pid, MallocStatement statement)
 			throws UnsatisfiablePathConditionException {
 		State result = civlcExecutor.executeMalloc(state, pid, statement);
 
-		result = transition(result, result.getProcessState(pid),
-				statement.target());
+		result = stateFactory.setLocation(result, pid, statement.target());
 		return result;
 	}
 
@@ -263,10 +271,9 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	protected State executeSpawn(State state, int pid,
+	private State executeSpawn(State state, int pid,
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
-		ProcessState process = state.getProcessState(pid);
 		CIVLFunction function = statement.function();
 		int newPid = state.numProcs();
 		List<Expression> argumentExpressions = statement.arguments();
@@ -285,8 +292,7 @@ public class Executor {
 		if (statement.lhs() != null)
 			state = assign(state, pid, statement.lhs(),
 					modelFactory.processValue(newPid));
-		state = transition(state, process, statement.target());
-		// state = stateFactory.canonic(state);
+		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
 
@@ -303,17 +309,15 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	protected State executeWait(State state, int pid, WaitStatement statement)
+	private State executeWait(State state, int pid, WaitStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid, statement.process());
 		SymbolicExpression procVal = eval.value;
 		int joinedPid = modelFactory.getProcessId(statement.process()
 				.getSource(), procVal);
 
-		state = transition(eval.state, state.getProcessState(pid),
-				statement.target());
+		state = stateFactory.setLocation(eval.state, pid, statement.target());
 		state = stateFactory.removeProcess(state, joinedPid);
-		// state = stateFactory.canonic(state);
 		return state;
 	}
 
@@ -329,8 +333,7 @@ public class Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	protected State executeReturn(State state, int pid,
-			ReturnStatement statement)
+	private State executeReturn(State state, int pid, ReturnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Expression expr = statement.expression();
 		ProcessState process;
@@ -359,8 +362,7 @@ public class Executor {
 		return state;
 	}
 
-	protected State executeAssume(State state, int pid,
-			AssumeStatement statement)
+	private State executeAssume(State state, int pid, AssumeStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
@@ -371,13 +373,11 @@ public class Executor {
 		oldPathCondition = state.getPathCondition();
 		newPathCondition = symbolicUniverse.and(oldPathCondition, assumeValue);
 		state = state.setPathCondition(newPathCondition);
-		state = transition(state, state.getProcessState(pid),
-				statement.target());
+		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
 
-	protected State executeAssert(State state, int pid,
-			AssertStatement statement)
+	private State executeAssert(State state, int pid, AssertStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
@@ -456,10 +456,6 @@ public class Executor {
 				// return state;
 				output.println();
 			}
-			// Certainty certainty = resultType == ResultType.NO ?
-			// Certainty.PROVEABLE
-			// : Certainty.MAYBE;
-
 			// TODO: USE GENERAL METHOD ... state = evaluator.logError in own
 			// class
 			state = evaluator.logError(statement.getSource(), state,
@@ -467,17 +463,8 @@ public class Executor {
 					"Cannot prove assertion holds: " + statement.toString()
 							+ "\n  Path condition: " + state.getPathCondition()
 							+ "\n  Assertion: " + assertValue + "\n");
-			// evaluator.reportError(new CIVLStateException(
-			// ErrorKind.ASSERTION_VIOLATION, certainty,
-			// "Cannot prove assertion holds: " + statement.toString()
-			// + "\n  Path condition: " + state.pathCondition()
-			// + "\n  Assertion: " + assertValue + "\n", state,
-			// statement.getSource()));
-			// state = stateFactory.setPathCondition(state,
-			// symbolicUniverse.and(state.pathCondition(), assertValue));
 		}
-		state = transition(state, state.getProcessState(pid),
-				statement.target());
+		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
 
@@ -493,57 +480,45 @@ public class Executor {
 	 *            The statement to be executed.
 	 * @return The updated state of the program.
 	 */
-	protected State executeWork(State state, int pid, Statement statement)
+	private State executeWork(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
 		numSteps++;
-		if (statement instanceof AssumeStatement) {
-			return executeAssume(state, pid, (AssumeStatement) statement);
-		} else if (statement instanceof AssertStatement) {
+
+		switch (statement.statementKind()) {
+		case ASSERT:
 			return executeAssert(state, pid, (AssertStatement) statement);
-		} else if (statement instanceof CallOrSpawnStatement) {
+		case ASSIGN:
+			return executeAssign(state, pid, (AssignStatement) statement);
+		case ASSUME:
+			return executeAssume(state, pid, (AssumeStatement) statement);
+		case CALL_OR_SPAWN:
 			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
 			if (call.isCall())
 				return executeCall(state, pid, call);
 			else
 				return executeSpawn(state, pid, call);
-		} else if (statement instanceof AssignStatement) {
-			return executeAssign(state, pid, (AssignStatement) statement);
-		} else if (statement instanceof WaitStatement) {
-			return executeWait(state, pid, (WaitStatement) statement);
-		} else if (statement instanceof ReturnStatement) {
-			return executeReturn(state, pid, (ReturnStatement) statement);
-		} else if (statement instanceof NoopStatement) {
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
-
-			return state;
-		} else if (statement instanceof MallocStatement) {
+		case CHOOSE:
+			throw new CIVLInternalException("Should be unreachable", statement);
+		case MALLOC:
 			return executeMalloc(state, pid, (MallocStatement) statement);
-		} else if (statement instanceof StatementList) {
+		case NOOP:
+			return stateFactory.setLocation(state, pid, statement.target());
+		case RETURN:
+			return executeReturn(state, pid, (ReturnStatement) statement);
+		case STATEMENT_LIST:
 			return executeStatementList(state, pid, (StatementList) statement,
 					null);
-		} else if (statement instanceof ChooseStatement) {
-			throw new CIVLInternalException("Should be unreachable", statement);
-		} else
+		case WAIT:
+			return executeWait(state, pid, (WaitStatement) statement);
+		default:
 			throw new CIVLInternalException("Unknown statement kind", statement);
+		}
 	}
 
-	/* ************************* Public Methods **************************** */
+	/* ********************* Methods from Executor ************************* */
 
-	/**
-	 * Assigns a value to the referenced cell in the state. Returns a new state
-	 * which is equivalent to the old state except that the memory specified by
-	 * the given pointer value is assigned the given value.
-	 * 
-	 * @param state
-	 *            a CIVL model state
-	 * @param pointer
-	 *            a pointer value
-	 * @param value
-	 *            a value to be assigned to the referenced memory location
-	 * @return the new state
-	 */
+	@Override
 	public State assign(CIVLSource source, State state,
 			SymbolicExpression pointer, SymbolicExpression value) {
 		int vid = evaluator.getVariableId(source, pointer);
@@ -565,21 +540,7 @@ public class Executor {
 		return result;
 	}
 
-	/**
-	 * Assigns a value to the memory location specified by the given
-	 * left-hand-side expression.
-	 * 
-	 * @param state
-	 *            a CIVL model state
-	 * @param pid
-	 *            the PID of the process executing the assignment
-	 * @param lhs
-	 *            a left-hand-side expression
-	 * @param value
-	 *            the value being assigned to the left-hand-side
-	 * @return the new state
-	 * @throws UnsatisfiablePathConditionException
-	 */
+	@Override
 	public State assign(State state, int pid, LHSExpression lhs,
 			SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
@@ -588,63 +549,41 @@ public class Executor {
 		return assign(lhs.getSource(), eval.state, eval.value, value);
 	}
 
-	/**
-	 * Execute a choose statement. This is like an assignment statement where
-	 * the variable gets assigned a particular value between 0 and arg-1,
-	 * inclusive. The value is assigned for each transition from the choose
-	 * source location by the Enabler.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The process id of the currently executing process.
-	 * @param statement
-	 *            A choose statement to be executed.
-	 * @param value
-	 *            The value assigned to the variable for this particular
-	 *            transition. This concrete value should be provided by the
-	 *            enabler.
-	 * @return The updated state of the program.
-	 * @throws UnsatisfiablePathConditionException
-	 */
+	@Override
 	public State executeChoose(State state, int pid, ChooseStatement statement,
 			SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
-		ProcessState process = state.getProcessState(pid);
-
 		state = assign(state, pid, statement.getLhs(), value);
-		state = transition(state, process, statement.target());
+		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
 
-	/**
-	 * @return The state factory associated with this executor.
-	 */
+	@Override
 	public StateFactory stateFactory() {
 		return stateFactory;
 	}
 
-	/**
-	 * @return The symbolic universe associated with this executor.
-	 */
+	@Override
+	public Enabler enabler() {
+		return this.enabler;
+	}
+
+	@Override
 	public SymbolicUniverse universe() {
 		return symbolicUniverse;
 	}
 
-	/**
-	 * @return The evaluator used by this executor.
-	 */
+	@Override
 	public Evaluator evaluator() {
 		return evaluator;
 	}
 
-	/**
-	 * @return The model factory used by this executor.
-	 */
+	@Override
 	public ModelFactory modelFactory() {
 		return modelFactory;
 	}
 
+	@Override
 	public State executeStatementList(State state, int pid,
 			StatementList statement, SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
@@ -662,15 +601,7 @@ public class Executor {
 		return state;
 	}
 
-	/**
-	 * Returns the state that results from executing the statement, or null if
-	 * path condition becomes unsatisfiable.
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param statement
-	 * @return
-	 */
+	@Override
 	public State execute(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
 		try {
@@ -685,6 +616,7 @@ public class Executor {
 		}
 	}
 
+	@Override
 	public LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
 		String library;
 
@@ -701,23 +633,7 @@ public class Executor {
 		}
 	}
 
-	/**
-	 * Execute a statement from a certain state and return the resulting state
-	 * TODO make sure the pid is never changed or return the new pid if changed
-	 * 
-	 * @param state
-	 *            The state to execute the statement with
-	 * @param location
-	 *            The location of the statement, satisfying that
-	 *            <code>s.source() == location</code>.
-	 * @param s
-	 *            The statement to be executed
-	 * @param pid
-	 *            The id of the process that the statement <code>s</code>
-	 *            belongs to. Precondition:
-	 *            <code>state.getProcessState(pid).getLocation() == location</code>
-	 * @return
-	 */
+	@Override
 	public Pair<StateStatusKind, State> executeStatement(State state,
 			Location location, Statement s, int pid) {
 		State newState = null;
@@ -755,10 +671,6 @@ public class Executor {
 					}
 				} else {
 					newState = state.setPathCondition(pathCondition);
-					// TODO: this is too much simplify!
-					// need to call simplify in order to have concrete
-					// value of input variables when possible
-					newState = stateFactory.simplify(newState);
 					newState = execute(newState, pid, s);
 				}
 			} catch (UnsatisfiablePathConditionException e) {
@@ -770,18 +682,9 @@ public class Executor {
 		return new Pair<>(StateStatusKind.NORMAL, newState);
 	}
 
-	/**
-	 * Get the list of processes that are in some atomic blocks but blocked in
-	 * some previous states and enabled at the given state.
-	 * 
-	 * @param state
-	 * @return The list of processes as described above. If there is no such
-	 *         process then return an empty list.
-	 */
-	@SuppressWarnings("unchecked")
+	@Override
 	public ArrayList<Integer> resumableAtomicProcesses(State state) {
-		Iterable<ProcessState> processes = (Iterable<ProcessState>) state
-				.getProcessStates();
+		Iterable<? extends ProcessState> processes = state.getProcessStates();
 		ArrayList<Integer> result = new ArrayList<Integer>();
 
 		assert !stateFactory.lockedByAtomic(state);
@@ -793,10 +696,10 @@ public class Executor {
 
 				if (pLocation != null) {
 					for (Statement s : pLocation.outgoing()) {
-						Pair<StateStatusKind, State> temp = executeStatement(
-								state, pLocation, s, pid);
+						BooleanExpression guard = enabler.getGuard(s, pid,
+								state);
 
-						if (temp.left != StateStatusKind.BLOCKED) {
+						if (!guard.isFalse()) {
 							result.add(p.getPid());
 							resumable = true;
 							break;
@@ -810,34 +713,33 @@ public class Executor {
 		return result;
 	}
 
-	/**
-	 * Transition a process from one location to another. If the new location is
-	 * in a different scope, create a new scope or move to the parent scope as
-	 * necessary.
-	 * 
-	 * @param state
-	 *            The old state.
-	 * @param process
-	 *            The process undergoing the transition.
-	 * @param target
-	 *            The end location of the transition.
-	 * @return A new state where the process is at the target location.
-	 */
-	public State transition(State state, ProcessState process, Location target) {
-		state = stateFactory.setLocation(state, process.getPid(), target);
-		// state = stateFactory.canonic(state);
-		return state;
-	}
+	// /**
+	// * Transition a process from one location to another. If the new location
+	// is
+	// * in a different scope, create a new scope or move to the parent scope as
+	// * necessary.
+	// *
+	// * @param state
+	// * The old state.
+	// * @param process
+	// * The process undergoing the transition.
+	// * @param target
+	// * The end location of the transition.
+	// * @return A new state where the process is at the target location.
+	// */
+	// private State transition(State state, ProcessState process, Location
+	// target) {
+	// state = stateFactory.setLocation(state, process.getPid(), target);
+	// // state = stateFactory.canonic(state);
+	// return state;
+	// }
 
+	@Override
 	public void setEnabler(Enabler enabler) {
 		this.enabler = enabler;
 	}
 
-	/**
-	 * Returns the number of "steps" executed since this Executor was created.
-	 * 
-	 * @return the number of steps executed
-	 */
+	@Override
 	public long getNumSteps() {
 		return numSteps;
 	}

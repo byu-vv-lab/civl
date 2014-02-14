@@ -15,8 +15,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
-import edu.udel.cis.vsl.civl.semantics.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -44,16 +44,16 @@ public class Libmpi implements LibraryExecutor {
 	private SymbolicUniverse universe;
 
 	private MPIModelFactory mpiFactory;
-	
+
 	private StateFactory stateFactory;
 
-//	private NumericExpression zero;
-//
-//	private NumericExpression one;
-//
-//	private IntObject zeroObject;
-//
-//	private IntObject oneObject;
+	// private NumericExpression zero;
+	//
+	// private NumericExpression one;
+	//
+	// private IntObject zeroObject;
+	//
+	// private IntObject oneObject;
 
 	public Libmpi(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
@@ -62,7 +62,7 @@ public class Libmpi implements LibraryExecutor {
 		// this.log = evaluator.log();
 		this.universe = evaluator.universe();
 		this.stateFactory = evaluator.stateFactory();
-		this.mpiFactory = (MPIModelFactory)modelFactory;
+		this.mpiFactory = (MPIModelFactory) modelFactory;
 		// this.zero = universe.zeroInt();
 		// this.one = universe.oneInt();
 		// this.zeroObject = universe.intObject(0);
@@ -125,10 +125,11 @@ public class Libmpi implements LibraryExecutor {
 	private State executeMPI_Comm_size(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluator.evaluate(state, pid, this.mpiFactory.numberOfProcs());
+		Evaluation eval = evaluator.evaluate(state, pid,
+				this.mpiFactory.numberOfProcs());
 		state = eval.state;
 		SymbolicExpression nprocsValue = eval.value;
-		AddressOfExpression nprocs = (AddressOfExpression)arguments[1];
+		AddressOfExpression nprocs = (AddressOfExpression) arguments[1];
 
 		if (lhs != null) {
 			eval = evaluator.evaluate(state, pid, lhs);
@@ -158,45 +159,47 @@ public class Libmpi implements LibraryExecutor {
 	private State executeMPI_Comm_rank(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluator.evaluate(state, pid, this.mpiFactory.rankVariable());
+		Evaluation eval = evaluator.evaluate(state, pid,
+				this.mpiFactory.rankVariable());
 		state = eval.state;
 		SymbolicExpression rankValue = eval.value;
-		AddressOfExpression rank = (AddressOfExpression)arguments[1];
+		AddressOfExpression rank = (AddressOfExpression) arguments[1];
 
 		if (lhs != null) {
 			eval = evaluator.evaluate(state, pid, lhs);
 			state = eval.state;
-			SymbolicExpression lhsValue = eval.value; 
+			SymbolicExpression lhsValue = eval.value;
 			state = this.primaryExecutor.assign(state, pid, lhs, lhsValue);
 		}
 		state = this.primaryExecutor.assign(state, pid, rank.operand(),
 				rankValue);
-		
+
 		return state;
 	}
-	
-//	private State executeMPI_Init(State state, int pid, LHSExpression lhs,
-//			Expression[] arguments, SymbolicExpression[] argumentValues)
-//			throws UnsatisfiablePathConditionException {
-//		Evaluation eval = evaluator.evaluate(state, pid, this.mpiFactory.numberOfProcs());
-//		state = eval.state;
-//		SymbolicExpression nprocs = eval.value;
-//		SymbolicExpression comm = null;
-//		SymbolicExpression messageBuffer = null;
-//		SymbolicExpression messageBuferRow = null;
-//		NumericExpression size = null;
-//		Model model = state.getScope(0).lexicalScope().model();
-//		CIVLType queueType = model.queueType();
-//		CIVLType messageType = model.mesageType();
-//		CIVLType commType = model.commType();
-//		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
-//		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
-//		SymbolicExpression emptyQueue;
-//		
-//		
-//		
-//		return state;
-//	}
+
+	// private State executeMPI_Init(State state, int pid, LHSExpression lhs,
+	// Expression[] arguments, SymbolicExpression[] argumentValues)
+	// throws UnsatisfiablePathConditionException {
+	// Evaluation eval = evaluator.evaluate(state, pid,
+	// this.mpiFactory.numberOfProcs());
+	// state = eval.state;
+	// SymbolicExpression nprocs = eval.value;
+	// SymbolicExpression comm = null;
+	// SymbolicExpression messageBuffer = null;
+	// SymbolicExpression messageBuferRow = null;
+	// NumericExpression size = null;
+	// Model model = state.getScope(0).lexicalScope().model();
+	// CIVLType queueType = model.queueType();
+	// CIVLType messageType = model.mesageType();
+	// CIVLType commType = model.commType();
+	// SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
+	// SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
+	// SymbolicExpression emptyQueue;
+	//
+	//
+	//
+	// return state;
+	// }
 
 	private State executeWork(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {

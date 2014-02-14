@@ -15,7 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
  * @author ziqingluo
  *
  */
-public interface MPIWaitStatement extends Statement{
+public interface MPIWaitStatement extends MPIStatement{
 	/**
 	 * Returns the communication request(handle).
 	 * 

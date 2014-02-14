@@ -148,7 +148,12 @@ public class CommonMPIIrecvStatement extends CommonStatement implements
 
 	@Override
 	public StatementKind statementKind() {
-		return StatementKind.MPI_IRECV;
+		return StatementKind.MPI;
+	}
+
+	@Override
+	public MPIStatementKind mpiStatementKind() {
+		return MPIStatementKind.IRECV;
 	}
 
 }

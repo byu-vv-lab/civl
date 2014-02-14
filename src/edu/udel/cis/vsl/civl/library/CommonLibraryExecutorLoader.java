@@ -8,7 +8,7 @@ import java.util.Map;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 
@@ -24,7 +24,8 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 	@SuppressWarnings("unchecked")
 	@Override
 	public LibraryExecutor getLibraryExecutor(String name,
-			Executor primaryExecutor, PrintStream output, boolean enablePrintf, ModelFactory modelFacotry) {
+			Executor primaryExecutor, PrintStream output, boolean enablePrintf,
+			ModelFactory modelFacotry) {
 		LibraryExecutor result = libraryExecutorCache.get(name);
 
 		if (result == null) {

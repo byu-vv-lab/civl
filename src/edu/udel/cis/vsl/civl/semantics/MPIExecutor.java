@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.semantics;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
@@ -14,20 +15,13 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MPIStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
-import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -35,6 +29,7 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -42,7 +37,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
-public class MPIExecutor extends Executor {
+public class MPIExecutor extends CommonExecutor {
 
 	/* ********************** Instance Field ******************************* */
 
@@ -154,26 +149,26 @@ public class MPIExecutor extends Executor {
 				commAddr).value;
 		// create buf array
 		SymbolicExpression bufArray = null;
-		eval = evaluator.dereference(civlsource, state,
-				bufAddr);
+		eval = evaluator.dereference(civlsource, state, bufAddr);
 		state = eval.state;
 		SymbolicExpression bufValue = eval.value;
 		SymbolicType bufType = null;
-		if(int_count < 0){
-			throw new UnsatisfiablePathConditionException();  //TODO: which exception ?!!?!
-		}else if(bufValue.isNull() || int_count == 0){
+		if (int_count < 0) {
+			throw new UnsatisfiablePathConditionException(); // TODO: which
+																// exception
+																// ?!!?!
+		} else if (bufValue.isNull() || int_count == 0) {
 			bufType = symbolicUniverse.integerType();
 			buf.add(symbolicUniverse.zeroInt());
-			bufArray = symbolicUniverse.array(bufType, buf);	
-		}else if((bufValue.isOne() && int_count == 1)){
+			bufArray = symbolicUniverse.array(bufType, buf);
+		} else if ((bufValue.isOne() && int_count == 1)) {
 			buf.add(bufValue);
 			bufType = bufValue.type();
 			bufArray = symbolicUniverse.array(bufType, buf);
-		}
-		else{
-			for(int i=0; i<int_count; i++){
-				SymbolicExpression bufArrayElement = symbolicUniverse.arrayRead(bufValue, 
-						symbolicUniverse.integer(i));
+		} else {
+			for (int i = 0; i < int_count; i++) {
+				SymbolicExpression bufArrayElement = symbolicUniverse
+						.arrayRead(bufValue, symbolicUniverse.integer(i));
 				buf.add(bufArrayElement);
 			}
 			bufType = bufValue.type();
@@ -264,7 +259,7 @@ public class MPIExecutor extends Executor {
 		commVariableID = evaluator.getVariableId(civlsource, commAddr);
 		state = stateFactory.setVariable(state, commVariableID, commScopeID,
 				comm);
-		//TODO: implement return values
+		// TODO: implement return values
 		if (lhs != null) {
 			eval = evaluator.evaluate(state, pid, statement.getLeftHandSide());
 			state = eval.state;
@@ -443,7 +438,7 @@ public class MPIExecutor extends Executor {
 		// set buf and status
 		buf = symbolicUniverse.tupleRead(newMessage,
 				symbolicUniverse.intObject(3));
-		//TODO: the buf need to be a array type
+		// TODO: the buf need to be a array type
 		buf = (SymbolicExpression) buf.argument(1);
 		assert buf.type() instanceof SymbolicArrayType;
 		// create a new tuple
@@ -478,7 +473,7 @@ public class MPIExecutor extends Executor {
 		// update state
 		state = stateFactory.setVariable(state, variableID, variableScopeID,
 				comm);
-		//TODO:implement mpi return values
+		// TODO:implement mpi return values
 		if (lhs != null) {
 			eval = evaluator.evaluate(state, pid, statement.getLeftHandSide());
 			state = eval.state;
@@ -500,61 +495,49 @@ public class MPIExecutor extends Executor {
 		return state;
 	}
 
+	@Override
+	public State execute(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
+		if (statement.statementKind() == StatementKind.MPI) {
+			try {
+				return executeWork(state, pid, (MPIStatement) statement);
+			} catch (SARLException e) {
+				// e.printStackTrace(System.err);
+				// System.err.flush();
+				throw new CIVLInternalException("SARL exception: " + e,
+						statement);
+			} catch (CIVLExecutionException e) {
+				evaluator.reportError(e);
+				throw new UnsatisfiablePathConditionException();
+			}
+		} else {
+			return super.execute(state, pid, statement);
+		}
+	}
+
 	/**
 	 * Add MPISend and MPIRecv statements execution to the superclass's version.
 	 */
-	@Override
-	protected State executeWork(State state, int pid, Statement statement)
+	private State executeWork(State state, int pid, MPIStatement statement)
 			throws UnsatisfiablePathConditionException {
 		LHSExpression lhs = null;
 		numSteps++;
-		if (statement instanceof CallOrSpawnStatement) {
-			lhs = ((CallOrSpawnStatement) statement).lhs();
-		}
-		if (statement instanceof AssumeStatement) {
-			return executeAssume(state, pid, (AssumeStatement) statement);
-		} else if (statement instanceof AssertStatement) {
-			return executeAssert(state, pid, (AssertStatement) statement);
-		} else if (statement instanceof CallOrSpawnStatement) {
-			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
-			if (call.isCall())
-				return executeCall(state, pid, call);
-			else
-				return executeSpawn(state, pid, call);
-		} else if (statement instanceof AssignStatement) {
-			return executeAssign(state, pid, (AssignStatement) statement);
-		} else if (statement instanceof WaitStatement) {
-			return executeWait(state, pid, (WaitStatement) statement);
-		} else if (statement instanceof ReturnStatement) {
-			return executeReturn(state, pid, (ReturnStatement) statement);
-		} else if (statement instanceof NoopStatement) {
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
-
-			return state;
-		} else if (statement instanceof MallocStatement) {
-			return executeMalloc(state, pid, (MallocStatement) statement);
-		} else if (statement instanceof StatementList) {
-			state = executeStatementList(state, pid, (StatementList) statement,
-					null);
-			return state;
-		} else if (statement instanceof MPISendStatement) {
+		switch (statement.mpiStatementKind()) {
+		case SEND:
 			state = executeMPI_Send(state, pid, lhs,
 					(MPISendStatement) statement);
-			state = this.transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			return state;
-		} else if (statement instanceof MPIRecvStatement) {
+		case RECV:
 			state = executeMPI_Recv(state, pid, lhs,
 					(MPIRecvStatement) statement);
-			state = this.transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			return state;
-		} else if (statement instanceof ChooseStatement) {
-			throw new CIVLInternalException("Should be unreachable", statement);
-		} else
-			throw new CIVLInternalException("Unknown statement kind", statement);
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"Unknown statement kind", statement);
+		}
 	}
 
 	@Override
@@ -578,134 +561,139 @@ public class MPIExecutor extends Executor {
 
 	/* *********************** public methods ********************************* */
 
-//	/**
-//	 * Get the guard of MPIRecvStatement. When receiving messages with any tag
-//	 * from any source, the guard is "There is at least one message buffer which
-//	 * belongs to the process itself has at least one message".
-//	 * 
-//	 * when receiving messages with any tag from a specific source, the guard is
-//	 * " There is at least one message in the specific message buffer".
-//	 * 
-//	 * when receiving messages with specific tag from any source, the guard is "
-//	 * There is at least one message buffer which belongs to the process itself
-//	 * has at least one message with the specific tag".
-//	 * 
-//	 * when receiving message with specific tag from specific source, the guard
-//	 * is "There is at least one message with the specific tag in the specific
-//	 * buffer"
-//	 * 
-//	 * @param state
-//	 *            The state of the program
-//	 * @param pid
-//	 *            The process id of the currently executing process
-//	 * @param statement
-//	 *            The statement to be executed
-//	 * 
-//	 * @return The updated state of the program
-//	 * @throws UnsatisfiablePathConditionException
-//	 */
-//	public BooleanExpression getMPIRecvGuard(State state, int pid,
-//			MPIRecvStatement statement)
-//			throws UnsatisfiablePathConditionException {
-//		CIVLSource civlsource = statement.getSource();
-//		Evaluation eval = evaluator.evaluate(state, pid,
-//				statement.getCommunicator());
-//		state = eval.state;
-//		SymbolicExpression commAddr = eval.value;
-//		eval = evaluator.dereference(civlsource, state, commAddr);
-//		state = eval.state;
-//		SymbolicExpression comm = eval.value;
-//		eval = evaluator.evaluate(state, pid, statement.getTag());
-//		state = eval.state;
-//		SymbolicExpression tag = eval.value;
-//		eval = evaluator.evaluate(state, pid, statement.getMPISource());
-//		state = eval.state;
-//		SymbolicExpression source = eval.value;
-//		eval = evaluator.evaluate(state, pid, rankExpression);
-//		state = eval.state;
-//		int rank = evaluator.extractInt(civlsource,
-//				(NumericExpression) eval.value);
-//		int queueLength = -1;
-//		SymbolicExpression buf; // buf has type $queue[][]
-//		SymbolicExpression bufRow; // buf[source], has type $queue[]
-//		SymbolicExpression queue; // particular $queue for this source and dest
-//		SymbolicExpression messages;
-//		boolean enabled = false;
-//		int int_tag = evaluator.extractInt(civlsource, (NumericExpression) tag);
-//		int int_source = evaluator.extractInt(civlsource,
-//				(NumericExpression) source);
-//		int nprocs = evaluator.extractInt(civlsource,
-//				(NumericExpression) symbolicUniverse.tupleRead(comm,
-//						symbolicUniverse.intObject(1)));
-//
-//		buf = symbolicUniverse.tupleRead(comm, symbolicUniverse.intObject(3));
-//		// MPI_ANY_SOURCE && MPI_ANY_TAG
-//		if (int_source == -1 && int_tag == -2) {
-//			for (int i = 0; i < nprocs; i++) {
-//				bufRow = symbolicUniverse.arrayRead(buf,
-//						symbolicUniverse.integer(i));
-//				queue = symbolicUniverse.arrayRead(bufRow,
-//						symbolicUniverse.integer(rank));
-//				queueLength = evaluator.extractInt(civlsource,
-//						(NumericExpression) symbolicUniverse.tupleRead(queue,
-//								symbolicUniverse.intObject(0)));
-//				if (queueLength > 0) {
-//					source = symbolicUniverse.integer(i);
-//					enabled = true;
-//					break;
-//				}
-//			}
-//			// MPI_ANY_SOURCE but not MPI_ANY_TAG
-//		} else if (int_source == -1 && int_tag != -2) {
-//			for (int i = 0; i < nprocs; i++) {
-//				bufRow = symbolicUniverse.arrayRead(buf,
-//						symbolicUniverse.integer(i));
-//				queue = symbolicUniverse.arrayRead(bufRow,
-//						symbolicUniverse.integer(rank));
-//				queueLength = evaluator.extractInt(civlsource,
-//						(NumericExpression) symbolicUniverse.tupleRead(queue,
-//								symbolicUniverse.intObject(0)));
-//				messages = symbolicUniverse.tupleRead(queue,
-//						symbolicUniverse.intObject(1));
-//				for (int j = 0; j < queueLength; j++) {
-//					if (symbolicUniverse.arrayRead(messages,
-//							symbolicUniverse.integer(j)).equals(tag)) {
-//						enabled = true;
-//						source = symbolicUniverse.integer(i);
-//						break;
-//					}
-//				}
-//				if (enabled)
-//					break;
-//			}
-//		} else {
-//			bufRow = symbolicUniverse
-//					.arrayRead(buf, (NumericExpression) source);
-//			queue = symbolicUniverse.arrayRead(bufRow,
-//					symbolicUniverse.integer(rank));
-//			queueLength = evaluator.extractInt(civlsource,
-//					(NumericExpression) symbolicUniverse.tupleRead(queue,
-//							symbolicUniverse.intObject(0)));
-//			messages = symbolicUniverse.tupleRead(queue,
-//					symbolicUniverse.intObject(1));
-//			if (int_tag == -2) {
-//				if (queueLength > 0)
-//					enabled = true;
-//			} else {
-//				for (int i = 0; i < queueLength; i++) {
-//					if (symbolicUniverse.tupleRead(
-//							symbolicUniverse.arrayRead(messages,
-//									symbolicUniverse.integer(i)),
-//							symbolicUniverse.intObject(2)).equals(tag)) {
-//						// We have a message with the right tag!
-//						enabled = true;
-//						break;
-//					}
-//				}
-//			}
-//		}
-//		return symbolicUniverse.bool(enabled);
-//	}
+	// /**
+	// * Get the guard of MPIRecvStatement. When receiving messages with any tag
+	// * from any source, the guard is "There is at least one message buffer
+	// which
+	// * belongs to the process itself has at least one message".
+	// *
+	// * when receiving messages with any tag from a specific source, the guard
+	// is
+	// * " There is at least one message in the specific message buffer".
+	// *
+	// * when receiving messages with specific tag from any source, the guard is
+	// "
+	// * There is at least one message buffer which belongs to the process
+	// itself
+	// * has at least one message with the specific tag".
+	// *
+	// * when receiving message with specific tag from specific source, the
+	// guard
+	// * is "There is at least one message with the specific tag in the specific
+	// * buffer"
+	// *
+	// * @param state
+	// * The state of the program
+	// * @param pid
+	// * The process id of the currently executing process
+	// * @param statement
+	// * The statement to be executed
+	// *
+	// * @return The updated state of the program
+	// * @throws UnsatisfiablePathConditionException
+	// */
+	// public BooleanExpression getMPIRecvGuard(State state, int pid,
+	// MPIRecvStatement statement)
+	// throws UnsatisfiablePathConditionException {
+	// CIVLSource civlsource = statement.getSource();
+	// Evaluation eval = evaluator.evaluate(state, pid,
+	// statement.getCommunicator());
+	// state = eval.state;
+	// SymbolicExpression commAddr = eval.value;
+	// eval = evaluator.dereference(civlsource, state, commAddr);
+	// state = eval.state;
+	// SymbolicExpression comm = eval.value;
+	// eval = evaluator.evaluate(state, pid, statement.getTag());
+	// state = eval.state;
+	// SymbolicExpression tag = eval.value;
+	// eval = evaluator.evaluate(state, pid, statement.getMPISource());
+	// state = eval.state;
+	// SymbolicExpression source = eval.value;
+	// eval = evaluator.evaluate(state, pid, rankExpression);
+	// state = eval.state;
+	// int rank = evaluator.extractInt(civlsource,
+	// (NumericExpression) eval.value);
+	// int queueLength = -1;
+	// SymbolicExpression buf; // buf has type $queue[][]
+	// SymbolicExpression bufRow; // buf[source], has type $queue[]
+	// SymbolicExpression queue; // particular $queue for this source and dest
+	// SymbolicExpression messages;
+	// boolean enabled = false;
+	// int int_tag = evaluator.extractInt(civlsource, (NumericExpression) tag);
+	// int int_source = evaluator.extractInt(civlsource,
+	// (NumericExpression) source);
+	// int nprocs = evaluator.extractInt(civlsource,
+	// (NumericExpression) symbolicUniverse.tupleRead(comm,
+	// symbolicUniverse.intObject(1)));
+	//
+	// buf = symbolicUniverse.tupleRead(comm, symbolicUniverse.intObject(3));
+	// // MPI_ANY_SOURCE && MPI_ANY_TAG
+	// if (int_source == -1 && int_tag == -2) {
+	// for (int i = 0; i < nprocs; i++) {
+	// bufRow = symbolicUniverse.arrayRead(buf,
+	// symbolicUniverse.integer(i));
+	// queue = symbolicUniverse.arrayRead(bufRow,
+	// symbolicUniverse.integer(rank));
+	// queueLength = evaluator.extractInt(civlsource,
+	// (NumericExpression) symbolicUniverse.tupleRead(queue,
+	// symbolicUniverse.intObject(0)));
+	// if (queueLength > 0) {
+	// source = symbolicUniverse.integer(i);
+	// enabled = true;
+	// break;
+	// }
+	// }
+	// // MPI_ANY_SOURCE but not MPI_ANY_TAG
+	// } else if (int_source == -1 && int_tag != -2) {
+	// for (int i = 0; i < nprocs; i++) {
+	// bufRow = symbolicUniverse.arrayRead(buf,
+	// symbolicUniverse.integer(i));
+	// queue = symbolicUniverse.arrayRead(bufRow,
+	// symbolicUniverse.integer(rank));
+	// queueLength = evaluator.extractInt(civlsource,
+	// (NumericExpression) symbolicUniverse.tupleRead(queue,
+	// symbolicUniverse.intObject(0)));
+	// messages = symbolicUniverse.tupleRead(queue,
+	// symbolicUniverse.intObject(1));
+	// for (int j = 0; j < queueLength; j++) {
+	// if (symbolicUniverse.arrayRead(messages,
+	// symbolicUniverse.integer(j)).equals(tag)) {
+	// enabled = true;
+	// source = symbolicUniverse.integer(i);
+	// break;
+	// }
+	// }
+	// if (enabled)
+	// break;
+	// }
+	// } else {
+	// bufRow = symbolicUniverse
+	// .arrayRead(buf, (NumericExpression) source);
+	// queue = symbolicUniverse.arrayRead(bufRow,
+	// symbolicUniverse.integer(rank));
+	// queueLength = evaluator.extractInt(civlsource,
+	// (NumericExpression) symbolicUniverse.tupleRead(queue,
+	// symbolicUniverse.intObject(0)));
+	// messages = symbolicUniverse.tupleRead(queue,
+	// symbolicUniverse.intObject(1));
+	// if (int_tag == -2) {
+	// if (queueLength > 0)
+	// enabled = true;
+	// } else {
+	// for (int i = 0; i < queueLength; i++) {
+	// if (symbolicUniverse.tupleRead(
+	// symbolicUniverse.arrayRead(messages,
+	// symbolicUniverse.integer(i)),
+	// symbolicUniverse.intObject(2)).equals(tag)) {
+	// // We have a message with the right tag!
+	// enabled = true;
+	// break;
+	// }
+	// }
+	// }
+	// }
+	// return symbolicUniverse.bool(enabled);
+	// }
 
 	/**
 	 * Add checking for guard of MPIRecvStatement to the superclass's version.

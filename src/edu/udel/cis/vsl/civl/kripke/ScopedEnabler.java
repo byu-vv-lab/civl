@@ -11,8 +11,8 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
-import edu.udel.cis.vsl.civl.semantics.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
@@ -66,10 +66,11 @@ public class ScopedEnabler extends Enabler implements
 	 *            The executor to be used
 	 * @param sPor
 	 *            True iff want to use scoped POR instead of default POR.
-	 * @param showAmpleSet 
+	 * @param showAmpleSet
 	 */
 	public ScopedEnabler(TransitionFactory transitionFactory,
-			Evaluator evaluator, Executor executor, boolean sPor, boolean showAmpleSet) {
+			Evaluator evaluator, Executor executor, boolean sPor,
+			boolean showAmpleSet) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
 		this.executor = executor;

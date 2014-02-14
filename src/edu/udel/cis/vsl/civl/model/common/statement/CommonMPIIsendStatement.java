@@ -150,7 +150,12 @@ public class CommonMPIIsendStatement extends CommonStatement implements
 
 	@Override
 	public StatementKind statementKind() {
-		return StatementKind.MPI_ISEND;
+		return StatementKind.MPI;
+	}
+	
+	@Override
+	public MPIStatementKind mpiStatementKind() {
+		return MPIStatementKind.ISEND;
 	}
 
 }

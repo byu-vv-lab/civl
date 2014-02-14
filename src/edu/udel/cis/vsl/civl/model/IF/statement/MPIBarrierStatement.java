@@ -15,7 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
  * @author ziqingluo
  * 
  */
-public interface MPIBarrierStatement extends Statement {
+public interface MPIBarrierStatement extends MPIStatement {
 
 	/**
 	 * Returns the communicator

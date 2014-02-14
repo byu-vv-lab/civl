@@ -17,8 +17,8 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
-import edu.udel.cis.vsl.civl.semantics.Executor;
-import edu.udel.cis.vsl.civl.semantics.Executor.StateStatusKind;
+import edu.udel.cis.vsl.civl.semantics.CommonExecutor.StateStatusKind;
+import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -262,8 +262,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			newState = executor.executeStatement(newState, pLocation,
 					executedStatement, pid).right;
 		} else {
-			newState = executor.transition(newState,
-					newState.getProcessState(pid), executedStatement.target());
+			newState = stateFactory.setLocation(state, pid,
+					executedStatement.target());
 		}
 		p = newState.getProcessState(pid).incrementAtomicCount();
 		newState = stateFactory.setProcessState(newState, p, pid);
@@ -305,8 +305,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 						p.atomicCount(), true);
 			}
 		} else
-			newState = executor.transition(newState,
-					newState.getProcessState(pid), executedStatement.target());
+			newState = stateFactory.setLocation(newState, pid,
+					executedStatement.target());
 		return new Pair<Statement, State>(executedStatement, newState);
 	}
 

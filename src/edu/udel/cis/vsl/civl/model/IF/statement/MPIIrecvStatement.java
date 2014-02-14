@@ -17,7 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
  * @author ziqingluo
  * 
  */
-public interface MPIIrecvStatement extends Statement {
+public interface MPIIrecvStatement extends MPIStatement {
 	/**
 	 * Returns the receive buffer argument.
 	 * 

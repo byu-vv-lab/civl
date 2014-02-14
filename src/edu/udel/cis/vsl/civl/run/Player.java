@@ -11,9 +11,11 @@ import edu.udel.cis.vsl.civl.library.CommonLibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
-import edu.udel.cis.vsl.civl.semantics.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.CommonEvaluator;
+import edu.udel.cis.vsl.civl.semantics.CommonExecutor;
 import edu.udel.cis.vsl.civl.semantics.MPIExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.States;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -113,7 +115,8 @@ public abstract class Player {
 				config);
 		this.transitionFactory = new TransitionFactory();
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
-		this.evaluator = new Evaluator(config, modelFactory, stateFactory, log);
+		this.evaluator = new CommonEvaluator(config, modelFactory,
+				stateFactory, log);
 		evaluator.setSolve(solve);
 		this.loader = new CommonLibraryExecutorLoader();
 		this.log.setErrorBound((int) config
@@ -127,8 +130,8 @@ public abstract class Player {
 			this.executor = new MPIExecutor(config, modelFactory, stateFactory,
 					log, loader, out, this.enablePrintf);
 		else
-			this.executor = new Executor(config, modelFactory, stateFactory,
-					log, loader, out, this.enablePrintf);
+			this.executor = new CommonExecutor(config, modelFactory,
+					stateFactory, log, loader, out, this.enablePrintf);
 		this.predicate = new StandardPredicate(log, universe, evaluator,
 				this.executor);
 		this.random = config.isTrue(UserInterface.randomO);

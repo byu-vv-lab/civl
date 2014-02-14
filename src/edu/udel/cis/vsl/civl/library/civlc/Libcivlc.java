@@ -30,8 +30,8 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
-import edu.udel.cis.vsl.civl.semantics.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -607,6 +607,7 @@ public class Libcivlc implements LibraryExecutor {
 		SymbolicExpression procQueueArray = null;
 		SymbolicExpression procArray = null;
 		SymbolicTupleType procQueueType = null;
+		Evaluation eval;
 
 		assert nprocs instanceof NumericExpression;
 		size = universe.multiply((NumericExpression) nprocs, evaluator.sizeof(
@@ -614,9 +615,14 @@ public class Libcivlc implements LibraryExecutor {
 						.processSymbolicType()));
 		procs = getArrayFromPointer(state, arguments[1], argumentValues[1],
 				size, source);
+		if (!nprocs.operator().equals(SymbolicOperator.CONCRETE)) {
+			state = stateFactory.simplify(state);
+			eval = evaluator.evaluate(state, pid, arguments[0]);
+			state = eval.state;
+			nprocs = eval.value;
+		}
 		nprocsConcrete = evaluator.extractInt(source,
 				(NumericExpression) nprocs);
-
 		/* create procQueue array */
 		for (int i = 0; i < nprocsConcrete; i++) {
 			ArrayList<SymbolicExpression> procArrayComponent = new ArrayList<SymbolicExpression>();
@@ -1322,7 +1328,6 @@ public class Libcivlc implements LibraryExecutor {
 				comm);
 		return state;
 	}
-
 	// /**
 	// We don't need the guard here. An error will be report instead.
 	// * The guard of the comm_add I think should be the process must be in the

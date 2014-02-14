@@ -18,8 +18,8 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
-import edu.udel.cis.vsl.civl.semantics.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -91,7 +91,8 @@ public class Deadlock implements StatePredicateIF<State> {
 	 *            The theorem prover to check validity of statement guards under
 	 *            the path condition.
 	 */
-	public Deadlock(SymbolicUniverse symbolicUniverse, Evaluator evaluator, Executor executor) {
+	public Deadlock(SymbolicUniverse symbolicUniverse, Evaluator evaluator,
+			Executor executor) {
 		this.universe = symbolicUniverse;
 		this.evaluator = evaluator;
 		this.modelFactory = evaluator.modelFactory();
@@ -145,7 +146,7 @@ public class Deadlock implements StatePredicateIF<State> {
 					explanation.append(source.getSummary());
 				for (Statement statement : location.outgoing()) {
 					BooleanExpression guard;
-					
+
 					if (statement instanceof CallOrSpawnStatement
 							&& ((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
 						LibraryExecutor libExecutor = executor
@@ -153,9 +154,9 @@ public class Deadlock implements StatePredicateIF<State> {
 
 						guard = libExecutor.getGuard(state, pid,
 								(CallOrSpawnStatement) statement);
-					}else{
-						guard = (BooleanExpression) evaluator
-								.evaluate(state, p.getPid(), statement.guard()).value;
+					} else {
+						guard = (BooleanExpression) evaluator.evaluate(state,
+								p.getPid(), statement.guard()).value;
 					}
 					if (statement instanceof WaitStatement) {
 						// TODO: Check that the guard is actually true, but it
@@ -221,36 +222,38 @@ public class Deadlock implements StatePredicateIF<State> {
 			if (source == null)
 				source = location.getSource();
 			for (Statement s : location.outgoing()) {
-				Expression staticGuard;
-				BooleanExpression guard;
+				// Expression staticGuard;
+				BooleanExpression guard = executor.enabler().getGuard(s, pid,
+						state);
 
-				// calculate the guard of system function calls.
-				if (s instanceof CallOrSpawnStatement
-						&& ((CallOrSpawnStatement) s).function() instanceof SystemFunction) {
-					LibraryExecutor libExecutor = executor
-							.libraryExecutor((CallOrSpawnStatement) s);
-
-					guard = libExecutor.getGuard(state, pid,
-							(CallOrSpawnStatement) s);
-				} else {
-					//calculate normal statement guards.
-					staticGuard = s.guard();
-					guard = (BooleanExpression) evaluator.evaluate(state, pid,
-							staticGuard).value;
-				}
+				// // calculate the guard of system function calls.
+				// if (s instanceof CallOrSpawnStatement
+				// && ((CallOrSpawnStatement) s).function() instanceof
+				// SystemFunction) {
+				// LibraryExecutor libExecutor = executor
+				// .libraryExecutor((CallOrSpawnStatement) s);
+				//
+				// guard = libExecutor.getGuard(state, pid,
+				// (CallOrSpawnStatement) s);
+				// } else {
+				// //calculate normal statement guards.
+				// staticGuard = s.guard();
+				// guard = (BooleanExpression) evaluator.evaluate(state, pid,
+				// staticGuard).value;
+				// }
 				if (guard.isFalse())
 					continue;
-				if (s instanceof WaitStatement) {
-					WaitStatement wait = (WaitStatement) s;
-					Expression waitExpr = wait.process();
-					SymbolicExpression joinProcess = evaluator.evaluate(state,
-							pid, waitExpr).value;
-					int pidValue = modelFactory.getProcessId(
-							waitExpr.getSource(), joinProcess);
-
-					if (!state.getProcessState(pidValue).hasEmptyStack())
-						continue;
-				}
+				// if (s instanceof WaitStatement) {
+				// WaitStatement wait = (WaitStatement) s;
+				// Expression waitExpr = wait.process();
+				// SymbolicExpression joinProcess = evaluator.evaluate(state,
+				// pid, waitExpr).value;
+				// int pidValue = modelFactory.getProcessId(
+				// waitExpr.getSource(), joinProcess);
+				//
+				// if (!state.getProcessState(pidValue).hasEmptyStack())
+				// continue;
+				// }
 				predicate = universe.or(predicate, guard);
 				if (predicate.isTrue())
 					return false;
