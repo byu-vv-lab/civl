@@ -7,12 +7,13 @@ import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.CommonExecutor.StateStatusKind;
+import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.util.Pair;
@@ -114,7 +115,12 @@ public interface Executor {
 	State execute(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException;
 
-	LibraryExecutor libraryExecutor(CallOrSpawnStatement statement);
+	// LibraryExecutor libraryExecutor(CallOrSpawnStatement statement);
+	//
+	// LibraryExecutor libraryExecutor(CIVLSource source, String library);
+
+	Evaluation evaluateSystemGuard(State state, int pid,
+			SystemGuardExpression systemGuard);
 
 	/**
 	 * Execute a statement from a certain state and return the resulting state

@@ -1328,6 +1328,7 @@ public class Libcivlc implements LibraryExecutor {
 				comm);
 		return state;
 	}
+
 	// /**
 	// We don't need the guard here. An error will be report instead.
 	// * The guard of the comm_add I think should be the process must be in the
@@ -1367,4 +1368,69 @@ public class Libcivlc implements LibraryExecutor {
 	//
 	// return universe.trueExpression();
 	// }
+
+	@Override
+	public Evaluation getGuard(State state, int pid, String function,
+			Expression[] arguments, CIVLSource source) {
+		SymbolicExpression[] argumentValues;
+		int numArgs;
+		BooleanExpression guard;
+
+		numArgs = arguments.length;
+		argumentValues = new SymbolicExpression[numArgs];
+		for (int i = 0; i < numArgs; i++) {
+			Evaluation eval = null;
+
+			try {
+				eval = evaluator.evaluate(state, pid, arguments[i]);
+			} catch (UnsatisfiablePathConditionException e) {
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return new Evaluation(state, universe.falseExpression());
+			}
+			argumentValues[i] = eval.value;
+			state = eval.state;
+		}
+
+		switch (function) {
+		case "$comm_dequeue":
+			try {
+				guard = getDequeueGuard(state, pid, arguments, argumentValues);
+			} catch (UnsatisfiablePathConditionException e) {
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return new Evaluation(state, universe.falseExpression());
+			}
+			break;
+		case "$comm_add":
+		case "$free":
+		case "$bundle_pack":
+		case "$bundle_unpack":
+		case "$bundle_size":
+		case "$comm_create":
+		case "$comm_enqueue":
+		case "printf":
+		case "$exit":
+		case "$memcpy":
+		case "$message_pack":
+		case "$message_source":
+		case "$message_tag":
+		case "$message_dest":
+		case "$message_size":
+		case "$message_unpack":
+		case "$comm_destroy":
+		case "$comm_nprocs":
+		case "$comm_probe":
+		case "$comm_seek":
+		case "$comm_chan_size":
+		case "$comm_total_size":
+			guard = universe.trueExpression();
+			break;
+
+		default:
+			throw new CIVLInternalException("Unknown civlc function: "
+					+ function, source);
+		}
+		return new Evaluation(state, guard);
+	}
 }

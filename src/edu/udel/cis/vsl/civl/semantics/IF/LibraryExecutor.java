@@ -1,7 +1,10 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
@@ -28,6 +31,14 @@ public interface LibraryExecutor {
 	 * the "regular" guard in the transition system.
 	 */
 	BooleanExpression getGuard(State state, int pid, Statement statement);
+
+	/**
+	 * Get a system guard for a system function. This is an extra guard relating
+	 * to the particular system function, and needs to be checked in addition to
+	 * the "regular" guard in the transition system.
+	 */
+	Evaluation getGuard(State state, int pid, String function,
+			Expression[] arguments, CIVLSource source);
 
 	/**
 	 * Does the library for which this is the executor contain a function with

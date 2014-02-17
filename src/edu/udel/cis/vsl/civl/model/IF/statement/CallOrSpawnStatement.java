@@ -64,4 +64,18 @@ public interface CallOrSpawnStatement extends Statement {
 	 */
 	void setArguments(List<Expression> arguments);
 
+	/**
+	 * Check if the statement is calling a system function.
+	 * 
+	 * @return
+	 */
+	boolean isSystemCall();
+
+	// /**
+	// * complete the guard with the system guard if the current call is a
+	// system
+	// * function call.
+	// */
+	// void completeSystemGuard();
+
 }

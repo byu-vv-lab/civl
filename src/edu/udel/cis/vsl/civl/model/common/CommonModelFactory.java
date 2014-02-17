@@ -57,6 +57,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -82,6 +83,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.expression.CommnSystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAddressOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonArrayLiteralExpression;
@@ -2279,6 +2281,20 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SymbolicUnionType bundleSymbolicType() {
 		return this.bundleSymbolicType;
+	}
+
+	@Override
+	public Expression systemGuardExpression(CallOrSpawnStatement call) {
+		SystemGuardExpression systemGuard = new CommnSystemGuardExpression(
+				call.getSource(),
+				((SystemFunction) call.function()).getLibrary(), call
+						.function().name().name(), call.arguments(),
+				this.booleanType);
+
+		if (this.isTrue(call.guard()))
+			return systemGuard;
+		return this.binaryExpression(call.guard().getSource(),
+				BINARY_OPERATOR.AND, call.guard(), systemGuard);
 	}
 
 }

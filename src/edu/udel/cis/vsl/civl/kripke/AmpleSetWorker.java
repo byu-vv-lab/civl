@@ -11,7 +11,6 @@ import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -159,8 +158,8 @@ public class AmpleSetWorker {
 	 * @param debugOut
 	 *            The print stream for debugging information.
 	 */
-	public AmpleSetWorker(State state, Enabler enabler,
-			Evaluator evaluator, boolean debug, PrintStream debugOut) {
+	public AmpleSetWorker(State state, Enabler enabler, Evaluator evaluator,
+			boolean debug, PrintStream debugOut) {
 		this.state = state;
 		this.enabler = enabler;
 		this.evaluator = evaluator;
@@ -408,10 +407,10 @@ public class AmpleSetWorker {
 					active = true;
 					if (s instanceof CallOrSpawnStatement) {
 						CallOrSpawnStatement callOrSpawnStatement = (CallOrSpawnStatement) s;
-						CIVLFunction function = callOrSpawnStatement.function();
 
-						if (function instanceof SystemFunction) {
-							SystemFunction systemFunction = (SystemFunction) function;
+						if (callOrSpawnStatement.isSystemCall()) {
+							SystemFunction systemFunction = (SystemFunction) callOrSpawnStatement
+									.function();
 							String library = systemFunction.getLibrary();
 							String name = systemFunction.name().name();
 

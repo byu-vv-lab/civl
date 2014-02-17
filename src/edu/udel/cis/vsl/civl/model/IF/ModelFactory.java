@@ -1472,4 +1472,6 @@ public interface ModelFactory {
 	void resetAnonFragment();
 
 	void addAnonStatement(Statement statment);
+
+	Expression systemGuardExpression(CallOrSpawnStatement call);
 }

@@ -128,10 +128,12 @@ public abstract class Player {
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		if (this.mpiMode)
 			this.executor = new MPIExecutor(config, modelFactory, stateFactory,
-					log, loader, out, this.enablePrintf);
+					log, loader, out, this.enablePrintf, evaluator);
 		else
 			this.executor = new CommonExecutor(config, modelFactory,
-					stateFactory, log, loader, out, this.enablePrintf);
+					stateFactory, log, loader, out, this.enablePrintf,
+					evaluator);
+		this.evaluator.setExecutor(executor);
 		this.predicate = new StandardPredicate(log, universe, evaluator,
 				this.executor);
 		this.random = config.isTrue(UserInterface.randomO);

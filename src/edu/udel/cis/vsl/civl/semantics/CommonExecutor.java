@@ -25,6 +25,7 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
@@ -149,12 +150,11 @@ public class CommonExecutor implements Executor {
 	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log,
 			LibraryExecutorLoader loader, PrintStream output,
-			boolean enablePrintf) {
+			boolean enablePrintf, Evaluator evaluator) {
 		this.symbolicUniverse = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
-		this.evaluator = new CommonEvaluator(config, modelFactory,
-				stateFactory, log);
+		this.evaluator = evaluator;
 		// this.log = log;
 		this.loader = loader;
 		this.output = output;
@@ -179,9 +179,9 @@ public class CommonExecutor implements Executor {
 	 */
 	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log, PrintStream output,
-			boolean enablePrintf) {
+			boolean enablePrintf, Evaluator evaluator) {
 		this(config, modelFactory, stateFactory, log, null, output,
-				enablePrintf);
+				enablePrintf, evaluator);
 	}
 
 	/* ************************* Private methods ************************* */
@@ -631,12 +631,23 @@ public class CommonExecutor implements Executor {
 		}
 	}
 
-	@Override
-	public LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
-		String library;
+	// private LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
+	// String library;
+	//
+	// assert statement.function() instanceof SystemFunction;
+	// library = ((SystemFunction) statement.function()).getLibrary();
+	// switch (library) {
+	// case "civlc":
+	// return civlcExecutor;
+	// case "stdio":
+	// return stdioExecutor;
+	// default:
+	// throw new CIVLInternalException("Unknown library: " + library,
+	// statement);
+	// }
+	// }
 
-		assert statement.function() instanceof SystemFunction;
-		library = ((SystemFunction) statement.function()).getLibrary();
+	private LibraryExecutor libraryExecutor(CIVLSource source, String library) {
 		switch (library) {
 		case "civlc":
 			return civlcExecutor;
@@ -644,7 +655,7 @@ public class CommonExecutor implements Executor {
 			return stdioExecutor;
 		default:
 			throw new CIVLInternalException("Unknown library: " + library,
-					statement);
+					source);
 		}
 	}
 
@@ -759,4 +770,13 @@ public class CommonExecutor implements Executor {
 		return numSteps;
 	}
 
+	@Override
+	public Evaluation evaluateSystemGuard(State state, int pid,
+			SystemGuardExpression systemGuard) {
+		LibraryExecutor libExecutor = libraryExecutor(systemGuard.getSource(),
+				systemGuard.library());
+
+		return libExecutor.getGuard(state, pid, systemGuard.functionName(),
+				systemGuard.arguments(), systemGuard.getSource());
+	}
 }

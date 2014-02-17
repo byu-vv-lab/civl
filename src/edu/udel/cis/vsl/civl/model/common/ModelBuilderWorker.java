@@ -366,7 +366,13 @@ public class ModelBuilderWorker {
 	protected void completeCallOrSpawnStatements() {
 		for (Entry<CallOrSpawnStatement, Function> entry : callStatements
 				.entrySet()) {
-			entry.getKey().setFunction(functionMap.get(entry.getValue()));
+			CallOrSpawnStatement call = entry.getKey();
+			CIVLFunction function = functionMap.get(entry.getValue());
+
+			call.setFunction(function);
+			if (call.isSystemCall()) {
+				call.setGuard(factory.systemGuardExpression(call));
+			}
 		}
 	}
 

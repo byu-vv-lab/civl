@@ -10,11 +10,9 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -22,7 +20,6 @@ import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
@@ -39,7 +36,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 /**
  * Enabler implements {@link EnablerIF} for CIVL models. It is an abstract class
- * and can have differernt sub classes for different implementation of reudction
+ * and can have different sub classes for different implementation of reduction
  * techniques.
  * 
  * @author Manchun Zheng (zmanchun)
@@ -103,32 +100,49 @@ public abstract class Enabler implements
 		} catch (UnsatisfiablePathConditionException e) {
 			return universe.falseExpression();
 		}
-		// calculate the guard of system function calls.
-		if (statement instanceof CallOrSpawnStatement
-				&& ((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
-			LibraryExecutor libExecutor = executor
-					.libraryExecutor((CallOrSpawnStatement) statement);
-			BooleanExpression systemGuard = libExecutor.getGuard(state, pid,
-					(CallOrSpawnStatement) statement);
+//		// calculate the guard of system function calls.
+//		if (statement instanceof CallOrSpawnStatement
+//				&& ((CallOrSpawnStatement) statement).isSystemCall()) {
+//			LibraryExecutor libExecutor = executor
+//					.libraryExecutor((CallOrSpawnStatement) statement);
+//			BooleanExpression systemGuard = libExecutor.getGuard(state, pid,
+//					(CallOrSpawnStatement) statement);
+//
+//			if (guard != null)
+//				guard = universe.and(guard, systemGuard);
+//		} else {
+//			if (statement instanceof WaitStatement) {
+//				WaitStatement wait = (WaitStatement) statement;
+//				Expression waitExpr = wait.process();
+//				SymbolicExpression joinProcess;
+//				int pidValue;
+//
+//				try {
+//					joinProcess = evaluator.evaluate(state, pid, waitExpr).value;
+//					pidValue = modelFactory.getProcessId(waitExpr.getSource(),
+//							joinProcess);
+//					if (!state.getProcessState(pidValue).hasEmptyStack())
+//						guard = universe.falseExpression();
+//				} catch (UnsatisfiablePathConditionException e) {
+//					return universe.falseExpression();
+//				}
+//			}
+//		}
+		
+		if (statement instanceof WaitStatement) {
+			WaitStatement wait = (WaitStatement) statement;
+			Expression waitExpr = wait.process();
+			SymbolicExpression joinProcess;
+			int pidValue;
 
-			if (guard != null)
-				guard = universe.and(guard, systemGuard);
-		} else {
-			if (statement instanceof WaitStatement) {
-				WaitStatement wait = (WaitStatement) statement;
-				Expression waitExpr = wait.process();
-				SymbolicExpression joinProcess;
-				int pidValue;
-
-				try {
-					joinProcess = evaluator.evaluate(state, pid, waitExpr).value;
-					pidValue = modelFactory.getProcessId(waitExpr.getSource(),
-							joinProcess);
-					if (!state.getProcessState(pidValue).hasEmptyStack())
-						guard = universe.falseExpression();
-				} catch (UnsatisfiablePathConditionException e) {
-					return universe.falseExpression();
-				}
+			try {
+				joinProcess = evaluator.evaluate(state, pid, waitExpr).value;
+				pidValue = modelFactory.getProcessId(waitExpr.getSource(),
+						joinProcess);
+				if (!state.getProcessState(pidValue).hasEmptyStack())
+					guard = universe.falseExpression();
+			} catch (UnsatisfiablePathConditionException e) {
+				return universe.falseExpression();
 			}
 		}
 		return guard;

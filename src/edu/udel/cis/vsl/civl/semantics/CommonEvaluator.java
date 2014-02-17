@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.udel.cis.vsl.civl.semantics;
 
 import java.io.FileNotFoundException;
@@ -55,6 +52,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -70,6 +68,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -115,6 +114,8 @@ import edu.udel.cis.vsl.sarl.number.Numbers;
 public class CommonEvaluator implements Evaluator {
 
 	/* *************************** Instance Fields ************************* */
+
+	private Executor executor;
 
 	/**
 	 * An uninterpreted function used to evaluate "BigO" of an expression. It
@@ -1855,6 +1856,10 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateSubscript(state, pid,
 					(SubscriptExpression) expression);
 			break;
+		case SYSTEM_GUARD:
+			result = evaluateSystemGuard(state, pid,
+					(SystemGuardExpression) expression);
+			break;
 		case UNARY:
 			result = evaluateUnary(state, pid, (UnaryExpression) expression);
 			break;
@@ -1874,6 +1879,23 @@ public class CommonEvaluator implements Evaluator {
 					+ kind, expression.getSource());
 		}
 		return result;
+	}
+
+	/**
+	 * evaluate a system guard expression
+	 * 
+	 * @param state
+	 *            The state where the computation happens.
+	 * @param pid
+	 *            The ID of the process that wants to evaluate the guard.
+	 * @param expression
+	 *            The system guard expression to be evaluated.
+	 * @return The result of the evaluation, including the state and the
+	 *         symbolic expression of the value.
+	 */
+	private Evaluation evaluateSystemGuard(State state, int pid,
+			SystemGuardExpression expression) {
+		return executor.evaluateSystemGuard(state, pid, expression);
 	}
 
 	@Override
@@ -2240,7 +2262,8 @@ public class CommonEvaluator implements Evaluator {
 				eval.value = setSymRef(structPointer, newSymRef);
 				result = eval;
 			} else {
-				return reference(state, pid, (LHSExpression) dot.structOrUnion());
+				return reference(state, pid,
+						(LHSExpression) dot.structOrUnion());
 			}
 		} else
 			throw new CIVLInternalException("Unknown kind of LHSExpression",
@@ -2426,6 +2449,8 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case QUANTIFIER:
 			break;
+		case SYSTEM_GUARD:
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("Expression kind: "
 					+ kind, expression.getSource());
@@ -2509,6 +2534,11 @@ public class CommonEvaluator implements Evaluator {
 	@Override
 	public void setSolve(boolean value) {
 		this.solve = value;
+	}
+
+	@Override
+	public void setExecutor(Executor executor) {
+		this.executor = executor;
 	}
 
 }

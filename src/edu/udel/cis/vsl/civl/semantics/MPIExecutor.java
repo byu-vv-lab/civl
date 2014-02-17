@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MPIStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -61,9 +62,9 @@ public class MPIExecutor extends CommonExecutor {
 	public MPIExecutor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log,
 			LibraryExecutorLoader loader, PrintStream output,
-			boolean enablePrintf) {
+			boolean enablePrintf, Evaluator evaluator) {
 		super(config, modelFactory, stateFactory, log, loader, output,
-				enablePrintf);
+				enablePrintf, evaluator);
 		this.mpiExecutor = (Libmpi) loader.getLibraryExecutor("mpi", this,
 				this.output, this.enablePrintf, this.modelFactory);
 		rankExpression = ((MPIModelFactory) modelFactory).rankVariable();
@@ -540,8 +541,7 @@ public class MPIExecutor extends CommonExecutor {
 		}
 	}
 
-	@Override
-	public LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
+	private LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
 		String library;
 
 		assert statement.function() instanceof SystemFunction;

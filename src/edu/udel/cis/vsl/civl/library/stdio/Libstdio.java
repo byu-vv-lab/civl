@@ -247,5 +247,14 @@ public class Libstdio implements LibraryExecutor {
 		output.printf(format, arguments.toArray());
 		return state;
 	}
+	
+	@Override
+	public Evaluation getGuard(State state, int pid, String function,
+			Expression[] arguments, CIVLSource source) {
+		BooleanExpression guard;
+
+		guard = universe.trueExpression();
+		return new Evaluation(state, guard);
+	}
 
 }

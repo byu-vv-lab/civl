@@ -312,5 +312,10 @@ public class CommonCallStatement extends CommonStatement implements
 	public StatementKind statementKind() {
 		return StatementKind.CALL_OR_SPAWN;
 	}
-	
+
+	@Override
+	public boolean isSystemCall() {
+		return this.function.isSystem();
+	}
+
 }

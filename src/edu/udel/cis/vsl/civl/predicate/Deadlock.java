@@ -12,15 +12,12 @@ import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
@@ -147,17 +144,9 @@ public class Deadlock implements StatePredicateIF<State> {
 				for (Statement statement : location.outgoing()) {
 					BooleanExpression guard;
 
-					if (statement instanceof CallOrSpawnStatement
-							&& ((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
-						LibraryExecutor libExecutor = executor
-								.libraryExecutor((CallOrSpawnStatement) statement);
+					guard = (BooleanExpression) evaluator.evaluate(state,
+							p.getPid(), statement.guard()).value;
 
-						guard = libExecutor.getGuard(state, pid,
-								(CallOrSpawnStatement) statement);
-					} else {
-						guard = (BooleanExpression) evaluator.evaluate(state,
-								p.getPid(), statement.guard()).value;
-					}
 					if (statement instanceof WaitStatement) {
 						// TODO: Check that the guard is actually true, but it
 						// should be.

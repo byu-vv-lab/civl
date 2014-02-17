@@ -361,7 +361,7 @@ public interface Evaluator {
 			ReferenceExpression symRef);
 
 	/**
-	 * Compute the symbolic representation of the size of a given symoblic type.
+	 * Compute the symbolic representation of the size of a given symbolic type.
 	 * 
 	 * @param source
 	 *            The source code element to be used in the error report (if
@@ -385,5 +385,7 @@ public interface Evaluator {
 	 * @return The symbolic universe of the evaluator.
 	 */
 	SymbolicUniverse universe();
+
+	void setExecutor(Executor executor);
 
 }

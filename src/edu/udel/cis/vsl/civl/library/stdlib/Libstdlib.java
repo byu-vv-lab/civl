@@ -7,10 +7,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
@@ -22,7 +26,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 public class Libstdlib implements LibraryExecutor {
 
 	// private StateFactoryIF factory;
-	// private SymbolicUniverse universe;
+	private SymbolicUniverse universe;
 
 	// private Vector<SymbolicType> elementTypes;
 	// private SymbolicType heapUnionType;
@@ -33,7 +37,7 @@ public class Libstdlib implements LibraryExecutor {
 	 */
 	public Libstdlib(Executor primaryExecutor) {
 		// this.factory = primaryExecutor.stateFactory();
-		// this.universe = primaryExecutor.universe();
+		this.universe = primaryExecutor.universe();
 		// elementTypes = new Vector<SymbolicType>();
 		// // TODO: Get the set of malloc'd types from the model.
 		// elementTypes.add(universe.booleanType());
@@ -139,4 +143,12 @@ public class Libstdlib implements LibraryExecutor {
 		return null;
 	}
 
+	@Override
+	public Evaluation getGuard(State state, int pid, String function,
+			Expression[] arguments, CIVLSource source) {
+		BooleanExpression guard;
+
+		guard = universe.trueExpression();
+		return new Evaluation(state, guard);
+	}
 }

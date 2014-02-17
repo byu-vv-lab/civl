@@ -6,6 +6,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -243,5 +244,14 @@ public class Libmpi implements LibraryExecutor {
 		}
 		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
+	}
+
+	@Override
+	public Evaluation getGuard(State state, int pid, String function,
+			Expression[] arguments, CIVLSource source) {
+		BooleanExpression guard;
+
+		guard = universe.trueExpression();
+		return new Evaluation(state, guard);
 	}
 }
