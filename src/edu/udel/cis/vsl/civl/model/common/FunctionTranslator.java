@@ -1425,7 +1425,7 @@ public class FunctionTranslator {
 					source, "__" + lhs.toString());
 			Variable newVariable = this.modelFactory.variable(source,
 					gcommType, newVariableIdentifier, newVid);
-			
+
 			scope.addVariable(newVariable);
 			return callOrSpawnStatement(location, functionCallNode, lhs,
 					arguments, isCall);

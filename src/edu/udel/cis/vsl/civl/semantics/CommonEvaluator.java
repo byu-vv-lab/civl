@@ -55,6 +55,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.WaitGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
@@ -1870,6 +1871,10 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateVariable(state, pid,
 					(VariableExpression) expression);
 			break;
+		case WAIT_GUARD:
+			result = evaluateWaitGuard(state, pid,
+					(WaitGuardExpression) expression);
+			break;
 		case QUANTIFIER:
 			result = evaluateQuantifiedExpression(state, pid,
 					(QuantifiedExpression) expression);
@@ -1879,6 +1884,28 @@ public class CommonEvaluator implements Evaluator {
 					+ kind, expression.getSource());
 		}
 		return result;
+	}
+
+	private Evaluation evaluateWaitGuard(State state, int pid,
+			WaitGuardExpression expression) {
+		SymbolicExpression joinProcess, guard;
+		int pidValue;
+		Evaluation eval;
+
+		try {
+			eval = evaluate(state, pid, expression.joinedProcess());
+		} catch (UnsatisfiablePathConditionException e) {
+			return new Evaluation(state, universe.falseExpression());
+		}
+		joinProcess = eval.value;
+		state = eval.state;
+		pidValue = modelFactory.getProcessId(expression.getSource(),
+				joinProcess);
+		if (!state.getProcessState(pidValue).hasEmptyStack())
+			guard = universe.falseExpression();
+		else
+			guard = universe.trueExpression();
+		return new Evaluation(state, guard);
 	}
 
 	/**
@@ -2446,6 +2473,8 @@ public class CommonEvaluator implements Evaluator {
 				memoryUnits.addAll(pointersInExpression(eval.value, state));
 			}
 			// }
+			break;
+		case WAIT_GUARD:
 			break;
 		case QUANTIFIER:
 			break;

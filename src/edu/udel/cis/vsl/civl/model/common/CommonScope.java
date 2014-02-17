@@ -142,6 +142,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	 */
 	public void addVariable(Variable variable) {
 		Variable[] oldVariables = variables;
+		
 		variables = new Variable[oldVariables.length + 1];
 		for (int i = 0; i < oldVariables.length; i++) {
 			variables[i] = oldVariables[i];

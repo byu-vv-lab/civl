@@ -11,11 +11,8 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -25,7 +22,6 @@ import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * An absolute deadlock occurs if all of the following hold:
@@ -54,7 +50,7 @@ public class Deadlock implements StatePredicateIF<State> {
 
 	private Executor executor;
 
-	private ModelFactory modelFactory;
+	// private ModelFactory modelFactory;
 
 	/**
 	 * If violation is found it is cached here.
@@ -92,7 +88,7 @@ public class Deadlock implements StatePredicateIF<State> {
 			Executor executor) {
 		this.universe = symbolicUniverse;
 		this.evaluator = evaluator;
-		this.modelFactory = evaluator.modelFactory();
+		// this.modelFactory = evaluator.modelFactory();
 		this.falseExpr = symbolicUniverse.falseExpression();
 		this.executor = executor;
 	}
@@ -123,7 +119,7 @@ public class Deadlock implements StatePredicateIF<State> {
 			Location location = null;
 			BooleanExpression predicate = null;
 			// wait on unterminated function, no outgoing edges:
-			String nonGuardExplanation = null;
+			// String nonGuardExplanation = null;
 			int pid = p.getPid();
 
 			if (first)
@@ -147,18 +143,18 @@ public class Deadlock implements StatePredicateIF<State> {
 					guard = (BooleanExpression) evaluator.evaluate(state,
 							p.getPid(), statement.guard()).value;
 
-					if (statement instanceof WaitStatement) {
-						// TODO: Check that the guard is actually true, but it
-						// should be.
-						WaitStatement wait = (WaitStatement) statement;
-						Expression waitExpr = wait.process();
-						SymbolicExpression joinProcess = evaluator.evaluate(
-								state, pid, waitExpr).value;
-						int pidValue = modelFactory.getProcessId(
-								waitExpr.getSource(), joinProcess);
-						nonGuardExplanation = "\n  Waiting on process "
-								+ pidValue;
-					}
+					// if (statement instanceof WaitStatement) {
+					// // TODO: Check that the guard is actually true, but it
+					// // should be.
+					// WaitStatement wait = (WaitStatement) statement;
+					// Expression waitExpr = wait.process();
+					// SymbolicExpression joinProcess = evaluator.evaluate(
+					// state, pid, waitExpr).value;
+					// int pidValue = modelFactory.getProcessId(
+					// waitExpr.getSource(), joinProcess);
+					// nonGuardExplanation = "\n  Waiting on process "
+					// + pidValue;
+					// }
 					if (predicate == null) {
 						predicate = guard;
 					} else {
@@ -167,8 +163,8 @@ public class Deadlock implements StatePredicateIF<State> {
 				}
 				if (predicate == null) {
 					explanation.append("No outgoing transitions.");
-				} else if (nonGuardExplanation != null) {
-					explanation.append(nonGuardExplanation);
+					// } else if (nonGuardExplanation != null) {
+					// explanation.append(nonGuardExplanation);
 				} else {
 					explanation.append("\n  Enabling predicate: " + predicate);
 				}

@@ -19,7 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class CommnSystemGuardExpression extends CommonExpression implements
+public class CommonSystemGuardExpression extends CommonExpression implements
 		SystemGuardExpression {
 
 	/* *************************** Instance Fields ************************* */
@@ -41,7 +41,21 @@ public class CommnSystemGuardExpression extends CommonExpression implements
 
 	/* **************************** Constructors *************************** */
 
-	public CommnSystemGuardExpression(CIVLSource source, String library,
+	/**
+	 * Create a new instance of system guard expression.
+	 * 
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @param library
+	 *            The name of the library that the invoked function belongs to.
+	 * @param function
+	 *            The name of the invoked function.
+	 * @param args
+	 *            The list of arguments used in the function call.
+	 * @param type
+	 *            The type of this expression (should be always boolean type).
+	 */
+	public CommonSystemGuardExpression(CIVLSource source, String library,
 			String function, List<Expression> args, CIVLType type) {
 		super(source);
 		this.library = library;

@@ -61,6 +61,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.WaitGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
@@ -83,7 +84,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.expression.CommnSystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonAddressOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonArrayLiteralExpression;
@@ -108,9 +108,11 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonStructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonSystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonVariableExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonWaitGuardExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssertStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
@@ -1280,9 +1282,11 @@ public class CommonModelFactory implements ModelFactory {
 			Expression process) {
 		WaitStatement result = new CommonWaitStatement(civlSource, source,
 				process);
+		WaitGuardExpression guard = new CommonWaitGuardExpression(civlSource,
+				process, this.booleanType);
 
+		result.setGuard(guard);
 		result.setStatementScope(process.expressionScope());
-		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return new CommonFragment(result);
 	}
 
@@ -2285,7 +2289,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public Expression systemGuardExpression(CallOrSpawnStatement call) {
-		SystemGuardExpression systemGuard = new CommnSystemGuardExpression(
+		SystemGuardExpression systemGuard = new CommonSystemGuardExpression(
 				call.getSource(),
 				((SystemFunction) call.function()).getLibrary(), call
 						.function().name().name(), call.arguments(),

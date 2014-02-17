@@ -31,7 +31,6 @@ import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 /**
@@ -100,51 +99,51 @@ public abstract class Enabler implements
 		} catch (UnsatisfiablePathConditionException e) {
 			return universe.falseExpression();
 		}
-//		// calculate the guard of system function calls.
-//		if (statement instanceof CallOrSpawnStatement
-//				&& ((CallOrSpawnStatement) statement).isSystemCall()) {
-//			LibraryExecutor libExecutor = executor
-//					.libraryExecutor((CallOrSpawnStatement) statement);
-//			BooleanExpression systemGuard = libExecutor.getGuard(state, pid,
-//					(CallOrSpawnStatement) statement);
-//
-//			if (guard != null)
-//				guard = universe.and(guard, systemGuard);
-//		} else {
-//			if (statement instanceof WaitStatement) {
-//				WaitStatement wait = (WaitStatement) statement;
-//				Expression waitExpr = wait.process();
-//				SymbolicExpression joinProcess;
-//				int pidValue;
-//
-//				try {
-//					joinProcess = evaluator.evaluate(state, pid, waitExpr).value;
-//					pidValue = modelFactory.getProcessId(waitExpr.getSource(),
-//							joinProcess);
-//					if (!state.getProcessState(pidValue).hasEmptyStack())
-//						guard = universe.falseExpression();
-//				} catch (UnsatisfiablePathConditionException e) {
-//					return universe.falseExpression();
-//				}
-//			}
-//		}
-		
-		if (statement instanceof WaitStatement) {
-			WaitStatement wait = (WaitStatement) statement;
-			Expression waitExpr = wait.process();
-			SymbolicExpression joinProcess;
-			int pidValue;
+		// // calculate the guard of system function calls.
+		// if (statement instanceof CallOrSpawnStatement
+		// && ((CallOrSpawnStatement) statement).isSystemCall()) {
+		// LibraryExecutor libExecutor = executor
+		// .libraryExecutor((CallOrSpawnStatement) statement);
+		// BooleanExpression systemGuard = libExecutor.getGuard(state, pid,
+		// (CallOrSpawnStatement) statement);
+		//
+		// if (guard != null)
+		// guard = universe.and(guard, systemGuard);
+		// } else {
+		// if (statement instanceof WaitStatement) {
+		// WaitStatement wait = (WaitStatement) statement;
+		// Expression waitExpr = wait.process();
+		// SymbolicExpression joinProcess;
+		// int pidValue;
+		//
+		// try {
+		// joinProcess = evaluator.evaluate(state, pid, waitExpr).value;
+		// pidValue = modelFactory.getProcessId(waitExpr.getSource(),
+		// joinProcess);
+		// if (!state.getProcessState(pidValue).hasEmptyStack())
+		// guard = universe.falseExpression();
+		// } catch (UnsatisfiablePathConditionException e) {
+		// return universe.falseExpression();
+		// }
+		// }
+		// }
 
-			try {
-				joinProcess = evaluator.evaluate(state, pid, waitExpr).value;
-				pidValue = modelFactory.getProcessId(waitExpr.getSource(),
-						joinProcess);
-				if (!state.getProcessState(pidValue).hasEmptyStack())
-					guard = universe.falseExpression();
-			} catch (UnsatisfiablePathConditionException e) {
-				return universe.falseExpression();
-			}
-		}
+		// if (statement instanceof WaitStatement) {
+		// WaitStatement wait = (WaitStatement) statement;
+		// Expression waitExpr = wait.process();
+		// SymbolicExpression joinProcess;
+		// int pidValue;
+		//
+		// try {
+		// joinProcess = evaluator.evaluate(state, pid, waitExpr).value;
+		// pidValue = modelFactory.getProcessId(waitExpr.getSource(),
+		// joinProcess);
+		// if (!state.getProcessState(pidValue).hasEmptyStack())
+		// guard = universe.falseExpression();
+		// } catch (UnsatisfiablePathConditionException e) {
+		// return universe.falseExpression();
+		// }
+		// }
 		return guard;
 	}
 
