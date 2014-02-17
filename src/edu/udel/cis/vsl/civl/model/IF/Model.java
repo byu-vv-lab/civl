@@ -141,6 +141,19 @@ public interface Model extends Sourceable {
 	 * @return The bundle type used by this model.
 	 */
 	CIVLBundleType bundleType();
+	
+	/**
+	 * 
+	 * @param The gcomm type used by this model
+	 */
+	CIVLType gcommType();
+	
+	/**
+	 * 
+	 * @param gcommType
+	 *        The gcomm type used by this model
+	 */
+	void setGcommType(CIVLType gcommType);
 
 	void setBundleType(CIVLBundleType type);
 

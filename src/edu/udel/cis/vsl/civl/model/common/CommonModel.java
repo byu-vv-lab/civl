@@ -35,6 +35,7 @@ public class CommonModel extends CommonSourceable implements Model {
 	private CIVLType queueType;
 	private CIVLType messageType;
 	private CIVLType commType;
+	private CIVLType gcommType;
 	private CIVLBundleType bundleType;
 
 	private ArrayList<MallocStatement> mallocStatements;
@@ -256,6 +257,16 @@ public class CommonModel extends CommonSourceable implements Model {
 	@Override
 	public void setBundleType(CIVLBundleType type) {
 		this.bundleType = type;
+	}
+
+	@Override
+	public CIVLType gcommType() {
+		return this.gcommType;
+	}
+
+	@Override
+	public void setGcommType(CIVLType gcommType) {
+		this.gcommType = gcommType;
 	}
 
 }
