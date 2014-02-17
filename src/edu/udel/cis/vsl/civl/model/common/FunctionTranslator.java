@@ -1418,6 +1418,17 @@ public class FunctionTranslator {
 		case "$choose_int":
 			return translateChooseIntFunctionCall(source, location, scope, lhs,
 					arguments);
+		case "$comm_create":
+			int newVid = scope.numVariables();
+			CIVLType gcommType = this.modelBuilder().gcommType;
+			Identifier newVariableIdentifier = this.modelFactory.identifier(
+					source, "__" + lhs.toString());
+			Variable newVariable = this.modelFactory.variable(source,
+					gcommType, newVariableIdentifier, newVid);
+			
+			scope.addVariable(newVariable);
+			return callOrSpawnStatement(location, functionCallNode, lhs,
+					arguments, isCall);
 		default:
 			return callOrSpawnStatement(location, functionCallNode, lhs,
 					arguments, isCall);
@@ -3223,6 +3234,8 @@ public class FunctionTranslator {
 				modelBuilder.queueType = result;
 			if ("__comm__".equals(tag))
 				modelBuilder.commType = result;
+			if ("__gcomm__".equals(tag))
+				modelBuilder.gcommType = result;
 			return result;
 		}
 	}
