@@ -28,7 +28,7 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 
 	@Override
 	public ExpressionKind expressionKind() {
-		return ExpressionKind.STRUCT_LITERAL;
+		return ExpressionKind.STRUCT_OR_UNION_LITERAL;
 	}
 
 	@Override

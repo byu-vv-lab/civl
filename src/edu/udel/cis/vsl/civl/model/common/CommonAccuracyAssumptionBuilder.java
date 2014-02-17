@@ -93,11 +93,10 @@ public class CommonAccuracyAssumptionBuilder implements
 		case SIZEOF_EXPRESSION:
 		case SIZEOF_TYPE:
 		case STRING_LITERAL:
-		case STRUCT_LITERAL:
+		case STRUCT_OR_UNION_LITERAL:
 		case SUBSCRIPT:
 		case UNARY:
 		case UNDEFINED_PROC:
-		case UNION_LITERAL:
 		case VARIABLE:
 		default:
 			// These shouldn't matter for the analysis.
@@ -701,11 +700,8 @@ public class CommonAccuracyAssumptionBuilder implements
 				source,
 				BINARY_OPERATOR.PLUS,
 				rhs,
-				factory.unaryExpression(
-						source,
-						UNARY_OPERATOR.BIG_O,
-						multiple(source, separatedExpression,
-								numExpansions)));
+				factory.unaryExpression(source, UNARY_OPERATOR.BIG_O,
+						multiple(source, separatedExpression, numExpansions)));
 		return factory
 				.binaryExpression(source, BINARY_OPERATOR.EQUAL, lhs, rhs);
 	}

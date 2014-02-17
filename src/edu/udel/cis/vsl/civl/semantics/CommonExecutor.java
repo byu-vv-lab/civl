@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
+import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -57,6 +58,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
@@ -546,6 +548,19 @@ public class CommonExecutor implements Executor {
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.reference(state, pid, lhs);
 
+		if (lhs instanceof DotExpression) {
+			DotExpression dot = (DotExpression) lhs;
+
+			if (dot.isUnion()) {
+				int memberIndex = dot.fieldIndex();
+
+				value = evaluator.universe().unionInject(
+						(SymbolicUnionType) (dot.structOrUnion()
+								.getExpressionType().getDynamicType(evaluator
+								.universe())),
+						evaluator.universe().intObject(memberIndex), value);
+			}
+		}
 		return assign(lhs.getSource(), eval.state, eval.value, value);
 	}
 

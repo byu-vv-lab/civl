@@ -4,7 +4,7 @@
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
 /**
- * A dot expression is a reference to a field in a struct.
+ * A dot expression is a reference to a field in a struct or union.
  * 
  * @author zirkel
  * 
@@ -12,12 +12,17 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
 public interface DotExpression extends LHSExpression {
 
 	/**
-	 * @return The struct referenced by this dot expression.
+	 * @return The struct or union referenced by this dot expression.
 	 */
-	Expression struct();
+	Expression structOrUnion();
 
 	/**
-	 * @return Index of the field referenced by this dot expression.
+	 * @return Index of the field/member referenced by this dot expression.
 	 */
 	int fieldIndex();
+	
+	boolean isStruct();
+	
+	boolean isUnion();
+
 }

@@ -24,7 +24,8 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public class CommonDotExpression extends CommonExpression implements
 		DotExpression {
 
-	private Expression struct;// TODO shall this be of type LHSExpression?
+	private Expression structOrUnion;// TODO shall this be of type
+										// LHSExpression?
 	private int fieldIndex;
 
 	/**
@@ -38,7 +39,7 @@ public class CommonDotExpression extends CommonExpression implements
 	public CommonDotExpression(CIVLSource source, Expression struct,
 			int fieldIndex) {
 		super(source);
-		this.struct = struct;
+		this.structOrUnion = struct;
 		this.fieldIndex = fieldIndex;
 	}
 
@@ -48,8 +49,8 @@ public class CommonDotExpression extends CommonExpression implements
 	 * @see edu.udel.cis.vsl.civl.model.IF.expression.DotExpression#struct()
 	 */
 	@Override
-	public Expression struct() {
-		return struct;
+	public Expression structOrUnion() {
+		return structOrUnion;
 	}
 
 	/*
@@ -64,7 +65,7 @@ public class CommonDotExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		return struct.toString() + "." + fieldIndex;
+		return structOrUnion.toString() + "." + fieldIndex;
 	}
 
 	@Override
@@ -74,8 +75,8 @@ public class CommonDotExpression extends CommonExpression implements
 
 	@Override
 	public void calculateDerefs() {
-		this.struct.calculateDerefs();
-		this.hasDerefs = this.struct.hasDerefs();
+		this.structOrUnion.calculateDerefs();
+		this.hasDerefs = this.structOrUnion.hasDerefs();
 	}
 
 	@Override
@@ -86,7 +87,7 @@ public class CommonDotExpression extends CommonExpression implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
-		this.struct.purelyLocalAnalysisOfVariables(funcScope);
+		this.structOrUnion.purelyLocalAnalysisOfVariables(funcScope);
 	}
 
 	@Override
@@ -96,24 +97,25 @@ public class CommonDotExpression extends CommonExpression implements
 			return;
 		}
 
-		this.struct.purelyLocalAnalysis();
-		this.purelyLocal = this.struct.isPurelyLocal();
+		this.structOrUnion.purelyLocalAnalysis();
+		this.purelyLocal = this.structOrUnion.isPurelyLocal();
 	}
 
 	@Override
 	public void replaceWith(ConditionalExpression oldExpression,
 			VariableExpression newExpression) {
-		if (struct == oldExpression) {
-			struct = newExpression;
+		if (structOrUnion == oldExpression) {
+			structOrUnion = newExpression;
 			return;
 		}
-		struct.replaceWith(oldExpression, newExpression);
+		structOrUnion.replaceWith(oldExpression, newExpression);
 	}
 
 	@Override
 	public Expression replaceWith(ConditionalExpression oldExpression,
 			Expression newExpression) {
-		Expression newStruct = struct.replaceWith(oldExpression, newExpression);
+		Expression newStruct = structOrUnion.replaceWith(oldExpression,
+				newExpression);
 		CommonDotExpression result = null;
 
 		if (newStruct != null) {
@@ -130,17 +132,18 @@ public class CommonDotExpression extends CommonExpression implements
 	@Override
 	public Variable variableWritten(Scope scope, CIVLHeapType heapType,
 			CIVLType commType) {
-		if (struct instanceof LHSExpression) {
-			return ((LHSExpression) struct).variableWritten(scope, heapType,
-					commType);
+		if (structOrUnion instanceof LHSExpression) {
+			return ((LHSExpression) structOrUnion).variableWritten(scope,
+					heapType, commType);
 		}
 		return null;
 	}
 
 	@Override
 	public Variable variableWritten(CIVLHeapType heapType, CIVLType commType) {
-		if (struct instanceof LHSExpression) {
-			return ((LHSExpression) struct).variableWritten(heapType, commType);
+		if (structOrUnion instanceof LHSExpression) {
+			return ((LHSExpression) structOrUnion).variableWritten(heapType,
+					commType);
 		}
 		return null;
 	}
@@ -149,7 +152,7 @@ public class CommonDotExpression extends CommonExpression implements
 	public Set<Variable> variableAddressedOf(Scope scope,
 			CIVLHeapType heapType, CIVLType commType) {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = struct.variableAddressedOf(scope,
+		Set<Variable> operandResult = structOrUnion.variableAddressedOf(scope,
 				heapType, commType);
 
 		if (operandResult != null)
@@ -161,12 +164,22 @@ public class CommonDotExpression extends CommonExpression implements
 	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
 			CIVLType commType) {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = struct.variableAddressedOf(heapType,
-				commType);
+		Set<Variable> operandResult = structOrUnion.variableAddressedOf(
+				heapType, commType);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
 		return variableSet;
+	}
+
+	@Override
+	public boolean isStruct() {
+		return this.structOrUnion.getExpressionType().isStructType();
+	}
+
+	@Override
+	public boolean isUnion() {
+		return this.structOrUnion.getExpressionType().isUnionType();
 	}
 
 }

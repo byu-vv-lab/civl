@@ -56,7 +56,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.UnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
@@ -927,15 +926,23 @@ public class CommonEvaluator implements Evaluator {
 	private Evaluation evaluateDot(State state, int pid,
 			DotExpression expression)
 			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluate(state, pid, expression.struct());
+		Evaluation eval = evaluate(state, pid, expression.structOrUnion());
 		SymbolicExpression structValue = eval.value;
 		int fieldIndex = expression.fieldIndex();
 
-		if (expression.struct().getExpressionType().isStructType()) {
+		if (expression.isStruct()) {
 			eval.value = universe.tupleRead(structValue,
 					universe.intObject(fieldIndex));
 		} else {
-			assert expression.struct().getExpressionType().isUnionType();
+			BooleanExpression test = universe.unionTest(
+					universe.intObject(fieldIndex), structValue);
+
+			if (test.isFalse()) {
+				logSimpleError(expression.getSource(), eval.state,
+						ErrorKind.UNION,
+						"Attempt to access an invalid union member");
+				throw new UnsatisfiablePathConditionException();
+			}
 			eval.value = universe.unionExtract(universe.intObject(fieldIndex),
 					structValue);
 		}
@@ -1323,17 +1330,12 @@ public class CommonEvaluator implements Evaluator {
 			SymbolicExpression unionValue;
 			SymbolicUnionType unionType = (SymbolicUnionType) dynamicStructType;
 
-			eval = evaluate(state, pid, fields[0]);
-			state = eval.state;
-			unionValue = universe.unionInject(unionType, universe.intObject(0),
-					eval.value);
 			assert dynamicStructType instanceof SymbolicUnionType;
-			for (int i = 0; i < numberOfMembers; i++) {
-				eval = evaluate(state, pid, fields[i]);
-				unionValue = universe.unionInject(unionType,
-						universe.intObject(i), eval.value);
-				state = eval.state;
-			}
+			eval = evaluate(state, pid, fields[numberOfMembers - 1]);
+			state = eval.state;
+			unionValue = universe.unionInject(unionType,
+					universe.intObject(numberOfMembers - 1), eval.value);
+
 			return new Evaluation(state, unionValue);
 		}
 	}
@@ -1371,24 +1373,6 @@ public class CommonEvaluator implements Evaluator {
 					+ expression.operator(), expression);
 		}
 		return eval;
-	}
-
-	/**
-	 * Evaluate a union literal expression.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The union literal expression.
-	 * @return The symbolic representation of the union literal expression.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation evaluateUnionLiteral(State state, int pid,
-			UnionLiteralExpression expression)
-			throws UnsatisfiablePathConditionException {
-		return evaluate(state, pid, expression.value());
 	}
 
 	/**
@@ -1863,7 +1847,7 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateStringLiteral(state, pid,
 					(StringLiteralExpression) expression);
 			break;
-		case STRUCT_LITERAL:
+		case STRUCT_OR_UNION_LITERAL:
 			result = evaluateStructOrUnionLiteral(state, pid,
 					(StructOrUnionLiteralExpression) expression);
 			break;
@@ -1876,10 +1860,6 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case UNDEFINED_PROC:
 			result = new Evaluation(state, modelFactory.undefinedProcessValue());
-			break;
-		case UNION_LITERAL:
-			result = evaluateUnionLiteral(state, pid,
-					(UnionLiteralExpression) expression);
 			break;
 		case VARIABLE:
 			result = evaluateVariable(state, pid,
@@ -2245,16 +2225,23 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluate(state, pid,
 					((DereferenceExpression) operand).pointer());
 		} else if (operand instanceof DotExpression) {
-			Evaluation eval = reference(state, pid,
-					(LHSExpression) ((DotExpression) operand).struct());
-			SymbolicExpression structPointer = eval.value;
-			ReferenceExpression oldSymRef = getSymRef(structPointer);
-			int index = ((DotExpression) operand).fieldIndex();
-			ReferenceExpression newSymRef = universe.tupleComponentReference(
-					oldSymRef, universe.intObject(index));
+			DotExpression dot = (DotExpression) operand;
+			int index = dot.fieldIndex();
 
-			eval.value = setSymRef(structPointer, newSymRef);
-			result = eval;
+			if (dot.isStruct()) {
+				Evaluation eval = reference(state, pid,
+						(LHSExpression) dot.structOrUnion());
+				SymbolicExpression structPointer = eval.value;
+				ReferenceExpression oldSymRef = getSymRef(structPointer);
+				ReferenceExpression newSymRef = universe
+						.tupleComponentReference(oldSymRef,
+								universe.intObject(index));
+
+				eval.value = setSymRef(structPointer, newSymRef);
+				result = eval;
+			} else {
+				return reference(state, pid, (LHSExpression) dot.structOrUnion());
+			}
 		} else
 			throw new CIVLInternalException("Unknown kind of LHSExpression",
 					operand);
@@ -2365,7 +2352,7 @@ public class CommonEvaluator implements Evaluator {
 		case DOT:
 			DotExpression dotExpression = (DotExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, dotExpression.struct(),
+			memoryUnitsOfExpression(state, pid, dotExpression.structOrUnion(),
 					memoryUnits);
 			break;
 		case DYNAMIC_TYPE_OF:
@@ -2386,7 +2373,7 @@ public class CommonEvaluator implements Evaluator {
 			memoryUnitsOfExpression(state, pid, sizeofExpression.getArgument(),
 					memoryUnits);
 			break;
-		case STRUCT_LITERAL:
+		case STRUCT_OR_UNION_LITERAL:
 			Expression[] fields = ((StructOrUnionLiteralExpression) expression)
 					.fields();
 
@@ -2409,8 +2396,6 @@ public class CommonEvaluator implements Evaluator {
 					memoryUnits);
 			break;
 		case UNDEFINED_PROC:
-			break;
-		case UNION_LITERAL:
 			break;
 		case VARIABLE:
 			Variable variable = ((VariableExpression) expression).variable();
