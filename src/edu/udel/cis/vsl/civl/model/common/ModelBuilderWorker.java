@@ -85,7 +85,11 @@ public class ModelBuilderWorker {
 	 * The unique type for a comm.
 	 */
 	CIVLType commType;
-
+	
+	/**
+	 * The unique type for a gcomm
+	 */
+	CIVLType gcommType;
 	/**
 	 * Configuration information for the generic model checker.
 	 */
@@ -388,6 +392,7 @@ public class ModelBuilderWorker {
 		model.setMessageType(messageType);
 		model.setQueueType(queueType);
 		model.setCommType(commType);
+		model.setGcommType(gcommType);
 		model.setBundleType(this.bundleType);
 		model.setName(modelName);
 		// add all functions to model except main:
