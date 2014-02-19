@@ -35,8 +35,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 /**
  * Enabler implements {@link EnablerIF} for CIVL models. It is an abstract class
- * and can have different sub classes for different implementation of reduction
- * techniques.
+ * and can have different implementations for different reduction techniques.
  * 
  * @author Manchun Zheng (zmanchun)
  * @author Timothy K. Zirkel (zirkel)
@@ -90,7 +89,6 @@ public abstract class Enabler implements
 		BooleanExpression guard = null;
 		Evaluation eval;
 
-		// calculate normal statement guards.
 		staticGuard = statement.guard();
 		try {
 			eval = evaluator.evaluate(state, pid, staticGuard);
@@ -99,51 +97,6 @@ public abstract class Enabler implements
 		} catch (UnsatisfiablePathConditionException e) {
 			return universe.falseExpression();
 		}
-		// // calculate the guard of system function calls.
-		// if (statement instanceof CallOrSpawnStatement
-		// && ((CallOrSpawnStatement) statement).isSystemCall()) {
-		// LibraryExecutor libExecutor = executor
-		// .libraryExecutor((CallOrSpawnStatement) statement);
-		// BooleanExpression systemGuard = libExecutor.getGuard(state, pid,
-		// (CallOrSpawnStatement) statement);
-		//
-		// if (guard != null)
-		// guard = universe.and(guard, systemGuard);
-		// } else {
-		// if (statement instanceof WaitStatement) {
-		// WaitStatement wait = (WaitStatement) statement;
-		// Expression waitExpr = wait.process();
-		// SymbolicExpression joinProcess;
-		// int pidValue;
-		//
-		// try {
-		// joinProcess = evaluator.evaluate(state, pid, waitExpr).value;
-		// pidValue = modelFactory.getProcessId(waitExpr.getSource(),
-		// joinProcess);
-		// if (!state.getProcessState(pidValue).hasEmptyStack())
-		// guard = universe.falseExpression();
-		// } catch (UnsatisfiablePathConditionException e) {
-		// return universe.falseExpression();
-		// }
-		// }
-		// }
-
-		// if (statement instanceof WaitStatement) {
-		// WaitStatement wait = (WaitStatement) statement;
-		// Expression waitExpr = wait.process();
-		// SymbolicExpression joinProcess;
-		// int pidValue;
-		//
-		// try {
-		// joinProcess = evaluator.evaluate(state, pid, waitExpr).value;
-		// pidValue = modelFactory.getProcessId(waitExpr.getSource(),
-		// joinProcess);
-		// if (!state.getProcessState(pidValue).hasEmptyStack())
-		// guard = universe.falseExpression();
-		// } catch (UnsatisfiablePathConditionException e) {
-		// return universe.falseExpression();
-		// }
-		// }
 		return guard;
 	}
 
@@ -180,12 +133,14 @@ public abstract class Enabler implements
 	@Override
 	public TransitionSequence enabledTransitions(State state) {
 		TransitionSequence transitions;
-		if (state.getPathCondition().isFalse())
-			// return empty set of transitions:
-			return new TransitionSequence(state);
 
+		if (state.getPathCondition().isFalse())
+			// return empty set of transitions.
+			return new TransitionSequence(state);
+		// return resumable atomic transitions.
 		transitions = enabledAtomicTransitions(state);
 		if (transitions == null)
+			// return ample transitions.
 			transitions = enabledTransitionsPOR(state);
 		return transitions;
 	}
@@ -255,6 +210,39 @@ public abstract class Enabler implements
 	/* ************************ Package-private Methods ******************** */
 
 	/**
+	 * Get the enabled transitions of a certain process at a given state.
+	 * 
+	 * @param state
+	 *            The state to work with.
+	 * @param pid
+	 *            The process id to work with.
+	 * @param assignAtomicLock
+	 *            The assignment statement for the atomic lock variable, should
+	 *            be null except that the process is going to re-obtain the
+	 *            atomic lock variable.
+	 * @return the list of enabled transitions of the given process at the
+	 *         specified state
+	 */
+	ArrayList<Transition> enabledTransitionsOfProcess(State state, int pid,
+			Statement assignAtomicLock) {
+		ProcessState p = state.getProcessState(pid);
+		Location pLocation = p.getLocation();
+		ArrayList<Transition> transitions = new ArrayList<>();
+
+		if (pLocation == null)
+			return transitions;
+		for (Statement s : pLocation.outgoing()) {
+			BooleanExpression newPathCondition = newPathCondition(state, pid, s);
+
+			if (!newPathCondition.isFalse()) {
+				transitions.addAll(enabledTransitionsOfStatement(state, s,
+						newPathCondition, pid, assignAtomicLock));
+			}
+		}
+		return transitions;
+	}
+
+	/**
 	 * Get the enabled transitions of a statement at a certain state. An
 	 * assignment to the atomic lock variable might be forced to the returned
 	 * transitions, when the process is going to re-obtain the atomic lock
@@ -278,7 +266,7 @@ public abstract class Enabler implements
 			Statement s, BooleanExpression pathCondition, int pid,
 			Statement assignAtomicLock) {
 		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
-		Statement transitionStatement;
+		Statement transitionStatement = null;
 
 		try {
 			if (s instanceof ChooseStatement) {
@@ -306,25 +294,33 @@ public abstract class Enabler implements
 							eval.state.getPathCondition(), pid,
 							transitionStatement, universe.integer(i)));
 				}
-			} else if (s instanceof WaitStatement) {
-				Evaluation eval = evaluator.evaluate(
-						state.setPathCondition(pathCondition), pid,
-						((WaitStatement) s).process());
-				int pidValue = modelFactory.getProcessId(((WaitStatement) s)
-						.process().getSource(), eval.value);
+			} else {
+				if (s instanceof WaitStatement) {
+					Evaluation eval = evaluator.evaluate(
+							state.setPathCondition(pathCondition), pid,
+							((WaitStatement) s).process());
+					int pidValue = modelFactory.getProcessId(
+							((WaitStatement) s).process().getSource(),
+							eval.value);
 
-				if (pidValue < 0) {
-					CIVLExecutionException e = new CIVLStateException(
-							ErrorKind.INVALID_PID,
-							Certainty.PROVEABLE,
-							"Unable to call $wait on a process that has already been the target of a $wait.",
-							state, s.getSource());
+					if (pidValue < 0) {
+						CIVLExecutionException e = new CIVLStateException(
+								ErrorKind.INVALID_PID,
+								Certainty.PROVEABLE,// TODO check message?
+								"Unable to call $wait on a process that has already been the target of a $wait.",
+								state, s.getSource());
 
-					evaluator.reportError(e);
-					// TODO: recover: add a no-op transition
-					throw e;
+						evaluator.reportError(e);
+						// TODO: recover: add a no-op transition
+						throw e;
+					}
+					if (state.getProcessState(pidValue).hasEmptyStack()) {
+						transitionStatement = s;
+					}
+				} else {
+					transitionStatement = s;
 				}
-				if (state.getProcessState(pidValue).hasEmptyStack()) {
+				if (transitionStatement != null) {
 					if (assignAtomicLock != null) {
 						StatementList statementList = new StatementList(
 								assignAtomicLock);
@@ -337,18 +333,6 @@ public abstract class Enabler implements
 					localTransitions.add(transitionFactory.newSimpleTransition(
 							pathCondition, pid, transitionStatement));
 				}
-			} else {
-				if (assignAtomicLock != null) {
-					StatementList statementList = new StatementList(
-							assignAtomicLock);
-
-					statementList.add(s);
-					transitionStatement = statementList;
-				} else {
-					transitionStatement = s;
-				}
-				localTransitions.add(transitionFactory.newSimpleTransition(
-						pathCondition, pid, transitionStatement));
 			}
 		} catch (UnsatisfiablePathConditionException e) {
 			// nothing to do: don't add this transition
@@ -368,6 +352,15 @@ public abstract class Enabler implements
 
 	/* **************************** Private Methods ************************ */
 
+	/**
+	 * Compute transitions triggered by resuming an atomic block that is
+	 * previously blocked. Add an assignment to update atomic lock variable
+	 * (i.e., grabbing the atomic lock) and mean
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @return The enabled transitions that resume an atomic block.
+	 */
 	private TransitionSequence enabledAtomicTransitions(State state) {
 		TransitionSequence transitions;
 		ArrayList<Integer> resumableProcesses;
@@ -384,7 +377,8 @@ public abstract class Enabler implements
 					.newTransitionSequence(state);
 
 			p = state.getProcessState(pidInAtomic);
-			localTransitions.addAll(getTransitions(state, pidInAtomic, null));
+			localTransitions.addAll(enabledTransitionsOfProcess(state,
+					pidInAtomic, null));
 			if (localTransitions.isEmpty()) {
 				// release atomic lock if the current location of the process
 				// that holds the lock is blocked
@@ -404,7 +398,8 @@ public abstract class Enabler implements
 			// only one process in atomic blocks could be resumed, so let
 			// the process hold the atomic lock
 			transitions = transitionFactory.newTransitionSequence(state);
-			transitions.addAll(getTransitions(state, pid, assignStatement));
+			transitions.addAll(enabledTransitionsOfProcess(state, pid,
+					assignStatement));
 			if (transitions.isEmpty()) {
 				throw new CIVLInternalException("unreachable", p.getLocation()
 						.getSource());
@@ -417,44 +412,12 @@ public abstract class Enabler implements
 				pLocation = state.getProcessState(pid).getLocation();
 				assignStatement = modelFactory.assignAtomicLockVariable(pid,
 						pLocation);
-				transitions.addAll(getTransitions(state, pid, assignStatement));
+				transitions.addAll(enabledTransitionsOfProcess(state, pid,
+						assignStatement));
 			}
 			return transitions;
 		} else {
 			return null;
 		}
-	}
-
-	/**
-	 * Get the enabled transitions of a certain process at a given state.
-	 * 
-	 * @param state
-	 *            The state to work with.
-	 * @param pid
-	 *            The process id to work with.
-	 * @param assignAtomicLock
-	 *            The assignment statement for the atomic lock variable, should
-	 *            be null except that the process is going to re-obtain the
-	 *            atomic lock variable.
-	 * @return the list of enabled transitions of the given process at the
-	 *         specified state
-	 */
-	private ArrayList<Transition> getTransitions(State state, int pid,
-			Statement assignAtomicLock) {
-		ProcessState p = state.getProcessState(pid);
-		Location pLocation = p.getLocation();
-		ArrayList<Transition> transitions = new ArrayList<>();
-
-		if (pLocation == null)
-			return transitions;
-		for (Statement s : pLocation.outgoing()) {
-			BooleanExpression newPathCondition = newPathCondition(state, pid, s);
-
-			if (!newPathCondition.isFalse()) {
-				transitions.addAll(enabledTransitionsOfStatement(state, s,
-						newPathCondition, pid, assignAtomicLock));
-			}
-		}
-		return transitions;
 	}
 }

@@ -387,10 +387,9 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Obtain active processes at the current state, i.e., non-null processes
+	 * Compute active processes at the current state, i.e., non-null processes
 	 * with non-empty stack that have at least one enabled statements.
 	 * 
-	 * @return
 	 */
 	private void computeActiveProcesses() {
 		for (ProcessState p : state.getProcessStates()) {
@@ -430,11 +429,14 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * The impact memory units of a certain process at the current state.
+	 * The impact memory units of a certain process at the current state. The
+	 * computation could be incomplete when there is atomic/atom block that
+	 * contains function calls.
 	 * 
 	 * @param p
 	 *            The process whose impact memory units are to be computed.
-	 * @return
+	 * @return The impact memory units of the process and the status to denote
+	 *         if the computation is complete.
 	 */
 	private Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemoryUnits(
 			ProcessState p) {
@@ -552,7 +554,7 @@ public class AmpleSetWorker {
 	 *            The statement whose impact memory units are to be computed.
 	 * @param pid
 	 *            The id of the process that owns the statement.
-	 * @return
+	 * @return the impact memory units of the statement
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Set<SymbolicExpression> impactMemoryUnitsOfStatement(
@@ -565,7 +567,6 @@ public class AmpleSetWorker {
 		if (memUnitsPartial != null) {
 			memUnits.addAll(memUnitsPartial);
 		}
-
 		switch (statement.statementKind()) {
 		case ASSERT:
 			AssertStatement assertStatement = (AssertStatement) statement;
@@ -636,7 +637,6 @@ public class AmpleSetWorker {
 				memUnits.addAll(memUnitsPartial);
 			}
 			break;
-
 		case MPI:
 			memUnitsPartial = impactMemoryUnitsOfMPIStatement(
 					(MPIStatement) statement, pid);
@@ -678,6 +678,17 @@ public class AmpleSetWorker {
 		return memUnits;
 	}
 
+	/**
+	 * Compute the impact memory units of an MPI statement.
+	 * 
+	 * @param statement
+	 *            The MPI statement whose impact memory units are to be
+	 *            computed.
+	 * @param pid
+	 *            The ID of the process that executes the MPI statement.
+	 * @return the impact memory units of the given MPI statement
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Set<SymbolicExpression> impactMemoryUnitsOfMPIStatement(
 			MPIStatement statement, int pid)
 			throws UnsatisfiablePathConditionException {
@@ -782,53 +793,46 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Compute the set of reachable memory units that a certain process can
-	 * reach at the current state.
+	 * Given a process, compute the set of reachable memory units and if the
+	 * memory unit could be modified at the current location or any future
+	 * location.
 	 * 
 	 * @param p
 	 *            The process whose reachable memory units are to be computed.
-	 * @return
+	 * @return A map of reachable memory units and if they could be modified by
+	 *         the process.
 	 */
 	private Map<SymbolicExpression, Boolean> reachableMemoryUnits(ProcessState p) {
-		Iterable<? extends StackEntry> callStacks = p.getStackEntries();
-		// Set<SymbolicExpression> memUnits = new HashSet<>();
 		Set<Integer> checkedDyScopes = new HashSet<>();
 		Map<SymbolicExpression, Boolean> memUnitPermissionMap = new HashMap<>();
 		Set<Variable> writableVariables = p.getLocation().writableVariables();
+		// only look at the top stack is sufficient
+		StackEntry callStack = p.peekStack();
+		int dyScopeID = callStack.scope();
 
-		for (StackEntry callStack : callStacks) {
-			int dyScopeID = callStack.scope();
+		while (dyScopeID >= 0) {
+			if (checkedDyScopes.contains(dyScopeID))
+				break;
+			else {
+				DynamicScope dyScope = state.getScope(dyScopeID);
+				int size = dyScope.numberOfValues();
 
-			while (dyScopeID >= 0) {
-				if (checkedDyScopes.contains(dyScopeID))
-					break;
-				else {
-					DynamicScope dyScope = state.getScope(dyScopeID);
-					// Scope stScope = dyScope.lexicalScope();
-					int size = dyScope.numberOfValues();
+				for (int vid = 0; vid < size; vid++) {
+					Variable variable = dyScope.lexicalScope().variable(vid);
+					Set<SymbolicExpression> varMemUnits = evaluator
+							.memoryUnitsOfVariable(dyScope.getValue(vid),
+									dyScopeID, vid, state);
+					boolean permission = writableVariables.contains(variable) ? true
+							: false;
 
-					for (int vid = 0; vid < size; vid++) {
-						Variable variable = dyScope.lexicalScope()
-								.variable(vid);
-						Set<SymbolicExpression> varMemUnits = evaluator
-								.memoryUnitsOfVariable(dyScope.getValue(vid),
-										dyScopeID, vid, state);
-						boolean permission = writableVariables
-								.contains(variable) ? true : false;
-
-						for (SymbolicExpression unit : varMemUnits) {
-							if (memUnitPermissionMap.containsKey(unit)) {
-								boolean newPermission = permission
-										|| memUnitPermissionMap.get(unit);
-								memUnitPermissionMap.put(unit, newPermission);
-							} else
-								memUnitPermissionMap.put(unit, permission);
-							// memUnits.add(unit);
+					for (SymbolicExpression unit : varMemUnits) {
+						if (!memUnitPermissionMap.containsKey(unit)) {
+							memUnitPermissionMap.put(unit, permission);
 						}
 					}
-					checkedDyScopes.add(dyScopeID);
-					dyScopeID = state.getParentId(dyScopeID);
 				}
+				checkedDyScopes.add(dyScopeID);
+				dyScopeID = state.getParentId(dyScopeID);
 			}
 		}
 		return memUnitPermissionMap;

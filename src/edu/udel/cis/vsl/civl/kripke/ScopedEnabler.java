@@ -392,20 +392,7 @@ public class ScopedEnabler extends Enabler implements
 
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
-			TransitionSequence localTransitions = transitionFactory
-					.newTransitionSequence(state);
-			int pid = p.getPid();
-
-			for (Statement s : p.getLocation().outgoing()) {
-				BooleanExpression newPathCondition = newPathCondition(state,
-						pid, s);
-
-				if (!newPathCondition.isFalse()) {
-					localTransitions.addAll(enabledTransitionsOfStatement(
-							state, s, newPathCondition, pid, null));
-				}
-			}
-			transitions.addAll(localTransitions);
+			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(), null));
 		}
 		if (debugging) {
 			checkCorrectness(processStates, state);

@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.kripke;
 
 import java.util.ArrayList;
 
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -11,7 +10,6 @@ import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.EnablerIF;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
  * EnablerPOR implements {@link EnablerIF} for CIVL models. Its basic
@@ -81,19 +79,7 @@ public class PointeredEnabler extends Enabler implements
 		}
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
-			TransitionSequence localTransitions = transitionFactory
-					.newTransitionSequence(state);
-			int pid = p.getPid();
-
-			for (Statement s : p.getLocation().outgoing()) {
-				BooleanExpression newPathCondition = newPathCondition(state,
-						pid, s);
-				if (!newPathCondition.isFalse()) {
-					localTransitions.addAll(enabledTransitionsOfStatement(
-							state, s, newPathCondition, pid, null));
-				}
-			}
-			transitions.addAll(localTransitions);
+			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(), null));
 		}
 		return transitions;
 	}
