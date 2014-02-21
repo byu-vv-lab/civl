@@ -6,12 +6,10 @@ import java.util.ArrayList;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -172,9 +170,6 @@ public abstract class Enabler implements
 
 	/* ************************ Methods from EnablerIF ********************* */
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public TransitionSequence enabledTransitions(State state) {
 		TransitionSequence transitions;
@@ -268,12 +263,17 @@ public abstract class Enabler implements
 	 * @return the list of enabled transitions of the given process at the
 	 *         specified state
 	 */
-	ArrayList<Transition> enabledTransitionsOfProcess(State state, int pid,
-			Statement assignAtomicLock) {
+	ArrayList<Transition> enabledTransitionsOfProcess(State state, int pid) {
 		ProcessState p = state.getProcessState(pid);
 		Location pLocation = p.getLocation();
 		ArrayList<Transition> transitions = new ArrayList<>();
+		Statement assignAtomicLock = null;
 
+		if (executor.stateFactory().processInAtomic(state) != pid
+				&& p.atomicCount() > 0) {
+			assignAtomicLock = modelFactory.assignAtomicLockVariable(pid,
+					pLocation);
+		}
 		if (pLocation == null)
 			return transitions;
 		for (Statement s : pLocation.outgoing()) {
@@ -391,7 +391,7 @@ public abstract class Enabler implements
 	 * 
 	 * @param state
 	 *            The current state.
-	 * @return
+	 * @return The enabled transitions computed by a certain POR approach.
 	 */
 	abstract TransitionSequence enabledTransitionsPOR(State state);
 
@@ -407,11 +407,10 @@ public abstract class Enabler implements
 	 * @return The enabled transitions that resume an atomic block.
 	 */
 	private TransitionSequence enabledAtomicTransitions(State state) {
-		TransitionSequence transitions;
-		ArrayList<Integer> resumableProcesses;
-		ProcessState p;
-		AssignStatement assignStatement;
-		Location pLocation;
+		// TransitionSequence transitions;
+		// ArrayList<Integer> resumableProcesses;
+		// AssignStatement assignStatement;
+		// Location pLocation;
 		int pidInAtomic;
 
 		pidInAtomic = executor.stateFactory().processInAtomic(state);
@@ -421,9 +420,8 @@ public abstract class Enabler implements
 			TransitionSequence localTransitions = transitionFactory
 					.newTransitionSequence(state);
 
-			p = state.getProcessState(pidInAtomic);
 			localTransitions.addAll(enabledTransitionsOfProcess(state,
-					pidInAtomic, null));
+					pidInAtomic));
 			if (localTransitions.isEmpty()) {
 				// release atomic lock if the current location of the process
 				// that holds the lock is blocked
@@ -431,38 +429,39 @@ public abstract class Enabler implements
 			} else
 				return localTransitions;
 		}
-		// TODO optimize the number of valid/prover calls
-		resumableProcesses = executor.resumableAtomicProcesses(state);
-		if (resumableProcesses.size() == 1) {
-			int pid = resumableProcesses.get(0);
-
-			p = state.getProcessState(pid);
-			pLocation = p.getLocation();
-			assignStatement = modelFactory.assignAtomicLockVariable(pid,
-					pLocation);
-			// only one process in atomic blocks could be resumed, so let
-			// the process hold the atomic lock
-			transitions = transitionFactory.newTransitionSequence(state);
-			transitions.addAll(enabledTransitionsOfProcess(state, pid,
-					assignStatement));
-			if (transitions.isEmpty()) {
-				throw new CIVLInternalException("unreachable", p.getLocation()
-						.getSource());
-			}
-			return transitions;
-		} else if (resumableProcesses.size() > 1) {
-			// There are more than one processes trying to hold the atomic lock
-			transitions = transitionFactory.newTransitionSequence(state);
-			for (Integer pid : resumableProcesses) {
-				pLocation = state.getProcessState(pid).getLocation();
-				assignStatement = modelFactory.assignAtomicLockVariable(pid,
-						pLocation);
-				transitions.addAll(enabledTransitionsOfProcess(state, pid,
-						assignStatement));
-			}
-			return transitions;
-		} else {
-			return null;
-		}
+		return null;
+		// // TODO optimize the number of valid/prover calls
+		// resumableProcesses = executor.resumableAtomicProcesses(state);
+		// if (resumableProcesses.size() == 1) {
+		// int pid = resumableProcesses.get(0);
+		//
+		// p = state.getProcessState(pid);
+		// pLocation = p.getLocation();
+		// assignStatement = modelFactory.assignAtomicLockVariable(pid,
+		// pLocation);
+		// // only one process in atomic blocks could be resumed, so let
+		// // the process hold the atomic lock
+		// transitions = transitionFactory.newTransitionSequence(state);
+		// transitions.addAll(enabledTransitionsOfProcess(state, pid,
+		// assignStatement));
+		// if (transitions.isEmpty()) {
+		// throw new CIVLInternalException("unreachable", p.getLocation()
+		// .getSource());
+		// }
+		// return transitions;
+		// } else if (resumableProcesses.size() > 1) {
+		// // There are more than one processes trying to hold the atomic lock
+		// transitions = transitionFactory.newTransitionSequence(state);
+		// for (Integer pid : resumableProcesses) {
+		// pLocation = state.getProcessState(pid).getLocation();
+		// assignStatement = modelFactory.assignAtomicLockVariable(pid,
+		// pLocation);
+		// transitions.addAll(enabledTransitionsOfProcess(state, pid,
+		// assignStatement));
+		// }
+		// return transitions;
+		// } else {
+		// return null;
+		// }
 	}
 }

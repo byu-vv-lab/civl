@@ -74,8 +74,7 @@ public class PointeredEnabler extends Enabler implements
 		}
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
-			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(),
-					null));
+			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid()));
 		}
 		return transitions;
 	}

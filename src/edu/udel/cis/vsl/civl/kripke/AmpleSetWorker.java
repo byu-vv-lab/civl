@@ -137,14 +137,14 @@ public class AmpleSetWorker {
 	Map<Integer, Map<SymbolicExpression, Integer>> processRankMap = new HashMap<>();
 
 	/**
-	 * The state that to be used to compute the ample set.
+	 * The current state at which the ample set is to be computed.
 	 */
 	private State state;
 
 	/* ***************************** Constructors ************************** */
 
 	/**
-	 * Create a new instance of ample set worker for a given state.
+	 * Creates a new instance of ample set worker for a given state.
 	 * 
 	 * @param state
 	 *            The state that this ample set is going to work for.
@@ -158,7 +158,7 @@ public class AmpleSetWorker {
 	 * @param debugOut
 	 *            The print stream for debugging information.
 	 */
-	public AmpleSetWorker(State state, Enabler enabler, Evaluator evaluator,
+	AmpleSetWorker(State state, Enabler enabler, Evaluator evaluator,
 			boolean debug, PrintStream debugOut) {
 		this.state = state;
 		this.enabler = enabler;
@@ -444,7 +444,8 @@ public class AmpleSetWorker {
 		int pid = p.getPid();
 		Location pLocation = p.getLocation();
 
-		if (pLocation.enterAtom() || pLocation.enterAtomic()) {
+		if (pLocation.enterAtom() || pLocation.enterAtomic()
+				|| p.atomicCount() > 0) {
 			return impactMemoryUnitsOfAtomicBlock(pLocation, pid);
 		} else {
 			for (Statement s : pLocation.outgoing()) {
@@ -477,8 +478,15 @@ public class AmpleSetWorker {
 	 */
 	private Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemoryUnitsOfAtomicBlock(
 			Location location, int pid) {
-		if (location.enterAtom() || location.enterAtomic()) {
-			Stack<Integer> atomFlags = new Stack<Integer>();
+		int atomicCount = state.getProcessState(pid).atomicCount();
+		Stack<Integer> atomFlags = new Stack<Integer>();
+
+		if (atomicCount > 0) {
+			for (int i = 0; i < atomicCount; i++) {
+				atomFlags.push(1);
+			}
+		}
+		if (atomicCount > 0 || location.enterAtom() || location.enterAtomic()) {
 			Set<Integer> checkedLocations = new HashSet<Integer>();
 			Stack<Location> workings = new Stack<Location>();
 			Set<SymbolicExpression> memUnits = new HashSet<>();
@@ -612,10 +620,14 @@ public class AmpleSetWorker {
 			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
 			// TODO special function calls
-			for (Expression argument : call.arguments()) {
-				memUnitsPartial = memoryUnit(argument, pid);
-				if (memUnitsPartial != null) {
-					memUnits.addAll(memUnitsPartial);
+			if (call.isSystemCall()) {
+
+			} else {
+				for (Expression argument : call.arguments()) {
+					memUnitsPartial = memoryUnit(argument, pid);
+					if (memUnitsPartial != null) {
+						memUnits.addAll(memUnitsPartial);
+					}
 				}
 			}
 			break;

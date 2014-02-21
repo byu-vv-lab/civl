@@ -387,8 +387,7 @@ public class ScopedEnabler extends Enabler implements
 
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
-			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(),
-					null));
+			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid()));
 		}
 		if (debugging) {
 			checkCorrectness(processStates, state);
@@ -530,7 +529,6 @@ public class ScopedEnabler extends Enabler implements
 	 */
 	private int locationImpactDyscopeId(State state, ProcessState p,
 			Location pLocation) {
-
 		Scope staticImpactScope = pLocation.impactScopeOfAtomicOrAtomBlock();
 		int locationDyScope = p.getDyscopeId();
 
