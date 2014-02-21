@@ -331,4 +331,9 @@ public class LanguageFeaturesTest {
 	public void union() throws ABCException {
 		assertTrue(ui.run("verify", filename("union.cvl")));
 	}
+
+	@Test
+	public void badGuard() throws ABCException {
+		assertFalse(ui.run("verify", filename("badGuard.cvl")));
+	}
 }
