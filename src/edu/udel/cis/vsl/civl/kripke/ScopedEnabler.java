@@ -71,13 +71,8 @@ public class ScopedEnabler extends Enabler implements
 	public ScopedEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean sPor,
 			boolean showAmpleSet) {
-		this.transitionFactory = transitionFactory;
-		this.evaluator = evaluator;
-		this.executor = executor;
-		this.modelFactory = evaluator.modelFactory();
-		this.universe = modelFactory.universe();
+		super(transitionFactory, evaluator, executor, showAmpleSet);
 		this.scpPor = sPor;
-		this.showAmpleSet = showAmpleSet;
 		if (this.scpPor)
 			this.debugOut.println("scoped POR is enabled.");
 	}
@@ -392,7 +387,8 @@ public class ScopedEnabler extends Enabler implements
 
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
-			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(), null));
+			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(),
+					null));
 		}
 		if (debugging) {
 			checkCorrectness(processStates, state);

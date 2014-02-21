@@ -10,7 +10,6 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
@@ -70,7 +69,10 @@ public abstract class Enabler implements
 	 */
 	protected ModelFactory modelFactory;
 
-	protected boolean showAmpleSet = false;;
+	/**
+	 * The option to enable/disable the printing of ample sets of each state.
+	 */
+	protected boolean showAmpleSet = false;
 
 	/**
 	 * The unique transition factory used by the system.
@@ -82,22 +84,61 @@ public abstract class Enabler implements
 	 */
 	protected SymbolicUniverse universe;
 
+	/**
+	 * The symbolic expression for the boolean value false.
+	 */
+	protected BooleanExpression falseExpression;
+
+	/* ***************************** Constructor *************************** */
+
+	/**
+	 * Creates a new instance of Enabler, called by the constructors of the
+	 * classes that implements Enabler.
+	 * 
+	 * @param transitionFactory
+	 *            The transition factory to be used for composing new
+	 *            transitions.
+	 * @param evaluator
+	 *            The evaluator to be used for evaluating expressions.
+	 * @param executor
+	 *            The executor to be used for computing the guard of system
+	 *            functions.
+	 * @param showAmpleSet
+	 *            The option to enable or disable the printing of ample sets.
+	 */
+	protected Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
+			Executor executor, boolean showAmpleSet) {
+		this.transitionFactory = transitionFactory;
+		this.evaluator = evaluator;
+		this.executor = executor;
+		this.showAmpleSet = showAmpleSet;
+		this.modelFactory = evaluator.modelFactory();
+		this.universe = modelFactory.universe();
+		falseExpression = universe.falseExpression();
+	}
+
 	/* **************************** Public Methods ************************* */
 
-	public BooleanExpression getGuard(Statement statement, int pid, State state) {
-		Expression staticGuard;
-		BooleanExpression guard = null;
-		Evaluation eval;
-
-		staticGuard = statement.guard();
+	/**
+	 * Computes the guard of a statement. Since we have SystemGuardExpression
+	 * and WaitGuardExpression, we don't need to compute the guard for system
+	 * function calls and wait statements explicitly, which are now handled by
+	 * the evaluator.
+	 * 
+	 * @param statement
+	 *            The statement whose guard is to computed.
+	 * @param pid
+	 *            The ID of the process that the statement belongs to.
+	 * @param state
+	 *            The current state that the computation happens.
+	 * @return The symbolic expression of the guard of the given statement.
+	 */
+	public Evaluation getGuard(Statement statement, int pid, State state) {
 		try {
-			eval = evaluator.evaluate(state, pid, staticGuard);
-			state = eval.state;
-			guard = (BooleanExpression) eval.value;
+			return evaluator.evaluate(state, pid, statement.guard());
 		} catch (UnsatisfiablePathConditionException e) {
-			return universe.falseExpression();
+			return new Evaluation(state, this.falseExpression);
 		}
-		return guard;
 	}
 
 	/**
@@ -117,19 +158,23 @@ public abstract class Enabler implements
 	 */
 	public BooleanExpression newPathCondition(State state, int pid,
 			Statement statement) {
-		BooleanExpression guard = getGuard(statement, pid, state);
-		BooleanExpression pathCondition = state.getPathCondition();
-		Reasoner reasoner = evaluator.universe().reasoner(pathCondition);
+		Evaluation eval = getGuard(statement, pid, state);
+		BooleanExpression guard = (BooleanExpression) eval.value;
+		BooleanExpression pathCondition = eval.state.getPathCondition();
+		Reasoner reasoner = universe.reasoner(pathCondition);
 
 		if (reasoner.isValid(guard))
 			return pathCondition;
-		if (reasoner.isValid(evaluator.universe().not(guard)))
-			return evaluator.universe().falseExpression();
-		return evaluator.universe().and(pathCondition, guard);
+		if (reasoner.isValid(universe.not(guard)))
+			return this.falseExpression;
+		return universe.and(pathCondition, guard);
 	}
 
 	/* ************************ Methods from EnablerIF ********************* */
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public TransitionSequence enabledTransitions(State state) {
 		TransitionSequence transitions;
@@ -353,9 +398,9 @@ public abstract class Enabler implements
 	/* **************************** Private Methods ************************ */
 
 	/**
-	 * Compute transitions triggered by resuming an atomic block that is
-	 * previously blocked. Add an assignment to update atomic lock variable
-	 * (i.e., grabbing the atomic lock) and mean
+	 * Computes transitions from the process owning the atomic lock or triggered
+	 * by resuming an atomic block that is previously blocked. Add an assignment
+	 * to update atomic lock variable (i.e., grabbing the atomic lock) and mean
 	 * 
 	 * @param state
 	 *            The current state.

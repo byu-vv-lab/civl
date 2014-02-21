@@ -402,7 +402,7 @@ public class AmpleSetWorker {
 			commCalls = new HashSet<>();
 			pid = p.getPid();
 			for (Statement s : p.getLocation().outgoing()) {
-				if (!enabler.getGuard(s, pid, state).isFalse()) {
+				if (!enabler.getGuard(s, pid, state).value.isFalse()) {
 					active = true;
 					if (s instanceof CallOrSpawnStatement) {
 						CallOrSpawnStatement callOrSpawnStatement = (CallOrSpawnStatement) s;

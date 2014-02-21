@@ -207,38 +207,11 @@ public class Deadlock implements StatePredicateIF<State> {
 			if (source == null)
 				source = location.getSource();
 			for (Statement s : location.outgoing()) {
-				// Expression staticGuard;
-				BooleanExpression guard = executor.enabler().getGuard(s, pid,
-						state);
+				BooleanExpression guard = (BooleanExpression) executor
+						.enabler().getGuard(s, pid, state).value;
 
-				// // calculate the guard of system function calls.
-				// if (s instanceof CallOrSpawnStatement
-				// && ((CallOrSpawnStatement) s).function() instanceof
-				// SystemFunction) {
-				// LibraryExecutor libExecutor = executor
-				// .libraryExecutor((CallOrSpawnStatement) s);
-				//
-				// guard = libExecutor.getGuard(state, pid,
-				// (CallOrSpawnStatement) s);
-				// } else {
-				// //calculate normal statement guards.
-				// staticGuard = s.guard();
-				// guard = (BooleanExpression) evaluator.evaluate(state, pid,
-				// staticGuard).value;
-				// }
 				if (guard.isFalse())
 					continue;
-				// if (s instanceof WaitStatement) {
-				// WaitStatement wait = (WaitStatement) s;
-				// Expression waitExpr = wait.process();
-				// SymbolicExpression joinProcess = evaluator.evaluate(state,
-				// pid, waitExpr).value;
-				// int pidValue = modelFactory.getProcessId(
-				// waitExpr.getSource(), joinProcess);
-				//
-				// if (!state.getProcessState(pidValue).hasEmptyStack())
-				// continue;
-				// }
 				predicate = universe.or(predicate, guard);
 				if (predicate.isTrue())
 					return false;

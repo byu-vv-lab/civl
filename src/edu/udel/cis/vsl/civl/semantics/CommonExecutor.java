@@ -722,8 +722,8 @@ public class CommonExecutor implements Executor {
 
 				if (pLocation != null) {
 					for (Statement s : pLocation.outgoing()) {
-						BooleanExpression guard = enabler.getGuard(s, pid,
-								state);
+						BooleanExpression guard = (BooleanExpression) enabler
+								.getGuard(s, pid, state).value;
 
 						if (!guard.isFalse()) {
 							result.add(p.getPid());

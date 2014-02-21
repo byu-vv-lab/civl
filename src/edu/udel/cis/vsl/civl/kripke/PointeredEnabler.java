@@ -42,12 +42,7 @@ public class PointeredEnabler extends Enabler implements
 	 */
 	public PointeredEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean showAmpleSet) {
-		this.transitionFactory = transitionFactory;
-		this.evaluator = evaluator;
-		this.executor = executor;
-		this.showAmpleSet = showAmpleSet;
-		this.modelFactory = evaluator.modelFactory();
-		this.universe = modelFactory.universe();
+		super(transitionFactory, evaluator, executor, showAmpleSet);
 	}
 
 	/* ************************* Methods from Enabler ********************** */
@@ -79,7 +74,8 @@ public class PointeredEnabler extends Enabler implements
 		}
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
-			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(), null));
+			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(),
+					null));
 		}
 		return transitions;
 	}
