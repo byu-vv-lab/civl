@@ -1,0 +1,1003 @@
+\part{Language}
+\label{part:lang}
+
+\chapter{Overview of CIVL-C}
+
+CIVL-C is a programming language.  It is an extension of a subset of
+the C11 dialect of C.  It does not include the standard C library.
+
+A CIVL-C program should begin with the line
+\begin{verbatim}
+#include <civlc.h>
+\end{verbatim}
+which includes the main CIVL-C header file, which declares all the
+types and other CIVL primitives.  Almost all of the CIVL-C primitives
+which are not already in C begin with the symbol \texttt{\$} to easily
+distinguish them from any reserved work or identifier in a C program.  
+
+Key concepts: static scope tree, nested functions, dynamic scope tree,
+nested functions, processes, spawning, waiting, types, ...
+
+
+\chapter{Structure of a CIVL-C program}
+
+CIVL-C program may use preprocessor directives as specified in the C
+Standard.  A source program is preprocessed, then parsed, resulting
+in a translation unit.
+
+A translation unit consists of a sequence of variable declarations,
+function prototypes, function definitions, and \emph{assume}
+statements.
+
+lexical scopes and the lexical scope tree
+
+naming scopes (\$scope)
+
+translation of source to model
+
+root function, root scope and the  main function
+
+formal parameters to main, return value
+
+
+% write a grammar.  Leave out type qualifiers, etc.  Keep pointers.
+% Keep simple types?  Why not keep all the standard types.
+% How about "symbolic types"?  Make all the casts explicit.
+% Look at CIL?
+
+% Describe as subset of C, but leave out:... and add...
+
+% add Set<proc> and use it.
+
+\chapter{Sequential Elements}
+
+In this chapter we describe the main sequential elements of the
+language.  For the most part these are the same as in C.
+
+\section{Types}
+
+The boolean type is denoted \verb!_Bool!, as in C. Its values are $0$
+and $1$, which are also denoted by $\ctrue$ and $\cfalse$,
+respectively.
+
+There is one integer type, corresponding to the mathematical integers.
+Currently, all of the C integer types \texttt{int}, \texttt{long},
+\texttt{unsigned\ int}, \texttt{short}, etc., are mapped to the CIVL
+integer type.
+
+There is one real type, corresponding to the mathematical real
+numbers. Currently, all of the C real types \texttt{double},
+\texttt{float}, etc., are mapped to the CIVL real type.
+
+Array types, \texttt{struct} and \texttt{union} types, \texttt{char},
+and pointer types are all exactly as in C.
+
+
+\section{Expressions}
+
+The following C operators are included in CIVL: 
+\begin{itemize}
+\item numerical addition (\verb!+}), subtraction (\verb!-!), multiplication
+  (\verb!*!), division (\verb!/!), unary minus (\verb!-!),
+  integer division (\verb!/!) and modulus (\verb!%!), all with
+  their ideal mathematical interpretations;
+\item address-of (\verb!&!), pointer dereference(\verb!*!),
+  pointer addition (\verb!+!) and subtraction (\verb!-!)
+\item numerical comparators \verb!==!, \verb!>=!, \verb!<=!, \verb!<!, \verb!>!,
+  with exact real semantics
+\item boolean operators \verb~!~, \verb!&&!, \verb!||!
+\item \verb!sizeof!
+\item assignments (\verb!=!)
+\item function calls: \verb!f(e1,...,en)!
+\item conditional: \verb!b ? e : f!
+\end{itemize}
+
+Bit-wise operations are not yet supported.
+
+\section{Statements}
+
+Usual C statements are supported:
+\begin{itemize}
+\item expression statements
+\item labeled statements
+\item \texttt{for}, \texttt{while} loops
+\item compound statement: \lb \ldots \rb
+\item \texttt{if} and \verb!if! \ldots \verb!else!
+\item \verb!goto!
+\item \verb!switch!
+\item \verb!break!
+\item \verb!continue!
+\end{itemize}
+
+\section{Nondeterminism}
+
+\cchoose
+
+
+
+\chapter{Concurrency}
+
+\section{Process creation and management}
+
+\section{Dynamic scopes, revisited}
+
+\section{Atomicity}
+
+\section{Message Passing}
+
+\chapter{Specification}
+
+\section{Overview}
+
+\section{Input-output signature}
+
+\section{Assertions and assumptions}
+
+\section{Formulas}
+
+boolean expressions, forall, exists, implies
+
+\section{Procedure contracts}
+
+\section{Concurrency specification}
+
+remote expressions, collection expressions
+
+\chapter{Pointers and Heaps}
+
+\chapter{Libraries}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Detailed descriptions of primitives}
+
+\subsection{\cproc} This is a primitive object type and functions like
+any other primitive C type (e.g., \texttt{int}).  An object of this
+type refers to a process.  It can be thought of as a process ID, but
+it is not an integer and cannot be cast to one.  Certain expressions
+take an argument of \cproc{} type and some return something of
+\cproc{} type.
+
+\subsection{\cassert} This is an assertion statement.  It takes as its
+sole argument an expression of boolean type.  The expressions have a
+richer syntax than C expressions.  During verification, the assertion
+is checked.  If it does not hold, a violation is reported.
+\begin{verbatim}
+  $assert ( expr ) ;
+\end{verbatim}
+Boolean values \ctrue{} and \cfalse{} may be used in assertions
+and assumptions.
+
+The assertion statement may take additional optional arguments
+used to print a specific message if the assertion is violated.
+These additional arguments are similar in form to those used
+in C's \texttt{printf} statement: a format string, followed by
+some number of arguments which are evaluated and substituted
+for successive codes in the format string.  For example,
+\begin{verbatim}
+  $assert(x<=B, "x-coordinate %f exceeds bound %f", x, B); 
+\end{verbatim}
+
+
+\subsection{\cassume} As \emph{assume statement} has the form
+\begin{verbatim}
+  $assume expr;
+\end{verbatim}
+During verification, the assumed expression is assumed to hold.  If
+this leads to a contradiction on some execution, that execution is
+simply ignored.  It never reports a violation, it only restricts the
+set of possible executions that will be explored by the verification
+algorithm.
+
+Like as assertion statement, as assume statement can be used any place
+a statement is expected.  In addition, as assume statement can be used
+in file scope to place restrictions on the global variables of the
+programs.  For example,
+\begin{verbatim}
+$input int B;
+$input int N;
+$assume 0<=N && N<=B;
+\end{verbatim}
+declares \texttt{N} and \texttt{B} to be integer inputs and restricts
+consideration to inputs satisfying $0\leq\texttt{N}\leq\texttt{B}$.
+
+\subsection{\catom} This defines a number of statements to be executed
+as a single atomic transition.  An \catom~block has the following
+form:
+\begin{verbatim}
+  $atom {
+    stmt1;
+    stmt2;
+    ...
+  }
+\end{verbatim}
+
+The statements inside an \catom\ block are to be executed as one
+transition. It is required that the execution of the statements in an
+\catom\ block satisfy all of the following properties:
+\begin{enumerate}
+\item \emph{deterministic}: at each step in the execution of the atom
+  block, there must be at most one enabled statement;
+\item \emph{nonblocking}: at each step in the execution, there must be
+  at least one enabled statement, hence, together with (1), there must
+  be exactly one enabled statement;
+\item \emph{finite}: the execution of the atom block must terminate
+  after a finite number of steps; and
+\item \emph{isolated}: there are no jumps from outside the atom block
+  to inside the atom block, or from inside the atomc block to outside
+  of it.
+\end{enumerate}
+
+Violations of the \emph{deterministic}, \emph{nonblocking}, or
+\emph{isolated} properties will be reported either statically or
+dynamically.  If the \emph{finite} property is violated, the
+verification may just run forever.
+
+Once the process enters an \catom\ block is said to be \emph{executing
+  atomly}.  The process remains executing atomly until it reaches the
+terminating right brace of the block.  Hence \emph{executing atomly}
+is a dynamic, not static condition.  For example, the block might
+contain a function call which takes the process to a point in code
+which is not statically contained in an atom block; that process is
+nevertheless still executing atomly and is subject to the rules above.
+The process only stops executing atomly when that function call
+returns and control finally reaches the right curly brace at the end
+of the atom block (assuming the block is not contained in another atom
+block).
+
+\emph{Note:} \cwait\ statements are not allowed in \catom\ blocks.
+The rationale for this is that there is never a way to know for
+certain that another process has terminated (until \cwait\ has
+returned) so there is never a way to be certain the \cwait\ statement
+will not block.  If one does occur in an \catom\ block, an error will
+be reported statically (if it can be detected statically) or
+dynamically (otherwise).  Note that it is not always possible to
+detect this statically because the \catom\ block may contain a
+function call, and the function may contain the \cwait\ statement.
+
+\subsection{\catomic} The statements in an \emph{atomic} block
+will be executed without other processes interleaving, to
+the extent possible.  It has the form:
+\begin{verbatim}
+  $atomic {
+    stmt1;
+    stmt2;
+    ...
+  }
+\end{verbatim}
+It is essentially a weaker form of \catom.  Unlike \catom, there are
+no restrictions on the statements that can go inside an \catomic\
+block.  A process executing an \catomic~block will try to execute the
+statements without interleaving with other processes, unless it
+becomes blocked.  Unlike an \catom, the statements in an atomic block
+do not necessarily execute as a single transition; they may be spread
+out over multiple transitions.
+
+When no statement is enabled, the execution of the \catomic\ block
+will be interrupted.  At this point, other processes are allowed to
+execute.  Eventually, if the original process becomes enabled due to
+the actions of other processes, it may be scheduled again, in which
+case it regains atomicity and continues where it left off.  For
+example, after executing the first loop, the process executing the
+following code will become blocked at the first \cwait\ statement:
+ \begin{verbatim}  
+$atomic{
+  for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
+  for(int i = 0; i < 5; i++) $wait p[i];
+}
+\end{verbatim}
+Other processes will then execute. Eventually, if the process being
+waited on terminates, the original process becomes enabled and may be
+scheduled, in which case it regain atomicity, increments \texttt{i}
+and proceeds to the next $\cwait$ statement.  This is in fact a common
+idiom for spawning and waiting on a set of processes.
+
+A process that enters an $\catomic$ block is said to be
+\emph{executing atomically}; it remains executing atomically until it
+reaches the closing curly brace.
+
+Both $\catom$ and $\catomic$ blocks can be nested arbitrarily, but
+$\catom$ overrides $\catomic$: a process that is executing atomly will
+continue executing atomly if it encounters an $\catomic$ statement;
+but a process executing atomically that encounters an $\catom$ will
+begin executing atomly.
+
+The atomic semantics are defined more precisely as follows: there is a
+single global variable called the \emph{atomic lock}. This variable
+can either be null (meaning the atomic lock is ``free''), or it can
+hold the PID of a process; that process is said to ``hold'' the atomic
+lock.  Moreover, each process contains a special integer variable, its
+\emph{atomic counter}, which is initially 0.  Every time a process
+enters an atomic block, it increments its atomic counter; every time
+it exits an atomic block, it decrements its counter.  In order to
+increment its counter from $0$ to $1$, it must first wait for the
+atomic lock to become free, and then take the lock.  When it
+decrements its counter from $1$ to $0$, it releases the atomic lock.
+When a process executing atomically becomes blocked, it releases the
+lock (without changing the value of its atomic counter).
+
+\subsection{\cchoose}  A \cchoose{} statement has the form
+\begin{verbatim}
+  $choose {
+    stmt1;
+    stmt2;
+    ...
+    default: stmt
+  }
+\end{verbatim}
+The \texttt{default} clause is optional.
+
+The guards of the statements are evaluated and among those that are
+\emph{true}, one is chosen nondeterministically and executed.  If none
+are \emph{true} and the \texttt{default} clause is present, it is
+chosen.  The \texttt{default} clause will only be selected if all
+guards are \emph{false}.  If no \texttt{default} clause is present and
+all guards are \emph{false}, the statement blocks.  Hence the implicit
+guard of the \cchoose{} statement without a \texttt{default} clause is
+the disjunction of the guards of its sub-statements.  The implicit
+guard of the \cchoose{} statement with a default clause is
+\emph{true}.
+
+Example: this shows how to encode a ``low-level'' CIVL guarded
+transition system:
+
+\begin{verbatim}
+  l1: $choose {
+    $when (x>0) {x--; goto l2;}
+    $when (x==0) {y=1; goto l3;}
+    default: {z=1; goto l4;}
+  }
+  l2: $choose {
+    ...
+  }
+  l3: $choose {
+    ...
+  }
+\end{verbatim}
+
+
+\subsection{\cinput} A variable in the root scope only may be declared
+with this type modifier indicating it is an ``input'' variable, as in
+\begin{verbatim}
+  $input int n;
+\end{verbatim}
+As explained above, the variable becomes a parameter to the root
+procedure.  This is used when comparing two programs for functional
+equivalence.  The two programs are functionally equivalent if,
+whenever they are given the same inputs (i.e., corresponding \cinput{}
+variables are initialized with the same values) they will produce the
+same outputs (i.e., corresponding \coutput{} variables will end up
+with the same values at termination).  Input variables can also be
+assigned a concrete value on the command line.
+
+\subsection{\cinvariant} This indicates a loop invariant.  Each C loop
+construct has an optional invariant clause as follows:
+\begin{verbatim}
+  while (expr) $invariant (expr) stmt
+  for (e1; e2; e3) $invariant (expr) stmt
+  do stmt while (expr) $invariant (expr) ;
+\end{verbatim}
+The invariant encodes the claim that if \texttt{expr} holds upon
+entering the loop and the loop condition holds, then it will hold
+after completion of execution of the loop body.  The invariant is used
+by certain verification techniques.
+
+\emph{Status:} parsed, but nothing is currently done with this
+information.
+
+\subsection{\coutput} A variable in the root scope may be declared
+with this type modifier to declare it to be an output variable.
+
+\subsection{\cself} This is a constant of type \cproc.  It can be used
+wherever an argument of type \cproc{} is called for.  It refers to the
+process that is evaluating the expression containing ``\cself''.
+
+\subsection{\cspawn} This is an expression with side-effects.  It
+spawns a new process and returns a reference to the new process, i.e.,
+an object of type \cproc.  The syntax is the same as a procedure
+invocation with the keyword ``\cspawn'' inserted in front:
+\begin{verbatim}
+  $spawn f(expr1, ..., exprn)
+\end{verbatim}
+Typically the returned value is assigned to a variable, e.g.,
+\begin{verbatim}
+  $proc p = $spawn f(i);
+\end{verbatim}
+If the invoked function \texttt{f} returns a value, that value is
+simply ignored.
+
+\subsection{\cwait} This is a statement that takes an argument of type
+\cproc{} and blocks until the referenced process terminates:
+\begin{verbatim}
+  $wait expr;
+\end{verbatim}
+
+\subsection{\cwhen} This represents a guarded command:
+\begin{verbatim}
+  $when (expr) stmt;
+\end{verbatim}
+All statements have a guard, either implicit or explicit.  For most
+statements, the guard is \ctrue.  The \cwhen{} statement allows one to
+attach an explicit guard to a statement.
+
+When \texttt{expr} is \emph{true}, the statement is enabled, otherwise
+it is disabled.  A disabled statement is \emph{blocked}---it will not
+be scheduled for execution.  When it is enabled, it may execute by
+moving control to the \texttt{stmt} and executing the first atomic
+action in the \texttt{stmt}.
+
+If \texttt{stmt} itself has a non-trivial guard, the guard of the
+\cwhen{} statement is effectively the conjunction of the \texttt{expr}
+and the guard of \texttt{stmt}.
+
+The evaluation of \texttt{expr} and the first atomic action of
+\texttt{stmt} effectively occur as a single atomic action.  There is
+no guarantee that execution of \texttt{stmt} will continue atomically
+if it contains more than one atomic action, i.e., other processes may
+be scheduled.
+
+Examples:
+\begin{verbatim}
+  $when (s>0) s--;
+\end{verbatim}
+This will block until \texttt{s} is positive and then decrement
+\texttt{s}.  The execution of \texttt{s--} is guaranteed to take place
+in an environment in which \texttt{s} is positive.
+
+\begin{verbatim}
+  $when (s>0) {s--; t++}
+\end{verbatim}
+The execution of \texttt{s--} must happen when \texttt{s>0}, but
+between \texttt{s--} and \texttt{t++}, other processes may execute.
+
+\begin{verbatim}
+  $when (s>0) $when (t>0) x=y*t;
+\end{verbatim}
+This blocks until both \texttt{x} and \texttt{t} are positive then
+executes the assignment in that state.  It is equivalent to
+\begin{verbatim}
+  $when (s>0 && t>0) x=y*t;
+\end{verbatim}
+
+\subsection{Procedure contracts}
+The \crequires{} and \censures{} primitives are used to encode
+procedure contracts.  There are optional
+elements that may occur in a procedure declaration or definition,
+as follows.  For a function prototype:
+\begin{verbatim}
+  T f(...)
+    $requires expr;
+    $ensures expr;
+  ;
+\end{verbatim}
+For a function definition:
+\begin{verbatim}
+  T f(...)
+    $requires expr;
+    $ensures expr;
+  {
+    ...
+  }
+\end{verbatim}
+The value \cresult{} may be used in post-conditions to refer
+to the result returned by a procedure.
+
+\emph{Status}: parsed, but nothing is currently done with this
+information.
+
+\subsection{Remote expressions}.  These have the form \verb!expr@x!
+and refer to a variable in another process, e.g., \verb!procs[i]@x!.
+This special kind of expression is used in collective expressions,
+which are used to formulate collective assertions and invariants.
+
+The expression \verb!expr! must have \cproc{} type.  The variable
+\texttt{x} must be a statically visible variable in the context in
+which it is occurs.  When this expression is evaluated, the evaluation
+context will be shifted to the process referred to by \texttt{expr}.
+
+\emph{Status}: not implemented.
+
+\subsection{Collective expressions}.  These have the form
+\begin{verbatim}
+  $collective(proc_expr, int_expr) expr 
+\end{verbatim}
+This is a collective expression over a set of processes.  The
+expression \texttt{proc{\U}expr} yields a pointer to the first element
+of an array of \cproc.  The expression \texttt{int{\U}expr} gives the
+length of that array, i.e., the number of processes.  Expression
+\texttt{expr} is a boolean-valued expression; it may use remote
+expressions to refer to variables in the processes specified in the
+array.  Example:
+\begin{verbatim}
+  $proc procs[N];
+  ...
+  $assert $collective(procs, N) i==procs[(pid+1)%N]@i ;
+\end{verbatim}
+
+\emph{Status}: not implemented.
+
+\chapter{Pointers and heaps}
+
+CIVL-C supports pointers, using the same operators with the same
+meanings as C (\texttt{\&}, \texttt{*}, pointer arithmetic).
+As mentioned above, there is also a heap type \cheap{}, which can
+be used to declare multiple heaps in a CIVL-C program.  The
+interaction between pointers, heaps, and scopes is an important
+aspect of CIVL-C.
+
+\section{Pointer types}
+
+Given any object type $T$ and a static scope $s$ in a CIVL-C program,
+there is a type \emph{pointer-to-$T$-in-$s$}.  The type is used to
+represent a pointer to a memory location of type $T$ in scope $s$ or a
+descendant of $s$ (i.e., some scope contained in $s$).
+
+If scope $s_1$ is a descendant of $s_2$ (i.e., $s_1$ is lexically
+contained in $s_2$), the type \emph{pointer-to-$T$-in-$s_1$} is a
+subtype of \emph{pointer-to-$T$-in-$s_2$}.  This means that any
+expression of the first type can be used wherever an object of the
+second type is expected.  In particular, any expression $e$ of the
+subtype can be assigned to a left-hand-side expression of the
+supertype without explicit casts; also $e$ can be used as an argument
+to a function for which the corresponding parameter has the supertype.
+
+The syntax for denoting this type adheres to the usual C syntax for
+denoting the type \emph{pointer-to-$T$} with the addition of a scope
+parameter within angular brackets immediately following the \texttt{*}
+token.  For example, to declare a variable \texttt{p} of type
+\emph{pointer-to-$T$-in-$s$}, one writes
+\begin{verbatim}
+     int *<s> p;
+\end{verbatim}
+If the scope modifier \texttt{<...>} is absent, the scope is taken to
+be the root scope $s_0$.  The object has type
+\emph{pointer-to-$T$-in-$s_0$}, which is abreviated as
+\emph{pointer-to-$T$}.  In this way, stanard C programs can be
+interpreted as CIVL-C programs.
+
+\section{Address-of operator}
+
+The address-of operator \texttt{\&} returns a pointer of the
+appropriate subtype using the innermost scope in which its left-hand-side
+argument is declared.  For example
+
+\begin{verbatim}
+  {
+    $scope s1;
+    int x;
+    double a[N];
+    int *<s1> p = &x;
+    double *<s1> q = &a[2];
+  }
+\end{verbatim}
+is correct (in particular, it is type-correct) because \texttt{\&x}
+has type \emph{pointer-to-\texttt{int}-in-\texttt{s1}}, since
+\texttt{s1} is the scope in which \texttt{x} is declared.
+
+\section{Pointer addition and subtractions}
+
+If \texttt{e} is an expression of type \emph{pointer-to-$T$-in-$s$}
+and \texttt{i} is an expression of integer type then \texttt{e+i} also
+has type \emph{pointer-to-$T$-in-$s$}.  In other words, pointer
+addition cannot leave the scope of the original pointer.  This
+reflects the fact that every object is contained in one scope, and
+pointer addition cannot leave the object.
+
+
+Pointer subtraction is defined on two pointers of the same type, where
+``same'' includes the scope.  That is checked statically.  As in C, it
+is only defined if the two pointers point to the same object.  In
+CIVL-C, a runtime error will be thrown if they do not point to the
+same object.
+
+\section{Semantics of scopes and pointer types}
+
+A variable of type \cscope{} is treated like any other variable.
+It becomes part of the state when the scope in which it is declared
+is instantiated to form a dynamic scope.  The variable is 
+initialized  at that time and its value cannot change.
+
+Each time a dynamic scope is instantiated, it is assigned a unique ID
+number.  The exactly value of the ID number is not relevant, it just
+has to be distince from any other scope ID number that currently
+exists in the state.  This is the value that is assigned to the scope
+variable.  Therefore, if a static scope contains a scope variable, and
+that scope is instantiated twice to form two distinct dynamic scopes,
+the values assigned to the two variables will be distinct.
+
+A pointer value is an ordered pair $\langle \delta,r \rangle$, where
+$\delta$ is a dynamic scope ID and $r$ is a reference to a memory
+location in the static scope associated to $\delta$.  (We will define
+the exact form of a reference later.)
+
+When a dynamic scope is instantiated, each new variable created is
+assigned a \emph{dynamic type}.  This is a refinement of the static
+type associated to the static variable.   Every dynamic type
+is an instance of exactly one static type.  The dynamic
+type of the newly instantiated variable is an instance of the
+static type of the static variable.
+
+The dynamic pointer types have the form
+\emph{pointer-to-$t$-in-$\delta$}, where $t$ is a dynamic type and
+$\delta$ is a dynamic scope ID.  For a program to be dynamically type
+safe, such a variable should hold only values of the form $\langle
+\delta, r\rangle$.  In particular, the variable should never be
+assigned a value where the dynamic scope component is a different
+instance of the static scope $s$ associated to $\delta$.
+
+\section{Pointer casts}
+
+If scope $s_1$ is contained in scope $s_2$, an expression of type
+\emph{pointer-to-$T$-in-$s_1$} can always be cast to
+\emph{pointer-to-$T$-in-$s_2$},
+ because the first is a subtype of the second.  (As described above,
+the cast is unnecessary.)  
+
+The cast in the other direction is also allowed, but the dynamic type
+safety of that cast will only be checked at runtime.  In particular, a
+runtime error will result if the cast attempts to cast the pointer
+value to a dynamic scope which does not contain (is an ancestor of)
+the dynamic scope component of the pointer value.
+
+A type \emph{pointer-to-$T_1$-in-$s$} can be cast to a type
+\emph{pointer-to-$T_2$-in-$s$} according to the usual rules of C.  In
+other words, usual casting rules apply as long as you don't change the
+scope.
+
+
+
+\section{Heaps}
+
+The standard CIVL-C library defines a type \cheap{} for explicit
+modeling of a heap.  The default value of \cheap{} type is an empty
+heap, so you only need to declare a variable to have type \cheap{}
+in order to create a new heap:
+\begin{verbatim}
+  $heap h; /* a new empty heap */
+\end{verbatim}
+
+The following functions are also defined:
+\begin{verbatim}
+void* $malloc($heap *h, int size);
+void memcpy(void *p, void *q, size_t size);
+void free(void *p)
+\end{verbatim}
+The first function is like C's \texttt{malloc}, except that you
+specify the heap in which the allocation takes place by passing a
+pointer to the heap as the first argument.  This modifies the
+specified heap and returns a pointer to the new object.  The function
+can only occur in a context in which the type of the object is
+specified, as in:
+\begin{verbatim}
+  $heap h;
+  int n = 10;
+  double *p = (double*)$malloc(&h, n*sizeof(double));
+\end{verbatim}
+The second and third functions are exactly the same as in C. Note that
+\texttt{free} modifies the heap which was used to allocate \texttt{p}.
+
+Another pointer example:
+\begin{small}
+\begin{verbatim}
+{ $heap h;
+  { $scope s1;
+    double x;
+    { $scope s2;
+      double y;
+      double *<s1> p;
+      /* p can only point to something in s1 or descendant,
+       * for example, s2 */
+      p = &x; // fine
+      p = &y; // fine
+      p = (double*)$malloc(&h,10*sizeof(double)); // static type error
+    }
+  }
+}
+\end{verbatim}
+\end{small}
+
+\emph{Status}: Pointer type, \texttt{\&}, \texttt{*}, pointer addition
+all implemented.  Type \cheap{}, \texttt{malloc}, \texttt{free}
+implemented.  Scope-qualified pointers: parsed, type-checked, but
+information not currently used.
+
+\section{Scope-Parameterized Functions}
+
+Coming soon.  (Parsed, type checked, not currently used otherwise.)
+
+\section{Scope-Parameterized Type Definitions}
+
+Coming soon. (Ditto.)
+
+\chapter{Library}
+
+The standard CIVL-C library is included into a program automtically
+with \texttt{civlc.h}.  The library defines a number of additional
+functions, types, and constants.
+
+\section{Misc. functions}
+
+\subsection{\cexit} This function takes no arguments.  It causes the
+calling process to terminate immediately, regardless of the state of
+its call stack:
+\begin{verbatim}
+  void $exit(void);
+\end{verbatim}
+
+\subsection{\cchooseint} This is a function with the following
+prototype:
+\begin{verbatim}
+  int $choose_int(int n);
+\end{verbatim}
+It takes as input a positive integer \texttt{n} and
+nondeterministicaly returns an integer in the range
+$[0,\texttt{n}-1]$.
+
+
+\section{Bundles}
+
+The library defines a type called \cbundle. A bundle is basically a
+bunch of data, wrapped into an atomic package.  A bundle is created
+using a function that specifies a region of memory.  One can create a
+bundle from an array of integers, and another bundle from an array of
+reals.  Both bundles have the same type, \cbundle.  They can therfore
+be entered into an array of \cbundle, for example.  Hence bundles are
+useful for mixing objects of different (even statically unknown) types
+into a single data structure.  Later, the contents of a bundle can be
+extracted with another function that specifies a region of memory into
+which to unpack the bundle; if that memory does not have the right
+type to receive the contents of the bundle, a runtime error is
+generated.
+
+\begin{figure}
+\begin{verbatim}
+/* Creates a bundle from the memory region specified by
+ * ptr and size, copying the data into the new bundle */
+$bundle $bundle_pack(void *ptr, int size);
+
+/* Returns the size (number of bytes) of the bundle */
+int $bundle_size($bundle b);
+
+/* Copies the data out of the bundle into the region
+ * specified */
+void $bundle_unpack($bundle bundle, void *ptr);
+\end{verbatim}
+  \caption{The \emph{bundle} abstract data type}
+  \label{fig:bundle}
+\end{figure}
+
+The relevant functions for creating and manipulating bundles
+are given in Figure \ref{fig:bundle}.
+
+\section{Message Passing}
+
+The library defines a number of additional primitives useful for
+modeling message-passing systems.  This part of the library is built
+in two layers: the lower layer defines an abstract data type for
+representing messages; the higher layer defines an abstract data type
+of \emph{communicators} for managing sets of messages being
+transferred among some set of processes.
+
+\subsection{Messages}
+
+Messages are similar to bundles, but with some additional
+``meta-data''.  The \emph{data} component of the message is the
+``contents'' of the message and is formed and extracted much like a
+bundle.  The meta-data consists of an integer identifier for the
+\emph{source} (sender) of the message, an integer identifier for the
+message \emph{destination} (receiver), and integer \emph{tag} which
+can be used by the received to discriminate among messages for
+reception.  This is very similar to MPI.
+
+\begin{figure}
+\begin{verbatim}
+/* creates a new message, copying data from the specified buffer */ 
+$message $message_pack(int source, int dest, int tag,
+    void *data, int size);
+
+/* returns the message source */ 
+int $message_source($message message);
+
+/* returns the message tag */
+int $message_tag($message message);
+
+/* returns the message destination */ 
+int $message_dest($message message);
+
+/* returns the message size */ 
+int $message_size($message message);
+
+/* transfers message data to buf, throwing exception if message
+ * size exceeds specified size */ 
+void $message_unpack($message message, void *buf, int size);
+\end{verbatim}
+  \caption{The \emph{message} abstract data type}
+  \label{fig:message}
+\end{figure}
+
+The functions for creating, and extracting information from, messages
+are given in Figure \ref{fig:message}.
+
+\subsection{Communicators}
+
+The library defines a \emph{communicator} type $\ccomm$.  As in MPI, a
+communicator is an abstraction for a ``communication universe'' that
+comprises a finite, fixed sequence of distinct processes and a
+collection of buffered messages that are being transmitted from one of
+those processes to another.
+
+\begin{figure}
+\begin{verbatim}
+/* creates a new comm from the given sequence of processes,
+ * by allocating memory and copying the process sequence;
+ * the new comm has no messages */
+$comm $comm_create(int nprocs, $proc * procs);
+
+/* returns the number of processes associated to the comm */ 
+int $comm_nprocs($comm * comm);
+
+/* adds the message to the comm */
+void $comm_enqueue($comm * comm, $message message);
+
+/* returns true iff a matching message exists in comm */
+_Bool $comm_probe($comm * comm, int source, int dest, int tag);
+
+/* finds the first matching message and returns pointer
+ * to it without modifying comm */
+$message * $comm_seek($comm * comm, int source, int dest, int tag);
+
+/* finds the first matching message, removes it from
+ * comm, and returns pointer to message */ 
+$message $comm_dequeue($comm * comm, int source, int dest, int tag);
+
+/* returns the number of messages from source to dest stored
+ * in comm */ 
+int $comm_chan_size($comm * comm, int source, int dest);
+
+/* returns the total number of messages in the comm */ 
+int $comm_total_size($comm * comm);
+\end{verbatim}
+  \caption{The \emph{communicator} abstract data type}
+  \label{fig:comm}
+\end{figure}
+
+The functions for creating and modifying a communicator are
+specified in Figure \ref{fig:comm}.
+
+% \chapter{Some Translation Examples}
+
+% \section{Structured parallelism}
+% Structured \verb!parbegin!/\verb!parend! statements look like this:
+% \begin{verbatim}
+% $parbegin
+%   S1; S2; S2
+% $parend
+% \end{verbatim}
+% (See Dijkstra, Cooperating Sequential Processes.)  The meaning is: run
+% the three statements in parallel, and block at the end until all have
+% completed.
+
+% This can be represented in CIVL-C as follows:
+
+% \begin{verbatim}
+% {
+%   void f_1() {S1}
+%   void f_2() {S2}
+%   void f_3() {S3}
+%   $proc tmp1 = $fork f_1(), tmp2=$fork f_2(), tmp3=$fork f_3();
+%   $join(tmp1); $join(tmp2); $join(tmp3);
+% }
+% \end{verbatim}
+
+% \subsection{Parallel for loops}
+% The standard parallel ``for'' loop looks like
+% \begin{verbatim}
+%   $parfor(T i = e; cond; inc) S
+% \end{verbatim}
+% It indicates each iteration should be run concurrently, blocking
+% at end until all complete.  In CIVL-C:
+
+% \begin{verbatim}
+% {
+%   void f(T i) {S}
+%   T i = e;
+%   int c = 0;
+%   Vector<$proc> list;
+
+%   while (cond) {
+%     list.add($fork f());
+%     c++;
+%     inc;
+%   }
+%   for (int j=0; j<c; j++) $join(list.get(j));
+% }
+% \end{verbatim}
+
+% (This is assuming we have some sort of Vector datatype.  Need to think
+% about that.)
+
+% \subsection{Message Passing}
+
+% There will be a bunch of standard libraries that can be included
+% into CIVL-C.  One of these will be the message-passing library.
+% It will define a bunch of primitives that we will fill in shortly.
+% Among them will be basic send and receive functions.
+
+% The message-passing library can be defined entirely in CIVL-C.
+% (See Figure \ref{fig:mp1}.)
+
+% \begin{figure}
+% \begin{verbatim}
+% typedef struct _CIVL_Message {
+%   struct _CIVL_Message *next; // next message in this queue
+%   struct _CIVL_Message *prev; // previous message in this queue
+%   int tag; // message tag
+%   int size; // size of buffer
+%   void *data; // pointer to first element
+% } *CIVL_Message;
+
+% typedef struct _CIVL_Comm {
+%   $heap heap;
+%   int numProcs; // number of procs in this communicator
+%   $proc *procs; // array of length numProcs
+%   CIVL_Message buf_front[][]; // oldest element of each queue
+%   CIVL_Message buf_back[][]; // newest element of each queue
+% } *CIVL_Comm;
+% \end{verbatim}
+%   \caption{CIVL Message Passing library: basic definitions}
+%   \label{fig:mp1}
+% \end{figure}
+
+% Message passing functions may be defined with prototypes such as:
+% \begin{verbatim}
+%   CIVL_Comm CIVL_Comm_create($proc procs[], int numProcs);
+%   void CIVL_send(int src, void *buf, int size, int dest,
+%                  int tag, CIVL_Comm comm);
+%   void CIVL_recv(int dest, void *buf, int size, int src,
+%                  int tag, CIVL_Comm comm);
+% \end{verbatim}
+
+% The arguments for \texttt{send} are:
+% \begin{enumerate}
+% \item rank of process issuing the send
+% \item address of buffer containing data to be sent
+% \item size of message
+% \item an integer tag
+% \item rank of destination process
+% \item communicator
+% \end{enumerate}
+
+% The arguments for \texttt{recv} are:
+% \begin{enumerate}
+% \item rank of process issuing the receive
+% \item address of receive buffer
+% \item size of receive buffer (must be large enough to hold any incoming message)
+% \item rank of source process or \code{CIVL{\U}ANY{\U}SOURCE}
+% \item tag or \code{CIVL{\U}ANY{\U}TAG}
+% \item communicator
+% \end{enumerate}
+
+% Notice one difference from MPI: we have to specify the process to
+% which the send or receive is associated in the first argument. This is
+% because we need to be more general than MPI. In MPI, that process is
+% always the MPI process invoking the send or receive. In CIVL, you
+% might want to have threads within processes (for example) and
+% associate the message to the MPI process, even though the thread is
+% actually invoking the send. Or you might want to associate it to
+% something else in some other language/library/API.
+
+% How they are implemented: \texttt{CIVL{\U}Comm{\U}create}
+% mallocs a new object of type \texttt{struct {\U}CIVL{\U}Comm} and returns
+% a pointer to it.
+
