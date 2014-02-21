@@ -265,9 +265,16 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private CIVLPrimitiveType integerType;
 
+	/**
+	 * The unique heap type
+	 */
 	private CIVLHeapType heapType;
+	
+	/**
+	 * The unique symbolic heap type
+	 */
 	private SymbolicTupleType heapSymbolicType;
-
+	
 	/** Keep a unique number to identify locations. */
 	private int locationID = 0;
 

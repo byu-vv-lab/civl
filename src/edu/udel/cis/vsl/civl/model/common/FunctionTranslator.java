@@ -128,7 +128,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -156,6 +155,22 @@ import edu.udel.cis.vsl.gmc.CommandLineException;
  * 
  */
 public class FunctionTranslator {
+
+	private static final String BUNDLE_TYPE = "__bundle__";
+
+	private static final String COMM_TYPE = "__comm__";
+
+	private static final String DYNAMIC_TYPE = "__dynamic__";
+
+	private static final String GCOMM_TYPE = "__gcomm__";
+
+	private static final String HEAP_TYPE = "__heap__";
+
+	private static final String MESSAGE_TYPE = "__message__";
+
+	private static final String PROC_TYPE = "__proc__";
+
+	private static final String QUEUE_TYPE = "__queue__";
 
 	/* ************************** Instance Fields ************************** */
 
@@ -188,6 +203,11 @@ public class FunctionTranslator {
 	 * The CIVL function that is the result of this function translator.
 	 */
 	protected CIVLFunction function;
+
+	/**
+	 * If the current translation is in variable declaration
+	 */
+	private boolean inVariableDeclaration;
 
 	/**
 	 * The accuracy assumption builder, which performs Taylor expansions after
@@ -1110,7 +1130,7 @@ public class FunctionTranslator {
 	 *            will be thrown.
 	 * @return The new choose statement.
 	 */
-	private ChooseStatement translateChooseIntFunctionCall(CIVLSource source,
+	private Statement translateChooseIntFunctionCall(CIVLSource source,
 			Location location, Scope scope, LHSExpression lhs,
 			ArrayList<Expression> arguments) {
 		int numberOfArgs = arguments.size();
@@ -1413,31 +1433,71 @@ public class FunctionTranslator {
 		// $choose_int, etc.
 		case "assert":
 		case "$assert":
-			return translateAssertFunctionCall(source, location, scope, lhs,
+			return translateAssertFunctionCall(source, location, scope,
 					arguments);
 		case "$choose_int":
 			return translateChooseIntFunctionCall(source, location, scope, lhs,
 					arguments);
-		case "$comm_create":
-			int newVid = scope.numVariables();
-			CIVLType gcommType = this.modelBuilder().gcommType;
-			Identifier newVariableIdentifier = this.modelFactory.identifier(
-					source, "__" + lhs.toString());
-			Variable newVariable = this.modelFactory.variable(source,
-					gcommType, newVariableIdentifier, newVid);
+		case "$gcomm_create":
+			if (!this.inVariableDeclaration) {
+				throw new CIVLSyntaxException("The function " + functionName
+						+ " is only allowed in a variable declaration.", source);
+			} else {
+				int newVid = scope.numVariables();
+				CIVLType gcommType = modelBuilder.gcommType;
+				Identifier gcommObjectIdentifier = this.modelFactory
+						.identifier(source, "__" + lhs.toString());
+				Variable gcommObjectVariable = this.modelFactory.variable(
+						source, gcommType, gcommObjectIdentifier, newVid);
+				VariableExpression gcommObjectExpression = modelFactory
+						.variableExpression(source, gcommObjectVariable);
 
-			scope.addVariable(newVariable);
-			return callOrSpawnStatement(location, functionCallNode, lhs,
-					arguments, isCall);
+				scope.addVariable(gcommObjectVariable);
+				return callOrSpawnStatement(location, functionCallNode,
+						gcommObjectExpression, arguments, isCall);
+			}
+		case "$heap_create":
+			if (!this.inVariableDeclaration) {
+				throw new CIVLSyntaxException("The function " + functionName
+						+ " is only allowed in a variable declaration.", source);
+			} else {
+				int newVid = scope.numVariables();
+				CIVLType heapType = modelBuilder.heapType;
+				Identifier heapObjectIdentifier = this.modelFactory.identifier(
+						source, "__" + lhs.toString());
+				Variable heapObjectVariable = this.modelFactory.variable(
+						source, heapType, heapObjectIdentifier, newVid);
+				VariableExpression heapObjectExpression = modelFactory
+						.variableExpression(source, heapObjectVariable);
+
+				scope.addVariable(heapObjectVariable);
+				return callOrSpawnStatement(location, functionCallNode,
+						heapObjectExpression, arguments, isCall);
+			}
 		default:
 			return callOrSpawnStatement(location, functionCallNode, lhs,
 					arguments, isCall);
 		}
 	}
 
+	/**
+	 * Translate the function call $assert() (from civlc.h) or assert() (from
+	 * assert.h) into an Assert Statement.
+	 * 
+	 * @param source
+	 *            The source code element for error report.
+	 * @param location
+	 *            The source location of the function call.
+	 * @param scope
+	 *            The scope where the function call happens.
+	 * @param arguments
+	 *            The arguments of the function call.
+	 * @return A new assert statement representing the $assert/assert function
+	 *         call.
+	 */
 	private Statement translateAssertFunctionCall(CIVLSource source,
-			Location location, Scope scope, LHSExpression lhs,
-			ArrayList<Expression> arguments) {
+			Location location, Scope scope, ArrayList<Expression> arguments) {
+		Statement result;
 
 		switch (arguments.size()) {
 		case 0:
@@ -1445,18 +1505,21 @@ public class FunctionTranslator {
 					"The function $assert should have at least one arguments.",
 					source);
 		case 1:
-			return modelFactory.assertStatement(source, location,
+			result = modelFactory.assertStatement(source, location,
 					modelFactory.booleanExpression(arguments.get(0)));
+			break;
 		default:
 			ArrayList<Expression> optionalArguments = new ArrayList<>();
 
 			for (int i = 1; i < arguments.size(); i++) {
 				optionalArguments.add(arguments.get(i));
 			}
-			return modelFactory.assertStatement(source, location,
+
+			result = modelFactory.assertStatement(source, location,
 					modelFactory.booleanExpression(arguments.get(0)),
 					optionalArguments);
 		}
+		return result;
 	}
 
 	/**
@@ -1827,11 +1890,8 @@ public class FunctionTranslator {
 	 * @return The fragment of the spawn statement
 	 */
 	private Fragment translateSpawnNode(Scope scope, SpawnNode spawnNode) {
-		Statement spawnStatement;
-
-		spawnStatement = translateFunctionCall(scope, null,
-				spawnNode.getCall(), false);
-		return new CommonFragment(spawnStatement);
+		return new CommonFragment(translateFunctionCall(scope, null,
+				spawnNode.getCall(), false));
 	}
 
 	/**
@@ -1964,6 +2024,7 @@ public class FunctionTranslator {
 		IdentifierNode identifier = node.getIdentifier();
 		CIVLSource source = modelFactory.sourceOf(node);
 
+		this.inVariableDeclaration = true;
 		if (variable.isInput() || type instanceof CIVLArrayType
 				|| type instanceof CIVLStructOrUnionType || type.isHeapType()) {
 			Expression rhs = null;
@@ -1997,6 +2058,7 @@ public class FunctionTranslator {
 			result = initialization;
 		else
 			result = result.combineWith(initialization);
+		this.inVariableDeclaration = false;
 		return result;
 	}
 
@@ -3199,13 +3261,13 @@ public class FunctionTranslator {
 		// if (type.isUnion())
 		// throw new CIVLUnimplementedFeatureException("Union types", source);
 		// civlc.h defines $proc as struct __proc__, etc.
-		if ("__proc__".equals(tag))
+		if (PROC_TYPE.equals(tag))
 			return modelFactory.processType();
-		if ("__heap__".equals(tag))
+		if (HEAP_TYPE.equals(tag))
 			return modelBuilder.heapType;
-		if ("__dynamic__".equals(tag))
+		if (DYNAMIC_TYPE.equals(tag))
 			return modelFactory.dynamicType();
-		if ("__bundle__".equals(tag))
+		if (BUNDLE_TYPE.equals(tag))
 			return modelBuilder.bundleType;
 		else {
 			CIVLStructOrUnionType result = modelFactory.structOrUnionType(
@@ -3228,13 +3290,13 @@ public class FunctionTranslator {
 				civlFields[i] = civlField;
 			}
 			result.complete(civlFields);
-			if ("__message__".equals(tag))
+			if (MESSAGE_TYPE.equals(tag))
 				modelBuilder.messageType = result;
-			if ("__queue__".equals(tag))
+			if (QUEUE_TYPE.equals(tag))
 				modelBuilder.queueType = result;
-			if ("__comm__".equals(tag))
+			if (COMM_TYPE.equals(tag))
 				modelBuilder.commType = result;
-			if ("__gcomm__".equals(tag))
+			if (GCOMM_TYPE.equals(tag))
 				modelBuilder.gcommType = result;
 			return result;
 		}

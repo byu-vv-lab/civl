@@ -497,6 +497,7 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 				.getFunction()).getIdentifier().name();
 		ArrayList<Expression> arguments = new ArrayList<Expression>();
 		Location location;
+		Statement result;
 
 		for (int i = 0; i < functionCallNode.getNumberOfArguments(); i++) {
 			Expression actual = translateExpressionNode(
@@ -511,27 +512,34 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 		// translate mpi function calls to the corresponding MPI
 		// Statement.
 		case MPIModelFactory.MPI_SEND:
-			return mpiFactory
-					.mpiSendStatement(source, location, lhs, arguments);
+			result = mpiFactory.mpiSendStatement(source, location, lhs,
+					arguments);
+			break;
 		case MPIModelFactory.MPI_RECV:
-			return mpiFactory
-					.mpiRecvStatement(source, location, lhs, arguments);
+			result = mpiFactory.mpiRecvStatement(source, location, lhs,
+					arguments);
+			break;
 		case MPIModelFactory.MPI_ISEND:
-			return mpiFactory.mpiIsendStatement(source, location, lhs,
+			result = mpiFactory.mpiIsendStatement(source, location, lhs,
 					arguments);
+			break;
 		case MPIModelFactory.MPI_IRECV:
-			return mpiFactory.mpiIrecvStatement(source, location, lhs,
+			result = mpiFactory.mpiIrecvStatement(source, location, lhs,
 					arguments);
+			break;
 		case MPIModelFactory.MPI_BARRIER:
-			return mpiFactory.mpiBarrierStatement(source, location, lhs,
+			result = mpiFactory.mpiBarrierStatement(source, location, lhs,
 					arguments);
+			break;
 		case MPIModelFactory.MPI_WAIT:
-			return mpiFactory
-					.mpiWaitStatement(source, location, lhs, arguments);
+			result = mpiFactory.mpiWaitStatement(source, location, lhs,
+					arguments);
+			break;
 		default:
-			return callOrSpawnStatement(location, functionCallNode, lhs,
+			result = callOrSpawnStatement(location, functionCallNode, lhs,
 					arguments, isCall);
 		}
+		return result;
 	}
 
 }

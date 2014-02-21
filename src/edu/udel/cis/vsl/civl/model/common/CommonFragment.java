@@ -44,6 +44,20 @@ public class CommonFragment implements Fragment {
 	}
 
 	/**
+	 * create a fragment from two given statements.
+	 * 
+	 * @param first
+	 *            The first statement
+	 * @param second
+	 *            The second statement
+	 */
+	public CommonFragment(Statement first, Statement second) {
+		this.startLocation = first.source();
+		first.setTarget(second.source());
+		this.lastStatement = second;
+	}
+
+	/**
 	 * 
 	 * @param startLocation
 	 *            the start location
@@ -263,7 +277,7 @@ public class CommonFragment implements Fragment {
 
 	@Override
 	public void addNewStatement(Statement statement) {
-		if(this.lastStatement != null)
+		if (this.lastStatement != null)
 			this.lastStatement.setTarget(statement.source());
 		else
 			this.startLocation = statement.source();

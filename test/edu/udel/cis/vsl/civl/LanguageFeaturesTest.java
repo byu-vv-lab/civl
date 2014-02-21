@@ -336,4 +336,9 @@ public class LanguageFeaturesTest {
 	public void badGuard() throws ABCException {
 		assertFalse(ui.run("verify", filename("badGuard.cvl")));
 	}
+
+	@Test
+	public void functionPrototypeBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("functionPrototypeBad.cvl")));
+	}
 }

@@ -10,10 +10,12 @@ int *gp;
 _Bool gStart = $false;
 
 void foo(){
-  $heap fh;
-  gp = (int *) $malloc(&fh, sizeof(int));
+  $heap fh = $heap_create();
+  
+  gp = (int *) $malloc(fh, sizeof(int));
   gStart = $true;
   *gp = 1;
+  $free(fh, gp);
 }
 
 void goo(){
@@ -24,6 +26,7 @@ void goo(){
 void main(){
   $proc f = $spawn foo();
   $proc g = $spawn goo();
+  
   $wait f;
   $wait g;
 }
