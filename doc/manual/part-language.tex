@@ -92,17 +92,68 @@ numbers. Currently, all of the C real types \texttt{double},
 Array types, \texttt{struct} and \texttt{union} types, \texttt{char},
 and pointer types are all exactly as in C.
 
+\subsection{The heap type $\cheap$ and handles}
 
-\subsection{Bundles}
+Unlike C, a CIVL-C program does not necessarily have access to a
+single, global heap. Instead, there is a $\cheap$ type, and heaps may
+be declared explicitly wherever they are needed. Hence a CIVL-C
+program may have several heaps, and these may exist in different
+scopes.
 
-The library defines a type called \cbundle. A bundle is basically a
-bunch of data, wrapped into an atomic package.  A bundle is created
-using a function that specifies a region of memory.  One can create a
+A heap is declared and created as follows:
+\begin{verbatim}
+  $heap h = $heap_create();
+\end{verbatim}
+The function \verb!$heap_create()! creates a new empty heap in the
+current scope and returns a \emph{handle} to that heap. A handle is
+like a pointer: it is a reference to another object. However, a handle
+is much more restricted than a general pointer. In particular, it
+cannot be dereferenced (by the \ct{*} operator). The underlying heap
+object can only be accessed by using a handle to it as an argument to
+a system function.
+
+Handles can be used in assignments and passed as arguments to functions.
+For example, this declaration could follow the one above:
+\begin{verbatim}
+  $heap h2=h;
+\end{verbatim}
+After executing this code, \ct{h2} and \ct{h} will be aliased, i.e., the two
+handles will refer to the same heap object.
+
+The heap object exists in the scope in which it is created. In
+particular, it will disappear when that scope disappears, i.e., when
+control reaches the right curly brace that defines the end of the
+scope. At that point, any references into the heap become invalid.
+
+The following system functions deal with heaps:
+\begin{verbatim}
+  void* $malloc($heap h, int size);
+  void free(void *p)
+\end{verbatim}
+The first function is like C's \texttt{malloc}, except that you
+specify the heap in which the allocation takes place.
+This modifies the specified heap and returns a pointer to the new object.
+The function can only occur in a context in which the type of the object is
+specified, as in:
+\begin{verbatim}
+  $heap h;
+  int n = 10;
+  double *p = (double*)$malloc(h, n*sizeof(double));
+\end{verbatim}
+The function \ct{free} is exactly the same as in C. Note that
+\texttt{free} modifies the heap which was used to allocate \texttt{p}.
+
+
+\subsection{The bundle type: $\cbundle$}
+
+CIVL-C includes a type named \cbundle. A bundle is basically a
+sequence of data, wrapped into an atomic package. A bundle is created
+using a function that specifies a region of memory. One can create a
 bundle from an array of integers, and another bundle from an array of
-reals.  Both bundles have the same type, \cbundle.  They can therfore
-be entered into an array of \cbundle, for example.  Hence bundles are
+reals. Both bundles have the same type, \cbundle. They can therfore be
+entered into an array of \cbundle, for example. Hence bundles are
 useful for mixing objects of different (even statically unknown) types
-into a single data structure.  Later, the contents of a bundle can be
+into a single data structure. Later, the contents of a bundle can be
 extracted with another function that specifies a region of memory into
 which to unpack the bundle; if that memory does not have the right
 type to receive the contents of the bundle, a runtime error is
@@ -128,23 +179,53 @@ void $bundle_unpack($bundle bundle, void *ptr);
 The relevant functions for creating and manipulating bundles
 are given in Figure \ref{fig:bundle}.
 
+\subsection{Scope type: \cscope}
+
+A variable may be declared to have type \cscope:
+\begin{verbatim}
+  $scope s;
+\end{verbatim}
+A value of type \cscope{} represents a dynamic scope. The variable
+\ct{s} in the declaration above is initialized with a value
+representing the dynamic scope in which it occurs.
+
+Scope variables are very restricted and can only be used in a few
+places. These are described in Chapter \ref{chap:pointers}.
+
+
+\subsection{Message-passing types}
+
+There are several types dealing with message-passing: $\cgcomm$
+(global communicator), $\ccomm$ (local communicator), and $\cmessage$.
+These types and the operations on them are described in Section
+\label{sec:communicators}.
+
+
 \section{Expressions}
 
 The following C expressions are included in CIVL: 
 \begin{itemize}
-\item numerical addition (\verb!+}), subtraction (\verb!-!), multiplication
-  (\verb!*!), division (\verb!/!), unary minus (\verb!-!),
-  integer division (\verb!/!) and modulus (\verb!%!), all with
-  their ideal mathematical interpretations;
-\item address-of (\verb!&!), pointer dereference(\verb!*!),
-  pointer addition (\verb!+!) and subtraction (\verb!-!)
-\item numerical comparators \verb!==!, \verb!>=!, \verb!<=!, \verb!<!, \verb!>!,
-  with exact real semantics
-\item boolean operators \verb~!~, \verb!&&!, \verb!||!
-\item \verb!sizeof!
-\item assignments (\verb!=!)
-\item function calls: \verb!f(e1,...,en)!
-\item conditional: \verb!b ? e : f!
+\item \emph{identifier} expressions (\texttt{x})
+\item parenthetical expressions (\verb!(e)!)
+\item numerical \emph{addition} (\verb!a+b!), \emph{subtraction} (\verb!a-b!),
+  \emph{multiplication} (\verb!a*b!), \emph{division} (\verb!a/b!),
+  \emph{unary minus} (\verb!a-b!),
+  \emph{integer division} (\verb!a/b!) and \emph{modulus} (\verb!a%b!),
+  all with their ideal mathematical interpretations
+\item array \emph{index} expressions (\verb!a[e]!) and struct or union
+  \emph{navigation} expressions (\verb!x.f!)
+\item \emph{address-of} (\verb!&e!), pointer \emph{dereference} (\verb!*p!),
+  pointer \emph{addition} (\verb!p+i!) and \emph{subtraction} (\verb!p-q!)
+  expressions
+\item comparison expressions (\verb!a==b!, \verb~a!=b~, \verb!a>=b!,
+  \verb!a<=b!, \verb!a<b!, \verb!a>b!)
+\item logical \emph{not} (\verb~!p~), \emph{and} (\verb!p&&q!), and
+  \emph{or} (\verb!p||q!)
+\item \emph{sizeof} a type (\verb!sizeof(t)!) or expression (\verb!sizeof(e)!)
+\item \emph{assignment} expressions (\verb!a=b!, \verb!a+=b!, \verb!a-=b!,
+  \verb!a*=b!, \verb!a/=b!)
+\item function \emph{calls} \verb!f(e1,...,en)!
+\item \emph{conditional} expressions (\verb!b ? e : f!).
 \end{itemize}
 
 Bit-wise operations are not yet supported.
@@ -153,10 +234,14 @@ Bit-wise operations are not yet supported.
 
 The usual C statements are supported:
 \begin{itemize}
-\item expression statements
-\item labeled statements
-\item \texttt{for}, \texttt{while} loops
-\item compound statement: \lb \ldots \rb
+\item \emph{no-op} (\ct{;})
+\item expression statements (\ct{e;})
+\item labeled statements, including \ct{case} and \ct{default} labels
+  (\ct{l: s})
+\item \emph{for} (\ct{for (init; cond; inc) s}), \emph{while} 
+  (\ct{while (cond) s}) and \emph{do} (\ct{do s while (cond)})
+  loops
+\item compound statements (\lb \ct{s1;s2;} \ldots \rb)
 \item \texttt{if} and \verb!if! \ldots \verb!else!
 \item \verb!goto!
 \item \verb!switch!
@@ -166,7 +251,9 @@ The usual C statements are supported:
 
 \section{Guards and nondeterminism}
 
-\subsection{\cwhen} This represents a guarded command:
+\subsection{Guarded commands: \cwhen}
+
+A guarded command is encoded in CIVL-C using a $\cwhen$ statement:
 \begin{verbatim}
   $when (expr) stmt;
 \end{verbatim}
@@ -213,7 +300,9 @@ executes the assignment in that state.  It is equivalent to
   $when (s>0 && t>0) x=y*t;
 \end{verbatim}
 
-\subsection{\cchoose}  A \cchoose{} statement has the form
+\subsection{Nondeterministic selection statement: \cchoose}
+
+A \cchoose{} statement has the form
 \begin{verbatim}
   $choose {
     stmt1;
@@ -253,8 +342,9 @@ transition system:
 \end{verbatim}
 
 
-\subsection{\cchooseint} This is a function with the following
-prototype:
+\subsection{Nondeterministic choice of integer: \cchooseint}
+
+This is a function with the following prototype:
 \begin{verbatim}
   int $choose_int(int n);
 \end{verbatim}
@@ -267,18 +357,23 @@ $[0,\texttt{n}-1]$.
 
 \section{Process creation and management}
 
-\subsection{\cproc} This is a primitive object type and functions like
-any other primitive C type (e.g., \texttt{int}).  An object of this
-type refers to a process.  It can be thought of as a process ID, but
-it is not an integer and cannot be cast to one.  Certain expressions
-take an argument of \cproc{} type and some return something of
-\cproc{} type.
+\subsection{The process type: \cproc}
 
-\subsection{\cself} This is a constant of type \cproc.  It can be used
-wherever an argument of type \cproc{} is called for.  It refers to the
-process that is evaluating the expression containing ``\cself''.
+This is a primitive object type and functions like any other primitive
+C type (e.g., \texttt{int}). An object of this type refers to a
+process. It can be thought of as a process ID, but it is not an
+integer and cannot be cast to one. Certain expressions take an
+argument of \cproc{} type and some return something of \cproc{} type.
 
-\subsection{\cspawn} This is an expression with side-effects.  It
+\subsection{The \emph{self} process constant: \cself}
+
+This is a constant of type \cproc. It can be used wherever an argument
+of type \cproc{} is called for. It refers to the process that is
+evaluating the expression containing ``\cself''.
+
+\subsection{Spawning a new process: \cspawn}
+
+This is an expression with side-effects.  It
 spawns a new process and returns a reference to the new process, i.e.,
 an object of type \cproc.  The syntax is the same as a procedure
 invocation with the keyword ``\cspawn'' inserted in front:
@@ -292,14 +387,18 @@ Typically the returned value is assigned to a variable, e.g.,
 If the invoked function \texttt{f} returns a value, that value is
 simply ignored.
 
-\subsection{\cwait} This is a statement that takes an argument of type
+\subsection{Waiting for another process to terminate: \cwait}
+
+This is a statement that takes an argument of type
 \cproc{} and blocks until the referenced process terminates:
 \begin{verbatim}
   $wait expr;
 \end{verbatim}
 
 
-\subsection{\cexit} This function takes no arguments.  It causes the
+\subsection{Terminating a process immediately: \cexit}
+
+This function takes no arguments.  It causes the
 calling process to terminate immediately, regardless of the state of
 its call stack:
 \begin{verbatim}
@@ -310,7 +409,7 @@ its call stack:
 
 \section{Atomicity}
 
-\subsection{\catom} This defines a number of statements to be executed
+\subsection{Atom blocks: \catom} This defines a number of statements to be executed
 as a single atomic transition.  An \catom~block has the following
 form:
 \begin{verbatim}
@@ -364,7 +463,7 @@ dynamically (otherwise).  Note that it is not always possible to
 detect this statically because the \catom\ block may contain a
 function call, and the function may contain the \cwait\ statement.
 
-\subsection{\catomic} The statements in an \emph{atomic} block
+\subsection{Atomic blocks: \catomic} The statements in an \emph{atomic} block
 will be executed without other processes interleaving, to
 the extent possible.  It has the form:
 \begin{verbatim}
@@ -436,7 +535,7 @@ representing messages; the higher layer defines an abstract data type
 of \emph{communicators} for managing sets of messages being
 transferred among some set of processes.
 
-\subsection{Messages}
+\subsection{Messages: \cmessage}
 
 Messages are similar to bundles, but with some additional
 ``meta-data''.  The \emph{data} component of the message is the
@@ -477,7 +576,8 @@ void $message_unpack($message message, void *buf, int size);
 The functions for creating, and extracting information from, messages
 are given in Figure \ref{fig:message}.
 
-\subsection{Communicators}
+\subsection{Communicators: \cgcomm{} and \ccomm}
+\label{sec:communicators}
 
 The library defines a \emph{global communicator} type $\cgcomm$ and a
 \emph{local communicator} type $\ccomm$. As in MPI, a communicator is
@@ -515,8 +615,8 @@ this handle as an argument.
  * The global communicator will have size communication places.  The
  * global communicator defines a communication "universe" and encompasses
  * message buffers and all other components of the state associated to
- * message-passing.  */
-$gcomm $gcomm_create(int size);
+ * message-passing.  The new object will be allocated in the given heap. */
+$gcomm $gcomm_create($heap h, int size);
 
 /* Creates a new local communicator object and returns a handle to it.
  * The new communicator will be affiliated with the specified global
@@ -526,8 +626,9 @@ $gcomm $gcomm_create(int size);
  * that will be occupied by the local communicator.  The local communicator
  * handle may be used by more than one process, but all of those
  * processes will be viewed as occupying the same place.
- * Only one call to $comm_create may occur for each gcomm-place pair.  */
-$comm $comm_create($gcomm gcomm, int place);
+ * Only one call to $comm_create may occur for each gcomm-place pair.
+ * The new object will be allocated in the given heap. */
+$comm $comm_create($heap h, $gcomm gcomm, int place);
 
 /* Returns the size (number of places) in the global communicator associated
  * to the given comm. */
@@ -562,7 +663,7 @@ $message $comm_dequeue($comm comm, int source, int tag);
   \label{fig:comm}
 \end{figure}
 
-The communication interface is given in Figure \ref{fig:comm}.
+The communicator interface is given in Figure \ref{fig:comm}.
 
 % nonblocking interface: instead of message_pack, it is a request
 % form a new request and Isend it
@@ -609,7 +710,7 @@ satsify their contract.
 
 \section{Input-output signature}
 
-\subsection{\cinput} A variable in the root scope only may be declared
+\subsection{Input type qualifier: \cinput} A variable in the root scope only may be declared
 with this type modifier indicating it is an ``input'' variable, as in
 \begin{verbatim}
   $input int n;
@@ -623,12 +724,16 @@ same outputs (i.e., corresponding \coutput{} variables will end up
 with the same values at termination).  Input variables can also be
 assigned a concrete value on the command line.
 
-\subsection{\coutput} A variable in the root scope may be declared
-with this type modifier to declare it to be an output variable.
+\subsection{Output type qualifier: \coutput}
+
+A variable in the root scope may be declared with this type modifier
+to declare it to be an output variable.
 
 \section{Assertions and assumptions}
 
-\subsection{\cassert} This is an assertion statement.  It takes as its
+\subsection{Assertion statements: \cassert}
+
+This is an assertion statement.  It takes as its
 sole argument an expression of boolean type.  The expressions have a
 richer syntax than C expressions.  During verification, the assertion
 is checked.  If it does not hold, a violation is reported.
@@ -649,7 +754,9 @@ for successive codes in the format string.  For example,
 \end{verbatim}
 
 
-\subsection{\cassume} As \emph{assume statement} has the form
+\subsection{Assume statements: \cassume}
+
+As \emph{assume statement} has the form
 \begin{verbatim}
   $assume expr;
 \end{verbatim}
@@ -674,11 +781,47 @@ consideration to inputs satisfying $0\leq\texttt{N}\leq\texttt{B}$.
 
 \section{Formulas}
 
-boolean expressions, forall, exists, implies
+A formula is a boolean expression that can be used in an assert
+statement, assume statement, procedure contract (below), or invariant.
+Any ordinary C boolean expression is a formula. CIVL-C provides some
+additional kinds of formulas, described below.
+
+\subsection{Implication: \cimplies}
+
+The binary operation \cimplies{} represents logical implication.
+The expression \verb!p=>q! is equivalent to \verb~(!p)||q~.
+
+\subsection{Universal quantifier: \cforall}
+
+The universally qunatified formula has the form
+\begin{verbatim}
+  $forall { type identifier | restriction} expr
+\end{verbatim}
+where \verb!type! is a type name (e.g., \texttt{int} or
+\texttt{double}), \verb!identifier! is the name of the bound variable,
+\verb!restriction! is a boolean expression which expresses some
+restriction on the values that the bound variable can take, and
+\verb!expr! is a formula.  The universally quantified formula
+holds iff for all values assignable to the bound variable
+for which the restriction holds, the formula \ct{expr} holds.
+
+A variation on the construct above can be used in the special case
+where the bound variable is to range over a finite interval
+of integers.  In this case the quantified formula may be written:
+\begin{verbatim}
+  $forall { type identifier=lower .. upper } expr
+\end{verbatim}
+where \ct{lower} and \ct{upper} are integer expressions.
+
+\subsection{Existential quantifier: \cexists}
+
+The syntax for existentially quantified expressions is exactly the
+same as for universally quantified expressions, with \cexists{} in
+place of \cforall{}.
 
 \section{Contracts}
 
-\subsection{Procedure contracts}
+\subsection{Procedure contracts: \crequires{} and \censures{}}
 The \crequires{} and \censures{} primitives are used to encode
 procedure contracts.  There are optional
 elements that may occur in a procedure declaration or definition,
@@ -704,7 +847,9 @@ to the result returned by a procedure.
 \emph{Status}: parsed, but nothing is currently done with this
 information.
 
-\subsection{\cinvariant} This indicates a loop invariant.  Each C loop
+\subsection{Loop invariants: \cinvariant}
+
+This indicates a loop invariant.  Each C loop
 construct has an optional invariant clause as follows:
 \begin{verbatim}
   while (expr) $invariant (expr) stmt
@@ -723,10 +868,12 @@ information.
 
 \section{Concurrency specification}
 
-\subsection{Remote expressions}.  These have the form \verb!expr@x!
-and refer to a variable in another process, e.g., \verb!procs[i]@x!.
-This special kind of expression is used in collective expressions,
-which are used to formulate collective assertions and invariants.
+\subsection{Remote expressions: \texttt{e@x}}.
+
+These have the form \verb!expr@x! and refer to a variable in another
+process, e.g., \verb!procs[i]@x!. This special kind of expression is
+used in collective expressions, which are used to formulate collective
+assertions and invariants.
 
 The expression \verb!expr! must have \cproc{} type.  The variable
 \texttt{x} must be a statically visible variable in the context in
@@ -735,7 +882,7 @@ context will be shifted to the process referred to by \texttt{expr}.
 
 \emph{Status}: not implemented.
 
-\subsection{Collective expressions}.  These have the form
+\subsection{Collective expressions: \ccollective}.  These have the form
 \begin{verbatim}
   $collective(proc_expr, int_expr) expr 
 \end{verbatim}
@@ -754,8 +901,8 @@ array.  Example:
 
 \emph{Status}: not implemented.
 
-\chapter{Pointers and Heaps}
-
+\chapter{Pointers and Scopes}
+\label{chap:pointers}
 
 CIVL-C supports pointers, using the same operators with the same
 meanings as C (\texttt{\&}, \texttt{*}, pointer arithmetic).
@@ -763,6 +910,16 @@ As mentioned above, there is also a heap type \cheap{}, which can
 be used to declare multiple heaps in a CIVL-C program.  The
 interaction between pointers, heaps, and scopes is an important
 aspect of CIVL-C.
+
+\section{Memory functions}
+
+The following function is exactly the same as in the C standard
+library: it copies memory from the region to by \ct{q} to that pointed
+to by \ct{p}.
+
+\begin{verbatim}
+  void memcpy(void *p, void *q, size_t size);
+\end{verbatim}
 
 \section{Pointer types}
 
@@ -786,7 +943,7 @@ parameter within angular brackets immediately following the \texttt{*}
 token.  For example, to declare a variable \texttt{p} of type
 \emph{pointer-to-$T$-in-$s$}, one writes
 \begin{verbatim}
-     int *<s> p;
+  int *<s> p;
 \end{verbatim}
 If the scope modifier \texttt{<...>} is absent, the scope is taken to
 be the root scope $s_0$.  The object has type
@@ -813,6 +970,25 @@ is correct (in particular, it is type-correct) because \texttt{\&x}
 has type \emph{pointer-to-\texttt{int}-in-\texttt{s1}}, since
 \texttt{s1} is the scope in which \texttt{x} is declared.
 
+Another pointer example:
+\begin{small}
+\begin{verbatim}
+{ $heap h = $heap_create();
+  { $scope s1;
+    double x;
+    { $scope s2;
+      double y;
+      double *<s1> p;
+      /* p can only point to something in s1 or descendant, for example, s2 */
+      p = &x; // fine
+      p = &y; // fine
+      p = (double*)$malloc(h, 10*sizeof(double)); // static type error
+    }
+  }
+}
+\end{verbatim}
+\end{small}
+
 \section{Pointer addition and subtractions}
 
 If \texttt{e} is an expression of type \emph{pointer-to-$T$-in-$s$}
@@ -821,7 +997,6 @@ has type \emph{pointer-to-$T$-in-$s$}.  In other words, pointer
 addition cannot leave the scope of the original pointer.  This
 reflects the fact that every object is contained in one scope, and
 pointer addition cannot leave the object.
-
 
 Pointer subtraction is defined on two pointers of the same type, where
 ``same'' includes the scope.  That is checked statically.  As in C, it
@@ -882,63 +1057,6 @@ A type \emph{pointer-to-$T_1$-in-$s$} can be cast to a type
 \emph{pointer-to-$T_2$-in-$s$} according to the usual rules of C.  In
 other words, usual casting rules apply as long as you don't change the
 scope.
-
-
-
-\section{Heaps}
-
-The standard CIVL-C library defines a type \cheap{} for explicit
-modeling of a heap.  The default value of \cheap{} type is an empty
-heap, so you only need to declare a variable to have type \cheap{}
-in order to create a new heap:
-\begin{verbatim}
-  $heap h; /* a new empty heap */
-\end{verbatim}
-
-The following functions are also defined:
-\begin{verbatim}
-void* $malloc($heap *h, int size);
-void memcpy(void *p, void *q, size_t size);
-void free(void *p)
-\end{verbatim}
-The first function is like C's \texttt{malloc}, except that you
-specify the heap in which the allocation takes place by passing a
-pointer to the heap as the first argument.  This modifies the
-specified heap and returns a pointer to the new object.  The function
-can only occur in a context in which the type of the object is
-specified, as in:
-\begin{verbatim}
-  $heap h;
-  int n = 10;
-  double *p = (double*)$malloc(&h, n*sizeof(double));
-\end{verbatim}
-The second and third functions are exactly the same as in C. Note that
-\texttt{free} modifies the heap which was used to allocate \texttt{p}.
-
-Another pointer example:
-\begin{small}
-\begin{verbatim}
-{ $heap h;
-  { $scope s1;
-    double x;
-    { $scope s2;
-      double y;
-      double *<s1> p;
-      /* p can only point to something in s1 or descendant,
-       * for example, s2 */
-      p = &x; // fine
-      p = &y; // fine
-      p = (double*)$malloc(&h,10*sizeof(double)); // static type error
-    }
-  }
-}
-\end{verbatim}
-\end{small}
-
-\emph{Status}: Pointer type, \texttt{\&}, \texttt{*}, pointer addition
-all implemented.  Type \cheap{}, \texttt{malloc}, \texttt{free}
-implemented.  Scope-qualified pointers: parsed, type-checked, but
-information not currently used.
 
 \section{Scope-Parameterized Functions}
 

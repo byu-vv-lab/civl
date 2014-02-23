@@ -138,8 +138,8 @@ void dine(int id) {
   int right = (id + 1) % n;
 
   while (1) {
-    $when (forks[left] == 0) {forks[left] = 1;}
-    $when (forks[right] == 0) {forks[right] = 1;}
+    $when (forks[left] == 0) forks[left] = 1;
+    $when (forks[right] == 0) forks[right] = 1;
     forks[right] = 0;
     forks[left] = 0;
   }
