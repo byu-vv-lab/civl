@@ -52,12 +52,20 @@ as follows:
 This chapter gives instructions for downloading and installing CIVL,
 and running the verification tool on an example.
 
-\begin{enumerate}
+\textbf{Note.} The following instructions explain how to install CIVL
+under the directory \texttt{/opt}, which is the standard installation
+point. If you do not wish to install CIVL there (e.g., because you
+don't want to use \texttt{sudo}, or you want to install it in your
+home directory), you can just modify the instructions by replacing
+\texttt{/opt} with another directory. You will just need to edit the
+script file \texttt{civl} appropriately, replacing the default paths
+with your chosen paths.
 
+\begin{enumerate}
 \item Download and unpack the appropriate pre-compiled library of CIVL
   dependencies from
-  \hbox{\url{http://vsl.cis.udel.edu/tools/vsl_depend/}}.  There are
-  versions for Darwin (OS X), 32-bit Linux, and 64-bit Linux.
+  \url{http://vsl.cis.udel.edu/tools/vsl_depend/}.
+  There are versions for Darwin (OS X), 32-bit Linux, and 64-bit Linux.
   After unpacking, you should have a directory named \texttt{vsl}.
 \item If you do not already have a directory \texttt{/opt},
   create it; use \texttt{sudo} as needed (\verb!sudo mkdir /opt!).
@@ -101,10 +109,6 @@ civl replay locksBad.cvl
 You should see a step-by-step account of how the program arrived
 at the deadlock.
 
-\textbf{Note.}  You can install \texttt{CIVL-\textit{tag}} and
-\texttt{vsl} in any directory you want, not just in \texttt{/opt}.
-You just need to edit the script file \texttt{civl} appropriately,
-replacing the default paths with the new paths.
 
 \chapter{Examples}
 
