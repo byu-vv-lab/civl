@@ -429,12 +429,14 @@ public class CommonEvaluator implements Evaluator {
 
 				set.add(expr);
 				try {
-					eval = this.dereference(null, state, expr);
-					pointerValue = eval.value;
-					state = eval.state;
-					if (pointerValue.type() != null
-							&& pointerValue.type().equals(pointerType))
-						findPointersInExpression(pointerValue, set, state);
+					if(getScopeId(null, expr) >= 0){
+						eval = this.dereference(null, state, expr);
+						pointerValue = eval.value;
+						state = eval.state;
+						if (pointerValue.type() != null
+								&& pointerValue.type().equals(pointerType))
+							findPointersInExpression(pointerValue, set, state);
+					}
 				} catch (UnsatisfiablePathConditionException e) {
 					// // TODO Auto-generated catch block
 					// e.printStackTrace();

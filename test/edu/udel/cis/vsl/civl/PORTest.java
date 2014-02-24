@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
@@ -45,5 +44,8 @@ public class PORTest {
 		assertFalse(ui.run("verify", filename("trade4.cvl")));
 	}
 	
-	
+	@Test
+	public void heap1() {
+		assertFalse(ui.run("verify", filename("heap1.cvl")));
+	}
 }
