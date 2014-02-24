@@ -1,0 +1,35 @@
+#include <civlc.h>
+
+$heap root;
+$heap *h = &root;
+int *p;
+_Bool start = $false;
+
+void f(){
+  $heap fh;
+
+  $when(start);
+  p = (int*) $malloc(h, sizeof(int));
+  h = &fh;
+  //$free(&fh, p);
+}
+
+void g(){
+  $heap gh;
+
+  $when(start);
+  h = &gh;
+  //p = (int*) $malloc(h, sizeof(int));
+  //$free(&gh, p);
+}
+
+void main(){
+  $proc ps[2];
+
+  ps[0] = $spawn f();
+  ps[1] = $spawn g();
+  start = $true;
+  $wait ps[0];
+  $wait ps[1];
+  $free(h, p);
+}
