@@ -2,12 +2,10 @@ package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
-import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
@@ -15,30 +13,27 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
-import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -51,7 +46,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
-import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
@@ -72,37 +66,228 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  * @author siegel
  * 
  */
-public class Libcivlc implements LibraryExecutor {
+public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 
-	private Executor primaryExecutor;
+	/* **************************** Constructors *************************** */
 
-	private Evaluator evaluator;
-
-	private SymbolicUniverse universe;
-
-	private StateFactory stateFactory;
-
-	private NumericExpression zero;
-
-	private NumericExpression one;
-
-	private IntObject zeroObject;
-
-	private IntObject oneObject;
-
-	// private SymbolicType bundleSymbolicType;
-
+	/**
+	 * TODO javadocs
+	 * 
+	 * @param primaryExecutor
+	 * @param output
+	 * @param enablePrintf
+	 * @param modelFactory
+	 */
 	public Libcivlc(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
-		this.primaryExecutor = primaryExecutor;
-		this.evaluator = primaryExecutor.evaluator();
-		// this.log = evaluator.log();
-		this.universe = evaluator.universe();
-		this.stateFactory = evaluator.stateFactory();
-		this.zero = universe.zeroInt();
-		this.one = universe.oneInt();
-		this.zeroObject = universe.intObject(0);
-		this.oneObject = universe.intObject(1);
+		super(primaryExecutor, output, enablePrintf, modelFactory);
+	}
+
+	/* ******************** Methods from LibraryExecutor ******************* */
+
+	@Override
+	public State execute(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
+		return executeWork(state, pid, statement);
+	}
+
+	@Override
+	public BooleanExpression getGuard(State state, int pid, Statement statement) {
+		Identifier name;
+		Expression[] arguments;
+		SymbolicExpression[] argumentValues;
+		CallOrSpawnStatement call;
+		// LHSExpression lhs;
+		int numArgs;
+		BooleanExpression guard;
+
+		if (!(statement instanceof CallOrSpawnStatement)) {
+			throw new CIVLInternalException("Unsupported statement for civlc",
+					statement);
+		}
+		call = (CallOrSpawnStatement) statement;
+		numArgs = call.arguments().size();
+		name = call.function().name();
+		// lhs = call.lhs();
+		arguments = new Expression[numArgs];
+		argumentValues = new SymbolicExpression[numArgs];
+		for (int i = 0; i < numArgs; i++) {
+			Evaluation eval = null;
+
+			arguments[i] = call.arguments().get(i);
+			try {
+				eval = evaluator.evaluate(state, pid, arguments[i]);
+			} catch (UnsatisfiablePathConditionException e) {
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return universe.falseExpression();
+			}
+			argumentValues[i] = eval.value;
+			state = eval.state;
+		}
+
+		switch (name.name()) {
+		case "$comm_dequeue":
+			try {
+				guard = getDequeueGuard(state, pid, arguments, argumentValues);
+			} catch (UnsatisfiablePathConditionException e) {
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return universe.falseExpression();
+			}
+			break;
+		case "$comm_add":
+			// try {
+			// guard = getCommAddGuard(state, pid, arguments, argumentValues,
+			// statement.getSource());
+			// } catch (UnsatisfiablePathConditionException e) {
+			// // the error that caused the unsatifiable path condition should
+			// // already have been reported.
+			// return universe.falseExpression();
+			// }
+			// break;
+		case "$free":
+		case "$bundle_pack":
+		case "$bundle_unpack":
+		case "$bundle_size":
+		case "$comm_create":
+		case "$comm_enqueue":
+		case "printf":
+		case "$exit":
+		case "$memcpy":
+		case "$message_pack":
+		case "$message_source":
+		case "$message_tag":
+		case "$message_dest":
+		case "$message_size":
+		case "$message_unpack":
+		case "$comm_destroy":
+		case "$comm_nprocs":
+		case "$comm_probe":
+		case "$comm_seek":
+		case "$comm_chan_size":
+		case "$comm_total_size":
+			guard = universe.trueExpression();
+			break;
+
+		default:
+			throw new CIVLInternalException("Unknown civlc function: " + name,
+					statement);
+		}
+		return guard;
+	}
+
+	// /**
+	// We don't need the guard here. An error will be report instead.
+	// * The guard of the comm_add I think should be the process must be in the
+	// * communicator and the thread gonna be added into the communicator should
+	// * not be in the communicator at this point.
+	// *
+	// * @param state
+	// * @param pid
+	// * @param arguments
+	// * @param argumentValues
+	// * @return
+	// * @throws UnsatisfiablePathConditionException
+	// */
+	// private BooleanExpression getCommAddGuard(State state, int pid,
+	// Expression arguments[], SymbolicExpression argumentValues[],
+	// CIVLSource source) throws UnsatisfiablePathConditionException {
+	// BooleanExpression guard = null;
+	// Expression commPointerExpr = arguments[0];
+	// SymbolicExpression procValue = argumentValues[1];
+	// DereferenceExpression commExpr = this.evaluator.modelFactory()
+	// .dereferenceExpression(source, commPointerExpr);
+	// Evaluation eval = this.evaluator.evaluate(state, pid, commExpr);
+	// SymbolicExpression comm = eval.value;
+	// state = eval.state;
+	// SymbolicExpression nprocs = this.universe.tupleRead(comm, zeroObject);
+	// int int_nprocs = evaluator.extractInt(source,
+	// (NumericExpression) nprocs);
+	// SymbolicExpression procs = this.universe.tupleRead(comm, oneObject);
+	// // TODO: get real rank
+	// SymbolicExpression rank = universe.integer(pid);
+	// SymbolicExpression procQueue = universe.arrayRead(procs,
+	// (NumericExpression) rank);
+	// SymbolicExpression threadArray = universe.tupleRead(procQueue,
+	// oneObject);
+	// SymbolicExpression theProcess = universe.arrayRead(threadArray,
+	// universe.integer(0));
+	//
+	// return universe.trueExpression();
+	// }
+
+	@Override
+	public Evaluation getGuard(State state, int pid, String function,
+			Expression[] arguments, CIVLSource source) {
+		SymbolicExpression[] argumentValues;
+		int numArgs;
+		BooleanExpression guard;
+
+		numArgs = arguments.length;
+		argumentValues = new SymbolicExpression[numArgs];
+		for (int i = 0; i < numArgs; i++) {
+			Evaluation eval = null;
+
+			try {
+				eval = evaluator.evaluate(state, pid, arguments[i]);
+			} catch (UnsatisfiablePathConditionException e) {
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return new Evaluation(state, universe.falseExpression());
+			}
+			argumentValues[i] = eval.value;
+			state = eval.state;
+		}
+
+		switch (function) {
+		case "$comm_dequeue":
+			try {
+				guard = getDequeueGuard(state, pid, arguments, argumentValues);
+			} catch (UnsatisfiablePathConditionException e) {
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return new Evaluation(state, universe.falseExpression());
+			}
+			break;
+		case "$comm_add":
+		case "$free":
+		case "$bundle_pack":
+		case "$bundle_unpack":
+		case "$bundle_size":
+		case "$comm_create":
+		case "$comm_enqueue":
+		case "printf":
+		case "$exit":
+		case "$memcpy":
+		case "$message_pack":
+		case "$message_source":
+		case "$message_tag":
+		case "$message_dest":
+		case "$message_size":
+		case "$message_unpack":
+		case "$comm_destroy":
+		case "$comm_nprocs":
+		case "$comm_probe":
+		case "$comm_seek":
+		case "$comm_chan_size":
+		case "$comm_total_size":
+		case "$gcomm_create":
+		case "$heap_create":
+			guard = universe.trueExpression();
+			break;
+
+		default:
+			throw new CIVLInternalException("Unknown civlc function: "
+					+ function, source);
+		}
+		return new Evaluation(state, guard);
+	}
+
+	@Override
+	public State initialize(State state) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
@@ -110,171 +295,45 @@ public class Libcivlc implements LibraryExecutor {
 		return "civlc";
 	}
 
-	public State executeMalloc(State state, int pid, MallocStatement statement)
-			throws UnsatisfiablePathConditionException {
-		CIVLSource source = statement.getSource();
-		int sid = state.getProcessState(pid).getDyscopeId();
-		int index = statement.getMallocId();
-		IntObject indexObj = universe.intObject(index);
-		LHSExpression lhs = statement.getLHS();
-		Evaluation eval;
-		SymbolicExpression heapPointer;
-		int heapVariableId;
-		ReferenceExpression symRef;
-		SymbolicExpression heapValue;
-		NumericExpression mallocSize, elementSize;
-		BooleanExpression pathCondition, claim;
-		ResultType validity;
-		NumericExpression elementCount;
-		SymbolicExpression heapField;
-		NumericExpression lengthExpression;
-		int length; // num allocated objects in index component of heap
-		StringObject newObjectName;
-		SymbolicType newObjectType;
-		SymbolicExpression newObject;
-		SymbolicExpression firstElementPointer; // returned value
-
-		eval = evaluator.evaluate(state, pid,
-				statement.getHeapPointerExpression());
-		state = eval.state;
-		heapPointer = eval.value;
-		eval = evaluator.dereference(source, state, heapPointer);
-		state = eval.state;
-		heapValue = eval.value;
-		heapVariableId = evaluator.getVariableId(source, heapPointer);
-		symRef = evaluator.getSymRef(heapPointer);
-		if (!symRef.isIdentityReference())
-			throw new CIVLException("heap used as internal structure", source);
-		eval = evaluator.evaluate(state, pid, statement.getSizeExpression());
-		state = eval.state;
-		mallocSize = (NumericExpression) eval.value;
-		eval = evaluator.evaluateSizeofType(source, state, pid,
-				statement.getStaticElementType());
-		state = eval.state;
-		elementSize = (NumericExpression) eval.value;
-		pathCondition = state.getPathCondition();
-		claim = universe.divides(elementSize, mallocSize);
-		validity = universe.reasoner(pathCondition).valid(claim)
-				.getResultType();
-		if (validity != ResultType.YES) {
-			Certainty certainty = validity == ResultType.NO ? Certainty.PROVEABLE
-					: Certainty.MAYBE;
-			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
-					certainty,
-					"Size argument to $malloc is not multiple of element size",
-					eval.state, source);
-
-			evaluator.reportError(e);
-			state = state.setPathCondition(universe.and(pathCondition, claim));
-		}
-		elementCount = universe.divide(mallocSize, elementSize);
-		heapField = universe.tupleRead(heapValue, indexObj);
-		lengthExpression = universe.length(heapField);
-		length = evaluator.extractInt(source, lengthExpression);
-		newObjectName = universe.stringObject("H_p" + pid + "s" + sid + "v"
-				+ heapVariableId + "i" + index + "l" + length);
-		newObjectType = universe.arrayType(statement.getDynamicElementType(),
-				elementCount);
-		newObject = universe.symbolicConstant(newObjectName, newObjectType);
-		heapField = universe.append(heapField, newObject);
-		heapValue = universe.tupleWrite(heapValue, indexObj, heapField);
-		state = primaryExecutor.assign(source, state, heapPointer, heapValue);
-		if (lhs != null) {
-			symRef = universe.tupleComponentReference(symRef, indexObj);
-			symRef = universe.arrayElementReference(symRef, lengthExpression);
-			symRef = universe.arrayElementReference(symRef, zero);
-			firstElementPointer = evaluator.setSymRef(heapPointer, symRef);
-			state = primaryExecutor
-					.assign(state, pid, lhs, firstElementPointer);
-		}
-		return state;
+	@Override
+	public State wrapUp(State state) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	private Evaluation getAndCheckHeapObjectPointer(
-			SymbolicExpression heapPointer, SymbolicExpression pointer,
-			CIVLSource pointerSource, State state) {
-		SymbolicExpression objectPointer = evaluator.getParentPointer(pointer);
-
-		if (objectPointer != null) {
-			SymbolicExpression fieldPointer = evaluator
-					.getParentPointer(objectPointer);
-
-			if (fieldPointer != null) {
-				SymbolicExpression actualHeapPointer = evaluator
-						.getParentPointer(fieldPointer);
-
-				if (actualHeapPointer != null) {
-					BooleanExpression pathCondition = state.getPathCondition();
-					BooleanExpression claim = universe.equals(
-							actualHeapPointer, heapPointer);
-					ResultType valid = universe.reasoner(pathCondition)
-							.valid(claim).getResultType();
-					ReferenceExpression symRef;
-
-					if (valid != ResultType.YES) {
-						Certainty certainty = valid == ResultType.NO ? Certainty.PROVEABLE
-								: Certainty.MAYBE;
-						CIVLStateException e = new CIVLStateException(
-								ErrorKind.MALLOC, certainty,
-								"Invalid pointer for heap", state,
-								pointerSource);
-
-						evaluator.reportError(e);
-						state = state.setPathCondition(universe.and(
-								pathCondition, claim));
-					}
-					symRef = evaluator.getSymRef(pointer);
-					if (symRef instanceof ArrayElementReference) {
-						NumericExpression index = ((ArrayElementReference) symRef)
-								.getIndex();
-
-						if (index.isZero()) {
-							return new Evaluation(state, objectPointer);
-						}
-					}
-
-				}
-			}
-		}
-		{
-			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
-					Certainty.PROVEABLE, "Invalid pointer for heap", state,
-					pointerSource);
-
-			evaluator.reportError(e);
-			state = state.setPathCondition(universe.falseExpression());
-			return new Evaluation(state, objectPointer);
-		}
-	}
-
-	private int getMallocIndex(SymbolicExpression pointer) {
-		// ref points to element 0 of an array:
-		NTReferenceExpression ref = (NTReferenceExpression) evaluator
-				.getSymRef(pointer);
-		// objectPointer points to array:
-		NTReferenceExpression objectPointer = (NTReferenceExpression) ref
-				.getParent();
-		// fieldPointer points to the field:
-		TupleComponentReference fieldPointer = (TupleComponentReference) objectPointer
-				.getParent();
-		int result = fieldPointer.getIndex().getInt();
-
-		return result;
-	}
-
-	// better to get more precise source...
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException 
+	 */
 	private State executeFree(State state, int pid, Expression[] arguments,
-			SymbolicExpression[] argumentValues, CIVLSource source) {
-		Expression heapPointerExpression = arguments[0];
-		CIVLHeapType heapType = (CIVLHeapType) ((CIVLPointerType) heapPointerExpression
-				.getExpressionType()).baseType();
-		Expression pointerExpression = arguments[1];
-		SymbolicExpression heapPointer = argumentValues[0];
-		SymbolicExpression firstElementPointer = argumentValues[1];
+			SymbolicExpression[] argumentValues, CIVLSource source) throws UnsatisfiablePathConditionException {
+		Expression pointerExpression = arguments[0];
+		SymbolicExpression firstElementPointer = argumentValues[0];
+		// Expression heapPointerExpression = arguments[0];
+		CIVLHeapType heapType = modelFactory.heapType();
+		// (CIVLHeapType) ((CIVLPointerType) heapPointerExpression
+		// .getExpressionType()).baseType();
+		SymbolicExpression heapScopeID = universe.tupleRead(
+				firstElementPointer, universe.intObject(0));
+		SymbolicExpression heapVarID = universe.tupleRead(firstElementPointer,
+				universe.intObject(1));
 		SymbolicExpression heapObjectPointer;
 		Evaluation eval;
 		int index;
 		SymbolicExpression undef;
+		ReferenceExpression symRef = (ReferenceExpression) universe
+				.canonic(universe.identityReference());
+		SymbolicExpression heapPointer = universe.tuple(
+				modelFactory.pointerSymbolicType(),
+				Arrays.asList(new SymbolicExpression[] { heapScopeID,
+						heapVarID, symRef }));
 
 		eval = getAndCheckHeapObjectPointer(heapPointer, firstElementPointer,
 				pointerExpression.getSource(), state);
@@ -286,6 +345,16 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 */
 	@SuppressWarnings("unused")
 	private State executeMemcpy(State state, int pid, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source) {
@@ -295,54 +364,6 @@ public class Libcivlc implements LibraryExecutor {
 	}
 
 	/**
-	 * $exit terminates the calling process.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param pid
-	 *            The process ID of the process to be terminated.
-	 * @return The state resulting from removing the specified process.
-	 */
-	private State executeExit(State state, int pid) {
-		int atomicPID = stateFactory.processInAtomic(state);
-
-		if (atomicPID == pid) {
-			state = stateFactory.releaseAtomicLock(state);
-		}
-		return stateFactory.removeProcess(state, pid);
-	}
-
-	/**
-	 * Returns the size of a bundle.
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param lhs
-	 * @param arguments
-	 * @param argumentValues
-	 * @param civlSource
-	 * @return The size of a bundle.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State executeBundleSize(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource civlSource) throws UnsatisfiablePathConditionException {
-		SymbolicObject arrayObject;
-		SymbolicExpression array;
-		NumericExpression size;
-
-		assert arguments.length == 1;
-		assert argumentValues[0].operator() == SymbolicOperator.UNION_INJECT;
-		arrayObject = argumentValues[0].argument(1);
-		assert arrayObject instanceof SymbolicExpression;
-		array = (SymbolicExpression) arrayObject;
-		size = evaluator.sizeof(civlSource, array.type());
-		if (lhs != null)
-			state = primaryExecutor.assign(state, pid, lhs, size);
-		return state;
-	}
-
-	/*
 	 * Creates a bundle from the memory region specified by ptr and size,
 	 * copying the data into the new bundle:
 	 * 
@@ -351,8 +372,19 @@ public class Libcivlc implements LibraryExecutor {
 	 * Copies the data out of the bundle into the region specified:
 	 * 
 	 * void $bundle_unpack($bundle bundle, void *ptr, int size);
+	 * 
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param bundleType
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
 	 */
-
 	private State executeBundlePack(State state, int pid,
 			CIVLBundleType bundleType, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
@@ -492,6 +524,47 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
+	/**
+	 * Returns the size of a bundle.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @param civlSource
+	 * @return The size of a bundle.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeBundleSize(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource civlSource) throws UnsatisfiablePathConditionException {
+		SymbolicObject arrayObject;
+		SymbolicExpression array;
+		NumericExpression size;
+
+		assert arguments.length == 1;
+		assert argumentValues[0].operator() == SymbolicOperator.UNION_INJECT;
+		arrayObject = argumentValues[0].argument(1);
+		assert arrayObject instanceof SymbolicExpression;
+		array = (SymbolicExpression) arrayObject;
+		size = evaluator.sizeof(civlSource, array.type());
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, lhs, size);
+		return state;
+	}
+
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State executeBundleUnpack(State state, int pid,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
@@ -582,6 +655,121 @@ public class Libcivlc implements LibraryExecutor {
 		throw new CIVLInternalException("Cannot complete unpack", source);
 	}
 
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCommAdd(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		Evaluation eval;
+		SymbolicExpression procValue = argumentValues[1];
+		SymbolicExpression comm;
+		SymbolicExpression nprocs;
+		int int_nprocs;
+		SymbolicExpression procs;
+		NumericExpression rank = (NumericExpression) argumentValues[2];
+		SymbolicExpression procQueue;
+		// assert procQueue != null;
+		SymbolicExpression queueLength;
+		SymbolicExpression procsArray;
+		ArrayList<SymbolicExpression> newProcsArrayComponent = new ArrayList<>();
+		ArrayList<SymbolicType> newProcsQueueTypeComponent = new ArrayList<>();
+		ArrayList<SymbolicExpression> newProcsQueueComponent = new ArrayList<>();
+		ArrayList<SymbolicExpression> newProcsComponent = new ArrayList<>();
+		int int_queueLength;
+		SymbolicExpression newProcsArray = null;
+		int procToAdd = evaluator.modelFactory().getProcessId(
+				arguments[1].getSource(), procValue);
+		int commScopeID = evaluator.getScopeId(arguments[0].getSource(),
+				argumentValues[0]);
+		int commVariableID = evaluator.getVariableId(arguments[0].getSource(),
+				argumentValues[0]);
+		int pRank = evaluator.extractInt(arguments[2].getSource(), rank);
+
+		eval = evaluator.dereference(arguments[0].getSource(), state,
+				argumentValues[0]);
+		comm = eval.value;
+		state = eval.state;
+		nprocs = this.universe.tupleRead(comm, zeroObject);
+		int_nprocs = evaluator.extractInt(source, (NumericExpression) nprocs);
+		procs = this.universe.tupleRead(comm, oneObject);
+		// // Get the exact rank
+		// int_rank = evaluator.findRank(comm, pid);
+		if (!evaluator.isProcInCommWithRank(comm, pid, pRank)) {
+			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
+					Certainty.CONCRETE,
+					"The process attempting to call $comm_add of the communicator "
+							+ arguments[0].toString()
+							+ " doesn't have the rank of " + pRank + ".",
+					source);
+		}
+		if (evaluator.findRank(comm, procToAdd) >= 0) {
+			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
+					Certainty.CONCRETE, "The process " + procToAdd
+							+ " is already in the communicator "
+							+ arguments[0].toString()
+							+ " and thus can't be added into it again.",
+					arguments[1].getSource());
+		}
+		procQueue = universe.arrayRead(procs, rank);
+		assert procQueue != null;
+		queueLength = universe.tupleRead(procQueue, zeroObject);
+		procsArray = universe.tupleRead(procQueue, oneObject);
+		int_queueLength = this.evaluator.extractInt(source,
+				(NumericExpression) queueLength);
+		for (int i = 0; i < int_queueLength; i++) {
+			newProcsArrayComponent.add(universe.arrayRead(procsArray,
+					universe.integer(i)));
+		}
+		newProcsArrayComponent.add(procValue);
+		newProcsArray = universe.array(newProcsArrayComponent.get(0).type(),
+				newProcsArrayComponent);
+		int_queueLength++;
+		newProcsQueueTypeComponent.add(universe.integerType());
+		newProcsQueueTypeComponent.add(newProcsArray.type());
+		newProcsQueueComponent.add(universe.integer(int_queueLength));
+		newProcsQueueComponent.add(newProcsArray);
+		SymbolicTupleType newProcQueueType = universe.tupleType(
+				universe.stringObject("__procQueue__"),
+				newProcsQueueTypeComponent);
+		procQueue = universe.tuple(newProcQueueType, newProcsQueueComponent);
+		for (int i = 0; i < int_nprocs; i++) {
+			if (i != evaluator.extractInt(source, rank))
+				newProcsComponent.add(universe.arrayRead(procs,
+						universe.integer(i)));
+			else {
+				newProcsComponent.add(procQueue);
+			}
+		}
+		newProcsArray = universe.array(universe.pureType(procQueue.type()),
+				newProcsComponent);
+		comm = universe.tupleWrite(comm, oneObject, newProcsArray);
+		state = stateFactory.setVariable(state, commVariableID, commScopeID,
+				comm);
+		return state;
+	}
+
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State executeCommCreate(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
@@ -670,6 +858,86 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCommDequeue(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression comm;
+		CIVLSource commArgSource = arguments[0].getSource();
+		NumericExpression sourceExpression;
+		NumericExpression destExpression;
+		SymbolicExpression buf; // buf has type $queue[][]
+		SymbolicExpression bufRow; // buf[source], has type $queue[] and
+									// corresponds
+		SymbolicExpression queue; // the particular $queue for this source and
+									// dest
+		int queueLength;
+		SymbolicExpression messages;
+		SymbolicExpression message = null;
+		int commScopeID = evaluator
+				.getScopeId(commArgSource, argumentValues[0]);
+		int commVariableID = evaluator.getVariableId(commArgSource,
+				argumentValues[0]);
+		int numMessages;
+
+		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
+		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
+		sourceExpression = (NumericExpression) argumentValues[1];
+		destExpression = (NumericExpression) argumentValues[2];
+		buf = universe.tupleRead(comm, universe.intObject(2));
+		bufRow = universe.arrayRead(buf, sourceExpression);
+		queue = universe.arrayRead(bufRow, destExpression);
+		messages = universe.tupleRead(queue, universe.intObject(1));
+		numMessages = evaluator.extractInt(commArgSource,
+				universe.length(messages));
+		for (int i = 0; i < numMessages; i++) {
+			if (universe.tupleRead(
+					universe.arrayRead(messages, universe.integer(i)),
+					universe.intObject(2)).equals(argumentValues[3])) {
+				message = universe.arrayRead(messages, universe.integer(i));
+				messages = universe.removeElementAt(messages, i);
+				break;
+			}
+		}
+		assert universe.tupleRead(queue, zeroObject) instanceof NumericExpression;
+		queueLength = evaluator.extractInt(commArgSource,
+				(NumericExpression) universe.tupleRead(queue, zeroObject));
+		queueLength--;
+		queue = universe.tupleWrite(queue, universe.intObject(0),
+				universe.integer(queueLength));
+		queue = universe.tupleWrite(queue, universe.intObject(1), messages);
+		bufRow = universe.arrayWrite(bufRow, destExpression, queue);
+		buf = universe.arrayWrite(buf, sourceExpression, bufRow);
+		comm = universe.tupleWrite(comm, universe.intObject(2), buf);
+		state = stateFactory.setVariable(state, commVariableID, commScopeID,
+				comm);
+		if (lhs != null) {
+			assert message != null;
+			state = primaryExecutor.assign(state, pid, lhs, message);
+		}
+		return state;
+	}
+
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param arguments
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State executeCommEnqueue(State state, int pid,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
@@ -773,65 +1041,73 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
-	private State executeCommDequeue(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression comm;
-		CIVLSource commArgSource = arguments[0].getSource();
-		NumericExpression sourceExpression;
-		NumericExpression destExpression;
-		SymbolicExpression buf; // buf has type $queue[][]
-		SymbolicExpression bufRow; // buf[source], has type $queue[] and
-									// corresponds
-		SymbolicExpression queue; // the particular $queue for this source and
-									// dest
-		int queueLength;
-		SymbolicExpression messages;
-		SymbolicExpression message = null;
-		int commScopeID = evaluator
-				.getScopeId(commArgSource, argumentValues[0]);
-		int commVariableID = evaluator.getVariableId(commArgSource,
-				argumentValues[0]);
-		int numMessages;
+	/**
+	 * $exit terminates the calling process.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The process ID of the process to be terminated.
+	 * @return The state resulting from removing the specified process.
+	 */
+	private State executeExit(State state, int pid) {
+		int atomicPID = stateFactory.processInAtomic(state);
 
-		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
-		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
-		sourceExpression = (NumericExpression) argumentValues[1];
-		destExpression = (NumericExpression) argumentValues[2];
-		buf = universe.tupleRead(comm, universe.intObject(2));
-		bufRow = universe.arrayRead(buf, sourceExpression);
-		queue = universe.arrayRead(bufRow, destExpression);
-		messages = universe.tupleRead(queue, universe.intObject(1));
-		numMessages = evaluator.extractInt(commArgSource,
-				universe.length(messages));
-		for (int i = 0; i < numMessages; i++) {
-			if (universe.tupleRead(
-					universe.arrayRead(messages, universe.integer(i)),
-					universe.intObject(2)).equals(argumentValues[3])) {
-				message = universe.arrayRead(messages, universe.integer(i));
-				messages = universe.removeElementAt(messages, i);
-				break;
-			}
+		if (atomicPID == pid) {
+			state = stateFactory.releaseAtomicLock(state);
 		}
-		assert universe.tupleRead(queue, zeroObject) instanceof NumericExpression;
-		queueLength = evaluator.extractInt(commArgSource,
-				(NumericExpression) universe.tupleRead(queue, zeroObject));
-		queueLength--;
-		queue = universe.tupleWrite(queue, universe.intObject(0),
-				universe.integer(queueLength));
-		queue = universe.tupleWrite(queue, universe.intObject(1), messages);
-		bufRow = universe.arrayWrite(bufRow, destExpression, queue);
-		buf = universe.arrayWrite(buf, sourceExpression, bufRow);
-		comm = universe.tupleWrite(comm, universe.intObject(2), buf);
-		state = stateFactory.setVariable(state, commVariableID, commScopeID,
-				comm);
-		if (lhs != null) {
-			assert message != null;
-			state = primaryExecutor.assign(state, pid, lhs, message);
+		return stateFactory.removeProcess(state, pid);
+	}
+
+	private State executeHeapCreate(State state, int pid, LHSExpression lhs,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression newHeapObject = this.modelFactory.heapType()
+				.getInitialValue();
+		Variable heapHandleVariable;
+		int heapHandleVID;
+		int heapHandleDyscopeID;
+		SymbolicExpression pointerOfHeapObject;
+		Variable heapArrayVariable;
+		Expression addressOfHeapObject;
+		Evaluation eval;
+		SymbolicExpression heapArrayValue;
+
+		assert lhs instanceof VariableExpression;
+		if (!(lhs instanceof VariableExpression)) {
+			throw new CIVLInternalException("Unreachable", source);
 		}
+		heapHandleVariable = ((VariableExpression) lhs).variable();
+		heapHandleVID = heapHandleVariable.vid();
+		heapHandleDyscopeID = state.getScopeId(pid, heapHandleVariable);
+		heapArrayVariable = heapHandleVariable.scope().variable("__h__");
+		eval = evaluator.evaluate(state, pid,
+				modelFactory.variableExpression(null, heapArrayVariable));
+		heapArrayValue = eval.value;
+		state = eval.state;
+		if (heapArrayValue == null) {
+
+		}
+
+		addressOfHeapObject = modelFactory.addressOfExpression(null,
+				modelFactory.variableExpression(null, heapArrayVariable));
+		state = stateFactory.setVariable(state, heapHandleVID + 1,
+				heapHandleDyscopeID, newHeapObject);
+		eval = evaluator.evaluate(state, pid, addressOfHeapObject);
+		state = eval.state;
+		pointerOfHeapObject = eval.value;
+		state = primaryExecutor.assign(state, pid, lhs, pointerOfHeapObject);
 		return state;
 	}
 
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param statement
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State executeWork(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
 		Identifier name;
@@ -863,44 +1139,37 @@ public class Libcivlc implements LibraryExecutor {
 		case "$free":
 			state = executeFree(state, pid, arguments, argumentValues,
 					statement.getSource());
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		case "$bundle_pack":
 			state = executeBundlePack(state, pid, (CIVLBundleType) call
 					.function().returnType(), lhs, arguments, argumentValues,
 					statement.getSource());
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		case "$bundle_unpack":
 			state = executeBundleUnpack(state, pid, arguments, argumentValues,
 					statement.getSource());
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		case "$bundle_size":
 			state = executeBundleSize(state, pid, lhs, arguments,
 					argumentValues, statement.getSource());
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
-		case "$comm_create":
+		case "$gcomm_create":
 			state = executeCommCreate(state, pid, lhs, arguments,
 					argumentValues, statement.getSource());
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		case "$comm_enqueue":
 			state = executeCommEnqueue(state, pid, arguments, argumentValues);
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		case "$comm_dequeue":
 			state = executeCommDequeue(state, pid, lhs, arguments,
 					argumentValues);
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		// case "printf":
 		// state = executePrintf(state, pid, argumentValues);
@@ -914,8 +1183,11 @@ public class Libcivlc implements LibraryExecutor {
 		case "$comm_add":
 			state = executeCommAdd(state, pid, lhs, arguments, argumentValues,
 					statement.getSource());
-			state = transition(state, state.getProcessState(pid),
-					statement.target());
+			state = stateFactory.setLocation(state, pid, statement.target());
+			break;
+		case "$heap_create":
+			state = executeHeapCreate(state, pid, lhs, statement.getSource());
+			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		case "$memcpy":
 		case "$message_pack":
@@ -938,12 +1210,83 @@ public class Libcivlc implements LibraryExecutor {
 		return state;
 	}
 
-	@Override
-	public State execute(State state, int pid, Statement statement)
-			throws UnsatisfiablePathConditionException {
-		return executeWork(state, pid, statement);
+	/**
+	 * TODO
+	 * 
+	 * @param heapPointer
+	 * @param pointer
+	 * @param pointerSource
+	 * @param state
+	 * @return
+	 */
+	private Evaluation getAndCheckHeapObjectPointer(
+			SymbolicExpression heapPointer, SymbolicExpression pointer,
+			CIVLSource pointerSource, State state) {
+		SymbolicExpression objectPointer = evaluator.getParentPointer(pointer);
+
+		if (objectPointer != null) {
+			SymbolicExpression fieldPointer = evaluator
+					.getParentPointer(objectPointer);
+
+			if (fieldPointer != null) {
+				SymbolicExpression actualHeapPointer = evaluator
+						.getParentPointer(fieldPointer);
+
+				if (actualHeapPointer != null) {
+					BooleanExpression pathCondition = state.getPathCondition();
+					BooleanExpression claim = universe.equals(
+							actualHeapPointer, heapPointer);
+					ResultType valid = universe.reasoner(pathCondition)
+							.valid(claim).getResultType();
+					ReferenceExpression symRef;
+
+					if (valid != ResultType.YES) {
+						Certainty certainty = valid == ResultType.NO ? Certainty.PROVEABLE
+								: Certainty.MAYBE;
+						CIVLStateException e = new CIVLStateException(
+								ErrorKind.MALLOC, certainty,
+								"Invalid pointer for heap", state,
+								pointerSource);
+
+						evaluator.reportError(e);
+						state = state.setPathCondition(universe.and(
+								pathCondition, claim));
+					}
+					symRef = evaluator.getSymRef(pointer);
+					if (symRef instanceof ArrayElementReference) {
+						NumericExpression index = ((ArrayElementReference) symRef)
+								.getIndex();
+
+						if (index.isZero()) {
+							return new Evaluation(state, objectPointer);
+						}
+					}
+
+				}
+			}
+		}
+		{
+			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
+					Certainty.PROVEABLE, "Invalid pointer for heap", state,
+					pointerSource);
+
+			evaluator.reportError(e);
+			state = state.setPathCondition(universe.falseExpression());
+			return new Evaluation(state, objectPointer);
+		}
 	}
 
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pointerExpr
+	 * @param pointer
+	 * @param size
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private SymbolicExpression getArrayFromPointer(State state,
 			Expression pointerExpr, SymbolicExpression pointer,
 			NumericExpression size, CIVLSource source)
@@ -1056,114 +1399,16 @@ public class Libcivlc implements LibraryExecutor {
 		return array;
 	}
 
-	@Override
-	public boolean containsFunction(String name) {
-		Set<String> functions = new HashSet<String>();
-
-		functions.add("$malloc");
-		functions.add("$free");
-		functions.add("$write");
-		return functions.contains(name);
-	}
-
-	@Override
-	public State initialize(State state) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public State wrapUp(State state) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public BooleanExpression getGuard(State state, int pid, Statement statement) {
-		Identifier name;
-		Expression[] arguments;
-		SymbolicExpression[] argumentValues;
-		CallOrSpawnStatement call;
-		// LHSExpression lhs;
-		int numArgs;
-		BooleanExpression guard;
-
-		if (!(statement instanceof CallOrSpawnStatement)) {
-			throw new CIVLInternalException("Unsupported statement for civlc",
-					statement);
-		}
-		call = (CallOrSpawnStatement) statement;
-		numArgs = call.arguments().size();
-		name = call.function().name();
-		// lhs = call.lhs();
-		arguments = new Expression[numArgs];
-		argumentValues = new SymbolicExpression[numArgs];
-		for (int i = 0; i < numArgs; i++) {
-			Evaluation eval = null;
-
-			arguments[i] = call.arguments().get(i);
-			try {
-				eval = evaluator.evaluate(state, pid, arguments[i]);
-			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
-				// already have been reported.
-				return universe.falseExpression();
-			}
-			argumentValues[i] = eval.value;
-			state = eval.state;
-		}
-
-		switch (name.name()) {
-		case "$comm_dequeue":
-			try {
-				guard = getDequeueGuard(state, pid, arguments, argumentValues);
-			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
-				// already have been reported.
-				return universe.falseExpression();
-			}
-			break;
-		case "$comm_add":
-			// try {
-			// guard = getCommAddGuard(state, pid, arguments, argumentValues,
-			// statement.getSource());
-			// } catch (UnsatisfiablePathConditionException e) {
-			// // the error that caused the unsatifiable path condition should
-			// // already have been reported.
-			// return universe.falseExpression();
-			// }
-			// break;
-		case "$free":
-		case "$bundle_pack":
-		case "$bundle_unpack":
-		case "$bundle_size":
-		case "$comm_create":
-		case "$comm_enqueue":
-		case "printf":
-		case "$exit":
-		case "$memcpy":
-		case "$message_pack":
-		case "$message_source":
-		case "$message_tag":
-		case "$message_dest":
-		case "$message_size":
-		case "$message_unpack":
-		case "$comm_destroy":
-		case "$comm_nprocs":
-		case "$comm_probe":
-		case "$comm_seek":
-		case "$comm_chan_size":
-		case "$comm_total_size":
-			guard = universe.trueExpression();
-			break;
-
-		default:
-			throw new CIVLInternalException("Unknown civlc function: " + name,
-					statement);
-		}
-		return guard;
-	}
-
+	/**
+	 * TODO
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param arguments
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private BooleanExpression getDequeueGuard(State state, int pid,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
@@ -1220,217 +1465,24 @@ public class Libcivlc implements LibraryExecutor {
 	}
 
 	/**
-	 * Transition a process from one location to another. If the new location is
-	 * in a different scope, create a new scope or move to the parent scope as
-	 * necessary.
+	 * TODO
 	 * 
-	 * @param state
-	 *            The old state.
-	 * @param process
-	 *            The process undergoing the transition.
-	 * @param target
-	 *            The end location of the transition.
-	 * @return A new state where the process is at the target location.
+	 * @param pointer
+	 * @return
 	 */
-	private State transition(State state, ProcessState process, Location target) {
-		state = stateFactory.setLocation(state, process.getPid(), target);
-		// state = stateFactory.canonic(state);
-		return state;
+	private int getMallocIndex(SymbolicExpression pointer) {
+		// ref points to element 0 of an array:
+		NTReferenceExpression ref = (NTReferenceExpression) evaluator
+				.getSymRef(pointer);
+		// objectPointer points to array:
+		NTReferenceExpression objectPointer = (NTReferenceExpression) ref
+				.getParent();
+		// fieldPointer points to the field:
+		TupleComponentReference fieldPointer = (TupleComponentReference) objectPointer
+				.getParent();
+		int result = fieldPointer.getIndex().getInt();
+
+		return result;
 	}
 
-	private State executeCommAdd(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
-		Evaluation eval;
-		SymbolicExpression procValue = argumentValues[1];
-		SymbolicExpression comm;
-		SymbolicExpression nprocs;
-		int int_nprocs;
-		SymbolicExpression procs;
-		NumericExpression rank = (NumericExpression) argumentValues[2];
-		SymbolicExpression procQueue;
-		// assert procQueue != null;
-		SymbolicExpression queueLength;
-		SymbolicExpression procsArray;
-		ArrayList<SymbolicExpression> newProcsArrayComponent = new ArrayList<>();
-		ArrayList<SymbolicType> newProcsQueueTypeComponent = new ArrayList<>();
-		ArrayList<SymbolicExpression> newProcsQueueComponent = new ArrayList<>();
-		ArrayList<SymbolicExpression> newProcsComponent = new ArrayList<>();
-		int int_queueLength;
-		SymbolicExpression newProcsArray = null;
-		int procToAdd = evaluator.modelFactory().getProcessId(
-				arguments[1].getSource(), procValue);
-		int commScopeID = evaluator.getScopeId(arguments[0].getSource(),
-				argumentValues[0]);
-		int commVariableID = evaluator.getVariableId(arguments[0].getSource(),
-				argumentValues[0]);
-		int pRank = evaluator.extractInt(arguments[2].getSource(), rank);
-
-		eval = evaluator.dereference(arguments[0].getSource(), state,
-				argumentValues[0]);
-		comm = eval.value;
-		state = eval.state;
-		nprocs = this.universe.tupleRead(comm, zeroObject);
-		int_nprocs = evaluator.extractInt(source, (NumericExpression) nprocs);
-		procs = this.universe.tupleRead(comm, oneObject);
-		// // Get the exact rank
-		// int_rank = evaluator.findRank(comm, pid);
-		if (!evaluator.isProcInCommWithRank(comm, pid, pRank)) {
-			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE,
-					"The process attempting to call $comm_add of the communicator "
-							+ arguments[0].toString()
-							+ " doesn't have the rank of " + pRank + ".",
-					source);
-		}
-		if (evaluator.findRank(comm, procToAdd) >= 0) {
-			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE, "The process " + procToAdd
-							+ " is already in the communicator "
-							+ arguments[0].toString()
-							+ " and thus can't be added into it again.",
-					arguments[1].getSource());
-		}
-		procQueue = universe.arrayRead(procs, rank);
-		assert procQueue != null;
-		queueLength = universe.tupleRead(procQueue, zeroObject);
-		procsArray = universe.tupleRead(procQueue, oneObject);
-		int_queueLength = this.evaluator.extractInt(source,
-				(NumericExpression) queueLength);
-		for (int i = 0; i < int_queueLength; i++) {
-			newProcsArrayComponent.add(universe.arrayRead(procsArray,
-					universe.integer(i)));
-		}
-		newProcsArrayComponent.add(procValue);
-		newProcsArray = universe.array(newProcsArrayComponent.get(0).type(),
-				newProcsArrayComponent);
-		int_queueLength++;
-		newProcsQueueTypeComponent.add(universe.integerType());
-		newProcsQueueTypeComponent.add(newProcsArray.type());
-		newProcsQueueComponent.add(universe.integer(int_queueLength));
-		newProcsQueueComponent.add(newProcsArray);
-		SymbolicTupleType newProcQueueType = universe.tupleType(
-				universe.stringObject("__procQueue__"),
-				newProcsQueueTypeComponent);
-		procQueue = universe.tuple(newProcQueueType, newProcsQueueComponent);
-		for (int i = 0; i < int_nprocs; i++) {
-			if (i != evaluator.extractInt(source, rank))
-				newProcsComponent.add(universe.arrayRead(procs,
-						universe.integer(i)));
-			else {
-				newProcsComponent.add(procQueue);
-			}
-		}
-		newProcsArray = universe.array(universe.pureType(procQueue.type()),
-				newProcsComponent);
-		comm = universe.tupleWrite(comm, oneObject, newProcsArray);
-		state = stateFactory.setVariable(state, commVariableID, commScopeID,
-				comm);
-		return state;
-	}
-
-	// /**
-	// We don't need the guard here. An error will be report instead.
-	// * The guard of the comm_add I think should be the process must be in the
-	// * communicator and the thread gonna be added into the communicator should
-	// * not be in the communicator at this point.
-	// *
-	// * @param state
-	// * @param pid
-	// * @param arguments
-	// * @param argumentValues
-	// * @return
-	// * @throws UnsatisfiablePathConditionException
-	// */
-	// private BooleanExpression getCommAddGuard(State state, int pid,
-	// Expression arguments[], SymbolicExpression argumentValues[],
-	// CIVLSource source) throws UnsatisfiablePathConditionException {
-	// BooleanExpression guard = null;
-	// Expression commPointerExpr = arguments[0];
-	// SymbolicExpression procValue = argumentValues[1];
-	// DereferenceExpression commExpr = this.evaluator.modelFactory()
-	// .dereferenceExpression(source, commPointerExpr);
-	// Evaluation eval = this.evaluator.evaluate(state, pid, commExpr);
-	// SymbolicExpression comm = eval.value;
-	// state = eval.state;
-	// SymbolicExpression nprocs = this.universe.tupleRead(comm, zeroObject);
-	// int int_nprocs = evaluator.extractInt(source,
-	// (NumericExpression) nprocs);
-	// SymbolicExpression procs = this.universe.tupleRead(comm, oneObject);
-	// // TODO: get real rank
-	// SymbolicExpression rank = universe.integer(pid);
-	// SymbolicExpression procQueue = universe.arrayRead(procs,
-	// (NumericExpression) rank);
-	// SymbolicExpression threadArray = universe.tupleRead(procQueue,
-	// oneObject);
-	// SymbolicExpression theProcess = universe.arrayRead(threadArray,
-	// universe.integer(0));
-	//
-	// return universe.trueExpression();
-	// }
-
-	@Override
-	public Evaluation getGuard(State state, int pid, String function,
-			Expression[] arguments, CIVLSource source) {
-		SymbolicExpression[] argumentValues;
-		int numArgs;
-		BooleanExpression guard;
-
-		numArgs = arguments.length;
-		argumentValues = new SymbolicExpression[numArgs];
-		for (int i = 0; i < numArgs; i++) {
-			Evaluation eval = null;
-
-			try {
-				eval = evaluator.evaluate(state, pid, arguments[i]);
-			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
-				// already have been reported.
-				return new Evaluation(state, universe.falseExpression());
-			}
-			argumentValues[i] = eval.value;
-			state = eval.state;
-		}
-
-		switch (function) {
-		case "$comm_dequeue":
-			try {
-				guard = getDequeueGuard(state, pid, arguments, argumentValues);
-			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
-				// already have been reported.
-				return new Evaluation(state, universe.falseExpression());
-			}
-			break;
-		case "$comm_add":
-		case "$free":
-		case "$bundle_pack":
-		case "$bundle_unpack":
-		case "$bundle_size":
-		case "$comm_create":
-		case "$comm_enqueue":
-		case "printf":
-		case "$exit":
-		case "$memcpy":
-		case "$message_pack":
-		case "$message_source":
-		case "$message_tag":
-		case "$message_dest":
-		case "$message_size":
-		case "$message_unpack":
-		case "$comm_destroy":
-		case "$comm_nprocs":
-		case "$comm_probe":
-		case "$comm_seek":
-		case "$comm_chan_size":
-		case "$comm_total_size":
-			guard = universe.trueExpression();
-			break;
-
-		default:
-			throw new CIVLInternalException("Unknown civlc function: "
-					+ function, source);
-		}
-		return new Evaluation(state, guard);
-	}
 }

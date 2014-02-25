@@ -3,18 +3,18 @@
  */
 package edu.udel.cis.vsl.civl.library.stdlib;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
@@ -23,33 +23,17 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  * @author zirkel
  * 
  */
-public class Libstdlib implements LibraryExecutor {
-
-	// private StateFactoryIF factory;
-	private SymbolicUniverse universe;
-
-	// private Vector<SymbolicType> elementTypes;
-	// private SymbolicType heapUnionType;
-	// private SymbolicExpression heap;
+public class Libstdlib extends CommonLibraryExecutor implements LibraryExecutor {
 
 	/**
 	 * Executor for stdlib function calls.
 	 */
-	public Libstdlib(Executor primaryExecutor) {
-		// this.factory = primaryExecutor.stateFactory();
-		this.universe = primaryExecutor.universe();
-		// elementTypes = new Vector<SymbolicType>();
-		// // TODO: Get the set of malloc'd types from the model.
-		// elementTypes.add(universe.booleanType());
-		// elementTypes.add(universe.integerType());
-		// elementTypes.add(universe.realType());
-		// heapUnionType = universe.unionType(universe.stringObject("heap"),
-		// elementTypes);
-		// heap = universe.array(heapUnionType, new
-		// Vector<SymbolicExpression>());
+	public Libstdlib(Executor primaryExecutor, PrintStream output,
+			boolean enablePrintf, ModelFactory modelFactory) {
+		super(primaryExecutor, output, enablePrintf, modelFactory);
 	}
 
-	/*
+	/**
 	 * (non-Javadoc)
 	 * 
 	 * @see edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#name()
@@ -59,13 +43,12 @@ public class Libstdlib implements LibraryExecutor {
 		return "stdlib";
 	}
 
-	/*
+	/**
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#execute(edu.udel.cis
-	 * .vsl.civl.state.State, int,
-	 * edu.udel.cis.vsl.civl.model.IF.statement.Statement)
+	 * @see edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#execute(edu.udel.cis
+	 *      .vsl.civl.state.State, int,
+	 *      edu.udel.cis.vsl.civl.model.IF.statement.Statement)
 	 */
 	@Override
 	public State execute(State state, int pid, Statement statement) {
@@ -95,28 +78,11 @@ public class Libstdlib implements LibraryExecutor {
 
 	}
 
-	/*
+	/**
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#containsFunction(java
-	 * .lang.String)
-	 */
-	@Override
-	public boolean containsFunction(String name) {
-		Set<String> functions = new HashSet<String>();
-
-		functions.add("malloc");
-		functions.add("free");
-		return functions.contains(name);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#initialize(edu.udel
-	 * .cis.vsl.civl.state.State)
+	 * @see edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#initialize(edu.udel
+	 *      .cis.vsl.civl.state.State)
 	 */
 	@Override
 	public State initialize(State state) {
@@ -124,12 +90,11 @@ public class Libstdlib implements LibraryExecutor {
 		return state;
 	}
 
-	/*
+	/**
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#wrapUp(edu.udel.cis
-	 * .vsl.civl.state.State)
+	 * @see edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#wrapUp(edu.udel.cis
+	 *      .vsl.civl.state.State)
 	 */
 	@Override
 	public State wrapUp(State state) {

@@ -231,15 +231,15 @@ public class LanguageFeaturesTest {
 		assertFalse(ui.run("verify", filename("mallocBad2.cvl")));
 	}
 
-	@Test
-	public void mallocBad3() throws ABCException {
-		assertFalse(ui.run("verify", filename("mallocBad3.cvl")));
-	}
-
-	@Test
-	public void mallocBad4() throws ABCException {
-		assertFalse(ui.run("verify", filename("mallocBad4.cvl")));
-	}
+	// @Test
+	// public void mallocBad3() throws ABCException {
+	// assertFalse(ui.run("verify", filename("mallocBad3.cvl")));
+	// }
+	//
+	// @Test
+	// public void mallocBad4() throws ABCException {
+	// assertFalse(ui.run("verify", filename("mallocBad4.cvl")));
+	// }
 
 	@Test
 	public void memcpy() throws ABCException {

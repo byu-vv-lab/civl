@@ -142,7 +142,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	 */
 	public void addVariable(Variable variable) {
 		Variable[] oldVariables = variables;
-		
+
 		variables = new Variable[oldVariables.length + 1];
 		for (int i = 0; i < oldVariables.length; i++) {
 			variables[i] = oldVariables[i];
@@ -174,6 +174,16 @@ public class CommonScope extends CommonSourceable implements Scope {
 			return parent.variable(name);
 		}
 		return null;
+	}
+
+	@Override
+	public boolean containsVariable(String name) {
+		for (Variable v : variables) {
+			if (v.name().name().equals(name)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -438,6 +448,16 @@ public class CommonScope extends CommonSourceable implements Scope {
 		}
 
 		return false;
+	}
+
+	@Override
+	public Variable variable(String name) {
+		for (Variable v : variables) {
+			if (v.name().name().equals(name)) {
+				return v;
+			}
+		}
+		return null;
 	}
 
 }

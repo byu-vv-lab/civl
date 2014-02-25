@@ -388,4 +388,7 @@ public interface Evaluator {
 
 	void setExecutor(Executor executor);
 
+	void logSimpleError(CIVLSource source, State state, ErrorKind errorKind,
+			String message) throws UnsatisfiablePathConditionException;
+
 }

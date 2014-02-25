@@ -58,7 +58,7 @@ public interface CIVLType {
 	 * @return the dynamic type index
 	 */
 	int getDynamicTypeIndex();
-	
+
 	/**
 	 * 
 	 * @return true iff this type is numeric
@@ -112,29 +112,41 @@ public interface CIVLType {
 	 * @return true iff this type is bundle type
 	 */
 	boolean isBundleType();
-	
+
 	/**
 	 * 
 	 * @return true iff this type is struct type
 	 */
 	boolean isStructType();
-	
+
 	/**
 	 * 
 	 * @return true iff this type is union type
 	 */
 	boolean isUnionType();
-	
+
 	/**
 	 * 
 	 * @return true iff this type is array type
 	 */
 	boolean isArrayType();
-	
+
 	/**
 	 * 
 	 * @return true iff this type is char type
 	 */
 	boolean isCharType();
+
+	/**
+	 * 
+	 * @return true iff this type is a handle type (e.g., $gcomm, $heap, etc)
+	 */
+	boolean isHandleType();
+
+	/**
+	 * 
+	 * @return true iff this type is the object type of some handle type.
+	 */
+	boolean isHandleObjectType();
 
 }

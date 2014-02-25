@@ -67,7 +67,7 @@ public class CommonHeapType extends CommonType implements CIVLHeapType {
 
 	@Override
 	public String toString() {
-		return "$heap";
+		return "__heap__";
 	}
 
 	@Override
@@ -83,5 +83,10 @@ public class CommonHeapType extends CommonType implements CIVLHeapType {
 	@Override
 	public String getName() {
 		return name;
+	}
+	
+	@Override
+	public boolean isHandleObjectType(){
+		return true;
 	}
 }

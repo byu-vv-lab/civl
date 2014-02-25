@@ -42,6 +42,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -684,6 +685,15 @@ public interface ModelFactory {
 	 */
 	SubscriptExpression subscriptExpression(CIVLSource source,
 			LHSExpression array, Expression index);
+
+	/**
+	 * A system function call expression
+	 * 
+	 * @param callStatement
+	 * @return
+	 */
+	SystemFunctionCallExpression systemFunctionCallExpression(
+			CallOrSpawnStatement callStatement);
 
 	/**
 	 * A unary expression. One of {-,!}.

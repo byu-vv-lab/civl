@@ -332,7 +332,8 @@ public class CommonEvaluator implements Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 *             if the path condition is definitely unsatisfiable
 	 */
-	private void logSimpleError(CIVLSource source, State state,
+	@Override
+	public void logSimpleError(CIVLSource source, State state,
 			ErrorKind errorKind, String message)
 			throws UnsatisfiablePathConditionException {
 		BooleanExpression pc = state.getPathCondition();
@@ -416,6 +417,13 @@ public class CommonEvaluator implements Evaluator {
 		}
 	}
 
+	/**
+	 * Finds pointers contained in a given expression recursively.
+	 * 
+	 * @param expr
+	 * @param set
+	 * @param state
+	 */
 	private void findPointersInExpression(SymbolicExpression expr,
 			Set<SymbolicExpression> set, State state) {
 		SymbolicType type = expr.type();
@@ -429,7 +437,7 @@ public class CommonEvaluator implements Evaluator {
 
 				set.add(expr);
 				try {
-					if(getScopeId(null, expr) >= 0){
+					if (getScopeId(null, expr) >= 0) {
 						eval = this.dereference(null, state, expr);
 						pointerValue = eval.value;
 						state = eval.state;
@@ -443,7 +451,6 @@ public class CommonEvaluator implements Evaluator {
 				}
 			} else {
 				int numArgs = expr.numArguments();
-				// String typeName = type.toString();
 
 				for (int i = 0; i < numArgs; i++) {
 					SymbolicObject arg = expr.argument(i);
@@ -1471,6 +1478,8 @@ public class CommonEvaluator implements Evaluator {
 					.name().stringObject(), componentTypes));
 		} else if (type instanceof CIVLBundleType) {
 			result = new TypeEvaluation(state, type.getDynamicType(universe));
+		} else if (type instanceof CIVLHeapType) {
+			result = new TypeEvaluation(state, this.heapType);
 		} else
 			throw new CIVLInternalException("Unreachable", source);
 		return result;
@@ -1523,6 +1532,10 @@ public class CommonEvaluator implements Evaluator {
 		if (type.isHeapType()) {
 			result = new Evaluation(state,
 					((CIVLHeapType) type).getInitialValue());
+		} else if (type.isScopeType()) {
+			int dyScopeID = state.getProcessState(pid).getDyscopeId();
+
+			return new Evaluation(state, modelFactory.scopeValue(dyScopeID));
 		} else {
 			TypeEvaluation typeEval = getDynamicType(state, pid, type,
 					expression.getSource(), false);
@@ -2467,8 +2480,8 @@ public class CommonEvaluator implements Evaluator {
 			// .name().name())) {
 			// atomic_enter statement is always considered as dependent with all
 			// processes since it accesses the global variable __atomic_lock_var
-			if (!variable.isConst() && !type.equals(modelFactory.heapType())
-					&& !type.equals(modelFactory.bundleType())
+			if (!variable.isConst() && !type.isHandleType()
+					&& !type.isHandleObjectType()
 					&& !type.equals(variable.scope().model().commType())) {
 				eval = new Evaluation(state, makePointer(sid, vid,
 						identityReference));

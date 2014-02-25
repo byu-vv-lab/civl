@@ -3,11 +3,11 @@
  * */
 #include <civlc.h>
 void main() {
-  $heap h, h0;
-  double *p = (double *) $malloc(&h, 5*sizeof(double));
+  $heap h = $heap_create(), h0 = $heap_create();
+  double *p = (double *) $malloc(h, 5*sizeof(double));
   
   p[4]=3.14;
   $assert(p[4]==3.14);
   // Free pointer from the wrong heap.
-  $free(&h0, p);
+  $free(h0, p);
 }   

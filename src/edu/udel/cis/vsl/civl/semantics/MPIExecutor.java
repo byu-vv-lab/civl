@@ -52,7 +52,7 @@ public class MPIExecutor extends CommonExecutor {
 	 * 
 	 * @param model
 	 *            The model being executed.
-	 * @param symbolicUniverse
+	 * @param universe
 	 *            A symbolic universe for creating new values.
 	 * @param stateFactory
 	 *            A state factory. Used by the Executor to create new processes.
@@ -109,7 +109,7 @@ public class MPIExecutor extends CommonExecutor {
 		int bundleIndex;
 		CIVLBundleType bundleType = state.getScope(0).lexicalScope().model()
 				.bundleType();
-		SymbolicUnionType bundle = bundleType.getDynamicType(symbolicUniverse);
+		SymbolicUnionType bundle = bundleType.getDynamicType(universe);
 		// commVariableID and commScopeID
 		int commScopeID;
 		int commVariableID;
@@ -122,8 +122,8 @@ public class MPIExecutor extends CommonExecutor {
 		SymbolicExpression count = eval.value;
 		eval = evaluator.evaluate(state, pid, statement.getDatatype());
 		state = eval.state;
-		SymbolicExpression dataType = symbolicUniverse.tupleRead(eval.value,
-				symbolicUniverse.intObject(0));
+		SymbolicExpression dataType = universe.tupleRead(eval.value,
+				universe.intObject(0));
 		eval = evaluator.evaluate(state, pid, statement.getDestination());
 		state = eval.state;
 		SymbolicExpression destination = eval.value;
@@ -159,38 +159,38 @@ public class MPIExecutor extends CommonExecutor {
 																// exception
 																// ?!!?!
 		} else if (bufValue.isNull() || int_count == 0) {
-			bufType = symbolicUniverse.integerType();
-			buf.add(symbolicUniverse.zeroInt());
-			bufArray = symbolicUniverse.array(bufType, buf);
+			bufType = universe.integerType();
+			buf.add(universe.zeroInt());
+			bufArray = universe.array(bufType, buf);
 		} else if ((bufValue.isOne() && int_count == 1)) {
 			buf.add(bufValue);
 			bufType = bufValue.type();
-			bufArray = symbolicUniverse.array(bufType, buf);
+			bufArray = universe.array(bufType, buf);
 		} else {
 			for (int i = 0; i < int_count; i++) {
-				SymbolicExpression bufArrayElement = symbolicUniverse
-						.arrayRead(bufValue, symbolicUniverse.integer(i));
+				SymbolicExpression bufArrayElement = universe
+						.arrayRead(bufValue, universe.integer(i));
 				buf.add(bufArrayElement);
 			}
 			bufType = bufValue.type();
 			bufType = ((SymbolicArrayType) bufType).elementType();
-			bufArray = symbolicUniverse.array(bufType, buf);
+			bufArray = universe.array(bufType, buf);
 		}
 		// message buffer[][] <- comm[2]
-		messageBuffer = symbolicUniverse.tupleRead(comm,
-				symbolicUniverse.intObject(2));
+		messageBuffer = universe.tupleRead(comm,
+				universe.intObject(2));
 		// message buffer[rank][]
-		messageBufferRow = symbolicUniverse.arrayRead(messageBuffer,
-				symbolicUniverse.integer(rank));
+		messageBufferRow = universe.arrayRead(messageBuffer,
+				universe.integer(rank));
 		// message queue <- message buffer [rank][destination]
-		messageQueue = symbolicUniverse.arrayRead(messageBufferRow,
+		messageQueue = universe.arrayRead(messageBufferRow,
 				(NumericExpression) destination);
 		queueLength = evaluator.extractInt(civlsource,
-				(NumericExpression) symbolicUniverse.tupleRead(messageQueue,
-						symbolicUniverse.intObject(0)));
+				(NumericExpression) universe.tupleRead(messageQueue,
+						universe.intObject(0)));
 		// message <- message queue[1]
-		messages = symbolicUniverse.tupleRead(messageQueue,
-				symbolicUniverse.intObject(1));
+		messages = universe.tupleRead(messageQueue,
+				universe.intObject(1));
 		// evaluate message size
 		switch (dataType.toString()) {
 		case "1": // MPI_INT
@@ -210,49 +210,49 @@ public class MPIExecutor extends CommonExecutor {
 					+ " in MPIExecutor", civlsource);
 		}
 
-		bundleIndex = bundleType.getIndexOf(symbolicUniverse.pureType(bufType));
-		bufArray = symbolicUniverse.unionInject(bundle,
-				symbolicUniverse.intObject(bundleIndex), bufArray);
+		bundleIndex = bundleType.getIndexOf(universe.pureType(bufType));
+		bufArray = universe.unionInject(bundle,
+				universe.intObject(bundleIndex), bufArray);
 		// message values
-		messageValues.add(symbolicUniverse.integer(rank));
+		messageValues.add(universe.integer(rank));
 		messageValues.add(destination);
 		messageValues.add(tag);
 		messageValues.add(bufArray);
-		messageValues.add(symbolicUniverse.integer(messageSize));
+		messageValues.add(universe.integer(messageSize));
 		// message types
-		messageTypes.add(symbolicUniverse.integer(rank).type());
+		messageTypes.add(universe.integer(rank).type());
 		messageTypes.add(destination.type());
 		messageTypes.add(tag.type());
 		messageTypes.add(bundle);
-		messageTypes.add(symbolicUniverse.integer(messageSize).type());
+		messageTypes.add(universe.integer(messageSize).type());
 		// build new message
-		newMessage = symbolicUniverse.tuple(symbolicUniverse.tupleType(
-				symbolicUniverse.stringObject("__message__"), messageTypes),
+		newMessage = universe.tuple(universe.tupleType(
+				universe.stringObject("__message__"), messageTypes),
 				messageValues);
 		// update the message queue with a new message array.
 		for (int i = 0; i < evaluator.extractInt(civlsource,
-				symbolicUniverse.length(messages)); i++) {
-			messageElements.add(symbolicUniverse.arrayRead(messages,
-					symbolicUniverse.integer(i)));
+				universe.length(messages)); i++) {
+			messageElements.add(universe.arrayRead(messages,
+					universe.integer(i)));
 		}
 		messageElements.add(newMessage);
-		messages = symbolicUniverse.array(newMessage.type(), messageElements);
+		messages = universe.array(newMessage.type(), messageElements);
 		queueLength = evaluator.extractInt(civlsource,
-				(NumericExpression) symbolicUniverse.tupleRead(messageQueue,
-						symbolicUniverse.intObject(0)));
+				(NumericExpression) universe.tupleRead(messageQueue,
+						universe.intObject(0)));
 		queueLength++;
-		messageQueue = symbolicUniverse.tupleWrite(messageQueue,
-				symbolicUniverse.intObject(0),
-				symbolicUniverse.integer(queueLength));
-		messageQueue = symbolicUniverse.tupleWrite(messageQueue,
-				symbolicUniverse.intObject(1), messages);
+		messageQueue = universe.tupleWrite(messageQueue,
+				universe.intObject(0),
+				universe.integer(queueLength));
+		messageQueue = universe.tupleWrite(messageQueue,
+				universe.intObject(1), messages);
 		// update message buffer
-		messageBufferRow = symbolicUniverse.arrayWrite(messageBufferRow,
+		messageBufferRow = universe.arrayWrite(messageBufferRow,
 				(NumericExpression) destination, messageQueue);
-		messageBuffer = symbolicUniverse.arrayWrite(messageBuffer,
-				symbolicUniverse.integer(rank), messageBufferRow);
+		messageBuffer = universe.arrayWrite(messageBuffer,
+				universe.integer(rank), messageBufferRow);
 		// update communicator
-		comm = symbolicUniverse.tupleWrite(comm, symbolicUniverse.intObject(2),
+		comm = universe.tupleWrite(comm, universe.intObject(2),
 				messageBuffer);
 		// update state
 		// ((MPIModelFactory)this.modelFactory).mpi
@@ -304,8 +304,8 @@ public class MPIExecutor extends CommonExecutor {
 		SymbolicExpression count = eval.value;
 		eval = evaluator.evaluate(state, pid, statement.getDatatype());
 		state = eval.state;
-		SymbolicExpression dataType = symbolicUniverse.tupleRead(eval.value,
-				symbolicUniverse.intObject(0));
+		SymbolicExpression dataType = universe.tupleRead(eval.value,
+				universe.intObject(0));
 		eval = evaluator.evaluate(state, pid, statement.getMPISource());
 		state = eval.state;
 		SymbolicExpression source = eval.value;
@@ -354,52 +354,52 @@ public class MPIExecutor extends CommonExecutor {
 					+ " in MPIExecutor", civlsource);
 		}
 		// obtain message
-		messageBuffer = symbolicUniverse.tupleRead(comm,
-				symbolicUniverse.intObject(2));
+		messageBuffer = universe.tupleRead(comm,
+				universe.intObject(2));
 		// MPI_ANY_SOURCE && MPI_ANY_TAG
 		if (int_source == -1 && int_tag == -2) {
 			int nprocs = evaluator.extractInt(civlsource,
-					(NumericExpression) symbolicUniverse.tupleRead(comm,
-							symbolicUniverse.intObject(0)));
+					(NumericExpression) universe.tupleRead(comm,
+							universe.intObject(0)));
 			for (int i = 0; i < nprocs; i++) {
-				messageBufferRow = symbolicUniverse.arrayRead(messageBuffer,
-						symbolicUniverse.integer(i));
-				messageQueue = symbolicUniverse.arrayRead(messageBufferRow,
-						symbolicUniverse.integer(rank));
+				messageBufferRow = universe.arrayRead(messageBuffer,
+						universe.integer(i));
+				messageQueue = universe.arrayRead(messageBufferRow,
+						universe.integer(rank));
 				queueLength = evaluator.extractInt(civlsource,
-						(NumericExpression) (symbolicUniverse.tupleRead(
-								messageQueue, symbolicUniverse.intObject(0))));
+						(NumericExpression) (universe.tupleRead(
+								messageQueue, universe.intObject(0))));
 				if (queueLength > 0) {
-					messages = symbolicUniverse.tupleRead(messageQueue,
-							symbolicUniverse.intObject(1));
-					newMessage = symbolicUniverse.arrayRead(messages,
-							symbolicUniverse.integer(0));
-					source = symbolicUniverse.integer(i);
+					messages = universe.tupleRead(messageQueue,
+							universe.intObject(1));
+					newMessage = universe.arrayRead(messages,
+							universe.integer(0));
+					source = universe.integer(i);
 					break;
 				}
 			}
 		} else if (int_source == -1 && int_tag != -2) {
 			// MPI_ANY_SOURCE but not MPI_ANY_TAG
 			int nprocs = evaluator.extractInt(civlsource,
-					(NumericExpression) symbolicUniverse.tupleRead(comm,
-							symbolicUniverse.intObject(0)));
+					(NumericExpression) universe.tupleRead(comm,
+							universe.intObject(0)));
 			for (int i = 0; i < nprocs; i++) {
-				messageBufferRow = symbolicUniverse.arrayRead(messageBuffer,
-						symbolicUniverse.integer(i));
-				messageQueue = symbolicUniverse.arrayRead(messageBufferRow,
-						symbolicUniverse.integer(rank));
+				messageBufferRow = universe.arrayRead(messageBuffer,
+						universe.integer(i));
+				messageQueue = universe.arrayRead(messageBufferRow,
+						universe.integer(rank));
 				queueLength = evaluator.extractInt(civlsource,
-						(NumericExpression) (symbolicUniverse.tupleRead(
-								messageQueue, symbolicUniverse.intObject(0))));
-				messages = symbolicUniverse.tupleRead(messageQueue,
-						symbolicUniverse.intObject(1));
+						(NumericExpression) (universe.tupleRead(
+								messageQueue, universe.intObject(0))));
+				messages = universe.tupleRead(messageQueue,
+						universe.intObject(1));
 				for (int j = 0; j < queueLength; j++) {
-					newMessage = symbolicUniverse.arrayRead(messages,
-							symbolicUniverse.integer(i));
-					if (symbolicUniverse.tupleRead(newMessage,
-							symbolicUniverse.intObject(2)).equals(tag)) {
+					newMessage = universe.arrayRead(messages,
+							universe.integer(i));
+					if (universe.tupleRead(newMessage,
+							universe.intObject(2)).equals(tag)) {
 						hasTag = true;
-						source = symbolicUniverse.integer(i);
+						source = universe.integer(i);
 						break;
 					}
 				}
@@ -407,29 +407,29 @@ public class MPIExecutor extends CommonExecutor {
 					break;
 			}
 		} else {
-			messageBufferRow = symbolicUniverse.arrayRead(messageBuffer,
+			messageBufferRow = universe.arrayRead(messageBuffer,
 					(NumericExpression) source);
-			messageQueue = symbolicUniverse.arrayRead(messageBufferRow,
-					symbolicUniverse.integer(rank));
-			messages = symbolicUniverse.tupleRead(messageQueue,
-					symbolicUniverse.intObject(1));
+			messageQueue = universe.arrayRead(messageBufferRow,
+					universe.integer(rank));
+			messages = universe.tupleRead(messageQueue,
+					universe.intObject(1));
 			queueLength = evaluator.extractInt(civlsource,
-					(NumericExpression) (symbolicUniverse.tupleRead(
-							messageQueue, symbolicUniverse.intObject(0))));
+					(NumericExpression) (universe.tupleRead(
+							messageQueue, universe.intObject(0))));
 			// MPI_ANY_TAG but not MPI_ANY_SOURCE
 			if (int_tag == -2) {
-				newMessage = symbolicUniverse.arrayRead(messages,
-						symbolicUniverse.integer(0));
+				newMessage = universe.arrayRead(messages,
+						universe.integer(0));
 				// neither MPI_ANY_TAG nor MPI_ANY_SOURCE
 			} else {
 				// find the message with the first matched tag.
 				for (int i = 0; i < queueLength; i++) {
-					newMessage = symbolicUniverse.arrayRead(messages,
-							symbolicUniverse.integer(i));
-					SymbolicExpression messageTag = symbolicUniverse.tupleRead(
-							newMessage, symbolicUniverse.intObject(2));
+					newMessage = universe.arrayRead(messages,
+							universe.integer(i));
+					SymbolicExpression messageTag = universe.tupleRead(
+							newMessage, universe.intObject(2));
 					if (tag.equals(messageTag)) {
-						messages = symbolicUniverse
+						messages = universe
 								.removeElementAt(messages, i);
 						break;
 					}
@@ -437,8 +437,8 @@ public class MPIExecutor extends CommonExecutor {
 			}
 		}
 		// set buf and status
-		buf = symbolicUniverse.tupleRead(newMessage,
-				symbolicUniverse.intObject(3));
+		buf = universe.tupleRead(newMessage,
+				universe.intObject(3));
 		// TODO: the buf need to be a array type
 		buf = (SymbolicExpression) buf.argument(1);
 		assert buf.type() instanceof SymbolicArrayType;
@@ -447,26 +447,26 @@ public class MPIExecutor extends CommonExecutor {
 		ArrayList<SymbolicType> statusTypes = new ArrayList<SymbolicType>();
 		statusValues.add(source);
 		statusValues.add(tag);
-		statusValues.add(symbolicUniverse.integer(0));
-		statusValues.add(symbolicUniverse.integer(messageSize));
+		statusValues.add(universe.integer(0));
+		statusValues.add(universe.integer(messageSize));
 		statusTypes.add(source.type());
 		statusTypes.add(tag.type());
-		statusTypes.add(symbolicUniverse.integer(0).type());
-		statusTypes.add(symbolicUniverse.integer(messageSize).type());
-		status = symbolicUniverse.tuple(symbolicUniverse.tupleType(
-				symbolicUniverse.stringObject("__MPI_Status"), statusTypes),
+		statusTypes.add(universe.integer(0).type());
+		statusTypes.add(universe.integer(messageSize).type());
+		status = universe.tuple(universe.tupleType(
+				universe.stringObject("__MPI_Status"), statusTypes),
 				statusValues);
 		queueLength--;
-		messageQueue = symbolicUniverse.tupleWrite(messageQueue,
-				symbolicUniverse.intObject(0),
-				symbolicUniverse.integer(queueLength));
-		messageQueue = symbolicUniverse.tupleWrite(messageQueue,
-				symbolicUniverse.intObject(1), messages);
-		messageBufferRow = symbolicUniverse.arrayWrite(messageBufferRow,
-				symbolicUniverse.integer(rank), messageQueue);
-		messageBuffer = symbolicUniverse.arrayWrite(messageBuffer,
+		messageQueue = universe.tupleWrite(messageQueue,
+				universe.intObject(0),
+				universe.integer(queueLength));
+		messageQueue = universe.tupleWrite(messageQueue,
+				universe.intObject(1), messages);
+		messageBufferRow = universe.arrayWrite(messageBufferRow,
+				universe.integer(rank), messageQueue);
+		messageBuffer = universe.arrayWrite(messageBuffer,
 				(NumericExpression) source, messageBufferRow);
-		comm = symbolicUniverse.tupleWrite(comm, symbolicUniverse.intObject(2),
+		comm = universe.tupleWrite(comm, universe.intObject(2),
 				messageBuffer);
 		// commVariableID and commScopeID
 		variableScopeID = evaluator.getScopeId(civlsource, commAddr);

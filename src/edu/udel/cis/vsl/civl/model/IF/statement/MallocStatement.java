@@ -38,7 +38,7 @@ public interface MallocStatement extends Statement {
 	 * 
 	 * @return the first argument to $malloc
 	 */
-	Expression getHeapPointerExpression();
+	Expression getScopeExpression();
 
 	/**
 	 * Returns the static type of the elements that are to be allocated. Each

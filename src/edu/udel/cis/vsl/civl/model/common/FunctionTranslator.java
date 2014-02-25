@@ -35,11 +35,13 @@ import edu.udel.cis.vsl.abc.ast.node.IF.compound.LiteralObject;
 import edu.udel.cis.vsl.abc.ast.node.IF.compound.ScalarLiteralObject;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.AbstractFunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ContractNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.DeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.EnsuresNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.RequiresNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ScopeParameterizedDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
@@ -124,6 +126,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -172,6 +175,8 @@ public class FunctionTranslator {
 
 	private static final String QUEUE_TYPE = "__queue__";
 
+	private static final String HEAP_VAR = "__h__";
+
 	/* ************************** Instance Fields ************************** */
 
 	/**
@@ -204,16 +209,18 @@ public class FunctionTranslator {
 	 */
 	protected CIVLFunction function;
 
-	/**
-	 * If the current translation is in variable declaration
-	 */
-	private boolean inVariableDeclaration;
+	// /**
+	// * If the current translation is in variable declaration
+	// */
+	// private boolean inVariableDeclaration;
 
 	/**
 	 * The accuracy assumption builder, which performs Taylor expansions after
 	 * assumptions involving abstract functions.
 	 */
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
+
+	// private Variable newHeapArrayVariable = null;
 
 	/* **************************** Constructors *************************** */
 
@@ -897,7 +904,8 @@ public class FunctionTranslator {
 				modelFactory.sourceOf(typeNode), scope, typeNode.getType());
 		FunctionCallNode callNode = (FunctionCallNode) castNode.getArgument();
 		int mallocId = modelBuilder.mallocStatements.size();
-		Expression heapPointerExpression;
+		// Expression heapPointerExpression;
+		Expression scopeExpression;
 		Expression sizeExpression;
 		CIVLType elementType;
 		MallocStatement result;
@@ -907,13 +915,12 @@ public class FunctionTranslator {
 					"result of $malloc not cast to pointer type", source);
 		elementType = ((CIVLPointerType) pointerType).baseType();
 		modelFactory.setCurrentScope(scope);
-		heapPointerExpression = translateExpressionNode(
-				callNode.getArgument(0), scope, true);
-		sizeExpression = translateExpressionNode(callNode.getArgument(1),
+		scopeExpression = translateExpressionNode(callNode.getScopeList()
+				.getSequenceChild(0), scope, true);
+		sizeExpression = translateExpressionNode(callNode.getArgument(0),
 				scope, true);
 		result = modelFactory.mallocStatement(source, location, lhs,
-				elementType, heapPointerExpression, sizeExpression, mallocId,
-				null);
+				elementType, scopeExpression, sizeExpression, mallocId, null);
 
 		modelBuilder.mallocStatements.add(result);
 		return result;
@@ -1054,14 +1061,19 @@ public class FunctionTranslator {
 				// name; think about how to initialize them.
 				modelBuilder.mainFunctionNode = functionDefinitionNode;
 			} else
-				translateFunctionDeclarationNode(functionDefinitionNode, scope);
+				translateFunctionDeclarationNode(functionDefinitionNode, scope,
+						null);
 			break;
 		case FUNCTION_DECLARATION:
 			translateFunctionDeclarationNode((FunctionDeclarationNode) node,
-					scope);
+					scope, null);
 			break;
 		case STATEMENT:
 			result = translateStatementNode(scope, (StatementNode) node);
+			break;
+		case SCOPE_PARAMETERIZED_DECLARATION:
+			result = translateScopeParameterizedDeclarationNode(scope,
+					(ScopeParameterizedDeclarationNode) node);
 			break;
 		case TYPE:
 			TypeNode typeNode = (TypeNode) node;
@@ -1083,6 +1095,32 @@ public class FunctionTranslator {
 		}
 
 		return result;
+	}
+
+	private Fragment translateScopeParameterizedDeclarationNode(Scope scope,
+			ScopeParameterizedDeclarationNode scopedNode) {
+		SequenceNode<VariableDeclarationNode> parameters = scopedNode
+				.parameters();
+		ArrayList<Variable> scopeParameters = new ArrayList<>();
+		int numOfParameters = parameters.numChildren();
+		DeclarationNode baseDeclarationNode = scopedNode.baseDeclaration();
+
+		if (baseDeclarationNode instanceof FunctionDeclarationNode) {
+			for (int i = 0; i < numOfParameters; i++) {
+				VariableDeclarationNode decl = parameters.getSequenceChild(i);
+				CIVLSource source = modelFactory.sourceOf(decl.getIdentifier());
+				Identifier variableName = modelFactory.identifier(source,
+						decl.getName());
+
+				scopeParameters.add(modelFactory.variable(source,
+						modelFactory.scopeType(), variableName,
+						scopeParameters.size()));
+			}
+			translateFunctionDeclarationNode(
+					(FunctionDeclarationNode) baseDeclarationNode, scope,
+					scopeParameters);
+		}
+		return null;
 	}
 
 	/**
@@ -1410,6 +1448,7 @@ public class FunctionTranslator {
 	 *            The function call node
 	 * @return the fragment containing the function call statement
 	 */
+	// @SuppressWarnings("unused")
 	protected Statement translateFunctionCall(Scope scope, LHSExpression lhs,
 			FunctionCallNode functionCallNode, boolean isCall) {
 		CIVLSource source = modelFactory.sourceOfBeginning(functionCallNode);
@@ -1438,42 +1477,44 @@ public class FunctionTranslator {
 		case "$choose_int":
 			return translateChooseIntFunctionCall(source, location, scope, lhs,
 					arguments);
-		case "$gcomm_create":
-			if (!this.inVariableDeclaration) {
-				throw new CIVLSyntaxException("The function " + functionName
-						+ " is only allowed in a variable declaration.", source);
-			} else {
-				int newVid = scope.numVariables();
-				CIVLType gcommType = modelBuilder.gcommType;
-				Identifier gcommObjectIdentifier = this.modelFactory
-						.identifier(source, "__" + lhs.toString());
-				Variable gcommObjectVariable = this.modelFactory.variable(
-						source, gcommType, gcommObjectIdentifier, newVid);
-				VariableExpression gcommObjectExpression = modelFactory
-						.variableExpression(source, gcommObjectVariable);
-
-				scope.addVariable(gcommObjectVariable);
-				return callOrSpawnStatement(location, functionCallNode,
-						gcommObjectExpression, arguments, isCall);
-			}
-		case "$heap_create":
-			if (!this.inVariableDeclaration) {
-				throw new CIVLSyntaxException("The function " + functionName
-						+ " is only allowed in a variable declaration.", source);
-			} else {
-				int newVid = scope.numVariables();
-				CIVLType heapType = modelBuilder.heapType;
-				Identifier heapObjectIdentifier = this.modelFactory.identifier(
-						source, "__" + lhs.toString());
-				Variable heapObjectVariable = this.modelFactory.variable(
-						source, heapType, heapObjectIdentifier, newVid);
-				VariableExpression heapObjectExpression = modelFactory
-						.variableExpression(source, heapObjectVariable);
-
-				scope.addVariable(heapObjectVariable);
-				return callOrSpawnStatement(location, functionCallNode,
-						heapObjectExpression, arguments, isCall);
-			}
+			// case "$gcomm_create":
+			// if (false) {
+			// // this.inVariableDeclaration = !this.inVariableDeclaration;
+			// throw new CIVLSyntaxException("The function " + functionName
+			// + " is only allowed in a variable declaration.", source);
+			// } else {
+			//
+			// }
+			// int newVid = scope.numVariables();
+			// CIVLType gcommType = modelBuilder.gcommType;
+			// Identifier gcommObjectIdentifier = this.modelFactory
+			// .identifier(source, "__" + lhs.toString());
+			// Variable gcommObjectVariable = this.modelFactory.variable(
+			// source, gcommType, gcommObjectIdentifier, newVid);
+			//
+			// scope.addVariable(gcommObjectVariable);
+			// return callOrSpawnStatement(location, functionCallNode, lhs,
+			// arguments, isCall);
+			// case "$heap_create":
+			// if (false) {
+			// throw new CIVLSyntaxException("The function " + functionName
+			// + " is only allowed in a variable declaration.", source);
+			// } else {
+			// if (!scope.containsVariable(HEAP_VAR)) {
+			// int newVid = scope.numVariables();
+			// CIVLArrayType heapArrayType = modelFactory
+			// .incompleteArrayType(modelBuilder.heapType);
+			// Variable heapArrayVariable = this.modelFactory.variable(
+			// source, heapArrayType,
+			// this.modelFactory.identifier(source, HEAP_VAR),
+			// newVid);
+			//
+			// scope.addVariable(heapArrayVariable);
+			// this.newHeapArrayVariable = heapArrayVariable;
+			// }
+			// return callOrSpawnStatement(location, functionCallNode, lhs,
+			// arguments, isCall);
+			// }
 		default:
 			return callOrSpawnStatement(location, functionCallNode, lhs,
 					arguments, isCall);
@@ -1563,7 +1604,7 @@ public class FunctionTranslator {
 	 *            the scope in which the function declaration occurs
 	 */
 	private void translateFunctionDeclarationNode(FunctionDeclarationNode node,
-			Scope scope) {
+			Scope scope, ArrayList<Variable> scopedParameters) {
 		Function entity = node.getEntity();
 		SequenceNode<ContractNode> contract = node.getContract();
 		CIVLFunction result;
@@ -1598,6 +1639,9 @@ public class FunctionTranslator {
 					.getParameters();
 			int numParameters = abcParameters.numChildren();
 
+			if (scopedParameters != null) {
+				parameters.addAll(0, scopedParameters);
+			}
 			for (int i = 0; i < numParameters; i++) {
 				VariableDeclarationNode decl = abcParameters
 						.getSequenceChild(i);
@@ -2011,7 +2055,7 @@ public class FunctionTranslator {
 	 *         statements generated by translating this declaration node, or
 	 *         null if no statements are generated
 	 * @throws CommandLineException
-	 *             if an intializer for an input variable specified on the
+	 *             if an initializer for an input variable specified on the
 	 *             command line does not have a type compatible with the
 	 *             variable
 	 */
@@ -2020,12 +2064,45 @@ public class FunctionTranslator {
 			throws CommandLineException {
 		Variable variable = translateVariableDeclarationNode(node, scope);
 		CIVLType type = variable.type();
-		Fragment result = null, initialization;
+		Fragment result = null, initialization = null;
 		IdentifierNode identifier = node.getIdentifier();
 		CIVLSource source = modelFactory.sourceOf(node);
 
-		this.inVariableDeclaration = true;
-		if (variable.isInput() || type instanceof CIVLArrayType
+		// this.inVariableDeclaration = true;
+		if (variable.type().isScopeType()) {
+			if (!scope.containsVariable(HEAP_VAR)) {
+				int newVid = scope.numVariables();
+				Variable heapVariable = this.modelFactory.variable(source,
+						modelBuilder.heapType,
+						this.modelFactory.identifier(source, HEAP_VAR), newVid);
+
+				scope.addVariable(heapVariable);
+				if (sourceLocation == null)
+					sourceLocation = modelFactory.location(
+							modelFactory.sourceOfBeginning(node), scope);
+				initialization = new CommonFragment(sourceLocation,
+						modelFactory.assignStatement(source, sourceLocation,
+								modelFactory.variableExpression(source,
+										heapVariable), modelFactory
+										.initialValueExpression(source,
+												heapVariable), true));
+				sourceLocation = null;
+			}
+			if (sourceLocation == null)
+				sourceLocation = modelFactory.location(
+						modelFactory.sourceOfBeginning(node), scope);
+			result = new CommonFragment(sourceLocation,
+					modelFactory
+							.assignStatement(source, sourceLocation,
+									modelFactory.variableExpression(
+											modelFactory.sourceOf(identifier),
+											variable), modelFactory
+											.initialValueExpression(source,
+													variable), true));
+			if (initialization != null)
+				result = initialization.combineWith(result);
+			return result;
+		} else if (variable.isInput() || type instanceof CIVLArrayType
 				|| type instanceof CIVLStructOrUnionType || type.isHeapType()) {
 			Expression rhs = null;
 
@@ -2054,11 +2131,21 @@ public class FunctionTranslator {
 		}
 		initialization = translateVariableInitializationNode(node, variable,
 				sourceLocation, scope);
+		// if (this.newHeapArrayVariable != null) {
+		// Location location = modelFactory.location(source, scope);
+		//
+		// result = new CommonFragment(location, modelFactory.assignStatement(
+		// source, location, modelFactory.variableExpression(source,
+		// this.newHeapArrayVariable), modelFactory
+		// .initialValueExpression(source,
+		// this.newHeapArrayVariable), true));
+		// this.newHeapArrayVariable = null;
+		// }
 		if (result == null)
 			result = initialization;
 		else
 			result = result.combineWith(initialization);
-		this.inVariableDeclaration = false;
+		// this.inVariableDeclaration = false;
 		return result;
 	}
 
@@ -2131,7 +2218,14 @@ public class FunctionTranslator {
 				rhs = translateExpressionNode((ExpressionNode) init, scope,
 						true);
 
-				if (init instanceof CompoundLiteralNode) {
+				if (rhs instanceof SystemFunctionCallExpression) {
+					CallOrSpawnStatement callStatement = ((SystemFunctionCallExpression) rhs)
+							.callStatement();
+
+					callStatement.setLhs(modelFactory.variableExpression(
+							modelFactory.sourceOf(init), variable));
+					return new CommonFragment(callStatement);
+				} else if (init instanceof CompoundLiteralNode) {
 					CIVLType variableType = variable.type();
 
 					if (variableType.isPointerType()) {
@@ -2149,7 +2243,6 @@ public class FunctionTranslator {
 								initSource, anonVariable));
 					}
 				}
-
 			} else {
 				// throw new CIVLUnimplementedFeatureException(init.toString(),
 				// initSource);
@@ -2163,6 +2256,7 @@ public class FunctionTranslator {
 							.newAnonymousVariableForArrayLiteral(initSource,
 									scope,
 									(CIVLArrayType) rhs.getExpressionType());
+
 					anonStatement = modelFactory.assignStatement(initSource,
 							modelFactory.location(initSource, scope),
 							modelFactory.variableExpression(initSource,
@@ -2739,6 +2833,7 @@ public class FunctionTranslator {
 		Function callee;
 		CIVLFunction abstractFunction;
 		List<Expression> arguments = new ArrayList<Expression>();
+		CIVLSource source = modelFactory.sourceOf(callNode);
 
 		if (functionExpression instanceof IdentifierExpressionNode) {
 			callee = (Function) ((IdentifierExpressionNode) functionExpression)
@@ -2749,19 +2844,33 @@ public class FunctionTranslator {
 							+ functionExpression.getSource());
 		abstractFunction = modelBuilder.functionMap.get(callee);
 		assert abstractFunction != null;
-		assert abstractFunction instanceof AbstractFunction;
-		modelFactory.setCurrentScope(scope);
-		for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
-			Expression actual = translateExpressionNode(
-					callNode.getArgument(i), scope, true);
+		if (abstractFunction instanceof AbstractFunction) {
+			modelFactory.setCurrentScope(scope);
+			for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
+				Expression actual = translateExpressionNode(
+						callNode.getArgument(i), scope, true);
 
-			actual = arrayToPointer(actual);
-			arguments.add(actual);
+				actual = arrayToPointer(actual);
+				arguments.add(actual);
+			}
+			result = modelFactory.abstractFunctionCallExpression(
+					modelFactory.sourceOf(callNode),
+					(AbstractFunction) abstractFunction, arguments);
+			return result;
+		} else {
+			Statement functionCall = this.translateFunctionCall(scope, null,
+					callNode, true);
+
+			if (functionCall instanceof CallOrSpawnStatement) {
+				CallOrSpawnStatement callStatement = (CallOrSpawnStatement) functionCall;
+
+				// if (!callStatement.isSystemCall())
+				// throw new CIVLInternalException("Unreachable", source);
+				return modelFactory.systemFunctionCallExpression(callStatement);
+			} else {
+				throw new CIVLInternalException("Unreachable", source);
+			}
 		}
-		result = modelFactory.abstractFunctionCallExpression(
-				modelFactory.sourceOf(callNode),
-				(AbstractFunction) abstractFunction, arguments);
-		return result;
 	}
 
 	/**
@@ -3296,8 +3405,10 @@ public class FunctionTranslator {
 				modelBuilder.queueType = result;
 			if (COMM_TYPE.equals(tag))
 				modelBuilder.commType = result;
-			if (GCOMM_TYPE.equals(tag))
+			if (GCOMM_TYPE.equals(tag)) {
 				modelBuilder.gcommType = result;
+				result.setHandleObjectType(true);
+			}
 			return result;
 		}
 	}
@@ -3339,7 +3450,7 @@ public class FunctionTranslator {
 						(StandardBasicType) abcType);
 				break;
 			case HEAP:
-				result = modelBuilder.heapType;
+				result = modelFactory.pointerType(modelBuilder.heapType);
 				break;
 			case OTHER_INTEGER:
 				result = modelFactory.integerType();

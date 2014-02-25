@@ -24,7 +24,7 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	private int id;
 
-	private Expression heapPointerExpression;
+	private Expression scopeExpression;
 
 	private CIVLType staticElementType;
 
@@ -45,7 +45,7 @@ public class CommonMallocStatement extends CommonStatement implements
 			SymbolicExpression undefinedObject, LHSExpression lhs) {
 		super(civlSource, source);
 		this.id = mallocId;
-		this.heapPointerExpression = heapPointerExpression;
+		this.scopeExpression = heapPointerExpression;
 		this.staticElementType = staticElementType;
 		this.dynamicElementType = dynamicElementType;
 		this.dynamicObjectType = dynamicObjectType;
@@ -60,8 +60,8 @@ public class CommonMallocStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Expression getHeapPointerExpression() {
-		return heapPointerExpression;
+	public Expression getScopeExpression() {
+		return scopeExpression;
 	}
 
 	@Override
@@ -97,14 +97,14 @@ public class CommonMallocStatement extends CommonStatement implements
 	@Override
 	public String toString() {
 		String result;
+		String scope = "<" + this.scopeExpression + ">";
 
 		if (lhs != null)
 			result = lhs + " = ";
 		else
 			result = "";
-		result += "(" + staticElementType + "*)";
-		result += "$malloc(" + heapPointerExpression + ", " + sizeExpression
-				+ ")";
+		result += "(" + staticElementType + "*" + scope + ")";
+		result += "$malloc" + scope + "(" + sizeExpression + ")";
 		return result;
 	}
 
@@ -127,7 +127,7 @@ public class CommonMallocStatement extends CommonStatement implements
 		if (lhs != null) {
 			lhs.purelyLocalAnalysisOfVariables(funcScope);
 		}
-		this.heapPointerExpression.purelyLocalAnalysisOfVariables(funcScope);
+		this.scopeExpression.purelyLocalAnalysisOfVariables(funcScope);
 		this.sizeExpression.purelyLocalAnalysisOfVariables(funcScope);
 	}
 
@@ -142,11 +142,11 @@ public class CommonMallocStatement extends CommonStatement implements
 			lhsPL = lhs.isPurelyLocal();
 		}
 
-		this.heapPointerExpression.purelyLocalAnalysis();
+		this.scopeExpression.purelyLocalAnalysis();
 		this.sizeExpression.purelyLocalAnalysis();
 
 		this.purelyLocal = lhsPL && this.guard().isPurelyLocal()
-				&& this.heapPointerExpression.isPurelyLocal()
+				&& this.scopeExpression.isPurelyLocal()
 				&& this.sizeExpression.isPurelyLocal();
 	}
 
@@ -171,7 +171,7 @@ public class CommonMallocStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonMallocStatement(this.getSource(),
-					this.source(), this.id, this.heapPointerExpression,
+					this.source(), this.id, this.scopeExpression,
 					staticElementType, dynamicElementType, dynamicObjectType,
 					this.sizeExpression, undefinedObject, lhs);
 			newStatement.setGuard(newGuard);
@@ -181,7 +181,7 @@ public class CommonMallocStatement extends CommonStatement implements
 
 			if (newSizeExpression != null) {
 				newStatement = new CommonMallocStatement(this.getSource(),
-						this.source(), id, this.heapPointerExpression,
+						this.source(), id, this.scopeExpression,
 						staticElementType, dynamicElementType,
 						dynamicObjectType, newSizeExpression, undefinedObject,
 						lhs);
@@ -204,8 +204,8 @@ public class CommonMallocStatement extends CommonStatement implements
 			if (lhsVariable != null)
 				result.add(lhsVariable);
 		}
-		argumentResult = heapPointerExpression.variableAddressedOf(scope,
-				heapType, commType);
+		argumentResult = scopeExpression.variableAddressedOf(scope, heapType,
+				commType);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		argumentResult = sizeExpression.variableAddressedOf(scope, heapType,
@@ -221,8 +221,8 @@ public class CommonMallocStatement extends CommonStatement implements
 		Set<Variable> result = new HashSet<>();
 		Set<Variable> argumentResult;
 
-		argumentResult = heapPointerExpression.variableAddressedOf(heapType,
-				commType);
+		argumentResult = scopeExpression
+				.variableAddressedOf(heapType, commType);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		argumentResult = sizeExpression.variableAddressedOf(heapType, commType);

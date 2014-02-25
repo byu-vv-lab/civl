@@ -173,4 +173,8 @@ public interface Scope extends Sourceable {
 	 */
 	boolean isDescendantOf(Scope anc);
 
+	boolean containsVariable(String name);
+	
+	Variable variable(String name);
+
 }

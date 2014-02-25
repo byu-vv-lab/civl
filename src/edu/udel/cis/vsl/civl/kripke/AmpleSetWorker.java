@@ -620,14 +620,20 @@ public class AmpleSetWorker {
 			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
 			// TODO special function calls
-			if (call.isSystemCall()) {
-
-			} else {
-				for (Expression argument : call.arguments()) {
-					memUnitsPartial = memoryUnit(argument, pid);
-					if (memUnitsPartial != null) {
-						memUnits.addAll(memUnitsPartial);
-					}
+//			if (call.isSystemCall()) {
+//
+//			} else {
+//				for (Expression argument : call.arguments()) {
+//					memUnitsPartial = memoryUnit(argument, pid);
+//					if (memUnitsPartial != null) {
+//						memUnits.addAll(memUnitsPartial);
+//					}
+//				}
+//			}
+			for (Expression argument : call.arguments()) {
+				memUnitsPartial = memoryUnit(argument, pid);
+				if (memUnitsPartial != null) {
+					memUnits.addAll(memUnitsPartial);
 				}
 			}
 			break;
@@ -639,7 +645,7 @@ public class AmpleSetWorker {
 				memUnits.addAll(memUnitsPartial);
 			}
 			memUnitsPartial = memoryUnit(
-					mallocStatement.getHeapPointerExpression(), pid);
+					mallocStatement.getScopeExpression(), pid);
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}

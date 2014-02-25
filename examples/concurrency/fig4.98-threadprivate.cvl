@@ -11,7 +11,7 @@ $input int N_BOUND; // upper bound of N
 $input int N; // the value of the variable n
 $assume 0 < N && N <=N_BOUND;
 #define OWNS(numIters, threadId, index) ((index)%NTHREADS==threadId)
-$heap h;
+$scope root;
 $proc threads[NTHREADS];
 
 int calculate_sum(int length, int *_pglobal) {
@@ -36,14 +36,14 @@ void main() {
     void __for_loop_1 (int _i) {
       int _j, _sum;
 
-      _pglobal = (int*)$malloc(&h, length[_i]*sizeof(int));
+      _pglobal = (int*)$malloc<root>(length[_i]*sizeof(int));
       _sum = 0;
       for (_j=0; _j<length[_i]; _j++) _pglobal[_j]=_j+1;
         _sum = calculate_sum(length[_i], _pglobal);
       printf("TID %d: value of sum for i = %d is %8d (check = %8d)\n",
                _TID, _i, _sum, check[_i]);
       $assert(_sum == check[_i]);
-      $free(&h, _pglobal);
+      $free(_pglobal);
     }
 
     for (int _i=0; _i<n; _i++)

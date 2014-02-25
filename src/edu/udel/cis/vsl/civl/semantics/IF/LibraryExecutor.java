@@ -40,11 +40,11 @@ public interface LibraryExecutor {
 	Evaluation getGuard(State state, int pid, String function,
 			Expression[] arguments, CIVLSource source);
 
-	/**
-	 * Does the library for which this is the executor contain a function with
-	 * the given name?
-	 */
-	boolean containsFunction(String name);
+	// /**
+	// * Does the library for which this is the executor contain a function with
+	// * the given name?
+	// */
+	// boolean containsFunction(String name);
 
 	// TODO: Is this ever being done?
 	/**

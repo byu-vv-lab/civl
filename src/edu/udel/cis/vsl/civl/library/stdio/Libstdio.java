@@ -6,6 +6,7 @@ import java.util.Vector;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -15,12 +16,9 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
-import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
@@ -33,35 +31,11 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class Libstdio implements LibraryExecutor {
+public class Libstdio extends CommonLibraryExecutor implements LibraryExecutor {
 
 	/* ************************** Instance Fields ************************** */
 
-	/**
-	 * Enable or disable printing. By default true, i.e., enable printing.
-	 */
-	private boolean enablePrintf;
-
-	/**
-	 * The unique evaluator used in the system.
-	 */
-	private Evaluator evaluator;
-
-	/**
-	 * The output stream to be used for printing.
-	 */
-	private PrintStream output = System.out;
-
-	/**
-	 * The unique state factory to obtain information of a certain state and
-	 * generate new states.
-	 */
-	private StateFactory stateFactory;
-
-	/**
-	 * The SARL symbolic universe used by this system.
-	 */
-	private SymbolicUniverse universe;
+	
 
 	/* **************************** Constructors *************************** */
 
@@ -77,26 +51,10 @@ public class Libstdio implements LibraryExecutor {
 	 */
 	public Libstdio(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
-		this.evaluator = primaryExecutor.evaluator();
-		this.universe = evaluator.universe();
-		this.stateFactory = evaluator.stateFactory();
-		this.enablePrintf = enablePrintf;
-		this.output = output;
+		super(primaryExecutor, output, enablePrintf, modelFactory);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
-
-	@Override
-	public boolean containsFunction(String name) {
-		switch (name) {
-		case "printf":
-			return true;
-		case "fprintf":
-			throw new CIVLUnimplementedFeatureException(name);
-		default:
-			throw new CIVLInternalException(name, (CIVLSource) null);
-		}
-	}
 
 	@Override
 	public State execute(State state, int pid, Statement statement)
@@ -247,7 +205,7 @@ public class Libstdio implements LibraryExecutor {
 		output.printf(format, arguments.toArray());
 		return state;
 	}
-	
+
 	@Override
 	public Evaluation getGuard(State state, int pid, String function,
 			Expression[] arguments, CIVLSource source) {

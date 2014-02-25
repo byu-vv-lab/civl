@@ -89,12 +89,12 @@ void gpu(){
 }
 
 int main( void ) {
-  $heap host;
+  $scope host;
     
   // allocate memory on the cpu side
-  a = (double *) $malloc(&host, N*sizeof(double));
-  b = (double *) $malloc(&host, N*sizeof(double));
-  partial_c = (double *) $malloc(&host, blocksPerGrid*sizeof(double));
+  a = (double *) $malloc<host>(N*sizeof(double));
+  b = (double *) $malloc<host>(N*sizeof(double));
+  partial_c = (double *) $malloc<host>(blocksPerGrid*sizeof(double));
   // fill in the host memory with data
   for (int i=0; i<N; i++) {
     a[i] = i;

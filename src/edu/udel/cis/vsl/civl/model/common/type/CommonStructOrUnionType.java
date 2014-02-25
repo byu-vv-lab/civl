@@ -24,6 +24,8 @@ public class CommonStructOrUnionType extends CommonType implements
 
 	private boolean isStruct;
 
+	private boolean isHandleObject;
+
 	private Identifier name;
 
 	private StructOrUnionField[] fields = null;
@@ -39,6 +41,7 @@ public class CommonStructOrUnionType extends CommonType implements
 	public CommonStructOrUnionType(Identifier name, boolean isStruct) {
 		this.name = name;
 		this.isStruct = isStruct;
+		this.isHandleObject = false;
 	}
 
 	@Override
@@ -177,5 +180,15 @@ public class CommonStructOrUnionType extends CommonType implements
 	@Override
 	public boolean isUnionType() {
 		return !isStruct;
+	}
+
+	@Override
+	public boolean isHandleObjectType() {
+		return this.isHandleObject;
+	}
+
+	@Override
+	public void setHandleObjectType(boolean value) {
+		this.isHandleObject = value;
 	}
 }

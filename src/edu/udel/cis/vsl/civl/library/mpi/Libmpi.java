@@ -1,11 +1,10 @@
 package edu.udel.cis.vsl.civl.library.mpi;
 
 import java.io.PrintStream;
-import java.util.HashSet;
-import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
@@ -16,12 +15,9 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
-import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -36,38 +32,14 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author ziqingluo
  * 
  */
-public class Libmpi implements LibraryExecutor {
-
-	private Executor primaryExecutor;
-
-	private Evaluator evaluator;
-
-	private SymbolicUniverse universe;
+public class Libmpi extends CommonLibraryExecutor implements LibraryExecutor {
 
 	private MPIModelFactory mpiFactory;
 
-	private StateFactory stateFactory;
-
-	// private NumericExpression zero;
-	//
-	// private NumericExpression one;
-	//
-	// private IntObject zeroObject;
-	//
-	// private IntObject oneObject;
-
 	public Libmpi(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
-		this.primaryExecutor = primaryExecutor;
-		this.evaluator = primaryExecutor.evaluator();
-		// this.log = evaluator.log();
-		this.universe = evaluator.universe();
-		this.stateFactory = evaluator.stateFactory();
+		super(primaryExecutor, output, enablePrintf, modelFactory);
 		this.mpiFactory = (MPIModelFactory) modelFactory;
-		// this.zero = universe.zeroInt();
-		// this.one = universe.oneInt();
-		// this.zeroObject = universe.intObject(0);
-		// this.oneObject = universe.intObject(1);
 	}
 
 	@Override
@@ -86,14 +58,6 @@ public class Libmpi implements LibraryExecutor {
 		BooleanExpression guard;
 		guard = universe.trueExpression();
 		return guard;
-	}
-
-	@Override
-	public boolean containsFunction(String name) {
-		Set<String> functions = new HashSet<String>();
-		functions.add("MPI_Comm_size");
-		functions.add("MPI_Comm_rank");
-		return functions.contains(name);
 	}
 
 	@Override

@@ -57,6 +57,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
@@ -108,6 +109,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonStructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSubscriptExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonSystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
@@ -269,12 +271,12 @@ public class CommonModelFactory implements ModelFactory {
 	 * The unique heap type
 	 */
 	private CIVLHeapType heapType;
-	
+
 	/**
 	 * The unique symbolic heap type
 	 */
 	private SymbolicTupleType heapSymbolicType;
-	
+
 	/** Keep a unique number to identify locations. */
 	private int locationID = 0;
 
@@ -1007,6 +1009,12 @@ public class CommonModelFactory implements ModelFactory {
 					"Unable to set expression type for expression: " + result);
 		}
 		return result;
+	}
+
+@Override
+	public SystemFunctionCallExpression systemFunctionCallExpression(
+			CallOrSpawnStatement callStatement) {
+		return new CommonSystemFunctionCallExpression(null, callStatement);
 	}
 
 	/**

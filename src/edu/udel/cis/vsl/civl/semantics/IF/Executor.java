@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
-import java.util.ArrayList;
-
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -33,9 +31,10 @@ public interface Executor {
 	 * @param value
 	 *            a value to be assigned to the referenced memory location
 	 * @return the new state
+	 * @throws UnsatisfiablePathConditionException 
 	 */
 	State assign(CIVLSource source, State state, SymbolicExpression pointer,
-			SymbolicExpression value);
+			SymbolicExpression value) throws UnsatisfiablePathConditionException;
 
 	/**
 	 * Assigns a value to the memory location specified by the given
@@ -141,16 +140,6 @@ public interface Executor {
 	 */
 	Pair<StateStatusKind, State> executeStatement(State state,
 			Location location, Statement s, int pid);
-
-	/**
-	 * Get the list of processes that are in some atomic blocks but blocked in
-	 * some previous states and enabled at the given state.
-	 * 
-	 * @param state
-	 * @return The list of processes as described above. If there is no such
-	 *         process then return an empty list.
-	 */
-	ArrayList<Integer> resumableAtomicProcesses(State state);
 
 	/**
 	 * Returns the number of "steps" executed since this Executor was created.

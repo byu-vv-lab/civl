@@ -3,11 +3,11 @@
  * */
 #include <civlc.h>
 void main() {
-  $heap h;
+  $scope s;
   double *p;
   
   // Uses pointer without malloc.
   p[4]=3.14;
   $assert(p[4]==3.14);
-  $free(&h, p);
+  $free(p);
 }   

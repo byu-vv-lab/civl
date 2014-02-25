@@ -87,9 +87,18 @@ public interface CIVLStructOrUnionType extends CIVLType {
 	 */
 	void complete(StructOrUnionField[] fields);
 
-//	/**
-//	 * 
-//	 * @return True if this is a struct type, otherwise return false.
-//	 */
-//	boolean isStruct();
+	/**
+	 * Updates the option whether this type is the object type of some handle
+	 * type, with the given value.
+	 * 
+	 * @param value
+	 *            The value to be used.
+	 */
+	void setHandleObjectType(boolean value);
+
+	// /**
+	// *
+	// * @return True if this is a struct type, otherwise return false.
+	// */
+	// boolean isStruct();
 }

@@ -85,12 +85,12 @@ public abstract class CommonType implements CIVLType {
 	public boolean isStructType() {
 		return false;
 	}
-	
+
 	@Override
 	public boolean isUnionType() {
 		return false;
 	}
-	
+
 	@Override
 	public boolean isCharType() {
 		return false;
@@ -99,6 +99,16 @@ public abstract class CommonType implements CIVLType {
 	@Override
 	public int getDynamicTypeIndex() {
 		return dynamicTypeIndex;
+	}
+
+	@Override
+	public boolean isHandleType() {
+		return false;
+	}
+	
+	@Override
+	public boolean isHandleObjectType() {
+		return false;
 	}
 
 	public void setDynamicTypeIndex(int index) {

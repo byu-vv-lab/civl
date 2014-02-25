@@ -10,12 +10,12 @@ int *gp;
 _Bool gStart = $false;
 
 void foo(){
-  $heap fh = $heap_create();
+  $scope sf;
   
-  gp = (int *) $malloc(fh, sizeof(int));
+  gp = (int *<sf>) $malloc<sf>(sizeof(int));
   gStart = $true;
   *gp = 1;
-  $free(fh, gp);
+  $free(gp);
 }
 
 void goo(){
