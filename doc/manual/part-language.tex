@@ -71,6 +71,8 @@ statements.
 
 In this chapter we describe the main sequential elements of the
 language.  For the most part these are the same as in C.
+Primitives dealing with concurrency are introduced in Chapter
+\ref{chap:concurrency}.
 
 \section{Types}
 
@@ -179,7 +181,7 @@ void $bundle_unpack($bundle bundle, void *ptr);
 The relevant functions for creating and manipulating bundles
 are given in Figure \ref{fig:bundle}.
 
-\subsection{Scope type: \cscope}
+\subsection{The \cscope{} type and \chere{} constant}
 
 An object of type $\cscope$ is a reference to a dynamic scope.
 It may be thought of as a ``dynamic scope ID, '' but it is not
@@ -206,12 +208,12 @@ curly brace which marks the end of the scope, or the process exits),
 any reference to that scope becomes ``undefined,'' and an attempt to
 use that scope will result in a runtime error.
 
-\subsection{Message-passing types}
+% \subsection{Other types}
 
-There are several types dealing with message-passing: $\cgcomm$
-(global communicator), $\ccomm$ (local communicator), and $\cmessage$.
-These types and the operations on them are described in Section
-\label{sec:communicators}.
+% There are several types dealing with message-passing: $\cgcomm$
+% (global communicator), $\ccomm$ (local communicator), and $\cmessage$.
+% These types and the operations on them are described in Section
+% \label{sec:communicators}.
 
 
 \section{Expressions}
@@ -367,6 +369,7 @@ $[0,\texttt{n}-1]$.
 
 
 \chapter{Concurrency}
+\label{chap:concurrency}
 
 \section{Process creation and management}
 
@@ -389,7 +392,7 @@ evaluating the expression containing ``\cself''.
 
 \subsection{Spawning a new process: \cspawn}
 
-This is an expression with side-effects.  It
+A \emph{spawn} expression is an expression with side-effects.  It
 spawns a new process and returns a reference to the new process, i.e.,
 an object of type \cproc.  The syntax is the same as a procedure
 invocation with the keyword ``\cspawn'' inserted in front:
@@ -768,24 +771,25 @@ are used primarily in functional equivalence checking.
 
 \section{Assertions and assumptions}
 
-\subsection{Assertion statements: \cassert}
+\subsection{Assertions: \cassert}
 
-This is an assertion statement.  It takes as its
-sole argument an expression of boolean type.  The expressions have a
-richer syntax than C expressions.  During verification, the assertion
-is checked.  If it does not hold, a violation is reported.
+The system function \cassert{} takes an argument of boolean type:
 \begin{verbatim}
-  $assert ( expr ) ;
+  void $assert (_Bool expr);
 \end{verbatim}
-Boolean values \ctrue{} and \cfalse{} may be used in assertions
-and assumptions.
+During verification, the assertion is checked.  If it cannot be proved
+that it must hold, a violation is reported.
 
-The assertion statement may take additional optional arguments
-used to print a specific message if the assertion is violated.
-These additional arguments are similar in form to those used
-in C's \texttt{printf} statement: a format string, followed by
-some number of arguments which are evaluated and substituted
-for successive codes in the format string.  For example,
+Note that CIVL-C boolean expressions have a richer syntax than C
+expressions, and may include universal or existential quantifiers
+(see below), and the boolean values  \ctrue{} and \cfalse{}.
+
+The assertion function may take additional optional arguments used to
+print a specific message if the assertion is violated.  These
+additional arguments are similar in form to those used in C's
+\texttt{printf} statement: a format string, followed by some number of
+arguments which are evaluated and substituted for successive codes in
+the format string.  For example,
 \begin{verbatim}
   $assert(x<=B, "x-coordinate %f exceeds bound %f", x, B); 
 \end{verbatim}
@@ -936,7 +940,7 @@ array.  Example:
 
 \emph{Status}: not implemented.
 
-\chapter{Pointers and Scopes}
+\chapter{Pointers, Scopes, and Heaps}
 \label{chap:pointers}
 
 CIVL-C supports pointers, using the same operators with the same
@@ -945,7 +949,7 @@ also a heap in every scope, and system functions to allocate and
 deallocate objects in the specified scope.  The interaction between
 pointers, heaps, and scopes is an important aspect of CIVL-C.
 
-\section{Memory functions}
+\section{Memory functions: \texttt{memcpy}}
 
 The following function is exactly the same as in the C standard
 library: it copies memory from the region to by \ct{q} to that pointed
@@ -955,7 +959,7 @@ to by \ct{p}.
   void memcpy(void *p, void *q, size_t size);
 \end{verbatim}
 
-\section{Heaps}
+\section{Heaps, \cmalloc{} and \texttt{free}}
 
 As mentioned above, each dynamic scope has an implicit heap on which
 objects can be allocated and deallocated dynamically.  To allocate an
@@ -963,8 +967,14 @@ object, one first needs a reference to the dynamic scope to be used.
 The system function $\cmalloc$ is like C's \texttt{malloc}, but takes
 this extra scope argument:
 \begin{verbatim}
-  void* $malloc($scope scope, int size);
+  void * $malloc($scope scope, int size);
 \end{verbatim}
+
+The standard C function
+\begin{verbatim}
+  void * malloc(int size);
+\end{verbatim}
+is equivalent to invoking \cmalloc{} on the root dynamic scope.
 
 The system function \ct{free} is used to deallocate a heap object;
 it is just like C's \texttt{free}:
@@ -973,6 +983,8 @@ it is just like C's \texttt{free}:
 \end{verbatim}
 
 \section{Scope Operations}
+
+The following are all on the drawing board, not yet implemented.
 
 Given any left-hand-side expression \ct{expr}, the expression
 \begin{verbatim}
@@ -989,7 +1001,19 @@ returns \emph{true} iff the dynamic scope referenced by \ct{s1}
 contains the dynamic scope referenced by \ct{s2}.  This allows
 one to reason about the tree structure of the dynamic scopes.
 
+The system function
+\begin{verbatim}
+  $scope $scope_parent($scope s);
+\end{verbatim}
+returns the parent dynamic scope of the dynamic scope referenced by
+\ct{s}.  If \ct{s} is the root dynamic scope, it returns the undefined
+value of type $\cscope$.
 
+The system function
+\begin{verbatim}
+  $scope $scope_join($scope s1, $scope s2);
+\end{verbatim}
+returns the smallest dynamic scope containing both \ct{s1} and \ct{s2}.
 
 
 % \section{Pointer types}
