@@ -163,15 +163,14 @@ generated.
 
 \begin{figure}
 \begin{verbatim}
-/* Creates a bundle from the memory region specified by
- * ptr and size, copying the data into the new bundle */
+/* Creates a bundle from the memory region specified by ptr and size,
+ * copying the data into the new bundle */
 $bundle $bundle_pack(void *ptr, int size);
 
 /* Returns the size (number of bytes) of the bundle */
 int $bundle_size($bundle b);
 
-/* Copies the data out of the bundle into the region
- * specified */
+/* Copies the data out of the bundle into the region specified */
 void $bundle_unpack($bundle bundle, void *ptr);
 \end{verbatim}
   \caption{The \emph{bundle} abstract data type}
@@ -181,42 +180,17 @@ void $bundle_unpack($bundle bundle, void *ptr);
 The relevant functions for creating and manipulating bundles
 are given in Figure \ref{fig:bundle}.
 
-\subsection{The \cscope{} type and \chere{} constant}
+\subsection{The \cscope{} type}
+\label{sec:scopetype}
 
-An object of type $\cscope$ is a reference to a dynamic scope.
-It may be thought of as a ``dynamic scope ID, '' but it is not
-an integer and cannot be converted to an integer.
-
-Every scope provides a constant of type $\cscope$ named $chere$.
-This constant is a reference to the dynamic scope in which it
-is contained.  For example,
-\begin{verbatim}
-  { // scope s
-    int *p = (int*)$malloc($here, n*sizeof(int);
-  }
-\end{verbatim}
-allocates an object consisting of $n$ ints in the scope $s$.
-
-The $\cscope$ type is like any other object type.  It may be used as
-the element type of an array, a field in a structure or union, and so
-on.  Expressions of type $\cscope$ may occur on the left or right-hand
-sides of assignments and as arguments in function calls just like any
-other expression.  Two different variables of type $\cscope$ may be
-aliased, i.e., they may refer to the same dynamic scope.  When a
-dynamic scope leaves the state (because control reached the right
-curly brace which marks the end of the scope, or the process exits),
-any reference to that scope becomes ``undefined,'' and an attempt to
-use that scope will result in a runtime error.
-
-% \subsection{Other types}
-
-% There are several types dealing with message-passing: $\cgcomm$
-% (global communicator), $\ccomm$ (local communicator), and $\cmessage$.
-% These types and the operations on them are described in Section
-% \label{sec:communicators}.
-
+An object of type $\cscope$ is a reference to a dynamic scope.  It may
+be thought of as a ``dynamic scope ID, '' but it is not an integer and
+cannot be converted to an integer.  Operations defined on scopes are
+discussed in Section \ref{sec:scopeexpr}.
 
 \section{Expressions}
+
+\subsection{Expressions inherited from C}
 
 The following C expressions are included in CIVL: 
 \begin{itemize}
@@ -244,6 +218,50 @@ The following C expressions are included in CIVL:
 \end{itemize}
 
 Bit-wise operations are not yet supported.
+
+\subsection{Scope expressions}
+\label{sec:scopeexpr}
+
+As mentioned in Section \ref{sec:scopetype}, CIVL-C provides a type
+\cscope.  An object of this type is a reference to a dynamic scope.
+Several constants, expressions, and functions dealing with the
+\cscope{} type are also provided.
+
+The $\cscope$ type is like any other object type.  It may be used as
+the element type of an array, a field in a structure or union, and so
+on.  Expressions of type $\cscope$ may occur on the left or right-hand
+sides of assignments and as arguments in function calls just like any
+other expression.  Two different variables of type $\cscope$ may be
+aliased, i.e., they may refer to the same dynamic scope.  When a
+dynamic scope leaves the state (because control reached the right
+curly brace which marks the end of the scope, or the process exits),
+any reference to that scope becomes ``undefined,'' and an attempt to
+use that scope will result in a runtime error.
+
+\subsubsection{The constant \chere}
+
+A constant \chere{} exists in every scope.  This constant has
+type \cscope{} and refers to the dynamic scope in which it is
+contained.  For example,
+\begin{verbatim}
+  { // scope s
+    int *p = (int*)$malloc($here, n*sizeof(int);
+  }
+\end{verbatim}
+allocates an object consisting of $n$ ints in the scope $s$.
+
+\subsubsection{Scope comparisons}
+
+Let $s_1$ and $s_2$ be expressions of type \cscope.  The following
+are expressions:
+\begin{itemize}
+\item $s_1$ \ct{==} $s_2$.  This is \emph{true} iff $s_1$ and $s_2$
+  refer to the same dynamic scope.
+\item  $s_1$ \ct{!=} $s_2$.  This is \emph{true} iff $s_1$ and $s_2$
+  refer to different dynamic scopes.
+\item etc.
+\end{itemize}
+
 
 \section{Statements}
 
