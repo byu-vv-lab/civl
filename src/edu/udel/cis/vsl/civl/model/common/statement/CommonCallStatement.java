@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -18,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
 /**
  * A function call or spawn. Either of the form f(x) or else v=f(x).
@@ -316,6 +318,57 @@ public class CommonCallStatement extends CommonStatement implements
 	@Override
 	public boolean isSystemCall() {
 		return this.function.isSystem();
+	}
+
+	@Override
+	public String toStepString(AtomicKind atomicKind, int atomCount,
+			boolean atomicLockVarChanged) {
+		String targetString;
+		String result = "  " + source().id() + "->";
+
+		if (isCall() && !isSystemCall()) {
+			if (!(function instanceof AbstractFunction)) {
+				targetString = Integer.toString(function.startLocation().id());
+			} else {
+				return super.toStepString(atomicKind, atomCount,
+						atomicLockVarChanged);
+			}
+		} else
+			return super.toStepString(atomicKind, atomCount,
+					atomicLockVarChanged);
+		result += targetString + ": ";
+		switch (atomicKind) {
+		case ATOMIC_ENTER:
+			if (atomicLockVarChanged) {
+				result += toString() + " ";
+			} else
+				result += "ENTER_ATOMIC (atomicCount++) ";
+			result += Integer.toString(atomCount - 1);
+			break;
+		case ATOMIC_EXIT:
+			if (atomicLockVarChanged) {
+				result += toString() + " ";
+			} else
+				result += "LEAVE_ATOMIC (atomicCount--) ";
+			result += Integer.toString(atomCount);
+			break;
+		case ATOM_ENTER:
+			result += toString() + " ";
+			result += Integer.toString(atomCount - 1);
+			break;
+		case ATOM_EXIT:
+			result += toString() + " ";
+			result += Integer.toString(atomCount);
+			break;
+		default:
+			result += toString();
+		}
+		if (getSource() != null)
+			result += " at " + getSource().getSummary();
+		else
+			result += " at " + source().getSource().getSummary();
+		result += ";\n";
+		return result;
 	}
 
 }

@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
 /**
  * The parent of all statements.
@@ -194,4 +195,6 @@ public interface Statement extends Sourceable {
 	 */
 	StatementKind statementKind();
 
+	String toStepString(AtomicKind atomicKind,
+			int atomCount, boolean atomicLockVarChanged);
 }

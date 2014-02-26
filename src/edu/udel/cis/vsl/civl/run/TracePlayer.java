@@ -81,7 +81,7 @@ public class TracePlayer extends Player {
 		// the Replayer prints:
 		stateManager.setShowStates(false);
 		stateManager.setShowSavedStates(false);
-		stateManager.setShowTransitions(false);
+		stateManager.setShowTransitions(showTransitions);
 		stateManager.setVerbose(false);
 		log.setSearcher(null);
 		replayer = new Replayer<State, Transition>(stateManager, out);

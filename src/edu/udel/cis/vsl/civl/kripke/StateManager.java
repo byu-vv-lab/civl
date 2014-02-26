@@ -516,10 +516,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 					currentLocation.getSource());
 		default:// execute a normal transition
 			if (printTransitions) {
-				out.println();
 				out.print(state + ", ");
 				printTransitionLong(out, transition);
-				out.println(";");
 			}
 			state = state.setPathCondition(((SimpleTransition) transition)
 					.pathCondition());
@@ -610,43 +608,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	private void printStatement(Statement s, AtomicKind atomicKind,
 			int atomCount, boolean atomicLockVarChanged) {
-		CIVLSource statementSource = s.getSource();
-
-		if (statementSource == null)
-			statementSource = s.source().getSource();
-		out.print("  " + s.source().id() + "->");
-		if (s.target() != null)
-			out.print(s.target().id() + ": ");
-		else
-			out.print("RET: ");
-		switch (atomicKind) {
-		case ATOMIC_ENTER:
-			if (atomicLockVarChanged) {
-				out.print(s.toString() + " ");
-			} else
-				out.print("ENTER_ATOMIC (atomicCount++) ");
-			out.print(atomCount - 1);
-			break;
-		case ATOMIC_EXIT:
-			if (atomicLockVarChanged) {
-				out.print(s.toString() + " ");
-			} else
-				out.print("LEAVE_ATOMIC (atomicCount--) ");
-			out.print(atomCount);
-			break;
-		case ATOM_ENTER:
-			out.print(s.toString() + " ");
-			out.print(atomCount - 1);
-			break;
-		case ATOM_EXIT:
-			out.print(s.toString() + " ");
-			out.print(atomCount);
-			break;
-		default:
-			out.print(s.toString());
-		}
-		if (statementSource != null)
-			out.println(" at " + statementSource.getSummary() + ";");
+		out.print(s.toStepString(atomicKind, atomCount, atomicLockVarChanged));
 	}
 
 	/**
@@ -662,7 +624,6 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	private void printTransitionPrefix(boolean printTransitions, State state,
 			int pid) {
 		if (printTransitions) {
-			out.println();
 			out.print(state + ", proc ");
 			out.println(pid + ":");
 		}

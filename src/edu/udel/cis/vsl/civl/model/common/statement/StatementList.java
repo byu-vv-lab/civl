@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
 /**
  * A list of statements that are to be executed in one step of a transition.
@@ -259,6 +260,49 @@ public class StatementList implements Statement {
 	@Override
 	public StatementKind statementKind() {
 		return StatementKind.STATEMENT_LIST;
+	}
+
+	@Override
+	public String toStepString(AtomicKind atomicKind, int atomCount,
+			boolean atomicLockVarChanged) {
+		String result = "  " + this.source().id() + "->";
+
+		if (this.target() != null)
+			result += this.target().id() + ": ";
+		else
+			result += "RET: ";
+		switch (atomicKind) {
+		case ATOMIC_ENTER:
+			if (atomicLockVarChanged) {
+				result += toString() + " ";
+			} else
+				result += "ENTER_ATOMIC (atomicCount++) ";
+			result += Integer.toString(atomCount - 1);
+			break;
+		case ATOMIC_EXIT:
+			if (atomicLockVarChanged) {
+				result += toString() + " ";
+			} else
+				result += "LEAVE_ATOMIC (atomicCount--) ";
+			result += Integer.toString(atomCount);
+			break;
+		case ATOM_ENTER:
+			result += toString() + " ";
+			result += Integer.toString(atomCount - 1);
+			break;
+		case ATOM_EXIT:
+			result += toString() + " ";
+			result += Integer.toString(atomCount);
+			break;
+		default:
+			result += toString();
+		}
+		if (this.getSource() != null)
+			result += " at " + getSource().getSummary();
+		else
+			result += " at " + this.source().getSource().getSummary();
+		result += ";\n";
+		return result;
 	}
 
 }

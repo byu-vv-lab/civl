@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
 /**
  * Sometimes it is useful for the model builder to return a set of statements.
@@ -205,6 +206,13 @@ public class StatementSet implements Statement {
 	@Override
 	public StatementKind statementKind() {
 		return StatementKind.OTHERS;
+	}
+
+	@Override
+	public String toStepString(AtomicKind atomicKind, int atomCount,
+			boolean atomicLockVarChanged) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

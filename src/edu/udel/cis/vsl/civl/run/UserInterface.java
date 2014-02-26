@@ -502,8 +502,9 @@ public class UserInterface {
 		// get the original config and overwrite it with new options...
 		parser.parse(newConfig, traceFile); // gets free args verify filename
 		setToDefault(newConfig, Arrays.asList(showModelO, verboseO, debugO,
-				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
+				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, enablePrintfO));
+		newConfig.setScalarValue(showTransitionsO, true);
 		newConfig.read(config);
 		model = extractModel(out, newConfig, sourceFilename);
 		if (showShortFileNameList(config))

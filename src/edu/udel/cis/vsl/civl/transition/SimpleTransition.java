@@ -3,8 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.transition;
 
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
@@ -73,19 +73,9 @@ public class SimpleTransition extends Transition {
 
 	@Override
 	public String toString() {
-		CIVLSource source = statement.getSource();
 		String result = "proc " + pid + ": \n";
 
-		result += "  " + statement.source().id() + "->";
-		if (statement.target() != null)
-			result += statement.target().id() + ": ";
-		else
-			result += "RET: ";
-		result += statement.toString();
-		if (source != null)
-			result += " at " + source.getSummary();
-		else if (statement.source().getSource() != null)
-			result += " at " + statement.source().getSource().getSummary();
+		result += statement.toStepString(AtomicKind.NONE, pid, false);
 		return result;
 	}
 
