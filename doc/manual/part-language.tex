@@ -92,56 +92,56 @@ numbers. Currently, all of the C real types \texttt{double},
 Array types, \texttt{struct} and \texttt{union} types, \texttt{char},
 and pointer types are all exactly as in C.
 
-\subsection{The heap type $\cheap$ and handles}
+% \subsection{The heap type $\cheap$ and handles}
 
-Unlike C, a CIVL-C program does not necessarily have access to a
-single, global heap. Instead, there is a $\cheap$ type, and heaps may
-be declared explicitly wherever they are needed. Hence a CIVL-C
-program may have several heaps, and these may exist in different
-scopes.
+% Unlike C, a CIVL-C program does not necessarily have access to a
+% single, global heap. Instead, there is a $\cheap$ type, and heaps may
+% be declared explicitly wherever they are needed. Hence a CIVL-C
+% program may have several heaps, and these may exist in different
+% scopes.
 
-A heap is declared and created as follows:
-\begin{verbatim}
-  $heap h = $heap_create();
-\end{verbatim}
-The function \verb!$heap_create()! creates a new empty heap in the
-current scope and returns a \emph{handle} to that heap. A handle is
-like a pointer: it is a reference to another object. However, a handle
-is much more restricted than a general pointer. In particular, it
-cannot be dereferenced (by the \ct{*} operator). The underlying heap
-object can only be accessed by using a handle to it as an argument to
-a system function.
+% A heap is declared and created as follows:
+% \begin{verbatim}
+%   $heap h = $heap_create();
+% \end{verbatim}
+% The function \verb!$heap_create()! creates a new empty heap in the
+% current scope and returns a \emph{handle} to that heap. A handle is
+% like a pointer: it is a reference to another object. However, a handle
+% is much more restricted than a general pointer. In particular, it
+% cannot be dereferenced (by the \ct{*} operator). The underlying heap
+% object can only be accessed by using a handle to it as an argument to
+% a system function.
 
-Handles can be used in assignments and passed as arguments to functions.
-For example, this declaration could follow the one above:
-\begin{verbatim}
-  $heap h2=h;
-\end{verbatim}
-After executing this code, \ct{h2} and \ct{h} will be aliased, i.e., the two
-handles will refer to the same heap object.
+% Handles can be used in assignments and passed as arguments to functions.
+% For example, this declaration could follow the one above:
+% \begin{verbatim}
+%   $heap h2=h;
+% \end{verbatim}
+% After executing this code, \ct{h2} and \ct{h} will be aliased, i.e., the two
+% handles will refer to the same heap object.
 
-The heap object exists in the scope in which it is created. In
-particular, it will disappear when that scope disappears, i.e., when
-control reaches the right curly brace that defines the end of the
-scope. At that point, any references into the heap become invalid.
+% The heap object exists in the scope in which it is created. In
+% particular, it will disappear when that scope disappears, i.e., when
+% control reaches the right curly brace that defines the end of the
+% scope. At that point, any references into the heap become invalid.
 
-The following system functions deal with heaps:
-\begin{verbatim}
-  void* $malloc($heap h, int size);
-  void free(void *p)
-\end{verbatim}
-The first function is like C's \texttt{malloc}, except that you
-specify the heap in which the allocation takes place.
-This modifies the specified heap and returns a pointer to the new object.
-The function can only occur in a context in which the type of the object is
-specified, as in:
-\begin{verbatim}
-  $heap h;
-  int n = 10;
-  double *p = (double*)$malloc(h, n*sizeof(double));
-\end{verbatim}
-The function \ct{free} is exactly the same as in C. Note that
-\texttt{free} modifies the heap which was used to allocate \texttt{p}.
+% The following system functions deal with heaps:
+% \begin{verbatim}
+%   void* $malloc($heap h, int size);
+%   void free(void *p)
+% \end{verbatim}
+% The first function is like C's \texttt{malloc}, except that you
+% specify the heap in which the allocation takes place.
+% This modifies the specified heap and returns a pointer to the new object.
+% The function can only occur in a context in which the type of the object is
+% specified, as in:
+% \begin{verbatim}
+%   $heap h;
+%   int n = 10;
+%   double *p = (double*)$malloc(h, n*sizeof(double));
+% \end{verbatim}
+% The function \ct{free} is exactly the same as in C. Note that
+% \texttt{free} modifies the heap which was used to allocate \texttt{p}.
 
 
 \subsection{The bundle type: $\cbundle$}
@@ -181,17 +181,30 @@ are given in Figure \ref{fig:bundle}.
 
 \subsection{Scope type: \cscope}
 
-A variable may be declared to have type \cscope:
+An object of type $\cscope$ is a reference to a dynamic scope.
+It may be thought of as a ``dynamic scope ID, '' but it is not
+an integer and cannot be converted to an integer.
+
+Every scope provides a constant of type $\cscope$ named $chere$.
+This constant is a reference to the dynamic scope in which it
+is contained.  For example,
 \begin{verbatim}
-  $scope s;
+  { // scope s
+    int *p = (int*)$malloc($here, n*sizeof(int);
+  }
 \end{verbatim}
-A value of type \cscope{} represents a dynamic scope. The variable
-\ct{s} in the declaration above is initialized with a value
-representing the dynamic scope in which it occurs.
+allocates an object consisting of $n$ ints in the scope $s$.
 
-Scope variables are very restricted and can only be used in a few
-places. These are described in Chapter \ref{chap:pointers}.
-
+The $\cscope$ type is like any other object type.  It may be used as
+the element type of an array, a field in a structure or union, and so
+on.  Expressions of type $\cscope$ may occur on the left or right-hand
+sides of assignments and as arguments in function calls just like any
+other expression.  Two different variables of type $\cscope$ may be
+aliased, i.e., they may refer to the same dynamic scope.  When a
+dynamic scope leaves the state (because control reached the right
+curly brace which marks the end of the scope, or the process exits),
+any reference to that scope becomes ``undefined,'' and an attempt to
+use that scope will result in a runtime error.
 
 \subsection{Message-passing types}
 
@@ -362,8 +375,11 @@ $[0,\texttt{n}-1]$.
 This is a primitive object type and functions like any other primitive
 C type (e.g., \texttt{int}). An object of this type refers to a
 process. It can be thought of as a process ID, but it is not an
-integer and cannot be cast to one. Certain expressions take an
-argument of \cproc{} type and some return something of \cproc{} type.
+integer and cannot be cast to one.  It is analogous to the $\cscope$
+type for dynamic scopes.
+
+Certain expressions take an argument of \cproc{} type and some return
+something of \cproc{} type.
 
 \subsection{The \emph{self} process constant: \cself}
 
@@ -389,12 +405,13 @@ simply ignored.
 
 \subsection{Waiting for another process to terminate: \cwait}
 
-This is a statement that takes an argument of type
-\cproc{} and blocks until the referenced process terminates:
+The system function $\cwait$ has signature
 \begin{verbatim}
-  $wait expr;
+  void $wait($proc p);
 \end{verbatim}
-
+When invoked, this function will not return until the process
+referenced by \ct{p} has terminated. Note that $p$ can be any
+expression of type \cproc{}, not just a variable.
 
 \subsection{Terminating a process immediately: \cexit}
 
@@ -615,8 +632,8 @@ this handle as an argument.
  * The global communicator will have size communication places.  The
  * global communicator defines a communication "universe" and encompasses
  * message buffers and all other components of the state associated to
- * message-passing.  The new object will be allocated in the given heap. */
-$gcomm $gcomm_create($heap h, int size);
+ * message-passing.  The new object will be allocated in the given scope. */
+$gcomm $gcomm_create($scope s, int size);
 
 /* Creates a new local communicator object and returns a handle to it.
  * The new communicator will be affiliated with the specified global
@@ -627,8 +644,8 @@ $gcomm $gcomm_create($heap h, int size);
  * handle may be used by more than one process, but all of those
  * processes will be viewed as occupying the same place.
  * Only one call to $comm_create may occur for each gcomm-place pair.
- * The new object will be allocated in the given heap. */
-$comm $comm_create($heap h, $gcomm gcomm, int place);
+ * The new object will be allocated in the given scope. */
+$comm $comm_create($scope s, $gcomm gcomm, int place);
 
 /* Returns the size (number of places) in the global communicator associated
  * to the given comm. */
@@ -710,24 +727,44 @@ satsify their contract.
 
 \section{Input-output signature}
 
-\subsection{Input type qualifier: \cinput} A variable in the root scope only may be declared
-with this type modifier indicating it is an ``input'' variable, as in
+\subsection{Input type qualifier: \cinput}
+
+The declaration of a variable in the root scope may
+include the type qualifier \cinput, e.g.,
 \begin{verbatim}
   $input int n;
 \end{verbatim}
-As explained above, the variable becomes a parameter to the root
-procedure.  This is used when comparing two programs for functional
-equivalence.  The two programs are functionally equivalent if,
-whenever they are given the same inputs (i.e., corresponding \cinput{}
-variables are initialized with the same values) they will produce the
-same outputs (i.e., corresponding \coutput{} variables will end up
-with the same values at termination).  Input variables can also be
-assigned a concrete value on the command line.
+This declares the variable to be an input variable, i.e., one which is
+considered to be an input to the program.  Such a variable is
+initialized with an arbitrary (unconstrained) value of its type.  When
+using symbolic execution to verify a program, such a variable will be
+assigned a unique symbolic constant of its type.
+
+In contrast, variables in the root scope which are not input variables
+will instead be initialized with the ``undefined'' value.  If an
+undefined value is used in some way (such as in an argument to an
+operator), an error occurs.
+
+In addition, input variables may only be read, never written to.
+
+Alternatively, it is also possible to specify a particular concrete
+initial value for an input variable.  This is done using a command
+line argument when verifying or running the program.
+
+Input (and output) variables also play a key role when determining
+whether two programs are functionally equivalent.  Two programs are
+considered functionally equivalent if, whenever they are given the
+same inputs (i.e., corresponding \cinput{} variables are initialized
+with the same values) they will produce the same outputs (i.e.,
+corresponding \coutput{} variables will end up with the same values at
+termination).
 
 \subsection{Output type qualifier: \coutput}
 
-A variable in the root scope may be declared with this type modifier
-to declare it to be an output variable.
+A variable in the root scope may be declared with this type qualifier
+to declare it to be an output variable.  Output variables are ``dual''
+to input variables.  They may only be written to, never read.  They
+are used primarily in functional equivalence checking.
 
 \section{Assertions and assumptions}
 
@@ -864,8 +901,6 @@ by certain verification techniques.
 \emph{Status:} parsed, but nothing is currently done with this
 information.
 
-
-
 \section{Concurrency specification}
 
 \subsection{Remote expressions: \texttt{e@x}}.
@@ -905,11 +940,10 @@ array.  Example:
 \label{chap:pointers}
 
 CIVL-C supports pointers, using the same operators with the same
-meanings as C (\texttt{\&}, \texttt{*}, pointer arithmetic).
-As mentioned above, there is also a heap type \cheap{}, which can
-be used to declare multiple heaps in a CIVL-C program.  The
-interaction between pointers, heaps, and scopes is an important
-aspect of CIVL-C.
+meanings as C (\texttt{\&}, \texttt{*}, pointer arithmetic).  There is
+also a heap in every scope, and system functions to allocate and
+deallocate objects in the specified scope.  The interaction between
+pointers, heaps, and scopes is an important aspect of CIVL-C.
 
 \section{Memory functions}
 
@@ -921,150 +955,187 @@ to by \ct{p}.
   void memcpy(void *p, void *q, size_t size);
 \end{verbatim}
 
-\section{Pointer types}
+\section{Heaps}
 
-Given any object type $T$ and a static scope $s$ in a CIVL-C program,
-there is a type \emph{pointer-to-$T$-in-$s$}.  The type is used to
-represent a pointer to a memory location of type $T$ in scope $s$ or a
-descendant of $s$ (i.e., some scope contained in $s$).
-
-If scope $s_1$ is a descendant of $s_2$ (i.e., $s_1$ is lexically
-contained in $s_2$), the type \emph{pointer-to-$T$-in-$s_1$} is a
-subtype of \emph{pointer-to-$T$-in-$s_2$}.  This means that any
-expression of the first type can be used wherever an object of the
-second type is expected.  In particular, any expression $e$ of the
-subtype can be assigned to a left-hand-side expression of the
-supertype without explicit casts; also $e$ can be used as an argument
-to a function for which the corresponding parameter has the supertype.
-
-The syntax for denoting this type adheres to the usual C syntax for
-denoting the type \emph{pointer-to-$T$} with the addition of a scope
-parameter within angular brackets immediately following the \texttt{*}
-token.  For example, to declare a variable \texttt{p} of type
-\emph{pointer-to-$T$-in-$s$}, one writes
+As mentioned above, each dynamic scope has an implicit heap on which
+objects can be allocated and deallocated dynamically.  To allocate an
+object, one first needs a reference to the dynamic scope to be used.
+The system function $\cmalloc$ is like C's \texttt{malloc}, but takes
+this extra scope argument:
 \begin{verbatim}
-  int *<s> p;
+  void* $malloc($scope scope, int size);
 \end{verbatim}
-If the scope modifier \texttt{<...>} is absent, the scope is taken to
-be the root scope $s_0$.  The object has type
-\emph{pointer-to-$T$-in-$s_0$}, which is abreviated as
-\emph{pointer-to-$T$}.  In this way, stanard C programs can be
-interpreted as CIVL-C programs.
 
-\section{Address-of operator}
-
-The address-of operator \texttt{\&} returns a pointer of the
-appropriate subtype using the innermost scope in which its left-hand-side
-argument is declared.  For example
-
+The system function \ct{free} is used to deallocate a heap object;
+it is just like C's \texttt{free}:
 \begin{verbatim}
-  {
-    $scope s1;
-    int x;
-    double a[N];
-    int *<s1> p = &x;
-    double *<s1> q = &a[2];
-  }
+  void free(void *p);
 \end{verbatim}
-is correct (in particular, it is type-correct) because \texttt{\&x}
-has type \emph{pointer-to-\texttt{int}-in-\texttt{s1}}, since
-\texttt{s1} is the scope in which \texttt{x} is declared.
 
-Another pointer example:
-\begin{small}
+\section{Scope Operations}
+
+Given any left-hand-side expression \ct{expr}, the expression
 \begin{verbatim}
-{ $heap h = $heap_create();
-  { $scope s1;
-    double x;
-    { $scope s2;
-      double y;
-      double *<s1> p;
-      /* p can only point to something in s1 or descendant, for example, s2 */
-      p = &x; // fine
-      p = &y; // fine
-      p = (double*)$malloc(h, 10*sizeof(double)); // static type error
-    }
-  }
-}
+  $scopeof(expr)
 \end{verbatim}
-\end{small}
+evaluates to the dynamic scope containing the object specified by
+\ct{expr}.
 
-\section{Pointer addition and subtractions}
+The system function
+\begin{verbatim}
+  _Bool $scope_contains($scope s1, $scope s2)
+\end{verbatim}
+returns \emph{true} iff the dynamic scope referenced by \ct{s1}
+contains the dynamic scope referenced by \ct{s2}.  This allows
+one to reason about the tree structure of the dynamic scopes.
 
-If \texttt{e} is an expression of type \emph{pointer-to-$T$-in-$s$}
-and \texttt{i} is an expression of integer type then \texttt{e+i} also
-has type \emph{pointer-to-$T$-in-$s$}.  In other words, pointer
-addition cannot leave the scope of the original pointer.  This
-reflects the fact that every object is contained in one scope, and
-pointer addition cannot leave the object.
 
-Pointer subtraction is defined on two pointers of the same type, where
-``same'' includes the scope.  That is checked statically.  As in C, it
-is only defined if the two pointers point to the same object.  In
-CIVL-C, a runtime error will be thrown if they do not point to the
-same object.
 
-\section{Semantics of scopes and pointer types}
 
-A variable of type \cscope{} is treated like any other variable.
-It becomes part of the state when the scope in which it is declared
-is instantiated to form a dynamic scope.  The variable is 
-initialized  at that time and its value cannot change.
+% \section{Pointer types}
 
-Each time a dynamic scope is instantiated, it is assigned a unique ID
-number.  The exactly value of the ID number is not relevant, it just
-has to be distince from any other scope ID number that currently
-exists in the state.  This is the value that is assigned to the scope
-variable.  Therefore, if a static scope contains a scope variable, and
-that scope is instantiated twice to form two distinct dynamic scopes,
-the values assigned to the two variables will be distinct.
+% Given any object type $T$ and a static scope $s$ in a CIVL-C program,
+% there is a type \emph{pointer-to-$T$-in-$s$}.  The type is used to
+% represent a pointer to a memory location of type $T$ in scope $s$ or a
+% descendant of $s$ (i.e., some scope contained in $s$).
 
-A pointer value is an ordered pair $\langle \delta,r \rangle$, where
-$\delta$ is a dynamic scope ID and $r$ is a reference to a memory
-location in the static scope associated to $\delta$.  (We will define
-the exact form of a reference later.)
+% If scope $s_1$ is a descendant of $s_2$ (i.e., $s_1$ is lexically
+% contained in $s_2$), the type \emph{pointer-to-$T$-in-$s_1$} is a
+% subtype of \emph{pointer-to-$T$-in-$s_2$}.  This means that any
+% expression of the first type can be used wherever an object of the
+% second type is expected.  In particular, any expression $e$ of the
+% subtype can be assigned to a left-hand-side expression of the
+% supertype without explicit casts; also $e$ can be used as an argument
+% to a function for which the corresponding parameter has the supertype.
 
-When a dynamic scope is instantiated, each new variable created is
-assigned a \emph{dynamic type}.  This is a refinement of the static
-type associated to the static variable.   Every dynamic type
-is an instance of exactly one static type.  The dynamic
-type of the newly instantiated variable is an instance of the
-static type of the static variable.
+% The syntax for denoting this type adheres to the usual C syntax for
+% denoting the type \emph{pointer-to-$T$} with the addition of a scope
+% parameter within angular brackets immediately following the \texttt{*}
+% token.  For example, to declare a variable \texttt{p} of type
+% \emph{pointer-to-$T$-in-$s$}, one writes
+% \begin{verbatim}
+%   int *<s> p;
+% \end{verbatim}
+% If the scope modifier \texttt{<...>} is absent, the scope is taken to
+% be the root scope $s_0$.  The object has type
+% \emph{pointer-to-$T$-in-$s_0$}, which is abreviated as
+% \emph{pointer-to-$T$}.  In this way, stanard C programs can be
+% interpreted as CIVL-C programs.
 
-The dynamic pointer types have the form
-\emph{pointer-to-$t$-in-$\delta$}, where $t$ is a dynamic type and
-$\delta$ is a dynamic scope ID.  For a program to be dynamically type
-safe, such a variable should hold only values of the form $\langle
-\delta, r\rangle$.  In particular, the variable should never be
-assigned a value where the dynamic scope component is a different
-instance of the static scope $s$ associated to $\delta$.
+% \section{Address-of operator}
 
-\section{Pointer casts}
+% The address-of operator \texttt{\&} returns a pointer of the
+% appropriate subtype using the innermost scope in which its left-hand-side
+% argument is declared.  For example
 
-If scope $s_1$ is contained in scope $s_2$, an expression of type
-\emph{pointer-to-$T$-in-$s_1$} can always be cast to
-\emph{pointer-to-$T$-in-$s_2$},
- because the first is a subtype of the second.  (As described above,
-the cast is unnecessary.)  
+% \begin{verbatim}
+%   {
+%     $scope s1 = $here();
+%     int x;
+%     double a[N];
+%     int *<s1> p = &x;
+%     double *<s1> q = &a[2];
+%   }
+% \end{verbatim}
+% is correct (in particular, it is type-correct) because \texttt{\&x}
+% has type \emph{pointer-to-\texttt{int}-in-\texttt{s1}}, since
+% \texttt{s1} is the scope in which \texttt{x} is declared.
 
-The cast in the other direction is also allowed, but the dynamic type
-safety of that cast will only be checked at runtime.  In particular, a
-runtime error will result if the cast attempts to cast the pointer
-value to a dynamic scope which does not contain (is an ancestor of)
-the dynamic scope component of the pointer value.
+% Another pointer example:
+% \begin{small}
+% \begin{verbatim}
+% { $scope s0 = $here();
+%   { $scope s1 = $here();
+%     double x;
+%     { $scope s2 = $here();
+%       double y;
+%       double *<s1> p;
+%       /* p can only point to something in s1 or descendant, for example, s2 */
+%       p = &x; // fine
+%       p = &y; // fine
+%       p = (double*)$malloc(s0, 10*sizeof(double)); // static type error
+%     }
+%   }
+% }
+% \end{verbatim}
+% \end{small}
 
-A type \emph{pointer-to-$T_1$-in-$s$} can be cast to a type
-\emph{pointer-to-$T_2$-in-$s$} according to the usual rules of C.  In
-other words, usual casting rules apply as long as you don't change the
-scope.
+% \section{Pointer addition and subtractions}
 
-\section{Scope-Parameterized Functions}
+% If \texttt{e} is an expression of type \emph{pointer-to-$T$-in-$s$}
+% and \texttt{i} is an expression of integer type then \texttt{e+i} also
+% has type \emph{pointer-to-$T$-in-$s$}.  In other words, pointer
+% addition cannot leave the scope of the original pointer.  This
+% reflects the fact that every object is contained in one scope, and
+% pointer addition cannot leave the object.
 
-Coming soon.  (Parsed, type checked, not currently used otherwise.)
+% Pointer subtraction is defined on two pointers of the same type, where
+% ``same'' includes the scope.  That is checked statically.  As in C, it
+% is only defined if the two pointers point to the same object.  In
+% CIVL-C, a runtime error will be thrown if they do not point to the
+% same object.
 
-\section{Scope-Parameterized Type Definitions}
+% \section{Semantics of scopes and pointer types}
 
-Coming soon. (Ditto.)
+% A variable of type \cscope{} is treated like any other variable.
+% It becomes part of the state when the scope in which it is declared
+% is instantiated to form a dynamic scope.  The variable is 
+% initialized  at that time and its value cannot change.
+
+% Each time a dynamic scope is instantiated, it is assigned a unique ID
+% number.  The exactly value of the ID number is not relevant, it just
+% has to be distince from any other scope ID number that currently
+% exists in the state.  This is the value that is assigned to the scope
+% variable.  Therefore, if a static scope contains a scope variable, and
+% that scope is instantiated twice to form two distinct dynamic scopes,
+% the values assigned to the two variables will be distinct.
+
+% A pointer value is an ordered pair $\langle \delta,r \rangle$, where
+% $\delta$ is a dynamic scope ID and $r$ is a reference to a memory
+% location in the static scope associated to $\delta$.  (We will define
+% the exact form of a reference later.)
+
+% When a dynamic scope is instantiated, each new variable created is
+% assigned a \emph{dynamic type}.  This is a refinement of the static
+% type associated to the static variable.   Every dynamic type
+% is an instance of exactly one static type.  The dynamic
+% type of the newly instantiated variable is an instance of the
+% static type of the static variable.
+
+% The dynamic pointer types have the form
+% \emph{pointer-to-$t$-in-$\delta$}, where $t$ is a dynamic type and
+% $\delta$ is a dynamic scope ID.  For a program to be dynamically type
+% safe, such a variable should hold only values of the form $\langle
+% \delta, r\rangle$.  In particular, the variable should never be
+% assigned a value where the dynamic scope component is a different
+% instance of the static scope $s$ associated to $\delta$.
+
+% \section{Pointer casts}
+
+% If scope $s_1$ is contained in scope $s_2$, an expression of type
+% \emph{pointer-to-$T$-in-$s_1$} can always be cast to
+% \emph{pointer-to-$T$-in-$s_2$},
+%  because the first is a subtype of the second.  (As described above,
+% the cast is unnecessary.)  
+
+% The cast in the other direction is also allowed, but the dynamic type
+% safety of that cast will only be checked at runtime.  In particular, a
+% runtime error will result if the cast attempts to cast the pointer
+% value to a dynamic scope which does not contain (is an ancestor of)
+% the dynamic scope component of the pointer value.
+
+% A type \emph{pointer-to-$T_1$-in-$s$} can be cast to a type
+% \emph{pointer-to-$T_2$-in-$s$} according to the usual rules of C.  In
+% other words, usual casting rules apply as long as you don't change the
+% scope.
+
+% \section{Scope-Parameterized Functions}
+
+% Coming soon.  (Parsed, type checked, not currently used otherwise.)
+
+% \section{Scope-Parameterized Type Definitions}
+
+% Coming soon. (Ditto.)
 
 \chapter{Libraries}
 

@@ -5,95 +5,112 @@
 
 \section{Symbolic execution}
 
+The tools currently in the CIVL tool kit all use \emph{symbolic
+  execution}.  This is a technique in which variables are assigned
+symbolic rather than concrete values.  In particular, input variables
+are assigned unique \emph{symbolic constants}, which are symbols such
+as $X$, $Y$, and so on.  Operations produce symbolic expressions in
+those symbols, such as $(X+Y)/2$.
+
 \section{Tool overview}
 
 Current tools allow one to \emph{run} a CIVL program using random
 choice to resolve nondeterministic choices; \emph{verify} a program
-using model checking to explore all states of the program;
-\emph{replay} a trace if an error is found.
+using model checking to explore all states of the program; and
+\emph{replay} a trace if an error is found.  There are also commands
+to show the results just of preprocessing or parsing a file; as these
+are basically sub-tasks of the other tasks, they are used mainly for
+debugging.
 
-The properties checked are assertion violations, division by zero,
-illegal pointer accesses, etc.
+Each tool is launched from the command line by typing ``\texttt{civl}
+\textit{cmd} \ldots'', where \textit{cmd} is one of
+\begin{itemize}
+\item \ct{help} : print usage information
+\item \ct{run}  : run the program using random simulation
+\item \ct{verify} : verify program
+\item \ct{replay} : replay trace for program
+\item \ct{parse} : show result of preprocessing and parsing file
+\item \ct{preprocess} : show result of preprocessing file only.
+\end{itemize}
+The additional arguments and options are described below and are also
+shown by the \ct{help} command.
 
-The available tools and options are summarized by the \texttt{civl
-  help} command:
+A number of properties are checked when running or verifying
+a CIVL program.  These include the following:
+\begin{itemize}
+\item absence of deadlocks
+\item absence of assertion violations
+\item absence of division or modulus with denominator $0$
+\item absence of illegal pointer dereferences
+\item absence of out-of-bounds array indexes
+\item absence of invalid casts
+\item every object is defined (i.e., initialized) before
+  it is used.
+\end{itemize}
 
-\begin{verbatim}
-Usage: civl <command> <options> filename ...
-Commands:
-  verify : verify program filename
-  run : run program filename
-  help : print this message
-  replay : replay trace for program filename
-  parse : show result of preprocessing and parsing filename
-  preprocess : show result of preprocessing filename
-Options:
-  -debug or -debug=BOOLEAN (default: false)
-    debug mode: print very detailed information
-  -echo or -echo=BOOLEAN (default: false)
-    print the command line
-  -errorBound=INTEGER (default: 1)
-    stop after finding this many errors
-  -guided or -guided=BOOLEAN
-    user guided simulation; applies only to run, ignored
-    for all other commands
-  -id=INTEGER (default: 0)
-    ID number of trace to replay
-  -inputKEY=VALUE
-    initialize input variable KEY to VALUE
-  -maxdepth=INTEGER (default: 2147483647)
-    bound on search depth
-  -min or -min=BOOLEAN (default: false)
-    search for minimal counterexample
-  -por=STRING (default: std)
-    partial order reduction (por) choices:
-    std (standard por) or scp (scoped por)
-  -random or -random=BOOLEAN
-    select enabled transitions randomly; default for run,
-    ignored for all other commands
-  -saveStates or -saveStates=BOOLEAN (default: true)
-    save states during depth-first search
-  -seed=STRING
-    set the random seed; applies only to run
-  -showModel or -showModel=BOOLEAN (default: false)
-    print the model
-  -showProverQueries or -showProverQueries=BOOLEAN (default: false)
-    print theorem prover queries only
-  -showQueries or -showQueries=BOOLEAN (default: false)
-    print all queries
-  -showSavedStates or -showSavedStates=BOOLEAN (default: false)
-    print saved states only
-  -showStates or -showStates=BOOLEAN (default: false)
-    print all states
-  -showTransitions or -showTransitions=BOOLEAN (default: false)
-    print transitions
-  -simplify or -simplify=BOOLEAN (default: true)
-    simplify states?
-  -solve or -solve=BOOLEAN (default: false)
-    try to solve for concrete counterexample
-  -states=STRING (default: immutable)
-    state implementation: immutable, transient, persistent
-  -sysIncludePath=STRING
-    set the system include path
-  -trace=STRING
-    filename of trace to replay
-  -userIncludePath=STRING
-    set the user include path
-  -verbose or -verbose=BOOLEAN (default: false)
-    verbose mode
-\end{verbatim}
 
-\chapter{Running a CIVL-C program}
+\section{ Options}
 
-\chapter{Model Checking}
+The following command line options are available:
 
-\chapter{Replaying counter-examples}
+\newenvironment{optionlist}{\begin{flushleft}}{\end{flushleft}}
+\newcommand{\option}[2]{#1\\[0mm]\makebox[5mm]{}#2\\[3mm]}
+\newcommand{\booloption}[3]{\option{\ct{-#1} or \ct{-#1=}\textit{boolean}
+    (default: \ct{#2})}{#3}}
+\newcommand{\intoption}[3]{\option{\ct{-#1=}\textit{integer}
+    (default: \ct{#2})}{#3}}
+\newcommand{\mapoption}[2]{\option{\ct{-#1}\textit{key}\ct{=}\textit{value}}{#2}}
+\newcommand{\stringoption}[3]{\option{\ct{-#1=}\textit{string}
+    (default: \ct{#2})}{#3}}
 
-\chapter{C/MPI Programs}
+\begin{optionlist}
+  \booloption{debug}{false}{debug mode: print very detailed information}
+  \booloption{echo}{false}{print the command line}
+  \intoption{errorBound}{1}{stop after finding this many errors}
+  \booloption{guided}{false}{user guided simulation; applies only to
+    run, ignored for all other commands}
+  \intoption{id}{0}{ID number of trace to replay}
+  \mapoption{input}{initialize input variable \textit{key} to
+    \textit{value}}
+  \intoption{maxdepth}{2147483647}{bound on search depth}
+  \booloption{min}{false}{search for minimal counterexample}
+  \stringoption{por}{std}{partial order reduction (por) choices:
+    std (standard por) or scp (scoped por)}
+  \booloption{random}{varies}{select enabled transitions randomly;
+    default for \texttt{run}, ignored for all other commands}
+  \booloption{saveStates}{true}{save states during depth-first search}
+  \stringoption{seed}{none}{set the random seed; applies only to run}
+  \booloption{showModel}{false}{print the model}
+  \booloption{showProverQueries}{false}{print theorem prover queries
+    only}
+  \booloption{showQueries}{false}{print all queries}
+  \booloption{showSavedStates}{false}{print saved states only}
+  \booloption{showStates}{false}{print all states}
+  \booloption{showTransitions}{false}{print transitions}
+  \booloption{simplify}{true}{simplify states?}
+  \booloption{solve}{false}{try to solve for concrete counterexample}
+  \stringoption{sysIncludePath}{}{set the system include path}
+  \stringoption{trace}{}{filename of trace to replay}
+  \stringoption{userIncludePath}{}{set the user include path}
+  \booloption{verbose}{false}{verbose mode}
+\end{optionlist}
 
+\chapter{Running a CIVL-C program: \texttt{civl run}}
+
+The syntax for the \ct{run} command is:
+\begin{flushleft}
+\ \ \ct{civl\ run}\ \textit{options} \textit{filename}
+\end{flushleft}
 
 \chapter{Transitions}
-In CIVL, a transition stands for the execution of a number of statements of a certain process from one state, and the execution of each statement is considered as one step. A transition has the following form in the output, where sid and sid' are the identifiers for the source and the target states, pid is the identifier of the process that this transition belongs to, and step 0,1 ... are the steps contained in the transitions.
+
+In CIVL, a transition stands for the execution of a number of
+statements of a certain process from one state, and the execution of
+each statement is considered as one step. A transition has the
+following form in the output, where sid and sid' are the identifiers
+for the source and the target states, pid is the identifier of the
+process that this transition belongs to, and step 0,1 ... are the
+steps contained in the transitions.
 
 \begin{verbatim}
 State sid, proc pid: 
@@ -103,13 +120,20 @@ State sid, proc pid:
 --> State sid'
 \end{verbatim}
 
-A step of a transition has the following form in the CIVL output, where src and dst is the source and destination location of the statement executed in the step, file is the file that contains the source code of the statement, location and text are the location and summary of text of the statement in the source file.
+A step of a transition has the following form in the CIVL output,
+where src and dst is the source and destination location of the
+statement executed in the step, file is the file that contains the
+source code of the statement, location and text are the location and
+summary of text of the statement in the source file.
 
 \begin{verbatim}
   src->dst: statement at file:location "text";
 \end{verbatim}
 
-For example, the following is a transition from state 0 to state 1, containing 6 steps. File names are renamed with short names and the mapping of short names and the original files is presented in output as well.
+For example, the following is a transition from state 0 to state 1,
+containing 6 steps. File names are renamed with short names and the
+mapping of short names and the original files is presented in output
+as well.
 
 \begin{verbatim}
 File name list:
@@ -125,5 +149,6 @@ State 0, proc 0:
 --> State 1
 \end{verbatim}
 
-To make use of this feature, one needs to specify the option ``-showTransitions'' when running CIVL.
+To make use of this feature, one needs to specify the option
+\texttt{-showTransitions} when running CIVL.
 
