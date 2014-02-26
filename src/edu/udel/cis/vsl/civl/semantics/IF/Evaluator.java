@@ -391,4 +391,10 @@ public interface Evaluator {
 	void logSimpleError(CIVLSource source, State state, ErrorKind errorKind,
 			String message) throws UnsatisfiablePathConditionException;
 
+	SymbolicExpression heapPointer(CIVLSource source, State state,
+			SymbolicExpression scopeValue)
+			throws UnsatisfiablePathConditionException;
+
+	SymbolicExpression heapValue(CIVLSource source, State state,
+			SymbolicExpression scopeValue) throws UnsatisfiablePathConditionException;
 }

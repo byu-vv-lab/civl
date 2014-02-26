@@ -70,6 +70,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -2583,6 +2584,53 @@ public class CommonEvaluator implements Evaluator {
 	@Override
 	public void setExecutor(Executor executor) {
 		this.executor = executor;
+	}
+
+	@Override
+	public SymbolicExpression heapValue(CIVLSource source, State state,
+			SymbolicExpression scopeValue)
+			throws UnsatisfiablePathConditionException {
+		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
+
+		if (dyScopeID < 0) {
+			logSimpleError(source, state, ErrorKind.DEREFERENCE,
+					"Attempt to dereference pointer into scope which has been removed from state");
+			throw new UnsatisfiablePathConditionException();
+		} else {
+			DynamicScope dyScope = state.getScope(dyScopeID);
+			Variable heapVariable = dyScope.lexicalScope().variable("__h__");
+
+			if (heapVariable == null) {
+				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+						"Attempt to dereference pointer into a heap that never exists");
+				throw new UnsatisfiablePathConditionException();
+			}
+			return dyScope.getValue(heapVariable.vid());
+		}
+	}
+
+	@Override
+	public SymbolicExpression heapPointer(CIVLSource source, State state,
+			SymbolicExpression scopeValue) throws UnsatisfiablePathConditionException {
+		ReferenceExpression symRef = (ReferenceExpression) universe
+				.canonic(universe.identityReference());
+		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
+
+		if (dyScopeID < 0) {
+			logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+					"Attempt to access the heap of the scope that has been removed from state");
+			throw new UnsatisfiablePathConditionException();
+		} else {
+			DynamicScope dyScope = state.getScope(dyScopeID);
+			Variable heapVariable = dyScope.lexicalScope().variable("__h__");
+
+			if (heapVariable == null) {
+				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+						"Attempt to access a heap that never exists");
+				throw new UnsatisfiablePathConditionException();
+			}
+			return makePointer(dyScopeID, heapVariable.vid(), symRef);
+		}
 	}
 
 }

@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -310,30 +309,22 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * @param argumentValues
 	 * @param source
 	 * @return
-	 * @throws UnsatisfiablePathConditionException 
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeFree(State state, int pid, Expression[] arguments,
-			SymbolicExpression[] argumentValues, CIVLSource source) throws UnsatisfiablePathConditionException {
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		Expression pointerExpression = arguments[0];
 		SymbolicExpression firstElementPointer = argumentValues[0];
-		// Expression heapPointerExpression = arguments[0];
 		CIVLHeapType heapType = modelFactory.heapType();
-		// (CIVLHeapType) ((CIVLPointerType) heapPointerExpression
-		// .getExpressionType()).baseType();
 		SymbolicExpression heapScopeID = universe.tupleRead(
 				firstElementPointer, universe.intObject(0));
-		SymbolicExpression heapVarID = universe.tupleRead(firstElementPointer,
-				universe.intObject(1));
 		SymbolicExpression heapObjectPointer;
 		Evaluation eval;
 		int index;
 		SymbolicExpression undef;
-		ReferenceExpression symRef = (ReferenceExpression) universe
-				.canonic(universe.identityReference());
-		SymbolicExpression heapPointer = universe.tuple(
-				modelFactory.pointerSymbolicType(),
-				Arrays.asList(new SymbolicExpression[] { heapScopeID,
-						heapVarID, symRef }));
+		SymbolicExpression heapPointer = evaluator.heapPointer(source, state,
+				heapScopeID);
 
 		eval = getAndCheckHeapObjectPointer(heapPointer, firstElementPointer,
 				pointerExpression.getSource(), state);
