@@ -206,7 +206,7 @@ The following C expressions are included in CIVL:
 \item \emph{address-of} (\verb!&e!), pointer \emph{dereference} (\verb!*p!),
   pointer \emph{addition} (\verb!p+i!) and \emph{subtraction} (\verb!p-q!)
   expressions
-\item comparison expressions (\verb!a==b!, \verb~a!=b~, \verb!a>=b!,
+\item relational expressions (\verb!a==b!, \verb~a!=b~, \verb!a>=b!,
   \verb!a<=b!, \verb!a<b!, \verb!a>b!)
 \item logical \emph{not} (\verb~!p~), \emph{and} (\verb!p&&q!), and
   \emph{or} (\verb!p||q!)
@@ -250,7 +250,7 @@ contained.  For example,
 \end{verbatim}
 allocates an object consisting of $n$ ints in the scope $s$.
 
-\subsubsection{Scope comparisons}
+\subsubsection{Scope relational operators}
 
 Let $s_1$ and $s_2$ be expressions of type \cscope.  The following
 are expressions:
@@ -259,9 +259,64 @@ are expressions:
   refer to the same dynamic scope.
 \item  $s_1$ \ct{!=} $s_2$.  This is \emph{true} iff $s_1$ and $s_2$
   refer to different dynamic scopes.
-\item etc.
+\item  $s_1$ \ct{<=} $s_2$.  This is \emph{true} iff $s_1$ is equal to
+  or a descendant of $s_2$, i.e., $s_1$ is equal to or contained in $s_2$.
+\item  $s_1$ \ct{<} $s_2$.  This is \emph{true} iff $s_1$ is a strict 
+  descendant of $s_2$, i.e., $s_1$ is contained in $s_2$ and is not
+  equal to $s_2$.
+\item $s_1$ \ct{>} $s_2$.  This is equivalent to $s_2$ \ct{<} $s_1$.
+\item  $s_1$ \ct{>=} $s_2$.  This is equivalent to $s_2$ \ct{<=} $s_1$.
 \end{itemize}
 
+\subsubsection{Scope parent function $\cscopeparent$}
+
+The system function
+\begin{verbatim}
+  $scope $scope_parent($scope s);
+\end{verbatim}
+returns the parent dynamic scope of the dynamic scope referenced by
+\ct{s}.  If \ct{s} is the root dynamic scope, it returns the undefined
+value of type $\cscope$.
+
+\subsubsection{Lowest Common Ancestor: \ct{+}}
+
+The expression $s_1$ \ct{+} $s_2$, where $s_1$ and $s_2$ are
+expressions of type \cscope, evaluates to the lowest common ancestor
+of $s_1$ and $s_2$ in the dynamic scope tree. This is the smallest
+dynamic scope containing both $s_1$ and $s_2$.
+
+\subsubsection{The \cscopeof{} expression}
+
+Given any left-hand-side expression \ct{expr}, the expression
+\begin{verbatim}
+  $scopeof(expr)
+\end{verbatim}
+evaluates to the dynamic scope containing the object specified by
+\ct{expr}.
+
+The following examples illustrates the meaning of the \cscopeof{}
+operator.  All of the assertions hold:
+\begin{verbatim}
+{
+  $scope s1 = $here;
+  int x;
+  double a[10];
+
+  {
+    $scope s2 = $here;
+    int *p = &x;
+    double *q = &a[4];
+
+    assert($scopeof(x)==s1);
+    assert($scopeof(p)==s2);
+    assert($scopeof(*p)==s1);
+    assert($scopeof(a)==s1);
+    assert($scopeof(a[5])==s1);
+    assert($scopeof(q)==s2);
+    assert($scopeof(*q)==s1);
+  }
+}  
+\end{verbatim}
 
 \section{Statements}
 
@@ -377,11 +432,11 @@ transition system:
 
 \subsection{Nondeterministic choice of integer: \cchooseint}
 
-This is a function with the following prototype:
+The system function \cchooseint{} has the following signature:
 \begin{verbatim}
   int $choose_int(int n);
 \end{verbatim}
-It takes as input a positive integer \texttt{n} and
+This function takes as input a positive integer \texttt{n} and
 nondeterministicaly returns an integer in the range
 $[0,\texttt{n}-1]$.
 
@@ -406,14 +461,14 @@ something of \cproc{} type.
 
 This is a constant of type \cproc. It can be used wherever an argument
 of type \cproc{} is called for. It refers to the process that is
-evaluating the expression containing ``\cself''.
+evaluating the expression containing \cself.
 
 \subsection{Spawning a new process: \cspawn}
 
 A \emph{spawn} expression is an expression with side-effects.  It
 spawns a new process and returns a reference to the new process, i.e.,
 an object of type \cproc.  The syntax is the same as a procedure
-invocation with the keyword ``\cspawn'' inserted in front:
+invocation with the keyword \cspawn{} inserted in front:
 \begin{verbatim}
   $spawn f(expr1, ..., exprn)
 \end{verbatim}
@@ -565,10 +620,9 @@ lock (without changing the value of its atomic counter).
 
 \section{Message Passing}
 
-
-The library defines a number of additional primitives useful for
-modeling message-passing systems.  This part of the library is built
-in two layers: the lower layer defines an abstract data type for
+CIVL-C provides a number of additional primitives that can be used to
+model message-passing systems.  This part of the language is built in
+two layers: the lower layer defines an abstract data type for
 representing messages; the higher layer defines an abstract data type
 of \emph{communicators} for managing sets of messages being
 transferred among some set of processes.
@@ -617,7 +671,7 @@ are given in Figure \ref{fig:message}.
 \subsection{Communicators: \cgcomm{} and \ccomm}
 \label{sec:communicators}
 
-The library defines a \emph{global communicator} type $\cgcomm$ and a
+CIVL-C defines a \emph{global communicator} type $\cgcomm$ and a
 \emph{local communicator} type $\ccomm$. As in MPI, a communicator is
 an abstraction for a ``communication universe'' that comprises a
 finite, fixed sequence of distinct processes and a collection of
@@ -629,7 +683,7 @@ a scope containing all scopes in which communication in that universe
 will take place. It is created by specifying the number of
 \emph{places} that will comprise the communicator. A place is an
 address to which messages may be sent or where they may be received.
-There is not necessarily a one-to-one correspondece between places and
+There is not necessarily a one-to-one correspondence between places and
 processes: many processes can occupy the same place.
 
 Local communicators are created (typically in some child scope of the
@@ -642,7 +696,7 @@ place.
 
 Both types ($\cgcomm$ and $\ccomm$) are handle types. When declared
 with a call the corresponding creation function, they create an object
-in the current scope and return a handle to that object. The object
+in the specified scope and return a handle to that object. The object
 can only be accessed through the specified system functions that take
 this handle as an argument.
 
@@ -702,6 +756,61 @@ $message $comm_dequeue($comm comm, int source, int tag);
 \end{figure}
 
 The communicator interface is given in Figure \ref{fig:comm}.
+
+Certain restrictions are enforced on some relations between the
+objects involved in a communication universe.
+
+Fix a \cgcomm{} object.  This object corresponds to a single
+communication universe with, say, $n$ places.  At any time, there can
+be \emph{at most one} \ccomm{} object associated to a given place.  If
+a program attempts to create a \ccomm{} object with the same \cgcomm{}
+and place as an earlier created \ccomm{} object, a runtime error will
+occur.  In particular, there can be at most $n$ \ccomm{} objects
+associated to the \cgcomm.
+
+The relation between processes and \ccomm{} objects is unconstrained.
+One process may use any number of \ccomm{} objects.  (Of course, those
+objects must be visible to the process.)  Dually, a single \ccomm{}
+object may be used by any number of processes; this actually comes up
+when modeling a multi-threaded MPI program.
+
+\begin{figure}
+  \begin{small}
+\begin{verbatim}
+$gcomm gcomm = $gcomm_create($here, nprocs);
+void Process(int rank) {
+  $comm comm = $comm_create($here, gcomm, rank);
+
+  void Thread(int tid) {
+    ...$comm_enqueue(comm, msg)...
+    ...$comm_dequeue(comm, source, tag)...
+  }
+
+  for (int i=0; i<nthreads; i++) $spawn Thread(i);
+  ...
+}
+for (int i=0; i<nprocs; i++) $spawn Process(i);
+...
+\end{verbatim}
+  \end{small}
+  \caption{Code skeleton for model of multithreaded MPI program
+    showing placement of global and local communicator objects}
+  \label{fig:mpi-threads-comm}
+\end{figure}
+
+There is no special status given to the process which creates the
+\ccomm{} object of a given place.  Any process which can reach that
+\ccomm{} object can use it to send or receive messages, regardless of
+whether that process was the one that created the \ccomm{} object.
+However, users should be aware that verification is likely to be most
+efficient when variables are declared as locally as possible, so it is
+best to declare the \ccomm{} object in the innermost scope possible.
+Figure \ref{fig:mpi-threads-comm} illustrates an effective way
+to do this in the context of modeling a multithreaded MPI program.
+In the code skeleton, each thread can access the local communicator
+object of its process, but not that of any other process.
+
+
 
 % nonblocking interface: instead of message_pack, it is a request
 % form a new request and Isend it
@@ -811,6 +920,10 @@ the format string.  For example,
 \begin{verbatim}
   $assert(x<=B, "x-coordinate %f exceeds bound %f", x, B); 
 \end{verbatim}
+
+The C function \texttt{assert}, included in the standard library
+\texttt{assert.h}, is identical to \cassert.  Programmers are
+free to use either one.
 
 
 \subsection{Assume statements: \cassume}
@@ -958,20 +1071,20 @@ array.  Example:
 
 \emph{Status}: not implemented.
 
-\chapter{Pointers, Scopes, and Heaps}
+\chapter{Pointers and Heaps}
 \label{chap:pointers}
 
 CIVL-C supports pointers, using the same operators with the same
 meanings as C (\texttt{\&}, \texttt{*}, pointer arithmetic).  There is
 also a heap in every scope, and system functions to allocate and
-deallocate objects in the specified scope.  The interaction between
-pointers, heaps, and scopes is an important aspect of CIVL-C.
+deallocate objects in the specified scope.
 
 \section{Memory functions: \texttt{memcpy}}
 
-The following function is exactly the same as in the C standard
-library: it copies memory from the region to by \ct{q} to that pointed
-to by \ct{p}.
+The function \texttt{memcpy} is defined in the standard C library
+\texttt{string.h} and works exactly the same in CIVL-C: it copies
+data from the region pointed to by \ct{q} to that pointed to by
+\ct{p}.  The signature is
 
 \begin{verbatim}
   void memcpy(void *p, void *q, size_t size);
@@ -987,66 +1100,17 @@ this extra scope argument:
 \begin{verbatim}
   void * $malloc($scope scope, int size);
 \end{verbatim}
-
 The standard C function
 \begin{verbatim}
   void * malloc(int size);
 \end{verbatim}
-is equivalent to invoking \cmalloc{} on the root dynamic scope.
+is equivalent to \verb!$malloc($root, size)!.
 
 The system function \ct{free} is used to deallocate a heap object;
 it is just like C's \texttt{free}:
 \begin{verbatim}
   void free(void *p);
 \end{verbatim}
-
-\section{Scope Operations}
-
-The following are all on the drawing board, not yet implemented.
-
-The pre-defined constant \cscoperoot{} is a reference to the root
-dynamic scope.
-
-The operator \texttt{==} may be applied to arguments of type
-$\cscope$.  It returns \emph{true} iff the two arguments refer to the
-same dynamic scope.
-
-The operator \texttt{>} may be applied to arguments of type $\cscope$.
-If returns \emph{true} iff the dynamic scope referred to by the left
-argument is a strict ancestor of the dynamic scope referred to by the
-right argument, i.e., the left scope contains the right scope.  The
-operators \texttt{>=}, \texttt{<}, \texttt{<=} have similar
-interpretations.
-
-Given any left-hand-side expression \ct{expr}, the expression
-\begin{verbatim}
-  $scopeof(expr)
-\end{verbatim}
-evaluates to the dynamic scope containing the object specified by
-\ct{expr}.
-
-% The system function
-% \begin{verbatim}
-%   _Bool $scope_contains($scope s1, $scope s2)
-% \end{verbatim}
-% returns \emph{true} iff the dynamic scope referenced by \ct{s1}
-% contains the dynamic scope referenced by \ct{s2}.  This allows
-% one to reason about the tree structure of the dynamic scopes.
-
-The system function
-\begin{verbatim}
-  $scope $scope_parent($scope s);
-\end{verbatim}
-returns the parent dynamic scope of the dynamic scope referenced by
-\ct{s}.  If \ct{s} is the root dynamic scope, it returns the undefined
-value of type $\cscope$.
-
-The system function
-\begin{verbatim}
-  $scope $scope_join($scope s1, $scope s2);
-\end{verbatim}
-returns the smallest dynamic scope containing both \ct{s1} and \ct{s2}.
-
 
 % \section{Pointer types}
 

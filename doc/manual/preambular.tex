@@ -1,3 +1,9 @@
+% number subsubsections and put them in the table of contents...
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+
+\newcommand{\notimp}{\emph{Status:} Not yet implemented.}
+
 % algorithm2e package settings...
 
 \SetInd{1mm}{2mm}
@@ -150,7 +156,7 @@
 %\newcommand{\cheap}{\cc{heap}}
 \newcommand{\cscope}{\cc{scope}}
 \newcommand{\cscopeof}{\cc{scopeof}}
-\newcommand{\cscopecontains}{\cc{scope{\U}contains}}
+\newcommand{\cscopeparent}{\cc{scope{\U}parent}}
 \newcommand{\cscoperoot}{\cc{root}}
 \newcommand{\chere}{\cc{here}}
 \newcommand{\cregion}{\cc{region}}
