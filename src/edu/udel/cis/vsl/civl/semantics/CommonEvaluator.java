@@ -40,6 +40,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
+import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -1523,6 +1524,14 @@ public class CommonEvaluator implements Evaluator {
 				expression.getSource(), true);
 	}
 
+	private Evaluation evaluateHereOrRootScope(State state, int pid,
+			HereOrRootExpression expression) {
+		int dyScopeID = expression.isRoot() ? state.rootScopeID() : state
+				.getProcessState(pid).getDyscopeId();
+
+		return new Evaluation(state, modelFactory.scopeValue(dyScopeID));
+	}
+
 	private Evaluation evaluateInitialValue(State state, int pid,
 			InitialValueExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -1533,10 +1542,6 @@ public class CommonEvaluator implements Evaluator {
 		if (type.isHeapType()) {
 			result = new Evaluation(state,
 					((CIVLHeapType) type).getInitialValue());
-		} else if (type.isScopeType()) {
-			int dyScopeID = state.getProcessState(pid).getDyscopeId();
-
-			return new Evaluation(state, modelFactory.scopeValue(dyScopeID));
 		} else {
 			TypeEvaluation typeEval = getDynamicType(state, pid, type,
 					expression.getSource(), false);
@@ -1834,6 +1839,10 @@ public class CommonEvaluator implements Evaluator {
 		case DYNAMIC_TYPE_OF:
 			result = evaluateDynamicTypeOf(state, pid,
 					(DynamicTypeOfExpression) expression);
+			break;
+		case HERE_OR_ROOT:
+			result = evaluateHereOrRootScope(state, pid,
+					(HereOrRootExpression) expression);
 			break;
 		case INITIAL_VALUE:
 			result = evaluateInitialValue(state, pid,
@@ -2496,6 +2505,8 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case SYSTEM_GUARD:
 			break;
+		case HERE_OR_ROOT:
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("Expression kind: "
 					+ kind, expression.getSource());
@@ -2611,7 +2622,8 @@ public class CommonEvaluator implements Evaluator {
 
 	@Override
 	public SymbolicExpression heapPointer(CIVLSource source, State state,
-			SymbolicExpression scopeValue) throws UnsatisfiablePathConditionException {
+			SymbolicExpression scopeValue)
+			throws UnsatisfiablePathConditionException {
 		ReferenceExpression symRef = (ReferenceExpression) universe
 				.canonic(universe.identityReference());
 		int dyScopeID = modelFactory.getScopeId(source, scopeValue);

@@ -45,6 +45,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -99,6 +100,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonDerivativeCallExpress
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDotExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonHereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonInitialValueExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonQuantifiedExpression;
@@ -225,6 +227,10 @@ public class CommonModelFactory implements ModelFactory {
 	private CIVLBundleType bundleType;
 
 	private SymbolicUnionType bundleSymbolicType;
+
+	private SymbolicTupleType commSymbolicType;
+
+	private SymbolicTupleType gcommSymbolicType;
 
 	/**
 	 * The unique char type used in the system.
@@ -822,6 +828,16 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public HereOrRootExpression hereOrRootExpression(CIVLSource source,
+			boolean isRoot) {
+		CommonHereOrRootExpression result = new CommonHereOrRootExpression(
+				source, isRoot);
+
+		result.setExpressionType(this.scopeType);
+		return result;
+	}
+
+	@Override
 	public InitialValueExpression initialValueExpression(CIVLSource source,
 			Variable variable) {
 		CommonInitialValueExpression result = new CommonInitialValueExpression(
@@ -1011,7 +1027,7 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-@Override
+	@Override
 	public SystemFunctionCallExpression systemFunctionCallExpression(
 			CallOrSpawnStatement callStatement) {
 		return new CommonSystemFunctionCallExpression(null, callStatement);
@@ -1322,7 +1338,7 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public MallocStatement mallocStatement(CIVLSource civlSource,
 			Location source, LHSExpression lhs, CIVLType staticElementType,
-			Expression heapPointerExpression, Expression sizeExpression,
+			Expression scopeExpression, Expression sizeExpression,
 			int mallocId, Expression guard) {
 		SymbolicType dynamicElementType = staticElementType
 				.getDynamicType(universe);
@@ -1330,7 +1346,7 @@ public class CommonModelFactory implements ModelFactory {
 				.canonic(universe.arrayType(dynamicElementType));
 		SymbolicExpression undefinedObject = undefinedValue(dynamicObjectType);
 		MallocStatement result = new CommonMallocStatement(civlSource, source,
-				mallocId, heapPointerExpression, staticElementType,
+				mallocId, scopeExpression, staticElementType,
 				dynamicElementType, dynamicObjectType, sizeExpression,
 				undefinedObject, lhs);
 
@@ -1950,6 +1966,10 @@ public class CommonModelFactory implements ModelFactory {
 		LinkedList<SymbolicType> fieldTypes = new LinkedList<SymbolicType>();
 		SymbolicTupleType result;
 
+		if (gcommSymbolicType != null)
+			fieldTypes.add(universe.arrayType(this.gcommSymbolicType));
+		if (commSymbolicType != null)
+			fieldTypes.add(universe.arrayType(this.commSymbolicType));
 		for (MallocStatement statement : mallocStatements) {
 			SymbolicType fieldType = universe.arrayType(statement
 					.getDynamicObjectType());
@@ -2314,6 +2334,18 @@ public class CommonModelFactory implements ModelFactory {
 			return systemGuard;
 		return this.binaryExpression(call.guard().getSource(),
 				BINARY_OPERATOR.AND, call.guard(), systemGuard);
+	}
+
+	@Override
+	public void setGcommSymbolicType(CIVLType gcommType) {
+		this.gcommSymbolicType = (SymbolicTupleType) universe.canonic(gcommType
+				.getDynamicType(universe));
+	}
+
+	@Override
+	public void setCommSymbolicType(CIVLType commType) {
+		this.commSymbolicType = (SymbolicTupleType) universe.canonic(commType
+				.getDynamicType(universe));
 	}
 
 }

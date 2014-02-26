@@ -1,7 +1,6 @@
 #include<civlc.h>
 int *x;
 int *p;
-$heap h = $heap_create();
 
 void f() {
   int y=0;
@@ -13,7 +12,7 @@ void f() {
 }
 
 void main() {
-  x = (int*) $malloc(h, sizeof(int));
+  x = (int*) $malloc($root, sizeof(int));
   p = x;
   *x = 0;
   $spawn f(); 

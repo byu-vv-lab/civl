@@ -1,7 +1,5 @@
 #include <civlc.h>
 
-$heap root;
-$heap *h = &root;
 int *p;
 _Bool start = $false;
 
@@ -9,7 +7,7 @@ void f(){
   $heap fh;
 
   $when(start);
-  p = (int*) $malloc(h, sizeof(int));
+  p = (int*) $malloc($root, sizeof(int));
   h = &fh;
   //$free(&fh, p);
 }

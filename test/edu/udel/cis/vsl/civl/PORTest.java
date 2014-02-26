@@ -44,8 +44,8 @@ public class PORTest {
 		assertFalse(ui.run("verify", filename("trade4.cvl")));
 	}
 	
-	@Test
-	public void heap1() {
-		assertFalse(ui.run("verify", filename("heap1.cvl")));
-	}
+//	@Test
+//	public void heap1() {
+//		assertFalse(ui.run("verify", filename("heap1.cvl")));
+//	}
 }

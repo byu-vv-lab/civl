@@ -19,14 +19,12 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
@@ -761,7 +759,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommCreate(State state, int pid, LHSExpression lhs,
+	private State executeGcommCreate(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression comm;
@@ -1050,45 +1048,45 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		return stateFactory.removeProcess(state, pid);
 	}
 
-	private State executeHeapCreate(State state, int pid, LHSExpression lhs,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
-		SymbolicExpression newHeapObject = this.modelFactory.heapType()
-				.getInitialValue();
-		Variable heapHandleVariable;
-		int heapHandleVID;
-		int heapHandleDyscopeID;
-		SymbolicExpression pointerOfHeapObject;
-		Variable heapArrayVariable;
-		Expression addressOfHeapObject;
-		Evaluation eval;
-		SymbolicExpression heapArrayValue;
-
-		assert lhs instanceof VariableExpression;
-		if (!(lhs instanceof VariableExpression)) {
-			throw new CIVLInternalException("Unreachable", source);
-		}
-		heapHandleVariable = ((VariableExpression) lhs).variable();
-		heapHandleVID = heapHandleVariable.vid();
-		heapHandleDyscopeID = state.getScopeId(pid, heapHandleVariable);
-		heapArrayVariable = heapHandleVariable.scope().variable("__h__");
-		eval = evaluator.evaluate(state, pid,
-				modelFactory.variableExpression(null, heapArrayVariable));
-		heapArrayValue = eval.value;
-		state = eval.state;
-		if (heapArrayValue == null) {
-
-		}
-
-		addressOfHeapObject = modelFactory.addressOfExpression(null,
-				modelFactory.variableExpression(null, heapArrayVariable));
-		state = stateFactory.setVariable(state, heapHandleVID + 1,
-				heapHandleDyscopeID, newHeapObject);
-		eval = evaluator.evaluate(state, pid, addressOfHeapObject);
-		state = eval.state;
-		pointerOfHeapObject = eval.value;
-		state = primaryExecutor.assign(state, pid, lhs, pointerOfHeapObject);
-		return state;
-	}
+	// private State executeHeapCreate(State state, int pid, LHSExpression lhs,
+	// CIVLSource source) throws UnsatisfiablePathConditionException {
+	// SymbolicExpression newHeapObject = this.modelFactory.heapType()
+	// .getInitialValue();
+	// Variable heapHandleVariable;
+	// int heapHandleVID;
+	// int heapHandleDyscopeID;
+	// SymbolicExpression pointerOfHeapObject;
+	// Variable heapArrayVariable;
+	// Expression addressOfHeapObject;
+	// Evaluation eval;
+	// SymbolicExpression heapArrayValue;
+	//
+	// assert lhs instanceof VariableExpression;
+	// if (!(lhs instanceof VariableExpression)) {
+	// throw new CIVLInternalException("Unreachable", source);
+	// }
+	// heapHandleVariable = ((VariableExpression) lhs).variable();
+	// heapHandleVID = heapHandleVariable.vid();
+	// heapHandleDyscopeID = state.getScopeId(pid, heapHandleVariable);
+	// heapArrayVariable = heapHandleVariable.scope().variable("__h__");
+	// eval = evaluator.evaluate(state, pid,
+	// modelFactory.variableExpression(null, heapArrayVariable));
+	// heapArrayValue = eval.value;
+	// state = eval.state;
+	// if (heapArrayValue == null) {
+	//
+	// }
+	//
+	// addressOfHeapObject = modelFactory.addressOfExpression(null,
+	// modelFactory.variableExpression(null, heapArrayVariable));
+	// state = stateFactory.setVariable(state, heapHandleVID + 1,
+	// heapHandleDyscopeID, newHeapObject);
+	// eval = evaluator.evaluate(state, pid, addressOfHeapObject);
+	// state = eval.state;
+	// pointerOfHeapObject = eval.value;
+	// state = primaryExecutor.assign(state, pid, lhs, pointerOfHeapObject);
+	// return state;
+	// }
 
 	/**
 	 * TODO
@@ -1149,7 +1147,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		case "$gcomm_create":
-			state = executeCommCreate(state, pid, lhs, arguments,
+			state = executeGcommCreate(state, pid, lhs, arguments,
 					argumentValues, statement.getSource());
 			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
@@ -1176,10 +1174,10 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 					statement.getSource());
 			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
-		case "$heap_create":
-			state = executeHeapCreate(state, pid, lhs, statement.getSource());
-			state = stateFactory.setLocation(state, pid, statement.target());
-			break;
+		// case "$heap_create":
+		// state = executeHeapCreate(state, pid, lhs, statement.getSource());
+		// state = stateFactory.setLocation(state, pid, statement.target());
+		// break;
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":

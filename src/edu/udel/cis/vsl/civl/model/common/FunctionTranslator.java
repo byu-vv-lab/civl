@@ -52,6 +52,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.DerivativeExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.DotNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.HereOrRootNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
@@ -121,6 +122,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
@@ -219,6 +221,8 @@ public class FunctionTranslator {
 	 * assumptions involving abstract functions.
 	 */
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
+
+	private int malocIdOffSet = 0;
 
 	// private Variable newHeapArrayVariable = null;
 
@@ -355,7 +359,27 @@ public class FunctionTranslator {
 	protected Fragment translateFunctionBody() {
 		Fragment body;
 		Scope scope = this.function.outerScope();
+		Fragment createRootHeap = null;
 
+		if (scope.id() == 0) {
+			if (!scope.containsVariable(HEAP_VAR)) {
+				int newVid = scope.numVariables();
+				CIVLSource source = modelFactory
+						.sourceOfBeginning(this.functionBodyNode);
+				Variable heapVariable = this.modelFactory.variable(source,
+						modelBuilder.heapType,
+						this.modelFactory.identifier(source, HEAP_VAR), newVid);
+				Location location = modelFactory.location(source, scope);
+
+				scope.addVariable(heapVariable);
+				createRootHeap = new CommonFragment(location,
+						modelFactory.assignStatement(source, location,
+								modelFactory.variableExpression(source,
+										heapVariable), modelFactory
+										.initialValueExpression(source,
+												heapVariable), true));
+			}
+		}
 		body = translateStatementNode(scope, this.functionBodyNode);
 		if (!containsReturn(body)) {
 
@@ -370,6 +394,9 @@ public class FunctionTranslator {
 				body = body.combineWith(returnFragment);
 			else
 				body = returnFragment;
+		}
+		if (createRootHeap != null) {
+			body = createRootHeap.combineWith(body);
 		}
 		return body;
 	}
@@ -903,7 +930,7 @@ public class FunctionTranslator {
 		CIVLType pointerType = translateABCType(
 				modelFactory.sourceOf(typeNode), scope, typeNode.getType());
 		FunctionCallNode callNode = (FunctionCallNode) castNode.getArgument();
-		int mallocId = modelBuilder.mallocStatements.size();
+		int mallocId = modelBuilder.mallocStatements.size() + malocIdOffSet;
 		// Expression heapPointerExpression;
 		Expression scopeExpression;
 		Expression sizeExpression;
@@ -915,9 +942,9 @@ public class FunctionTranslator {
 					"result of $malloc not cast to pointer type", source);
 		elementType = ((CIVLPointerType) pointerType).baseType();
 		modelFactory.setCurrentScope(scope);
-		scopeExpression = translateExpressionNode(callNode.getScopeList()
-				.getSequenceChild(0), scope, true);
-		sizeExpression = translateExpressionNode(callNode.getArgument(0),
+		scopeExpression = translateExpressionNode(callNode.getArgument(0),
+				scope, true);
+		sizeExpression = translateExpressionNode(callNode.getArgument(1),
 				scope, true);
 		result = modelFactory.mallocStatement(source, location, lhs,
 				elementType, scopeExpression, sizeExpression, mallocId, null);
@@ -990,6 +1017,35 @@ public class FunctionTranslator {
 					+ leftExpression, modelFactory.sourceOf(lhs));
 		assignStatement = assignStatement(modelFactory.sourceOfSpan(lhs, rhs),
 				(LHSExpression) leftExpression, rhs, scope);
+
+		if (assignStatement instanceof MallocStatement) {
+			MallocStatement malloc = (MallocStatement) assignStatement;
+			Expression scopeExpr = malloc.getScopeExpression();
+
+			if (scopeExpr instanceof HereOrRootExpression) {
+				if (((HereOrRootExpression) scopeExpr).isHere()) {
+					if (!scope.containsVariable(HEAP_VAR)) {
+						int newVid = scope.numVariables();
+						CIVLSource source = modelFactory.sourceOf(assignNode);
+						Variable heapVariable = this.modelFactory.variable(
+								source, modelBuilder.heapType,
+								this.modelFactory.identifier(source, HEAP_VAR),
+								newVid);
+						Location location = modelFactory
+								.location(source, scope);
+
+						scope.addVariable(heapVariable);
+						return new CommonFragment(modelFactory.assignStatement(
+								source, location, modelFactory
+										.variableExpression(source,
+												heapVariable), modelFactory
+										.initialValueExpression(source,
+												heapVariable), true),
+								assignStatement);
+					}
+				}
+			}
+		}
 
 		return new CommonFragment(assignStatement);
 	}
@@ -2080,7 +2136,7 @@ public class FunctionTranslator {
 				if (sourceLocation == null)
 					sourceLocation = modelFactory.location(
 							modelFactory.sourceOfBeginning(node), scope);
-				initialization = new CommonFragment(sourceLocation,
+				result = new CommonFragment(sourceLocation,
 						modelFactory.assignStatement(source, sourceLocation,
 								modelFactory.variableExpression(source,
 										heapVariable), modelFactory
@@ -2088,20 +2144,20 @@ public class FunctionTranslator {
 												heapVariable), true));
 				sourceLocation = null;
 			}
-			if (sourceLocation == null)
-				sourceLocation = modelFactory.location(
-						modelFactory.sourceOfBeginning(node), scope);
-			result = new CommonFragment(sourceLocation,
-					modelFactory
-							.assignStatement(source, sourceLocation,
-									modelFactory.variableExpression(
-											modelFactory.sourceOf(identifier),
-											variable), modelFactory
-											.initialValueExpression(source,
-													variable), true));
-			if (initialization != null)
-				result = initialization.combineWith(result);
-			return result;
+			// if (sourceLocation == null)
+			// sourceLocation = modelFactory.location(
+			// modelFactory.sourceOfBeginning(node), scope);
+			// result = new CommonFragment(sourceLocation,
+			// modelFactory
+			// .assignStatement(source, sourceLocation,
+			// modelFactory.variableExpression(
+			// modelFactory.sourceOf(identifier),
+			// variable), modelFactory
+			// .initialValueExpression(source,
+			// variable), true));
+			// if (initialization != null)
+			// result = initialization.combineWith(result);
+			// return result;
 		} else if (variable.isInput() || type instanceof CIVLArrayType
 				|| type instanceof CIVLStructOrUnionType || type.isHeapType()) {
 			Expression rhs = null;
@@ -2477,6 +2533,12 @@ public class FunctionTranslator {
 		Expression result;
 
 		switch (convertedType.kind()) {
+		case SCOPE:
+			HereOrRootNode scopeConstantNode = (HereOrRootNode) constantNode;
+
+			result = modelFactory.hereOrRootExpression(source,
+					scopeConstantNode.isRootNode());
+			break;
 		case PROCESS:
 			assert constantNode.getStringRepresentation().equals("$self");
 			result = modelFactory.selfExpression(source);
@@ -3359,6 +3421,9 @@ public class FunctionTranslator {
 	private CIVLType translateABCStructureOrUnionType(CIVLSource source,
 			Scope scope, StructureOrUnionType type) {
 		String tag = type.getTag();
+		CIVLStructOrUnionType result;
+		int numFields;
+		StructOrUnionField[] civlFields;
 
 		if (tag == null) {
 			if (type.isStruct())
@@ -3370,47 +3435,57 @@ public class FunctionTranslator {
 		// if (type.isUnion())
 		// throw new CIVLUnimplementedFeatureException("Union types", source);
 		// civlc.h defines $proc as struct __proc__, etc.
-		if (PROC_TYPE.equals(tag))
+		switch (tag) {
+		case PROC_TYPE:
 			return modelFactory.processType();
-		if (HEAP_TYPE.equals(tag))
+		case HEAP_TYPE:
 			return modelBuilder.heapType;
-		if (DYNAMIC_TYPE.equals(tag))
+		case DYNAMIC_TYPE:
 			return modelFactory.dynamicType();
-		if (BUNDLE_TYPE.equals(tag))
+		case BUNDLE_TYPE:
 			return modelBuilder.bundleType;
-		else {
-			CIVLStructOrUnionType result = modelFactory.structOrUnionType(
-					modelFactory.identifier(source, tag), type.isStruct());
-			int numFields = type.getNumFields();
-			StructOrUnionField[] civlFields = new StructOrUnionField[numFields];
-
-			modelBuilder.typeMap.put(type, result);
-			for (int i = 0; i < numFields; i++) {
-				Field field = type.getField(i);
-				String name = field.getName();
-				Type fieldType = field.getType();
-				CIVLType civlFieldType = translateABCType(source, scope,
-						fieldType);
-				Identifier identifier = modelFactory.identifier(modelFactory
-						.sourceOf(field.getDefinition().getIdentifier()), name);
-				StructOrUnionField civlField = modelFactory.structField(
-						identifier, civlFieldType);
-
-				civlFields[i] = civlField;
-			}
-			result.complete(civlFields);
-			if (MESSAGE_TYPE.equals(tag))
-				modelBuilder.messageType = result;
-			if (QUEUE_TYPE.equals(tag))
-				modelBuilder.queueType = result;
-			if (COMM_TYPE.equals(tag))
-				modelBuilder.commType = result;
-			if (GCOMM_TYPE.equals(tag)) {
-				modelBuilder.gcommType = result;
-				result.setHandleObjectType(true);
-			}
-			return result;
+		default:
 		}
+		result = modelFactory.structOrUnionType(
+				modelFactory.identifier(source, tag), type.isStruct());
+		numFields = type.getNumFields();
+		civlFields = new StructOrUnionField[numFields];
+		modelBuilder.typeMap.put(type, result);
+		for (int i = 0; i < numFields; i++) {
+			Field field = type.getField(i);
+			String name = field.getName();
+			Type fieldType = field.getType();
+			CIVLType civlFieldType = translateABCType(source, scope, fieldType);
+			Identifier identifier = modelFactory.identifier(modelFactory
+					.sourceOf(field.getDefinition().getIdentifier()), name);
+			StructOrUnionField civlField = modelFactory.structField(identifier,
+					civlFieldType);
+
+			civlFields[i] = civlField;
+		}
+		result.complete(civlFields);
+		switch (tag) {
+		case MESSAGE_TYPE:
+			modelBuilder.messageType = result;
+			break;
+		case QUEUE_TYPE:
+			modelBuilder.queueType = result;
+			break;
+		case COMM_TYPE:
+			result.setHandleObjectType(true);
+			modelBuilder.commType = result;
+			modelFactory.setCommSymbolicType(result);
+			malocIdOffSet++;
+			break;
+		case GCOMM_TYPE:
+			result.setHandleObjectType(true);
+			modelBuilder.gcommType = result;
+			modelFactory.setGcommSymbolicType(result);
+			malocIdOffSet++;
+			break;
+		default:
+		}
+		return result;
 	}
 
 	/**

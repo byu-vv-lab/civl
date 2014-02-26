@@ -30,6 +30,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -507,6 +508,8 @@ public interface ModelFactory {
 	 */
 	DynamicTypeOfExpression dynamicTypeOfExpression(CIVLSource source,
 			CIVLType type);
+
+	HereOrRootExpression hereOrRootExpression(CIVLSource source, boolean isRoot);
 
 	/**
 	 * Returns an "initial value" expression for the given variable. This is an
@@ -1484,4 +1487,8 @@ public interface ModelFactory {
 	void addAnonStatement(Statement statment);
 
 	Expression systemGuardExpression(CallOrSpawnStatement call);
+	
+	void setGcommSymbolicType(CIVLType gcommType);
+
+	void setCommSymbolicType(CIVLType commType);
 }

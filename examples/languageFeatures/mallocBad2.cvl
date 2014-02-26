@@ -3,7 +3,7 @@
  * */
 #include <civlc.h>
 void main() {
-  $scope s;
+  $scope s=$root;
   double *p;
   
   // Uses pointer without malloc.
