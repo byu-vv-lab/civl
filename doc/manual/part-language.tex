@@ -986,6 +986,20 @@ it is just like C's \texttt{free}:
 
 The following are all on the drawing board, not yet implemented.
 
+The pre-defined constant \cscoperoot{} is a reference to the root
+dynamic scope.
+
+The operator \texttt{==} may be applied to arguments of type
+$\cscope$.  It returns \emph{true} iff the two arguments refer to the
+same dynamic scope.
+
+The operator \texttt{>} may be applied to arguments of type $\cscope$.
+If returns \emph{true} iff the dynamic scope referred to by the left
+argument is a strict ancestor of the dynamic scope referred to by the
+right argument, i.e., the left scope contains the right scope.  The
+operators \texttt{>=}, \texttt{<}, \texttt{<=} have similar
+interpretations.
+
 Given any left-hand-side expression \ct{expr}, the expression
 \begin{verbatim}
   $scopeof(expr)
@@ -993,13 +1007,13 @@ Given any left-hand-side expression \ct{expr}, the expression
 evaluates to the dynamic scope containing the object specified by
 \ct{expr}.
 
-The system function
-\begin{verbatim}
-  _Bool $scope_contains($scope s1, $scope s2)
-\end{verbatim}
-returns \emph{true} iff the dynamic scope referenced by \ct{s1}
-contains the dynamic scope referenced by \ct{s2}.  This allows
-one to reason about the tree structure of the dynamic scopes.
+% The system function
+% \begin{verbatim}
+%   _Bool $scope_contains($scope s1, $scope s2)
+% \end{verbatim}
+% returns \emph{true} iff the dynamic scope referenced by \ct{s1}
+% contains the dynamic scope referenced by \ct{s2}.  This allows
+% one to reason about the tree structure of the dynamic scopes.
 
 The system function
 \begin{verbatim}
