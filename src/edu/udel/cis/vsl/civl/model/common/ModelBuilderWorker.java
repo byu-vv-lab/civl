@@ -85,7 +85,7 @@ public class ModelBuilderWorker {
 	 * The unique type for a comm.
 	 */
 	CIVLType commType;
-	
+
 	/**
 	 * The unique type for a gcomm
 	 */
@@ -503,8 +503,10 @@ public class ModelBuilderWorker {
 		translateUndefinedFunctions();
 		completeCallOrSpawnStatements();
 		completeBundleType();
-		factory.setGcommSymbolicType(gcommType);
-		factory.setCommSymbolicType(commType);
+		if (gcommType != null)
+			factory.setGcommSymbolicType(gcommType);
+		if (commType != null)
+			factory.setCommSymbolicType(commType);
 		factory.completeHeapType(heapType, mallocStatements);
 		completeModel(system);
 		this.staticAnalysis();
