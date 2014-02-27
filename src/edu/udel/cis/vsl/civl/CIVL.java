@@ -22,13 +22,13 @@ public class CIVL {
 	}
 
 	/** The version of this release of CIVL. */
-	public final static String version = "0.7";
+	public final static String version = "0.8";
 
 	/**
 	 * The date of this release of CIVL. Format: YYYY-MM-DD in accordance with
 	 * ISO 8601.
 	 */
-	public final static String date = "2014-02-08";
+	public final static String date = "2014-02-28";
 
 	/**
 	 * Execute the appropriate CIVL tool(s) based on the command line arguments.
