@@ -22,7 +22,7 @@ void main() {
   $proc q = $spawn f(N);
 
   $atomic {
-    $wait p;
-    $wait q;
+    $wait(p);
+    $wait(q);
   }
 }

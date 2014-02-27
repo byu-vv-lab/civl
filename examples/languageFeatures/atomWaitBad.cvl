@@ -11,12 +11,12 @@ void foo() {
   $proc p = $spawn koo();
   // undesired blocked state in $atom block, 
   // an error will be reported
-  $wait p;
+  $wait(p);
 }
 
 void main() {
   $atom {
-    $wait $self;
+    $wait($self);
     foo();
   }
 }

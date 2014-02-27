@@ -22,7 +22,7 @@ void main() {
   $proc p = $spawn f1(N);
   $proc q = $spawn f2(N);
 
-  $wait p;
-  $wait q;
+  $wait(p);
+  $wait(q);
   $assert(s1==s2);
 }

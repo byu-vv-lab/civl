@@ -10,9 +10,9 @@ int *gp;
 _Bool gStart = $false;
 
 void foo(){
-  $scope sf;
+  $scope sf = $here;
   
-  gp = (int *<sf>) $malloc<sf>(sizeof(int));
+  gp = (int *) $malloc(sf, sizeof(int));
   gStart = $true;
   *gp = 1;
   $free(gp);

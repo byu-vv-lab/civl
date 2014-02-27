@@ -41,6 +41,4 @@ void main() {
   init();
   for (int i = 0; i < n; i++)
     philosophers[i] = $spawn dine(i);
-  for (int i = 0; i < n; i++)
-    $wait philosophers[i];
 }

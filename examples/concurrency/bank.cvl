@@ -166,8 +166,8 @@ void main()
    }
    proc_a= $spawn main_a();
    proc_b= $spawn main_b();
-   $wait proc_a;
-   $wait proc_b;
+   $wait(proc_a);
+   $wait(proc_b);
 }
 
 /* ======================================================================== */

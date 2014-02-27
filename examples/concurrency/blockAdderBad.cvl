@@ -44,7 +44,7 @@ double adder_par() {
   for (int i=0; i<P; i++)
     workers[i] = $spawn run_worker(i);
   for (int i=0; i<P; i++)
-    $wait workers[i];
+    $wait(workers[i]);
   return result;
 }
 

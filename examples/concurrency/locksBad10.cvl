@@ -29,6 +29,6 @@ void main() {
   y = 0;
   $proc p = $spawn f(10);
   $proc q = $spawn g(10);
-  $wait p;
-  $wait q;
+  $wait(p);
+  $wait(q);
 }

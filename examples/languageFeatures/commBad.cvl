@@ -17,5 +17,5 @@ void main() {
   
   comm = $comm_create(1, &worker_proc);
   start = $true;
-  $wait worker_proc;  
+  $wait(worker_proc);  
 }

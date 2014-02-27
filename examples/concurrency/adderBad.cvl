@@ -34,7 +34,7 @@ double adderPar(double *p, int n) {
   for (int j = 0; j < n; j++)
     workers[j] = $spawn worker(j);
   for (int j = 0; j < n; j++)
-    $wait workers[j];
+    $wait(workers[j]);
   return s;
 }
 

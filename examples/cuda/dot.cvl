@@ -76,7 +76,7 @@ void gpu(){
       threads[i] = $spawn gpuThread(i);
     }
     for(int i = 0; i < threadsPerBlock; i++) {
-      $wait threads[i];
+      $wait(threads[i]);
     }
   }
  
@@ -84,7 +84,7 @@ void gpu(){
     blocks[i] = $spawn gpuBlock(i);  
   }
   for(int i = 0; i < blocksPerGrid; i++) {
-    $wait blocks[i];
+    $wait(blocks[i]);
   }
 }
 

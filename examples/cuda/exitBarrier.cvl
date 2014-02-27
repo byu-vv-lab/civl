@@ -135,10 +135,10 @@ void main() {
   $proc proc3 = $spawn run_proc3(3);
 
   //wait for threads
-  $wait proc0;
-  $wait proc1;
-  $wait proc2;
-  $wait proc3;
+  $wait(proc0);
+  $wait(proc1);
+  $wait(proc2);
+  $wait(proc3);
 
   $assert(counter == 2);
 }

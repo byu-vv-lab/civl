@@ -21,6 +21,6 @@ void main() {
   $proc q = $spawn f2(N);
 
   $assert(s1==s2); // oops, should wait first
-  $wait p;
-  $wait q;
+  $wait(p);
+  $wait(q);
 }

@@ -50,5 +50,5 @@ void main() {
   }
   
   for (int t=0; t<NTHREADS; t++) threads[t] = $spawn __par_1(t);
-  for (int t=0; t<NTHREADS; t++) $wait threads[t];
+  for (int t=0; t<NTHREADS; t++) $wait(threads[t]);
 }

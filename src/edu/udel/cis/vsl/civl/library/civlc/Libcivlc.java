@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -273,12 +274,30 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		case "$heap_create":
 			guard = universe.trueExpression();
 			break;
-
+		case "$wait":
+			guard = getWaitGuard(state, pid, arguments, argumentValues);
+			break;
 		default:
 			throw new CIVLInternalException("Unknown civlc function: "
 					+ function, source);
 		}
 		return new Evaluation(state, guard);
+	}
+
+	private BooleanExpression getWaitGuard(State state, int pid,
+			Expression[] arguments, SymbolicExpression[] argumentValues) {
+		SymbolicExpression joinProcess = argumentValues[0];
+		BooleanExpression guard;
+		int pidValue;
+		Expression joinProcessExpr = arguments[0];
+
+		pidValue = modelFactory.getProcessId(joinProcessExpr.getSource(),
+				joinProcess);
+		if (!state.getProcessState(pidValue).hasEmptyStack())
+			guard = universe.falseExpression();
+		else
+			guard = universe.trueExpression();
+		return guard;
 	}
 
 	@Override
@@ -1174,6 +1193,10 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 					statement.getSource());
 			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
+		case "$wait":
+			state = executeWait(state, pid, lhs, arguments, argumentValues,
+					statement.getSource(), statement.target());
+			break;
 		// case "$heap_create":
 		// state = executeHeapCreate(state, pid, lhs, statement.getSource());
 		// state = stateFactory.setLocation(state, pid, statement.target());
@@ -1196,6 +1219,18 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					statement);
 		}
+		return state;
+	}
+
+	private State executeWait(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source, Location target) {
+		SymbolicExpression procVal = argumentValues[0];
+		int joinedPid = modelFactory.getProcessId(arguments[0]
+				.getSource(), procVal);
+
+		state = stateFactory.setLocation(state, pid, target);
+		state = stateFactory.removeProcess(state, joinedPid);
 		return state;
 	}
 
