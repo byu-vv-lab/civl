@@ -84,30 +84,24 @@ with your chosen paths.
   add the directory \texttt{/opt/CIVL-\textit{tag}/bin} to your path.
 \end{enumerate}
 
-From the command line, you should now be able to type \texttt{civl
-  help} and see a help message describing the command line syntax.
+From the command line, you should now be able to type ``\texttt{civl
+  help}'' and see a help message describing the command line syntax.
 
 Copy the file
 \texttt{CIVL-\textit{tag}/examples/concurrency/locksBad.cvl} to your
 working directory.  Look at the program: it is a simple 2-process
-program with two shared variables used as locks.  The 2 processes try
-to obtain the locks in opposite order, leading to a deadlock.
-
-Type
-\begin{verbatim}
-civl verify locksBad.cvl
-\end{verbatim}
-You should see some output culminating in a message 
+program with two shared variables used as locks.  The two processes
+try to obtain the locks in opposite order, which can lead to a
+deadlock if both processes obtain their first lock before either
+obtains the second.  Type
+``\verb!civl verify locksBad.cvl!''.  You should see some output
+culminating in a message
 \begin{verbatim}
 The program MAY NOT be correct.  See CIVLREP/locksBad_log.txt
 \end{verbatim}
 
-Type
-\begin{verbatim}
-civl replay locksBad.cvl
-\end{verbatim}
-You should see a step-by-step account of how the program arrived
-at the deadlock.
+Type ``\verb!civl replay locksBad.cvl!''.  You should see a
+step-by-step account of how the program arrived at the deadlock.
 
 
 \chapter{Examples}

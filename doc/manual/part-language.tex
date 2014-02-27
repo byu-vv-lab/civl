@@ -152,8 +152,8 @@ CIVL-C includes a type named \cbundle. A bundle is basically a
 sequence of data, wrapped into an atomic package. A bundle is created
 using a function that specifies a region of memory. One can create a
 bundle from an array of integers, and another bundle from an array of
-reals. Both bundles have the same type, \cbundle. They can therfore be
-entered into an array of \cbundle, for example. Hence bundles are
+reals. Both bundles have the same type, \cbundle. They can therefore
+be entered into an array of \cbundle, for example. Hence bundles are
 useful for mixing objects of different (even statically unknown) types
 into a single data structure. Later, the contents of a bundle can be
 extracted with another function that specifies a region of memory into
@@ -194,15 +194,16 @@ discussed in Section \ref{sec:scopeexpr}.
 
 The following C expressions are included in CIVL: 
 \begin{itemize}
+\item \emph{constant} expressions
 \item \emph{identifier} expressions (\texttt{x})
 \item parenthetical expressions (\verb!(e)!)
 \item numerical \emph{addition} (\verb!a+b!), \emph{subtraction} (\verb!a-b!),
   \emph{multiplication} (\verb!a*b!), \emph{division} (\verb!a/b!),
-  \emph{unary minus} (\verb!a-b!),
+  \emph{unary plus} (\verb!+a!), \emph{unary minus} (\verb!-a!),
   \emph{integer division} (\verb!a/b!) and \emph{modulus} (\verb!a%b!),
   all with their ideal mathematical interpretations
 \item array \emph{index} expressions (\verb!a[e]!) and struct or union
-  \emph{navigation} expressions (\verb!x.f!)
+  \emph{navigation} expressions (\verb!x.f!, \verb!p->f!)
 \item \emph{address-of} (\verb!&e!), pointer \emph{dereference} (\verb!*p!),
   pointer \emph{addition} (\verb!p+i!) and \emph{subtraction} (\verb!p-q!)
   expressions
@@ -212,9 +213,10 @@ The following C expressions are included in CIVL:
   \emph{or} (\verb!p||q!)
 \item \emph{sizeof} a type (\verb!sizeof(t)!) or expression (\verb!sizeof(e)!)
 \item \emph{assignment} expressions (\verb!a=b!, \verb!a+=b!, \verb!a-=b!,
-  \verb!a*=b!, \verb!a/=b!)
+  \verb!a*=b!, \verb!a/=b!, \verb!a%=b!)
 \item function \emph{calls} \verb!f(e1,...,en)!
 \item \emph{conditional} expressions (\verb!b ? e : f!).
+\item \emph{cast} expressions (\verb!(t)e!)
 \end{itemize}
 
 Bit-wise operations are not yet supported.
@@ -250,10 +252,15 @@ contained.  For example,
 \end{verbatim}
 allocates an object consisting of $n$ ints in the scope $s$.
 
+\subsubsection{The constant \cscoperoot{}}
+
+There is a global constant \cscoperoot{} of type $\cscope$ which
+refers to the root dynamic scope.
+
 \subsubsection{Scope relational operators}
 
-Let $s_1$ and $s_2$ be expressions of type \cscope.  The following
-are expressions:
+Let $s_1$ and $s_2$ be expressions of type \cscope.  The following are
+all CIVL-C expressions of boolean type:
 \begin{itemize}
 \item $s_1$ \ct{==} $s_2$.  This is \emph{true} iff $s_1$ and $s_2$
   refer to the same dynamic scope.
@@ -294,7 +301,7 @@ Given any left-hand-side expression \ct{expr}, the expression
 evaluates to the dynamic scope containing the object specified by
 \ct{expr}.
 
-The following examples illustrates the meaning of the \cscopeof{}
+The following example illustrates the semantics of the \cscopeof{}
 operator.  All of the assertions hold:
 \begin{verbatim}
 {
@@ -335,6 +342,7 @@ The usual C statements are supported:
 \item \verb!switch!
 \item \verb!break!
 \item \verb!continue!
+\item \verb!return!
 \end{itemize}
 
 \section{Guards and nondeterminism}
@@ -498,8 +506,6 @@ its call stack:
   void $exit(void);
 \end{verbatim}
 
-\section{Dynamic scopes, revisited}
-
 \section{Atomicity}
 
 \subsection{Atom blocks: \catom} This defines a number of statements to be executed
@@ -618,7 +624,7 @@ When a process executing atomically becomes blocked, it releases the
 lock (without changing the value of its atomic counter).
 
 
-\section{Message Passing}
+\section{Message-Passing}
 
 CIVL-C provides a number of additional primitives that can be used to
 model message-passing systems.  This part of the language is built in
@@ -629,14 +635,14 @@ transferred among some set of processes.
 
 \subsection{Messages: \cmessage}
 
-Messages are similar to bundles, but with some additional
-``meta-data''.  The \emph{data} component of the message is the
-``contents'' of the message and is formed and extracted much like a
-bundle.  The meta-data consists of an integer identifier for the
-\emph{source} (sender) of the message, an integer identifier for the
-message \emph{destination} (receiver), and integer \emph{tag} which
-can be used by the received to discriminate among messages for
-reception.  This is very similar to MPI.
+Messages are similar to bundles, but with some additional meta-data.
+The \emph{data} component of the message is the ``contents'' of the
+message and is formed and extracted much like a bundle.  The meta-data
+consists of an integer identifier for the \emph{source} place of the
+message, an integer identifier for the message \emph{destination}
+place, and an integer \emph{tag} which can be used by a process to
+discriminate among messages for reception.  This is very similar to
+MPI.
 
 \begin{figure}
   \begin{small}
@@ -672,11 +678,16 @@ are given in Figure \ref{fig:message}.
 \label{sec:communicators}
 
 CIVL-C defines a \emph{global communicator} type $\cgcomm$ and a
-\emph{local communicator} type $\ccomm$. As in MPI, a communicator is
-an abstraction for a ``communication universe'' that comprises a
-finite, fixed sequence of distinct processes and a collection of
-buffered messages that are being transmitted from one of those
-processes to another.
+\emph{local communicator} type $\ccomm$. The global communicator is an
+abstraction for a ``communication universe'' that stores buffered
+messages and perhaps other data.  The local communicator wraps
+together a reference to a global communicator and an integer
+\emph{place}.  Most of the message-passing commands take a local
+communicator as an argument to specify the communication universe used
+for that operation and the place from which that operation will be
+executed.  The communication universes are isolated from one
+another---a message sent on one can never be received using a
+different communicator, for example.
 
 The global communicator is the shared object that must be declared in
 a scope containing all scopes in which communication in that universe
@@ -684,7 +695,7 @@ will take place. It is created by specifying the number of
 \emph{places} that will comprise the communicator. A place is an
 address to which messages may be sent or where they may be received.
 There is not necessarily a one-to-one correspondence between places and
-processes: many processes can occupy the same place.
+processes: many processes can use the same place.
 
 Local communicators are created (typically in some child scope of the
 scope in which the global communicator is declared) by specifying the
@@ -695,10 +706,10 @@ consisting of a reference to the global communicator and the integer
 place.
 
 Both types ($\cgcomm$ and $\ccomm$) are handle types. When declared
-with a call the corresponding creation function, they create an object
-in the specified scope and return a handle to that object. The object
-can only be accessed through the specified system functions that take
-this handle as an argument.
+with a call to the corresponding creation function, they create an
+object in the specified scope and return a handle to that object. The
+object can only be accessed through the specified system functions
+that take this handle as an argument.
 
 \begin{figure}
   \begin{small}
@@ -769,10 +780,11 @@ occur.  In particular, there can be at most $n$ \ccomm{} objects
 associated to the \cgcomm.
 
 The relation between processes and \ccomm{} objects is unconstrained.
-One process may use any number of \ccomm{} objects.  (Of course, those
-objects must be visible to the process.)  Dually, a single \ccomm{}
-object may be used by any number of processes; this actually comes up
-when modeling a multi-threaded MPI program.
+One process may use any number of \ccomm{} objects.  (Of course, the
+process must have access to handles for those \ccomm{} objects.)
+Dually, a single \ccomm{} object may be used by any number of
+processes; this situation arises naturally when modeling a
+multi-threaded MPI program.
 
 \begin{figure}
   \begin{small}
@@ -799,16 +811,17 @@ for (int i=0; i<nprocs; i++) $spawn Process(i);
 \end{figure}
 
 There is no special status given to the process which creates the
-\ccomm{} object of a given place.  Any process which can reach that
-\ccomm{} object can use it to send or receive messages, regardless of
-whether that process was the one that created the \ccomm{} object.
-However, users should be aware that verification is likely to be most
-efficient when variables are declared as locally as possible, so it is
-best to declare the \ccomm{} object in the innermost scope possible.
-Figure \ref{fig:mpi-threads-comm} illustrates an effective way
-to do this in the context of modeling a multithreaded MPI program.
-In the code skeleton, each thread can access the local communicator
-object of its process, but not that of any other process.
+\ccomm{} object of a given place.  Any process which can access a
+handle for that \ccomm{} object can use it to send or receive
+messages, regardless of whether that process was the one that created
+the \ccomm{} object.  However, users should be aware that verification
+is likely to be most efficient when variables are declared as locally
+as possible, so it is best to declare the \ccomm{} object in the
+innermost scope possible.  Figure \ref{fig:mpi-threads-comm}
+illustrates an effective way to do this in the context of modeling a
+multithreaded MPI program.  In the code skeleton, each thread can
+access the local communicator object of its process, but not that of
+any other process.
 
 
 
