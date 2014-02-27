@@ -211,27 +211,26 @@ minimal counterexample, we issue the command
 \begin{figure}[t]
   \begin{small}
 \begin{verbatim}
-CIVL v0.7 of 2014-02-08 -- http://vsl.cis.udel.edu/civl
-Error 0 encountered at depth 136:
+CIVL v0.8 of 2014-02-28 -- http://vsl.cis.udel.edu/civl
+Error 0 encountered at depth 129:
 ...
-Error 25 encountered at depth 20:
+Error 25 encountered at depth 16:
 CIVL execution error (kind: DEADLOCK, certainty: PROVEABLE)
 A deadlock is possible:
   Path condition: true
   Enabling predicate: false
-ProcessState 0: at location 15, f0:40.4-9 "$wait"
-  Waiting on process 1
-ProcessState 1: at location 28, f0:22.31-43 "forks[right]"
+ProcessState 0: terminated
+ProcessState 1: at location 26, f0:21.30-42 "forks[right]"
   Enabling predicate: false
-ProcessState 2: at location 28, f0:22.31-43 "forks[right]"
+ProcessState 2: at location 26, f0:21.30-42 "forks[right]"
   Enabling predicate: false
-at f0:40.4-9 "$wait".
-State 683
+at f0:21.30-42 "forks[right]".
+State 664
 | Path condition
 | | true
 | Dynamic scopes
 | | dyscope 0 (parent=-1, static=0)
-| | | reachers = {0,1,2}
+| | | reachers = {1,2}
 | | | variables
 | | | | __atomic_lock_var = process<-1>
 | | | | B = 5
@@ -243,20 +242,20 @@ State 683
 | | process 2
 | | | atomicCount = 0
 | | | call stack
-| | | | Frame[function=dine, location=28, f0:22.31-43 "forks[right]", scope=5]
+| | | | Frame[function=dine, location=26, f0:21.30-42 "forks[right]", scope=3]
 ...
 =================== Stats ===================
-   validCalls          : 18874
+   validCalls          : 15328
    proverCalls         : 17
-   memory (bytes)      : 163577856
-   time (s)            : 6.22
+   memory (bytes)      : 26738688
+   time (s)            : 2.24
    maxProcs            : 6
-   statesInstantiated  : 9346
-   statesSaved         : 684
-   statesSeen          : 1782
-   statesMatched       : 1178
-   steps               : 3009
-   transitions         : 2959
+   statesInstantiated  : 9267
+   statesSaved         : 665
+   statesSeen          : 1758
+   statesMatched       : 1177
+   steps               : 2994
+   transitions         : 2934
 
 The program MAY NOT be correct.  See CIVLREP/diningBad_log.txt
 \end{verbatim}
@@ -279,34 +278,49 @@ discarded and only this one saved.  We can replay the trace with the command
   \begin{small}
 \begin{verbatim}
 ...
-Step 1: proc 0: 
-  0->1: B = 5 at f0:9.0-12 "$input int B"
-Step 2: proc 0: 
-  35->36: i = 0 at f0:30.7-16 "int i = 0"
-Step 3: proc 0: 
-  36->38: LOOP_TRUE_BRANCH at f0:30.18-23 "i < n"
-Step 4: proc 0: 
-  38->40: forks[i] = 0 at f0:30.30-42 "forks[i] = 0"
+Transition 1: State 0, proc 0: 
+  0->1: B = 5 at f0:9.0-12 "$input int B";
+  1->2: n = InitialValue(n) at f0:10.0-12 "$input int n";
+  2->3: $assume ((2<=n)&&(n<=B)) at f0:11.0-20 "$assume 2<=n && n ... B";
+  3->4: forks = InitialValue(forks) at f0:13.0-12 "int forks[n]";
+  4->6: __h__ = InitialValue(__h__) at f0:27.12-13 "{";
+  6->7: i = 0 at f0:28.7-16 "int i = 0";
+--> State 1
+
+Transition 2: State 1, proc 0: 
+  7->9: LOOP_TRUE_BRANCH at f0:28.18-23 "i < n";
+--> State 2
+
 ...
-Step 17: proc 2: 
-  21->25: LOOP_TRUE_BRANCH at f0:20.9-10 "1"
-Step 18: proc 1: 
-  25->28: forks[left] = 1 at f0:21.30-45 "forks[left] = 1"
-Step 19: proc 2: 
-  25->28: forks[left] = 1 at f0:21.30-45 "forks[left] = 1"
-...
-Violation of Deadlock found in State 20:
+
+Transition 12: State 12, proc 2: 
+  19->20: left = id at f0:16.2-15 "int left = id";
+  20->21: right = ((id+1)%n) at f0:17.2-26 "int right = (id  ... n";
+--> State 13
+
+Transition 13: State 13, proc 2: 
+  21->24: LOOP_TRUE_BRANCH at f0:19.9-10 "1";
+--> State 14
+
+Transition 14: State 14, proc 1: 
+  24->26: forks[left] = 1 at f0:20.29-44 "forks[left] = 1";
+--> State 15
+
+Transition 15: State 15, proc 2: 
+  24->26: forks[left] = 1 at f0:20.29-44 "forks[left] = 1";
+--> State 16
+
+Violation of Deadlock found in State 16:
 A deadlock is possible:
   Path condition: true
   Enabling predicate: false
-ProcessState 0: at location 15, f0:40.4-9 "$wait"
-  Waiting on process 1
-ProcessState 1: at location 28, f0:22.31-43 "forks[right]"
+ProcessState 0: terminated
+ProcessState 1: at location 26, f0:21.30-42 "forks[right]"
   Enabling predicate: false
-ProcessState 2: at location 28, f0:22.31-43 "forks[right]"
+ProcessState 2: at location 26, f0:21.30-42 "forks[right]"
   Enabling predicate: false
-...
-Trace ends after 19 steps.
+
+Trace ends after 15 transitions.
 Violation(s) found.
 ...
 \end{verbatim}
@@ -317,5 +331,5 @@ Violation(s) found.
 
 The result of this command is shown in Figure \ref{fig:diningReplay}.
 The output indicates that a deadlock has been found involving 2
-philosophers. The trace has 19 steps; after the initialization
+philosophers. The trace has 15 transitions; after the initialization
 sequence, each philosopher picks up her left fork.
