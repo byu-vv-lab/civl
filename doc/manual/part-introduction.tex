@@ -121,7 +121,7 @@ of running some of the tools on them.
 Dijkstra's well-known Dining Philosophers system can be encoded in
 CIVL-C as shown in Figure \ref{fig:dining}.
 
-\begin{figure}
+\begin{figure}[t]
   \begin{small}
 \begin{verbatim}
 #include <civlc.h>
@@ -129,9 +129,7 @@ CIVL-C as shown in Figure \ref{fig:dining}.
 $input int B; // upper bound on number of philosophers
 $input int n; // number of philosophers
 $assume 2<=n && n<=B;
-
-// Each fork will be on the table (0) or in a hand (1).
-_Bool forks[n];
+_Bool forks[n]; // Each fork will be on the table (0) or in a hand (1). 
 
 void dine(int id) {
   int left = id;
@@ -145,13 +143,8 @@ void dine(int id) {
   }
 }
 
-/* Put all forks on the table. */
-void init() {
-  for (int i = 0; i < n; i++) forks[i] = 0;
-}
-
 void main() {
-  init();
+  for (int i = 0; i < n; i++) forks[i] = 0;
   for (int i = 0; i < n; i++) $spawn dine(i);
 }
 \end{verbatim}
@@ -215,7 +208,7 @@ minimal counterexample, we issue the command
   civl verify -inputB=5 -min diningBad.cvl
 \end{verbatim}
 
-\begin{figure}
+\begin{figure}[t]
   \begin{small}
 \begin{verbatim}
 CIVL v0.7 of 2014-02-08 -- http://vsl.cis.udel.edu/civl
@@ -326,4 +319,3 @@ The result of this command is shown in Figure \ref{fig:diningReplay}.
 The output indicates that a deadlock has been found involving 2
 philosophers. The trace has 19 steps; after the initialization
 sequence, each philosopher picks up her left fork.
-
