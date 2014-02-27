@@ -502,8 +502,10 @@ public class ModelBuilderWorker {
 		// initialization);
 		translateUndefinedFunctions();
 		completeCallOrSpawnStatements();
-		factory.completeHeapType(heapType, mallocStatements);
 		completeBundleType();
+		factory.setGcommSymbolicType(gcommType);
+		factory.setCommSymbolicType(commType);
+		factory.completeHeapType(heapType, mallocStatements);
 		completeModel(system);
 		this.staticAnalysis();
 	}

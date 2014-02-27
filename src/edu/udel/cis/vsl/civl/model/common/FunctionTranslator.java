@@ -3474,13 +3474,13 @@ public class FunctionTranslator {
 		case COMM_TYPE:
 			result.setHandleObjectType(true);
 			modelBuilder.commType = result;
-			modelFactory.setCommSymbolicType(result);
+//			modelFactory.setCommSymbolicType(result);
 			malocIdOffSet++;
 			break;
 		case GCOMM_TYPE:
 			result.setHandleObjectType(true);
 			modelBuilder.gcommType = result;
-			modelFactory.setGcommSymbolicType(result);
+//			modelFactory.setGcommSymbolicType(result);
 			malocIdOffSet++;
 			break;
 		default:
