@@ -1631,8 +1631,41 @@ public class FunctionTranslator {
 	 */
 	private Fragment translateFunctionCallNode(Scope scope,
 			FunctionCallNode functionCallNode) {
-		return new CommonFragment(translateFunctionCall(scope, null,
-				functionCallNode, true));
+		Statement functionCall = translateFunctionCall(scope, null,
+				functionCallNode, true);
+		
+		if(functionCall instanceof CallOrSpawnStatement && !scope.containsVariable(HEAP_VAR)){
+			CallOrSpawnStatement call = (CallOrSpawnStatement) functionCall;
+			
+			if(call.arguments() != null && call.arguments().size() > 0){
+				for(Expression scopeExpr : call.arguments()){
+					if (scopeExpr instanceof HereOrRootExpression) {
+						if (((HereOrRootExpression) scopeExpr).isHere()) {
+							if (!scope.containsVariable(HEAP_VAR)) {
+								int newVid = scope.numVariables();
+								CIVLSource source = modelFactory.sourceOf(functionCallNode);
+								Variable heapVariable = this.modelFactory.variable(
+										source, modelBuilder.heapType,
+										this.modelFactory.identifier(source, HEAP_VAR),
+										newVid);
+								Location location = modelFactory
+										.location(source, scope);
+
+								scope.addVariable(heapVariable);
+								return new CommonFragment(modelFactory.assignStatement(
+										source, location, modelFactory
+												.variableExpression(source,
+														heapVariable), modelFactory
+												.initialValueExpression(source,
+														heapVariable), true),
+														functionCall);
+							}
+						}
+					}
+				}
+			}
+		}
+		return new CommonFragment(functionCall);
 	}
 
 	/**
