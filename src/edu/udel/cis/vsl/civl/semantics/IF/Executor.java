@@ -167,6 +167,33 @@ public interface Executor {
 	 */
 	Enabler enabler();
 
+	/**
+	 * Adds a new object to the heap of a certain scope; sets the pointer of the
+	 * object in the heap to the provided left-hand-side expression (or does
+	 * nothing if no left-hand-side expression is specified).
+	 * 
+	 * @param source
+	 *            The source code element to be used to report errors.
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process where this computation happens.
+	 * @param lhs
+	 *            The left-hand-side expression to store the pointer to the
+	 *            added object.
+	 * @param scopeExpression
+	 *            The static expression of the scope value.
+	 * @param scopeValue
+	 *            The symbolic expression of the scope.
+	 * @param objectType
+	 *            The CIVL type of the object to be added, needed to decide the
+	 *            field index in the heap.
+	 * @param objectValue
+	 *            The object to be added to the heap.
+	 * @return The new state after adding the given object to the heap in the
+	 *         given scope.
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	State malloc(CIVLSource source, State state, int pid, LHSExpression lhs,
 			Expression scopeExpression, SymbolicExpression scopeValue,
 			CIVLType objectType, SymbolicExpression objectValue)
