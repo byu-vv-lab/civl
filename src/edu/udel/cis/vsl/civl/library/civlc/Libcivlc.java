@@ -151,8 +151,6 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		case "$comm_size":
 		case "$comm_probe":
 		case "$comm_seek":
-		case "$comm_chan_size":
-		case "$comm_total_size":
 			guard = universe.trueExpression();
 			break;
 
@@ -162,46 +160,6 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		}
 		return guard;
 	}
-
-	// /**
-	// We don't need the guard here. An error will be report instead.
-	// * The guard of the comm_add I think should be the process must be in the
-	// * communicator and the thread gonna be added into the communicator should
-	// * not be in the communicator at this point.
-	// *
-	// * @param state
-	// * @param pid
-	// * @param arguments
-	// * @param argumentValues
-	// * @return
-	// * @throws UnsatisfiablePathConditionException
-	// */
-	// private BooleanExpression getCommAddGuard(State state, int pid,
-	// Expression arguments[], SymbolicExpression argumentValues[],
-	// CIVLSource source) throws UnsatisfiablePathConditionException {
-	// BooleanExpression guard = null;
-	// Expression commPointerExpr = arguments[0];
-	// SymbolicExpression procValue = argumentValues[1];
-	// DereferenceExpression commExpr = this.evaluator.modelFactory()
-	// .dereferenceExpression(source, commPointerExpr);
-	// Evaluation eval = this.evaluator.evaluate(state, pid, commExpr);
-	// SymbolicExpression comm = eval.value;
-	// state = eval.state;
-	// SymbolicExpression nprocs = this.universe.tupleRead(comm, zeroObject);
-	// int int_nprocs = evaluator.extractInt(source,
-	// (NumericExpression) nprocs);
-	// SymbolicExpression procs = this.universe.tupleRead(comm, oneObject);
-	// // TODO: get real rank
-	// SymbolicExpression rank = universe.integer(pid);
-	// SymbolicExpression procQueue = universe.arrayRead(procs,
-	// (NumericExpression) rank);
-	// SymbolicExpression threadArray = universe.tupleRead(procQueue,
-	// oneObject);
-	// SymbolicExpression theProcess = universe.arrayRead(threadArray,
-	// universe.integer(0));
-	//
-	// return universe.trueExpression();
-	// }
 
 	@Override
 	public Evaluation getGuard(State state, int pid, String function,
@@ -653,9 +611,11 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * The gcomm_create function creates a __gcomm__ object and puts it into the
-	 * specified heap array, then let the left hand side variable which is a
-	 * handle reference to it.
+	 * Creates a new global communicator object and returns a handle to it. The
+	 * global communicator will have size communication places. The global
+	 * communicator defines a communication "universe" and encompasses message
+	 * buffers and all other components of the state associated to
+	 * message-passing. The new object will be allocated in the given scope.
 	 * 
 	 * @param state
 	 *            current state
@@ -667,7 +627,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 *            $scope scope , int nprocs
 	 * @param argumentValues
 	 * @param source
-	 * @return
+	 * @return $gcomm
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeGcommCreate(State state, int pid, LHSExpression lhs,
@@ -734,7 +694,16 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * Intiates the local comm which is a handle of a gcomm.
+	 * Creates a new local communicator object and returns a handle to it. The
+	 * new communicator will be affiliated with the specified global
+	 * communicator. This local communicator handle will be used as an argument
+	 * in most message-passing functions. The place must be in [0,size-1] and
+	 * specifies the place in the global communication universe that will be
+	 * occupied by the local communicator. The local communicator handle may be
+	 * used by more than one process, but all of those processes will be viewed
+	 * as occupying the same place. Only one call to $comm_create may occur for
+	 * each gcomm-place pair. The new object will be allocated in the given
+	 * scope.
 	 * 
 	 * @param state
 	 * @param pid
@@ -743,7 +712,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * @param arguments
 	 *            $scope, $gcomm, place
 	 * @param argumentValues
-	 * @return
+	 * @return $comm
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommCreate(State state, int pid, LHSExpression lhs,
@@ -785,7 +754,8 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * Returns the number of processes associated to the comm
+	 * Returns the size (number of places) in the global communicator associated
+	 * to the given comm.
 	 * 
 	 * @param state
 	 * @param pid
@@ -794,10 +764,10 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * @param arguments
 	 *            $comm
 	 * @param argumentValues
-	 * @return
+	 * @return the number of places
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommNprocs(State state, int pid, LHSExpression lhs,
+	private State executeCommSize(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression commHandle = argumentValues[0];
@@ -824,16 +794,18 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * returns true iff a matching message exists in comm
+	 * Returns true iff a matching message exists in the communication universe
+	 * specified by the comm. A message matches the arguments if the destination
+	 * of the message is the place of the comm, and the sources and tags match.
 	 * 
 	 * @param state
 	 * @param pid
 	 * @param lhs
 	 *            _Bool type
 	 * @param arguments
-	 *            &comm, source, dest, tag
+	 *            &comm, source, tag
 	 * @param argumentValues
-	 * @return
+	 * @return _Bool hasMatchedMessage?
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommProbe(State state, int pid, LHSExpression lhs,
@@ -844,8 +816,8 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		SymbolicExpression gcommHandle;
 		SymbolicExpression gcomm;
 		SymbolicExpression source = argumentValues[1];
-		SymbolicExpression dest = argumentValues[2];
-		SymbolicExpression tag = argumentValues[3];
+		SymbolicExpression tag = argumentValues[2];
+		SymbolicExpression dest;
 		SymbolicExpression message;
 		boolean isFind = false;
 		CIVLSource civlsource = arguments[0].getSource();
@@ -858,6 +830,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		eval = evaluator.dereference(civlsource, state, gcommHandle);
 		state = eval.state;
 		gcomm = eval.value;
+		dest = universe.tupleRead(comm, zeroObject);
 		message = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
 				tag, civlsource);
 		if (message != null)
@@ -871,14 +844,17 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * Return the matched message without changing message buffer
+	 * Finds the first matching message and returns it without modifying the
+	 * communication universe. If no matching message exists, returns a message
+	 * with source, dest, and tag all negative.
 	 * 
 	 * @param state
 	 * @param pid
 	 * @param lhs
 	 * @param arguments
+	 *            $comm, source, tag
 	 * @param argumentValues
-	 * @return
+	 * @return $message
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommSeek(State state, int pid, LHSExpression lhs,
@@ -889,8 +865,8 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		SymbolicExpression gcommHandle;
 		SymbolicExpression gcomm;
 		SymbolicExpression source = argumentValues[1];
-		SymbolicExpression dest = argumentValues[2];
-		SymbolicExpression tag = argumentValues[3];
+		SymbolicExpression dest;
+		SymbolicExpression tag = argumentValues[2];
 		SymbolicExpression message;
 		CIVLSource civlsource = arguments[0].getSource();
 		Evaluation eval;
@@ -902,120 +878,12 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		eval = evaluator.dereference(civlsource, state, gcommHandle);
 		state = eval.state;
 		gcomm = eval.value;
+		dest = universe.tupleRead(comm, zeroObject);
 		message = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
 				tag, civlsource);
 		if (lhs != null) {
 			state = this.stateFactory.setVariable(state,
 					((VariableExpression) lhs).variable(), pid, message);
-		}
-		return state;
-	}
-
-	/**
-	 * returns the number of messages from source to dest stored in comm;
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param lhs
-	 *            int type
-	 * @param arguments
-	 *            $comm, source, dest
-	 * @param argumentValues
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State executeCommChanSize(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression commHandle = argumentValues[0];
-		SymbolicExpression comm;
-		SymbolicExpression gcommHandle;
-		SymbolicExpression gcomm;
-		SymbolicExpression source = argumentValues[1];
-		SymbolicExpression dest = argumentValues[2];
-		SymbolicExpression buf;
-		SymbolicExpression bufRow;
-		SymbolicExpression queue;
-		SymbolicExpression queueLength;
-		CIVLSource civlsource = arguments[0].getSource();
-		Evaluation eval;
-
-		assert evaluator.extractInt(civlsource, (NumericExpression) source) >= 0;
-		assert evaluator.extractInt(civlsource, (NumericExpression) dest) >= 0;
-		eval = evaluator.dereference(civlsource, state, commHandle);
-		state = eval.state;
-		comm = eval.value;
-		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle);
-		state = eval.state;
-		gcomm = eval.value;
-		buf = universe.tupleRead(gcomm, universe.intObject(2));
-		bufRow = universe.arrayRead(buf, (NumericExpression) source);
-		queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-		queueLength = universe.tupleRead(queue, zeroObject);
-		if (lhs != null) {
-			state = this.stateFactory.setVariable(state,
-					((VariableExpression) lhs).variable(), pid, queueLength);
-		}
-		return state;
-	}
-
-	/**
-	 * returns the total number of messages in the comm
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param lhs
-	 *            int type
-	 * @param arguments
-	 *            $comm
-	 * @param argumentValues
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State executeCommTotalSize(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression commHandle = argumentValues[0];
-		SymbolicExpression comm;
-		SymbolicExpression gcommHandle;
-		SymbolicExpression gcomm;
-		SymbolicExpression buf;
-		SymbolicExpression bufRow;
-		SymbolicExpression queue;
-		SymbolicExpression queueLength;
-		SymbolicExpression nprocs;
-		int int_nprocs;
-		int total_size = 0;
-		int int_queueLength;
-		CIVLSource civlsource = arguments[0].getSource();
-		Evaluation eval;
-
-		eval = evaluator.dereference(civlsource, state, commHandle);
-		state = eval.state;
-		comm = eval.value;
-		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle);
-		state = eval.state;
-		gcomm = eval.value;
-		nprocs = universe.tupleRead(gcomm, universe.intObject(0));
-		buf = universe.tupleRead(gcomm, universe.intObject(2));
-		int_nprocs = evaluator.extractInt(civlsource,
-				(NumericExpression) nprocs);
-		for (int i = 0; i < int_nprocs; i++) {
-			for (int j = 0; j < int_nprocs; j++) {
-				bufRow = universe.arrayRead(buf, universe.integer(i));
-				queue = universe.arrayRead(bufRow, universe.integer(j));
-				queueLength = universe.tupleRead(queue, zeroObject);
-				int_queueLength = evaluator.extractInt(civlsource,
-						(NumericExpression) queueLength);
-				total_size += int_queueLength;
-			}
-		}
-		if (lhs != null) {
-			state = this.stateFactory.setVariable(state,
-					((VariableExpression) lhs).variable(), pid,
-					universe.integer(total_size));
 		}
 		return state;
 	}
@@ -1116,14 +984,16 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	// }
 
 	/**
-	 * TODO
+	 * Finds the first matching message, removes it from the communicator, and
+	 * returns the message
 	 * 
 	 * @param state
 	 * @param pid
 	 * @param lhs
 	 * @param arguments
+	 *            $comm, source, tag
 	 * @param argumentValues
-	 * @return
+	 * @return $message
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommDequeue(State state, int pid, LHSExpression lhs,
@@ -1183,7 +1053,8 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		// remove the new message in the messages array
 		assert int_queueLength >= 0;
 		assert MessageIndexInMessagesArray >= 0;
-		messages = universe.removeElementAt(messages, MessageIndexInMessagesArray);
+		messages = universe.removeElementAt(messages,
+				MessageIndexInMessagesArray);
 		int_queueLength--;
 		queueLength = universe.integer(int_queueLength);
 		queue = universe.tupleWrite(queue, zeroObject, queueLength);
@@ -1200,11 +1071,14 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * TODO
+	 * Adds the message to the appropriate message queue in the communication
+	 * universe specified by the comm. The source of the message must equal the
+	 * place of the comm.
 	 * 
 	 * @param state
 	 * @param pid
 	 * @param arguments
+	 *            $comm, $message
 	 * @param argumentValues
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
@@ -1352,7 +1226,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			// No transition after an exit because the process no longer exists.
 			break;
 		case "$comm_size":
-			state = this.executeCommNprocs(state, pid, lhs, arguments,
+			state = this.executeCommSize(state, pid, lhs, arguments,
 					argumentValues);
 			state = this.stateFactory.setLocation(state, pid,
 					statement.target()); // is it equivalent to transition?
@@ -1378,18 +1252,6 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			break;
 		case "$comm_seek":
 			state = this.executeCommSeek(state, pid, lhs, arguments,
-					argumentValues);
-			state = this.stateFactory.setLocation(state, pid,
-					statement.target());
-			break;
-		case "$comm_chan_size":
-			state = this.executeCommChanSize(state, pid, lhs, arguments,
-					argumentValues);
-			state = this.stateFactory.setLocation(state, pid,
-					statement.target());
-			break;
-		case "$comm_total_size":
-			state = this.executeCommTotalSize(state, pid, lhs, arguments,
 					argumentValues);
 			state = this.stateFactory.setLocation(state, pid,
 					statement.target());
