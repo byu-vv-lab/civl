@@ -10,6 +10,7 @@ void MPI_Process (int __rank) {
 #include "mp_proc2.cvh"
   int rank;
   _Bool tStart = $false;
+  MPI_Comm MPI_COMM_WORLD = $comm_create($here, __MPI_Comm_World, __rank);
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   $proc threads[2];
@@ -31,12 +32,9 @@ void MPI_Process (int __rank) {
       }
     }
   }
-  //$atomic {
   for (int i=0; i<2; i++) {
     threads[i] = $spawn Thread(i);
-    $comm_add(MPI_COMM_WORLD, threads[i], rank);
   }
   tStart = $true;
-  for (int i=0; i<2; i++) $wait threads[i];
-  //}
+  for (int i=0; i<2; i++) $wait(threads[i]);
 }

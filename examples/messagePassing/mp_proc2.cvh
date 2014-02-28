@@ -1,14 +1,14 @@
 
 int MPI_Comm_size(MPI_Comm comm, int *size) {
-  *size = comm->nprocs;
+  *size = $comm_size(comm);
   return 0;
 }
 
-int MPI_Comm_rank(MPI_Comm comm, int *rank) {
+int MPI_Comm_rank(MPI_Comm comm, int* rank) {
   // this only works for MPI_COMM_WORLD.
   // for multiple communicators, you will need 
   // a map (array) from PID to rank for each comm
-  *rank = __rank;
+  *rank = comm->place;
   return 0;
 }
 
@@ -46,7 +46,7 @@ int MPI_Send(void *buf, int count, MPI_Datatype datatype,
 
 int MPI_Recv(void *buf, int count, MPI_Datatype datatype,
              int source, int tag, MPI_Comm comm, MPI_Status *status) {
-  $message in = $comm_dequeue(comm, source, __rank, tag);
+  $message in = $comm_dequeue(comm, source, tag);
   $atom {
     int size;
     

@@ -1,11 +1,11 @@
 #define MPI_ANY_SOURCE $COMM_ANY_SOURCE
 #define MPI_ANY_TAG $COMM_ANY_TAG
-typedef $comm *MPI_Comm;
 $input int NPROCS;
 $proc __procs[NPROCS];
 _Bool __start = 0;
-$comm __MPI_Comm_World;
-MPI_Comm MPI_COMM_WORLD = &__MPI_Comm_World;
+$gcomm __MPI_Comm_World = $gcomm_create($root, NPROCS);
+
+typedef $comm MPI_Comm;
 
 typedef int MPI_Datatype;
 
@@ -58,7 +58,6 @@ void MPI_Process (int __rank);
 void init() {
   for (int i=0; i<NPROCS; i++)
     __procs[i] = $spawn MPI_Process(i);
-  __MPI_Comm_World = $comm_create(NPROCS, __procs);
   __start=1;
 }
 
@@ -68,8 +67,6 @@ void finalize() {
 }
 
 void main() {
-  //$atomic{
-    init();
-    finalize();
-  //}
+  init();
+  finalize();
 }

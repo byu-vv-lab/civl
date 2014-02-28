@@ -701,7 +701,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		gcomm = eval.value;
 		nprocs = universe.tupleRead(gcomm, zeroObject);
 		if (lhs != null) {
-			assert lhs instanceof VariableExpression;
+//			assert lhs instanceof VariableExpression;
 			state = this.primaryExecutor.assign(state, pid, lhs, nprocs);
 		}
 		return state;
