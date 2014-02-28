@@ -1,0 +1,10 @@
+#include <civlc.h>
+
+void foo(){
+
+}
+
+void main(){
+$proc p = $spawn foo();
+}
+
