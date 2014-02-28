@@ -65,8 +65,7 @@ public class MessagePassingTest {
 	@Test
 	public void ring() {
 		assertTrue(ui.run("verify", filename("ring.cvl"),
-				"-inputNPROCS_BOUND=10", "-inputN_BOUND=5", "-showModel",
-				"-showTransitions"));
+				"-inputNPROCS_BOUND=10", "-inputN_BOUND=5"));
 	}
 
 }
