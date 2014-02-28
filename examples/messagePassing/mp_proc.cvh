@@ -1,10 +1,10 @@
-  void send(void *buf, int count, int dest, int tag) {
+  void send(void *buf, int count, int dest, int tag, $comm comm) {
     $message out = $message_pack(rank, dest, tag, buf, count*sizeof(double));
-    $comm_enqueue(&MPI_COMM_WORLD, out);
+    $comm_enqueue(comm, out);
   }
 
-  void recv(void *buf, int count, int source, int tag) {
-    $message in = $comm_dequeue(&MPI_COMM_WORLD, source, rank, tag);
+  void recv(void *buf, int count, int source, int tag, $comm comm) {
+    $message in = $comm_dequeue(comm, source, tag);
     $message_unpack(in, buf, count*sizeof(double));
   }
 

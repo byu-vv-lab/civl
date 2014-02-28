@@ -2,18 +2,13 @@
 $input int NPROCS;
 $proc __procs[NPROCS];
 _Bool __start = 0;
-$comm MPI_COMM_WORLD;
-$comm REDUCE_COMM;
+$gcomm COMM_WORLD;
 
 void MPI_Process (int rank);
-
 
 void init() {
   for (int i=0; i<NPROCS; i++)
     __procs[i] = $spawn MPI_Process(i);
-  MPI_COMM_WORLD = $comm_create(NPROCS, __procs);
-  REDUCE_COMM = $comm_create(NPROCS, __procs);
-  __start=1;
 }
 
 void finalize() {
@@ -24,6 +19,8 @@ void finalize() {
 void main() {
   $atomic{
     init();
+    COMM_WORLD = $gcomm_create($here, NPROCS);
+    __start = 1;
     finalize();
   }
 }
