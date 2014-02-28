@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,15 +14,18 @@ import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
@@ -43,7 +45,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
@@ -662,133 +663,373 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * TODO
+	 * The gcomm_create function creates a __gcomm__ object and puts it into the
+	 * specified heap array, then let the left hand side variable which is a
+	 * handle reference to it.
 	 * 
 	 * @param state
+	 *            current state
 	 * @param pid
+	 *            the pid of the process itself
 	 * @param lhs
+	 *            the handle variable
 	 * @param arguments
+	 *            $scope scope , int nprocs
 	 * @param argumentValues
 	 * @param source
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommAdd(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
-		Evaluation eval;
-		SymbolicExpression procValue = argumentValues[1];
-		SymbolicExpression comm;
-		SymbolicExpression nprocs;
-		int int_nprocs;
-		SymbolicExpression procs;
-		NumericExpression rank = (NumericExpression) argumentValues[2];
-		SymbolicExpression procQueue;
-		// assert procQueue != null;
-		SymbolicExpression queueLength;
-		SymbolicExpression procsArray;
-		ArrayList<SymbolicExpression> newProcsArrayComponent = new ArrayList<>();
-		ArrayList<SymbolicType> newProcsQueueTypeComponent = new ArrayList<>();
-		ArrayList<SymbolicExpression> newProcsQueueComponent = new ArrayList<>();
-		ArrayList<SymbolicExpression> newProcsComponent = new ArrayList<>();
-		int int_queueLength;
-		SymbolicExpression newProcsArray = null;
-		int procToAdd = evaluator.modelFactory().getProcessId(
-				arguments[1].getSource(), procValue);
-		int commScopeID = evaluator.getScopeId(arguments[0].getSource(),
-				argumentValues[0]);
-		int commVariableID = evaluator.getVariableId(arguments[0].getSource(),
-				argumentValues[0]);
-		int pRank = evaluator.extractInt(arguments[2].getSource(), rank);
-
-		eval = evaluator.dereference(arguments[0].getSource(), state,
-				argumentValues[0]);
-		comm = eval.value;
-		state = eval.state;
-		nprocs = this.universe.tupleRead(comm, zeroObject);
-		int_nprocs = evaluator.extractInt(source, (NumericExpression) nprocs);
-		procs = this.universe.tupleRead(comm, oneObject);
-		// // Get the exact rank
-		// int_rank = evaluator.findRank(comm, pid);
-		if (!evaluator.isProcInCommWithRank(comm, pid, pRank)) {
-			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE,
-					"The process attempting to call $comm_add of the communicator "
-							+ arguments[0].toString()
-							+ " doesn't have the rank of " + pRank + ".",
-					source);
-		}
-		if (evaluator.findRank(comm, procToAdd) >= 0) {
-			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE, "The process " + procToAdd
-							+ " is already in the communicator "
-							+ arguments[0].toString()
-							+ " and thus can't be added into it again.",
-					arguments[1].getSource());
-		}
-		procQueue = universe.arrayRead(procs, rank);
-		assert procQueue != null;
-		queueLength = universe.tupleRead(procQueue, zeroObject);
-		procsArray = universe.tupleRead(procQueue, oneObject);
-		int_queueLength = this.evaluator.extractInt(source,
-				(NumericExpression) queueLength);
-		for (int i = 0; i < int_queueLength; i++) {
-			newProcsArrayComponent.add(universe.arrayRead(procsArray,
-					universe.integer(i)));
-		}
-		newProcsArrayComponent.add(procValue);
-		newProcsArray = universe.array(newProcsArrayComponent.get(0).type(),
-				newProcsArrayComponent);
-		int_queueLength++;
-		newProcsQueueTypeComponent.add(universe.integerType());
-		newProcsQueueTypeComponent.add(newProcsArray.type());
-		newProcsQueueComponent.add(universe.integer(int_queueLength));
-		newProcsQueueComponent.add(newProcsArray);
-		SymbolicTupleType newProcQueueType = universe.tupleType(
-				universe.stringObject("__procQueue__"),
-				newProcsQueueTypeComponent);
-		procQueue = universe.tuple(newProcQueueType, newProcsQueueComponent);
-		for (int i = 0; i < int_nprocs; i++) {
-			if (i != evaluator.extractInt(source, rank))
-				newProcsComponent.add(universe.arrayRead(procs,
-						universe.integer(i)));
-			else {
-				newProcsComponent.add(procQueue);
-			}
-		}
-		newProcsArray = universe.array(universe.pureType(procQueue.type()),
-				newProcsComponent);
-		comm = universe.tupleWrite(comm, oneObject, newProcsArray);
-		state = stateFactory.setVariable(state, commVariableID, commScopeID,
-				comm);
-		return state;
-	}
-
 	private State executeGcommCreate(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
-		// TODO create the gcomm object using N
-		SymbolicExpression gcommObject = universe.symbolicConstant(
-				universe.stringObject("gcomm"), modelFactory.model()
-						.gcommType().getDynamicType(universe));
+		SymbolicExpression gcomm;
+		SymbolicExpression nprocs = argumentValues[1];
+		SymbolicExpression scope = argumentValues[0];
+		Expression scopeExpression = arguments[0];
+		SymbolicExpression isInit;
+		SymbolicExpression isInitArray;
+		SymbolicExpression buf;
+		SymbolicExpression bufRow;
+		SymbolicExpression queueLength = universe.integer(0);
+		SymbolicExpression emptyQueue;
+		SymbolicExpression emptyMessages;
+		LinkedList<SymbolicExpression> emptyMessagesComponents = new LinkedList<SymbolicExpression>();
+		LinkedList<SymbolicExpression> isInitComponents = new LinkedList<SymbolicExpression>();
+		LinkedList<SymbolicExpression> queueComponents = new LinkedList<SymbolicExpression>();
+		LinkedList<SymbolicExpression> bufRowComponents = new LinkedList<SymbolicExpression>();
+		LinkedList<SymbolicExpression> bufComponents = new LinkedList<SymbolicExpression>();
+		List<SymbolicExpression> gcommComponents = new LinkedList<SymbolicExpression>();
+		int int_nprocs;
+		Model model = state.getScope(0).lexicalScope().model();
+		CIVLType queueType = model.queueType();
+		CIVLType messageType = model.mesageType();
+		CIVLType gcommType = model.gcommType();
+		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
+		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
 
-		state = primaryExecutor.malloc(source, state, pid, lhs, arguments[0],
-				argumentValues[0], modelFactory.model().gcommType(), gcommObject);
+		assert nprocs instanceof NumericExpression;
+		int_nprocs = evaluator.extractInt(source, (NumericExpression) nprocs);
+		// isInit component
+		isInit = universe.bool(false);
+		for (int i = 0; i < int_nprocs; i++) {
+			isInitComponents.add(isInit);
+		}
+		isInitArray = universe.array(isInit.type(), isInitComponents);
+		// buf component
+		emptyMessages = universe.array(dynamicMessageType,
+				emptyMessagesComponents);
+		queueComponents.add(queueLength);
+		queueComponents.add(emptyMessages);
+		assert dynamicQueueType instanceof SymbolicTupleType;
+		emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
+				queueComponents);
+		for (int i = 0; i < int_nprocs; i++) {
+			bufRowComponents.add(emptyQueue);
+		}
+		bufRow = universe.array(dynamicQueueType, bufRowComponents);
+		for (int i = 0; i < int_nprocs; i++) {
+			bufComponents.add(bufRow);
+		}
+		buf = universe.array(bufRow.type(), bufComponents);
+		gcommComponents.add(nprocs);
+		gcommComponents.add(isInitArray);
+		gcommComponents.add(buf);
+		gcomm = universe.tuple(
+				(SymbolicTupleType) gcommType.getDynamicType(universe),
+				gcommComponents);
+		state = primaryExecutor.malloc(source, state, pid, lhs,
+				scopeExpression, scope, gcommType, gcomm);
 		return state;
 	}
 
 	/**
-	 * TODO
+	 * Intiates the local comm which is a handle of a gcomm.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 *            $comm
+	 * @param arguments
+	 *            $scope, $gcomm, place
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCommCreate(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression scope = argumentValues[0];
+		Expression scopeExpression = arguments[0];
+		SymbolicExpression gcommHandle = argumentValues[1];
+		SymbolicExpression place = argumentValues[2];
+		SymbolicExpression gcomm;
+		SymbolicExpression comm;
+		SymbolicExpression isInitArray;
+		LinkedList<SymbolicExpression> commComponents = new LinkedList<SymbolicExpression>();
+		CIVLSource civlsource = arguments[0].getSource();
+		Model model = state.getScope(0).lexicalScope().model();
+		CIVLType commType = model.commType();
+		Evaluation eval;
+
+		eval = this.evaluator.dereference(civlsource, state, gcommHandle);
+		state = eval.state;
+		gcomm = eval.value;
+		isInitArray = universe.tupleRead(gcomm, oneObject);
+		assert universe.arrayRead(isInitArray, (NumericExpression) place)
+				.equals(universe.bool(false));
+		isInitArray = universe.arrayWrite(isInitArray,
+				(NumericExpression) place, universe.bool(true));
+		gcomm = universe.tupleWrite(gcomm, oneObject, isInitArray);
+		state = this.primaryExecutor.assign(civlsource, state, gcommHandle,
+				gcomm);
+		// builds comm
+		commComponents.add(place);
+		commComponents.add(gcommHandle);
+		comm = universe.tuple(
+				(SymbolicTupleType) commType.getDynamicType(universe),
+				commComponents);
+		state = this.primaryExecutor.malloc(civlsource, state, pid, lhs,
+				scopeExpression, scope, commType, comm);
+		return state;
+	}
+
+	/**
+	 * Returns the number of processes associated to the comm
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 *            int type
+	 * @param arguments
+	 *            $comm
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCommNprocs(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression commHandle = argumentValues[0];
+		SymbolicExpression comm;
+		SymbolicExpression gcommHandle;
+		SymbolicExpression gcomm;
+		SymbolicExpression nprocs;
+		CIVLSource civlsource = arguments[0].getSource();
+		Evaluation eval;
+
+		eval = evaluator.dereference(civlsource, state, commHandle);
+		state = eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		state = eval.state;
+		gcomm = eval.value;
+		nprocs = universe.tupleRead(gcomm, zeroObject);
+		if (lhs != null) {
+			assert lhs instanceof VariableExpression;
+			state = this.primaryExecutor.assign(state, pid, lhs, nprocs);
+		}
+		return state;
+	}
+
+	/**
+	 * returns true iff a matching message exists in comm
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 *            _Bool type
+	 * @param arguments
+	 *            &comm, source, dest, tag
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCommProbe(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression commHandle = argumentValues[0];
+		SymbolicExpression comm;
+		SymbolicExpression gcommHandle;
+		SymbolicExpression gcomm;
+		SymbolicExpression source = argumentValues[1];
+		SymbolicExpression dest = argumentValues[2];
+		SymbolicExpression tag = argumentValues[3];
+		SymbolicExpression message;
+		boolean isFind = false;
+		CIVLSource civlsource = arguments[0].getSource();
+		Evaluation eval;
+
+		eval = evaluator.dereference(civlsource, state, commHandle);
+		state = eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		state = eval.state;
+		gcomm = eval.value;
+		message = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
+				tag, civlsource);
+		if (message != null)
+			isFind = true;
+		if (lhs != null) {
+			state = this.stateFactory.setVariable(state,
+					((VariableExpression) lhs).variable(), pid,
+					universe.bool(isFind));
+		}
+		return state;
+	}
+
+	/**
+	 * Return the matched message without changing message buffer
 	 * 
 	 * @param state
 	 * @param pid
 	 * @param lhs
 	 * @param arguments
 	 * @param argumentValues
-	 * @param source
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
+	private State executeCommSeek(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression commHandle = argumentValues[0];
+		SymbolicExpression comm;
+		SymbolicExpression gcommHandle;
+		SymbolicExpression gcomm;
+		SymbolicExpression source = argumentValues[1];
+		SymbolicExpression dest = argumentValues[2];
+		SymbolicExpression tag = argumentValues[3];
+		SymbolicExpression message;
+		CIVLSource civlsource = arguments[0].getSource();
+		Evaluation eval;
+
+		eval = evaluator.dereference(civlsource, state, commHandle);
+		state = eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		state = eval.state;
+		gcomm = eval.value;
+		message = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
+				tag, civlsource);
+		if (lhs != null) {
+			state = this.stateFactory.setVariable(state,
+					((VariableExpression) lhs).variable(), pid, message);
+		}
+		return state;
+	}
+
+	/**
+	 * returns the number of messages from source to dest stored in comm;
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 *            int type
+	 * @param arguments
+	 *            $comm, source, dest
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCommChanSize(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression commHandle = argumentValues[0];
+		SymbolicExpression comm;
+		SymbolicExpression gcommHandle;
+		SymbolicExpression gcomm;
+		SymbolicExpression source = argumentValues[1];
+		SymbolicExpression dest = argumentValues[2];
+		SymbolicExpression buf;
+		SymbolicExpression bufRow;
+		SymbolicExpression queue;
+		SymbolicExpression queueLength;
+		CIVLSource civlsource = arguments[0].getSource();
+		Evaluation eval;
+
+		assert evaluator.extractInt(civlsource, (NumericExpression) source) >= 0;
+		assert evaluator.extractInt(civlsource, (NumericExpression) dest) >= 0;
+		eval = evaluator.dereference(civlsource, state, commHandle);
+		state = eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		state = eval.state;
+		gcomm = eval.value;
+		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		bufRow = universe.arrayRead(buf, (NumericExpression) source);
+		queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+		queueLength = universe.tupleRead(queue, zeroObject);
+		if (lhs != null) {
+			state = this.stateFactory.setVariable(state,
+					((VariableExpression) lhs).variable(), pid, queueLength);
+		}
+		return state;
+	}
+
+	/**
+	 * returns the total number of messages in the comm
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 *            int type
+	 * @param arguments
+	 *            $comm
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCommTotalSize(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression commHandle = argumentValues[0];
+		SymbolicExpression comm;
+		SymbolicExpression gcommHandle;
+		SymbolicExpression gcomm;
+		SymbolicExpression buf;
+		SymbolicExpression bufRow;
+		SymbolicExpression queue;
+		SymbolicExpression queueLength;
+		SymbolicExpression nprocs;
+		int int_nprocs;
+		int total_size = 0;
+		int int_queueLength;
+		CIVLSource civlsource = arguments[0].getSource();
+		Evaluation eval;
+
+		eval = evaluator.dereference(civlsource, state, commHandle);
+		state = eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		state = eval.state;
+		gcomm = eval.value;
+		nprocs = universe.tupleRead(gcomm, universe.intObject(0));
+		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		int_nprocs = evaluator.extractInt(civlsource,
+				(NumericExpression) nprocs);
+		for (int i = 0; i < int_nprocs; i++) {
+			for (int j = 0; j < int_nprocs; j++) {
+				bufRow = universe.arrayRead(buf, universe.integer(i));
+				queue = universe.arrayRead(bufRow, universe.integer(j));
+				queueLength = universe.tupleRead(queue, zeroObject);
+				int_queueLength = evaluator.extractInt(civlsource,
+						(NumericExpression) queueLength);
+				total_size += int_queueLength;
+			}
+		}
+		if (lhs != null) {
+			state = this.stateFactory.setVariable(state,
+					((VariableExpression) lhs).variable(), pid,
+					universe.integer(total_size));
+		}
+		return state;
+	}
+
 	// private State executeGcommCreate(State state, int pid, LHSExpression lhs,
 	// Expression[] arguments, SymbolicExpression[] argumentValues,
 	// CIVLSource source) throws UnsatisfiablePathConditionException {
@@ -898,58 +1139,63 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	private State executeCommDequeue(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
+		CIVLSource civlsource = arguments[0].getSource();
+		SymbolicExpression commHandle = argumentValues[0];
+		SymbolicExpression newMessage;
 		SymbolicExpression comm;
-		CIVLSource commArgSource = arguments[0].getSource();
-		NumericExpression sourceExpression;
-		NumericExpression destExpression;
-		SymbolicExpression buf; // buf has type $queue[][]
-		SymbolicExpression bufRow; // buf[source], has type $queue[] and
-									// corresponds
-		SymbolicExpression queue; // the particular $queue for this source and
-									// dest
-		int queueLength;
+		SymbolicExpression gcommHandle;
+		SymbolicExpression gcomm;
+		SymbolicExpression source = argumentValues[1];
+		SymbolicExpression tag = argumentValues[2];
+		SymbolicExpression dest;
+		SymbolicExpression buf;
+		SymbolicExpression bufRow;
+		SymbolicExpression queue;
+		SymbolicExpression queueLength;
 		SymbolicExpression messages;
-		SymbolicExpression message = null;
-		int commScopeID = evaluator
-				.getScopeId(commArgSource, argumentValues[0]);
-		int commVariableID = evaluator.getVariableId(commArgSource,
-				argumentValues[0]);
-		int numMessages;
+		Evaluation eval;
+		int int_queueLength;
 
-		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
-		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
-		sourceExpression = (NumericExpression) argumentValues[1];
-		destExpression = (NumericExpression) argumentValues[2];
-		buf = universe.tupleRead(comm, universe.intObject(2));
-		bufRow = universe.arrayRead(buf, sourceExpression);
-		queue = universe.arrayRead(bufRow, destExpression);
-		messages = universe.tupleRead(queue, universe.intObject(1));
-		numMessages = evaluator.extractInt(commArgSource,
-				universe.length(messages));
-		for (int i = 0; i < numMessages; i++) {
-			if (universe.tupleRead(
-					universe.arrayRead(messages, universe.integer(i)),
-					universe.intObject(2)).equals(argumentValues[3])) {
-				message = universe.arrayRead(messages, universe.integer(i));
+		eval = evaluator.dereference(civlsource, state, commHandle);
+		state = eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		state = eval.state;
+		gcomm = eval.value;
+		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		dest = universe.tupleRead(comm, zeroObject);
+		newMessage = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
+				tag, civlsource);
+		// remove the new message in the messages array
+		source = universe.tupleRead(newMessage, zeroObject);
+		dest = universe.tupleRead(newMessage, oneObject);
+		bufRow = universe.arrayRead(buf, (NumericExpression) source);
+		queue = bufRow = universe.arrayRead(bufRow, (NumericExpression) dest);
+		queueLength = universe.tupleRead(queue, zeroObject);
+		messages = universe.tupleRead(queue, oneObject);
+		int_queueLength = evaluator.extractInt(civlsource,
+				(NumericExpression) queueLength);
+		for (int i = 0; i < int_queueLength; i++) {
+			SymbolicExpression tempMessage = universe.arrayRead(messages,
+					universe.integer(i));
+			if (universe.tupleRead(tempMessage, universe.intObject(2)).equals(
+					tag)) {
 				messages = universe.removeElementAt(messages, i);
 				break;
 			}
 		}
-		assert universe.tupleRead(queue, zeroObject) instanceof NumericExpression;
-		queueLength = evaluator.extractInt(commArgSource,
-				(NumericExpression) universe.tupleRead(queue, zeroObject));
-		queueLength--;
-		queue = universe.tupleWrite(queue, universe.intObject(0),
-				universe.integer(queueLength));
-		queue = universe.tupleWrite(queue, universe.intObject(1), messages);
-		bufRow = universe.arrayWrite(bufRow, destExpression, queue);
-		buf = universe.arrayWrite(buf, sourceExpression, bufRow);
-		comm = universe.tupleWrite(comm, universe.intObject(2), buf);
-		state = stateFactory.setVariable(state, commVariableID, commScopeID,
-				comm);
+		int_queueLength--;
+		queueLength = universe.integer(int_queueLength);
+		queue = universe.tupleWrite(queue, zeroObject, queueLength);
+		queue = universe.tupleWrite(queue, oneObject, messages);
+		bufRow = universe.arrayWrite(bufRow, (NumericExpression) dest, queue);
+		buf = universe.arrayWrite(buf, (NumericExpression) source, bufRow);
+		gcomm = universe.tupleWrite(gcomm, universe.intObject(2), buf);
+		state = this.primaryExecutor.assign(civlsource, state, gcommHandle,
+				gcomm);
 		if (lhs != null) {
-			assert message != null;
-			state = primaryExecutor.assign(state, pid, lhs, message);
+			state = this.primaryExecutor.assign(state, pid, lhs, newMessage);
 		}
 		return state;
 	}
@@ -967,103 +1213,48 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	private State executeCommEnqueue(State state, int pid,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-
-		// SymbolicExpression procArray;
-		CIVLSource commArgSource = arguments[0].getSource();
-		// int nprocs;
-		int source = -1;
-		int dest = -1;
-		NumericExpression sourceExpression;
-		NumericExpression destExpression;
-		SymbolicExpression buf; // buf has type $queue[][]
-		SymbolicExpression bufRow; // buf[source], has type $queue[] and
-									// corresponds
-		SymbolicExpression queue; // the particular $queue for this source and
-									// dest
-		int queueLength;
+		CIVLSource civlsource = arguments[0].getSource();
+		SymbolicExpression commHandle = argumentValues[0];
+		SymbolicExpression newMessage = argumentValues[1];
+		SymbolicExpression comm;
+		SymbolicExpression gcommHandle;
+		SymbolicExpression gcomm;
+		SymbolicExpression source;
+		SymbolicExpression dest;
+		SymbolicExpression buf;
+		SymbolicExpression bufRow;
+		SymbolicExpression queue;
+		SymbolicExpression queueLength;
 		SymbolicExpression messages;
-		List<SymbolicExpression> messagesElements = new LinkedList<SymbolicExpression>();
-		SymbolicExpression newMessage;
-		int commScopeID = evaluator
-				.getScopeId(commArgSource, argumentValues[0]);
-		int commVariableID = evaluator.getVariableId(commArgSource,
-				argumentValues[0]);
-		SymbolicExpression comm = evaluator.dereference(commArgSource, state,
-				argumentValues[0]).value;
-		// int int_rank = evaluator.findRank(comm, pid);
+		Evaluation eval;
+		int int_queueLength;
 
-		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
-		// nprocs = evaluator.extractInt(commArgSource,
-		// (NumericExpression) universe.tupleRead(comm, zeroObject));
-		// procArray = (SymbolicExpression) universe.tupleRead(comm,
-		// universe.intObject(1));
-		// evaluator.dereference(commArgSource, state,
-		// argumentValues[1]);
-		// if (int_rank < 0) {
-		// throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-		// Certainty.CONCRETE,
-		// "The process attempting to call $comm_enqueue is not in the communicator "
-		// + arguments[0].toString() + ".", commArgSource);
-		// }
-		newMessage = argumentValues[1];
-		source = evaluator.extractInt(arguments[1].getSource(),
-				(NumericExpression) universe.tupleRead(newMessage, zeroObject));
-		if (!evaluator.isProcInCommWithRank(comm, pid, source)) {
-			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE,
-					"The process cannot call $comm_enqueue of communicator "
-							+ arguments[0].toString()
-							+ " using source rank of " + source + ".",
-					commArgSource);
-		}
-		dest = evaluator.extractInt(arguments[1].getSource(),
-				(NumericExpression) universe.tupleRead(newMessage, oneObject));
-		// Find the array index corresponding to the source proc and dest proc
-		// for (int i = 0; i < nprocs; i++) {
-		// SymbolicExpression proc = universe.arrayRead(procArray,
-		// universe.integer(i));
-		// int procID = evaluator.extractInt(commArgSource,
-		// (NumericExpression) universe.tupleRead(proc, zeroObject));
-		// if (procID == pid) {
-		// source = i;
-		// }
-		// if (universe.tupleRead(proc, zeroObject).equals(
-		// universe.tupleRead(newMessage, universe.intObject(1)))) {
-		// dest = i;
-		// }
-		// if (dest >= 0 && source >= 0) {
-		// break;
-		// }
-		// }
-		assert source >= 0;
-		assert dest >= 0;
-		sourceExpression = universe.integer(source);
-		destExpression = universe.integer(dest);
-		buf = universe.tupleRead(comm, universe.intObject(2));
-		bufRow = universe.arrayRead(buf, sourceExpression);
-		queue = universe.arrayRead(bufRow, destExpression);
-		messages = universe.tupleRead(queue, universe.intObject(1));
-		for (int i = 0; i < evaluator.extractInt(commArgSource,
-				universe.length(messages)); i++) {
-			messagesElements.add(universe.arrayRead(messages,
-					universe.integer(i)));
-		}
-		messagesElements.add(newMessage);
-		messages = universe.array(
-				((SymbolicArrayType) messages.type()).elementType(),
-				messagesElements);
-		assert universe.tupleRead(queue, zeroObject) instanceof NumericExpression;
-		queueLength = evaluator.extractInt(commArgSource,
-				(NumericExpression) universe.tupleRead(queue, zeroObject));
-		queueLength++;
-		queue = universe.tupleWrite(queue, universe.intObject(0),
-				universe.integer(queueLength));
-		queue = universe.tupleWrite(queue, universe.intObject(1), messages);
-		bufRow = universe.arrayWrite(bufRow, destExpression, queue);
-		buf = universe.arrayWrite(buf, sourceExpression, bufRow);
-		comm = universe.tupleWrite(comm, universe.intObject(2), buf);
-		state = stateFactory.setVariable(state, commVariableID, commScopeID,
-				comm);
+		eval = evaluator.dereference(civlsource, state, commHandle);
+		state = eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		state = eval.state;
+		gcomm = eval.value;
+		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		source = universe.tupleRead(newMessage, zeroObject);
+		dest = universe.tupleRead(newMessage, oneObject);
+		bufRow = universe.arrayRead(buf, (NumericExpression) source);
+		queue = universe.arrayRead(buf, (NumericExpression) dest);
+		queueLength = universe.tupleRead(queue, zeroObject);
+		messages = universe.tupleRead(queue, oneObject);
+		messages = universe.append(messages, newMessage);
+		int_queueLength = evaluator.extractInt(civlsource,
+				(NumericExpression) queueLength);
+		int_queueLength++;
+		queueLength = universe.integer(int_queueLength);
+		queue = universe.tupleWrite(queue, zeroObject, queueLength);
+		queue = universe.tupleWrite(queue, oneObject, messages);
+		bufRow = universe.arrayWrite(bufRow, (NumericExpression) dest, queue);
+		buf = universe.arrayWrite(buf, (NumericExpression) source, bufRow);
+		gcomm = universe.tupleWrite(gcomm, universe.intObject(2), buf);
+		state = this.primaryExecutor.assign(civlsource, state, gcommHandle,
+				gcomm);
 		return state;
 	}
 
@@ -1084,46 +1275,6 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		}
 		return stateFactory.removeProcess(state, pid);
 	}
-
-	// private State executeHeapCreate(State state, int pid, LHSExpression lhs,
-	// CIVLSource source) throws UnsatisfiablePathConditionException {
-	// SymbolicExpression newHeapObject = this.modelFactory.heapType()
-	// .getInitialValue();
-	// Variable heapHandleVariable;
-	// int heapHandleVID;
-	// int heapHandleDyscopeID;
-	// SymbolicExpression pointerOfHeapObject;
-	// Variable heapArrayVariable;
-	// Expression addressOfHeapObject;
-	// Evaluation eval;
-	// SymbolicExpression heapArrayValue;
-	//
-	// assert lhs instanceof VariableExpression;
-	// if (!(lhs instanceof VariableExpression)) {
-	// throw new CIVLInternalException("Unreachable", source);
-	// }
-	// heapHandleVariable = ((VariableExpression) lhs).variable();
-	// heapHandleVID = heapHandleVariable.vid();
-	// heapHandleDyscopeID = state.getScopeId(pid, heapHandleVariable);
-	// heapArrayVariable = heapHandleVariable.scope().variable("__h__");
-	// eval = evaluator.evaluate(state, pid,
-	// modelFactory.variableExpression(null, heapArrayVariable));
-	// heapArrayValue = eval.value;
-	// state = eval.state;
-	// if (heapArrayValue == null) {
-	//
-	// }
-	//
-	// addressOfHeapObject = modelFactory.addressOfExpression(null,
-	// modelFactory.variableExpression(null, heapArrayVariable));
-	// state = stateFactory.setVariable(state, heapHandleVID + 1,
-	// heapHandleDyscopeID, newHeapObject);
-	// eval = evaluator.evaluate(state, pid, addressOfHeapObject);
-	// state = eval.state;
-	// pointerOfHeapObject = eval.value;
-	// state = primaryExecutor.assign(state, pid, lhs, pointerOfHeapObject);
-	// return state;
-	// }
 
 	/**
 	 * TODO
@@ -1206,19 +1357,58 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			state = executeExit(state, pid);
 			// No transition after an exit because the process no longer exists.
 			break;
-		case "$comm_add":
-			state = executeCommAdd(state, pid, lhs, arguments, argumentValues,
-					statement.getSource());
-			state = stateFactory.setLocation(state, pid, statement.target());
+		// case "$comm_add":
+		// state = executeCommAdd(state, pid, lhs, arguments, argumentValues,
+		// statement.getSource());
+		// state = stateFactory.setLocation(state, pid, statement.target());
+		// break;
+		// case "$heap_create":
+		// state = executeHeapCreate(state, pid, lhs, statement.getSource());
+		// state = stateFactory.setLocation(state, pid, statement.target());
+		// break;
+		case "comm_nprocs":
+			state = this.executeCommNprocs(state, pid, lhs, arguments,
+					argumentValues);
+			state = this.stateFactory.setLocation(state, pid,
+					statement.target()); // is it equivalent to transition?
 			break;
 		case "$wait":
 			state = executeWait(state, pid, lhs, arguments, argumentValues,
 					statement.getSource(), statement.target());
 			break;
+		case "$comm_create":
+			state = this.executeCommCreate(state, pid, lhs, arguments,
+					argumentValues);
+			state = stateFactory.setLocation(state, pid, statement.target());
+			break;
 		// case "$heap_create":
 		// state = executeHeapCreate(state, pid, lhs, statement.getSource());
 		// state = stateFactory.setLocation(state, pid, statement.target());
 		// break;
+		case "$comm_probe":
+			state = this.executeCommProbe(state, pid, lhs, arguments,
+					argumentValues);
+			state = this.stateFactory.setLocation(state, pid,
+					statement.target());
+			break;
+		case "$comm_seek":
+			state = this.executeCommSeek(state, pid, lhs, arguments,
+					argumentValues);
+			state = this.stateFactory.setLocation(state, pid,
+					statement.target());
+			break;
+		case "$comm_chan_size":
+			state = this.executeCommChanSize(state, pid, lhs, arguments,
+					argumentValues);
+			state = this.stateFactory.setLocation(state, pid,
+					statement.target());
+			break;
+		case "$comm_total_size":
+			state = this.executeCommTotalSize(state, pid, lhs, arguments,
+					argumentValues);
+			state = this.stateFactory.setLocation(state, pid,
+					statement.target());
+			break;
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":
@@ -1226,12 +1416,6 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		case "$message_dest":
 		case "$message_size":
 		case "$message_unpack":
-		case "$comm_destroy":
-		case "$comm_nprocs":
-		case "$comm_probe":
-		case "$comm_seek":
-		case "$comm_chan_size":
-		case "$comm_total_size":
 			throw new CIVLUnimplementedFeatureException(name.name(), statement);
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
@@ -1527,4 +1711,107 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		return result;
 	}
 
+	/**
+	 * TODO: internal function
+	 * 
+	 * @param pid
+	 * @param gcomm
+	 * @param source
+	 * @param dest
+	 * @param tag
+	 * @param civlsource
+	 * @param returnMessages
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private SymbolicExpression getMatchedMessageFromGcomm(int pid,
+			SymbolicExpression gcomm, SymbolicExpression source,
+			SymbolicExpression dest, SymbolicExpression tag,
+			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
+		SymbolicExpression buf;
+		SymbolicExpression bufRow;
+		SymbolicExpression queue;
+		SymbolicExpression queueLength;
+		SymbolicExpression messages = null;
+		SymbolicExpression nprocs;
+		SymbolicExpression message = null;
+		int int_source = evaluator.extractInt(civlsource,
+				(NumericExpression) source);
+		int int_tag = evaluator.extractInt(civlsource, (NumericExpression) tag);
+		int int_queueLength;
+		int int_nprocs;
+
+		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		nprocs = universe.tupleRead(gcomm, zeroObject);
+		int_nprocs = evaluator.extractInt(civlsource,
+				(NumericExpression) nprocs);
+		// specific source and tag
+		if (int_source >= 0 && int_tag >= 0) {
+			bufRow = universe.arrayRead(buf, (NumericExpression) source);
+			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+			messages = universe.tupleRead(queue, oneObject);
+			queueLength = universe.tupleRead(queue, zeroObject);
+			int_queueLength = evaluator.extractInt(civlsource,
+					(NumericExpression) queueLength);
+			for (int i = 0; i < int_queueLength; i++) {
+				message = universe.arrayRead(messages, universe.integer(i));
+				if (universe.tupleRead(message, universe.intObject(2)).equals(
+						tag))
+					break;
+				else
+					message = null;
+			}
+		}
+		// specific source but random tag
+		if (int_source >= 0 && int_tag == -2) {
+			bufRow = universe.arrayRead(buf, (NumericExpression) source);
+			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+			messages = universe.tupleRead(queue, oneObject);
+			queueLength = universe.tupleRead(queue, zeroObject);
+			int_queueLength = evaluator.extractInt(civlsource,
+					(NumericExpression) queueLength);
+			if (int_queueLength > 0)
+				message = universe.arrayRead(messages, zero);
+		}
+		// random source but specific tag
+		if (int_source == -1 && int_tag >= 0) {
+			boolean hasTag = false;
+
+			for (int i = 0; i < int_nprocs; i++) {
+				bufRow = universe.arrayRead(buf, universe.integer(i));
+				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+				messages = universe.tupleRead(queue, oneObject);
+				queueLength = universe.tupleRead(queue, zeroObject);
+				int_queueLength = evaluator.extractInt(civlsource,
+						(NumericExpression) queueLength);
+				for (int j = 0; j < int_queueLength; j++) {
+					message = universe.arrayRead(messages, universe.integer(j));
+					if (universe.tupleRead(message, universe.intObject(2))
+							.equals(tag)) {
+						hasTag = true;
+						break;
+					} else
+						message = null;
+				}
+				if (hasTag)
+					break;
+			}
+		}
+		// random source and tag
+		if (int_source == -1 && int_tag == -2) {
+			for (int i = 0; i < int_nprocs; i++) {
+				bufRow = universe.arrayRead(buf, universe.integer(i));
+				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+				messages = universe.tupleRead(queue, oneObject);
+				queueLength = universe.tupleRead(queue, zeroObject);
+				int_queueLength = evaluator.extractInt(civlsource,
+						(NumericExpression) queueLength);
+				if (int_queueLength > 0) {
+					message = universe.arrayRead(messages, zero);
+					break;
+				}
+			}
+		}
+		return message;
+	}
 }

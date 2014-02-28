@@ -12,7 +12,7 @@ $input int N_BOUND; // upper bound on number times to loop
 $input int N; // number of times to loop
 $assume 0 < N && N <= N_BOUND;
 _Bool initialized = $false;
-$comm MPI_COMM_WORLD; // the default MPI communicator
+$gcomm MPI_COMM_WORLD; // the default MPI communicator
 
 void MPI_Process (int rank) {
   int left = (rank+NPROCS-1)%NPROCS;
@@ -20,21 +20,23 @@ void MPI_Process (int rank) {
   int i=0;
   int x=rank, y; // send a message from x, recv into y, for checking
   $message in, out;
+  $comm myComm;
   
   $when (initialized);
+  myComm = $comm_create($here, MPI_COMM_WORLD, rank);
   while (i<N) {
     if (rank%2==0) { // send first, then recv
       out = $message_pack(rank, right, TAG, &x, sizeof(int));
-      $comm_enqueue(&MPI_COMM_WORLD, out);
-      in = $comm_dequeue(&MPI_COMM_WORLD, left, rank, TAG);
+      $comm_enqueue(myComm, out);
+      in = $comm_dequeue(myComm, left, TAG);
       $message_unpack(in, &y, sizeof(int));
       $assert(y==left);
     } else { // recv first, then send
-      in = $comm_dequeue(&MPI_COMM_WORLD, left, rank, TAG);
+      in = $comm_dequeue(myComm, left, TAG);
       $message_unpack(in, &y, sizeof(int));
       $assert(y==left);
       out = $message_pack(rank, right, TAG, &x, sizeof(int));
-      $comm_enqueue(&MPI_COMM_WORLD, out);
+      $comm_enqueue(myComm, out);
     }
     i++;
   }
@@ -45,7 +47,7 @@ void main() {
   
   for (int i=0; i<NPROCS; i++)
     procs[i] = $spawn MPI_Process(i);
-  MPI_COMM_WORLD = $comm_create(NPROCS, procs);
+  MPI_COMM_WORLD = $gcomm_create($here, NPROCS);
   initialized = $true;
   for (int i=0; i<NPROCS; i++)
     $wait(procs[i]);
