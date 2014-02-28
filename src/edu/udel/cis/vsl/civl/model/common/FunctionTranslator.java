@@ -223,7 +223,7 @@ public class FunctionTranslator {
 
 	private int malocIdOffSet = 0;
 
-	private boolean heapNeeded = false;
+	// private boolean heapNeeded = false;
 
 	// private Variable newHeapArrayVariable = null;
 
@@ -485,25 +485,22 @@ public class FunctionTranslator {
 					+ statementNode.getClass().getSimpleName(),
 					modelFactory.sourceOf(statementNode));
 		}
-		if (this.heapNeeded) {
-			this.heapNeeded = false;
-			if (!scope.containsVariable(HEAP_VAR)) {
-				int newVid = scope.numVariables();
-				CIVLSource source = modelFactory.sourceOf(statementNode);
-				Variable heapVariable = this.modelFactory.variable(source,
-						modelBuilder.heapType,
-						this.modelFactory.identifier(source, HEAP_VAR), newVid);
-				Location location = modelFactory.location(source, scope);
-				Fragment createHeap;
+		if (!scope.containsVariable(HEAP_VAR)) {
+			int newVid = scope.numVariables();
+			CIVLSource source = modelFactory.sourceOf(statementNode);
+			Variable heapVariable = this.modelFactory.variable(source,
+					modelBuilder.heapType,
+					this.modelFactory.identifier(source, HEAP_VAR), newVid);
+			Location location = modelFactory.location(source, scope);
+			Fragment createHeap;
 
-				scope.addVariable(heapVariable);
-				createHeap = new CommonFragment(modelFactory.assignStatement(
-						source, location, modelFactory.variableExpression(
-								source, heapVariable), modelFactory
-								.initialValueExpression(source, heapVariable),
-						true));
-				result = createHeap.combineWith(result);
-			}
+			scope.addVariable(heapVariable);
+			createHeap = new CommonFragment(modelFactory.assignStatement(
+					source, location,
+					modelFactory.variableExpression(source, heapVariable),
+					modelFactory.initialValueExpression(source, heapVariable),
+					true));
+			result = createHeap.combineWith(result);
 		}
 		if (modelFactory.hasConditionalExpressions() == true) {
 			result = modelFactory.refineConditionalExpressionOfStatement(
@@ -964,11 +961,11 @@ public class FunctionTranslator {
 					"result of $malloc/malloc not cast to pointer type", source);
 		elementType = ((CIVLPointerType) pointerType).baseType();
 		modelFactory.setCurrentScope(scope);
-		if(callNode.getNumberOfArguments() == 1){
+		if (callNode.getNumberOfArguments() == 1) {
 			scopeExpression = modelFactory.hereOrRootExpression(source, true);
 			sizeExpression = translateExpressionNode(callNode.getArgument(0),
 					scope, true);
-		}else{
+		} else {
 			scopeExpression = translateExpressionNode(callNode.getArgument(0),
 					scope, true);
 			sizeExpression = translateExpressionNode(callNode.getArgument(1),
@@ -2597,8 +2594,8 @@ public class FunctionTranslator {
 
 			result = modelFactory.hereOrRootExpression(source,
 					scopeConstantNode.isRootNode());
-			if (scopeConstantNode.isHereNode())
-				this.heapNeeded = true;
+			// if (scopeConstantNode.isHereNode())
+			// this.heapNeeded = true;
 			break;
 		case PROCESS:
 			assert constantNode.getStringRepresentation().equals("$self");
@@ -3173,8 +3170,8 @@ public class FunctionTranslator {
 			Expression arg0, Expression arg1) {
 		CIVLType type0 = arg0.getExpressionType();
 		CIVLType type1 = arg1.getExpressionType();
-		boolean isNumeric0 = type0.isNumericType();
-		boolean isNumeric1 = type1.isNumericType();
+		boolean isNumeric0 = type0.isNumericType() || type0.isScopeType();
+		boolean isNumeric1 = type1.isNumericType() || type1.isScopeType();
 
 		if (isNumeric0 && isNumeric1) {
 			return modelFactory.binaryExpression(source, BINARY_OPERATOR.PLUS,
