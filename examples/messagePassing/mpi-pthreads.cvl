@@ -5,44 +5,37 @@
  */
 #include<civlc.h>
 #define TAG 0
+#define NPROCS 2
+#define NTHREADS 2
 
-$comm comm;
-_Bool initialized = $false;
+$gcomm gcomm = $gcomm_create($here, NPROCS);
 
-void MPI_Process (int pid) {
-  _Bool threadsInit = $false;
-  $proc threads[2];
+void MPI_Process (int rank) {
+  $comm comm = $comm_create($here, gcomm, rank);
+  $proc threads[NTHREADS];
   
   void Thread(int tid) {
-    int x = pid;
+    int x = rank;
     $message in, out = $message_pack(pid, 1-pid, TAG, &x, sizeof(int));
     
-    $when(threadsInit) ;
     for (int j=0; j<2; j++) {
-      if (pid == 1) {
-        for (int i=0; i<2; i++) $comm_enqueue(&comm, out);
-        for (int i=0; i<2; i++) in = $comm_dequeue(&comm, 1-pid, pid, TAG);
+      if (rank == 1) {
+        for (int i=0; i<2; i++) $comm_enqueue(comm, out);
+        for (int i=0; i<2; i++) in = $comm_dequeue(comm, 1-rank, TAG);
       } else {
-        for (int i=0; i<2; i++) in = $comm_dequeue(&comm, 1-pid, pid, TAG);
-        for (int i=0; i<2; i++) $comm_enqueue(&comm, out);
+        for (int i=0; i<2; i++) in = $comm_dequeue(comm, 1-rank, TAG);
+        for (int i=0; i<2; i++) $comm_enqueue(comm, out);
       }
     }
   }
   
-  $when (initialized); 
-  for (int i=0; i<2; i++) {
-    threads[i] = $spawn Thread(i);
-    $comm_add(&comm, threads[i], pid);
-  }
-  threadsInit = $true;
-  for (int i=0; i<2; i++) $wait(threads[i]);
+  for (int i=0; i<NTHREADS; i++) threads[i] = $spawn Thread(i);
+  for (int i=0; i<NTHREADS; i++) $wait(threads[i]);
 }
 
 void main() {
-  $proc procs[2];
+  $proc procs[NPROCS];
 
-  for (int i=0; i<2; i++) procs[i] = $spawn MPI_Process(i);
-  comm = $comm_create(2, procs);
-  initialized = $true;
-  for (int i=0; i<2; i++) $wait(procs[i]);
+  for (int i=0; i<NPROCS; i++) procs[i] = $spawn MPI_Process(i);
+  for (int i=0; i<NPROCS; i++) $wait(procs[i]);
 }
