@@ -2027,7 +2027,7 @@ public class CommonEvaluator implements Evaluator {
 					deref = universe.dereference(variableValue, symRef);
 				} catch (SARLException e) {
 					logSimpleError(source, state, ErrorKind.DEREFERENCE,
-							"Illegal pointer dereference");
+							"Illegal pointer dereference " + source.getSummary());
 					throw new UnsatisfiablePathConditionException();
 				}
 				return new Evaluation(state, deref);
@@ -2491,8 +2491,7 @@ public class CommonEvaluator implements Evaluator {
 			// atomic_enter statement is always considered as dependent with all
 			// processes since it accesses the global variable __atomic_lock_var
 			if (!variable.isConst() && !type.isHandleType()
-					&& !type.isHandleObjectType()
-					&& !type.equals(variable.scope().model().commType())) {
+					&& !type.isHandleObjectType()) {
 				eval = new Evaluation(state, makePointer(sid, vid,
 						identityReference));
 				memoryUnits.addAll(pointersInExpression(eval.value, state));

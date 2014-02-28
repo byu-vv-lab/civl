@@ -898,7 +898,7 @@ public class CommonExecutor implements Executor {
 							universe.integer(heapVariableId), symRef }));
 			symRef = universe.tupleComponentReference(symRef, indexObj);
 			symRef = universe
-					.arrayElementReference(symRef, universe.integer(1));
+					.arrayElementReference(symRef, universe.integer(0));
 			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
 			firstElementPointer = evaluator.setSymRef(heapPointer, symRef);
 			state = assign(state, pid, lhs, firstElementPointer);
