@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -2026,8 +2025,12 @@ public class CommonEvaluator implements Evaluator {
 				try {
 					deref = universe.dereference(variableValue, symRef);
 				} catch (SARLException e) {
-					logSimpleError(source, state, ErrorKind.DEREFERENCE,
-							"Illegal pointer dereference " + source.getSummary());
+					logSimpleError(
+							source,
+							state,
+							ErrorKind.DEREFERENCE,
+							"Illegal pointer dereference "
+									+ source.getSummary());
 					throw new UnsatisfiablePathConditionException();
 				}
 				return new Evaluation(state, deref);
@@ -2044,33 +2047,8 @@ public class CommonEvaluator implements Evaluator {
 
 	@Override
 	public int findRank(SymbolicExpression comm, int pid) {
-		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
-				universe.intObject(1));
-		NumericExpression symbolicProcsLength = ((SymbolicCompleteArrayType) procMatrix
-				.type()).extent();
-		int procsLength = this.extractInt(null, symbolicProcsLength);
-
-		for (int rank = 0; rank < procsLength; rank++) {
-			SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
-					universe.integer(rank));
-			int procRowLength = this.extractInt(
-					null,
-					(NumericExpression) universe.tupleRead(procQueue,
-							universe.intObject(0)));
-			SymbolicExpression procRow = universe.tupleRead(procQueue,
-					universe.intObject(1));
-
-			for (int j = 0; j < procRowLength; j++) {
-				SymbolicExpression proc = universe.arrayRead(procRow,
-						universe.integer(j));
-				int procId = this.modelFactory.getProcessId(null, proc);
-
-				if (procId == pid)
-					return rank;
-			}
-
-		}
-		return -1;
+		SymbolicExpression place = this.universe.tupleRead(comm, zeroObj);
+		return this.extractInt(null, (NumericExpression) place);
 	}
 
 	@Override
@@ -2550,26 +2528,27 @@ public class CommonEvaluator implements Evaluator {
 	@Override
 	public Set<Integer> processesOfSameRankInComm(SymbolicExpression comm,
 			int pid, int rank) {
-		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
-				universe.intObject(1));
-		SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
-				universe.integer(rank));
-		int procRowLength = this.extractInt(
-				null,
-				(NumericExpression) universe.tupleRead(procQueue,
-						universe.intObject(0)));
-		SymbolicExpression procRow = universe.tupleRead(procQueue,
-				universe.intObject(1));
-		Set<Integer> pidsInComm = new LinkedHashSet<>();
-
-		for (int j = 0; j < procRowLength; j++) {
-			SymbolicExpression proc = universe.arrayRead(procRow,
-					universe.integer(j));
-			int procId = this.modelFactory.getProcessId(null, proc);
-
-			pidsInComm.add(procId);
-		}
-		return pidsInComm;
+		return new HashSet<Integer>();
+		// SymbolicExpression procMatrix = this.universe.tupleRead(comm,
+		// universe.intObject(1));
+		// SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
+		// universe.integer(rank));
+		// int procRowLength = this.extractInt(
+		// null,
+		// (NumericExpression) universe.tupleRead(procQueue,
+		// universe.intObject(0)));
+		// SymbolicExpression procRow = universe.tupleRead(procQueue,
+		// universe.intObject(1));
+		// Set<Integer> pidsInComm = new LinkedHashSet<>();
+		//
+		// for (int j = 0; j < procRowLength; j++) {
+		// SymbolicExpression proc = universe.arrayRead(procRow,
+		// universe.integer(j));
+		// int procId = this.modelFactory.getProcessId(null, proc);
+		//
+		// pidsInComm.add(procId);
+		// }
+		// return pidsInComm;
 	}
 
 	@Override

@@ -4,7 +4,6 @@ import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -133,16 +132,6 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 				return universe.falseExpression();
 			}
 			break;
-		case "$comm_add":
-			// try {
-			// guard = getCommAddGuard(state, pid, arguments, argumentValues,
-			// statement.getSource());
-			// } catch (UnsatisfiablePathConditionException e) {
-			// // the error that caused the unsatifiable path condition should
-			// // already have been reported.
-			// return universe.falseExpression();
-			// }
-			// break;
 		case "$free":
 		case "$bundle_pack":
 		case "$bundle_unpack":
@@ -159,7 +148,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		case "$message_size":
 		case "$message_unpack":
 		case "$comm_destroy":
-		case "$comm_nprocs":
+		case "$comm_size":
 		case "$comm_probe":
 		case "$comm_seek":
 		case "$comm_chan_size":
@@ -264,7 +253,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		case "$message_size":
 		case "$message_unpack":
 		case "$comm_destroy":
-		case "$comm_nprocs":
+		case "$comm_size":
 		case "$comm_probe":
 		case "$comm_seek":
 		case "$comm_chan_size":
@@ -1171,7 +1160,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		source = universe.tupleRead(newMessage, zeroObject);
 		dest = universe.tupleRead(newMessage, oneObject);
 		bufRow = universe.arrayRead(buf, (NumericExpression) source);
-		queue = bufRow = universe.arrayRead(bufRow, (NumericExpression) dest);
+		queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 		queueLength = universe.tupleRead(queue, zeroObject);
 		messages = universe.tupleRead(queue, oneObject);
 		int_queueLength = evaluator.extractInt(civlsource,
@@ -1179,6 +1168,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		for (int i = 0; i < int_queueLength; i++) {
 			SymbolicExpression tempMessage = universe.arrayRead(messages,
 					universe.integer(i));
+			
 			if (universe.tupleRead(tempMessage, universe.intObject(2)).equals(
 					tag)) {
 				messages = universe.removeElementAt(messages, i);
@@ -1240,7 +1230,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		source = universe.tupleRead(newMessage, zeroObject);
 		dest = universe.tupleRead(newMessage, oneObject);
 		bufRow = universe.arrayRead(buf, (NumericExpression) source);
-		queue = universe.arrayRead(buf, (NumericExpression) dest);
+		queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 		queueLength = universe.tupleRead(queue, zeroObject);
 		messages = universe.tupleRead(queue, oneObject);
 		messages = universe.append(messages, newMessage);
@@ -1348,25 +1338,11 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 					argumentValues);
 			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
-		// case "printf":
-		// state = executePrintf(state, pid, argumentValues);
-		// state = transition(state, state.getProcessState(pid),
-		// statement.target());
-		// break;
 		case "$exit":
 			state = executeExit(state, pid);
 			// No transition after an exit because the process no longer exists.
 			break;
-		// case "$comm_add":
-		// state = executeCommAdd(state, pid, lhs, arguments, argumentValues,
-		// statement.getSource());
-		// state = stateFactory.setLocation(state, pid, statement.target());
-		// break;
-		// case "$heap_create":
-		// state = executeHeapCreate(state, pid, lhs, statement.getSource());
-		// state = stateFactory.setLocation(state, pid, statement.target());
-		// break;
-		case "comm_nprocs":
+		case "comm_size":
 			state = this.executeCommNprocs(state, pid, lhs, arguments,
 					argumentValues);
 			state = this.stateFactory.setLocation(state, pid,
@@ -1631,6 +1607,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * @param state
 	 * @param pid
 	 * @param arguments
+	 *            $comm, source, tag
 	 * @param argumentValues
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
@@ -1638,55 +1615,30 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	private BooleanExpression getDequeueGuard(State state, int pid,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
+		SymbolicExpression commHandle = argumentValues[0];
+		SymbolicExpression source = argumentValues[1];
+		SymbolicExpression tag = argumentValues[2];
 		SymbolicExpression comm;
-		CIVLSource commArgSource = arguments[0].getSource();
-		NumericExpression sourceExpression;
-		NumericExpression destExpression;
-		SymbolicExpression buf; // buf has type $queue[][]
-		SymbolicExpression bufRow; // buf[source], has type $queue[]
-		SymbolicExpression queue; // particular $queue for this source and dest
-		SymbolicExpression messages;
-		int numMessages;
+		SymbolicExpression gcommHandle;
+		SymbolicExpression gcomm;
+		SymbolicExpression dest;
+		SymbolicExpression newMessage;
+		CIVLSource civlsource = arguments[0].getSource();
 		boolean enabled = false;
-		// int int_rank;
-		int dest;
+		Evaluation eval;
 
-		comm = evaluator.dereference(commArgSource, state, argumentValues[0]).value;
-		// int_rank = evaluator.findRank(comm, pid);
-		// if (int_rank < 0) {
-		// throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-		// Certainty.CONCRETE,
-		// "The process attempting to call $comm_dequeue is not in the communicator "
-		// + arguments[0].toString() + ".", commArgSource);
-		// }
-		destExpression = (NumericExpression) argumentValues[2];
-		dest = evaluator.extractInt(null, destExpression);
-		if (!evaluator.isProcInCommWithRank(comm, pid, dest)) {
-			throw new CIVLExecutionException(ErrorKind.COMMUNICATION,
-					Certainty.CONCRETE,
-					"The process cannot call $comm_dequeue of communicator "
-							+ arguments[0].toString()
-							+ " using destination rank of " + dest + ".",
-					commArgSource);
-		}
-
-		assert universe.tupleRead(comm, zeroObject) instanceof NumericExpression;
-		sourceExpression = (NumericExpression) argumentValues[1];
-		buf = universe.tupleRead(comm, universe.intObject(2));
-		bufRow = universe.arrayRead(buf, sourceExpression);
-		queue = universe.arrayRead(bufRow, destExpression);
-		messages = universe.tupleRead(queue, universe.intObject(1));
-		numMessages = evaluator.extractInt(commArgSource,
-				universe.length(messages));
-		for (int i = 0; i < numMessages; i++) {
-			if (universe.tupleRead(
-					universe.arrayRead(messages, universe.integer(i)),
-					universe.intObject(2)).equals(argumentValues[3])) {
-				// We have a message with the right tag!
-				enabled = true;
-				break;
-			}
-		}
+		eval = evaluator.dereference(civlsource, state, commHandle);
+		state = eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		state = eval.state;
+		gcomm = eval.value;
+		dest = universe.tupleRead(comm, zeroObject);
+		newMessage = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
+				tag, civlsource);
+		if (newMessage != null)
+			enabled = true;
 		return universe.bool(enabled);
 	}
 
