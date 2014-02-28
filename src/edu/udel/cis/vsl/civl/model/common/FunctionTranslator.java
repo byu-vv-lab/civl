@@ -1110,7 +1110,23 @@ public class FunctionTranslator {
 	protected Fragment translateASTNode(ASTNode node, Scope scope,
 			Location location) {
 		Fragment result = null;
+		Fragment createHeap = null;
 
+		if (!scope.containsVariable(HEAP_VAR)) {
+			int newVid = scope.numVariables();
+			CIVLSource source = modelFactory.sourceOf(node);
+			Variable heapVariable = this.modelFactory.variable(source,
+					modelBuilder.heapType,
+					this.modelFactory.identifier(source, HEAP_VAR), newVid);
+			Location heaplocation = modelFactory.location(source, scope);
+
+			scope.addVariable(heapVariable);
+			createHeap = new CommonFragment(modelFactory.assignStatement(
+					source, heaplocation,
+					modelFactory.variableExpression(source, heapVariable),
+					modelFactory.initialValueExpression(source, heapVariable),
+					true));
+		}
 		switch (node.nodeKind()) {
 		case VARIABLE_DECLARATION:
 			try {
@@ -1172,6 +1188,8 @@ public class FunctionTranslator {
 						modelFactory.sourceOf(node));
 		}
 
+		if (createHeap != null)
+			result = createHeap.combineWith(result);
 		return result;
 	}
 
