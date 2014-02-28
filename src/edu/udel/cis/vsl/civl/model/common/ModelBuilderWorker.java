@@ -504,7 +504,7 @@ public class ModelBuilderWorker {
 		completeCallOrSpawnStatements();
 		completeBundleType();
 		if (gcommType != null) {// TODO add fake mallocStatement to the beginning
-			mallocStatements.add(factory.mallocStatement(null, null, null, 
+			mallocStatements.add(0, factory.mallocStatement(null, null, null, 
 					gcommType, null, 
 					factory.sizeofTypeExpression(null, gcommType), 
 					0, null));
@@ -512,9 +512,9 @@ public class ModelBuilderWorker {
 		}
 		if (commType != null) {// TODO add fake mallocStatement to the beginning
 //			factory.setCommSymbolicType(commType);
-			mallocStatements.add(factory.mallocStatement(null, null, null, 
-					gcommType, null, 
-					factory.sizeofTypeExpression(null, gcommType), 
+			mallocStatements.add(1, factory.mallocStatement(null, null, null, 
+					commType, null, 
+					factory.sizeofTypeExpression(null, commType), 
 					1, null));
 		}
 		factory.completeHeapType(heapType, mallocStatements);
