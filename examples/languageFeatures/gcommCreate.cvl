@@ -1,0 +1,13 @@
+#include <civlc.h>
+
+int foo($gcomm g, $gcomm f){
+  return 0;
+}
+
+void main(){
+  $gcomm gcomm = $gcomm_create($root, 2);
+  $gcomm fcomm = $gcomm_create($here, 2);
+  $proc fp = $spawn foo(gcomm, fcomm);
+
+  $wait(fp);
+}

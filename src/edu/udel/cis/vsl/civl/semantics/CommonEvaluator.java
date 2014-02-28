@@ -2609,7 +2609,7 @@ public class CommonEvaluator implements Evaluator {
 			throw new UnsatisfiablePathConditionException();
 		} else {
 			DynamicScope dyScope = state.getScope(dyScopeID);
-			Variable heapVariable = dyScope.lexicalScope().variable("__h__");
+			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
 
 			if (heapVariable == null) {
 				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
@@ -2634,7 +2634,7 @@ public class CommonEvaluator implements Evaluator {
 			throw new UnsatisfiablePathConditionException();
 		} else {
 			DynamicScope dyScope = state.getScope(dyScopeID);
-			Variable heapVariable = dyScope.lexicalScope().variable("__h__");
+			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
 
 			if (heapVariable == null) {
 				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,

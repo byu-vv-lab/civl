@@ -341,4 +341,24 @@ public class LanguageFeaturesTest {
 	public void functionPrototypeBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("functionPrototypeBad.cvl")));
 	}
+	
+	@Test
+	public void gcommCreate() throws ABCException {
+		assertTrue(ui.run("verify", filename("gcommCreate.cvl")));
+	}
+	
+	@Test
+	public void messageUnpackBad1() throws ABCException {
+		assertFalse(ui.run("verify", filename("messageUnpackBad1.cvl")));
+	}
+	
+	@Test
+	public void messageUnpackBad2() throws ABCException {
+		assertFalse(ui.run("verify", filename("messageUnpackBad2.cvl")));
+	}
+	
+	@Test
+	public void malloc1() throws ABCException {
+		assertTrue(ui.run("verify", filename("malloc1.cvl")));
+	}
 }

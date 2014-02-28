@@ -1491,4 +1491,6 @@ public interface ModelFactory {
 	void setGcommSymbolicType(CIVLType gcommType);
 
 	void setCommSymbolicType(CIVLType commType);
+
+	Model model();
 }

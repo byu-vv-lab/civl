@@ -503,10 +503,20 @@ public class ModelBuilderWorker {
 		translateUndefinedFunctions();
 		completeCallOrSpawnStatements();
 		completeBundleType();
-		if (gcommType != null)
-			factory.setGcommSymbolicType(gcommType);
-		if (commType != null)
-			factory.setCommSymbolicType(commType);
+		if (gcommType != null) {// TODO add fake mallocStatement to the beginning
+			mallocStatements.add(factory.mallocStatement(null, null, null, 
+					gcommType, null, 
+					factory.sizeofTypeExpression(null, gcommType), 
+					0, null));
+			//factory.setGcommSymbolicType(gcommType);
+		}
+		if (commType != null) {// TODO add fake mallocStatement to the beginning
+//			factory.setCommSymbolicType(commType);
+			mallocStatements.add(factory.mallocStatement(null, null, null, 
+					gcommType, null, 
+					factory.sizeofTypeExpression(null, gcommType), 
+					1, null));
+		}
 		factory.completeHeapType(heapType, mallocStatements);
 		completeModel(system);
 		this.staticAnalysis();

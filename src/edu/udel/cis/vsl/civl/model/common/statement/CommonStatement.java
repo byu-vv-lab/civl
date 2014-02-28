@@ -45,7 +45,8 @@ public abstract class CommonStatement extends CommonSourceable implements
 		super(civlSource);
 		this.source = source;
 		guard = new CommonBooleanLiteralExpression(civlSource, true);
-		source.addOutgoing(this);
+		if (source != null)
+			source.addOutgoing(this);
 	}
 
 	public CommonStatement() {

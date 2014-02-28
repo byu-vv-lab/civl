@@ -228,9 +228,9 @@ public class CommonModelFactory implements ModelFactory {
 
 	private SymbolicUnionType bundleSymbolicType;
 
-	private SymbolicTupleType commSymbolicType;
-
-	private SymbolicTupleType gcommSymbolicType;
+//	private SymbolicTupleType commSymbolicType;
+//
+//	private SymbolicTupleType gcommSymbolicType;
 
 	/**
 	 * The unique char type used in the system.
@@ -1966,10 +1966,10 @@ public class CommonModelFactory implements ModelFactory {
 		LinkedList<SymbolicType> fieldTypes = new LinkedList<SymbolicType>();
 		SymbolicTupleType result;
 
-		if (gcommSymbolicType != null)
-			fieldTypes.add(universe.arrayType(this.gcommSymbolicType));
-		if (commSymbolicType != null)
-			fieldTypes.add(universe.arrayType(this.commSymbolicType));
+		// if (gcommSymbolicType != null)
+		// fieldTypes.add(universe.arrayType(this.gcommSymbolicType));
+		// if (commSymbolicType != null)
+		// fieldTypes.add(universe.arrayType(this.commSymbolicType));
 		for (MallocStatement statement : mallocStatements) {
 			SymbolicType fieldType = universe.arrayType(statement
 					.getDynamicObjectType());
@@ -2338,14 +2338,20 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public void setGcommSymbolicType(CIVLType gcommType) {
-		this.gcommSymbolicType = (SymbolicTupleType) universe.canonic(gcommType
-				.getDynamicType(universe));
+		// this.gcommSymbolicType = (SymbolicTupleType)
+		// universe.canonic(gcommType
+		// .getDynamicType(universe));
 	}
 
 	@Override
 	public void setCommSymbolicType(CIVLType commType) {
-		this.commSymbolicType = (SymbolicTupleType) universe.canonic(commType
-				.getDynamicType(universe));
+//		this.commSymbolicType = (SymbolicTupleType) universe.canonic(commType
+//				.getDynamicType(universe));
+	}
+	
+	@Override
+	public Model model(){
+		return this.modelBuilder.getModel();
 	}
 
 }

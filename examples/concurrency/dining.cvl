@@ -9,7 +9,7 @@ $input int BOUND; // upper bound on number of philosophers
 $input int n; // number of philosophers
 $assume 2<=n && n<=BOUND;
 
-// Each fork will be on the table (0) or in a hand (1).
+// Each fork will be on the table (-1) or in a hand (0-(n-1)).
 int forks[n];
 
 void dine(int id) {
@@ -18,22 +18,22 @@ void dine(int id) {
 
   while (1) {
     if (id % 2 == 0) {
-      $when (forks[left] == 0) {forks[left] = 1;}
-      $when (forks[right] == 0) {forks[right] = 1;}
-      forks[right] = 0;
-      forks[left] = 0;
+      $when (forks[left] < 0) {forks[left] = id;}
+      $when (forks[right] < 0) {forks[right] = id;}
+      forks[right] = -1;
+      forks[left] = -1;
     } else {
-      $when (forks[right] == 0) {forks[right] = 1;}
-      $when (forks[left] == 0) {forks[left] = 1;}
-      forks[right] = 0;
-      forks[left] = 0;
+      $when (forks[right] < 0) {forks[right] = id;}
+      $when (forks[left] < 0) {forks[left] = id;}
+      forks[right] = -1;
+      forks[left] = -1;
     }
   }
 }
 
 /* Put all forks on the table. */
 void init() {
-  for (int i = 0; i < n; i++) forks[i] = 0;
+  for (int i = 0; i < n; i++) forks[i] = -1;
 }
 
 void main() {

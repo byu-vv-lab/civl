@@ -15,7 +15,6 @@ import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -25,7 +24,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
@@ -249,7 +247,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			}
 			break;
 		case "$comm_add":
-		case "$free":
+		case "free":
 		case "$bundle_pack":
 		case "$bundle_unpack":
 		case "$bundle_size":
@@ -766,6 +764,19 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		return state;
 	}
 
+	private State executeGcommCreate(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		// TODO create the gcomm object using N
+		SymbolicExpression gcommObject = universe.symbolicConstant(
+				universe.stringObject("gcomm"), modelFactory.model()
+						.gcommType().getDynamicType(universe));
+
+		state = primaryExecutor.malloc(source, state, pid, lhs, arguments[0],
+				argumentValues[0], modelFactory.model().gcommType(), gcommObject);
+		return state;
+	}
+
 	/**
 	 * TODO
 	 * 
@@ -778,93 +789,100 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeGcommCreate(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
-		SymbolicExpression comm;
-		SymbolicExpression nprocs = argumentValues[0];
-		NumericExpression size;
-		int nprocsConcrete;
-		SymbolicExpression procs;
-		SymbolicExpression buff;
-		SymbolicExpression buff1d;
-		List<SymbolicExpression> queueComponents = new LinkedList<SymbolicExpression>();
-		List<SymbolicExpression> emptyQueues = new LinkedList<SymbolicExpression>();
-		List<SymbolicExpression> buff1ds = new LinkedList<SymbolicExpression>();
-		List<SymbolicExpression> commComponents = new LinkedList<SymbolicExpression>();
-		Model model = state.getScope(0).lexicalScope().model();
-		CIVLType queueType = model.queueType();
-		CIVLType messageType = model.mesageType();
-		CIVLType commType = model.commType();
-		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
-		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
-		SymbolicExpression emptyQueue; // Just need one since immutable.
-		ArrayList<SymbolicExpression> procQueueArrayComponent = new ArrayList<SymbolicExpression>();
-		SymbolicExpression procQueueArray = null;
-		SymbolicExpression procArray = null;
-		SymbolicTupleType procQueueType = null;
-		Evaluation eval;
-
-		assert nprocs instanceof NumericExpression;
-		size = universe.multiply((NumericExpression) nprocs, evaluator.sizeof(
-				arguments[1].getSource(), evaluator.modelFactory()
-						.processSymbolicType()));
-		procs = getArrayFromPointer(state, arguments[1], argumentValues[1],
-				size, source);
-		if (!nprocs.operator().equals(SymbolicOperator.CONCRETE)) {
-			state = stateFactory.simplify(state);
-			eval = evaluator.evaluate(state, pid, arguments[0]);
-			state = eval.state;
-			nprocs = eval.value;
-		}
-		nprocsConcrete = evaluator.extractInt(source,
-				(NumericExpression) nprocs);
-		/* create procQueue array */
-		for (int i = 0; i < nprocsConcrete; i++) {
-			ArrayList<SymbolicExpression> procArrayComponent = new ArrayList<SymbolicExpression>();
-			ArrayList<SymbolicExpression> procQueueComponent = new ArrayList<SymbolicExpression>();
-			ArrayList<SymbolicType> procQueueTypeComponent = new ArrayList<SymbolicType>();
-
-			procQueueComponent.add(universe.integer(1));// procs queue length
-			procQueueTypeComponent.add(universe.integer(1).type());
-			SymbolicExpression singleProc = universe.arrayRead(procs,
-					universe.integer(i));
-			procArrayComponent.add(singleProc);
-			procArray = universe.array(singleProc.type(), procArrayComponent);
-			procQueueComponent.add(procArray);
-			procQueueTypeComponent.add(procArray.type());
-			procQueueType = universe.tupleType(
-					universe.stringObject("__procQueue__"),
-					procQueueTypeComponent);
-			procQueueArrayComponent.add(universe.tuple(procQueueType,
-					procQueueComponent));
-		}
-		procQueueArray = universe.array(procQueueType, procQueueArrayComponent);
-		// SymbolicType test = universe.pureType(procQueueArray.type());
-		queueComponents.add(universe.integer(0));
-		queueComponents.add(universe.emptyArray(dynamicMessageType));
-		assert dynamicQueueType instanceof SymbolicTupleType;
-		emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
-				queueComponents);
-		for (int i = 0; i < nprocsConcrete; i++) {
-			emptyQueues.add(emptyQueue);
-		}
-		buff1d = universe.array(dynamicQueueType, emptyQueues);
-		for (int i = 0; i < nprocsConcrete; i++) {
-			buff1ds.add(buff1d);
-		}
-		buff = universe.array(universe.arrayType(dynamicQueueType), buff1ds);
-		commComponents.add(nprocs);
-		commComponents.add(procQueueArray);
-		commComponents.add(buff);
-		assert commType.getDynamicType(universe) instanceof SymbolicTupleType;
-		comm = universe.tuple(
-				(SymbolicTupleType) commType.getDynamicType(universe),
-				commComponents);
-		if (lhs != null)
-			state = primaryExecutor.assign(state, pid, lhs, comm);
-		return state;
-	}
+	// private State executeGcommCreate(State state, int pid, LHSExpression lhs,
+	// Expression[] arguments, SymbolicExpression[] argumentValues,
+	// CIVLSource source) throws UnsatisfiablePathConditionException {
+	// SymbolicExpression comm;
+	// SymbolicExpression nprocs = argumentValues[0];
+	// NumericExpression size;
+	// int nprocsConcrete;
+	// SymbolicExpression procs;
+	// SymbolicExpression buff;
+	// SymbolicExpression buff1d;
+	// List<SymbolicExpression> queueComponents = new
+	// LinkedList<SymbolicExpression>();
+	// List<SymbolicExpression> emptyQueues = new
+	// LinkedList<SymbolicExpression>();
+	// List<SymbolicExpression> buff1ds = new LinkedList<SymbolicExpression>();
+	// List<SymbolicExpression> commComponents = new
+	// LinkedList<SymbolicExpression>();
+	// Model model = state.getScope(0).lexicalScope().model();
+	// CIVLType queueType = model.queueType();
+	// CIVLType messageType = model.mesageType();
+	// CIVLType commType = model.commType();
+	// SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
+	// SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
+	// SymbolicExpression emptyQueue; // Just need one since immutable.
+	// ArrayList<SymbolicExpression> procQueueArrayComponent = new
+	// ArrayList<SymbolicExpression>();
+	// SymbolicExpression procQueueArray = null;
+	// SymbolicExpression procArray = null;
+	// SymbolicTupleType procQueueType = null;
+	// Evaluation eval;
+	//
+	// assert nprocs instanceof NumericExpression;
+	// size = universe.multiply((NumericExpression) nprocs, evaluator.sizeof(
+	// arguments[1].getSource(), evaluator.modelFactory()
+	// .processSymbolicType()));
+	// procs = getArrayFromPointer(state, arguments[1], argumentValues[1],
+	// size, source);
+	// if (!nprocs.operator().equals(SymbolicOperator.CONCRETE)) {
+	// state = stateFactory.simplify(state);
+	// eval = evaluator.evaluate(state, pid, arguments[0]);
+	// state = eval.state;
+	// nprocs = eval.value;
+	// }
+	// nprocsConcrete = evaluator.extractInt(source,
+	// (NumericExpression) nprocs);
+	// /* create procQueue array */
+	// for (int i = 0; i < nprocsConcrete; i++) {
+	// ArrayList<SymbolicExpression> procArrayComponent = new
+	// ArrayList<SymbolicExpression>();
+	// ArrayList<SymbolicExpression> procQueueComponent = new
+	// ArrayList<SymbolicExpression>();
+	// ArrayList<SymbolicType> procQueueTypeComponent = new
+	// ArrayList<SymbolicType>();
+	//
+	// procQueueComponent.add(universe.integer(1));// procs queue length
+	// procQueueTypeComponent.add(universe.integer(1).type());
+	// SymbolicExpression singleProc = universe.arrayRead(procs,
+	// universe.integer(i));
+	// procArrayComponent.add(singleProc);
+	// procArray = universe.array(singleProc.type(), procArrayComponent);
+	// procQueueComponent.add(procArray);
+	// procQueueTypeComponent.add(procArray.type());
+	// procQueueType = universe.tupleType(
+	// universe.stringObject("__procQueue__"),
+	// procQueueTypeComponent);
+	// procQueueArrayComponent.add(universe.tuple(procQueueType,
+	// procQueueComponent));
+	// }
+	// procQueueArray = universe.array(procQueueType, procQueueArrayComponent);
+	// // SymbolicType test = universe.pureType(procQueueArray.type());
+	// queueComponents.add(universe.integer(0));
+	// queueComponents.add(universe.emptyArray(dynamicMessageType));
+	// assert dynamicQueueType instanceof SymbolicTupleType;
+	// emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
+	// queueComponents);
+	// for (int i = 0; i < nprocsConcrete; i++) {
+	// emptyQueues.add(emptyQueue);
+	// }
+	// buff1d = universe.array(dynamicQueueType, emptyQueues);
+	// for (int i = 0; i < nprocsConcrete; i++) {
+	// buff1ds.add(buff1d);
+	// }
+	// buff = universe.array(universe.arrayType(dynamicQueueType), buff1ds);
+	// commComponents.add(nprocs);
+	// commComponents.add(procQueueArray);
+	// commComponents.add(buff);
+	// assert commType.getDynamicType(universe) instanceof SymbolicTupleType;
+	// comm = universe.tuple(
+	// (SymbolicTupleType) commType.getDynamicType(universe),
+	// commComponents);
+	// if (lhs != null)
+	// state = primaryExecutor.assign(state, pid, lhs, comm);
+	// return state;
+	// }
 
 	/**
 	 * TODO
@@ -1144,7 +1162,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			state = eval.state;
 		}
 		switch (name.name()) {
-		case "$free":
+		case "free":
 			state = executeFree(state, pid, arguments, argumentValues,
 					statement.getSource());
 			state = stateFactory.setLocation(state, pid, statement.target());
@@ -1226,8 +1244,8 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source, Location target) {
 		SymbolicExpression procVal = argumentValues[0];
-		int joinedPid = modelFactory.getProcessId(arguments[0]
-				.getSource(), procVal);
+		int joinedPid = modelFactory.getProcessId(arguments[0].getSource(),
+				procVal);
 
 		state = stateFactory.setLocation(state, pid, target);
 		state = stateFactory.removeProcess(state, joinedPid);

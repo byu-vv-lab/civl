@@ -176,7 +176,7 @@ public class FunctionTranslator {
 
 	private static final String QUEUE_TYPE = "__queue__";
 
-	private static final String HEAP_VAR = "__h__";
+	private static final String HEAP_VAR = "__heap";
 
 	/* ************************** Instance Fields ************************** */
 
@@ -222,7 +222,7 @@ public class FunctionTranslator {
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
 
 	private int malocIdOffSet = 0;
-	
+
 	private boolean heapNeeded = false;
 
 	// private Variable newHeapArrayVariable = null;
@@ -485,26 +485,23 @@ public class FunctionTranslator {
 					+ statementNode.getClass().getSimpleName(),
 					modelFactory.sourceOf(statementNode));
 		}
-		if(this.heapNeeded){
+		if (this.heapNeeded) {
 			this.heapNeeded = false;
 			if (!scope.containsVariable(HEAP_VAR)) {
 				int newVid = scope.numVariables();
 				CIVLSource source = modelFactory.sourceOf(statementNode);
-				Variable heapVariable = this.modelFactory.variable(
-						source, modelBuilder.heapType,
-						this.modelFactory.identifier(source, HEAP_VAR),
-						newVid);
-				Location location = modelFactory
-						.location(source, scope);
+				Variable heapVariable = this.modelFactory.variable(source,
+						modelBuilder.heapType,
+						this.modelFactory.identifier(source, HEAP_VAR), newVid);
+				Location location = modelFactory.location(source, scope);
 				Fragment createHeap;
 
 				scope.addVariable(heapVariable);
 				createHeap = new CommonFragment(modelFactory.assignStatement(
-						source, location, modelFactory
-								.variableExpression(source,
-										heapVariable), modelFactory
-								.initialValueExpression(source,
-										heapVariable), true));
+						source, location, modelFactory.variableExpression(
+								source, heapVariable), modelFactory
+								.initialValueExpression(source, heapVariable),
+						true));
 				result = createHeap.combineWith(result);
 			}
 		}
@@ -926,7 +923,8 @@ public class FunctionTranslator {
 				String functionName = ((IdentifierExpressionNode) functionNode)
 						.getIdentifier().name();
 
-				if ("$malloc".equals(functionName))
+				if ("$malloc".equals(functionName)
+						|| "malloc".equals(functionName))
 					return true;
 			}
 		}
@@ -963,16 +961,21 @@ public class FunctionTranslator {
 
 		if (!pointerType.isPointerType())
 			throw new CIVLException(
-					"result of $malloc not cast to pointer type", source);
+					"result of $malloc/malloc not cast to pointer type", source);
 		elementType = ((CIVLPointerType) pointerType).baseType();
 		modelFactory.setCurrentScope(scope);
-		scopeExpression = translateExpressionNode(callNode.getArgument(0),
-				scope, true);
-		sizeExpression = translateExpressionNode(callNode.getArgument(1),
-				scope, true);
+		if(callNode.getNumberOfArguments() == 1){
+			scopeExpression = modelFactory.hereOrRootExpression(source, true);
+			sizeExpression = translateExpressionNode(callNode.getArgument(0),
+					scope, true);
+		}else{
+			scopeExpression = translateExpressionNode(callNode.getArgument(0),
+					scope, true);
+			sizeExpression = translateExpressionNode(callNode.getArgument(1),
+					scope, true);
+		}
 		result = modelFactory.mallocStatement(source, location, lhs,
 				elementType, scopeExpression, sizeExpression, mallocId, null);
-
 		modelBuilder.mallocStatements.add(result);
 		return result;
 	}
@@ -1041,34 +1044,34 @@ public class FunctionTranslator {
 					+ leftExpression, modelFactory.sourceOf(lhs));
 		assignStatement = assignStatement(modelFactory.sourceOfSpan(lhs, rhs),
 				(LHSExpression) leftExpression, rhs, scope);
-//		if (assignStatement instanceof MallocStatement) {
-//			MallocStatement malloc = (MallocStatement) assignStatement;
-//			Expression scopeExpr = malloc.getScopeExpression();
-//
-//			if (scopeExpr instanceof HereOrRootExpression) {
-//				if (((HereOrRootExpression) scopeExpr).isHere()) {
-//					if (!scope.containsVariable(HEAP_VAR)) {
-//						int newVid = scope.numVariables();
-//						CIVLSource source = modelFactory.sourceOf(assignNode);
-//						Variable heapVariable = this.modelFactory.variable(
-//								source, modelBuilder.heapType,
-//								this.modelFactory.identifier(source, HEAP_VAR),
-//								newVid);
-//						Location location = modelFactory
-//								.location(source, scope);
-//
-//						scope.addVariable(heapVariable);
-//						return new CommonFragment(modelFactory.assignStatement(
-//								source, location, modelFactory
-//										.variableExpression(source,
-//												heapVariable), modelFactory
-//										.initialValueExpression(source,
-//												heapVariable), true),
-//								assignStatement);
-//					}
-//				}
-//			}
-//		}
+		// if (assignStatement instanceof MallocStatement) {
+		// MallocStatement malloc = (MallocStatement) assignStatement;
+		// Expression scopeExpr = malloc.getScopeExpression();
+		//
+		// if (scopeExpr instanceof HereOrRootExpression) {
+		// if (((HereOrRootExpression) scopeExpr).isHere()) {
+		// if (!scope.containsVariable(HEAP_VAR)) {
+		// int newVid = scope.numVariables();
+		// CIVLSource source = modelFactory.sourceOf(assignNode);
+		// Variable heapVariable = this.modelFactory.variable(
+		// source, modelBuilder.heapType,
+		// this.modelFactory.identifier(source, HEAP_VAR),
+		// newVid);
+		// Location location = modelFactory
+		// .location(source, scope);
+		//
+		// scope.addVariable(heapVariable);
+		// return new CommonFragment(modelFactory.assignStatement(
+		// source, location, modelFactory
+		// .variableExpression(source,
+		// heapVariable), modelFactory
+		// .initialValueExpression(source,
+		// heapVariable), true),
+		// assignStatement);
+		// }
+		// }
+		// }
+		// }
 		return new CommonFragment(assignStatement);
 	}
 
@@ -1655,38 +1658,39 @@ public class FunctionTranslator {
 			FunctionCallNode functionCallNode) {
 		Statement functionCall = translateFunctionCall(scope, null,
 				functionCallNode, true);
-		
-//		if(functionCall instanceof CallOrSpawnStatement && !scope.containsVariable(HEAP_VAR)){
-//			CallOrSpawnStatement call = (CallOrSpawnStatement) functionCall;
-//			
-//			if(call.arguments() != null && call.arguments().size() > 0){
-//				for(Expression scopeExpr : call.arguments()){
-//					if (scopeExpr instanceof HereOrRootExpression) {
-//						if (((HereOrRootExpression) scopeExpr).isHere()) {
-//							if (!scope.containsVariable(HEAP_VAR)) {
-//								int newVid = scope.numVariables();
-//								CIVLSource source = modelFactory.sourceOf(functionCallNode);
-//								Variable heapVariable = this.modelFactory.variable(
-//										source, modelBuilder.heapType,
-//										this.modelFactory.identifier(source, HEAP_VAR),
-//										newVid);
-//								Location location = modelFactory
-//										.location(source, scope);
-//
-//								scope.addVariable(heapVariable);
-//								return new CommonFragment(modelFactory.assignStatement(
-//										source, location, modelFactory
-//												.variableExpression(source,
-//														heapVariable), modelFactory
-//												.initialValueExpression(source,
-//														heapVariable), true),
-//														functionCall);
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
+
+		// if(functionCall instanceof CallOrSpawnStatement &&
+		// !scope.containsVariable(HEAP_VAR)){
+		// CallOrSpawnStatement call = (CallOrSpawnStatement) functionCall;
+		//
+		// if(call.arguments() != null && call.arguments().size() > 0){
+		// for(Expression scopeExpr : call.arguments()){
+		// if (scopeExpr instanceof HereOrRootExpression) {
+		// if (((HereOrRootExpression) scopeExpr).isHere()) {
+		// if (!scope.containsVariable(HEAP_VAR)) {
+		// int newVid = scope.numVariables();
+		// CIVLSource source = modelFactory.sourceOf(functionCallNode);
+		// Variable heapVariable = this.modelFactory.variable(
+		// source, modelBuilder.heapType,
+		// this.modelFactory.identifier(source, HEAP_VAR),
+		// newVid);
+		// Location location = modelFactory
+		// .location(source, scope);
+		//
+		// scope.addVariable(heapVariable);
+		// return new CommonFragment(modelFactory.assignStatement(
+		// source, location, modelFactory
+		// .variableExpression(source,
+		// heapVariable), modelFactory
+		// .initialValueExpression(source,
+		// heapVariable), true),
+		// functionCall);
+		// }
+		// }
+		// }
+		// }
+		// }
+		// }
 		return new CommonFragment(functionCall);
 	}
 
@@ -2180,41 +2184,41 @@ public class FunctionTranslator {
 		CIVLSource source = modelFactory.sourceOf(node);
 
 		// this.inVariableDeclaration = true;
-		//if (variable.type().isScopeType()) {
-//			if (!scope.containsVariable(HEAP_VAR)) {
-//				int newVid = scope.numVariables();
-//				Variable heapVariable = this.modelFactory.variable(source,
-//						modelBuilder.heapType,
-//						this.modelFactory.identifier(source, HEAP_VAR), newVid);
-//
-//				scope.addVariable(heapVariable);
-//				if (sourceLocation == null)
-//					sourceLocation = modelFactory.location(
-//							modelFactory.sourceOfBeginning(node), scope);
-//				result = new CommonFragment(sourceLocation,
-//						modelFactory.assignStatement(source, sourceLocation,
-//								modelFactory.variableExpression(source,
-//										heapVariable), modelFactory
-//										.initialValueExpression(source,
-//												heapVariable), true));
-//				sourceLocation = null;
-//			}
-			// if (sourceLocation == null)
-			// sourceLocation = modelFactory.location(
-			// modelFactory.sourceOfBeginning(node), scope);
-			// result = new CommonFragment(sourceLocation,
-			// modelFactory
-			// .assignStatement(source, sourceLocation,
-			// modelFactory.variableExpression(
-			// modelFactory.sourceOf(identifier),
-			// variable), modelFactory
-			// .initialValueExpression(source,
-			// variable), true));
-			// if (initialization != null)
-			// result = initialization.combineWith(result);
-			// return result;
-//		} else 
-			if (variable.isInput() || type instanceof CIVLArrayType
+		// if (variable.type().isScopeType()) {
+		// if (!scope.containsVariable(HEAP_VAR)) {
+		// int newVid = scope.numVariables();
+		// Variable heapVariable = this.modelFactory.variable(source,
+		// modelBuilder.heapType,
+		// this.modelFactory.identifier(source, HEAP_VAR), newVid);
+		//
+		// scope.addVariable(heapVariable);
+		// if (sourceLocation == null)
+		// sourceLocation = modelFactory.location(
+		// modelFactory.sourceOfBeginning(node), scope);
+		// result = new CommonFragment(sourceLocation,
+		// modelFactory.assignStatement(source, sourceLocation,
+		// modelFactory.variableExpression(source,
+		// heapVariable), modelFactory
+		// .initialValueExpression(source,
+		// heapVariable), true));
+		// sourceLocation = null;
+		// }
+		// if (sourceLocation == null)
+		// sourceLocation = modelFactory.location(
+		// modelFactory.sourceOfBeginning(node), scope);
+		// result = new CommonFragment(sourceLocation,
+		// modelFactory
+		// .assignStatement(source, sourceLocation,
+		// modelFactory.variableExpression(
+		// modelFactory.sourceOf(identifier),
+		// variable), modelFactory
+		// .initialValueExpression(source,
+		// variable), true));
+		// if (initialization != null)
+		// result = initialization.combineWith(result);
+		// return result;
+		// } else
+		if (variable.isInput() || type instanceof CIVLArrayType
 				|| type instanceof CIVLStructOrUnionType || type.isHeapType()) {
 			Expression rhs = null;
 
@@ -2593,7 +2597,7 @@ public class FunctionTranslator {
 
 			result = modelFactory.hereOrRootExpression(source,
 					scopeConstantNode.isRootNode());
-			if(scopeConstantNode.isHereNode())
+			if (scopeConstantNode.isHereNode())
 				this.heapNeeded = true;
 			break;
 		case PROCESS:
@@ -3531,13 +3535,13 @@ public class FunctionTranslator {
 		case COMM_TYPE:
 			result.setHandleObjectType(true);
 			modelBuilder.commType = result;
-//			modelFactory.setCommSymbolicType(result);
+			// modelFactory.setCommSymbolicType(result);
 			malocIdOffSet++;
 			break;
 		case GCOMM_TYPE:
 			result.setHandleObjectType(true);
 			modelBuilder.gcommType = result;
-//			modelFactory.setGcommSymbolicType(result);
+			// modelFactory.setGcommSymbolicType(result);
 			malocIdOffSet++;
 			break;
 		default:
