@@ -366,4 +366,10 @@ public class LanguageFeaturesTest {
 	public void scopeOperators()throws ABCException {
 		assertTrue(ui.run("verify", filename("scopeOperators.cvl")));
 	}
+	
+	@Test
+	public void communicatorFeatures() {
+		assertTrue(ui.run("verify", filename("communicatorFeatures.cvl"),
+				"-inputNPROCS_BOUND=5", "-inputN_BOUND=3"));
+	}
 }

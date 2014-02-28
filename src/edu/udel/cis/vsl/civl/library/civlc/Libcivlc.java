@@ -43,6 +43,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -795,6 +796,9 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		dest = universe.tupleRead(comm, zeroObject);
 		message = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
 				tag, civlsource);
+		if (message == null) {
+			message = this.getEmptyMessage(state);
+		}
 		if (lhs != null) {
 			state = this.stateFactory.setVariable(state,
 					((VariableExpression) lhs).variable(), pid, message);
@@ -1536,6 +1540,29 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 					message = null;
 			}
 		}
+		return message;
+	}
+
+	private SymbolicExpression getEmptyMessage(State state) {
+		SymbolicExpression message;
+		Model model = state.getScope(0).lexicalScope().model();
+		CIVLType messageType = model.mesageType();
+		CIVLBundleType bundleType = model.bundleType();
+		LinkedList<SymbolicExpression> emptyMessageComponents = new LinkedList<SymbolicExpression>();
+		StringObject name;
+		SymbolicExpression bundle;
+		
+		name = universe.stringObject("X_s" + -1 + "v"
+				+ -1);
+		bundle = universe.symbolicConstant(name, bundleType.getDynamicType(universe));
+		emptyMessageComponents.add(universe.integer(-1));
+		emptyMessageComponents.add(universe.integer(-1));
+		emptyMessageComponents.add(universe.integer(-1));
+		emptyMessageComponents.add(bundle);
+		emptyMessageComponents.add(universe.integer(-1));
+		message = this.universe.tuple(
+				(SymbolicTupleType) messageType.getDynamicType(universe),
+				emptyMessageComponents);
 		return message;
 	}
 }

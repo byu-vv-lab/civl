@@ -48,6 +48,16 @@ void MPI_Process (int rank) {
       $message_unpack(in, &y, sizeof(int));
       $assert(y==left);
     } else { // recv first, then send
+
+      hasMessage = $comm_probe(myComm, left, TAG);
+      comm_size = $comm_size(myComm);
+      comm_place = $comm_place(myComm);
+      printf("hasMessage is %s\n", hasMessage);
+      printf("comm_size is %d\n", comm_size);
+      printf("comm_place is %d\n", comm_place);
+      matchedMessage = $comm_seek(myComm, left, TAG);
+      printf("matchedMessage is %s\n", matchedMessage);
+
       in = $comm_dequeue(myComm, left, TAG);
       $message_unpack(in, &y, sizeof(int));
       $assert(y==left);
