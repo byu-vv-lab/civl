@@ -1131,7 +1131,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			throws UnsatisfiablePathConditionException {
 		CIVLSource civlsource = arguments[0].getSource();
 		SymbolicExpression commHandle = argumentValues[0];
-		SymbolicExpression newMessage;
+		SymbolicExpression newMessage = null;
 		SymbolicExpression comm;
 		SymbolicExpression gcommHandle;
 		SymbolicExpression gcomm;
@@ -1139,12 +1139,15 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		SymbolicExpression tag = argumentValues[2];
 		SymbolicExpression dest;
 		SymbolicExpression buf;
-		SymbolicExpression bufRow;
-		SymbolicExpression queue;
-		SymbolicExpression queueLength;
-		SymbolicExpression messages;
+		SymbolicExpression bufRow = null;
+		SymbolicExpression queue = null;
+		SymbolicExpression queueLength = null;
+		SymbolicExpression messages = null;
 		Evaluation eval;
-		int int_queueLength;
+		int int_queueLength = -1;
+		int int_source;
+		int int_tag;
+		int MessageIndexInMessagesArray = -1;
 
 		eval = evaluator.dereference(civlsource, state, commHandle);
 		state = eval.state;
@@ -1155,27 +1158,32 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
 		dest = universe.tupleRead(comm, zeroObject);
-		newMessage = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
-				tag, civlsource);
-		// remove the new message in the messages array
-		source = universe.tupleRead(newMessage, zeroObject);
-		dest = universe.tupleRead(newMessage, oneObject);
-		bufRow = universe.arrayRead(buf, (NumericExpression) source);
-		queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-		queueLength = universe.tupleRead(queue, zeroObject);
-		messages = universe.tupleRead(queue, oneObject);
-		int_queueLength = evaluator.extractInt(civlsource,
-				(NumericExpression) queueLength);
-		for (int i = 0; i < int_queueLength; i++) {
-			SymbolicExpression tempMessage = universe.arrayRead(messages,
-					universe.integer(i));
-			
-			if (universe.tupleRead(tempMessage, universe.intObject(2)).equals(
-					tag)) {
-				messages = universe.removeElementAt(messages, i);
-				break;
+		int_source = evaluator.extractInt(civlsource,
+				(NumericExpression) source);
+		int_tag = evaluator.extractInt(civlsource, (NumericExpression) tag);
+		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		// specific source and tag
+		if (int_source >= 0 && int_tag >= 0) {
+			bufRow = universe.arrayRead(buf, (NumericExpression) source);
+			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+			messages = universe.tupleRead(queue, oneObject);
+			queueLength = universe.tupleRead(queue, zeroObject);
+			int_queueLength = evaluator.extractInt(civlsource,
+					(NumericExpression) queueLength);
+			for (int i = 0; i < int_queueLength; i++) {
+				newMessage = universe.arrayRead(messages, universe.integer(i));
+				if (universe.tupleRead(newMessage, universe.intObject(2))
+						.equals(tag)) {
+					MessageIndexInMessagesArray = i;
+					break;
+				} else
+					newMessage = null;
 			}
 		}
+		// remove the new message in the messages array
+		assert int_queueLength >= 0;
+		assert MessageIndexInMessagesArray >= 0;
+		messages = universe.removeElementAt(messages, MessageIndexInMessagesArray);
 		int_queueLength--;
 		queueLength = universe.integer(int_queueLength);
 		queue = universe.tupleWrite(queue, zeroObject, queueLength);
@@ -1343,7 +1351,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			state = executeExit(state, pid);
 			// No transition after an exit because the process no longer exists.
 			break;
-		case "comm_size":
+		case "$comm_size":
 			state = this.executeCommNprocs(state, pid, lhs, arguments,
 					argumentValues);
 			state = this.stateFactory.setLocation(state, pid,
@@ -1728,18 +1736,13 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		SymbolicExpression queue;
 		SymbolicExpression queueLength;
 		SymbolicExpression messages = null;
-		SymbolicExpression nprocs;
 		SymbolicExpression message = null;
 		int int_source = evaluator.extractInt(civlsource,
 				(NumericExpression) source);
 		int int_tag = evaluator.extractInt(civlsource, (NumericExpression) tag);
 		int int_queueLength;
-		int int_nprocs;
 
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
-		nprocs = universe.tupleRead(gcomm, zeroObject);
-		int_nprocs = evaluator.extractInt(civlsource,
-				(NumericExpression) nprocs);
 		// specific source and tag
 		if (int_source >= 0 && int_tag >= 0) {
 			bufRow = universe.arrayRead(buf, (NumericExpression) source);
@@ -1755,56 +1758,6 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 					break;
 				else
 					message = null;
-			}
-		}
-		// specific source but random tag
-		if (int_source >= 0 && int_tag == -2) {
-			bufRow = universe.arrayRead(buf, (NumericExpression) source);
-			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-			messages = universe.tupleRead(queue, oneObject);
-			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = evaluator.extractInt(civlsource,
-					(NumericExpression) queueLength);
-			if (int_queueLength > 0)
-				message = universe.arrayRead(messages, zero);
-		}
-		// random source but specific tag
-		if (int_source == -1 && int_tag >= 0) {
-			boolean hasTag = false;
-
-			for (int i = 0; i < int_nprocs; i++) {
-				bufRow = universe.arrayRead(buf, universe.integer(i));
-				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-				messages = universe.tupleRead(queue, oneObject);
-				queueLength = universe.tupleRead(queue, zeroObject);
-				int_queueLength = evaluator.extractInt(civlsource,
-						(NumericExpression) queueLength);
-				for (int j = 0; j < int_queueLength; j++) {
-					message = universe.arrayRead(messages, universe.integer(j));
-					if (universe.tupleRead(message, universe.intObject(2))
-							.equals(tag)) {
-						hasTag = true;
-						break;
-					} else
-						message = null;
-				}
-				if (hasTag)
-					break;
-			}
-		}
-		// random source and tag
-		if (int_source == -1 && int_tag == -2) {
-			for (int i = 0; i < int_nprocs; i++) {
-				bufRow = universe.arrayRead(buf, universe.integer(i));
-				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-				messages = universe.tupleRead(queue, oneObject);
-				queueLength = universe.tupleRead(queue, zeroObject);
-				int_queueLength = evaluator.extractInt(civlsource,
-						(NumericExpression) queueLength);
-				if (int_queueLength > 0) {
-					message = universe.arrayRead(messages, zero);
-					break;
-				}
 			}
 		}
 		return message;
