@@ -16,7 +16,7 @@ void MPI_Process (int rank) {
   
   void Thread(int tid) {
     int x = rank;
-    $message in, out = $message_pack(pid, 1-pid, TAG, &x, sizeof(int));
+    $message in, out = $message_pack(rank, 1-rank, TAG, &x, sizeof(int));
     
     for (int j=0; j<2; j++) {
       if (rank == 1) {
