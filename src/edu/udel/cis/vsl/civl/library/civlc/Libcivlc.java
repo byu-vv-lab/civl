@@ -260,6 +260,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		case "$comm_total_size":
 		case "$gcomm_create":
 		case "$heap_create":
+		case "$scope_parent":
 			guard = universe.trueExpression();
 			break;
 		case "$wait":
@@ -1385,6 +1386,12 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			state = this.stateFactory.setLocation(state, pid,
 					statement.target());
 			break;
+		case "$scope_parent":
+			state = this.executeScopeParent(state, pid, lhs, arguments,
+					argumentValues);
+			state = this.stateFactory.setLocation(state, pid,
+					statement.target());
+			break;
 		case "$memcpy":
 		case "$message_pack":
 		case "$message_source":
@@ -1396,6 +1403,42 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					statement);
+		}
+		return state;
+	}
+
+	/**
+	 * Executes lhs = $scope_parent($scope s).
+	 * 
+	 * @param state
+	 *            The state where the computation happens.
+	 * @param pid
+	 *            The ID of the process that the executed function call belongs
+	 *            to.
+	 * @param lhs
+	 *            The left hand side expression of the function call, which is
+	 *            to be assigned with the return value.
+	 * @param arguments
+	 *            The static arguments of the function call.
+	 * @param argumentValues
+	 *            The symbolic expressions of the arguments of the function
+	 *            call.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 *             if the assignment of the left hand side expression fails.
+	 */
+	private State executeScopeParent(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression scopeValue = argumentValues[0];
+		Expression scopeExpression = arguments[0];
+		CIVLSource source = scopeExpression.getSource();
+		int scopeID = modelFactory.getScopeId(source, scopeValue);
+		int parentID = state.getParentId(scopeID);
+		SymbolicExpression parentScope = modelFactory.scopeValue(parentID);
+
+		if (lhs != null) {
+			state = this.primaryExecutor.assign(state, pid, lhs, parentScope);
 		}
 		return state;
 	}

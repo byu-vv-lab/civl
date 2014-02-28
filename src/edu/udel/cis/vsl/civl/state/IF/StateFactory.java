@@ -334,4 +334,31 @@ public interface StateFactory {
 	 */
 	State setProcessState(State state, ProcessState processState, int pid);
 
+	/**
+	 * Checks if one dyscope is strictly the descendant of the other (not equal
+	 * to).
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param ancestor
+	 *            The ID of the ancestor scope.
+	 * @param descendant
+	 *            The ID of the descendant scope.
+	 * @return True iff ancestor scope is really an ancestor of the descendant
+	 *         scope and they must not be equal to each other.
+	 */
+	boolean isDesendantOf(State state, int ancestor, int descendant);
+
+	/**
+	 * Computes the lowest common ancestor of two given scopes.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param one
+	 *            One dynamic scope.
+	 * @param another
+	 *            Another dynamic scope.
+	 * @return The lowest common ancestor of the two given scopes.
+	 */
+	int lowestCommonAncestor(State state, int one, int another);
 }

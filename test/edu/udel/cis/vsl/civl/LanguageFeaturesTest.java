@@ -361,4 +361,9 @@ public class LanguageFeaturesTest {
 	public void malloc1() throws ABCException {
 		assertTrue(ui.run("verify", filename("malloc1.cvl")));
 	}
+	
+	@Test
+	public void scopeOperators()throws ABCException {
+		assertTrue(ui.run("verify", filename("scopeOperators.cvl")));
+	}
 }

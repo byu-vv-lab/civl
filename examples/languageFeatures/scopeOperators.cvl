@@ -1,0 +1,26 @@
+#include <civlc.h>
+
+void main(){
+  $scope s = $here, t = $here;
+  $scope p = $scope_parent(s);
+  $gcomm g = $gcomm_create(p, 5);
+  $gcomm f;
+  
+  void foo(){
+    $scope fs = $here;
+    $scope sum = fs + s;// compute the lowest common ancestors of fs and s.
+    
+    $assert(s > fs);
+    $assert(sum == s);
+  }
+  
+  f = g;
+  g = f;
+  foo();
+  $assert(s == t);
+  $assert(s != p);
+  $assert(s <= p);// s is equal to p or s is strictly a descendant of p.
+  $assert(s < p);// s is strictly a descendant of p 
+  $assert(p >= s);// p is equal to s or p is strictly an ancestor of s.
+  $assert(p > s);// p is strictly a ancestor of s.
+}

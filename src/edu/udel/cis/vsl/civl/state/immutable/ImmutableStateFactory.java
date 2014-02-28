@@ -996,4 +996,36 @@ public class ImmutableStateFactory implements StateFactory {
 		return config;
 	}
 
+	@Override
+	public boolean isDesendantOf(State state, int ancestor, int descendant) {
+		if (ancestor == descendant) {
+			return false;
+		} else {
+			int parent = state.getParentId(descendant);
+
+			while (parent >= 0) {
+				if (ancestor == parent)
+					return true;
+				parent = state.getParentId(parent);
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public int lowestCommonAncestor(State state, int one, int another) {
+		if (one == another) {
+			return one;
+		} else {
+			int parent = one;
+
+			while (parent >= 0) {
+				if (parent == another || this.isDesendantOf(state, parent, another))
+					return parent;
+				parent = state.getParentId(parent);
+			}
+		}
+		return state.rootScopeID();
+	}
+
 }

@@ -234,7 +234,7 @@ public class AmpleSetWorker {
 		Set<Integer> ampleProcessIDs = new LinkedHashSet<>();
 		Stack<Integer> workingProcessIDs = new Stack<>();
 		// the map of communicators and processes in the communicator
-		Set<SymbolicExpression> checkedComm = new HashSet<>();
+//		Set<SymbolicExpression> checkedComm = new HashSet<>();
 
 		workingProcessIDs.add(startPid);
 		ampleProcessIDs.add(startPid);
@@ -244,7 +244,7 @@ public class AmpleSetWorker {
 			Set<SymbolicExpression> impactMemUnits = impactMemUnitsMap.get(pid);
 			Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfThis = reachableMemUnitsMap
 					.get(pid);
-			Set<CallOrSpawnStatement> commCalls;
+//			Set<CallOrSpawnStatement> commCalls;
 
 			if (impactMemUnits == null) {
 				// The current process is entering an atomic/atom block
@@ -253,33 +253,33 @@ public class AmpleSetWorker {
 				ampleProcessIDs = activeProcesses.keySet();
 				return ampleProcessIDs;
 			}
-			commCalls = activeProcesses.get(pid);
-			if (commCalls != null && !commCalls.isEmpty()) {
-				// this process has calls to comm_enque or comm_dequeu
-				for (CallOrSpawnStatement call : commCalls) {
-					Set<Integer> processIDsInComm = null;
-
-					try {
-						processIDsInComm = commAmpleSet(pid, call, checkedComm);
-					} catch (UnsatisfiablePathConditionException e) {
-						continue;
-					}
-					if (processIDsInComm != null && !processIDsInComm.isEmpty())
-						for (int commPid : processIDsInComm) {
-							if (commPid != pid
-									&& activeProcesses.keySet().contains(
-											commPid)
-									&& !ampleProcessIDs.contains(commPid)
-									&& !workingProcessIDs.contains(commPid)) {
-								workingProcessIDs.add(commPid);
-								ampleProcessIDs.add(commPid);
-								if (ampleProcessIDs.size() == activeProcesses
-										.keySet().size())
-									return ampleProcessIDs;
-							}
-						}
-				}
-			}
+//			commCalls = activeProcesses.get(pid);
+//			if (commCalls != null && !commCalls.isEmpty()) {
+//				// this process has calls to comm_enque or comm_dequeu
+//				for (CallOrSpawnStatement call : commCalls) {
+//					Set<Integer> processIDsInComm = null;
+//
+//					try {
+//						processIDsInComm = commAmpleSet(pid, call, checkedComm);
+//					} catch (UnsatisfiablePathConditionException e) {
+//						continue;
+//					}
+//					if (processIDsInComm != null && !processIDsInComm.isEmpty())
+//						for (int commPid : processIDsInComm) {
+//							if (commPid != pid
+//									&& activeProcesses.keySet().contains(
+//											commPid)
+//									&& !ampleProcessIDs.contains(commPid)
+//									&& !workingProcessIDs.contains(commPid)) {
+//								workingProcessIDs.add(commPid);
+//								ampleProcessIDs.add(commPid);
+//								if (ampleProcessIDs.size() == activeProcesses
+//										.keySet().size())
+//									return ampleProcessIDs;
+//							}
+//						}
+//				}
+//			}
 			for (Statement s : thisProc.getLocation().outgoing()) {
 				// this process has a wait statement
 				if (s instanceof WaitStatement) {
@@ -322,69 +322,71 @@ public class AmpleSetWorker {
 		return ampleProcessIDs;
 	}
 
-	/**
-	 * Compute the ample process ID's of a process given a certain communicator.
-	 * The rule is: for every $comm_enqueue or $comm_dequeue function call of
-	 * process, the set of processes in the same communicator with the same rank
-	 * should be contained in the ample set.
-	 * 
-	 * @param pid
-	 *            The ID of the current process.
-	 * @param call
-	 *            The functional call statement which invokes $comm_enqueue or
-	 *            $comm_dequeue.
-	 * @param checkedComm
-	 *            The set of communicators that has been checked when computing
-	 *            the ample set for the current process.
-	 * @return The set of process ID's that should be contained in the ample set
-	 *         due to the communicator.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Set<Integer> commAmpleSet(int pid, CallOrSpawnStatement call,
-			Set<SymbolicExpression> checkedComm)
-			throws UnsatisfiablePathConditionException {
-		// this process has calls to comm_enque or comm_dequeu
-		int thisRank;
-		SymbolicExpression comm;
-
-		comm = evaluator.evaluate(state, pid, call.arguments().get(0)).value;
-		comm = evaluator.dereference(call.arguments().get(0).getSource(),
-				state, comm).value;
-
-		if (processRankMap.containsKey(pid)
-				&& processRankMap.get(pid).containsKey(comm)) {
-			thisRank = processRankMap.get(pid).get(comm);
-		} else {
-			thisRank = evaluator.findRank(comm, pid);
-			if (!processRankMap.containsKey(pid)) {
-				processRankMap.put(pid,
-						new HashMap<SymbolicExpression, Integer>());
-			}
-			processRankMap.get(pid).put(comm, thisRank);
-		}
-		if (!checkedComm.contains(comm)) {
-			// the communicator has been included in the
-			// ample set yet
-			Set<Integer> processIDsInComm = null;
-
-			if (processesInCommMap.containsKey(comm)
-					&& processesInCommMap.get(comm).containsKey(thisRank)) {
-				processIDsInComm = processesInCommMap.get(comm).get(thisRank);
-
-			} else {
-				processIDsInComm = evaluator.processesOfSameRankInComm(comm,
-						pid, thisRank);
-				if (!processesInCommMap.containsKey(comm)) {
-					processesInCommMap.put(comm,
-							new HashMap<Integer, Set<Integer>>());
-				}
-				processesInCommMap.get(comm).put(thisRank, processIDsInComm);
-			}
-			checkedComm.add(comm);
-			return processIDsInComm;
-		}
-		return null;
-	}
+	// /**
+	// * Compute the ample process ID's of a process given a certain
+	// communicator.
+	// * The rule is: for every $comm_enqueue or $comm_dequeue function call of
+	// * process, the set of processes in the same communicator with the same
+	// rank
+	// * should be contained in the ample set.
+	// *
+	// * @param pid
+	// * The ID of the current process.
+	// * @param call
+	// * The functional call statement which invokes $comm_enqueue or
+	// * $comm_dequeue.
+	// * @param checkedComm
+	// * The set of communicators that has been checked when computing
+	// * the ample set for the current process.
+	// * @return The set of process ID's that should be contained in the ample
+	// set
+	// * due to the communicator.
+	// * @throws UnsatisfiablePathConditionException
+	// */
+	// private Set<Integer> commAmpleSet(int pid, CallOrSpawnStatement call,
+	//			Set<SymbolicExpression> checkedComm)
+//			throws UnsatisfiablePathConditionException {
+//		// this process has calls to comm_enque or comm_dequeu
+//		int thisRank;
+//		SymbolicExpression comm;
+//
+//		comm = evaluator.evaluate(state, pid, call.arguments().get(0)).value;
+//		comm = evaluator.dereference(call.arguments().get(0).getSource(),
+//				state, comm).value;
+//		if (processRankMap.containsKey(pid)
+//				&& processRankMap.get(pid).containsKey(comm)) {
+//			thisRank = processRankMap.get(pid).get(comm);
+//		} else {
+//			thisRank = evaluator.findRank(comm, pid);
+//			if (!processRankMap.containsKey(pid)) {
+//				processRankMap.put(pid,
+//						new HashMap<SymbolicExpression, Integer>());
+//			}
+//			processRankMap.get(pid).put(comm, thisRank);
+//		}
+//		if (!checkedComm.contains(comm)) {
+//			// the communicator has been included in the
+//			// ample set yet
+//			Set<Integer> processIDsInComm = null;
+//
+//			if (processesInCommMap.containsKey(comm)
+//					&& processesInCommMap.get(comm).containsKey(thisRank)) {
+//				processIDsInComm = processesInCommMap.get(comm).get(thisRank);
+//
+//			} else {
+//				processIDsInComm = evaluator.processesOfSameRankInComm(comm,
+//						pid, thisRank);
+//				if (!processesInCommMap.containsKey(comm)) {
+//					processesInCommMap.put(comm,
+//							new HashMap<Integer, Set<Integer>>());
+//				}
+//				processesInCommMap.get(comm).put(thisRank, processIDsInComm);
+//			}
+//			checkedComm.add(comm);
+//			return processIDsInComm;
+//		}
+//		return null;
+//	}
 
 	/**
 	 * Compute active processes at the current state, i.e., non-null processes

@@ -1057,93 +1057,140 @@ public class CommonEvaluator implements Evaluator {
 		if (operator == BINARY_OPERATOR.IMPLIES)
 			return evaluateImplies(state, pid, expression);
 		else {
-			Evaluation eval = evaluate(state, pid, expression.left());
-			SymbolicExpression left = eval.value;
-			SymbolicExpression right;
+			if (expression.left().getExpressionType()
+					.equals(modelFactory.scopeType())) {
+				Evaluation eval = evaluate(state, pid, expression.left());
+				int left = modelFactory.getScopeId(expression.left()
+						.getSource(), eval.value);
+				int right;
+				boolean result;
 
-			eval = evaluate(state, pid, expression.right());
-			right = eval.value;
-			switch (expression.operator()) {
-			case PLUS:
-				eval.value = universe.add((NumericExpression) left,
-						(NumericExpression) right);
-				break;
-			case MINUS:
-				eval.value = universe.subtract((NumericExpression) left,
-						(NumericExpression) right);
-				break;
-			case TIMES:
-				eval.value = universe.multiply((NumericExpression) left,
-						(NumericExpression) right);
-				break;
-			case DIVIDE: {
-				BooleanExpression assumption = eval.state.getPathCondition();
-				NumericExpression denominator = (NumericExpression) right;
-				BooleanExpression claim = universe.neq(
-						zeroOf(expression.getSource(),
-								expression.getExpressionType()), denominator);
-				ResultType resultType = universe.reasoner(assumption)
-						.valid(claim).getResultType();
+				state = eval.state;
+				eval = evaluate(state, pid, expression.right());
+				state = eval.state;
+				right = modelFactory.getScopeId(expression.right().getSource(),
+						eval.value);
+				switch (expression.operator()) {
+				case PLUS:
+					int lowestCommonAncestor = stateFactory
+							.lowestCommonAncestor(state, left, right);
 
-				if (resultType != ResultType.YES) {
-					eval.state = logError(expression.getSource(), eval.state,
-							claim, resultType, ErrorKind.DIVISION_BY_ZERO,
-							"Division by zero");
+					eval.value = modelFactory.scopeValue(lowestCommonAncestor);
+					break;
+				case LESS_THAN:
+					result = stateFactory.isDesendantOf(state, right, left);
+					eval.value = universe.bool(result);
+					break;
+				case LESS_THAN_EQUAL:
+					result = (left == right) ? true : stateFactory
+							.isDesendantOf(state, right, left);
+					eval.value = universe.bool(result);
+					break;
+				case EQUAL:
+					eval.value = universe.bool(left == right);
+					break;
+				case NOT_EQUAL:
+					eval.value = universe.bool(left != right);
+					break;
+				default:
+					throw new CIVLInternalException("unreachable",
+							expression.getSource());
 				}
-				eval.value = universe.divide((NumericExpression) left,
-						denominator);
-				break;
-			}
-			case LESS_THAN:
-				eval.value = universe.lessThan((NumericExpression) left,
-						(NumericExpression) right);
-				break;
-			case LESS_THAN_EQUAL:
-				eval.value = universe.lessThanEquals((NumericExpression) left,
-						(NumericExpression) right);
-				break;
-			case EQUAL:
-				eval.value = universe.equals(left, right);
-				break;
-			case NOT_EQUAL:
-				eval.value = universe.neq(left, right);
-				break;
-			case MODULO: {
-				BooleanExpression assumption = eval.state.getPathCondition();
-				NumericExpression denominator = (NumericExpression) right;
-				BooleanExpression claim = universe.neq(
-						zeroOf(expression.getSource(),
-								expression.getExpressionType()), denominator);
-				ResultType resultType = universe.reasoner(assumption)
-						.valid(claim).getResultType();
+				return eval;
+			} else {
+				Evaluation eval = evaluate(state, pid, expression.left());
+				SymbolicExpression left = eval.value;
+				SymbolicExpression right;
 
-				// TODO: check not negative
-				if (resultType != ResultType.YES) {
-					eval.state = this.logError(expression.getSource(),
-							eval.state, claim, resultType,
-							ErrorKind.DIVISION_BY_ZERO,
-							"Modulus denominator is zero");
+				eval = evaluate(state, pid, expression.right());
+				right = eval.value;
+				switch (expression.operator()) {
+				case PLUS:
+					eval.value = universe.add((NumericExpression) left,
+							(NumericExpression) right);
+					break;
+				case MINUS:
+					eval.value = universe.subtract((NumericExpression) left,
+							(NumericExpression) right);
+					break;
+				case TIMES:
+					eval.value = universe.multiply((NumericExpression) left,
+							(NumericExpression) right);
+					break;
+				case DIVIDE: {
+					BooleanExpression assumption = eval.state
+							.getPathCondition();
+					NumericExpression denominator = (NumericExpression) right;
+					BooleanExpression claim = universe.neq(
+							zeroOf(expression.getSource(),
+									expression.getExpressionType()),
+							denominator);
+					ResultType resultType = universe.reasoner(assumption)
+							.valid(claim).getResultType();
+
+					if (resultType != ResultType.YES) {
+						eval.state = logError(expression.getSource(),
+								eval.state, claim, resultType,
+								ErrorKind.DIVISION_BY_ZERO, "Division by zero");
+					}
+					eval.value = universe.divide((NumericExpression) left,
+							denominator);
 				}
-				eval.value = universe.modulo((NumericExpression) left,
-						denominator);
-				break;
+					break;
+				case LESS_THAN:
+					eval.value = universe.lessThan((NumericExpression) left,
+							(NumericExpression) right);
+					break;
+				case LESS_THAN_EQUAL:
+					eval.value = universe
+							.lessThanEquals((NumericExpression) left,
+									(NumericExpression) right);
+					break;
+				case EQUAL:
+					eval.value = universe.equals(left, right);
+					break;
+				case NOT_EQUAL:
+					eval.value = universe.neq(left, right);
+					break;
+				case MODULO: {
+					BooleanExpression assumption = eval.state
+							.getPathCondition();
+					NumericExpression denominator = (NumericExpression) right;
+					BooleanExpression claim = universe.neq(
+							zeroOf(expression.getSource(),
+									expression.getExpressionType()),
+							denominator);
+					ResultType resultType = universe.reasoner(assumption)
+							.valid(claim).getResultType();
+
+					// TODO: check not negative
+					if (resultType != ResultType.YES) {
+						eval.state = this.logError(expression.getSource(),
+								eval.state, claim, resultType,
+								ErrorKind.DIVISION_BY_ZERO,
+								"Modulus denominator is zero");
+					}
+					eval.value = universe.modulo((NumericExpression) left,
+							denominator);
+					break;
+				}
+				case POINTER_ADD:
+					eval = pointerAdd(state, pid, expression, left,
+							(NumericExpression) right);
+					break;
+				case POINTER_SUBTRACT:
+					eval = pointerSubtract(state, pid, expression, left, right);
+					break;
+				case IMPLIES:
+				case AND:
+				case OR:
+					throw new CIVLInternalException("unreachable", expression);
+				default:
+					throw new CIVLUnimplementedFeatureException("Operator "
+							+ expression.operator(), expression);
+				}
+				return eval;
 			}
-			case POINTER_ADD:
-				eval = pointerAdd(state, pid, expression, left,
-						(NumericExpression) right);
-				break;
-			case POINTER_SUBTRACT:
-				eval = pointerSubtract(state, pid, expression, left, right);
-				break;
-			case IMPLIES:
-			case AND:
-			case OR:
-				throw new CIVLInternalException("unreachable", expression);
-			default:
-				throw new CIVLUnimplementedFeatureException("Operator "
-						+ expression.operator(), expression);
-			}
-			return eval;
 		}
 	}
 
