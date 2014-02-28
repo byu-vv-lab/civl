@@ -4,7 +4,6 @@
 package edu.udel.cis.vsl.civl.predicate;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.ErrorLog;
@@ -33,9 +32,9 @@ public class StandardPredicate implements StatePredicateIF<State> {
 	 *            The symbolic universe.
 	 */
 	public StandardPredicate(ErrorLog log, SymbolicUniverse universe,
-			Evaluator evaluator, Executor executor) {
+			Executor executor) {
 		// this.log = log;
-		deadlockPredicate = new Deadlock(universe, evaluator, executor);
+		deadlockPredicate = new Deadlock(universe, executor);
 	}
 
 	@Override

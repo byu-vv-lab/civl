@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
+import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -27,7 +28,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -158,92 +158,6 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					statement);
 		}
-		return guard;
-	}
-
-	@Override
-	public Evaluation getGuard(State state, int pid, String function,
-			Expression[] arguments, CIVLSource source) {
-		SymbolicExpression[] argumentValues;
-		int numArgs;
-		BooleanExpression guard;
-
-		numArgs = arguments.length;
-		argumentValues = new SymbolicExpression[numArgs];
-		for (int i = 0; i < numArgs; i++) {
-			Evaluation eval = null;
-
-			try {
-				eval = evaluator.evaluate(state, pid, arguments[i]);
-			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
-				// already have been reported.
-				return new Evaluation(state, universe.falseExpression());
-			}
-			argumentValues[i] = eval.value;
-			state = eval.state;
-		}
-
-		switch (function) {
-		case "$comm_dequeue":
-			try {
-				guard = getDequeueGuard(state, pid, arguments, argumentValues);
-			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
-				// already have been reported.
-				return new Evaluation(state, universe.falseExpression());
-			}
-			break;
-		case "$comm_add":
-		case "free":
-		case "$bundle_pack":
-		case "$bundle_unpack":
-		case "$bundle_size":
-		case "$comm_create":
-		case "$comm_enqueue":
-		case "printf":
-		case "$exit":
-		case "$memcpy":
-		case "$message_pack":
-		case "$message_source":
-		case "$message_tag":
-		case "$message_dest":
-		case "$message_size":
-		case "$message_unpack":
-		case "$comm_destroy":
-		case "$comm_size":
-		case "$comm_probe":
-		case "$comm_seek":
-		case "$comm_chan_size":
-		case "$comm_total_size":
-		case "$gcomm_create":
-		case "$heap_create":
-		case "$scope_parent":
-			guard = universe.trueExpression();
-			break;
-		case "$wait":
-			guard = getWaitGuard(state, pid, arguments, argumentValues);
-			break;
-		default:
-			throw new CIVLInternalException("Unknown civlc function: "
-					+ function, source);
-		}
-		return new Evaluation(state, guard);
-	}
-
-	private BooleanExpression getWaitGuard(State state, int pid,
-			Expression[] arguments, SymbolicExpression[] argumentValues) {
-		SymbolicExpression joinProcess = argumentValues[0];
-		BooleanExpression guard;
-		int pidValue;
-		Expression joinProcessExpr = arguments[0];
-
-		pidValue = modelFactory.getProcessId(joinProcessExpr.getSource(),
-				joinProcess);
-		if (!state.getProcessState(pidValue).hasEmptyStack())
-			guard = universe.falseExpression();
-		else
-			guard = universe.trueExpression();
 		return guard;
 	}
 

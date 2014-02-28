@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
+import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -17,7 +18,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -204,15 +204,6 @@ public class Libstdio extends CommonLibraryExecutor implements LibraryExecutor {
 		format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
 		output.printf(format, arguments.toArray());
 		return state;
-	}
-
-	@Override
-	public Evaluation getGuard(State state, int pid, String function,
-			Expression[] arguments, CIVLSource source) {
-		BooleanExpression guard;
-
-		guard = universe.trueExpression();
-		return new Evaluation(state, guard);
 	}
 
 }

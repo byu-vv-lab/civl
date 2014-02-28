@@ -52,7 +52,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.WaitGuardExpression;
@@ -69,7 +68,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -117,7 +115,7 @@ public class CommonEvaluator implements Evaluator {
 
 	/* *************************** Instance Fields ************************* */
 
-	private Executor executor;
+//	private Executor executor;
 
 	/**
 	 * An uninterpreted function used to evaluate "BigO" of an expression. It
@@ -146,6 +144,10 @@ public class CommonEvaluator implements Evaluator {
 	 * The symbolic dynamic type.
 	 */
 	private SymbolicTupleType dynamicType;
+
+	private SymbolicType gcommType;
+
+	private SymbolicType commType;
 
 	/**
 	 * The symbolic heap type.
@@ -311,6 +313,11 @@ public class CommonEvaluator implements Evaluator {
 						universe.realType()));
 		bigOFunction = universe.canonic(bigOFunction);
 		trueReasoner = universe.reasoner(universe.trueExpression());
+		if (modelFactory.model().gcommType() != null)
+			gcommType = modelFactory.model().gcommType()
+					.getDynamicType(universe);
+		if (modelFactory.model().commType() != null)
+			commType = modelFactory.model().commType().getDynamicType(universe);
 		// falseExpr = universe.falseExpression();
 	}
 
@@ -430,7 +437,8 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicType type = expr.type();
 
 		// TODO check comm type
-		if (type != null && !type.equals(heapType) && !type.equals(bundleType)) {
+		if (type != null && !type.equals(heapType) && !type.equals(gcommType)
+				&& !type.equals(commType) && !type.equals(bundleType)) {
 			// need to eliminate heap type as well. each proc has its own.
 			if (pointerType.equals(type)) {
 				SymbolicExpression pointerValue;
@@ -1929,9 +1937,8 @@ public class CommonEvaluator implements Evaluator {
 					(SubscriptExpression) expression);
 			break;
 		case SYSTEM_GUARD:
-			result = evaluateSystemGuard(state, pid,
-					(SystemGuardExpression) expression);
-			break;
+			throw new CIVLInternalException("Unreachable",
+					expression.getSource());
 		case UNARY:
 			result = evaluateUnary(state, pid, (UnaryExpression) expression);
 			break;
@@ -1979,22 +1986,23 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, guard);
 	}
 
-	/**
-	 * evaluate a system guard expression
-	 * 
-	 * @param state
-	 *            The state where the computation happens.
-	 * @param pid
-	 *            The ID of the process that wants to evaluate the guard.
-	 * @param expression
-	 *            The system guard expression to be evaluated.
-	 * @return The result of the evaluation, including the state and the
-	 *         symbolic expression of the value.
-	 */
-	private Evaluation evaluateSystemGuard(State state, int pid,
-			SystemGuardExpression expression) {
-		return executor.evaluateSystemGuard(state, pid, expression);
-	}
+	// /**
+	// * evaluate a system guard expression
+	// *
+	// * @param state
+	// * The state where the computation happens.
+	// * @param pid
+	// * The ID of the process that wants to evaluate the guard.
+	// * @param expression
+	// * The system guard expression to be evaluated.
+	// * @return The result of the evaluation, including the state and the
+	// * symbolic expression of the value.
+	// */
+	// private Evaluation evaluateSystemGuard(State state, int pid,
+	// SystemGuardExpression expression) {
+	// enabler
+	// return executor.evaluateSystemGuard(state, pid, expression);
+	// }
 
 	@Override
 	public Evaluation evaluateSizeofType(CIVLSource source, State state,
@@ -2439,9 +2447,7 @@ public class CommonEvaluator implements Evaluator {
 					memoryUnits);
 			break;
 		case CHAR_LITERAL:
-
 			break;
-
 		case DEREFERENCE:
 			DereferenceExpression deferenceExpression = (DereferenceExpression) expression;
 
@@ -2515,8 +2521,7 @@ public class CommonEvaluator implements Evaluator {
 			// .name().name())) {
 			// atomic_enter statement is always considered as dependent with all
 			// processes since it accesses the global variable __atomic_lock_var
-			if (!variable.isConst() && !type.isHandleType()
-					&& !type.isHandleObjectType()) {
+			if (!variable.isConst() && !type.isHandleObjectType()) {
 				eval = new Evaluation(state, makePointer(sid, vid,
 						identityReference));
 				memoryUnits.addAll(pointersInExpression(eval.value, state));
@@ -2617,10 +2622,10 @@ public class CommonEvaluator implements Evaluator {
 		this.solve = value;
 	}
 
-	@Override
-	public void setExecutor(Executor executor) {
-		this.executor = executor;
-	}
+//	@Override
+//	public void setExecutor(Executor executor) {
+//		this.executor = executor;
+//	}
 
 	@Override
 	public SymbolicExpression heapValue(CIVLSource source, State state,

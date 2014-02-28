@@ -8,8 +8,13 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
+import edu.udel.cis.vsl.civl.library.IF.LibraryEnablerLoader;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -87,6 +92,8 @@ public abstract class Enabler implements
 	 */
 	protected BooleanExpression falseExpression;
 
+	protected LibraryEnablerLoader libraryEnablerLoader;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -105,7 +112,8 @@ public abstract class Enabler implements
 	 *            The option to enable or disable the printing of ample sets.
 	 */
 	protected Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
-			Executor executor, boolean showAmpleSet) {
+			Executor executor, boolean showAmpleSet,
+			LibraryEnablerLoader enablerLoader) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
 		this.executor = executor;
@@ -113,6 +121,7 @@ public abstract class Enabler implements
 		this.modelFactory = evaluator.modelFactory();
 		this.universe = modelFactory.universe();
 		falseExpression = universe.falseExpression();
+		this.libraryEnablerLoader = enablerLoader;
 	}
 
 	/* **************************** Public Methods ************************* */
@@ -133,10 +142,30 @@ public abstract class Enabler implements
 	 */
 	public Evaluation getGuard(Statement statement, int pid, State state) {
 		try {
+			if (statement instanceof CallOrSpawnStatement) {
+				if (((CallOrSpawnStatement) statement).isSystemCall()) {
+					return getSystemGuard(state, pid,
+							(CallOrSpawnStatement) statement);
+				}
+			}
 			return evaluator.evaluate(state, pid, statement.guard());
 		} catch (UnsatisfiablePathConditionException e) {
 			return new Evaluation(state, this.falseExpression);
 		}
+	}
+
+	private Evaluation getSystemGuard(State state, int pid,
+			CallOrSpawnStatement statement) {
+		LibraryEnabler libEnabler = libraryEnabler(statement.getSource(),
+				((SystemFunction) (statement.function())).getLibrary());
+
+		return libEnabler
+				.getGuard(statement.getSource(), state, pid, statement);
+	}
+
+	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
+		return this.libraryEnablerLoader.getLibraryEnabler(library, this,
+				this.debugOut, evaluator.modelFactory());
 	}
 
 	/**
@@ -463,5 +492,9 @@ public abstract class Enabler implements
 		// } else {
 		// return null;
 		// }
+	}
+
+	public Evaluator evaluator() {
+		return this.evaluator;
 	}
 }

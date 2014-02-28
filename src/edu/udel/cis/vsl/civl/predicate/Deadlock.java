@@ -13,7 +13,6 @@ import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -46,7 +45,7 @@ public class Deadlock implements StatePredicateIF<State> {
 
 	private SymbolicUniverse universe;
 
-	private Evaluator evaluator;
+	// private Evaluator evaluator;
 
 	private Executor executor;
 
@@ -84,10 +83,9 @@ public class Deadlock implements StatePredicateIF<State> {
 	 *            The theorem prover to check validity of statement guards under
 	 *            the path condition.
 	 */
-	public Deadlock(SymbolicUniverse symbolicUniverse, Evaluator evaluator,
-			Executor executor) {
+	public Deadlock(SymbolicUniverse symbolicUniverse, Executor executor) {
 		this.universe = symbolicUniverse;
-		this.evaluator = evaluator;
+		// this.evaluator = evaluator;
 		// this.modelFactory = evaluator.modelFactory();
 		this.falseExpr = symbolicUniverse.falseExpression();
 		this.executor = executor;
@@ -140,8 +138,8 @@ public class Deadlock implements StatePredicateIF<State> {
 				for (Statement statement : location.outgoing()) {
 					BooleanExpression guard;
 
-					guard = (BooleanExpression) evaluator.evaluate(state,
-							p.getPid(), statement.guard()).value;
+					guard = (BooleanExpression) executor.enabler().getGuard(
+							statement, pid, state).value;
 
 					// if (statement instanceof WaitStatement) {
 					// // TODO: Check that the guard is actually true, but it

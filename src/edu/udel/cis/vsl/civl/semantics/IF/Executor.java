@@ -2,18 +2,17 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
+import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.CommonExecutor.StateStatusKind;
-import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.util.Pair;
@@ -121,8 +120,8 @@ public interface Executor {
 	//
 	// LibraryExecutor libraryExecutor(CIVLSource source, String library);
 
-	Evaluation evaluateSystemGuard(State state, int pid,
-			SystemGuardExpression systemGuard);
+	// Evaluation evaluateSystemGuard(State state, int pid,
+	// SystemGuardExpression systemGuard);
 
 	/**
 	 * Execute a statement from a certain state and return the resulting state
@@ -198,4 +197,6 @@ public interface Executor {
 			Expression scopeExpression, SymbolicExpression scopeValue,
 			CIVLType objectType, SymbolicExpression objectValue)
 			throws UnsatisfiablePathConditionException;
+
+	LibraryExecutor libraryExecutor(CIVLSource source, String library);
 }

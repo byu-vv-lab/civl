@@ -7,13 +7,10 @@ import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
@@ -36,7 +33,7 @@ public class Libstdlib extends CommonLibraryExecutor implements LibraryExecutor 
 	/**
 	 * (non-Javadoc)
 	 * 
-	 * @see edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#name()
+	 * @see edu.udel.cis.vsl.civl.library.IF.LibraryExecutor#name()
 	 */
 	@Override
 	public String name() {
@@ -46,7 +43,7 @@ public class Libstdlib extends CommonLibraryExecutor implements LibraryExecutor 
 	/**
 	 * (non-Javadoc)
 	 * 
-	 * @see edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#execute(edu.udel.cis
+	 * @see edu.udel.cis.vsl.civl.library.IF.LibraryExecutor#execute(edu.udel.cis
 	 *      .vsl.civl.state.State, int,
 	 *      edu.udel.cis.vsl.civl.model.IF.statement.Statement)
 	 */
@@ -81,7 +78,7 @@ public class Libstdlib extends CommonLibraryExecutor implements LibraryExecutor 
 	/**
 	 * (non-Javadoc)
 	 * 
-	 * @see edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#initialize(edu.udel
+	 * @see edu.udel.cis.vsl.civl.library.IF.LibraryExecutor#initialize(edu.udel
 	 *      .cis.vsl.civl.state.State)
 	 */
 	@Override
@@ -93,7 +90,7 @@ public class Libstdlib extends CommonLibraryExecutor implements LibraryExecutor 
 	/**
 	 * (non-Javadoc)
 	 * 
-	 * @see edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor#wrapUp(edu.udel.cis
+	 * @see edu.udel.cis.vsl.civl.library.IF.LibraryExecutor#wrapUp(edu.udel.cis
 	 *      .vsl.civl.state.State)
 	 */
 	@Override
@@ -108,12 +105,4 @@ public class Libstdlib extends CommonLibraryExecutor implements LibraryExecutor 
 		return null;
 	}
 
-	@Override
-	public Evaluation getGuard(State state, int pid, String function,
-			Expression[] arguments, CIVLSource source) {
-		BooleanExpression guard;
-
-		guard = universe.trueExpression();
-		return new Evaluation(state, guard);
-	}
 }

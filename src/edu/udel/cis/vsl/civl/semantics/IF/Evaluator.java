@@ -386,7 +386,7 @@ public interface Evaluator {
 	 */
 	SymbolicUniverse universe();
 
-	void setExecutor(Executor executor);
+	// void setExecutor(Executor executor);
 
 	void logSimpleError(CIVLSource source, State state, ErrorKind errorKind,
 			String message) throws UnsatisfiablePathConditionException;
@@ -396,5 +396,6 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 
 	SymbolicExpression heapValue(CIVLSource source, State state,
-			SymbolicExpression scopeValue) throws UnsatisfiablePathConditionException;
+			SymbolicExpression scopeValue)
+			throws UnsatisfiablePathConditionException;
 }

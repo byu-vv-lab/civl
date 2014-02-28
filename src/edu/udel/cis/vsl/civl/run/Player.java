@@ -7,7 +7,9 @@ import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.PointeredEnabler;
 import edu.udel.cis.vsl.civl.kripke.ScopedEnabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
+import edu.udel.cis.vsl.civl.library.CommonLibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.library.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
@@ -61,7 +63,9 @@ public abstract class Player {
 
 	protected StandardPredicate predicate;
 
-	protected LibraryExecutorLoader loader;
+	protected LibraryExecutorLoader executorLoader;
+
+	protected LibraryEnablerLoader enablerLoader;
 
 	protected Executor executor;
 
@@ -118,7 +122,8 @@ public abstract class Player {
 		this.evaluator = new CommonEvaluator(config, modelFactory,
 				stateFactory, log);
 		evaluator.setSolve(solve);
-		this.loader = new CommonLibraryExecutorLoader();
+		this.executorLoader = new CommonLibraryExecutorLoader();
+		this.enablerLoader = new CommonLibraryEnablerLoader();
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));
 		this.enablePrintf = (Boolean) config
@@ -128,14 +133,13 @@ public abstract class Player {
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		if (this.mpiMode)
 			this.executor = new MPIExecutor(config, modelFactory, stateFactory,
-					log, loader, out, this.enablePrintf, evaluator);
+					log, executorLoader, out, this.enablePrintf, evaluator);
 		else
 			this.executor = new CommonExecutor(config, modelFactory,
-					stateFactory, log, loader, out, this.enablePrintf,
+					stateFactory, log, executorLoader, out, this.enablePrintf,
 					evaluator);
-		this.evaluator.setExecutor(executor);
-		this.predicate = new StandardPredicate(log, universe, evaluator,
-				this.executor);
+		// this.evaluator.setExecutor(executor);
+		this.predicate = new StandardPredicate(log, universe, this.executor);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
 		this.debug = config.isTrue(UserInterface.debugO);
@@ -155,13 +159,13 @@ public abstract class Player {
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 		if (this.scpPor1) {
 			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					false, showAmpleSet);
+					false, showAmpleSet, this.enablerLoader);
 		} else if (this.scpPor2) {
 			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					true, showAmpleSet);
+					true, showAmpleSet, this.enablerLoader);
 		} else {
 			enabler = new PointeredEnabler(transitionFactory, evaluator,
-					executor, showAmpleSet);
+					executor, showAmpleSet, this.enablerLoader);
 		}
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);

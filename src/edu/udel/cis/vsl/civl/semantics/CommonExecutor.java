@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
+import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
 import edu.udel.cis.vsl.civl.library.stdio.Libstdio;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -27,7 +28,6 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
@@ -43,7 +43,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -650,7 +649,8 @@ public class CommonExecutor implements Executor {
 	 * @param library
 	 * @return
 	 */
-	private LibraryExecutor libraryExecutor(CIVLSource source, String library) {
+	@Override
+	public LibraryExecutor libraryExecutor(CIVLSource source, String library) {
 		switch (library) {
 		case "civlc":
 			return civlcExecutor;
@@ -719,15 +719,15 @@ public class CommonExecutor implements Executor {
 		return this.enabler;
 	}
 
-	@Override
-	public Evaluation evaluateSystemGuard(State state, int pid,
-			SystemGuardExpression systemGuard) {
-		LibraryExecutor libExecutor = libraryExecutor(systemGuard.getSource(),
-				systemGuard.library());
-
-		return libExecutor.getGuard(state, pid, systemGuard.functionName(),
-				systemGuard.arguments(), systemGuard.getSource());
-	}
+	// @Override
+	// public Evaluation evaluateSystemGuard(State state, int pid,
+	// SystemGuardExpression systemGuard) {
+	// LibraryExecutor libExecutor = libraryExecutor(systemGuard.getSource(),
+	// systemGuard.library());
+	//
+	// return libExecutor.getGuard(state, pid, systemGuard.functionName(),
+	// systemGuard.arguments(), systemGuard.getSource());
+	// }
 
 	@Override
 	public Evaluator evaluator() {

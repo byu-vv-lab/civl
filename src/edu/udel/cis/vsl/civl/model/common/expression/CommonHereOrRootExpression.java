@@ -46,4 +46,11 @@ public class CommonHereOrRootExpression extends CommonExpression implements
 		return this.isRoot;
 	}
 
+	@Override
+	public String toString() {
+		if (this.isRoot)
+			return "$root";
+		return "$here";
+	}
+
 }
