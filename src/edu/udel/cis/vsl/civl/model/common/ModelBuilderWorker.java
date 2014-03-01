@@ -237,7 +237,7 @@ public class ModelBuilderWorker {
 		functionMap = new LinkedHashMap<Function, CIVLFunction>();
 		unprocessedFunctions = new ArrayList<FunctionDefinitionNode>();
 		// add the global variable for atomic lock
-		factory.createAtomicLockVariable(systemScope);
+//		factory.createAtomicLockVariable(systemScope);
 		factory.setSystemScope(systemScope);
 	}
 

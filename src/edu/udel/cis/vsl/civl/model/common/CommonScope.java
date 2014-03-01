@@ -60,6 +60,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 			v.setScope(this);
 			checkProcRef(v);
 			checkPointer(v);
+			checkScopeRef(v);
 		}
 		this.id = id;
 	}

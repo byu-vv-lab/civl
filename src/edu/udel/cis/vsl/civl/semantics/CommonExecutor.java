@@ -436,6 +436,9 @@ public class CommonExecutor implements Executor {
 		dyScope = state.getScope(dyScopeID);
 		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
 		heapValue = dyScope.getValue(heapVariableId);
+		if (heapValue.equals(universe.nullExpression())) {
+			heapValue = evaluator.initialHeapValue();
+		}
 		eval = evaluator.evaluate(state, pid, statement.getSizeExpression());
 		state = eval.state;
 		mallocSize = (NumericExpression) eval.value;
@@ -875,8 +878,8 @@ public class CommonExecutor implements Executor {
 		dyScope = state.getScope(dyScopeID);
 		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
 		heapField = universe.tupleRead(heapValue, indexObj);
-//		newObjectName = universe.stringObject("H_p" + pid + "s" + sid + "v"
-//				+ heapVariableId + "i" + index + "l1");
+		// newObjectName = universe.stringObject("H_p" + pid + "s" + sid + "v"
+		// + heapVariableId + "i" + index + "l1");
 		// newObjectType =
 		// universe.arrayType(objectType.getDynamicType(universe),
 		// universe.integer(1));

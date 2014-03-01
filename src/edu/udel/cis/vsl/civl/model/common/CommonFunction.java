@@ -92,10 +92,10 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		this.containingScope = containingScope;
 		scopes = new HashSet<Scope>();
 		outerScope = factory.scope(source, containingScope,
-				new LinkedHashSet<Variable>(), this);
-		for (Variable variable : parameters) {
-			outerScope.addVariable(variable);
-		}
+				new LinkedHashSet<>(parameters), this);
+//		for (Variable variable : parameters) {
+//			outerScope.addVariable(variable);
+//		}
 		scopes.add(outerScope);
 		locations = new LinkedHashSet<Location>();
 		this.startLocation = startLocation;

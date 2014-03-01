@@ -115,7 +115,7 @@ public class CommonEvaluator implements Evaluator {
 
 	/* *************************** Instance Fields ************************* */
 
-//	private Executor executor;
+	// private Executor executor;
 
 	/**
 	 * An uninterpreted function used to evaluate "BigO" of an expression. It
@@ -2622,10 +2622,10 @@ public class CommonEvaluator implements Evaluator {
 		this.solve = value;
 	}
 
-//	@Override
-//	public void setExecutor(Executor executor) {
-//		this.executor = executor;
-//	}
+	// @Override
+	// public void setExecutor(Executor executor) {
+	// this.executor = executor;
+	// }
 
 	@Override
 	public SymbolicExpression heapValue(CIVLSource source, State state,
@@ -2640,13 +2640,18 @@ public class CommonEvaluator implements Evaluator {
 		} else {
 			DynamicScope dyScope = state.getScope(dyScopeID);
 			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
+			SymbolicExpression heapValue;
 
 			if (heapVariable == null) {
 				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
 						"Attempt to dereference pointer into a heap that never exists");
 				throw new UnsatisfiablePathConditionException();
 			}
-			return dyScope.getValue(heapVariable.vid());
+
+			heapValue = dyScope.getValue(heapVariable.vid());
+			if (heapValue.equals(universe.nullExpression()))
+				heapValue = this.initialHeapValue();
+			return heapValue;
 		}
 	}
 
@@ -2673,6 +2678,11 @@ public class CommonEvaluator implements Evaluator {
 			}
 			return makePointer(dyScopeID, heapVariable.vid(), symRef);
 		}
+	}
+
+	@Override
+	public SymbolicExpression initialHeapValue() {
+		return modelFactory.heapType().getInitialValue();
 	}
 
 }

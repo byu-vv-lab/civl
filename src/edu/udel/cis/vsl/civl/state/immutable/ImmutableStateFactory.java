@@ -1,14 +1,11 @@
 package edu.udel.cis.vsl.civl.state.immutable;
 
-import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -23,12 +20,7 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * An implementation of StateFactory based on the Immutable Pattern.
@@ -464,7 +456,7 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression[] newValues = null;
 			BitSet oldBitSet = dynamicScope.getReachers();
 			BitSet newBitSet = updateBitSet(oldBitSet, oldToNewPidMap);
-			Model model = staticScope.model();
+//			Model model = staticScope.model();
 
 			for (Variable variable : procrefVariableIter) {
 				int vid = variable.vid();
@@ -473,88 +465,94 @@ public class ImmutableStateFactory implements StateFactory {
 						procSubMap);
 
 				// update communicator
-				if (variable.type().equals(model.commType())) {
-					SymbolicExpression procMatrix = this.universe.tupleRead(
-							newValue, universe.intObject(1));
-					NumericExpression symbolicRankCount = ((SymbolicCompleteArrayType) procMatrix
-							.type()).extent();
-					int rankCount;
-					SymbolicExpression undefinedProc = modelFactory
-							.undefinedProcessValue();
-					ArrayList<SymbolicExpression> newProcQueueArrayComponents = new ArrayList<>();
-					SymbolicExpression newProcQueueArray = procMatrix;
-					SymbolicTupleType newProcQueueType = null;
-					// SymbolicExpression buffer = universe.tupleRead(newValue,
-					// universe.intObject(2));
-					SymbolicExpression newComm;
-					// ArrayList<SymbolicExpression> newCommComponents = new
-					// ArrayList<>();
-
-					IntegerNumber rankIntegerNumber = (IntegerNumber) universe
-							.extractNumber(symbolicRankCount);
-
-					if (rankIntegerNumber == null)
-						throw new CIVLInternalException(
-								"Unable to extract concrete int from "
-										+ symbolicRankCount, (CIVLSource) null);
-					else
-						rankCount = rankIntegerNumber.intValue();
-					for (int rank = 0; rank < rankCount; rank++) {
-						SymbolicExpression procQueue = this.universe.arrayRead(
-								procMatrix, universe.integer(rank));
-						int procRowLength;
-						SymbolicExpression procRow = universe.tupleRead(
-								procQueue, universe.intObject(1));
-						ArrayList<SymbolicExpression> newProcQueueComponents = new ArrayList<>();
-						ArrayList<SymbolicType> newProcQueueTypeComponents = new ArrayList<>();
-						ArrayList<SymbolicExpression> newProcArrayComponents = new ArrayList<>();
-						SymbolicExpression newProcArray, newProcQueue;
-						int procQueueLength = 0;
-						IntegerNumber procRowLengthIntegerNumber = (IntegerNumber) universe
-								.extractNumber((NumericExpression) universe
-										.tupleRead(procQueue,
-												universe.intObject(0)));
-
-						if (procRowLengthIntegerNumber == null)
-							throw new CIVLInternalException(
-									"Unable to extract concrete int from "
-											+ symbolicRankCount,
-									(CIVLSource) null);
-						else
-							procRowLength = procRowLengthIntegerNumber
-									.intValue();
-
-						for (int j = 0; j < procRowLength; j++) {
-							SymbolicExpression proc = universe.arrayRead(
-									procRow, universe.integer(j));
-
-							if (!proc.equals(undefinedProc)) {
-								newProcArrayComponents.add(proc);
-								procQueueLength++;
-							}
-						}
-						newProcArray = universe.array(
-								modelFactory.processSymbolicType(),
-								newProcArrayComponents);
-						newProcQueueComponents.add(universe
-								.integer(procQueueLength));
-						newProcQueueComponents.add(newProcArray);
-						newProcQueueTypeComponents.add(universe.integerType());
-						newProcQueueTypeComponents.add(newProcArray.type());
-						newProcQueueType = universe.tupleType(
-								universe.stringObject("__procQueue__"),
-								newProcQueueTypeComponents);
-						newProcQueue = universe.tuple(newProcQueueType,
-								newProcQueueComponents);
-						newProcQueueArrayComponents.add(newProcQueue);
-					}
-					newProcQueueArray = universe.array(
-							universe.pureType(newProcQueueType),
-							newProcQueueArrayComponents);
-					newComm = universe.tupleWrite(newValue,
-							universe.intObject(1), newProcQueueArray);
-					newValue = newComm;
-				}
+				// if (variable.type().equals(model.commType())) {
+				// SymbolicExpression procMatrix = this.universe.tupleRead(
+				// newValue, universe.intObject(1));
+				// NumericExpression symbolicRankCount =
+				// ((SymbolicCompleteArrayType) procMatrix
+				// .type()).extent();
+				// int rankCount;
+				// SymbolicExpression undefinedProc = modelFactory
+				// .undefinedProcessValue();
+				// ArrayList<SymbolicExpression> newProcQueueArrayComponents =
+				// new ArrayList<>();
+				// SymbolicExpression newProcQueueArray = procMatrix;
+				// SymbolicTupleType newProcQueueType = null;
+				// // SymbolicExpression buffer = universe.tupleRead(newValue,
+				// // universe.intObject(2));
+				// SymbolicExpression newComm;
+				// // ArrayList<SymbolicExpression> newCommComponents = new
+				// // ArrayList<>();
+				//
+				// IntegerNumber rankIntegerNumber = (IntegerNumber) universe
+				// .extractNumber(symbolicRankCount);
+				//
+				// if (rankIntegerNumber == null)
+				// throw new CIVLInternalException(
+				// "Unable to extract concrete int from "
+				// + symbolicRankCount, (CIVLSource) null);
+				// else
+				// rankCount = rankIntegerNumber.intValue();
+				// for (int rank = 0; rank < rankCount; rank++) {
+				// SymbolicExpression procQueue = this.universe.arrayRead(
+				// procMatrix, universe.integer(rank));
+				// int procRowLength;
+				// SymbolicExpression procRow = universe.tupleRead(
+				// procQueue, universe.intObject(1));
+				// ArrayList<SymbolicExpression> newProcQueueComponents = new
+				// ArrayList<>();
+				// ArrayList<SymbolicType> newProcQueueTypeComponents = new
+				// ArrayList<>();
+				// ArrayList<SymbolicExpression> newProcArrayComponents = new
+				// ArrayList<>();
+				// SymbolicExpression newProcArray, newProcQueue;
+				// int procQueueLength = 0;
+				// IntegerNumber procRowLengthIntegerNumber = (IntegerNumber)
+				// universe
+				// .extractNumber((NumericExpression) universe
+				// .tupleRead(procQueue,
+				// universe.intObject(0)));
+				//
+				// if (procRowLengthIntegerNumber == null)
+				// throw new CIVLInternalException(
+				// "Unable to extract concrete int from "
+				// + symbolicRankCount,
+				// (CIVLSource) null);
+				// else
+				// procRowLength = procRowLengthIntegerNumber
+				// .intValue();
+				//
+				// for (int j = 0; j < procRowLength; j++) {
+				// SymbolicExpression proc = universe.arrayRead(
+				// procRow, universe.integer(j));
+				//
+				// if (!proc.equals(undefinedProc)) {
+				// newProcArrayComponents.add(proc);
+				// procQueueLength++;
+				// }
+				// }
+				// newProcArray = universe.array(
+				// modelFactory.processSymbolicType(),
+				// newProcArrayComponents);
+				// newProcQueueComponents.add(universe
+				// .integer(procQueueLength));
+				// newProcQueueComponents.add(newProcArray);
+				// newProcQueueTypeComponents.add(universe.integerType());
+				// newProcQueueTypeComponents.add(newProcArray.type());
+				// newProcQueueType = universe.tupleType(
+				// universe.stringObject("__procQueue__"),
+				// newProcQueueTypeComponents);
+				// newProcQueue = universe.tuple(newProcQueueType,
+				// newProcQueueComponents);
+				// newProcQueueArrayComponents.add(newProcQueue);
+				// }
+				// newProcQueueArray = universe.array(
+				// universe.pureType(newProcQueueType),
+				// newProcQueueArrayComponents);
+				// newComm = universe.tupleWrite(newValue,
+				// universe.intObject(1), newProcQueueArray);
+				// newValue = newComm;
+				// }
 
 				if (oldValue != newValue) {
 					if (newValues == null)
@@ -1020,7 +1018,8 @@ public class ImmutableStateFactory implements StateFactory {
 			int parent = one;
 
 			while (parent >= 0) {
-				if (parent == another || this.isDesendantOf(state, parent, another))
+				if (parent == another
+						|| this.isDesendantOf(state, parent, another))
 					return parent;
 				parent = state.getParentId(parent);
 			}

@@ -200,6 +200,8 @@ public class CommonModelFactory implements ModelFactory {
 	private static final String CONDITIONAL_VARIABLE_PREFIX = "__cond_var_";
 
 	private static final String ANONYMOUS_VARIABLE_PREFIX = "__anon_";
+	
+	private static final String HEAP_VAR = "__heap";
 
 	/* ************************** Instance Fields ************************** */
 
@@ -1869,7 +1871,16 @@ public class CommonModelFactory implements ModelFactory {
 	public Scope scope(CIVLSource source, Scope parent,
 			Set<Variable> variables, CIVLFunction function) {
 		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
-
+		int newVid;
+		Variable heapVariable;
+		
+		if(newScope.id() == 0)
+			this.createAtomicLockVariable(newScope);
+		newVid = newScope.numVariables();
+		heapVariable = this.variable(source,
+				modelBuilder.heapType,
+				this.identifier(source, HEAP_VAR), newVid);
+		newScope.addVariable(heapVariable);
 		if (parent != null) {
 			parent.addChild(newScope);
 		}

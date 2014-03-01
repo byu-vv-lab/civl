@@ -398,4 +398,6 @@ public interface Evaluator {
 	SymbolicExpression heapValue(CIVLSource source, State state,
 			SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
+	
+	SymbolicExpression initialHeapValue();
 }
