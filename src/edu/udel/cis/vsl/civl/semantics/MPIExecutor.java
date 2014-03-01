@@ -7,16 +7,12 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.library.mpi.Libmpi;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MPIStatement;
@@ -29,9 +25,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
-import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
@@ -44,7 +38,7 @@ public class MPIExecutor extends CommonExecutor {
 
 	private VariableExpression rankExpression;
 
-	private Libmpi mpiExecutor;
+	// private Libmpi mpiExecutor;
 
 	/* ************************** constructor ******************************** */
 	/**
@@ -65,8 +59,8 @@ public class MPIExecutor extends CommonExecutor {
 			boolean enablePrintf, Evaluator evaluator) {
 		super(config, modelFactory, stateFactory, log, loader, output,
 				enablePrintf, evaluator);
-		this.mpiExecutor = (Libmpi) loader.getLibraryExecutor("mpi", this,
-				this.output, this.enablePrintf, this.modelFactory);
+		// this.mpiExecutor = (Libmpi) loader.getLibraryExecutor("mpi", this,
+		//	this.output, this.enablePrintf, this.modelFactory);
 		rankExpression = ((MPIModelFactory) modelFactory).rankVariable();
 	}
 
@@ -168,8 +162,8 @@ public class MPIExecutor extends CommonExecutor {
 			bufArray = universe.array(bufType, buf);
 		} else {
 			for (int i = 0; i < int_count; i++) {
-				SymbolicExpression bufArrayElement = universe
-						.arrayRead(bufValue, universe.integer(i));
+				SymbolicExpression bufArrayElement = universe.arrayRead(
+						bufValue, universe.integer(i));
 				buf.add(bufArrayElement);
 			}
 			bufType = bufValue.type();
@@ -177,20 +171,19 @@ public class MPIExecutor extends CommonExecutor {
 			bufArray = universe.array(bufType, buf);
 		}
 		// message buffer[][] <- comm[2]
-		messageBuffer = universe.tupleRead(comm,
-				universe.intObject(2));
+		messageBuffer = universe.tupleRead(comm, universe.intObject(2));
 		// message buffer[rank][]
 		messageBufferRow = universe.arrayRead(messageBuffer,
 				universe.integer(rank));
 		// message queue <- message buffer [rank][destination]
 		messageQueue = universe.arrayRead(messageBufferRow,
 				(NumericExpression) destination);
-		queueLength = evaluator.extractInt(civlsource,
+		queueLength = evaluator.extractInt(
+				civlsource,
 				(NumericExpression) universe.tupleRead(messageQueue,
 						universe.intObject(0)));
 		// message <- message queue[1]
-		messages = universe.tupleRead(messageQueue,
-				universe.intObject(1));
+		messages = universe.tupleRead(messageQueue, universe.intObject(1));
 		// evaluate message size
 		switch (dataType.toString()) {
 		case "1": // MPI_INT
@@ -237,23 +230,22 @@ public class MPIExecutor extends CommonExecutor {
 		}
 		messageElements.add(newMessage);
 		messages = universe.array(newMessage.type(), messageElements);
-		queueLength = evaluator.extractInt(civlsource,
+		queueLength = evaluator.extractInt(
+				civlsource,
 				(NumericExpression) universe.tupleRead(messageQueue,
 						universe.intObject(0)));
 		queueLength++;
-		messageQueue = universe.tupleWrite(messageQueue,
-				universe.intObject(0),
+		messageQueue = universe.tupleWrite(messageQueue, universe.intObject(0),
 				universe.integer(queueLength));
-		messageQueue = universe.tupleWrite(messageQueue,
-				universe.intObject(1), messages);
+		messageQueue = universe.tupleWrite(messageQueue, universe.intObject(1),
+				messages);
 		// update message buffer
 		messageBufferRow = universe.arrayWrite(messageBufferRow,
 				(NumericExpression) destination, messageQueue);
 		messageBuffer = universe.arrayWrite(messageBuffer,
 				universe.integer(rank), messageBufferRow);
 		// update communicator
-		comm = universe.tupleWrite(comm, universe.intObject(2),
-				messageBuffer);
+		comm = universe.tupleWrite(comm, universe.intObject(2), messageBuffer);
 		// update state
 		// ((MPIModelFactory)this.modelFactory).mpi
 		commScopeID = evaluator.getScopeId(civlsource, commAddr);
@@ -354,11 +346,11 @@ public class MPIExecutor extends CommonExecutor {
 					+ " in MPIExecutor", civlsource);
 		}
 		// obtain message
-		messageBuffer = universe.tupleRead(comm,
-				universe.intObject(2));
+		messageBuffer = universe.tupleRead(comm, universe.intObject(2));
 		// MPI_ANY_SOURCE && MPI_ANY_TAG
 		if (int_source == -1 && int_tag == -2) {
-			int nprocs = evaluator.extractInt(civlsource,
+			int nprocs = evaluator.extractInt(
+					civlsource,
 					(NumericExpression) universe.tupleRead(comm,
 							universe.intObject(0)));
 			for (int i = 0; i < nprocs; i++) {
@@ -367,8 +359,8 @@ public class MPIExecutor extends CommonExecutor {
 				messageQueue = universe.arrayRead(messageBufferRow,
 						universe.integer(rank));
 				queueLength = evaluator.extractInt(civlsource,
-						(NumericExpression) (universe.tupleRead(
-								messageQueue, universe.intObject(0))));
+						(NumericExpression) (universe.tupleRead(messageQueue,
+								universe.intObject(0))));
 				if (queueLength > 0) {
 					messages = universe.tupleRead(messageQueue,
 							universe.intObject(1));
@@ -380,7 +372,8 @@ public class MPIExecutor extends CommonExecutor {
 			}
 		} else if (int_source == -1 && int_tag != -2) {
 			// MPI_ANY_SOURCE but not MPI_ANY_TAG
-			int nprocs = evaluator.extractInt(civlsource,
+			int nprocs = evaluator.extractInt(
+					civlsource,
 					(NumericExpression) universe.tupleRead(comm,
 							universe.intObject(0)));
 			for (int i = 0; i < nprocs; i++) {
@@ -389,15 +382,15 @@ public class MPIExecutor extends CommonExecutor {
 				messageQueue = universe.arrayRead(messageBufferRow,
 						universe.integer(rank));
 				queueLength = evaluator.extractInt(civlsource,
-						(NumericExpression) (universe.tupleRead(
-								messageQueue, universe.intObject(0))));
+						(NumericExpression) (universe.tupleRead(messageQueue,
+								universe.intObject(0))));
 				messages = universe.tupleRead(messageQueue,
 						universe.intObject(1));
 				for (int j = 0; j < queueLength; j++) {
 					newMessage = universe.arrayRead(messages,
 							universe.integer(i));
-					if (universe.tupleRead(newMessage,
-							universe.intObject(2)).equals(tag)) {
+					if (universe.tupleRead(newMessage, universe.intObject(2))
+							.equals(tag)) {
 						hasTag = true;
 						source = universe.integer(i);
 						break;
@@ -411,15 +404,13 @@ public class MPIExecutor extends CommonExecutor {
 					(NumericExpression) source);
 			messageQueue = universe.arrayRead(messageBufferRow,
 					universe.integer(rank));
-			messages = universe.tupleRead(messageQueue,
-					universe.intObject(1));
+			messages = universe.tupleRead(messageQueue, universe.intObject(1));
 			queueLength = evaluator.extractInt(civlsource,
-					(NumericExpression) (universe.tupleRead(
-							messageQueue, universe.intObject(0))));
+					(NumericExpression) (universe.tupleRead(messageQueue,
+							universe.intObject(0))));
 			// MPI_ANY_TAG but not MPI_ANY_SOURCE
 			if (int_tag == -2) {
-				newMessage = universe.arrayRead(messages,
-						universe.integer(0));
+				newMessage = universe.arrayRead(messages, universe.integer(0));
 				// neither MPI_ANY_TAG nor MPI_ANY_SOURCE
 			} else {
 				// find the message with the first matched tag.
@@ -429,16 +420,14 @@ public class MPIExecutor extends CommonExecutor {
 					SymbolicExpression messageTag = universe.tupleRead(
 							newMessage, universe.intObject(2));
 					if (tag.equals(messageTag)) {
-						messages = universe
-								.removeElementAt(messages, i);
+						messages = universe.removeElementAt(messages, i);
 						break;
 					}
 				}
 			}
 		}
 		// set buf and status
-		buf = universe.tupleRead(newMessage,
-				universe.intObject(3));
+		buf = universe.tupleRead(newMessage, universe.intObject(3));
 		// TODO: the buf need to be a array type
 		buf = (SymbolicExpression) buf.argument(1);
 		assert buf.type() instanceof SymbolicArrayType;
@@ -457,17 +446,15 @@ public class MPIExecutor extends CommonExecutor {
 				universe.stringObject("__MPI_Status"), statusTypes),
 				statusValues);
 		queueLength--;
-		messageQueue = universe.tupleWrite(messageQueue,
-				universe.intObject(0),
+		messageQueue = universe.tupleWrite(messageQueue, universe.intObject(0),
 				universe.integer(queueLength));
-		messageQueue = universe.tupleWrite(messageQueue,
-				universe.intObject(1), messages);
+		messageQueue = universe.tupleWrite(messageQueue, universe.intObject(1),
+				messages);
 		messageBufferRow = universe.arrayWrite(messageBufferRow,
 				universe.integer(rank), messageQueue);
 		messageBuffer = universe.arrayWrite(messageBuffer,
 				(NumericExpression) source, messageBufferRow);
-		comm = universe.tupleWrite(comm, universe.intObject(2),
-				messageBuffer);
+		comm = universe.tupleWrite(comm, universe.intObject(2), messageBuffer);
 		// commVariableID and commScopeID
 		variableScopeID = evaluator.getScopeId(civlsource, commAddr);
 		variableID = evaluator.getVariableId(civlsource, commAddr);
@@ -541,23 +528,23 @@ public class MPIExecutor extends CommonExecutor {
 		}
 	}
 
-	private LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
-		String library;
-
-		assert statement.function() instanceof SystemFunction;
-		library = ((SystemFunction) statement.function()).getLibrary();
-		switch (library) {
-		case "civlc":
-			return civlcExecutor;
-		case "stdio":
-			return stdioExecutor;
-		case "mpi":
-			return mpiExecutor;
-		default:
-			throw new CIVLInternalException("Unknown library: " + library,
-					statement);
-		}
-	}
+	// private LibraryExecutor libraryExecutor(CallOrSpawnStatement statement) {
+	// String library;
+	//
+	// assert statement.function() instanceof SystemFunction;
+	// library = ((SystemFunction) statement.function()).getLibrary();
+	// switch (library) {
+	// case "civlc":
+	// return civlcExecutor;
+	// case "stdio":
+	// return stdioExecutor;
+	// case "mpi":
+	// return mpiExecutor;
+	// default:
+	// throw new CIVLInternalException("Unknown library: " + library,
+	// statement);
+	// }
+	// }
 
 	/* *********************** public methods ********************************* */
 
@@ -698,31 +685,33 @@ public class MPIExecutor extends CommonExecutor {
 	/**
 	 * Add checking for guard of MPIRecvStatement to the superclass's version.
 	 */
-	public BooleanExpression newPathCondition(State state, int pid,
-			Statement statement) {
-		try {
-			Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
-			BooleanExpression pathCondition = eval.state.getPathCondition();
-			BooleanExpression guard = (BooleanExpression) eval.value;
-			Reasoner reasoner = evaluator.universe().reasoner(pathCondition);
-
-			if (statement instanceof CallOrSpawnStatement) {
-				if (((CallOrSpawnStatement) statement).function() instanceof SystemFunction) {
-					LibraryExecutor libraryExecutor = libraryExecutor((CallOrSpawnStatement) statement);
-
-					guard = evaluator.universe().and(guard,
-							libraryExecutor.getGuard(state, pid, statement));
-				}
-			}
-			if (reasoner.isValid(guard))
-				return pathCondition;
-			if (reasoner.isValid(evaluator.universe().not(guard)))
-				return evaluator.universe().falseExpression();
-			return evaluator.universe().and(pathCondition, guard);
-		} catch (UnsatisfiablePathConditionException e) {
-			return evaluator.universe().falseExpression();
-		}
-	}
+	// public BooleanExpression newPathCondition(State state, int pid,
+	// Statement statement) {
+	// try {
+	// Evaluation eval = evaluator.evaluate(state, pid, statement.guard());
+	// BooleanExpression pathCondition = eval.state.getPathCondition();
+	// BooleanExpression guard = (BooleanExpression) eval.value;
+	// Reasoner reasoner = evaluator.universe().reasoner(pathCondition);
+	//
+	// if (statement instanceof CallOrSpawnStatement) {
+	// if (((CallOrSpawnStatement) statement).function() instanceof
+	// SystemFunction) {
+	// LibraryExecutor libraryExecutor = libraryExecutor((CallOrSpawnStatement)
+	// statement);
+	//
+	// guard = evaluator.universe().and(guard,
+	// libraryExecutor.getGuard(state, pid, statement));
+	// }
+	// }
+	// if (reasoner.isValid(guard))
+	// return pathCondition;
+	// if (reasoner.isValid(evaluator.universe().not(guard)))
+	// return evaluator.universe().falseExpression();
+	// return evaluator.universe().and(pathCondition, guard);
+	// } catch (UnsatisfiablePathConditionException e) {
+	// return evaluator.universe().falseExpression();
+	// }
+	// }
 
 	// // /**
 	// // * Add checking for guard of MPIRecvStatement to the superclass's

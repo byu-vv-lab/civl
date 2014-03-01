@@ -158,7 +158,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$comm_seek":
 		case "$comm_chan_size":
 		case "$comm_total_size":
-		case "$gcomm_create":
+		case "$gcomm_create2":
 		case "$heap_create":
 		case "$scope_parent":
 			guard = universe.trueExpression();

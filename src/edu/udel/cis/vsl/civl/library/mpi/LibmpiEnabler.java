@@ -17,7 +17,6 @@ public class LibmpiEnabler extends CommonLibraryEnabler implements
 
 	@Override
 	public String name() {
-		// TODO Auto-generated method stub
 		return "mpi";
 	}
 

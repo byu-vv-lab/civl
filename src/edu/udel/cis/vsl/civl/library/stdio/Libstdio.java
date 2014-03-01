@@ -19,7 +19,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
@@ -62,10 +61,11 @@ public class Libstdio extends CommonLibraryExecutor implements LibraryExecutor {
 		return executeWork(state, pid, (CallOrSpawnStatement) statement);
 	}
 
-	@Override
-	public BooleanExpression getGuard(State state, int pid, Statement statement) {
-		return universe.trueExpression();
-	}
+	// @Override
+	// public BooleanExpression getGuard(State state, int pid, Statement
+	// statement) {
+	// return universe.trueExpression();
+	// }
 
 	@Override
 	public State initialize(State state) {

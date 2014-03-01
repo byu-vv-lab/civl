@@ -12,7 +12,6 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
  * Executor for stdlib function calls.
@@ -99,10 +98,11 @@ public class Libstdlib extends CommonLibraryExecutor implements LibraryExecutor 
 		return state;
 	}
 
-	@Override
-	public BooleanExpression getGuard(State state, int pid, Statement statement) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	// @Override
+	// public BooleanExpression getGuard(State state, int pid, Statement
+	// statement) {
+	// // TODO Auto-generated method stub
+	// return null;
+	// }
 
 }

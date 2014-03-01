@@ -17,7 +17,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -52,12 +51,13 @@ public class Libmpi extends CommonLibraryExecutor implements LibraryExecutor {
 		return this.executeWork(state, pid, statement);
 	}
 
-	@Override
-	public BooleanExpression getGuard(State state, int pid, Statement statement) {
-		BooleanExpression guard;
-		guard = universe.trueExpression();
-		return guard;
-	}
+	// @Override
+	// public BooleanExpression getGuard(State state, int pid, Statement
+	// statement) {
+	// BooleanExpression guard;
+	// guard = universe.trueExpression();
+	// return guard;
+	// }
 
 	@Override
 	public State initialize(State state) {

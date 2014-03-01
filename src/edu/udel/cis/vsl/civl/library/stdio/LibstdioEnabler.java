@@ -13,7 +13,6 @@ public class LibstdioEnabler extends CommonLibraryEnabler implements
 	public LibstdioEnabler(Enabler primaryEnabler, PrintStream output,
 			ModelFactory modelFactory) {
 		super(primaryEnabler, output, modelFactory);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

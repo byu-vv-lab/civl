@@ -28,6 +28,12 @@ public class MessagePassingTest {
 	/* **************************** Test Methods *************************** */
 
 	@Test
+	public void ring0() {
+		assertTrue(ui.run("verify", filename("ring0.cvl"),
+				"-inputNPROCS_BOUND=8", "-inputN_BOUND=4"));
+	}
+
+	@Test
 	public void ring1() {
 		assertTrue(ui.run("verify", filename("ring1.cvl"), "-inputNPROCS=3"));
 	}
@@ -42,8 +48,6 @@ public class MessagePassingTest {
 		assertFalse(ui.run("verify", filename("mpi-pthreads.cvl")));
 	}
 
-	// takes too long (forever?)
-	// @Ignore
 	@Test
 	public void mpiPthreadsMin() {
 		assertFalse(ui.run("verify", "-min", filename("mpi-pthreads.cvl")));
@@ -54,18 +58,12 @@ public class MessagePassingTest {
 		assertFalse(ui.run("verify", filename("hybrid2.cvl"), "-inputNPROCS=2"));
 	}
 
-	// takes too long (forever?)
+	// takes too long: about 90s
 	@Ignore
 	@Test
 	public void hybrid2Min() {
 		assertFalse(ui.run("verify", filename("hybrid2.cvl"), "-inputNPROCS=2",
 				"-min"));
-	}
-
-	@Test
-	public void ring() {
-		assertTrue(ui.run("verify", filename("ring.cvl"),
-				"-inputNPROCS_BOUND=10", "-inputN_BOUND=5"));
 	}
 
 }

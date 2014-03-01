@@ -89,79 +89,80 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		return executeWork(state, pid, statement);
 	}
 
-	@Override
-	public BooleanExpression getGuard(State state, int pid, Statement statement) {
-		Identifier name;
-		Expression[] arguments;
-		SymbolicExpression[] argumentValues;
-		CallOrSpawnStatement call;
-		// LHSExpression lhs;
-		int numArgs;
-		BooleanExpression guard;
-
-		if (!(statement instanceof CallOrSpawnStatement)) {
-			throw new CIVLInternalException("Unsupported statement for civlc",
-					statement);
-		}
-		call = (CallOrSpawnStatement) statement;
-		numArgs = call.arguments().size();
-		name = call.function().name();
-		// lhs = call.lhs();
-		arguments = new Expression[numArgs];
-		argumentValues = new SymbolicExpression[numArgs];
-		for (int i = 0; i < numArgs; i++) {
-			Evaluation eval = null;
-
-			arguments[i] = call.arguments().get(i);
-			try {
-				eval = evaluator.evaluate(state, pid, arguments[i]);
-			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
-				// already have been reported.
-				return universe.falseExpression();
-			}
-			argumentValues[i] = eval.value;
-			state = eval.state;
-		}
-
-		switch (name.name()) {
-		case "$comm_dequeue":
-			try {
-				guard = getDequeueGuard(state, pid, arguments, argumentValues);
-			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
-				// already have been reported.
-				return universe.falseExpression();
-			}
-			break;
-		case "$free":
-		case "$bundle_pack":
-		case "$bundle_unpack":
-		case "$bundle_size":
-		case "$comm_create":
-		case "$comm_enqueue":
-		case "printf":
-		case "$exit":
-		case "$memcpy":
-		case "$message_pack":
-		case "$message_source":
-		case "$message_tag":
-		case "$message_dest":
-		case "$message_size":
-		case "$message_unpack":
-		case "$comm_destroy":
-		case "$comm_size":
-		case "$comm_probe":
-		case "$comm_seek":
-			guard = universe.trueExpression();
-			break;
-
-		default:
-			throw new CIVLInternalException("Unknown civlc function: " + name,
-					statement);
-		}
-		return guard;
-	}
+	// @Override
+	// public BooleanExpression getGuard(State state, int pid, Statement
+	// statement) {
+	// Identifier name;
+	// Expression[] arguments;
+	// SymbolicExpression[] argumentValues;
+	// CallOrSpawnStatement call;
+	// // LHSExpression lhs;
+	// int numArgs;
+	// BooleanExpression guard;
+	//
+	// if (!(statement instanceof CallOrSpawnStatement)) {
+	// throw new CIVLInternalException("Unsupported statement for civlc",
+	// statement);
+	// }
+	// call = (CallOrSpawnStatement) statement;
+	// numArgs = call.arguments().size();
+	// name = call.function().name();
+	// // lhs = call.lhs();
+	// arguments = new Expression[numArgs];
+	// argumentValues = new SymbolicExpression[numArgs];
+	// for (int i = 0; i < numArgs; i++) {
+	// Evaluation eval = null;
+	//
+	// arguments[i] = call.arguments().get(i);
+	// try {
+	// eval = evaluator.evaluate(state, pid, arguments[i]);
+	// } catch (UnsatisfiablePathConditionException e) {
+	// // the error that caused the unsatifiable path condition should
+	// // already have been reported.
+	// return universe.falseExpression();
+	// }
+	// argumentValues[i] = eval.value;
+	// state = eval.state;
+	// }
+	//
+	// switch (name.name()) {
+	// case "$comm_dequeue":
+	// try {
+	// guard = getDequeueGuard(state, pid, arguments, argumentValues);
+	// } catch (UnsatisfiablePathConditionException e) {
+	// // the error that caused the unsatifiable path condition should
+	// // already have been reported.
+	// return universe.falseExpression();
+	// }
+	// break;
+	// case "$free":
+	// case "$bundle_pack":
+	// case "$bundle_unpack":
+	// case "$bundle_size":
+	// case "$comm_create":
+	// case "$comm_enqueue":
+	// case "printf":
+	// case "$exit":
+	// case "$memcpy":
+	// case "$message_pack":
+	// case "$message_source":
+	// case "$message_tag":
+	// case "$message_dest":
+	// case "$message_size":
+	// case "$message_unpack":
+	// case "$comm_destroy":
+	// case "$comm_size":
+	// case "$comm_probe":
+	// case "$comm_seek":
+	// guard = universe.trueExpression();
+	// break;
+	//
+	// default:
+	// throw new CIVLInternalException("Unknown civlc function: " + name,
+	// statement);
+	// }
+	// return guard;
+	// }
 
 	@Override
 	public State initialize(State state) {
@@ -584,9 +585,16 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		CIVLType gcommType = model.gcommType();
 		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
 		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		IntegerNumber number_nprocs = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) nprocs);
 
-		assert nprocs instanceof NumericExpression;
-		int_nprocs = evaluator.extractInt(source, (NumericExpression) nprocs);
+		if (number_nprocs != null)
+			int_nprocs = number_nprocs.intValue();
+		else
+			throw new CIVLInternalException(
+					"Cannot extract concrete int value for gcomm size",
+					arguments[1]);
 		// isInit component
 		isInit = universe.bool(false);
 		for (int i = 0; i < int_nprocs; i++) {
@@ -1137,7 +1145,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 					argumentValues, statement.getSource());
 			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
-		case "$gcomm_create":
+		case "$gcomm_create2":
 			state = executeGcommCreate(state, pid, lhs, arguments,
 					argumentValues, statement.getSource());
 			state = stateFactory.setLocation(state, pid, statement.target());
@@ -1444,46 +1452,46 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		return array;
 	}
 
-	/**
-	 * TODO
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param arguments
-	 *            $comm, source, tag
-	 * @param argumentValues
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private BooleanExpression getDequeueGuard(State state, int pid,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression commHandle = argumentValues[0];
-		SymbolicExpression source = argumentValues[1];
-		SymbolicExpression tag = argumentValues[2];
-		SymbolicExpression comm;
-		SymbolicExpression gcommHandle;
-		SymbolicExpression gcomm;
-		SymbolicExpression dest;
-		SymbolicExpression newMessage;
-		CIVLSource civlsource = arguments[0].getSource();
-		boolean enabled = false;
-		Evaluation eval;
-
-		eval = evaluator.dereference(civlsource, state, commHandle);
-		state = eval.state;
-		comm = eval.value;
-		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle);
-		state = eval.state;
-		gcomm = eval.value;
-		dest = universe.tupleRead(comm, zeroObject);
-		newMessage = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
-				tag, civlsource);
-		if (newMessage != null)
-			enabled = true;
-		return universe.bool(enabled);
-	}
+	// /**
+	// * TODO
+	// *
+	// * @param state
+	// * @param pid
+	// * @param arguments
+	// * $comm, source, tag
+	// * @param argumentValues
+	// * @return
+	// * @throws UnsatisfiablePathConditionException
+	// */
+	// private BooleanExpression getDequeueGuard(State state, int pid,
+	// Expression[] arguments, SymbolicExpression[] argumentValues)
+	// throws UnsatisfiablePathConditionException {
+	// SymbolicExpression commHandle = argumentValues[0];
+	// SymbolicExpression source = argumentValues[1];
+	// SymbolicExpression tag = argumentValues[2];
+	// SymbolicExpression comm;
+	// SymbolicExpression gcommHandle;
+	// SymbolicExpression gcomm;
+	// SymbolicExpression dest;
+	// SymbolicExpression newMessage;
+	// CIVLSource civlsource = arguments[0].getSource();
+	// boolean enabled = false;
+	// Evaluation eval;
+	//
+	// eval = evaluator.dereference(civlsource, state, commHandle);
+	// state = eval.state;
+	// comm = eval.value;
+	// gcommHandle = universe.tupleRead(comm, oneObject);
+	// eval = evaluator.dereference(civlsource, state, gcommHandle);
+	// state = eval.state;
+	// gcomm = eval.value;
+	// dest = universe.tupleRead(comm, zeroObject);
+	// newMessage = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
+	// tag, civlsource);
+	// if (newMessage != null)
+	// enabled = true;
+	// return universe.bool(enabled);
+	// }
 
 	/**
 	 * TODO
@@ -1563,10 +1571,10 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		LinkedList<SymbolicExpression> emptyMessageComponents = new LinkedList<SymbolicExpression>();
 		StringObject name;
 		SymbolicExpression bundle;
-		
-		name = universe.stringObject("X_s" + -1 + "v"
-				+ -1);
-		bundle = universe.symbolicConstant(name, bundleType.getDynamicType(universe));
+
+		name = universe.stringObject("X_s" + -1 + "v" + -1);
+		bundle = universe.symbolicConstant(name,
+				bundleType.getDynamicType(universe));
 		emptyMessageComponents.add(universe.integer(-1));
 		emptyMessageComponents.add(universe.integer(-1));
 		emptyMessageComponents.add(universe.integer(-1));
