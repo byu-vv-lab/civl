@@ -15,7 +15,7 @@ void foo(){
   gp = (int *) $malloc(sf, sizeof(int));
   gStart = $true;
   *gp = 1;
-  $free(gp);
+  free(gp);
 }
 
 void goo(){
@@ -27,6 +27,6 @@ void main(){
   $proc f = $spawn foo();
   $proc g = $spawn goo();
   
-  $wait f;
-  $wait g;
+  $wait(f);
+  $wait(g);
 }

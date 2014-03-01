@@ -9,7 +9,7 @@ _Bool start = $false;
 
 void worker(int me) {
   $when (start);
-  $comm_dequeue(&comm, me, me, TAG);
+  $comm_dequeue(&comm, me, TAG);
 }
 
 void main() {
