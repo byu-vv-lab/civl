@@ -31,6 +31,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -508,11 +509,22 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 										.integer(i);
 								NumericExpression targetIndex = universe.add(
 										pointerIndex, sourceIndex);
-								SymbolicExpression element = universe
-										.arrayRead(array, universe.integer(i));
 
-								targetArray = universe.arrayWrite(targetArray,
-										targetIndex, element);
+								try {
+									SymbolicExpression element = universe
+											.arrayRead(array,
+													universe.integer(i));
+
+									targetArray = universe.arrayWrite(
+											targetArray, targetIndex, element);
+								} catch (SARLException e) {
+									throw new CIVLStateException(
+											ErrorKind.OUT_OF_BOUNDS,
+											Certainty.CONCRETE,
+											"Attempt to write beyond array bound: index="
+													+ targetIndex, state,
+											source);
+								}
 							}
 							state = primaryExecutor.assign(source, state,
 									parentPointer, targetArray);
@@ -702,7 +714,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		gcomm = eval.value;
 		nprocs = universe.tupleRead(gcomm, zeroObject);
 		if (lhs != null) {
-//			assert lhs instanceof VariableExpression;
+			// assert lhs instanceof VariableExpression;
 			state = this.primaryExecutor.assign(state, pid, lhs, nprocs);
 		}
 		return state;
