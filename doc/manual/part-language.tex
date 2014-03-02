@@ -3,17 +3,20 @@
 
 \chapter{Overview of CIVL-C}
 
+\section{Main Concepts}
+
 CIVL-C is an extension of a subset of the C11 dialect of C. It
 includes the most commonly-used elements of C, including most of the
 syntax, types, expressions, and statements. Missing are some of the
-more esoteric type qualifiers and much of the standard library. None
-of the C11 language elements dealing with concurrency are included, as
-CIVL-C has its own concurrency primitives.
+more esoteric type qualifiers, bitwise operations (at least for now),
+and much of the standard library.  Moreover, none of the C11 language
+elements dealing with concurrency are included, as CIVL-C has its own
+concurrency primitives.
 
-The keywords in CIVL-C not already in C begin with symbol \cckey.
+The keywords in CIVL-C not already in C begin with the symbol \cckey.
 This makes them readily identifiable and also prevents any naming
-conflicts with identifiers in C programs.  This means that most
-legal C programs will also be legal CIVL-C programs.
+conflicts with identifiers in C programs.  This means that most legal
+C programs will also be legal CIVL-C programs.
 
 One of the most important features of CIVL-C not found in standard C
 is the ability to define functions in any scope. (Standard C allows
@@ -21,51 +24,144 @@ function definitions only in the file scope.)  This feature is also
 found in GNU C, the GNU extension of C.
 
 Another central CIVL-C feature is the ability to \emph{spawn}
-functions, i.e., run the function in a new process (thread).
+functions, i.e., run the function in a new \emph{process} (thread).
 
+\emph{Scopes} and \emph{processes} are the two central themes of
+CIVL-C.  Each has a static and a dynamic aspect.  The static scopes
+correspond to the lexical scopes in the program---typically, regions
+delimited by curly braces \lb \ldots \rb.  At runtime, these scopes
+are \emph{instantiated} when control in a process reaches the
+beginning of the scope.  Processes are created dynamically by
+\emph{spawning} functions; hence the functions are the static
+representation of processes.
 
+\section{Example Illustrating Scopes and Processes}
 
+To understand the static and dynamic nature of scopes and processes,
+and the relations between them, we consider the (artificial) example
+code of Figure \ref{fig:scopecodeex}.  The static scopes in the scope
+are numbered from $0$ to $6$.
 
-Key concepts: static scope tree, nested functions, dynamic scope tree,
-nested functions, processes, spawning, waiting, types, ...
+\begin{figure}[t]
+  \centering
+  \includegraphics[scale=1.2]{scopeCodeExample}
+  \caption{CIVL-C code skeleton to illustrate scope hierarchy}
+  \label{fig:scopecodeex}
+\end{figure}
 
+\begin{figure}
+  \centering
+  \includegraphics[scale=1.2]{scopeStateExample}
+  \caption{State scope tree and a state for example program}
+  \label{fig:scopestateex}
+\end{figure}
 
-\chapter{Structure of a CIVL-C program}
+The static scopes have a tree structure: one scope is a child of
+another if the first is immediately contained in the second.  Scope 0,
+which is the file scope (or \emph{root} scope) is the root of this
+tree.  The static scope tree is depicted in Figure
+\ref{fig:scopestateex} (left).  Each scope is identified by its
+integer ID.  Additionally, if the scope happens to be the scope of a
+function definition, the name of the function is included in this
+identifier.  A node in this tree also shows the variables and
+functions declared in the scope.  For brevity, we omit the \emph{proc}
+variables.
 
-CIVL-C program may use preprocessor directives as specified in the C
-Standard.  A source program is preprocessed, then parsed, resulting
-in a translation unit.
+We now look at what happens when this program executes.  Figure
+\ref{fig:scopestateex} (right) illustrates a possible state of the
+program at one point in an execution.  We now explain how
+this state is arrived at.
 
-A CIVL-C program begins with the line
+First, there is an implicit \emph{root function} placed around the
+entire code.  The body of the \emph{main} function becomes the body
+of the root function, and the \emph{main} function itself disappears.
+This minor transformation does not change the structure of the scope
+tree.
+
+Execution begins by spawning a process $p_0$ to execute the root
+function.  This causes scope $0$ to be instantiated.  An instance of a
+static scope is known as a \emph{dynamic scope}, or \emph{dyscopes}
+for short.  The dynamic scopes are represented by the ovals with
+double borders on the right side of Figure \ref{fig:scopestateex}.
+Each dyscope specifies a value for every variable declared in the
+corresponding static scope.  In this case, the value $3$ has been
+assigned to variable \texttt{x}.
+
+The state of process $p_0$ is represented by a \emph{call stack}
+(green).  The entries on this stack are \emph{activation frames}.
+Each frame contains two data: a reference to a dyscope (indicated by
+blue arrows) and a current location (or programmer counter vaule) in
+the static scope corresponding to that dyscope (not shown).  The
+dyscope defines the environment in which the process evaluates
+expressions and executes statements.  The currently executing function
+of a process, corresponding to the top frame in the call stack, can
+``see'' only the variables in its dyscope and those of all the
+ancestors of its dyscope in the dyscope tree.
+
+Returning to the example, $p_0$ enters scope 6, instanitating that
+scope, and then spawns procedure \texttt{f}.  This creates process
+$p_1$, with a new stack with a frame pointing to a dyscope
+corresponding to static scope 1.  The new process proceed to run
+concurrently with $p_0$.  Meanwhile, $p_0$ calls procedure \texttt{g},
+which pushes a new entry onto its call stack, and instantiates scope
+5.  Hence $p_0$ has two entries on its stack: the bottom one pointing
+to the instance of scope 6, the top one pointing to the instance of
+scope 5.
+
+Meanwhile, assume $\texttt{x}>0$, so that $p_1$ takes the \emph{true}
+branch of the \texttt{if} statement, instantiating scope 3 under the
+instance of scope 1.  It then spawns two copies of procedure
+\texttt{f1}, creating processes $p_2$ and $p_3$ and two instances of
+scope 2.  Then $p_1$ spawns \texttt{f2}, creating process $p_4$ and an
+instance of scope 4.  Note that the instance of scope 4 is a chile of
+the instance of scope 3, since the (static) scope 4 is a child of
+scope 3.  Finally, $p_1$ calls \texttt{f2}, pushing a new entry on its
+stack and creating another instance of scope 4.  The final state
+arrived at is the one shown.
+
+There are few key points to understand:
+\begin{itemize}
+\item In any state, there is a mapping from the dyscope tree to the
+  static scope tree which maps a dyscoe to the static scope of which
+  it is an instance.  This mapping is a \emph{tree homomorphism},
+  i.e., if dyscope $u$ is a child of dyscope $v$, then the static
+  scope corresponding to $u$ is a child of the static scope
+  corresponding to $v$.
+\item A static scope may have any number of instances, including 0.
+\item Dynamic scopes are created when control enters the corresponding
+  static scope; they disappear from the state when they become
+  unreachable.  A dyscope $v$ is ``reachable'' if some process has a
+  frame pointing to a dyscope $u$ and there is a path from $u$ up to
+  $v$ that follows the parent edges in the dyscope tree.
+\item Processes are created when functions are spawned; they disappear
+  from the state when their stack becomes empty (either because the
+  process terminates normally or invokes the \emph{exit} system
+  function).
+\end{itemize}
+
+\section{Structure of a CIVL-C program}
+
+A CIVL-C program is structured very much like a standard C program.
+In particular, a CIVL-C program may use the preprocessor directives
+specified in the C Standard, and with the same meaning.  A source
+program is preprocessed, then parsed, resulting in a translation unit,
+just as with standard C.  The main differences are the nesting of
+function definitions and the new primitives beginning with
+\texttt{\$}, which are described in detail in the remainder of this
+part of the manual.
+
+A CIVL-C program must begin with the line
 \begin{verbatim}
 #include <civlc.h>
 \end{verbatim}
 which includes the main CIVL-C header file, which declares all the
 types and other CIVL primitives.
 
-A translation unit consists of a sequence of variable declarations,
-function prototypes, function definitions, and \emph{assume}
-statements.
-
-% lexical scopes and the lexical scope tree
-
-% naming scopes (\$scope)
-
-% translation of source to model
-
-% root function, root scope and the  main function
-
-% formal parameters to main, return value
-
-
-% write a grammar.  Leave out type qualifiers, etc.  Keep pointers.
-% Keep simple types?  Why not keep all the standard types.
-% How about "symbolic types"?  Make all the casts explicit.
-% Look at CIL?
-
-% Describe as subset of C, but leave out:... and add...
-
-% add Set<proc> and use it.
+As usual, a translation unit consists of a sequence of variable
+declarations, function prototypes, and function definitions in file
+scope.  In addition, \emph{assume} statements may occur in the file
+scope.  These are used to state assumptions on the input values
+to a program.
 
 \chapter{Sequential Elements}
 
@@ -822,15 +918,6 @@ illustrates an effective way to do this in the context of modeling a
 multithreaded MPI program.  In the code skeleton, each thread can
 access the local communicator object of its process, but not that of
 any other process.
-
-
-
-% nonblocking interface: instead of message_pack, it is a request
-% form a new request and Isend it
-% can it be re-used?
-% buffer_create, 
-% request create,
-% match, complete, 
 
 \chapter{Specification}
 
