@@ -9,7 +9,7 @@ import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 
@@ -19,12 +19,13 @@ import edu.udel.cis.vsl.civl.state.IF.State;
  * @author zirkel
  * 
  */
-public class Libstdlib extends CommonLibraryExecutor implements LibraryExecutor {
+public class LibstdlibExecutor extends CommonLibraryExecutor implements
+		LibraryExecutor {
 
 	/**
 	 * Executor for stdlib function calls.
 	 */
-	public Libstdlib(Executor primaryExecutor, PrintStream output,
+	public LibstdlibExecutor(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
 		super(primaryExecutor, output, enablePrintf, modelFactory);
 	}
@@ -47,7 +48,7 @@ public class Libstdlib extends CommonLibraryExecutor implements LibraryExecutor 
 	 *      edu.udel.cis.vsl.civl.model.IF.statement.Statement)
 	 */
 	@Override
-	public State execute(State state, int pid, Statement statement) {
+	public State execute(State state, int pid, CallOrSpawnStatement statement) {
 		// Identifier name;
 		// State result = null;
 

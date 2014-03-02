@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,21 +14,41 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
+/**
+ * Implementation of the enabler-related logics for system functions declared
+ * civlc.h.
+ * 
+ * @author Manchun Zheng (zmanchun)
+ * 
+ */
 public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		LibraryEnabler {
 
+	/* **************************** Constructors *************************** */
+	/**
+	 * Creates a new instance of the library enabler for civlc.h.
+	 * 
+	 * @param primaryEnabler
+	 *            The enabler for normal CIVL execution.
+	 * @param output
+	 *            The output stream to be used in the enabler.
+	 * @param modelFactory
+	 *            The model factory of the system.
+	 */
 	public LibcivlcEnabler(Enabler primaryEnabler, PrintStream output,
 			ModelFactory modelFactory) {
 		super(primaryEnabler, output, modelFactory);
 	}
+
+	/* ************************ Methods from Library *********************** */
 
 	@Override
 	public String name() {
@@ -37,8 +56,11 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		return "civlc";
 	}
 
+	/* ********************* Methods from LibraryEnabler ******************* */
+
 	@Override
-	public Set<Integer> ampleSet(State state, int pid, Statement statement,
+	public Set<Integer> ampleSet(State state, int pid,
+			CallOrSpawnStatement statement,
 			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
 		Identifier name;
 		CallOrSpawnStatement call;
@@ -59,64 +81,22 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		}
 	}
 
-	private Set<Integer> ampleSetWork(State state, int pid,
-			CallOrSpawnStatement call,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
-		int numArgs;
-		numArgs = call.arguments().size();
-		Expression[] arguments;
-		SymbolicExpression[] argumentValues;
-
-		arguments = new Expression[numArgs];
-		argumentValues = new SymbolicExpression[numArgs];
-		for (int i = 0; i < numArgs; i++) {
-			Evaluation eval = null;
-
-			arguments[i] = call.arguments().get(i);
-			try {
-				eval = evaluator.evaluate(state, pid, arguments[i]);
-			} catch (UnsatisfiablePathConditionException e) {
-				return new HashSet<>();
-			}
-			argumentValues[i] = eval.value;
-			state = eval.state;
-		}
-
-		switch (call.function().name().name()) {
-		case "$comm_enqueue":
-		case "$comm_dequeue":
-			Set<Integer> ampleSet = new HashSet<>();
-
-			for (int otherPid : reachableMemUnitsMap.keySet()) {
-				if (otherPid == pid)
-					continue;
-				else if (reachableMemUnitsMap.get(otherPid).containsKey(
-						argumentValues[0])) {
-					ampleSet.add(otherPid);
-				}
-			}
-			return ampleSet;
-		default:
-		}
-		return new HashSet<>();
-	}
-
 	@Override
-	public Evaluation getGuard(CIVLSource source, State state, int pid,
-			CallOrSpawnStatement call) {
+	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
+			SystemGuardExpression systemGuard) {
 		SymbolicExpression[] argumentValues;
 		int numArgs;
 		BooleanExpression guard;
-		List<Expression> arguments = call.arguments();
-		String function = call.function().name().name();
+		Expression[] arguments = systemGuard.arguments();
+		String function = systemGuard.functionName();
 
-		numArgs = call.arguments().size();
+		numArgs = arguments.length;
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval = null;
 
 			try {
-				eval = evaluator.evaluate(state, pid, arguments.get(i));
+				eval = evaluator.evaluate(state, pid, arguments[i]);
 			} catch (UnsatisfiablePathConditionException e) {
 				// the error that caused the unsatifiable path condition should
 				// already have been reported.
@@ -173,8 +153,66 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		return new Evaluation(state, guard);
 	}
 
+	/* *************************** Private Methods ************************* */
+
 	/**
-	 * TODO
+	 * Computes the ample set process ID's from a system function call.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process that the system function call belongs
+	 *            to.
+	 * @param call
+	 *            The system function call statement.
+	 * @param reachableMemUnitsMap
+	 *            The map of reachable memory units of all active processes.
+	 * @return
+	 */
+	private Set<Integer> ampleSetWork(State state, int pid,
+			CallOrSpawnStatement call,
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
+		int numArgs;
+		numArgs = call.arguments().size();
+		Expression[] arguments;
+		SymbolicExpression[] argumentValues;
+
+		arguments = new Expression[numArgs];
+		argumentValues = new SymbolicExpression[numArgs];
+		for (int i = 0; i < numArgs; i++) {
+			Evaluation eval = null;
+
+			arguments[i] = call.arguments().get(i);
+			try {
+				eval = evaluator.evaluate(state, pid, arguments[i]);
+			} catch (UnsatisfiablePathConditionException e) {
+				return new HashSet<>();
+			}
+			argumentValues[i] = eval.value;
+			state = eval.state;
+		}
+
+		switch (call.function().name().name()) {
+		case "$comm_enqueue":
+		case "$comm_dequeue":
+			Set<Integer> ampleSet = new HashSet<>();
+
+			for (int otherPid : reachableMemUnitsMap.keySet()) {
+				if (otherPid == pid)
+					continue;
+				else if (reachableMemUnitsMap.get(otherPid).containsKey(
+						argumentValues[0])) {
+					ampleSet.add(otherPid);
+				}
+			}
+			return ampleSet;
+		default:
+		}
+		return new HashSet<>();
+	}
+
+	/**
+	 * Computes the guard of $comm_dequeue().
 	 * 
 	 * @param state
 	 * @param pid
@@ -185,7 +223,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression getDequeueGuard(State state, int pid,
-			List<Expression> arguments, SymbolicExpression[] argumentValues)
+			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression commHandle = argumentValues[0];
 		SymbolicExpression source = argumentValues[1];
@@ -195,7 +233,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		SymbolicExpression gcomm;
 		SymbolicExpression dest;
 		SymbolicExpression newMessage;
-		CIVLSource civlsource = arguments.get(0).getSource();
+		CIVLSource civlsource = arguments[0].getSource();
 		boolean enabled = false;
 		Evaluation eval;
 
@@ -318,12 +356,20 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		return message;
 	}
 
+	/**
+	 * Computes the guard of $wait.
+	 * @param state
+	 * @param pid
+	 * @param arguments
+	 * @param argumentValues
+	 * @return
+	 */
 	private BooleanExpression getWaitGuard(State state, int pid,
-			List<Expression> arguments, SymbolicExpression[] argumentValues) {
+			Expression[] arguments, SymbolicExpression[] argumentValues) {
 		SymbolicExpression joinProcess = argumentValues[0];
 		BooleanExpression guard;
 		int pidValue;
-		Expression joinProcessExpr = arguments.get(0);
+		Expression joinProcessExpr = arguments[0];
 
 		pidValue = modelFactory.getProcessId(joinProcessExpr.getSource(),
 				joinProcess);

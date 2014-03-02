@@ -21,8 +21,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -52,31 +50,29 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 /**
- * Implementation of system functions declared civlc.h.
- * 
- * <ul>
- * <li><code>$malloc</code>: since calls to this function have already been
- * translated to {@link MallocStatement}s in the model, these are handled a
- * little differently.</li>
- * <li><code>$free</code></li>
- * </ul>
+ * Implementation of the execution for system functions declared civlc.h.
  * 
  * @author siegel
  * 
  */
-public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
+public class LibcivlcExecutor extends CommonLibraryExecutor implements
+		LibraryExecutor {
 
 	/* **************************** Constructors *************************** */
 
 	/**
-	 * TODO javadocs
+	 * Creates a new instance of the library executor for civlc.h.
 	 * 
 	 * @param primaryExecutor
+	 *            The executor for normal CIVL execution.
 	 * @param output
+	 *            The output stream to be used in the enabler.
 	 * @param enablePrintf
+	 *            If printing is enabled for the printf function.
 	 * @param modelFactory
+	 *            The model factory of the system.
 	 */
-	public Libcivlc(Executor primaryExecutor, PrintStream output,
+	public LibcivlcExecutor(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
 		super(primaryExecutor, output, enablePrintf, modelFactory);
 	}
@@ -84,85 +80,10 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	/* ******************** Methods from LibraryExecutor ******************* */
 
 	@Override
-	public State execute(State state, int pid, Statement statement)
+	public State execute(State state, int pid, CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		return executeWork(state, pid, statement);
 	}
-
-	// @Override
-	// public BooleanExpression getGuard(State state, int pid, Statement
-	// statement) {
-	// Identifier name;
-	// Expression[] arguments;
-	// SymbolicExpression[] argumentValues;
-	// CallOrSpawnStatement call;
-	// // LHSExpression lhs;
-	// int numArgs;
-	// BooleanExpression guard;
-	//
-	// if (!(statement instanceof CallOrSpawnStatement)) {
-	// throw new CIVLInternalException("Unsupported statement for civlc",
-	// statement);
-	// }
-	// call = (CallOrSpawnStatement) statement;
-	// numArgs = call.arguments().size();
-	// name = call.function().name();
-	// // lhs = call.lhs();
-	// arguments = new Expression[numArgs];
-	// argumentValues = new SymbolicExpression[numArgs];
-	// for (int i = 0; i < numArgs; i++) {
-	// Evaluation eval = null;
-	//
-	// arguments[i] = call.arguments().get(i);
-	// try {
-	// eval = evaluator.evaluate(state, pid, arguments[i]);
-	// } catch (UnsatisfiablePathConditionException e) {
-	// // the error that caused the unsatifiable path condition should
-	// // already have been reported.
-	// return universe.falseExpression();
-	// }
-	// argumentValues[i] = eval.value;
-	// state = eval.state;
-	// }
-	//
-	// switch (name.name()) {
-	// case "$comm_dequeue":
-	// try {
-	// guard = getDequeueGuard(state, pid, arguments, argumentValues);
-	// } catch (UnsatisfiablePathConditionException e) {
-	// // the error that caused the unsatifiable path condition should
-	// // already have been reported.
-	// return universe.falseExpression();
-	// }
-	// break;
-	// case "$free":
-	// case "$bundle_pack":
-	// case "$bundle_unpack":
-	// case "$bundle_size":
-	// case "$comm_create":
-	// case "$comm_enqueue":
-	// case "printf":
-	// case "$exit":
-	// case "$memcpy":
-	// case "$message_pack":
-	// case "$message_source":
-	// case "$message_tag":
-	// case "$message_dest":
-	// case "$message_size":
-	// case "$message_unpack":
-	// case "$comm_destroy":
-	// case "$comm_size":
-	// case "$comm_probe":
-	// case "$comm_seek":
-	// guard = universe.trueExpression();
-	// break;
-	//
-	// default:
-	// throw new CIVLInternalException("Unknown civlc function: " + name,
-	// statement);
-	// }
-	// return guard;
-	// }
 
 	@Override
 	public State initialize(State state) {
@@ -181,15 +102,25 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		return null;
 	}
 
+	/* ************************** Private Methods ************************** */
+
 	/**
-	 * TODO
+	 * Executes the function call "free(*void)": removes from the heap the
+	 * object referred to by the given pointer.
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
 	 * @param source
-	 * @return
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeFree(State state, int pid, Expression[] arguments,
@@ -218,14 +149,23 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * TODO
+	 * Executes the function call "memcpy": removes from the heap the object
+	 * referred to by the given pointer.
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
 	 * @param source
-	 * @return
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	@SuppressWarnings("unused")
 	private State executeMemcpy(State state, int pid, Expression[] arguments,
@@ -245,16 +185,25 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * 
 	 * void $bundle_unpack($bundle bundle, void *ptr, int size);
 	 * 
-	 * TODO
-	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param bundleType
+	 *            The bundle type of the model.
 	 * @param lhs
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
 	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
 	 * @param source
-	 * @return
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeBundlePack(State state, int pid,
@@ -262,11 +211,8 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		Expression pointerExpr = arguments[0];
-		// Expression sizeExpr = arguments[1];
 		SymbolicExpression pointer = argumentValues[0];
 		NumericExpression size = (NumericExpression) argumentValues[1];
-		// ReferenceExpression symRef = evaluator.getSymRef(pointer);
-		// ReferenceKind kind = symRef.referenceKind();
 		SymbolicType elementType;
 		SymbolicType pureElementType;
 		SymbolicUnionType symbolicBundleType;
@@ -285,111 +231,7 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		symbolicBundleType = bundleType.getDynamicType(universe);
 		index = bundleType.getIndexOf(pureElementType);
 		indexObj = universe.intObject(index);
-		// NumericExpression elementSize = evaluator.sizeof(source,
-		// elementType);
-		// BooleanExpression pathCondition = state.pathCondition();
-		// BooleanExpression zeroSizeClaim = universe.equals(size, zero);
-		// Reasoner reasoner = universe.reasoner(pathCondition);
-		// ResultType zeroSizeValid = reasoner.valid(zeroSizeClaim)
-		// .getResultType();
 		array = getArrayFromPointer(state, pointerExpr, pointer, size, source);
-		//
-		// if (zeroSizeValid == ResultType.YES) {
-		// array = universe.emptyArray(elementType);
-		// } else {
-		// BooleanExpression oneCountClaim = universe
-		// .equals(size, elementSize);
-		// ResultType oneCountValid = reasoner.valid(oneCountClaim)
-		// .getResultType();
-		//
-		// if (oneCountValid == ResultType.YES) {
-		// Evaluation eval = evaluator.dereference(
-		// pointerExpr.getSource(), state, pointer);
-		// SymbolicExpression element0 = eval.value;
-		//
-		// state = eval.state;
-		// pathCondition = state.pathCondition();
-		// array = universe.array(elementType,
-		// new Singleton<SymbolicExpression>(element0));
-		// } else {
-		// BooleanExpression divisibility = universe.divides(elementSize,
-		// size);
-		// ResultType divisibilityValid = reasoner.valid(divisibility)
-		// .getResultType();
-		// NumericExpression count;
-		//
-		// if (divisibilityValid != ResultType.YES) {
-		// Certainty certainty = divisibilityValid == ResultType.MAYBE ?
-		// Certainty.MAYBE
-		// : Certainty.PROVEABLE;
-		// CIVLStateException e = new CIVLStateException(
-		// ErrorKind.OTHER, certainty,
-		// "sizeof element does not divide size argument",
-		// state, source);
-		//
-		// log.report(e);
-		// pathCondition = universe.and(pathCondition, divisibility);
-		// state = stateFactory.setPathCondition(state, pathCondition);
-		// reasoner = universe.reasoner(pathCondition);
-		// }
-		// count = universe.divide(size, elementSize);
-		// switch (kind) {
-		// case ARRAY_ELEMENT: {
-		// NumericExpression startIndex = ((ArrayElementReference) symRef)
-		// .getIndex();
-		// SymbolicExpression arrayPointer = evaluator.parentPointer(
-		// source, pointer);
-		// Evaluation eval = evaluator.dereference(source, state,
-		// arrayPointer);
-		// SymbolicExpression originalArray = eval.value;
-		// NumericExpression endIndex = universe
-		// .add(startIndex, count);
-		//
-		// state = eval.state;
-		// array = evaluator.getSubArray(originalArray, startIndex,
-		// endIndex, state, source);
-		// break;
-		// }
-		// case IDENTITY:
-		// throw new CIVLStateException(ErrorKind.POINTER,
-		// Certainty.MAYBE,
-		// "unable to get concrete count of 0 or 1 from size",
-		// state, source);
-		// case NULL: { // size must be 0
-		// Certainty certainty = zeroSizeValid == ResultType.MAYBE ?
-		// Certainty.MAYBE
-		// : Certainty.PROVEABLE;
-		// CIVLStateException e = new CIVLStateException(
-		// ErrorKind.POINTER, certainty,
-		// "null pointer only valid with size 0", state,
-		// source);
-		//
-		// log.report(e);
-		// pathCondition = universe.and(pathCondition, zeroSizeClaim);
-		// state = stateFactory.setPathCondition(state, pathCondition);
-		// reasoner = universe.reasoner(pathCondition);
-		// array = universe.emptyArray(elementType);
-		// }
-		// case OFFSET: {
-		// // either size is zero or size is 1 and offset is 0
-		// throw new CIVLStateException(ErrorKind.POINTER,
-		// Certainty.MAYBE, "possible out of bounds pointer",
-		// state, source);
-		// }
-		// case TUPLE_COMPONENT: {
-		// throw new CIVLStateException(ErrorKind.POINTER,
-		// Certainty.MAYBE,
-		// "unable to get concrete count of 0 or 1 from size",
-		// state, source);
-		// }
-		// case UNION_MEMBER:
-		// throw new CIVLInternalException("dereference union member",
-		// source);
-		// default:
-		// throw new CIVLInternalException("unreachable", source);
-		// }
-		// }
-		// }
 		bundle = universe.unionInject(symbolicBundleType, indexObj, array);
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, lhs, bundle);
@@ -400,12 +242,22 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * Returns the size of a bundle.
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param lhs
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
 	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
 	 * @param civlSource
-	 * @return The size of a bundle.
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeBundleSize(State state, int pid, LHSExpression lhs,
@@ -437,21 +289,35 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
+
+	/**
+	 * Copies the data out of the bundle into the region specified:
+	 * 
+	 * void $bundle_unpack($bundle bundle, void *ptr, int size);
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
+	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State executeBundleUnpack(State state, int pid,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression bundle = argumentValues[0];
-		// Expression pointerExpr = arguments[1];
-		// Expression sizeExpr = arguments[1];
 		SymbolicExpression pointer = argumentValues[1];
 		ReferenceExpression symRef = evaluator.getSymRef(pointer);
 		ReferenceKind kind = symRef.referenceKind();
-		// SymbolicType referencedType = evaluator.referencedType(source, state,
-		// pointer);
-		// IntObject index = (IntObject) bundle.argument(0);
 		SymbolicExpression array = (SymbolicExpression) bundle.argument(1);
-		// SymbolicType elementType = ((SymbolicArrayType) array.type())
-		// .elementType();
 		NumericExpression length = universe.length(array);
 		BooleanExpression pathCondition = state.getPathCondition();
 		BooleanExpression zeroLengthClaim = universe.equals(length, zero);
@@ -546,16 +412,22 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * message-passing. The new object will be allocated in the given scope.
 	 * 
 	 * @param state
-	 *            current state
+	 *            The current state.
 	 * @param pid
-	 *            the pid of the process itself
+	 *            The ID of the process that the function call belongs to.
 	 * @param lhs
-	 *            the handle variable
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
 	 * @param arguments
-	 *            $scope scope , int nprocs
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
 	 * @param source
-	 * @return $gcomm
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeGcommCreate(State state, int pid, LHSExpression lhs,
@@ -641,13 +513,22 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * scope.
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param lhs
-	 *            $comm
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
 	 * @param arguments
-	 *            $scope, $gcomm, place
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
-	 * @return $comm
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommCreate(State state, int pid, LHSExpression lhs,
@@ -693,13 +574,22 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * to the given comm.
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param lhs
-	 *            int type
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
 	 * @param arguments
-	 *            $comm
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
-	 * @return the number of places
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommSize(State state, int pid, LHSExpression lhs,
@@ -722,7 +612,6 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		gcomm = eval.value;
 		nprocs = universe.tupleRead(gcomm, zeroObject);
 		if (lhs != null) {
-			// assert lhs instanceof VariableExpression;
 			state = this.primaryExecutor.assign(state, pid, lhs, nprocs);
 		}
 		return state;
@@ -734,13 +623,22 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * of the message is the place of the comm, and the sources and tags match.
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param lhs
-	 *            _Bool type
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
 	 * @param arguments
-	 *            &comm, source, tag
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
-	 * @return _Bool hasMatchedMessage?
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommProbe(State state, int pid, LHSExpression lhs,
@@ -784,12 +682,22 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * with source, dest, and tag all negative.
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param lhs
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
 	 * @param arguments
-	 *            $comm, source, tag
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
-	 * @return $message
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommSeek(State state, int pid, LHSExpression lhs,
@@ -826,112 +734,27 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		return state;
 	}
 
-	// private State executeGcommCreate(State state, int pid, LHSExpression lhs,
-	// Expression[] arguments, SymbolicExpression[] argumentValues,
-	// CIVLSource source) throws UnsatisfiablePathConditionException {
-	// SymbolicExpression comm;
-	// SymbolicExpression nprocs = argumentValues[0];
-	// NumericExpression size;
-	// int nprocsConcrete;
-	// SymbolicExpression procs;
-	// SymbolicExpression buff;
-	// SymbolicExpression buff1d;
-	// List<SymbolicExpression> queueComponents = new
-	// LinkedList<SymbolicExpression>();
-	// List<SymbolicExpression> emptyQueues = new
-	// LinkedList<SymbolicExpression>();
-	// List<SymbolicExpression> buff1ds = new LinkedList<SymbolicExpression>();
-	// List<SymbolicExpression> commComponents = new
-	// LinkedList<SymbolicExpression>();
-	// Model model = state.getScope(0).lexicalScope().model();
-	// CIVLType queueType = model.queueType();
-	// CIVLType messageType = model.mesageType();
-	// CIVLType commType = model.commType();
-	// SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
-	// SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
-	// SymbolicExpression emptyQueue; // Just need one since immutable.
-	// ArrayList<SymbolicExpression> procQueueArrayComponent = new
-	// ArrayList<SymbolicExpression>();
-	// SymbolicExpression procQueueArray = null;
-	// SymbolicExpression procArray = null;
-	// SymbolicTupleType procQueueType = null;
-	// Evaluation eval;
-	//
-	// assert nprocs instanceof NumericExpression;
-	// size = universe.multiply((NumericExpression) nprocs, evaluator.sizeof(
-	// arguments[1].getSource(), evaluator.modelFactory()
-	// .processSymbolicType()));
-	// procs = getArrayFromPointer(state, arguments[1], argumentValues[1],
-	// size, source);
-	// if (!nprocs.operator().equals(SymbolicOperator.CONCRETE)) {
-	// state = stateFactory.simplify(state);
-	// eval = evaluator.evaluate(state, pid, arguments[0]);
-	// state = eval.state;
-	// nprocs = eval.value;
-	// }
-	// nprocsConcrete = evaluator.extractInt(source,
-	// (NumericExpression) nprocs);
-	// /* create procQueue array */
-	// for (int i = 0; i < nprocsConcrete; i++) {
-	// ArrayList<SymbolicExpression> procArrayComponent = new
-	// ArrayList<SymbolicExpression>();
-	// ArrayList<SymbolicExpression> procQueueComponent = new
-	// ArrayList<SymbolicExpression>();
-	// ArrayList<SymbolicType> procQueueTypeComponent = new
-	// ArrayList<SymbolicType>();
-	//
-	// procQueueComponent.add(universe.integer(1));// procs queue length
-	// procQueueTypeComponent.add(universe.integer(1).type());
-	// SymbolicExpression singleProc = universe.arrayRead(procs,
-	// universe.integer(i));
-	// procArrayComponent.add(singleProc);
-	// procArray = universe.array(singleProc.type(), procArrayComponent);
-	// procQueueComponent.add(procArray);
-	// procQueueTypeComponent.add(procArray.type());
-	// procQueueType = universe.tupleType(
-	// universe.stringObject("__procQueue__"),
-	// procQueueTypeComponent);
-	// procQueueArrayComponent.add(universe.tuple(procQueueType,
-	// procQueueComponent));
-	// }
-	// procQueueArray = universe.array(procQueueType, procQueueArrayComponent);
-	// // SymbolicType test = universe.pureType(procQueueArray.type());
-	// queueComponents.add(universe.integer(0));
-	// queueComponents.add(universe.emptyArray(dynamicMessageType));
-	// assert dynamicQueueType instanceof SymbolicTupleType;
-	// emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
-	// queueComponents);
-	// for (int i = 0; i < nprocsConcrete; i++) {
-	// emptyQueues.add(emptyQueue);
-	// }
-	// buff1d = universe.array(dynamicQueueType, emptyQueues);
-	// for (int i = 0; i < nprocsConcrete; i++) {
-	// buff1ds.add(buff1d);
-	// }
-	// buff = universe.array(universe.arrayType(dynamicQueueType), buff1ds);
-	// commComponents.add(nprocs);
-	// commComponents.add(procQueueArray);
-	// commComponents.add(buff);
-	// assert commType.getDynamicType(universe) instanceof SymbolicTupleType;
-	// comm = universe.tuple(
-	// (SymbolicTupleType) commType.getDynamicType(universe),
-	// commComponents);
-	// if (lhs != null)
-	// state = primaryExecutor.assign(state, pid, lhs, comm);
-	// return state;
-	// }
-
 	/**
 	 * Finds the first matching message, removes it from the communicator, and
 	 * returns the message
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param lhs
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
 	 * @param arguments
-	 *            $comm, source, tag
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
-	 * @return $message
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommDequeue(State state, int pid, LHSExpression lhs,
@@ -1014,11 +837,18 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	 * place of the comm.
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
+	 *            The ID of the process that the function call belongs to.
 	 * @param arguments
-	 *            $comm, $message
+	 *            The static representation of the arguments of the function
+	 *            call.
 	 * @param argumentValues
-	 * @return
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCommEnqueue(State state, int pid,
@@ -1088,28 +918,26 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * TODO
+	 * Executes a system function call, updating the left hand side expression
+	 * with the returned value if any.
 	 * 
 	 * @param state
+	 *            The current state.
 	 * @param pid
-	 * @param statement
-	 * @return
+	 *            The ID of the process that the function call belongs to.
+	 * @param call
+	 *            The function call statement to be executed.
+	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeWork(State state, int pid, Statement statement)
+	private State executeWork(State state, int pid, CallOrSpawnStatement call)
 			throws UnsatisfiablePathConditionException {
 		Identifier name;
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
-		CallOrSpawnStatement call;
 		LHSExpression lhs;
 		int numArgs;
 
-		if (!(statement instanceof CallOrSpawnStatement)) {
-			throw new CIVLInternalException("Unsupported statement for civlc",
-					statement);
-		}
-		call = (CallOrSpawnStatement) statement;
 		numArgs = call.arguments().size();
 		name = call.function().name();
 		lhs = call.lhs();
@@ -1126,79 +954,57 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		switch (name.name()) {
 		case "free":
 			state = executeFree(state, pid, arguments, argumentValues,
-					statement.getSource());
-			state = stateFactory.setLocation(state, pid, statement.target());
+					call.getSource());
 			break;
 		case "$bundle_pack":
 			state = executeBundlePack(state, pid, (CIVLBundleType) call
 					.function().returnType(), lhs, arguments, argumentValues,
-					statement.getSource());
-			state = stateFactory.setLocation(state, pid, statement.target());
+					call.getSource());
 			break;
 		case "$bundle_unpack":
 			state = executeBundleUnpack(state, pid, arguments, argumentValues,
-					statement.getSource());
-			state = stateFactory.setLocation(state, pid, statement.target());
+					call.getSource());
 			break;
 		case "$bundle_size":
 			state = executeBundleSize(state, pid, lhs, arguments,
-					argumentValues, statement.getSource());
-			state = stateFactory.setLocation(state, pid, statement.target());
+					argumentValues, call.getSource());
 			break;
 		case "$gcomm_create2":
 			state = executeGcommCreate(state, pid, lhs, arguments,
-					argumentValues, statement.getSource());
-			state = stateFactory.setLocation(state, pid, statement.target());
+					argumentValues, call.getSource());
 			break;
 		case "$comm_enqueue":
 			state = executeCommEnqueue(state, pid, arguments, argumentValues);
-			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
 		case "$comm_dequeue":
 			state = executeCommDequeue(state, pid, lhs, arguments,
 					argumentValues);
-			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
-		case "$exit":
-			state = executeExit(state, pid);
-			// No transition after an exit because the process no longer exists.
-			break;
+		case "$exit":// return immediately since no transitions needed after an
+						// exit, because the process no longer exists.
+			return executeExit(state, pid);
 		case "$comm_size":
 			state = this.executeCommSize(state, pid, lhs, arguments,
 					argumentValues);
-			state = this.stateFactory.setLocation(state, pid,
-					statement.target()); // is it equivalent to transition?
 			break;
-		case "$wait":
-			state = executeWait(state, pid, lhs, arguments, argumentValues,
-					statement.getSource(), statement.target());
-			break;
+		case "$wait":// return immediately since target location has been set.
+			return executeWait(state, pid, arguments, argumentValues,
+					call.getSource(), call.target());
 		case "$comm_create":
 			state = this.executeCommCreate(state, pid, lhs, arguments,
 					argumentValues);
-			state = stateFactory.setLocation(state, pid, statement.target());
 			break;
-		// case "$heap_create":
-		// state = executeHeapCreate(state, pid, lhs, statement.getSource());
-		// state = stateFactory.setLocation(state, pid, statement.target());
-		// break;
 		case "$comm_probe":
 			state = this.executeCommProbe(state, pid, lhs, arguments,
 					argumentValues);
-			state = this.stateFactory.setLocation(state, pid,
-					statement.target());
 			break;
 		case "$comm_seek":
 			state = this.executeCommSeek(state, pid, lhs, arguments,
 					argumentValues);
-			state = this.stateFactory.setLocation(state, pid,
-					statement.target());
 			break;
 		case "$scope_parent":
 			state = this.executeScopeParent(state, pid, lhs, arguments,
 					argumentValues);
-			state = this.stateFactory.setLocation(state, pid,
-					statement.target());
 			break;
 		case "$memcpy":
 		case "$message_pack":
@@ -1207,11 +1013,12 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		case "$message_dest":
 		case "$message_size":
 		case "$message_unpack":
-			throw new CIVLUnimplementedFeatureException(name.name(), statement);
+			throw new CIVLUnimplementedFeatureException(name.name(), call);
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
-					statement);
+					call);
 		}
+		state = stateFactory.setLocation(state, pid, call.target());
 		return state;
 	}
 
@@ -1251,9 +1058,30 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		return state;
 	}
 
-	private State executeWait(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source, Location target) {
+	/**
+	 * Executes the $wait system function call. Only enabled when the waited
+	 * process has terminated.
+	 * 
+	 * * @param state The current state.
+	 * 
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
+	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @param target
+	 *            The target location of the wait function call.
+	 * @return The new state after executing the function call.
+	 * @return
+	 */
+	private State executeWait(State state, int pid, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source,
+			Location target) {
 		SymbolicExpression procVal = argumentValues[0];
 		int joinedPid = modelFactory.getProcessId(arguments[0].getSource(),
 				procVal);
@@ -1264,13 +1092,17 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * TODO
+	 * Obtain a heap object via a certain heap object pointer.
 	 * 
 	 * @param heapPointer
+	 *            The heap pointer.
 	 * @param pointer
+	 *            The heap object pointer.
 	 * @param pointerSource
+	 *            The source code element of the pointer.
 	 * @param state
-	 * @return
+	 *            The current state
+	 * @return The heap object pointer and the new state if any side effect.
 	 */
 	private Evaluation getAndCheckHeapObjectPointer(
 			SymbolicExpression heapPointer, SymbolicExpression pointer,
@@ -1330,14 +1162,20 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * TODO
+	 * Obtains an array via a certain pointer.
 	 * 
 	 * @param state
+	 *            The current state
 	 * @param pointerExpr
+	 *            The static representation of the pointer.
 	 * @param pointer
+	 *            The dynamic representation of the pointer.
 	 * @param size
+	 *            The size of the array.
 	 * @param source
-	 * @return
+	 *            The source code element for error report.
+	 * @return The symbolic representation of the array that the given pointer
+	 *         points to.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private SymbolicExpression getArrayFromPointer(State state,
@@ -1452,52 +1290,13 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 		return array;
 	}
 
-	// /**
-	// * TODO
-	// *
-	// * @param state
-	// * @param pid
-	// * @param arguments
-	// * $comm, source, tag
-	// * @param argumentValues
-	// * @return
-	// * @throws UnsatisfiablePathConditionException
-	// */
-	// private BooleanExpression getDequeueGuard(State state, int pid,
-	// Expression[] arguments, SymbolicExpression[] argumentValues)
-	// throws UnsatisfiablePathConditionException {
-	// SymbolicExpression commHandle = argumentValues[0];
-	// SymbolicExpression source = argumentValues[1];
-	// SymbolicExpression tag = argumentValues[2];
-	// SymbolicExpression comm;
-	// SymbolicExpression gcommHandle;
-	// SymbolicExpression gcomm;
-	// SymbolicExpression dest;
-	// SymbolicExpression newMessage;
-	// CIVLSource civlsource = arguments[0].getSource();
-	// boolean enabled = false;
-	// Evaluation eval;
-	//
-	// eval = evaluator.dereference(civlsource, state, commHandle);
-	// state = eval.state;
-	// comm = eval.value;
-	// gcommHandle = universe.tupleRead(comm, oneObject);
-	// eval = evaluator.dereference(civlsource, state, gcommHandle);
-	// state = eval.state;
-	// gcomm = eval.value;
-	// dest = universe.tupleRead(comm, zeroObject);
-	// newMessage = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
-	// tag, civlsource);
-	// if (newMessage != null)
-	// enabled = true;
-	// return universe.bool(enabled);
-	// }
-
 	/**
-	 * TODO
+	 * Obtains the field ID in the heap type via a heap-object pointer.
 	 * 
 	 * @param pointer
-	 * @return
+	 *            The heap-object pointer.
+	 * @return The field ID in the heap type of the heap-object that the given
+	 *         pointer refers to.
 	 */
 	private int getMallocIndex(SymbolicExpression pointer) {
 		// ref points to element 0 of an array:
@@ -1515,16 +1314,21 @@ public class Libcivlc extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	/**
-	 * TODO: internal function
+	 * Computes matched message in the communicator.
 	 * 
 	 * @param pid
+	 *            The process ID.
 	 * @param gcomm
+	 *            The dynamic representation of the communicator.
 	 * @param source
+	 *            The expected source.
 	 * @param dest
+	 *            The expected destination.
 	 * @param tag
+	 *            The expected tag.
 	 * @param civlsource
-	 * @param returnMessages
-	 * @return
+	 *            The source code element for error report.
+	 * @return The matched message, NULL if no matched message found.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private SymbolicExpression getMatchedMessageFromGcomm(int pid,

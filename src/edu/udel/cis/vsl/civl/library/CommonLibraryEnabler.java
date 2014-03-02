@@ -9,8 +9,8 @@ import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -20,9 +20,16 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 
-public abstract class CommonLibraryEnabler implements LibraryEnabler {
+/**
+ * This class implements the common logic of library enablers.
+ * 
+ * @author Manchun Zheng (zmanchun)
+ * 
+ */
+public abstract class CommonLibraryEnabler extends Library implements
+		LibraryEnabler {
 
-	protected Enabler primaryEnabler;
+	/* *************************** Instance Fields ************************* */
 
 	/**
 	 * The evaluator for evaluating expressions.
@@ -30,10 +37,18 @@ public abstract class CommonLibraryEnabler implements LibraryEnabler {
 	protected Evaluator evaluator;
 
 	/**
+	 * The model factory of the system.
+	 */
+	protected ModelFactory modelFactory;
+
+	/**
 	 * The symbolic expression of one.
 	 */
 	protected NumericExpression one;
 
+	/**
+	 * The symbolic object of integer one.
+	 */
 	protected IntObject oneObject;
 
 	/**
@@ -41,6 +56,14 @@ public abstract class CommonLibraryEnabler implements LibraryEnabler {
 	 */
 	protected PrintStream output = System.out;
 
+	/**
+	 * The enabler for normal CIVL execution.
+	 */
+	protected Enabler primaryEnabler;
+
+	/**
+	 * The state factory for state-related computation.
+	 */
 	protected StateFactory stateFactory;
 
 	/**
@@ -48,12 +71,28 @@ public abstract class CommonLibraryEnabler implements LibraryEnabler {
 	 */
 	protected SymbolicUniverse universe;
 
+	/**
+	 * The symbolic expression of zero.
+	 */
 	protected NumericExpression zero;
 
+	/**
+	 * The symbolic object of integer zero.
+	 */
 	protected IntObject zeroObject;
 
-	protected ModelFactory modelFactory;
+	/* ***************************** Constructor *************************** */
 
+	/**
+	 * Creates a new instance of library enabler.
+	 * 
+	 * @param primaryEnabler
+	 *            The enabler for normal CIVL execution.
+	 * @param output
+	 *            The output stream to be used in the enabler.
+	 * @param modelFactory
+	 *            The model factory of the system.
+	 */
 	protected CommonLibraryEnabler(Enabler primaryEnabler, PrintStream output,
 			ModelFactory modelFactory) {
 		this.primaryEnabler = primaryEnabler;
@@ -68,14 +107,17 @@ public abstract class CommonLibraryEnabler implements LibraryEnabler {
 		this.modelFactory = modelFactory;
 	}
 
+	/* ********************* Methods from LibraryEnabler ******************* */
+
 	@Override
-	public Evaluation getGuard(CIVLSource source, State state, int pid,
-			CallOrSpawnStatement call) {
+	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
+			SystemGuardExpression systemGuard) {
 		return new Evaluation(state, universe.trueExpression());
 	}
 
 	@Override
-	public Set<Integer> ampleSet(State state, int pid, Statement statement,
+	public Set<Integer> ampleSet(State state, int pid,
+			CallOrSpawnStatement statement,
 			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
 		return new HashSet<>();
 	}

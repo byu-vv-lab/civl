@@ -7,6 +7,13 @@ import edu.udel.cis.vsl.civl.library.CommonLibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 
+/**
+ * Implementation of the enabler-related logics for system functions declared
+ * mpi.h.
+ * 
+ * @author Manchun Zheng (zmanchun)
+ * 
+ */
 public class LibmpiEnabler extends CommonLibraryEnabler implements
 		LibraryEnabler {
 

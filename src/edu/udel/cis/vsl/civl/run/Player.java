@@ -7,9 +7,8 @@ import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.PointeredEnabler;
 import edu.udel.cis.vsl.civl.kripke.ScopedEnabler;
 import edu.udel.cis.vsl.civl.kripke.StateManager;
-import edu.udel.cis.vsl.civl.library.CommonLibraryEnablerLoader;
-import edu.udel.cis.vsl.civl.library.CommonLibraryExecutorLoader;
-import edu.udel.cis.vsl.civl.library.IF.LibraryEnablerLoader;
+import edu.udel.cis.vsl.civl.library.CommonLibraryLoader;
+import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
@@ -18,7 +17,6 @@ import edu.udel.cis.vsl.civl.semantics.CommonExecutor;
 import edu.udel.cis.vsl.civl.semantics.MPIExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.States;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -63,9 +61,7 @@ public abstract class Player {
 
 	protected StandardPredicate predicate;
 
-	protected LibraryExecutorLoader executorLoader;
-
-	protected LibraryEnablerLoader enablerLoader;
+	protected LibraryLoader libraryLoader;
 
 	protected Executor executor;
 
@@ -122,8 +118,7 @@ public abstract class Player {
 		this.evaluator = new CommonEvaluator(config, modelFactory,
 				stateFactory, log);
 		evaluator.setSolve(solve);
-		this.executorLoader = new CommonLibraryExecutorLoader();
-		this.enablerLoader = new CommonLibraryEnablerLoader();
+		this.libraryLoader = new CommonLibraryLoader();
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));
 		this.enablePrintf = (Boolean) config
@@ -133,10 +128,10 @@ public abstract class Player {
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		if (this.mpiMode)
 			this.executor = new MPIExecutor(config, modelFactory, stateFactory,
-					log, executorLoader, out, this.enablePrintf, evaluator);
+					log, libraryLoader, out, this.enablePrintf, evaluator);
 		else
 			this.executor = new CommonExecutor(config, modelFactory,
-					stateFactory, log, executorLoader, out, this.enablePrintf,
+					stateFactory, log, libraryLoader, out, this.enablePrintf,
 					evaluator);
 		// this.evaluator.setExecutor(executor);
 		this.predicate = new StandardPredicate(log, universe, this.executor);
@@ -159,17 +154,18 @@ public abstract class Player {
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 		if (this.scpPor1) {
 			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					false, showAmpleSet, this.enablerLoader);
+					false, showAmpleSet, this.libraryLoader);
 		} else if (this.scpPor2) {
 			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					true, showAmpleSet, this.enablerLoader);
+					true, showAmpleSet, this.libraryLoader);
 		} else {
 			enabler = new PointeredEnabler(transitionFactory, evaluator,
-					executor, showAmpleSet, this.enablerLoader);
+					executor, showAmpleSet, this.libraryLoader);
 		}
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);
 		this.executor.setEnabler((Enabler) this.enabler);
+		this.evaluator.setEnabler((Enabler) this.enabler);
 		stateManager = new StateManager(executor);
 		stateManager.setOutputStream(out);
 		stateManager.setVerbose(verbose);

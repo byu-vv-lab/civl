@@ -7,7 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Stack;
 
-import edu.udel.cis.vsl.civl.library.IF.LibraryEnablerLoader;
+import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -71,9 +71,8 @@ public class ScopedEnabler extends Enabler implements
 	 */
 	public ScopedEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean sPor,
-			boolean showAmpleSet, LibraryEnablerLoader enablerLoader) {
-		super(transitionFactory, evaluator, executor, showAmpleSet,
-				enablerLoader);
+			boolean showAmpleSet, LibraryLoader libLoader) {
+		super(transitionFactory, evaluator, executor, showAmpleSet, libLoader);
 		this.scpPor = sPor;
 		if (this.scpPor)
 			this.debugOut.println("scoped POR is enabled.");

@@ -30,11 +30,12 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author ziqingluo
  * 
  */
-public class Libmpi extends CommonLibraryExecutor implements LibraryExecutor {
+public class LibmpiExecutor extends CommonLibraryExecutor implements
+		LibraryExecutor {
 
 	private MPIModelFactory mpiFactory;
 
-	public Libmpi(Executor primaryExecutor, PrintStream output,
+	public LibmpiExecutor(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
 		super(primaryExecutor, output, enablePrintf, modelFactory);
 		this.mpiFactory = (MPIModelFactory) modelFactory;
@@ -46,7 +47,7 @@ public class Libmpi extends CommonLibraryExecutor implements LibraryExecutor {
 	}
 
 	@Override
-	public State execute(State state, int pid, Statement statement)
+	public State execute(State state, int pid, CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		return this.executeWork(state, pid, statement);
 	}

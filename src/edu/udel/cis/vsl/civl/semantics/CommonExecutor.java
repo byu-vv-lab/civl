@@ -18,8 +18,9 @@ import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.library.civlc.Libcivlc;
-import edu.udel.cis.vsl.civl.library.stdio.Libstdio;
+import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
+import edu.udel.cis.vsl.civl.library.civlc.LibcivlcExecutor;
+import edu.udel.cis.vsl.civl.library.stdio.LibstdioExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -43,7 +44,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
@@ -100,7 +100,7 @@ public class CommonExecutor implements Executor {
 	/**
 	 * The unique library executor for civlc.h.
 	 */
-	protected Libcivlc civlcExecutor;
+	protected LibcivlcExecutor civlcExecutor;
 
 	/**
 	 * Enable or disable printing. True by default.
@@ -120,7 +120,7 @@ public class CommonExecutor implements Executor {
 	 * The loader used to find Executors for system functions declared in
 	 * libraries.
 	 */
-	protected LibraryExecutorLoader loader;
+	protected LibraryLoader loader;
 
 	/**
 	 * The unique model factory used in the system.
@@ -145,7 +145,7 @@ public class CommonExecutor implements Executor {
 	/**
 	 * The unique library executor for stdio.h.
 	 */
-	protected Libstdio stdioExecutor;
+	protected LibstdioExecutor stdioExecutor;
 
 	/** The symbolic universe used to manage all symbolic expressions. */
 	protected SymbolicUniverse universe;
@@ -165,9 +165,8 @@ public class CommonExecutor implements Executor {
 	 *            A theorem prover for checking assertions.
 	 */
 	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactory stateFactory, ErrorLog log,
-			LibraryExecutorLoader loader, PrintStream output,
-			boolean enablePrintf, Evaluator evaluator) {
+			StateFactory stateFactory, ErrorLog log, LibraryLoader loader,
+			PrintStream output, boolean enablePrintf, Evaluator evaluator) {
 		this.universe = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
@@ -175,10 +174,12 @@ public class CommonExecutor implements Executor {
 		this.loader = loader;
 		this.output = output;
 		this.enablePrintf = enablePrintf;
-		this.civlcExecutor = (Libcivlc) loader.getLibraryExecutor("civlc",
-				this, this.output, this.enablePrintf, this.modelFactory);
-		this.stdioExecutor = (Libstdio) loader.getLibraryExecutor("stdio",
-				this, this.output, this.enablePrintf, this.modelFactory);
+		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
+				"civlc", this, this.output, this.enablePrintf,
+				this.modelFactory);
+		this.stdioExecutor = (LibstdioExecutor) loader.getLibraryExecutor(
+				"stdio", this, this.output, this.enablePrintf,
+				this.modelFactory);
 	}
 
 	/**

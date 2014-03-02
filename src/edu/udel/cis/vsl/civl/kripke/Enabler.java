@@ -9,12 +9,11 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
-import edu.udel.cis.vsl.civl.library.IF.LibraryEnablerLoader;
+import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -92,7 +91,7 @@ public abstract class Enabler implements
 	 */
 	protected BooleanExpression falseExpression;
 
-	protected LibraryEnablerLoader libraryEnablerLoader;
+	protected LibraryLoader libraryLoader;
 
 	/* ***************************** Constructor *************************** */
 
@@ -112,8 +111,7 @@ public abstract class Enabler implements
 	 *            The option to enable or disable the printing of ample sets.
 	 */
 	protected Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
-			Executor executor, boolean showAmpleSet,
-			LibraryEnablerLoader enablerLoader) {
+			Executor executor, boolean showAmpleSet, LibraryLoader libLoader) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
 		this.executor = executor;
@@ -121,7 +119,7 @@ public abstract class Enabler implements
 		this.modelFactory = evaluator.modelFactory();
 		this.universe = modelFactory.universe();
 		falseExpression = universe.falseExpression();
-		this.libraryEnablerLoader = enablerLoader;
+		this.libraryLoader = libLoader;
 	}
 
 	/* **************************** Public Methods ************************* */
@@ -141,30 +139,34 @@ public abstract class Enabler implements
 	 * @return The symbolic expression of the guard of the given statement.
 	 */
 	public Evaluation getGuard(Statement statement, int pid, State state) {
+		// try {
+		// if (statement instanceof CallOrSpawnStatement) {
+		// if (((CallOrSpawnStatement) statement).isSystemCall()) {
+		// return getSystemGuard(state, pid,
+		// (CallOrSpawnStatement) statement);
+		// }
+		// }
 		try {
-			if (statement instanceof CallOrSpawnStatement) {
-				if (((CallOrSpawnStatement) statement).isSystemCall()) {
-					return getSystemGuard(state, pid,
-							(CallOrSpawnStatement) statement);
-				}
-			}
 			return evaluator.evaluate(state, pid, statement.guard());
 		} catch (UnsatisfiablePathConditionException e) {
 			return new Evaluation(state, this.falseExpression);
 		}
+		// } catch (UnsatisfiablePathConditionException e) {
+		// return new Evaluation(state, this.falseExpression);
+		// }
 	}
 
-	private Evaluation getSystemGuard(State state, int pid,
-			CallOrSpawnStatement statement) {
-		LibraryEnabler libEnabler = libraryEnabler(statement.getSource(),
-				((SystemFunction) (statement.function())).getLibrary());
+	public Evaluation getSystemGuard(State state, int pid,
+			SystemGuardExpression expression) {
+		LibraryEnabler libEnabler = libraryEnabler(expression.getSource(),
+				expression.library());
 
-		return libEnabler
-				.getGuard(statement.getSource(), state, pid, statement);
+		return libEnabler.evaluateGuard(expression.getSource(), state, pid,
+				expression);
 	}
 
 	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
-		return this.libraryEnablerLoader.getLibraryEnabler(library, this,
+		return this.libraryLoader.getLibraryEnabler(library, this,
 				this.debugOut, evaluator.modelFactory());
 	}
 

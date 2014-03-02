@@ -2,7 +2,7 @@ package edu.udel.cis.vsl.civl.kripke;
 
 import java.util.ArrayList;
 
-import edu.udel.cis.vsl.civl.library.IF.LibraryEnablerLoader;
+import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -43,9 +43,8 @@ public class PointeredEnabler extends Enabler implements
 	 */
 	public PointeredEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean showAmpleSet,
-			LibraryEnablerLoader enablerLoader) {
-		super(transitionFactory, evaluator, executor, showAmpleSet,
-				enablerLoader);
+			LibraryLoader libLoader) {
+		super(transitionFactory, evaluator, executor, showAmpleSet, libLoader);
 	}
 
 	/* ************************* Methods from Enabler ********************** */

@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -52,6 +53,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.WaitGuardExpression;
@@ -115,7 +117,7 @@ public class CommonEvaluator implements Evaluator {
 
 	/* *************************** Instance Fields ************************* */
 
-	// private Executor executor;
+	private Enabler enabler;
 
 	/**
 	 * An uninterpreted function used to evaluate "BigO" of an expression. It
@@ -207,7 +209,7 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * TODO ???
 	 */
-	private Map<SymbolicType, NumericExpression> sizeofDynamicMap = new HashMap<SymbolicType, NumericExpression>();
+	private Map<SymbolicType, NumericExpression> sizeofDynamicMap = new HashMap<>();
 
 	/**
 	 * An uninterpreted function used to evaluate "sizeof" on a type. It takes
@@ -268,7 +270,7 @@ public class CommonEvaluator implements Evaluator {
 	 * Create a new instance of evaluator for evaluating expressions.
 	 * 
 	 * @param config
-	 *            The gmc configuration.
+	 *            The GMC configuration.
 	 * @param modelFactory
 	 *            The model factory to be used.
 	 * @param stateFactory
@@ -284,8 +286,6 @@ public class CommonEvaluator implements Evaluator {
 		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
 		this.universe = stateFactory.symbolicUniverse();
-		// processType = modelFactory.processSymbolicType();
-		// scopeType = modelFactory.scopeSymbolicType();
 		dynamicType = modelFactory.dynamicSymbolicType();
 		pointerType = modelFactory.pointerSymbolicType();
 		heapType = modelFactory.heapSymbolicType();
@@ -318,201 +318,37 @@ public class CommonEvaluator implements Evaluator {
 					.getDynamicType(universe);
 		if (modelFactory.model().commType() != null)
 			commType = modelFactory.model().commType().getDynamicType(universe);
-		// falseExpr = universe.falseExpression();
 	}
 
 	/* ************************** Private Methods ************************** */
 
 	/**
-	 * Checks whether the path condition is satisfiable and logs an error if it
-	 * is (or might be). If the path condition is definitely unsatisfiable,
-	 * there is no error to log, and an UnsatisfiablePathConditionException is
-	 * thrown.
+	 * Computes the symbolic initial value of a variable.
 	 * 
-	 * @param source
-	 *            source code element used to report the error
-	 * @param state
-	 *            the current state in which the possible error is detected
-	 * @param errorKind
-	 *            the kind of error (e.g., DEREFERENCE)
-	 * @param message
-	 *            the message to include in the error report
-	 * @throws UnsatisfiablePathConditionException
-	 *             if the path condition is definitely unsatisfiable
+	 * @param variable
+	 *            The variable to be evaluated.
+	 * @param dynamicType
+	 *            The symbolic type of the variable.
+	 * @param dyscopeId
+	 *            The dynamic scope ID of the current state.
+	 * @return The symbolic initial value of the given variable
 	 */
-	@Override
-	public void logSimpleError(CIVLSource source, State state,
-			ErrorKind errorKind, String message)
-			throws UnsatisfiablePathConditionException {
-		BooleanExpression pc = state.getPathCondition();
-		BooleanExpression npc = universe.not(pc);
-		ValidityResult validityResult = trueReasoner.valid(npc);
-		ResultType nsat = validityResult.getResultType();
-		Certainty certainty;
-		CIVLStateException error;
+	private SymbolicExpression computeInitialValue(Variable variable,
+			SymbolicType dynamicType, int dyscopeId) {
+		CIVLType type = variable.type();
+		int vid = variable.vid();
+		SymbolicExpression result;
 
-		// performance! need to cache the satisfiability of each pc somewhere
-		// negation is slow
-		// maybe add "nsat" to Reasoner.
-		if (nsat == ResultType.YES)
-			// no error to report---an infeasible path
-			throw new UnsatisfiablePathConditionException();
-		if (nsat == ResultType.MAYBE)
-			certainty = Certainty.MAYBE;
-		else { // pc is definitely satisfiable
-			certainty = Certainty.PROVEABLE;
+		if (!variable.isInput()
+				&& !variable.isBound()
+				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
+			result = nullExpression;
+		} else {
+			StringObject name = universe.stringObject("X_s" + dyscopeId + "v"
+					+ vid);
+
+			result = universe.symbolicConstant(name, dynamicType);
 		}
-		error = new CIVLStateException(errorKind, certainty, message, state,
-				source);
-		reportError(error);
-	}
-
-	private NumericExpression zeroOf(CIVLSource source, CIVLType type) {
-		if (type instanceof CIVLPrimitiveType) {
-			if (((CIVLPrimitiveType) type).primitiveTypeKind() == PrimitiveTypeKind.INT)
-				return zero;
-			if (((CIVLPrimitiveType) type).primitiveTypeKind() == PrimitiveTypeKind.REAL)
-				return zeroR;
-		}
-		throw new CIVLInternalException("Expected integer or real type, not "
-				+ type, source);
-	}
-
-	/**
-	 * Gets a concrete Java int from the field of a symbolic expression of tuple
-	 * type or throws exception.
-	 * 
-	 * @param tuple
-	 *            symbolic expression of tuple type
-	 * @param fieldIndex
-	 *            index of a field in that tuple
-	 * @return the concrete int value of that field
-	 * @throws CIVLInternalException
-	 *             if a concrete integer value cannot be extracted
-	 */
-	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
-			IntObject fieldIndex) {
-		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
-				fieldIndex);
-
-		return extractInt(source, field);
-	}
-
-	/**
-	 * Finds all the pointers that can be dereferenced inside a symbolic object.
-	 * 
-	 * @param object
-	 *            a symbolic object
-	 * @param set
-	 *            a set to which the pointer values will be added
-	 * @param heapType
-	 *            the heap type, which will be ignored
-	 */
-	private void findPointersInObject(SymbolicObject object,
-			Set<SymbolicExpression> set, State state) {
-		switch (object.symbolicObjectKind()) {
-
-		case EXPRESSION:
-			findPointersInExpression((SymbolicExpression) object, set, state);
-			break;
-		case EXPRESSION_COLLECTION:
-			for (SymbolicExpression expr : (SymbolicCollection<?>) object)
-				findPointersInExpression(expr, set, state);
-			break;
-		default:
-			// ignore types and primitives, they don't have any pointers
-			// you can dereference.
-		}
-	}
-
-	/**
-	 * Finds pointers contained in a given expression recursively.
-	 * 
-	 * @param expr
-	 * @param set
-	 * @param state
-	 */
-	private void findPointersInExpression(SymbolicExpression expr,
-			Set<SymbolicExpression> set, State state) {
-		SymbolicType type = expr.type();
-
-		// TODO check comm type
-		if (type != null && !type.equals(heapType) && !type.equals(gcommType)
-				&& !type.equals(commType) && !type.equals(bundleType)) {
-			// need to eliminate heap type as well. each proc has its own.
-			if (pointerType.equals(type)) {
-				SymbolicExpression pointerValue;
-				Evaluation eval;
-
-				set.add(expr);
-				try {
-					if (getScopeId(null, expr) >= 0) {
-						eval = this.dereference(null, state, expr);
-						pointerValue = eval.value;
-						state = eval.state;
-						if (pointerValue.type() != null
-								&& pointerValue.type().equals(pointerType))
-							findPointersInExpression(pointerValue, set, state);
-					}
-				} catch (UnsatisfiablePathConditionException e) {
-					// // TODO Auto-generated catch block
-					// e.printStackTrace();
-				}
-			} else {
-				int numArgs = expr.numArguments();
-
-				for (int i = 0; i < numArgs; i++) {
-					SymbolicObject arg = expr.argument(i);
-
-					findPointersInObject(arg, set, state);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Returns the set of pointer values that occur inside a symbolic
-	 * expression, excluding any pointers that occur inside a heap. TODO
-	 * Optimization: you only need to call this method on variables that could
-	 * have pointers in them, otherwise don't bother
-	 * 
-	 * @param expr
-	 *            a symbolic expression
-	 * @param heapType
-	 *            the heap type
-	 * @return set of pointer values occurring a subexpression of expression
-	 *         (including expression itself) but not in a heap
-	 */
-
-	private Set<SymbolicExpression> pointersInExpression(
-			SymbolicExpression expr, State state) {
-		Set<SymbolicExpression> result = new HashSet<>();
-
-		findPointersInExpression(expr, result, state);
-		return result;
-	}
-
-	/**
-	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
-	 * symbolic reference value.
-	 * 
-	 * @param scopeId
-	 *            ID number of a dynamic scope
-	 * @param varId
-	 *            ID number of a variable within that scope
-	 * @param symRef
-	 *            a symbolic reference to a point within the variable
-	 * @return a pointer value as specified by the 3 components
-	 */
-	private SymbolicExpression makePointer(int scopeId, int varId,
-			ReferenceExpression symRef) {
-		SymbolicExpression scopeField = modelFactory.scopeValue(scopeId);
-		SymbolicExpression varField = universe.integer(varId);
-		SymbolicExpression result = universe.tuple(
-				pointerType,
-				Arrays.asList(new SymbolicExpression[] { scopeField, varField,
-						symRef }));
-
 		return result;
 	}
 
@@ -538,109 +374,72 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluates pointer addition. Pointer addition involves the addition of a
-	 * pointer expression and an integer.
+	 * Evaluates the dynamic type of a given CIVL type at a certain state. When
+	 * the CIVL type has some state, e.g., an array type with a variable as the
+	 * extent, the type needs to be evaluated.
 	 * 
 	 * @param state
-	 *            the pre-state
+	 *            The current state.
 	 * @param pid
-	 *            the PID of the process evaluating the pointer addition
-	 * @param expression
-	 *            the pointer addition expression
-	 * @param pointer
-	 *            the result of evaluating argument 0 of expression
-	 * @param offset
-	 *            the result of evaluating argument 1 of expression
-	 * @return the result of evaluating the sum of the pointer and the integer
+	 *            The ID of the process where the computation happens.
+	 * @param type
+	 *            The CIVL type to be evaluated for the dynamic type.
+	 * @param source
+	 *            The source code element for error report.
+	 * @param isDefinition
+	 *            The flag denoting if the type is a definition.
+	 * @return The dynamic type of the given type.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Evaluation pointerAdd(State state, int pid,
-			BinaryExpression expression, SymbolicExpression pointer,
-			NumericExpression offset)
+	private Evaluation dynamicTypeOf(State state, int pid, CIVLType type,
+			CIVLSource source, boolean isDefinition)
 			throws UnsatisfiablePathConditionException {
-		ReferenceExpression symRef = getSymRef(pointer);
+		TypeEvaluation typeEval = getDynamicType(state, pid, type, source,
+				isDefinition);
+		SymbolicExpression expr = expressionOfType(typeEval.type);
+		Evaluation result = new Evaluation(typeEval.state, expr);
 
-		if (symRef.isArrayElementReference()) {
-			SymbolicExpression arrayPointer = parentPointer(
-					expression.getSource(), pointer);
-			Evaluation eval = dereference(expression.getSource(), state,
-					arrayPointer);
-			// eval.value is now a symbolic expression of array type.
-			SymbolicArrayType arrayType = (SymbolicArrayType) eval.value.type();
-			ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
-			NumericExpression oldIndex = arrayElementRef.getIndex();
-			NumericExpression newIndex = universe.add(oldIndex, offset);
-
-			if (arrayType.isComplete()) { // check bounds
-				NumericExpression length = universe.length(eval.value);
-				BooleanExpression claim = universe.and(
-						universe.lessThanEquals(zero, newIndex),
-						universe.lessThanEquals(newIndex, length));
-				BooleanExpression assumption = eval.state.getPathCondition();
-				ResultType resultType = universe.reasoner(assumption)
-						.valid(claim).getResultType();
-
-				if (resultType != ResultType.YES) {
-					eval.state = logError(expression.getSource(), eval.state,
-							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
-							"Pointer addition resulted in out of bounds array index:\nindex = "
-									+ newIndex + "\nlength = " + length);
-				}
-			}
-			eval.value = setSymRef(pointer, universe.arrayElementReference(
-					arrayElementRef.getParent(), newIndex));
-			return eval;
-		} else if (symRef.isOffsetReference()) {
-			OffsetReference offsetRef = (OffsetReference) symRef;
-			NumericExpression oldOffset = offsetRef.getOffset();
-			NumericExpression newOffset = universe.add(oldOffset, offset);
-			BooleanExpression claim = universe.and(
-					universe.lessThanEquals(zero, newOffset),
-					universe.lessThanEquals(newOffset, one));
-			BooleanExpression assumption = state.getPathCondition();
-			ResultType resultType = universe.reasoner(assumption).valid(claim)
-					.getResultType();
-			Evaluation eval;
-
-			if (resultType != ResultType.YES) {
-				state = logError(expression.getSource(), state, claim,
-						resultType, ErrorKind.OUT_OF_BOUNDS,
-						"Pointer addition resulted in out of bounds object pointer:\noffset = "
-								+ newOffset);
-			}
-			eval = new Evaluation(state, setSymRef(pointer,
-					universe.offsetReference(offsetRef.getParent(), newOffset)));
-			return eval;
-		} else
-			throw new CIVLUnimplementedFeatureException(
-					"Pointer addition for anything other than array elements or variables",
-					expression);
+		return result;
 	}
 
 	/**
-	 * Evaluates pointer subtraction.
+	 * Evaluates an abstract function call.
 	 * 
 	 * @param state
-	 *            the pre-state
+	 *            The current state.
 	 * @param pid
-	 *            the PID of the process performing this evaluation
+	 *            The ID of the process that the expression belongs to.
 	 * @param expression
-	 *            the pointer subtraction expression
-	 * @param p1
-	 *            the result of evaluating argument 0 of expression; should be a
-	 *            pointer
-	 * @param p2
-	 *            the result of evaluating argument 1 of expression; should be a
-	 *            pointer
-	 * @return the integer symbolic expression resulting from subtracting the
-	 *         two pointers together with the post-state if side-effects
-	 *         occurred
+	 *            The abstract function call expression to be evaluated.
+	 * @return The value of the expression and the new state.
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Evaluation pointerSubtract(State state, int pid,
-			BinaryExpression expression, SymbolicExpression p1,
-			SymbolicExpression p2) {
-		throw new CIVLUnimplementedFeatureException("pointer subtraction",
-				expression);
+	private Evaluation evaluateAbstractFunctionCall(State state, int pid,
+			AbstractFunctionCallExpression expression)
+			throws UnsatisfiablePathConditionException {
+		AbstractFunction function = expression.function();
+		SymbolicType returnType = function.returnType()
+				.getDynamicType(universe);
+		List<SymbolicType> argumentTypes = new ArrayList<SymbolicType>();
+		List<SymbolicExpression> arguments = new ArrayList<SymbolicExpression>();
+		SymbolicType functionType;
+		SymbolicExpression functionExpression;
+		SymbolicExpression functionApplication;
+		Evaluation result;
+
+		for (Variable param : function.parameters()) {
+			argumentTypes.add(param.type().getDynamicType(universe));
+		}
+		for (Expression arg : expression.arguments()) {
+			Evaluation eval = evaluate(state, pid, arg);
+			arguments.add(eval.value);
+		}
+		functionType = universe.functionType(argumentTypes, returnType);
+		functionExpression = universe.symbolicConstant(
+				universe.stringObject(function.name().name()), functionType);
+		functionApplication = universe.apply(functionExpression, arguments);
+		result = new Evaluation(state, functionApplication);
+		return result;
 	}
 
 	/**
@@ -653,7 +452,8 @@ public class CommonEvaluator implements Evaluator {
 	 * @param expression
 	 *            the address-of expression
 	 * @return the symbolic expression of pointer type resulting from evaluating
-	 *         the address of the argument
+	 *         the address of the argument and a new state (if there is
+	 *         side-effect, otherwise just return the orginal state)
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateAddressOf(State state, int pid,
@@ -663,22 +463,252 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluates a dereference expression "*e".
+	 * Evaluates a short-circuit "and" expression "p&&q".
 	 * 
 	 * @param state
 	 *            the pre-state
 	 * @param pid
-	 *            PID of the process performing the evaluation
+	 *            PID of the process evaluating this expression
 	 * @param expression
-	 *            the dereference expression
-	 * @return the symbolic expression value that result from dereferencing the
-	 *         pointer value argument
+	 *            the and expression
+	 * @return the result of applying the AND operator to the two arguments
+	 *         together with the post-state whose path condition may contain the
+	 *         side-effects resulting from evaluation
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Evaluation evaluateDereference(State state, int pid,
-			DereferenceExpression expression)
+	private Evaluation evaluateAnd(State state, int pid,
+			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
-		return dereference(state, pid, expression.pointer());
+		Evaluation eval = evaluate(state, pid, expression.left());
+		BooleanExpression p = (BooleanExpression) eval.value;
+		BooleanExpression assumption = eval.state.getPathCondition();
+		Reasoner reasoner = universe.reasoner(assumption);
+
+		if (reasoner.isValid(p))
+			return evaluate(eval.state, pid, expression.right());
+		if (reasoner.isValid(universe.not(p))) {
+			eval.value = universe.falseExpression();
+			return eval;
+		} else {
+			BooleanExpression assumptionAndp = universe.and(assumption, p);
+			State s1 = eval.state.setPathCondition(assumptionAndp);
+			Evaluation eval1 = evaluate(s1, pid, expression.right());
+			BooleanExpression pcTemp = eval1.state.getPathCondition();
+
+			if (!assumptionAndp.equals(pcTemp)) {
+				BooleanExpression pc = universe.or(pcTemp,
+						universe.and(assumption, universe.not(p)));
+
+				eval.state = eval.state.setPathCondition(pc);
+			}
+			// Reason for above: In the common case where there
+			// are no side effects, this would set the path condition to
+			// (assumption && p) || (assumption && !p),
+			// which does not get simplified to just "assumption",
+			// as one would like. So it is handled as a special case:
+			// check whether pcTemp equals assumption && p
+			// (i.e., the evaluation of expression.right() did not
+			// add any side-effects). If this holds, then pc is just
+			// assumption.
+			eval.value = universe.and(p, (BooleanExpression) eval1.value);
+			return eval;
+		}
+	}
+
+	/**
+	 * Evaluate an array literal expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The array literal expression.
+	 * @return The symbolic representation of the array literal expression and
+	 *         the new state if there is side effect.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateArrayLiteral(State state, int pid,
+			ArrayLiteralExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Expression[] elements = expression.elements();
+		SymbolicType symbolicElementType = expression.elementType()
+				.getDynamicType(universe);
+		List<SymbolicExpression> symbolicElements = new ArrayList<>();
+		Evaluation eval;
+
+		for (Expression element : elements) {
+			eval = evaluate(state, pid, element);
+			symbolicElements.add(eval.value);
+			state = eval.state;
+		}
+		return new Evaluation(state, universe.array(symbolicElementType,
+				symbolicElements));
+	}
+
+	/**
+	 * Evaluate a binary expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The binary expression.
+	 * @return A symbolic expression for the binary operation and a new state if
+	 *         there is side-effect.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateBinary(State state, int pid,
+			BinaryExpression expression)
+			throws UnsatisfiablePathConditionException {
+		BINARY_OPERATOR operator = expression.operator();
+
+		if (operator == BINARY_OPERATOR.AND)
+			return evaluateAnd(state, pid, expression);
+		if (operator == BINARY_OPERATOR.OR)
+			return evaluateOr(state, pid, expression);
+		if (operator == BINARY_OPERATOR.IMPLIES)
+			return evaluateImplies(state, pid, expression);
+		else {
+			if (expression.left().getExpressionType()
+					.equals(modelFactory.scopeType())) {
+				return evaluateScopeOperations(state, pid, expression);
+			} else {
+				return evaluateNumericOperations(state, pid, expression);
+			}
+		}
+	}
+
+	/**
+	 * Evaluate a boolean literal expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The boolean literal expression.
+	 * @return The symbolic representation of the boolean literal expression and
+	 *         the new state if there is side effect during the evaluation.
+	 */
+	private Evaluation evaluateBooleanLiteral(State state, int pid,
+			BooleanLiteralExpression expression) {
+		return new Evaluation(state, universe.bool(expression.value()));
+	}
+
+	private Evaluation evaluateBoundVariable(State state, int pid,
+			BoundVariableExpression expression) {
+		Iterator<SymbolicConstant> boundVariableIterator = boundVariables
+				.iterator();
+		Evaluation result = null;
+
+		while (boundVariableIterator.hasNext()) {
+			SymbolicConstant boundVariable = boundVariableIterator.next();
+
+			if (boundVariable.name().toString()
+					.equals(expression.name().name())) {
+				result = new Evaluation(state, boundVariable);
+				break;
+			}
+		}
+		if (result != null) {
+			return result;
+		}
+		throw new CIVLException("Unknown bound variable",
+				expression.getSource());
+	}
+
+	/**
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The cast expression.
+	 * @return The symbolic representation of the cast expression.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateCast(State state, int pid,
+			CastExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Expression arg = expression.getExpression();
+		CIVLType argType = arg.getExpressionType();
+		Evaluation eval = evaluate(state, pid, arg);
+		SymbolicExpression value = eval.value;
+		CIVLType castType = expression.getCastType();
+		TypeEvaluation typeEval = getDynamicType(eval.state, pid, castType,
+				expression.getSource(), false);
+		SymbolicType endType = typeEval.type;
+
+		state = typeEval.state;
+		if (argType.isIntegerType() && castType.isPointerType()) {
+			// only good cast is from 0 to null pointer
+			BooleanExpression assumption = state.getPathCondition();
+			BooleanExpression claim = universe.equals(zero, value);
+			ResultType resultType = universe.reasoner(assumption).valid(claim)
+					.getResultType();
+
+			if (resultType != ResultType.YES) {
+				state = logError(expression.getSource(), state, claim,
+						resultType, ErrorKind.INVALID_CAST,
+						"Cast from non-zero integer to pointer");
+				eval.state = state;
+			}
+			eval.value = nullPointer;
+			return eval;
+		} else if (argType.isPointerType() && castType.isPointerType()) {
+			// pointer to pointer: for now...no change.
+			return eval;
+		}
+		try {
+			eval.value = universe.cast(endType, eval.value);
+		} catch (SARLException e) {
+			CIVLStateException error = new CIVLStateException(
+					ErrorKind.INVALID_CAST, Certainty.NONE,
+					"SARL could not cast: " + e, eval.state,
+					expression.getSource());
+
+			reportError(error);
+			throw new UnsatisfiablePathConditionException();
+		}
+		return eval;
+	}
+
+	/**
+	 * Evaluate a char literal expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The char literal expression.
+	 * @return The symbolic representation of the char literal expression.
+	 */
+	private Evaluation evaluateCharLiteral(State state, int pid,
+			CharLiteralExpression expression) {
+		return new Evaluation(state, universe.character(expression.value()));
+	}
+
+	/**
+	 * Evaluates a conditional expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            the pid of the currently executing process.
+	 * @param expression
+	 *            The conditional expression.
+	 * @return A symbolic expression for the result of the conditional.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateCond(State state, int pid,
+			ConditionalExpression expression)
+			throws UnsatisfiablePathConditionException {
+		return evaluateConditional(state, pid, expression.getCondition(),
+				expression.getTrueBranch(), expression.getFalseBranch());
 	}
 
 	/**
@@ -775,26 +805,120 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluates a conditional expression.
+	 * Evaluates a dereference expression "*e".
 	 * 
 	 * @param state
-	 *            The state of the program.
+	 *            the pre-state
 	 * @param pid
-	 *            the pid of the currently executing process.
+	 *            PID of the process performing the evaluation
 	 * @param expression
-	 *            The conditional expression.
-	 * @return A symbolic expression for the result of the conditional.
+	 *            the dereference expression
+	 * @return the symbolic expression value that result from dereferencing the
+	 *         pointer value argument
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Evaluation evaluateCond(State state, int pid,
-			ConditionalExpression expression)
+	private Evaluation evaluateDereference(State state, int pid,
+			DereferenceExpression expression)
 			throws UnsatisfiablePathConditionException {
-		return evaluateConditional(state, pid, expression.getCondition(),
-				expression.getTrueBranch(), expression.getFalseBranch());
+		return dereference(state, pid, expression.pointer());
+	}
+
+	private Evaluation evaluateDerivativeCall(State state, int pid,
+			DerivativeCallExpression expression)
+			throws UnsatisfiablePathConditionException {
+		AbstractFunction function = expression.function();
+		SymbolicType returnType = function.returnType()
+				.getDynamicType(universe);
+		List<SymbolicType> argumentTypes = new ArrayList<SymbolicType>();
+		List<SymbolicExpression> arguments = new ArrayList<SymbolicExpression>();
+		SymbolicType functionType;
+		SymbolicExpression functionExpression;
+		SymbolicExpression functionApplication;
+		Evaluation result;
+		String derivativeName;
+
+		for (Variable param : function.parameters()) {
+			argumentTypes.add(param.type().getDynamicType(universe));
+		}
+		for (Expression arg : expression.arguments()) {
+			Evaluation eval = evaluate(state, pid, arg);
+			arguments.add(eval.value);
+		}
+		functionType = universe.functionType(argumentTypes, returnType);
+		// The derivative name is the name of the function concatenated with the
+		// names and degrees of the partials. e.g. the name of
+		// $D[rho,{x,1},{y,2}]() is "rhox1y2"
+		derivativeName = function.name().name();
+		for (Pair<Variable, IntegerLiteralExpression> partial : expression
+				.partials()) {
+			derivativeName += partial.left.name().name()
+					+ partial.right.value();
+		}
+		functionExpression = universe.symbolicConstant(
+				universe.stringObject(derivativeName), functionType);
+		functionApplication = universe.apply(functionExpression, arguments);
+		result = new Evaluation(state, functionApplication);
+		return result;
 	}
 
 	/**
-	 * Evaluates a short-circuit "and" expression "p&&q".
+	 * Evaluate a "dot" expression used to navigate to a field in a record,
+	 * "e.f".
+	 * 
+	 * @param state
+	 *            The state of the model
+	 * @param pid
+	 *            The pid of the process evaluating this expression
+	 * @param expression
+	 *            The dot expression
+	 * @return The symbolic expression resulting from evaluating the expression
+	 *         together with the post-state which may incorporate side-effects
+	 *         resulting from the evaluation
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateDot(State state, int pid,
+			DotExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluate(state, pid, expression.structOrUnion());
+		SymbolicExpression structValue = eval.value;
+		int fieldIndex = expression.fieldIndex();
+
+		if (expression.isStruct()) {
+			eval.value = universe.tupleRead(structValue,
+					universe.intObject(fieldIndex));
+		} else {
+			BooleanExpression test = universe.unionTest(
+					universe.intObject(fieldIndex), structValue);
+
+			if (test.isFalse()) {
+				logSimpleError(expression.getSource(), eval.state,
+						ErrorKind.UNION,
+						"Attempt to access an invalid union member");
+				throw new UnsatisfiablePathConditionException();
+			}
+			eval.value = universe.unionExtract(universe.intObject(fieldIndex),
+					structValue);
+		}
+		return eval;
+	}
+
+	private Evaluation evaluateDynamicTypeOf(State state, int pid,
+			DynamicTypeOfExpression expression)
+			throws UnsatisfiablePathConditionException {
+		return dynamicTypeOf(state, pid, expression.getType(),
+				expression.getSource(), true);
+	}
+
+	private Evaluation evaluateHereOrRootScope(State state, int pid,
+			HereOrRootExpression expression) {
+		int dyScopeID = expression.isRoot() ? state.rootScopeID() : state
+				.getProcessState(pid).getDyscopeId();
+
+		return new Evaluation(state, modelFactory.scopeValue(dyScopeID));
+	}
+
+	/**
+	 * Evaluates a short-circuit "implies" expression "p=?q".
 	 * 
 	 * @param state
 	 *            the pre-state
@@ -802,12 +926,12 @@ public class CommonEvaluator implements Evaluator {
 	 *            PID of the process evaluating this expression
 	 * @param expression
 	 *            the and expression
-	 * @return the result of applying the AND operator to the two arguments
+	 * @return the result of applying the IMPLIES operator to the two arguments
 	 *         together with the post-state whose path condition may contain the
 	 *         side-effects resulting from evaluation
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Evaluation evaluateAnd(State state, int pid,
+	private Evaluation evaluateImplies(State state, int pid,
 			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluate(state, pid, expression.left());
@@ -815,35 +939,157 @@ public class CommonEvaluator implements Evaluator {
 		BooleanExpression assumption = eval.state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(assumption);
 
-		if (reasoner.isValid(p))
-			return evaluate(eval.state, pid, expression.right());
+		// If p is false, the implication will evaluate to true.
 		if (reasoner.isValid(universe.not(p))) {
-			eval.value = universe.falseExpression();
+			eval.value = universe.trueExpression();
 			return eval;
 		} else {
-			BooleanExpression assumptionAndp = universe.and(assumption, p);
-			State s1 = eval.state.setPathCondition(assumptionAndp);
+			State s1 = eval.state.setPathCondition(universe.and(assumption, p));
 			Evaluation eval1 = evaluate(s1, pid, expression.right());
-			BooleanExpression pcTemp = eval1.state.getPathCondition();
+			BooleanExpression pc = universe.or(eval1.state.getPathCondition(),
+					universe.and(assumption, p));
 
-			if (!assumptionAndp.equals(pcTemp)) {
-				BooleanExpression pc = universe.or(pcTemp,
-						universe.and(assumption, universe.not(p)));
-
-				eval.state = eval.state.setPathCondition(pc);
-			}
-			// Reason for above: In the common case where there
-			// are no side effects, this would set the path condition to
-			// (assumption && p) || (assumption && !p),
-			// which does not get simplified to just "assumption",
-			// as one would like. So it is handled as a special case:
-			// check whether pcTemp equals assumption && p
-			// (i.e., the evaluation of expression.right() did not
-			// add any side-effects). If this holds, then pc is just
-			// assumption.
-			eval.value = universe.and(p, (BooleanExpression) eval1.value);
+			eval.state = eval.state.setPathCondition(pc);
+			eval.value = universe.implies(p, (BooleanExpression) eval1.value);
 			return eval;
 		}
+	}
+
+	/**
+	 * Evaluates an initial value expression.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param expression
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateInitialValue(State state, int pid,
+			InitialValueExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Variable variable = expression.variable();
+		CIVLType type = variable.type();
+		Evaluation result;
+
+		if (type.isHeapType()) {
+			result = new Evaluation(state,
+					((CIVLHeapType) type).getInitialValue());
+		} else {
+			TypeEvaluation typeEval = getDynamicType(state, pid, type,
+					expression.getSource(), false);
+			int sid = state.getScopeId(pid, variable);
+			SymbolicExpression value = computeInitialValue(variable,
+					typeEval.type, sid);
+
+			result = new Evaluation(typeEval.state, value);
+		}
+		return result;
+	}
+
+	/**
+	 * Evaluates an integer literal expression.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The pid of the currently executing process.
+	 * @param expression
+	 *            The integer literal expression.
+	 * @return The symbolic representation of the integer literal expression.
+	 */
+	private Evaluation evaluateIntegerLiteral(State state, int pid,
+			IntegerLiteralExpression expression) {
+		return new Evaluation(state, universe.integer(expression.value()
+				.intValue()));
+	}
+
+	private Evaluation evaluateNumericOperations(State state, int pid,
+			BinaryExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluate(state, pid, expression.left());
+		SymbolicExpression left = eval.value;
+		SymbolicExpression right;
+
+		eval = evaluate(state, pid, expression.right());
+		right = eval.value;
+		switch (expression.operator()) {
+		case PLUS:
+			eval.value = universe.add((NumericExpression) left,
+					(NumericExpression) right);
+			break;
+		case MINUS:
+			eval.value = universe.subtract((NumericExpression) left,
+					(NumericExpression) right);
+			break;
+		case TIMES:
+			eval.value = universe.multiply((NumericExpression) left,
+					(NumericExpression) right);
+			break;
+		case DIVIDE: {
+			BooleanExpression assumption = eval.state.getPathCondition();
+			NumericExpression denominator = (NumericExpression) right;
+			BooleanExpression claim = universe.neq(
+					zeroOf(expression.getSource(),
+							expression.getExpressionType()), denominator);
+			ResultType resultType = universe.reasoner(assumption).valid(claim)
+					.getResultType();
+
+			if (resultType != ResultType.YES) {
+				eval.state = logError(expression.getSource(), eval.state,
+						claim, resultType, ErrorKind.DIVISION_BY_ZERO,
+						"Division by zero");
+			}
+			eval.value = universe.divide((NumericExpression) left, denominator);
+		}
+			break;
+		case LESS_THAN:
+			eval.value = universe.lessThan((NumericExpression) left,
+					(NumericExpression) right);
+			break;
+		case LESS_THAN_EQUAL:
+			eval.value = universe.lessThanEquals((NumericExpression) left,
+					(NumericExpression) right);
+			break;
+		case EQUAL:
+			eval.value = universe.equals(left, right);
+			break;
+		case NOT_EQUAL:
+			eval.value = universe.neq(left, right);
+			break;
+		case MODULO: {
+			BooleanExpression assumption = eval.state.getPathCondition();
+			NumericExpression denominator = (NumericExpression) right;
+			BooleanExpression claim = universe.neq(
+					zeroOf(expression.getSource(),
+							expression.getExpressionType()), denominator);
+			ResultType resultType = universe.reasoner(assumption).valid(claim)
+					.getResultType();
+
+			// TODO: check not negative
+			if (resultType != ResultType.YES) {
+				eval.state = this.logError(expression.getSource(), eval.state,
+						claim, resultType, ErrorKind.DIVISION_BY_ZERO,
+						"Modulus denominator is zero");
+			}
+			eval.value = universe.modulo((NumericExpression) left, denominator);
+			break;
+		}
+		case POINTER_ADD:
+			eval = pointerAdd(state, pid, expression, left,
+					(NumericExpression) right);
+			break;
+		case POINTER_SUBTRACT:
+			eval = pointerSubtract(state, pid, expression, left, right);
+			break;
+		case IMPLIES:
+		case AND:
+		case OR:
+			throw new CIVLInternalException("unreachable", expression);
+		default:
+			throw new CIVLUnimplementedFeatureException("Operator "
+					+ expression.operator(), expression);
+		}
+		return eval;
 	}
 
 	/**
@@ -890,83 +1136,159 @@ public class CommonEvaluator implements Evaluator {
 		}
 	}
 
-	/**
-	 * Evaluates a short-circuit "implies" expression "p=?q".
-	 * 
-	 * @param state
-	 *            the pre-state
-	 * @param pid
-	 *            PID of the process evaluating this expression
-	 * @param expression
-	 *            the and expression
-	 * @return the result of applying the IMPLIES operator to the two arguments
-	 *         together with the post-state whose path condition may contain the
-	 *         side-effects resulting from evaluation
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation evaluateImplies(State state, int pid,
+	private Evaluation evaluateQuantifiedExpression(State state, int pid,
+			QuantifiedExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation result;
+		Evaluation quantifiedExpression;
+		BooleanExpression context;
+		Reasoner reasoner;
+		BooleanExpression simplifiedExpression;
+		SymbolicConstant boundVariable = universe.symbolicConstant(expression
+				.boundVariableName().stringObject(), expression
+				.boundVariableType().getDynamicType(universe));
+		State stateWithRestriction;
+
+		boundVariables.push(boundVariable);
+		if (expression.isRange()) {
+			Evaluation lower = evaluate(state, pid, expression.lower());
+			Evaluation upper = evaluate(state, pid, expression.upper());
+			SymbolicExpression rangeRestriction;
+
+			assert lower.value instanceof NumericExpression;
+			assert upper.value instanceof NumericExpression;
+			rangeRestriction = universe.and(universe.lessThanEquals(
+					(NumericExpression) lower.value,
+					(NumericExpression) boundVariable), universe
+					.lessThanEquals((NumericExpression) boundVariable,
+							(NumericExpression) upper.value));
+			stateWithRestriction = state.setPathCondition(universe.and(
+					(BooleanExpression) rangeRestriction,
+					state.getPathCondition()));
+			quantifiedExpression = evaluate(stateWithRestriction, pid,
+					expression.expression());
+			switch (expression.quantifier()) {
+			case EXISTS:
+				result = new Evaluation(state, universe.existsInt(
+						(NumericSymbolicConstant) boundVariable,
+						(NumericExpression) lower.value,
+						(NumericExpression) upper.value,
+						(BooleanExpression) quantifiedExpression.value));
+				break;
+			case FORALL:
+				result = new Evaluation(state, universe.forallInt(
+						(NumericSymbolicConstant) boundVariable,
+						(NumericExpression) lower.value,
+						(NumericExpression) upper.value,
+						(BooleanExpression) quantifiedExpression.value));
+				break;
+			case UNIFORM:
+				result = new Evaluation(state, universe.forallInt(
+						(NumericSymbolicConstant) boundVariable,
+						(NumericExpression) lower.value,
+						(NumericExpression) upper.value,
+						(BooleanExpression) quantifiedExpression.value));
+				break;
+			default:
+				throw new CIVLException("Unknown quantifier ",
+						expression.getSource());
+			}
+		} else {
+			Evaluation restriction = evaluate(state, pid,
+					expression.boundRestriction());
+			stateWithRestriction = state.setPathCondition(universe.and(
+					(BooleanExpression) restriction.value,
+					state.getPathCondition()));
+			quantifiedExpression = evaluate(stateWithRestriction, pid,
+					expression.expression());
+			// By definition, the restriction should be boolean valued.
+			assert restriction.value instanceof BooleanExpression;
+			context = universe.and(state.getPathCondition(),
+					(BooleanExpression) restriction.value);
+			reasoner = universe.reasoner(context);
+			simplifiedExpression = (BooleanExpression) reasoner
+					.simplify(quantifiedExpression.value);
+			switch (expression.quantifier()) {
+			case EXISTS:
+				result = new Evaluation(state, universe.exists(boundVariable,
+						universe.and((BooleanExpression) restriction.value,
+								simplifiedExpression)));
+				break;
+			case FORALL:
+				result = new Evaluation(state, universe.forall(boundVariable,
+						universe.implies((BooleanExpression) restriction.value,
+								simplifiedExpression)));
+				break;
+			case UNIFORM:
+				result = new Evaluation(state, universe.forall(boundVariable,
+						universe.implies((BooleanExpression) restriction.value,
+								simplifiedExpression)));
+				break;
+			default:
+				throw new CIVLException("Unknown quantifier ",
+						expression.getSource());
+			}
+		}
+
+		boundVariables.pop();
+		return result;
+	}
+
+	private Evaluation evaluateScopeOperations(State state, int pid,
 			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluate(state, pid, expression.left());
-		BooleanExpression p = (BooleanExpression) eval.value;
-		BooleanExpression assumption = eval.state.getPathCondition();
-		Reasoner reasoner = universe.reasoner(assumption);
+		int left = modelFactory.getScopeId(expression.left().getSource(),
+				eval.value);
+		int right;
+		boolean result;
 
-		// If p is false, the implication will evaluate to true.
-		if (reasoner.isValid(universe.not(p))) {
-			eval.value = universe.trueExpression();
-			return eval;
-		} else {
-			State s1 = eval.state.setPathCondition(universe.and(assumption, p));
-			Evaluation eval1 = evaluate(s1, pid, expression.right());
-			BooleanExpression pc = universe.or(eval1.state.getPathCondition(),
-					universe.and(assumption, p));
+		state = eval.state;
+		eval = evaluate(state, pid, expression.right());
+		state = eval.state;
+		right = modelFactory.getScopeId(expression.right().getSource(),
+				eval.value);
+		switch (expression.operator()) {
+		case PLUS:
+			int lowestCommonAncestor = stateFactory.lowestCommonAncestor(state,
+					left, right);
 
-			eval.state = eval.state.setPathCondition(pc);
-			eval.value = universe.implies(p, (BooleanExpression) eval1.value);
-			return eval;
-		}
-	}
-
-	/**
-	 * Evaluate a "dot" expression used to navigate to a field in a record,
-	 * "e.f".
-	 * 
-	 * @param state
-	 *            The state of the model
-	 * @param pid
-	 *            The pid of the process evaluating this expression
-	 * @param expression
-	 *            The dot expression
-	 * @return The symbolic expression resulting from evaluating the expression
-	 *         together with the post-state which may incorporate side-effects
-	 *         resulting from the evaluation
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation evaluateDot(State state, int pid,
-			DotExpression expression)
-			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluate(state, pid, expression.structOrUnion());
-		SymbolicExpression structValue = eval.value;
-		int fieldIndex = expression.fieldIndex();
-
-		if (expression.isStruct()) {
-			eval.value = universe.tupleRead(structValue,
-					universe.intObject(fieldIndex));
-		} else {
-			BooleanExpression test = universe.unionTest(
-					universe.intObject(fieldIndex), structValue);
-
-			if (test.isFalse()) {
-				logSimpleError(expression.getSource(), eval.state,
-						ErrorKind.UNION,
-						"Attempt to access an invalid union member");
-				throw new UnsatisfiablePathConditionException();
-			}
-			eval.value = universe.unionExtract(universe.intObject(fieldIndex),
-					structValue);
+			eval.value = modelFactory.scopeValue(lowestCommonAncestor);
+			break;
+		case LESS_THAN:
+			result = stateFactory.isDesendantOf(state, right, left);
+			eval.value = universe.bool(result);
+			break;
+		case LESS_THAN_EQUAL:
+			result = (left == right) ? true : stateFactory.isDesendantOf(state,
+					right, left);
+			eval.value = universe.bool(result);
+			break;
+		case EQUAL:
+			eval.value = universe.bool(left == right);
+			break;
+		case NOT_EQUAL:
+			eval.value = universe.bool(left != right);
+			break;
+		default:
+			throw new CIVLInternalException("unreachable",
+					expression.getSource());
 		}
 		return eval;
+	}
+
+	private Evaluation evaluateSizeofExpressionExpression(State state, int pid,
+			SizeofExpressionExpression expression)
+			throws UnsatisfiablePathConditionException {
+		return evaluateSizeofType(expression.getSource(), state, pid,
+				expression.getArgument().getExpressionType());
+	}
+
+	private Evaluation evaluateSizeofTypeExpression(State state, int pid,
+			SizeofTypeExpression expression)
+			throws UnsatisfiablePathConditionException {
+		return evaluateSizeofType(expression.getSource(), state, pid,
+				expression.getTypeArgument());
 	}
 
 	/**
@@ -1011,317 +1333,6 @@ public class CommonEvaluator implements Evaluator {
 		return eval;
 	}
 
-	/**
-	 * Evaluate an array literal expression.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The array literal expression.
-	 * @return The symbolic representation of the array literal expression.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation evaluateArrayLiteral(State state, int pid,
-			ArrayLiteralExpression expression)
-			throws UnsatisfiablePathConditionException {
-		Expression[] elements = expression.elements();
-		SymbolicType symbolicElementType = expression.elementType()
-				.getDynamicType(universe);
-		List<SymbolicExpression> symbolicElements = new ArrayList<>();
-		Evaluation eval;
-
-		for (Expression element : elements) {
-			eval = evaluate(state, pid, element);
-			symbolicElements.add(eval.value);
-			state = eval.state;
-		}
-		return new Evaluation(state, universe.array(symbolicElementType,
-				symbolicElements));
-	}
-
-	/**
-	 * Evaluate a binary expression.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The binary expression.
-	 * @return A symbolic expression for the binary operation.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation evaluateBinary(State state, int pid,
-			BinaryExpression expression)
-			throws UnsatisfiablePathConditionException {
-		BINARY_OPERATOR operator = expression.operator();
-
-		if (operator == BINARY_OPERATOR.AND)
-			return evaluateAnd(state, pid, expression);
-		if (operator == BINARY_OPERATOR.OR)
-			return evaluateOr(state, pid, expression);
-		if (operator == BINARY_OPERATOR.IMPLIES)
-			return evaluateImplies(state, pid, expression);
-		else {
-			if (expression.left().getExpressionType()
-					.equals(modelFactory.scopeType())) {
-				Evaluation eval = evaluate(state, pid, expression.left());
-				int left = modelFactory.getScopeId(expression.left()
-						.getSource(), eval.value);
-				int right;
-				boolean result;
-
-				state = eval.state;
-				eval = evaluate(state, pid, expression.right());
-				state = eval.state;
-				right = modelFactory.getScopeId(expression.right().getSource(),
-						eval.value);
-				switch (expression.operator()) {
-				case PLUS:
-					int lowestCommonAncestor = stateFactory
-							.lowestCommonAncestor(state, left, right);
-
-					eval.value = modelFactory.scopeValue(lowestCommonAncestor);
-					break;
-				case LESS_THAN:
-					result = stateFactory.isDesendantOf(state, right, left);
-					eval.value = universe.bool(result);
-					break;
-				case LESS_THAN_EQUAL:
-					result = (left == right) ? true : stateFactory
-							.isDesendantOf(state, right, left);
-					eval.value = universe.bool(result);
-					break;
-				case EQUAL:
-					eval.value = universe.bool(left == right);
-					break;
-				case NOT_EQUAL:
-					eval.value = universe.bool(left != right);
-					break;
-				default:
-					throw new CIVLInternalException("unreachable",
-							expression.getSource());
-				}
-				return eval;
-			} else {
-				Evaluation eval = evaluate(state, pid, expression.left());
-				SymbolicExpression left = eval.value;
-				SymbolicExpression right;
-
-				eval = evaluate(state, pid, expression.right());
-				right = eval.value;
-				switch (expression.operator()) {
-				case PLUS:
-					eval.value = universe.add((NumericExpression) left,
-							(NumericExpression) right);
-					break;
-				case MINUS:
-					eval.value = universe.subtract((NumericExpression) left,
-							(NumericExpression) right);
-					break;
-				case TIMES:
-					eval.value = universe.multiply((NumericExpression) left,
-							(NumericExpression) right);
-					break;
-				case DIVIDE: {
-					BooleanExpression assumption = eval.state
-							.getPathCondition();
-					NumericExpression denominator = (NumericExpression) right;
-					BooleanExpression claim = universe.neq(
-							zeroOf(expression.getSource(),
-									expression.getExpressionType()),
-							denominator);
-					ResultType resultType = universe.reasoner(assumption)
-							.valid(claim).getResultType();
-
-					if (resultType != ResultType.YES) {
-						eval.state = logError(expression.getSource(),
-								eval.state, claim, resultType,
-								ErrorKind.DIVISION_BY_ZERO, "Division by zero");
-					}
-					eval.value = universe.divide((NumericExpression) left,
-							denominator);
-				}
-					break;
-				case LESS_THAN:
-					eval.value = universe.lessThan((NumericExpression) left,
-							(NumericExpression) right);
-					break;
-				case LESS_THAN_EQUAL:
-					eval.value = universe
-							.lessThanEquals((NumericExpression) left,
-									(NumericExpression) right);
-					break;
-				case EQUAL:
-					eval.value = universe.equals(left, right);
-					break;
-				case NOT_EQUAL:
-					eval.value = universe.neq(left, right);
-					break;
-				case MODULO: {
-					BooleanExpression assumption = eval.state
-							.getPathCondition();
-					NumericExpression denominator = (NumericExpression) right;
-					BooleanExpression claim = universe.neq(
-							zeroOf(expression.getSource(),
-									expression.getExpressionType()),
-							denominator);
-					ResultType resultType = universe.reasoner(assumption)
-							.valid(claim).getResultType();
-
-					// TODO: check not negative
-					if (resultType != ResultType.YES) {
-						eval.state = this.logError(expression.getSource(),
-								eval.state, claim, resultType,
-								ErrorKind.DIVISION_BY_ZERO,
-								"Modulus denominator is zero");
-					}
-					eval.value = universe.modulo((NumericExpression) left,
-							denominator);
-					break;
-				}
-				case POINTER_ADD:
-					eval = pointerAdd(state, pid, expression, left,
-							(NumericExpression) right);
-					break;
-				case POINTER_SUBTRACT:
-					eval = pointerSubtract(state, pid, expression, left, right);
-					break;
-				case IMPLIES:
-				case AND:
-				case OR:
-					throw new CIVLInternalException("unreachable", expression);
-				default:
-					throw new CIVLUnimplementedFeatureException("Operator "
-							+ expression.operator(), expression);
-				}
-				return eval;
-			}
-		}
-	}
-
-	/**
-	 * Evaluate a boolean literal expression.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The boolean literal expression.
-	 * @return The symbolic representation of the boolean literal expression.
-	 */
-	private Evaluation evaluateBooleanLiteral(State state, int pid,
-			BooleanLiteralExpression expression) {
-		return new Evaluation(state, universe.bool(expression.value()));
-	}
-
-	/**
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The cast expression.
-	 * @return The symbolic representation of the cast expression.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation evaluateCast(State state, int pid,
-			CastExpression expression)
-			throws UnsatisfiablePathConditionException {
-		Expression arg = expression.getExpression();
-		CIVLType argType = arg.getExpressionType();
-		Evaluation eval = evaluate(state, pid, arg);
-		SymbolicExpression value = eval.value;
-		CIVLType castType = expression.getCastType();
-		TypeEvaluation typeEval = getDynamicType(eval.state, pid, castType,
-				expression.getSource(), false);
-		SymbolicType endType = typeEval.type;
-
-		state = typeEval.state;
-		if (argType.isIntegerType() && castType.isPointerType()) {
-			// only good cast is from 0 to null pointer
-			BooleanExpression assumption = state.getPathCondition();
-			BooleanExpression claim = universe.equals(zero, value);
-			ResultType resultType = universe.reasoner(assumption).valid(claim)
-					.getResultType();
-
-			if (resultType != ResultType.YES) {
-				state = logError(expression.getSource(), state, claim,
-						resultType, ErrorKind.INVALID_CAST,
-						"Cast from non-zero integer to pointer");
-				eval.state = state;
-			}
-			eval.value = nullPointer;
-			return eval;
-		} else if (argType.isPointerType() && castType.isPointerType()) {
-			// pointer to pointer: for now...no change.
-			return eval;
-		}
-		try {
-			eval.value = universe.cast(endType, eval.value);
-		} catch (SARLException e) {
-			CIVLStateException error = new CIVLStateException(
-					ErrorKind.INVALID_CAST, Certainty.NONE,
-					"SARL could not cast: " + e, eval.state,
-					expression.getSource());
-
-			reportError(error);
-			throw new UnsatisfiablePathConditionException();
-		}
-		return eval;
-	}
-
-	/**
-	 * Evaluate a char literal expression.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The char literal expression.
-	 * @return The symbolic representation of the char literal expression.
-	 */
-	private Evaluation evaluateCharLiteral(State state, int pid,
-			CharLiteralExpression expression) {
-		return new Evaluation(state, universe.character(expression.value()));
-	}
-
-	private Evaluation evaluateSizeofTypeExpression(State state, int pid,
-			SizeofTypeExpression expression)
-			throws UnsatisfiablePathConditionException {
-		return evaluateSizeofType(expression.getSource(), state, pid,
-				expression.getTypeArgument());
-	}
-
-	private Evaluation evaluateSizeofExpressionExpression(State state, int pid,
-			SizeofExpressionExpression expression)
-			throws UnsatisfiablePathConditionException {
-		return evaluateSizeofType(expression.getSource(), state, pid,
-				expression.getArgument().getExpressionType());
-	}
-
-	/**
-	 * Evalute an integer literal expression.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The integer literal expression.
-	 * @return The symbolic representation of the integer literal expression.
-	 */
-	private Evaluation evaluateIntegerLiteral(State state, int pid,
-			IntegerLiteralExpression expression) {
-		return new Evaluation(state, universe.integer(expression.value()
-				.intValue()));
-	}
-
 	private Evaluation evaluateSelf(State state, int pid,
 			SelfExpression expression) {
 		return new Evaluation(state, modelFactory.processValue(pid));
@@ -1343,6 +1354,20 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, universe.number(universe
 				.numberObject(numberFactory.rational(expression.value()
 						.toPlainString()))));
+	}
+
+	private Evaluation evaluateResult(State state, int pid,
+			ResultExpression expression) {
+		// TODO
+		// this is used in a contract post-condition as a variable to
+		// refer to the result returned by a function. $result.
+		// get rid of ResultExpression and instead create a variable
+		// in the outermost scope of any function with non-void
+		// return type, store the result of return in that variable.
+		// Add method in Function to get that variable. (and set it?)
+		// Model builder will translate $result to that variable.
+		throw new CIVLUnimplementedFeatureException(
+				"$result not yet implemented: " + expression.getSource());
 	}
 
 	/**
@@ -1471,20 +1496,180 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, value);
 	}
 
-	private Evaluation evaluateResult(State state, int pid,
-			ResultExpression expression) {
-		// TODO
-		// this is used in a contract post-condition as a variable to
-		// refer to the result returned by a function. $result.
-		// get rid of ResultExpression and instead create a variable
-		// in the outermost scope of any function with non-void
-		// return type, store the result of return in that variable.
-		// Add method in Function to get that variable. (and set it?)
-		// Model builder will translate $result to that variable.
-		throw new CIVLUnimplementedFeatureException(
-				"$result not yet implemented: " + expression.getSource());
+	private Evaluation evaluateWaitGuard(State state, int pid,
+			WaitGuardExpression expression) {
+		SymbolicExpression joinProcess, guard;
+		int pidValue;
+		Evaluation eval;
+
+		try {
+			eval = evaluate(state, pid, expression.joinedProcess());
+		} catch (UnsatisfiablePathConditionException e) {
+			return new Evaluation(state, universe.falseExpression());
+		}
+		joinProcess = eval.value;
+		state = eval.state;
+		pidValue = modelFactory.getProcessId(expression.getSource(),
+				joinProcess);
+		if (!state.getProcessState(pidValue).hasEmptyStack())
+			guard = universe.falseExpression();
+		else
+			guard = universe.trueExpression();
+		return new Evaluation(state, guard);
 	}
 
+	/**
+	 * evaluate a system guard expression
+	 * 
+	 * @param state
+	 *            The state where the computation happens.
+	 * @param pid
+	 *            The ID of the process that wants to evaluate the guard.
+	 * @param expression
+	 *            The system guard expression to be evaluated.
+	 * @return The result of the evaluation, including the state and the
+	 *         symbolic expression of the value.
+	 */
+	private Evaluation evaluateSystemGuard(State state, int pid,
+			SystemGuardExpression expression) {
+		return enabler.getSystemGuard(state, pid, expression);
+	}
+
+	/**
+	 * Given a symbolic type, returns a canonic symbolic expression which
+	 * somehow wraps that type so it can be used as a value. Nothing should be
+	 * assumed about the symbolic expression. To extract the type from such an
+	 * expression, use method {@link #getType}.
+	 * 
+	 * @param type
+	 *            a symbolic type
+	 * @return a canonic symbolic expression wrapping that type
+	 */
+	private SymbolicExpression expressionOfType(SymbolicType type) {
+		SymbolicExpression result;
+
+		type = (SymbolicType) universe.canonic(type);
+		result = typeExpressionMap.get(type);
+		if (result == null) {
+			SymbolicExpression id = universe.integer(type.id());
+
+			result = universe.canonic(universe.tuple(dynamicType,
+					new Singleton<SymbolicExpression>(id)));
+			typeExpressionMap.put(type, result);
+		}
+		return result;
+	}
+
+	/**
+	 * Gets a concrete Java int from the field of a symbolic expression of tuple
+	 * type or throws exception.
+	 * 
+	 * @param tuple
+	 *            symbolic expression of tuple type
+	 * @param fieldIndex
+	 *            index of a field in that tuple
+	 * @return the concrete int value of that field
+	 * @throws CIVLInternalException
+	 *             if a concrete integer value cannot be extracted
+	 */
+	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
+			IntObject fieldIndex) {
+		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
+				fieldIndex);
+
+		return extractInt(source, field);
+	}
+
+	/**
+	 * Finds pointers contained in a given expression recursively.
+	 * 
+	 * @param expr
+	 * @param set
+	 * @param state
+	 */
+	private void findPointersInExpression(SymbolicExpression expr,
+			Set<SymbolicExpression> set, State state) {
+		SymbolicType type = expr.type();
+
+		// TODO check comm type
+		if (type != null && !type.equals(heapType) && !type.equals(gcommType)
+				&& !type.equals(commType) && !type.equals(bundleType)) {
+			// need to eliminate heap type as well. each proc has its own.
+			if (pointerType.equals(type)) {
+				SymbolicExpression pointerValue;
+				Evaluation eval;
+
+				set.add(expr);
+				try {
+					if (getScopeId(null, expr) >= 0) {
+						eval = this.dereference(null, state, expr);
+						pointerValue = eval.value;
+						state = eval.state;
+						if (pointerValue.type() != null
+								&& pointerValue.type().equals(pointerType))
+							findPointersInExpression(pointerValue, set, state);
+					}
+				} catch (UnsatisfiablePathConditionException e) {
+					// // TODO Auto-generated catch block
+					// e.printStackTrace();
+				}
+			} else {
+				int numArgs = expr.numArguments();
+
+				for (int i = 0; i < numArgs; i++) {
+					SymbolicObject arg = expr.argument(i);
+
+					findPointersInObject(arg, set, state);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Finds all the pointers that can be dereferenced inside a symbolic object.
+	 * 
+	 * @param object
+	 *            a symbolic object
+	 * @param set
+	 *            a set to which the pointer values will be added
+	 * @param heapType
+	 *            the heap type, which will be ignored
+	 */
+	private void findPointersInObject(SymbolicObject object,
+			Set<SymbolicExpression> set, State state) {
+		switch (object.symbolicObjectKind()) {
+
+		case EXPRESSION:
+			findPointersInExpression((SymbolicExpression) object, set, state);
+			break;
+		case EXPRESSION_COLLECTION:
+			for (SymbolicExpression expr : (SymbolicCollection<?>) object)
+				findPointersInExpression(expr, set, state);
+			break;
+		default:
+			// ignore types and primitives, they don't have any pointers
+			// you can dereference.
+		}
+	}
+
+	/**
+	 * Evaluates the dynamic type of a given CIVL type at a certain state. When
+	 * the CIVL type has some state, e.g., an array type with a variable as the
+	 * extent, the type needs to be evaluated.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process where the computation happens.
+	 * @param type
+	 *            The CIVL type to be evaluated for the dynamic type.
+	 * @param source
+	 *            The source code element for error report.
+	 * @param isDefinition
+	 *            The flag denoting if the type is a definition.
+	 * @return The dynamic type of the given type.
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private TypeEvaluation getDynamicType(State state, int pid, CIVLType type,
 			CIVLSource source, boolean isDefinition)
 			throws UnsatisfiablePathConditionException {
@@ -1541,284 +1726,6 @@ public class CommonEvaluator implements Evaluator {
 		return result;
 	}
 
-	private SymbolicExpression computeInitialValue(State s, Variable variable,
-			SymbolicType dynamicType, int dyscopeId) {
-		CIVLType type = variable.type();
-		int vid = variable.vid();
-		SymbolicExpression result;
-
-		if (!variable.isInput()
-				&& !variable.isBound()
-				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
-			result = nullExpression;
-		} else {
-			StringObject name = universe.stringObject("X_s" + dyscopeId + "v"
-					+ vid);
-
-			result = universe.symbolicConstant(name, dynamicType);
-		}
-		return result;
-	}
-
-	private Evaluation dynamicTypeOf(State state, int pid, CIVLType type,
-			CIVLSource source, boolean isDefinition)
-			throws UnsatisfiablePathConditionException {
-		TypeEvaluation typeEval = getDynamicType(state, pid, type, source,
-				isDefinition);
-		SymbolicExpression expr = expressionOfType(typeEval.type);
-		Evaluation result = new Evaluation(typeEval.state, expr);
-
-		return result;
-	}
-
-	private Evaluation evaluateDynamicTypeOf(State state, int pid,
-			DynamicTypeOfExpression expression)
-			throws UnsatisfiablePathConditionException {
-		return dynamicTypeOf(state, pid, expression.getType(),
-				expression.getSource(), true);
-	}
-
-	private Evaluation evaluateHereOrRootScope(State state, int pid,
-			HereOrRootExpression expression) {
-		int dyScopeID = expression.isRoot() ? state.rootScopeID() : state
-				.getProcessState(pid).getDyscopeId();
-
-		return new Evaluation(state, modelFactory.scopeValue(dyScopeID));
-	}
-
-	private Evaluation evaluateInitialValue(State state, int pid,
-			InitialValueExpression expression)
-			throws UnsatisfiablePathConditionException {
-		Variable variable = expression.variable();
-		CIVLType type = variable.type();
-		Evaluation result;
-
-		if (type.isHeapType()) {
-			result = new Evaluation(state,
-					((CIVLHeapType) type).getInitialValue());
-		} else {
-			TypeEvaluation typeEval = getDynamicType(state, pid, type,
-					expression.getSource(), false);
-			int sid = state.getScopeId(pid, variable);
-			SymbolicExpression value = computeInitialValue(typeEval.state,
-					variable, typeEval.type, sid);
-
-			result = new Evaluation(typeEval.state, value);
-		}
-		return result;
-	}
-
-	private Evaluation evaluateBoundVariable(State state, int pid,
-			BoundVariableExpression expression) {
-		Iterator<SymbolicConstant> boundVariableIterator = boundVariables
-				.iterator();
-		Evaluation result = null;
-
-		while (boundVariableIterator.hasNext()) {
-			SymbolicConstant boundVariable = boundVariableIterator.next();
-
-			if (boundVariable.name().toString()
-					.equals(expression.name().name())) {
-				result = new Evaluation(state, boundVariable);
-				break;
-			}
-		}
-		if (result != null) {
-			return result;
-		}
-		throw new CIVLException("Unknown bound variable",
-				expression.getSource());
-	}
-
-	private Evaluation evaluateQuantifiedExpression(State state, int pid,
-			QuantifiedExpression expression)
-			throws UnsatisfiablePathConditionException {
-		Evaluation result;
-		Evaluation quantifiedExpression;
-		BooleanExpression context;
-		Reasoner reasoner;
-		BooleanExpression simplifiedExpression;
-		SymbolicConstant boundVariable = universe.symbolicConstant(expression
-				.boundVariableName().stringObject(), expression
-				.boundVariableType().getDynamicType(universe));
-		State stateWithRestriction;
-
-		boundVariables.push(boundVariable);
-		if (expression.isRange()) {
-			Evaluation lower = evaluate(state, pid, expression.lower());
-			Evaluation upper = evaluate(state, pid, expression.upper());
-			SymbolicExpression rangeRestriction;
-
-			assert lower.value instanceof NumericExpression;
-			assert upper.value instanceof NumericExpression;
-			rangeRestriction = universe.and(universe.lessThanEquals(
-					(NumericExpression) lower.value,
-					(NumericExpression) boundVariable), universe
-					.lessThanEquals((NumericExpression) boundVariable,
-							(NumericExpression) upper.value));
-			stateWithRestriction = state.setPathCondition(universe.and(
-					(BooleanExpression) rangeRestriction,
-					state.getPathCondition()));
-			quantifiedExpression = evaluate(stateWithRestriction, pid,
-					expression.expression());
-			switch (expression.quantifier()) {
-			case EXISTS:
-				result = new Evaluation(state, universe.existsInt(
-						(NumericSymbolicConstant) boundVariable,
-						(NumericExpression) lower.value,
-						(NumericExpression) upper.value,
-						(BooleanExpression) quantifiedExpression.value));
-				break;
-			case FORALL:
-				result = new Evaluation(state, universe.forallInt(
-						(NumericSymbolicConstant) boundVariable,
-						(NumericExpression) lower.value,
-						(NumericExpression) upper.value,
-						(BooleanExpression) quantifiedExpression.value));
-				break;
-			case UNIFORM:
-				result = new Evaluation(state, universe.forallInt(
-						(NumericSymbolicConstant) boundVariable,
-						(NumericExpression) lower.value,
-						(NumericExpression) upper.value,
-						(BooleanExpression) quantifiedExpression.value));
-				break;
-			default:
-				throw new CIVLException("Unknown quantifier ",
-						expression.getSource());
-			}
-		} else {
-			Evaluation restriction = evaluate(state, pid,
-					expression.boundRestriction());
-			stateWithRestriction = state.setPathCondition(universe.and(
-					(BooleanExpression) restriction.value,
-					state.getPathCondition()));
-			quantifiedExpression = evaluate(stateWithRestriction, pid,
-					expression.expression());
-			// By definition, the restriction should be boolean valued.
-			assert restriction.value instanceof BooleanExpression;
-			context = universe.and(state.getPathCondition(),
-					(BooleanExpression) restriction.value);
-			reasoner = universe.reasoner(context);
-			simplifiedExpression = (BooleanExpression) reasoner
-					.simplify(quantifiedExpression.value);
-			switch (expression.quantifier()) {
-			case EXISTS:
-				result = new Evaluation(state, universe.exists(boundVariable,
-						universe.and((BooleanExpression) restriction.value,
-								simplifiedExpression)));
-				break;
-			case FORALL:
-				result = new Evaluation(state, universe.forall(boundVariable,
-						universe.implies((BooleanExpression) restriction.value,
-								simplifiedExpression)));
-				break;
-			case UNIFORM:
-				result = new Evaluation(state, universe.forall(boundVariable,
-						universe.implies((BooleanExpression) restriction.value,
-								simplifiedExpression)));
-				break;
-			default:
-				throw new CIVLException("Unknown quantifier ",
-						expression.getSource());
-			}
-		}
-
-		boundVariables.pop();
-		return result;
-	}
-
-	private Evaluation evaluateAbstractFunctionCall(State state, int pid,
-			AbstractFunctionCallExpression expression)
-			throws UnsatisfiablePathConditionException {
-		AbstractFunction function = expression.function();
-		SymbolicType returnType = function.returnType()
-				.getDynamicType(universe);
-		List<SymbolicType> argumentTypes = new ArrayList<SymbolicType>();
-		List<SymbolicExpression> arguments = new ArrayList<SymbolicExpression>();
-		SymbolicType functionType;
-		SymbolicExpression functionExpression;
-		SymbolicExpression functionApplication;
-		Evaluation result;
-
-		for (Variable param : function.parameters()) {
-			argumentTypes.add(param.type().getDynamicType(universe));
-		}
-		for (Expression arg : expression.arguments()) {
-			Evaluation eval = evaluate(state, pid, arg);
-			arguments.add(eval.value);
-		}
-		functionType = universe.functionType(argumentTypes, returnType);
-		functionExpression = universe.symbolicConstant(
-				universe.stringObject(function.name().name()), functionType);
-		functionApplication = universe.apply(functionExpression, arguments);
-		result = new Evaluation(state, functionApplication);
-		return result;
-	}
-
-	private Evaluation evaluateDerivativeCall(State state, int pid,
-			DerivativeCallExpression expression)
-			throws UnsatisfiablePathConditionException {
-		AbstractFunction function = expression.function();
-		SymbolicType returnType = function.returnType()
-				.getDynamicType(universe);
-		List<SymbolicType> argumentTypes = new ArrayList<SymbolicType>();
-		List<SymbolicExpression> arguments = new ArrayList<SymbolicExpression>();
-		SymbolicType functionType;
-		SymbolicExpression functionExpression;
-		SymbolicExpression functionApplication;
-		Evaluation result;
-		String derivativeName;
-
-		for (Variable param : function.parameters()) {
-			argumentTypes.add(param.type().getDynamicType(universe));
-		}
-		for (Expression arg : expression.arguments()) {
-			Evaluation eval = evaluate(state, pid, arg);
-			arguments.add(eval.value);
-		}
-		functionType = universe.functionType(argumentTypes, returnType);
-		// The derivative name is the name of the function concatenated with the
-		// names and degrees of the partials. e.g. the name of
-		// $D[rho,{x,1},{y,2}]() is "rhox1y2"
-		derivativeName = function.name().name();
-		for (Pair<Variable, IntegerLiteralExpression> partial : expression
-				.partials()) {
-			derivativeName += partial.left.name().name()
-					+ partial.right.value();
-		}
-		functionExpression = universe.symbolicConstant(
-				universe.stringObject(derivativeName), functionType);
-		functionApplication = universe.apply(functionExpression, arguments);
-		result = new Evaluation(state, functionApplication);
-		return result;
-	}
-
-	/**
-	 * Given a symbolic type, returns a canonic symbolic expression which
-	 * somehow wraps that type so it can be used as a value. Nothing should be
-	 * assumed about the symbolic expression. To extract the type from such an
-	 * expression, use method {@link #getType}.
-	 * 
-	 * @param type
-	 *            a symbolic type
-	 * @return a canonic symbolic expression wrapping that type
-	 */
-	private SymbolicExpression expressionOfType(SymbolicType type) {
-		SymbolicExpression result;
-
-		type = (SymbolicType) universe.canonic(type);
-		result = typeExpressionMap.get(type);
-		if (result == null) {
-			SymbolicExpression id = universe.integer(type.id());
-
-			result = universe.canonic(universe.tuple(dynamicType,
-					new Singleton<SymbolicExpression>(id)));
-			typeExpressionMap.put(type, result);
-		}
-		return result;
-	}
-
 	/**
 	 * Given a symbolic expression returned by the method
 	 * {@link #expressionOfType}, this extracts the type that was used to create
@@ -1834,6 +1741,176 @@ public class CommonEvaluator implements Evaluator {
 		int id = extractIntField(source, expr, zeroObj);
 
 		return (SymbolicType) universe.objectWithId(id);
+	}
+
+	/**
+	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
+	 * symbolic reference value.
+	 * 
+	 * @param scopeId
+	 *            ID number of a dynamic scope
+	 * @param varId
+	 *            ID number of a variable within that scope
+	 * @param symRef
+	 *            a symbolic reference to a point within the variable
+	 * @return a pointer value as specified by the 3 components
+	 */
+	private SymbolicExpression makePointer(int scopeId, int varId,
+			ReferenceExpression symRef) {
+		SymbolicExpression scopeField = modelFactory.scopeValue(scopeId);
+		SymbolicExpression varField = universe.integer(varId);
+		SymbolicExpression result = universe.tuple(
+				pointerType,
+				Arrays.asList(new SymbolicExpression[] { scopeField, varField,
+						symRef }));
+
+		return result;
+	}
+
+	/**
+	 * Evaluates pointer addition. Pointer addition involves the addition of a
+	 * pointer expression and an integer.
+	 * 
+	 * @param state
+	 *            the pre-state
+	 * @param pid
+	 *            the PID of the process evaluating the pointer addition
+	 * @param expression
+	 *            the pointer addition expression
+	 * @param pointer
+	 *            the result of evaluating argument 0 of expression
+	 * @param offset
+	 *            the result of evaluating argument 1 of expression
+	 * @return the result of evaluating the sum of the pointer and the integer
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation pointerAdd(State state, int pid,
+			BinaryExpression expression, SymbolicExpression pointer,
+			NumericExpression offset)
+			throws UnsatisfiablePathConditionException {
+		ReferenceExpression symRef = getSymRef(pointer);
+
+		if (symRef.isArrayElementReference()) {
+			SymbolicExpression arrayPointer = parentPointer(
+					expression.getSource(), pointer);
+			Evaluation eval = dereference(expression.getSource(), state,
+					arrayPointer);
+			// eval.value is now a symbolic expression of array type.
+			SymbolicArrayType arrayType = (SymbolicArrayType) eval.value.type();
+			ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
+			NumericExpression oldIndex = arrayElementRef.getIndex();
+			NumericExpression newIndex = universe.add(oldIndex, offset);
+
+			if (arrayType.isComplete()) { // check bounds
+				NumericExpression length = universe.length(eval.value);
+				BooleanExpression claim = universe.and(
+						universe.lessThanEquals(zero, newIndex),
+						universe.lessThanEquals(newIndex, length));
+				BooleanExpression assumption = eval.state.getPathCondition();
+				ResultType resultType = universe.reasoner(assumption)
+						.valid(claim).getResultType();
+
+				if (resultType != ResultType.YES) {
+					eval.state = logError(expression.getSource(), eval.state,
+							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
+							"Pointer addition resulted in out of bounds array index:\nindex = "
+									+ newIndex + "\nlength = " + length);
+				}
+			}
+			eval.value = setSymRef(pointer, universe.arrayElementReference(
+					arrayElementRef.getParent(), newIndex));
+			return eval;
+		} else if (symRef.isOffsetReference()) {
+			OffsetReference offsetRef = (OffsetReference) symRef;
+			NumericExpression oldOffset = offsetRef.getOffset();
+			NumericExpression newOffset = universe.add(oldOffset, offset);
+			BooleanExpression claim = universe.and(
+					universe.lessThanEquals(zero, newOffset),
+					universe.lessThanEquals(newOffset, one));
+			BooleanExpression assumption = state.getPathCondition();
+			ResultType resultType = universe.reasoner(assumption).valid(claim)
+					.getResultType();
+			Evaluation eval;
+
+			if (resultType != ResultType.YES) {
+				state = logError(expression.getSource(), state, claim,
+						resultType, ErrorKind.OUT_OF_BOUNDS,
+						"Pointer addition resulted in out of bounds object pointer:\noffset = "
+								+ newOffset);
+			}
+			eval = new Evaluation(state, setSymRef(pointer,
+					universe.offsetReference(offsetRef.getParent(), newOffset)));
+			return eval;
+		} else
+			throw new CIVLUnimplementedFeatureException(
+					"Pointer addition for anything other than array elements or variables",
+					expression);
+	}
+
+	/**
+	 * Returns the set of pointer values that occur inside a symbolic
+	 * expression, excluding any pointers that occur inside a heap. TODO
+	 * Optimization: you only need to call this method on variables that could
+	 * have pointers in them, otherwise don't bother
+	 * 
+	 * @param expr
+	 *            a symbolic expression
+	 * @param heapType
+	 *            the heap type
+	 * @return set of pointer values occurring a subexpression of expression
+	 *         (including expression itself) but not in a heap
+	 */
+
+	private Set<SymbolicExpression> pointersInExpression(
+			SymbolicExpression expr, State state) {
+		Set<SymbolicExpression> result = new HashSet<>();
+
+		findPointersInExpression(expr, result, state);
+		return result;
+	}
+
+	/**
+	 * Evaluates pointer subtraction.
+	 * 
+	 * @param state
+	 *            the pre-state
+	 * @param pid
+	 *            the PID of the process performing this evaluation
+	 * @param expression
+	 *            the pointer subtraction expression
+	 * @param p1
+	 *            the result of evaluating argument 0 of expression; should be a
+	 *            pointer
+	 * @param p2
+	 *            the result of evaluating argument 1 of expression; should be a
+	 *            pointer
+	 * @return the integer symbolic expression resulting from subtracting the
+	 *         two pointers together with the post-state if side-effects
+	 *         occurred
+	 */
+	private Evaluation pointerSubtract(State state, int pid,
+			BinaryExpression expression, SymbolicExpression p1,
+			SymbolicExpression p2) {
+		throw new CIVLUnimplementedFeatureException("pointer subtraction",
+				expression);
+	}
+
+	/**
+	 * zero
+	 * 
+	 * @param source
+	 * @param type
+	 * @return
+	 */
+	private NumericExpression zeroOf(CIVLSource source, CIVLType type) {
+		if (type instanceof CIVLPrimitiveType) {
+			if (((CIVLPrimitiveType) type).primitiveTypeKind() == PrimitiveTypeKind.INT)
+				return zero;
+			if (((CIVLPrimitiveType) type).primitiveTypeKind() == PrimitiveTypeKind.REAL)
+				return zeroR;
+		}
+		throw new CIVLInternalException("Expected integer or real type, not "
+				+ type, source);
 	}
 
 	/* ********************** Methods from Evaluator *********************** */
@@ -1937,8 +2014,9 @@ public class CommonEvaluator implements Evaluator {
 					(SubscriptExpression) expression);
 			break;
 		case SYSTEM_GUARD:
-			throw new CIVLInternalException("Unreachable",
-					expression.getSource());
+			result = evaluateSystemGuard(state, pid,
+					(SystemGuardExpression) expression);
+			break;
 		case UNARY:
 			result = evaluateUnary(state, pid, (UnaryExpression) expression);
 			break;
@@ -1963,46 +2041,6 @@ public class CommonEvaluator implements Evaluator {
 		}
 		return result;
 	}
-
-	private Evaluation evaluateWaitGuard(State state, int pid,
-			WaitGuardExpression expression) {
-		SymbolicExpression joinProcess, guard;
-		int pidValue;
-		Evaluation eval;
-
-		try {
-			eval = evaluate(state, pid, expression.joinedProcess());
-		} catch (UnsatisfiablePathConditionException e) {
-			return new Evaluation(state, universe.falseExpression());
-		}
-		joinProcess = eval.value;
-		state = eval.state;
-		pidValue = modelFactory.getProcessId(expression.getSource(),
-				joinProcess);
-		if (!state.getProcessState(pidValue).hasEmptyStack())
-			guard = universe.falseExpression();
-		else
-			guard = universe.trueExpression();
-		return new Evaluation(state, guard);
-	}
-
-	// /**
-	// * evaluate a system guard expression
-	// *
-	// * @param state
-	// * The state where the computation happens.
-	// * @param pid
-	// * The ID of the process that wants to evaluate the guard.
-	// * @param expression
-	// * The system guard expression to be evaluated.
-	// * @return The result of the evaluation, including the state and the
-	// * symbolic expression of the value.
-	// */
-	// private Evaluation evaluateSystemGuard(State state, int pid,
-	// SystemGuardExpression expression) {
-	// enabler
-	// return executor.evaluateSystemGuard(state, pid, expression);
-	// }
 
 	@Override
 	public Evaluation evaluateSizeofType(CIVLSource source, State state,
@@ -2201,6 +2239,118 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
+	public int getVariableId(CIVLSource source, SymbolicExpression pointer) {
+		return extractIntField(source, pointer, oneObj);
+	}
+
+	// @Override
+	// public void setExecutor(Executor executor) {
+	// this.executor = executor;
+	// }
+
+	@Override
+	public SymbolicExpression heapValue(CIVLSource source, State state,
+			SymbolicExpression scopeValue)
+			throws UnsatisfiablePathConditionException {
+		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
+
+		if (dyScopeID < 0) {
+			logSimpleError(source, state, ErrorKind.DEREFERENCE,
+					"Attempt to dereference pointer into scope which has been removed from state");
+			throw new UnsatisfiablePathConditionException();
+		} else {
+			DynamicScope dyScope = state.getScope(dyScopeID);
+			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
+			SymbolicExpression heapValue;
+
+			if (heapVariable == null) {
+				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+						"Attempt to dereference pointer into a heap that never exists");
+				throw new UnsatisfiablePathConditionException();
+			}
+
+			heapValue = dyScope.getValue(heapVariable.vid());
+			if (heapValue.equals(universe.nullExpression()))
+				heapValue = this.initialHeapValue();
+			return heapValue;
+		}
+	}
+
+	@Override
+	public SymbolicExpression heapPointer(CIVLSource source, State state,
+			SymbolicExpression scopeValue)
+			throws UnsatisfiablePathConditionException {
+		ReferenceExpression symRef = (ReferenceExpression) universe
+				.canonic(universe.identityReference());
+		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
+
+		if (dyScopeID < 0) {
+			logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+					"Attempt to access the heap of the scope that has been removed from state");
+			throw new UnsatisfiablePathConditionException();
+		} else {
+			DynamicScope dyScope = state.getScope(dyScopeID);
+			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
+
+			if (heapVariable == null) {
+				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+						"Attempt to access a heap that never exists");
+				throw new UnsatisfiablePathConditionException();
+			}
+			return makePointer(dyScopeID, heapVariable.vid(), symRef);
+		}
+	}
+
+	// @Override
+	// public void setExecutor(Executor executor) {
+	// this.executor = executor;
+	// }
+
+	@Override
+	public SymbolicExpression initialHeapValue() {
+		return modelFactory.heapType().getInitialValue();
+	}
+
+	@Override
+	public boolean isProcInCommWithRank(SymbolicExpression comm, int pid,
+			int rank) {
+		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
+				universe.intObject(1));
+		SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
+				universe.integer(rank));
+		int procRowLength = this.extractInt(
+				null,
+				(NumericExpression) universe.tupleRead(procQueue,
+						universe.intObject(0)));
+		SymbolicExpression procRow = universe.tupleRead(procQueue,
+				universe.intObject(1));
+
+		for (int j = 0; j < procRowLength; j++) {
+			SymbolicExpression proc = universe.arrayRead(procRow,
+					universe.integer(j));
+			int procId = this.modelFactory.getProcessId(null, proc);
+
+			if (procId == pid)
+				return true;
+		}
+		return false;
+	}
+
+	@Override
+	public int joinedIDofWait(State state, ProcessState p, WaitStatement wait) {
+		Evaluation eval;
+		try {
+			eval = evaluate(state, p.getPid(), wait.process());
+			SymbolicExpression procVal = eval.value;
+
+			return modelFactory.getProcessId(wait.process().getSource(),
+					procVal);
+		} catch (UnsatisfiablePathConditionException e) {
+		}
+		return -1;
+	}
+
+	@Override
 	public State logError(CIVLSource source, State state,
 			BooleanExpression claim, ResultType resultType,
 			ErrorKind errorKind, String message)
@@ -2258,154 +2408,48 @@ public class CommonEvaluator implements Evaluator {
 		return state;
 	}
 
+	/**
+	 * Checks whether the path condition is satisfiable and logs an error if it
+	 * is (or might be). If the path condition is definitely unsatisfiable,
+	 * there is no error to log, and an UnsatisfiablePathConditionException is
+	 * thrown.
+	 * 
+	 * @param source
+	 *            source code element used to report the error
+	 * @param state
+	 *            the current state in which the possible error is detected
+	 * @param errorKind
+	 *            the kind of error (e.g., DEREFERENCE)
+	 * @param message
+	 *            the message to include in the error report
+	 * @throws UnsatisfiablePathConditionException
+	 *             if the path condition is definitely unsatisfiable
+	 */
 	@Override
-	public ModelFactory modelFactory() {
-		return modelFactory;
-	}
-
-	@Override
-	public SymbolicExpression parentPointer(CIVLSource source,
-			SymbolicExpression pointer) {
-		ReferenceExpression symRef = getSymRef(pointer);
-
-		if (symRef instanceof NTReferenceExpression)
-			return setSymRef(pointer,
-					((NTReferenceExpression) symRef).getParent());
-		throw new CIVLInternalException("Expected non-trivial pointer: "
-				+ pointer, source);
-	}
-
-	@Override
-	public void reportError(CIVLExecutionException err) {
-		try {
-			log.report(new CIVLLogEntry(config, err));
-		} catch (FileNotFoundException e) {
-			throw new CIVLException(e.toString(), err.getSource());
-		}
-	}
-
-	@Override
-	public SymbolicExpression setSymRef(SymbolicExpression pointer,
-			ReferenceExpression symRef) {
-		return universe.tupleWrite(pointer, twoObj, symRef);
-	}
-
-	public StateFactory stateFactory() {
-		return stateFactory;
-	}
-
-	public SymbolicUniverse universe() {
-		return universe;
-	}
-
-	@Override
-	public int getVariableId(CIVLSource source, SymbolicExpression pointer) {
-		return extractIntField(source, pointer, oneObj);
-	}
-
-	@Override
-	public Evaluation reference(State state, int pid, LHSExpression operand)
+	public void logSimpleError(CIVLSource source, State state,
+			ErrorKind errorKind, String message)
 			throws UnsatisfiablePathConditionException {
-		Evaluation result;
+		BooleanExpression pc = state.getPathCondition();
+		BooleanExpression npc = universe.not(pc);
+		ValidityResult validityResult = trueReasoner.valid(npc);
+		ResultType nsat = validityResult.getResultType();
+		Certainty certainty;
+		CIVLStateException error;
 
-		if (operand instanceof VariableExpression) {
-			Variable variable = ((VariableExpression) operand).variable();
-			int sid = state.getScopeId(pid, variable);
-			int vid = variable.vid();
-
-			result = new Evaluation(state, makePointer(sid, vid,
-					identityReference));
-		} else if (operand instanceof SubscriptExpression) {
-			Evaluation refEval = reference(state, pid,
-					((SubscriptExpression) operand).array());
-			SymbolicExpression arrayPointer = refEval.value;
-			ReferenceExpression oldSymRef = getSymRef(arrayPointer);
-			NumericExpression index;
-			ReferenceExpression newSymRef;
-
-			result = evaluate(refEval.state, pid,
-					((SubscriptExpression) operand).index());
-			index = (NumericExpression) result.value;
-			newSymRef = universe.arrayElementReference(oldSymRef, index);
-			result.value = setSymRef(arrayPointer, newSymRef);
-		} else if (operand instanceof DereferenceExpression) {
-			result = evaluate(state, pid,
-					((DereferenceExpression) operand).pointer());
-		} else if (operand instanceof DotExpression) {
-			DotExpression dot = (DotExpression) operand;
-			int index = dot.fieldIndex();
-
-			if (dot.isStruct()) {
-				Evaluation eval = reference(state, pid,
-						(LHSExpression) dot.structOrUnion());
-				SymbolicExpression structPointer = eval.value;
-				ReferenceExpression oldSymRef = getSymRef(structPointer);
-				ReferenceExpression newSymRef = universe
-						.tupleComponentReference(oldSymRef,
-								universe.intObject(index));
-
-				eval.value = setSymRef(structPointer, newSymRef);
-				result = eval;
-			} else {
-				return reference(state, pid,
-						(LHSExpression) dot.structOrUnion());
-			}
-		} else
-			throw new CIVLInternalException("Unknown kind of LHSExpression",
-					operand);
-		return result;
-	}
-
-	@Override
-	public NumericExpression sizeof(CIVLSource source, SymbolicType type) {
-		NumericExpression result = sizeofDynamicMap.get(type);
-
-		if (result == null) {
-
-			if (type.isBoolean())
-				result = modelFactory.booleanType().getSizeof();
-			else if (type == modelFactory.dynamicSymbolicType())
-				result = modelFactory.dynamicType().getSizeof();
-			else if (type.isInteger())
-				result = modelFactory.integerType().getSizeof();
-			else if (type == modelFactory.processSymbolicType())
-				result = modelFactory.processType().getSizeof();
-			else if (type.isReal())
-				result = modelFactory.realType().getSizeof();
-			else if (type == modelFactory.scopeSymbolicType())
-				result = modelFactory.scopeType().getSizeof();
-			else if (type instanceof SymbolicCompleteArrayType) {
-				SymbolicCompleteArrayType arrayType = (SymbolicCompleteArrayType) type;
-
-				result = sizeof(source, arrayType.elementType());
-				result = universe.multiply(arrayType.extent(),
-						(NumericExpression) result);
-			} else if (type instanceof SymbolicArrayType) {
-				throw new CIVLInternalException(
-						"sizeof applied to incomplete array type", source);
-			} else {
-				// wrap the type in an expression of type dynamicTYpe
-				SymbolicExpression typeExpr = expressionOfType(type);
-
-				result = (NumericExpression) universe.apply(sizeofFunction,
-						new Singleton<SymbolicExpression>(typeExpr));
-			}
-			sizeofDynamicMap.put(type, result);
+		// performance! need to cache the satisfiability of each pc somewhere
+		// negation is slow
+		// maybe add "nsat" to Reasoner.
+		if (nsat == ResultType.YES)
+			// no error to report---an infeasible path
+			throw new UnsatisfiablePathConditionException();
+		if (nsat == ResultType.MAYBE)
+			certainty = Certainty.MAYBE;
+		else { // pc is definitely satisfiable
+			certainty = Certainty.PROVEABLE;
 		}
-		return result;
-	}
-
-	@Override
-	public SymbolicType referencedType(CIVLSource source, State state,
-			SymbolicExpression pointer) {
-		int sid = getScopeId(source, pointer);
-		int vid = getVariableId(source, pointer);
-		ReferenceExpression symRef = getSymRef(pointer);
-		SymbolicExpression variableValue = state.getScope(sid).getValue(vid);
-		SymbolicType variableType = variableValue.type();
-		SymbolicType result = universe.referencedType(variableType, symRef);
-
-		return result;
+		error = new CIVLStateException(errorKind, certainty, message, state,
+				source);
+		reportError(error);
 	}
 
 	@Override
@@ -2553,28 +2597,8 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public boolean isProcInCommWithRank(SymbolicExpression comm, int pid,
-			int rank) {
-		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
-				universe.intObject(1));
-		SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
-				universe.integer(rank));
-		int procRowLength = this.extractInt(
-				null,
-				(NumericExpression) universe.tupleRead(procQueue,
-						universe.intObject(0)));
-		SymbolicExpression procRow = universe.tupleRead(procQueue,
-				universe.intObject(1));
-
-		for (int j = 0; j < procRowLength; j++) {
-			SymbolicExpression proc = universe.arrayRead(procRow,
-					universe.integer(j));
-			int procId = this.modelFactory.getProcessId(null, proc);
-
-			if (procId == pid)
-				return true;
-		}
-		return false;
+	public ModelFactory modelFactory() {
+		return modelFactory;
 	}
 
 	@Override
@@ -2604,22 +2628,90 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public int joinedIDofWait(State state, ProcessState p, WaitStatement wait) {
-		Evaluation eval;
-		try {
-			eval = evaluate(state, p.getPid(), wait.process());
-			SymbolicExpression procVal = eval.value;
+	public SymbolicExpression parentPointer(CIVLSource source,
+			SymbolicExpression pointer) {
+		ReferenceExpression symRef = getSymRef(pointer);
 
-			return modelFactory.getProcessId(wait.process().getSource(),
-					procVal);
-		} catch (UnsatisfiablePathConditionException e) {
-		}
-		return -1;
+		if (symRef instanceof NTReferenceExpression)
+			return setSymRef(pointer,
+					((NTReferenceExpression) symRef).getParent());
+		throw new CIVLInternalException("Expected non-trivial pointer: "
+				+ pointer, source);
 	}
 
 	@Override
-	public void setSolve(boolean value) {
-		this.solve = value;
+	public Evaluation reference(State state, int pid, LHSExpression operand)
+			throws UnsatisfiablePathConditionException {
+		Evaluation result;
+
+		if (operand instanceof VariableExpression) {
+			Variable variable = ((VariableExpression) operand).variable();
+			int sid = state.getScopeId(pid, variable);
+			int vid = variable.vid();
+
+			result = new Evaluation(state, makePointer(sid, vid,
+					identityReference));
+		} else if (operand instanceof SubscriptExpression) {
+			Evaluation refEval = reference(state, pid,
+					((SubscriptExpression) operand).array());
+			SymbolicExpression arrayPointer = refEval.value;
+			ReferenceExpression oldSymRef = getSymRef(arrayPointer);
+			NumericExpression index;
+			ReferenceExpression newSymRef;
+
+			result = evaluate(refEval.state, pid,
+					((SubscriptExpression) operand).index());
+			index = (NumericExpression) result.value;
+			newSymRef = universe.arrayElementReference(oldSymRef, index);
+			result.value = setSymRef(arrayPointer, newSymRef);
+		} else if (operand instanceof DereferenceExpression) {
+			result = evaluate(state, pid,
+					((DereferenceExpression) operand).pointer());
+		} else if (operand instanceof DotExpression) {
+			DotExpression dot = (DotExpression) operand;
+			int index = dot.fieldIndex();
+
+			if (dot.isStruct()) {
+				Evaluation eval = reference(state, pid,
+						(LHSExpression) dot.structOrUnion());
+				SymbolicExpression structPointer = eval.value;
+				ReferenceExpression oldSymRef = getSymRef(structPointer);
+				ReferenceExpression newSymRef = universe
+						.tupleComponentReference(oldSymRef,
+								universe.intObject(index));
+
+				eval.value = setSymRef(structPointer, newSymRef);
+				result = eval;
+			} else {
+				return reference(state, pid,
+						(LHSExpression) dot.structOrUnion());
+			}
+		} else
+			throw new CIVLInternalException("Unknown kind of LHSExpression",
+					operand);
+		return result;
+	}
+
+	@Override
+	public SymbolicType referencedType(CIVLSource source, State state,
+			SymbolicExpression pointer) {
+		int sid = getScopeId(source, pointer);
+		int vid = getVariableId(source, pointer);
+		ReferenceExpression symRef = getSymRef(pointer);
+		SymbolicExpression variableValue = state.getScope(sid).getValue(vid);
+		SymbolicType variableType = variableValue.type();
+		SymbolicType result = universe.referencedType(variableType, symRef);
+
+		return result;
+	}
+
+	@Override
+	public void reportError(CIVLExecutionException err) {
+		try {
+			log.report(new CIVLLogEntry(config, err));
+		} catch (FileNotFoundException e) {
+			throw new CIVLException(e.toString(), err.getSource());
+		}
 	}
 
 	// @Override
@@ -2628,61 +2720,66 @@ public class CommonEvaluator implements Evaluator {
 	// }
 
 	@Override
-	public SymbolicExpression heapValue(CIVLSource source, State state,
-			SymbolicExpression scopeValue)
-			throws UnsatisfiablePathConditionException {
-		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
-
-		if (dyScopeID < 0) {
-			logSimpleError(source, state, ErrorKind.DEREFERENCE,
-					"Attempt to dereference pointer into scope which has been removed from state");
-			throw new UnsatisfiablePathConditionException();
-		} else {
-			DynamicScope dyScope = state.getScope(dyScopeID);
-			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
-			SymbolicExpression heapValue;
-
-			if (heapVariable == null) {
-				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
-						"Attempt to dereference pointer into a heap that never exists");
-				throw new UnsatisfiablePathConditionException();
-			}
-
-			heapValue = dyScope.getValue(heapVariable.vid());
-			if (heapValue.equals(universe.nullExpression()))
-				heapValue = this.initialHeapValue();
-			return heapValue;
-		}
+	public void setEnabler(Enabler enabler) {
+		this.enabler = enabler;
 	}
 
 	@Override
-	public SymbolicExpression heapPointer(CIVLSource source, State state,
-			SymbolicExpression scopeValue)
-			throws UnsatisfiablePathConditionException {
-		ReferenceExpression symRef = (ReferenceExpression) universe
-				.canonic(universe.identityReference());
-		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
-
-		if (dyScopeID < 0) {
-			logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
-					"Attempt to access the heap of the scope that has been removed from state");
-			throw new UnsatisfiablePathConditionException();
-		} else {
-			DynamicScope dyScope = state.getScope(dyScopeID);
-			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
-
-			if (heapVariable == null) {
-				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
-						"Attempt to access a heap that never exists");
-				throw new UnsatisfiablePathConditionException();
-			}
-			return makePointer(dyScopeID, heapVariable.vid(), symRef);
-		}
+	public void setSolve(boolean value) {
+		this.solve = value;
 	}
 
 	@Override
-	public SymbolicExpression initialHeapValue() {
-		return modelFactory.heapType().getInitialValue();
+	public SymbolicExpression setSymRef(SymbolicExpression pointer,
+			ReferenceExpression symRef) {
+		return universe.tupleWrite(pointer, twoObj, symRef);
+	}
+
+	@Override
+	public NumericExpression sizeof(CIVLSource source, SymbolicType type) {
+		NumericExpression result = sizeofDynamicMap.get(type);
+
+		if (result == null) {
+
+			if (type.isBoolean())
+				result = modelFactory.booleanType().getSizeof();
+			else if (type == modelFactory.dynamicSymbolicType())
+				result = modelFactory.dynamicType().getSizeof();
+			else if (type.isInteger())
+				result = modelFactory.integerType().getSizeof();
+			else if (type == modelFactory.processSymbolicType())
+				result = modelFactory.processType().getSizeof();
+			else if (type.isReal())
+				result = modelFactory.realType().getSizeof();
+			else if (type == modelFactory.scopeSymbolicType())
+				result = modelFactory.scopeType().getSizeof();
+			else if (type instanceof SymbolicCompleteArrayType) {
+				SymbolicCompleteArrayType arrayType = (SymbolicCompleteArrayType) type;
+
+				result = sizeof(source, arrayType.elementType());
+				result = universe.multiply(arrayType.extent(),
+						(NumericExpression) result);
+			} else if (type instanceof SymbolicArrayType) {
+				throw new CIVLInternalException(
+						"sizeof applied to incomplete array type", source);
+			} else {
+				// wrap the type in an expression of type dynamicTYpe
+				SymbolicExpression typeExpr = expressionOfType(type);
+
+				result = (NumericExpression) universe.apply(sizeofFunction,
+						new Singleton<SymbolicExpression>(typeExpr));
+			}
+			sizeofDynamicMap.put(type, result);
+		}
+		return result;
+	}
+
+	public StateFactory stateFactory() {
+		return stateFactory;
+	}
+
+	public SymbolicUniverse universe() {
+		return universe;
 	}
 
 }

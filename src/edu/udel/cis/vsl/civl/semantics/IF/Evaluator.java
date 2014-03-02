@@ -6,6 +6,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -400,4 +401,6 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 	
 	SymbolicExpression initialHeapValue();
+
+	void setEnabler(Enabler enabler);
 }

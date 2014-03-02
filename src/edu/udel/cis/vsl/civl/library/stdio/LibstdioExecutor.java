@@ -13,7 +13,6 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
@@ -30,11 +29,10 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class Libstdio extends CommonLibraryExecutor implements LibraryExecutor {
+public class LibstdioExecutor extends CommonLibraryExecutor implements
+		LibraryExecutor {
 
 	/* ************************** Instance Fields ************************** */
-
-	
 
 	/* **************************** Constructors *************************** */
 
@@ -48,7 +46,7 @@ public class Libstdio extends CommonLibraryExecutor implements LibraryExecutor {
 	 * @param enablePrintf
 	 *            True iff print is enabled, reflecting command line options.
 	 */
-	public Libstdio(Executor primaryExecutor, PrintStream output,
+	public LibstdioExecutor(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
 		super(primaryExecutor, output, enablePrintf, modelFactory);
 	}
@@ -56,7 +54,7 @@ public class Libstdio extends CommonLibraryExecutor implements LibraryExecutor {
 	/* ******************** Methods from LibraryExecutor ******************* */
 
 	@Override
-	public State execute(State state, int pid, Statement statement)
+	public State execute(State state, int pid, CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		return executeWork(state, pid, (CallOrSpawnStatement) statement);
 	}

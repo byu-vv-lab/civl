@@ -1,37 +1,28 @@
 package edu.udel.cis.vsl.civl.library.IF;
 
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.library.CommonLibraryLoader;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.state.IF.State;
 
 /**
  * A Library Executor provides the semantics for system functions defined in a
- * library. It provides a method to "execute" each system library function.
+ * library. It provides a method to "execute" each system library function.A new
+ * library is implemented in the package named as
+ * "edu.udel.cis.vsl.civl.library." ( {@link CommonLibraryLoader#CLASS_PREFIX})
+ * + library name. And the class name of the executor is: "Lib" + library name +
+ * "Enabler". For example, the stdio library executor is implemented as the
+ * class edu.udel.cis.vsl.civl.library.stdio.LibstdioExecutor.
  * 
  */
-public interface LibraryExecutor extends Library {
+public interface LibraryExecutor {
 
 	/**
 	 * Returns the state that results from executing the statement, or null if
 	 * path condition becomes unsatisfiable.
 	 */
-	State execute(State state, int pid, Statement statement)
+	State execute(State state, int pid, CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException;
-
-	// /**
-	// * Get a system guard for a system function. This is an extra guard
-	// relating
-	// * to the particular system function, and needs to be checked in addition
-	// to
-	// * the "regular" guard in the transition system.
-	// */
-	//BooleanExpression getGuard(State state, int pid, Statement statement);
-
-	// /**
-	// * Does the library for which this is the executor contain a function with
-	// * the given name?
-	// */
-	// boolean containsFunction(String name);
 
 	// TODO: Is this ever being done?
 	/**
