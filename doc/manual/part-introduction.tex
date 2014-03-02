@@ -372,15 +372,39 @@ void main() {
 \end{verbatim}
   \end{small}
   \caption{CIVL-C model of a multithreaded MPI program.  Two processes
-    each spawn two threads, which executes a sequence of send and
-    receive operations.  The program has a subtle defect which can
+    each spawn two threads.  Each thread executes a sequence of send
+    and receive operations.  The program has a subtle defect which can
     lead to deadlock.}
   \label{fig:mpithreads}
 \end{figure}
 
 Figure \ref{fig:mpithreads} is an example of a CIVL-C model of
 multithreaded MPI program.  The program consists of two processes,
-each of which spawns two threads.  
+each of which spawns two threads.  All four threads issue
+message-passing operations.
 
-All four threads issue
-message-passing operations.  In the
+This example illustrates some of the message-passing primitives
+provided in CIVL-C.  A \emph{global communicator} object is allocated
+in the root scope.  The constant $\chere$ has type $\cscope$ and
+refers to the scope in which the expression occurs; in this case it is
+the root (i.e., file) scope.  This global communicator is declared to
+have \texttt{NPROCS} \emph{places}; these are points from which
+messages can be sent or received.  The function \verb!MPI_Process!  is
+used to model an MPI process.  Each instance will create its own
+\emph{local communicator} object which specifies the global
+communicator and a place; this is the object that will be used to send
+or receive messages at that place.
+
+Each process spawns two instances of function \texttt{Thread}.  Each
+thread creates a message object from a buffer, specifying the source
+and destination places, tag, pointer to the beginning of the buffer,
+and the size of the buffer.  The message is \emph{enqueued} into the
+communication universe using the local communicator.  Similarly,
+messages are dequeued by specifying the local communicator, source
+place, and tag.
+
+The program has a subtle defect, which only manifests on very specific
+interleavings of the threads.   This defect can be found using
+\texttt{civl verify}.
+
+
