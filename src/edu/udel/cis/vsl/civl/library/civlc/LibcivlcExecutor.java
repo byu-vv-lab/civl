@@ -85,8 +85,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 
 	@Override
 	public State initialize(State state) {
-		// TODO Auto-generated method stub
-		return null;
+		return state;
 	}
 
 	@Override
@@ -96,8 +95,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 
 	@Override
 	public State wrapUp(State state) {
-		// TODO Auto-generated method stub
-		return null;
+		return state;
 	}
 
 	/* ************************** Private Methods ************************** */

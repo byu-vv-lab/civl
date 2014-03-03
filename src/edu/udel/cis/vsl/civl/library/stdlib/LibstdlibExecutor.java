@@ -62,13 +62,11 @@ public class LibstdlibExecutor extends CommonLibraryExecutor implements
 
 	@Override
 	public State initialize(State state) {
-		// TODO Auto-generated method stub
 		return state;
 	}
 
 	@Override
 	public State wrapUp(State state) {
-		// TODO Auto-generated method stub
 		return state;
 	}
 

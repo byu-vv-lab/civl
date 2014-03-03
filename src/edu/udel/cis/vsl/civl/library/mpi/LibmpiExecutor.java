@@ -52,24 +52,14 @@ public class LibmpiExecutor extends CommonLibraryExecutor implements
 		return this.executeWork(state, pid, statement);
 	}
 
-	// @Override
-	// public BooleanExpression getGuard(State state, int pid, Statement
-	// statement) {
-	// BooleanExpression guard;
-	// guard = universe.trueExpression();
-	// return guard;
-	// }
-
 	@Override
 	public State initialize(State state) {
-		// TODO Auto-generated method stub
-		return null;
+		return state;
 	}
 
 	@Override
 	public State wrapUp(State state) {
-		// TODO Auto-generated method stub
-		return null;
+		return state;
 	}
 
 	/* ************************* private methods **************************** */
