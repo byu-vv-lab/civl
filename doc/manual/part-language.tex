@@ -242,7 +242,7 @@ and pointer types are all exactly as in C.
 % \texttt{free} modifies the heap which was used to allocate \texttt{p}.
 
 
-\subsection{The bundle type: $\cbundle$}
+\subsection{The bundle type: \cbundle}
 
 CIVL-C includes a type named \cbundle. A bundle is basically a
 sequence of data, wrapped into an atomic package. A bundle is created
@@ -371,7 +371,7 @@ all CIVL-C expressions of boolean type:
 \item  $s_1$ \ct{>=} $s_2$.  This is equivalent to $s_2$ \ct{<=} $s_1$.
 \end{itemize}
 
-\subsubsection{Scope parent function $\cscopeparent$}
+\subsubsection{Scope parent function \texorpdfstring{\cscopeparent}{\$scope\_parent}}
 
 The system function
 \begin{verbatim}
@@ -534,7 +534,8 @@ transition system:
 \end{verbatim}
 
 
-\subsection{Nondeterministic choice of integer: \cchooseint}
+\subsection{Nondeterministic choice of integer:
+  \texorpdfstring{\cchooseint}{\$choose\_int}}
 
 The system function \cchooseint{} has the following signature:
 \begin{verbatim}
@@ -604,9 +605,9 @@ its call stack:
 
 \section{Atomicity}
 
-\subsection{Atom blocks: \catom} This defines a number of statements to be executed
-as a single atomic transition.  An \catom~block has the following
-form:
+\subsection{Atom blocks: \catom} This defines a number of statements
+to be executed as a single atomic transition.  An \catom~block has the
+following form:
 \begin{verbatim}
   $atom {
     stmt1;
@@ -658,9 +659,11 @@ dynamically (otherwise).  Note that it is not always possible to
 detect this statically because the \catom\ block may contain a
 function call, and the function may contain the \cwait\ statement.
 
-\subsection{Atomic blocks: \catomic} The statements in an \emph{atomic} block
-will be executed without other processes interleaving, to
-the extent possible.  It has the form:
+\subsection{Atomic blocks: \catomic}
+
+The statements in an \emph{atomic} block will be executed without
+other processes interleaving, to the extent possible.  It has the
+form:
 \begin{verbatim}
   $atomic {
     stmt1;

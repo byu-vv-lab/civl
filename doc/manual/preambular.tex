@@ -18,7 +18,8 @@
 \SetKwInOut{Invariant}{invariant}
 
 % Type/font styles...
-\newcommand{\setsty}[1]{\textsf{\textcolor{blue}{\textup{#1}}}}
+\newcommand{\upsty}[1]{\textup{\textsf{#1}}}
+\newcommand{\setsty}[1]{\textup{\textsf{\textcolor{blue}{#1}}}}
 \newcommand{\code}[1]{\texttt{\textcolor{blue}{#1}}}
 \newcommand{\ct}[1]{\texttt{#1}}
 
@@ -34,7 +35,8 @@
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\lb}{\texttt{\char`\{}}
 \newcommand{\rb}{\texttt{\char`\}}}
-\newcommand{\U}{{\ttfamily\symbol{'137}}}
+\newcommand{\U}{\texttt{\char`\_}}
+%\newcommand{\U}{{\ttfamily\symbol{'137}}}
 \newcommand{\UU}{\U\U}
 
 % Static notions...

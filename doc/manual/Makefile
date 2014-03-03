@@ -2,7 +2,9 @@ NAME=civl-manual
 SRC=$(NAME).tex
 BIB=civl.bib
 
-$(NAME).pdf: $(SRC) $(BIB)
+$(NAME).pdf: $(SRC) part-introduction.tex part-language.tex \
+             part-semantics.tex part-tools.tex $(BIB) Makefile \
+             ../images/scopeCodeExample.pdf ../images/scopeStateExample.pdf
 	pdflatex $(SRC)
 	bibtex $(NAME)
 	pdflatex $(SRC)

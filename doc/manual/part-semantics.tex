@@ -100,7 +100,10 @@ valuations in that system.
 
 \begin{definition}
   Given a CIVL context $\mathcal{C}$, a \emph{lexical scope system}
-  over $\mathcal{C}$ is a tuple $(\Sigma,\rootscope,\sparent,\vars)$
+  over $\mathcal{C}$ is a tuple 
+  \[
+  (\Sigma,\rootscope,\sparent,\vars)
+  \]
   consisting of
   \begin{enumerate}
   \item a set $\Sigma$ (the set of \emph{static scopes}),
@@ -355,7 +358,10 @@ can be defined, as can pointers into the heap.
   Furthermore, if the guarded transition system contains a statement
   of the form $\langle\code{return}\rangle$ then
   $\returntype(f)=\void$.  If it contains a statement of the form
-  $\langle\code{return},e\rangle$ then $\etype(e)=\returntype(f)$.
+  $\langle\code{return},e\rangle$ then
+  \[
+  \etype(e)=\returntype(f).
+  \]
 \end{definition}
 
 \begin{definition}
@@ -540,11 +546,12 @@ let $(\delta,l)$ be the corresponding frame; set $\Psi(p,i)=[\delta]$.
 % Define regions in the dyscope tree.   (each region contains one
 % function node)
 
-\newcommand{\lub}{\sigma_{\textsf{lub}}}
+
+\newcommand{\lub}{\sigma_{\upsty{lub}}}
 
 \begin{figure}[t]
   \begin{algorithm}[H]
-    \Procedure{$\textsf{\textup{jump}}(s\colon\State, p\colon\Val_{\proc},
+    \Procedure{$\upsty{jump}(s\colon\State, p\colon\Val_{\proc},
       l'\colon\Loc)\colon\State$}{%
       let $(\Delta, \droot, \dparent, \static, \deval, P, \stack)=s$\;
       let $\delta$ be the dyscope of the last frame on $\stack(p)$\;
@@ -554,7 +561,7 @@ let $(\delta,l)$ be the corresponding frame; set $\Psi(p,i)=[\delta]$.
       $\sigma'$ in the tree $\Sigma$\;
       let $m$ be the minimum integer such that
       $\sparent^m(\sigma)=\lub$\;
-      let $\delta_{\textsf{lub}}=\dparent^m(\delta)$\;
+      let $\delta_{\upsty{lub}}=\dparent^m(\delta)$\;
       let $n$ be the minimum integer such that
       $\sparent^{n}(\sigma')=\lub$\;
       let $\delta_0,\ldots,\delta_{n-1}$ be $n$ distinct objects not in $\Delta$\;
@@ -570,7 +577,7 @@ let $(\delta,l)$ be the corresponding frame; set $\Psi(p,i)=[\delta]$.
       \begin{cases}
         \dparent(\delta') & \text{if $\delta'\in\Delta$}\\
         \delta_{i+1} & \text{if $\delta'=\delta_{i}$ for some $0\leq i<n-1$}\\
-        \delta_{\textsf{lub}} & \text{if $n\geq 1$ and $\delta'=\delta_{n-1}$}
+        \delta_{\upsty{lub}} & \text{if $n\geq 1$ and $\delta'=\delta_{n-1}$}
       \end{cases}
       \)\;
       define $\static'\colon\Delta'\ra\Sigma$ by
@@ -592,9 +599,9 @@ let $(\delta,l)$ be the corresponding frame; set $\Psi(p,i)=[\delta]$.
       \)\;
       define $\stack'$ to be the same as $\stack$ except that
       the last frame on $\stack'(p)$ is replaced with
-      $(\delta_0,l')$ if $n\geq 1$, or with $(\delta_{\textsf{lub}},l')$
+      $(\delta_0,l')$ if $n\geq 1$, or with $(\delta_{\upsty{lub}},l')$
       if $n=0$\;
-      let $s'(\Delta',\droot,\dparent',\static',\deval',P,\stack')$\;
+      let $s'=(\Delta',\droot,\dparent',\static',\deval',P,\stack')$\;
       return the result of removing all unreachable dyscopes from $s'$\;
     }
   \end{algorithm}
@@ -636,7 +643,7 @@ exist since the function scope is a common ancestor of $\sigma$ and
 $\sigma'$.  There is a chain of static scopes from $\sigma$ up to
 $\lub$ and a corresponding chain
 $\delta,\dparent(\delta),\ldots,\dparent^m(\delta)$ in the dynamic
-scope tree.  Let $\delta_{\textsf{lub}}=\dparent^m(\delta)$.  This
+scope tree.  Let $\delta_{\upsty{lub}}=\dparent^m(\delta)$.  This
 will become the least upper bound of $\delta$ and the new dynamic
 scope corresponding to $\sigma'$ that will be added to the state.
 
@@ -666,7 +673,7 @@ to the scope of the start location.
 The \emph{initial state} for $M$ is obtained by creating one process
 (let $P=\{0\}$) and having it call the root function $f_0$. 
 Hence start with the state $s$ in which $P=\{0\}$, $\ldots$.
-The initial state is $\textsf{jump}(s,0,\start_{f_0})$.
+The initial state is $\upsty{jump}(s,0,\start_{f_0})$.
 
 \section{Transitions}
 
