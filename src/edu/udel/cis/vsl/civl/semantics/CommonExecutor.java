@@ -23,7 +23,6 @@ import edu.udel.cis.vsl.civl.library.civlc.LibcivlcExecutor;
 import edu.udel.cis.vsl.civl.library.stdio.LibstdioExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
@@ -839,25 +838,14 @@ public class CommonExecutor implements Executor {
 		return modelFactory;
 	}
 
-	private int heapFieldIndexOfType(CIVLType type) {
-		Model model = modelFactory.model();
-
-		if (type.equals(model.gcommType()))
-			return 0;
-		if (type.equals(model.commType()))
-			return 1;
-		return -1;
-	}
-
 	@Override
 	public State malloc(CIVLSource source, State state, int pid,
 			LHSExpression lhs, Expression scopeExpression,
 			SymbolicExpression scopeValue, CIVLType objectType,
 			SymbolicExpression objectValue)
 			throws UnsatisfiablePathConditionException {
-		int index = this.heapFieldIndexOfType(objectType);
+		int index = modelFactory.getHeapFieldId(objectType);
 		IntObject indexObj = universe.intObject(index);
-		// int sid = state.getProcessState(pid).getDyscopeId();
 		int dyScopeID;
 		DynamicScope dyScope;
 		int heapVariableId;
@@ -865,9 +853,6 @@ public class CommonExecutor implements Executor {
 		SymbolicExpression heapValue;
 		SymbolicExpression heapPointer;
 		SymbolicExpression heapField;
-		// int length; // num allocated objects in index component of heap
-		// StringObject newObjectName;
-		// SymbolicType newObjectType;
 		SymbolicExpression newObject;
 		SymbolicExpression firstElementPointer; // returned value
 		ArrayList<SymbolicExpression> elements = new ArrayList<>();
@@ -879,19 +864,12 @@ public class CommonExecutor implements Executor {
 		dyScope = state.getScope(dyScopeID);
 		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
 		heapField = universe.tupleRead(heapValue, indexObj);
-		// newObjectName = universe.stringObject("H_p" + pid + "s" + sid + "v"
-		// + heapVariableId + "i" + index + "l1");
-		// newObjectType =
-		// universe.arrayType(objectType.getDynamicType(universe),
-		// universe.integer(1));
 		newObject = universe.array(objectType.getDynamicType(universe),
 				elements);
-		// newObject = universe.symbolicConstant(newObjectName, newObjectType);
 		heapField = universe.append(heapField, newObject);
 		heapValue = universe.tupleWrite(heapValue, indexObj, heapField);
 		state = stateFactory.setVariable(state, heapVariableId, dyScopeID,
 				heapValue);
-		// state = assign(source, state, heapPointer, heapValue);
 		if (lhs != null) {
 			symRef = (ReferenceExpression) universe.canonic(universe
 					.identityReference());

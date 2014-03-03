@@ -1506,4 +1506,8 @@ public interface ModelFactory {
 	 */
 	ScopeofExpression scopeofExpression(CIVLSource source,
 			LHSExpression argument);
+
+	void addHeapFieldType(CIVLType type, int id);
+
+	int getHeapFieldId(CIVLType type);
 }

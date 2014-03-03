@@ -109,6 +109,8 @@ public class ModelBuilderWorker {
 	 */
 	Map<Function, CIVLFunction> functionMap;
 
+	ArrayList<CIVLType> handledObjectTypes = new ArrayList<>();
+
 	/**
 	 * The unique type for a heap.
 	 */
@@ -224,20 +226,13 @@ public class ModelBuilderWorker {
 		this.debugOut = debugOut;
 	}
 
-	/* *************************** Private Methods ************************* */
-
-	/* *********************************************************************
-	 * Intra-translation Methods
-	 * *********************************************************************
-	 */
+	/* ************************** Protected Methods ************************ */
 
 	protected void initialization(CIVLFunction system) {
 		systemScope = system.outerScope();
 		callStatements = new LinkedHashMap<CallOrSpawnStatement, Function>();
 		functionMap = new LinkedHashMap<Function, CIVLFunction>();
 		unprocessedFunctions = new ArrayList<FunctionDefinitionNode>();
-		// add the global variable for atomic lock
-		// factory.createAtomicLockVariable(systemScope);
 		factory.setSystemScope(systemScope);
 	}
 
@@ -252,6 +247,25 @@ public class ModelBuilderWorker {
 					.remove(0);
 
 			translateFunctionDefinitionNode(functionDefinition);
+		}
+	}
+
+	/* *************************** Private Methods ************************* */
+
+	private void completeHeapType() {
+		completeHandleObjectTypes();
+		factory.completeHeapType(heapType, mallocStatements);
+	}
+
+	private void completeHandleObjectTypes() {
+		for (CIVLType handleObjectType : this.handledObjectTypes) {
+			int mallocId = mallocStatements.size();
+
+			mallocStatements.add(factory.mallocStatement(null, null, null,
+					handleObjectType, null,
+					factory.sizeofTypeExpression(null, handleObjectType),
+					mallocId, null));
+			factory.addHeapFieldType(handleObjectType, mallocId);
 		}
 	}
 
@@ -501,20 +515,7 @@ public class ModelBuilderWorker {
 		translateUndefinedFunctions();
 		completeCallOrSpawnStatements();
 		completeBundleType();
-		if (gcommType != null) {// TODO add fake mallocStatement to the
-								// beginning
-			mallocStatements.add(0, factory.mallocStatement(null, null, null,
-					gcommType, null,
-					factory.sizeofTypeExpression(null, gcommType), 0, null));
-			// factory.setGcommSymbolicType(gcommType);
-		}
-		if (commType != null) {// TODO add fake mallocStatement to the beginning
-			// factory.setCommSymbolicType(commType);
-			mallocStatements.add(1, factory.mallocStatement(null, null, null,
-					commType, null,
-					factory.sizeofTypeExpression(null, commType), 1, null));
-		}
-		factory.completeHeapType(heapType, mallocStatements);
+		completeHeapType();
 		completeModel(system);
 		this.staticAnalysis();
 	}

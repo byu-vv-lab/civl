@@ -232,10 +232,6 @@ public class CommonModelFactory implements ModelFactory {
 
 	private SymbolicUnionType bundleSymbolicType;
 
-	// private SymbolicTupleType commSymbolicType;
-	//
-	// private SymbolicTupleType gcommSymbolicType;
-
 	/**
 	 * The unique char type used in the system.
 	 */
@@ -286,6 +282,11 @@ public class CommonModelFactory implements ModelFactory {
 	 * The unique symbolic heap type
 	 */
 	private SymbolicTupleType heapSymbolicType;
+
+	/**
+	 * The map of handled object types and their field ID in the heap type.
+	 */
+	private Map<CIVLType, Integer> heapFieldTypeMap = new HashMap<>();
 
 	/** Keep a unique number to identify locations. */
 	private int locationID = 0;
@@ -468,6 +469,18 @@ public class CommonModelFactory implements ModelFactory {
 	 * CIVL Types
 	 * *********************************************************************
 	 */
+
+	@Override
+	public void addHeapFieldType(CIVLType type, int id) {
+		this.heapFieldTypeMap.put(type, id);
+	}
+
+	@Override
+	public int getHeapFieldId(CIVLType type) {
+		if (this.heapFieldTypeMap.containsKey(type))
+			return heapFieldTypeMap.get(type);
+		return -1;
+	}
 
 	@Override
 	public CIVLPrimitiveType booleanType() {
