@@ -1193,7 +1193,7 @@ data from the region pointed to by \ct{q} to that pointed to by
   void memcpy(void *p, void *q, size_t size);
 \end{verbatim}
 
-\section{Heaps, \cmalloc{} and \texttt{free}}
+\section{Heaps, \cmalloc{} and \cfree}
 
 As mentioned above, each dynamic scope has an implicit heap on which
 objects can be allocated and deallocated dynamically.  To allocate an
@@ -1207,13 +1207,17 @@ The standard C function
 \begin{verbatim}
   void * malloc(int size);
 \end{verbatim}
-is equivalent to \verb!$malloc($root, size)!.
+declared in \texttt{stdlib.h}, is equivalent to \verb!$malloc($root, size)!.
 
-The system function \ct{free} is used to deallocate a heap object;
+The system function \cfree{} is used to deallocate a heap object;
 it is just like C's \texttt{free}:
 \begin{verbatim}
-  void free(void *p);
+  void $free(void *p);
 \end{verbatim}
+An error is generated if the pointer is not one that was returned by
+\cmalloc, or if it was already freed.  The standard C function
+\texttt{free}, declared in \texttt{stdlib.h} is identical to \cfree.
+The two functions are interchangeable.
 
 % \section{Pointer types}
 
@@ -1365,8 +1369,26 @@ it is just like C's \texttt{free}:
 Each of the following libraries is at least partially implemented and can
 be included in a CIVL-C program:
 \begin{itemize}
-\item \ct{stdlib}
-\item \ct{stdbool}
-\item \ct{stdio}
 \item \ct{assert}
+  \begin{itemize}
+  \item \verb!void assert(_Bool expr);!
+  \end{itemize}
+\item \ct{stdlib}
+  \begin{itemize}
+  \item \verb!void * malloc(size_t size);!
+  \item \verb!void free(void * ptr)!
+  \end{itemize}
+\item \ct{stdbool}
+  \begin{itemize}
+  \item \verb!true!
+  \item \verb!false!
+  \end{itemize}
+\item \ct{stdio}
+  \begin{itemize}
+  \item \verb!int printf(const char * restrict format, ...);!
+  \end{itemize}
+\item \ct{string}
+  \begin{itemize}
+  \item \verb!void memcpy(void * restrict dst, const void * restrict src, size_t n);!
+  \end{itemize}
 \end{itemize}
