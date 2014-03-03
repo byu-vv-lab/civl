@@ -24,7 +24,7 @@ void secondDerivative(double h, int n, double y[], double result[]){
 	}
 	result[0] = (y[2]-2*y[1]+y[0])/h; 
 	result[n-1] = (y[n-3] - 2*y[n-2]-y[n-1])/h;
-	$assert($uniform {k=1 .. n-2} result[k]-$D[rho,{x,2}](k*h) == $O(h*h*h));
+	$assert($uniform {k=1 .. n-2} result[k]-$D[rho,{x,2}](k*h) == $O(h*h*h*h*h));
 }
 
 void main() {

@@ -45,14 +45,18 @@ public class AccuracyTest {
 
 	@Test
 	public void secondDerivativeBad() {
-		assertTrue(ui.run("verify", "-inputnum_elements=5",
+		assertFalse(ui.run("verify", "-inputnum_elements=5",
 				filename("secondDerivativeBad.cvl")));
 	}
-	
+
 	@Test
 	public void diffusion() {
-		assertTrue(ui.run("verify", "-inputn=4",
-				filename("diffusion.cvl")));
+		assertTrue(ui.run("verify", "-inputn=4", filename("diffusion.cvl")));
 	}
 
+	@Test
+	public void laplace2d() {
+		assertTrue(ui.run("verify", "-inputrows=3", "-inputcols=3",
+				filename("laplace2d.cvl")));
+	}
 }
