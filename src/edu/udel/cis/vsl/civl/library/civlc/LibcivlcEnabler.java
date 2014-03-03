@@ -116,35 +116,22 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 				return new Evaluation(state, universe.falseExpression());
 			}
 			break;
-		case "$comm_add":
-		case "free":
-		case "$bundle_pack":
-		case "$bundle_unpack":
-		case "$bundle_size":
-		case "$comm_create":
-		case "$comm_enqueue":
-		case "printf":
-		case "$exit":
-		case "$memcpy":
-		case "$message_pack":
-		case "$message_source":
-		case "$message_tag":
-		case "$message_dest":
-		case "$message_size":
-		case "$message_unpack":
-		case "$comm_destroy":
-		case "$comm_size":
-		case "$comm_probe":
-		case "$comm_seek":
-		case "$comm_chan_size":
-		case "$comm_total_size":
-		case "$gcomm_create2":
-		case "$heap_create":
-		case "$scope_parent":
-			guard = universe.trueExpression();
-			break;
 		case "$wait":
 			guard = getWaitGuard(state, pid, arguments, argumentValues);
+			break;
+		case "$bundle_pack":
+		case "$bundle_size":
+		case "$bundle_unpack":
+		case "$comm_create":
+		case "$comm_enqueue":
+		case "$comm_probe":
+		case "$comm_seek":
+		case "$comm_size":
+		case "$exit":
+		case "$free":
+		case "$gcomm_create2":
+		case "$scope_parent":
+			guard = universe.trueExpression();
 			break;
 		default:
 			throw new CIVLInternalException("Unknown civlc function: "
@@ -176,6 +163,8 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		numArgs = call.arguments().size();
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
+		String function = call.function().name().name();
+		CIVLSource source = call.getSource();
 
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
@@ -192,23 +181,46 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 			state = eval.state;
 		}
 
-		switch (call.function().name().name()) {
-		case "$comm_enqueue":
+		switch (function) {
 		case "$comm_dequeue":
+		case "$comm_enqueue":
 			Set<Integer> ampleSet = new HashSet<>();
+			Set<SymbolicExpression> commMemUnits = new HashSet<>();
 
-			for (int otherPid : reachableMemUnitsMap.keySet()) {
-				if (otherPid == pid)
-					continue;
-				else if (reachableMemUnitsMap.get(otherPid).containsKey(
-						argumentValues[0])) {
-					ampleSet.add(otherPid);
+			try {
+				evaluator.memoryUnitsOfExpression(state, pid, arguments[0],
+						commMemUnits);
+			} catch (UnsatisfiablePathConditionException e) {
+				commMemUnits.add(argumentValues[0]);
+			}
+			for (SymbolicExpression memUnit : commMemUnits) {
+				for (int otherPid : reachableMemUnitsMap.keySet()) {
+					if (otherPid == pid || ampleSet.contains(otherPid))
+						continue;
+					else if (reachableMemUnitsMap.get(otherPid).containsKey(
+							memUnit)) {
+						ampleSet.add(otherPid);
+					}
 				}
 			}
 			return ampleSet;
+		case "$wait":
+		case "$bundle_pack":
+		case "$bundle_size":
+		case "$bundle_unpack":
+		case "$comm_create":
+		case "$comm_probe":
+		case "$comm_seek":
+		case "$comm_size":
+		case "$exit":
+		case "$free":
+		case "$gcomm_create2":
+		case "$scope_parent":
+			return new HashSet<>();
 		default:
+			throw new CIVLInternalException("Unknown civlc function: "
+					+ function, source);
 		}
-		return new HashSet<>();
 	}
 
 	/**
@@ -358,6 +370,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 
 	/**
 	 * Computes the guard of $wait.
+	 * 
 	 * @param state
 	 * @param pid
 	 * @param arguments

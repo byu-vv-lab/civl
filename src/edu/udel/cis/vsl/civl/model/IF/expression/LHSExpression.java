@@ -16,6 +16,18 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * 
  */
 public interface LHSExpression extends Expression {
+	
+	public enum LHSExpressionKind{
+		DEREFERENCE, DOT, SUBSCRIPT, VARIABLE}
+	
+	LHSExpressionKind lhsExpressionKind();
+	
+	/**
+	 * Updates the flag of the expression denoting if it is purely local.
+	 * 
+	 * @param pl
+	 *            True iff attempting to set the expression as purely local.
+	 */
 	void setPurelyLocal(boolean pl);
 
 	/**

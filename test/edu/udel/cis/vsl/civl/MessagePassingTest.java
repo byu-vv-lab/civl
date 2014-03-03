@@ -28,19 +28,16 @@ public class MessagePassingTest {
 	/* **************************** Test Methods *************************** */
 
 	@Test
-	public void ring0() {
-		assertTrue(ui.run("verify", filename("ring0.cvl"),
-				"-inputNPROCS_BOUND=8", "-inputN_BOUND=4"));
+	public void hybrid() {
+		assertFalse(ui.run("verify", filename("hybrid.cvl"), "-inputNPROCS=2"));
 	}
 
+	// takes too long: about 90s
+	@Ignore
 	@Test
-	public void ring1() {
-		assertTrue(ui.run("verify", filename("ring1.cvl"), "-inputNPROCS=3"));
-	}
-
-	@Test
-	public void ring2() {
-		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));
+	public void hybridMin() {
+		assertFalse(ui.run("verify", filename("hybrid.cvl"), "-inputNPROCS=2",
+				"-min"));
 	}
 
 	@Test
@@ -54,16 +51,19 @@ public class MessagePassingTest {
 	}
 
 	@Test
-	public void hybrid2() {
-		assertFalse(ui.run("verify", filename("hybrid2.cvl"), "-inputNPROCS=2"));
+	public void ring() {
+		assertTrue(ui.run("verify", filename("ring.cvl"),
+				"-inputNPROCS_BOUND=8", "-inputN_BOUND=4"));
 	}
 
-	// takes too long: about 90s
-	@Ignore
 	@Test
-	public void hybrid2Min() {
-		assertFalse(ui.run("verify", filename("hybrid2.cvl"), "-inputNPROCS=2",
-				"-min"));
+	public void ring1() {
+		assertTrue(ui.run("verify", filename("ring1.cvl"), "-inputNPROCS=3"));
+	}
+
+	@Test
+	public void ring2() {
+		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));
 	}
 
 }

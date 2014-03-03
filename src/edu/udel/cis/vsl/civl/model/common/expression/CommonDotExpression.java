@@ -182,4 +182,9 @@ public class CommonDotExpression extends CommonExpression implements
 		return this.structOrUnion.getExpressionType().isUnionType();
 	}
 
+	@Override
+	public LHSExpressionKind lhsExpressionKind() {
+		return LHSExpressionKind.DOT;
+	}
+
 }

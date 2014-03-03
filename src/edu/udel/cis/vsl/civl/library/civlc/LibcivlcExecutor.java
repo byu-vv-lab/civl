@@ -22,7 +22,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
@@ -33,13 +32,11 @@ import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression.ReferenceKind;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
-import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
@@ -53,6 +50,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  * Implementation of the execution for system functions declared civlc.h.
  * 
  * @author siegel
+ * @author Manchun Zheng (zmanchun)
  * 
  */
 public class LibcivlcExecutor extends CommonLibraryExecutor implements
@@ -103,50 +101,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
-
-	/**
-	 * Executes the function call "free(*void)": removes from the heap the
-	 * object referred to by the given pointer.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param pid
-	 *            The ID of the process that the function call belongs to.
-	 * @param arguments
-	 *            The static representation of the arguments of the function
-	 *            call.
-	 * @param argumentValues
-	 *            The dynamic representation of the arguments of the function
-	 *            call.
-	 * @param source
-	 *            The source code element to be used for error report.
-	 * @return The new state after executing the function call.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State executeFree(State state, int pid, Expression[] arguments,
-			SymbolicExpression[] argumentValues, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		Expression pointerExpression = arguments[0];
-		SymbolicExpression firstElementPointer = argumentValues[0];
-		CIVLHeapType heapType = modelFactory.heapType();
-		SymbolicExpression heapScopeID = universe.tupleRead(
-				firstElementPointer, universe.intObject(0));
-		SymbolicExpression heapObjectPointer;
-		Evaluation eval;
-		int index;
-		SymbolicExpression undef;
-		SymbolicExpression heapPointer = evaluator.heapPointer(source, state,
-				heapScopeID);
-
-		eval = getAndCheckHeapObjectPointer(heapPointer, firstElementPointer,
-				pointerExpression.getSource(), state);
-		state = eval.state;
-		heapObjectPointer = eval.value;
-		index = getMallocIndex(firstElementPointer);
-		undef = heapType.getMalloc(index).getUndefinedObject();
-		state = primaryExecutor.assign(source, state, heapObjectPointer, undef);
-		return state;
-	}
 
 	/**
 	 * Creates a bundle from the memory region specified by ptr and size,
@@ -913,26 +867,22 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = eval.state;
 		}
 		switch (name.name()) {
-		case "free":
-			state = executeFree(state, pid, arguments, argumentValues,
-					call.getSource());
-			break;
 		case "$bundle_pack":
 			state = executeBundlePack(state, pid, (CIVLBundleType) call
 					.function().returnType(), lhs, arguments, argumentValues,
-					call.getSource());
-			break;
-		case "$bundle_unpack":
-			state = executeBundleUnpack(state, pid, arguments, argumentValues,
 					call.getSource());
 			break;
 		case "$bundle_size":
 			state = executeBundleSize(state, pid, lhs, arguments,
 					argumentValues, call.getSource());
 			break;
-		case "$gcomm_create2":
-			state = executeGcommCreate(state, pid, lhs, arguments,
-					argumentValues, call.getSource());
+		case "$bundle_unpack":
+			state = executeBundleUnpack(state, pid, arguments, argumentValues,
+					call.getSource());
+			break;
+		case "$comm_create":
+			state = this.executeCommCreate(state, pid, lhs, arguments,
+					argumentValues);
 			break;
 		case "$comm_enqueue":
 			state = executeCommEnqueue(state, pid, arguments, argumentValues);
@@ -941,40 +891,36 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = executeCommDequeue(state, pid, lhs, arguments,
 					argumentValues);
 			break;
-		case "$exit":// return immediately since no transitions needed after an
-						// exit, because the process no longer exists.
-			return executeExit(state, pid);
-		case "$comm_size":
-			state = this.executeCommSize(state, pid, lhs, arguments,
-					argumentValues);
-			break;
-		case "$wait":// return immediately since target location has been set.
-			return executeWait(state, pid, arguments, argumentValues,
-					call.getSource(), call.target());
-		case "$comm_create":
-			state = this.executeCommCreate(state, pid, lhs, arguments,
+		case "$comm_seek":
+			state = this.executeCommSeek(state, pid, lhs, arguments,
 					argumentValues);
 			break;
 		case "$comm_probe":
 			state = this.executeCommProbe(state, pid, lhs, arguments,
 					argumentValues);
 			break;
-		case "$comm_seek":
-			state = this.executeCommSeek(state, pid, lhs, arguments,
+		case "$comm_size":
+			state = this.executeCommSize(state, pid, lhs, arguments,
 					argumentValues);
+			break;
+		case "$exit":// return immediately since no transitions needed after an
+			// exit, because the process no longer exists.
+			return executeExit(state, pid);
+		case "$free":
+			state = executeFree(state, pid, arguments, argumentValues,
+					call.getSource());
+			break;
+		case "$gcomm_create2":
+			state = executeGcommCreate(state, pid, lhs, arguments,
+					argumentValues, call.getSource());
 			break;
 		case "$scope_parent":
 			state = this.executeScopeParent(state, pid, lhs, arguments,
 					argumentValues);
 			break;
-		case "$memcpy":
-		case "$message_pack":
-		case "$message_source":
-		case "$message_tag":
-		case "$message_dest":
-		case "$message_size":
-		case "$message_unpack":
-			throw new CIVLUnimplementedFeatureException(name.name(), call);
+		case "$wait":// return immediately since target location has been set.
+			return executeWait(state, pid, arguments, argumentValues,
+					call.getSource(), call.target());
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					call);
@@ -1050,76 +996,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		state = stateFactory.setLocation(state, pid, target);
 		state = stateFactory.removeProcess(state, joinedPid);
 		return state;
-	}
-
-	/**
-	 * Obtain a heap object via a certain heap object pointer.
-	 * 
-	 * @param heapPointer
-	 *            The heap pointer.
-	 * @param pointer
-	 *            The heap object pointer.
-	 * @param pointerSource
-	 *            The source code element of the pointer.
-	 * @param state
-	 *            The current state
-	 * @return The heap object pointer and the new state if any side effect.
-	 */
-	private Evaluation getAndCheckHeapObjectPointer(
-			SymbolicExpression heapPointer, SymbolicExpression pointer,
-			CIVLSource pointerSource, State state) {
-		SymbolicExpression objectPointer = evaluator.getParentPointer(pointer);
-
-		if (objectPointer != null) {
-			SymbolicExpression fieldPointer = evaluator
-					.getParentPointer(objectPointer);
-
-			if (fieldPointer != null) {
-				SymbolicExpression actualHeapPointer = evaluator
-						.getParentPointer(fieldPointer);
-
-				if (actualHeapPointer != null) {
-					BooleanExpression pathCondition = state.getPathCondition();
-					BooleanExpression claim = universe.equals(
-							actualHeapPointer, heapPointer);
-					ResultType valid = universe.reasoner(pathCondition)
-							.valid(claim).getResultType();
-					ReferenceExpression symRef;
-
-					if (valid != ResultType.YES) {
-						Certainty certainty = valid == ResultType.NO ? Certainty.PROVEABLE
-								: Certainty.MAYBE;
-						CIVLStateException e = new CIVLStateException(
-								ErrorKind.MALLOC, certainty,
-								"Invalid pointer for heap", state,
-								pointerSource);
-
-						evaluator.reportError(e);
-						state = state.setPathCondition(universe.and(
-								pathCondition, claim));
-					}
-					symRef = evaluator.getSymRef(pointer);
-					if (symRef instanceof ArrayElementReference) {
-						NumericExpression index = ((ArrayElementReference) symRef)
-								.getIndex();
-
-						if (index.isZero()) {
-							return new Evaluation(state, objectPointer);
-						}
-					}
-
-				}
-			}
-		}
-		{
-			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
-					Certainty.PROVEABLE, "Invalid pointer for heap", state,
-					pointerSource);
-
-			evaluator.reportError(e);
-			state = state.setPathCondition(universe.falseExpression());
-			return new Evaluation(state, objectPointer);
-		}
 	}
 
 	/**
@@ -1249,29 +1125,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			}
 		}
 		return array;
-	}
-
-	/**
-	 * Obtains the field ID in the heap type via a heap-object pointer.
-	 * 
-	 * @param pointer
-	 *            The heap-object pointer.
-	 * @return The field ID in the heap type of the heap-object that the given
-	 *         pointer refers to.
-	 */
-	private int getMallocIndex(SymbolicExpression pointer) {
-		// ref points to element 0 of an array:
-		NTReferenceExpression ref = (NTReferenceExpression) evaluator
-				.getSymRef(pointer);
-		// objectPointer points to array:
-		NTReferenceExpression objectPointer = (NTReferenceExpression) ref
-				.getParent();
-		// fieldPointer points to the field:
-		TupleComponentReference fieldPointer = (TupleComponentReference) objectPointer
-				.getParent();
-		int result = fieldPointer.getIndex().getInt();
-
-		return result;
 	}
 
 	/**

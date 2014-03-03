@@ -11,19 +11,19 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class ConcurrencyTest {
 
-	/* **************************** Static Fields **************************** */
+	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"), "concurrency");
 
 	private static UserInterface ui = new UserInterface();
 
-	/* **************************** Helper Methods *************************** */
+	/* *************************** Helper Methods ************************** */
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
 	}
 
-	/****************************** Test Methods *****************************/
+	/* **************************** Test Methods *************************** */
 
 	@Test
 	public void adder() {
@@ -122,23 +122,13 @@ public class ConcurrencyTest {
 
 	@Test
 	public void threadPrivate() {
-		assertTrue(ui.run("verify", "-inputTHREADS_BOUND=2",
-				"-inputN_BOUND=4", "-enablePrintf=false",
-				filename("fig4.98-threadprivate.cvl")));
+		assertTrue(ui.run("verify", "-inputTHREADS_BOUND=2", "-inputN_BOUND=4",
+				"-enablePrintf=false", filename("fig4.98-threadprivate.cvl")));
 	}
 
 	@Test
-	public void pointerShare() {
-		assertFalse(ui.run("verify", filename("pointerShare.cvl")));
+	public void waitSelf() {
+		assertFalse(ui.run("verify", filename("waitSelf.cvl")));
 	}
 
-	@Test
-	public void pointerShare1() {
-		assertFalse(ui.run("verify", filename("pointerShare1.cvl")));
-	}
-
-	@Test
-	public void pointerShare2() {
-		assertFalse(ui.run("verify", filename("pointerShare2.cvl")));
-	}
 }

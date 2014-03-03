@@ -38,6 +38,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
@@ -1487,10 +1488,22 @@ public interface ModelFactory {
 	void addAnonStatement(Statement statment);
 
 	Expression systemGuardExpression(CallOrSpawnStatement call);
-	
+
 	void setGcommSymbolicType(CIVLType gcommType);
 
 	void setCommSymbolicType(CIVLType commType);
 
 	Model model();
+
+	/**
+	 * Creates a new scopeof expression using the given argument.
+	 * 
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @param argument
+	 *            The argument of the scope of expression.
+	 * @return The new scopeof expression.
+	 */
+	ScopeofExpression scopeofExpression(CIVLSource source,
+			LHSExpression argument);
 }

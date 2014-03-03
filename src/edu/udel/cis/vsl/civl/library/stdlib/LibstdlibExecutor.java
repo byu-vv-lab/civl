@@ -5,105 +5,120 @@ package edu.udel.cis.vsl.civl.library.stdlib;
 
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * Executor for stdlib function calls.
  * 
+ * @author Manchun Zheng (zmanchun)
  * @author zirkel
  * 
  */
 public class LibstdlibExecutor extends CommonLibraryExecutor implements
 		LibraryExecutor {
 
+	/* **************************** Constructors *************************** */
+
 	/**
-	 * Executor for stdlib function calls.
+	 * Create a new instance of library executor for "stdlib.h".
+	 * 
+	 * @param primaryExecutor
+	 *            The main executor of the system.
+	 * @param output
+	 *            The output stream for printing.
+	 * @param enablePrintf
+	 *            True iff print is enabled, reflecting command line options.
 	 */
 	public LibstdlibExecutor(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
 		super(primaryExecutor, output, enablePrintf, modelFactory);
 	}
 
-	/**
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.udel.cis.vsl.civl.library.IF.LibraryExecutor#name()
-	 */
+	/* ************************ Methods from Library *********************** */
+
 	@Override
 	public String name() {
 		return "stdlib";
 	}
 
-	/**
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.udel.cis.vsl.civl.library.IF.LibraryExecutor#execute(edu.udel.cis
-	 *      .vsl.civl.state.State, int,
-	 *      edu.udel.cis.vsl.civl.model.IF.statement.Statement)
-	 */
+	/* ******************** Methods from LibraryExecutor ******************* */
+
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement statement) {
-		// Identifier name;
-		// State result = null;
-
-		throw new CIVLUnimplementedFeatureException(
-				"stdlib not yet implemented", statement);
-
-		// if (!(statement instanceof CallOrSpawnStatement)) {
-		// throw new RuntimeException("Unsupported statement for stdlib: "
-		// + statement);
-		// }
-		// name = ((CallOrSpawnStatement) statement).function().name();
-		// if (name.name().equals("malloc")) {
-		// // Vector<SymbolicExpression> heapElements = new
-		// // Vector<SymbolicExpression>();
-		//
-		// } else if (name.name().equals("free")) {
-		//
-		// } else {
-		// throw new RuntimeException("Unsupported statement for stdlib: "
-		// + statement);
-		// }
-		// return result;
-		// // TODO Auto-generated method stub
-
+	public State execute(State state, int pid, CallOrSpawnStatement statement)
+			throws UnsatisfiablePathConditionException {
+		return executeWork(state, pid, statement);
 	}
 
-	/**
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.udel.cis.vsl.civl.library.IF.LibraryExecutor#initialize(edu.udel
-	 *      .cis.vsl.civl.state.State)
-	 */
 	@Override
 	public State initialize(State state) {
 		// TODO Auto-generated method stub
 		return state;
 	}
 
-	/**
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.udel.cis.vsl.civl.library.IF.LibraryExecutor#wrapUp(edu.udel.cis
-	 *      .vsl.civl.state.State)
-	 */
 	@Override
 	public State wrapUp(State state) {
 		// TODO Auto-generated method stub
 		return state;
 	}
 
-	// @Override
-	// public BooleanExpression getGuard(State state, int pid, Statement
-	// statement) {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
+	/* *************************** Private Methods ************************* */
+
+	/**
+	 * Executes a system function call, updating the left hand side expression
+	 * with the returned value if any.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param call
+	 *            The function call statement to be executed.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeWork(State state, int pid, CallOrSpawnStatement call)
+			throws UnsatisfiablePathConditionException {
+		Identifier name;
+		Expression[] arguments;
+		SymbolicExpression[] argumentValues;
+		// LHSExpression lhs;
+		int numArgs;
+
+		numArgs = call.arguments().size();
+		name = call.function().name();
+		// lhs = call.lhs();
+		arguments = new Expression[numArgs];
+		argumentValues = new SymbolicExpression[numArgs];
+		for (int i = 0; i < numArgs; i++) {
+			Evaluation eval;
+
+			arguments[i] = call.arguments().get(i);
+			eval = evaluator.evaluate(state, pid, arguments[i]);
+			argumentValues[i] = eval.value;
+			state = eval.state;
+		}
+		switch (name.name()) {
+		case "free":
+			state = executeFree(state, pid, arguments, argumentValues,
+					call.getSource());
+			break;
+		default:
+			throw new CIVLInternalException("Unknown stdlib function: " + name,
+					call);
+		}
+		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
 
 }

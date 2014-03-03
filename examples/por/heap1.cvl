@@ -4,8 +4,6 @@ int *p;
 _Bool start = $false;
 
 void f(){
-  $heap fh;
-
   $when(start);
   p = (int*) $malloc($root, sizeof(int));
   h = &fh;

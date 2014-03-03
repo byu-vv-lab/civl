@@ -10,19 +10,19 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class PORTest {
 
-	/* **************************** Static Fields **************************** */
+	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"), "por");
 
 	private static UserInterface ui = new UserInterface();
 
-	/* **************************** Helper Methods *************************** */
+	/* *************************** Helper Methods ************************** */
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
 	}
 
-	/****************************** Test Methods *****************************/
+	/* **************************** Test Methods *************************** */
 
 	@Test
 	public void atomic0() {
@@ -32,6 +32,21 @@ public class PORTest {
 	@Test
 	public void atomic1() {
 		assertFalse(ui.run("verify", filename("atomic1.cvl")));
+	}
+	
+	@Test
+	public void pointerShare() {
+		assertFalse(ui.run("verify", filename("pointerShare.cvl")));
+	}
+
+	@Test
+	public void pointerShare1() {
+		assertFalse(ui.run("verify", filename("pointerShare1.cvl")));
+	}
+
+	@Test
+	public void pointerShare2() {
+		assertFalse(ui.run("verify", filename("pointerShare2.cvl")));
 	}
 
 	@Test
@@ -44,8 +59,4 @@ public class PORTest {
 		assertFalse(ui.run("verify", filename("trade4.cvl")));
 	}
 	
-//	@Test
-//	public void heap1() {
-//		assertFalse(ui.run("verify", filename("heap1.cvl")));
-//	}
 }

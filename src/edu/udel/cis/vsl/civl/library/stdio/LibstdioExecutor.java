@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.library.stdio;
 import java.io.PrintStream;
 import java.util.Vector;
 
-import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
@@ -32,8 +31,6 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 public class LibstdioExecutor extends CommonLibraryExecutor implements
 		LibraryExecutor {
 
-	/* ************************** Instance Fields ************************** */
-
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -51,6 +48,13 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		super(primaryExecutor, output, enablePrintf, modelFactory);
 	}
 
+	/* ************************ Methods from Library *********************** */
+
+	@Override
+	public String name() {
+		return "stdio";
+	}
+
 	/* ******************** Methods from LibraryExecutor ******************* */
 
 	@Override
@@ -59,21 +63,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		return executeWork(state, pid, (CallOrSpawnStatement) statement);
 	}
 
-	// @Override
-	// public BooleanExpression getGuard(State state, int pid, Statement
-	// statement) {
-	// return universe.trueExpression();
-	// }
-
 	@Override
 	public State initialize(State state) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	@Override
-	public String name() {
-		return "stdio";
 	}
 
 	@Override
@@ -104,10 +97,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		SymbolicExpression[] argumentValues;
 		int numArgs;
 
-		if (!(statement instanceof CallOrSpawnStatement)) {
-			throw new CIVLInternalException("Unsupported statement for civlc",
-					statement);
-		}
 		statement = (CallOrSpawnStatement) statement;
 		numArgs = statement.arguments().size();
 		name = statement.function().name();

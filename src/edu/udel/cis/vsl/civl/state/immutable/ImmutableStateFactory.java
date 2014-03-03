@@ -1026,5 +1026,10 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 		return state.rootScopeID();
 	}
+	
+//	@Override
+//	public int getScopeId(State state, int pid, Variable variable){
+//		return state.getScopeId(pid, variable);
+//	}
 
 }

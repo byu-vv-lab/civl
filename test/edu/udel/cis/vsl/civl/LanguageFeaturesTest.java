@@ -16,20 +16,25 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class LanguageFeaturesTest {
 
-	/***************************** Static Fields *****************************/
+	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"),
 			"languageFeatures");
 
 	private static UserInterface ui = new UserInterface();
 
-	/***************************** Helper Methods *****************************/
+	/* *************************** Helper Methods *************************** */
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
 	}
 
-	/****************************** Test Methods *****************************/
+	/* **************************** Test Methods *************************** */
+
+	@Test
+	public void arrayLiteral() throws ABCException {
+		assertTrue(ui.run("verify", filename("arrayLiteral.cvl")));
+	}
 
 	@Test
 	public void arrayPointer() throws ABCException {
@@ -39,11 +44,6 @@ public class LanguageFeaturesTest {
 	@Test
 	public void arrays() throws ABCException {
 		assertTrue(ui.run("verify", filename("arrays.cvl")));
-	}
-
-	@Test
-	public void arrayLiteral() throws ABCException {
-		assertTrue(ui.run("verify", filename("arrayLiteral.cvl")));
 	}
 
 	@Test
@@ -94,6 +94,11 @@ public class LanguageFeaturesTest {
 	@Test
 	public void atomWaitBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("atomWaitBad.cvl")));
+	}
+
+	@Test
+	public void badGuard() throws ABCException {
+		assertFalse(ui.run("verify", filename("badGuard.cvl")));
 	}
 
 	@Test
@@ -162,6 +167,12 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
+	public void communicatorFeatures() {
+		assertTrue(ui.run("verify", filename("communicatorFeatures.cvl"),
+				"-inputNPROCS_BOUND=5", "-inputN_BOUND=3"));
+	}
+
+	@Test
 	public void compare() throws ABCException {
 		assertTrue(ui.run("verify", filename("compare.cvl")));
 	}
@@ -207,6 +218,11 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
+	public void functionPrototypeBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("functionPrototypeBad.cvl")));
+	}
+
+	@Test
 	public void implies() throws ABCException {
 		assertTrue(ui.run("verify", filename("implies.cvl")));
 	}
@@ -222,6 +238,11 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
+	public void malloc1() throws ABCException {
+		assertTrue(ui.run("verify", filename("malloc1.cvl")));
+	}
+
+	@Test
 	public void mallocBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("mallocBad.cvl")));
 	}
@@ -231,19 +252,19 @@ public class LanguageFeaturesTest {
 		assertFalse(ui.run("verify", filename("mallocBad2.cvl")));
 	}
 
-	// @Test
-	// public void mallocBad3() throws ABCException {
-	// assertFalse(ui.run("verify", filename("mallocBad3.cvl")));
-	// }
-	//
-	// @Test
-	// public void mallocBad4() throws ABCException {
-	// assertFalse(ui.run("verify", filename("mallocBad4.cvl")));
-	// }
-
 	@Test
 	public void memcpy() throws ABCException {
 		assertTrue(ui.run("verify", filename("memcpy.cvl")));
+	}
+
+	@Test
+	public void messageUnpackBad1() throws ABCException {
+		assertFalse(ui.run("verify", filename("messageUnpackBad1.cvl")));
+	}
+
+	@Test
+	public void messageUnpackBad2() throws ABCException {
+		assertFalse(ui.run("verify", filename("messageUnpackBad2.cvl")));
 	}
 
 	@Test
@@ -283,6 +304,16 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
+	public void removedHeapPointer() throws ABCException {
+		assertFalse(ui.run("verify", filename("removedHeapPointer.cvl")));
+	}
+
+	@Test
+	public void scopeOperators() throws ABCException {
+		assertTrue(ui.run("verify", filename("scopeOperators.cvl")));
+	}
+
+	@Test
 	public void scoping() throws ABCException {
 		assertTrue(ui.run("verify", filename("scoping.cvl")));
 	}
@@ -300,6 +331,11 @@ public class LanguageFeaturesTest {
 	@Test
 	public void sizeOf() throws ABCException {
 		assertTrue(ui.run("verify", filename("sizeOf.cvl")));
+	}
+
+	@Test
+	public void spawnFoo() throws ABCException {
+		assertFalse(ui.run("verify", filename("spawnFoo.cvl")));
 	}
 
 	@Test
@@ -323,53 +359,7 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void removedHeapPointer() throws ABCException {
-		assertFalse(ui.run("verify", filename("removedHeapPointer.cvl")));
-	}
-
-	@Test
 	public void union() throws ABCException {
 		assertTrue(ui.run("verify", filename("union.cvl")));
-	}
-
-	@Test
-	public void badGuard() throws ABCException {
-		assertFalse(ui.run("verify", filename("badGuard.cvl")));
-	}
-
-	@Test
-	public void functionPrototypeBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("functionPrototypeBad.cvl")));
-	}
-	
-	@Test
-	public void gcommCreate() throws ABCException {
-		assertTrue(ui.run("verify", filename("gcommCreate.cvl")));
-	}
-	
-	@Test
-	public void messageUnpackBad1() throws ABCException {
-		assertFalse(ui.run("verify", filename("messageUnpackBad1.cvl")));
-	}
-	
-	@Test
-	public void messageUnpackBad2() throws ABCException {
-		assertFalse(ui.run("verify", filename("messageUnpackBad2.cvl")));
-	}
-	
-	@Test
-	public void malloc1() throws ABCException {
-		assertTrue(ui.run("verify", filename("malloc1.cvl")));
-	}
-	
-	@Test
-	public void scopeOperators()throws ABCException {
-		assertTrue(ui.run("verify", filename("scopeOperators.cvl")));
-	}
-	
-	@Test
-	public void communicatorFeatures() {
-		assertTrue(ui.run("verify", filename("communicatorFeatures.cvl"),
-				"-inputNPROCS_BOUND=5", "-inputN_BOUND=3"));
 	}
 }

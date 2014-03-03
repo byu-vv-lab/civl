@@ -195,4 +195,9 @@ public class CommonSubscriptExpression extends CommonExpression implements
 			variableSet.addAll(operandResult);
 		return variableSet;
 	}
+
+	@Override
+	public LHSExpressionKind lhsExpressionKind() {
+		return LHSExpressionKind.SUBSCRIPT;
+	}
 }

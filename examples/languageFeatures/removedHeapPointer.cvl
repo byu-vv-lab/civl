@@ -15,7 +15,7 @@ void foo(){
   gp = (int *) $malloc(sf, sizeof(int));
   gStart = $true;
   *gp = 1;
-  free(gp);
+  $free(gp);
 }
 
 void goo(){

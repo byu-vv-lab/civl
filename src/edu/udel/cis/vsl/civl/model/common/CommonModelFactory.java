@@ -53,6 +53,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
@@ -106,6 +107,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpress
 import edu.udel.cis.vsl.civl.model.common.expression.CommonQuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonScopeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofTypeExpression;
@@ -200,7 +202,7 @@ public class CommonModelFactory implements ModelFactory {
 	private static final String CONDITIONAL_VARIABLE_PREFIX = "__cond_var_";
 
 	private static final String ANONYMOUS_VARIABLE_PREFIX = "__anon_";
-	
+
 	private static final String HEAP_VAR = "__heap";
 
 	/* ************************** Instance Fields ************************** */
@@ -230,9 +232,9 @@ public class CommonModelFactory implements ModelFactory {
 
 	private SymbolicUnionType bundleSymbolicType;
 
-//	private SymbolicTupleType commSymbolicType;
-//
-//	private SymbolicTupleType gcommSymbolicType;
+	// private SymbolicTupleType commSymbolicType;
+	//
+	// private SymbolicTupleType gcommSymbolicType;
 
 	/**
 	 * The unique char type used in the system.
@@ -935,6 +937,15 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public ResultExpression resultExpression(CIVLSource source) {
 		return new CommonResultExpression(source);
+	}
+
+	@Override
+	public ScopeofExpression scopeofExpression(CIVLSource source,
+			LHSExpression argument) {
+		ScopeofExpression result = new CommonScopeofExpression(source, argument);
+
+		((CommonScopeofExpression) result).setExpressionType(scopeType);
+		return result;
 	}
 
 	/**
@@ -1873,12 +1884,11 @@ public class CommonModelFactory implements ModelFactory {
 		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
 		int newVid;
 		Variable heapVariable;
-		
-		if(newScope.id() == 0)
+
+		if (newScope.id() == 0)
 			this.createAtomicLockVariable(newScope);
 		newVid = newScope.numVariables();
-		heapVariable = this.variable(source,
-				modelBuilder.heapType,
+		heapVariable = this.variable(source, modelBuilder.heapType,
 				this.identifier(source, HEAP_VAR), newVid);
 		newScope.addVariable(heapVariable);
 		if (parent != null) {
@@ -2356,12 +2366,12 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public void setCommSymbolicType(CIVLType commType) {
-//		this.commSymbolicType = (SymbolicTupleType) universe.canonic(commType
-//				.getDynamicType(universe));
+		// this.commSymbolicType = (SymbolicTupleType) universe.canonic(commType
+		// .getDynamicType(universe));
 	}
-	
+
 	@Override
-	public Model model(){
+	public Model model() {
 		return this.modelBuilder.getModel();
 	}
 

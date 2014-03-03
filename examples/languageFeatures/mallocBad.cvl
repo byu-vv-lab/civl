@@ -6,7 +6,7 @@ void main() {
   double *p = (double *) $malloc($here, 5*sizeof(double));
   
   p[4]=3.14;
-  free(p);
+  $free(p);
   // Uses pointer after free.
   $assert(p[4]==3.14);
 }   

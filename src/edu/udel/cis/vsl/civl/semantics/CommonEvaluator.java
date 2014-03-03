@@ -47,6 +47,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
@@ -1990,6 +1991,10 @@ public class CommonEvaluator implements Evaluator {
 		case RESULT:
 			result = evaluateResult(state, pid, (ResultExpression) expression);
 			break;
+		case SCOPEOF:
+			result = evaluateScopeofExpression(state, pid,
+					(ScopeofExpression) expression);
+			break;
 		case SELF:
 			result = evaluateSelf(state, pid, (SelfExpression) expression);
 			break;
@@ -2040,6 +2045,51 @@ public class CommonEvaluator implements Evaluator {
 					+ kind, expression.getSource());
 		}
 		return result;
+	}
+
+	private Evaluation evaluateScopeofExpression(State state, int pid,
+			ScopeofExpression expression)
+			throws UnsatisfiablePathConditionException {
+		LHSExpression argument = expression.argument();
+
+		return scopeofExpression(state, pid, argument);
+	}
+
+	private Evaluation scopeofExpression(State state, int pid,
+			LHSExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval;
+
+		switch (expression.lhsExpressionKind()) {
+		case DEREFERENCE:
+			Expression pointer = ((DereferenceExpression) expression).pointer();
+
+			eval = evaluate(state, pid, pointer);
+			int sid = getScopeId(pointer.getSource(), eval.value);
+			state = eval.state;
+			if (sid < 0) {
+				logSimpleError(pointer.getSource(), state,
+						ErrorKind.DEREFERENCE,
+						"Attempt to dereference pointer into scope which has been removed from state");
+				throw new UnsatisfiablePathConditionException();
+			}
+			return new Evaluation(state, modelFactory.scopeValue(sid));
+		case DOT:
+			return scopeofExpression(state, pid,
+					(LHSExpression) (((DotExpression) expression)
+							.structOrUnion()));
+		case SUBSCRIPT:
+			return scopeofExpression(
+					state,
+					pid,
+					(LHSExpression) (((SubscriptExpression) expression).array()));
+
+		default:// VARIABLE
+			int scopeId = state.getScopeId(pid,
+					((VariableExpression) expression).variable());
+
+			return new Evaluation(state, modelFactory.scopeValue(scopeId));
+		}
 	}
 
 	@Override

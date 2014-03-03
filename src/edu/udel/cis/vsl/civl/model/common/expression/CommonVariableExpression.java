@@ -120,4 +120,9 @@ public class CommonVariableExpression extends CommonExpression implements
 		return variable;
 	}
 
+	@Override
+	public LHSExpressionKind lhsExpressionKind() {
+		return LHSExpressionKind.VARIABLE;
+	}
+
 }

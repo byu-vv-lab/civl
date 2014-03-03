@@ -10,7 +10,7 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class CudaTest {
 
-	/***************************** Static Fields *****************************/
+	/* *************************** Static Fields *************************** */
 
 	private static UserInterface ui = new UserInterface();
 
@@ -20,7 +20,7 @@ public class CudaTest {
 		return new File(rootDir, name).getPath();
 	}
 
-	/***************************** Test Methods *****************************/
+	/* *************************** Test Methods **************************** */
 
 	@Test
 	public void exitBarrier() {
@@ -32,9 +32,4 @@ public class CudaTest {
 		assertTrue(ui.run("verify", filename("dot.cvl"), "-inputN_BOUND=8",
 				"-inputTHREADS_PER_BLOCK=4"));
 	}
-
-	// @Test
-	// public void pathfinder() {
-	// assertTrue(ui.run("verify", filename("pathfinder.cvl"), "-por=scp"));
-	// }
 }
