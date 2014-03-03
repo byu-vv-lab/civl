@@ -12,8 +12,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -72,14 +70,12 @@ public class CommonNoopStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLType commType) {
+	public Set<Variable> variableAddressedOf(Scope scope) {
 		return null;
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLType commType) {
+	public Set<Variable> variableAddressedOf() {
 		return null;
 	}
 

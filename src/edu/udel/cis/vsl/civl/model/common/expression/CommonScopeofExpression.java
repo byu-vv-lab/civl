@@ -6,8 +6,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -19,11 +17,11 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public class CommonScopeofExpression extends CommonExpression implements
 		ScopeofExpression {
 
-	private LHSExpression expression;
+	private LHSExpression argument;
 
 	public CommonScopeofExpression(CIVLSource source, LHSExpression expression) {
 		super(source);
-		this.expression = expression;
+		this.argument = expression;
 	}
 
 	@Override
@@ -32,20 +30,23 @@ public class CommonScopeofExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLType commType) {
-		return expression.variableAddressedOf(scope, heapType, commType);
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return argument.variableAddressedOf(scope);
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLType commType) {
-		return expression.variableAddressedOf(heapType, commType);
+	public Set<Variable> variableAddressedOf() {
+		return argument.variableAddressedOf();
 	}
 
 	@Override
 	public LHSExpression argument() {
-		return expression;
+		return argument;
+	}
+	
+	@Override
+	public String toString(){
+		return "$scopeof(" + argument + ")";
 	}
 
 }

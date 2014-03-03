@@ -11,8 +11,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonDereferenceExpression extends CommonExpression implements
@@ -89,11 +87,9 @@ public class CommonDereferenceExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Variable variableWritten(Scope scope, CIVLHeapType heapType,
-			CIVLType commType) {
+	public Variable variableWritten(Scope scope) {
 		if (pointer instanceof LHSExpression) {
-			return ((LHSExpression) pointer).variableWritten(scope, heapType,
-					commType);
+			return ((LHSExpression) pointer).variableWritten(scope);
 		}
 		if (pointer instanceof BinaryExpression) {
 			BinaryExpression binaryExpression = (BinaryExpression) pointer;
@@ -107,8 +103,8 @@ public class CommonDereferenceExpression extends CommonExpression implements
 					pointerVariable = binaryExpression.right();
 				}
 				if (pointerVariable instanceof LHSExpression) {
-					return ((LHSExpression) pointerVariable).variableWritten(
-							scope, heapType, commType);
+					return ((LHSExpression) pointerVariable)
+							.variableWritten(scope);
 				}
 			}
 		}
@@ -116,11 +112,9 @@ public class CommonDereferenceExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLType commType) {
+	public Set<Variable> variableAddressedOf(Scope scope) {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = pointer.variableAddressedOf(scope,
-				heapType, commType);
+		Set<Variable> operandResult = pointer.variableAddressedOf(scope);
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);
@@ -128,10 +122,9 @@ public class CommonDereferenceExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Variable variableWritten(CIVLHeapType heapType, CIVLType commType) {
+	public Variable variableWritten() {
 		if (pointer instanceof LHSExpression) {
-			return ((LHSExpression) pointer)
-					.variableWritten(heapType, commType);
+			return ((LHSExpression) pointer).variableWritten();
 		}
 		if (pointer instanceof BinaryExpression) {
 			BinaryExpression binaryExpression = (BinaryExpression) pointer;
@@ -145,8 +138,7 @@ public class CommonDereferenceExpression extends CommonExpression implements
 					pointerVariable = binaryExpression.right();
 				}
 				if (pointerVariable instanceof LHSExpression) {
-					return ((LHSExpression) pointerVariable).variableWritten(
-							heapType, commType);
+					return ((LHSExpression) pointerVariable).variableWritten();
 				}
 			}
 		}
@@ -154,11 +146,9 @@ public class CommonDereferenceExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLType commType) {
+	public Set<Variable> variableAddressedOf() {
 		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = pointer.variableAddressedOf(heapType,
-				commType);
+		Set<Variable> operandResult = pointer.variableAddressedOf();
 
 		if (operandResult != null)
 			variableSet.addAll(operandResult);

@@ -12,8 +12,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
@@ -178,15 +176,14 @@ public interface Statement extends Sourceable {
 	 *            The given scope.
 	 * @return
 	 */
-	Set<Variable> variableAddressedOf(Scope scope, CIVLHeapType heapType,
-			CIVLType commType);
+	Set<Variable> variableAddressedOf(Scope scope);
 
 	/**
 	 * Obtain the set of variables whose addresses are referenced.
 	 * 
 	 * @return
 	 */
-	Set<Variable> variableAddressedOf(CIVLHeapType heapType, CIVLType commType);
+	Set<Variable> variableAddressedOf();
 
 	/**
 	 * Obtain the kind of the statement.
@@ -195,6 +192,6 @@ public interface Statement extends Sourceable {
 	 */
 	StatementKind statementKind();
 
-	String toStepString(AtomicKind atomicKind,
-			int atomCount, boolean atomicLockVarChanged);
+	String toStepString(AtomicKind atomicKind, int atomCount,
+			boolean atomicLockVarChanged);
 }

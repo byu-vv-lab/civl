@@ -237,7 +237,7 @@ public class ModelBuilderWorker {
 		functionMap = new LinkedHashMap<Function, CIVLFunction>();
 		unprocessedFunctions = new ArrayList<FunctionDefinitionNode>();
 		// add the global variable for atomic lock
-//		factory.createAtomicLockVariable(systemScope);
+		// factory.createAtomicLockVariable(systemScope);
 		factory.setSystemScope(systemScope);
 	}
 
@@ -414,8 +414,7 @@ public class ModelBuilderWorker {
 			f.purelyLocalAnalysis();
 			f.setModel(model);
 			for (Statement s : f.statements()) {
-				Set<Variable> statementResult = s.variableAddressedOf(
-						this.heapType, this.commType);
+				Set<Variable> statementResult = s.variableAddressedOf();
 
 				if (statementResult != null) {
 					addressedOfVariables.addAll(statementResult);
@@ -437,8 +436,7 @@ public class ModelBuilderWorker {
 			// identified after ALL variables have been
 			// checked for being purely local or not
 			for (Location loc : f.locations()) {
-				loc.computeWritableVariables(addressedOfVariables,
-						this.heapType, this.commType);
+				loc.computeWritableVariables(addressedOfVariables);
 				for (Statement s : loc.outgoing()) {
 					s.purelyLocalAnalysis();
 				}
@@ -503,19 +501,18 @@ public class ModelBuilderWorker {
 		translateUndefinedFunctions();
 		completeCallOrSpawnStatements();
 		completeBundleType();
-		if (gcommType != null) {// TODO add fake mallocStatement to the beginning
-			mallocStatements.add(0, factory.mallocStatement(null, null, null, 
-					gcommType, null, 
-					factory.sizeofTypeExpression(null, gcommType), 
-					0, null));
-			//factory.setGcommSymbolicType(gcommType);
+		if (gcommType != null) {// TODO add fake mallocStatement to the
+								// beginning
+			mallocStatements.add(0, factory.mallocStatement(null, null, null,
+					gcommType, null,
+					factory.sizeofTypeExpression(null, gcommType), 0, null));
+			// factory.setGcommSymbolicType(gcommType);
 		}
 		if (commType != null) {// TODO add fake mallocStatement to the beginning
-//			factory.setCommSymbolicType(commType);
-			mallocStatements.add(1, factory.mallocStatement(null, null, null, 
-					commType, null, 
-					factory.sizeofTypeExpression(null, commType), 
-					1, null));
+			// factory.setCommSymbolicType(commType);
+			mallocStatements.add(1, factory.mallocStatement(null, null, null,
+					commType, null,
+					factory.sizeofTypeExpression(null, commType), 1, null));
 		}
 		factory.completeHeapType(heapType, mallocStatements);
 		completeModel(system);

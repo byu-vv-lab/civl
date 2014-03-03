@@ -15,8 +15,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -168,29 +166,25 @@ public class CommonAssignStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLType commType) {
+	public Set<Variable> variableAddressedOf(Scope scope) {
 		Set<Variable> result = new HashSet<>();
-		Set<Variable> argumentResult = lhs.variableAddressedOf(scope, heapType,
-				commType);
-		Variable lhsVariable = lhs.variableWritten(scope, heapType, commType);
+		Set<Variable> argumentResult = lhs.variableAddressedOf(scope);
+		Variable lhsVariable = lhs.variableWritten(scope);
 
 		if (lhsVariable != null)
 			result.add(lhsVariable);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
-		argumentResult = rhs.variableAddressedOf(scope, heapType, commType);
+		argumentResult = rhs.variableAddressedOf(scope);
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		return result;
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLType commType) {
+	public Set<Variable> variableAddressedOf() {
 		Set<Variable> result = new HashSet<>();
-		Set<Variable> argumentResult = lhs.variableAddressedOf(heapType,
-				commType);
+		Set<Variable> argumentResult = lhs.variableAddressedOf();
 
 		if (rhs instanceof VariableExpression) {
 			if (rhs.getExpressionType().isPointerType()) {
@@ -199,7 +193,7 @@ public class CommonAssignStatement extends CommonStatement implements
 		} else {
 			if (argumentResult != null)
 				result.addAll(argumentResult);
-			argumentResult = rhs.variableAddressedOf(heapType, commType);
+			argumentResult = rhs.variableAddressedOf();
 			if (argumentResult != null)
 				result.addAll(argumentResult);
 		}

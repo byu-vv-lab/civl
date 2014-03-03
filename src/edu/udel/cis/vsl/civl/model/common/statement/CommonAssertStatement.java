@@ -15,8 +15,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -241,18 +239,15 @@ public class CommonAssertStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLType commType) {
+	public Set<Variable> variableAddressedOf(Scope scope) {
 		Set<Variable> result = new HashSet<>();
-		Set<Variable> argumentResult = expression.variableAddressedOf(scope,
-				heapType, commType);
+		Set<Variable> argumentResult = expression.variableAddressedOf(scope);
 
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		if (printfArguments != null) {
 			for (Expression argument : printfArguments) {
-				argumentResult = argument.variableAddressedOf(scope, heapType,
-						commType);
+				argumentResult = argument.variableAddressedOf(scope);
 				if (argumentResult != null)
 					result.addAll(argumentResult);
 			}
@@ -261,18 +256,15 @@ public class CommonAssertStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLType commType) {
+	public Set<Variable> variableAddressedOf() {
 		Set<Variable> result = new HashSet<>();
-		Set<Variable> argumentResult = expression.variableAddressedOf(heapType,
-				commType);
+		Set<Variable> argumentResult = expression.variableAddressedOf();
 
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		if (printfArguments != null) {
 			for (Expression argument : printfArguments) {
-				argumentResult = argument.variableAddressedOf(heapType,
-						commType);
+				argumentResult = argument.variableAddressedOf();
 				if (argumentResult != null)
 					result.addAll(argumentResult);
 			}

@@ -13,8 +13,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -120,15 +118,13 @@ public class CommonWaitStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLType commType) {
-		return process.variableAddressedOf(scope, heapType, commType);
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return process.variableAddressedOf(scope);
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLType commType) {
-		return process.variableAddressedOf(heapType, commType);
+	public Set<Variable> variableAddressedOf() {
+		return process.variableAddressedOf();
 	}
 
 	@Override

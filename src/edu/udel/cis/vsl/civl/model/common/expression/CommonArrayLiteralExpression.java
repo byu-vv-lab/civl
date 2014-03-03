@@ -9,7 +9,6 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -67,14 +66,13 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLType commType) {
+	public Set<Variable> variableAddressedOf(Scope scope) {
 		Set<Variable> result = new HashSet<>();
 
 		if (elements != null) {
 			for (Expression element : elements) {
-				Set<Variable> elementResult = element.variableAddressedOf(
-						scope, heapType, commType);
+				Set<Variable> elementResult = element
+						.variableAddressedOf(scope);
 
 				if (elementResult != null)
 					result.addAll(elementResult);
@@ -84,14 +82,12 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLType commType) {
+	public Set<Variable> variableAddressedOf() {
 		Set<Variable> result = new HashSet<>();
 
 		if (elements != null) {
 			for (Expression element : elements) {
-				Set<Variable> elementResult = element.variableAddressedOf(
-						heapType, commType);
+				Set<Variable> elementResult = element.variableAddressedOf();
 
 				if (elementResult != null)
 					result.addAll(elementResult);
@@ -99,15 +95,5 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 		}
 		return result;
 	}
-
-	// @Override
-	// public int id() {
-	// return this.id;
-	// }
-	//
-	// @Override
-	// public void setId(int id) {
-	// this.id = id;
-	// }
 
 }

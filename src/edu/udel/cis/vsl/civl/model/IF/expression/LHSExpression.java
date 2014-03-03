@@ -1,8 +1,6 @@
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -16,12 +14,13 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * 
  */
 public interface LHSExpression extends Expression {
-	
-	public enum LHSExpressionKind{
-		DEREFERENCE, DOT, SUBSCRIPT, VARIABLE}
-	
+
+	public enum LHSExpressionKind {
+		DEREFERENCE, DOT, SUBSCRIPT, VARIABLE
+	}
+
 	LHSExpressionKind lhsExpressionKind();
-	
+
 	/**
 	 * Updates the flag of the expression denoting if it is purely local.
 	 * 
@@ -32,23 +31,21 @@ public interface LHSExpression extends Expression {
 
 	/**
 	 * Return the variable that is visible from the given scope, which is
-	 * possible the left hand side of an assignment statement, excluding heap
-	 * type and bundle type variables.
+	 * possible the left hand side of an assignment statement.
 	 * 
 	 * @param scope
 	 *            The given scope.
 	 * @return
 	 */
-	Variable variableWritten(Scope scope, CIVLHeapType heapType,
-			CIVLType commType);
+	Variable variableWritten(Scope scope);
 
 	/**
 	 * Return the variable that is possible the left hand side of an assignment
-	 * statement, excluding heap type and bundle type variables.
+	 * statement.
 	 * 
 	 * @param scope
 	 *            The given scope.
 	 * @return
 	 */
-	Variable variableWritten(CIVLHeapType heapType, CIVLType commType);
+	Variable variableWritten();
 }

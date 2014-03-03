@@ -16,8 +16,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
@@ -268,13 +266,11 @@ public class CommonCallStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(Scope scope,
-			CIVLHeapType heapType, CIVLType commType) {
+	public Set<Variable> variableAddressedOf(Scope scope) {
 		Set<Variable> result = new HashSet<>();
 
 		if (lhs != null) {
-			Variable lhsVariable = lhs.variableWritten(scope, heapType,
-					commType);
+			Variable lhsVariable = lhs.variableWritten(scope);
 
 			if (lhsVariable != null)
 				result.add(lhsVariable);
@@ -283,8 +279,7 @@ public class CommonCallStatement extends CommonStatement implements
 			Set<Variable> argumentResult;
 
 			for (Expression argument : arguments) {
-				argumentResult = argument.variableAddressedOf(scope, heapType,
-						commType);
+				argumentResult = argument.variableAddressedOf(scope);
 				if (argumentResult != null)
 					result.addAll(argumentResult);
 			}
@@ -293,16 +288,14 @@ public class CommonCallStatement extends CommonStatement implements
 	}
 
 	@Override
-	public Set<Variable> variableAddressedOf(CIVLHeapType heapType,
-			CIVLType commType) {
+	public Set<Variable> variableAddressedOf() {
 		Set<Variable> result = new HashSet<>();
 
 		if (arguments != null) {
 			Set<Variable> argumentResult;
 
 			for (Expression argument : arguments) {
-				argumentResult = argument.variableAddressedOf(heapType,
-						commType);
+				argumentResult = argument.variableAddressedOf();
 				if (argumentResult != null)
 					result.addAll(argumentResult);
 			}
