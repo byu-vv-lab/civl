@@ -149,33 +149,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	}
 
 	/**
-	 * Executes the function call "memcpy": removes from the heap the object
-	 * referred to by the given pointer.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param pid
-	 *            The ID of the process that the function call belongs to.
-	 * @param arguments
-	 *            The static representation of the arguments of the function
-	 *            call.
-	 * @param argumentValues
-	 *            The dynamic representation of the arguments of the function
-	 *            call.
-	 * @param source
-	 *            The source code element to be used for error report.
-	 * @return The new state after executing the function call.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	@SuppressWarnings("unused")
-	private State executeMemcpy(State state, int pid, Expression[] arguments,
-			SymbolicExpression[] argumentValues, CIVLSource source) {
-
-		// TODO: implement me
-		return null;
-	}
-
-	/**
 	 * Creates a bundle from the memory region specified by ptr and size,
 	 * copying the data into the new bundle:
 	 * 
@@ -277,18 +250,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = primaryExecutor.assign(state, pid, lhs, size);
 		return state;
 	}
-
-	/**
-	 * TODO
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param arguments
-	 * @param argumentValues
-	 * @param source
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
 
 	/**
 	 * Copies the data out of the bundle into the region specified:
