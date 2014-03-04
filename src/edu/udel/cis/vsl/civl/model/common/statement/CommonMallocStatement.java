@@ -96,14 +96,13 @@ public class CommonMallocStatement extends CommonStatement implements
 	@Override
 	public String toString() {
 		String result;
-		String scope = "<" + this.scopeExpression + ">";
 
 		if (lhs != null)
 			result = lhs + " = ";
 		else
 			result = "";
-		result += "(" + staticElementType + "*" + scope + ")";
-		result += "$malloc" + scope + "(" + sizeExpression + ")";
+		result += "(" + staticElementType + "*" + ")";
+		result += "$malloc(" + scopeExpression + ", " + sizeExpression + ")";
 		return result;
 	}
 

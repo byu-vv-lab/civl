@@ -1262,6 +1262,10 @@ public class FunctionTranslator {
 				}
 			}
 		}
+		if (!newScopeNeeded) {
+			newScopeNeeded = hasHereNode(statementNode.getScope(),
+					statementNode);
+		}
 		if (newScopeNeeded)
 			newScope = modelFactory.scope(modelFactory.sourceOf(statementNode),
 					scope, new LinkedHashSet<Variable>(),
@@ -1281,6 +1285,33 @@ public class FunctionTranslator {
 			}
 		}
 		return result;
+	}
+
+	private boolean hasHereNode(edu.udel.cis.vsl.abc.ast.entity.IF.Scope scope,
+			ASTNode astNode) {
+		int number = astNode.numChildren();
+
+		if (number < 1)
+			return false;
+		for (int i = 0; i < number; i++) {
+			ASTNode child = astNode.child(i);
+
+			if(child == null)
+				continue;
+			if (!child.getScope().equals(scope))
+				continue;
+			else {
+				if (child instanceof HereOrRootNode)
+					return true;
+				else {
+					boolean result = hasHereNode(scope, child);
+
+					if (result)
+						return result;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
