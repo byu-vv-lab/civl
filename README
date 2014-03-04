@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v 0.7
+                               v 0.8
 
 ------------------------------ Overview -------------------------------
 
@@ -37,14 +37,21 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.6 -------------------------
+-------------------------- Updates from v 0.7 -------------------------
 
-1. A new system function is supported: $comm_add(*comm comm, $proc q, int rank),
-   allowing one process to add another process q into the communicator comm. 
-   Refer to examples/messagePassing/hybrid.cvl for more details.
+1. Dyscopes are now first-class objects, like processes and other types.
+   Refer to CIVL Manual Section 6.2.2 for more details about $scope expressions. 
+   
+2. Interfaces for message passing are significantly simplified. Refer to 
+   CIVL Manual Section 7.3.2 and examples/messagePassing for more details.
 
-2. A new partial order reduction algorithm is implemented and performance gets
-   improved greatly.
+3. $wait is not implemented as a system function declared in civlc.h,
+   instead of a language primitive. So the syntax becomes "$wait(p)"
+   instead of "$wait p".
+
+4. There is no longer a $heap type. Instead, every dynamic scope has its
+   own heap automatically. The $malloc function has been modified to take
+   a scope as its first argument, e.g., $malloc($here, sizeof(int)).
 
 ------------------------- Binary Installation -------------------------
 
