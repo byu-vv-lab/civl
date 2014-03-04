@@ -1287,6 +1287,16 @@ public class FunctionTranslator {
 		return result;
 	}
 
+	/**
+	 * Checks if an AST node contains any $here node in a certain scope.
+	 * 
+	 * @param scope
+	 *            The scope to be checked.
+	 * @param astNode
+	 *            The AST node to be checked.
+	 * @return True iff a $here node exists in the AST node and is in the given
+	 *         scope.
+	 */
 	private boolean hasHereNode(edu.udel.cis.vsl.abc.ast.entity.IF.Scope scope,
 			ASTNode astNode) {
 		int number = astNode.numChildren();
@@ -1296,14 +1306,15 @@ public class FunctionTranslator {
 		for (int i = 0; i < number; i++) {
 			ASTNode child = astNode.child(i);
 
-			if(child == null)
+			if (child == null)
 				continue;
 			if (!child.getScope().equals(scope))
 				continue;
 			else {
-				if (child instanceof HereOrRootNode)
-					return true;
-				else {
+				if (child instanceof HereOrRootNode) {
+					if (((HereOrRootNode) child).isHereNode())
+						return true;
+				} else {
 					boolean result = hasHereNode(scope, child);
 
 					if (result)

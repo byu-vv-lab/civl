@@ -46,17 +46,23 @@ way.)
 
 9. The autotest script will create the release at the next CIVL commit
 (to any part of CIVL). If you don't want to wait, you can trigger it
-manually by executing from vsl, in ~/scripts:
+manually by executing from vsl, in ~/scripts/autotest:
 
  ./run_manager.sh FullPathTo/config_civl-0.2.sh 121
 
 where 121 is whatever the revision number was for the release.
 
-10. On vsl, edit /home/www/vsl/civl/index.html to use
-the new release in the latest stable release section:
-
+10. Edit svn://vsl.cis.udel.edu/vsl/web/civl/index.html:
+    
+    - use the new release in the latest stable release of Download section:
     <li><a href="test/0.2/latest/release">Latest stable release</a></li>
-Commit the change.
+    
+    - use the new released manual in the Documentation section:
+    <li>The CIVL Manual: <a href="test/0.8/latest/release/civl-manual-0.8_711.pdf">
+        latest stable version </a> </li>
+        
+   Commit the change, and then on vsl, cd /home/www/vsl/civl and svn update to 
+   update index.html to the latest version.
 
 11. If there are any problems, you can continue to modify the branch.
 For example, to incorporate changes from the trunk, update or check
