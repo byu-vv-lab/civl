@@ -165,14 +165,12 @@ Download the tgz archive of VSL dependencies from
 
    		README.txt    lib        licenses    src
 
-5. Create a file build.properties in the directory where build.xml is in.
-   Copy and paste the content from properties/build.properties.osx or 
-   properties/build.properties.linux depending on your platform.
-   If your workspace directory is the default setting of Eclipse, 
-   i.e., HOME/Documents/workspace for osx or HOME/workspace for linux, 
-   then you dont have to anything.
-   Otherwise, you need to edit the entry "workspace" to point to the
-   corresponding directory where you put the projects ABC, SARL and GMC.
+5. If default_build.properties matches the configuration of your system,
+   then you can skip this step. Otherwise, you may need to create a file 
+   build.properties in the directory where build.xml is in.
+   Copy and paste the content from any file under properties, edit each 
+   entry with the path configured in your system. The newly created file
+   build.properties will automatically be used by ant to to build the .jar file.
 
 6. Navigate to Preferences -> Java -> Build Path -> ClassPath 
    Variables, and then select New to create a classpath variable VSL, 
