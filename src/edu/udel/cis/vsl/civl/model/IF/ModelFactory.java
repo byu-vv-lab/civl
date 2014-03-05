@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -59,6 +60,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
@@ -1496,13 +1498,13 @@ public interface ModelFactory {
 	Model model();
 
 	/**
-	 * Creates a new scopeof expression using the given argument.
+	 * Creates a new $scopeof expression using the given argument.
 	 * 
 	 * @param source
 	 *            The source code element to be used for error report.
 	 * @param argument
 	 *            The argument of the scope of expression.
-	 * @return The new scopeof expression.
+	 * @return The new $scopeof expression.
 	 */
 	ScopeofExpression scopeofExpression(CIVLSource source,
 			LHSExpression argument);
@@ -1510,4 +1512,15 @@ public interface ModelFactory {
 	void addHeapFieldType(CIVLType type, int id);
 
 	int getHeapFieldId(CIVLType type);
+
+	/**
+	 * Creates a new instance of enumeration type with the specified name.
+	 * 
+	 * @param name
+	 *            The name of the enumeration type to be created.
+	 * @param valueMap
+	 *            The map of enumerator names and their values.
+	 * @return The new enumeration type.
+	 */
+	CIVLEnumType enumType(String name, Map<String, BigInteger> valueMap);
 }

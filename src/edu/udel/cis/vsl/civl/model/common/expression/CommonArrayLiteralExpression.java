@@ -96,4 +96,9 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 		return result;
 	}
 
+	@Override
+	public LiteralKind literalKind() {
+		return LiteralKind.ARRAY;
+	}
+
 }

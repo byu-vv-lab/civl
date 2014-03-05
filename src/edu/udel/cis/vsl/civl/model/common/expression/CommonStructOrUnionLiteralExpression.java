@@ -99,4 +99,9 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 	public boolean isStruct() {
 		return this.structOrUnionType().isStructType();
 	}
+
+	@Override
+	public LiteralKind literalKind() {
+		return LiteralKind.STRUCT_OR_UNION;
+	}
 }

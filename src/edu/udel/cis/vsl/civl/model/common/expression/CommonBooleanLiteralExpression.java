@@ -69,4 +69,9 @@ public class CommonBooleanLiteralExpression extends CommonExpression implements
 	public Set<Variable> variableAddressedOf() {
 		return null;
 	}
+
+	@Override
+	public LiteralKind literalKind() {
+		return LiteralKind.BOOLEAN;
+	}
 }

@@ -115,4 +115,8 @@ public abstract class CommonType implements CIVLType {
 		this.dynamicTypeIndex = index;
 	}
 
+	@Override 
+	public boolean isEnumerationType(){
+		return false;
+	}
 }

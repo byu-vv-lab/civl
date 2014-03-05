@@ -149,4 +149,10 @@ public interface CIVLType {
 	 */
 	boolean isHandleObjectType();
 
+	/**
+	 * 
+	 * @return true iff this type is an enumeration type.
+	 */
+	boolean isEnumerationType();
+
 }

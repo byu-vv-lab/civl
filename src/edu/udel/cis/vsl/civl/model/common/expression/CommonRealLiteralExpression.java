@@ -75,4 +75,9 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public LiteralKind literalKind() {
+		return LiteralKind.REAL;
+	}
 }

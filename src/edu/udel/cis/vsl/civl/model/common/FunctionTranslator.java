@@ -6,8 +6,10 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.conversion.IF.ArithmeticConversion;
@@ -22,6 +24,7 @@ import edu.udel.cis.vsl.abc.ast.conversion.IF.PointerBoolConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.VoidPointerConversion;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity.EntityKind;
+import edu.udel.cis.vsl.abc.ast.entity.IF.Enumerator;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Field;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Label;
@@ -87,12 +90,14 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WaitNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.EnumerationTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.common.declaration.CommonFunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
+import edu.udel.cis.vsl.abc.ast.type.IF.EnumerationType;
 import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.QualifiedObjectType;
@@ -102,7 +107,9 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.ast.type.common.CommonCharType;
+import edu.udel.cis.vsl.abc.ast.value.IF.CharacterValue;
 import edu.udel.cis.vsl.abc.ast.value.IF.IntegerValue;
+import edu.udel.cis.vsl.abc.ast.value.IF.Value;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.StringLiteral;
@@ -136,6 +143,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
@@ -1038,12 +1046,17 @@ public class FunctionTranslator {
 			break;
 		case TYPE:
 			TypeNode typeNode = (TypeNode) node;
-			if (typeNode.kind() == TypeNodeKind.STRUCTURE_OR_UNION) {
+
+			switch (typeNode.kind()) {
+			case STRUCTURE_OR_UNION:
+			case ENUMERATION:
 				result = translateCompoundTypeNode(location, scope,
 						(TypeNode) node);
-				break;
+				return result;
+			default:
 			}
-			// if not structure or union type, then execute default
+			// if not structure or union type or enumeration type, then execute
+			// default
 			// case to throw an exception
 		default:
 			if (scope.id() == modelBuilder.systemScope.id())
@@ -1055,6 +1068,42 @@ public class FunctionTranslator {
 						modelFactory.sourceOf(node));
 		}
 		return result;
+	}
+
+	private CIVLType translateABCEnumerationType(CIVLSource source,
+			Scope scope, EnumerationType enumType) {
+		String name = enumType.getTag();
+		Iterator<Enumerator> enumerators = enumType.getEnumerators();
+		int numOfEnumerators = enumType.getNumEnumerators();
+		BigInteger currentValue = BigInteger.ZERO;
+		Map<String, BigInteger> valueMap = new LinkedHashMap<>(numOfEnumerators);
+
+		if (name == null) {
+			name = "__enum_";
+		}
+		while (enumerators.hasNext()) {
+			Enumerator enumerator = enumerators.next();
+			String member = enumerator.getName();
+			Value abcValue = enumerator.getValue();
+			BigInteger value;
+
+			if (abcValue != null) {
+				if (abcValue instanceof IntegerValue) {
+					value = ((IntegerValue) abcValue).getIntegerValue();
+				} else if (abcValue instanceof CharacterValue) {
+					value = BigInteger.valueOf(((CharacterValue) abcValue)
+							.getCharacter().getCharacters()[0]);
+				} else
+					throw new CIVLSyntaxException(
+							"Only integer or char constant can be used in enumerators.",
+							source);
+			} else {
+				value = currentValue;
+			}
+			valueMap.put(member, value);
+			currentValue = value.add(BigInteger.ONE);
+		}
+		return modelFactory.enumType(name, valueMap);
 	}
 
 	private Fragment translateScopeParameterizedDeclarationNode(Scope scope,
@@ -2457,6 +2506,14 @@ public class FunctionTranslator {
 			}
 			break;
 		}
+		case ENUMERATION:
+			CIVLEnumType enumType = (CIVLEnumType) translateABCType(source,
+					null, constantNode.getInitialType());
+			String member = ((IdentifierNode) constantNode.child(0)).name();
+
+			result = modelFactory.integerLiteralExpression(source,
+					enumType.valueOf(member));
+			break;
 		case POINTER:
 			boolean isSupportedChar = false;
 
@@ -3423,9 +3480,12 @@ public class FunctionTranslator {
 			case VOID:
 				result = modelFactory.voidType();
 				break;
+
+			case ENUMERATION:
+				return translateABCEnumerationType(source, scope,
+						(EnumerationType) abcType);
 			case ATOMIC:
 			case FUNCTION:
-			case ENUMERATION:
 				throw new CIVLUnimplementedFeatureException("Type " + abcType,
 						source);
 			default:
@@ -3490,7 +3550,10 @@ public class FunctionTranslator {
 			}
 		} else {
 			prefix = "__typedef_";
-			tag = ((TypedefDeclarationNode) typeNode.parent()).getName();
+			if (!(typeNode instanceof EnumerationTypeNode))
+				tag = ((TypedefDeclarationNode) typeNode.parent()).getName();
+			else
+				tag = "";
 		}
 		if (type.hasState()) {
 			Variable variable;

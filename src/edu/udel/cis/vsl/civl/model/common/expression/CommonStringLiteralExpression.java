@@ -69,4 +69,8 @@ public class CommonStringLiteralExpression extends CommonExpression implements
 		return null;
 	}
 
+	@Override
+	public LiteralKind literalKind() {
+		return LiteralKind.STRING;
+	}
 }

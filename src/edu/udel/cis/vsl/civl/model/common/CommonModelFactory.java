@@ -79,6 +79,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
@@ -139,6 +140,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonBundleType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonEnumType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
@@ -515,6 +517,11 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CIVLPrimitiveType dynamicType() {
 		return dynamicType;
+	}
+
+	@Override
+	public CIVLEnumType enumType(String name, Map<String, BigInteger> valueMap) {
+		return new CommonEnumType(name, valueMap, universe.integerType());
 	}
 
 	@Override
