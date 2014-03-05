@@ -52,7 +52,7 @@ are numbered from $0$ to $6$.
 \begin{figure}
   \centering
   \includegraphics[scale=1.2]{scopeStateExample}
-  \caption{State scope tree and a state for example program}
+  \caption{Static scope tree and a state for example program}
   \label{fig:scopestateex}
 \end{figure}
 
@@ -122,7 +122,7 @@ arrived at is the one shown.
 There are few key points to understand:
 \begin{itemize}
 \item In any state, there is a mapping from the dyscope tree to the
-  static scope tree which maps a dyscoe to the static scope of which
+  static scope tree which maps a dyscope to the static scope of which
   it is an instance.  This mapping is a \emph{tree homomorphism},
   i.e., if dyscope $u$ is a child of dyscope $v$, then the static
   scope corresponding to $u$ is a child of the static scope
@@ -309,7 +309,7 @@ The following C expressions are included in CIVL:
   \emph{or} (\verb!p||q!)
 \item \emph{sizeof} a type (\verb!sizeof(t)!) or expression (\verb!sizeof(e)!)
 \item \emph{assignment} expressions (\verb!a=b!, \verb!a+=b!, \verb!a-=b!,
-  \verb!a*=b!, \verb!a/=b!, \verb!a%=b!)
+  \verb!a*=b!, \verb!a/=b!, \verb!a%=b!, \verb!a++!, \verb!a--!)
 \item function \emph{calls} \verb!f(e1,...,en)!
 \item \emph{conditional} expressions (\verb!b ? e : f!).
 \item \emph{cast} expressions (\verb!(t)e!)
