@@ -1,4 +1,4 @@
-/* Sum of an array - First parallel version */
+/* Sum of an array - Second parallel version */
  
  #include <stdio.h>
  #include <mpi.h>
@@ -12,12 +12,9 @@ void slave (void);
  
 int main (int argc, char **argv) {
   int myrank;
-  //Initialization of MPI
   MPI_Init (&argc, &argv);
-  //myrank will contain the rank of the process
   MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
-  //The part of the program which will be executed is decided
-  if (myrank == 0)
+  if (!myrank)
     master ();
   else
     slave ();
@@ -27,20 +24,25 @@ int main (int argc, char **argv) {
  
 void master (void) {
   float array[N];
-  double mysum = 0, tmpsum;
-  unsigned long long i;
+  double mysum, tmpsum;
+  unsigned long long step, i;
+  int size;
   MPI_Status status;
   //Initialization of the array
   for (i = 0; i < N; i++)
     array[i] = i + 1;
-  //The array is divided by two and each part is sent to the slaves
-  MPI_Send (array, N / 2, MPI_FLOAT, 1, MSG_DATA, MPI_COMM_WORLD);
-  MPI_Send (array + N / 2, N / 2, MPI_FLOAT, 2, MSG_DATA, MPI_COMM_WORLD);
-  //The master receive the result from the slaves
-  MPI_Recv (&tmpsum, 1, MPI_DOUBLE, 1, MSG_RESULT, MPI_COMM_WORLD, &status);
-  mysum += tmpsum;
-  MPI_Recv (&tmpsum, 1, MPI_DOUBLE, 2, MSG_RESULT, MPI_COMM_WORLD, &status);
-  mysum += tmpsum;
+  MPI_Comm_size (MPI_COMM_WORLD, &size);
+  if (size != 1)
+    step = N / (size - 1);
+  //The array is divided by the number of slaves
+  for (i = 0; i < size - 1; i++)
+    MPI_Send (array + i * step, step, MPI_FLOAT, i + 1, MSG_DATA, MPI_COMM_WORLD);
+  //The master completes the work if necessary
+  for (i = (size - 1) * step, mysum = 0; i < N; i++)
+    mysum += array[i];
+  //The master receives the results in any order
+  for (i = 1; i < size; mysum += tmpsum, i++)
+    MPI_Recv (&tmpsum, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MSG_RESULT, MPI_COMM_WORLD, &status);
   printf ("%lf\n", mysum);
 }
  
@@ -48,11 +50,12 @@ void slave (void) {
   float array[N];
   double sum;
   unsigned long long i;
+  int count;
   MPI_Status status;
-  //The slave receives the array from the master
-  MPI_Recv (array, N / 2, MPI_FLOAT, 0, MSG_DATA, MPI_COMM_WORLD, &status);
-  for (i = 0, sum = 0; i < N / 2; i++)
+  MPI_Recv (array, N, MPI_FLOAT, 0, MSG_DATA, MPI_COMM_WORLD, &status);
+  //The slave finds the size of the array
+  MPI_Get_count (&status, MPI_FLOAT, &count);
+  for (i = 0, sum = 0; i < count; i++)
     sum += array[i];
-  //The result is send to the master
   MPI_Send (&sum, 1, MPI_DOUBLE, 0, MSG_RESULT, MPI_COMM_WORLD);
 }
