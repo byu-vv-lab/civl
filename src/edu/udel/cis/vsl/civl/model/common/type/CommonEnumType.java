@@ -63,6 +63,7 @@ public class CommonEnumType extends CommonType implements CIVLEnumType {
 		for(String member : valueMap.keySet()){
 			result += (member + "=" + valueMap.get(member) + ", ");
 		}
+		result = result.substring(0, result.length()-2);
 		result += "}";
 		return result;
 	}

@@ -53,6 +53,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.CompoundLiteralNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.DerivativeExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.DotNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.EnumerationConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.HereOrRootNode;
@@ -143,7 +144,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
@@ -2441,10 +2441,15 @@ public class FunctionTranslator {
 				scope, typeNode.getType());
 		ExpressionNode argumentNode = castNode.getArgument();
 		Expression castExpression, result;
+		CIVLSource source = modelFactory.sourceOf(castNode);
 
 		modelFactory.setCurrentScope(scope);
 		castExpression = translateExpressionNode(argumentNode, scope, true);
-		result = modelFactory.castExpression(modelFactory.sourceOf(castNode),
+		if(castType.isPointerType() && !castExpression.getExpressionType().isPointerType() && castExpression instanceof LHSExpression){
+			result = modelFactory.castExpression(source,
+					castType, modelFactory.addressOfExpression(source, (LHSExpression)castExpression));
+		}else
+		result = modelFactory.castExpression(source,
 				castType, castExpression);
 		return result;
 	}
@@ -2474,9 +2479,15 @@ public class FunctionTranslator {
 			result = modelFactory.selfExpression(source);
 			break;
 		case OTHER_INTEGER:
-			result = modelFactory.integerLiteralExpression(source, BigInteger
-					.valueOf(Long.parseLong(constantNode
-							.getStringRepresentation())));
+			if (constantNode instanceof EnumerationConstantNode) {
+				BigInteger value = ((IntegerValue) ((EnumerationConstantNode) constantNode)
+						.getConstantValue()).getIntegerValue();
+
+				result = modelFactory.integerLiteralExpression(source, value);
+			} else
+				result = modelFactory.integerLiteralExpression(source,
+						BigInteger.valueOf(Long.parseLong(constantNode
+								.getStringRepresentation())));
 			break;
 		case BASIC: {
 			switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
@@ -2488,9 +2499,16 @@ public class FunctionTranslator {
 			case UNSIGNED_LONG:
 			case LONG_LONG:
 			case UNSIGNED_LONG_LONG:
-				result = modelFactory.integerLiteralExpression(source,
-						BigInteger.valueOf(Long.parseLong(constantNode
-								.getStringRepresentation())));
+				if (constantNode instanceof EnumerationConstantNode) {
+					BigInteger value = ((IntegerValue) ((EnumerationConstantNode) constantNode)
+							.getConstantValue()).getIntegerValue();
+
+					result = modelFactory.integerLiteralExpression(source,
+							value);
+				} else
+					result = modelFactory.integerLiteralExpression(source,
+							BigInteger.valueOf(Long.parseLong(constantNode
+									.getStringRepresentation())));
 				break;
 			case FLOAT:
 			case DOUBLE:
@@ -2528,12 +2546,15 @@ public class FunctionTranslator {
 			break;
 		}
 		case ENUMERATION:
-			CIVLEnumType enumType = (CIVLEnumType) translateABCType(source,
-					null, constantNode.getInitialType());
-			String member = ((IdentifierNode) constantNode.child(0)).name();
+			if (constantNode instanceof EnumerationConstantNode) {
+				BigInteger value = ((IntegerValue) ((EnumerationConstantNode) constantNode)
+						.getConstantValue()).getIntegerValue();
 
-			result = modelFactory.integerLiteralExpression(source,
-					enumType.valueOf(member));
+				result = modelFactory.integerLiteralExpression(source, value);
+			} else
+				result = modelFactory.integerLiteralExpression(source,
+						BigInteger.valueOf(Long.parseLong(constantNode
+								.getStringRepresentation())));
 			break;
 		case POINTER:
 			boolean isSupportedChar = false;
@@ -3502,7 +3523,6 @@ public class FunctionTranslator {
 			case VOID:
 				result = modelFactory.voidType();
 				break;
-
 			case ENUMERATION:
 				return translateABCEnumerationType(source, scope,
 						(EnumerationType) abcType);
