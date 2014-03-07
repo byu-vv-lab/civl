@@ -1,26 +1,22 @@
-#include <stdio.h>
+#include <civlc.h>
 int main(){
   int const x = 9;
-  enum hue { A, B = 4, C, D=B};
+  enum hue { A, B = 4, C, D = B};
   enum huf {H, I, J, K};
   enum hue a = A, b = B, c = C, d = D;
   enum hue h = (enum hue) J;
   int y = x + C;
 
-  if(1 > 0){
+  {
     enum hf { A=10 };
     int k = A;
 
-    printf("k = %d\n", k);
+    $assert(k == 10);
   }
-
-  printf("a = %d\n", a);
-  printf("b = %d\n", b);
-  printf("c = %d\n", c);
-  printf("d = %d\n", d);
-//  printf("e = %d\n", e);
-//  printf("f = %d\n", f);
-//  printf("g = %d\n", g);
-  printf("h = %d\n", h);
-  printf("y = %d\n", y);
+  $assert(a == 0);
+  $assert(b == 4);
+  $assert(c == 5);
+  $assert(d == 4);
+  $assert(h == 2);
+  $assert(y == 14);
 }

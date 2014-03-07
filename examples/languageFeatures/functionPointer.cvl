@@ -1,5 +1,6 @@
 #include <civlc.h>
 #include <stdio.h>
+$proc procs[4];
 
 int min(int a, int b) {
   if (a < b)
@@ -23,14 +24,12 @@ $proc proc_create(void (*f)(int), int x){
 
 void foo(int id) {
   printf("I'm spawned with id %d.\n", id);
+  $assert(procs[id] == $self);
 }
 
 void main(){
   int k = minDouble(min, 5, 8);
-  $proc procs[4];
-  
-  printf("The result is %d.\n", k);
-  
+
   for(int i = 0; i < 4; i++){
     procs[i] = proc_create(foo, i);
   }
