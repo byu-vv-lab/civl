@@ -362,12 +362,12 @@ public class LanguageFeaturesTest {
 	public void union() throws ABCException {
 		assertTrue(ui.run("verify", filename("union.cvl")));
 	}
-	
+
 	@Test
 	public void enum1() throws ABCException {
 		assertTrue(ui.run("verify", filename("enum1.cvl")));
 	}
-	
+
 	@Test
 	public void enum2() throws ABCException {
 		assertTrue(ui.run("verify", filename("enum2.cvl")));
