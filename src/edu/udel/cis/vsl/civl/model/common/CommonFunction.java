@@ -20,11 +20,13 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
+import edu.udel.cis.vsl.civl.model.common.type.CommonFunctionType;
 
 /**
  * A function.
@@ -54,7 +56,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 	private Expression precondition = null;
 
-	private CIVLType returnType;
+	private CIVLFunctionType functionType;
 
 	private Set<Scope> scopes;
 
@@ -88,14 +90,22 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		super(source);
 		this.name = name;
 		this.parameters = parameters;
-		this.returnType = returnType;
+		if (parameters != null) {
+			int number = parameters.size();
+			CIVLType[] types = new CIVLType[number];
+
+			this.functionType = new CommonFunctionType(returnType, types);
+		} else {
+			this.functionType = new CommonFunctionType(returnType,
+					new CIVLType[0]);
+		}
 		this.containingScope = containingScope;
 		scopes = new HashSet<Scope>();
 		outerScope = factory.scope(source, containingScope,
 				new LinkedHashSet<>(parameters), this);
-//		for (Variable variable : parameters) {
-//			outerScope.addVariable(variable);
-//		}
+		// for (Variable variable : parameters) {
+		// outerScope.addVariable(variable);
+		// }
 		scopes.add(outerScope);
 		locations = new LinkedHashSet<Location>();
 		this.startLocation = startLocation;
@@ -241,7 +251,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 */
 	@Override
 	public CIVLType returnType() {
-		return returnType;
+		return this.functionType.returnType();
 	}
 
 	/**
@@ -322,14 +332,14 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		this.parameters = parameters;
 	}
 
-	/**
-	 * @param returnType
-	 *            The return type of this function.
-	 */
-	@Override
-	public void setReturnType(CIVLType returnType) {
-		this.returnType = returnType;
-	}
+	// /**
+	// * @param returnType
+	// * The return type of this function.
+	// */
+	// @Override
+	// public void setReturnType(CIVLType returnType) {
+	// this.returnType = returnType;
+	// }
 
 	/**
 	 * @param scopes
@@ -458,6 +468,37 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		}
 		result += ")";
 		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> result = new HashSet<>();
+
+		for (Statement statement : this.statements) {
+			Set<Variable> subResult = statement.variableAddressedOf(scope);
+
+			if (subResult != null)
+				result.addAll(subResult);
+		}
+		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf() {
+		Set<Variable> result = new HashSet<>();
+
+		for (Statement statement : this.statements) {
+			Set<Variable> subResult = statement.variableAddressedOf();
+
+			if (subResult != null)
+				result.addAll(subResult);
+		}
+		return result;
+	}
+
+	@Override
+	public CIVLFunctionType functionType() {
+		return this.functionType;
 	}
 
 }

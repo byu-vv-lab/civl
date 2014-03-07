@@ -22,8 +22,10 @@ import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
@@ -40,6 +42,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -105,6 +108,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicCollection;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 import edu.udel.cis.vsl.sarl.number.Numbers;
 
 /**
@@ -207,6 +211,8 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private SymbolicTupleType pointerType;
 
+	private SymbolicTupleType functionPointerType;
+
 	/**
 	 * TODO ???
 	 */
@@ -289,6 +295,7 @@ public class CommonEvaluator implements Evaluator {
 		this.universe = stateFactory.symbolicUniverse();
 		dynamicType = modelFactory.dynamicSymbolicType();
 		pointerType = modelFactory.pointerSymbolicType();
+		functionPointerType = modelFactory.functionPointerSymbolicType();
 		heapType = modelFactory.heapSymbolicType();
 		bundleType = modelFactory.bundleSymbolicType();
 		this.log = log;
@@ -1972,6 +1979,10 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateDynamicTypeOf(state, pid,
 					(DynamicTypeOfExpression) expression);
 			break;
+		case FUNCTION_POINTER:
+			result = evaluateFunctionPointer(state, pid,
+					(FunctionPointerExpression) expression);
+			break;
 		case HERE_OR_ROOT:
 			result = evaluateHereOrRootScope(state, pid,
 					(HereOrRootExpression) expression);
@@ -2045,6 +2056,20 @@ public class CommonEvaluator implements Evaluator {
 					+ kind, expression.getSource());
 		}
 		return result;
+	}
+
+	private Evaluation evaluateFunctionPointer(State state, int pid,
+			FunctionPointerExpression expression) {
+		Scope scope = expression.scope();
+		String function = expression.function().name().name();
+		SymbolicExpression dyScopeId = modelFactory.scopeValue(state
+				.getDyScope(pid, scope));
+		SymbolicExpression functionPointer = universe.tuple(
+				this.functionPointerType,
+				Arrays.asList(new SymbolicExpression[] { dyScopeId,
+						universe.stringExpression(function) }));
+
+		return new Evaluation(state, functionPointer);
 	}
 
 	private Evaluation evaluateScopeofExpression(State state, int pid,
@@ -2202,6 +2227,34 @@ public class CommonEvaluator implements Evaluator {
 			return setSymRef(pointer,
 					((NTReferenceExpression) symRef).getParent());
 		return null;
+	}
+
+	@Override
+	public Pair<State, CIVLFunction> evaluateFunctionExpression(State state,
+			int pid, Expression functionExpression)
+			throws UnsatisfiablePathConditionException {
+		if (functionExpression == null)
+			return null;
+		else {
+			CIVLFunction function;
+			Evaluation eval = this.evaluate(state, pid, functionExpression);
+			int scopeId = modelFactory.getScopeId(
+					functionExpression.getSource(),
+					universe.tupleRead(eval.value, this.zeroObj));
+			SymbolicExpression symFuncName = universe.tupleRead(eval.value,
+					this.oneObj);
+			SymbolicSequence<?> originalArray = (SymbolicSequence<?>) symFuncName
+					.argument(0);
+			String funcName = "";
+
+			state = eval.state;
+			for (int j = 0; j < originalArray.size(); j++) {
+				funcName += originalArray.get(j).toString().charAt(1);
+			}
+			function = state.getScope(scopeId).lexicalScope()
+					.getFunction(funcName);
+			return new Pair<>(state, function);
+		}
 	}
 
 	@Override
@@ -2629,6 +2682,8 @@ public class CommonEvaluator implements Evaluator {
 		case SYSTEM_GUARD:
 			break;
 		case HERE_OR_ROOT:
+			break;
+		case FUNCTION_POINTER:
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("Expression kind: "

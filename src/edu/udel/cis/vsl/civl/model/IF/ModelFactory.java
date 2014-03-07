@@ -31,6 +31,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -61,6 +62,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
@@ -511,6 +513,9 @@ public interface ModelFactory {
 	 */
 	DynamicTypeOfExpression dynamicTypeOfExpression(CIVLSource source,
 			CIVLType type);
+
+	FunctionPointerExpression functionPointerExpression(CIVLSource source,
+			Scope scope, CIVLFunction function);
 
 	HereOrRootExpression hereOrRootExpression(CIVLSource source, boolean isRoot);
 
@@ -1523,4 +1528,19 @@ public interface ModelFactory {
 	 * @return The new enumeration type.
 	 */
 	CIVLEnumType enumType(String name, Map<String, BigInteger> valueMap);
+
+	/**
+	 * Creates a new instance of function type.
+	 * 
+	 * @param returnType
+	 * @param paraTypes
+	 * @return
+	 */
+	CIVLFunctionType functionType(CIVLType returnType, CIVLType[] paraTypes);
+
+	CallOrSpawnStatement callOrSpawnStatement(CIVLSource sourceOf,
+			Location location, boolean isCall, Expression function,
+			List<Expression> arguments, Expression guard);
+
+	SymbolicTupleType functionPointerSymbolicType();
 }

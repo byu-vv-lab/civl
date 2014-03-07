@@ -372,4 +372,9 @@ public class LanguageFeaturesTest {
 	public void enum2() throws ABCException {
 		assertTrue(ui.run("verify", filename("enum2.cvl")));
 	}
+	
+	@Test
+	public void functionPointer() throws ABCException {
+		assertTrue(ui.run("verify", filename("functionPointer.cvl")));
+	}
 }

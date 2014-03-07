@@ -6,8 +6,10 @@ package edu.udel.cis.vsl.civl.model.common;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -32,6 +34,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 
 	private Scope parent;
 	private Variable[] variables;
+	private Map<String, CIVLFunction> functions;
 	private Set<Scope> children = new LinkedHashSet<Scope>();
 	private Collection<Variable> procRefs = new HashSet<Variable>();
 	private Collection<Variable> scopeRefs = new HashSet<Variable>();
@@ -54,6 +57,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 		super(source);
 		this.parent = parent;
 		this.variables = new Variable[variables.size()];
+		this.functions = new HashMap<>();
 		for (Variable v : variables) {
 			assert this.variables[v.vid()] == null;
 			this.variables[v.vid()] = v;
@@ -136,6 +140,11 @@ public class CommonScope extends CommonSourceable implements Scope {
 	 */
 	public void addChild(Scope child) {
 		children.add(child);
+	}
+
+	@Override
+	public void addFunction(CIVLFunction function) {
+		this.functions.put(function.name().name(), function);
 	}
 
 	/**
@@ -418,6 +427,26 @@ public class CommonScope extends CommonSourceable implements Scope {
 			}
 		}
 		out.flush();
+	}
+
+	@Override
+	public CIVLFunction getFunction(Identifier name) {
+		String functionName = name.name();
+
+		if (this.functions.containsKey(functionName))
+			return functions.get(functionName);
+		if (this.parent != null)
+			return this.parent.getFunction(name);
+		return null;
+	}
+
+	@Override
+	public CIVLFunction getFunction(String name) {
+		if (this.functions.containsKey(name))
+			return functions.get(name);
+		if (this.parent != null)
+			return this.parent.getFunction(name);
+		return null;
 	}
 
 	public int getVid(Variable staticVariable) {

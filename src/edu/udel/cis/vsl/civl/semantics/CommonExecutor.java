@@ -387,6 +387,14 @@ public class CommonExecutor implements Executor {
 				state = eval.state;
 				arguments[i] = eval.value;
 			}
+			if (function == null) {
+				Pair<State, CIVLFunction> eval = evaluator
+						.evaluateFunctionExpression(state, pid,
+								statement.functionExpression());
+
+				function = eval.right;
+				state = eval.left;
+			}
 			state = stateFactory.pushCallStack(state, pid, function, arguments);
 		}
 		return state;
@@ -557,6 +565,14 @@ public class CommonExecutor implements Executor {
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
 
 		assert !statement.isCall();
+		if (function == null) {
+			Pair<State, CIVLFunction> eval = evaluator
+					.evaluateFunctionExpression(state, pid,
+							statement.functionExpression());
+
+			state = eval.left;
+			function = eval.right;
+		}
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval = evaluator.evaluate(state, pid,
 					argumentExpressions.get(i));

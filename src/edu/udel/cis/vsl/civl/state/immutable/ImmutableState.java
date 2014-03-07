@@ -730,4 +730,19 @@ public class ImmutableState implements State {
 		return "State " + identifier();
 	}
 
+	@Override
+	public int getDyScope(int pid, Scope scope) {
+		int staticId = scope.id();
+		int dyScopeId = getProcessState(pid).getDyscopeId();
+		DynamicScope dyScope = this.getScope(dyScopeId);
+
+		while (dyScope.lexicalScope().id() != staticId) {
+			dyScopeId = this.getParentId(dyScopeId);
+			if (dyScopeId < 0)
+				return -1;
+			dyScope = this.getScope(dyScopeId);
+		}
+		return dyScopeId;
+	}
+
 }

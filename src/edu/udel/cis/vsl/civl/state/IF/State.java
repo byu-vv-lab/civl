@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.state.IF;
 
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -192,6 +193,8 @@ public interface State {
 	 */
 	DynamicScope getScope(int id);
 
+	int getDyScope(int pid, Scope scope);
+
 	/**
 	 * Returns the set of process states as an Iterable. This should not be
 	 * modified. It is convenient when you want to iterate over the states,
@@ -248,7 +251,7 @@ public interface State {
 	 *         the variable.
 	 */
 	State setVariable(int vid, int scopeId, SymbolicExpression value);
-	
+
 	int getCanonicId();
 
 }

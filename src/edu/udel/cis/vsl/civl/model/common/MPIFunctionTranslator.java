@@ -536,7 +536,7 @@ public class MPIFunctionTranslator extends FunctionTranslator {
 					arguments);
 			break;
 		default:
-			result = callOrSpawnStatement(location, functionCallNode, lhs,
+			result = callOrSpawnStatement(scope, location, functionCallNode, lhs,
 					arguments, isCall);
 		}
 		return result;

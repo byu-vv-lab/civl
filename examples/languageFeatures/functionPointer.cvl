@@ -1,0 +1,42 @@
+#include <civlc.h>
+#include <stdio.h>
+
+int min(int a, int b) {
+  if (a < b)
+    return a;
+  else 
+    return b;
+}
+
+int minDouble(int (*f)(int, int), int a, int b) {
+  int result;
+  
+  result = f(a, b);
+  return result * 2;
+}
+
+$proc proc_create(void (*f)(int), int x){
+  $proc p = $spawn f(x);
+  
+  return p;
+}
+
+void foo(int id) {
+  printf("I'm spawned with id %d.\n", id);
+}
+
+void main(){
+  int k = minDouble(min, 5, 8);
+  $proc procs[4];
+  
+  printf("The result is %d.\n", k);
+  
+  for(int i = 0; i < 4; i++){
+    procs[i] = proc_create(foo, i);
+  }
+  
+  for(int i = 0; i < 4; i++){
+    $wait(procs[i]);
+    printf("Process %d terminates.\n", i);
+  }
+}

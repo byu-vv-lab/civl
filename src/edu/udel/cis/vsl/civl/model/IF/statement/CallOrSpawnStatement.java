@@ -71,6 +71,8 @@ public interface CallOrSpawnStatement extends Statement {
 	 */
 	boolean isSystemCall();
 
+	Expression functionExpression();
+
 	// /**
 	// * complete the guard with the system guard if the current call is a
 	// system

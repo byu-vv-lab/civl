@@ -578,8 +578,8 @@ public class FunctionTranslator {
 	 *            spawn node
 	 * @return the CallOrSpawnStatement
 	 */
-	protected CallOrSpawnStatement callOrSpawnStatement(Location location,
-			FunctionCallNode callNode, LHSExpression lhs,
+	protected CallOrSpawnStatement callOrSpawnStatement(Scope scope,
+			Location location, FunctionCallNode callNode, LHSExpression lhs,
 			ArrayList<Expression> arguments, boolean isCall) {
 		ExpressionNode functionExpression = ((FunctionCallNode) callNode)
 				.getFunction();
@@ -591,18 +591,38 @@ public class FunctionTranslator {
 					"$malloc can only occur in a cast expression",
 					modelFactory.sourceOf(callNode));
 		if (functionExpression instanceof IdentifierExpressionNode) {
-			callee = (Function) ((IdentifierExpressionNode) functionExpression)
+			Entity entity = ((IdentifierExpressionNode) functionExpression)
 					.getIdentifier().getEntity();
+
+			switch (entity.getEntityKind()) {
+			case FUNCTION:
+				callee = (Function) entity;
+				result = modelFactory.callOrSpawnStatement(
+						modelFactory.sourceOf(callNode), location, isCall,
+						(CIVLFunction) null, arguments, null);
+				break;
+			case VARIABLE:
+				Expression function = this.translateExpressionNode(
+						functionExpression, scope, true);
+				callee = null;
+
+				result = modelFactory.callOrSpawnStatement(
+						modelFactory.sourceOf(callNode), location, isCall,
+						function, arguments, null);
+				break;
+			default:
+				throw new CIVLUnimplementedFeatureException(
+						"Function call must use identifier of variables or functions for now: "
+								+ functionExpression.getSource());
+			}
 		} else
 			throw new CIVLUnimplementedFeatureException(
 					"Function call must use identifier for now: "
 							+ functionExpression.getSource());
 
-		result = modelFactory.callOrSpawnStatement(
-				modelFactory.sourceOf(callNode), location, isCall, null,
-				arguments, null);
 		result.setLhs(lhs);
-		modelBuilder.callStatements.put(result, callee);
+		if (callee != null)
+			modelBuilder.callStatements.put(result, callee);
 		return result;
 	}
 
@@ -1528,7 +1548,7 @@ public class FunctionTranslator {
 			return translateChooseIntFunctionCall(source, location, scope, lhs,
 					arguments);
 		default:
-			return callOrSpawnStatement(location, functionCallNode, lhs,
+			return callOrSpawnStatement(scope, location, functionCallNode, lhs,
 					arguments, isCall);
 		}
 	}
@@ -1601,7 +1621,7 @@ public class FunctionTranslator {
 	 * declaration.
 	 * 
 	 * First, see if there is already a CIVL Function CF corresponding to F. If
-	 * not, create one and add it to the modelm and map(s). This may be an
+	 * not, create one and add it to the model and map(s). This may be an
 	 * ordinary or a system function. (It is a system function if F does not
 	 * have any definition.)
 	 * 
@@ -1609,7 +1629,7 @@ public class FunctionTranslator {
 	 * contract fields of CF.
 	 * 
 	 * If F is a function definition, add to lists of unprocessed function
-	 * defintitions: unprocessedFunctions.add(node); containingScopes.put(node,
+	 * definitions: unprocessedFunctions.add(node); containingScopes.put(node,
 	 * scope);. Function bodies will be processed at a later pass.
 	 * 
 	 * @param node
@@ -1631,7 +1651,6 @@ public class FunctionTranslator {
 		if ((entity.getDefinition() != null)
 				&& (!(node instanceof CommonFunctionDefinitionNode)))
 			return;
-
 		result = modelBuilder.functionMap.get(entity);
 		if (result == null) {
 			CIVLSource nodeSource = modelFactory.sourceOf(node);
@@ -1698,10 +1717,12 @@ public class FunctionTranslator {
 					result = modelFactory.systemFunction(nodeSource,
 							functionIdentifier, parameters, returnType, scope,
 							libName);
+					scope.addFunction(result);
 				}
 			} else { // regular function
 				result = modelFactory.function(nodeSource, functionIdentifier,
 						parameters, returnType, scope, null);
+				scope.addFunction(result);
 				modelBuilder.unprocessedFunctions.add(entity.getDefinition());
 			}
 			modelBuilder.functionMap.put(entity, result);
@@ -2712,8 +2733,6 @@ public class FunctionTranslator {
 					throw new CIVLUnimplementedFeatureException(
 							"compatible structure or union conversion", source);
 				} else if (conversion instanceof FunctionConversion) {
-					throw new CIVLUnimplementedFeatureException(
-							"function pointers", source);
 				} else if (conversion instanceof LvalueConversion) {
 					// nothing to do since ignore qualifiers anyway
 				} else if (conversion instanceof NullPointerConversion) {
@@ -2883,11 +2902,14 @@ public class FunctionTranslator {
 		if (functionInfo.containsBoundVariable(name)) {
 			result = modelFactory.boundVariableExpression(source, name,
 					functionInfo.boundVariableType(name));
-		} else if (scope.variable(name) == null) {
-			throw new CIVLInternalException("No such variable ", source);
-		} else {
+		} else if (scope.variable(name) != null) {
 			result = modelFactory.variableExpression(source,
 					scope.variable(name));
+		} else if (scope.getFunction(name) != null) {
+			result = modelFactory.functionPointerExpression(source, scope,
+					scope.getFunction(name));
+		} else {
+			throw new CIVLInternalException("No such variable ", source);
 		}
 		return result;
 	}
@@ -3484,8 +3506,10 @@ public class FunctionTranslator {
 			case ENUMERATION:
 				return translateABCEnumerationType(source, scope,
 						(EnumerationType) abcType);
-			case ATOMIC:
 			case FUNCTION:
+				return translateABCFunctionType(source, scope,
+						(FunctionType) abcType);
+			case ATOMIC:
 				throw new CIVLUnimplementedFeatureException("Type " + abcType,
 						source);
 			default:
@@ -3495,6 +3519,31 @@ public class FunctionTranslator {
 			modelBuilder.typeMap.put(abcType, result);
 		}
 		return result;
+	}
+
+	/**
+	 * Translates ABC function type.
+	 * 
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @param scope
+	 *            The scope of the function type.
+	 * @param abcType
+	 *            The ABC representation of the function type.
+	 * @return The CIVL function type translated from the ABC function type.
+	 */
+	private CIVLType translateABCFunctionType(CIVLSource source, Scope scope,
+			FunctionType abcType) {
+		CIVLType returnType = translateABCType(source, scope,
+				abcType.getReturnType());
+		int numberOfParameters = abcType.getNumParameters();
+		CIVLType[] paraTypes = new CIVLType[numberOfParameters];
+
+		for (int i = 0; i < numberOfParameters; i++) {
+			paraTypes[i] = translateABCType(source, scope,
+					abcType.getParameterType(i));
+		}
+		return modelFactory.functionType(returnType, paraTypes);
 	}
 
 	/**

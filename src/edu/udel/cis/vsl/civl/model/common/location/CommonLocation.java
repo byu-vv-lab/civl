@@ -540,7 +540,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 					CIVLFunction function = ((CallOrSpawnStatement) statement)
 							.function();
 
-					if (!checkedFunctions.contains(function)) {
+					if (function != null && !checkedFunctions.contains(function)) {
 						workingFunctions.add(function);
 					}
 				}
@@ -567,7 +567,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 						CIVLFunction newFunction = ((CallOrSpawnStatement) statement)
 								.function();
 
-						if (!checkedFunctions.contains(newFunction)) {
+						if (newFunction != null
+								&& !checkedFunctions.contains(newFunction)) {
 							workingFunctions.add(newFunction);
 						}
 					}

@@ -45,6 +45,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -80,6 +81,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
@@ -102,6 +104,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonDerivativeCallExpress
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDotExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonFunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonHereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonInitialValueExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
@@ -141,6 +144,7 @@ import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonBundleType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonEnumType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonFunctionType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
@@ -309,6 +313,11 @@ public class CommonModelFactory implements ModelFactory {
 	 * The unique symbolic pointer type used in the system.
 	 */
 	private SymbolicTupleType pointerSymbolicType;
+	
+	/**
+	 * The unique symbolic function pointer type used in the system.
+	 */
+	private SymbolicTupleType functionPointerSymbolicType;
 
 	/**
 	 * The unique symbolic process type used in the system.
@@ -418,7 +427,8 @@ public class CommonModelFactory implements ModelFactory {
 	public CommonModelFactory(SymbolicUniverse universe) {
 		Iterable<SymbolicType> intTypeSingleton = new Singleton<SymbolicType>(
 				universe.integerType());
-		LinkedList<SymbolicType> pointerComponents = new LinkedList<SymbolicType>();
+		LinkedList<SymbolicType> pointerComponents = new LinkedList<>();
+		LinkedList<SymbolicType> fpointerComponents = new LinkedList<>();
 
 		this.universe = universe;
 		this.voidType = primitiveType(PrimitiveTypeKind.VOID, null);
@@ -449,6 +459,11 @@ public class CommonModelFactory implements ModelFactory {
 		pointerSymbolicType = (SymbolicTupleType) universe
 				.canonic(universe.tupleType(universe.stringObject("pointer"),
 						pointerComponents));
+		fpointerComponents.add(scopeType.getDynamicType(universe));
+		fpointerComponents.add(universe.arrayType(universe.characterType()));
+		functionPointerSymbolicType = (SymbolicTupleType) universe
+				.canonic(universe.tupleType(universe.stringObject("fpointer"),
+						fpointerComponents));
 		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
 				.arrayType(universe.characterType()));
 		stringType = primitiveType(PrimitiveTypeKind.STRING, stringSymbolicType);
@@ -525,6 +540,12 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public CIVLFunctionType functionType(CIVLType returnType,
+			CIVLType[] paraTypes) {
+		return new CommonFunctionType(returnType, paraTypes);
+	}
+
+	@Override
 	public CIVLHeapType heapType(String name) {
 		return new CommonHeapType(name);
 	}
@@ -588,6 +609,11 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SymbolicTupleType dynamicSymbolicType() {
 		return dynamicSymbolicType;
+	}
+	
+	@Override
+	public SymbolicTupleType functionPointerSymbolicType() {
+		return functionPointerSymbolicType;
 	}
 
 	@Override
@@ -849,6 +875,16 @@ public class CommonModelFactory implements ModelFactory {
 		// result.setExpressionScope(expressionScope)
 		result.setExpressionType(dynamicType);
 		return result;
+	}
+
+	@Override
+	public FunctionPointerExpression functionPointerExpression(
+			CIVLSource source, Scope scope, CIVLFunction function) {
+		FunctionPointerExpression expression = new CommonFunctionPointerExpression(
+				source, function, pointerSymbolicType);
+
+		expression.setExpressionScope(scope);
+		return expression;
 	}
 
 	@Override
@@ -1285,6 +1321,24 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
 			Location source, boolean isCall, CIVLFunction function,
+			List<Expression> arguments, Expression guard) {
+		CallOrSpawnStatement result = new CommonCallStatement(civlSource,
+				source, isCall, function, arguments);
+		Scope statementScope = null;
+
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		for (Expression arg : arguments) {
+			statementScope = join(statementScope, arg.expressionScope());
+		}
+		result.setStatementScope(statementScope);
+		if (guard != null)
+			result.setGuard(guard);
+		return result;
+	}
+	
+	@Override
+	public CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
+			Location source, boolean isCall, Expression function,
 			List<Expression> arguments, Expression guard) {
 		CallOrSpawnStatement result = new CommonCallStatement(civlSource,
 				source, isCall, function, arguments);

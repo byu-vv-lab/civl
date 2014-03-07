@@ -34,7 +34,32 @@ public class CommonCallStatement extends CommonStatement implements
 
 	private CIVLFunction function;
 
+	private Expression functionExpression;
+
 	private List<Expression> arguments;
+
+	/**
+	 * A function call. Either of the form f(x) or else v=f(x).
+	 * 
+	 * @param source
+	 *            The source location for this call statement.
+	 * @param isCall
+	 *            is this a call statement (not fork)?
+	 * @param function
+	 *            The function.
+	 * @param arguments
+	 *            The arguments to the function.
+	 */
+	public CommonCallStatement(CIVLSource civlSource, Location source,
+			boolean isCall, Expression functionExpression,
+			List<Expression> arguments) {
+		super(civlSource, source);
+		this.isCall = isCall;
+		// assert functionExpression.getExpressionType() instanceof
+		// CIVLFunctionType;
+		this.functionExpression = functionExpression;
+		this.arguments = arguments;
+	}
 
 	/**
 	 * A function call. Either of the form f(x) or else v=f(x).
@@ -93,6 +118,11 @@ public class CommonCallStatement extends CommonStatement implements
 		return function;
 	}
 
+	@Override
+	public Expression functionExpression() {
+		return this.functionExpression;
+	}
+
 	/**
 	 * @return The arguments to the function.
 	 */
@@ -130,9 +160,16 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public String toString() {
-		String result = function.name().name();
+		String functionString;
+		String result;
 		boolean first = true;
 
+		if (function != null)
+			functionString = function.name().name();
+		else {
+			functionString = this.functionExpression.toString();
+		}
+		result = functionString;
 		result += "(";
 		for (Expression arg : arguments) {
 			if (first)
@@ -310,6 +347,8 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public boolean isSystemCall() {
+		if (this.function == null)
+			return false;
 		return this.function.isSystem();
 	}
 
@@ -320,7 +359,7 @@ public class CommonCallStatement extends CommonStatement implements
 		String result = "  " + source().id() + "->";
 
 		if (isCall() && !isSystemCall()) {
-			if (!(function instanceof AbstractFunction)) {
+			if (function != null && !(function instanceof AbstractFunction)) {
 				targetString = Integer.toString(function.startLocation().id());
 			} else {
 				return super.toStepString(atomicKind, atomCount,

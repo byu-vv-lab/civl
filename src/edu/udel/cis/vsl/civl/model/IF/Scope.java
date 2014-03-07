@@ -174,7 +174,13 @@ public interface Scope extends Sourceable {
 	boolean isDescendantOf(Scope anc);
 
 	boolean containsVariable(String name);
-	
+
 	Variable variable(String name);
+
+	void addFunction(CIVLFunction function);
+
+	CIVLFunction getFunction(Identifier name);
+	
+	CIVLFunction getFunction(String name);
 
 }

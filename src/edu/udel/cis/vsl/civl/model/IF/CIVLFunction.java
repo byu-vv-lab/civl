@@ -4,12 +4,13 @@
 package edu.udel.cis.vsl.civl.model.IF;
 
 import java.io.PrintStream;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -123,11 +124,11 @@ public interface CIVLFunction extends Sourceable {
 	 */
 	public void setParameters(List<Variable> parameters);
 
-	/**
-	 * @param returnType
-	 *            The return type of this function.
-	 */
-	public void setReturnType(CIVLType returnType);
+	// /**
+	// * @param returnType
+	// * The return type of this function.
+	// */
+	// public void setReturnType(CIVLType returnType);
 
 	/**
 	 * @param scopes
@@ -197,8 +198,13 @@ public interface CIVLFunction extends Sourceable {
 	 * l3), l2 ([true]no-op -> l4), l3(), l(4) After applying simplify(), should
 	 * be l1 (s1 -> l4, s2 -> l3), l3(), l4()
 	 */
-	public void simplify();
+	void simplify();
 
-	public void purelyLocalAnalysis();
+	void purelyLocalAnalysis();
 
+	Set<Variable> variableAddressedOf(Scope scope);
+
+	Set<Variable> variableAddressedOf();
+
+	CIVLFunctionType functionType();
 }
