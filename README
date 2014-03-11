@@ -97,7 +97,10 @@ to put it in your path.
 
 We recommend using the Eclipse IDE for Java/EE developers.
 
-1. Install prerequisite projects ABC, SARL and GMC. 
+1. Install an SVN plugin in Eclipse (such as Subversive) if you have
+   not already.
+
+2. Install prerequisite projects ABC, SARL and GMC. 
    Make sure that the three projects are put in the workspace
    directory where CIVL will be put. 
 
@@ -127,17 +130,17 @@ We recommend using the Eclipse IDE for Java/EE developers.
 	   by right-clicking (or ctrl-clicking) on the build.xml file and
 	   selecting Run As->Ant Build.
 
-2. From within Eclipse, select New Project...from SVN. The archive is
+3. From within Eclipse, select New Project...from SVN. The archive is
 svn://vsl.cis.udel.edu/civl.  After entering that, open it up and
 select the "trunk". (It is simplest to just check out the trunk for
 the Eclipse project.)
 
-3. Check out the trunk, and create the project using the New Java
+4. Check out the trunk, and create the project using the New Java
 Project Wizard as usual, naming it "CIVL". The .project, .classpath,
 and other Eclipse meta-data are already in the SVN archive, saving you
 a bunch of work.
 
-4. If you already have the VSL dependencies library, you may
+5. If you already have the VSL dependencies library, you may
 skip this step.
 
 Download the tgz archive of VSL dependencies from 
@@ -165,24 +168,24 @@ Download the tgz archive of VSL dependencies from
 
    		README.txt    lib        licenses    src
 
-5. If default_build.properties matches the configuration of your system,
+6. If default_build.properties matches the configuration of your system,
    then you can skip this step. Otherwise, you may need to create a file 
    build.properties in the directory where build.xml is in.
    Copy and paste the content from any file under properties, edit each 
    entry with the path configured in your system. The newly created file
    build.properties will automatically be used by ant to to build the .jar file.
 
-6. Navigate to Preferences -> Java -> Build Path -> ClassPath 
+7. Navigate to Preferences -> Java -> Build Path -> ClassPath 
    Variables, and then select New to create a classpath variable VSL, 
    and specify its value to be /opt/vsl. Navigate to Preferences -> Run/Debug 
    -> String Substitution -> New, and then define an entry vsl_lib and 
    set its value to be /opt/vsl/lib.
 
-7. Do a clean build.  Everything should compile.  Generate the civl.jar
+8. Do a clean build.  Everything should compile.  Generate the civl.jar
    by right-clicking (or ctrl-click on OS X) the build.xml file and
    Run As->Ant Build.  
 
-8. Go to Run->Run Configurations... Create a new JUnit configuration.
+9. Go to Run->Run Configurations... Create a new JUnit configuration.
    Name it CIVL Tests. Select "Run all tests in the selected project..."
    and navigate to the folder "test" in the CIVL project.
    The Test runner should be JUnit 4. Under the Arguments tab, type
@@ -192,7 +195,7 @@ Download the tgz archive of VSL dependencies from
    specify its value by clicking Variables and choose vsl_lib from the list, 
    or you may type ${vsl_lib} in the value entry.
 
-9. An example of how to set up a single test from within Eclipse:
+10. An example of how to set up a single test from within Eclipse:
    create a new Run Configuration via the Run->Run
    Configurations... menu.  Create a new "Java Application"
    configuration.  Call it "CIVL barrier2".  The Project is CIVL.  The
