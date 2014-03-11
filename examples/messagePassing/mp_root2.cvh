@@ -23,9 +23,9 @@ struct __MPI_Status {
 
 typedef struct __MPI_Status MPI_Status;
 
-MPI_Status __MPI_Status_ignore;
+//MPI_Status __MPI_Status_ignore;
 
-MPI_Status *MPI_STATUS_IGNORE = &__MPI_Status_ignore;
+MPI_Status *MPI_STATUS_IGNORE = (MPI_Status*) NULL;
 
 int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype,
                   int *count) {
