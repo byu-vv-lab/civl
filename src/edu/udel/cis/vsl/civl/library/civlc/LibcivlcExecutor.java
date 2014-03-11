@@ -901,6 +901,10 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = this.executeCommSize(state, pid, lhs, arguments,
 					argumentValues);
 			break;
+		case "equalsTo":
+			state = this.executeEqualsTo(state, pid, lhs, arguments,
+					argumentValues);
+			break;
 		case "$exit":// return immediately since no transitions needed after an
 			// exit, because the process no longer exists.
 			return executeExit(state, pid);
@@ -924,6 +928,18 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 					call);
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
+
+	private State executeEqualsTo(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression result = universe.equals(argumentValues[0],
+				argumentValues[1]);
+
+		if (lhs != null) {
+			state = this.primaryExecutor.assign(state, pid, lhs, result);
+		}
 		return state;
 	}
 

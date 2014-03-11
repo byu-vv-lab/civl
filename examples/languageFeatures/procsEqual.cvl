@@ -1,0 +1,9 @@
+#include <civlc.h>
+#include <stdio.h>
+
+void main() {
+  $proc p = $self, q = $self;
+  _Bool result = equalsTo(p,q);
+  
+  $assert(result);
+}

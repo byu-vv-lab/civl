@@ -127,6 +127,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$comm_probe":
 		case "$comm_seek":
 		case "$comm_size":
+		case "equalsTo":
 		case "$exit":
 		case "$free":
 		case "$gcomm_create2":
@@ -212,6 +213,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$comm_probe":
 		case "$comm_seek":
 		case "$comm_size":
+		case "equalsTo":
 		case "$exit":
 		case "$free":
 		case "$gcomm_create2":

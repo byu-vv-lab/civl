@@ -529,6 +529,7 @@ public class UserInterface {
 		model = extractModel(out, config, filename);
 		if (showShortFileNameList(config))
 			TokenUtils.printShorterFileNameMap(out);
+		config.setScalarValue(showTransitionsO, true);
 		player = TracePlayer.randomPlayer(config, model, out);
 		out.println("\nRunning random simulation with seed " + player.getSeed()
 				+ " ...");

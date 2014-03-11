@@ -377,4 +377,9 @@ public class LanguageFeaturesTest {
 	public void functionPointer() throws ABCException {
 		assertTrue(ui.run("verify", filename("functionPointer.cvl")));
 	}
+	
+	@Test
+	public void procsEquality()throws ABCException{
+		assertTrue(ui.run("verify", filename("procsEqual.cvl")));
+	}
 }
