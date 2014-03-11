@@ -5,12 +5,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -32,8 +33,6 @@ public class CommonCallStatement extends CommonStatement implements
 
 	private LHSExpression lhs = null;
 
-	private CIVLFunction function;
-
 	private Expression functionExpression;
 
 	private List<Expression> arguments;
@@ -51,56 +50,57 @@ public class CommonCallStatement extends CommonStatement implements
 	 *            The arguments to the function.
 	 */
 	public CommonCallStatement(CIVLSource civlSource, Location source,
-			boolean isCall, Expression functionExpression,
+			boolean isCall, LHSExpression lhs, Expression functionExpression,
 			List<Expression> arguments) {
 		super(civlSource, source);
 		this.isCall = isCall;
 		// assert functionExpression.getExpressionType() instanceof
 		// CIVLFunctionType;
+		this.lhs = lhs;
 		this.functionExpression = functionExpression;
 		this.arguments = arguments;
 	}
 
-	/**
-	 * A function call. Either of the form f(x) or else v=f(x).
-	 * 
-	 * @param source
-	 *            The source location for this call statement.
-	 * @param isCall
-	 *            is this a call statement (not fork)?
-	 * @param function
-	 *            The function.
-	 * @param arguments
-	 *            The arguments to the function.
-	 */
-	public CommonCallStatement(CIVLSource civlSource, Location source,
-			boolean isCall, CIVLFunction function, List<Expression> arguments) {
-		super(civlSource, source);
-		this.isCall = isCall;
-		this.function = function;
-		this.arguments = arguments;
-	}
+	// /**
+	// * A function call. Either of the form f(x) or else v=f(x).
+	// *
+	// * @param source
+	// * The source location for this call statement.
+	// * @param isCall
+	// * is this a call statement (not fork)?
+	// * @param function
+	// * The function.
+	// * @param arguments
+	// * The arguments to the function.
+	// */
+	// public CommonCallStatement(CIVLSource civlSource, Location source,
+	// boolean isCall, CIVLFunction function, List<Expression> arguments) {
+	// super(civlSource, source);
+	// this.isCall = isCall;
+	// this.function = function;
+	// this.arguments = arguments;
+	// }
 
-	/**
-	 * A function call.
-	 * 
-	 * @param source
-	 *            The source location for this call statement.
-	 * @param lhs
-	 *            The (optional) left hand side expression. Used when the call
-	 *            statement is also an assignment. Null if not applicable.
-	 * @param function
-	 *            The function.
-	 * @param arguments
-	 *            The arguments to the function.
-	 */
-	public CommonCallStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, CIVLFunction function, List<Expression> arguments) {
-		super(civlSource, source);
-		this.lhs = lhs;
-		this.function = function;
-		this.arguments = arguments;
-	}
+	// /**
+	// * A function call.
+	// *
+	// * @param source
+	// * The source location for this call statement.
+	// * @param lhs
+	// * The (optional) left hand side expression. Used when the call
+	// * statement is also an assignment. Null if not applicable.
+	// * @param function
+	// * The function.
+	// * @param arguments
+	// * The arguments to the function.
+	// */
+	// public CommonCallStatement(CIVLSource civlSource, Location source,
+	// LHSExpression lhs, CIVLFunction function, List<Expression> arguments) {
+	// super(civlSource, source);
+	// this.lhs = lhs;
+	// this.function = function;
+	// this.arguments = arguments;
+	// }
 
 	/**
 	 * @return The left hand side expression if applicable. Else null.
@@ -115,7 +115,9 @@ public class CommonCallStatement extends CommonStatement implements
 	 */
 	@Override
 	public CIVLFunction function() {
-		return function;
+		if (this.functionExpression.expressionKind() == ExpressionKind.FUNCTION_POINTER)
+			return ((FunctionPointerExpression) functionExpression).function();
+		return null;
 	}
 
 	@Override
@@ -140,14 +142,14 @@ public class CommonCallStatement extends CommonStatement implements
 		this.lhs = lhs;
 	}
 
-	/**
-	 * @param function
-	 *            The function being called.
-	 */
-	@Override
-	public void setFunction(CIVLFunction function) {
-		this.function = function;
-	}
+	// /**
+	// * @param function
+	// * The function being called.
+	// */
+	// @Override
+	// public void setFunction(CIVLFunction function) {
+	// this.function = function;
+	// }
 
 	/**
 	 * @param arguments
@@ -160,16 +162,10 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public String toString() {
-		String functionString;
-		String result;
+		String result = this.functionExpression.toString();
+		;
 		boolean first = true;
 
-		if (function != null)
-			functionString = function.name().name();
-		else {
-			functionString = this.functionExpression.toString();
-		}
-		result = functionString;
 		result += "(";
 		for (Expression arg : arguments) {
 			if (first)
@@ -270,7 +266,8 @@ public class CommonCallStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonCallStatement(this.getSource(),
-					this.source(), lhs, this.function, this.arguments);
+					this.source(), this.isCall, lhs, this.functionExpression,
+					this.arguments);
 			newStatement.setGuard(newGuard);
 			newStatement.isCall = this.isCall;
 		} else {
@@ -294,7 +291,8 @@ public class CommonCallStatement extends CommonStatement implements
 			}
 			if (hasNewArg) {
 				newStatement = new CommonCallStatement(this.getSource(),
-						this.source(), lhs, this.function, newArgs);
+						this.source(), this.isCall, lhs,
+						this.functionExpression, newArgs);
 				newStatement.setGuard(this.guard());
 				newStatement.isCall = this.isCall;
 			}
@@ -347,9 +345,12 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public boolean isSystemCall() {
-		if (this.function == null)
-			return false;
-		return this.function.isSystem();
+		CIVLFunction function = this.function();
+
+		if (this.isCall && function != null && function.isLibraryFunction()) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -357,14 +358,10 @@ public class CommonCallStatement extends CommonStatement implements
 			boolean atomicLockVarChanged) {
 		String targetString;
 		String result = "  " + source().id() + "->";
+		CIVLFunction function = this.function();
 
-		if (isCall() && !isSystemCall()) {
-			if (function != null && !(function instanceof AbstractFunction)) {
-				targetString = Integer.toString(function.startLocation().id());
-			} else {
-				return super.toStepString(atomicKind, atomCount,
-						atomicLockVarChanged);
-			}
+		if (this.isCall && function != null && function.isNormal()) {
+			targetString = Integer.toString(function.startLocation().id());
 		} else
 			return super.toStepString(atomicKind, atomCount,
 					atomicLockVarChanged);
@@ -401,6 +398,11 @@ public class CommonCallStatement extends CommonStatement implements
 			result += " at " + source().getSource().getSummary();
 		result += ";\n";
 		return result;
+	}
+
+	@Override
+	public void setFunction(FunctionPointerExpression function) {
+		this.functionExpression = function;
 	}
 
 }

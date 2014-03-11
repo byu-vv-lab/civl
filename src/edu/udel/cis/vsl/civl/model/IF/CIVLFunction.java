@@ -207,4 +207,26 @@ public interface CIVLFunction extends Sourceable {
 	Set<Variable> variableAddressedOf();
 
 	CIVLFunctionType functionType();
+
+	/**
+	 * Is this function implemented by library?
+	 * 
+	 * @return
+	 */
+	boolean isLibraryFunction();
+
+	/**
+	 * Is this an abstract function?
+	 * 
+	 * @return
+	 */
+	boolean isAbstract();
+
+	/**
+	 * Is this a normal function that contains a function body defined in the
+	 * source code?
+	 * 
+	 * @return
+	 */
+	boolean isNormal();
 }

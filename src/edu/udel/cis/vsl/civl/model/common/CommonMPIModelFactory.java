@@ -277,19 +277,14 @@ public class CommonMPIModelFactory extends CommonModelFactory implements
 	@Override
 	public CallOrSpawnStatement callOrSpawnStatement(Location source,
 			boolean isCall, CIVLFunction function, List<Expression> arguments) {
-		return callOrSpawnStatement(systemSource(), source, isCall, function,
-				arguments, null);
+		return null;
 	}
 
 	@Override
 	public CallOrSpawnStatement callOrSpawnStatement(Location source,
 			boolean isCall, LHSExpression lhs, CIVLFunction function,
 			List<Expression> arguments) {
-		CallOrSpawnStatement statement = callOrSpawnStatement(systemSource(),
-				source, isCall, function, arguments, null);
-
-		statement.setLhs(lhs);
-		return statement;
+		return null;
 	}
 
 	@Override

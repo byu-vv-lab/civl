@@ -49,7 +49,7 @@ public class CommonAbstractFunction extends CommonFunction implements
 		return continuity;
 	}
 
-	/*********************** Methods from CIVLFunction **********************/
+	/* ********************** Methods from CIVLFunction ******************** */
 
 	@Override
 	public void print(String prefix, PrintStream out, boolean isDebug) {
@@ -70,6 +70,16 @@ public class CommonAbstractFunction extends CommonFunction implements
 		}
 		this.outerScope().print(prefix + "| ", out, isDebug);
 		out.flush();
+	}
+	
+	@Override
+	public boolean isAbstract(){
+		return true;
+	}
+	
+	@Override
+	public boolean isNormal() {
+		return false;
 	}
 
 }

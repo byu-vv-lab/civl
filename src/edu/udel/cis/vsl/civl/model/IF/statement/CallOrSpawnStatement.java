@@ -7,6 +7,7 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 
 /**
@@ -56,7 +57,7 @@ public interface CallOrSpawnStatement extends Statement {
 	 * @param function
 	 *            The function being called.
 	 */
-	void setFunction(CIVLFunction function);
+	void setFunction(FunctionPointerExpression function);
 
 	/**
 	 * @param arguments

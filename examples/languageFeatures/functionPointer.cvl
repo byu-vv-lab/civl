@@ -23,8 +23,10 @@ $proc proc_create(void (*f)(int), int x){
 }
 
 void foo(int id) {
+  _Bool checkPid = equalsTo(procs[id], $self);
+  
   printf("I'm spawned with id %d.\n", id);
-  $assert(procs[id] == $self);
+  $assert(checkPid);
 }
 
 void main(){

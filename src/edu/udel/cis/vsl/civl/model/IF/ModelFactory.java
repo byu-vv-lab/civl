@@ -515,7 +515,7 @@ public interface ModelFactory {
 			CIVLType type);
 
 	FunctionPointerExpression functionPointerExpression(CIVLSource source,
-			Scope scope, CIVLFunction function);
+			CIVLFunction function);
 
 	HereOrRootExpression hereOrRootExpression(CIVLSource source, boolean isRoot);
 
@@ -847,8 +847,6 @@ public interface ModelFactory {
 	 *            The source location for this fork statement.
 	 * @param isCall
 	 *            is this a call statement (not spawn statement)?
-	 * @param function
-	 *            A function
 	 * @param arguments
 	 *            The arguments to the function.
 	 * @param guard
@@ -856,7 +854,7 @@ public interface ModelFactory {
 	 * @return A new fork statement.
 	 */
 	CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
-			Location source, boolean isCall, CIVLFunction function,
+			Location source, boolean isCall,
 			List<Expression> arguments, Expression guard);
 
 	/**

@@ -67,5 +67,14 @@ public class CommonSystemFunction extends CommonFunction implements
 	public String toString() {
 		return this.name().name() + " : system function call";
 	}
+	
+	@Override
+	public boolean isLibraryFunction(){
+		return true;
+	}
 
+	@Override
+	public boolean isNormal() {
+		return false;
+	}
 }

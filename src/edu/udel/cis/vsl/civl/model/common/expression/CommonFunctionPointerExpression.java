@@ -21,6 +21,7 @@ public class CommonFunctionPointerExpression extends CommonExpression implements
 		this.function = function;
 		this.expressionType = new CommonPointerType(function.functionType(),
 				pointerType);
+		this.setExpressionScope(function.containingScope());
 	}
 
 	@Override

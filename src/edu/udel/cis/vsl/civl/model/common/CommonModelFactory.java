@@ -879,11 +879,10 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public FunctionPointerExpression functionPointerExpression(
-			CIVLSource source, Scope scope, CIVLFunction function) {
+			CIVLSource source, CIVLFunction function) {
 		FunctionPointerExpression expression = new CommonFunctionPointerExpression(
 				source, function, pointerSymbolicType);
-
-		expression.setExpressionScope(scope);
+		
 		return expression;
 	}
 
@@ -1320,10 +1319,10 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
-			Location source, boolean isCall, CIVLFunction function,
+			Location source, boolean isCall,
 			List<Expression> arguments, Expression guard) {
 		CallOrSpawnStatement result = new CommonCallStatement(civlSource,
-				source, isCall, function, arguments);
+				source, isCall, null, null, arguments);
 		Scope statementScope = null;
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);
@@ -1341,7 +1340,7 @@ public class CommonModelFactory implements ModelFactory {
 			Location source, boolean isCall, Expression function,
 			List<Expression> arguments, Expression guard) {
 		CallOrSpawnStatement result = new CommonCallStatement(civlSource,
-				source, isCall, function, arguments);
+				source, isCall, null, function, arguments);
 		Scope statementScope = null;
 
 		((CommonExpression) result.guard()).setExpressionType(booleanType);

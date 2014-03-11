@@ -599,7 +599,7 @@ public class FunctionTranslator {
 				callee = (Function) entity;
 				result = modelFactory.callOrSpawnStatement(
 						modelFactory.sourceOf(callNode), location, isCall,
-						(CIVLFunction) null, arguments, null);
+						arguments, null);
 				break;
 			case VARIABLE:
 				Expression function = this.translateExpressionNode(
@@ -2927,7 +2927,7 @@ public class FunctionTranslator {
 			result = modelFactory.variableExpression(source,
 					scope.variable(name));
 		} else if (scope.getFunction(name) != null) {
-			result = modelFactory.functionPointerExpression(source, scope,
+			result = modelFactory.functionPointerExpression(source,
 					scope.getFunction(name));
 		} else {
 			throw new CIVLInternalException("No such variable ", source);

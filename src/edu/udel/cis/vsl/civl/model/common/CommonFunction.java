@@ -501,4 +501,19 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		return this.functionType;
 	}
 
+	@Override
+	public boolean isLibraryFunction() {
+		return false;
+	}
+
+	@Override
+	public boolean isAbstract() {
+		return false;
+	}
+
+	@Override
+	public boolean isNormal() {
+		return true;
+	}
+
 }

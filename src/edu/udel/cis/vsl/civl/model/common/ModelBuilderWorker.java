@@ -387,7 +387,8 @@ public class ModelBuilderWorker {
 			CallOrSpawnStatement call = entry.getKey();
 			CIVLFunction function = functionMap.get(entry.getValue());
 
-			call.setFunction(function);
+			call.setFunction(factory.functionPointerExpression(function.getSource(), function));
+			//TODO when the function is a function pointer, we are unable to identify if it is a system call.
 			if (call.isSystemCall()) {
 				call.setGuard(factory.systemGuardExpression(call));
 			}
