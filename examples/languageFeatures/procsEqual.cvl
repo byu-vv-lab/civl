@@ -1,3 +1,7 @@
+/* Example to demonstrate the use of system function equalsTo() that 
+ * compares two process references.
+ * 
+ */
 #include <civlc.h>
 #include <stdio.h>
 
