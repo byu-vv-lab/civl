@@ -137,6 +137,9 @@ public class AmpleSetWorker {
 	 */
 	Map<Integer, Map<SymbolicExpression, Integer>> processRankMap = new HashMap<>();
 
+	/**
+	 * map of process ID's and the set of enabled system call statements.
+	 */
 	Map<Integer, Set<CallOrSpawnStatement>> enabledSystemCallMap = new HashMap<>();
 
 	/**

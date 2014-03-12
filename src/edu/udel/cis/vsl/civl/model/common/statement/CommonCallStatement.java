@@ -54,53 +54,10 @@ public class CommonCallStatement extends CommonStatement implements
 			List<Expression> arguments) {
 		super(civlSource, source);
 		this.isCall = isCall;
-		// assert functionExpression.getExpressionType() instanceof
-		// CIVLFunctionType;
 		this.lhs = lhs;
 		this.functionExpression = functionExpression;
 		this.arguments = arguments;
 	}
-
-	// /**
-	// * A function call. Either of the form f(x) or else v=f(x).
-	// *
-	// * @param source
-	// * The source location for this call statement.
-	// * @param isCall
-	// * is this a call statement (not fork)?
-	// * @param function
-	// * The function.
-	// * @param arguments
-	// * The arguments to the function.
-	// */
-	// public CommonCallStatement(CIVLSource civlSource, Location source,
-	// boolean isCall, CIVLFunction function, List<Expression> arguments) {
-	// super(civlSource, source);
-	// this.isCall = isCall;
-	// this.function = function;
-	// this.arguments = arguments;
-	// }
-
-	// /**
-	// * A function call.
-	// *
-	// * @param source
-	// * The source location for this call statement.
-	// * @param lhs
-	// * The (optional) left hand side expression. Used when the call
-	// * statement is also an assignment. Null if not applicable.
-	// * @param function
-	// * The function.
-	// * @param arguments
-	// * The arguments to the function.
-	// */
-	// public CommonCallStatement(CIVLSource civlSource, Location source,
-	// LHSExpression lhs, CIVLFunction function, List<Expression> arguments) {
-	// super(civlSource, source);
-	// this.lhs = lhs;
-	// this.function = function;
-	// this.arguments = arguments;
-	// }
 
 	/**
 	 * @return The left hand side expression if applicable. Else null.
@@ -141,15 +98,6 @@ public class CommonCallStatement extends CommonStatement implements
 	public void setLhs(LHSExpression lhs) {
 		this.lhs = lhs;
 	}
-
-	// /**
-	// * @param function
-	// * The function being called.
-	// */
-	// @Override
-	// public void setFunction(CIVLFunction function) {
-	// this.function = function;
-	// }
 
 	/**
 	 * @param arguments

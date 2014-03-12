@@ -2431,19 +2431,6 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public void setGcommSymbolicType(CIVLType gcommType) {
-		// this.gcommSymbolicType = (SymbolicTupleType)
-		// universe.canonic(gcommType
-		// .getDynamicType(universe));
-	}
-
-	@Override
-	public void setCommSymbolicType(CIVLType commType) {
-		// this.commSymbolicType = (SymbolicTupleType) universe.canonic(commType
-		// .getDynamicType(universe));
-	}
-
-	@Override
 	public Model model() {
 		return this.modelBuilder.getModel();
 	}

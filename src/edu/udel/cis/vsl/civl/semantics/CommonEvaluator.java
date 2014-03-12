@@ -979,19 +979,13 @@ public class CommonEvaluator implements Evaluator {
 		Variable variable = expression.variable();
 		CIVLType type = variable.type();
 		Evaluation result;
+		TypeEvaluation typeEval = getDynamicType(state, pid, type,
+				expression.getSource(), false);
+		int sid = state.getScopeId(pid, variable);
+		SymbolicExpression value = computeInitialValue(variable,
+				typeEval.type, sid);
 
-		if (type.isHeapType()) {
-			result = new Evaluation(state,
-					((CIVLHeapType) type).getInitialValue());
-		} else {
-			TypeEvaluation typeEval = getDynamicType(state, pid, type,
-					expression.getSource(), false);
-			int sid = state.getScopeId(pid, variable);
-			SymbolicExpression value = computeInitialValue(variable,
-					typeEval.type, sid);
-
-			result = new Evaluation(typeEval.state, value);
-		}
+		result = new Evaluation(typeEval.state, value);
 		return result;
 	}
 

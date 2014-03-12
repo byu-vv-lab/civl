@@ -1494,10 +1494,6 @@ public interface ModelFactory {
 
 	Expression systemGuardExpression(CallOrSpawnStatement call);
 
-	void setGcommSymbolicType(CIVLType gcommType);
-
-	void setCommSymbolicType(CIVLType commType);
-
 	Model model();
 
 	/**
