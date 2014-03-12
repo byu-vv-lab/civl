@@ -123,15 +123,18 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$bundle_size":
 		case "$bundle_unpack":
 		case "$comm_create":
+		case "$comm_defined":
 		case "$comm_enqueue":
 		case "$comm_probe":
 		case "$comm_seek":
 		case "$comm_size":
-		case "equalsTo":
 		case "$exit":
 		case "$free":
 		case "$gcomm_create2":
+		case "$gcomm_defined":
+		case "$proc_defined":
 		case "$scope_parent":
+		case "$scope_defined":
 			guard = universe.trueExpression();
 			break;
 		default:

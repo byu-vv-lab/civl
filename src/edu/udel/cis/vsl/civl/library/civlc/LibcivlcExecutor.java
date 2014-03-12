@@ -882,6 +882,10 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = this.executeCommCreate(state, pid, lhs, arguments,
 					argumentValues);
 			break;
+		case "$comm_defined":
+			state = this.executeCommDefined(state, pid, lhs, arguments,
+					argumentValues);
+			break;
 		case "$comm_enqueue":
 			state = executeCommEnqueue(state, pid, arguments, argumentValues);
 			break;
@@ -901,10 +905,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = this.executeCommSize(state, pid, lhs, arguments,
 					argumentValues);
 			break;
-		case "equalsTo":
-			state = this.executeEqualsTo(state, pid, lhs, arguments,
-					argumentValues);
-			break;
 		case "$exit":// return immediately since no transitions needed after an
 			// exit, because the process no longer exists.
 			return executeExit(state, pid);
@@ -915,6 +915,18 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		case "$gcomm_create2":
 			state = executeGcommCreate(state, pid, lhs, arguments,
 					argumentValues, call.getSource());
+			break;
+		case "$gcomm_defined":
+			state = this.executeGcommDefined(state, pid, lhs, arguments,
+					argumentValues);
+			break;
+		case "$proc_defined":
+			state = this.executeProcDefined(state, pid, lhs, arguments,
+					argumentValues);
+			break;
+		case "$scope_defined":
+			state = this.executeScopeDefined(state, pid, lhs, arguments,
+					argumentValues);
 			break;
 		case "$scope_parent":
 			state = this.executeScopeParent(state, pid, lhs, arguments,
@@ -931,16 +943,129 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		return state;
 	}
 
-	private State executeEqualsTo(State state, int pid, LHSExpression lhs,
+	/**
+	 * Checks if a $comm object is defined, i.e., it doesn't point to the heap
+	 * of an invalid scope, implementing the function $comm_defined($comm comm).
+	 * 
+	 * @param state
+	 *            The state where the checking happens.
+	 * @param pid
+	 *            The ID of the process that this computation belongs to.
+	 * @param lhs
+	 *            The left hand side expression of this function call.
+	 * @param arguments
+	 *            The static arguments of the function call.
+	 * @param argumentValues
+	 *            The symbolic values of the arguments of the function call
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCommDefined(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression result = universe.equals(argumentValues[0],
-				argumentValues[1]);
+		SymbolicExpression result = this.isValidPointer(argumentValues[0]);
 
-		if (lhs != null) {
-			state = this.primaryExecutor.assign(state, pid, lhs, result);
-		}
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, lhs, result);
 		return state;
+	}
+
+	/**
+	 * Checks if a $gcomm object is defined, i.e., it doesn't point to the heap
+	 * of an invalid scope, implementing the function $gcomm_defined($gcomm
+	 * gcomm).
+	 * 
+	 * @param state
+	 *            The state where the checking happens.
+	 * @param pid
+	 *            The ID of the process that this computation belongs to.
+	 * @param lhs
+	 *            The left hand side expression of this function call.
+	 * @param arguments
+	 *            The static arguments of the function call.
+	 * @param argumentValues
+	 *            The symbolic values of the arguments of the function call
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeGcommDefined(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression result = this.isValidPointer(argumentValues[0]);
+
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, lhs, result);
+		return state;
+	}
+
+	/**
+	 * Checks if a scope reference is defined, i.e., its id is non-negative.
+	 * 
+	 * @param state
+	 *            The state where the checking happens.
+	 * @param pid
+	 *            The ID of the process that this computation belongs to.
+	 * @param lhs
+	 *            The left hand side expression of this function call.
+	 * @param arguments
+	 *            The static arguments of the function call.
+	 * @param argumentValues
+	 *            The symbolic values of the arguments of the function call
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeScopeDefined(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression result = universe.neq(
+				modelFactory.undefinedScopeValue(), argumentValues[0]);
+
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, lhs, result);
+		return state;
+	}
+
+	/**
+	 * Checks if a process reference is defined, i.e., its id is non-negative.
+	 * 
+	 * @param state
+	 *            The state where the checking happens.
+	 * @param pid
+	 *            The ID of the process that this computation belongs to.
+	 * @param lhs
+	 *            The left hand side expression of this function call.
+	 * @param arguments
+	 *            The static arguments of the function call.
+	 * @param argumentValues
+	 *            The symbolic values of the arguments of the function call
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeProcDefined(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression result = universe.neq(
+				modelFactory.undefinedProcessValue(), argumentValues[0]);
+
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, lhs, result);
+		return state;
+	}
+
+	/**
+	 * Checks if a pointer is defined, i.e., it doesn't point to a memory unit
+	 * of an invalid scope.
+	 * 
+	 * @param pointer
+	 * @return
+	 */
+	private SymbolicExpression isValidPointer(SymbolicExpression pointer) {
+		int scopeId = evaluator.getScopeId(null, pointer);
+
+		if (scopeId > 0)
+			return universe.bool(true);
+		else
+			return universe.bool(false);
 	}
 
 	/**

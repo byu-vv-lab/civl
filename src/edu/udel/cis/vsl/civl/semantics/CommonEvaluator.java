@@ -982,8 +982,8 @@ public class CommonEvaluator implements Evaluator {
 		TypeEvaluation typeEval = getDynamicType(state, pid, type,
 				expression.getSource(), false);
 		int sid = state.getScopeId(pid, variable);
-		SymbolicExpression value = computeInitialValue(variable,
-				typeEval.type, sid);
+		SymbolicExpression value = computeInitialValue(variable, typeEval.type,
+				sid);
 
 		result = new Evaluation(typeEval.state, value);
 		return result;
@@ -1053,10 +1053,17 @@ public class CommonEvaluator implements Evaluator {
 			eval.value = universe.lessThanEquals((NumericExpression) left,
 					(NumericExpression) right);
 			break;
+		// equal and not_equal operators support scope, process, and pointer
+		// types. If the value of those types is undefined (e.g., process -1,
+		// scope -1, pointer<-1, ..., ...>), an error should be reported.
 		case EQUAL:
+			this.isValueDefined(state, expression.left(), left);
+			this.isValueDefined(state, expression.right(), right);
 			eval.value = universe.equals(left, right);
 			break;
 		case NOT_EQUAL:
+			this.isValueDefined(state, expression.left(), left);
+			this.isValueDefined(state, expression.right(), right);
 			eval.value = universe.neq(left, right);
 			break;
 		case MODULO: {
@@ -1093,6 +1100,48 @@ public class CommonEvaluator implements Evaluator {
 					+ expression.operator(), expression);
 		}
 		return eval;
+	}
+
+	/**
+	 * Checks if a value of type scope, process, or pointer type is defined.
+	 * If the value of those types is undefined (e.g., process -1, scope -1,
+	 * pointer<-1, ..., ...>), an error should be reported.
+	 * 
+	 * @param state
+	 * The state where the checking happens.
+	 * @param expression
+	 * The static representation of the value.
+	 * @param expressionValue
+	 * The symbolic value to be checked if it is defined.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private void isValueDefined(State state, Expression expression,
+			SymbolicExpression expressionValue)
+			throws UnsatisfiablePathConditionException {
+		CIVLSource source = expression.getSource();
+
+		if (expression.getExpressionType().equals(modelFactory.scopeType())) {
+			if (expressionValue.equals(modelFactory.undefinedScopeValue())) {
+				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+						"Attempt to evaluate an invalid scope reference");
+				throw new UnsatisfiablePathConditionException();
+			}
+		} else if (expression.getExpressionType().equals(
+				modelFactory.processType())) {
+			if (expressionValue.equals(modelFactory.undefinedProcessValue())) {
+				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+						"Attempt to evaluate an invalid process reference");
+				throw new UnsatisfiablePathConditionException();
+			}
+		} else if (expressionValue.type().equals(this.pointerType)) {
+			int scopeID = this.getScopeId(source, expressionValue);
+
+			if (scopeID < 0) {
+				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+						"Attempt to evaluate a pointer refererring to memory of an invalid scope");
+				throw new UnsatisfiablePathConditionException();
+			}
+		}
 	}
 
 	/**
@@ -1724,9 +1773,9 @@ public class CommonEvaluator implements Evaluator {
 			result = new TypeEvaluation(state, type.getDynamicType(universe));
 		} else if (type instanceof CIVLHeapType) {
 			result = new TypeEvaluation(state, this.heapType);
-		} else if(type instanceof CIVLEnumType){
+		} else if (type instanceof CIVLEnumType) {
 			result = new TypeEvaluation(state, type.getDynamicType(universe));
-		}else
+		} else
 			throw new CIVLInternalException("Unreachable", source);
 		return result;
 	}

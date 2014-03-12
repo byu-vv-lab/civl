@@ -313,7 +313,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * The unique symbolic pointer type used in the system.
 	 */
 	private SymbolicTupleType pointerSymbolicType;
-	
+
 	/**
 	 * The unique symbolic function pointer type used in the system.
 	 */
@@ -610,7 +610,7 @@ public class CommonModelFactory implements ModelFactory {
 	public SymbolicTupleType dynamicSymbolicType() {
 		return dynamicSymbolicType;
 	}
-	
+
 	@Override
 	public SymbolicTupleType functionPointerSymbolicType() {
 		return functionPointerSymbolicType;
@@ -882,7 +882,7 @@ public class CommonModelFactory implements ModelFactory {
 			CIVLSource source, CIVLFunction function) {
 		FunctionPointerExpression expression = new CommonFunctionPointerExpression(
 				source, function, pointerSymbolicType);
-		
+
 		return expression;
 	}
 
@@ -1319,8 +1319,8 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
-			Location source, boolean isCall,
-			List<Expression> arguments, Expression guard) {
+			Location source, boolean isCall, List<Expression> arguments,
+			Expression guard) {
 		CallOrSpawnStatement result = new CommonCallStatement(civlSource,
 				source, isCall, null, null, arguments);
 		Scope statementScope = null;
@@ -1334,7 +1334,7 @@ public class CommonModelFactory implements ModelFactory {
 			result.setGuard(guard);
 		return result;
 	}
-	
+
 	@Override
 	public CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
 			Location source, boolean isCall, Expression function,
@@ -2033,6 +2033,11 @@ public class CommonModelFactory implements ModelFactory {
 			scopeValues.set(sid, result);
 		}
 		return result;
+	}
+
+	@Override
+	public SymbolicExpression undefinedScopeValue() {
+		return this.undefinedProcessValue;
 	}
 
 	@Override
