@@ -870,6 +870,7 @@ public class CommonExecutor implements Executor {
 		SymbolicExpression heapPointer;
 		SymbolicExpression heapField;
 		SymbolicExpression newObject;
+		NumericExpression fieldLength;
 		SymbolicExpression firstElementPointer; // returned value
 		ArrayList<SymbolicExpression> elements = new ArrayList<>();
 
@@ -880,6 +881,7 @@ public class CommonExecutor implements Executor {
 		dyScope = state.getScope(dyScopeID);
 		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
 		heapField = universe.tupleRead(heapValue, indexObj);
+		fieldLength = universe.length(heapField);
 		newObject = universe.array(objectType.getDynamicType(universe),
 				elements);
 		heapField = universe.append(heapField, newObject);
@@ -895,8 +897,7 @@ public class CommonExecutor implements Executor {
 							modelFactory.scopeValue(dyScopeID),
 							universe.integer(heapVariableId), symRef }));
 			symRef = universe.tupleComponentReference(symRef, indexObj);
-			symRef = universe
-					.arrayElementReference(symRef, universe.integer(0));
+			symRef = universe.arrayElementReference(symRef, fieldLength);
 			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
 			firstElementPointer = evaluator.setSymRef(heapPointer, symRef);
 			state = assign(state, pid, lhs, firstElementPointer);

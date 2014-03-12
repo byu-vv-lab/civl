@@ -85,7 +85,8 @@ public class TracePlayer extends Player {
 		stateManager.setVerbose(false);
 		log.setSearcher(null);
 		replayer = new Replayer<State, Transition>(stateManager, out);
-		replayer.setPrintAllStates(showStates || verbose || debug);
+		replayer.setPrintAllStates(showStates || verbose || debug
+				|| showSavedStates);
 		replayer.setPredicate(predicate);
 	}
 
