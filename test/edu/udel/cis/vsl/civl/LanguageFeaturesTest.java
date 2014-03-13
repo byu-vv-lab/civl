@@ -60,6 +60,11 @@ public class LanguageFeaturesTest {
 	public void assertPrintf() throws ABCException {
 		assertFalse(ui.run("verify", filename("assertPrintf.cvl")));
 	}
+	
+	@Test
+	public void assert1() throws ABCException {
+		assertTrue(ui.run("verify", filename("assert1.cvl")));
+	}
 
 	@Test
 	public void assume() throws ABCException {
@@ -379,15 +384,10 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void procsEquality() throws ABCException {
-		assertTrue(ui.run("verify", filename("procsEqual.cvl")));
-	}
-
-	@Test
 	public void undefPointer() throws ABCException {
 		assertFalse(ui.run("verify", filename("undefPointer.cvl")));
 	}
-	
+
 	@Test
 	public void undefHeapPointer() throws ABCException {
 		assertFalse(ui.run("verify", filename("undefHeapPointer.cvl")));

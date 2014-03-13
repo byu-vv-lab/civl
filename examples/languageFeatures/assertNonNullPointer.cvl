@@ -8,5 +8,6 @@
 void main(){
   double x;
   double *p=&x; 
+  
   $assert(p); // OK
 }

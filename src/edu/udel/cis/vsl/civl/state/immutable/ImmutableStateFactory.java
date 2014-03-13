@@ -456,104 +456,13 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression[] newValues = null;
 			BitSet oldBitSet = dynamicScope.getReachers();
 			BitSet newBitSet = updateBitSet(oldBitSet, oldToNewPidMap);
-//			Model model = staticScope.model();
 
 			for (Variable variable : procrefVariableIter) {
 				int vid = variable.vid();
 				SymbolicExpression oldValue = dynamicScope.getValue(vid);
 				SymbolicExpression newValue = universe.substitute(oldValue,
 						procSubMap);
-
-				// update communicator
-				// if (variable.type().equals(model.commType())) {
-				// SymbolicExpression procMatrix = this.universe.tupleRead(
-				// newValue, universe.intObject(1));
-				// NumericExpression symbolicRankCount =
-				// ((SymbolicCompleteArrayType) procMatrix
-				// .type()).extent();
-				// int rankCount;
-				// SymbolicExpression undefinedProc = modelFactory
-				// .undefinedProcessValue();
-				// ArrayList<SymbolicExpression> newProcQueueArrayComponents =
-				// new ArrayList<>();
-				// SymbolicExpression newProcQueueArray = procMatrix;
-				// SymbolicTupleType newProcQueueType = null;
-				// // SymbolicExpression buffer = universe.tupleRead(newValue,
-				// // universe.intObject(2));
-				// SymbolicExpression newComm;
-				// // ArrayList<SymbolicExpression> newCommComponents = new
-				// // ArrayList<>();
-				//
-				// IntegerNumber rankIntegerNumber = (IntegerNumber) universe
-				// .extractNumber(symbolicRankCount);
-				//
-				// if (rankIntegerNumber == null)
-				// throw new CIVLInternalException(
-				// "Unable to extract concrete int from "
-				// + symbolicRankCount, (CIVLSource) null);
-				// else
-				// rankCount = rankIntegerNumber.intValue();
-				// for (int rank = 0; rank < rankCount; rank++) {
-				// SymbolicExpression procQueue = this.universe.arrayRead(
-				// procMatrix, universe.integer(rank));
-				// int procRowLength;
-				// SymbolicExpression procRow = universe.tupleRead(
-				// procQueue, universe.intObject(1));
-				// ArrayList<SymbolicExpression> newProcQueueComponents = new
-				// ArrayList<>();
-				// ArrayList<SymbolicType> newProcQueueTypeComponents = new
-				// ArrayList<>();
-				// ArrayList<SymbolicExpression> newProcArrayComponents = new
-				// ArrayList<>();
-				// SymbolicExpression newProcArray, newProcQueue;
-				// int procQueueLength = 0;
-				// IntegerNumber procRowLengthIntegerNumber = (IntegerNumber)
-				// universe
-				// .extractNumber((NumericExpression) universe
-				// .tupleRead(procQueue,
-				// universe.intObject(0)));
-				//
-				// if (procRowLengthIntegerNumber == null)
-				// throw new CIVLInternalException(
-				// "Unable to extract concrete int from "
-				// + symbolicRankCount,
-				// (CIVLSource) null);
-				// else
-				// procRowLength = procRowLengthIntegerNumber
-				// .intValue();
-				//
-				// for (int j = 0; j < procRowLength; j++) {
-				// SymbolicExpression proc = universe.arrayRead(
-				// procRow, universe.integer(j));
-				//
-				// if (!proc.equals(undefinedProc)) {
-				// newProcArrayComponents.add(proc);
-				// procQueueLength++;
-				// }
-				// }
-				// newProcArray = universe.array(
-				// modelFactory.processSymbolicType(),
-				// newProcArrayComponents);
-				// newProcQueueComponents.add(universe
-				// .integer(procQueueLength));
-				// newProcQueueComponents.add(newProcArray);
-				// newProcQueueTypeComponents.add(universe.integerType());
-				// newProcQueueTypeComponents.add(newProcArray.type());
-				// newProcQueueType = universe.tupleType(
-				// universe.stringObject("__procQueue__"),
-				// newProcQueueTypeComponents);
-				// newProcQueue = universe.tuple(newProcQueueType,
-				// newProcQueueComponents);
-				// newProcQueueArrayComponents.add(newProcQueue);
-				// }
-				// newProcQueueArray = universe.array(
-				// universe.pureType(newProcQueueType),
-				// newProcQueueArrayComponents);
-				// newComm = universe.tupleWrite(newValue,
-				// universe.intObject(1), newProcQueueArray);
-				// newValue = newComm;
-				// }
-
+				
 				if (oldValue != newValue) {
 					if (newValues == null)
 						newValues = dynamicScope.copyValues();

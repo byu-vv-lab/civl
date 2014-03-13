@@ -6,5 +6,6 @@
 
 void main(){
   double *p = NULL; 
+  
   $assert(p);
 }

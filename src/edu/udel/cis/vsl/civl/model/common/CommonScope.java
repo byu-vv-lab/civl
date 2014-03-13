@@ -123,6 +123,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 			this.variables[v.vid()] = v;
 			checkProcRef(v);
 			checkPointer(v);
+			checkScopeRef(v);
 		}
 	}
 
