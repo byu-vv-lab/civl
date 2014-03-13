@@ -372,14 +372,19 @@ public class LanguageFeaturesTest {
 	public void enum2() throws ABCException {
 		assertTrue(ui.run("verify", filename("enum2.cvl")));
 	}
-	
+
 	@Test
 	public void functionPointer() throws ABCException {
 		assertTrue(ui.run("verify", filename("functionPointer.cvl")));
 	}
-	
+
 	@Test
-	public void procsEquality()throws ABCException{
+	public void procsEquality() throws ABCException {
 		assertTrue(ui.run("verify", filename("procsEqual.cvl")));
+	}
+
+	@Test
+	public void undefPointer() throws ABCException {
+		assertFalse(ui.run("verify", filename("undefPointer.cvl")));
 	}
 }
