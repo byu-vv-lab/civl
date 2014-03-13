@@ -118,6 +118,11 @@ public class CommonPrimitiveType extends CommonType implements
 	}
 
 	@Override
+	public boolean isBoolType() {
+		return kind == PrimitiveTypeKind.BOOL;
+	}
+
+	@Override
 	public boolean hasState() {
 		return false;
 	}

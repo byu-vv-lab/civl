@@ -119,4 +119,9 @@ public abstract class CommonType implements CIVLType {
 	public boolean isEnumerationType(){
 		return false;
 	}
+	
+	@Override 
+	public boolean isBoolType(){
+		return false;
+	}
 }

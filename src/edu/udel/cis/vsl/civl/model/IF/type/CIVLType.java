@@ -155,4 +155,11 @@ public interface CIVLType {
 	 */
 	boolean isEnumerationType();
 
+	/**
+	 * 
+	 * 
+	 * @return true iff this type is a boolean type.
+	 */
+	boolean isBoolType();
+
 }

@@ -1295,7 +1295,7 @@ public interface ModelFactory {
 
 	/**
 	 * Translate a symbolic process id into an integer
-	 * 
+	 * TODO: explain
 	 * @param source
 	 *            The CIVL source information of the symbolic process id
 	 * @param processValue

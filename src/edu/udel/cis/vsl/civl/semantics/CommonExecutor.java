@@ -200,7 +200,7 @@ public class CommonExecutor implements Executor {
 				enablePrintf, evaluator);
 	}
 
-	/* ************************* Private methods ************************* */
+	/* ************************** Private methods ************************** */
 
 	/**
 	 * TODO javadocs

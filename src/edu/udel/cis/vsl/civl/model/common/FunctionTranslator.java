@@ -1947,14 +1947,17 @@ public class FunctionTranslator {
 		Location location = modelFactory.location(
 				modelFactory.sourceOfBeginning(returnNode), scope);
 		Expression expression;
+		CIVLFunction function =  this.functionInfo.function();
 
 		if (returnNode.getExpression() != null) {
 			expression = translateExpressionNode(returnNode.getExpression(),
 					scope, true);
+			if(function.returnType().isBoolType())
+				expression = modelFactory.booleanExpression(expression);
 		} else
 			expression = null;
 		return modelFactory.returnFragment(modelFactory.sourceOf(returnNode),
-				location, expression, this.functionInfo.function());
+				location, expression, function);
 	}
 
 	/**
