@@ -130,5 +130,10 @@ public class ConcurrencyTest {
 	public void waitSelf() {
 		assertFalse(ui.run("verify", filename("waitSelf.cvl")));
 	}
+	
+	@Test
+	public void dlqueue() {
+		assertTrue(ui.run("verify", filename("dlqueue.cvl")));
+	}
 
 }
