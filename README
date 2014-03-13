@@ -71,8 +71,7 @@ downloaded .tgz file and you will have a folder named "vsl".
 If you do not already have a directory /opt, create one with
 "mkdir /opt".  Move vsl into /opt.  Use sudo as needed.
 
-3. Download the appropriate CIVL distribution from
-http://vsl.cis.udel.edu/civl.
+3. Download the CIVL distribution from http://vsl.cis.udel.edu/civl.
 
 4. Unzip and untar the downloaded file if this does not happen
 automatically.  This should result in a folder named
@@ -131,21 +130,19 @@ We recommend using the Eclipse IDE for Java/EE developers.
 	   selecting Run As->Ant Build.
 
 3. From within Eclipse, select New Project...from SVN. The archive is
-svn://vsl.cis.udel.edu/civl.  After entering that, open it up and
-select the "trunk". (It is simplest to just check out the trunk for
-the Eclipse project.)
+   svn://vsl.cis.udel.edu/civl.  After entering that, open it up and
+   select the "trunk". (It is simplest to just check out the trunk for
+   the Eclipse project.)
 
 4. Check out the trunk, and create the project using the New Java
-Project Wizard as usual, naming it "CIVL". The .project, .classpath,
-and other Eclipse meta-data are already in the SVN archive, saving you
-a bunch of work.
+   Project Wizard as usual, naming it "CIVL". The .project, .classpath,
+   and other Eclipse meta-data are already in the SVN archive, saving you
+   a bunch of work.
 
 5. If you already have the VSL dependencies library, you may
-skip this step.
-
-Download the tgz archive of VSL dependencies from 
-   http://vsl.cis.udel.edu/tools/vsl_depend,
-   choosing the right .tgz according to your platform:
+   skip this step. Download the tgz archive of VSL dependencies from 
+   http://vsl.cis.udel.edu/tools/vsl_depend, choosing the right .tgz 
+   according to your platform:
 	
 	vsl_linux32-1.0.tgz	- 32-bit linux
 	vsl_linux64-1.0.tgz	- 64-bit linux
