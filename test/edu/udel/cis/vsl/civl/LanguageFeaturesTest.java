@@ -387,4 +387,9 @@ public class LanguageFeaturesTest {
 	public void undefPointer() throws ABCException {
 		assertFalse(ui.run("verify", filename("undefPointer.cvl")));
 	}
+	
+	@Test
+	public void undefHeapPointer() throws ABCException {
+		assertFalse(ui.run("verify", filename("undefHeapPointer.cvl")));
+	}
 }
