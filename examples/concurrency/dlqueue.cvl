@@ -81,7 +81,7 @@ void test2() {
   $wait(t0);
   $wait(t1);
   result = dequeue(&q, &x);
-  assert(result!=0);
+  assert(result);
   result = dequeue(&q, &y);
   assert(result!=0);
   assert ((x==6 && y==7) || (x==7 && y==6));
