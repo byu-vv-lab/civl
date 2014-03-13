@@ -1103,42 +1103,50 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Checks if a value of type scope, process, or pointer type is defined.
-	 * If the value of those types is undefined (e.g., process -1, scope -1,
+	 * Checks if a value of type scope, process, or pointer type is defined. If
+	 * the value of those types is undefined (e.g., process -1, scope -1,
 	 * pointer<-1, ..., ...>), an error should be reported.
 	 * 
 	 * @param state
-	 * The state where the checking happens.
+	 *            The state where the checking happens.
 	 * @param expression
-	 * The static representation of the value.
+	 *            The static representation of the value.
 	 * @param expressionValue
-	 * The symbolic value to be checked if it is defined.
+	 *            The symbolic value to be checked if it is defined.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private void isValueDefined(State state, Expression expression,
 			SymbolicExpression expressionValue)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource source = expression.getSource();
+		CIVLType expressionType = expression.getExpressionType();
 
-		if (expression.getExpressionType().equals(modelFactory.scopeType())) {
+		if (expressionType.equals(modelFactory.scopeType())) {
 			if (expressionValue.equals(modelFactory.undefinedScopeValue())) {
 				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid scope reference");
 				throw new UnsatisfiablePathConditionException();
 			}
-		} else if (expression.getExpressionType().equals(
-				modelFactory.processType())) {
+		} else if (expressionType.equals(modelFactory.processType())) {
 			if (expressionValue.equals(modelFactory.undefinedProcessValue())) {
 				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid process reference");
 				throw new UnsatisfiablePathConditionException();
 			}
 		} else if (expressionValue.type().equals(this.pointerType)) {
-			int scopeID = this.getScopeId(source, expressionValue);
+			if (expressionValue.equals(nullPointer))
+				return;
+			try {
+				int scopeID = this.getScopeId(source, expressionValue);
 
-			if (scopeID < 0) {
-				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
-						"Attempt to evaluate a pointer refererring to memory of an invalid scope");
+				if (scopeID < 0) {
+					logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+							"Attempt to evaluate a pointer refererring to memory of an invalid scope");
+					throw new UnsatisfiablePathConditionException();
+				}
+			} catch (Exception e) {
+				logSimpleError(source, state, ErrorKind.UNDEFINED_VALUE,
+						"Attempt to use undefined pointer");
 				throw new UnsatisfiablePathConditionException();
 			}
 		}

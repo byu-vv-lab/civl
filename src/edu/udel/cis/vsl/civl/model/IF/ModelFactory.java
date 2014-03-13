@@ -1307,6 +1307,8 @@ public interface ModelFactory {
 	/**
 	 * Translate a symbolic scope id into an integer
 	 * 
+	 * TODO: what kind of exception is thrown if you can't do it???
+	 * 
 	 * @param source
 	 *            The CIVL source information of the symbolic process id
 	 * @param scopeValue
