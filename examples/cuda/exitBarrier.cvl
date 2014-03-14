@@ -50,7 +50,6 @@ void CIVL_Barrier_init(int numProcs, CIVL_Barrier *barrier, int *array) {
   barrier->in_barrier = array;
   for (int i=0; i<numProcs; i++)
     barrier->in_barrier[i] = 0;
-  return barrier;
 }
 
 void CIVL_barrier(CIVL_Barrier *barrier, int tid) {
