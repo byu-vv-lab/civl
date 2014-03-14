@@ -11,13 +11,13 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
 
 public class ArithmeticTest {
 
-	/***************************** Static Fields *****************************/
+	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"), "arithmetic");
 
 	private static UserInterface ui = new UserInterface();
 
-	/***************************** Helper Methods ****************************/
+	/* *************************** Helper Methods ************************** */
 
 	private void check(String name) {
 		assertTrue(ui.run("verify", filename(name)));
@@ -27,7 +27,7 @@ public class ArithmeticTest {
 		return new File(rootDir, name).getPath();
 	}
 
-	/****************************** Test Methods *****************************/
+	/* **************************** Test Methods *************************** */
 
 	@Test
 	public void algebra() {

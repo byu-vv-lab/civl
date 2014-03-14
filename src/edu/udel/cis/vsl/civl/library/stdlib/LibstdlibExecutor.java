@@ -90,12 +90,10 @@ public class LibstdlibExecutor extends CommonLibraryExecutor implements
 		Identifier name;
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
-		// LHSExpression lhs;
 		int numArgs;
 
 		numArgs = call.arguments().size();
 		name = call.function().name();
-		// lhs = call.lhs();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {

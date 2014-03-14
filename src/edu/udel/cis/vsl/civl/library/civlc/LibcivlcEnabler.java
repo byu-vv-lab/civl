@@ -130,6 +130,8 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$comm_seek":
 		case "$comm_size":
 		case "$exit":
+		case "$comm_free":
+		case "$gcomm_free":
 		case "$free":
 		case "$gcomm_create2":
 		case "$gcomm_defined":
@@ -320,23 +322,23 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 				else
 					message = null;
 			}
-		}else if(int_source >= 0 && int_tag ==-2){
+		} else if (int_source >= 0 && int_tag == -2) {
 			bufRow = universe.arrayRead(buf, (NumericExpression) source);
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
 			int_queueLength = evaluator.extractInt(civlsource,
 					(NumericExpression) queueLength);
-			if(int_queueLength > 0)
+			if (int_queueLength > 0)
 				message = universe.arrayRead(messages, zero);
 			else
 				message = null;
-		}else{
+		} else {
 			throw new CIVLUnimplementedFeatureException("$COMM_ANY_SOURCE");
 		}
 		return message;
 	}
-	
+
 	/**
 	 * Computes the guard of $wait.
 	 * 
