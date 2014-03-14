@@ -453,4 +453,26 @@ follows:
   executed from a single process, resulting in a state which is then
   pushed onto the DFS stack.
 \end{itemize}
- 
+
+\chapter{Emacs mode}
+
+A CIVL-C mode for the \texttt{emacs} text editor is available in
+directory \texttt{emacs} in the CIVL distribution.  This provides
+syntax highlighting and automatic indentation for CIVL-C programs.
+
+To install this mode:
+\begin{enumerate}
+\item Copy file \texttt{civl-syntax.el} to \verb!~/.emacs.d/lisp! or another favorite location
+\item Include that path in your load path in \verb!.emacs!:
+\begin{verbatim}
+(add-to-list 'load-path "~/.emacs.d/lisp")
+\end{verbatim}
+\item Add the following lines to your \verb!~/.emacs! file:
+\begin{verbatim}
+(require 'civl-syntax)
+(civl-syntax)
+\end{verbatim}
+\end{enumerate}
+
+We are grateful to William Killian of the University of Delaware for
+writing this emacs module.
