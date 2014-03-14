@@ -20,7 +20,7 @@ $input double initialU[nx];
 double seq_u[nx];
 $proc __procs[nprocs];
 $gcomm __MPI_COMM_WORLD;
-$assume nx >= nprocs;
+$assume nx > nprocs;
 $assume 0 < nprocs && nprocs <= nprocsb;
 $assume 0 < nsteps && nsteps <= nstepsb;
 $assume 2 < nx && nx <= nxb;
