@@ -299,5 +299,6 @@ public class CommonModelCombiner implements ModelCombiner {
 				factory.setImpactScopeOfLocation(loc);
 			}
 		}
+		model.complete();
 	}
 }
