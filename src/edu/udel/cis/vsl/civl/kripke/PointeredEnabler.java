@@ -67,12 +67,14 @@ public class PointeredEnabler extends Enabler implements
 				ampleWorker.ampleProcesses());// compute ample processes
 
 		if (debugging || showAmpleSet) {
-			debugOut.print("ample processes at state " + state.getCanonicId()
-					+ ":");
-			for (ProcessState p : processStates) {
-				debugOut.print(p.getPid() + "\t");
+			if (processStates.size() > 1) {
+				debugOut.print("ample processes at state "
+						+ state.getCanonicId() + ":\t");
+				for (ProcessState p : processStates) {
+					debugOut.print(p.getPid() + "\t");
+				}
+				debugOut.println();
 			}
-			debugOut.println();
 		}
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
