@@ -45,7 +45,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  */
 public class UserInterface {
 
-	/***************************** Static fields *****************************/
+	/* *************************** Static fields *************************** */
 
 	/**
 	 * A string printed before and after titles of sections of output to make
@@ -144,7 +144,7 @@ public class UserInterface {
 	public final static Option verboseO = Option.newScalarOption("verbose",
 			BOOLEAN, "verbose mode", false);
 
-	/*************************** Instance fields *****************************/
+	/* ************************* Instance fields *************************** */
 
 	/**
 	 * Stderr: used only if something goes wrong, like a bad command line arg,
@@ -171,7 +171,7 @@ public class UserInterface {
 	 */
 	SymbolicUniverse universe = SARL.newStandardUniverse();
 
-	/**************************** Constructors *******************************/
+	/* ************************** Constructors ***************************** */
 
 	public UserInterface() {
 		Collection<Option> options = Arrays.asList(errorBoundO, showModelO,
@@ -185,7 +185,7 @@ public class UserInterface {
 		parser = new CommandLineParser(options);
 	}
 
-	/*************************** Private Methods *****************************/
+	/* ************************* Private Methods *************************** */
 
 	/**
 	 * Extracts from a string the "core" part of a filename by removing any
@@ -470,7 +470,7 @@ public class UserInterface {
 		return false;
 	}
 
-	/*************************** Public Methods *****************************/
+	/* ************************** Public Methods *************************** */
 
 	public boolean runHelp(GMCConfiguration config) {
 		printUsage(out);

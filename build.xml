@@ -38,6 +38,9 @@
 		<classpath path="${jacoco.jar}" />
 	</taskdef>
 
+	<!-- Benchmark  -->
+
+	<property name="bench.src.dir" location="${basedir}/bench" />
 
 	<!-- Source compilation and JAR construction -->
 
@@ -145,6 +148,13 @@
 		</jacoco:report>
 	</target>
 
+	<!-- Benchmark Tasks -->
+
+	<target name="bench-compile" depends="jar" description="Compile benchmark java source files.">
+		<mkdir dir="${bin.dir}" />
+		<javac debug="true" srcdir="${bench.src.dir}" destdir="${bin.dir}" includes="edu/udel/cis/vsl/civl/**" classpathref="src.compile.classpath" encoding="UTF-8" includeantruntime="false">
+		</javac>
+	</target>
 
 	<!-- Javadoc Tasks -->
 
@@ -170,6 +180,6 @@
 
 	<!-- Do everything -->
 
-	<target name="all" depends="jar,test,javadoc" />
+	<target name="all" depends="jar,test,javadoc,bench-compile" />
 
 </project>

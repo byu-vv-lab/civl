@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v 0.8
+                               v 0.9
 
 ------------------------------ Overview -------------------------------
 
@@ -37,21 +37,8 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.7 -------------------------
+-------------------------- Updates from v 0.8 -------------------------
 
-1. Dyscopes are now first-class objects, like processes and other types.
-   Refer to CIVL Manual Section 6.2.2 for more details about $scope expressions. 
-   
-2. Interfaces for message passing are significantly simplified. Refer to 
-   CIVL Manual Section 7.3.2 and examples/messagePassing for more details.
-
-3. $wait is not implemented as a system function declared in civlc.h,
-   instead of a language primitive. So the syntax becomes "$wait(p)"
-   instead of "$wait p".
-
-4. There is no longer a $heap type. Instead, every dynamic scope has its
-   own heap automatically. The $malloc function has been modified to take
-   a scope as its first argument, e.g., $malloc($here, sizeof(int)).
 
 ------------------------- Binary Installation -------------------------
 
@@ -78,10 +65,11 @@ automatically.  This should result in a folder named
 CIVL-TAG, where TAG is some version id string.  This folder
 contains the following:
 
- - README : this file
- - bin : containing one executable sh script called "civl"
- - lib : containing civl-TAG.jar
- - doc : containing the manual and the tutorial of CIVL
+ - README   : this file
+ - bin      : containing one executable sh script called "civl"
+ - lib      : containing civl-TAG.jar
+ - doc      : containing the manual and the tutorial of CIVL
+ - emacs    : CIVL-C emacs mode and its installation guideline
  - licenses : licenses for CIVL and included libraries
  - examples : some example CIVL programs
 
