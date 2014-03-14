@@ -2,7 +2,7 @@
  *  result with the solver got in a sequencial way.
  *
  *  Command line example:
- *  civl verify -inputNB=10 -inputK=0.3 -inputNSTEPS=5 -inputNX=10 diffusion_1d.c -showAmpleSet
+ *  civl verify -inputNPROCSB=10 -inputK=0.3 -inputNSTEPS=5 -inputNX=10 diffusion_1d.c -showAmpleSet
  *  This diffusion1d program computing the diffusion1d equation in parallel and then compare the result with 
  *  another result of diffution1d equation computed in sequential.
  **/ 
@@ -13,7 +13,7 @@
 				 from left u */
 #define FROM_RIGHT 2          /* mpi tag which means the source is send or receive
 				 from right u */
-#define REDUCE 3              /* reduce tag */
+#define REDUCE 3              /* mpi tag which stands for reducing */
 $input int NPROCS;
 $input int NPROCSB;
 $input double K;              /* k = alpha^2 * dt/(dx^2) */
@@ -23,34 +23,32 @@ $input int  NX;               /* the length of the array */
 $input int  NXB;
 $input double initialU[NX];
 $proc __procs[NPROCS];
-_Bool __start = 0;
-$comm MPI_COMM_WORLD;
+$gcomm __MPI_COMM_WORLD;
 $assume 0 < NPROCS && NPROCS <= NPROCSB;
 $assume 0 < NSTEPS && NSTEPS <= NSTEPSB;
 $assume 2 < NX && NX <= NXB;
 
 void MPI_Process (int rank);
 
-void send(void *buf, int count, int dest, int tag, int rank) {
-  $message out = $message_pack(rank, dest, tag, buf, count*sizeof(double));
-  $comm_enqueue(&MPI_COMM_WORLD, out);
+void send(void *buf, int count, int dest, int tag, $comm comm) {
+  $message out = $message_pack(comm->place, dest, tag, buf, count*sizeof(double));
+  $comm_enqueue(comm, out);
 }
 
-void recv(void *buf, int count, int source, int tag, int rank) {
-  $message in = $comm_dequeue(&MPI_COMM_WORLD, source, rank, tag);
+void recv(void *buf, int count, int source, int tag, $comm comm) {
+  $message in = $comm_dequeue(comm, source, tag);
   $message_unpack(in, buf, count*sizeof(double));
 }
 
 void init() {
+  __MPI_COMM_WORLD = $gcomm_create($root, NPROCS);
   for (int i=0; i<NPROCS; i++)
     __procs[i] = $spawn MPI_Process(i);
-  MPI_COMM_WORLD = $comm_create(NPROCS, __procs);
-  __start=1;
 }
 
 void finalize() {
   for (int i=0; i<NPROCS; i++)
-    $wait __procs[i];
+    $wait(__procs[i]);
 }
 
 void main() {
@@ -62,12 +60,13 @@ void main() {
 void update(double * u, double * u_new, int start, int end){
   int i;
   int u_length = end - start + 1;
-
-  for(i=1; i<u_length+1; i++){
-    u_new[i] = u[i] + K * (u[i-1] + u[i+1] - 2*u[i]);
-  }
-  for(i=1; i<u_length+1; i++){
-    u[i] = u_new[i];
+  $atomic{
+    for(i=1; i<u_length+1; i++){
+      u_new[i] = u[i] + K * (u[i-1] + u[i+1] - 2*u[i]);
+    }
+    for(i=1; i<u_length+1; i++){
+      u[i] = u_new[i];
+    }
   }
 }
 
@@ -75,23 +74,23 @@ void update(double * u, double * u_new, int start, int end){
    send the first interior element to left u and receive for 
    the last interior element */
 void communicate(double * u, int left, int right, int start, 
-		 int end, int rank){
+		 int end, $comm comm){
   int u_length = end - start + 1;
   // the most left or right us just need to exchange with one side 
     if(left == -1 && right == -1)
       return;
     else if(left == -1){ 
-      send(&u[u_length], 1, right, FROM_LEFT, rank); 
-      recv(&u[u_length + 1], 1, right, FROM_RIGHT, rank);
+      send(&u[u_length], 1, right, FROM_LEFT, comm); 
+      recv(&u[u_length + 1], 1, right, FROM_RIGHT, comm);
     }
     else if(right == -1){
-      send(&u[1], 1, left, FROM_RIGHT, rank); 
-      recv(&u[0], 1, left, FROM_LEFT, rank);
+      send(&u[1], 1, left, FROM_RIGHT, comm); 
+      recv(&u[0], 1, left, FROM_LEFT, comm);
     }else{
-      send(&u[u_length], 1, right, FROM_LEFT, rank);
-      send(&u[1], 1, left, FROM_RIGHT, rank);
-      recv(&u[u_length + 1], 1, right, FROM_RIGHT, rank);
-      recv(&u[0], 1, left, FROM_LEFT, rank);
+      send(&u[u_length], 1, right, FROM_LEFT, comm);
+      send(&u[1], 1, left, FROM_RIGHT, comm);
+      recv(&u[u_length + 1], 1, right, FROM_RIGHT, comm);
+      recv(&u[0], 1, left, FROM_LEFT, comm);
     }
 }
 
@@ -103,7 +102,7 @@ int uProperties(int length, int nprocs, int rank, int* results){
   int remainder = (length - 2) % nprocs;
   int u_length =(length - 2) / nprocs;
   int start = rank * u_length + 1;
-
+  $atomic{
   //the last u takes the remainder
   if(rank == nprocs - 1){
     u_length = u_length + remainder;
@@ -119,8 +118,8 @@ int uProperties(int length, int nprocs, int rank, int* results){
   results[1] = end;
   results[2] = left_u;
   results[3] = right_u;
+  }
   return 1;
-
   }
 
 /* the numbers of elements in u and u_new are 2 more than u_length because of 
@@ -130,6 +129,7 @@ int initU(double * u, double * u_new, int start, int end,
   int i,j;
   int u_length = end - start + 1; // the number of interior elements
 
+  $atomic{
   /* initiate interior array */
   j = start;
   for(i=1; i< u_length+1; i++){
@@ -149,17 +149,19 @@ int initU(double * u, double * u_new, int start, int end,
       u[i] = initialU[NX-1];
       u_new[i] = initialU[NX-1];
     }
+  }
     return u_length;
 }
 
 /* gather separate results from all processes */
-void combineU(int start, int end, double * u, int rank, double * whole_u, int nprocs){
+void combineU(int start, int end, double * u, $comm comm, double * whole_u, int nprocs){
   double receive_whole_u[NX];
   whole_u[0] = initialU[0];
   whole_u[NX - 1] = initialU[NX-1];
   int i = start;
   int j = 1;
   int k = 1;
+  int rank = $comm_place(comm);
   for(; k<NX-1; k++){
     whole_u[k] = 0;
   }
@@ -168,10 +170,10 @@ void combineU(int start, int end, double * u, int rank, double * whole_u, int np
     j++;
   }
   if(rank != 0){
-	send(whole_u, NX, 0, REDUCE, rank);
+	send(whole_u, NX, 0, REDUCE, comm);
   }else{
     for(i = 1; i<nprocs; i++){
-      recv(receive_whole_u, NX, i, REDUCE, rank);
+      recv(receive_whole_u, NX, i, REDUCE, comm);
       for(j = 1; j<NX-1; j++){
 	whole_u[j] += receive_whole_u[j];
       }
@@ -207,7 +209,6 @@ void seqDiffusion1d(double * seq_u){
 }
 
 void MPI_Process (int rank){
-  $when (__start);
   double whole_u[NX];              /* The array used for gather results from every processes */
   double seq_u[NX];                /* The array used for store sequential computing results */
   int nprocs;                      /* number of processes*/
@@ -217,7 +218,10 @@ void MPI_Process (int rank){
   int u_length;                    /* number of elements in this u*/
   int temp[4];                     /*temp buffer for start, end, left_u and right_u */
   int nsteps = NSTEPS;
-  
+  double * u;
+  double * u_new;
+  $comm MPI_COMM_WORLD = $comm_create($here, __MPI_COMM_WORLD, rank);
+
   if(NPROCS > (NX-2)){
     nprocs = (NX - 2);
     if(rank >= (NX-2)){
@@ -226,24 +230,25 @@ void MPI_Process (int rank){
   }else{
     nprocs = NPROCS;
   }
+
   uProperties(NX,nprocs,rank,temp);
   start = temp[0];
   end = temp[1];
   left_u = temp[2];
   right_u = temp[3];
   u_length = end - start + 1;
-  double u[u_length + 2];
-  double u_new[u_length + 2];
+  u = (double*)$malloc($root, sizeof(double)*(u_length + 2));
+  u_new = (double*)$malloc($root, sizeof(double)*(u_length + 2));
   initU(u, u_new, start, end, left_u, right_u);
   /* Jacobi Iterations*/
   while(nsteps > 0){
-    communicate(u, left_u, right_u, start, end, rank);
+    communicate(u, left_u, right_u, start, end, MPI_COMM_WORLD);
     update(u, u_new, start, end);
-	nsteps --;
+	nsteps--;
   }
   /* Gathering the result from every processes into whole_u and compare it with the result seq_u which got
      from sequential computing function */
-  combineU(start,end,u,rank, whole_u, nprocs);
+  combineU(start, end, u, MPI_COMM_WORLD, whole_u, nprocs);
   if(rank == 0){
 	seqDiffusion1d(seq_u);
 	for(int i=0; i<NX; i++){

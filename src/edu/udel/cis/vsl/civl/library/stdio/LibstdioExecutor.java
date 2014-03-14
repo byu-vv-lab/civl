@@ -186,7 +186,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				arguments.add(argument.toString());
 		}
 		// Print
-		format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
+		format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegacp]", "%s");
 		output.printf(format, arguments.toArray());
 		return state;
 	}

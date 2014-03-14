@@ -723,6 +723,18 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 				} else
 					newMessage = null;
 			}
+		}else if(int_source >= 0 && int_tag == -2){   //MPI_ANY_TAG
+			bufRow = universe.arrayRead(buf, (NumericExpression) source);
+			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+			messages = universe.tupleRead(queue, oneObject);
+			newMessage = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest, tag, civlsource);
+			queueLength = universe.tupleRead(queue, zeroObject);
+			int_queueLength = evaluator.extractInt(civlsource,
+					(NumericExpression) queueLength);
+			assert(newMessage != null);
+			MessageIndexInMessagesArray = 0;
+		}else{
+			throw new CIVLUnimplementedFeatureException("$COMM_ANY_SOURCE");
 		}
 		// remove the new message in the messages array
 		assert int_queueLength >= 0;
@@ -1316,6 +1328,20 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 				else
 					message = null;
 			}
+		}else if(int_source >= 0 && int_tag ==-2){
+			bufRow = universe.arrayRead(buf, (NumericExpression) source);
+			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+			messages = universe.tupleRead(queue, oneObject);
+			queueLength = universe.tupleRead(queue, zeroObject);
+			int_queueLength = evaluator.extractInt(civlsource,
+					(NumericExpression) queueLength);
+			if(int_queueLength > 0)
+				message = universe.arrayRead(messages, zero);
+			else
+				message = null;
+		}else{
+			throw new CIVLUnimplementedFeatureException("system function:$comm_dequeue() hasn't support nondeterministic "
+					+ "arguments");
 		}
 		return message;
 	}

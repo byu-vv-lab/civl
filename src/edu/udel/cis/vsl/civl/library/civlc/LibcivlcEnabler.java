@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.library.CommonLibraryEnabler;
@@ -270,16 +271,21 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 	}
 
 	/**
-	 * TODO: internal function
+	 * Computes matched message in the communicator.
 	 * 
 	 * @param pid
+	 *            The process ID.
 	 * @param gcomm
+	 *            The dynamic representation of the communicator.
 	 * @param source
+	 *            The expected source.
 	 * @param dest
+	 *            The expected destination.
 	 * @param tag
+	 *            The expected tag.
 	 * @param civlsource
-	 * @param returnMessages
-	 * @return
+	 *            The source code element for error report.
+	 * @return The matched message, NULL if no matched message found.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private SymbolicExpression getMatchedMessageFromGcomm(int pid,
@@ -291,18 +297,13 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		SymbolicExpression queue;
 		SymbolicExpression queueLength;
 		SymbolicExpression messages = null;
-		SymbolicExpression nprocs;
 		SymbolicExpression message = null;
 		int int_source = evaluator.extractInt(civlsource,
 				(NumericExpression) source);
 		int int_tag = evaluator.extractInt(civlsource, (NumericExpression) tag);
 		int int_queueLength;
-		int int_nprocs;
 
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
-		nprocs = universe.tupleRead(gcomm, zeroObject);
-		int_nprocs = evaluator.extractInt(civlsource,
-				(NumericExpression) nprocs);
 		// specific source and tag
 		if (int_source >= 0 && int_tag >= 0) {
 			bufRow = universe.arrayRead(buf, (NumericExpression) source);
@@ -319,60 +320,23 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 				else
 					message = null;
 			}
-		}
-		// specific source but random tag
-		if (int_source >= 0 && int_tag == -2) {
+		}else if(int_source >= 0 && int_tag ==-2){
 			bufRow = universe.arrayRead(buf, (NumericExpression) source);
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
 			int_queueLength = evaluator.extractInt(civlsource,
 					(NumericExpression) queueLength);
-			if (int_queueLength > 0)
+			if(int_queueLength > 0)
 				message = universe.arrayRead(messages, zero);
-		}
-		// random source but specific tag
-		if (int_source == -1 && int_tag >= 0) {
-			boolean hasTag = false;
-
-			for (int i = 0; i < int_nprocs; i++) {
-				bufRow = universe.arrayRead(buf, universe.integer(i));
-				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-				messages = universe.tupleRead(queue, oneObject);
-				queueLength = universe.tupleRead(queue, zeroObject);
-				int_queueLength = evaluator.extractInt(civlsource,
-						(NumericExpression) queueLength);
-				for (int j = 0; j < int_queueLength; j++) {
-					message = universe.arrayRead(messages, universe.integer(j));
-					if (universe.tupleRead(message, universe.intObject(2))
-							.equals(tag)) {
-						hasTag = true;
-						break;
-					} else
-						message = null;
-				}
-				if (hasTag)
-					break;
-			}
-		}
-		// random source and tag
-		if (int_source == -1 && int_tag == -2) {
-			for (int i = 0; i < int_nprocs; i++) {
-				bufRow = universe.arrayRead(buf, universe.integer(i));
-				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-				messages = universe.tupleRead(queue, oneObject);
-				queueLength = universe.tupleRead(queue, zeroObject);
-				int_queueLength = evaluator.extractInt(civlsource,
-						(NumericExpression) queueLength);
-				if (int_queueLength > 0) {
-					message = universe.arrayRead(messages, zero);
-					break;
-				}
-			}
+			else
+				message = null;
+		}else{
+			throw new CIVLUnimplementedFeatureException("$COMM_ANY_SOURCE");
 		}
 		return message;
 	}
-
+	
 	/**
 	 * Computes the guard of $wait.
 	 * 

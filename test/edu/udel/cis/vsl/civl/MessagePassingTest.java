@@ -60,10 +60,20 @@ public class MessagePassingTest {
 	public void ring1() {
 		assertTrue(ui.run("verify", filename("ring1.cvl"), "-inputNPROCS=3"));
 	}
+	
+	@Test
+	public void ring1_2() {
+		assertTrue(ui.run("verify", filename("ring1.1.cvl"), "-inputNPROCS=3"));
+	}
 
 	@Test
 	public void ring2() {
 		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));
 	}
 
+	@Test
+	public void diffusion1d() {
+		assertTrue(ui.run("verify", filename("diffusion1d_par.cvl"), "-inputNPROCSB=5" ,"-inputNXB=6" 
+				,"-inputNSTEPSB=3"));
+	}
 }
