@@ -31,8 +31,7 @@ void initialize(queue_t *Q) {
 }
   
 void enqueue(queue_t *Q, int value) {
-  // node_t *node = (node_t*)malloc(sizeof(node_t));
-  node_t *node = (node_t*)$malloc($root, sizeof(node_t));
+  node_t *node = (node_t*)malloc(sizeof(node_t)); // in root scope
   
   node->value = value;          // Copy enqueued value into node
   node->next = NULL;            // Set next pointer of node to NULL

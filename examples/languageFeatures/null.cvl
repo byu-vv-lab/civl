@@ -1,11 +1,11 @@
 /* Commandline execution:
  *		civl verify null.cvl
- * */
-#include<civlc.h>
+ */
+#include<string.h>
+#include<assert.h>
 
 void main() {
-  int *p;
+  int *p = 0;
   
-  p = 0;
-  $assert(p == NULL);
+  assert(p == NULL);
 }
