@@ -2037,7 +2037,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public SymbolicExpression undefinedScopeValue() {
-		return this.undefinedProcessValue;
+		return this.undefinedScopeValue;
 	}
 
 	@Override
@@ -2065,10 +2065,6 @@ public class CommonModelFactory implements ModelFactory {
 		LinkedList<SymbolicType> fieldTypes = new LinkedList<SymbolicType>();
 		SymbolicTupleType result;
 
-		// if (gcommSymbolicType != null)
-		// fieldTypes.add(universe.arrayType(this.gcommSymbolicType));
-		// if (commSymbolicType != null)
-		// fieldTypes.add(universe.arrayType(this.commSymbolicType));
 		for (MallocStatement statement : mallocStatements) {
 			SymbolicType fieldType = universe.arrayType(statement
 					.getDynamicObjectType());

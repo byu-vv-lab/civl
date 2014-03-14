@@ -652,7 +652,15 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicType endType = typeEval.type;
 
 		state = typeEval.state;
-		if (argType.isIntegerType() && castType.isPointerType()) {
+		if (argType.isBoolType() && castType.isIntegerType()) {
+			boolean boolv = universe.extractBoolean((BooleanExpression) value);
+
+			if (boolv) {
+				eval.value = universe.integer(1);
+			} else
+				eval.value = universe.integer(0);
+			return eval;
+		} else if (argType.isIntegerType() && castType.isPointerType()) {
 			// only good cast is from 0 to null pointer
 			BooleanExpression assumption = state.getPathCondition();
 			BooleanExpression claim = universe.equals(zero, value);

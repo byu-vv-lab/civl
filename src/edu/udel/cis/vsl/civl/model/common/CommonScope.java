@@ -32,6 +32,10 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  */
 public class CommonScope extends CommonSourceable implements Scope {
 
+	/**
+	 * The parent scope of this scope. Each scope has exactly one parent scope,
+	 * except for the root scope which has no parent.
+	 */
 	private Scope parent;
 	private Variable[] variables;
 	private Map<String, CIVLFunction> functions;
@@ -62,9 +66,9 @@ public class CommonScope extends CommonSourceable implements Scope {
 			assert this.variables[v.vid()] == null;
 			this.variables[v.vid()] = v;
 			v.setScope(this);
-			checkProcRef(v);
-			checkPointer(v);
-			checkScopeRef(v);
+			// checkProcRef(v);
+			// checkPointer(v);
+			// checkScopeRef(v);
 		}
 		this.id = id;
 	}
@@ -121,9 +125,9 @@ public class CommonScope extends CommonSourceable implements Scope {
 		for (Variable v : variables) {
 			assert this.variables[v.vid()] == null;
 			this.variables[v.vid()] = v;
-			checkProcRef(v);
-			checkPointer(v);
-			checkScopeRef(v);
+			// checkProcRef(v);
+			// checkPointer(v);
+			// checkScopeRef(v);
 		}
 	}
 
@@ -160,9 +164,9 @@ public class CommonScope extends CommonSourceable implements Scope {
 		}
 		assert variable.vid() == oldVariables.length;
 		variables[oldVariables.length] = variable;
-		checkProcRef(variable);
-		checkScopeRef(variable);
-		checkPointer(variable);
+		// checkProcRef(variable);
+		// checkScopeRef(variable);
+		// checkPointer(variable);
 		variable.setScope(this);
 	}
 
@@ -345,7 +349,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 		if (type.isScopeType()) {
 			containsScopeType = true;
 		} else if (type.isArrayType()) {
-			containsScopeType = containsPointerType(((CIVLArrayType) type)
+			containsScopeType = containsScopeType(((CIVLArrayType) type)
 					.elementType());
 		} else if (type.isStructType()) {
 			for (StructOrUnionField f : ((CIVLStructOrUnionType) type).fields()) {
@@ -489,6 +493,18 @@ public class CommonScope extends CommonSourceable implements Scope {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public void complete() {
+		for (Variable v : variables) {
+			this.checkPointer(v);
+			this.checkScopeRef(v);
+			this.checkProcRef(v);
+		}
+		if (children != null)
+			for (Scope child : children)
+				child.complete();
 	}
 
 }

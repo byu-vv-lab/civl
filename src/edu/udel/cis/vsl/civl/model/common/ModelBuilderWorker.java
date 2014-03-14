@@ -414,6 +414,7 @@ public class ModelBuilderWorker {
 		for (CIVLFunction f : functionMap.values())
 			model.addFunction(f);
 		((CommonModel) model).setMallocStatements(mallocStatements);
+		// TODO check scope/proc/pointers of variables.
 	}
 
 	/**
@@ -518,6 +519,7 @@ public class ModelBuilderWorker {
 		completeBundleType();
 		completeHeapType();
 		completeModel(system);
+		systemScope.complete();
 		this.staticAnalysis();
 	}
 

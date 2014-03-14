@@ -183,4 +183,6 @@ public interface Scope extends Sourceable {
 	
 	CIVLFunction getFunction(String name);
 
+	void complete();
+
 }
