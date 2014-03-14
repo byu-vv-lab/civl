@@ -31,8 +31,9 @@ void initialize(queue_t *Q) {
 }
   
 void enqueue(queue_t *Q, int value) {
-  node_t *node = (node_t*)malloc(sizeof(node_t));
-
+  // node_t *node = (node_t*)malloc(sizeof(node_t));
+  node_t *node = (node_t*)$malloc($root, sizeof(node_t));
+  
   node->value = value;          // Copy enqueued value into node
   node->next = NULL;            // Set next pointer of node to NULL
   lock(Q->T_lock);              // Acquire T_lock in order to access Tail
@@ -83,7 +84,7 @@ void test2() {
   result = dequeue(&q, &x);
   assert(result);
   result = dequeue(&q, &y);
-  assert(result!=0);
+  assert(result);
   assert ((x==6 && y==7) || (x==7 && y==6));
   // assert (x==6 && y==7);
   // assert (x==7 && y==6);
