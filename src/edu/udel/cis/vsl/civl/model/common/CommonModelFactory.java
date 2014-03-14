@@ -2435,5 +2435,4 @@ public class CommonModelFactory implements ModelFactory {
 	public Model model() {
 		return this.modelBuilder.getModel();
 	}
-
 }

@@ -268,5 +268,10 @@ public class CommonModel extends CommonSourceable implements Model {
 	public void setGcommType(CIVLType gcommType) {
 		this.gcommType = gcommType;
 	}
+	
+	@Override
+	public void complete(){
+		this.system.outerScope().complete();
+	}
 
 }

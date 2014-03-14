@@ -387,8 +387,10 @@ public class ModelBuilderWorker {
 			CallOrSpawnStatement call = entry.getKey();
 			CIVLFunction function = functionMap.get(entry.getValue());
 
-			call.setFunction(factory.functionPointerExpression(function.getSource(), function));
-			//TODO when the function is a function pointer, we are unable to identify if it is a system call.
+			call.setFunction(factory.functionPointerExpression(
+					function.getSource(), function));
+			// TODO when the function is a function pointer, we are unable to
+			// identify if it is a system call.
 			if (call.isSystemCall()) {
 				call.setGuard(factory.systemGuardExpression(call));
 			}
@@ -414,6 +416,7 @@ public class ModelBuilderWorker {
 		for (CIVLFunction f : functionMap.values())
 			model.addFunction(f);
 		((CommonModel) model).setMallocStatements(mallocStatements);
+		model.complete();
 		// TODO check scope/proc/pointers of variables.
 	}
 
@@ -519,7 +522,7 @@ public class ModelBuilderWorker {
 		completeBundleType();
 		completeHeapType();
 		completeModel(system);
-		systemScope.complete();
+
 		this.staticAnalysis();
 	}
 

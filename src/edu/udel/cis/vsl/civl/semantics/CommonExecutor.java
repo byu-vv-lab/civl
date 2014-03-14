@@ -482,7 +482,6 @@ public class CommonExecutor implements Executor {
 		heapValue = universe.tupleWrite(heapValue, indexObj, heapField);
 		state = stateFactory.setVariable(state, heapVariableId, dyScopeID,
 				heapValue);
-		// state = assign(source, state, heapPointer, heapValue);
 		if (lhs != null) {
 			symRef = (ReferenceExpression) universe.canonic(universe
 					.identityReference());
