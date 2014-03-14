@@ -9,10 +9,12 @@
  *     (if you do not like to see the message printed by those printf function calls.)
  */
 
+#define NPROCS 3
+
 #include <civlc.h>
 #include <stdio.h>
-$proc procs[4];
-$scope scopes[4];
+$proc procs[NPROCS];
+$scope scopes[NPROCS];
 
 int min(int a, int b) {
   if (a < b)
@@ -49,11 +51,11 @@ void main(){
   // min here is a function pointer
   int k = fDouble(min, 5, 8);
 
-  for(int i = 0; i < 4; i++){
+  for(int i = 0; i < NPROCS; i++){
     procs[i] = proc_create(foo, i);
   }
   
-  for(int i = 0; i < 4; i++){
+  for(int i = 0; i < NPROCS; i++){
     $wait(procs[i]);
     printf("Process %d terminates.\n", i);
     if($proc_defined(procs[i]))
@@ -62,7 +64,7 @@ void main(){
       printf("Process %d now has invalid reference: %d\n", i, procs[i]);
   }
   
-  for(int i = 0; i < 4; i++){
+  for(int i = 0; i < NPROCS; i++){
     _Bool defined = $proc_defined(procs[i]);
     
     $assert(!defined);
