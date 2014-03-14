@@ -31,6 +31,7 @@ void MPI_Process (int rank) {
   
   for (int i=0; i<NTHREADS; i++) threads[i] = $spawn Thread(i);
   for (int i=0; i<NTHREADS; i++) $wait(threads[i]);
+  $comm_destroy(comm);
 }
 
 void main() {
@@ -38,4 +39,5 @@ void main() {
 
   for (int i=0; i<NPROCS; i++) procs[i] = $spawn MPI_Process(i);
   for (int i=0; i<NPROCS; i++) $wait(procs[i]);
+  $gcomm_destroy(gcomm);
 }

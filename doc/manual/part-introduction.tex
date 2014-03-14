@@ -142,7 +142,7 @@ void main() {
 }
 \end{verbatim}
   \end{small}
-  \caption{CIVL-C encoding of Dijkstra's Dining Philosophers}
+  \caption{\texttt{diningBad.cvl}: CIVL-C encoding of Dijkstra's Dining Philosophers}
   \label{fig:dining}
 \end{figure}
 
@@ -204,7 +204,7 @@ minimal counterexample, we issue the command
 \begin{figure}[t]
   \begin{small}
 \begin{verbatim}
-CIVL v0.8 of 2014-03-03 -- http://vsl.cis.udel.edu/civl
+CIVL v0.9 of 2014-03-14 -- http://vsl.cis.udel.edu/civl
 Error 0 encountered at depth 129:
 ...
 Error 25 encountered at depth 16:
@@ -228,26 +228,26 @@ State 664
 | | | | __atomic_lock_var = process<-1>
 | | | | B = 5
 | | | | n = 2
-| | | | forks = X_s0v3[0:=1, 1:=1]
+| | | | forks = X_s0v4[0:=1, 1:=1]
 ...
 | Process states
 ...
 | | process 2
 | | | atomicCount = 0
 | | | call stack
-| | | | Frame[function=dine, location=26, f0:21.30-42 "forks[right]", scope=3]
+| | | | Frame[function=dine, location=25, f0:21.30-42 "forks[right]", scope=3]
 ...
 =================== Stats ===================
-   validCalls          : 15328
+   validCalls          : 15327
    proverCalls         : 17
-   memory (bytes)      : 26738688
-   time (s)            : 2.24
+   memory (bytes)      : 18554880
+   time (s)            : 2.17
    maxProcs            : 6
-   statesInstantiated  : 9267
+   statesInstantiated  : 9264
    statesSaved         : 665
    statesSeen          : 1758
    statesMatched       : 1177
-   steps               : 2994
+   steps               : 2993
    transitions         : 2934
 
 The program MAY NOT be correct.  See CIVLREP/diningBad_log.txt
@@ -275,42 +275,41 @@ Transition 1: State 0, proc 0:
   0->1: B = 5 at f0:9.0-12 "$input int B";
   1->2: n = InitialValue(n) at f0:10.0-12 "$input int n";
   2->3: $assume ((2<=n)&&(n<=B)) at f0:11.0-20 "$assume 2<=n && n ... B";
-  3->4: forks = InitialValue(forks) at f0:13.0-12 "int forks[n]";
-  4->6: __h__ = InitialValue(__h__) at f0:27.12-13 "{";
-  6->7: i = 0 at f0:28.7-16 "int i = 0";
+  3->5: forks = InitialValue(forks) at f0:13.0-12 "int forks[n]";
+  5->6: i = 0 at f0:28.7-16 "int i = 0";
 --> State 1
 
 Transition 2: State 1, proc 0: 
-  7->9: LOOP_TRUE_BRANCH at f0:28.18-23 "i < n";
+  6->8: LOOP_TRUE_BRANCH at f0:28.18-23 "i < n";
 --> State 2
 
 ...
 
 Transition 12: State 12, proc 2: 
-  19->20: left = id at f0:16.2-15 "int left = id";
-  20->21: right = ((id+1)%n) at f0:17.2-26 "int right = (id  ... n";
+  18->19: left = id at f0:16.2-15 "int left = id";
+  19->20: right = ((id+1)%n) at f0:17.2-26 "int right = (id  ... n";
 --> State 13
 
 Transition 13: State 13, proc 2: 
-  21->24: LOOP_TRUE_BRANCH at f0:19.9-10 "1";
+  20->23: LOOP_TRUE_BRANCH at f0:19.9-10 "1";
 --> State 14
 
 Transition 14: State 14, proc 1: 
-  24->26: forks[left] = 1 at f0:20.29-44 "forks[left] = 1";
+  23->25: forks[left] = 1 at f0:20.29-44 "forks[left] = 1";
 --> State 15
 
 Transition 15: State 15, proc 2: 
-  24->26: forks[left] = 1 at f0:20.29-44 "forks[left] = 1";
+  23->25: forks[left] = 1 at f0:20.29-44 "forks[left] = 1";
 --> State 16
-
+...
 Violation of Deadlock found in State 16:
 A deadlock is possible:
   Path condition: true
   Enabling predicate: false
 ProcessState 0: terminated
-ProcessState 1: at location 26, f0:21.30-42 "forks[right]"
+ProcessState 1: at location 25, f0:21.30-42 "forks[right]"
   Enabling predicate: false
-ProcessState 2: at location 26, f0:21.30-42 "forks[right]"
+ProcessState 2: at location 25, f0:21.30-42 "forks[right]"
   Enabling predicate: false
 
 Trace ends after 15 transitions.
@@ -318,7 +317,7 @@ Violation(s) found.
 ...
 \end{verbatim}
   \end{small}
-  \caption{Output from \texttt{civl replay}}
+  \caption{Output from \texttt{civl replay diningBad.cvl}}
   \label{fig:diningReplay}
 \end{figure}
 
@@ -360,6 +359,7 @@ void MPI_Process (int rank) {
   
   for (int i=0; i<NTHREADS; i++) threads[i] = $spawn Thread(i);
   for (int i=0; i<NTHREADS; i++) $wait(threads[i]);
+  $comm_destroy(comm);
 }
 
 void main() {
@@ -367,13 +367,12 @@ void main() {
 
   for (int i=0; i<NPROCS; i++) procs[i] = $spawn MPI_Process(i);
   for (int i=0; i<NPROCS; i++) $wait(procs[i]);
+  $gcomm_destroy(gcomm);
 }
 \end{verbatim}
   \end{small}
-  \caption{CIVL-C model of a multithreaded MPI program.  Two processes
-    each spawn two threads.  Each thread executes a sequence of send
-    and receive operations.  The program has a subtle defect which can
-    lead to deadlock.}
+  \caption{\texttt{mpi-pthreads.cvl}: CIVL-C model of a (defective)
+    multithreaded MPI program.}
   \label{fig:mpithreads}
 \end{figure}
 

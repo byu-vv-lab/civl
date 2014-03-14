@@ -66,6 +66,7 @@ The following command line options are available:
 \begin{optionlist}
   \booloption{debug}{false}{debug mode: print very detailed information}
   \booloption{echo}{false}{print the command line}
+  \booloption{enablePrintf}{true}{enable \texttt{printf} function}
   \intoption{errorBound}{1}{stop after finding this many errors}
   \booloption{guided}{false}{user guided simulation; applies only to
     run, ignored for all other commands}
@@ -80,6 +81,7 @@ The following command line options are available:
     default for \texttt{run}, ignored for all other commands}
   \booloption{saveStates}{true}{save states during depth-first search}
   \stringoption{seed}{none}{set the random seed; applies only to run}
+  \booloption{showAmpleSet}{false}{print the ample set of each state}
   \booloption{showModel}{false}{print the model}
   \booloption{showProverQueries}{false}{print theorem prover queries
     only}
