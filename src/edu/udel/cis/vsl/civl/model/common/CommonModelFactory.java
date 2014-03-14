@@ -1881,7 +1881,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public void completeBundleType(CIVLBundleType bundleType,
-			Collection<SymbolicType> elementTypes) {
+			List<CIVLType> eleTypes, Collection<SymbolicType> elementTypes) {
 		LinkedList<SymbolicType> arrayTypes = new LinkedList<SymbolicType>();
 		SymbolicUnionType dynamicType;
 
@@ -1890,7 +1890,7 @@ public class CommonModelFactory implements ModelFactory {
 		dynamicType = universe.unionType(universe.stringObject("$bundle"),
 				arrayTypes);
 		dynamicType = (SymbolicUnionType) universe.canonic(dynamicType);
-		bundleType.complete(elementTypes, dynamicType);
+		bundleType.complete(eleTypes, elementTypes, dynamicType);
 		this.bundleType = bundleType;
 		this.bundleSymbolicType = dynamicType;
 	}
@@ -2435,4 +2435,5 @@ public class CommonModelFactory implements ModelFactory {
 	public Model model() {
 		return this.modelBuilder.getModel();
 	}
+
 }

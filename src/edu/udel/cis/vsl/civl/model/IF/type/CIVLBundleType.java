@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF.type;
 
 import java.util.Collection;
+import java.util.List;
 
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -14,15 +15,17 @@ public interface CIVLBundleType extends CIVLType {
 
 	SymbolicType getElementType(int index);
 
-	//TODO: What does this do if the type isn't found?
+	// TODO: What does this do if the type isn't found?
 	Integer getIndexOf(SymbolicType elementType);
 
 	boolean isComplete();
 
-	void complete(Collection<SymbolicType> elementTypes,
+	void complete(List<CIVLType> types, Collection<SymbolicType> elementTypes,
 			SymbolicUnionType dynamicType);
 
 	@Override
 	SymbolicUnionType getDynamicType(SymbolicUniverse universe);
+
+	List<CIVLType> types();
 
 }

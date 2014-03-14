@@ -5,18 +5,28 @@ package edu.udel.cis.vsl.civl.model.common.type;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 public class CommonBundleType extends CommonType implements CIVLBundleType {
 
+	private List<CIVLType> types;
+
 	private SymbolicType[] elementTypes = null;
 
 	private Map<SymbolicType, Integer> indexMap = null;
+
+	private boolean containsProcRefs = false;
+
+	private boolean containsScopeRefs = false;
+
+	private boolean containsPointerRefs = false;
 
 	public CommonBundleType() {
 	}
@@ -42,15 +52,21 @@ public class CommonBundleType extends CommonType implements CIVLBundleType {
 	}
 
 	@Override
+	public List<CIVLType> types() {
+		return types;
+	}
+
+	@Override
 	public boolean isComplete() {
 		return elementTypes != null;
 	}
 
 	@Override
-	public void complete(Collection<SymbolicType> elementTypes,
-			SymbolicUnionType dynamicType) {
+	public void complete(List<CIVLType> types,
+			Collection<SymbolicType> elementTypes, SymbolicUnionType dynamicType) {
 		int n = elementTypes.size();
 
+		this.types = types;
 		this.elementTypes = elementTypes.toArray(new SymbolicType[n]);
 		this.dynamicType = dynamicType;
 		this.indexMap = new LinkedHashMap<SymbolicType, Integer>(n);
@@ -71,6 +87,18 @@ public class CommonBundleType extends CommonType implements CIVLBundleType {
 	@Override
 	public Integer getIndexOf(SymbolicType elementType) {
 		return indexMap.get(elementType);
+	}
+
+	public boolean containsProcRefs() {
+		return this.containsProcRefs;
+	}
+
+	public boolean containsScopeRefs() {
+		return this.containsScopeRefs;
+	}
+
+	public boolean containsPointerRefs() {
+		return this.containsPointerRefs;
 	}
 
 }

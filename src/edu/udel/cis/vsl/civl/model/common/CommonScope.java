@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -337,8 +339,14 @@ public class CommonScope extends CommonSourceable implements Scope {
 			// contains pointer types.
 			containsPointerType = true;
 		} else if (type.isBundleType()) {
-			// It is possible for a bundle to contain a pointer.
-			containsPointerType = true;
+			List<CIVLType> types = ((CIVLBundleType) type).types();
+
+			for (CIVLType elementType : types) {
+				boolean elementContainsPointer = containsPointerType(elementType);
+
+				containsPointerType = containsPointerType
+						|| elementContainsPointer;
+			}
 		}
 		return containsPointerType;
 	}
@@ -363,8 +371,13 @@ public class CommonScope extends CommonSourceable implements Scope {
 			// contains scope types.
 			containsScopeType = true;
 		} else if (type.isBundleType()) {
-			// It is possible for a bundle to contain a scope.
-			containsScopeType = true;
+			List<CIVLType> types = ((CIVLBundleType) type).types();
+
+			for (CIVLType elementType : types) {
+				boolean elementContainsScope = containsScopeType(elementType);
+
+				containsScopeType = containsScopeType || elementContainsScope;
+			}
 		}
 		return containsScopeType;
 	}
@@ -389,8 +402,13 @@ public class CommonScope extends CommonSourceable implements Scope {
 			// contains process types.
 			containsProcType = true;
 		} else if (type.isBundleType()) {
-			// It is possible for a bundle to contain a proc.
-			containsProcType = true;
+			List<CIVLType> types = ((CIVLBundleType) type).types();
+
+			for (CIVLType elementType : types) {
+				boolean elementContainsProc = containsProcType(elementType);
+
+				containsProcType = containsProcType || elementContainsProc;
+			}
 		}
 		return containsProcType;
 	}

@@ -372,7 +372,8 @@ public class ModelBuilderWorker {
 			}
 			((CommonType) type).setDynamicTypeIndex(id);
 		}
-		factory.completeBundleType(bundleType, dynamicTypeMap.keySet());
+		factory.completeBundleType(bundleType, bundleableTypeList,
+				dynamicTypeMap.keySet());
 	}
 
 	/**

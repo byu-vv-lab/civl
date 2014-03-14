@@ -155,7 +155,7 @@ public interface ModelFactory {
 	 *            the set of all dynamic types which occur as bundle elements
 	 */
 	void completeBundleType(CIVLBundleType bundleType,
-			Collection<SymbolicType> types);
+ List<CIVLType> eleTypes, Collection<SymbolicType> types);
 
 	/**
 	 * Completes the heap type.
@@ -854,8 +854,8 @@ public interface ModelFactory {
 	 * @return A new fork statement.
 	 */
 	CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
-			Location source, boolean isCall,
-			List<Expression> arguments, Expression guard);
+			Location source, boolean isCall, List<Expression> arguments,
+			Expression guard);
 
 	/**
 	 * A choose statement is of the form <code>x = $choose_int(n)</code>;
@@ -1294,8 +1294,8 @@ public interface ModelFactory {
 			Scope containingScope, Location startLocation);
 
 	/**
-	 * Translate a symbolic process id into an integer
-	 * TODO: explain
+	 * Translate a symbolic process id into an integer TODO: explain
+	 * 
 	 * @param source
 	 *            The CIVL source information of the symbolic process id
 	 * @param processValue
