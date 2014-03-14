@@ -415,8 +415,13 @@ public class CommonAccuracyAssumptionBuilder implements
 				break;
 			}
 		}
-		result = result.combineWith(bigOFacts(source, separatedExpression,
-				scope, function.continuity()));
+//		result = result.combineWith(factory.assumeFragment(source, factory
+//				.location(source, scope), factory.binaryExpression(source,
+//				BINARY_OPERATOR.NOT_EQUAL, factory.unaryExpression(source,
+//						UNARY_OPERATOR.BIG_O, separatedExpression), factory
+//						.realLiteralExpression(source, BigDecimal.ZERO))));
+		 result = result.combineWith(bigOFacts(source, separatedExpression,
+		 scope, function.continuity()));
 		return result;
 	}
 

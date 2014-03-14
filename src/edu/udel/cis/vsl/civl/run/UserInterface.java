@@ -27,6 +27,8 @@ import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
+import edu.udel.cis.vsl.civl.model.IF.ModelCombiner;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -234,14 +236,26 @@ public class UserInterface {
 	}
 
 	private Model extractModel(PrintStream out, GMCConfiguration config,
+			String filename, ModelFactory factory) throws ABCException,
+			IOException, CommandLineException {
+		return extractModel(out, config, filename,
+				Models.newModelBuilder(universe, config.isTrue(mpiO), factory));
+	}
+
+	private Model extractModel(PrintStream out, GMCConfiguration config,
 			String filename) throws ABCException, IOException,
 			CommandLineException {
+		return extractModel(out, config, filename,
+				Models.newModelBuilder(universe, config.isTrue(mpiO)));
+	}
+
+	private Model extractModel(PrintStream out, GMCConfiguration config,
+			String filename, ModelBuilder modelBuilder) throws ABCException,
+			IOException, CommandLineException {
 		boolean parse = "parse".equals(config.getFreeArg(0));
 		boolean debug = config.isTrue(debugO);
 		boolean verbose = config.isTrue(verboseO);
 		boolean showModel = config.isTrue(showModelO);
-		ModelBuilder modelBuilder = Models.newModelBuilder(universe,
-				config.isTrue(mpiO));
 		Activator frontEnd = getFrontEnd(filename, config);
 		Program program;
 		Model model;
@@ -575,6 +589,53 @@ public class UserInterface {
 		return result;
 	}
 
+	public boolean runCompare(GMCConfiguration config)
+			throws CommandLineException, ABCException, IOException {
+		boolean result = false;
+		String filename0, filename1;
+		Model model0, model1, compositeModel;
+		ModelCombiner combiner;
+		Verifier verifier;
+		boolean showShortFileName = showShortFileNameList(config);
+		boolean debug = config.isTrue(debugO);
+		boolean verbose = config.isTrue(verboseO);
+		boolean showModel = config.isTrue(showModelO);
+
+		assert !config.isTrue(mpiO);
+		checkFilenames(2, config);
+		filename0 = config.getFreeArg(1);
+		filename1 = config.getFreeArg(2);
+		model0 = extractModel(out, config, filename0);
+		model1 = extractModel(out, config, filename1, model0.factory());
+		combiner = Models.newModelCombiner(model0.factory());
+		compositeModel = combiner.combine(model0, model1);
+		if (showModel || verbose || debug) {
+			out.println("Composite Model");
+			compositeModel.print(out, verbose || debug);
+		}
+		if (showShortFileName)
+			TokenUtils.printShorterFileNameMap(out);
+		verifier = new Verifier(config, compositeModel, out, startTime,
+				showShortFileName);
+		try {
+			result = verifier.run();
+		} catch (CIVLUnimplementedFeatureException unimplemented) {
+			verifier.terminateUpdater();
+			out.println();
+			out.println("Error: " + unimplemented.toString());
+			return false;
+		} catch (Exception e) {
+			verifier.terminateUpdater();
+			throw e;
+		}
+		printStats(out);
+		verifier.printStats();
+		out.println();
+		verifier.printResult();
+		out.flush();
+		return result;
+	}
+
 	/**
 	 * Parses command line arguments and runs the CIVL tool(s) as specified by
 	 * those arguments.
@@ -606,6 +667,8 @@ public class UserInterface {
 			universe.setShowProverQueries(true);
 		try {
 			switch (command) {
+			case "compare":
+				return runCompare(config);
 			case "help":
 				return runHelp(config);
 			case "verify":

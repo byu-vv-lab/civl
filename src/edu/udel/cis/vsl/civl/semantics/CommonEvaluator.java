@@ -98,6 +98,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.OffsetReference;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.NumberFactory;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
@@ -110,6 +111,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicCollection;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
+import edu.udel.cis.vsl.sarl.ideal.common.NTPrimitivePower;
 import edu.udel.cis.vsl.sarl.number.Numbers;
 
 /**
@@ -970,6 +972,28 @@ public class CommonEvaluator implements Evaluator {
 			eval.value = universe.implies(p, (BooleanExpression) eval1.value);
 			return eval;
 		}
+	}
+
+	SymbolicExpression bigOExpression(SymbolicExpression expression) {
+		SymbolicExpression result;
+
+		if (expression.operator() == SymbolicOperator.POWER) {
+			NumericExpression bigO;
+			NumericExpression baseExpression;
+			NumericExpression extractedPower;
+
+			assert expression instanceof NTPrimitivePower;
+			baseExpression = ((NTPrimitivePower) expression).primitive();
+			extractedPower = universe.power(baseExpression,
+					((NTPrimitivePower) expression).degree() - 1);
+			bigO = (NumericExpression) universe.apply(bigOFunction,
+					new Singleton<SymbolicExpression>(baseExpression));
+			result = universe.multiply(extractedPower, bigO);
+		} else {
+			result = universe.apply(bigOFunction,
+					new Singleton<SymbolicExpression>(expression));
+		}
+		return result;
 	}
 
 	/**

@@ -59,4 +59,28 @@ public class AccuracyTest {
 		assertTrue(ui.run("verify", "-inputrows=3", "-inputcols=3",
 				filename("laplace2d.cvl")));
 	}
+
+	@Test
+	public void derivativeBackward() {
+		assertTrue(ui.run("verify", "-inputnum_elements=5",
+				filename("derivativeBackward.cvl")));
+	}
+
+	@Test
+	public void upwindFirstOrder() {
+		assertTrue(ui.run("verify", "-inputn=4",
+				filename("upwindFirstOrder.cvl")));
+	}
+
+	@Test
+	public void upwindSecondOrder() {
+		assertTrue(ui.run("verify", "-inputn=5",
+				filename("upwindSecondOrder.cvl")));
+	}
+
+	@Test
+	public void upwindThirdOrder() {
+		assertTrue(ui.run("verify", "-inputn=5",
+				filename("upwindSecondOrder.cvl")));
+	}
 }

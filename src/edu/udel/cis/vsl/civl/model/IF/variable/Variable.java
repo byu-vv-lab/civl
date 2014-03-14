@@ -40,12 +40,17 @@ public interface Variable extends Sourceable {
 	 * @return Whether this variable is an input.
 	 */
 	boolean isInput();
-	
+
+	/**
+	 * @return Whether this variable is an output.
+	 */
+	boolean isOutput();
+
 	/**
 	 * @return Whether this variable is a bound variable.
 	 */
 	boolean isBound();
-	
+
 	/**
 	 * @param type
 	 *            The type of this variable.
@@ -66,6 +71,12 @@ public interface Variable extends Sourceable {
 
 	/**
 	 * @param value
+	 *            Whether this variable is an output.
+	 */
+	void setIsOutput(boolean value);
+
+	/**
+	 * @param value
 	 *            Whether this variable is a bound variable.
 	 */
 	void setIsBound(boolean value);
@@ -76,10 +87,22 @@ public interface Variable extends Sourceable {
 	Identifier name();
 
 	/**
+	 * @param name
+	 *            The name of this variable.
+	 */
+	void setName(Identifier name);
+
+	/**
 	 * @param scope
 	 *            The scope to which this variable belongs.
 	 */
 	void setScope(Scope scope);
+
+	/**
+	 * @param vid
+	 *            The index of this variable in the containing scope.
+	 */
+	void setVid(int vid);
 
 	/**
 	 * @return The scope of this variable.

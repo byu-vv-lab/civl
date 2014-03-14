@@ -23,6 +23,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	private Identifier name;
 	private boolean isConst;
 	private boolean isInput;
+	private boolean isOutput;
 	private boolean isBound;
 	private int vid;
 	private Scope scope;
@@ -70,10 +71,17 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	}
 
 	/**
-	 * @return Whether this variable is an extern.
+	 * @return Whether this variable is an input.
 	 */
 	public boolean isInput() {
 		return isInput;
+	}
+
+	/**
+	 * @return Whether this variable is an output.
+	 */
+	public boolean isOutput() {
+		return isOutput;
 	}
 
 	/**
@@ -96,10 +104,18 @@ public class CommonVariable extends CommonSourceable implements Variable {
 
 	/**
 	 * @param value
-	 *            Whether this variable is an extern.
+	 *            Whether this variable is an input.
 	 */
 	public void setIsInput(boolean value) {
 		this.isInput = value;
+	}
+
+	/**
+	 * @param value
+	 *            Whether this variable is an output.
+	 */
+	public void setIsOutput(boolean value) {
+		this.isOutput = value;
 	}
 
 	/**
@@ -107,6 +123,14 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	 */
 	public Identifier name() {
 		return name;
+	}
+
+	/**
+	 * @param name
+	 *            The name of this variable.
+	 */
+	public void setName(Identifier name) {
+		this.name = name;
 	}
 
 	/**
@@ -181,40 +205,42 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		this.isBound = value;
 	}
 
+	@Override
+	public void setVid(int vid) {
+		this.vid = vid;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
-	// @Override
-	// public boolean equals(Object obj) {
-	// if (this == obj)
-	// return true;
-	// if (obj == null)
-	// return false;
-	// if (getClass() != obj.getClass())
-	// return false;
-	// Variable other = (Variable) obj;
-	// if (extent == null) {
-	// if (other.extent != null)
-	// return false;
-	// } else if (!extent.equals(other.extent))
-	// return false;
-	// if (isConst != other.isConst)
-	// return false;
-	// if (isSync != other.isSync)
-	// return false;
-	// if (name == null) {
-	// if (other.name != null)
-	// return false;
-	// } else if (!name.equals(other.name))
-	// return false;
-	// if (type == null) {
-	// if (other.type != null)
-	// return false;
-	// } else if (!type.equals(other.type))
-	// return false;
-	// return true;
-	// }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Variable other = (Variable) obj;
+		if (isConst != other.isConst())
+			return false;
+		if (isInput != other.isInput())
+			return false;
+		if (isOutput != other.isOutput())
+			return false;
+		if (name == null) {
+			if (other.name() != null)
+				return false;
+		} else if (!name.equals(other.name()))
+			return false;
+		if (type == null) {
+			if (other.type() != null)
+				return false;
+		} else if (!type.equals(other.type()))
+			return false;
+		return true;
+	}
 
 }

@@ -48,6 +48,23 @@ public class CommonModelBuilder implements ModelBuilder {
 			factory = new CommonMPIModelFactory(universe);
 	}
 
+	/**
+	 * Constructs new instance of CommonModelBuilder and sets up system
+	 * functions.
+	 * 
+	 * @param universe
+	 *            The symbolic universe
+	 * @param mpiMode
+	 *            True iff this is an MPI program.
+	 * @param factory
+	 *            The model factory to be used for constructing this model.
+	 */
+	public CommonModelBuilder(SymbolicUniverse universe, boolean mpiMode,
+			ModelFactory factory) {
+		this.mpiMode = mpiMode;
+		this.factory = factory;
+	}
+
 	// Exported Methods................................................
 
 	@Override

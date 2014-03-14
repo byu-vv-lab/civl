@@ -2167,6 +2167,9 @@ public class FunctionTranslator {
 		if (node.getTypeNode().isInputQualified()) {
 			variable.setIsInput(true);
 		}
+		if (node.getTypeNode().isOutputQualified()) {
+			variable.setIsOutput(true);
+		}
 		return variable;
 	}
 
