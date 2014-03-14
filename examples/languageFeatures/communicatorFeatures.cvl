@@ -34,7 +34,6 @@ void MPI_Process (int rank) {
     if (rank%2==0) { // send first, then recv
       out = $message_pack(rank, right, TAG, &x, sizeof(int));
       $comm_enqueue(myComm, out);
-
       hasMessage = $comm_probe(myComm, left, TAG);
       comm_size = $comm_size(myComm);
       comm_place = $comm_place(myComm);
@@ -43,12 +42,10 @@ void MPI_Process (int rank) {
       printf("comm_place is %d\n", comm_place);
       matchedMessage = $comm_seek(myComm, left, TAG);
       printf("matchedMessage is %s\n", matchedMessage);
-
       in = $comm_dequeue(myComm, left, TAG);
       $message_unpack(in, &y, sizeof(int));
       $assert(y==left);
     } else { // recv first, then send
-
       hasMessage = $comm_probe(myComm, left, TAG);
       comm_size = $comm_size(myComm);
       comm_place = $comm_place(myComm);
@@ -57,7 +54,6 @@ void MPI_Process (int rank) {
       printf("comm_place is %d\n", comm_place);
       matchedMessage = $comm_seek(myComm, left, TAG);
       printf("matchedMessage is %s\n", matchedMessage);
-
       in = $comm_dequeue(myComm, left, TAG);
       $message_unpack(in, &y, sizeof(int));
       $assert(y==left);
@@ -66,6 +62,8 @@ void MPI_Process (int rank) {
     }
     i++;
   }
+  // destroy the local communicator.
+  $comm_destroy(myComm);
 }
 
 void main() {
@@ -77,4 +75,6 @@ void main() {
   initialized = $true;
   for (int i=0; i<NPROCS; i++)
     $wait(procs[i]);
+  // destroy the global communicator.
+  $gcomm_destroy(MPI_COMM_WORLD);
 }

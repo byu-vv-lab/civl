@@ -35,7 +35,7 @@ void MPI_Process (int rank) {
       $comm_enqueue(comm, out);
     }
   }
-  $comm_free(comm);
+  $comm_destroy(comm);
 }
 
 void main() {
@@ -45,5 +45,5 @@ void main() {
     procs[i] = $spawn MPI_Process(i);
   for (int i=0; i<NPROCS; i++)
     $wait(procs[i]);
-  $gcomm_free(GCOMM_WORLD);
+  $gcomm_destroy(GCOMM_WORLD);
 }

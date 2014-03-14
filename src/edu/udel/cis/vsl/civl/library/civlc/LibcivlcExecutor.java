@@ -908,8 +908,8 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		case "$exit":// return immediately since no transitions needed after an
 			// exit, because the process no longer exists.
 			return executeExit(state, pid);
-		case "$comm_free":
-		case "$gcomm_free":
+		case "$comm_destroy":
+		case "$gcomm_destroy":
 		case "$free":
 			state = executeFree(state, pid, arguments, argumentValues,
 					call.getSource());

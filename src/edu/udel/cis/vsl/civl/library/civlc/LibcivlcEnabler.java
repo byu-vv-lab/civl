@@ -130,8 +130,8 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$comm_seek":
 		case "$comm_size":
 		case "$exit":
-		case "$comm_free":
-		case "$gcomm_free":
+		case "$comm_destroy":
+		case "$gcomm_destroy":
 		case "$free":
 		case "$gcomm_create2":
 		case "$gcomm_defined":
