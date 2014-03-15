@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl;
+package edu.udel.cis.vsl.civl.bench;
 
 import edu.udel.cis.vsl.civl.run.UserInterface;
 
