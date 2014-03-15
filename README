@@ -39,6 +39,18 @@ licenses.  See directory licenses for the license of each component.
 
 -------------------------- Updates from v 0.8 -------------------------
 
+1. Several bugs get fixed. Refer to CIVL Trac (https://vsl.cis.udel.edu/trac/civl/)
+   for more details.
+
+2. Support equality operators (==, !=) for $scope and $proc types.
+
+3. Support function pointers:
+   Refer to examples/languageFeatures/functionPointer.cvl for an example.
+
+4. Several new system functions:
+   $proc_defined($proc)/$scope_defined($scope): checks if a process/scope
+   reference is defined;
+   $gcomm_destroy($gcomm)/$comm_destroy($comm): destroys a communicator.
 
 ------------------------- Binary Installation -------------------------
 
