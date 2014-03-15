@@ -15,7 +15,7 @@ public class AdderBenchmark {
 	public static void main(String[] args) {
 		// -inputB=7: 12 seconds
 		// -inputB=8: 39 seconds
-		ui.run("verify -inputB=8 examples/concurrency/adder.cvl");
+		ui.run("verify -echo -inputB=8 examples/concurrency/adder.cvl");
 		
 		/*
 		 *Result of new POR

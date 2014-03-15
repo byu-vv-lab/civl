@@ -15,7 +15,7 @@ public class DiningPhilosopherBenchmark {
 	public static void main(String[] args) {
 		// -inputB=9: 19 seconds
 		// -inputB=10: 56 seconds
-		ui.run("verify -inputB=9 examples/concurrency/dining.cvl");
+		ui.run("verify -echo -inputBOUND=9 examples/concurrency/dining.cvl");
 	}
 
 }

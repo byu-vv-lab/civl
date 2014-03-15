@@ -17,7 +17,7 @@ public class MessagePassingBenchmark {
 		// -inputNPROCS=6 -simplify=false: 68 seconds
 		// since 6 processes take much more than 50 seconds, so choose 5
 		// processes.
-		ui.run("verify -inputNPROCS=5 -simplify=false examples/messagePassing/ring.cvl");
+		ui.run("verify -echo -inputNPROCS_BOUND=5 -inputN_BOUND=3 examples/messagePassing/ring.cvl");
 	}
 
 }

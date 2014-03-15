@@ -14,7 +14,7 @@ public class BlockAdderBenchmark {
 
 	public static void main(String[] args) {
 		// -inputB=10 -inputW=4: 27 seconds
-		ui.run("verify -inputB=10 -inputW=4 examples/concurrency/blockAdder.cvl");
+		ui.run("verify -echo -inputB=10 -inputW=4 examples/concurrency/blockAdder.cvl");
 	}
 
 }
