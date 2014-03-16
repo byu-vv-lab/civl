@@ -6,10 +6,9 @@
  * points are fixed.
  *
  *  Command line example:
-
-    civl verify -inputNPROCSB=3 -inputNSTEPSB=3 -inputWSTEP=1 \
-    -inputNXB=6 diffusion1d.cvl
-
+ *
+ *  civl verify -inputNPROCSB=3 -inputNSTEPSB=3  \
+ -inputNXB=6 diffusion1d_good.cvl
  */ 
 #include<civlc.h>
 #include<stdio.h>
@@ -34,13 +33,10 @@ $input double u_init[NX];    // initial values for temperature (u)
 $assume 2 <= NX && NX <= NXB;
 $assume K>0 && K<.5;
 $assume NSTEPS >= 1;
-// check this: wstep >= 1 && wstep <= NSTEPS;
-$assume NX > NPROCS;
-$assume 0 < NPROCS && NPROCS <= NPROCSB;
-$assume 0 < NSTEPS && NSTEPS <= NSTEPSB;
-
-
-
+$assume WSTEP >= 1 && WSTEP <= NSTEPS;
+// $assume NX >= NPROCS;
+$assume 1 <= NPROCS && NPROCS <= NPROCSB;
+$assume 1 <= NSTEPS && NSTEPS <= NSTEPSB;
 
 // global variables:
 int output_seq[NX];           // final (color) result of sequential computation
@@ -152,7 +148,7 @@ void main_seq() {
     nsteps = NSTEPS;
     wstep = WSTEP;
     k = K;
-    printf("Diffusion1d with nx=%d, k=%f, nsteps=%d, wstep=%d\n",
+    printf("Diffusion1d (seq) with nx=%d, k=%f, nsteps=%d, wstep=%d\n",
 	   nx, k, nsteps, wstep);
     assert(nx>=2);
     assert(k>0 && k<.5);
@@ -229,14 +225,14 @@ void MPI_Process (int rank) {
       k = K;
       nsteps = NSTEPS;
       wstep = WSTEP;
-      printf("Diffusion1d with nx=%d, k=%f, nsteps=%d, wstep=%d nprocs=%d\n",
+      printf("Diffusion1d (par) with nx=%d, k=%f, nsteps=%d, wstep=%d nprocs=%d\n",
 	     nx, k, nsteps, wstep, nprocs);
     }
     MPI_Bcast(&nx, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&k, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&nsteps, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&wstep, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    assert(nx>=nprocs);
+    // assert(nx>=nprocs);
     assert(k>0 && k<.5);
     assert(nx>=2);
     assert(nsteps>=1);
@@ -353,8 +349,14 @@ void main_par() {
 }  
 
 void main() {
+  for (int i=0; i<NX; i++) ;
+  for (int i=0; i<NSTEPS; i++) ;
+  for (int i=0; i<WSTEP; i++) ;
+  for (int i=0; i<NPROCS; i++) ;
   main_seq();
   main_par();
-  for (int i=0; i<NX; i++)
+  for (int i=0; i<NX; i++) {
+    printf("output[%d] = %d\n", i, output_seq[i]);
     $assert(output_seq[i]==output_par[i]);
+  }
 }
