@@ -567,6 +567,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		} else {
 			state = stateFactory.collectProcesses(state);
 			state = stateFactory.collectScopes(state);
+			if (simplify)
+				state = stateFactory.simplify(state);
 			state.commit();
 		}
 		if (verbose || debug || showTransitions) {
