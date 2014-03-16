@@ -392,4 +392,9 @@ public class LanguageFeaturesTest {
 	public void undefHeapPointer() throws ABCException {
 		assertFalse(ui.run("verify", filename("undefHeapPointer.cvl")));
 	}
+	
+	@Test
+	public void sideEffectLoop() throws ABCException {
+		assertTrue(ui.run("verify", filename("sideEffectLoop.cvl")));
+	}
 }
