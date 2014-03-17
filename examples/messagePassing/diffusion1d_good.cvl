@@ -42,7 +42,6 @@ $assume 1 <= NSTEPS && NSTEPS <= NSTEPSB;
 // global variables:
 int output_seq[NX];           // final (color) result of sequential computation
 int output_par[NX];           // final (color) result of parallel computation
-$proc procs[NPROCS];          // the MPI processes
 CMPI_Gcomm MPI_GCOMM_WORLD;   // the global communicator object
 
 /* Abstract function representing conversion from temperature to color */
@@ -278,6 +277,8 @@ void MPI_Process (int _rank) {
 }
 
 void run_par() {
+  $proc procs[NPROCS];          // the MPI processes
+
   MPI_GCOMM_WORLD = CMPI_Gcomm_create($root, NPROCS);
   for (int i=0; i<NPROCS; i++) procs[i] = $spawn MPI_Process(i);
   for (int i=0; i<NPROCS; i++) $wait(procs[i]);
