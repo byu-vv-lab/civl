@@ -10,6 +10,6 @@ void main() {
   int i;
 
   for (i=0; i<f(2); i++)
-    printf("i=%d\n");
+    printf("i=%d\n",i);
   assert(i==3);
 }
