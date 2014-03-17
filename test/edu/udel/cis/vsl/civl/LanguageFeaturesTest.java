@@ -32,6 +32,11 @@ public class LanguageFeaturesTest {
 	/* **************************** Test Methods *************************** */
 
 	@Test
+	public void abstractFunc() throws ABCException {
+		assertTrue(ui.run("verify", filename("abstractFun.cvl")));
+	}
+	
+	@Test
 	public void arrayLiteral() throws ABCException {
 		assertTrue(ui.run("verify", filename("arrayLiteral.cvl")));
 	}

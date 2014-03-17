@@ -12,6 +12,8 @@ void main() {
     int x = colorOf(u[2]);
 
     printf("x=%d\n", x);
+    x = colorOf(u[1]);
+    printf("x=%d\n", x);
   }
   f();
 }

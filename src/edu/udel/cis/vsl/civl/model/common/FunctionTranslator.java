@@ -1526,7 +1526,17 @@ public class FunctionTranslator {
 				.getFunction()).getIdentifier().name();
 		ArrayList<Expression> arguments = new ArrayList<Expression>();
 		Location location;
-
+		CIVLFunction abstractFunction;
+		Function callee;
+		ExpressionNode functionExpression = functionCallNode.getFunction();
+		
+		if (functionExpression instanceof IdentifierExpressionNode) {
+			callee = (Function) ((IdentifierExpressionNode) functionExpression)
+					.getIdentifier().getEntity();
+		} else
+			throw new CIVLUnimplementedFeatureException(
+					"Function call must use identifier for now: "
+							+ functionExpression.getSource());
 		modelFactory.setCurrentScope(scope);
 		for (int i = 0; i < functionCallNode.getNumberOfArguments(); i++) {
 			Expression actual = translateExpressionNode(
@@ -1537,6 +1547,16 @@ public class FunctionTranslator {
 		}
 		location = modelFactory.location(
 				modelFactory.sourceOfBeginning(functionCallNode), scope);
+		abstractFunction = modelBuilder.functionMap.get(callee);
+		assert abstractFunction != null;
+		if (abstractFunction instanceof AbstractFunction) {
+			
+			Expression abstractFunctionCall = modelFactory.abstractFunctionCallExpression(
+					modelFactory.sourceOf(functionCallNode),
+					(AbstractFunction) abstractFunction, arguments);
+			
+			return modelFactory.assignStatement(source, location, lhs, abstractFunctionCall, false);
+		}
 		switch (functionName) {
 		// special translation for some system functions like $assert,
 		// $choose_int, etc.

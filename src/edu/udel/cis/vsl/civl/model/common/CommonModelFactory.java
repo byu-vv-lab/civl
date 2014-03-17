@@ -653,9 +653,6 @@ public class CommonModelFactory implements ModelFactory {
 		// outermost scope, since it has no value or state, it doesn't
 		// contribute anything non-local to the expression scope.
 		expressionScope = joinScope(arguments);
-		// for (Expression arg : arguments) {
-		// expressionScope = join(expressionScope, arg.expressionScope());
-		// }
 		result.setExpressionScope(expressionScope);
 		result.setExpressionType(function.returnType());
 		return result;
