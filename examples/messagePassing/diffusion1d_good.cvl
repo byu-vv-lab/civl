@@ -43,7 +43,7 @@ $assume 1 <= NSTEPS && NSTEPS <= NSTEPSB;
 int output_seq[NX];           // final (color) result of sequential computation
 int output_par[NX];           // final (color) result of parallel computation
 $proc procs[NPROCS];          // the MPI processes
-$gcomm MPI_GCOMM_WORLD;       // the global communicator object
+CMPI_Gcomm MPI_GCOMM_WORLD;   // the global communicator object
 
 /* Abstract function representing conversion from temperature to color */
 //$abstract int colorOf(double x);
@@ -109,7 +109,7 @@ void run_seq() {
 /* MPI Process in parallel algorithm */
 void MPI_Process (int _rank) {
   $scope proc_scope = $here;   /* this scope */
-  $comm  MPI_COMM_WORLD;
+  MPI_Comm MPI_COMM_WORLD;
 
   int nx = -1;              /* number of discrete points including endpoints */
   double k = -1;            /* D*dt/(dx*dx) */
@@ -258,7 +258,7 @@ void MPI_Process (int _rank) {
     int iter;
 
     MPI_Init();
-    MPI_COMM_WORLD = $comm_create(proc_scope, MPI_GCOMM_WORLD, _rank);
+    MPI_COMM_WORLD = MPI_Comm_create(proc_scope, MPI_GCOMM_WORLD, _rank);
     init();
     write_frame(0);
     for (iter = 1; iter <= nsteps; iter++) {
@@ -267,7 +267,7 @@ void MPI_Process (int _rank) {
       if (iter%wstep==0) write_frame(iter);
     }
     MPI_Finalize();
-    $comm_destroy(MPI_COMM_WORLD);
+    MPI_Comm_destroy(MPI_COMM_WORLD);
     free(u);
     free(u_new);
     if (rank == 0)
@@ -278,10 +278,10 @@ void MPI_Process (int _rank) {
 }
 
 void run_par() {
-  MPI_GCOMM_WORLD = $gcomm_create($root, NPROCS);
+  MPI_GCOMM_WORLD = CMPI_Gcomm_create($root, NPROCS);
   for (int i=0; i<NPROCS; i++) procs[i] = $spawn MPI_Process(i);
   for (int i=0; i<NPROCS; i++) $wait(procs[i]);
-  $gcomm_destroy(MPI_GCOMM_WORLD);
+  CMPI_Gcomm_destroy(MPI_GCOMM_WORLD);
 }  
 
 void main() {
