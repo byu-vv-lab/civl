@@ -1,0 +1,127 @@
+
+typedef $comm MPI_Comm;
+
+typedef enum {
+  MPI_INT,
+  MPI_FLOAT,
+  MPI_DOUBLE,
+  MPI_CHAR
+} MPI_Datatype;
+
+#define BCAST_TAG 999
+
+#define MPI_PROC_NULL -3
+
+typedef struct {
+  int MPI_SOURCE;
+  int MPI_TAG;
+  int MPI_ERROR;
+  int size;
+} MPI_Status;
+
+#define MPI_STATUS_IGNORE NULL
+
+#define MPI_STATUSES_IGNORE NULL
+
+int sizeofDatatype(MPI_Datatype datatype) {
+  switch (datatype) {
+  case MPI_INT:
+    return sizeof(int);
+  case MPI_FLOAT:
+    return sizeof(float);
+  case MPI_DOUBLE:
+    return sizeof(double);
+  case MPI_CHAR:
+    return sizeof(char);
+  default:
+    $assert(0, "Unreachable");
+  }
+}
+
+int MPI_Init() {
+  return 0;
+}
+
+int MPI_Finalize() {
+  return 0;
+}
+
+int MPI_Comm_size(MPI_Comm comm, int *size) {
+  *size = $comm_size(comm);
+  return 0;
+}
+
+int MPI_Comm_rank(MPI_Comm comm, int *rank) {
+  *rank = $comm_place(comm);
+  return 0;
+}
+
+/* Sends a message. */
+int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
+	     int tag, MPI_Comm comm) {
+  if (dest >= 0) {
+    int size = count*sizeofDatatype(datatype);
+    $message out =
+      $message_pack(comm->place, dest, tag, buf, size);
+
+    $comm_enqueue(comm, out);
+  }
+  return 0;
+}
+
+/* Receives a message. */
+int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
+	     int tag, MPI_Comm comm, MPI_Status *status) {
+  if (source >= 0) {
+    $message in = $comm_dequeue(comm, source, tag);
+    int size = count*sizeofDatatype(datatype);
+
+    $message_unpack(in, buf, size);
+    if (status != MPI_STATUS_IGNORE) {
+      status->size = $message_size(in);
+      status->MPI_SOURCE = $message_source(in);
+      status->MPI_TAG = $message_tag(in);
+      status->MPI_ERROR = 0;
+    }
+  }
+  return 0;
+}
+
+int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) {
+  *count = status->size/sizeofDatatype(datatype);
+  return 0;
+}
+
+int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+		 int dest, int sendtag,
+		 void *recvbuf, int recvcount, MPI_Datatype recvtype,
+		 int source, int recvtag,
+		 MPI_Comm comm, MPI_Status *status) {
+  MPI_Send(sendbuf, sendcount, sendtype, dest, sendtag, comm);
+  MPI_Recv(recvbuf, recvcount, recvtype, source, recvtag, comm, status);
+  return 0;
+}
+
+/* Broadcasts a message from root to everyone else.
+ * Need to use a differnt comm.
+ */
+int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
+	      MPI_Comm comm) {
+  
+
+  int place = $comm_place(comm);
+
+#ifdef DEBUG
+  printf("MPI_Bcast: place=%d, count=%d, root=%d\n", place, count, root);
+#endif
+  if (place == root) {
+    int nprocs = $comm_size(comm);
+
+    for (int i=0; i<nprocs; i++)
+      if (i != root)
+	MPI_Send(buf, count, datatype, i, BCAST_TAG, comm);
+  } else {
+    MPI_Recv(buf, count, datatype, root, BCAST_TAG, comm, MPI_STATUS_IGNORE);
+  }
+  return 0;
+}
