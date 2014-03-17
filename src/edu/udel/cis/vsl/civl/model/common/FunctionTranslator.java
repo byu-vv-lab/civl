@@ -1531,8 +1531,14 @@ public class FunctionTranslator {
 		ExpressionNode functionExpression = functionCallNode.getFunction();
 		
 		if (functionExpression instanceof IdentifierExpressionNode) {
-			callee = (Function) ((IdentifierExpressionNode) functionExpression)
+			Entity entity = ((IdentifierExpressionNode) functionExpression)
 					.getIdentifier().getEntity();
+			
+			if(entity.getEntityKind() == EntityKind.FUNCTION)
+			{callee = (Function) entity;
+			abstractFunction = modelBuilder.functionMap.get(callee);
+			}else
+				abstractFunction = null;
 		} else
 			throw new CIVLUnimplementedFeatureException(
 					"Function call must use identifier for now: "
@@ -1547,10 +1553,7 @@ public class FunctionTranslator {
 		}
 		location = modelFactory.location(
 				modelFactory.sourceOfBeginning(functionCallNode), scope);
-		abstractFunction = modelBuilder.functionMap.get(callee);
-		assert abstractFunction != null;
-		if (abstractFunction instanceof AbstractFunction) {
-			
+		if (abstractFunction != null && abstractFunction instanceof AbstractFunction) {
 			Expression abstractFunctionCall = modelFactory.abstractFunctionCallExpression(
 					modelFactory.sourceOf(functionCallNode),
 					(AbstractFunction) abstractFunction, arguments);
