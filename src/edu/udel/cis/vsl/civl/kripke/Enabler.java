@@ -13,8 +13,10 @@ import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -163,6 +165,16 @@ public abstract class Enabler implements
 
 		return libEnabler
 				.evaluateGuard(source, state, pid, function, arguments);
+	}
+
+	public ArrayList<SimpleTransition> getEnabledTransitionsOfSystemCall(
+			CIVLSource source, State state, CallOrSpawnStatement call,
+			BooleanExpression pathCondition, int pid, Statement assignAtomicLock) {
+		LibraryEnabler libEnabler = libraryEnabler(source,
+				((SystemFunction) call.function()).getLibrary());
+
+		return libEnabler.enabledTransitions(state, call, pathCondition, pid,
+				assignAtomicLock);
 	}
 
 	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
@@ -354,7 +366,7 @@ public abstract class Enabler implements
 		Statement transitionStatement = null;
 
 		try {
-			if (s instanceof ChooseStatement) {
+			 if (s instanceof ChooseStatement) {
 				Evaluation eval = evaluator.evaluate(
 						state.setPathCondition(pathCondition), pid,
 						((ChooseStatement) s).rhs());
@@ -380,7 +392,17 @@ public abstract class Enabler implements
 							transitionStatement, universe.integer(i)));
 				}
 			} else {
-				if (s instanceof WaitStatement) {
+				if (s instanceof CallOrSpawnStatement) {
+					CallOrSpawnStatement call = (CallOrSpawnStatement) s;
+
+					if (call.isSystemCall()) {// TODO check function pointer
+						return this.getEnabledTransitionsOfSystemCall(
+								call.getSource(), state, call, pathCondition, pid,
+								assignAtomicLock);
+					} else {
+						transitionStatement = s;
+					}
+				} else if (s instanceof WaitStatement) {
 					Evaluation eval = evaluator.evaluate(
 							state.setPathCondition(pathCondition), pid,
 							((WaitStatement) s).process());
