@@ -199,6 +199,14 @@ public abstract class Enabler implements
 		return universe.and(pathCondition, guard);
 	}
 
+	/**
+	 * Returns the transition factory of this enabler.
+	 * @return
+	 */
+	public TransitionFactory transitionFactory() {
+		return this.transitionFactory;
+	}
+
 	/* ************************ Methods from EnablerIF ********************* */
 
 	@Override
@@ -338,7 +346,7 @@ public abstract class Enabler implements
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
 	 */
-	ArrayList<SimpleTransition> enabledTransitionsOfStatement(State state,
+	public ArrayList<SimpleTransition> enabledTransitionsOfStatement(State state,
 			Statement s, BooleanExpression pathCondition, int pid,
 			Statement assignAtomicLock) {
 		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();

@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.library;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -11,11 +12,16 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.transition.SimpleTransition;
+import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
@@ -67,6 +73,11 @@ public abstract class CommonLibraryEnabler extends Library implements
 	protected StateFactory stateFactory;
 
 	/**
+	 * The unique transition factory used by the system.
+	 */
+	protected TransitionFactory transitionFactory;
+
+	/**
 	 * The symbolic universe for symbolic computations.
 	 */
 	protected SymbolicUniverse universe;
@@ -96,6 +107,7 @@ public abstract class CommonLibraryEnabler extends Library implements
 	protected CommonLibraryEnabler(Enabler primaryEnabler, PrintStream output,
 			ModelFactory modelFactory) {
 		this.primaryEnabler = primaryEnabler;
+		this.transitionFactory = primaryEnabler.transitionFactory();
 		this.evaluator = primaryEnabler.evaluator();
 		this.universe = evaluator.universe();
 		this.stateFactory = evaluator.stateFactory();
@@ -120,6 +132,26 @@ public abstract class CommonLibraryEnabler extends Library implements
 			CallOrSpawnStatement statement,
 			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
 		return new HashSet<>();
+	}
+
+	@Override
+	public ArrayList<SimpleTransition> enabledTransitions(State state,
+			CallOrSpawnStatement call, BooleanExpression pathCondition, int pid,
+			Statement assignAtomicLock) {
+		Statement transitionStatement;
+		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
+
+		if (assignAtomicLock != null) {
+			StatementList statementList = new StatementList(assignAtomicLock);
+
+			statementList.add(call);
+			transitionStatement = statementList;
+		} else {
+			transitionStatement = call;
+		}
+		localTransitions.add(transitionFactory.newSimpleTransition(
+				pathCondition, pid, transitionStatement));
+		return localTransitions;
 	}
 
 }

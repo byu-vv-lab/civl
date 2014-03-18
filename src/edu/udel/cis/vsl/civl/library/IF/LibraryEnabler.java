@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.library.IF;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -7,8 +8,11 @@ import edu.udel.cis.vsl.civl.library.CommonLibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.transition.SimpleTransition;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -49,4 +53,27 @@ public interface LibraryEnabler {
 	 */
 	Set<Integer> ampleSet(State state, int pid, CallOrSpawnStatement statement,
 			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap);
+
+	/**
+	 * Computes the enabled transitions of a given function call. This is to
+	 * support nondeterministic function calls.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param call
+	 *            The function call statement, upon which the set of enabled
+	 *            transitions will be computed.
+	 * @param pathCondition
+	 *            The current path condition.
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param assignAtomicLock
+	 *            The assignment statement for the atomic lock variable, should
+	 *            be null except that the process is going to re-obtain the
+	 *            atomic lock variable.
+	 * @return The set of enabled transitions.
+	 */
+	ArrayList<SimpleTransition> enabledTransitions(State state,
+			CallOrSpawnStatement call, BooleanExpression pathCondition,
+			int pid, Statement assignAtomicLock);
 }

@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.kripke;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -63,32 +62,20 @@ public class AmpleSetWorker {
 		NORMAL, INCOMPLETE
 	};
 
-	/* **************************** Static Fields ************************** */
-
-	/**
-	 * The name of $comm_enqueu.
-	 */
-	private static final String COMM_ENQUE = "$comm_enqueue";
-
-	/**
-	 * The name of $comm_dequeu.
-	 */
-	private static final String COMM_DEQUE = "$comm_dequeue";
-
 	/* *************************** Instance Fields ************************* */
 
 	/**
 	 * The map of active processes (i.e., non-null processes with non-empty
-	 * stack that have at least one enabled statement) and the corresponding
-	 * possible $comm_enqueue/$comm_dequeu function calls.
+	 * stack that have at least one enabled statement)
 	 */
-	Map<Integer, Set<CallOrSpawnStatement>> activeProcesses = new LinkedHashMap<>();
+	Set<Integer> activeProcesses = new LinkedHashSet<>();
 
-	/**
-	 * Mapping of process ID's and the corresponding set of ample process ID's.
-	 * Used for finding the smallest ample set.
-	 */
-	Map<Integer, Set<Integer>> ampleProcessesMap = new HashMap<>();
+	// /**
+	// * Mapping of process ID's and the corresponding set of ample process
+	// ID's.
+	// * Used for finding the smallest ample set.
+	// */
+	// Map<Integer, Set<Integer>> ampleProcessesMap = new HashMap<>();
 
 	/**
 	 * The unique enabler used in the system. Used here for evaluating the guard
@@ -188,8 +175,7 @@ public class AmpleSetWorker {
 		computeActiveProcesses();
 		// return immediately if at most one process is activated.
 		if (activeProcesses.size() <= 1)
-			ampleProcessIDs = new LinkedHashSet<Integer>(
-					activeProcesses.keySet());
+			ampleProcessIDs = activeProcesses;
 		else {
 			ampleProcessIDs = ampleProcessesWork();
 		}
@@ -209,22 +195,18 @@ public class AmpleSetWorker {
 	private Set<Integer> ampleProcessesWork() {
 		Set<Integer> result = new LinkedHashSet<>();
 		int minimalAmpleSetSize = activeProcesses.size() + 1;
-		int minAmpleSetId = -1;// keep track of the smallest ample set
 
 		preprocessing();
-		for (int pid : activeProcesses.keySet()) {
-			Set<Integer> ampleProcessIDs = ampleSetOfProcess(pid);
+		for (int pid : activeProcesses) {
+			Set<Integer> ampleSet = ampleSetOfProcess(pid, minimalAmpleSetSize);
+			int currentSize = ampleSet.size();
 
-			ampleProcessesMap.put(pid, ampleProcessIDs);
-			if (ampleProcessIDs.size() < minimalAmpleSetSize) {
-				minAmpleSetId = pid;
-				minimalAmpleSetSize = ampleProcessIDs.size();
+			if (currentSize == 1)
+				return ampleSet;
+			if (currentSize < minimalAmpleSetSize) {
+				result = ampleSet;
+				minimalAmpleSetSize = currentSize;
 			}
-			if (minimalAmpleSetSize == 1)
-				break;
-		}
-		for (int pid : ampleProcessesMap.get(minAmpleSetId)) {
-			result.add(pid);
 		}
 		return result;
 	}
@@ -236,7 +218,7 @@ public class AmpleSetWorker {
 	 *            The id of the process to start with.
 	 * @return The set of process ID's to be contained in the ample set.
 	 */
-	private Set<Integer> ampleSetOfProcess(int startPid) {
+	private Set<Integer> ampleSetOfProcess(int startPid, int minAmpleSize) {
 		Set<Integer> ampleProcessIDs = new LinkedHashSet<>();
 		Stack<Integer> workingProcessIDs = new Stack<>();
 
@@ -255,7 +237,7 @@ public class AmpleSetWorker {
 				// The current process is entering an atomic/atom block
 				// whose impact memory units can't be computed
 				// completely
-				ampleProcessIDs = activeProcesses.keySet();
+				ampleProcessIDs = activeProcesses;
 				return ampleProcessIDs;
 			}
 			if (systemCalls != null && !systemCalls.isEmpty()) {
@@ -270,14 +252,16 @@ public class AmpleSetWorker {
 					if (ampleSubSet != null && !ampleSubSet.isEmpty()) {
 						for (int amplePid : ampleSubSet) {
 							if (amplePid != pid
-									&& activeProcesses.keySet().contains(
-											amplePid)
+									&& activeProcesses.contains(amplePid)
 									&& !ampleProcessIDs.contains(amplePid)
 									&& !workingProcessIDs.contains(amplePid)) {
 								workingProcessIDs.add(amplePid);
 								ampleProcessIDs.add(amplePid);
+								// early return
+								if (ampleProcessIDs.size() >= minAmpleSize)
+									return ampleProcessIDs;
 								if (ampleProcessIDs.size() == activeProcesses
-										.keySet().size())
+										.size())
 									return ampleProcessIDs;
 							}
 						}
@@ -294,13 +278,15 @@ public class AmpleSetWorker {
 							&& workingProcessIDs.contains(joinID)) {
 						workingProcessIDs.add(joinID);
 						ampleProcessIDs.add(joinID);
-						if (ampleProcessIDs.size() == activeProcesses.keySet()
-								.size())
-							break;
+						// early return
+						if (ampleProcessIDs.size() >= minAmpleSize)
+							return ampleProcessIDs;
+						if (ampleProcessIDs.size() == activeProcesses.size())
+							return ampleProcessIDs;
 					}
 				}
 			}
-			for (int otherPid : activeProcesses.keySet()) {
+			for (int otherPid : activeProcesses) {
 				Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther;
 
 				// add new ample id earlier
@@ -319,7 +305,10 @@ public class AmpleSetWorker {
 						}
 					}
 				}
-				if (ampleProcessIDs.size() == activeProcesses.keySet().size())
+				// early return
+				if (ampleProcessIDs.size() >= minAmpleSize)
+					return ampleProcessIDs;
+				if (ampleProcessIDs.size() == activeProcesses.size())
 					return ampleProcessIDs;
 			}
 		}
@@ -334,37 +323,18 @@ public class AmpleSetWorker {
 	private void computeActiveProcesses() {
 		for (ProcessState p : state.getProcessStates()) {
 			boolean active = false;
-			Set<CallOrSpawnStatement> commCalls;
 			int pid;
 
 			if (p == null || p.hasEmptyStack())
 				continue;
-			commCalls = new HashSet<>();
 			pid = p.getPid();
 			for (Statement s : p.getLocation().outgoing()) {
 				if (!enabler.getGuard(s, pid, state).value.isFalse()) {
 					active = true;
-					if (s instanceof CallOrSpawnStatement) {
-						CallOrSpawnStatement callOrSpawnStatement = (CallOrSpawnStatement) s;
-
-						if (callOrSpawnStatement.isSystemCall()) {
-							SystemFunction systemFunction = (SystemFunction) callOrSpawnStatement
-									.function();
-							String library = systemFunction.getLibrary();
-							String name = systemFunction.name().name();
-
-							if (library.equals("civlc")) {
-								if (name.equals(COMM_DEQUE)
-										|| name.equals(COMM_ENQUE)) {
-									commCalls.add((CallOrSpawnStatement) s);
-								}
-							}
-						}
-					}
 				}
 			}
 			if (active)
-				activeProcesses.put(pid, commCalls);
+				activeProcesses.add(pid);
 		}
 	}
 
@@ -715,7 +685,7 @@ public class AmpleSetWorker {
 	 * </ul>
 	 */
 	private void preprocessing() {
-		for (int pid : activeProcesses.keySet()) {
+		for (int pid : activeProcesses) {
 			ProcessState p = state.getProcessState(pid);
 			Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemUnitsPair = impactMemoryUnits(p);
 
