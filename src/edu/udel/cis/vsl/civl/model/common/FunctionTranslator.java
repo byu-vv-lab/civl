@@ -609,6 +609,8 @@ public class FunctionTranslator {
 				result = modelFactory.callOrSpawnStatement(
 						modelFactory.sourceOf(callNode), location, isCall,
 						function, arguments, null);
+				// added function guard expression since the function could be a
+				// system function which has an outstanding guard
 				result.setGuard(modelFactory.functionGuardExpression(
 						modelFactory.sourceOf(callNode), function, arguments));
 				break;
