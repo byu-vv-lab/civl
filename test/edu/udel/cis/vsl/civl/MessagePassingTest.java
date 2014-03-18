@@ -60,7 +60,6 @@ public class MessagePassingTest {
 	public void ring1() {
 		assertTrue(ui.run("verify", filename("ring1.cvl"), "-inputNPROCS=3"));
 	}
-	
 
 	@Test
 	public void ring2() {
@@ -69,7 +68,7 @@ public class MessagePassingTest {
 
 	@Test
 	public void diffusion1d() {
-		assertTrue(ui.run("verify", filename("diffusion1d_par.cvl"), "-inputNPROCSB=5" ,"-inputNXB=6" 
-				,"-inputNSTEPSB=3"));
+		assertTrue(ui.run("verify", filename("diffusion1d_good.cvl"),
+				"-inputNPROCSB=3", "-inputNSTEPSB=3", "-inputNXB=6"));
 	}
 }

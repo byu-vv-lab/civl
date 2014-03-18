@@ -45,8 +45,8 @@ int output_par[NX];           // final (color) result of parallel computation
 CMPI_Gcomm MPI_GCOMM_WORLD;   // the global communicator object
 
 /* Abstract function representing conversion from temperature to color */
-//$abstract int colorOf(double x);
-int colorOf(double x) { return (int)x; }
+$abstract int colorOf(double x);
+//int colorOf(double x) { return (int)x; }
 
 /* Sequential algorithm: performs simulation storing result of final
  * time step in output_seq  */
