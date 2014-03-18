@@ -2761,6 +2761,12 @@ public class CommonEvaluator implements Evaluator {
 			}
 			// }
 			break;
+		case ABSTRACT_FUNCTION_CALL:
+			for (Expression arg : ((AbstractFunctionCallExpression) expression)
+					.arguments()) {
+				memoryUnitsOfExpression(state, pid, arg, memoryUnits);
+			}
+			break;
 		case WAIT_GUARD:
 			break;
 		case QUANTIFIER:
