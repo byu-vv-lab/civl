@@ -283,22 +283,6 @@ public interface Evaluator {
 			SymbolicExpression pointer);
 
 	/**
-	 * Computes the set of process id's in a given communicator with the same
-	 * rank as a certain process.
-	 * 
-	 * @param comm
-	 *            The communicator.
-	 * @param pid
-	 *            The process to be checked (including in the result set)
-	 * @param state
-	 *            The state where the computation happens.
-	 * @return The set of process IDs that shares the same rank in the
-	 *         communciator.
-	 */
-	Set<Integer> processesOfSameRankInComm(SymbolicExpression comm, int pid,
-			int rank);
-
-	/**
 	 * Creates a pointer value by evaluating a left-hand-side expression in the
 	 * given state.
 	 * 

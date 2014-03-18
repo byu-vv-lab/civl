@@ -1,12 +1,13 @@
 package edu.udel.cis.vsl.civl.library.IF;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.library.CommonLibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
@@ -35,7 +36,7 @@ public interface LibraryEnabler {
 	 * the "regular" guard in the transition system.
 	 */
 	Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			SystemGuardExpression systemGuard);
+			String function, List<Expression> arguments);
 
 	/**
 	 * Computes the ample set process ID's from a system function call.

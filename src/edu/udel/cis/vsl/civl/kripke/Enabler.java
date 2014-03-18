@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.kripke;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
@@ -12,7 +13,7 @@ import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -156,13 +157,12 @@ public abstract class Enabler implements
 		// }
 	}
 
-	public Evaluation getSystemGuard(State state, int pid,
-			SystemGuardExpression expression) {
-		LibraryEnabler libEnabler = libraryEnabler(expression.getSource(),
-				expression.library());
+	public Evaluation getSystemGuard(CIVLSource source, State state, int pid,
+			String library, String function, List<Expression> arguments) {
+		LibraryEnabler libEnabler = libraryEnabler(source, library);
 
-		return libEnabler.evaluateGuard(expression.getSource(), state, pid,
-				expression);
+		return libEnabler
+				.evaluateGuard(source, state, pid, function, arguments);
 	}
 
 	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
@@ -201,6 +201,7 @@ public abstract class Enabler implements
 
 	/**
 	 * Returns the transition factory of this enabler.
+	 * 
 	 * @return
 	 */
 	public TransitionFactory transitionFactory() {
@@ -346,8 +347,8 @@ public abstract class Enabler implements
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
 	 */
-	public ArrayList<SimpleTransition> enabledTransitionsOfStatement(State state,
-			Statement s, BooleanExpression pathCondition, int pid,
+	public ArrayList<SimpleTransition> enabledTransitionsOfStatement(
+			State state, Statement s, BooleanExpression pathCondition, int pid,
 			Statement assignAtomicLock) {
 		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
 		Statement transitionStatement = null;

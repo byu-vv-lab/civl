@@ -36,7 +36,7 @@ public class CommonSystemGuardExpression extends CommonExpression implements
 	/**
 	 * The list of arguments that the function call uses.
 	 */
-	private Expression[] arguments;
+	private List<Expression> arguments;
 
 	/* **************************** Constructors *************************** */
 
@@ -59,8 +59,7 @@ public class CommonSystemGuardExpression extends CommonExpression implements
 		super(source);
 		this.library = library;
 		this.functionName = function;
-		this.arguments = new Expression[args.size()];
-		args.toArray(this.arguments);
+		this.arguments = args;
 		this.expressionType = type;
 	}
 
@@ -96,7 +95,7 @@ public class CommonSystemGuardExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Expression[] arguments() {
+	public List<Expression> arguments() {
 		return this.arguments;
 	}
 

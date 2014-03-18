@@ -40,6 +40,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
@@ -321,7 +322,8 @@ public class CommonExecutor implements Executor {
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid, statement.rhs());
 
-		state = assign(eval.state, pid, statement.getLhs(), eval.value);
+		state = assign(eval.state, pid, statement.getLhs(), eval.value,
+				statement.isInitialization());
 		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
@@ -686,17 +688,44 @@ public class CommonExecutor implements Executor {
 	public State assign(CIVLSource source, State state,
 			SymbolicExpression pointer, SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
+		return this.assign(source, state, pointer, value, false);
+	}
+
+	private State assign(CIVLSource source, State state,
+			SymbolicExpression pointer, SymbolicExpression value,
+			boolean isInitialization)
+			throws UnsatisfiablePathConditionException {
 		int vid = evaluator.getVariableId(source, pointer);
 		int sid = evaluator.getScopeId(source, pointer);
 		ReferenceExpression symRef = evaluator.getSymRef(pointer);
 		State result;
+		Variable variable;
 
 		if (sid < 0) {
 			evaluator
 					.logSimpleError(source, state, ErrorKind.DEREFERENCE,
 							"Attempt to dereference pointer into scope which has been removed from state");
 			throw new UnsatisfiablePathConditionException();
-		} else if (symRef.isIdentityReference()) {
+		} 
+		variable = state.getScope(sid).lexicalScope().variable(vid);
+		if (!isInitialization) {
+			if (variable.isInput()) {
+				evaluator
+						.logSimpleError(source, state, ErrorKind.INPUT_WRITE,
+								"Attempt to write to input variable "
+										+ variable.name());
+				throw new UnsatisfiablePathConditionException();
+			} else if (variable.isConst()) {
+				evaluator.logSimpleError(
+						source,
+						state,
+						ErrorKind.CONSTANT_WRITE,
+						"Attempt to write to constant variable "
+								+ variable.name());
+				throw new UnsatisfiablePathConditionException();
+			}
+		}
+		if (symRef.isIdentityReference()) {
 			result = stateFactory.setVariable(state, vid, sid, value);
 		} else {
 			SymbolicExpression oldVariableValue = state.getVariableValue(sid,
@@ -714,6 +743,12 @@ public class CommonExecutor implements Executor {
 	public State assign(State state, int pid, LHSExpression lhs,
 			SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
+		return this.assign(state, pid, lhs, value, false);
+	}
+
+	private State assign(State state, int pid, LHSExpression lhs,
+			SymbolicExpression value, boolean isInitialization)
+			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.reference(state, pid, lhs);
 
 		if (lhs instanceof DotExpression) {
@@ -729,7 +764,9 @@ public class CommonExecutor implements Executor {
 						evaluator.universe().intObject(memberIndex), value);
 			}
 		}
-		return assign(lhs.getSource(), eval.state, eval.value, value);
+		// TODO check if lhs is constant or input value
+		return assign(lhs.getSource(), eval.state, eval.value, value,
+				isInitialization);
 	}
 
 	@Override

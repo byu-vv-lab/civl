@@ -609,6 +609,8 @@ public class FunctionTranslator {
 				result = modelFactory.callOrSpawnStatement(
 						modelFactory.sourceOf(callNode), location, isCall,
 						function, arguments, null);
+				result.setGuard(modelFactory.functionGuardExpression(
+						modelFactory.sourceOf(callNode), function, arguments));
 				break;
 			default:
 				throw new CIVLUnimplementedFeatureException(
@@ -978,15 +980,18 @@ public class FunctionTranslator {
 		if (!(leftExpression instanceof LHSExpression))
 			throw new CIVLInternalException("expected LHS expression, not "
 					+ leftExpression, modelFactory.sourceOf(lhs));
-		if(leftExpression instanceof VariableExpression){
-			Variable lhsVariable = ((VariableExpression)leftExpression).variable();
-			
-			if(lhsVariable.isInput())
-				throw new CIVLSyntaxException("attempt to modify the input variable "
-						+ leftExpression, modelFactory.sourceOf(lhs));
-			if(lhsVariable.isConst())
-				throw new CIVLInternalException("attempt to modify the constant variable "
-						+ leftExpression, modelFactory.sourceOf(lhs));
+		if (leftExpression instanceof VariableExpression) {
+			Variable lhsVariable = ((VariableExpression) leftExpression)
+					.variable();
+
+			if (lhsVariable.isInput())
+				throw new CIVLSyntaxException(
+						"attempt to modify the input variable "
+								+ leftExpression, modelFactory.sourceOf(lhs));
+			if (lhsVariable.isConst())
+				throw new CIVLInternalException(
+						"attempt to modify the constant variable "
+								+ leftExpression, modelFactory.sourceOf(lhs));
 		}
 		assignStatement = assignStatement(modelFactory.sourceOfSpan(lhs, rhs),
 				(LHSExpression) leftExpression, rhs, scope);
@@ -1539,15 +1544,15 @@ public class FunctionTranslator {
 		CIVLFunction abstractFunction;
 		Function callee;
 		ExpressionNode functionExpression = functionCallNode.getFunction();
-		
+
 		if (functionExpression instanceof IdentifierExpressionNode) {
 			Entity entity = ((IdentifierExpressionNode) functionExpression)
 					.getIdentifier().getEntity();
-			
-			if(entity.getEntityKind() == EntityKind.FUNCTION)
-			{callee = (Function) entity;
-			abstractFunction = modelBuilder.functionMap.get(callee);
-			}else
+
+			if (entity.getEntityKind() == EntityKind.FUNCTION) {
+				callee = (Function) entity;
+				abstractFunction = modelBuilder.functionMap.get(callee);
+			} else
 				abstractFunction = null;
 		} else
 			throw new CIVLUnimplementedFeatureException(
@@ -1563,12 +1568,15 @@ public class FunctionTranslator {
 		}
 		location = modelFactory.location(
 				modelFactory.sourceOfBeginning(functionCallNode), scope);
-		if (abstractFunction != null && abstractFunction instanceof AbstractFunction) {
-			Expression abstractFunctionCall = modelFactory.abstractFunctionCallExpression(
-					modelFactory.sourceOf(functionCallNode),
-					(AbstractFunction) abstractFunction, arguments);
-			
-			return modelFactory.assignStatement(source, location, lhs, abstractFunctionCall, false);
+		if (abstractFunction != null
+				&& abstractFunction instanceof AbstractFunction) {
+			Expression abstractFunctionCall = modelFactory
+					.abstractFunctionCallExpression(
+							modelFactory.sourceOf(functionCallNode),
+							(AbstractFunction) abstractFunction, arguments);
+
+			return modelFactory.assignStatement(source, location, lhs,
+					abstractFunctionCall, false);
 		}
 		switch (functionName) {
 		// special translation for some system functions like $assert,
@@ -1980,12 +1988,12 @@ public class FunctionTranslator {
 		Location location = modelFactory.location(
 				modelFactory.sourceOfBeginning(returnNode), scope);
 		Expression expression;
-		CIVLFunction function =  this.functionInfo.function();
+		CIVLFunction function = this.functionInfo.function();
 
 		if (returnNode.getExpression() != null) {
 			expression = translateExpressionNode(returnNode.getExpression(),
 					scope, true);
-			if(function.returnType().isBoolType())
+			if (function.returnType().isBoolType())
 				expression = modelFactory.booleanExpression(expression);
 		} else
 			expression = null;
@@ -2484,12 +2492,15 @@ public class FunctionTranslator {
 
 		modelFactory.setCurrentScope(scope);
 		castExpression = translateExpressionNode(argumentNode, scope, true);
-		if(castType.isPointerType() && !castExpression.getExpressionType().isPointerType() && castExpression instanceof LHSExpression){
-			result = modelFactory.castExpression(source,
-					castType, modelFactory.addressOfExpression(source, (LHSExpression)castExpression));
-		}else
-		result = modelFactory.castExpression(source,
-				castType, castExpression);
+		if (castType.isPointerType()
+				&& !castExpression.getExpressionType().isPointerType()
+				&& castExpression instanceof LHSExpression) {
+			result = modelFactory.castExpression(source, castType,
+					modelFactory.addressOfExpression(source,
+							(LHSExpression) castExpression));
+		} else
+			result = modelFactory.castExpression(source, castType,
+					castExpression);
 		return result;
 	}
 

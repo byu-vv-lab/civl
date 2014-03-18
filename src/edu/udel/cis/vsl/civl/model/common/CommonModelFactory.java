@@ -45,6 +45,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
@@ -104,6 +105,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonDerivativeCallExpress
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDotExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonFunctionGuardExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonFunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonHereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonInitialValueExpression;
@@ -2426,6 +2428,15 @@ public class CommonModelFactory implements ModelFactory {
 			return systemGuard;
 		return this.binaryExpression(call.guard().getSource(),
 				BINARY_OPERATOR.AND, call.guard(), systemGuard);
+	}
+
+	@Override
+	public Expression functionGuardExpression(CIVLSource source,
+			Expression function, List<Expression> arguments) {
+		FunctionGuardExpression functionGuard = new CommonFunctionGuardExpression(
+				source, function, arguments, this.booleanType);
+
+		return functionGuard;
 	}
 
 	@Override

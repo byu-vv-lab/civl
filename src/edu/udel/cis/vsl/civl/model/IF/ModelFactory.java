@@ -1541,4 +1541,7 @@ public interface ModelFactory {
 	SymbolicTupleType functionPointerSymbolicType();
 
 	SymbolicExpression undefinedScopeValue();
+
+	Expression functionGuardExpression(CIVLSource source, Expression function,
+			List<Expression> arguments);
 }

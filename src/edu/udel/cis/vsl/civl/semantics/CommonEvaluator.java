@@ -26,6 +26,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
@@ -42,6 +43,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
@@ -1624,7 +1626,9 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private Evaluation evaluateSystemGuard(State state, int pid,
 			SystemGuardExpression expression) {
-		return enabler.getSystemGuard(state, pid, expression);
+		return enabler.getSystemGuard(expression.getSource(), state, pid,
+				expression.library(), expression.functionName(),
+				expression.arguments());
 	}
 
 	/**
@@ -2069,6 +2073,10 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateFunctionPointer(state, pid,
 					(FunctionPointerExpression) expression);
 			break;
+		case FUNCTION_GUARD:
+			result = evaluateFunctionGuard(state, pid,
+					(FunctionGuardExpression) expression);
+			break;
 		case HERE_OR_ROOT:
 			result = evaluateHereOrRootScope(state, pid,
 					(HereOrRootExpression) expression);
@@ -2142,6 +2150,30 @@ public class CommonEvaluator implements Evaluator {
 					+ kind, expression.getSource());
 		}
 		return result;
+	}
+
+	private Evaluation evaluateFunctionGuard(State state, int pid,
+			FunctionGuardExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Pair<State, CIVLFunction> eval = this.evaluateFunctionExpression(state,
+				pid, expression.functionExpression());
+		CIVLFunction function;
+
+		state = eval.left;
+		function = eval.right;
+		if (function == null) {
+			this.logSimpleError(expression.getSource(), state, ErrorKind.OTHER,
+					"function body cann't be found");
+			throw new UnsatisfiablePathConditionException();
+		}
+		if (function.isSystem()) {
+			SystemFunction systemFunction = (SystemFunction) function;
+
+			return enabler.getSystemGuard(expression.getSource(), state, pid,
+					systemFunction.getLibrary(), systemFunction.name().name(),
+					expression.arguments());
+		}
+		return new Evaluation(state, universe.trueExpression());
 	}
 
 	private Evaluation evaluateFunctionPointer(State state, int pid,
@@ -2250,7 +2282,6 @@ public class CommonEvaluator implements Evaluator {
 				.extractNumber(expression);
 
 		// TODO make expression
-
 		if (result == null)
 			throw new CIVLInternalException(
 					"Unable to extract concrete int from " + expression, source);
@@ -2771,12 +2802,16 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case QUANTIFIER:
 			break;
-		case SYSTEM_GUARD:
+		case FUNCTION_GUARD:// arguments already handled by the call
+							// statement
+			break;
+		case SYSTEM_GUARD:// arguments already handled by the call statement
 			break;
 		case HERE_OR_ROOT:
 			break;
 		case FUNCTION_POINTER:
 			break;
+
 		default:
 			throw new CIVLUnimplementedFeatureException("Expression kind: "
 					+ kind, expression.getSource());
@@ -2796,32 +2831,6 @@ public class CommonEvaluator implements Evaluator {
 	@Override
 	public ModelFactory modelFactory() {
 		return modelFactory;
-	}
-
-	@Override
-	public Set<Integer> processesOfSameRankInComm(SymbolicExpression comm,
-			int pid, int rank) {
-		return new HashSet<Integer>();
-		// SymbolicExpression procMatrix = this.universe.tupleRead(comm,
-		// universe.intObject(1));
-		// SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
-		// universe.integer(rank));
-		// int procRowLength = this.extractInt(
-		// null,
-		// (NumericExpression) universe.tupleRead(procQueue,
-		// universe.intObject(0)));
-		// SymbolicExpression procRow = universe.tupleRead(procQueue,
-		// universe.intObject(1));
-		// Set<Integer> pidsInComm = new LinkedHashSet<>();
-		//
-		// for (int j = 0; j < procRowLength; j++) {
-		// SymbolicExpression proc = universe.arrayRead(procRow,
-		// universe.integer(j));
-		// int procId = this.modelFactory.getProcessId(null, proc);
-		//
-		// pidsInComm.add(procId);
-		// }
-		// return pidsInComm;
 	}
 
 	@Override

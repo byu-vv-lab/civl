@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,7 +16,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -84,20 +84,18 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 
 	@Override
 	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			SystemGuardExpression systemGuard) {
+			String function, List<Expression> arguments) {
 		SymbolicExpression[] argumentValues;
 		int numArgs;
 		BooleanExpression guard;
-		Expression[] arguments = systemGuard.arguments();
-		String function = systemGuard.functionName();
 
-		numArgs = arguments.length;
+		numArgs = arguments.size();
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval = null;
 
 			try {
-				eval = evaluator.evaluate(state, pid, arguments[i]);
+				eval = evaluator.evaluate(state, pid, arguments.get(i));
 			} catch (UnsatisfiablePathConditionException e) {
 				// the error that caused the unsatifiable path condition should
 				// already have been reported.
@@ -243,7 +241,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression getDequeueGuard(State state, int pid,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+			List<Expression> arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression commHandle = argumentValues[0];
 		SymbolicExpression source = argumentValues[1];
@@ -253,7 +251,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		SymbolicExpression gcomm;
 		SymbolicExpression dest;
 		SymbolicExpression newMessage;
-		CIVLSource civlsource = arguments[0].getSource();
+		CIVLSource civlsource = arguments.get(0).getSource();
 		boolean enabled = false;
 		Evaluation eval;
 
@@ -349,11 +347,11 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 	 * @return
 	 */
 	private BooleanExpression getWaitGuard(State state, int pid,
-			Expression[] arguments, SymbolicExpression[] argumentValues) {
+			List<Expression> arguments, SymbolicExpression[] argumentValues) {
 		SymbolicExpression joinProcess = argumentValues[0];
 		BooleanExpression guard;
 		int pidValue;
-		Expression joinProcessExpr = arguments[0];
+		Expression joinProcessExpr = arguments.get(0);
 
 		pidValue = modelFactory.getProcessId(joinProcessExpr.getSource(),
 				joinProcess);

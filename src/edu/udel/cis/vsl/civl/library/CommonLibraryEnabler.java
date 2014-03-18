@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.library;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,7 +11,7 @@ import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
@@ -123,7 +124,7 @@ public abstract class CommonLibraryEnabler extends Library implements
 
 	@Override
 	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			SystemGuardExpression systemGuard) {
+			String function, List<Expression> arguments) {
 		return new Evaluation(state, universe.trueExpression());
 	}
 
@@ -136,8 +137,8 @@ public abstract class CommonLibraryEnabler extends Library implements
 
 	@Override
 	public ArrayList<SimpleTransition> enabledTransitions(State state,
-			CallOrSpawnStatement call, BooleanExpression pathCondition, int pid,
-			Statement assignAtomicLock) {
+			CallOrSpawnStatement call, BooleanExpression pathCondition,
+			int pid, Statement assignAtomicLock) {
 		Statement transitionStatement;
 		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
 

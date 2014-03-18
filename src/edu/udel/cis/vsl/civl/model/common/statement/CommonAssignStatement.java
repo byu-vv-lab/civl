@@ -143,6 +143,7 @@ public class CommonAssignStatement extends CommonStatement implements
 			newStatement = new CommonAssignStatement(this.getSource(),
 					this.source(), lhs, this.rhs);
 			newStatement.setGuard(newGuard);
+			newStatement.setInitialization(this.isInitialization);
 		} else {
 			Expression newRhs = rhs.replaceWith(oldExpression, newExpression);
 
@@ -150,6 +151,7 @@ public class CommonAssignStatement extends CommonStatement implements
 				newStatement = new CommonAssignStatement(this.getSource(),
 						this.source(), lhs, newRhs);
 				newStatement.setGuard(this.guard());
+				newStatement.setInitialization(this.isInitialization);
 			}
 		}
 		return newStatement;
