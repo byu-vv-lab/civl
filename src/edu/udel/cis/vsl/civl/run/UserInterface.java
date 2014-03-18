@@ -70,10 +70,10 @@ public class UserInterface {
 					+ "    for all other commands", null);
 
 	public final static Option idO = Option.newScalarOption("id", INTEGER,
-			"ID number of trace to replay", 0);
+			"ID number of trace to replay; applies only to replay command", 0);
 
 	public final static Option inputO = Option.newMapOption("input",
-			"initialize input variable KEY to VALUE");
+			"initialize input variable KEY to VALUE; applies only to run and verify");
 
 	public final static Option maxdepthO = Option.newScalarOption("maxdepth",
 			INTEGER, "bound on search depth", Integer.MAX_VALUE);
