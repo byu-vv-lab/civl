@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v 0.9
+                               v 0.9.1
 
 ------------------------------ Overview -------------------------------
 
@@ -37,20 +37,12 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.8 -------------------------
+-------------------------- Updates from v 0.9 -------------------------
 
-1. Several bugs get fixed. Refer to CIVL Trac (https://vsl.cis.udel.edu/trac/civl/)
-   for more details.
-
-2. Support equality operators (==, !=) for $scope and $proc types.
-
-3. Support function pointers:
-   Refer to examples/languageFeatures/functionPointer.cvl for an example.
-
-4. Several new system functions:
-   $proc_defined($proc)/$scope_defined($scope): checks if a process/scope
-   reference is defined;
-   $gcomm_destroy($gcomm)/$comm_destroy($comm): destroys a communicator.
+This is a maintenance release for v0.9, which has two major bugs get fixed:
+- a bug when using abstract function in an assign statement;
+- a bug in side effect remover when a for loop has function call its
+  in condition expression.
 
 ------------------------- Binary Installation -------------------------
 
