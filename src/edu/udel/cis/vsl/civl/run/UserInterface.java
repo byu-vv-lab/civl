@@ -144,6 +144,9 @@ public class UserInterface {
 	public final static Option verboseO = Option.newScalarOption("verbose",
 			BOOLEAN, "verbose mode", false);
 
+	public final static Option guiO = Option.newScalarOption("gui", BOOLEAN,
+			"launch GUI? (under development, only works with replay)", false);
+
 	/* ************************* Instance fields *************************** */
 
 	/**
@@ -180,7 +183,7 @@ public class UserInterface {
 				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO, porO,
 				saveStatesO, simplifyO, solveO, enablePrintfO, mpiO,
-				showAmpleSetO);
+				showAmpleSetO, guiO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -699,6 +702,7 @@ public class UserInterface {
 			throw e;
 		} catch (CIVLException e) {
 			err.println(e);
+			TokenUtils.printShorterFileNameMap(err);
 		}
 		err.flush();
 		return false;
@@ -728,7 +732,7 @@ public class UserInterface {
 	 * 
 	 * @param args
 	 *            command line arguments as collection
-	 * @return true iff everything succeeeded and no errors were found
+	 * @return true iff everything succeeded and no errors were found
 	 */
 	public boolean run(Collection<String> args) {
 		return run(args.toArray(new String[args.size()]));

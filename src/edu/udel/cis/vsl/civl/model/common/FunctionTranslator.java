@@ -978,6 +978,16 @@ public class FunctionTranslator {
 		if (!(leftExpression instanceof LHSExpression))
 			throw new CIVLInternalException("expected LHS expression, not "
 					+ leftExpression, modelFactory.sourceOf(lhs));
+		if(leftExpression instanceof VariableExpression){
+			Variable lhsVariable = ((VariableExpression)leftExpression).variable();
+			
+			if(lhsVariable.isInput())
+				throw new CIVLSyntaxException("attempt to modify the input variable "
+						+ leftExpression, modelFactory.sourceOf(lhs));
+			if(lhsVariable.isConst())
+				throw new CIVLInternalException("attempt to modify the constant variable "
+						+ leftExpression, modelFactory.sourceOf(lhs));
+		}
 		assignStatement = assignStatement(modelFactory.sourceOfSpan(lhs, rhs),
 				(LHSExpression) leftExpression, rhs, scope);
 		return new CommonFragment(assignStatement);

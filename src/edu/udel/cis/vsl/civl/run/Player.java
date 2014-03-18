@@ -100,6 +100,8 @@ public abstract class Player {
 	protected boolean enablePrintf; // true by default
 
 	protected boolean mpiMode; // false by default
+	
+	protected boolean gui; // false by default, only works with Replay mode.
 
 	public Player(GMCConfiguration config, Model model, PrintStream out)
 			throws CommandLineException {
@@ -125,6 +127,8 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.enablePrintfO);
 		this.showAmpleSet = (Boolean) config
 				.getValueOrDefault(UserInterface.showAmpleSetO);
+		this.gui = (Boolean) config
+				.getValueOrDefault(UserInterface.guiO);
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		if (this.mpiMode)
 			this.executor = new MPIExecutor(config, modelFactory, stateFactory,

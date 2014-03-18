@@ -402,4 +402,9 @@ public class LanguageFeaturesTest {
 	public void sideEffectLoop() throws ABCException {
 		assertTrue(ui.run("verify", filename("sideEffectLoop.cvl")));
 	}
+	
+	@Test
+	public void assignInput() throws ABCException {
+		assertFalse(ui.run("verify", filename("assignInput.cvl"), "-showModel"));
+	}
 }

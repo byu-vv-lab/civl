@@ -79,6 +79,7 @@ public class TracePlayer extends Player {
 		super(config, model, out);
 		// turn the following off because they duplicate what
 		// the Replayer prints:
+		//TODO check here
 		stateManager.setShowStates(false);
 		stateManager.setShowSavedStates(false);
 		stateManager.setShowTransitions(showTransitions);
