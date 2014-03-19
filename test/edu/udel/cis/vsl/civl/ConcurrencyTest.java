@@ -120,11 +120,7 @@ public class ConcurrencyTest {
 		assertFalse(ui.run("verify", "-inputN=10", filename("spawnBad.cvl")));
 	}
 
-	@Test
-	public void threadPrivate() {
-		assertTrue(ui.run("verify", "-inputTHREADS_BOUND=2", "-inputN_BOUND=4",
-				"-enablePrintf=false", filename("fig4.98-threadprivate.cvl")));
-	}
+	
 
 	@Test
 	public void waitSelf() {
