@@ -395,6 +395,7 @@ public abstract class Enabler implements
 				if (s instanceof CallOrSpawnStatement) {
 					CallOrSpawnStatement call = (CallOrSpawnStatement) s;
 
+					//TODO think about optimization of system functions
 					if (call.isSystemCall()) {// TODO check function pointer
 						return this.getEnabledTransitionsOfSystemCall(
 								call.getSource(), state, call, pathCondition, pid,
