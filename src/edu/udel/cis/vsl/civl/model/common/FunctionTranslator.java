@@ -2988,7 +2988,7 @@ public class FunctionTranslator {
 			
 			if(!this.isLHS && varExpression.variable().isOutput()){
 				throw new CIVLSyntaxException(
-						"attempt to read the input variable "
+						"attempt to read the output variable "
 								+ name, source);
 			}
 			result = varExpression;
