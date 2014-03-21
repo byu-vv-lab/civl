@@ -408,7 +408,7 @@ public class ImmutableProcessState implements ProcessState {
 
 	@Override
 	public void print(PrintStream out, String prefix) {
-		out.println(prefix + "process " + identifier);
+		out.println(prefix + "process " + identifier + "(process<" + pid + ">)");
 		out.println(prefix + "| atomicCount = " + atomicCount);
 		out.println(prefix + "| call stack");
 		for (int i = 0; i < callStack.length; i++) {
