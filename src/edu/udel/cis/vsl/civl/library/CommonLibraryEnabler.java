@@ -138,7 +138,7 @@ public abstract class CommonLibraryEnabler extends Library implements
 	@Override
 	public ArrayList<SimpleTransition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
-			int pid, Statement assignAtomicLock) {
+			int pid, int processIdentifier, Statement assignAtomicLock) {
 		Statement transitionStatement;
 		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
 
@@ -151,7 +151,7 @@ public abstract class CommonLibraryEnabler extends Library implements
 			transitionStatement = call;
 		}
 		localTransitions.add(transitionFactory.newSimpleTransition(
-				pathCondition, pid, transitionStatement));
+				pathCondition, pid, processIdentifier, transitionStatement));
 		return localTransitions;
 	}
 

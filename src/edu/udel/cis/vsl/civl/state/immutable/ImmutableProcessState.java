@@ -84,6 +84,14 @@ public class ImmutableProcessState implements ProcessState {
 			throw new UnsupportedOperationException();
 		}
 	}
+	
+	/* *************************** Static Fields *************************** */
+
+	/**
+	 * The number of instances of this class that have been created since the
+	 * class was loaded.
+	 */
+	static int instanceCount = 0;
 
 	/* ************************** Instance Fields ************************** */
 
@@ -120,6 +128,12 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	private StackEntry[] callStack;
 
+	/**
+	 * This identifier is not part of the state. It is never renamed, helping to
+	 * identify a specific process when processes got collected.
+	 */
+	private int identifier;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -137,6 +151,28 @@ public class ImmutableProcessState implements ProcessState {
 		this.pid = pid;
 		this.callStack = stack;
 		this.atomicCount = atomicCount;
+		this.identifier = instanceCount++;
+	}
+
+	/**
+	 * Constructs new process state from given fields. No information is cloned;
+	 * the given objects just become the fields.
+	 * 
+	 * @param pid
+	 *            the process ID
+	 * @param identifier
+	 * 			the identifier of the process
+	 * @param stack
+	 *            the call stack
+	 * @param atomicCount
+	 *            the atomic count
+	 */
+	ImmutableProcessState(int pid, int identifier, StackEntry[] stack,
+			int atomicCount) {
+		this.pid = pid;
+		this.callStack = stack;
+		this.atomicCount = atomicCount;
+		this.identifier = identifier;
 	}
 
 	/**
@@ -175,7 +211,7 @@ public class ImmutableProcessState implements ProcessState {
 		ImmutableStackEntry[] newStack = new ImmutableStackEntry[callStack.length - 1];
 
 		System.arraycopy(callStack, 1, newStack, 0, callStack.length - 1);
-		return new ImmutableProcessState(pid, newStack, this.atomicCount);
+		return new ImmutableProcessState(pid, this.identifier, newStack, this.atomicCount);
 	}
 
 	/**
@@ -192,7 +228,7 @@ public class ImmutableProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 0, newStack, 1, callStack.length);
 		newStack[0] = newStackEntry;
-		return new ImmutableProcessState(pid, newStack, this.atomicCount);
+		return new ImmutableProcessState(pid, this.identifier, newStack, this.atomicCount);
 	}
 
 	/**
@@ -213,7 +249,7 @@ public class ImmutableProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 1, newStack, 1, length - 1);
 		newStack[0] = newStackEntry;
-		return new ImmutableProcessState(pid, newStack, this.atomicCount);
+		return new ImmutableProcessState(pid, this.identifier, newStack, this.atomicCount);
 	}
 
 	/**
@@ -238,11 +274,11 @@ public class ImmutableProcessState implements ProcessState {
 	}
 
 	ImmutableProcessState setPid(int pid) {
-		return new ImmutableProcessState(pid, callStack, this.atomicCount);
+		return new ImmutableProcessState(pid, this.identifier, callStack, this.atomicCount);
 	}
 
 	ProcessState setStackEntries(StackEntry[] frames) {
-		return new ImmutableProcessState(pid, frames, this.atomicCount);
+		return new ImmutableProcessState(pid, this.identifier, frames, this.atomicCount);
 	}
 
 	ProcessState setStackEntry(int index, StackEntry frame) {
@@ -251,7 +287,7 @@ public class ImmutableProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 0, newStack, 0, n);
 		newStack[index] = frame;
-		return new ImmutableProcessState(pid, newStack, this.atomicCount);
+		return new ImmutableProcessState(pid, this.identifier, newStack, this.atomicCount);
 	}
 
 	/**
@@ -282,7 +318,7 @@ public class ImmutableProcessState implements ProcessState {
 						newScope);
 			}
 		}
-		return stackChange ? new ImmutableProcessState(pid, newStack,
+		return stackChange ? new ImmutableProcessState(pid, this.identifier, newStack,
 				atomicCount) : this;
 	}
 
@@ -300,7 +336,7 @@ public class ImmutableProcessState implements ProcessState {
 
 	@Override
 	public ProcessState decrementAtomicCount() {
-		return new ImmutableProcessState(this.pid, this.callStack,
+		return new ImmutableProcessState(this.pid, this.identifier, this.callStack,
 				this.atomicCount - 1);
 	}
 
@@ -330,6 +366,11 @@ public class ImmutableProcessState implements ProcessState {
 	public boolean hasEmptyStack() {
 		return callStack.length == 0;
 	}
+	
+	@Override
+	public int identifier(){
+		return this.identifier;
+	}
 
 	@Override
 	public boolean inAtomic() {
@@ -338,7 +379,7 @@ public class ImmutableProcessState implements ProcessState {
 
 	@Override
 	public ProcessState incrementAtomicCount() {
-		return new ImmutableProcessState(this.pid, this.callStack,
+		return new ImmutableProcessState(this.pid, this.identifier, this.callStack,
 				this.atomicCount + 1);
 	}
 
@@ -367,7 +408,7 @@ public class ImmutableProcessState implements ProcessState {
 
 	@Override
 	public void print(PrintStream out, String prefix) {
-		out.println(prefix + "process " + pid);
+		out.println(prefix + "process " + identifier);
 		out.println(prefix + "| atomicCount = " + atomicCount);
 		out.println(prefix + "| call stack");
 		for (int i = 0; i < callStack.length; i++) {

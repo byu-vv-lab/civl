@@ -76,5 +76,5 @@ public interface LibraryEnabler {
 	 */
 	ArrayList<SimpleTransition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
-			int pid, Statement assignAtomicLock);
+			int pid, int processIdentifier, Statement assignAtomicLock);
 }

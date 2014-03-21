@@ -490,24 +490,26 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		Location currentLocation;
 		boolean printTransitions = verbose || debug || showTransitions;
 		int oldMaxCanonicId = this.maxCanonicId;
+		int processIdentifier;
 
 		assert transition instanceof SimpleTransition;
 		pid = ((SimpleTransition) transition).pid();
+		processIdentifier = ((SimpleTransition) transition).processIdentifier();
 		p = state.getProcessState(pid);
 		currentLocation = p.getLocation();
 		switch (currentLocation.atomicKind()) {
 		case ATOMIC_ENTER:
-			printTransitionPrefix(printTransitions, state, pid);
+			printTransitionPrefix(printTransitions, state, processIdentifier);
 			state = executeAtomicOrPurelyLocalStatements(state, pid,
 					currentLocation, true, printTransitions);
 			break;
 		case ATOMIC_EXIT:
-			printTransitionPrefix(printTransitions, state, pid);
+			printTransitionPrefix(printTransitions, state, processIdentifier);
 			state = executeAtomicOrPurelyLocalStatements(state, pid,
 					currentLocation, true, printTransitions);
 			break;
 		case ATOM_ENTER:
-			printTransitionPrefix(printTransitions, state, pid);
+			printTransitionPrefix(printTransitions, state, processIdentifier);
 			state = executeAtomBlock(state, pid, currentLocation,
 					printTransitions);
 			break;
@@ -620,14 +622,14 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 *            True iff each step is to be printed.
 	 * @param state
 	 *            The source state of the transition.
-	 * @param pid
-	 *            The ID of the process that this transition associates with.
+	 * @param processIdentifier
+	 *            The identifier of the process that this transition associates with.
 	 */
 	private void printTransitionPrefix(boolean printTransitions, State state,
-			int pid) {
+			int processIdentifier) {
 		if (printTransitions) {
 			out.print(state + ", proc ");
-			out.println(pid + ":");
+			out.println(processIdentifier + ":");
 		}
 	}
 

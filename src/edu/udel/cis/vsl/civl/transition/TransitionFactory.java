@@ -30,14 +30,19 @@ public class TransitionFactory {
 	 *            statement
 	 * @param pid
 	 *            The process id of the process executing this transition.
+	 * @param processIdentifier
+	 *            The process identifier of the process executing this
+	 *            transition.
 	 * @param statement
 	 *            The statement corresponding to this transition.
 	 * @return A new simple transition with the given path condition and
 	 *         statement.
 	 */
 	public SimpleTransition newSimpleTransition(
-			BooleanExpression pathCondition, int pid, Statement statement) {
-		return new SimpleTransition(pathCondition, pid, statement);
+			BooleanExpression pathCondition, int pid, int processIdentifier,
+			Statement statement) {
+		return new SimpleTransition(pathCondition, pid, processIdentifier,
+				statement);
 	}
 
 	/**
@@ -48,6 +53,9 @@ public class TransitionFactory {
 	 *            statement
 	 * @param pid
 	 *            The process id of the process executing this transition.
+	 * @param processIdentifier
+	 *            The process identifier of the process executing this
+	 *            transition.
 	 * @param statement
 	 *            The statement corresponding to this transition.
 	 * @param value
@@ -56,9 +64,10 @@ public class TransitionFactory {
 	 *         statement.
 	 */
 	public SimpleTransition newChooseTransition(
-			BooleanExpression pathCondition, int pid, Statement statement,
-			SymbolicExpression value) {
-		return new ChooseTransition(pathCondition, pid, statement, value);
+			BooleanExpression pathCondition, int pid, int processIdentifier,
+			Statement statement, SymbolicExpression value) {
+		return new ChooseTransition(pathCondition, pid, processIdentifier,
+				statement, value);
 	}
 
 	/**

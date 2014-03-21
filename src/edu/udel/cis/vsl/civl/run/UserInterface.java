@@ -531,6 +531,7 @@ public class UserInterface {
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
 		if (guiMode) {
 			// State[] states = replayer.getStates();
+			// Transition[] transitions;
 			// runGui(states);
 			result = false;
 		} else {

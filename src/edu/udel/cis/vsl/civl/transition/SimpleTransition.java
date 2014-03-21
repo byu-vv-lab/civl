@@ -18,6 +18,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 public class SimpleTransition extends Transition {
 
 	protected int pid;
+	
+	protected int processIdentifier;
 
 	protected Statement statement;
 
@@ -31,14 +33,17 @@ public class SimpleTransition extends Transition {
 	 *            statement
 	 * @param pid
 	 *            The process id of the process executing this transition.
+	 * @param processIdentifier
+	 *            The process identifier of the process executing this transition.
 	 * @param statement
 	 *            The statement corresponding to this transition.
 	 */
-	public SimpleTransition(BooleanExpression pathCondition, int pid,
+	public SimpleTransition(BooleanExpression pathCondition, int pid, int processIdentifier,
 			Statement statement) {
 		super(pathCondition);
 		this.pid = pid;
 		this.statement = statement;
+		this.processIdentifier = processIdentifier;
 	}
 
 	/**
@@ -73,10 +78,14 @@ public class SimpleTransition extends Transition {
 
 	@Override
 	public String toString() {
-		String result = "proc " + pid + ": \n";
+		String result = "proc " + processIdentifier + ": \n";
 
 		result += statement.toStepString(AtomicKind.NONE, pid, false);
 		return result;
+	}
+	
+	public int processIdentifier(){
+		return this.processIdentifier;
 	}
 
 }

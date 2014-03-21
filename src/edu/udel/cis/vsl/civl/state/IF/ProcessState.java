@@ -129,4 +129,6 @@ public interface ProcessState {
 	 *         this process
 	 */
 	int atomicCount();
+
+	int identifier();
 }

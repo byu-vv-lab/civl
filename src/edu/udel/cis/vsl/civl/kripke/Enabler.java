@@ -167,13 +167,13 @@ public abstract class Enabler implements
 				.evaluateGuard(source, state, pid, function, arguments);
 	}
 
-	public ArrayList<SimpleTransition> getEnabledTransitionsOfSystemCall(
+	private ArrayList<SimpleTransition> getEnabledTransitionsOfSystemCall(
 			CIVLSource source, State state, CallOrSpawnStatement call,
-			BooleanExpression pathCondition, int pid, Statement assignAtomicLock) {
+			BooleanExpression pathCondition, int pid, int processIdentifier, Statement assignAtomicLock) {
 		LibraryEnabler libEnabler = libraryEnabler(source,
 				((SystemFunction) call.function()).getLibrary());
 
-		return libEnabler.enabledTransitions(state, call, pathCondition, pid,
+		return libEnabler.enabledTransitions(state, call, pathCondition, pid, processIdentifier,
 				assignAtomicLock);
 	}
 
@@ -364,9 +364,10 @@ public abstract class Enabler implements
 			Statement assignAtomicLock) {
 		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
 		Statement transitionStatement = null;
+		int processIdentifier = state.getProcessState(pid).identifier();
 
 		try {
-			 if (s instanceof ChooseStatement) {
+			if (s instanceof ChooseStatement) {
 				Evaluation eval = evaluator.evaluate(
 						state.setPathCondition(pathCondition), pid,
 						((ChooseStatement) s).rhs());
@@ -389,17 +390,18 @@ public abstract class Enabler implements
 				for (int i = 0; i < upper; i++) {
 					localTransitions.add(transitionFactory.newChooseTransition(
 							eval.state.getPathCondition(), pid,
-							transitionStatement, universe.integer(i)));
+							processIdentifier, transitionStatement,
+							universe.integer(i)));
 				}
 			} else {
 				if (s instanceof CallOrSpawnStatement) {
 					CallOrSpawnStatement call = (CallOrSpawnStatement) s;
 
-					//TODO think about optimization of system functions
+					// TODO think about optimization of system functions
 					if (call.isSystemCall()) {// TODO check function pointer
 						return this.getEnabledTransitionsOfSystemCall(
-								call.getSource(), state, call, pathCondition, pid,
-								assignAtomicLock);
+								call.getSource(), state, call, pathCondition,
+								pid, processIdentifier, assignAtomicLock);
 					} else {
 						transitionStatement = s;
 					}
@@ -439,7 +441,8 @@ public abstract class Enabler implements
 						transitionStatement = s;
 					}
 					localTransitions.add(transitionFactory.newSimpleTransition(
-							pathCondition, pid, transitionStatement));
+							pathCondition, pid, processIdentifier,
+							transitionStatement));
 				}
 			}
 		} catch (UnsatisfiablePathConditionException e) {

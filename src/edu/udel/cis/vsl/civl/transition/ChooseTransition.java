@@ -30,14 +30,17 @@ public class ChooseTransition extends SimpleTransition {
 	 *            transition
 	 * @param pid
 	 *            The process id of the process executing this transition.
+	 * @param processIdentifier
+	 *            The process identifier of the process executing this
+	 *            transition.
 	 * @param statement
 	 *            The statement corresponding to this transition.
 	 * @param value
 	 *            The value resulting from the choose for this transition.
 	 */
 	public ChooseTransition(BooleanExpression pathCondition, int pid,
-			Statement statement, SymbolicExpression value) {
-		super(pathCondition, pid, statement);
+			int processIdentifier, Statement statement, SymbolicExpression value) {
+		super(pathCondition, pid, processIdentifier, statement);
 		this.value = value;
 	}
 
