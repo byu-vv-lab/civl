@@ -4,8 +4,9 @@ $input int N;
 $output int sum;
 
 void main() {
-  sum = 0;
+  int localsum = 0;
   for (int i = 1; i <= N; i++) {
-    sum+=i;
+	  localsum+=i;
   } 
+  sum = localsum;
 }

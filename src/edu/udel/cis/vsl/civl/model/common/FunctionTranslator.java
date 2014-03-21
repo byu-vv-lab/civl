@@ -221,6 +221,11 @@ public class FunctionTranslator {
 	 * assumptions involving abstract functions.
 	 */
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
+	
+	/**
+	 * The current translation is a left hand side expression.
+	 */
+	private boolean isLHS = false;
 
 	/* **************************** Constructors *************************** */
 
@@ -977,7 +982,9 @@ public class FunctionTranslator {
 		Statement assignStatement;
 
 		modelFactory.setCurrentScope(scope);
+		this.isLHS = true;
 		leftExpression = translateExpressionNode(lhs, scope, true);
+		this.isLHS = false;
 		assert assignNode.getOperator() == Operator.ASSIGN;
 		if (!(leftExpression instanceof LHSExpression))
 			throw new CIVLInternalException("expected LHS expression, not "
@@ -991,7 +998,7 @@ public class FunctionTranslator {
 						"attempt to modify the input variable "
 								+ leftExpression, modelFactory.sourceOf(lhs));
 			if (lhsVariable.isConst())
-				throw new CIVLInternalException(
+				throw new CIVLSyntaxException(
 						"attempt to modify the constant variable "
 								+ leftExpression, modelFactory.sourceOf(lhs));
 		}
@@ -2976,8 +2983,15 @@ public class FunctionTranslator {
 			result = modelFactory.boundVariableExpression(source, name,
 					functionInfo.boundVariableType(name));
 		} else if (scope.variable(name) != null) {
-			result = modelFactory.variableExpression(source,
+			VariableExpression varExpression = modelFactory.variableExpression(source,
 					scope.variable(name));
+			
+			if(!this.isLHS && varExpression.variable().isOutput()){
+				throw new CIVLSyntaxException(
+						"attempt to read the input variable "
+								+ name, source);
+			}
+			result = varExpression;
 		} else if (scope.getFunction(name) != null) {
 			result = modelFactory.functionPointerExpression(source,
 					scope.getFunction(name));

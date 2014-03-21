@@ -407,4 +407,14 @@ public class LanguageFeaturesTest {
 	public void assignInput() throws ABCException {
 		assertFalse(ui.run("verify", filename("assignInput.cvl"), "-showModel"));
 	}
+	
+	@Test
+	public void inputBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("inputBad.cvl")));
+	}
+	
+	@Test
+	public void outputBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("outputBad.cvl")));
+	}
 }

@@ -117,6 +117,11 @@ public class TracePlayer extends Player {
 		}
 		return !violation;
 	}
+	
+	public State[] getStates() throws MisguidedExecutionException {
+		State initialState = stateFactory.initialState(model);
+		return  replayer.getStates(initialState, chooser);
+	}
 
 	public void printStats() {
 		out.print("   statesInstantiated  : ");

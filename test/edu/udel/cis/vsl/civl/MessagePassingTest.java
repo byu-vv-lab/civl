@@ -69,6 +69,6 @@ public class MessagePassingTest {
 	@Test
 	public void diffusion1d() {
 		assertTrue(ui.run("verify", filename("diffusion1d.cvl"),
-				"-inputNPROCSB=3", "-inputNSTEPSB=3", "-inputNXB=6"));
+				"-inputNPROCSB=3", "-inputNSTEPSB=3", "-inputNXB=6", "-enablePrintf=false"));
 	}
 }

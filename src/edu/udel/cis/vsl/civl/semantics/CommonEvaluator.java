@@ -2303,10 +2303,18 @@ public class CommonEvaluator implements Evaluator {
 			} else {
 				int vid = getVariableId(source, pointer);
 				ReferenceExpression symRef = getSymRef(pointer);
-				SymbolicExpression variableValue = state.getScope(sid)
-						.getValue(vid);
+//				Variable variable = state.getScope(sid).lexicalScope()
+//						.variable(vid);
+				SymbolicExpression variableValue;
 				SymbolicExpression deref;
 
+//				if (variable.isOutput()) {
+//					logSimpleError(source, state, ErrorKind.OUTPUT_READ,
+//							"Attempt to read output variable "
+//									+ variable.name().name());
+//					throw new UnsatisfiablePathConditionException();
+//				}
+				variableValue = state.getScope(sid).getValue(vid);
 				try {
 					deref = universe.dereference(variableValue, symRef);
 				} catch (SARLException e) {

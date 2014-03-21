@@ -72,8 +72,9 @@ public class UserInterface {
 	public final static Option idO = Option.newScalarOption("id", INTEGER,
 			"ID number of trace to replay; applies only to replay command", 0);
 
-	public final static Option inputO = Option.newMapOption("input",
-			"initialize input variable KEY to VALUE; applies only to run and verify");
+	public final static Option inputO = Option
+			.newMapOption("input",
+					"initialize input variable KEY to VALUE; applies only to run and verify");
 
 	public final static Option maxdepthO = Option.newScalarOption("maxdepth",
 			INTEGER, "bound on search depth", Integer.MAX_VALUE);
@@ -505,6 +506,7 @@ public class UserInterface {
 		GMCConfiguration newConfig;
 		Model model;
 		TracePlayer replayer;
+		boolean guiMode = config.isTrue(guiO);
 
 		checkFilenames(1, config);
 		sourceFilename = config.getFreeArg(1);
@@ -527,7 +529,13 @@ public class UserInterface {
 		if (showShortFileNameList(config))
 			TokenUtils.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
-		result = replayer.run();
+		if (guiMode) {
+			// State[] states = replayer.getStates();
+			// runGui(states);
+			result = false;
+		} else {
+			result = replayer.run();
+		}
 		printStats(out);
 		replayer.printStats();
 		out.println();
