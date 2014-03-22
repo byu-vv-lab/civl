@@ -8,7 +8,7 @@
  *  Command line example:
  *
  *  civl verify -inputNPROCSB=3 -inputNSTEPSB=3  \
- -inputNXB=6 diffusion1d_good.cvl
+ -inputNXB=6 diffusion1d.cvl
  */ 
 #include <civlc.h>
 #include <stdio.h>
