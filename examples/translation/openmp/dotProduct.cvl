@@ -16,7 +16,7 @@
 * https://computing.llnl.gov/tutorials/openMP/samples/C/omp_reduction.c
 **/
 /*  
- * civl verify -inputNTHREADS=2 -inputN=8 dotProduct1.cvl
+ * civl verify -inputNTHREADS=2 -inputN=8 dotProduct.cvl
  *  */
 #include <civlc.h>
 #include <stdio.h>
