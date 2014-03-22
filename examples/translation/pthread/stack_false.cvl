@@ -1,3 +1,8 @@
+/**
+* Command line execution:
+* civl verify -inputSIZE=8 stack_false.cvl -min
+*/
+
 #include <civlc.h>
 #include "pthread.cvh"
 #include <stdio.h>
