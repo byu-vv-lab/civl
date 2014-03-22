@@ -46,7 +46,7 @@ void __barrier(int tid) {
     if (num_in_barrier == OMP_NUM_THREADS) { // I am last to enter
       for (int i=0; i<OMP_NUM_THREADS; i++) in_barrier[i] = 0; // release all
         num_in_barrier = 0; // now none are in barrier
-      }
     }
-    $when (in_barrier[tid] == 0); // wait till I am released
   }
+  $when (in_barrier[tid] == 0); // wait till I am released
+}

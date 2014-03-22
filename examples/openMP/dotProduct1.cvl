@@ -15,13 +15,20 @@
 * Online source:
 * https://computing.llnl.gov/tutorials/openMP/samples/C/omp_reduction.c
 **/
+/*  
+ * civl verify -inputNTHREADS=2 -inputN=8 dotProduct1.cvl
+ *  */
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "omp.cvh"
+$input int NTHREADS;
 $input int N;
 
 int main (int argc, char *argv[]) {
+  /* implicitly initializing the number of threads */
+  omp_set_num_threads(NTHREADS);
+	
   int   i;
   double a[N], b[N], sum; 
 
@@ -31,31 +38,30 @@ int main (int argc, char *argv[]) {
   sum = 0.0;
   
   /* The procedure of each thread for the for loop */
-  void __for_0(int __tid, int __start, int __end, int __extra){	
-//	if(__extra > 0) 
-//      printf("   __for_1 thread %d starts from index %d to %d, %d\n", __tid, __start, __end, __extra);
-//	else
-//	  printf("   __for_1 thread %d starts from index %d to %d\n", __tid, __start, __end);
+  void __for_0(int __tid, int __start, int __end, int __extra){
+    double __sum = sum;	
+
     for(int __i = __start; __i < __end; __i++) {
-  	  sum = sum + (a[__i] * b[__i]);
-//      printf("loop %d\n", __i);
+  	  __sum = __sum + (a[__i] * b[__i]);
     }
     if(__extra > 0) {
-      sum = sum + (a[__extra] * b[__extra]);
-      printf("loop %d\n", __extra);
+      __sum = __sum + (a[__extra] * b[__extra]);
     }
+    __barrier(__tid);
+    sum += __sum;
   }
   
   /* Helper variales introduced for the parallel for loop */
   $proc __for_0_procs[OMP_NUM_THREADS];
-  
+
+  __barrier_init();  
   /* Create processes to conduct the parallel for loop  */
   for(i = 0; i < OMP_NUM_THREADS; i++) {
-	  int __start = __for_start(i, N);
-	  int __end = __for_end(i, N);
-	  int __extra = __for_extra(i, N);
+    int __start = __for_start(i, N);
+    int __end = __for_end(i, N);
+    int __extra = __for_extra(i, N);
 	
-	  __for_0_procs[i] = $spawn __for_0(i, __start, __end, __extra);
+    __for_0_procs[i] = $spawn __for_0(i, __start, __end, __extra);
   }
   
   /** The orginal OpenMP parallel for loop
@@ -65,7 +71,7 @@ int main (int argc, char *argv[]) {
       printf("loop %d\n", i);
     }
   **/
-  
+
   /* Join parallel for processes  */
   for(i = 0; i < OMP_NUM_THREADS; i++) {
 	  $wait(__for_0_procs[i]);
