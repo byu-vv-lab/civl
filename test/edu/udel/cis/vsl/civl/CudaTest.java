@@ -14,7 +14,7 @@ public class CudaTest {
 
 	private static UserInterface ui = new UserInterface();
 
-	private static File rootDir = new File(new File("examples"), "cuda");
+	private static File rootDir = new File(new File("examples"), "translation/cuda");
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();

@@ -12,7 +12,7 @@ public class OpenMPTest {
 	
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"), "openMP");
+	private static File rootDir = new File(new File("examples"), "translation/openMP");
 
 	private static UserInterface ui = new UserInterface();
 
