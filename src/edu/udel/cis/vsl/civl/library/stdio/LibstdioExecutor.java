@@ -3,6 +3,8 @@ package edu.udel.cis.vsl.civl.library.stdio;
 import java.io.PrintStream;
 import java.util.Vector;
 
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
@@ -187,8 +189,19 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		}
 		// Print
 		format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegacp]", "%s");
-		output.printf(format, arguments.toArray());
+		for (int i = 0; i < format.length(); i++) {
+			if (format.charAt(i) == '%') {
+				if (format.charAt(i + 1) != 's')
+					throw new CIVLSyntaxException("The format:%"
+							+ format.charAt(i + 1) + " is not allowed in printf", expressions[0].getSource());
+			}
+		}
+		try {
+			output.printf(format, arguments.toArray());
+		} catch (Exception e) {
+			throw new CIVLInternalException("unexpected error in printf",
+					expressions[0].getSource());
+		}
 		return state;
 	}
-
 }
