@@ -1,3 +1,8 @@
+/**
+* This program is taken from the Pthread benchmarks of SV-COMP 2014.
+* https://svn.sosy-lab.org/software/sv-benchmarks/tags/svcomp14/
+*/
+
 #include <pthread.h>
 #include <stdio.h>
 #include <assert.h>

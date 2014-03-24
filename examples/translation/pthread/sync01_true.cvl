@@ -1,4 +1,8 @@
 /**
+* This is a translation of a Pthread program from 
+* the Pthread benchmarks of SV-COMP 2014.
+* https://svn.sosy-lab.org/software/sv-benchmarks/tags/svcomp14/
+*
 * Command line execution:
 * civl verify sync01_true.cvl
 */
