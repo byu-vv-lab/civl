@@ -15,7 +15,31 @@ typedef struct _ABC_va_list {
 
 typedef unsigned long int size_t;
 
-typedef struct FILE FILE;
+/* Represents an actual file: something with a name and contents.
+ * The name is a string (array of char).  The contents is an
+ * array of strings: each entry is a "chunk" of the file; the
+ * file may be viewed as a concatenation of those chunks.
+ */
+typedef struct CIVL_file_t {
+  char name[];
+  char contents[][];
+} CIVL_file_t;
+
+/* Implements the C notion of a FILE, which is really a reference
+ * into a particular point of an actual file.  Even if you are just
+ * reading the file, this FILE object changes since it contains a reference
+ * to the point of file you just read.  
+ *
+ */
+typedef struct FILE {
+  CIVL_file_t *file;  // the actual file to which this refers 
+  int pos1;     // the chunk index (first index) in the contents
+  int pos2;     // the character index (second index) in the contents
+  int mode;     // Stream mode: r/w/a 
+  _Bool isOpen; // is this FILE open?
+} FILE;
+
+
 
 typedef int fpos_t;
 
