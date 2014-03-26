@@ -31,6 +31,8 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelCombiner;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -327,21 +329,21 @@ public class UserInterface {
 				.getValue(userIncludePathO));
 		File[] sysIncludes = extractPaths((String) config
 				.getValue(sysIncludePathO));
-		File civlDefaultInclude = new File( new File(".").getAbsoluteFile(),
+		File civlDefaultInclude = new File(new File(".").getAbsoluteFile(),
 				"text/include");
 		boolean hasCIVLDefaultSet = false;
 		String civlDefaultIncludePath = civlDefaultInclude.getAbsolutePath();
 		Activator frontEnd;
-		
-		for(File sysInclude : sysIncludes){
-			if(sysInclude.getAbsolutePath().equals(civlDefaultIncludePath))
+
+		for (File sysInclude : sysIncludes) {
+			if (sysInclude.getAbsolutePath().equals(civlDefaultIncludePath))
 				hasCIVLDefaultSet = true;
 		}
-		if(!hasCIVLDefaultSet){
+		if (!hasCIVLDefaultSet) {
 			int length = sysIncludes.length;
-			List<File> newSysIncludes = new ArrayList<>(length+1);
-			
-			for(int i = 0; i < length; i ++){
+			List<File> newSysIncludes = new ArrayList<>(length + 1);
+
+			for (int i = 0; i < length; i++) {
 				newSysIncludes.add(sysIncludes[i]);
 			}
 			newSysIncludes.add(civlDefaultInclude);
@@ -553,10 +555,11 @@ public class UserInterface {
 			TokenUtils.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
 		if (guiMode) {
-			// State[] states = replayer.getStates();
-			// Transition[] transitions;
-			// runGui(states);
-			result = false;
+			State[] states = new State[] {};
+			Transition[] transitions = new Transition[] {};
+
+			result = replayer.replayForGui(states, transitions);
+			// runGui(states, transitions);
 		} else {
 			result = replayer.run();
 		}
