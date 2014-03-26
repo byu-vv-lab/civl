@@ -1980,6 +1980,9 @@ public class CommonModelFactory implements ModelFactory {
 	public SystemFunction systemFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, String libraryName) {
+		if(libraryName.endsWith("-common")){
+			libraryName = libraryName.substring(0, libraryName.length()-7);
+		}
 		return new CommonSystemFunction(source, name, parameters, returnType,
 				containingScope, (Location) null, this, libraryName);
 	}

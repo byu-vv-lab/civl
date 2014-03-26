@@ -2,6 +2,7 @@
  *		civl verify memcpy.cvl
  * */
 #include<civlc.h>
+#include<string.h>
 
 typedef struct foo {
   int f0;

@@ -7,14 +7,12 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
@@ -38,7 +36,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
@@ -61,12 +58,10 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
-import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
  * An executor is used to execute a CIVL statement. The basic method provided
@@ -227,69 +222,80 @@ public class CommonExecutor implements Executor {
 		resultType = valid.getResultType();
 		if (resultType != ResultType.YES) {
 			if (statement.printfArguments() != null) {
-				String stringOfSymbolicExpression = new String();
-				String format = new String();
-				Vector<Object> arguments = new Vector<Object>();
-				CIVLSource source = state.getProcessState(pid).getLocation()
-						.getSource();
-				SymbolicExpression arrayPointer;
-				SymbolicSequence<?> originalArray;
+//				String stringOfSymbolicExpression = new String();
+//				String format = new String();
+//				Vector<Object> arguments = new Vector<Object>();
+//				CIVLSource source = state.getProcessState(pid).getLocation()
+//						.getSource();
+//				SymbolicExpression arrayPointer;
+//				SymbolicSequence<?> originalArray;
 
-				if (!this.enablePrintf)
+				if (!this.enablePrintf) {
 					return state;
-
-				eval = evaluator.evaluate(state, pid,
-						statement.printfArguments()[0]);
-				arrayPointer = evaluator.parentPointer(source, eval.value);
-				state = eval.state;
-				eval = evaluator.dereference(source, state, arrayPointer);
-				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
-				state = eval.state;
-				for (int i = 0; i < originalArray.size(); i++) {
-					char current = originalArray.get(i).toString().charAt(1);
-
-					if (current == '\u0007')
-						throw new CIVLUnimplementedFeatureException(
-								"Escape sequence " + current, source);
-					format += current;
-				}
-				if (!this.enablePrintf)
-					return state;
-				// obtain printf() arguments
-				for (int i = 1; i < statement.printfArguments().length; i++) {
-					SymbolicExpression argument;
-					CIVLType argumentType = statement.printfArguments()[i]
-							.getExpressionType();
-
-					eval = evaluator.evaluate(state, pid,
-							statement.printfArguments()[i]);
-					argument = eval.value;
-					state = eval.state;
-					if ((argumentType instanceof CIVLPointerType)
-							&& ((CIVLPointerType) argumentType).baseType()
-									.isCharType()
-							&& argument.operator() == SymbolicOperator.CONCRETE) {
-						arrayPointer = evaluator
-								.parentPointer(source, argument);
-						eval = evaluator.dereference(source, state,
-								arrayPointer);
-						originalArray = (SymbolicSequence<?>) eval.value
-								.argument(0);
+				} else {
+					// obtain printf() arguments
+					Expression[] arguments = statement.printfArguments();
+					SymbolicExpression[] argumentValues = new SymbolicExpression[arguments.length];
+					for(int i = 0; i < arguments.length; i++){
+						
+						eval = evaluator.evaluate(state, pid,
+								arguments[i]);
 						state = eval.state;
-						stringOfSymbolicExpression = "";
-						for (int j = 0; j < originalArray.size(); j++) {
-							stringOfSymbolicExpression += originalArray.get(j)
-									.toString().charAt(1);
-						}
-						arguments.add(stringOfSymbolicExpression);
-					} else
-						arguments.add(argument.toString());
+						argumentValues[i] = eval.value;
+					}
+						state = stdioExecutor.executePrintf(state, pid,
+								arguments, argumentValues);
 				}
-				// Print
-				format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
-				output.printf(format, arguments.toArray());
-				// return state;
-				output.println();
+//				eval = evaluator.evaluate(state, pid,
+//						statement.printfArguments()[0]);
+//				arrayPointer = evaluator.parentPointer(source, eval.value);
+//				state = eval.state;
+//				eval = evaluator.dereference(source, state, arrayPointer);
+//				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
+//				state = eval.state;
+//				for (int i = 0; i < originalArray.size(); i++) {
+//					char current = originalArray.get(i).toString().charAt(1);
+//
+//					if (current == '\u0007')
+//						throw new CIVLUnimplementedFeatureException(
+//								"Escape sequence " + current, source);
+//					format += current;
+				//}
+
+//				for (int i = 1; i < statement.printfArguments().length; i++) {
+//					SymbolicExpression argument;
+//					CIVLType argumentType = statement.printfArguments()[i]
+//							.getExpressionType();
+//
+//					eval = evaluator.evaluate(state, pid,
+//							statement.printfArguments()[i]);
+//					argument = eval.value;
+//					state = eval.state;
+//					if ((argumentType instanceof CIVLPointerType)
+//							&& ((CIVLPointerType) argumentType).baseType()
+//									.isCharType()
+//							&& argument.operator() == SymbolicOperator.CONCRETE) {
+//						arrayPointer = evaluator
+//								.parentPointer(source, argument);
+//						eval = evaluator.dereference(source, state,
+//								arrayPointer);
+//						originalArray = (SymbolicSequence<?>) eval.value
+//								.argument(0);
+//						state = eval.state;
+//						stringOfSymbolicExpression = "";
+//						for (int j = 0; j < originalArray.size(); j++) {
+//							stringOfSymbolicExpression += originalArray.get(j)
+//									.toString().charAt(1);
+//						}
+//						arguments.add(stringOfSymbolicExpression);
+//					} else
+//						arguments.add(argument.toString());
+//				}
+//				// Print
+//				format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegac]", "%s");
+//				output.printf(format, arguments.toArray());
+//				// return state;
+//				output.println();
 			}
 			// TODO: USE GENERAL METHOD ... state = evaluator.logError in own
 			// class
@@ -706,7 +712,7 @@ public class CommonExecutor implements Executor {
 					.logSimpleError(source, state, ErrorKind.DEREFERENCE,
 							"Attempt to dereference pointer into scope which has been removed from state");
 			throw new UnsatisfiablePathConditionException();
-		} 
+		}
 		variable = state.getScope(sid).lexicalScope().variable(vid);
 		if (!isInitialization) {
 			if (variable.isInput()) {

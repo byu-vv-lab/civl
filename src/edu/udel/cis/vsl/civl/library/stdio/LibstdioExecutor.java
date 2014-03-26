@@ -139,7 +139,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 * @return State
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executePrintf(State state, int pid, Expression[] expressions,
+	public State executePrintf(State state, int pid, Expression[] expressions,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		String stringOfSymbolicExpression = "";
@@ -188,6 +188,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				arguments.add(argument.toString());
 		}
 		// Print
+		format = format.replaceAll("%lf", "%s");
 		format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegacp]", "%s");
 		for (int i = 0; i < format.length(); i++) {
 			if (format.charAt(i) == '%') {
