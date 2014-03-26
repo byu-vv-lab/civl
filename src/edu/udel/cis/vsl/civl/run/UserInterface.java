@@ -8,9 +8,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.ABCException;
@@ -325,7 +327,28 @@ public class UserInterface {
 				.getValue(userIncludePathO));
 		File[] sysIncludes = extractPaths((String) config
 				.getValue(sysIncludePathO));
-		Activator frontEnd = ABC.activator(file, sysIncludes, userIncludes);
+		File civlDefaultInclude = new File( new File(".").getAbsoluteFile(),
+				"text/include");
+		boolean hasCIVLDefaultSet = false;
+		String civlDefaultIncludePath = civlDefaultInclude.getAbsolutePath();
+		Activator frontEnd;
+		
+		for(File sysInclude : sysIncludes){
+			if(sysInclude.getAbsolutePath().equals(civlDefaultIncludePath))
+				hasCIVLDefaultSet = true;
+		}
+		if(!hasCIVLDefaultSet){
+			int length = sysIncludes.length;
+			List<File> newSysIncludes = new ArrayList<>(length+1);
+			
+			for(int i = 0; i < length; i ++){
+				newSysIncludes.add(sysIncludes[i]);
+			}
+			newSysIncludes.add(civlDefaultInclude);
+			sysIncludes = new File[length + 1];
+			newSysIncludes.toArray(sysIncludes);
+		}
+		frontEnd = ABC.activator(file, sysIncludes, userIncludes);
 
 		return frontEnd;
 	}
