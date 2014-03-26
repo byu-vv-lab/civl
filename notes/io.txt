@@ -1,5 +1,46 @@
 Implementation of stdio.
 
+
+/* Array of strings: result of printing to stdout */
+$output char CIVL_stdout[][];
+
+/* Abstract functions will be declared in LibstdioExecutor.java:
+ * char[] intToString(int x, char format[])
+ * char[] floatToString(float x, char format[])
+ * char[] doubleToString(double x, char format[])
+ * etc.
+ */
+ 
+
+/* system function printf will be defined as follows:
+ * evaluate arguments.
+ * parse the format string to find all the % codes.
+ * check they match up with the number and types of additional args.
+ * for each code, extract the code into a separate concrete array
+ * of char.
+ * For an abstract function call for each of the above format-string-
+ * value pairs.  Note that %s codes do not require abstract function
+ * since corresponding value will already have type string (char[]).
+ * Construct an array of SymbolicExpression as follows:
+ * sequence of concrete strings interleaved with abstract ones
+ * as above.
+ * Append these to CIVL_stdout.
+ */
+ 
+ 
+ Input:
+ 
+ strcmp(s1,s2): to determine if two strings are equal.
+ Need to assume this is true in many cases?
+ Need strcmp to return abstract function if the strings
+ are not concrete.
+ 
+ fscanf(file, format, buf):
+ 
+ $input
+ 
+
+
 =================================== I/O Model =========================================
 
 Representation of file contents:
