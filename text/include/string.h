@@ -4,7 +4,7 @@
 #else
 #include<civlc.h>
 #endif
-#include <string-common.h>
+#include<string-common.h>
 
 /* Copies a region of memory */
 void memcpy(void *p, void *q, size_t size) {
