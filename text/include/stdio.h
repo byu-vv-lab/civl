@@ -21,8 +21,12 @@ typedef unsigned long int size_t;
  * file may be viewed as a concatenation of those chunks.
  */
 typedef struct CIVL_file_t {
-  char name[];
-  char contents[][];
+  char name[];        /* name of file */
+  char contents[][];  /* list of strings which form file contents */
+  _Bool isOutput;     /* is this an output file? */
+  _Bool isInput;      /* is this an input file? */
+  _Bool isBinary;     /* can be binary or text */
+  _Bool isWide;       /* wide orientation */
 } CIVL_file_t;
 
 /* Implements the C notion of a FILE, which is really a reference
@@ -38,8 +42,6 @@ typedef struct FILE {
   int mode;     // Stream mode: r/w/a 
   _Bool isOpen; // is this FILE open?
 } FILE;
-
-
 
 typedef int fpos_t;
 
@@ -61,6 +63,29 @@ typedef int fpos_t;
 #define stdin (FILE*)0
 #define stdout (FILE*)1
 #define stderr (FILE*)2
+
+/* Global Variables */
+
+// inputs: none, using abstract functions instead
+
+// global state variables...
+
+/* The files in the file system.  Initially empty array.
+ * When a file is opened, a new actual file will be created
+ * and added to this list, if a file by that name is not
+ * already in this list.  The state of this array and
+ * the files in this array change during execution.
+ */
+CIVL_file_t CIVL_files[];
+
+// outputs:
+
+/* The files which were modified or created are written here
+ * at the end of the program.   They constitute outputs of
+ * the program.  The files will be sorted in some canonical
+ * way.
+ */
+$output CIVL_file_t CIVL_output_files[];
 
 /* Function Prototypes */
 
