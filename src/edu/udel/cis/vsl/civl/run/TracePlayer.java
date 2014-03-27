@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.run;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -118,13 +119,15 @@ public class TracePlayer extends Player {
 		return !violation;
 	}
 
-	public State replayForGui(State[] states, Transition[] transitions)
+	public State[] replayForGui(ArrayList<Transition> transitions)
 			throws MisguidedExecutionException {
-		return stateFactory.initialState(model);
-		// State initialState = stateFactory.initialState(model);
-		//
-		// return replayer.replayForGui(initialState, chooser, states,
-		// transitions);
+		// return stateFactory.initialState(model);
+		State initialState = stateFactory.initialState(model);
+		State[] states = new State[] { initialState };
+
+		replayer.replayForGui(initialState, chooser, states, transitions);
+
+		return states;
 	}
 
 	public void printStats() {

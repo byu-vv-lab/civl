@@ -33,7 +33,6 @@ import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelCombiner;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.state.immutable.ImmutableState;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
@@ -557,15 +556,17 @@ public class UserInterface {
 			TokenUtils.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
 		if (guiMode) {
-			State[] states = new State[] {};
-			Transition[] transitions = new Transition[] {};
+			State[] states = new State[]{};
+			ArrayList<Transition> transitions = new ArrayList<>();
+			Transition[] tranArray;
 			@SuppressWarnings("unused")
 			CIVL_GUI gui;
 
-			
-			//result = replayer.replayForGui(states, transitions);
-			gui = new CIVL_GUI((ImmutableState) replayer.replayForGui(states, transitions),
-					replayer.stateManager);
+			states = replayer.replayForGui(transitions);
+			// result = replayer.replayForGui(states, transitions);
+			tranArray = new Transition[transitions.size()];
+			transitions.toArray(tranArray);
+			gui = new CIVL_GUI(states, tranArray);
 			// runGui(states, transitions, replayer.stateManager);
 			result = false;
 		} else {
