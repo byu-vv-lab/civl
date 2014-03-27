@@ -79,7 +79,7 @@ public class TracePlayer extends Player {
 		super(config, model, out);
 		// turn the following off because they duplicate what
 		// the Replayer prints:
-		//TODO check here
+		// TODO check here
 		stateManager.setShowStates(false);
 		stateManager.setShowSavedStates(false);
 		stateManager.setShowTransitions(showTransitions);
@@ -117,12 +117,14 @@ public class TracePlayer extends Player {
 		}
 		return !violation;
 	}
-	
-	public boolean replayForGui(State[] states,
-			Transition[] transitions) throws MisguidedExecutionException {
-		State initialState = stateFactory.initialState(model);
-		
-		return replayer.replayForGui(initialState, chooser, states, transitions);
+
+	public State replayForGui(State[] states, Transition[] transitions)
+			throws MisguidedExecutionException {
+		return stateFactory.initialState(model);
+		// State initialState = stateFactory.initialState(model);
+		//
+		// return replayer.replayForGui(initialState, chooser, states,
+		// transitions);
 	}
 
 	public void printStats() {

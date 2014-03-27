@@ -25,6 +25,7 @@ import edu.udel.cis.vsl.civl.CIVL;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.gui.CIVL_GUI;
 import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -32,6 +33,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelCombiner;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.immutable.ImmutableState;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
@@ -557,9 +559,15 @@ public class UserInterface {
 		if (guiMode) {
 			State[] states = new State[] {};
 			Transition[] transitions = new Transition[] {};
+			@SuppressWarnings("unused")
+			CIVL_GUI gui;
 
-			result = replayer.replayForGui(states, transitions);
-			// runGui(states, transitions);
+			
+			//result = replayer.replayForGui(states, transitions);
+			gui = new CIVL_GUI((ImmutableState) replayer.replayForGui(states, transitions),
+					replayer.stateManager);
+			// runGui(states, transitions, replayer.stateManager);
+			result = false;
 		} else {
 			result = replayer.run();
 		}
