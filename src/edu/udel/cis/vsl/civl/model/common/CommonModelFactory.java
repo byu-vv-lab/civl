@@ -392,10 +392,22 @@ public class CommonModelFactory implements ModelFactory {
 	private SymbolicExpression undefinedScopeValue;
 
 	/**
-	 * The unique symbolic expression for the undefined processs value, which
-	 * has the integer value -1.
+	 * The unique symbolic expression for the null scope value, which has the
+	 * integer value -2.
+	 */
+	private SymbolicExpression nullScopeValue;
+
+	/**
+	 * The unique symbolic expression for the undefined process value, which has
+	 * the integer value -1.
 	 */
 	private SymbolicExpression undefinedProcessValue;
+
+	/**
+	 * The unique symbolic expression for the null process value, which has the
+	 * integer value -2.
+	 */
+	private SymbolicExpression nullProcessValue;
 
 	/**
 	 * The unique SARL symbolic universe used in the system.
@@ -475,9 +487,15 @@ public class CommonModelFactory implements ModelFactory {
 		undefinedProcessValue = universe.canonic(universe.tuple(
 				processSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
+		this.nullProcessValue = universe.canonic(universe.tuple(
+				processSymbolicType,
+				new Singleton<SymbolicExpression>(universe.integer(-2))));
 		undefinedScopeValue = universe.canonic(universe.tuple(
 				scopeSymbolicType,
 				new Singleton<SymbolicExpression>(universe.integer(-1))));
+		this.nullScopeValue = universe.canonic(universe.tuple(
+				scopeSymbolicType,
+				new Singleton<SymbolicExpression>(universe.integer(-2))));
 		this.conditionalExpressions = new Stack<ArrayDeque<ConditionalExpression>>();
 		this.anonFragment = new CommonFragment();
 	}
@@ -1879,6 +1897,11 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public SymbolicExpression nullProcessValue() {
+		return this.nullProcessValue;
+	}
+
+	@Override
 	public void completeBundleType(CIVLBundleType bundleType,
 			List<CIVLType> eleTypes, Collection<SymbolicType> elementTypes) {
 		LinkedList<SymbolicType> arrayTypes = new LinkedList<SymbolicType>();
@@ -1980,8 +2003,8 @@ public class CommonModelFactory implements ModelFactory {
 	public SystemFunction systemFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, String libraryName) {
-		if(libraryName.endsWith("-common")){
-			libraryName = libraryName.substring(0, libraryName.length()-7);
+		if (libraryName.endsWith("-common")) {
+			libraryName = libraryName.substring(0, libraryName.length() - 7);
 		}
 		return new CommonSystemFunction(source, name, parameters, returnType,
 				containingScope, (Location) null, this, libraryName);
@@ -2002,6 +2025,8 @@ public class CommonModelFactory implements ModelFactory {
 	public SymbolicExpression processValue(int pid) {
 		SymbolicExpression result;
 
+		if (pid == -2)
+			return this.nullProcessValue;
 		if (pid < 0)
 			return undefinedProcessValue;
 		while (pid >= processValues.size())
@@ -2021,11 +2046,23 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
+	public SymbolicExpression isProcessDefined(CIVLSource source,
+			SymbolicExpression processValue) {
+		int pid = extractIntField(source, processValue, zeroObj);
+
+		if (pid == -1)
+			return universe.falseExpression();
+		return universe.trueExpression();
+	}
+
+	@Override
 	public SymbolicExpression scopeValue(int sid) {
 		SymbolicExpression result;
 
+		if (sid == -2)
+			return this.nullScopeValue;
 		if (sid < 0)
-			return undefinedScopeValue;
+			return this.undefinedScopeValue;
 		while (sid >= scopeValues.size())
 			scopeValues.addAll(nullList);
 		result = scopeValues.get(sid);
@@ -2040,6 +2077,21 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SymbolicExpression undefinedScopeValue() {
 		return this.undefinedScopeValue;
+	}
+	
+	@Override
+	public SymbolicExpression nullScopeValue() {
+		return this.nullScopeValue;
+	}
+
+	@Override
+	public SymbolicExpression isScopeDefined(CIVLSource source,
+			SymbolicExpression scopeValue) {
+		int scopeId = extractIntField(source, scopeValue, zeroObj);
+
+		if (scopeId == -1)
+			return universe.falseExpression();
+		return universe.trueExpression();
 	}
 
 	@Override

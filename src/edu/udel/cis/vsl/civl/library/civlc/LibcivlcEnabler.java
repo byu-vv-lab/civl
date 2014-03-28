@@ -134,6 +134,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$gcomm_create2":
 		case "$gcomm_defined":
 		case "$proc_defined":
+		case "$proc_null":
 		case "$scope_parent":
 		case "$scope_defined":
 			guard = universe.trueExpression();

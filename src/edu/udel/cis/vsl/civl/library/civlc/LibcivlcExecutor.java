@@ -926,6 +926,10 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = this.executeProcDefined(state, pid, lhs, arguments,
 					argumentValues);
 			break;
+		case "$proc_null":
+			state = this.executeProcNull(state, pid, lhs, arguments,
+					argumentValues);
+			break;
 		case "$scope_defined":
 			state = this.executeScopeDefined(state, pid, lhs, arguments,
 					argumentValues);
@@ -943,6 +947,17 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
 		return state;
+	}
+
+	private State executeProcNull(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression nullProcess = this.modelFactory.nullProcessValue();
+		Evaluation eval = evaluator.evaluate(state, pid, arguments[0]);
+
+		state = eval.state;
+		return primaryExecutor.assign(arguments[0].getSource(), state,
+				eval.value, nullProcess);
 	}
 
 	/**
@@ -1019,8 +1034,8 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	private State executeScopeDefined(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression result = universe.neq(
-				modelFactory.undefinedScopeValue(), argumentValues[0]);
+		SymbolicExpression result = modelFactory.isScopeDefined(
+				arguments[0].getSource(), argumentValues[0]);
 
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, lhs, result);
@@ -1046,8 +1061,8 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	private State executeProcDefined(State state, int pid, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression result = universe.neq(
-				modelFactory.undefinedProcessValue(), argumentValues[0]);
+		SymbolicExpression result = modelFactory.isProcessDefined(
+				arguments[0].getSource(), argumentValues[0]);
 
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, lhs, result);

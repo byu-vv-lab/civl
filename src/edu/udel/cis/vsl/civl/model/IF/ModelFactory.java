@@ -1544,4 +1544,14 @@ public interface ModelFactory {
 
 	Expression functionGuardExpression(CIVLSource source, Expression function,
 			List<Expression> arguments);
+
+	SymbolicExpression nullProcessValue();
+
+	SymbolicExpression isProcessDefined(CIVLSource source,
+			SymbolicExpression processValue);
+
+	SymbolicExpression isScopeDefined(CIVLSource source,
+			SymbolicExpression scopeValue);
+
+	SymbolicExpression nullScopeValue();
 }
