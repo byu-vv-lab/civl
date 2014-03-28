@@ -598,6 +598,18 @@ object is defined using the method \cprocdefined:
   _Bool $proc_defined($proc p);
 \end{verbatim}
 
+\subsection{Obtaining the null process reference: \cprocNull}
+
+This function takes a pointer to an object of \cproc{} type as a parameter:
+
+\begin{verbatim}
+  void $proc_null($proc *p);
+\end{verbatim}
+
+It updates the corresponding object with the default null value of the \cproc{} type.
+The null value of \cproc{} type is considered as defined, i.e., there will be no
+error to use an \cproc{} object with null value.
+
 \subsection{The \emph{self} process constant: \cself}
 
 This is a constant of type \cproc. It can be used wherever an argument
