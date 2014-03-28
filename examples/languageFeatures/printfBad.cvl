@@ -4,5 +4,5 @@
 $input double x;
 
 void main() {
-  printf("x=%f\a", x); //\a currently is not supported by CIVL, so this example will throw a exception
+  printf("x=%l", x); //\a currently is not supported by CIVL, so this example will throw a exception
 }
