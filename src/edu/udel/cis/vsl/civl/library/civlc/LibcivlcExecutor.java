@@ -1064,7 +1064,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	private SymbolicExpression isValidPointer(SymbolicExpression pointer) {
 		int scopeId = evaluator.getScopeId(null, pointer);
 
-		if (scopeId > 0)
+		if (scopeId >= 0)
 			return universe.bool(true);
 		else
 			return universe.bool(false);

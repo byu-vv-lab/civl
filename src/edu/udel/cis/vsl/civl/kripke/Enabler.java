@@ -169,12 +169,13 @@ public abstract class Enabler implements
 
 	private ArrayList<SimpleTransition> getEnabledTransitionsOfSystemCall(
 			CIVLSource source, State state, CallOrSpawnStatement call,
-			BooleanExpression pathCondition, int pid, int processIdentifier, Statement assignAtomicLock) {
+			BooleanExpression pathCondition, int pid, int processIdentifier,
+			Statement assignAtomicLock) {
 		LibraryEnabler libEnabler = libraryEnabler(source,
 				((SystemFunction) call.function()).getLibrary());
 
-		return libEnabler.enabledTransitions(state, call, pathCondition, pid, processIdentifier,
-				assignAtomicLock);
+		return libEnabler.enabledTransitions(state, call, pathCondition, pid,
+				processIdentifier, assignAtomicLock);
 	}
 
 	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
@@ -204,8 +205,9 @@ public abstract class Enabler implements
 		BooleanExpression pathCondition = eval.state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(pathCondition);
 
-		if (reasoner.isValid(guard))
+		if (guard.isTrue()) {
 			return pathCondition;
+		}
 		if (reasoner.isValid(universe.not(guard)))
 			return this.falseExpression;
 		return universe.and(pathCondition, guard);
