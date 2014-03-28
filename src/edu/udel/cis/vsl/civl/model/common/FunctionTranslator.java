@@ -139,6 +139,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
@@ -221,11 +222,13 @@ public class FunctionTranslator {
 	 * assumptions involving abstract functions.
 	 */
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
-	
+
 	/**
 	 * The current translation is a left hand side expression.
 	 */
 	private boolean isLHS = false;
+	
+	private boolean isRootFunction = false;
 
 	/* **************************** Constructors *************************** */
 
@@ -343,7 +346,9 @@ public class FunctionTranslator {
 					modelFactory.sourceOf(rootNode));
 		}
 		this.functionBodyNode = modelBuilder.mainFunctionNode.getBody();
+		this.isRootFunction = true;
 		body = this.translateFunctionBody();
+		this.isRootFunction = false;
 		body = initialization.combineWith(body);
 		functionInfo.completeFunction(body);
 	}
@@ -360,21 +365,65 @@ public class FunctionTranslator {
 	protected Fragment translateFunctionBody() {
 		Fragment body;
 		Scope scope = this.function.outerScope();
-
+		CIVLType returnedType;
+		
 		body = translateStatementNode(scope, this.functionBodyNode);
-		if (!containsReturn(body)) {
+		returnedType = this.function.returnType();
+		if(this.isRootFunction || returnedType.isVoidType()){
+			if (!containsReturn(body)) {
+				CIVLSource endSource = modelFactory
+						.sourceOfEnd(this.functionBodyNode);
+				Location returnLocation = modelFactory.location(endSource,
+						function.outerScope());
+				Fragment returnFragment = modelFactory.returnFragment(endSource,
+						returnLocation, null, this.functionInfo.function());
 
-			CIVLSource endSource = modelFactory
-					.sourceOfEnd(this.functionBodyNode);
-			Location returnLocation = modelFactory.location(endSource,
-					function.outerScope());
-			Fragment returnFragment = modelFactory.returnFragment(endSource,
-					returnLocation, null, this.functionInfo.function());
+				if (body != null)
+					body = body.combineWith(returnFragment);
+				else
+					body = returnFragment;
+			}
+		}else{
+			CIVLSource source = modelFactory.sourceOfEnd(functionBodyNode);
+		    Location location = modelFactory.location(source, scope);
+			ArrayList<Expression> arguments = new ArrayList<>(1);
+			String message = "The function " + function.name().name() + " attempts to return without a value.\n\n";
+			int length = message.length();
+			AssertStatement assertion;
+			CIVLArrayType arrayType = modelFactory.completeArrayType(
+					modelFactory.charType(), modelFactory
+							.integerLiteralExpression(source,
+									BigInteger.valueOf(length)));
+			ArrayList<Expression> chars = new ArrayList<>();
+			ArrayLiteralExpression stringLiteral;
+			VariableExpression anonVariable = modelFactory
+					.variableExpression(source, modelFactory
+							.newAnonymousVariableForArrayLiteral(
+									source,
+									scope,
+									arrayType));
+			Statement anonAssign;
+			Fragment checkingFragment;
+			
 
-			if (body != null)
-				body = body.combineWith(returnFragment);
-			else
-				body = returnFragment;
+			for (int i = 0; i < length; i++) {
+				char c = message.charAt(i);
+				chars.add(modelFactory.charLiteralExpression(
+						source, c));
+
+			}
+			stringLiteral = modelFactory.arrayLiteralExpression(source,
+					arrayType, chars);
+			anonAssign = modelFactory.assignStatement(
+					source,
+					modelFactory.location(source,
+							modelFactory.currentScope()), anonVariable,
+					stringLiteral, true);
+			arguments.add(arrayToPointer(anonVariable));
+			assertion = modelFactory.assertStatement(source, location, 
+					modelFactory.booleanLiteralExpression(source, false), arguments);
+			checkingFragment = new CommonFragment(anonAssign, assertion);
+			body = body.combineWith(checkingFragment);
 		}
 		return body;
 	}
@@ -2983,13 +3032,12 @@ public class FunctionTranslator {
 			result = modelFactory.boundVariableExpression(source, name,
 					functionInfo.boundVariableType(name));
 		} else if (scope.variable(name) != null) {
-			VariableExpression varExpression = modelFactory.variableExpression(source,
-					scope.variable(name));
-			
-			if(!this.isLHS && varExpression.variable().isOutput()){
+			VariableExpression varExpression = modelFactory.variableExpression(
+					source, scope.variable(name));
+
+			if (!this.isLHS && varExpression.variable().isOutput()) {
 				throw new CIVLSyntaxException(
-						"attempt to read the output variable "
-								+ name, source);
+						"attempt to read the output variable " + name, source);
 			}
 			result = varExpression;
 		} else if (scope.getFunction(name) != null) {

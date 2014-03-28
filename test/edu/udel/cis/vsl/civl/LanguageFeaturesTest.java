@@ -422,4 +422,10 @@ public class LanguageFeaturesTest {
 	public void procNull() throws ABCException {
 		assertTrue(ui.run("verify", filename("procNull.cvl")));
 	}
+	
+	@Test
+	public void functionBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("functionBad.cvl")));
+	}
+	
 }
