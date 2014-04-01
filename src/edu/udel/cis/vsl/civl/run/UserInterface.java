@@ -21,6 +21,8 @@ import edu.udel.cis.vsl.abc.Activator;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
+import edu.udel.cis.vsl.abc.transform.common.Pruner;
+import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.CIVL;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -274,8 +276,8 @@ public class UserInterface {
 			program = frontEnd.showTranslation(out);
 		} else {
 			program = frontEnd.getProgram();
-			program.prune();
-			program.removeSideEffects();
+			program.applyTransformer(Pruner.CODE);
+			program.applyTransformer(SideEffectRemover.CODE);
 		}
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
@@ -556,7 +558,7 @@ public class UserInterface {
 			TokenUtils.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
 		if (guiMode) {
-			State[] states = new State[]{};
+			State[] states = new State[] {};
 			ArrayList<Transition> transitions = new ArrayList<>();
 			Transition[] tranArray;
 			@SuppressWarnings("unused")
