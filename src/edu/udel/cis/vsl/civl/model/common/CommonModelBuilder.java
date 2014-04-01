@@ -6,7 +6,6 @@ package edu.udel.cis.vsl.civl.model.common;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.civl.model.IF.MPIModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -29,7 +28,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	 */
 	private ModelFactory factory;
 
-	private boolean mpiMode = false;
+	// private boolean mpiMode = false;
 
 	// Constructors....................................................
 
@@ -40,12 +39,12 @@ public class CommonModelBuilder implements ModelBuilder {
 	 * @param universe
 	 *            The symbolic universe
 	 */
-	public CommonModelBuilder(SymbolicUniverse universe, boolean mpiMode) {
-		this.mpiMode = mpiMode;
-		if (!mpiMode)
-			factory = new CommonModelFactory(universe);
-		else
-			factory = new CommonMPIModelFactory(universe);
+	public CommonModelBuilder(SymbolicUniverse universe) {
+		// this.mpiMode = mpiMode;
+		// if (!mpiMode)
+		factory = new CommonModelFactory(universe);
+		// else
+		// factory = new CommonMPIModelFactory(universe);
 	}
 
 	/**
@@ -59,9 +58,8 @@ public class CommonModelBuilder implements ModelBuilder {
 	 * @param factory
 	 *            The model factory to be used for constructing this model.
 	 */
-	public CommonModelBuilder(SymbolicUniverse universe, boolean mpiMode,
-			ModelFactory factory) {
-		this.mpiMode = mpiMode;
+	public CommonModelBuilder(SymbolicUniverse universe, ModelFactory factory) {
+		// this.mpiMode = mpiMode;
 		this.factory = factory;
 	}
 
@@ -73,13 +71,13 @@ public class CommonModelBuilder implements ModelBuilder {
 			throws CommandLineException {
 		ModelBuilderWorker worker;
 
-		if (!this.mpiMode)
-			worker = new ModelBuilderWorker(config, factory, program, name,
-					debugging, debugOut);
-		else
-			worker = new MPIModelBuilderWorker(config,
-					(MPIModelFactory) factory, program, name, debugging,
-					debugOut);
+		// if (!this.mpiMode)
+		worker = new ModelBuilderWorker(config, factory, program, name,
+				debugging, debugOut);
+		// else
+		// worker = new MPIModelBuilderWorker(config,
+		// (MPIModelFactory) factory, program, name, debugging,
+		// debugOut);
 		worker.buildModel();
 		return worker.getModel();
 	}

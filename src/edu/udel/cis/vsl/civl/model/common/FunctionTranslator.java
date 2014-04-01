@@ -1493,6 +1493,17 @@ public class FunctionTranslator {
 			case ASSIGN:
 				result = translateAssignNode(scope, operatorNode);
 				break;
+			case COMMA:
+				int number = operatorNode.getNumberOfArguments();
+				result = new CommonFragment();
+				
+				for(int i = 0; i < number; i++){
+					ExpressionNode argument = operatorNode.getArgument(i);
+					Fragment current = this.translateExpressionStatementNode(scope, argument);
+					
+					result = result.combineWith(current);
+				}
+				break;
 			case POSTINCREMENT:
 			case PREINCREMENT:
 			case POSTDECREMENT:

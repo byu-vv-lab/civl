@@ -16,14 +16,13 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  */
 public class Models {
 
-	public static ModelBuilder newModelBuilder(SymbolicUniverse universe,
-			boolean mpiMode) {
-		return new CommonModelBuilder(universe, mpiMode);
+	public static ModelBuilder newModelBuilder(SymbolicUniverse universe) {
+		return new CommonModelBuilder(universe);
 	}
 
 	public static ModelBuilder newModelBuilder(SymbolicUniverse universe,
-			boolean mpiMode, ModelFactory factory) {
-		return new CommonModelBuilder(universe, mpiMode, factory);
+			ModelFactory factory) {
+		return new CommonModelBuilder(universe, factory);
 	}
 
 	public static ModelCombiner newModelCombiner(ModelFactory factory) {

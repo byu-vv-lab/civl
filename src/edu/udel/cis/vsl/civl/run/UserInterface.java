@@ -18,9 +18,11 @@ import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.ABCException;
 import edu.udel.cis.vsl.abc.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.Activator;
+import edu.udel.cis.vsl.abc.ABC.Language;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
+import edu.udel.cis.vsl.abc.transform.common.MPITransformer;
 import edu.udel.cis.vsl.abc.transform.common.Pruner;
 import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.CIVL;
@@ -250,14 +252,14 @@ public class UserInterface {
 			String filename, ModelFactory factory) throws ABCException,
 			IOException, CommandLineException {
 		return extractModel(out, config, filename,
-				Models.newModelBuilder(universe, config.isTrue(mpiO), factory));
+				Models.newModelBuilder(universe, factory));
 	}
 
 	private Model extractModel(PrintStream out, GMCConfiguration config,
 			String filename) throws ABCException, IOException,
 			CommandLineException {
 		return extractModel(out, config, filename,
-				Models.newModelBuilder(universe, config.isTrue(mpiO)));
+				Models.newModelBuilder(universe));
 	}
 
 	private Model extractModel(PrintStream out, GMCConfiguration config,
@@ -276,6 +278,10 @@ public class UserInterface {
 			program = frontEnd.showTranslation(out);
 		} else {
 			program = frontEnd.getProgram();
+			if (config.isTrue(mpiO)) {
+				ABC.language = Language.CIVL_C;
+				program.applyTransformer(MPITransformer.CODE);
+			}
 			program.applyTransformer(Pruner.CODE);
 			program.applyTransformer(SideEffectRemover.CODE);
 		}
