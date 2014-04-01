@@ -144,20 +144,27 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		int index;
 		IntObject indexObj;
 		SymbolicExpression array;
-		SymbolicExpression bundle;
+		SymbolicExpression bundle = null;
 
 		if (pointer.type().typeKind() != SymbolicTypeKind.TUPLE) {
 			throw new CIVLUnimplementedFeatureException(
 					"string literals in message passing function calls,",
 					source);
 		}
-		elementType = evaluator.referencedType(source, state, pointer);
-		pureElementType = universe.pureType(elementType);
-		symbolicBundleType = bundleType.getDynamicType(universe);
-		index = bundleType.getIndexOf(pureElementType);
-		indexObj = universe.intObject(index);
-		array = getArrayFromPointer(state, pointerExpr, pointer, size, source);
-		bundle = universe.unionInject(symbolicBundleType, indexObj, array);
+		// check if pointer is NULL
+		if (evaluator.getScopeId(source, pointer) == -1
+				&& evaluator.getVariableId(source, pointer) == -1) {
+			
+		} else {
+			elementType = evaluator.referencedType(source, state, pointer);
+			pureElementType = universe.pureType(elementType);
+			symbolicBundleType = bundleType.getDynamicType(universe);
+			index = bundleType.getIndexOf(pureElementType);
+			indexObj = universe.intObject(index);
+			array = getArrayFromPointer(state, pointerExpr, pointer, size,
+					source);
+			bundle = universe.unionInject(symbolicBundleType, indexObj, array);
+		}
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, lhs, bundle);
 		return state;
@@ -722,6 +729,17 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 					break;
 				} else
 					newMessage = null;
+			}
+		} else if (int_source >= 0 && int_tag == -2) {
+			bufRow = universe.arrayRead(buf, (NumericExpression) source);
+			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+			messages = universe.tupleRead(queue, oneObject);
+			queueLength = universe.tupleRead(queue, zeroObject);
+			int_queueLength = evaluator.extractInt(civlsource,
+					(NumericExpression) queueLength);
+			if (int_queueLength > 0) {
+				newMessage = universe.arrayRead(messages, zero);
+				MessageIndexInMessagesArray = 0;
 			}
 		}
 		// remove the new message in the messages array
@@ -1333,6 +1351,19 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 				else
 					message = null;
 			}
+		} else if (int_source >= 0 && int_tag == -2) {
+			bufRow = universe.arrayRead(buf, (NumericExpression) source);
+			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+			messages = universe.tupleRead(queue, oneObject);
+			queueLength = universe.tupleRead(queue, zeroObject);
+			int_queueLength = evaluator.extractInt(civlsource,
+					(NumericExpression) queueLength);
+			if (int_queueLength > 0)
+				message = universe.arrayRead(messages, zero);
+			else
+				message = null;
+		} else {
+			throw new CIVLUnimplementedFeatureException("$COMM_ANY_SOURCE");
 		}
 		return message;
 	}
