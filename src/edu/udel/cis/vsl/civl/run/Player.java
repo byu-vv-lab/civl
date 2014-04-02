@@ -14,7 +14,6 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.CommonEvaluator;
 import edu.udel.cis.vsl.civl.semantics.CommonExecutor;
-import edu.udel.cis.vsl.civl.semantics.MPIExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.States;
@@ -130,10 +129,10 @@ public abstract class Player {
 		this.gui = (Boolean) config
 				.getValueOrDefault(UserInterface.guiO);
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
-		if (this.mpiMode)
-			this.executor = new MPIExecutor(config, modelFactory, stateFactory,
-					log, libraryLoader, out, this.enablePrintf, evaluator);
-		else
+		// if (this.mpiMode)
+		// this.executor = new MPIExecutor(config, modelFactory, stateFactory,
+		// log, libraryLoader, out, this.enablePrintf, evaluator);
+		// else
 			this.executor = new CommonExecutor(config, modelFactory,
 					stateFactory, log, libraryLoader, out, this.enablePrintf,
 					evaluator);

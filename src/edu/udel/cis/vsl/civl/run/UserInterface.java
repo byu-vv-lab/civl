@@ -15,10 +15,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import edu.udel.cis.vsl.abc.ABC;
+import edu.udel.cis.vsl.abc.ABC.Language;
 import edu.udel.cis.vsl.abc.ABCException;
 import edu.udel.cis.vsl.abc.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.Activator;
-import edu.udel.cis.vsl.abc.ABC.Language;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
@@ -277,11 +277,11 @@ public class UserInterface {
 			// shows absolutely everything
 			program = frontEnd.showTranslation(out);
 		} else {
-			program = frontEnd.getProgram();
-			if (config.isTrue(mpiO)) {
+			if (config.isTrue(mpiO))
 				ABC.language = Language.CIVL_C;
+			program = frontEnd.getProgram();
+			if (config.isTrue(mpiO))
 				program.applyTransformer(MPITransformer.CODE);
-			}
 			program.applyTransformer(Pruner.CODE);
 			program.applyTransformer(SideEffectRemover.CODE);
 		}
