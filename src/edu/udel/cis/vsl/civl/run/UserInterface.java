@@ -26,7 +26,6 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.transform.Transform;
 import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
-import edu.udel.cis.vsl.abc.transform.common.MPITransformer;
 import edu.udel.cis.vsl.abc.transform.common.Pruner;
 import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.CIVL;
@@ -42,6 +41,8 @@ import edu.udel.cis.vsl.civl.model.IF.ModelCombiner;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
+import edu.udel.cis.vsl.civl.transform.common.MPITransformer;
+import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
@@ -294,11 +295,29 @@ public class UserInterface {
 						return new IOTransformer(astFactory);
 					}
 				});
-			if (config.isTrue(mpiO))
-				ABC.language = Language.CIVL_C;
+			if (!Transform.getCodes().contains(MPITransformer.CODE))
+				Transform.addTransform(new TransformRecord(MPITransformer.CODE,
+						MPITransformer.LONG_NAME,
+						MPITransformer.SHORT_DESCRIPTION) {
+					@Override
+					public Transformer create(ASTFactory astFactory) {
+						return new MPITransformer(astFactory);
+					}
+				});
+			if (!Transform.getCodes().contains(OpenMPTransformer.CODE))
+				Transform.addTransform(new TransformRecord(
+						OpenMPTransformer.CODE, OpenMPTransformer.LONG_NAME,
+						OpenMPTransformer.SHORT_DESCRIPTION) {
+					@Override
+					public Transformer create(ASTFactory astFactory) {
+						return new OpenMPTransformer(astFactory);
+					}
+				});
+			// if (config.isTrue(mpiO))
+			ABC.language = Language.CIVL_C;
 			program = frontEnd.getProgram();
-//			 always apply io transformation.
-//			program.applyTransformer(IOTransformer.CODE);
+			// always apply io transformation.
+			// program.applyTransformer(IOTransformer.CODE);
 			if (config.isTrue(mpiO))
 				program.applyTransformer(MPITransformer.CODE);
 			program.applyTransformer(Pruner.CODE);
