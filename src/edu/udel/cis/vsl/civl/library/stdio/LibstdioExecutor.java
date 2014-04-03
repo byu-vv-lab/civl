@@ -44,30 +44,35 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  * executor may be loaded even if the user program has not included stdio. (See
  * "Other Public Methods".)
  * 
+ * The following system functions are defined here:
+ * <ul>
+ * <li><code>$filesystem $filesystem_create($scope)</code></li>
+ * <li><code>CIVL_File_mode CIVL_File_stringToMode(char *)</code></li>
+ * <li><code>void $filesystem_destroy($filesystem)</code></li>
+ * <li>
+ * <code>FILE * $fopen($filesystem, const char * restrict, CIVL_File_mode)</code>
+ * </li>
+ * <li><code>int fclose(FILE *)</code></li>
+ * <li><code>int fflush(FILE *)</code></li>
+ * <li><code>int fprintf(FILE * restrict, const char * restrict, ...)</code></li>
+ * <li><code>int fscanf(FILE * restrict, const char * restrict, ...)</code></li>
+ * <li><code>void $filesystem_copy_output($filesystem, $file *)</code></li>
+ * </ul>
  * 
- * <pre>
- * $fopen
- * $fprintf
- * $stdout
- * </pre>
+ * Occurrences of functions <code>printf</code> and <code>scanf</code> in the
+ * original source will already have been replaced by calls to
+ * <code>fprintf</code> and <code>fscanf</code>, respectively.
  * 
- * Different header files can be introduced for different purposes:
- * 
- * plain C program
- * 
- * translate C to CIVL: add creation of filesystem, all functions use that
- * argument.
- * 
- * or just get the variable named filesystem in the header file.
- * 
- * 
+ * @author Stephen F. Siegel (siegel)
  * @author Ziqing Luo (ziqing)
  * @author Manchun Zheng (zmanchun)
  * 
  */
 public class LibstdioExecutor extends CommonLibraryExecutor implements
 		LibraryExecutor {
-	public static int modeCount = 0;
+
+	// the different file modes; see stdio.cvl:
+
 	public final static int CIVL_FILE_MODE_R = 0;
 	public final static int CIVL_FILE_MODE_W = 1;
 	public final static int CIVL_FILE_MODE_WX = 2;
@@ -187,10 +192,14 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 * something readable but unspecified.
 	 */
 	private String getString(SymbolicExpression stringExpr) {
+		// TODO
 		return null;
 	}
 
+	
 	/**
+	 * TODO: move me to general evaluator.
+	 * 
 	 * Given a pointer to char, returns the symbolic expression of type array of
 	 * char which is the string pointed to.
 	 * 
@@ -317,7 +326,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		SymbolicExpression filesystemPointer = argumentValues[0];
 		Evaluation eval = evaluator.dereference(expressions[0].getSource(),
 				state, filesystemPointer);
-		int mode = evaluator.extractInt(expressions[2].getSource(),
+		CIVLSource modeSource = expressions[2].getSource();
+		int mode = evaluator.extractInt(modeSource,
 				(NumericExpression) argumentValues[2]);
 		SymbolicExpression fileSystemStructure;
 		SymbolicExpression fileArray;
@@ -396,7 +406,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				pos0 = pos1 = zeroInt;
 				break;
 			default:
-				throw new CIVLUnimplementedFeatureException("FILE mode " + mode);
+				throw new CIVLUnimplementedFeatureException(
+						"FILE mode " + mode, modeSource);
 			}
 			theFile = universe.tuple(fileSymbolicType, Arrays.asList(filename,
 					contents, isOutput, isInput, isBinary, isWide));
@@ -406,17 +417,19 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			state = primaryExecutor.assign(expressions[1].getSource(), state,
 					filesystemPointer, fileSystemStructure);
 		}
-		// now theFile is the new file
+		// now theFile is the new file and fileIndex is its index
 		// malloc a new FILE object with appropriate pointers
+		// create a pointer to theFile (array element reference)
+		// 
 
 		{
 			// $file *file; // the actual file to which this refers
 			// $filesystem fs; // file system to which this FILE is associated
 			// int pos1; // the chunk index (first index) in the contents
 			// int pos2; // the character index (second index) in the contents
-			// int mode; // Stream mode: r/w/a
+			// CIVL_File_mode mode; // integer(mode)
 			// int isOpen; // is this FILE open (0 or 1)?
-			
+
 			// do malloc, get pointer, do the assignments.
 		}
 

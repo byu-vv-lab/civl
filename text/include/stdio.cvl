@@ -86,7 +86,7 @@ typedef struct FILE {
   $filesystem fs; // file system to which this FILE is associated
   int pos1;       // the chunk index (first index) in the contents
   int pos2;       // the character index (second index) in the contents
-  int mode;       // Stream mode: r/w/a 
+  CIVL_File_mode mode;  // stream mode
   int isOpen;     // is this FILE open (0 or 1)?
 } FILE;
 
@@ -107,9 +107,6 @@ typedef int fpos_t;
 #define SEEK_END 2
 #define SEEK_SET 3
 #define TMP_MAX 100
-// #define stdin (FILE*)0
-// #define stdout (FILE*)1
-// #define stderr (FILE*)2
 
 
 /* Functions */
