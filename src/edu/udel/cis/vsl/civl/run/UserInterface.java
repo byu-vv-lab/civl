@@ -19,9 +19,13 @@ import edu.udel.cis.vsl.abc.ABC.Language;
 import edu.udel.cis.vsl.abc.ABCException;
 import edu.udel.cis.vsl.abc.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.Activator;
+import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
+import edu.udel.cis.vsl.abc.transform.Transform;
+import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
+import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 import edu.udel.cis.vsl.abc.transform.common.MPITransformer;
 import edu.udel.cis.vsl.abc.transform.common.Pruner;
 import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
@@ -37,6 +41,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelCombiner;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
@@ -92,7 +97,7 @@ public class UserInterface {
 			"search for minimal counterexample", false);
 
 	public final static Option mpiO = Option.newScalarOption("mpi", BOOLEAN,
-			"MPI mode", false);
+			"apply MPI transformation?", false);
 
 	public final static Option porO = Option
 			.newScalarOption(
@@ -277,9 +282,20 @@ public class UserInterface {
 			// shows absolutely everything
 			program = frontEnd.showTranslation(out);
 		} else {
+			if (!Transform.getCodes().contains(IOTransformer.CODE))
+				Transform.addTransform(new TransformRecord(IOTransformer.CODE,
+						IOTransformer.LONG_NAME,
+						IOTransformer.SHORT_DESCRIPTION) {
+					@Override
+					public Transformer create(ASTFactory astFactory) {
+						return new IOTransformer(astFactory);
+					}
+				});
 			if (config.isTrue(mpiO))
 				ABC.language = Language.CIVL_C;
 			program = frontEnd.getProgram();
+			// always apply io transformation.
+			program.applyTransformer(IOTransformer.CODE);
 			if (config.isTrue(mpiO))
 				program.applyTransformer(MPITransformer.CODE);
 			program.applyTransformer(Pruner.CODE);
