@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
@@ -617,12 +619,18 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		if (this.enablePrintf) {
-			// TODO: use StringBuffer instead for performance
-			String stringOfSymbolicExpression = "";
-			String format = "";
+			// using StringBuffer instead for performance
+			StringBuffer stringOfSymbolicExpression = new StringBuffer();
+			StringBuffer formatBuffer = new StringBuffer();
+			String format;
 			ArrayList<String> arguments = new ArrayList<String>();
 			CIVLSource source = state.getProcessState(pid).getLocation()
 					.getSource();
+			// variables used for checking %s
+			ArrayList<Integer> sIndexes = new ArrayList<Integer>();
+			Pattern pattern;
+			Matcher matcher;
+			int sCount = 1;
 
 			// don't assume argumentValues[0] is a pointer to an element of an
 			// array. Check it. If it is not, through an exception.
@@ -655,33 +663,72 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 
 				formatChars[i] = theChar;
 			}
-			format = new String(formatChars);
+			formatBuffer.append(formatChars);
+			// checking %s: find out all the corresponding argument positions
+			// for all %s existed in format string.
+			pattern = Pattern
+					.compile("((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[sdfoxegacpuxADEFGX]");
+			matcher = pattern.matcher(formatBuffer);
+			while (matcher.find()) {
+				String formatSpecifier = matcher.group();
+				if (formatSpecifier.compareTo("%s") == 0) {
+					sIndexes.add(sCount);
+				}
+				sCount++;
+			}
+			// format = formatBuffer.toString();
+			// splitedFormats = format.split("%s");
+			// for (int k = 0; k < splitedFormats.length - 1; k++) {
+			// int splitedFormatsLength;
+			//
+			// splitedFormatsLength = splitedFormats[k]
+			// .split("((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]").length;
+			// //is it true? string.split("REX").length == 0 ==> string is fully
+			// matched with "REX".
+			// if (splitedFormatsLength == 0)
+			// splitedFormatsLength = 2;
+			// sCount += splitedFormatsLength;
+			// sIndexes.add(sCount);
+			// }
 			for (int i = 1; i < argumentValues.length; i++) {
 				SymbolicExpression argument = argumentValues[i];
 				CIVLType argumentType = expressions[i].getExpressionType();
+				ReferenceExpression ref;
+				ArrayElementReference arrayRef;
+				NumericExpression arrayIndex;
+				int int_arrayIndex;
 
 				if (argumentType instanceof CIVLPointerType
 						&& ((CIVLPointerType) argumentType).baseType()
 								.isCharType()
 						&& argument.operator() == SymbolicOperator.CONCRETE) {
-					// also check format code is %s before doing this!
+					// also check format code is %s before doing this
+					if (!sIndexes.contains(i)) {
+						throw new CIVLSyntaxException(
+								"Array pointer unaccepted",
+								expressions[i].getSource());
+					}
 					arrayPointer = evaluator.parentPointer(source, argument);
-
+					ref = evaluator.getSymRef(argument);
+					assert (ref.isArrayElementReference());
+					arrayRef = (ArrayElementReference) evaluator
+							.getSymRef(argument);
+					arrayIndex = arrayRef.getIndex();
+					// what if the index is symbolic ?
+					int_arrayIndex = evaluator.extractInt(source, arrayIndex);
 					// index is not necessarily 0! FIX ME!
-
 					eval = evaluator.dereference(source, state, arrayPointer);
 					originalArray = (SymbolicSequence<?>) eval.value
 							.argument(0);
 					state = eval.state;
-					stringOfSymbolicExpression = "";
-
-					// fix this way of making the string:
-
-					for (int j = 0; j < originalArray.size(); j++) {
-						stringOfSymbolicExpression += originalArray.get(j)
-								.toString().charAt(1);
+					for (int j = int_arrayIndex; j < originalArray.size(); j++) {
+						stringOfSymbolicExpression.append(originalArray.get(j)
+								.toString().charAt(1));
 					}
-					arguments.add(stringOfSymbolicExpression);
+					arguments.add(stringOfSymbolicExpression.substring(0));
+					// clear stringOfSymbolicExpression
+					stringOfSymbolicExpression.delete(0,
+							stringOfSymbolicExpression.length());
 				} else
 					arguments.add(argument.toString());
 			}
@@ -691,10 +738,18 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			// TODO: at model building time, check statically that the
 			// expression types are compatible with corresponding conversion
 			// specifiers
+			format = formatBuffer.substring(0);
 			format = format.replaceAll("%lf", "%s");
-			format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegacp]", "%s");
+			format = format
+					.replaceAll(
+							"((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]",
+							"%s");
 			for (int i = 0; i < format.length(); i++) {
 				if (format.charAt(i) == '%') {
+					if (format.charAt(i + 1) == '%') {
+						i++;
+						continue;
+					}
 					if (format.charAt(i + 1) != 's')
 						throw new CIVLSyntaxException("The format:%"
 								+ format.charAt(i + 1)
