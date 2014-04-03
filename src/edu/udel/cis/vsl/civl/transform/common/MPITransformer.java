@@ -569,7 +569,8 @@ public class MPITransformer extends BaseTransformer {
 				nodeFactory.newIdentifierNode(source, variable));
 		arguments.add(variableExpression);
 		arguments.add(upperBoundExpression);
-		upperPart = nodeFactory.newOperatorNode(source, Operator.LT, arguments);
+		upperPart = nodeFactory
+				.newOperatorNode(source, Operator.LTE, arguments);
 		arguments = new ArrayList<>(2);
 		arguments.add(lowerPart);
 		arguments.add(upperPart);
@@ -593,8 +594,7 @@ public class MPITransformer extends BaseTransformer {
 		List<ASTNode> includedNodes = new ArrayList<ASTNode>();
 		List<VariableDeclarationNode> mainParameters = new ArrayList<>();
 		int count;
-		AssumeNode nprocsAssumption = this
-				.boundAssumption(NPROCS, NPROCS_BOUND);
+		AssumeNode nprocsAssumption;
 
 		this.source = root.getSource();
 		assert this.astFactory == ast.getASTFactory();
@@ -602,7 +602,10 @@ public class MPITransformer extends BaseTransformer {
 		ast.release();
 		// declaring $input int NPROCS;
 		nprocsVar = this.nprocsDeclaration();
+		// declaring $input int NPROCS_BOUND;
 		nprocsBoundVar = this.nprocsBoundDeclaration();
+		// assuming 0 < NPROCS && NPROCS <= NPROCS_BOUND
+		nprocsAssumption = this.boundAssumption(NPROCS, NPROCS_BOUND);
 		// declaring $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);
 		gcommWorld = this.gcommDeclaration();
 		// defining MPI_Process(_rank){...};
