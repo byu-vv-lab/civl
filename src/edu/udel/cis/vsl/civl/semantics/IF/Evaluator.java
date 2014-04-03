@@ -385,7 +385,7 @@ public interface Evaluator {
 	SymbolicExpression heapValue(CIVLSource source, State state,
 			SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
-	
+
 	SymbolicExpression initialHeapValue();
 
 	void setEnabler(Enabler enabler);
@@ -393,4 +393,19 @@ public interface Evaluator {
 	Pair<State, CIVLFunction> evaluateFunctionExpression(State state, int pid,
 			Expression functionExpression)
 			throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
+	 * symbolic reference value.
+	 * 
+	 * @param scopeId
+	 *            ID number of a dynamic scope
+	 * @param varId
+	 *            ID number of a variable within that scope
+	 * @param symRef
+	 *            a symbolic reference to a point within the variable
+	 * @return a pointer value as specified by the 3 components
+	 */
+	SymbolicExpression makePointer(int scopeId, int varId,
+			ReferenceExpression symRef);
 }

@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
@@ -15,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
@@ -112,6 +114,11 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	private CIVLStructOrUnionType filesystemStructType;
 
 	/**
+	 * The symbolic type corresponding to filesystemStructType.
+	 */
+	private SymbolicTupleType filesystemStructSymbolicType;
+
+	/**
 	 * The CIVL struct type $file, defined in stdio.
 	 */
 	private CIVLStructOrUnionType fileType;
@@ -196,7 +203,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		return null;
 	}
 
-	
 	/**
 	 * TODO: move me to general evaluator.
 	 * 
@@ -314,13 +320,46 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	}
 
 	/**
+	 * $filesystem CIVL_filesystem = $filesystem_create($here); Creates a new
+	 * empty file system, returning a handle to it. <br>
+	 * $filesystem s$filesystem_create($scope scope);
+	 * 
+	 * typedef struct CIVL_filesystem { $scope scope; $file files[]; } *
+	 * $filesystem;
+	 * 
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State execute_filesystem_create(CIVLSource source, State state,
+			int pid, LHSExpression lhs, Expression[] expressions,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval;
+		SymbolicExpression scope = argumentValues[0];
+		LinkedList<SymbolicExpression> filesystemComponents = new LinkedList<>();
+		LinkedList<SymbolicExpression> fileArrayComponents = new LinkedList<>();
+		SymbolicExpression filesArray = universe.array(fileSymbolicType,
+				fileArrayComponents);
+		SymbolicExpression filesystem;
+
+		filesystemComponents.add(scope);
+		filesystemComponents.add(filesArray);
+		filesystem = universe.tuple(filesystemStructSymbolicType,
+				filesystemComponents);
+		state = primaryExecutor.malloc(source, state, pid, lhs, expressions[0],
+				scope, filesystemStructType, filesystem);
+		return state;
+	}
+
+	/**
 	 * <pre>
 	 * FILE * $fopen($filesystem fs, const char * restrict filename,
 	 *               const char * restrict mode);
 	 * </pre>
 	 * 
 	 */
-	private State execute_fopen(State state, int pid, Expression[] expressions,
+	private State execute_fopen(CIVLSource source, State state, int pid,
+			LHSExpression lhs, Expression[] expressions,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression filesystemPointer = argumentValues[0];
@@ -339,14 +378,18 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		NumericExpression isInput, isOutput, isBinary, isWide = zeroInt;
 		SymbolicExpression contents;
 		SymbolicExpression theFile;
-		NumericExpression pos0, pos1;
+		NumericExpression pos0 = null, pos1 = null;
+		int scopeId = evaluator.getScopeId(expressions[0].getSource(),
+				filesystemPointer);
+		int filesystemVid = evaluator.getVariableId(expressions[0].getSource(),
+				filesystemPointer);
 
 		state = eval.state;
 		fileSystemStructure = eval.value;
 		scope = universe.tupleRead(fileSystemStructure, zeroObj);
 		fileArray = universe.tupleRead(fileSystemStructure, oneObj);
 		eval = getStringExpression(state, expressions[1].getSource(),
-				argumentValues[1]);
+				argumentValues[1]);// TODO go to common evaluator
 		state = eval.state;
 		filename = eval.value;
 
@@ -420,20 +463,39 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		// now theFile is the new file and fileIndex is its index
 		// malloc a new FILE object with appropriate pointers
 		// create a pointer to theFile (array element reference)
-		// 
+		//
 
 		{
+			List<SymbolicExpression> streamComponents = new LinkedList<>();
+			ReferenceExpression ref = universe.arrayElementReference(
+					universe.tupleComponentReference(
+							universe.identityReference(), oneObject),
+					universe.integer(fileIndex));
+			SymbolicExpression filePointer = evaluator.makePointer(scopeId,
+					filesystemVid, ref);
+			SymbolicExpression fileStream;
+
 			// $file *file; // the actual file to which this refers
 			// $filesystem fs; // file system to which this FILE is associated
 			// int pos1; // the chunk index (first index) in the contents
 			// int pos2; // the character index (second index) in the contents
 			// CIVL_File_mode mode; // integer(mode)
 			// int isOpen; // is this FILE open (0 or 1)?
-
+			streamComponents.add(filePointer);
+			streamComponents.add(filesystemPointer);
+			streamComponents.add(pos0);
+			streamComponents.add(pos1);
+			streamComponents.add(argumentValues[2]);
+			streamComponents.add(universe.integer(1));
+			fileStream = universe.tuple(
+					(SymbolicTupleType) FILEtype.getDynamicType(universe),
+					streamComponents);
 			// do malloc, get pointer, do the assignments.
+			state = primaryExecutor.malloc(source, state, pid, lhs, null,
+					scope, FILEtype, fileStream);
 		}
 
-		return null;
+		return state;
 
 	}
 
@@ -456,6 +518,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		int numArgs;
+		CIVLSource source = statement.getSource();
+		LHSExpression lhs = statement.lhs();
 
 		statement = (CallOrSpawnStatement) statement;
 		numArgs = statement.arguments().size();
@@ -473,12 +537,20 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		switch (name.name()) {
 		case "printf":
 			state = executePrintf(state, pid, arguments, argumentValues);
-			state = stateFactory.setLocation(state, pid, statement.target());
+			break;
+		case "$fopen":
+			state = execute_fopen(source, state, pid, lhs, arguments,
+					argumentValues);
+			break;
+		case "$filesystem_create":
+			state = execute_filesystem_create(source, state, pid, lhs,
+					arguments, argumentValues);
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(name.name(), statement);
 
 		}
+		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
 

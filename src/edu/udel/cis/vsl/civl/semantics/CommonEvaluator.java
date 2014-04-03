@@ -1842,30 +1842,6 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
-	 * symbolic reference value.
-	 * 
-	 * @param scopeId
-	 *            ID number of a dynamic scope
-	 * @param varId
-	 *            ID number of a variable within that scope
-	 * @param symRef
-	 *            a symbolic reference to a point within the variable
-	 * @return a pointer value as specified by the 3 components
-	 */
-	private SymbolicExpression makePointer(int scopeId, int varId,
-			ReferenceExpression symRef) {
-		SymbolicExpression scopeField = modelFactory.scopeValue(scopeId);
-		SymbolicExpression varField = universe.integer(varId);
-		SymbolicExpression result = universe.tuple(
-				pointerType,
-				Arrays.asList(new SymbolicExpression[] { scopeField, varField,
-						symRef }));
-
-		return result;
-	}
-
-	/**
 	 * Evaluates pointer addition. Pointer addition involves the addition of a
 	 * pointer expression and an integer.
 	 * 
@@ -2011,14 +1987,97 @@ public class CommonEvaluator implements Evaluator {
 				+ type, source);
 	}
 
-	/* ********************** Methods from Evaluator *********************** */
+	private Evaluation evaluateFunctionGuard(State state, int pid,
+			FunctionGuardExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Pair<State, CIVLFunction> eval = this.evaluateFunctionExpression(state,
+				pid, expression.functionExpression());
+		CIVLFunction function;
 
+		state = eval.left;
+		function = eval.right;
+		if (function == null) {
+			this.logSimpleError(expression.getSource(), state, ErrorKind.OTHER,
+					"function body cann't be found");
+			throw new UnsatisfiablePathConditionException();
+		}
+		if (function.isSystem()) {
+			SystemFunction systemFunction = (SystemFunction) function;
+
+			return enabler.getSystemGuard(expression.getSource(), state, pid,
+					systemFunction.getLibrary(), systemFunction.name().name(),
+					expression.arguments());
+		}
+		return new Evaluation(state, universe.trueExpression());
+	}
+
+	private Evaluation evaluateFunctionPointer(State state, int pid,
+			FunctionPointerExpression expression) {
+		Scope scope = expression.scope();
+		String function = expression.function().name().name();
+		SymbolicExpression dyScopeId = modelFactory.scopeValue(state
+				.getDyScope(pid, scope));
+		SymbolicExpression functionPointer = universe.tuple(
+				this.functionPointerType,
+				Arrays.asList(new SymbolicExpression[] { dyScopeId,
+						universe.stringExpression(function) }));
+
+		return new Evaluation(state, functionPointer);
+	}
+
+	private Evaluation evaluateScopeofExpression(State state, int pid,
+			ScopeofExpression expression)
+			throws UnsatisfiablePathConditionException {
+		LHSExpression argument = expression.argument();
+
+		return scopeofExpression(state, pid, argument);
+	}
+
+	private Evaluation scopeofExpression(State state, int pid,
+			LHSExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval;
+
+		switch (expression.lhsExpressionKind()) {
+		case DEREFERENCE:
+			Expression pointer = ((DereferenceExpression) expression).pointer();
+
+			eval = evaluate(state, pid, pointer);
+			int sid = getScopeId(pointer.getSource(), eval.value);
+			state = eval.state;
+			if (sid < 0) {
+				logSimpleError(pointer.getSource(), state,
+						ErrorKind.DEREFERENCE,
+						"Attempt to dereference pointer into scope which has been removed from state");
+				throw new UnsatisfiablePathConditionException();
+			}
+			return new Evaluation(state, modelFactory.scopeValue(sid));
+		case DOT:
+			return scopeofExpression(state, pid,
+					(LHSExpression) (((DotExpression) expression)
+							.structOrUnion()));
+		case SUBSCRIPT:
+			return scopeofExpression(
+					state,
+					pid,
+					(LHSExpression) (((SubscriptExpression) expression).array()));
+
+		default:// VARIABLE
+			int scopeId = state.getScopeId(pid,
+					((VariableExpression) expression).variable());
+
+			return new Evaluation(state, modelFactory.scopeValue(scopeId));
+		}
+	}
+
+	/* ********************** Methods from Evaluator *********************** */
+	
 	@Override
 	public Evaluation evaluate(State state, int pid, Expression expression)
 			throws UnsatisfiablePathConditionException {
 		ExpressionKind kind = expression.expressionKind();
 		Evaluation result;
-
+	
 		switch (kind) {
 		case ABSTRACT_FUNCTION_CALL:
 			result = evaluateAbstractFunctionCall(state, pid,
@@ -2152,89 +2211,6 @@ public class CommonEvaluator implements Evaluator {
 		return result;
 	}
 
-	private Evaluation evaluateFunctionGuard(State state, int pid,
-			FunctionGuardExpression expression)
-			throws UnsatisfiablePathConditionException {
-		Pair<State, CIVLFunction> eval = this.evaluateFunctionExpression(state,
-				pid, expression.functionExpression());
-		CIVLFunction function;
-
-		state = eval.left;
-		function = eval.right;
-		if (function == null) {
-			this.logSimpleError(expression.getSource(), state, ErrorKind.OTHER,
-					"function body cann't be found");
-			throw new UnsatisfiablePathConditionException();
-		}
-		if (function.isSystem()) {
-			SystemFunction systemFunction = (SystemFunction) function;
-
-			return enabler.getSystemGuard(expression.getSource(), state, pid,
-					systemFunction.getLibrary(), systemFunction.name().name(),
-					expression.arguments());
-		}
-		return new Evaluation(state, universe.trueExpression());
-	}
-
-	private Evaluation evaluateFunctionPointer(State state, int pid,
-			FunctionPointerExpression expression) {
-		Scope scope = expression.scope();
-		String function = expression.function().name().name();
-		SymbolicExpression dyScopeId = modelFactory.scopeValue(state
-				.getDyScope(pid, scope));
-		SymbolicExpression functionPointer = universe.tuple(
-				this.functionPointerType,
-				Arrays.asList(new SymbolicExpression[] { dyScopeId,
-						universe.stringExpression(function) }));
-
-		return new Evaluation(state, functionPointer);
-	}
-
-	private Evaluation evaluateScopeofExpression(State state, int pid,
-			ScopeofExpression expression)
-			throws UnsatisfiablePathConditionException {
-		LHSExpression argument = expression.argument();
-
-		return scopeofExpression(state, pid, argument);
-	}
-
-	private Evaluation scopeofExpression(State state, int pid,
-			LHSExpression expression)
-			throws UnsatisfiablePathConditionException {
-		Evaluation eval;
-
-		switch (expression.lhsExpressionKind()) {
-		case DEREFERENCE:
-			Expression pointer = ((DereferenceExpression) expression).pointer();
-
-			eval = evaluate(state, pid, pointer);
-			int sid = getScopeId(pointer.getSource(), eval.value);
-			state = eval.state;
-			if (sid < 0) {
-				logSimpleError(pointer.getSource(), state,
-						ErrorKind.DEREFERENCE,
-						"Attempt to dereference pointer into scope which has been removed from state");
-				throw new UnsatisfiablePathConditionException();
-			}
-			return new Evaluation(state, modelFactory.scopeValue(sid));
-		case DOT:
-			return scopeofExpression(state, pid,
-					(LHSExpression) (((DotExpression) expression)
-							.structOrUnion()));
-		case SUBSCRIPT:
-			return scopeofExpression(
-					state,
-					pid,
-					(LHSExpression) (((SubscriptExpression) expression).array()));
-
-		default:// VARIABLE
-			int scopeId = state.getScopeId(pid,
-					((VariableExpression) expression).variable());
-
-			return new Evaluation(state, modelFactory.scopeValue(scopeId));
-		}
-	}
-
 	@Override
 	public Evaluation evaluateSizeofType(CIVLSource source, State state,
 			int pid, CIVLType type) throws UnsatisfiablePathConditionException {
@@ -2303,17 +2279,17 @@ public class CommonEvaluator implements Evaluator {
 			} else {
 				int vid = getVariableId(source, pointer);
 				ReferenceExpression symRef = getSymRef(pointer);
-//				Variable variable = state.getScope(sid).lexicalScope()
-//						.variable(vid);
+				// Variable variable = state.getScope(sid).lexicalScope()
+				// .variable(vid);
 				SymbolicExpression variableValue;
 				SymbolicExpression deref;
 
-//				if (variable.isOutput()) {
-//					logSimpleError(source, state, ErrorKind.OUTPUT_READ,
-//							"Attempt to read output variable "
-//									+ variable.name().name());
-//					throw new UnsatisfiablePathConditionException();
-//				}
+				// if (variable.isOutput()) {
+				// logSimpleError(source, state, ErrorKind.OUTPUT_READ,
+				// "Attempt to read output variable "
+				// + variable.name().name());
+				// throw new UnsatisfiablePathConditionException();
+				// }
 				variableValue = state.getScope(sid).getValue(vid);
 				try {
 					deref = universe.dereference(variableValue, symRef);
@@ -2678,6 +2654,19 @@ public class CommonEvaluator implements Evaluator {
 		error = new CIVLStateException(errorKind, certainty, message, state,
 				source);
 		reportError(error);
+	}
+
+	@Override
+	public SymbolicExpression makePointer(int scopeId, int varId,
+			ReferenceExpression symRef) {
+		SymbolicExpression scopeField = modelFactory.scopeValue(scopeId);
+		SymbolicExpression varField = universe.integer(varId);
+		SymbolicExpression result = universe.tuple(
+				pointerType,
+				Arrays.asList(new SymbolicExpression[] { scopeField, varField,
+						symRef }));
+	
+		return result;
 	}
 
 	@Override

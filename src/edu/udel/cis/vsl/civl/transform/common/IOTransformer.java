@@ -7,35 +7,12 @@ import edu.udel.cis.vsl.abc.ABCUnsupportedException;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.DotNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.StringLiteralNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode.BlockItemKind;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.ChooseStatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode.StatementKind;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.value.IF.StringValue;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
@@ -106,169 +83,23 @@ public class IOTransformer extends BaseTransformer {
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
-		for (int i = 0; i < rootNode.numChildren(); i++) {
-			ASTNode node = rootNode.child(i);
-
-			if (node instanceof FunctionDefinitionNode) {
-				processFunctionDefinition((FunctionDefinitionNode) node);
-			}
-		}
+		this.processASTNode(rootNode);
 		return astFactory.newTranslationUnit(rootNode);
 	}
 
-	private void processFunctionDefinition(FunctionDefinitionNode function)
-			throws SyntaxException {
-		processCompoundStatement(function.getBody());
-	}
+	private void processASTNode(ASTNode node) throws SyntaxException {
+		int numChildren = node.numChildren();
 
-	private void processCompoundStatement(CompoundStatementNode statement)
-			throws SyntaxException {
-		int count = statement.numChildren();
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = node.child(i);
 
-		for (int i = 0; i < count; i++) {
-			BlockItemNode item = statement.getSequenceChild(i);
-			BlockItemKind kind = item.blockItemKind();
-
-			switch (kind) {
-			case STATEMENT:
-				this.processStatement((StatementNode) item);
-				break;
-			case ORDINARY_DECLARATION:
-				if (item.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
-					processFunctionDefinition((FunctionDefinitionNode) item);
-				}
-				break;
-			default:
-			}
+			if (child != null)
+				this.processASTNode(node.child(i));
 		}
-	}
-
-	/**
-	 * Remove side effects if the statement contains them. Note that
-	 * <code>goto</code>, <code>jump</code>, and <code>null</code> statements
-	 * cannot have side effects, and so will never be modified.
-	 * 
-	 * @param statement
-	 * @return
-	 * @throws SyntaxException
-	 */
-	private void processStatement(StatementNode statement)
-			throws SyntaxException {
-		StatementKind kind = statement.statementKind();
-
-		switch (kind) {
-		case ASSUME:
-			processAssumeStatement((AssumeNode) statement);
-			break;
-		case CHOOSE:
-			processChooseStatement((ChooseStatementNode) statement);
-			break;
-		case COMPOUND:
-			processCompoundStatement((CompoundStatementNode) statement);
-			break;
-		case EXPRESSION:
-			processExpression(((ExpressionStatementNode) statement)
-					.getExpression());
-			break;
-		case FOR:
-			processLoopStatement((ForLoopNode) statement);
-			break;
-		case IF:
-			processIfStatement((IfNode) statement);
-			break;
-		case LABELED:
-			processStatement(((LabeledStatementNode) statement).getStatement());
-			break;
-		case LOOP:
-			processLoopStatement((LoopNode) statement);
-			break;
-		case RETURN:
-			processReturnStatement((ReturnNode) statement);
-			break;
-		case SWITCH:
-			processSwitchStatement((SwitchNode) statement);
-			break;
-		case WHEN:
-			processExpression(((WhenNode) statement).getGuard());
-			processStatement(((WhenNode) statement).getBody());
-			break;
-		case ATOMIC:
-			processStatement(((AtomicNode) statement).getBody());
-			break;
-		default:
-
+		if (node instanceof FunctionCallNode) {
+			this.processFunctionCall((FunctionCallNode) node);
 		}
-	}
 
-	private void processSwitchStatement(SwitchNode switchNode)
-			throws SyntaxException {
-		processExpression(switchNode.getCondition());
-		processStatement(switchNode.getBody());
-	}
-
-	private void processReturnStatement(ReturnNode returnNode)
-			throws SyntaxException {
-		ExpressionNode expression = returnNode.getExpression();
-		if (expression != null)
-			processExpression(expression);
-	}
-
-	private void processIfStatement(IfNode ifNode) throws SyntaxException {
-		processExpression(ifNode.getCondition());
-		processStatement(ifNode.getTrueBranch());
-		if (ifNode.getFalseBranch() != null)
-			processStatement(ifNode.getFalseBranch());
-	}
-
-	private void processLoopStatement(LoopNode loop) throws SyntaxException {
-		processExpression(loop.getCondition());
-		processStatement(loop.getBody());
-		if (loop.statementKind() == StatementKind.FOR) {
-			ForLoopNode forLoop = (ForLoopNode) loop;
-
-			processExpression(forLoop.getIncrementer());
-		}
-	}
-
-	private void processChooseStatement(ChooseStatementNode choose)
-			throws SyntaxException {
-		for (StatementNode statement : choose) {
-			processStatement(statement);
-		}
-	}
-
-	private void processAssumeStatement(AssumeNode statement)
-			throws SyntaxException {
-		ExpressionNode expression = statement.getExpression();
-
-		processExpression(expression);
-	}
-
-	private void processExpression(ExpressionNode expression)
-			throws SyntaxException {
-		ExpressionKind expressionKind = expression.expressionKind();
-
-		switch (expressionKind) {
-		case OPERATOR:
-			processOperator((OperatorNode) expression);
-			break;
-		case FUNCTION_CALL:
-			processFunctionCall((FunctionCallNode) expression);
-			break;
-		case CAST:
-			processExpression(((CastNode) expression).getArgument());
-			break;
-		case DOT:
-			processExpression(((DotNode) expression).getStructure());
-			break;
-		case ARROW:
-			processExpression(((ArrowNode) expression).getStructurePointer());
-			break;
-		case SPAWN:
-			processExpression(((SpawnNode) expression).getCall());
-			break;
-		default:
-		}
 	}
 
 	private void processFunctionCall(FunctionCallNode functionCall)
@@ -395,13 +226,13 @@ public class IOTransformer extends BaseTransformer {
 				"ActualParameterList", arguments));
 	}
 
-	private void processOperator(OperatorNode expression)
-			throws SyntaxException {
-		int count = expression.getNumberOfArguments();
-
-		for (int i = 0; i < count; i++) {
-			processExpression(expression.getArgument(i));
-		}
-	}
+	// private void processOperator(OperatorNode expression)
+	// throws SyntaxException {
+	// int count = expression.getNumberOfArguments();
+	//
+	// for (int i = 0; i < count; i++) {
+	// processExpression(expression.getArgument(i));
+	// }
+	// }
 
 }
