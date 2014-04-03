@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.run;
 import java.io.File;
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.kripke.PointeredEnabler;
 import edu.udel.cis.vsl.civl.kripke.ScopedEnabler;
@@ -99,13 +100,16 @@ public abstract class Player {
 	protected boolean enablePrintf; // true by default
 
 	protected boolean mpiMode; // false by default
-	
+
 	protected boolean gui; // false by default, only works with Replay mode.
 
-	public Player(GMCConfiguration config, Model model, PrintStream out)
-			throws CommandLineException {
+	protected Preprocessor preprocessor;
+
+	public Player(GMCConfiguration config, Model model, PrintStream out,
+			Preprocessor preprocessor) throws CommandLineException {
 		SymbolicUniverse universe;
 
+		this.preprocessor = preprocessor;
 		this.config = config;
 		this.model = model;
 		this.out = out;
@@ -126,16 +130,14 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.enablePrintfO);
 		this.showAmpleSet = (Boolean) config
 				.getValueOrDefault(UserInterface.showAmpleSetO);
-		this.gui = (Boolean) config
-				.getValueOrDefault(UserInterface.guiO);
+		this.gui = (Boolean) config.getValueOrDefault(UserInterface.guiO);
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		// if (this.mpiMode)
 		// this.executor = new MPIExecutor(config, modelFactory, stateFactory,
 		// log, libraryLoader, out, this.enablePrintf, evaluator);
 		// else
-			this.executor = new CommonExecutor(config, modelFactory,
-					stateFactory, log, libraryLoader, out, this.enablePrintf,
-					evaluator);
+		this.executor = new CommonExecutor(config, modelFactory, stateFactory,
+				log, libraryLoader, out, this.enablePrintf, evaluator);
 		// this.evaluator.setExecutor(executor);
 		this.predicate = new StandardPredicate(log, universe, this.executor);
 		this.random = config.isTrue(UserInterface.randomO);

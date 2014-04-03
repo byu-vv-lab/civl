@@ -40,10 +40,10 @@ public class ABC_CIVLSource implements CIVLSource {
 		abcSource.print(out);
 	}
 	
-	@Override
-	public void printShorterFileNameMap(PrintStream out) {
-		abcSource.printShorterFileNameMap(out);
-	}
+//	@Override
+//	public void printShorterFileNameMap(PrintStream out) {
+//		abcSource.printShorterFileNameMap(out);
+//	}
 
 	/* ************************* Methods from Object *********************** */
 

@@ -20,9 +20,9 @@ import edu.udel.cis.vsl.abc.ABCException;
 import edu.udel.cis.vsl.abc.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.Activator;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
+import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
 import edu.udel.cis.vsl.abc.transform.Transform;
 import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
@@ -189,6 +189,8 @@ public class UserInterface {
 	 */
 	SymbolicUniverse universe = SARL.newStandardUniverse();
 
+	private Preprocessor preprocessor;
+
 	/* ************************** Constructors ***************************** */
 
 	public UserInterface() {
@@ -278,6 +280,7 @@ public class UserInterface {
 		Program program;
 		Model model;
 
+		this.preprocessor = frontEnd.getPreprocessor();
 		if (verbose || debug) {
 			// shows absolutely everything
 			program = frontEnd.showTranslation(out);
@@ -294,8 +297,8 @@ public class UserInterface {
 			if (config.isTrue(mpiO))
 				ABC.language = Language.CIVL_C;
 			program = frontEnd.getProgram();
-			// always apply io transformation.
-			program.applyTransformer(IOTransformer.CODE);
+//			 always apply io transformation.
+//			program.applyTransformer(IOTransformer.CODE);
 			if (config.isTrue(mpiO))
 				program.applyTransformer(MPITransformer.CODE);
 			program.applyTransformer(Pruner.CODE);
@@ -536,7 +539,7 @@ public class UserInterface {
 		checkFilenames(1, config);
 		extractModel(out, config, config.getFreeArg(1));
 		if (showShortFileNameList(config))
-			TokenUtils.printShorterFileNameMap(out);
+			this.preprocessor.printShorterFileNameMap(out);
 		return true;
 	}
 
@@ -577,8 +580,9 @@ public class UserInterface {
 		newConfig.read(config);
 		model = extractModel(out, newConfig, sourceFilename);
 		if (showShortFileNameList(config))
-			TokenUtils.printShorterFileNameMap(out);
-		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out);
+			preprocessor.printShorterFileNameMap(out);
+		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out,
+				this.preprocessor);
 		if (guiMode) {
 			State[] states = new State[] {};
 			ArrayList<Transition> transitions = new ArrayList<>();
@@ -613,9 +617,9 @@ public class UserInterface {
 		filename = config.getFreeArg(1);
 		model = extractModel(out, config, filename);
 		if (showShortFileNameList(config))
-			TokenUtils.printShorterFileNameMap(out);
+			preprocessor.printShorterFileNameMap(out);
 		config.setScalarValue(showTransitionsO, true);
-		player = TracePlayer.randomPlayer(config, model, out);
+		player = TracePlayer.randomPlayer(config, model, out, preprocessor);
 		out.println("\nRunning random simulation with seed " + player.getSeed()
 				+ " ...");
 		out.flush();
@@ -638,15 +642,16 @@ public class UserInterface {
 		filename = config.getFreeArg(1);
 		model = extractModel(out, config, filename);
 		if (showShortFileName)
-			TokenUtils.printShorterFileNameMap(out);
+			preprocessor.printShorterFileNameMap(out);
 		verifier = new Verifier(config, model, out, startTime,
-				showShortFileName);
+				showShortFileName, preprocessor);
 		try {
 			result = verifier.run();
 		} catch (CIVLUnimplementedFeatureException unimplemented) {
 			verifier.terminateUpdater();
 			out.println();
 			out.println("Error: " + unimplemented.toString());
+			this.preprocessor.printShorterFileNameMap(out);
 			return false;
 		} catch (Exception e) {
 			verifier.terminateUpdater();
@@ -685,9 +690,9 @@ public class UserInterface {
 			compositeModel.print(out, verbose || debug);
 		}
 		if (showShortFileName)
-			TokenUtils.printShorterFileNameMap(out);
+			this.preprocessor.printShorterFileNameMap(out);
 		verifier = new Verifier(config, compositeModel, out, startTime,
-				showShortFileName);
+				showShortFileName, preprocessor);
 		try {
 			result = verifier.run();
 		} catch (CIVLUnimplementedFeatureException unimplemented) {
@@ -770,7 +775,7 @@ public class UserInterface {
 			throw e;
 		} catch (CIVLException e) {
 			err.println(e);
-			TokenUtils.printShorterFileNameMap(err);
+			preprocessor.printShorterFileNameMap(err);
 		}
 		err.flush();
 		return false;

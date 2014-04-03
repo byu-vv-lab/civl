@@ -21,9 +21,9 @@ public class SystemCIVLSource implements CIVLSource {
 		return "CIVL System object";
 	}
 
-	@Override
-	public void printShorterFileNameMap(PrintStream out) {
-
-	}
+//	@Override
+//	public void printShorterFileNameMap(PrintStream out) {
+//
+//	}
 
 }

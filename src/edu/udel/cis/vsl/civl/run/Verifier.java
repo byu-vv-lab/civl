@@ -3,7 +3,7 @@ package edu.udel.cis.vsl.civl.run;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.abc.token.IF.TokenUtils;
+import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -111,9 +111,9 @@ public class Verifier extends Player {
 	private double startTime;
 
 	public Verifier(GMCConfiguration config, Model model, PrintStream out,
-			double startTime, boolean shortFileNamesShown)
-			throws CommandLineException {
-		super(config, model, out);
+			double startTime, boolean shortFileNamesShown,
+			Preprocessor preprocessor) throws CommandLineException {
+		super(config, model, out, preprocessor);
 		if (random) {
 			throw new CommandLineException(
 					"\"-random\" mode is incompatible with civl verify command.");
@@ -182,7 +182,7 @@ public class Verifier extends Player {
 		} catch (ExcessiveErrorException e) {
 			violationFound = true;
 			if (!shortFileNamesShown) {
-				TokenUtils.printShorterFileNameMap(out);
+				preprocessor.printShorterFileNameMap(out);
 				out.println();
 			}
 			out.println("Error bound exceeded: search terminated");

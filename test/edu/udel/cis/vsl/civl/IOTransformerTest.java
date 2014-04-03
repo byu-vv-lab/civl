@@ -25,6 +25,6 @@ public class IOTransformerTest {
 
 	@Test
 	public void io() {
-		assertTrue(ui.run("verify", filename("io.c")));
+		assertTrue(ui.run("verify", filename("io.cvl")));
 	}
 }
