@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
@@ -151,10 +152,19 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 					"string literals in message passing function calls,",
 					source);
 		}
-		// check if pointer is NULL
-		if (evaluator.getScopeId(source, pointer) == -1
+		// check if size is zero
+		if (size.isZero()) {
+			// if size is 0 then just ignore the pointer. The pointer could be
+			// NULL, or even invalid. The result is still a bundle of size 0.
+			symbolicBundleType = bundleType.getDynamicType(universe);
+			index = bundleType.getIndexOf(universe.booleanType());
+			indexObj = universe.intObject(index);
+			array = universe.emptyArray(universe.booleanType());
+			bundle = universe.unionInject(symbolicBundleType, indexObj, array);
+		} else if (!size.isZero()
+				&& evaluator.getScopeId(source, pointer) == -1
 				&& evaluator.getVariableId(source, pointer) == -1) {
-			
+			throw new CIVLSyntaxException("Packing a NULL message with size larger than 0", source);
 		} else {
 			elementType = evaluator.referencedType(source, state, pointer);
 			pureElementType = universe.pureType(elementType);
