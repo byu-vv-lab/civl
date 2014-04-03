@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
@@ -134,12 +135,10 @@ public class OpenMPTransformer extends BaseTransformer {
 
 			if (condition instanceof OperatorNode) {
 				OperatorNode relop = (OperatorNode) condition;
-				OperatorNode.Operator op = relop.getOperator();
-				if (op == OperatorNode.Operator.LT
-						|| op == OperatorNode.Operator.LTE) {
+				Operator op = relop.getOperator();
+				if (op == Operator.LT || op == Operator.LTE) {
 					lessThanComparison = true;
-				} else if (op == OperatorNode.Operator.GT
-						|| op == OperatorNode.Operator.GTE) {
+				} else if (op == Operator.GT || op == Operator.GTE) {
 					lessThanComparison = false;
 				} else {
 					assert false : "OpenMP Canonical Loop Form violated (condition must be one of >, >=, <, or <=) :"
@@ -280,7 +279,7 @@ public class OpenMPTransformer extends BaseTransformer {
 	 */
 	private void collectAssignRefExprs(ASTNode node) {
 		if (node instanceof OperatorNode
-				&& ((OperatorNode) node).getOperator() == OperatorNode.Operator.ASSIGN) {
+				&& ((OperatorNode) node).getOperator() == Operator.ASSIGN) {
 			/*
 			 * Need to handle all of the *EQ operators as well.
 			 */
@@ -294,7 +293,7 @@ public class OpenMPTransformer extends BaseTransformer {
 					writeVars.add(idEnt);
 				}
 			} else if (lhs instanceof OperatorNode
-					&& ((OperatorNode) lhs).getOperator() == OperatorNode.Operator.SUBSCRIPT) {
+					&& ((OperatorNode) lhs).getOperator() == Operator.SUBSCRIPT) {
 				writeArrayRefs.add((OperatorNode) lhs);
 
 			} else {
@@ -330,7 +329,7 @@ public class OpenMPTransformer extends BaseTransformer {
 			}
 
 		} else if (node instanceof OperatorNode
-				&& ((OperatorNode) node).getOperator() == OperatorNode.Operator.SUBSCRIPT) {
+				&& ((OperatorNode) node).getOperator() == Operator.SUBSCRIPT) {
 			readArrayRefs.add((OperatorNode) node);
 
 		} else if (node != null) {
