@@ -17,32 +17,14 @@ $filesystem CIVL_filesystem = $filesystem_create($here);
  */
 $output $filesystem CIVL_output_filesystem;
 
-FILE * stdout = $fopen(CIVL_filesystem, "CIVL_stdout", "wx");
+FILE * stdout = $fopen(CIVL_filesystem, "CIVL_stdout", CIVL_FILE_MODE_WX);
 
-FILE * stderr = $fopen(CIVL_filesystem, "CIVL_stderr", "wx");
+FILE * stderr = $fopen(CIVL_filesystem, "CIVL_stderr", CIVL_FILE_MODE_WX);
 
-FILE * stdin = $fopen(CIVL_filesystem, "CIVL_stdin", "r");
+FILE * stdin = $fopen(CIVL_filesystem, "CIVL_stdin", CIVL_FILE_MODE_R);
 
-FILE *fopen(const char * restrict filename, const char * restrict mode) {
+FILE *fopen(const char * restrict filename, CIVL_File_mode mode) {
   return $fopen(CIVL_filesystem, filename, mode);
 }
 
-// make a system function to avoid dealing with the var args
-// it will just call $fprintf with CIVL_filesystem.
-// this will be implemented in an executor for stdio-c
-// get rid of dash.  That executor will have to find
-// a variable called CIVL_filesystem starting from
-// this process.  Can this be done without strings?
-
-// would prefer that the model builder replaced calls to
-// fprintf with something else.    or AST transformer.
-// 
-
-// int fprintf(FILE * restrict stream, const char * restrict format, ...);
-
-// ditto
-// int fscanf(FILE * restrict stream, const char * restrict format, ...);
-
-// int printf(const char * restrict format, ...);
-
-// int scanf(const char * restrict format, ...);
+// everything else: system function

@@ -11,6 +11,27 @@
 
 /* ******************************* Types ******************************* */
 
+/* There are 16 modes, and they must appear in this order to be
+ * consistent with the system function Java code. */
+typedef enum CIVL_File_mode {
+  CIVL_FILE_MODE_R,    // open text file for reading
+  CIVL_FILE_MODE_W,    // truncate to zero length or create text file for writing
+  CIVL_FILE_MODE_WX,   // create text file for writing
+  CIVL_FILE_MODE_A,    // append; open or create text file for writing at end-of-file
+  CIVL_FILE_MODE_RB,   // open binary file for reading
+  CIVL_FILE_MODE_WB,   // truncate to zero length or create binary file for writing
+  CIVL_FILE_MODE_WBX,  // create binary file for writing
+  CIVL_FILE_MODE_AB,   // append; open or create binary file for writing at end-of-file
+  CIVL_FILE_MODE_RP,   // open text file for update (reading and writing)
+  CIVL_FILE_MODE_WP,   // truncate to zero length or create text file for update
+  CIVL_FILE_MODE_WPX,  // create text file for update
+  CIVL_FILE_MODE_AP,   // append; open or create text file for update, writing at end-of-file
+  CIVL_FILE_MODE_RPB,  // open binary file for update (reading and writing)
+  CIVL_FILE_MODE_WPB,  // truncate to zero length or create binary file for update
+  CIVL_FILE_MODE_WPBX, // create binary file for update
+  CIVL_FILE_MODE_APB   // append; open or create binary file for update, writing at end-of-file
+} CIVL_File_mode;
+
 /* Needed from stdarg.h: what is it for? */
 typedef struct _ABC_va_list {
   int x;
@@ -93,15 +114,17 @@ typedef int fpos_t;
 
 /* Functions */
 
+/* Converts a mode string to the enumerated type CIVL_File_mode.
+ * An exception is thrown if the mode string is not one of those
+ * specified in the C11 Standard. */
+CIVL_File_mode CIVL_File_stringToMode(char * modeString);
+
 /* Creates a new empty file system, returning a handle to it. */
 $filesystem $filesystem_create($scope scope);
 
 /* Deallocates any data associated to the file system, and makes
  * the handle undefined */
 void $filesystem_destroy($filesystem fs);
-
-// do we need this or will it all happen through fopen
-$file $file_create($filesystem fs, char * filename);
 
 /* Opens a file f, creates a new FILE F pointing into f, and returns
  * a pointer to F.  Will create f if f does not already exist or
@@ -129,7 +152,7 @@ $file $file_create($filesystem fs, char * filename);
  *
  */
 FILE * $fopen($filesystem fs, const char * restrict filename,
-              const char * restrict mode);
+              CIVL_File_mode mode);
 
 // same as C. make system function
 // int fclose(FILE *stream);

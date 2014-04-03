@@ -67,6 +67,23 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public class LibstdioExecutor extends CommonLibraryExecutor implements
 		LibraryExecutor {
+	public static int modeCount = 0;
+	public final static int CIVL_FILE_MODE_R = 0;
+	public final static int CIVL_FILE_MODE_W = 1;
+	public final static int CIVL_FILE_MODE_WX = 2;
+	public final static int CIVL_FILE_MODE_A = 3;
+	public final static int CIVL_FILE_MODE_RB = 4;
+	public final static int CIVL_FILE_MODE_WB = 5;
+	public final static int CIVL_FILE_MODE_WBX = 6;
+	public final static int CIVL_FILE_MODE_AB = 7;
+	public final static int CIVL_FILE_MODE_RP = 8;
+	public final static int CIVL_FILE_MODE_WP = 9;
+	public final static int CIVL_FILE_MODE_WPX = 10;
+	public final static int CIVL_FILE_MODE_AP = 11;
+	public final static int CIVL_FILE_MODE_RPB = 12;
+	public final static int CIVL_FILE_MODE_WPB = 13;
+	public final static int CIVL_FILE_MODE_WPBX = 14;
+	public final static int CIVL_FILE_MODE_APB = 15;
 
 	/** The SARL character type. */
 	private SymbolicType charType;
@@ -158,6 +175,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				.symbolicConstant(universe.stringObject("contents"), universe
 						.functionType(Arrays.asList(stringSymbolicType),
 								stringSymbolicType)));
+
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -299,6 +317,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		SymbolicExpression filesystemPointer = argumentValues[0];
 		Evaluation eval = evaluator.dereference(expressions[0].getSource(),
 				state, filesystemPointer);
+		int mode = evaluator.extractInt(expressions[2].getSource(),
+				(NumericExpression) argumentValues[2]);
 		SymbolicExpression fileSystemStructure;
 		SymbolicExpression fileArray;
 		SymbolicExpression scope;
@@ -306,10 +326,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		SymbolicSequence<?> fileSequence;
 		int numFiles;
 		int fileIndex;
-		String mode;
 		NumericExpression isInput, isOutput, isBinary, isWide = zeroInt;
 		SymbolicExpression contents;
 		SymbolicExpression theFile;
+		NumericExpression pos0, pos1;
 
 		state = eval.state;
 		fileSystemStructure = eval.value;
@@ -319,8 +339,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				argumentValues[1]);
 		state = eval.state;
 		filename = eval.value;
-
-		mode = getString(argumentValues[2]);
 
 		// does a file by that name already exist in the filesystem?
 		// assume all are concrete.
@@ -343,28 +361,40 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		if (fileIndex == numFiles) {
 			// file not found: create it.
 			switch (mode) {
-			case "r":
+			case CIVL_FILE_MODE_R:
 				// assume file exists with unconstrained contents
 				isInput = oneInt;
 				isOutput = zeroInt;
 				isBinary = zeroInt;
 				contents = initialContents(filename);
+				pos0 = pos1 = zeroInt;
 				break;
-			case "w":
-			case "wx":
+			case CIVL_FILE_MODE_W:
+			case CIVL_FILE_MODE_WX:
 				// assume file does not yet exist
 				isInput = zeroInt;
 				isOutput = oneInt;
 				isBinary = zeroInt;
 				contents = emptyContents;
+				pos0 = pos1 = zeroInt;
 				break;
-			case "a":
-			case "r+":
+			case CIVL_FILE_MODE_A:
 				// assume file exists
 				isInput = oneInt;
 				isOutput = oneInt;
 				isBinary = zeroInt;
 				contents = initialContents(filename);
+				pos0 = oneInt;
+				pos1 = zeroInt;
+				break;
+			case CIVL_FILE_MODE_RP:
+				// assume file exists
+				isInput = oneInt;
+				isOutput = oneInt;
+				isBinary = zeroInt;
+				contents = initialContents(filename);
+				pos0 = pos1 = zeroInt;
+				break;
 			default:
 				throw new CIVLUnimplementedFeatureException("FILE mode " + mode);
 			}
@@ -378,7 +408,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		}
 		// now theFile is the new file
 		// malloc a new FILE object with appropriate pointers
-		
+
 		{
 			// $file *file; // the actual file to which this refers
 			// $filesystem fs; // file system to which this FILE is associated
@@ -386,12 +416,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			// int pos2; // the character index (second index) in the contents
 			// int mode; // Stream mode: r/w/a
 			// int isOpen; // is this FILE open (0 or 1)?
-			NumericExpression pos1, pos2;
-			// create enum type for mode.
+			
+			// do malloc, get pointer, do the assignments.
 		}
-		
-		
-		
+
 		return null;
 
 	}
