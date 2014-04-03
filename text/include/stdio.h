@@ -1,9 +1,9 @@
 /* stdio.h: The CIVL representation of standard C library stdio.
  * Based on C11 Standard.
  */
- #ifdef __STDIO__
- #else
- #define __STDIO__
+#ifdef __STDIO__
+#else
+#define __STDIO__
 
 #include<civlc.h>
 #include<stdio.cvl>

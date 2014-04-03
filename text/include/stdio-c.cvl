@@ -15,7 +15,7 @@ $filesystem CIVL_filesystem = $filesystem_create($here);
  * the program.  The files will be sorted in some canonical
  * way.
  */
-$output $filesystem CIVL_output_filesystem;
+$output $file CIVL_output_filesystem[];
 
 FILE * stdout = $fopen(CIVL_filesystem, "CIVL_stdout", CIVL_FILE_MODE_WX);
 
@@ -23,8 +23,9 @@ FILE * stderr = $fopen(CIVL_filesystem, "CIVL_stderr", CIVL_FILE_MODE_WX);
 
 FILE * stdin = $fopen(CIVL_filesystem, "CIVL_stdin", CIVL_FILE_MODE_R);
 
-FILE *fopen(const char * restrict filename, CIVL_File_mode mode) {
-  return $fopen(CIVL_filesystem, filename, mode);
-}
+//FILE *fopen(const char * restrict filename, CIVL_File_mode mode) {
+//  return $fopen(CIVL_filesystem, filename, mode);
+//}
 
 // everything else: system function
+// at the end of this scope, copy all files from CIVL_filesystem to CIVL_output_filesystem

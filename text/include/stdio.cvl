@@ -114,7 +114,7 @@ typedef int fpos_t;
 /* Converts a mode string to the enumerated type CIVL_File_mode.
  * An exception is thrown if the mode string is not one of those
  * specified in the C11 Standard. */
-CIVL_File_mode CIVL_File_stringToMode(char * modeString);
+CIVL_File_mode CIVL_File_stringToMode(char * modeString);//mode not string-literal
 
 /* Creates a new empty file system, returning a handle to it. */
 $filesystem $filesystem_create($scope scope);
@@ -134,7 +134,7 @@ void $filesystem_destroy($filesystem fs);
  * See C11 Sec. 7.21.5.3.   The modes currently supported
  * are: 
  *   "r":  open text file for reading; fails if file does
- *         not exist
+ *         not exist //if fails return NULL
  *   "w":  truncate to 0 length if file exists and
  *         open for writing, or create new empty text file
  *         for writing if file does not yet exist
