@@ -5,6 +5,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -132,6 +133,37 @@ public interface Evaluator {
 	 * @return the dynamic scope ID component of that pointer value
 	 */
 	int getScopeId(CIVLSource source, SymbolicExpression pointer);
+
+	/**
+	 * Given a pointer to char, returns the symbolic expression of type array of
+	 * char which is the string pointed to.
+	 * 
+	 * The method will succeed if any of the following holds: (1) the pointer
+	 * points to element 0 of an array of char. In that case, it is just assumed
+	 * that the string is the whole array. (2) the pointer points to element i
+	 * of an array of char, where i is a concrete positive integer and the array
+	 * length is also concrete. In that case, the elements of the array are
+	 * scanned starting from position i until the first null charcter is
+	 * reached, or the end of the array is reached, and the string is construted
+	 * from those scanned characters (including the null character). In other
+	 * situations, this method may fail, in which case it throws an exception.
+	 * 
+	 * @param state
+	 *            the state in which this evaluation is taking place
+	 * @param source
+	 *            the source information used to report errors
+	 * @param charPointer
+	 *            a symbolic expression which is a pointer to a char
+	 * @throws CIVLUnimplementedFeatureException
+	 *             if it is not possible to extract the string expression.
+	 * @return the symbolic expression which is an array of type char
+	 *         representing the string pointed to
+	 * @throws UnsatisfiablePathConditionException
+	 *             of something goes wrong evaluating the string
+	 */
+	Evaluation getStringExpression(State state, CIVLSource source,
+			SymbolicExpression charPointer)
+			throws UnsatisfiablePathConditionException;
 
 	/**
 	 * Given an array, a start index, and end index, returns the array which is

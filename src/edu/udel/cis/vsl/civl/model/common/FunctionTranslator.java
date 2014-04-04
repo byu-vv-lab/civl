@@ -185,6 +185,12 @@ public class FunctionTranslator {
 
 	private static final String QUEUE_TYPE = "__queue__";
 
+	private static final String FILE_SYSTEM_TYPE = "CIVL_filesystem";
+
+	private static final String REAL_FILE_TYPE = "$file";
+
+	private static final String FILE_STREAM_TYPE = "FILE";
+
 	/* ************************** Instance Fields ************************** */
 
 	/**
@@ -227,7 +233,7 @@ public class FunctionTranslator {
 	 * The current translation is a left hand side expression.
 	 */
 	private boolean isLHS = false;
-	
+
 	private boolean isRootFunction = false;
 
 	/* **************************** Constructors *************************** */
@@ -366,62 +372,58 @@ public class FunctionTranslator {
 		Fragment body;
 		Scope scope = this.function.outerScope();
 		CIVLType returnedType;
-		
+
 		body = translateStatementNode(scope, this.functionBodyNode);
 		returnedType = this.function.returnType();
-		if(this.isRootFunction || returnedType.isVoidType()){
+		if (this.isRootFunction || returnedType.isVoidType()) {
 			if (!containsReturn(body)) {
 				CIVLSource endSource = modelFactory
 						.sourceOfEnd(this.functionBodyNode);
 				Location returnLocation = modelFactory.location(endSource,
 						function.outerScope());
-				Fragment returnFragment = modelFactory.returnFragment(endSource,
-						returnLocation, null, this.functionInfo.function());
+				Fragment returnFragment = modelFactory.returnFragment(
+						endSource, returnLocation, null,
+						this.functionInfo.function());
 
 				if (body != null)
 					body = body.combineWith(returnFragment);
 				else
 					body = returnFragment;
 			}
-		}else{
+		} else {
 			CIVLSource source = modelFactory.sourceOfEnd(functionBodyNode);
-		    Location location = modelFactory.location(source, scope);
+			Location location = modelFactory.location(source, scope);
 			ArrayList<Expression> arguments = new ArrayList<>(1);
-			String message = "The function " + function.name().name() + " attempts to return without a value.\n\n";
+			String message = "The function " + function.name().name()
+					+ " attempts to return without a value.\n\n";
 			int length = message.length();
 			AssertStatement assertion;
 			CIVLArrayType arrayType = modelFactory.completeArrayType(
-					modelFactory.charType(), modelFactory
-							.integerLiteralExpression(source,
-									BigInteger.valueOf(length)));
+					modelFactory.charType(),
+					modelFactory.integerLiteralExpression(source,
+							BigInteger.valueOf(length)));
 			ArrayList<Expression> chars = new ArrayList<>();
 			ArrayLiteralExpression stringLiteral;
-			VariableExpression anonVariable = modelFactory
-					.variableExpression(source, modelFactory
-							.newAnonymousVariableForArrayLiteral(
-									source,
-									scope,
-									arrayType));
+			VariableExpression anonVariable = modelFactory.variableExpression(
+					source, modelFactory.newAnonymousVariableForArrayLiteral(
+							source, scope, arrayType));
 			Statement anonAssign;
 			Fragment checkingFragment;
-			
 
 			for (int i = 0; i < length; i++) {
 				char c = message.charAt(i);
-				chars.add(modelFactory.charLiteralExpression(
-						source, c));
+				chars.add(modelFactory.charLiteralExpression(source, c));
 
 			}
 			stringLiteral = modelFactory.arrayLiteralExpression(source,
 					arrayType, chars);
-			anonAssign = modelFactory.assignStatement(
-					source,
-					modelFactory.location(source,
-							modelFactory.currentScope()), anonVariable,
-					stringLiteral, true);
+			anonAssign = modelFactory.assignStatement(source,
+					modelFactory.location(source, modelFactory.currentScope()),
+					anonVariable, stringLiteral, true);
 			arguments.add(arrayToPointer(anonVariable));
-			assertion = modelFactory.assertStatement(source, location, 
-					modelFactory.booleanLiteralExpression(source, false), arguments);
+			assertion = modelFactory.assertStatement(source, location,
+					modelFactory.booleanLiteralExpression(source, false),
+					arguments);
 			checkingFragment = new CommonFragment(anonAssign, assertion);
 			body = body.combineWith(checkingFragment);
 		}
@@ -1100,6 +1102,10 @@ public class FunctionTranslator {
 			try {
 				result = translateVariableDeclarationNode(location, scope,
 						(VariableDeclarationNode) node);
+				if (!modelFactory.anonFragment().isEmpty()) {
+					result = modelFactory.anonFragment().combineWith(result);
+					modelFactory.resetAnonFragment();
+				}
 			} catch (CommandLineException e) {
 				throw new CIVLInternalException(
 						"Saw input variable outside of root scope",
@@ -1496,11 +1502,12 @@ public class FunctionTranslator {
 			case COMMA:
 				int number = operatorNode.getNumberOfArguments();
 				result = new CommonFragment();
-				
-				for(int i = 0; i < number; i++){
+
+				for (int i = 0; i < number; i++) {
 					ExpressionNode argument = operatorNode.getArgument(i);
-					Fragment current = this.translateExpressionStatementNode(scope, argument);
-					
+					Fragment current = this.translateExpressionStatementNode(
+							scope, argument);
+
 					result = result.combineWith(current);
 				}
 				break;
@@ -3573,6 +3580,17 @@ public class FunctionTranslator {
 			result.setHandleObjectType(true);
 			modelBuilder.gcommType = result;
 			modelBuilder.handledObjectTypes.add(result);
+			break;
+		case FILE_SYSTEM_TYPE:
+			result.setHandleObjectType(true);
+			modelBuilder.basedFilesystemType = result;
+			modelBuilder.handledObjectTypes.add(result);
+			break;
+		case REAL_FILE_TYPE:
+			modelBuilder.fileType = result;
+			break;
+		case FILE_STREAM_TYPE:
+			modelBuilder.FILEtype = result;
 			break;
 		default:
 		}

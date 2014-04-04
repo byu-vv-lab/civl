@@ -276,6 +276,15 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private NumericExpression zeroR;
 
+	/** The SARL character type. */
+	private SymbolicType charType;
+
+	/**
+	 * The SARL character 0, i.e., '\0' or '\u0000', used as the
+	 * "null character constant" in C.
+	 */
+	private SymbolicExpression nullCharExpr;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -331,6 +340,8 @@ public class CommonEvaluator implements Evaluator {
 					.getDynamicType(universe);
 		if (modelFactory.model().commType() != null)
 			commType = modelFactory.model().commType().getDynamicType(universe);
+		charType = universe.characterType();
+		nullCharExpr = universe.canonic(universe.character('\u0000'));
 	}
 
 	/* ************************** Private Methods ************************** */
@@ -2071,13 +2082,13 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/* ********************** Methods from Evaluator *********************** */
-	
+
 	@Override
 	public Evaluation evaluate(State state, int pid, Expression expression)
 			throws UnsatisfiablePathConditionException {
 		ExpressionKind kind = expression.expressionKind();
 		Evaluation result;
-	
+
 		switch (kind) {
 		case ABSTRACT_FUNCTION_CALL:
 			result = evaluateAbstractFunctionCall(state, pid,
@@ -2362,6 +2373,76 @@ public class CommonEvaluator implements Evaluator {
 	public int getScopeId(CIVLSource source, SymbolicExpression pointer) {
 		return modelFactory.getScopeId(source,
 				universe.tupleRead(pointer, zeroObj));
+	}
+
+	@Override
+	public Evaluation getStringExpression(State state, CIVLSource source,
+			SymbolicExpression charPointer)
+			throws UnsatisfiablePathConditionException {
+		BooleanExpression pc = state.getPathCondition();
+		Reasoner reasoner = universe.reasoner(pc);
+		ReferenceExpression symRef = this.getSymRef(charPointer);
+
+		if (symRef.isArrayElementReference()) {
+			ArrayElementReference arrayEltRef = (ArrayElementReference) symRef;
+			SymbolicExpression arrayReference = this.parentPointer(source,
+					charPointer);
+			NumericExpression indexExpr = arrayEltRef.getIndex();
+			Evaluation eval = this.dereference(source, state, arrayReference);
+			int index;
+
+			if (indexExpr.isZero())
+				index = 0;
+			else {
+				IntegerNumber indexNum = (IntegerNumber) reasoner
+						.extractNumber(indexExpr);
+
+				if (indexNum == null)
+					throw new CIVLUnimplementedFeatureException(
+							"non-concrete symbolic index into string", source);
+				index = indexNum.intValue();
+			}
+			if (index == 0)
+				return eval;
+			else if (index > 0) {
+				SymbolicExpression arrayValue = eval.value;
+				SymbolicArrayType arrayType = (SymbolicArrayType) arrayValue
+						.type();
+				LinkedList<SymbolicExpression> charExprList = new LinkedList<>();
+				int length;
+
+				if (arrayType.isComplete()) {
+					NumericExpression extent = ((SymbolicCompleteArrayType) arrayType)
+							.extent();
+					IntegerNumber extentNum = (IntegerNumber) reasoner
+							.extractNumber(extent);
+
+					if (extentNum == null)
+						throw new CIVLUnimplementedFeatureException(
+								"pointer into string of non-concrete length",
+								source);
+					length = extentNum.intValue();
+				} else
+					throw new CIVLUnimplementedFeatureException(
+							"pointer into string of unknown length", source);
+				for (int i = index; i < length; i++) {
+					SymbolicExpression charExpr = universe.arrayRead(
+							arrayValue, universe.integer(i));
+
+					charExprList.add(charExpr);
+					// if you wanted to get heavy-weight, call the prover to see
+					// if charExpr equals the null character instead of this:
+					if (nullCharExpr.equals(charExpr))
+						break;
+				}
+				eval.value = universe.array(charType, charExprList);
+				return eval;
+			} else
+				throw new CIVLInternalException("negative pointer index: "
+						+ index, source);
+		}
+		throw new CIVLUnimplementedFeatureException(
+				"pointer to char is not into an array of char", source);
 	}
 
 	@Override
@@ -2665,7 +2746,7 @@ public class CommonEvaluator implements Evaluator {
 				pointerType,
 				Arrays.asList(new SymbolicExpression[] { scopeField, varField,
 						symRef }));
-	
+
 		return result;
 	}
 

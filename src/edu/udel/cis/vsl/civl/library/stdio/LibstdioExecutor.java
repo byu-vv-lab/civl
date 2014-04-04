@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -26,21 +27,15 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
-import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicFunctionType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
@@ -94,20 +89,24 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	public final static int CIVL_FILE_MODE_WPBX = 14;
 	public final static int CIVL_FILE_MODE_APB = 15;
 
-	/** The SARL character type. */
-	private SymbolicType charType;
+	public final static String STDOUT = "CIVL_stdout";
+	public final static String STDIN = "CIVL_stdin";
 
-	/**
-	 * The SARL character 0, i.e., '\0' or '\u0000', used as the
-	 * "null character constant" in C.
-	 */
-	private SymbolicExpression nullCharExpr;
+//	/** The SARL character type. */
+//	private SymbolicType charType;
+//
+//	/**
+//	 * The SARL character 0, i.e., '\0' or '\u0000', used as the
+//	 * "null character constant" in C.
+//	 */
+//	private SymbolicExpression nullCharExpr;
 
-	/**
-	 * The CIVL handle type "$filesystem". This is a pointer type with base type
-	 * a struct type.
-	 */
-	private CIVLPointerType filesystemType;
+	// /**
+	// * The CIVL handle type "$filesystem". This is a pointer type with base
+	// type
+	// * a struct type.
+	// */
+	// private CIVLPointerType filesystemType;
 
 	/**
 	 * The base type of the pointer type $filesystem; a structure type with
@@ -135,10 +134,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 */
 	private CIVLStructOrUnionType FILEtype;
 
-	private SymbolicType FILESymbolicType;
+	// private SymbolicType FILESymbolicType;
 
-	private IntObject zeroObj, oneObj, twoObj, threeObj, fourObj, fiveObj,
-			sixObj;
+	// private IntObject zeroObj, oneObj, twoObj, threeObj, fourObj, fiveObj,
+	// sixObj;
 
 	private NumericExpression zeroInt, oneInt;
 
@@ -169,11 +168,12 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	public LibstdioExecutor(Executor primaryExecutor, PrintStream output,
 			boolean enablePrintf, ModelFactory modelFactory) {
 		super(primaryExecutor, output, enablePrintf, modelFactory);
+		Model model = modelFactory.model();
 
-		charType = universe.characterType();
-		nullCharExpr = universe.canonic(universe.character('\u0000'));
-		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
-		oneObj = (IntObject) universe.canonic(universe.intObject(1));
+//		charType = universe.characterType();
+//		nullCharExpr = universe.canonic(universe.character('\u0000'));
+		// zeroObj = (IntObject) universe.canonic(universe.intObject(0));
+		// oneObj = (IntObject) universe.canonic(universe.intObject(1));
 		zeroInt = universe.zeroInt();
 		oneInt = universe.oneInt();
 		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
@@ -181,15 +181,25 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		emptyContents = universe.canonic(universe
 				.emptyArray(stringSymbolicType));
 
-		SymbolicFunctionType stringToStringArray = universe.functionType(
-				Arrays.asList(stringSymbolicType),
-				universe.arrayType(stringSymbolicType));
+		// SymbolicFunctionType stringToStringArray = universe.functionType(
+		// Arrays.asList(stringSymbolicType),
+		// universe.arrayType(stringSymbolicType));
 
 		initialContentsFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("contents"), universe
 						.functionType(Arrays.asList(stringSymbolicType),
 								stringSymbolicType)));
 
+		this.filesystemStructType = model.basedFilesystemType();
+		this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
+				.getDynamicType(universe);
+
+		this.fileType = model.fileType();
+		this.fileSymbolicType = (SymbolicTupleType) this.fileType
+				.getDynamicType(universe);
+
+		this.FILEtype = model.FILEtype();
+//		this.FILESymbolicType = this.FILEtype.getDynamicType(universe);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -199,109 +209,53 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 * representation. If it is a concrete array of char consisting of concrete
 	 * characters, this will be the obvious string. Otherwise the result is
 	 * something readable but unspecified.
-	 */
-	private String getString(SymbolicExpression stringExpr) {
-		// TODO
-		return null;
-	}
-
-	/**
-	 * TODO: move me to general evaluator.
 	 * 
-	 * Given a pointer to char, returns the symbolic expression of type array of
-	 * char which is the string pointed to.
-	 * 
-	 * The method will succeed if any of the following holds: (1) the pointer
-	 * points to element 0 of an array of char. In that case, it is just assumed
-	 * that the string is the whole array. (2) the pointer points to element i
-	 * of an array of char, where i is a concrete positive integer and the array
-	 * length is also concrete. In that case, the elements of the array are
-	 * scanned starting from position i until the first null charcter is
-	 * reached, or the end of the array is reached, and the string is construted
-	 * from those scanned characters (including the null character). In other
-	 * situations, this method may fail, in which case it throws an exception.
-	 * 
-	 * @param state
-	 *            the state in which this evaluation is taking place
-	 * @param source
-	 *            the source information used to report errors
-	 * @param charPointer
-	 *            a symbolic expression which is a pointer to a char
-	 * @throws CIVLUnimplementedFeatureException
-	 *             if it is not possible to extract the string expression.
-	 * @return the symbolic expression which is an array of type char
-	 *         representing the string pointed to
 	 * @throws UnsatisfiablePathConditionException
-	 *             of something goes wrong evaluating the string
 	 */
-	private Evaluation getStringExpression(State state, CIVLSource source,
+	private Pair<State, StringBuffer> getString(CIVLSource source, State state,
 			SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException {
-		BooleanExpression pc = state.getPathCondition();
-		Reasoner reasoner = universe.reasoner(pc);
-		ReferenceExpression symRef = evaluator.getSymRef(charPointer);
+		if (charPointer.operator() == SymbolicOperator.CONCRETE) {
+			SymbolicSequence<?> originalArray;
+			int int_arrayIndex;
+			StringBuffer result = new StringBuffer();
+			int numChars;
+			char[] stringChars;
 
-		if (symRef.isArrayElementReference()) {
-			ArrayElementReference arrayEltRef = (ArrayElementReference) symRef;
-			SymbolicExpression arrayReference = evaluator.parentPointer(source,
-					charPointer);
-			NumericExpression indexExpr = arrayEltRef.getIndex();
-			Evaluation eval = evaluator.dereference(source, state,
-					arrayReference);
-			int index;
+			if (charPointer.type() instanceof SymbolicArrayType) {
+				originalArray = (SymbolicSequence<?>) charPointer.argument(0);
+				int_arrayIndex = 0;
+			} else {
+				SymbolicExpression arrayPointer = evaluator.parentPointer(
+						source, charPointer);
+				ArrayElementReference arrayRef = (ArrayElementReference) evaluator
+						.getSymRef(charPointer);
+				NumericExpression arrayIndex = arrayRef.getIndex();
+				Evaluation eval = evaluator.dereference(source, state,
+						arrayPointer);
 
-			if (indexExpr.isZero())
-				index = 0;
-			else {
-				IntegerNumber indexNum = (IntegerNumber) reasoner
-						.extractNumber(indexExpr);
-
-				if (indexNum == null)
-					throw new CIVLUnimplementedFeatureException(
-							"non-concrete symbolic index into string", source);
-				index = indexNum.intValue();
+				state = eval.state;
+				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
+				int_arrayIndex = evaluator.extractInt(source, arrayIndex);
 			}
-			if (index == 0)
-				return eval;
-			else if (index > 0) {
-				SymbolicExpression arrayValue = eval.value;
-				SymbolicArrayType arrayType = (SymbolicArrayType) arrayValue
-						.type();
-				LinkedList<SymbolicExpression> charExprList = new LinkedList<>();
-				int length;
+			numChars = originalArray.size();
+			stringChars = new char[numChars - int_arrayIndex];
+			for (int i = 0, j = int_arrayIndex; j < numChars; i++, j++) {
+				SymbolicExpression charExpr = originalArray.get(j);
+				Character theChar = universe.extractCharacter(charExpr);
 
-				if (arrayType.isComplete()) {
-					NumericExpression extent = ((SymbolicCompleteArrayType) arrayType)
-							.extent();
-					IntegerNumber extentNum = (IntegerNumber) reasoner
-							.extractNumber(extent);
-
-					if (extentNum == null)
-						throw new CIVLUnimplementedFeatureException(
-								"pointer into string of non-concrete length",
-								source);
-					length = extentNum.intValue();
-				} else
+				if (theChar == null)
 					throw new CIVLUnimplementedFeatureException(
-							"pointer into string of unknown length", source);
-				for (int i = index; i < length; i++) {
-					SymbolicExpression charExpr = universe.arrayRead(
-							arrayValue, universe.integer(i));
+							"non-concrete character in string at position " + j,
+							source);
+				stringChars[i] = theChar;
+			}
+			result.append(stringChars);
+			return new Pair<>(state, result);
+		} else
+			throw new CIVLUnimplementedFeatureException("non-concrete strings",
+					source);
 
-					charExprList.add(charExpr);
-					// if you wanted to get heavy-weight, call the prover to see
-					// if charExpr equals the null character instead of this:
-					if (nullCharExpr.equals(charExpr))
-						break;
-				}
-				eval.value = universe.array(charType, charExprList);
-				return eval;
-			} else
-				throw new CIVLInternalException("negative pointer index: "
-						+ index, source);
-		}
-		throw new CIVLUnimplementedFeatureException(
-				"pointer to char is not into an array of char", source);
 	}
 
 	/**
@@ -336,7 +290,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			int pid, LHSExpression lhs, Expression[] expressions,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		Evaluation eval;
+		// Evaluation eval;
 		SymbolicExpression scope = argumentValues[0];
 		LinkedList<SymbolicExpression> filesystemComponents = new LinkedList<>();
 		LinkedList<SymbolicExpression> fileArrayComponents = new LinkedList<>();
@@ -372,7 +326,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				(NumericExpression) argumentValues[2]);
 		SymbolicExpression fileSystemStructure;
 		SymbolicExpression fileArray;
-		SymbolicExpression scope;
+		// SymbolicExpression scope;
 		SymbolicExpression filename;
 		SymbolicSequence<?> fileSequence;
 		int numFiles;
@@ -385,19 +339,20 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				filesystemPointer);
 		int filesystemVid = evaluator.getVariableId(expressions[0].getSource(),
 				filesystemPointer);
+		ReferenceExpression fileSystemRef = evaluator
+				.getSymRef(filesystemPointer);
 
 		state = eval.state;
 		fileSystemStructure = eval.value;
-		scope = universe.tupleRead(fileSystemStructure, zeroObj);
-		fileArray = universe.tupleRead(fileSystemStructure, oneObj);
-		eval = getStringExpression(state, expressions[1].getSource(),
-				argumentValues[1]);// TODO go to common evaluator
+		// scope = universe.tupleRead(fileSystemStructure, zeroObj);
+		fileArray = universe.tupleRead(fileSystemStructure, oneObject);
+		eval = evaluator.getStringExpression(state, expressions[1].getSource(),
+				argumentValues[1]);
 		state = eval.state;
 		filename = eval.value;
 
 		// does a file by that name already exist in the filesystem?
 		// assume all are concrete.
-
 		if (fileArray.operator() != SymbolicOperator.CONCRETE)
 			throw new CIVLUnimplementedFeatureException(
 					"non-concrete file system", expressions[0]);
@@ -406,7 +361,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		for (fileIndex = 0; fileIndex < numFiles; fileIndex++) {
 			SymbolicExpression tmpFile = fileSequence.get(fileIndex);
 			SymbolicExpression tmpFilename = universe.tupleRead(tmpFile,
-					zeroObj);
+					zeroObject);
 
 			if (tmpFilename.equals(filename)) {
 				theFile = tmpFile;
@@ -458,7 +413,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					contents, isOutput, isInput, isBinary, isWide));
 			fileArray = universe.append(fileArray, theFile);
 			fileSystemStructure = universe.tupleWrite(fileSystemStructure,
-					oneObj, fileArray);
+					oneObject, fileArray);
 			state = primaryExecutor.assign(expressions[1].getSource(), state,
 					filesystemPointer, fileSystemStructure);
 		}
@@ -466,12 +421,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		// malloc a new FILE object with appropriate pointers
 		// create a pointer to theFile (array element reference)
 		//
-
 		{
 			List<SymbolicExpression> streamComponents = new LinkedList<>();
 			ReferenceExpression ref = universe.arrayElementReference(
-					universe.tupleComponentReference(
-							universe.identityReference(), oneObject),
+					universe.tupleComponentReference(fileSystemRef, oneObject),
 					universe.integer(fileIndex));
 			SymbolicExpression filePointer = evaluator.makePointer(scopeId,
 					filesystemVid, ref);
@@ -493,8 +446,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					(SymbolicTupleType) FILEtype.getDynamicType(universe),
 					streamComponents);
 			// do malloc, get pointer, do the assignments.
-			state = primaryExecutor.malloc(source, state, pid, lhs, null,
-					scope, FILEtype, fileStream);
+			state = primaryExecutor.assign(state, pid, lhs, fileStream);
 		}
 
 		return state;
@@ -538,7 +490,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		}
 		switch (name.name()) {
 		case "printf":
-			state = executePrintf(state, pid, arguments, argumentValues);
+			state = primaryExecutor.executePrintf(state, pid, arguments,
+					argumentValues);
 			break;
 		case "$fopen":
 			state = execute_fopen(source, state, pid, lhs, arguments,
@@ -547,6 +500,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		case "$filesystem_create":
 			state = execute_filesystem_create(source, state, pid, lhs,
 					arguments, argumentValues);
+			break;
+		case "fprintf":
+			state = execute_fprintf(source, state, pid, lhs, arguments,
+					argumentValues);
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(name.name(), statement);
@@ -557,6 +514,205 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	}
 
 	/* ************************ Methods from Library *********************** */
+
+	private State execute_fprintf(CIVLSource source, State state, int pid,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression fileStream = argumentValues[0];
+		SymbolicExpression filePointer = universe.tupleRead(fileStream,
+				zeroObject);
+		Evaluation eval = evaluator.dereference(arguments[0].getSource(),
+				state, filePointer);
+		SymbolicExpression fileObject = eval.value;
+		SymbolicExpression fileName = universe
+				.tupleRead(fileObject, zeroObject);
+		Pair<State, StringBuffer> stringResult;
+		String fileNameString;
+		StringBuffer stringOfSymbolicExpression;
+		StringBuffer formatBuffer;
+		ArrayList<StringBuffer> printedContents = new ArrayList<>();
+		ArrayList<Integer> sIndexes = new ArrayList<>();
+		Pattern pattern;
+		Matcher matcher;
+		int sCount = 1;
+		Pair<State, StringBuffer> concreteString;
+
+		state = eval.state;
+		stringResult = this.getString(source, state, fileName);
+		state = stringResult.left;
+		fileNameString = stringResult.right.substring(0,
+				stringResult.right.length() - 1);
+		concreteString = this.getString(arguments[1].getSource(), state,
+				argumentValues[1]);
+		formatBuffer = concreteString.right;
+		state = concreteString.left;
+		pattern = Pattern
+				.compile("((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[sdfoxegacpuxADEFGX]");
+		matcher = pattern.matcher(formatBuffer);
+		while (matcher.find()) {
+			String formatSpecifier = matcher.group();
+			if (formatSpecifier.compareTo("%s") == 0) {
+				sIndexes.add(sCount);
+			}
+			sCount++;
+		}
+		for (int i = 2; i < argumentValues.length; i++) {
+			SymbolicExpression argumentValue = argumentValues[i];
+			CIVLType argumentType = arguments[i].getExpressionType();
+
+			if (argumentType instanceof CIVLPointerType
+					&& ((CIVLPointerType) argumentType).baseType().isCharType()
+					&& argumentValue.operator() == SymbolicOperator.CONCRETE) {
+				// also check format code is %s before doing this
+				if (!sIndexes.contains(i)) {
+					throw new CIVLSyntaxException("Array pointer unaccepted",
+							arguments[i].getSource());
+				}
+				concreteString = this.getString(arguments[i].getSource(),
+						state, argumentValue);
+				stringOfSymbolicExpression = concreteString.right;
+				state = concreteString.left;
+				printedContents.add(stringOfSymbolicExpression);
+			} else
+				printedContents.add(new StringBuffer(argumentValue.toString()));
+		}
+		if (fileNameString.equals(STDOUT)) {
+			this.printf(arguments[1].getSource(), formatBuffer, printedContents);
+		} else if (fileNameString.equalsIgnoreCase(STDIN)) {
+
+		}
+		{ // updates the file
+			SymbolicExpression fileContents = universe.tupleRead(fileObject,
+					oneObject);
+			List<StringBuffer> formats = this.splitFormat(
+					arguments[1].getSource(), formatBuffer);
+			int newContentCount = formats.size();
+			int formatIndex = 0;
+
+			for (int i = 0; i < newContentCount; i++) {
+				StringBuffer current = formats.get(i);
+				SymbolicExpression newStringExpression;
+
+				if (current.length() > 1) {
+					if (current.charAt(0) == '%' && current.charAt(1) != '%') {
+						newStringExpression = universe.stringExpression(current
+								.append(printedContents.get(formatIndex))
+								.toString());
+						formatIndex++;
+						fileContents = universe.append(fileContents,
+								newStringExpression);
+						continue;
+					}
+				}
+				newStringExpression = universe.stringExpression(current
+						.toString().replaceAll("%%", "%"));
+				fileContents = universe.append(fileContents,
+						newStringExpression);
+			}
+			fileObject = universe.tupleWrite(fileObject, oneObject,
+					fileContents);
+			state = primaryExecutor.assign(source, state, filePointer,
+					fileObject);
+		}
+		return state;
+	}
+
+	private List<StringBuffer> splitFormat(CIVLSource source,
+			StringBuffer formatBuffer) {
+		int count = formatBuffer.length();
+		List<StringBuffer> result = new ArrayList<>();
+		StringBuffer stringBuffer = new StringBuffer();
+
+		for (int i = 0; i < count; i++) {
+			Character current = formatBuffer.charAt(i);
+
+			if (current.equals('%')) {
+				Character code = formatBuffer.charAt(i + 1);
+
+				if (code.equals('%')) {
+					stringBuffer.append("%%");
+					i = i + 1;
+				} else {
+					if (stringBuffer.length() > 0) {
+						result.add(stringBuffer);
+						stringBuffer = new StringBuffer();
+					}
+					switch (code) {
+					case 'd':
+					case 'f':
+					case 'o':
+					case 'e':
+					case 'g':
+					case 'a':
+					case 'c':
+					case 'p':
+					case 'u':
+					case 'x':
+					case 'A':
+					case 'D':
+					case 'E':
+					case 'F':
+					case 'G':
+					case 'X':
+						stringBuffer.append('%');
+						stringBuffer.append(code);
+						i = i + 1;
+						break;
+					case 'l':
+						Character code1 = formatBuffer.charAt(i + 2);
+
+						if (!code1.equals('f')) {
+							throw new CIVLSyntaxException(
+									"The format %lf is not allowed in fprintf",
+									source);
+						}
+						i = i + 2;
+						stringBuffer.append("%lf");
+						break;
+					default:
+						throw new CIVLSyntaxException("The format %" + code
+								+ " is not allowed in fprintf", source);
+					}
+					result.add(stringBuffer);
+					stringBuffer = new StringBuffer();
+				}
+			} else {
+				stringBuffer.append(current);
+			}
+		}
+		if (stringBuffer.length() > 0)
+			result.add(stringBuffer);
+		return result;
+	}
+
+	private void printf(CIVLSource source, StringBuffer formatBuffer,
+			ArrayList<StringBuffer> arguments) {
+		String format = formatBuffer.substring(0);
+
+		format = format.replaceAll("%lf", "%s");
+		format = format.replaceAll(
+				"((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]", "%s");
+		for (int i = 0; i < format.length(); i++) {
+			if (format.charAt(i) == '%') {
+				if (format.charAt(i + 1) == '%') {
+					i++;
+					continue;
+				}
+				if (format.charAt(i + 1) != 's')
+					throw new CIVLSyntaxException("The format:%"
+							+ format.charAt(i + 1)
+							+ " is not allowed in printf", source);
+			}
+		}
+		try {
+			output.printf(format, arguments.toArray());
+
+		} catch (Exception e) {
+			throw new CIVLInternalException("unexpected error in printf",
+					source);
+		}
+	}
 
 	@Override
 	public String name() {
@@ -588,183 +744,5 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	}
 
 	/* ************************ Other Public Methods *********************** */
-
-	/**
-	 * Execute <code>printf()</code> function. See C11 Sec. 7.21.6.1 and
-	 * 7.21.6.3. Prototype:
-	 * 
-	 * <pre>
-	 * int printf(const char * restrict format, ...);
-	 * </pre>
-	 * 
-	 * Escape characters can be supported; the following have been tested:
-	 * <code>\n</code>, <code>\r</code>, <code>\b</code>, <code>\t</code>,
-	 * <code>\"</code>, <code>\'</code>, and <code>\\</code>. Some (but not all)
-	 * format specifiers can be supported and the following have been tested:
-	 * <code>%d</code>, <code>%o</code>, <code>%x</code>, <code>%f</code>,
-	 * <code>%e</code>, <code>%g</code>, <code>%a</code>, <code>%c</code>,
-	 * <code>%p</code>, and <code>%s</code>.
-	 * 
-	 * TODO CIVL currently dosen't support 'printf("%c" , c)'(where c is a char
-	 * type variable)?
-	 * 
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param argumentValues
-	 * @return State
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	public State executePrintf(State state, int pid, Expression[] expressions,
-			SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		if (this.enablePrintf) {
-			// using StringBuffer instead for performance
-			StringBuffer stringOfSymbolicExpression = new StringBuffer();
-			StringBuffer formatBuffer = new StringBuffer();
-			String format;
-			ArrayList<String> arguments = new ArrayList<String>();
-			CIVLSource source = state.getProcessState(pid).getLocation()
-					.getSource();
-			// variables used for checking %s
-			ArrayList<Integer> sIndexes = new ArrayList<Integer>();
-			Pattern pattern;
-			Matcher matcher;
-			int sCount = 1;
-
-			// don't assume argumentValues[0] is a pointer to an element of an
-			// array. Check it. If it is not, through an exception.
-			SymbolicExpression arrayPointer = evaluator.parentPointer(source,
-					argumentValues[0]);
-			Evaluation eval = evaluator
-					.dereference(source, state, arrayPointer);
-
-			if (eval.value.operator() != SymbolicOperator.CONCRETE)
-				throw new CIVLUnimplementedFeatureException(
-						"non-concrete format strings",
-						expressions[0].getSource());
-
-			SymbolicSequence<?> originalArray = (SymbolicSequence<?>) eval.value
-					.argument(0);
-
-			state = eval.state;
-
-			int numChars = originalArray.size();
-			char[] formatChars = new char[numChars];
-
-			for (int i = 0; i < originalArray.size(); i++) {
-				SymbolicExpression charExpr = originalArray.get(i);
-				Character theChar = universe.extractCharacter(charExpr);
-
-				if (theChar == null)
-					throw new CIVLUnimplementedFeatureException(
-							"non-concrete character in format string at position "
-									+ i, expressions[0].getSource());
-
-				formatChars[i] = theChar;
-			}
-			formatBuffer.append(formatChars);
-			// checking %s: find out all the corresponding argument positions
-			// for all %s existed in format string.
-			pattern = Pattern
-					.compile("((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[sdfoxegacpuxADEFGX]");
-			matcher = pattern.matcher(formatBuffer);
-			while (matcher.find()) {
-				String formatSpecifier = matcher.group();
-				if (formatSpecifier.compareTo("%s") == 0) {
-					sIndexes.add(sCount);
-				}
-				sCount++;
-			}
-			// format = formatBuffer.toString();
-			// splitedFormats = format.split("%s");
-			// for (int k = 0; k < splitedFormats.length - 1; k++) {
-			// int splitedFormatsLength;
-			//
-			// splitedFormatsLength = splitedFormats[k]
-			// .split("((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]").length;
-			// //is it true? string.split("REX").length == 0 ==> string is fully
-			// matched with "REX".
-			// if (splitedFormatsLength == 0)
-			// splitedFormatsLength = 2;
-			// sCount += splitedFormatsLength;
-			// sIndexes.add(sCount);
-			// }
-			for (int i = 1; i < argumentValues.length; i++) {
-				SymbolicExpression argument = argumentValues[i];
-				CIVLType argumentType = expressions[i].getExpressionType();
-				ReferenceExpression ref;
-				ArrayElementReference arrayRef;
-				NumericExpression arrayIndex;
-				int int_arrayIndex;
-
-				if (argumentType instanceof CIVLPointerType
-						&& ((CIVLPointerType) argumentType).baseType()
-								.isCharType()
-						&& argument.operator() == SymbolicOperator.CONCRETE) {
-					// also check format code is %s before doing this
-					if (!sIndexes.contains(i)) {
-						throw new CIVLSyntaxException(
-								"Array pointer unaccepted",
-								expressions[i].getSource());
-					}
-					arrayPointer = evaluator.parentPointer(source, argument);
-					ref = evaluator.getSymRef(argument);
-					assert (ref.isArrayElementReference());
-					arrayRef = (ArrayElementReference) evaluator
-							.getSymRef(argument);
-					arrayIndex = arrayRef.getIndex();
-					// what if the index is symbolic ?
-					int_arrayIndex = evaluator.extractInt(source, arrayIndex);
-					// index is not necessarily 0! FIX ME!
-					eval = evaluator.dereference(source, state, arrayPointer);
-					originalArray = (SymbolicSequence<?>) eval.value
-							.argument(0);
-					state = eval.state;
-					for (int j = int_arrayIndex; j < originalArray.size(); j++) {
-						stringOfSymbolicExpression.append(originalArray.get(j)
-								.toString().charAt(1));
-					}
-					arguments.add(stringOfSymbolicExpression.substring(0));
-					// clear stringOfSymbolicExpression
-					stringOfSymbolicExpression.delete(0,
-							stringOfSymbolicExpression.length());
-				} else
-					arguments.add(argument.toString());
-			}
-
-			// TODO: print pointers in a much nicer way
-
-			// TODO: at model building time, check statically that the
-			// expression types are compatible with corresponding conversion
-			// specifiers
-			format = formatBuffer.substring(0);
-			format = format.replaceAll("%lf", "%s");
-			format = format
-					.replaceAll(
-							"((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]",
-							"%s");
-			for (int i = 0; i < format.length(); i++) {
-				if (format.charAt(i) == '%') {
-					if (format.charAt(i + 1) == '%') {
-						i++;
-						continue;
-					}
-					if (format.charAt(i + 1) != 's')
-						throw new CIVLSyntaxException("The format:%"
-								+ format.charAt(i + 1)
-								+ " is not allowed in printf",
-								expressions[0].getSource());
-				}
-			}
-			try {
-				output.printf(format, arguments.toArray());
-			} catch (Exception e) {
-				throw new CIVLInternalException("unexpected error in printf",
-						expressions[0].getSource());
-			}
-		}
-		return state;
-	}
 
 }

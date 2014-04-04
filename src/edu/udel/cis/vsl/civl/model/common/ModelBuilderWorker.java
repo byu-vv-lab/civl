@@ -90,6 +90,24 @@ public class ModelBuilderWorker {
 	 * The unique type for a gcomm
 	 */
 	CIVLType gcommType;
+
+	/**
+	 * The base type of the pointer type $filesystem; a structure type with
+	 * fields (0) scope, and (1) files. NULL if there is no IO operation.
+	 */
+	CIVLStructOrUnionType basedFilesystemType;
+
+	/**
+	 * The CIVL struct type $file, defined in stdio. NULL if there is no IO
+	 * operation.
+	 */
+	CIVLStructOrUnionType fileType;
+
+	/**
+	 * The CIVL type FILE, defined in stdio. NULL if there is no IO operation.
+	 */
+	CIVLStructOrUnionType FILEtype;
+
 	/**
 	 * Configuration information for the generic model checker.
 	 */
@@ -411,6 +429,9 @@ public class ModelBuilderWorker {
 		model.setQueueType(queueType);
 		model.setCommType(commType);
 		model.setGcommType(gcommType);
+		model.setBasedFilesystemType(this.basedFilesystemType);
+		model.setFileType(this.fileType);
+		model.setFILEType(this.FILEtype);
 		model.setBundleType(this.bundleType);
 		model.setName(modelName);
 		// add all functions to model except main:

@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -37,6 +38,22 @@ public class CommonModel extends CommonSourceable implements Model {
 	private CIVLType commType;
 	private CIVLType gcommType;
 	private CIVLBundleType bundleType;
+	/**
+	 * The base type of the pointer type $filesystem; a structure type with
+	 * fields (0) scope, and (1) files. NULL if there is no IO operation.
+	 */
+	private CIVLStructOrUnionType basedFilesystemType;
+
+	/**
+	 * The CIVL struct type $file, defined in stdio. NULL if there is no IO
+	 * operation.
+	 */
+	private CIVLStructOrUnionType fileType;
+
+	/**
+	 * The CIVL type FILE, defined in stdio. NULL if there is no IO operation.
+	 */
+	private CIVLStructOrUnionType FILEtype;
 
 	private ArrayList<MallocStatement> mallocStatements;
 
@@ -268,10 +285,40 @@ public class CommonModel extends CommonSourceable implements Model {
 	public void setGcommType(CIVLType gcommType) {
 		this.gcommType = gcommType;
 	}
-	
+
 	@Override
-	public void complete(){
+	public void complete() {
 		this.system.outerScope().complete();
+	}
+
+	@Override
+	public CIVLStructOrUnionType basedFilesystemType() {
+		return this.basedFilesystemType;
+	}
+
+	@Override
+	public void setBasedFilesystemType(CIVLStructOrUnionType type) {
+		this.basedFilesystemType = type;
+	}
+
+	@Override
+	public CIVLStructOrUnionType fileType() {
+		return this.fileType;
+	}
+
+	@Override
+	public void setFileType(CIVLStructOrUnionType type) {
+		this.fileType = type;
+	}
+
+	@Override
+	public CIVLStructOrUnionType FILEtype() {
+		return this.FILEtype;
+	}
+
+	@Override
+	public void setFILEType(CIVLStructOrUnionType type) {
+		this.FILEtype = type;
 	}
 
 }

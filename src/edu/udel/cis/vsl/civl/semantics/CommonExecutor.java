@@ -7,12 +7,16 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
+import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
@@ -36,6 +40,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
@@ -54,14 +59,17 @@ import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
  * An executor is used to execute a CIVL statement. The basic method provided
@@ -172,9 +180,9 @@ public class CommonExecutor implements Executor {
 		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
 				"civlc", this, this.output, this.enablePrintf,
 				this.modelFactory);
-		this.stdioExecutor = (LibstdioExecutor) loader.getLibraryExecutor(
-				"stdio", this, this.output, this.enablePrintf,
-				this.modelFactory);
+		// this.stdioExecutor = (LibstdioExecutor) loader.getLibraryExecutor(
+		// "stdio", this, this.output, this.enablePrintf,
+		// this.modelFactory);
 	}
 
 	/**
@@ -242,7 +250,7 @@ public class CommonExecutor implements Executor {
 						state = eval.state;
 						argumentValues[i] = eval.value;
 					}
-					state = stdioExecutor.executePrintf(state, pid, arguments,
+					state = this.executePrintf(state, pid, arguments,
 							argumentValues);
 				}
 				// eval = evaluator.evaluate(state, pid,
@@ -682,6 +690,10 @@ public class CommonExecutor implements Executor {
 		case "civlc":
 			return civlcExecutor;
 		case "stdio":
+			if (stdioExecutor == null)
+				this.stdioExecutor = (LibstdioExecutor) loader
+						.getLibraryExecutor("stdio", this, this.output,
+								this.enablePrintf, this.modelFactory);
 			return stdioExecutor;
 		default:
 			throw new CIVLInternalException("Unknown library: " + library,
@@ -964,5 +976,158 @@ public class CommonExecutor implements Executor {
 	@Override
 	public SymbolicUniverse universe() {
 		return universe;
+	}
+	
+	@Override
+	public State executePrintf(State state, int pid, Expression[] expressions,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		if (this.enablePrintf) {
+			// using StringBuffer instead for performance
+			StringBuffer stringOfSymbolicExpression = new StringBuffer();
+			StringBuffer formatBuffer = new StringBuffer();
+			String format;
+			ArrayList<String> arguments = new ArrayList<String>();
+			CIVLSource source = state.getProcessState(pid).getLocation()
+					.getSource();
+			// variables used for checking %s
+			ArrayList<Integer> sIndexes = new ArrayList<Integer>();
+			Pattern pattern;
+			Matcher matcher;
+			int sCount = 1;
+
+			// don't assume argumentValues[0] is a pointer to an element of an
+			// array. Check it. If it is not, through an exception.
+			SymbolicExpression arrayPointer = evaluator.parentPointer(source,
+					argumentValues[0]);
+			Evaluation eval = evaluator
+					.dereference(source, state, arrayPointer);
+
+			if (eval.value.operator() != SymbolicOperator.CONCRETE)
+				throw new CIVLUnimplementedFeatureException(
+						"non-concrete format strings",
+						expressions[0].getSource());
+
+			SymbolicSequence<?> originalArray = (SymbolicSequence<?>) eval.value
+					.argument(0);
+
+			state = eval.state;
+
+			int numChars = originalArray.size();
+			char[] formatChars = new char[numChars];
+
+			for (int i = 0; i < originalArray.size(); i++) {
+				SymbolicExpression charExpr = originalArray.get(i);
+				Character theChar = universe.extractCharacter(charExpr);
+
+				if (theChar == null)
+					throw new CIVLUnimplementedFeatureException(
+							"non-concrete character in format string at position "
+									+ i, expressions[0].getSource());
+
+				formatChars[i] = theChar;
+			}
+			formatBuffer.append(formatChars);
+			// checking %s: find out all the corresponding argument positions
+			// for all %s existed in format string.
+			pattern = Pattern
+					.compile("((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[sdfoxegacpuxADEFGX]");
+			matcher = pattern.matcher(formatBuffer);
+			while (matcher.find()) {
+				String formatSpecifier = matcher.group();
+				if (formatSpecifier.compareTo("%s") == 0) {
+					sIndexes.add(sCount);
+				}
+				sCount++;
+			}
+			// format = formatBuffer.toString();
+			// splitedFormats = format.split("%s");
+			// for (int k = 0; k < splitedFormats.length - 1; k++) {
+			// int splitedFormatsLength;
+			//
+			// splitedFormatsLength = splitedFormats[k]
+			// .split("((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]").length;
+			// //is it true? string.split("REX").length == 0 ==> string is fully
+			// matched with "REX".
+			// if (splitedFormatsLength == 0)
+			// splitedFormatsLength = 2;
+			// sCount += splitedFormatsLength;
+			// sIndexes.add(sCount);
+			// }
+			for (int i = 1; i < argumentValues.length; i++) {
+				SymbolicExpression argument = argumentValues[i];
+				CIVLType argumentType = expressions[i].getExpressionType();
+				ReferenceExpression ref;
+				ArrayElementReference arrayRef;
+				NumericExpression arrayIndex;
+				int int_arrayIndex;
+
+				if (argumentType instanceof CIVLPointerType
+						&& ((CIVLPointerType) argumentType).baseType()
+								.isCharType()
+						&& argument.operator() == SymbolicOperator.CONCRETE) {
+					// also check format code is %s before doing this
+					if (!sIndexes.contains(i)) {
+						throw new CIVLSyntaxException(
+								"Array pointer unaccepted",
+								expressions[i].getSource());
+					}
+					arrayPointer = evaluator.parentPointer(source, argument);
+					ref = evaluator.getSymRef(argument);
+					assert (ref.isArrayElementReference());
+					arrayRef = (ArrayElementReference) evaluator
+							.getSymRef(argument);
+					arrayIndex = arrayRef.getIndex();
+					// what if the index is symbolic ?
+					int_arrayIndex = evaluator.extractInt(source, arrayIndex);
+					// index is not necessarily 0! FIX ME!
+					eval = evaluator.dereference(source, state, arrayPointer);
+					originalArray = (SymbolicSequence<?>) eval.value
+							.argument(0);
+					state = eval.state;
+					for (int j = int_arrayIndex; j < originalArray.size(); j++) {
+						stringOfSymbolicExpression.append(originalArray.get(j)
+								.toString().charAt(1));
+					}
+					arguments.add(stringOfSymbolicExpression.substring(0));
+					// clear stringOfSymbolicExpression
+					stringOfSymbolicExpression.delete(0,
+							stringOfSymbolicExpression.length());
+				} else
+					arguments.add(argument.toString());
+			}
+
+			// TODO: print pointers in a much nicer way
+
+			// TODO: at model building time, check statically that the
+			// expression types are compatible with corresponding conversion
+			// specifiers
+			format = formatBuffer.substring(0);
+			format = format.replaceAll("%lf", "%s");
+			format = format
+					.replaceAll(
+							"((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]",
+							"%s");
+			for (int i = 0; i < format.length(); i++) {
+				if (format.charAt(i) == '%') {
+					if (format.charAt(i + 1) == '%') {
+						i++;
+						continue;
+					}
+					if (format.charAt(i + 1) != 's')
+						throw new CIVLSyntaxException("The format:%"
+								+ format.charAt(i + 1)
+								+ " is not allowed in printf",
+								expressions[0].getSource());
+				}
+			}
+			try {
+				output.printf(format, arguments.toArray());
+			} catch (Exception e) {
+				throw new CIVLInternalException("unexpected error in printf",
+						expressions[0].getSource());
+			}
+		}
+		return state;
 	}
 }

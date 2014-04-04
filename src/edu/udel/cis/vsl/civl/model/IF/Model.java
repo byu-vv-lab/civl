@@ -9,6 +9,8 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -144,12 +146,12 @@ public interface Model extends Sourceable {
 
 	/**
 	 * 
-	 * @param The
-	 *            gcomm type used by this model
+	 * @return The gcomm type of by this model
 	 */
 	CIVLType gcommType();
 
 	/**
+	 * NULL if there is no communicater operation.
 	 * 
 	 * @param gcommType
 	 *            The gcomm type used by this model
@@ -163,5 +165,36 @@ public interface Model extends Sourceable {
 	 * manipulating the model.
 	 */
 	void complete();
+
+	/**
+	 * The base type of the pointer type $filesystem; a structure type with
+	 * fields (0) scope, and (1) files. Returns NULL if there is no IO
+	 * operation.
+	 * 
+	 * @return The base type of the handle <code>$filesystem</code>
+	 */
+	CIVLStructOrUnionType basedFilesystemType();
+
+	void setBasedFilesystemType(CIVLStructOrUnionType type);
+
+	/**
+	 * The CIVL struct type $file, defined in stdio. Returns NULL if there is no
+	 * IO operation.
+	 * 
+	 * @return The <code>$file</code> type.
+	 */
+	CIVLStructOrUnionType fileType();
+
+	void setFileType(CIVLStructOrUnionType type);
+
+	/**
+	 * The CIVL type FILE, defined in stdio. Returns NULL if there is no IO
+	 * operation.
+	 * 
+	 * @return The <code>FILE</code> type.
+	 */
+	CIVLStructOrUnionType FILEtype();
+
+	void setFILEType(CIVLStructOrUnionType type);
 
 }

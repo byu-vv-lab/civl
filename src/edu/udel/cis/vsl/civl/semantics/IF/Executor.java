@@ -199,4 +199,34 @@ public interface Executor {
 			throws UnsatisfiablePathConditionException;
 
 	LibraryExecutor libraryExecutor(CIVLSource source, String library);
+
+	/**
+	 * Execute <code>printf()</code> function. See C11 Sec. 7.21.6.1 and
+	 * 7.21.6.3. Prototype:
+	 * 
+	 * <pre>
+	 * int printf(const char * restrict format, ...);
+	 * </pre>
+	 * 
+	 * Escape characters can be supported; the following have been tested:
+	 * <code>\n</code>, <code>\r</code>, <code>\b</code>, <code>\t</code>,
+	 * <code>\"</code>, <code>\'</code>, and <code>\\</code>. Some (but not all)
+	 * format specifiers can be supported and the following have been tested:
+	 * <code>%d</code>, <code>%o</code>, <code>%x</code>, <code>%f</code>,
+	 * <code>%e</code>, <code>%g</code>, <code>%a</code>, <code>%c</code>,
+	 * <code>%p</code>, and <code>%s</code>.
+	 * 
+	 * TODO CIVL currently dosen't support 'printf("%c" , c)'(where c is a char
+	 * type variable)?
+	 * 
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param argumentValues
+	 * @return State
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	State executePrintf(State state, int pid, Expression[] expressions,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException;
 }
