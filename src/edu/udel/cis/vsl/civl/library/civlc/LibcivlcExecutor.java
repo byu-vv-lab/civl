@@ -157,9 +157,10 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			// if size is 0 then just ignore the pointer. The pointer could be
 			// NULL, or even invalid. The result is still a bundle of size 0.
 			symbolicBundleType = bundleType.getDynamicType(universe);
-			index = bundleType.getIndexOf(universe.booleanType());
-			indexObj = universe.intObject(index);
-			array = universe.emptyArray(universe.booleanType());
+			index = 0;
+			indexObj = universe.intObject(0);
+			elementType = bundleType.getElementType(index);
+			array = universe.emptyArray(elementType);
 			bundle = universe.unionInject(symbolicBundleType, indexObj, array);
 		} else if (!size.isZero()
 				&& evaluator.getScopeId(source, pointer) == -1
