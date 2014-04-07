@@ -317,7 +317,7 @@ public class UserInterface {
 			ABC.language = Language.CIVL_C;
 			program = frontEnd.getProgram();
 			// always apply io transformatioen.
-			// program.applyTransformer(IOTransformer.CODE);
+			 program.applyTransformer(IOTransformer.CODE);
 			if (config.isTrue(mpiO))
 				program.applyTransformer(MPITransformer.CODE);
 			program.applyTransformer(Pruner.CODE);
