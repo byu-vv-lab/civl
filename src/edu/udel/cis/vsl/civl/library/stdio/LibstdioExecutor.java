@@ -3,8 +3,10 @@ package edu.udel.cis.vsl.civl.library.stdio;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -92,14 +94,14 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	public final static String STDOUT = "CIVL_stdout";
 	public final static String STDIN = "CIVL_stdin";
 
-//	/** The SARL character type. */
-//	private SymbolicType charType;
-//
-//	/**
-//	 * The SARL character 0, i.e., '\0' or '\u0000', used as the
-//	 * "null character constant" in C.
-//	 */
-//	private SymbolicExpression nullCharExpr;
+	// /** The SARL character type. */
+	// private SymbolicType charType;
+	//
+	// /**
+	// * The SARL character 0, i.e., '\0' or '\u0000', used as the
+	// * "null character constant" in C.
+	// */
+	// private SymbolicExpression nullCharExpr;
 
 	// /**
 	// * The CIVL handle type "$filesystem". This is a pointer type with base
@@ -153,6 +155,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 
 	private SymbolicConstant initialContentsFunction;
 
+	private Set<Character> numbers;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -170,8 +174,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		super(primaryExecutor, output, enablePrintf, modelFactory);
 		Model model = modelFactory.model();
 
-//		charType = universe.characterType();
-//		nullCharExpr = universe.canonic(universe.character('\u0000'));
+		// charType = universe.characterType();
+		// nullCharExpr = universe.canonic(universe.character('\u0000'));
 		// zeroObj = (IntObject) universe.canonic(universe.intObject(0));
 		// oneObj = (IntObject) universe.canonic(universe.intObject(1));
 		zeroInt = universe.zeroInt();
@@ -199,7 +203,11 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				.getDynamicType(universe);
 
 		this.FILEtype = model.FILEtype();
-//		this.FILESymbolicType = this.FILEtype.getDynamicType(universe);
+		// this.FILESymbolicType = this.FILEtype.getDynamicType(universe);
+		numbers = new HashSet<Character>(10);
+		for (int i = 0; i < 10; i++) {
+			numbers.add(Character.forDigit(i, 10));
+		}
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -535,7 +543,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		ArrayList<Integer> sIndexes = new ArrayList<>();
 		Pattern pattern;
 		Matcher matcher;
-		int sCount = 1;
+		int sCount = 2;
 		Pair<State, StringBuffer> concreteString;
 
 		state = eval.state;
@@ -618,6 +626,41 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		return state;
 	}
 
+	/**
+	 * Parse the format code.
+	 * 
+	 * Paragraph 4, Section 7.21.6.1, C11 Standards Each conversion
+	 * specification is introduced by the character %. After the %, the
+	 * following appear in sequence:
+	 * <ul>
+	 * <li> Zero or more flags (in any order) that modify the meaning of the
+	 * conversion specification. </li>
+	 * <li> An optional minimum field width. If the
+	 * converted value has fewer characters than the field width, it is padded
+	 * with spaces (by default) on the left (or right, if the left adjustment
+	 * flag, described later, has been given) to the field width. The field
+	 * width takes the form of an asterisk * (described later) or a nonnegative
+	 * decimal integer. </li>
+	 * <li> An optional precision that gives the minimum
+	 * number of digits to appear for the d, i, o, u, x, and X conversions, the
+	 * number of digits to appear after the decimal-point character for a, A, e,
+	 * E, f, and F conversions, the maximum number of significant digits for the
+	 * g and G conversions, or the maximum number of bytes to be written for s
+	 * conversions. The precision takes the form of a period (.) followed either
+	 * by an asterisk * (described later) or by an optional decimal integer; if
+	 * only the period is specified, the precision is taken as zero. If a
+	 * precision appears with any other conversion specifier, the behavior is
+	 * undefined. </li>
+	 * <li> An optional length modifier that specifies the size of the
+	 * argument.</li>
+	 * <li> A conversion specifier character that specifies the type of
+	 * conversion to be applied.</li>
+	 * </ul>
+	 * 
+	 * @param source
+	 * @param formatBuffer
+	 * @return
+	 */
 	private List<StringBuffer> splitFormat(CIVLSource source,
 			StringBuffer formatBuffer) {
 		int count = formatBuffer.length();
@@ -633,6 +676,29 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				if (code.equals('%')) {
 					stringBuffer.append("%%");
 					i = i + 1;
+				} else if (numbers.contains(code)) {
+					Character next = code;
+
+					i = i + 1;
+					stringBuffer.append('%');
+					while (numbers.contains(next)) {
+						stringBuffer.append(next);
+						i++;
+						next = formatBuffer.charAt(i);
+					}
+					i--;
+				} else if (code.equals('.')) {
+					Character next;
+
+					i = i + 2;
+					next = formatBuffer.charAt(i);
+					stringBuffer.append('.');
+					while (numbers.contains(next)) {
+						stringBuffer.append(next);
+						i++;
+						next = formatBuffer.charAt(i);
+					}
+					i--;
 				} else {
 					if (stringBuffer.length() > 0) {
 						result.add(stringBuffer);
@@ -640,21 +706,24 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					}
 					switch (code) {
 					case 'd':
-					case 'f':
+					case 'i':
 					case 'o':
-					case 'e':
-					case 'g':
-					case 'a':
-					case 'c':
-					case 'p':
 					case 'u':
 					case 'x':
-					case 'A':
-					case 'D':
-					case 'E':
-					case 'F':
-					case 'G':
 					case 'X':
+					
+					case	'a':
+					case 'A':
+					case 'e':
+					case 'E':
+					case 'f':
+					case 'F':
+					case 'g':
+					case 'G': 
+					case 's':
+					case 'c':
+					case 'p':
+					case 'D':
 						stringBuffer.append('%');
 						stringBuffer.append(code);
 						i = i + 1;
@@ -688,29 +757,33 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 
 	private void printf(CIVLSource source, StringBuffer formatBuffer,
 			ArrayList<StringBuffer> arguments) {
-		String format = formatBuffer.substring(0);
+		if (this.enablePrintf) {
+			String format = formatBuffer.substring(0);
 
-		format = format.replaceAll("%lf", "%s");
-		format = format.replaceAll(
-				"((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]", "%s");
-		for (int i = 0; i < format.length(); i++) {
-			if (format.charAt(i) == '%') {
-				if (format.charAt(i + 1) == '%') {
-					i++;
-					continue;
+			format = format.replaceAll("%lf", "%s");
+			format = format
+					.replaceAll(
+							"((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]",
+							"%s");
+			for (int i = 0; i < format.length(); i++) {
+				if (format.charAt(i) == '%') {
+					if (format.charAt(i + 1) == '%') {
+						i++;
+						continue;
+					}
+					if (format.charAt(i + 1) != 's')
+						throw new CIVLSyntaxException("The format:%"
+								+ format.charAt(i + 1)
+								+ " is not allowed in printf", source);
 				}
-				if (format.charAt(i + 1) != 's')
-					throw new CIVLSyntaxException("The format:%"
-							+ format.charAt(i + 1)
-							+ " is not allowed in printf", source);
 			}
-		}
-		try {
-			output.printf(format, arguments.toArray());
+			try {
+				output.printf(format, arguments.toArray());
 
-		} catch (Exception e) {
-			throw new CIVLInternalException("unexpected error in printf",
-					source);
+			} catch (Exception e) {
+				throw new CIVLInternalException("unexpected error in printf",
+						source);
+			}
 		}
 	}
 
