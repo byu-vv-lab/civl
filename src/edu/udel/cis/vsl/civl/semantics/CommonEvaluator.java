@@ -693,6 +693,15 @@ public class CommonEvaluator implements Evaluator {
 		} else if (argType.isPointerType() && castType.isPointerType()) {
 			// pointer to pointer: for now...no change.
 			return eval;
+		} else if (argType.isIntegerType() && castType.isBoolType()) {
+			if (value.isZero())
+				eval.value = universe.bool(false);
+			else if (value.isNumeric())
+				eval.value = universe.bool(true);
+			else
+				throw new CIVLExecutionException(ErrorKind.INVALID_CAST,
+						Certainty.CONCRETE, "Cast from integer to boolean", arg.getSource());
+			return eval;
 		}
 		try {
 			eval.value = universe.cast(endType, eval.value);
