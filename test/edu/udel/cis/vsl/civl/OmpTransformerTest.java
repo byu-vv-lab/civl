@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -20,15 +22,28 @@ import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 import edu.udel.cis.vsl.abc.transform.common.Pruner;
 import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
+import edu.udel.cis.vsl.civl.run.UserInterface;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
 
 public class OmpTransformerTest {
+
+	/* *************************** Static Fields *************************** */
+
+	private static File rootDir = new File(new File("examples"), "omp");
+
+	private static UserInterface ui = new UserInterface();
 
 	private File[] systemIncludes, userIncludes;
 
 	private PrintStream out = System.out;
 
 	private File root = new File(new File("examples"), "omp");
+
+	/* *************************** Helper Methods ************************** */
+
+	private static String filename(String name) {
+		return new File(rootDir, name).getPath();
+	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -61,6 +76,13 @@ public class OmpTransformerTest {
 		a = ABC.activator(new File(root, filenameRoot + ".c"), systemIncludes,
 				userIncludes);
 		a.showTranslation(out, codes);
+	}
+
+	/* **************************** Test Methods *************************** */
+
+	@Test
+	public void dotProduct_critical1() throws ABCException, IOException {
+		assertTrue(ui.run("parse", filename("dotProduct_critical.c")));
 	}
 
 	@Test

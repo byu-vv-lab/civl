@@ -25,7 +25,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode.StatementKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
@@ -166,6 +165,14 @@ public class MPITransformer extends BaseTransformer {
 					includedNodes.add(child);
 				}
 			} else {
+				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
+					VariableDeclarationNode variable = (VariableDeclarationNode) child;
+
+					if (variable.getTypeNode().isInputQualified()) {
+						vars.add(variable);
+						continue;
+					}
+				}
 				if (child.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
 					FunctionDefinitionNode functionNode = (FunctionDefinitionNode) child;
 					IdentifierNode functionName = (IdentifierNode) functionNode
@@ -173,7 +180,7 @@ public class MPITransformer extends BaseTransformer {
 
 					if (functionName.name().equals("main")) {
 						functionName.setName(MPI_MAIN);
-						processOriginalMainFunction(functionNode, vars);
+						processMainFunction(functionNode, vars);
 					}
 				}
 				items.add((BlockItemNode) child);
@@ -201,9 +208,6 @@ public class MPITransformer extends BaseTransformer {
 	 * Processes the original main function, including:
 	 * <ul>
 	 * <li>Removes all arguments of the function;</li>
-	 * <li>Renames the function as "__main";</li>
-	 * <li>Changes the function call <code>MPI_Init(...)</code> to
-	 * <code>_MPI_Init()</code>.</li>
 	 * </ul>
 	 * 
 	 * @param mainFunction
@@ -217,14 +221,12 @@ public class MPITransformer extends BaseTransformer {
 	 *            this function, this parameter should be an empty list and this
 	 *            function will update this list.
 	 */
-	private void processOriginalMainFunction(
-			FunctionDefinitionNode mainFunction,
-			List<VariableDeclarationNode> vars) {
+	private void processMainFunction(FunctionDefinitionNode mainFunction,
+			List<VariableDeclarationNode> inputVars) {
 		FunctionTypeNode functionType = mainFunction.getTypeNode();
 		SequenceNode<VariableDeclarationNode> parameters = functionType
 				.getParameters();
 		int count = parameters.numChildren();
-		CompoundStatementNode functionBody = mainFunction.getBody();
 
 		if (count > 0) {
 			List<VariableDeclarationNode> newParameters = new ArrayList<>(0);
@@ -235,47 +237,11 @@ public class MPITransformer extends BaseTransformer {
 
 				parameters.removeChild(k);
 				parameter.getTypeNode().setInputQualified(true);
-				vars.add(parameter);
+				inputVars.add(parameter);
 			}
-			functionType.setParameters(nodeFactory.newSequenceNode(source,
-					"FormalParameterDeclarations", newParameters));
-		}
-		count = functionBody.numChildren();
-		for (int j = 0; j < count; j++) {
-			BlockItemNode block = functionBody.getSequenceChild(j);
-
-			if (block.nodeKind() == NodeKind.STATEMENT) {
-				StatementNode statementNode = (StatementNode) block;
-
-				if (statementNode.statementKind() == StatementKind.EXPRESSION) {
-					ExpressionStatementNode expressionStatement = (ExpressionStatementNode) statementNode;
-					ExpressionNode expression = expressionStatement
-							.getExpression();
-
-					if (expression.expressionKind() == ExpressionKind.FUNCTION_CALL) {
-						FunctionCallNode functionCall = (FunctionCallNode) expression;
-
-						if (functionCall.getFunction().expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
-							IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
-									.getFunction();
-
-							if (functionExpression.getIdentifier().name()
-									.equals(MPI_INIT)) {
-								List<ExpressionNode> arguments = new ArrayList<>(
-										0);
-
-								functionExpression.getIdentifier().setName(
-										MPI_INIT_NEW);
-								functionCall.setChild(1, nodeFactory
-										.newSequenceNode(source,
-												"ActualParameterList",
-												arguments));
-							}
-						}
-					}
-
-				}
-			}
+			functionType.setParameters(nodeFactory.newSequenceNode(
+					parameters.getSource(), "FormalParameterDeclarations",
+					newParameters));
 		}
 	}
 
@@ -548,6 +514,36 @@ public class MPITransformer extends BaseTransformer {
 		return mainFunction;
 	}
 
+	private void preprocessASTNode(ASTNode node) throws SyntaxException {
+		int numChildren = node.numChildren();
+
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = node.child(i);
+
+			if (child != null)
+				this.preprocessASTNode(node.child(i));
+		}
+		if (node instanceof FunctionCallNode) {
+			this.preprocessFunctionCall((FunctionCallNode) node);
+		}
+
+	}
+
+	private void preprocessFunctionCall(FunctionCallNode functionCall) {
+		if (functionCall.getFunction().expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+			IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
+					.getFunction();
+
+			if (functionExpression.getIdentifier().name().equals(MPI_INIT)) {
+				List<ExpressionNode> arguments = new ArrayList<>(0);
+
+				functionExpression.getIdentifier().setName(MPI_INIT_NEW);
+				functionCall.setChild(1, nodeFactory.newSequenceNode(source,
+						"ActualParameterList", arguments));
+			}
+		}
+	}
+
 	private AssumeNode boundAssumption(String variable, String upperBound)
 			throws SyntaxException {
 		IdentifierExpressionNode variableExpression = nodeFactory
@@ -600,6 +596,8 @@ public class MPITransformer extends BaseTransformer {
 		assert this.astFactory == ast.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();
+		// change MPI_Init(...) to _MPI_Init();
+		preprocessASTNode(root);
 		// declaring $input int NPROCS;
 		nprocsVar = this.nprocsDeclaration();
 		// declaring $input int NPROCS_BOUND;

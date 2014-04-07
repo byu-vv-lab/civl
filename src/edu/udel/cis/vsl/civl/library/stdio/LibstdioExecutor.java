@@ -543,7 +543,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		ArrayList<Integer> sIndexes = new ArrayList<>();
 		Pattern pattern;
 		Matcher matcher;
-		int sCount = 2;
+		int sCount = 3;
 		Pair<State, StringBuffer> concreteString;
 
 		state = eval.state;
@@ -665,6 +665,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		List<StringBuffer> result = new ArrayList<>();
 		StringBuffer stringBuffer = new StringBuffer();
 		boolean inConversion = false;
+		boolean hasFieldWidth = false;
+		boolean hasPrecision = false;
 
 		for (int i = 0; i < count; i++) {
 			Character current = formatBuffer.charAt(i);
@@ -687,32 +689,53 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				current = formatBuffer.charAt(++i);
 			}
 			if (inConversion) {
-				if (numbers.contains(current)) {
+				//field width
+				if (current.equals('*')) {
+					stringBuffer.append('*');
+					current = formatBuffer.charAt(++i);
+				}else if (numbers.contains(current)) {
 					Character next = current;
 
+					if (hasFieldWidth) {
+						stringBuffer.append(next);
+						throw new CIVLSyntaxException(
+								"Duplicate field width in \""
+										+ stringBuffer + "\"...", source);
+					}
+					hasFieldWidth = true;
 					while (numbers.contains(next)) {
 						stringBuffer.append(next);
 						next = formatBuffer.charAt(++i);
 					}
 					current = next;
 				}
+				//precision
 				if (current.equals('.')) {
 					Character next;
 
 					next = formatBuffer.charAt(++i);
 					stringBuffer.append('.');
+					if (hasPrecision) {
+						throw new CIVLSyntaxException(
+								"Duplicate precision detected in \""
+										+ stringBuffer + "\"...", source);
+					}
+					hasPrecision = true;
 					while (numbers.contains(next)) {
 						stringBuffer.append(next);
 						next = formatBuffer.charAt(++i);
 					}
 					current = next;
 				}
-				if(current.equals('*')){
-					stringBuffer.append('*');
-					current = formatBuffer.charAt(++i);
-				}
-				// else {
 				switch (current) {
+				case 'c':
+				case 'p':
+				case 'D':
+					if (hasFieldWidth || hasPrecision) {
+						throw new CIVLSyntaxException(
+								"Invalid precision for the format \"%"
+										+ current + "\"...", source);
+					}
 				case 'd':
 				case 'i':
 				case 'o':
@@ -728,9 +751,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				case 'g':
 				case 'G':
 				case 's':
-				case 'c':
-				case 'p':
-				case 'D':
 					stringBuffer.append(current);
 					break;
 				case 'l':
@@ -749,8 +769,9 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				}
 				result.add(stringBuffer);
 				inConversion = false;
+				hasFieldWidth = false;
+				hasPrecision = false;
 				stringBuffer = new StringBuffer();
-				// }
 			} else {
 				stringBuffer.append(current);
 			}

@@ -35,7 +35,7 @@ public class LanguageFeaturesTest {
 	public void abstractFunc() throws ABCException {
 		assertTrue(ui.run("verify", filename("abstractFun.cvl")));
 	}
-	
+
 	@Test
 	public void arrayLiteral() throws ABCException {
 		assertTrue(ui.run("verify", filename("arrayLiteral.cvl")));
@@ -65,7 +65,7 @@ public class LanguageFeaturesTest {
 	public void assertPrintf() throws ABCException {
 		assertFalse(ui.run("verify", filename("assertPrintf.cvl")));
 	}
-	
+
 	@Test
 	public void assert1() throws ABCException {
 		assertTrue(ui.run("verify", filename("assert1.cvl")));
@@ -300,7 +300,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void printf() throws ABCException {
-		assertTrue(ui.run("verify", filename("printf.cvl")));
+		assertTrue(ui.run("verify", filename("printf.cvl"), "-showSavedStates"));
 	}
 
 	@Test
@@ -397,35 +397,40 @@ public class LanguageFeaturesTest {
 	public void undefHeapPointer() throws ABCException {
 		assertFalse(ui.run("verify", filename("undefHeapPointer.cvl")));
 	}
-	
+
 	@Test
 	public void sideEffectLoop() throws ABCException {
 		assertTrue(ui.run("verify", filename("sideEffectLoop.cvl")));
 	}
-	
+
 	@Test
 	public void assignInput() throws ABCException {
 		assertFalse(ui.run("verify", filename("assignInput.cvl"), "-showModel"));
 	}
-	
+
 	@Test
 	public void inputBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("inputBad.cvl")));
 	}
-	
+
 	@Test
 	public void outputBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("outputBad.cvl")));
 	}
-	
+
 	@Test
 	public void procNull() throws ABCException {
 		assertTrue(ui.run("verify", filename("procNull.cvl")));
 	}
-	
+
 	@Test
 	public void functionBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("functionBad.cvl")));
 	}
-	
+
+	@Test
+	public void intToBool() throws ABCException {
+		assertTrue(ui.run("verify", filename("intToBool.cvl"), "-showModel"));
+	}
+
 }

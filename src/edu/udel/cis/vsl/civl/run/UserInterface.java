@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.ABC.Language;
@@ -23,6 +24,7 @@ import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.Transform;
 import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
@@ -40,6 +42,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelCombiner;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
 import edu.udel.cis.vsl.civl.transform.common.MPITransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
@@ -192,6 +195,10 @@ public class UserInterface {
 
 	private Preprocessor preprocessor;
 
+	private boolean hasStdio;
+	private boolean hasOmp;
+	private boolean hasMpi;
+
 	/* ************************** Constructors ***************************** */
 
 	public UserInterface() {
@@ -286,43 +293,11 @@ public class UserInterface {
 			// shows absolutely everything
 			program = frontEnd.showTranslation(out);
 		} else {
-			if (!Transform.getCodes().contains(IOTransformer.CODE))
-				Transform.addTransform(new TransformRecord(IOTransformer.CODE,
-						IOTransformer.LONG_NAME,
-						IOTransformer.SHORT_DESCRIPTION) {
-					@Override
-					public Transformer create(ASTFactory astFactory) {
-						return new IOTransformer(astFactory);
-					}
-				});
-			if (!Transform.getCodes().contains(MPITransformer.CODE))
-				Transform.addTransform(new TransformRecord(MPITransformer.CODE,
-						MPITransformer.LONG_NAME,
-						MPITransformer.SHORT_DESCRIPTION) {
-					@Override
-					public Transformer create(ASTFactory astFactory) {
-						return new MPITransformer(astFactory);
-					}
-				});
-			if (!Transform.getCodes().contains(OpenMPTransformer.CODE))
-				Transform.addTransform(new TransformRecord(
-						OpenMPTransformer.CODE, OpenMPTransformer.LONG_NAME,
-						OpenMPTransformer.SHORT_DESCRIPTION) {
-					@Override
-					public Transformer create(ASTFactory astFactory) {
-						return new OpenMPTransformer(astFactory);
-					}
-				});
 			// if (config.isTrue(mpiO))
 			ABC.language = Language.CIVL_C;
 			program = frontEnd.getProgram();
-			// always apply io transformatioen.
-			 program.applyTransformer(IOTransformer.CODE);
-			if (config.isTrue(mpiO))
-				program.applyTransformer(MPITransformer.CODE);
-			program.applyTransformer(Pruner.CODE);
-			program.applyTransformer(SideEffectRemover.CODE);
 		}
+		applyTransformers(filename, program);
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(config, program, coreName(filename),
@@ -333,6 +308,73 @@ public class UserInterface {
 			model.print(out, verbose || debug);
 		}
 		return model;
+	}
+
+	private void applyTransformers(String fileName, Program program)
+			throws SyntaxException {
+		Set<String> headers = this.preprocessor.headerFiles();
+		boolean isC = fileName.endsWith(".c");
+
+		if (headers.contains("stdio.h"))
+			this.hasStdio = true;
+		if (isC && headers.contains("omp.h"))
+			this.hasOmp = true;
+		if (isC && headers.contains("mpi.h"))
+			this.hasMpi = true;
+
+		// always apply general transformation.
+		if (!Transform.getCodes().contains(GeneralTransformer.CODE))
+			Transform.addTransform(new TransformRecord(GeneralTransformer.CODE,
+					GeneralTransformer.LONG_NAME,
+					GeneralTransformer.SHORT_DESCRIPTION) {
+				@Override
+				public Transformer create(ASTFactory astFactory) {
+					return new GeneralTransformer(astFactory);
+				}
+			});
+		if (!this.hasMpi)
+			program.applyTransformer(GeneralTransformer.CODE);
+		if (this.hasStdio) {
+			if (!Transform.getCodes().contains(IOTransformer.CODE))
+				Transform.addTransform(new TransformRecord(IOTransformer.CODE,
+						IOTransformer.LONG_NAME,
+						IOTransformer.SHORT_DESCRIPTION) {
+					@Override
+					public Transformer create(ASTFactory astFactory) {
+						return new IOTransformer(astFactory);
+					}
+				});
+			program.applyTransformer(IOTransformer.CODE);
+		}
+
+		if (this.hasOmp) {
+			if (!Transform.getCodes().contains(OpenMPTransformer.CODE))
+				Transform.addTransform(new TransformRecord(
+						OpenMPTransformer.CODE, OpenMPTransformer.LONG_NAME,
+						OpenMPTransformer.SHORT_DESCRIPTION) {
+					@Override
+					public Transformer create(ASTFactory astFactory) {
+						return new OpenMPTransformer(astFactory);
+					}
+				});
+			program.applyTransformer(OpenMPTransformer.CODE);
+		}
+
+		if (this.hasMpi) {
+			if (!Transform.getCodes().contains(MPITransformer.CODE))
+				Transform.addTransform(new TransformRecord(MPITransformer.CODE,
+						MPITransformer.LONG_NAME,
+						MPITransformer.SHORT_DESCRIPTION) {
+					@Override
+					public Transformer create(ASTFactory astFactory) {
+						return new MPITransformer(astFactory);
+					}
+				});
+			program.applyTransformer(MPITransformer.CODE);
+		}
+		// always apply pruner and side effect remover
+		program.applyTransformer(Pruner.CODE);
+		program.applyTransformer(SideEffectRemover.CODE);
 	}
 
 	/**
