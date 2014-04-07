@@ -633,27 +633,25 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 * specification is introduced by the character %. After the %, the
 	 * following appear in sequence:
 	 * <ul>
-	 * <li> Zero or more flags (in any order) that modify the meaning of the
-	 * conversion specification. </li>
-	 * <li> An optional minimum field width. If the
-	 * converted value has fewer characters than the field width, it is padded
-	 * with spaces (by default) on the left (or right, if the left adjustment
-	 * flag, described later, has been given) to the field width. The field
-	 * width takes the form of an asterisk * (described later) or a nonnegative
-	 * decimal integer. </li>
-	 * <li> An optional precision that gives the minimum
-	 * number of digits to appear for the d, i, o, u, x, and X conversions, the
-	 * number of digits to appear after the decimal-point character for a, A, e,
-	 * E, f, and F conversions, the maximum number of significant digits for the
-	 * g and G conversions, or the maximum number of bytes to be written for s
+	 * <li>Zero or more flags (in any order) that modify the meaning of the
+	 * conversion specification.</li>
+	 * <li>An optional minimum field width. If the converted value has fewer
+	 * characters than the field width, it is padded with spaces (by default) on
+	 * the left (or right, if the left adjustment flag, described later, has
+	 * been given) to the field width. The field width takes the form of an
+	 * asterisk * (described later) or a nonnegative decimal integer.</li>
+	 * <li>An optional precision that gives the minimum number of digits to
+	 * appear for the d, i, o, u, x, and X conversions, the number of digits to
+	 * appear after the decimal-point character for a, A, e, E, f, and F
+	 * conversions, the maximum number of significant digits for the g and G
+	 * conversions, or the maximum number of bytes to be written for s
 	 * conversions. The precision takes the form of a period (.) followed either
 	 * by an asterisk * (described later) or by an optional decimal integer; if
 	 * only the period is specified, the precision is taken as zero. If a
 	 * precision appears with any other conversion specifier, the behavior is
-	 * undefined. </li>
-	 * <li> An optional length modifier that specifies the size of the
-	 * argument.</li>
-	 * <li> A conversion specifier character that specifies the type of
+	 * undefined.</li>
+	 * <li>An optional length modifier that specifies the size of the argument.</li>
+	 * <li>A conversion specifier character that specifies the type of
 	 * conversion to be applied.</li>
 	 * </ul>
 	 * 
@@ -666,86 +664,93 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		int count = formatBuffer.length();
 		List<StringBuffer> result = new ArrayList<>();
 		StringBuffer stringBuffer = new StringBuffer();
+		boolean inConversion = false;
 
 		for (int i = 0; i < count; i++) {
 			Character current = formatBuffer.charAt(i);
+			Character code;
 
 			if (current.equals('%')) {
-				Character code = formatBuffer.charAt(i + 1);
+				code = formatBuffer.charAt(i + 1);
 
 				if (code.equals('%')) {
 					stringBuffer.append("%%");
 					i = i + 1;
-				} else if (numbers.contains(code)) {
-					Character next = code;
-
-					i = i + 1;
-					stringBuffer.append('%');
-					while (numbers.contains(next)) {
-						stringBuffer.append(next);
-						i++;
-						next = formatBuffer.charAt(i);
-					}
-					i--;
-				} else if (code.equals('.')) {
-					Character next;
-
-					i = i + 2;
-					next = formatBuffer.charAt(i);
-					stringBuffer.append('.');
-					while (numbers.contains(next)) {
-						stringBuffer.append(next);
-						i++;
-						next = formatBuffer.charAt(i);
-					}
-					i--;
-				} else {
-					if (stringBuffer.length() > 0) {
-						result.add(stringBuffer);
-						stringBuffer = new StringBuffer();
-					}
-					switch (code) {
-					case 'd':
-					case 'i':
-					case 'o':
-					case 'u':
-					case 'x':
-					case 'X':
-					
-					case	'a':
-					case 'A':
-					case 'e':
-					case 'E':
-					case 'f':
-					case 'F':
-					case 'g':
-					case 'G': 
-					case 's':
-					case 'c':
-					case 'p':
-					case 'D':
-						stringBuffer.append('%');
-						stringBuffer.append(code);
-						i = i + 1;
-						break;
-					case 'l':
-						Character code1 = formatBuffer.charAt(i + 2);
-
-						if (!code1.equals('f')) {
-							throw new CIVLSyntaxException(
-									"The format %lf is not allowed in fprintf",
-									source);
-						}
-						i = i + 2;
-						stringBuffer.append("%lf");
-						break;
-					default:
-						throw new CIVLSyntaxException("The format %" + code
-								+ " is not allowed in fprintf", source);
-					}
+					continue;
+				}
+				if (stringBuffer.length() > 0) {
 					result.add(stringBuffer);
 					stringBuffer = new StringBuffer();
 				}
+				inConversion = true;
+				stringBuffer.append('%');
+				current = formatBuffer.charAt(++i);
+			}
+			if (inConversion) {
+				if (numbers.contains(current)) {
+					Character next = current;
+
+					while (numbers.contains(next)) {
+						stringBuffer.append(next);
+						next = formatBuffer.charAt(++i);
+					}
+					current = next;
+				}
+				if (current.equals('.')) {
+					Character next;
+
+					next = formatBuffer.charAt(++i);
+					stringBuffer.append('.');
+					while (numbers.contains(next)) {
+						stringBuffer.append(next);
+						next = formatBuffer.charAt(++i);
+					}
+					current = next;
+				}
+				if(current.equals('*')){
+					stringBuffer.append('*');
+					current = formatBuffer.charAt(++i);
+				}
+				// else {
+				switch (current) {
+				case 'd':
+				case 'i':
+				case 'o':
+				case 'u':
+				case 'x':
+				case 'X':
+				case 'a':
+				case 'A':
+				case 'e':
+				case 'E':
+				case 'f':
+				case 'F':
+				case 'g':
+				case 'G':
+				case 's':
+				case 'c':
+				case 'p':
+				case 'D':
+					stringBuffer.append(current);
+					break;
+				case 'l':
+					Character code1 = formatBuffer.charAt(++i);
+
+					if (!code1.equals('f')) {
+						throw new CIVLSyntaxException(
+								"The format %lf is not allowed in fprintf",
+								source);
+					}
+					stringBuffer.append("lf");
+					break;
+				default:
+					throw new CIVLSyntaxException("The format %" + current
+							+ " is not allowed in fprintf", source);
+				}
+				result.add(stringBuffer);
+				inConversion = false;
+				stringBuffer = new StringBuffer();
+				// }
 			} else {
 				stringBuffer.append(current);
 			}
