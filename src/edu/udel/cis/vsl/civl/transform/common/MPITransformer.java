@@ -153,12 +153,19 @@ public class MPITransformer extends BaseTransformer {
 					.getSourceFile().getName();
 
 			root.removeChild(i);
-			if (sourceFile.endsWith(".h")) {
+			if (sourceFile.equals("stdio.cvl")) {
+				includedNodes.add(child);
+			} else if (sourceFile.endsWith(".h")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
 
-					// ignore the MPI_COMM_WORLD declaration in mpi.h.
-					if (!variableDeclaration.getName().equals(COMM_WORLD)) {
+					if (sourceFile.equals("stdio.h")) {
+						// keep variable declaration nodes from stdio, i.e.,
+						// stdout, stdin, etc.
+						items.add(variableDeclaration);
+					} else if (!variableDeclaration.getName()
+							.equals(COMM_WORLD)) {
+						// ignore the MPI_COMM_WORLD declaration in mpi.h.
 						includedNodes.add(child);
 					}
 				} else {

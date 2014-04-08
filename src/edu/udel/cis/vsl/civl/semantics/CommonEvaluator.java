@@ -49,6 +49,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
@@ -700,7 +701,8 @@ public class CommonEvaluator implements Evaluator {
 				eval.value = universe.bool(true);
 			else
 				throw new CIVLExecutionException(ErrorKind.INVALID_CAST,
-						Certainty.CONCRETE, "Cast from integer to boolean", arg.getSource());
+						Certainty.CONCRETE, "Cast from integer to boolean",
+						arg.getSource());
 			return eval;
 		}
 		try {
@@ -1452,6 +1454,11 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, modelFactory.processValue(pid));
 	}
 
+	private Evaluation evaluateProcnull(State state, int pid,
+			ProcnullExpression expression) {
+		return new Evaluation(state, modelFactory.nullProcessValue());
+	}
+
 	/**
 	 * Evaluate a real literal expression.
 	 * 
@@ -2181,6 +2188,10 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case SELF:
 			result = evaluateSelf(state, pid, (SelfExpression) expression);
+			break;
+		case PROC_NULL:
+			result = this.evaluateProcnull(state, pid,
+					(ProcnullExpression) expression);
 			break;
 		case SIZEOF_TYPE:
 			result = evaluateSizeofTypeExpression(state, pid,

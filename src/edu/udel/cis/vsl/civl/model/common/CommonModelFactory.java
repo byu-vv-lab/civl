@@ -51,6 +51,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
@@ -110,6 +111,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonFunctionPointerExpres
 import edu.udel.cis.vsl.civl.model.common.expression.CommonHereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonInitialValueExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonProcnullExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonQuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
@@ -1030,6 +1032,14 @@ public class CommonModelFactory implements ModelFactory {
 		SelfExpression result = new CommonSelfExpression(source);
 
 		((CommonSelfExpression) result).setExpressionType(processType);
+		return result;
+	}
+	
+	@Override
+	public ProcnullExpression procnullExpression(CIVLSource source) {
+		ProcnullExpression result = new CommonProcnullExpression(source);
+
+		((CommonProcnullExpression) result).setExpressionType(processType);
 		return result;
 	}
 

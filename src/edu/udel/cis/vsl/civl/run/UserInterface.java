@@ -332,8 +332,9 @@ public class UserInterface {
 					return new GeneralTransformer(astFactory);
 				}
 			});
-		if (!this.hasMpi)
+		if (!this.hasMpi) {
 			program.applyTransformer(GeneralTransformer.CODE);
+		}
 		if (this.hasStdio) {
 			if (!Transform.getCodes().contains(IOTransformer.CODE))
 				Transform.addTransform(new TransformRecord(IOTransformer.CODE,
@@ -344,6 +345,7 @@ public class UserInterface {
 						return new IOTransformer(astFactory);
 					}
 				});
+			this.out.println("Apply IO transformer...");
 			program.applyTransformer(IOTransformer.CODE);
 		}
 
@@ -357,6 +359,7 @@ public class UserInterface {
 						return new OpenMPTransformer(astFactory);
 					}
 				});
+			this.out.println("Apply OpenMP transformer...");
 			program.applyTransformer(OpenMPTransformer.CODE);
 		}
 
@@ -370,6 +373,7 @@ public class UserInterface {
 						return new MPITransformer(astFactory);
 					}
 				});
+			this.out.println("Apply MPI transformer...");
 			program.applyTransformer(MPITransformer.CODE);
 		}
 		// always apply pruner and side effect remover

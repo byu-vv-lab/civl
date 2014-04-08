@@ -40,13 +40,11 @@ public class CommonSelfExpression extends CommonExpression implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

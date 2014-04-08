@@ -165,7 +165,8 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		} else if (!size.isZero()
 				&& evaluator.getScopeId(source, pointer) == -1
 				&& evaluator.getVariableId(source, pointer) == -1) {
-			throw new CIVLSyntaxException("Packing a NULL message with size larger than 0", source);
+			throw new CIVLSyntaxException(
+					"Packing a NULL message with size larger than 0", source);
 		} else {
 			elementType = evaluator.referencedType(source, state, pointer);
 			pureElementType = universe.pureType(elementType);
@@ -955,10 +956,10 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = this.executeProcDefined(state, pid, lhs, arguments,
 					argumentValues);
 			break;
-		case "$proc_null":
-			state = this.executeProcNull(state, pid, lhs, arguments,
-					argumentValues);
-			break;
+		// case "$proc_null":
+		// state = this.executeProcNull(state, pid, lhs, arguments,
+		// argumentValues);
+		// break;
 		case "$scope_defined":
 			state = this.executeScopeDefined(state, pid, lhs, arguments,
 					argumentValues);
@@ -978,16 +979,16 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		return state;
 	}
 
-	private State executeProcNull(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression nullProcess = this.modelFactory.nullProcessValue();
-		Evaluation eval = evaluator.evaluate(state, pid, arguments[0]);
-
-		state = eval.state;
-		return primaryExecutor.assign(arguments[0].getSource(), state,
-				eval.value, nullProcess);
-	}
+	// private State executeProcNull(State state, int pid, LHSExpression lhs,
+	// Expression[] arguments, SymbolicExpression[] argumentValues)
+	// throws UnsatisfiablePathConditionException {
+	// SymbolicExpression nullProcess = this.modelFactory.nullProcessValue();
+	// Evaluation eval = evaluator.evaluate(state, pid, arguments[0]);
+	//
+	// state = eval.state;
+	// return primaryExecutor.assign(arguments[0].getSource(), state,
+	// eval.value, nullProcess);
+	// }
 
 	/**
 	 * Checks if a $comm object is defined, i.e., it doesn't point to the heap

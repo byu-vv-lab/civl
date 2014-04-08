@@ -2601,8 +2601,12 @@ public class FunctionTranslator {
 					scopeConstantNode.isRootNode());
 			break;
 		case PROCESS:
-			assert constantNode.getStringRepresentation().equals("$self");
-			result = modelFactory.selfExpression(source);
+			String procValue = constantNode.getStringRepresentation();
+
+			if (procValue.equals("$self"))
+				result = modelFactory.selfExpression(source);
+			else
+				result = modelFactory.procnullExpression(source);
 			break;
 		case OTHER_INTEGER:
 			if (constantNode instanceof EnumerationConstantNode) {

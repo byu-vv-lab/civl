@@ -3,9 +3,8 @@
 
 void main(){
   $proc p = $self;
-  
-  $proc_null(&p);
-  if($self != p){
+
+  if(p != $proc_null){
 	  printf("I'm not null.\n");
   }
 }
