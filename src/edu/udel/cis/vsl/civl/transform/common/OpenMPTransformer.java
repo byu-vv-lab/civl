@@ -20,11 +20,19 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpNodeFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorkshareNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorkshareNode.OmpWorkshareNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
+import edu.udel.cis.vsl.abc.ast.node.common.omp.CommonOmpNodeFactory;
+import edu.udel.cis.vsl.abc.ast.type.common.CommonTypeFactory;
+import edu.udel.cis.vsl.abc.ast.value.common.CommonValueFactory;
+import edu.udel.cis.vsl.abc.token.IF.CToken;
+import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 import edu.udel.cis.vsl.abc.util.ExpressionEvaluator;
@@ -68,9 +76,16 @@ public class OpenMPTransformer extends BaseTransformer {
 	}
 
 	public AST transform(AST unit) throws SyntaxException {
+		ASTNode rootNode = unit.getRootNode();
+
+		assert this.astFactory == unit.getASTFactory();
+		assert this.nodeFactory == astFactory.getNodeFactory();
+		unit.release();
+		
 		System.out.println("LoopDependenceAnnotator Activated");
-		annotate(unit.getRootNode());
-		return unit;
+		replaceIndependentOmpFor(rootNode);
+		
+		return astFactory.newTranslationUnit(rootNode);
 	}
 
 	AttributeKey getAttributeKey() {
@@ -82,7 +97,7 @@ public class OpenMPTransformer extends BaseTransformer {
 	 * constraints on array index expressions and formulate and solve
 	 * constraints that indicate dependence.
 	 */
-	private void annotate(ASTNode node) {
+	private void replaceIndependentOmpFor(ASTNode node) {
 		if (node instanceof OmpParallelNode) {
 			/*
 			 * TBD: this code does not yet handle: - nested parallel blocks -
@@ -113,16 +128,18 @@ public class OpenMPTransformer extends BaseTransformer {
 			// Visit the rest of this node
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				annotate(child);
+				replaceIndependentOmpFor(child);
 			}
 
 		} else if (node instanceof OmpForNode) {
+			OmpForNode ompFor = (OmpForNode)node;
+			
 			/*
 			 * We do not currently check for issues with canonical form.
 			 * Compilers are not required to check those constraints, so thee is
 			 * some value in doing so.
 			 */
-			ForLoopNode fln = (ForLoopNode) ((OmpForNode) node).statementNode();
+			ForLoopNode fln = (ForLoopNode) ompFor.statementNode();
 
 			/*
 			 * Condition must be of the form: var relop expr or expr relop var
@@ -219,13 +236,11 @@ public class OpenMPTransformer extends BaseTransformer {
 			 * 
 			 * Note that we set up "beginBound" and "endBound" to be used to
 			 * constraint the range of the index expression in case it is needed
-			 * in determining the equivalence of loop index expressions.
+			 * in determining the equivalence of loop index expressions.  These
+			 * bounds are currently not used in formulating the SARL queries.
 			 */
 
 			/*
-			 * Visit the statement body looking for assignments e.g., catch
-			 * OperatorExpression node's with operator=ASSIGN
-			 * 
 			 * Accumulate the set of memory-referencing expressions, i.e.,
 			 * variable references, array index expressions, on the LHS and the
 			 * RHS
@@ -238,27 +253,76 @@ public class OpenMPTransformer extends BaseTransformer {
 
 			collectAssignRefExprs(body);
 
-			System.out.println("Loop Dependence Analysis Info:");
-			System.out.println("   writeVars:" + writeVars);
-			System.out.println("   readVars:" + readVars);
-			System.out.println("   writeArrayRefs:" + writeArrayRefs);
-			System.out.println("   readArrayRefs:" + readArrayRefs);
+//			System.out.println("Loop Dependence Analysis Info:");
+//			System.out.println("   writeVars:" + writeVars);
+//			System.out.println("   readVars:" + readVars);
+//			System.out.println("   writeArrayRefs:" + writeArrayRefs);
+//			System.out.println("   readArrayRefs:" + readArrayRefs);
 
 			/*
 			 * Check for name-based dependences
 			 */
 			writeVars.retainAll(readVars);
-			System.out.println("OMP For has scalar "
-					+ (writeVars.isEmpty() ? "in" : "")
-					+ "dependent loop iterations");
+			boolean hasDeps = !writeVars.isEmpty();
+//			System.out.println("OMP For has scalar "
+//					+ (writeVars.isEmpty() ? "in" : "")
+//					+ "dependent loop iterations");
 
 			/*
 			 * Check for array-based dependences
 			 */
-			boolean hasDeps = hasArrayRefDependences(writeArrayRefs,
-					readArrayRefs);
-			System.out.println("OMP For has array " + (hasDeps ? "" : "in")
-					+ "dependent loop iterations");
+			hasDeps |= hasArrayRefDependences(writeArrayRefs, readArrayRefs);
+//			System.out.println("OMP For has array " + (hasDeps ? "" : "in")
+//					+ "dependent loop iterations");
+			
+			if (!hasDeps) {
+				/*
+				 * Transform this OpenMP "for" into either:
+				 *   1) a plain loop if parent is an OpenMP "parallel" statement
+				 *   2) otherwise a "single" workshare
+				 */
+				ASTNode parent = ompFor.parent();
+				if (parent instanceof OmpParallelNode) {
+					System.out.println("OpenMP Transformer: eliminating parallel and for");
+					
+					ASTNode grand = parent.parent();
+					int childIndex = 0;
+					for (childIndex = 0; childIndex < grand.numChildren(); childIndex++) {
+						if (grand.child(childIndex) == parent) break;
+					}
+					
+					// TBD: Need to clear the parent of fln in order to link it into the grandparent
+					grand.setChild(childIndex, fln);
+				} else {
+					System.out.println("OpenMP Transformer: replacing for with single workshare");
+
+					int childIndex = 0;
+					for (childIndex = 0; childIndex < parent.numChildren(); childIndex++) {
+						if (parent.child(childIndex) == node) break;
+					}
+					
+					OmpNodeFactory ompFactory = new CommonOmpNodeFactory(new CommonValueFactory(new CommonTypeFactory()));
+					List<CToken> singleBody = new ArrayList<CToken>();
+					Iterator<CToken> tokIt = ompFor.getTokens();
+					while (tokIt.hasNext()) {
+						singleBody.add(tokIt.next());
+						
+					}
+					
+					OmpWorkshareNode single = ompFactory.newWorkshareNode(ompFor.getSource(), ompFor.getPragmaIdentifier(),
+							singleBody, ompFor.getToken(ompFor.getNumTokens()), OmpWorkshareNodeKind.SINGLE);
+					
+					single.setStatementNode(fln);
+					
+					// Transfer private, firstprivate, copyprivate, and nowait clauses to single
+					single.setPrivateList(ompFor.privateList());
+					single.setFirstprivateList(ompFor.firstprivateList());
+					single.setCopyprivateList(ompFor.copyprivateList());
+					single.setNowait(ompFor.nowait());
+
+					parent.setChild(childIndex, single);
+				}
+			}
 
 		} else if (node != null) {
 			// BUG: can get here with null values in parallelfor.c example
@@ -269,7 +333,7 @@ public class OpenMPTransformer extends BaseTransformer {
 			 */
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				annotate(child);
+				replaceIndependentOmpFor(child);
 			}
 		}
 	}
