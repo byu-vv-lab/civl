@@ -311,7 +311,7 @@ public class OpenMPTransformer extends BaseTransformer {
 					}
 					
 					OmpWorkshareNode single = ompFactory.newWorkshareNode(ompFor.getSource(), ompFor.getPragmaIdentifier(),
-							singleBody, ompFor.getToken(ompFor.getNumTokens()), OmpWorkshareNodeKind.SINGLE);
+							singleBody, ompFor.getToken(ompFor.getNumTokens()-1), OmpWorkshareNodeKind.SINGLE);
 					
 					single.setStatementNode(fln);
 					
