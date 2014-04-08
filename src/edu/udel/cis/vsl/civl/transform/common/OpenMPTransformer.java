@@ -285,21 +285,22 @@ public class OpenMPTransformer extends BaseTransformer {
 				if (parent instanceof OmpParallelNode) {
 					System.out.println("OpenMP Transformer: eliminating parallel and for");
 					
-					ASTNode grand = parent.parent();
-					int childIndex = 0;
-					for (childIndex = 0; childIndex < grand.numChildren(); childIndex++) {
-						if (grand.child(childIndex) == parent) break;
-					}
+					// Remove "for" node from "omp for" node
+					int forIndex = getChildIndex(ompFor, fln);
+					assert forIndex != -1;
+					ompFor.removeChild(forIndex);
 					
-					// TBD: Need to clear the parent of fln in order to link it into the grandparent
-					grand.setChild(childIndex, fln);
+					// Link "for" into the grand parent
+					ASTNode grand = parent.parent();
+					int parentIndex = getChildIndex(grand, parent);
+					assert parentIndex != -1;
+					grand.setChild(parentIndex, fln);
 				} else {
 					System.out.println("OpenMP Transformer: replacing for with single workshare");
 
-					int childIndex = 0;
-					for (childIndex = 0; childIndex < parent.numChildren(); childIndex++) {
-						if (parent.child(childIndex) == node) break;
-					}
+					int ompForIndex = getChildIndex(parent, ompFor);
+					assert ompForIndex != -1;
+					parent.removeChild(ompForIndex);
 					
 					OmpNodeFactory ompFactory = new CommonOmpNodeFactory(new CommonValueFactory(new CommonTypeFactory()));
 					List<CToken> singleBody = new ArrayList<CToken>();
@@ -319,8 +320,8 @@ public class OpenMPTransformer extends BaseTransformer {
 					single.setFirstprivateList(ompFor.firstprivateList());
 					single.setCopyprivateList(ompFor.copyprivateList());
 					single.setNowait(ompFor.nowait());
-
-					parent.setChild(childIndex, single);
+					
+					parent.setChild(ompForIndex, single);
 				}
 			}
 
@@ -336,6 +337,17 @@ public class OpenMPTransformer extends BaseTransformer {
 				replaceIndependentOmpFor(child);
 			}
 		}
+	}
+	
+	/*
+	 * Returns the index of "child" in the children of "node"; -1 if "child" is
+	 * not one of "node"'s children.
+	 */
+	private int getChildIndex(ASTNode node, ASTNode child) {
+		for (int childIndex = 0; childIndex < node.numChildren(); childIndex++) {
+			if (node.child(childIndex) == child) return childIndex;
+		}
+		return -1;
 	}
 
 	/*
