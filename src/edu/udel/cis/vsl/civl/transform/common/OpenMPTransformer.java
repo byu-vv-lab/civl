@@ -21,7 +21,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorkshareNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
@@ -308,11 +308,11 @@ public class OpenMPTransformer extends BaseTransformer {
 					// ompFor.getPragmaIdentifier(),
 					// singleBody, ompFor.getToken(ompFor.getNumTokens()-1),
 					// OmpWorkshareNodeKind.SINGLE);
-					
-					OmpWorkshareNode single = nodeFactory.newOmpSingleNode(ompFor.getSource());
-					
 					fln.parent().removeChild(fln.childIndex());
-					single.setStatementNode(fln);
+					OmpWorksharingNode single = nodeFactory.newOmpSingleNode(ompFor.getSource(), fln);
+					
+					// fln.parent().removeChild(fln.childIndex());
+					// single.setStatementNode(fln);
 					
 					// Transfer private, firstprivate, copyprivate, and nowait clauses to single
 					single.setPrivateList(ompFor.privateList());

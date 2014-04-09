@@ -33,8 +33,7 @@ public class OmpTransformer extends BaseTransformer implements Transformer {
 	public OmpTransformer(ASTFactory astFactory) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 		this.ompBuilder = new OmpBuilder(nodeFactory.getValueFactory(),
-				this.nodeFactory, astFactory.getTokenFactory(),
-				astFactory);
+				this.nodeFactory, astFactory.getTokenFactory(), astFactory);
 	}
 
 	@Override
@@ -59,8 +58,7 @@ public class OmpTransformer extends BaseTransformer implements Transformer {
 
 				if (pragmaNode.getPragmaIdentifier().name().equals(OMP)) {
 					OmpNode ompNode = ompBuilder.getOmpNode(
-							pragmaNode.getSource(), null,
-							pragmaNode.getTokens());
+							pragmaNode.getSource(), pragmaNode.getTokens());
 
 					ast.removeChild(i);
 					switch (ompNode.ompNodeKind()) {
