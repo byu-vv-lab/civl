@@ -45,6 +45,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
 import edu.udel.cis.vsl.civl.transform.common.MPITransformer;
+import edu.udel.cis.vsl.civl.transform.common.OmpTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.gmc.CommandLineException;
@@ -359,6 +360,17 @@ public class UserInterface {
 						return new OpenMPTransformer(astFactory);
 					}
 				});
+			if (!Transform.getCodes().contains(OmpTransformer.CODE))
+				Transform.addTransform(new TransformRecord(OmpTransformer.CODE,
+						OmpTransformer.LONG_NAME,
+						OmpTransformer.SHORT_DESCRIPTION) {
+					@Override
+					public Transformer create(ASTFactory astFactory) {
+						return new OmpTransformer(astFactory);
+					}
+				});
+			this.out.println("Apply OpenMP parser...");
+			program.applyTransformer(OmpTransformer.CODE);
 			this.out.println("Apply OpenMP transformer...");
 			program.applyTransformer(OpenMPTransformer.CODE);
 		}

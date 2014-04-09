@@ -523,6 +523,17 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 
 	/* ************************ Methods from Library *********************** */
 
+	/**
+	 * Execute fprintf();
+	 * @param source
+	 * @param state
+	 * @param pid
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State execute_fprintf(CIVLSource source, State state, int pid,
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
@@ -543,7 +554,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		ArrayList<Integer> sIndexes = new ArrayList<>();
 		Pattern pattern;
 		Matcher matcher;
-		int sCount = 3;
+		int sCount = 2;
 		Pair<State, StringBuffer> concreteString;
 
 		state = eval.state;

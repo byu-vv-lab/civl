@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 import edu.udel.cis.vsl.abc.transform.common.Pruner;
 import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.civl.transform.common.OmpTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
 
 public class OmpTransformerTest {
@@ -57,6 +58,17 @@ public class OmpTransformerTest {
 				}
 			});
 		}
+		if (!Transform.getCodes().contains(OmpTransformer.CODE)) {
+			Transform
+					.addTransform(new TransformRecord(OmpTransformer.CODE,
+							OmpTransformer.LONG_NAME,
+							OmpTransformer.SHORT_DESCRIPTION) {
+						@Override
+						public Transformer create(ASTFactory astFactory) {
+							return new OmpTransformer(astFactory);
+						}
+					});
+		}
 		ABC.language = Language.CIVL_C;
 	}
 
@@ -70,6 +82,7 @@ public class OmpTransformerTest {
 
 		codes.add(Pruner.CODE);
 		codes.add(SideEffectRemover.CODE);
+		codes.add(OmpTransformer.CODE);
 		codes.add(OpenMPTransformer.CODE);
 		this.systemIncludes = new File[0];
 		this.userIncludes = new File[0];
@@ -82,7 +95,12 @@ public class OmpTransformerTest {
 
 	@Test
 	public void dotProduct_critical1() throws ABCException, IOException {
-		assertTrue(ui.run("parse", filename("dotProduct_critical.c")));
+		assertTrue(ui.run("parse", "-echo", filename("dotProduct_critical.c")));
+	}
+
+	@Test
+	public void nested() throws ABCException, IOException {
+		this.check("nested");
 	}
 
 	@Test

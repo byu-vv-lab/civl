@@ -20,19 +20,12 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpNodeFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorkshareNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorkshareNode.OmpWorkshareNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
-import edu.udel.cis.vsl.abc.ast.node.common.omp.CommonOmpNodeFactory;
-import edu.udel.cis.vsl.abc.ast.type.common.CommonTypeFactory;
-import edu.udel.cis.vsl.abc.ast.value.common.CommonValueFactory;
-import edu.udel.cis.vsl.abc.token.IF.CToken;
-import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 import edu.udel.cis.vsl.abc.util.ExpressionEvaluator;
@@ -302,17 +295,23 @@ public class OpenMPTransformer extends BaseTransformer {
 					assert ompForIndex != -1;
 					parent.removeChild(ompForIndex);
 					
-					OmpNodeFactory ompFactory = new CommonOmpNodeFactory(new CommonValueFactory(new CommonTypeFactory()));
-					List<CToken> singleBody = new ArrayList<CToken>();
-					Iterator<CToken> tokIt = ompFor.getTokens();
-					while (tokIt.hasNext()) {
-						singleBody.add(tokIt.next());
-						
-					}
+//					OmpNodeFactory ompFactory = new CommonOmpNodeFactory(new CommonValueFactory(new CommonTypeFactory()));
+//					List<CToken> singleBody = new ArrayList<CToken>();
+//					Iterator<CToken> tokIt = ompFor.getTokens();
+//					while (tokIt.hasNext()) {
+//						singleBody.add(tokIt.next());
+//						
+//					}
 					
-					OmpWorkshareNode single = ompFactory.newWorkshareNode(ompFor.getSource(), ompFor.getPragmaIdentifier(),
-							singleBody, ompFor.getToken(ompFor.getNumTokens()-1), OmpWorkshareNodeKind.SINGLE);
+					// OmpWorkshareNode single =
+					// ompFactory.newWorkshareNode(ompFor.getSource(),
+					// ompFor.getPragmaIdentifier(),
+					// singleBody, ompFor.getToken(ompFor.getNumTokens()-1),
+					// OmpWorkshareNodeKind.SINGLE);
 					
+					OmpWorkshareNode single = nodeFactory.newOmpSingleNode(ompFor.getSource());
+					
+					fln.parent().removeChild(fln.childIndex());
 					single.setStatementNode(fln);
 					
 					// Transfer private, firstprivate, copyprivate, and nowait clauses to single
