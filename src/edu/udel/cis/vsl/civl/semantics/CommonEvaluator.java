@@ -1724,7 +1724,7 @@ public class CommonEvaluator implements Evaluator {
 
 				set.add(expr);
 				try {
-					if (getScopeId(null, expr) >= 0) {
+					if (expr.operator() == SymbolicOperator.CONCRETE && getScopeId(null, expr) >= 0) {
 						eval = this.dereference(null, state, expr);
 						pointerValue = eval.value;
 						state = eval.state;
