@@ -2833,6 +2833,8 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case SELF:
 			break;
+		case PROC_NULL:
+			break;
 		case SIZEOF_TYPE:
 			break;
 		case SIZEOF_EXPRESSION:
