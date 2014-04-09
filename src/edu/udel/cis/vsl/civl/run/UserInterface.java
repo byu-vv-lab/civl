@@ -311,6 +311,13 @@ public class UserInterface {
 		return model;
 	}
 
+	/**
+	 * Apply transformers of the program.
+	 * 
+	 * @param fileName
+	 * @param program
+	 * @throws SyntaxException
+	 */
 	private void applyTransformers(String fileName, Program program)
 			throws SyntaxException {
 		Set<String> headers = this.preprocessor.headerFiles();
@@ -318,7 +325,7 @@ public class UserInterface {
 
 		if (headers.contains("stdio.h"))
 			this.hasStdio = true;
-		if (isC && headers.contains("omp.h"))
+		if (isC && (headers.contains("omp.h") || program.hasOmpPragma()))
 			this.hasOmp = true;
 		if (isC && headers.contains("mpi.h"))
 			this.hasMpi = true;
