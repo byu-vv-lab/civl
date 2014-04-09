@@ -525,6 +525,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 
 	/**
 	 * Execute fprintf();
+	 * 
 	 * @param source
 	 * @param state
 	 * @param pid
@@ -692,6 +693,12 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					continue;
 				}
 				if (stringBuffer.length() > 0) {
+					if (stringBuffer.charAt(0) == '%'
+							&& stringBuffer.charAt(1) != '%') {
+						throw new CIVLSyntaxException("The format %"
+								+ stringBuffer + " is not allowed in fprintf",
+								source);
+					}
 					result.add(stringBuffer);
 					stringBuffer = new StringBuffer();
 				}
@@ -700,18 +707,18 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				current = formatBuffer.charAt(++i);
 			}
 			if (inConversion) {
-				//field width
+				// field width
 				if (current.equals('*')) {
 					stringBuffer.append('*');
 					current = formatBuffer.charAt(++i);
-				}else if (numbers.contains(current)) {
+				} else if (numbers.contains(current)) {
 					Character next = current;
 
 					if (hasFieldWidth) {
 						stringBuffer.append(next);
 						throw new CIVLSyntaxException(
-								"Duplicate field width in \""
-										+ stringBuffer + "\"...", source);
+								"Duplicate field width in \"" + stringBuffer
+										+ "\"...", source);
 					}
 					hasFieldWidth = true;
 					while (numbers.contains(next)) {
@@ -720,7 +727,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					}
 					current = next;
 				}
-				//precision
+				// precision
 				if (current.equals('.')) {
 					Character next;
 
@@ -732,16 +739,45 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 										+ stringBuffer + "\"...", source);
 					}
 					hasPrecision = true;
-					while (numbers.contains(next)) {
+					if (next.equals('*')) {
 						stringBuffer.append(next);
 						next = formatBuffer.charAt(++i);
+					} else {
+						while (numbers.contains(next)) {
+							stringBuffer.append(next);
+							next = formatBuffer.charAt(++i);
+						}
 					}
 					current = next;
+				}
+				// length modifier
+				switch (current) {
+				case 'h':
+				case 'l':
+					Character next = formatBuffer.charAt(i + 1);
+
+					if (next.equals(current)) {
+						i++;
+						stringBuffer.append(current);
+						stringBuffer.append(next);
+					} else
+						stringBuffer.append(current);
+					current = formatBuffer.charAt(++i);
+					break;
+				case 'j':
+				case 'z':
+				case 't':
+				case 'L':
+					stringBuffer.append(current);
+					current = formatBuffer.charAt(++i);
+					break;
+				default:
 				}
 				switch (current) {
 				case 'c':
 				case 'p':
 				case 'D':
+				case 'n':
 					if (hasFieldWidth || hasPrecision) {
 						throw new CIVLSyntaxException(
 								"Invalid precision for the format \"%"
@@ -764,18 +800,19 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				case 's':
 					stringBuffer.append(current);
 					break;
-				case 'l':
-					Character code1 = formatBuffer.charAt(++i);
-
-					if (!code1.equals('f')) {
-						throw new CIVLSyntaxException(
-								"The format %lf is not allowed in fprintf",
-								source);
-					}
-					stringBuffer.append("lf");
-					break;
+//				case 'l':
+//					Character code1 = formatBuffer.charAt(++i);
+//
+//					if (!code1.equals('f')) {
+//						throw new CIVLSyntaxException(
+//								"The format %lf is not allowed in fprintf",
+//								source);
+//					}
+//					stringBuffer.append("lf");
+//					break;
 				default:
-					throw new CIVLSyntaxException("The format %" + current
+					stringBuffer.append(current);
+					throw new CIVLSyntaxException("The format %" + stringBuffer
 							+ " is not allowed in fprintf", source);
 				}
 				result.add(stringBuffer);
