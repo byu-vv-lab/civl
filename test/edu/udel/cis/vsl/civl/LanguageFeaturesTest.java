@@ -432,5 +432,10 @@ public class LanguageFeaturesTest {
 	public void intToBool() throws ABCException {
 		assertTrue(ui.run("verify", filename("intToBool.cvl"), "-showModel"));
 	}
+	
+	@Test
+	public void twoDpointerTest() throws ABCException {
+		assertTrue(ui.run("verify", filename("2dpointerTest.cvl"), "-showSavedStates"));
+	}
 
 }
