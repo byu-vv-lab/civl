@@ -1,0 +1,24 @@
+#include <civlc.h>
+
+void Process(){
+  double ** buf;
+  int *p;
+  
+  p = (int *)$malloc($here, 2 * sizeof(int));
+  buf = (double **)$malloc($here, 2 * sizeof(double *));
+  for(int i=0; i<2; i++){
+    buf[i] = (double *)$malloc($here, 
+			       2 * sizeof(double));
+  }
+
+}
+
+void main(){
+  $proc procs[2];
+
+  procs[0] = $spawn Process();
+  procs[1] = $spawn Process();
+
+  $wait(procs[0]);
+  $wait(procs[1]);
+}
