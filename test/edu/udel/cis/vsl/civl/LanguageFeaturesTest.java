@@ -437,5 +437,11 @@ public class LanguageFeaturesTest {
 	public void twoDpointerTest() throws ABCException {
 		assertTrue(ui.run("verify", filename("2dpointerTest.cvl"), "-showSavedStates"));
 	}
+	
+	@Test
+	public void civlExitBad() throws ABCException {
+		assertTrue(ui.run("verify", "-showTransitions", "-showStates", filename("civlExitBad.cvl")));
+		
+	}
 
 }
