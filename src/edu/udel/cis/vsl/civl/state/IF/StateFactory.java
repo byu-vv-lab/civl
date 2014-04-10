@@ -148,6 +148,20 @@ public interface StateFactory {
 			SymbolicExpression[] arguments, int callerPid);
 
 	/**
+	 * Sets the process state for the designated process to be the process state
+	 * with the empty stack.
+	 * 
+	 * @param state
+	 *            the old state
+	 * @param pid
+	 *            the PID of the process to terminate
+	 * @return state that is identical to old except that the process state for
+	 *         process PID has been set to the process state with the empty
+	 *         stack
+	 */
+	State terminateProcess(State state, int pid);
+
+	/**
 	 * Removes a process from the state. The process state associated to that
 	 * process is set to null. No other part of the state is affected. To really
 	 * get rid of the process state you need to call {@link #collectProcesses}.
@@ -260,7 +274,7 @@ public interface StateFactory {
 
 	/**
 	 * Performs a garbage collection and canonicalization of the process states.
-	 * Removes and process state that is null. Renumbers the PIDs so that there
+	 * Removes any process state that is null. Renumbers the PIDs so that there
 	 * are no gaps (and start from 0).
 	 * 
 	 * @param state

@@ -857,7 +857,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		if (atomicPID == pid) {
 			state = stateFactory.releaseAtomicLock(state);
 		}
-		return stateFactory.removeProcess(state, pid);
+		return stateFactory.terminateProcess(state, pid);
 	}
 
 	/**

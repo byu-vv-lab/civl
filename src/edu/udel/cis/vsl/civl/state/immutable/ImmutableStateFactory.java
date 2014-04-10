@@ -462,7 +462,7 @@ public class ImmutableStateFactory implements StateFactory {
 				SymbolicExpression oldValue = dynamicScope.getValue(vid);
 				SymbolicExpression newValue = universe.substitute(oldValue,
 						procSubMap);
-				
+
 				if (oldValue != newValue) {
 					if (newValues == null)
 						newValues = dynamicScope.copyValues();
@@ -760,6 +760,14 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
+	public State terminateProcess(State state, int pid) {
+		ImmutableState theState = (ImmutableState) state;
+		ImmutableProcessState emptyProcessState = new ImmutableProcessState(pid);
+
+		return theState.setProcessState(pid, emptyProcessState);
+	}
+
+	@Override
 	public ImmutableState removeProcess(State state, int pid) {
 		ImmutableState theState = (ImmutableState) state;
 
@@ -935,10 +943,10 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 		return state.rootScopeID();
 	}
-	
-//	@Override
-//	public int getScopeId(State state, int pid, Variable variable){
-//		return state.getScopeId(pid, variable);
-//	}
+
+	// @Override
+	// public int getScopeId(State state, int pid, Variable variable){
+	// return state.getScopeId(pid, variable);
+	// }
 
 }
