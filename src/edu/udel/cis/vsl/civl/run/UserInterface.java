@@ -47,6 +47,7 @@ import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
 import edu.udel.cis.vsl.civl.transform.common.MPITransformer;
 import edu.udel.cis.vsl.civl.transform.common.OmpTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
+import edu.udel.cis.vsl.civl.transition.CompoundTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
@@ -670,7 +671,7 @@ public class UserInterface {
 		if (guiMode) {
 			ArrayList<State> states = new ArrayList<>();
 			ArrayList<Transition> transitions = new ArrayList<>();
-			Transition[] tranArray;
+			CompoundTransition[] tranArray;
 			State[] stateArray;
 			@SuppressWarnings("unused")
 			CIVL_GUI gui;
@@ -679,7 +680,7 @@ public class UserInterface {
 			stateArray = new State[states.size()];
 			states.toArray(stateArray);
 			// result = replayer.replayForGui(states, transitions);
-			tranArray = new Transition[transitions.size()];
+			tranArray = new CompoundTransition[transitions.size()];
 			transitions.toArray(tranArray);
 			gui = new CIVL_GUI(stateArray, tranArray);
 			// runGui(states, transitions, replayer.stateManager);
