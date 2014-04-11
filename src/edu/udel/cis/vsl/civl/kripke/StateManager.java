@@ -23,7 +23,9 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.transition.ChooseTransition;
+import edu.udel.cis.vsl.civl.transition.CompoundTransition;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
+import edu.udel.cis.vsl.civl.transition.Step;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.civl.util.Printable;
@@ -130,6 +132,10 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	private int maxCanonicId = -1;
 
+	private boolean guiMode = false;
+
+	private CompoundTransition compoundTransition;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -223,8 +229,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			stateCounter++;
 			p = newState.getProcessState(pid);
 			if (print && executedStatement != null) {
-				printStatement(executedStatement, newLocation.atomicKind(),
-						p.atomicCount(), false);
+				printStatement(currentState, newState, executedStatement,
+						newLocation.atomicKind(), p.atomicCount(), false);
 			}
 			if (p != null && !p.hasEmptyStack())
 				newLocation = p.getLocation();
@@ -301,8 +307,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			newState = executor.executeStatement(newState, pLocation,
 					pLocation.getOutgoing(0), pid).right;
 			if (print) {
-				printStatement(executedStatement, AtomicKind.ATOMIC_EXIT,
-						p.atomicCount(), true);
+				printStatement(state, newState, executedStatement,
+						AtomicKind.ATOMIC_EXIT, p.atomicCount(), true);
 			}
 		} else
 			newState = stateFactory.setLocation(newState, pid,
@@ -454,11 +460,12 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			}
 			p = newState.getProcessState(pid);
 			if (p != null && print && stepExecuted) {
-				printStatement(executedStatement, pLocation.atomicKind(),
-						p.atomicCount(), atomicLockVarChanged);
-			} else if (print && stepExecuted) {
-				printStatement(executedStatement, pLocation.atomicKind(), 0,
+				printStatement(oldState, newState, executedStatement,
+						pLocation.atomicKind(), p.atomicCount(),
 						atomicLockVarChanged);
+			} else if (print && stepExecuted) {
+				printStatement(oldState, newState, executedStatement,
+						pLocation.atomicKind(), 0, atomicLockVarChanged);
 			}
 			if (p != null && !p.hasEmptyStack())
 				pLocation = p.peekStack().location();
@@ -497,6 +504,9 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		processIdentifier = ((SimpleTransition) transition).processIdentifier();
 		p = state.getProcessState(pid);
 		currentLocation = p.getLocation();
+		if (this.guiMode)
+			this.compoundTransition = new CompoundTransition(pid,
+					processIdentifier);
 		switch (currentLocation.atomicKind()) {
 		case ATOMIC_ENTER:
 			printTransitionPrefix(printTransitions, state, processIdentifier);
@@ -517,6 +527,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			throw new CIVLInternalException("Unreachable",
 					currentLocation.getSource());
 		default:// execute a normal transition
+			State oldState = state;
+
 			if (printTransitions) {
 				out.print(state + ", ");
 				printTransitionLong(out, transition);
@@ -538,6 +550,9 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			} else {
 				state = executor.execute(state, pid, statement);
 			}
+			if (this.guiMode)
+				this.compoundTransition.addStep(new Step(oldState, state,
+						statement));
 			// sometimes the execution might allow the process to grab the
 			// atomic lock
 			if (executor.stateFactory().lockedByAtomic(state)) {
@@ -610,8 +625,13 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 *            True iff the atomic lock variable is changed during the
 	 *            execution of the statement.
 	 */
-	private void printStatement(Statement s, AtomicKind atomicKind,
-			int atomCount, boolean atomicLockVarChanged) {
+	private void printStatement(State currentState, State newState,
+			Statement s, AtomicKind atomicKind, int atomCount,
+			boolean atomicLockVarChanged) {
+		if (this.guiMode) {
+			this.compoundTransition
+					.addStep(new Step(currentState, newState, s));
+		}
 		out.print(s.toStepString(atomicKind, atomCount, atomicLockVarChanged));
 	}
 
@@ -623,7 +643,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 * @param state
 	 *            The source state of the transition.
 	 * @param processIdentifier
-	 *            The identifier of the process that this transition associates with.
+	 *            The identifier of the process that this transition associates
+	 *            with.
 	 */
 	private void printTransitionPrefix(boolean printTransitions, State state,
 			int processIdentifier) {
@@ -702,6 +723,32 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			return state;
 		}
 
+	}
+
+	@Override
+	public Object[] nextStateForGui(State state, Transition transition) {
+		Object[] results = new Object[2];
+
+		nextStateCalls++;
+		if (nextStateCalls % 100 == 0) {
+			synchronized (this) {
+				if (printUpdate) {
+					printUpdateWork();
+					printUpdate = false;
+				}
+			}
+		}
+		try {
+			results[0] = nextStateWork(state, transition);
+		} catch (UnsatisfiablePathConditionException e) {
+			// problem is the interface requires an actual State
+			// be returned. There is no concept of executing a
+			// transition and getting null or an exception.
+			// since the error has been logged, just stutter:
+			results[0] = state;
+		}
+		results[1] = this.compoundTransition;
+		return results;
 	}
 
 	@Override
@@ -877,6 +924,10 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	public void setDebug(boolean value) {
 		this.debug = value;
+	}
+
+	public void setGuiMode(boolean value) {
+		this.guiMode = value;
 	}
 
 	/**

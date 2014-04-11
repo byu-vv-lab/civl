@@ -175,6 +175,7 @@ public abstract class Player {
 		stateManager.setOutputStream(out);
 		stateManager.setVerbose(verbose);
 		stateManager.setDebug(debug);
+		stateManager.setGuiMode(this.gui);
 		stateManager.setShowStates(showStates);
 		stateManager.setShowSavedStates(showSavedStates);
 		stateManager.setShowTransitions(showTransitions);

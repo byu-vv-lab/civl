@@ -1724,7 +1724,9 @@ public class CommonEvaluator implements Evaluator {
 
 				set.add(expr);
 				try {
-					if (expr.operator() == SymbolicOperator.CONCRETE && getScopeId(null, expr) >= 0) {
+					if (expr.operator() == SymbolicOperator.CONCRETE
+							&& getScopeId(null, expr) >= 0) {
+						// if (getScopeId(null, expr) >= 0) {
 						eval = this.dereference(null, state, expr);
 						pointerValue = eval.value;
 						state = eval.state;
@@ -2771,58 +2773,65 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public void memoryUnitsOfExpression(State state, int pid,
+	public boolean memoryUnitsOfExpression(State state, int pid,
 			Expression expression, Set<SymbolicExpression> memoryUnits)
 			throws UnsatisfiablePathConditionException {
 		ExpressionKind kind = expression.expressionKind();
 		Evaluation eval;
+		boolean temp;
 
 		switch (kind) {
 		case ADDRESS_OF:
 			AddressOfExpression addressOfExpression = (AddressOfExpression) expression;
 			Expression operand = addressOfExpression.operand();
 
-			memoryUnitsOfExpression(state, pid, operand, memoryUnits);
-			break;
+			return memoryUnitsOfExpression(state, pid, operand, memoryUnits);
 		case ARRAY_LITERAL:
 			Expression[] elements = ((ArrayLiteralExpression) expression)
 					.elements();
 
 			for (Expression element : elements) {
-				memoryUnitsOfExpression(state, pid, element, memoryUnits);
+				temp = memoryUnitsOfExpression(state, pid, element, memoryUnits);
+				if (!temp)
+					return false;
 			}
 			break;
 		case BINARY:
 			BinaryExpression binaryExpression = (BinaryExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, binaryExpression.left(),
+			temp = memoryUnitsOfExpression(state, pid, binaryExpression.left(),
 					memoryUnits);
-			memoryUnitsOfExpression(state, pid, binaryExpression.right(),
-					memoryUnits);
-			break;
+			if (!temp)
+				return false;
+			return memoryUnitsOfExpression(state, pid,
+					binaryExpression.right(), memoryUnits);
 		case BOOLEAN_LITERAL:
 			break;
 		case CAST:
 			CastExpression castExpression = (CastExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, castExpression.getExpression(),
-					memoryUnits);
-			break;
+			return memoryUnitsOfExpression(state, pid,
+					castExpression.getExpression(), memoryUnits);
 		case CHAR_LITERAL:
 			break;
 		case DEREFERENCE:
 			DereferenceExpression deferenceExpression = (DereferenceExpression) expression;
-
-			memoryUnitsOfExpression(state, pid, deferenceExpression.pointer(),
-					memoryUnits);
-			break;
-
+//			SymbolicExpression pointerValue;
+//
+//			try {
+//				pointerValue = this.evaluate(state, pid,
+//						deferenceExpression.pointer()).value;
+//			} catch (Exception ex) {
+//				return false;
+//			}
+//			this.findPointersInExpression(pointerValue, memoryUnits, state);
+			return memoryUnitsOfExpression(state, pid,
+					deferenceExpression.pointer(), memoryUnits);
 		case DOT:
 			DotExpression dotExpression = (DotExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, dotExpression.structOrUnion(),
-					memoryUnits);
-			break;
+			return memoryUnitsOfExpression(state, pid,
+					dotExpression.structOrUnion(), memoryUnits);
 		case DYNAMIC_TYPE_OF:
 			break;
 		case INITIAL_VALUE:
@@ -2840,31 +2849,32 @@ public class CommonEvaluator implements Evaluator {
 		case SIZEOF_EXPRESSION:
 			SizeofExpressionExpression sizeofExpression = (SizeofExpressionExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, sizeofExpression.getArgument(),
-					memoryUnits);
-			break;
+			return memoryUnitsOfExpression(state, pid,
+					sizeofExpression.getArgument(), memoryUnits);
 		case STRUCT_OR_UNION_LITERAL:
 			Expression[] fields = ((StructOrUnionLiteralExpression) expression)
 					.fields();
 
 			for (Expression field : fields) {
-				memoryUnitsOfExpression(state, pid, field, memoryUnits);
+				temp = memoryUnitsOfExpression(state, pid, field, memoryUnits);
+				if(!temp)
+					return false;
 			}
 			break;
 		case SUBSCRIPT:
 			SubscriptExpression subscriptExpression = (SubscriptExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, subscriptExpression.array(),
+			temp = memoryUnitsOfExpression(state, pid, subscriptExpression.array(),
 					memoryUnits);
-			memoryUnitsOfExpression(state, pid, subscriptExpression.index(),
+			if(!temp)
+				return false;
+			return memoryUnitsOfExpression(state, pid, subscriptExpression.index(),
 					memoryUnits);
-			break;
 		case UNARY:
 			UnaryExpression unaryExpression = (UnaryExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, unaryExpression.operand(),
+			return memoryUnitsOfExpression(state, pid, unaryExpression.operand(),
 					memoryUnits);
-			break;
 		case UNDEFINED_PROC:
 			break;
 		case VARIABLE:
@@ -2895,7 +2905,9 @@ public class CommonEvaluator implements Evaluator {
 		case ABSTRACT_FUNCTION_CALL:
 			for (Expression arg : ((AbstractFunctionCallExpression) expression)
 					.arguments()) {
-				memoryUnitsOfExpression(state, pid, arg, memoryUnits);
+				temp = memoryUnitsOfExpression(state, pid, arg, memoryUnits);
+				if(!temp)
+					return false;
 			}
 			break;
 		case WAIT_GUARD:
@@ -2916,6 +2928,7 @@ public class CommonEvaluator implements Evaluator {
 			throw new CIVLUnimplementedFeatureException("Expression kind: "
 					+ kind, expression.getSource());
 		}
+		return true;
 	}
 
 	@Override

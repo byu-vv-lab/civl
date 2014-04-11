@@ -668,17 +668,20 @@ public class UserInterface {
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out,
 				this.preprocessor);
 		if (guiMode) {
-			State[] states = new State[] {};
+			ArrayList<State> states = new ArrayList<>();
 			ArrayList<Transition> transitions = new ArrayList<>();
 			Transition[] tranArray;
+			State[] stateArray;
 			@SuppressWarnings("unused")
 			CIVL_GUI gui;
 
-			states = replayer.replayForGui(transitions);
+			replayer.replayForGui(states, transitions);
+			stateArray = new State[states.size()];
+			states.toArray(stateArray);
 			// result = replayer.replayForGui(states, transitions);
 			tranArray = new Transition[transitions.size()];
 			transitions.toArray(tranArray);
-			gui = new CIVL_GUI(states, tranArray);
+			gui = new CIVL_GUI(stateArray, tranArray);
 			// runGui(states, transitions, replayer.stateManager);
 			result = false;
 		} else {

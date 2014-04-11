@@ -270,8 +270,8 @@ public interface Evaluator {
 	 *            The set of memory units reachable by the expression.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	void memoryUnitsOfExpression(State state, int pid, Expression expression,
-			Set<SymbolicExpression> memoryUnits)
+	boolean memoryUnitsOfExpression(State state, int pid,
+			Expression expression, Set<SymbolicExpression> memoryUnits)
 			throws UnsatisfiablePathConditionException;
 
 	/**

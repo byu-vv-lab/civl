@@ -18,9 +18,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.MPIRecvStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.MPISendStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.MPIStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -69,13 +66,6 @@ public class AmpleSetWorker {
 	 * stack that have at least one enabled statement)
 	 */
 	Set<Integer> activeProcesses = new LinkedHashSet<>();
-
-	// /**
-	// * Mapping of process ID's and the corresponding set of ample process
-	// ID's.
-	// * Used for finding the smallest ample set.
-	// */
-	// Map<Integer, Set<Integer>> ampleProcessesMap = new HashMap<>();
 
 	/**
 	 * The unique enabler used in the system. Used here for evaluating the guard
@@ -354,6 +344,7 @@ public class AmpleSetWorker {
 		int pid = p.getPid();
 		Location pLocation = p.getLocation();
 		Set<CallOrSpawnStatement> systemCalls = new HashSet<>();
+		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> partialResult;
 
 		this.enabledSystemCallMap.put(pid, systemCalls);
 		if (pLocation.enterAtom() || pLocation.enterAtomic()
@@ -362,7 +353,10 @@ public class AmpleSetWorker {
 		} else {
 			for (Statement s : pLocation.outgoing()) {
 				try {
-					memUnits.addAll(impactMemoryUnitsOfStatement(s, pid));
+					partialResult = impactMemoryUnitsOfStatement(s, pid);
+					if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+						return partialResult;
+					memUnits.addAll(partialResult.right);
 				} catch (UnsatisfiablePathConditionException e) {
 					continue;
 				}
@@ -392,6 +386,7 @@ public class AmpleSetWorker {
 			Location location, int pid) {
 		int atomicCount = state.getProcessState(pid).atomicCount();
 		Stack<Integer> atomFlags = new Stack<Integer>();
+		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> partialResult;
 
 		if (atomicCount > 0) {
 			for (int i = 0; i < atomicCount; i++) {
@@ -438,13 +433,15 @@ public class AmpleSetWorker {
 							CallOrSpawnStatement callOrSpawnStatement = (CallOrSpawnStatement) s;
 
 							if (callOrSpawnStatement.isCall()) {
-									return new Pair<MemoryUnitsStatus, Set<SymbolicExpression>>(
-											MemoryUnitsStatus.INCOMPLETE,
-											memUnits);
+								return new Pair<MemoryUnitsStatus, Set<SymbolicExpression>>(
+										MemoryUnitsStatus.INCOMPLETE, memUnits);
 							}
 						}
 						try {
-							memUnits.addAll(impactMemoryUnitsOfStatement(s, pid));
+							partialResult = impactMemoryUnitsOfStatement(s, pid);
+							if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+								return partialResult;
+							memUnits.addAll(partialResult.right);
 						} catch (UnsatisfiablePathConditionException e) {
 
 						}
@@ -473,13 +470,16 @@ public class AmpleSetWorker {
 	 * @return the impact memory units of the statement
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Set<SymbolicExpression> impactMemoryUnitsOfStatement(
+	private Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemoryUnitsOfStatement(
 			Statement statement, int pid)
 			throws UnsatisfiablePathConditionException {
 		Set<SymbolicExpression> memUnits = new HashSet<>();
-		Set<SymbolicExpression> memUnitsPartial = memoryUnit(statement.guard(),
-				pid);
+		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> partialResult = memoryUnit(
+				statement.guard(), pid);
+		Set<SymbolicExpression> memUnitsPartial = partialResult.right;
 
+		if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+			return partialResult;
 		if (memUnitsPartial != null) {
 			memUnits.addAll(memUnitsPartial);
 		}
@@ -489,13 +489,19 @@ public class AmpleSetWorker {
 			Expression assertExpression = assertStatement.getExpression();
 			Expression[] printfArgs = assertStatement.printfArguments();
 
-			memUnitsPartial = memoryUnit(assertExpression, pid);
+			partialResult = memoryUnit(assertExpression, pid);
+			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+				return partialResult;
+			memUnitsPartial = partialResult.right;
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
 			if (printfArgs != null) {
 				for (Expression argument : printfArgs) {
-					memUnitsPartial = memoryUnit(argument, pid);
+					partialResult = memoryUnit(argument, pid);
+					if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+						return partialResult;
+					memUnitsPartial = partialResult.right;
 					if (memUnitsPartial != null) {
 						memUnits.addAll(memUnitsPartial);
 					}
@@ -506,11 +512,17 @@ public class AmpleSetWorker {
 		case CHOOSE:
 			AssignStatement assignStatement = (AssignStatement) statement;
 
-			memUnitsPartial = memoryUnit(assignStatement.getLhs(), pid);
+			partialResult = memoryUnit(assignStatement.getLhs(), pid);
+			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+				return partialResult;
+			memUnitsPartial = partialResult.right;
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
-			memUnitsPartial = memoryUnit(assignStatement.rhs(), pid);
+			partialResult = memoryUnit(assignStatement.rhs(), pid);
+			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+				return partialResult;
+			memUnitsPartial = partialResult.right;
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
@@ -519,7 +531,10 @@ public class AmpleSetWorker {
 			AssumeStatement assumeStatement = (AssumeStatement) statement;
 			Expression assumeExpression = assumeStatement.getExpression();
 
-			memUnitsPartial = memoryUnit(assumeExpression, pid);
+			partialResult = memoryUnit(assumeExpression, pid);
+			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+				return partialResult;
+			memUnitsPartial = partialResult.right;
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
@@ -531,7 +546,10 @@ public class AmpleSetWorker {
 				this.enabledSystemCallMap.get(pid).add(call);
 			}
 			for (Expression argument : call.arguments()) {
-				memUnitsPartial = memoryUnit(argument, pid);
+				partialResult = memoryUnit(argument, pid);
+				if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+					return partialResult;
+				memUnitsPartial = partialResult.right;
 				if (memUnitsPartial != null) {
 					memUnits.addAll(memUnitsPartial);
 				}
@@ -540,35 +558,46 @@ public class AmpleSetWorker {
 		case MALLOC:
 			MallocStatement mallocStatement = (MallocStatement) statement;
 
-			memUnitsPartial = memoryUnit(mallocStatement.getLHS(), pid);
+			partialResult = memoryUnit(mallocStatement.getLHS(), pid);
+			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+				return partialResult;
+			memUnitsPartial = partialResult.right;
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
-			memUnitsPartial = memoryUnit(mallocStatement.getScopeExpression(),
+			partialResult = memoryUnit(mallocStatement.getScopeExpression(),
 					pid);
+			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+				return partialResult;
+			memUnitsPartial = partialResult.right;
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
-			memUnitsPartial = memoryUnit(mallocStatement.getSizeExpression(),
-					pid);
+			partialResult = memoryUnit(mallocStatement.getSizeExpression(), pid);
+			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+				return partialResult;
+			memUnitsPartial = partialResult.right;
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
 			break;
-		case MPI:
-			memUnitsPartial = impactMemoryUnitsOfMPIStatement(
-					(MPIStatement) statement, pid);
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-			break;
+		// case MPI:
+		// memUnitsPartial = impactMemoryUnitsOfMPIStatement(
+		// (MPIStatement) statement, pid);
+		// if (memUnitsPartial != null) {
+		// memUnits.addAll(memUnitsPartial);
+		// }
+		// break;
 		case NOOP:
 			break;
 		case RETURN:
 			ReturnStatement returnStatement = (ReturnStatement) statement;
 
 			if (returnStatement.expression() != null) {
-				memUnitsPartial = memoryUnit(returnStatement.expression(), pid);
+				partialResult = memoryUnit(returnStatement.expression(), pid);
+				if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+					return partialResult;
+				memUnitsPartial = partialResult.right;
 				if (memUnitsPartial != null) {
 					memUnits.addAll(memUnitsPartial);
 				}
@@ -578,12 +607,18 @@ public class AmpleSetWorker {
 			StatementList statementList = (StatementList) statement;
 
 			for (Statement subStatement : statementList.statements()) {
-				memUnits.addAll(impactMemoryUnitsOfStatement(subStatement, pid));
+				partialResult = impactMemoryUnitsOfStatement(subStatement, pid);
+				if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+					return partialResult;
+				memUnits.addAll(memUnitsPartial);
 			}
 			break;
 		case WAIT:
-			memUnitsPartial = memoryUnit(((WaitStatement) statement).process(),
+			partialResult = memoryUnit(((WaitStatement) statement).process(),
 					pid);
+			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+				return partialResult;
+			memUnitsPartial = partialResult.right;
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
@@ -593,63 +628,63 @@ public class AmpleSetWorker {
 					"Impact memory units for statement: ", statement);
 		}
 
-		return memUnits;
+		return new Pair<>(MemoryUnitsStatus.NORMAL, memUnits);
 	}
 
-	/**
-	 * Compute the impact memory units of an MPI statement.
-	 * 
-	 * @param statement
-	 *            The MPI statement whose impact memory units are to be
-	 *            computed.
-	 * @param pid
-	 *            The ID of the process that executes the MPI statement.
-	 * @return the impact memory units of the given MPI statement
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Set<SymbolicExpression> impactMemoryUnitsOfMPIStatement(
-			MPIStatement statement, int pid)
-			throws UnsatisfiablePathConditionException {
-		Set<SymbolicExpression> memUnits = new HashSet<>();
-		Set<SymbolicExpression> memUnitsPartial;
-
-		switch (statement.mpiStatementKind()) {
-		case IBARRIER:
-			break;
-		case IRECV:
-			break;
-		case ISEND:
-			break;
-		case RECV:
-			MPIRecvStatement mpiRecvStatement = (MPIRecvStatement) statement;
-
-			for (Expression argument : mpiRecvStatement.getArgumentsList()) {
-				memUnitsPartial = memoryUnit(argument, pid);
-				if (memUnitsPartial != null) {
-					memUnits.addAll(memUnitsPartial);
-				}
-			}
-			break;
-		case SEND:
-			// TODO: why the program never goes there ?
-			MPISendStatement mpiSendStatement = (MPISendStatement) statement;
-
-			for (Expression argument : mpiSendStatement.getArgumentsList()) {
-				memUnitsPartial = memoryUnit(argument, pid);
-				if (memUnitsPartial != null) {
-					memUnits.addAll(memUnitsPartial);
-				}
-			}
-			break;
-		case WAIT:
-			break;
-		default:
-			throw new CIVLUnimplementedFeatureException(
-					"Impact memory units for statement: ", statement);
-		}
-		return memUnits;
-	}
-
+	// /**
+	// * Compute the impact memory units of an MPI statement.
+	// *
+	// * @param statement
+	// * The MPI statement whose impact memory units are to be
+	// * computed.
+	// * @param pid
+	// * The ID of the process that executes the MPI statement.
+	// * @return the impact memory units of the given MPI statement
+	// * @throws UnsatisfiablePathConditionException
+	// */
+	// private Set<SymbolicExpression> impactMemoryUnitsOfMPIStatement(
+	// MPIStatement statement, int pid)
+	// throws UnsatisfiablePathConditionException {
+	// Set<SymbolicExpression> memUnits = new HashSet<>();
+	// Set<SymbolicExpression> memUnitsPartial;
+	//
+	// switch (statement.mpiStatementKind()) {
+	// case IBARRIER:
+	// break;
+	// case IRECV:
+	// break;
+	// case ISEND:
+	// break;
+	// case RECV:
+	// MPIRecvStatement mpiRecvStatement = (MPIRecvStatement) statement;
+	//
+	// for (Expression argument : mpiRecvStatement.getArgumentsList()) {
+	// memUnitsPartial = memoryUnit(argument, pid);
+	// if (memUnitsPartial != null) {
+	// memUnits.addAll(memUnitsPartial);
+	// }
+	// }
+	// break;
+	// case SEND:
+	// // TODO: why the program never goes there ?
+	// MPISendStatement mpiSendStatement = (MPISendStatement) statement;
+	//
+	// for (Expression argument : mpiSendStatement.getArgumentsList()) {
+	// memUnitsPartial = memoryUnit(argument, pid);
+	// if (memUnitsPartial != null) {
+	// memUnits.addAll(memUnitsPartial);
+	// }
+	// }
+	// break;
+	// case WAIT:
+	// break;
+	// default:
+	// throw new CIVLUnimplementedFeatureException(
+	// "Impact memory units for statement: ", statement);
+	// }
+	// return memUnits;
+	// }
+	//
 	/**
 	 * Compute the set of memory units accessed by a given expression of a
 	 * certain process at the current state.
@@ -661,16 +696,30 @@ public class AmpleSetWorker {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Set<SymbolicExpression> memoryUnit(Expression expression, int pid)
+	private Pair<MemoryUnitsStatus, Set<SymbolicExpression>> memoryUnit(
+			Expression expression, int pid)
 			throws UnsatisfiablePathConditionException {
 		Set<SymbolicExpression> memoryUnits = new HashSet<>();
+		// SymbolicExpression value;
+		boolean result;
+		MemoryUnitsStatus status;
 
-		evaluator.memoryUnitsOfExpression(state, pid, expression, memoryUnits);
+		result = evaluator.memoryUnitsOfExpression(state, pid, expression,
+				memoryUnits);
+		// if (expression.getExpressionType().isPointerType()) {
+		// value = evaluator.evaluate(state, pid, expression).value;
+		// evaluator.findPointersInExpression(value, memoryUnits, state);
+		// }
+		if (result)
+			status = MemoryUnitsStatus.NORMAL;
+		else
+			status = MemoryUnitsStatus.INCOMPLETE;
+
 		if (debugging) {
 			printMemoryUnitsOfExpression(expression, memoryUnits);
 		}
 		// printMemoryUnitsOfExpression(expression, memoryUnits);
-		return memoryUnits;
+		return new Pair<>(status, memoryUnits);
 	}
 
 	/**

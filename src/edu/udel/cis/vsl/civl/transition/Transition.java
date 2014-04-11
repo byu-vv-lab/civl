@@ -28,6 +28,10 @@ public class Transition {
 
 	private Model model;
 
+	public Transition() {
+
+	}
+
 	/**
 	 * A transition.
 	 * 

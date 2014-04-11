@@ -122,15 +122,17 @@ public class TracePlayer extends Player {
 		return !violation;
 	}
 
-	public State[] replayForGui(ArrayList<Transition> transitions)
+	public void replayForGui(ArrayList<State> states,
+			ArrayList<Transition> transitions)
 			throws MisguidedExecutionException {
 		// return stateFactory.initialState(model);
 		State initialState = stateFactory.initialState(model);
-		State[] states = new State[] { initialState };
+		// State[] states = new State[] { initialState };
 
+		states.add(initialState);
 		replayer.replayForGui(initialState, chooser, states, transitions);
 
-		return states;
+		// return states;
 	}
 
 	public void printStats() {
