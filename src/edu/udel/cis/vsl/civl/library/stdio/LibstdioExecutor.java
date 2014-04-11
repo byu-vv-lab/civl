@@ -73,7 +73,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		LibraryExecutor {
 
 	// the different file modes; see stdio.cvl:
-
 	public final static int CIVL_FILE_MODE_R = 0;
 	public final static int CIVL_FILE_MODE_W = 1;
 	public final static int CIVL_FILE_MODE_WX = 2;
@@ -91,24 +90,9 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	public final static int CIVL_FILE_MODE_WPBX = 14;
 	public final static int CIVL_FILE_MODE_APB = 15;
 
+	// file name of stdout/stdin
 	public final static String STDOUT = "CIVL_stdout";
 	public final static String STDIN = "CIVL_stdin";
-
-	// /** The SARL character type. */
-	// private SymbolicType charType;
-	//
-	// /**
-	// * The SARL character 0, i.e., '\0' or '\u0000', used as the
-	// * "null character constant" in C.
-	// */
-	// private SymbolicExpression nullCharExpr;
-
-	// /**
-	// * The CIVL handle type "$filesystem". This is a pointer type with base
-	// type
-	// * a struct type.
-	// */
-	// private CIVLPointerType filesystemType;
 
 	/**
 	 * The base type of the pointer type $filesystem; a structure type with
@@ -136,13 +120,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 */
 	private CIVLStructOrUnionType FILEtype;
 
-	// private SymbolicType FILESymbolicType;
-
-	// private IntObject zeroObj, oneObj, twoObj, threeObj, fourObj, fiveObj,
-	// sixObj;
-
-	private NumericExpression zeroInt, oneInt;
-
 	/**
 	 * The symbolic type array-of-char (char[]).
 	 */
@@ -155,6 +132,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 
 	private SymbolicConstant initialContentsFunction;
 
+	/**
+	 * The set of characters that are used to construct a number in a format
+	 * string.
+	 */
 	private Set<Character> numbers;
 
 	/* **************************** Constructors *************************** */
@@ -174,36 +155,21 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		super(primaryExecutor, output, enablePrintf, modelFactory);
 		Model model = modelFactory.model();
 
-		// charType = universe.characterType();
-		// nullCharExpr = universe.canonic(universe.character('\u0000'));
-		// zeroObj = (IntObject) universe.canonic(universe.intObject(0));
-		// oneObj = (IntObject) universe.canonic(universe.intObject(1));
-		zeroInt = universe.zeroInt();
-		oneInt = universe.oneInt();
 		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
 				.arrayType(universe.characterType()));
 		emptyContents = universe.canonic(universe
 				.emptyArray(stringSymbolicType));
-
-		// SymbolicFunctionType stringToStringArray = universe.functionType(
-		// Arrays.asList(stringSymbolicType),
-		// universe.arrayType(stringSymbolicType));
-
 		initialContentsFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("contents"), universe
 						.functionType(Arrays.asList(stringSymbolicType),
 								stringSymbolicType)));
-
 		this.filesystemStructType = model.basedFilesystemType();
 		this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
 				.getDynamicType(universe);
-
 		this.fileType = model.fileType();
 		this.fileSymbolicType = (SymbolicTupleType) this.fileType
 				.getDynamicType(universe);
-
 		this.FILEtype = model.FILEtype();
-		// this.FILESymbolicType = this.FILEtype.getDynamicType(universe);
 		numbers = new HashSet<Character>(10);
 		for (int i = 0; i < 10; i++) {
 			numbers.add(Character.forDigit(i, 10));
@@ -298,7 +264,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			int pid, LHSExpression lhs, Expression[] expressions,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		// Evaluation eval;
 		SymbolicExpression scope = argumentValues[0];
 		LinkedList<SymbolicExpression> filesystemComponents = new LinkedList<>();
 		LinkedList<SymbolicExpression> fileArrayComponents = new LinkedList<>();
@@ -334,12 +299,11 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				(NumericExpression) argumentValues[2]);
 		SymbolicExpression fileSystemStructure;
 		SymbolicExpression fileArray;
-		// SymbolicExpression scope;
 		SymbolicExpression filename;
 		SymbolicSequence<?> fileSequence;
 		int numFiles;
 		int fileIndex;
-		NumericExpression isInput, isOutput, isBinary, isWide = zeroInt;
+		NumericExpression isInput, isOutput, isBinary, isWide = this.zero;
 		SymbolicExpression contents;
 		SymbolicExpression theFile;
 		NumericExpression pos0 = null, pos1 = null;
@@ -352,7 +316,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 
 		state = eval.state;
 		fileSystemStructure = eval.value;
-		// scope = universe.tupleRead(fileSystemStructure, zeroObj);
 		fileArray = universe.tupleRead(fileSystemStructure, oneObject);
 		eval = evaluator.getStringExpression(state, expressions[1].getSource(),
 				argumentValues[1]);
@@ -381,37 +344,37 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			switch (mode) {
 			case CIVL_FILE_MODE_R:
 				// assume file exists with unconstrained contents
-				isInput = oneInt;
-				isOutput = zeroInt;
-				isBinary = zeroInt;
+				isInput = this.one;
+				isOutput = this.zero;
+				isBinary = zero;
 				contents = initialContents(filename);
-				pos0 = pos1 = zeroInt;
+				pos0 = pos1 = zero;
 				break;
 			case CIVL_FILE_MODE_W:
 			case CIVL_FILE_MODE_WX:
 				// assume file does not yet exist
-				isInput = zeroInt;
-				isOutput = oneInt;
-				isBinary = zeroInt;
+				isInput = zero;
+				isOutput = one;
+				isBinary = zero;
 				contents = emptyContents;
-				pos0 = pos1 = zeroInt;
+				pos0 = pos1 = zero;
 				break;
 			case CIVL_FILE_MODE_A:
 				// assume file exists
-				isInput = oneInt;
-				isOutput = oneInt;
-				isBinary = zeroInt;
+				isInput = one;
+				isOutput = one;
+				isBinary = zero;
 				contents = initialContents(filename);
-				pos0 = oneInt;
-				pos1 = zeroInt;
+				pos0 = one;
+				pos1 = zero;
 				break;
 			case CIVL_FILE_MODE_RP:
 				// assume file exists
-				isInput = oneInt;
-				isOutput = oneInt;
-				isBinary = zeroInt;
+				isInput = one;
+				isOutput = one;
+				isBinary = zero;
 				contents = initialContents(filename);
-				pos0 = pos1 = zeroInt;
+				pos0 = pos1 = zero;
 				break;
 			default:
 				throw new CIVLUnimplementedFeatureException(
@@ -438,12 +401,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					filesystemVid, ref);
 			SymbolicExpression fileStream;
 
-			// $file *file; // the actual file to which this refers
-			// $filesystem fs; // file system to which this FILE is associated
-			// int pos1; // the chunk index (first index) in the contents
-			// int pos2; // the character index (second index) in the contents
-			// CIVL_File_mode mode; // integer(mode)
-			// int isOpen; // is this FILE open (0 or 1)?
 			streamComponents.add(filePointer);
 			streamComponents.add(filesystemPointer);
 			streamComponents.add(pos0);
@@ -456,9 +413,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			// do malloc, get pointer, do the assignments.
 			state = primaryExecutor.assign(state, pid, lhs, fileStream);
 		}
-
 		return state;
-
 	}
 
 	/**
@@ -524,14 +479,24 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	/* ************************ Methods from Library *********************** */
 
 	/**
-	 * Execute fprintf();
+	 * Execute the function call for fprintf
+	 * <code>int fprintf(FILE * restrict stream,
+	 * const char * restrict format, ...)</code>.
 	 * 
 	 * @param source
+	 *            The source code element of the function call.
 	 * @param state
+	 *            The state where the function call happens.
 	 * @param pid
+	 *            The ID of the process that this function call belongs to.
 	 * @param lhs
+	 *            The left hand side of the function call.
 	 * @param arguments
+	 *            The list of CIVL expressions for the arguments of the function
+	 *            call.
 	 * @param argumentValues
+	 *            The list of symbolic expressions representing the value of the
+	 *            arguments of the function call.
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
@@ -600,7 +565,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		if (fileNameString.equals(STDOUT)) {
 			this.printf(arguments[1].getSource(), formatBuffer, printedContents);
 		} else if (fileNameString.equalsIgnoreCase(STDIN)) {
-
+			// TODO: stdin
 		}
 		{ // updates the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,
@@ -639,11 +604,14 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	}
 
 	/**
-	 * Parse the format code.
+	 * Parses the format string, according to C11 standards. For example,
+	 * <code>"This is process %d.\n"</code> will be parsed into a list of
+	 * strings: <code>"This is process "</code>, <code>"%d"</code>,
+	 * <code>".\n"</code>.<br>
 	 * 
-	 * Paragraph 4, Section 7.21.6.1, C11 Standards Each conversion
-	 * specification is introduced by the character %. After the %, the
-	 * following appear in sequence:
+	 * In Paragraph 4, Section 7.21.6.1, C11 Standards:<br>
+	 * Each conversion specification is introduced by the character %. After the
+	 * %, the following appear in sequence:
 	 * <ul>
 	 * <li>Zero or more flags (in any order) that modify the meaning of the
 	 * conversion specification.</li>
@@ -668,8 +636,11 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 * </ul>
 	 * 
 	 * @param source
+	 *            The source code element of the format argument.
 	 * @param formatBuffer
-	 * @return
+	 *            The string buffer containing the content of the format string.
+	 * @return A list of string buffers by splitting the format by conversion
+	 *         specifiers.
 	 */
 	private List<StringBuffer> splitFormat(CIVLSource source,
 			StringBuffer formatBuffer) {
@@ -800,16 +771,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				case 's':
 					stringBuffer.append(current);
 					break;
-//				case 'l':
-//					Character code1 = formatBuffer.charAt(++i);
-//
-//					if (!code1.equals('f')) {
-//						throw new CIVLSyntaxException(
-//								"The format %lf is not allowed in fprintf",
-//								source);
-//					}
-//					stringBuffer.append("lf");
-//					break;
 				default:
 					stringBuffer.append(current);
 					throw new CIVLSyntaxException("The format %" + stringBuffer
@@ -829,6 +790,16 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		return result;
 	}
 
+	/**
+	 * Prints to the standard output stream.
+	 * 
+	 * @param source
+	 *            The source code information of the format argument.
+	 * @param formatBuffer
+	 *            The format string buffer.
+	 * @param arguments
+	 *            The list of arguments to be printed according to the format.
+	 */
 	private void printf(CIVLSource source, StringBuffer formatBuffer,
 			ArrayList<StringBuffer> arguments) {
 		if (this.enablePrintf) {
@@ -889,7 +860,5 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	public State wrapUp(State state) {
 		return state;
 	}
-
-	/* ************************ Other Public Methods *********************** */
 
 }
