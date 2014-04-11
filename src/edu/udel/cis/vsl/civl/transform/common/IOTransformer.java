@@ -18,6 +18,17 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 
+/**
+ * The IO transformer transforms<br>
+ * <ul>
+ * <li>all function calls printf(...) into frpintf(stdout, ...)</li>
+ * <li>all function calls scanf(...) into fscanf(stdin, ...)</li>
+ * <li>all function calls fopen(...) into $fopen(...)</li>
+ * </ul>
+ * 
+ * @author zmanchun
+ * 
+ */
 public class IOTransformer extends BaseTransformer {
 
 	public static String CODE = "io";
@@ -87,6 +98,12 @@ public class IOTransformer extends BaseTransformer {
 		return astFactory.newTranslationUnit(rootNode);
 	}
 
+	/**
+	 * Processes an AST node.
+	 * 
+	 * @param node
+	 * @throws SyntaxException
+	 */
 	private void processASTNode(ASTNode node) throws SyntaxException {
 		int numChildren = node.numChildren();
 
