@@ -21,7 +21,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 
-public class OmpTransformer extends BaseTransformer implements Transformer {
+public class OmpPragmaTransformer extends BaseTransformer implements Transformer {
 
 	public final static String CODE = "_omp_";
 	public final static String LONG_NAME = "Omp Parser";
@@ -30,7 +30,7 @@ public class OmpTransformer extends BaseTransformer implements Transformer {
 
 	private OmpBuilder ompBuilder;
 
-	public OmpTransformer(ASTFactory astFactory) {
+	public OmpPragmaTransformer(ASTFactory astFactory) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 		this.ompBuilder = new OmpBuilder(nodeFactory.getValueFactory(),
 				this.nodeFactory, astFactory.getTokenFactory(), astFactory);

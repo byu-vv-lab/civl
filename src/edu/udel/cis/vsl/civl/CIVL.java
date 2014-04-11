@@ -1,8 +1,5 @@
 package edu.udel.cis.vsl.civl;
 
-import java.io.File;
-import java.io.PrintStream;
-
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.ABC.Language;
 import edu.udel.cis.vsl.civl.run.UserInterface;
@@ -42,22 +39,4 @@ public class CIVL {
 		ui.run(args);
 	}
 
-	public static boolean verify(File file, PrintStream out) {
-		return verify(false, false, file, out, false);
-	}
-
-	public static boolean verify(boolean printModel, boolean verbose,
-			File file, PrintStream out) {
-		return verify(printModel, verbose, file, out, false);
-	}
-
-	public static boolean verify(boolean printModel, boolean verbose,
-			File file, PrintStream out, boolean randomMode) {
-		UserInterface ui = new UserInterface();
-
-		String[] args = new String[] { "verify", "-showModel=" + printModel,
-				"-verbose=" + verbose, "-random=" + randomMode, file.getPath() };
-
-		return ui.run(args);
-	}
 }

@@ -726,7 +726,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	}
 
 	@Override
-	public Object[] nextStateForGui(State state, Transition transition) {
+	public Object[] nextStateForUi(State state, Transition transition) {
 		Object[] results = new Object[2];
 
 		nextStateCalls++;

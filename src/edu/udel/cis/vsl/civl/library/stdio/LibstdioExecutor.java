@@ -64,6 +64,11 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  * original source will already have been replaced by calls to
  * <code>fprintf</code> and <code>fscanf</code>, respectively.
  * 
+ * fscanf: $assume $testFileLength("foo") == n*m+k; must appear before any
+ * opening of the file.
+ * 
+ * C transformer: civl pragma's
+ * 
  * @author Stephen F. Siegel (siegel)
  * @author Ziqing Luo (ziqing)
  * @author Manchun Zheng (zmanchun)
@@ -566,7 +571,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			this.printf(arguments[1].getSource(), formatBuffer, printedContents);
 		} else if (fileNameString.equalsIgnoreCase(STDIN)) {
 			// TODO: stdin
-		}
+		}// TODO stderr,
 		{ // updates the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,
 					oneObject);

@@ -44,8 +44,8 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
-import edu.udel.cis.vsl.civl.transform.common.MPITransformer;
-import edu.udel.cis.vsl.civl.transform.common.OmpTransformer;
+import edu.udel.cis.vsl.civl.transform.common.MPI2CIVLTransformer;
+import edu.udel.cis.vsl.civl.transform.common.OmpPragmaTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
 import edu.udel.cis.vsl.civl.transition.CompoundTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
@@ -368,33 +368,33 @@ public class UserInterface {
 						return new OpenMPTransformer(astFactory);
 					}
 				});
-			if (!Transform.getCodes().contains(OmpTransformer.CODE))
-				Transform.addTransform(new TransformRecord(OmpTransformer.CODE,
-						OmpTransformer.LONG_NAME,
-						OmpTransformer.SHORT_DESCRIPTION) {
+			if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE))
+				Transform.addTransform(new TransformRecord(OmpPragmaTransformer.CODE,
+						OmpPragmaTransformer.LONG_NAME,
+						OmpPragmaTransformer.SHORT_DESCRIPTION) {
 					@Override
 					public Transformer create(ASTFactory astFactory) {
-						return new OmpTransformer(astFactory);
+						return new OmpPragmaTransformer(astFactory);
 					}
 				});
 			this.out.println("Apply OpenMP parser...");
-			program.applyTransformer(OmpTransformer.CODE);
+			program.applyTransformer(OmpPragmaTransformer.CODE);
 			this.out.println("Apply OpenMP transformer...");
 			program.applyTransformer(OpenMPTransformer.CODE);
 		}
 
 		if (this.hasMpi) {
-			if (!Transform.getCodes().contains(MPITransformer.CODE))
-				Transform.addTransform(new TransformRecord(MPITransformer.CODE,
-						MPITransformer.LONG_NAME,
-						MPITransformer.SHORT_DESCRIPTION) {
+			if (!Transform.getCodes().contains(MPI2CIVLTransformer.CODE))
+				Transform.addTransform(new TransformRecord(MPI2CIVLTransformer.CODE,
+						MPI2CIVLTransformer.LONG_NAME,
+						MPI2CIVLTransformer.SHORT_DESCRIPTION) {
 					@Override
 					public Transformer create(ASTFactory astFactory) {
-						return new MPITransformer(astFactory);
+						return new MPI2CIVLTransformer(astFactory);
 					}
 				});
 			this.out.println("Apply MPI transformer...");
-			program.applyTransformer(MPITransformer.CODE);
+			program.applyTransformer(MPI2CIVLTransformer.CODE);
 		}
 		// always apply pruner and side effect remover
 		program.applyTransformer(Pruner.CODE);

@@ -40,7 +40,7 @@ import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class MPITransformer extends BaseTransformer {
+public class MPI2CIVLTransformer extends BaseTransformer {
 
 	/* **************************** Static Fields ************************** */
 	public static String CODE = "mpi";
@@ -82,7 +82,7 @@ public class MPITransformer extends BaseTransformer {
 	 * @param astFactory
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
-	public MPITransformer(ASTFactory astFactory) {
+	public MPI2CIVLTransformer(ASTFactory astFactory) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 	}
 
