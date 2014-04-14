@@ -297,10 +297,10 @@ public class LanguageFeaturesTest {
 	public void pointers() throws ABCException {
 		assertTrue(ui.run("verify", filename("pointers.cvl")));
 	}
-	
+
 	@Test
 	public void pointerAdd() throws ABCException {
-		assertTrue(ui.run("parse", filename("pointerAdd.cvl")));
+		assertTrue(ui.run("verify", filename("pointerAdd.cvl")));
 	}
 
 	@Test
@@ -437,16 +437,17 @@ public class LanguageFeaturesTest {
 	public void intToBool() throws ABCException {
 		assertTrue(ui.run("verify", filename("intToBool.cvl"), "-showModel"));
 	}
-	
+
 	@Test
 	public void twoDpointerTest() throws ABCException {
-		assertTrue(ui.run("verify", filename("2dpointerTest.cvl"), "-showSavedStates"));
+		assertTrue(ui.run("verify", filename("2dpointerTest.cvl")));
 	}
-	
+
 	@Test
 	public void civlExitBad() throws ABCException {
-		assertTrue(ui.run("verify", "-showTransitions", "-showStates", filename("civlExitBad.cvl")));
-		
+		assertTrue(ui.run("verify", "-showTransitions", "-showStates",
+				filename("civlExitBad.cvl")));
+
 	}
 
 }

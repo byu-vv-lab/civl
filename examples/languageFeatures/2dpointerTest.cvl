@@ -1,4 +1,5 @@
 #include <civlc.h>
+int sh = 0;
 
 void Process(){
   double ** buf;
@@ -12,6 +13,20 @@ void Process(){
   }
 
 }
+
+/*void Process(){
+  int *a[6];
+  int b[6];
+  
+  for(int i = 0; i < 6; i++){
+    b[i] = i;
+    a[i] = &b[i];
+  }
+  for(int i = 0; i < 6; i++){
+    sh ++;
+    *a[i] = *a[i] + sh;
+  }
+}*/
 
 void main(){
   $proc procs[2];

@@ -3110,8 +3110,13 @@ public class FunctionTranslator {
 					arguments.get(0));
 			break;
 		case DEREFERENCE:
+			Expression pointer = arguments.get(0);
+			
+			if(!pointer.getExpressionType().isPointerType()){
+				pointer = this.arrayToPointer(pointer);
+			}
 			result = modelFactory.dereferenceExpression(source,
-					arguments.get(0));
+					pointer);
 			break;
 		case CONDITIONAL:
 			result = modelFactory.conditionalExpression(source,
