@@ -23,7 +23,7 @@ import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 import edu.udel.cis.vsl.abc.transform.common.Pruner;
 import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.run.UserInterface;
-import edu.udel.cis.vsl.civl.transform.common.OmpTransformer;
+import edu.udel.cis.vsl.civl.transform.common.OmpPragmaTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
 
 public class OmpTransformerTest {
@@ -58,14 +58,14 @@ public class OmpTransformerTest {
 				}
 			});
 		}
-		if (!Transform.getCodes().contains(OmpTransformer.CODE)) {
+		if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE)) {
 			Transform
-					.addTransform(new TransformRecord(OmpTransformer.CODE,
-							OmpTransformer.LONG_NAME,
-							OmpTransformer.SHORT_DESCRIPTION) {
+					.addTransform(new TransformRecord(OmpPragmaTransformer.CODE,
+							OmpPragmaTransformer.LONG_NAME,
+							OmpPragmaTransformer.SHORT_DESCRIPTION) {
 						@Override
 						public Transformer create(ASTFactory astFactory) {
-							return new OmpTransformer(astFactory);
+							return new OmpPragmaTransformer(astFactory);
 						}
 					});
 		}
@@ -82,7 +82,7 @@ public class OmpTransformerTest {
 
 		codes.add(Pruner.CODE);
 		codes.add(SideEffectRemover.CODE);
-		codes.add(OmpTransformer.CODE);
+		codes.add(OmpPragmaTransformer.CODE);
 		codes.add(OpenMPTransformer.CODE);
 		this.systemIncludes = new File[0];
 		this.userIncludes = new File[0];
