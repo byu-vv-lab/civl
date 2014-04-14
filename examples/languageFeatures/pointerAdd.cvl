@@ -20,15 +20,15 @@ void main(){
 
   /* access array */
   printf("*(a1d + 5) = %.4f\n", *(a1d + 5));
-  printf("*(a1d + 10) = %.4f\n", *(a1d + 10));
+  printf("*(a1d + 9) = %.4f\n", *(a1d + 9));
   printf("*(*(a2d + 5) + 5) = %.4f\n", *(*(a2d + 5) + 5));
   printf("*(&a2d[0][0] + 10) = %.4f\n", *(&a2d[0][0] + 10));
-  printf("*(*a2d + 10) = %.4f\n", *(*a2d + 10));
+  printf("*(&a2d[0][0] + 99) = %.4f\n", *(&a2d[0][0] + 99));
 
   /* access malloced pointer */
   printf("*(p1d + 5) = %.4f\n", *(p1d + 5));
-  printf("*(p1d + 10) = %.4f\n", *(p1d + 10));
+  printf("*(p1d + 9) = %.4f\n", *(p1d + 9));
   printf("*(*(p2d + 5) + 5) = %.4f\n", *(*(p2d + 5) + 5));
   printf("*(&p2d[0][0] + 10) = %.4f\n", *(&p2d[0][0] + 10));
-  printf("*(*p2d + 10) = %.4f\n", *(*p2d + 10));
+  printf("*(*p2d + 9) = %.4f\n", *(*p2d + 9));
 }
