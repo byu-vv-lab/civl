@@ -20,9 +20,8 @@ public class Models {
 		return new CommonModelBuilder(universe);
 	}
 
-	public static ModelBuilder newModelBuilder(SymbolicUniverse universe,
-			ModelFactory factory) {
-		return new CommonModelBuilder(universe, factory);
+	public static ModelBuilder newModelBuilder(ModelFactory factory) {
+		return new CommonModelBuilder(factory.universe(), factory);
 	}
 
 	public static ModelCombiner newModelCombiner(ModelFactory factory) {

@@ -190,11 +190,8 @@ public class UserInterface {
 	 */
 	private final double startTime = System.currentTimeMillis();
 
-	/**
-	 * The symbolic universe used in this session.
-	 */
-	SymbolicUniverse universe = SARL.newStandardUniverse();
-
+	// TODO: remove these
+	
 	private Preprocessor preprocessor;
 
 	private boolean hasStdio;
@@ -269,12 +266,12 @@ public class UserInterface {
 			String filename, ModelFactory factory) throws ABCException,
 			IOException, CommandLineException {
 		return extractModel(out, config, filename,
-				Models.newModelBuilder(universe, factory));
+				Models.newModelBuilder(factory));
 	}
 
 	private Model extractModel(PrintStream out, GMCConfiguration config,
-			String filename) throws ABCException, IOException,
-			CommandLineException {
+			String filename, SymbolicUniverse universe) throws ABCException,
+			IOException, CommandLineException {
 		return extractModel(out, config, filename,
 				Models.newModelBuilder(universe));
 	}
@@ -369,7 +366,8 @@ public class UserInterface {
 					}
 				});
 			if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE))
-				Transform.addTransform(new TransformRecord(OmpPragmaTransformer.CODE,
+				Transform.addTransform(new TransformRecord(
+						OmpPragmaTransformer.CODE,
 						OmpPragmaTransformer.LONG_NAME,
 						OmpPragmaTransformer.SHORT_DESCRIPTION) {
 					@Override
@@ -385,7 +383,8 @@ public class UserInterface {
 
 		if (this.hasMpi) {
 			if (!Transform.getCodes().contains(MPI2CIVLTransformer.CODE))
-				Transform.addTransform(new TransformRecord(MPI2CIVLTransformer.CODE,
+				Transform.addTransform(new TransformRecord(
+						MPI2CIVLTransformer.CODE,
 						MPI2CIVLTransformer.LONG_NAME,
 						MPI2CIVLTransformer.SHORT_DESCRIPTION) {
 					@Override
@@ -548,7 +547,7 @@ public class UserInterface {
 	 * @param transitions
 	 *            the number of transitions executed in the course of the run
 	 */
-	private void printStats(PrintStream out) {
+	private void printStats(PrintStream out, SymbolicUniverse universe) {
 		// round up time to nearest 1/100th of second...
 		double time = Math
 				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
@@ -621,8 +620,10 @@ public class UserInterface {
 
 	public boolean runParse(GMCConfiguration config)
 			throws CommandLineException, ABCException, IOException {
+		SymbolicUniverse universe = SARL.newStandardUniverse();
+
 		checkFilenames(1, config);
-		extractModel(out, config, config.getFreeArg(1));
+		extractModel(out, config, config.getFreeArg(1), universe);
 		if (showShortFileNameList(config))
 			this.preprocessor.printShorterFileNameMap(out);
 		return true;
@@ -638,6 +639,7 @@ public class UserInterface {
 	public boolean runReplay(GMCConfiguration config)
 			throws CommandLineException, FileNotFoundException, IOException,
 			ABCException, MisguidedExecutionException {
+		SymbolicUniverse universe = SARL.newStandardUniverse();
 		boolean result;
 		String sourceFilename, traceFilename;
 		File traceFile;
@@ -663,7 +665,7 @@ public class UserInterface {
 				showProverQueriesO, enablePrintfO));
 		newConfig.setScalarValue(showTransitionsO, true);
 		newConfig.read(config);
-		model = extractModel(out, newConfig, sourceFilename);
+		model = extractModel(out, newConfig, sourceFilename, universe);
 		if (showShortFileNameList(config))
 			preprocessor.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out,
@@ -688,7 +690,7 @@ public class UserInterface {
 		} else {
 			result = replayer.run();
 		}
-		printStats(out);
+		printStats(out, universe);
 		replayer.printStats();
 		out.println();
 		return result;
@@ -696,6 +698,7 @@ public class UserInterface {
 
 	public boolean runRun(GMCConfiguration config) throws CommandLineException,
 			ABCException, IOException, MisguidedExecutionException {
+		SymbolicUniverse universe = SARL.newStandardUniverse();
 		boolean result;
 		String filename;
 		Model model;
@@ -703,7 +706,7 @@ public class UserInterface {
 
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
-		model = extractModel(out, config, filename);
+		model = extractModel(out, config, filename, universe);
 		if (showShortFileNameList(config))
 			preprocessor.printShorterFileNameMap(out);
 		config.setScalarValue(showTransitionsO, true);
@@ -712,7 +715,7 @@ public class UserInterface {
 				+ " ...");
 		out.flush();
 		result = player.run();
-		printStats(out);
+		printStats(out, universe);
 		player.printStats();
 		out.println();
 		return result;
@@ -720,6 +723,7 @@ public class UserInterface {
 
 	public boolean runVerify(GMCConfiguration config)
 			throws CommandLineException, ABCException, IOException {
+		SymbolicUniverse universe = SARL.newStandardUniverse();
 		boolean result;
 		String filename;
 		Model model;
@@ -728,7 +732,7 @@ public class UserInterface {
 
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
-		model = extractModel(out, config, filename);
+		model = extractModel(out, config, filename, universe);
 		if (showShortFileName)
 			preprocessor.printShorterFileNameMap(out);
 		verifier = new Verifier(config, model, out, startTime,
@@ -745,7 +749,7 @@ public class UserInterface {
 			verifier.terminateUpdater();
 			throw e;
 		}
-		printStats(out);
+		printStats(out, universe);
 		verifier.printStats();
 		out.println();
 		verifier.printResult();
@@ -755,6 +759,7 @@ public class UserInterface {
 
 	public boolean runCompare(GMCConfiguration config)
 			throws CommandLineException, ABCException, IOException {
+		SymbolicUniverse universe = SARL.newStandardUniverse();
 		boolean result = false;
 		String filename0, filename1;
 		Model model0, model1, compositeModel;
@@ -769,7 +774,7 @@ public class UserInterface {
 		checkFilenames(2, config);
 		filename0 = config.getFreeArg(1);
 		filename1 = config.getFreeArg(2);
-		model0 = extractModel(out, config, filename0);
+		model0 = extractModel(out, config, filename0, universe);
 		model1 = extractModel(out, config, filename1, model0.factory());
 		combiner = Models.newModelCombiner(model0.factory());
 		compositeModel = combiner.combine(model0, model1);
@@ -792,7 +797,7 @@ public class UserInterface {
 			verifier.terminateUpdater();
 			throw e;
 		}
-		printStats(out);
+		printStats(out, universe);
 		verifier.printStats();
 		out.println();
 		verifier.printResult();
@@ -815,6 +820,7 @@ public class UserInterface {
 	public boolean runMain(String[] args) throws CommandLineException {
 		GMCConfiguration config = parser.parse(Arrays.asList(args));
 		int numFree = config.getNumFreeArgs();
+		SymbolicUniverse universe = SARL.newStandardUniverse();
 		String command;
 
 		out.println("CIVL v" + CIVL.version + " of " + CIVL.date
