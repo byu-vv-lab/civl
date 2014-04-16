@@ -130,7 +130,7 @@ public class ImmutableProcessState implements ProcessState {
 
 	/**
 	 * This identifier is not part of the state. It is never renamed, helping to
-	 * identify a specific process when processes got collected.
+	 * identify a specific process when processes get collected.
 	 */
 	private int identifier;
 
@@ -315,7 +315,7 @@ public class ImmutableProcessState implements ProcessState {
 			} else {
 				stackChange = true;
 				newStack[j] = new ImmutableStackEntry(oldFrame.location(),
-						newScope);
+						newScope, oldFrame.dyscopeIdentifier());
 			}
 		}
 		return stackChange ? new ImmutableProcessState(pid, this.identifier, newStack,

@@ -13,7 +13,12 @@ void f() {
 }
 
 void main() {
+  $proc procs[4];
+  
   for (int i = 0; i < 4; i++) {
-    $spawn f();
+    procs[i] = $spawn f();
+  }
+  for (int i = 0; i < 4; i++) {
+    $wait(procs[i]);
   }
 }

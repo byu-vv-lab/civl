@@ -5,6 +5,8 @@ void foo(){
 }
 
 void main(){
-$proc p = $spawn foo();
+  $proc p = $spawn foo();
+
+  $wait(p);
 }
 

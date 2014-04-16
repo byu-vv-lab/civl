@@ -23,10 +23,14 @@ void foo(int i) {
 }
 
 void main(){
+  $proc fp1, fp2;
+  
   $atomic {
-    $spawn foo(1);
-    $spawn foo(2);
+    fp1 = $spawn foo(1);
+    fp2 = $spawn foo(2);
     // blocked here until z++ has been executed twice
     $when (z==2) x = 0;
   }
+  $wait(fp1);
+  $wait(fp2);
 }

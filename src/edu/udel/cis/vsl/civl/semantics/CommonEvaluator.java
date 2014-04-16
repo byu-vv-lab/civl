@@ -3033,11 +3033,6 @@ public class CommonEvaluator implements Evaluator {
 		}
 	}
 
-	// @Override
-	// public void setExecutor(Executor executor) {
-	// this.executor = executor;
-	// }
-
 	@Override
 	public void setEnabler(Enabler enabler) {
 		this.enabler = enabler;

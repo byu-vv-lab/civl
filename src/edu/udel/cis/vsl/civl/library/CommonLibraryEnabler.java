@@ -21,11 +21,8 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 
 /**
  * This class implements the common logic of library enablers.
@@ -48,15 +45,15 @@ public abstract class CommonLibraryEnabler extends Library implements
 	 */
 	protected ModelFactory modelFactory;
 
-	/**
-	 * The symbolic expression of one.
-	 */
-	protected NumericExpression one;
-
-	/**
-	 * The symbolic object of integer one.
-	 */
-	protected IntObject oneObject;
+	// /**
+	// * The symbolic expression of one.
+	// */
+	// protected NumericExpression one;
+	//
+	// /**
+	// * The symbolic object of integer one.
+	// */
+	// protected IntObject oneObject;
 
 	/**
 	 * The output stream to be used for printing.
@@ -78,20 +75,20 @@ public abstract class CommonLibraryEnabler extends Library implements
 	 */
 	protected TransitionFactory transitionFactory;
 
-	/**
-	 * The symbolic universe for symbolic computations.
-	 */
-	protected SymbolicUniverse universe;
-
-	/**
-	 * The symbolic expression of zero.
-	 */
-	protected NumericExpression zero;
-
-	/**
-	 * The symbolic object of integer zero.
-	 */
-	protected IntObject zeroObject;
+	// /**
+	// * The symbolic universe for symbolic computations.
+	// */
+	// protected SymbolicUniverse universe;
+	//
+	// /**
+	// * The symbolic expression of zero.
+	// */
+	// protected NumericExpression zero;
+	//
+	// /**
+	// * The symbolic object of integer zero.
+	// */
+	// protected IntObject zeroObject;
 
 	/* ***************************** Constructor *************************** */
 
@@ -107,15 +104,11 @@ public abstract class CommonLibraryEnabler extends Library implements
 	 */
 	protected CommonLibraryEnabler(Enabler primaryEnabler, PrintStream output,
 			ModelFactory modelFactory) {
+		super(primaryEnabler.evaluator().universe());
 		this.primaryEnabler = primaryEnabler;
 		this.transitionFactory = primaryEnabler.transitionFactory();
 		this.evaluator = primaryEnabler.evaluator();
-		this.universe = evaluator.universe();
 		this.stateFactory = evaluator.stateFactory();
-		this.zero = universe.zeroInt();
-		this.one = universe.oneInt();
-		this.zeroObject = universe.intObject(0);
-		this.oneObject = universe.intObject(1);
 		this.output = output;
 		this.modelFactory = modelFactory;
 	}

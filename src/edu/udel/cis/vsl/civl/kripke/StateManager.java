@@ -439,12 +439,12 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			}
 			if (oneStep == null && stepExecuted) {
 				// location is blocked
-				if (atomic)
+				if (atomic) {
 					oldState = stateFactory.releaseAtomicLock(oldState);
-				if (print) {
-					out.println("  " + pLocation.id()
-							+ ": ($ATOMIC_LOCK_VAR = process<-1>) at "
-							+ pLocation.getSource().getSummary() + ";");
+					if (print)
+						out.println("  " + pLocation.id()
+								+ ": ($ATOMIC_LOCK_VAR = process<-1>) at "
+								+ pLocation.getSource().getSummary() + ";");
 				}
 				return oldState;
 			} else if (oneStep != null) {
@@ -459,6 +459,10 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				}
 			}
 			p = newState.getProcessState(pid);
+			if (this.showStates) {
+				out.println();
+				newState.print(out);
+			}
 			if (p != null && print && stepExecuted) {
 				printStatement(oldState, newState, executedStatement,
 						pLocation.atomicKind(), p.atomicCount(),

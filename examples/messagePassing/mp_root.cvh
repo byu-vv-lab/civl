@@ -22,5 +22,6 @@ void main() {
     COMM_WORLD = $gcomm_create($here, NPROCS);
     __start = 1;
     finalize();
+    $gcomm_destroy(COMM_WORLD);
   }
 }

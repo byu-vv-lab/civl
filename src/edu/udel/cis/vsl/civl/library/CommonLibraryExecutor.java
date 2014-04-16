@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
@@ -16,7 +17,6 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -25,7 +25,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
-import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 
 /**
  * This class implements the common logic of library executors.
@@ -54,16 +53,6 @@ public abstract class CommonLibraryExecutor extends Library implements
 	protected ModelFactory modelFactory;
 
 	/**
-	 * The symbolic expression of one.
-	 */
-	protected NumericExpression one;
-
-	/**
-	 * The symbolic object of integer one.
-	 */
-	protected IntObject oneObject;
-
-	/**
 	 * The output stream to be used for printing.
 	 */
 	protected PrintStream output = System.out;
@@ -79,19 +68,9 @@ public abstract class CommonLibraryExecutor extends Library implements
 	protected StateFactory stateFactory;
 
 	/**
-	 * The symbolic universe for symbolic computations.
+	 * The static model of the program.
 	 */
-	protected SymbolicUniverse universe;
-
-	/**
-	 * The symbolic expression of zero.
-	 */
-	protected NumericExpression zero;
-
-	/**
-	 * The symbolic object of integer zero.
-	 */
-	protected IntObject zeroObject;
+	protected Model model;
 
 	/* **************************** Constructors *************************** */
 
@@ -109,17 +88,14 @@ public abstract class CommonLibraryExecutor extends Library implements
 	 */
 	protected CommonLibraryExecutor(Executor primaryExecutor,
 			PrintStream output, boolean enablePrintf, ModelFactory modelFactory) {
+		super(primaryExecutor.evaluator().universe());
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
-		this.universe = evaluator.universe();
 		this.stateFactory = evaluator.stateFactory();
-		this.zero = universe.zeroInt();
-		this.one = universe.oneInt();
-		this.zeroObject = universe.intObject(0);
-		this.oneObject = universe.intObject(1);
 		this.enablePrintf = enablePrintf;
 		this.output = output;
 		this.modelFactory = modelFactory;
+		this.model = modelFactory.model();
 	}
 
 	/* ************************* Protected Methods ************************* */

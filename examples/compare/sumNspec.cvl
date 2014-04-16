@@ -1,5 +1,4 @@
 #include<civlc.h>
-#include<stdio.h>
 $input int N;
 $output int sum;
 

@@ -71,7 +71,7 @@ public class CIVLExecutionException extends CIVLException {
 		POINTER,
 		QUANTIFIER,
 		SIZEOF,
-		UNDEFINED_VALUE, UNION
+		UNDEFINED_VALUE, UNION, PROCESS_LEAK
 	}
 
 	private Certainty certainty;

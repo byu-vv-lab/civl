@@ -196,4 +196,32 @@ public interface Model extends Sourceable {
 
 	void setFILEType(CIVLStructOrUnionType type);
 
+	/**
+	 * 
+	 * @return The base type of the handle $gbarrier
+	 */
+	CIVLType gbarrierType();
+
+	/**
+	 * NULL if there is no barrier operation.
+	 * 
+	 * @param gbarrierType
+	 *            The type to be used as the base type of the $gbarrier handle.
+	 */
+	void setGbarrierType(CIVLType gbarrierType);
+
+	/**
+	 * 
+	 * @return The base type of the handle $barrier
+	 */
+	CIVLType barrierType();
+
+	/**
+	 * NULL if there is no barrier operation.
+	 * 
+	 * @param gbarrierType
+	 *            The type to be used as the base type of the $barrier handle.
+	 */
+	void setBarrierType(CIVLType barrierType);
+
 }

@@ -12,9 +12,12 @@ void f() {
 }
 
 void main() {
+  $proc fp;
+  
   x = (int*) $malloc($root, sizeof(int));
   p = x;
   *x = 0;
-  $spawn f(); 
+  fp = $spawn f(); 
   $assert(*p==0);
+  $wait(fp);
 }

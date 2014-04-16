@@ -20,8 +20,15 @@ public interface StackEntry {
 	Location location();
 
 	/**
-	 * @return The dynamic scope of the process at the time of the function
-	 *         call.
+	 * @return The ID of the dynamic scope of the process at the time of the
+	 *         function call.
 	 */
 	int scope();
+
+	/**
+	 * 
+	 * @return The identifier of the dynamic scope of the process at the time of
+	 *         the function call.
+	 */
+	int dyscopeIdentifier();
 }

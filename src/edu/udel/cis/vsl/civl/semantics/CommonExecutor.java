@@ -180,9 +180,6 @@ public class CommonExecutor implements Executor {
 		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
 				"civlc", this, this.output, this.enablePrintf,
 				this.modelFactory);
-		// this.stdioExecutor = (LibstdioExecutor) loader.getLibraryExecutor(
-		// "stdio", this, this.output, this.enablePrintf,
-		// this.modelFactory);
 	}
 
 	/**
@@ -230,14 +227,6 @@ public class CommonExecutor implements Executor {
 		resultType = valid.getResultType();
 		if (resultType != ResultType.YES) {
 			if (statement.printfArguments() != null) {
-				// String stringOfSymbolicExpression = new String();
-				// String format = new String();
-				// Vector<Object> arguments = new Vector<Object>();
-				// CIVLSource source = state.getProcessState(pid).getLocation()
-				// .getSource();
-				// SymbolicExpression arrayPointer;
-				// SymbolicSequence<?> originalArray;
-
 				if (!this.enablePrintf) {
 					return state;
 				} else {
@@ -253,58 +242,6 @@ public class CommonExecutor implements Executor {
 					state = this.executePrintf(state, pid, arguments,
 							argumentValues);
 				}
-				// eval = evaluator.evaluate(state, pid,
-				// statement.printfArguments()[0]);
-				// arrayPointer = evaluator.parentPointer(source, eval.value);
-				// state = eval.state;
-				// eval = evaluator.dereference(source, state, arrayPointer);
-				// originalArray = (SymbolicSequence<?>) eval.value.argument(0);
-				// state = eval.state;
-				// for (int i = 0; i < originalArray.size(); i++) {
-				// char current = originalArray.get(i).toString().charAt(1);
-				//
-				// if (current == '\u0007')
-				// throw new CIVLUnimplementedFeatureException(
-				// "Escape sequence " + current, source);
-				// format += current;
-				// }
-
-				// for (int i = 1; i < statement.printfArguments().length; i++)
-				// {
-				// SymbolicExpression argument;
-				// CIVLType argumentType = statement.printfArguments()[i]
-				// .getExpressionType();
-				//
-				// eval = evaluator.evaluate(state, pid,
-				// statement.printfArguments()[i]);
-				// argument = eval.value;
-				// state = eval.state;
-				// if ((argumentType instanceof CIVLPointerType)
-				// && ((CIVLPointerType) argumentType).baseType()
-				// .isCharType()
-				// && argument.operator() == SymbolicOperator.CONCRETE) {
-				// arrayPointer = evaluator
-				// .parentPointer(source, argument);
-				// eval = evaluator.dereference(source, state,
-				// arrayPointer);
-				// originalArray = (SymbolicSequence<?>) eval.value
-				// .argument(0);
-				// state = eval.state;
-				// stringOfSymbolicExpression = "";
-				// for (int j = 0; j < originalArray.size(); j++) {
-				// stringOfSymbolicExpression += originalArray.get(j)
-				// .toString().charAt(1);
-				// }
-				// arguments.add(stringOfSymbolicExpression);
-				// } else
-				// arguments.add(argument.toString());
-				// }
-				// // Print
-				// format = format.replaceAll("%[0-9]*[.]?[0-9]*[dfoxegac]",
-				// "%s");
-				// output.printf(format, arguments.toArray());
-				// // return state;
-				// output.println();
 			}
 			// TODO: USE GENERAL METHOD ... state = evaluator.logError in own
 			// class
@@ -534,7 +471,30 @@ public class CommonExecutor implements Executor {
 		Expression expr = statement.expression();
 		ProcessState process;
 		SymbolicExpression returnValue;
+		String functionName;
 
+		process = state.getProcessState(pid);
+		functionName = process.peekStack().location().function().name().name();
+		if (functionName.equals("_CIVL_system")) {
+			assert pid == 0;
+			if (state.numProcs() > 1) {
+				for (ProcessState proc : state.getProcessStates()) {
+					if (proc == null)
+						continue;
+					if (proc.getPid() == pid)
+						continue;
+					if (!proc.hasEmptyStack()) {
+						throw new CIVLExecutionException(
+								ErrorKind.PROCESS_LEAK, Certainty.CONCRETE,
+								"Attempt to terminate the main process while process "
+										+ proc.identifier() + "(process<"
+										+ proc.getPid()
+										+ ">) is still running.",
+								statement.getSource());
+					}
+				}
+			}
+		}
 		if (expr == null) {
 			returnValue = null;
 		} else {
@@ -977,7 +937,7 @@ public class CommonExecutor implements Executor {
 	public SymbolicUniverse universe() {
 		return universe;
 	}
-	
+
 	@Override
 	public State executePrintf(State state, int pid, Expression[] expressions,
 			SymbolicExpression[] argumentValues)

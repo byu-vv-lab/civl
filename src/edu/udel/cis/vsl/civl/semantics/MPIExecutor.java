@@ -100,8 +100,7 @@ public class MPIExecutor extends CommonExecutor {
 		int rank = evaluator.extractInt(civlsource,
 				(NumericExpression) eval.value);
 		int bundleIndex;
-		CIVLBundleType bundleType = state.getScope(0).lexicalScope().model()
-				.bundleType();
+		CIVLBundleType bundleType = modelFactory.model().bundleType();
 		SymbolicUnionType bundle = bundleType.getDynamicType(universe);
 		// commVariableID and commScopeID
 		int commScopeID;

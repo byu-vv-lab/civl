@@ -23,6 +23,9 @@ void proc1() {
 }
 
 void main() {
-  $spawn proc0();
-  $spawn proc1();
+  $proc p0 = $spawn proc0();
+  $proc p1 = $spawn proc1();
+  
+  $wait(p0);
+  $wait(p1);
 }

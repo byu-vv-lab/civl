@@ -8,11 +8,16 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.StringLiteralNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.value.IF.StringValue;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
@@ -82,6 +87,9 @@ public class IOTransformer extends BaseTransformer {
 	public static String FOPEN_APB = "a+b";
 	public static String FOPEN_ABP = "ab+";
 
+	public static String FILESYSTEM_DESTROY = "$filesystem_destroy";
+	public static String CIVL_FILESYSTEM = "CIVL_filesystem";
+
 	public IOTransformer(ASTFactory astFactory) {
 		super(IOTransformer.CODE, IOTransformer.LONG_NAME,
 				IOTransformer.SHORT_DESCRIPTION, astFactory);
@@ -94,8 +102,48 @@ public class IOTransformer extends BaseTransformer {
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
-		this.processASTNode(rootNode);
+		this.renameFunctionCalls(rootNode);
+		this.processFreeCall(rootNode);
 		return astFactory.newTranslationUnit(rootNode);
+	}
+
+	private void processFreeCall(ASTNode node) {
+		int numChildren = node.numChildren();
+
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = node.child(i);
+
+			if (child instanceof FunctionDefinitionNode) {
+				FunctionDefinitionNode function = (FunctionDefinitionNode) child;
+				String functionName = function.getName();
+
+				if (functionName.equals("main")) {
+					ExpressionStatementNode functionCallStatement;
+					FunctionCallNode functionCall;
+					List<ExpressionNode> arguments = new ArrayList<>(1);
+					CompoundStatementNode body = function.getBody();
+					BlockItemNode lastStatement = body.getSequenceChild(body
+							.numChildren() - 1);
+
+					arguments.add(nodeFactory.newIdentifierExpressionNode(node
+							.getSource(), nodeFactory.newIdentifierNode(
+							node.getSource(), CIVL_FILESYSTEM)));
+					functionCall = nodeFactory.newFunctionCallNode(node
+							.getSource(), nodeFactory
+							.newIdentifierExpressionNode(node.getSource(),
+									nodeFactory.newIdentifierNode(
+											node.getSource(),
+											FILESYSTEM_DESTROY)), arguments,
+							null);
+					functionCallStatement = nodeFactory
+							.newExpressionStatementNode(functionCall);
+					if (!(lastStatement instanceof ReturnNode)) {
+						body.addSequenceChild(functionCallStatement.copy());
+					}
+					this.addFreeBeforeReturn(body, functionCallStatement);
+				}
+			}
+		}
 	}
 
 	/**
@@ -104,19 +152,61 @@ public class IOTransformer extends BaseTransformer {
 	 * @param node
 	 * @throws SyntaxException
 	 */
-	private void processASTNode(ASTNode node) throws SyntaxException {
+	private void renameFunctionCalls(ASTNode node) throws SyntaxException {
 		int numChildren = node.numChildren();
 
 		for (int i = 0; i < numChildren; i++) {
 			ASTNode child = node.child(i);
 
 			if (child != null)
-				this.processASTNode(node.child(i));
+				this.renameFunctionCalls(node.child(i));
+			// if (child.getSource().getFirstToken().getSourceFile().getName()
+			// .equals("stdio-c.cvl")) {
+			// if (child instanceof ExpressionStatementNode) {
+			// ExpressionStatementNode expressionStatement =
+			// (ExpressionStatementNode) child;
+			//
+			// if (expressionStatement.getExpression() instanceof
+			// FunctionCallNode) {
+			// FunctionCallNode functionCall = (FunctionCallNode)
+			// expressionStatement
+			// .getExpression();
+			// String functionName = ((IdentifierExpressionNode) functionCall
+			// .getFunction()).getIdentifier().name();
+			//
+			// if (functionName.equals("$filesystem_destroy")) {
+			// this.freeCall = expressionStatement;
+			// node.removeChild(i);
+			// }
+			// }
+			// }
+			// }
 		}
 		if (node instanceof FunctionCallNode) {
 			this.processFunctionCall((FunctionCallNode) node);
 		}
+	}
 
+	private void addFreeBeforeReturn(ASTNode node,
+			ExpressionStatementNode functionCallStatement) {
+		int numChildren = node.numChildren();
+
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = node.child(i);
+
+			if (child == null)
+				continue;
+			if (child instanceof ReturnNode) {
+				List<BlockItemNode> statements = new ArrayList<>(2);
+
+				statements.add(functionCallStatement.copy());
+				statements.add((ReturnNode) child);
+				node.removeChild(i);
+				node.setChild(i, nodeFactory.newCompoundStatementNode(
+						child.getSource(), statements));
+			} else
+				this.addFreeBeforeReturn(node.child(i), functionCallStatement);
+		}
 	}
 
 	private void processFunctionCall(FunctionCallNode functionCall)

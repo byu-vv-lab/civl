@@ -12,6 +12,8 @@ void f() {
 }
 
 void main() {
-  $spawn f(); 
+  $proc fp = $spawn f();
+  
   $assert(*p==0);
+  $wait(fp);
 }

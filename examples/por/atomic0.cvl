@@ -4,8 +4,10 @@ void f() {
   x=1;
 }
 void main() {
-  $spawn f();
+  $proc fp = $spawn f();
+  
   $atomic {
     $assert(x==0); // false
   }
+  $wait(fp);
 }

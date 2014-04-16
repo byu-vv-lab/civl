@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -15,7 +16,6 @@ import edu.udel.cis.vsl.civl.library.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -383,7 +383,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		LinkedList<SymbolicExpression> bufComponents = new LinkedList<>();
 		List<SymbolicExpression> gcommComponents = new LinkedList<>();
 		int int_nprocs;
-		Model model = state.getScope(0).lexicalScope().model();
 		CIVLType queueType = model.queueType();
 		CIVLType messageType = model.mesageType();
 		CIVLType gcommType = model.gcommType();
@@ -433,6 +432,254 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	}
 
 	/**
+	 * Creates a new global communicator object and returns a handle to it. The
+	 * global communicator will have size communication places. The global
+	 * communicator defines a communication "universe" and encompasses message
+	 * buffers and all other components of the state associated to
+	 * message-passing. The new object will be allocated in the given scope.
+	 * 
+	 * typedef struct __gbarrier__ { int nprocs; _Bool in_barrier[]; //
+	 * initialized as all false. int num_in_barrier; // initialized as 0. } *
+	 * $gbarrier;
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param lhs
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
+	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
+	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeGbarrierCreate(State state, int pid,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression gbarrierObj;
+		SymbolicExpression nprocs = argumentValues[1];
+		SymbolicExpression numInBarrier = universe.integer(0);
+		SymbolicExpression scope = argumentValues[0];
+		Expression scopeExpression = arguments[0];
+		SymbolicExpression procMapArray;
+		LinkedList<SymbolicExpression> procMapComponents = new LinkedList<>();
+		SymbolicExpression inBarrierArray;
+		LinkedList<SymbolicExpression> inBarrierComponents = new LinkedList<>();
+		List<SymbolicExpression> gbarrierComponents = new LinkedList<>();
+		int int_nprocs;
+		CIVLType gbarrierType = model.gbarrierType();
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		IntegerNumber number_nprocs = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) nprocs);
+
+		if (number_nprocs != null)
+			int_nprocs = number_nprocs.intValue();
+		else
+			throw new CIVLInternalException(
+					"Cannot extract concrete int value for gbarrier size",
+					arguments[1]);
+		for (int i = 0; i < int_nprocs; i++) {
+			inBarrierComponents.add(universe.bool(false));
+			procMapComponents.add(modelFactory.nullProcessValue());
+		}
+		inBarrierArray = universe.array(universe.booleanType(),
+				inBarrierComponents);
+		procMapArray = universe
+				.array(modelFactory.processSymbolicType(), procMapComponents);
+		gbarrierComponents.add(nprocs);
+		gbarrierComponents.add(procMapArray);
+		gbarrierComponents.add(inBarrierArray);
+		gbarrierComponents.add(numInBarrier);
+		gbarrierObj = universe.tuple(
+				(SymbolicTupleType) gbarrierType.getDynamicType(universe),
+				gbarrierComponents);
+		state = primaryExecutor.malloc(source, state, pid, lhs,
+				scopeExpression, scope, gbarrierType, gbarrierObj);
+		return state;
+	}
+
+	/**
+	 * Creates a new local communicator object and returns a handle to it. The
+	 * new communicator will be affiliated with the specified global
+	 * communicator. This local communicator handle will be used as an argument
+	 * in most message-passing functions. The place must be in [0,size-1] and
+	 * specifies the place in the global communication universe that will be
+	 * occupied by the local communicator. The local communicator handle may be
+	 * used by more than one process, but all of those processes will be viewed
+	 * as occupying the same place. Only one call to $comm_create may occur for
+	 * each gcomm-place pair. The new object will be allocated in the given
+	 * scope.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param lhs
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
+	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
+	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeBarrierCreate(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression scope = argumentValues[0];
+		Expression scopeExpression = arguments[0];
+		SymbolicExpression gbarrier = argumentValues[1];
+		SymbolicExpression place = argumentValues[2];
+		SymbolicExpression gbarrierObj;
+		SymbolicExpression barrierObj;
+		SymbolicExpression procMapArray;
+		LinkedList<SymbolicExpression> barrierComponents = new LinkedList<SymbolicExpression>();
+		CIVLSource civlsource = arguments[0].getSource();
+		CIVLType barrierType = model.barrierType();
+		Evaluation eval;
+		int place_num = ((IntegerNumber) universe
+				.extractNumber((NumericExpression) place)).intValue();
+		int totalPlaces;
+
+		if (place_num < 0) {
+			throw new CIVLExecutionException(ErrorKind.OTHER,
+					Certainty.CONCRETE, "Invalid place " + place_num
+							+ " used in $barrier_create().", source);
+		}
+		eval = this.evaluator.dereference(civlsource, state, gbarrier);
+		state = eval.state;
+		gbarrierObj = eval.value;
+		totalPlaces = ((IntegerNumber) universe
+				.extractNumber((NumericExpression) universe.tupleRead(
+						gbarrierObj, zeroObject))).intValue();
+		if (place_num >= totalPlaces) {
+			throw new CIVLExecutionException(
+					ErrorKind.OTHER,
+					Certainty.CONCRETE,
+					"Place "
+							+ place_num
+							+ " used in $barrier_create() exceeds the size of the $gbarrier.",
+					source);
+		}
+		procMapArray = universe.tupleRead(gbarrierObj, oneObject);
+		if (!universe.arrayRead(procMapArray, (NumericExpression) place)
+				.equals(modelFactory.nullProcessValue())) {
+			throw new CIVLExecutionException(ErrorKind.OTHER,
+					Certainty.CONCRETE,
+					"Attempt to create a barrier using an invalid place.",
+					source);
+		}
+
+		// TODO report an error if the place exceeds the size of the
+		// communicator
+		procMapArray = universe.arrayWrite(procMapArray,
+				(NumericExpression) place, modelFactory.processValue(pid));
+		gbarrierObj = universe.tupleWrite(gbarrierObj, oneObject, procMapArray);
+		state = this.primaryExecutor.assign(civlsource, state, gbarrier,
+				gbarrierObj);
+		// builds barrier object
+		barrierComponents.add(place);
+		barrierComponents.add(gbarrier);
+		barrierObj = universe.tuple(
+				(SymbolicTupleType) barrierType.getDynamicType(universe),
+				barrierComponents);
+		state = this.primaryExecutor.malloc(civlsource, state, pid, lhs,
+				scopeExpression, scope, barrierType, barrierObj);
+		return state;
+	}
+
+	/**
+	 * Adds the message to the appropriate message queue in the communication
+	 * universe specified by the comm. The source of the message must equal the
+	 * place of the comm.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
+	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeBarrierEnter(State state, int pid,
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		CIVLSource civlsource = arguments[0].getSource();
+		SymbolicExpression barrier = argumentValues[0];
+		SymbolicExpression barrierObj;
+		SymbolicExpression gbarrier;
+		SymbolicExpression gbarrierObj;
+		SymbolicExpression inBarrierArray;
+		SymbolicExpression nprocs;
+		NumericExpression myPlace;
+		SymbolicExpression numInBarrier;
+		Evaluation eval;
+		int numInBarrier_int;
+		int nprocs_int;
+
+		eval = evaluator.dereference(civlsource, state, barrier);
+		state = eval.state;
+		barrierObj = eval.value;
+		myPlace = (NumericExpression) universe
+				.tupleRead(barrierObj, zeroObject);
+		gbarrier = universe.tupleRead(barrierObj, oneObject);
+		eval = evaluator.dereference(civlsource, state, gbarrier);
+		state = eval.state;
+		gbarrierObj = eval.value;
+		nprocs = universe.tupleRead(gbarrierObj, zeroObject);
+		inBarrierArray = universe.tupleRead(gbarrierObj, twoObject);
+		numInBarrier = universe.tupleRead(gbarrierObj, threeObject);
+		nprocs_int = evaluator.extractInt(civlsource,
+				(NumericExpression) nprocs);
+		numInBarrier_int = evaluator.extractInt(civlsource,
+				(NumericExpression) numInBarrier);
+		numInBarrier_int++;
+		if (numInBarrier_int == nprocs_int) {
+			LinkedList<SymbolicExpression> inBarrierComponents = new LinkedList<>();
+
+			for (int i = 0; i < nprocs_int; i++) {
+				inBarrierComponents.add(universe.falseExpression());
+			}
+			inBarrierArray = universe.array(universe.booleanType(),
+					inBarrierComponents);
+			numInBarrier = zero;
+		} else {
+			numInBarrier = universe.integer(numInBarrier_int);
+			inBarrierArray = universe.arrayWrite(inBarrierArray, myPlace,
+					universe.trueExpression());
+		}
+		gbarrierObj = universe.tupleWrite(gbarrierObj, this.twoObject,
+				inBarrierArray);
+		gbarrierObj = universe.tupleWrite(gbarrierObj, this.threeObject,
+				numInBarrier);
+		state = this.primaryExecutor.assign(civlsource, state, gbarrier,
+				gbarrierObj);
+		return state;
+	}
+
+	/**
 	 * Creates a new local communicator object and returns a handle to it. The
 	 * new communicator will be affiliated with the specified global
 	 * communicator. This local communicator handle will be used as an argument
@@ -475,7 +722,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		SymbolicExpression isInitArray;
 		LinkedList<SymbolicExpression> commComponents = new LinkedList<SymbolicExpression>();
 		CIVLSource civlsource = arguments[0].getSource();
-		Model model = state.getScope(0).lexicalScope().model();
 		CIVLType commType = model.commType();
 		Evaluation eval;
 
@@ -483,8 +729,12 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		state = eval.state;
 		gcomm = eval.value;
 		isInitArray = universe.tupleRead(gcomm, oneObject);
+		// TODO report an error if the place has already been taken by other
+		// processes.
 		assert universe.arrayRead(isInitArray, (NumericExpression) place)
 				.equals(universe.bool(false));
+		// TODO report an error if the place exceeds the size of the
+		// communicator
 		isInitArray = universe.arrayWrite(isInitArray,
 				(NumericExpression) place, universe.bool(true));
 		gcomm = universe.tupleWrite(gcomm, oneObject, isInitArray);
@@ -821,6 +1071,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		state = eval.state;
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		// TODO checks if source is equal to the place of comm.
 		source = universe.tupleRead(newMessage, zeroObject);
 		dest = universe.tupleRead(newMessage, oneObject);
 		bufRow = universe.arrayRead(buf, (NumericExpression) source);
@@ -908,6 +1159,20 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = executeBundleUnpack(state, pid, arguments, argumentValues,
 					call.getSource());
 			break;
+		case "$barrier_create":
+			state = executeBarrierCreate(state, pid, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
+		case "$barrier_enter":
+			state = executeBarrierEnter(state, pid, arguments, argumentValues);
+			break;
+		case "$barrier_exit":
+			// does nothing
+			break;
+		case "$gbarrier_create":
+			state = executeGbarrierCreate(state, pid, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
 		case "$comm_create":
 			state = this.executeCommCreate(state, pid, lhs, arguments,
 					argumentValues);
@@ -938,6 +1203,8 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		case "$exit":// return immediately since no transitions needed after an
 			// exit, because the process no longer exists.
 			return executeExit(state, pid);
+		case "$barrier_destroy":
+		case "$gbarrier_destroy":
 		case "$comm_destroy":
 		case "$gcomm_destroy":
 		case "$free":
@@ -956,10 +1223,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = this.executeProcDefined(state, pid, lhs, arguments,
 					argumentValues);
 			break;
-		// case "$proc_null":
-		// state = this.executeProcNull(state, pid, lhs, arguments,
-		// argumentValues);
-		// break;
 		case "$scope_defined":
 			state = this.executeScopeDefined(state, pid, lhs, arguments,
 					argumentValues);
@@ -978,17 +1241,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		state = stateFactory.setLocation(state, pid, call.target());
 		return state;
 	}
-
-	// private State executeProcNull(State state, int pid, LHSExpression lhs,
-	// Expression[] arguments, SymbolicExpression[] argumentValues)
-	// throws UnsatisfiablePathConditionException {
-	// SymbolicExpression nullProcess = this.modelFactory.nullProcessValue();
-	// Evaluation eval = evaluator.evaluate(state, pid, arguments[0]);
-	//
-	// state = eval.state;
-	// return primaryExecutor.assign(arguments[0].getSource(), state,
-	// eval.value, nullProcess);
-	// }
 
 	/**
 	 * Checks if a $comm object is defined, i.e., it doesn't point to the heap
@@ -1382,7 +1634,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 
 	private SymbolicExpression getEmptyMessage(State state) {
 		SymbolicExpression message;
-		Model model = state.getScope(0).lexicalScope().model();
 		CIVLType messageType = model.mesageType();
 		CIVLBundleType bundleType = model.bundleType();
 		LinkedList<SymbolicExpression> emptyMessageComponents = new LinkedList<SymbolicExpression>();

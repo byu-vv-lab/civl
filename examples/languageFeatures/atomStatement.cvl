@@ -11,6 +11,7 @@ void foo(){
 void main(){
   int i = 0;
   int x = 3;
+  $proc procs[5];
 	
   $atom {
     if(i < 0)
@@ -43,7 +44,7 @@ void main(){
   $assert(i == 45);
   $atom {
     for(int m = 0; m < 5; m++) {
-      $spawn foo();
+      procs[m] = $spawn foo();
 	}
   }
   //nested atomic and non-pure-local atomic block
@@ -57,4 +58,7 @@ void main(){
     n += 9;
   }
   $assert(n == 10);
+  for(int m = 0; m < 5; m++) {
+    $wait(procs[m]);
+  }
 }

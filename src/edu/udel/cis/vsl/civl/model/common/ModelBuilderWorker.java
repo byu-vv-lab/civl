@@ -92,6 +92,16 @@ public class ModelBuilderWorker {
 	CIVLType gcommType;
 
 	/**
+	 * The type __barrier__, which is the base type of the handle $barrier.
+	 */
+	CIVLType barrierType;
+
+	/**
+	 * The type __gbarrier__, which is the base type of the handle $gbarrier.
+	 */
+	CIVLType gbarrierType;
+
+	/**
 	 * The base type of the pointer type $filesystem; a structure type with
 	 * fields (0) scope, and (1) files. NULL if there is no IO operation.
 	 */
@@ -429,6 +439,8 @@ public class ModelBuilderWorker {
 		model.setQueueType(queueType);
 		model.setCommType(commType);
 		model.setGcommType(gcommType);
+		model.setBarrierType(this.barrierType);
+		model.setGbarrierType(gbarrierType);
 		model.setBasedFilesystemType(this.basedFilesystemType);
 		model.setFileType(this.fileType);
 		model.setFILEType(this.FILEtype);

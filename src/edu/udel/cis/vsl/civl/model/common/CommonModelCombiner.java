@@ -111,8 +111,61 @@ public class CommonModelCombiner implements ModelCombiner {
 			compositeModel.addFunction(f);
 		}
 		system.setModel(compositeModel);
+		completeTypes(compositeModel, model0, model1);
 		staticAnalysis(compositeModel);
 		return compositeModel;
+	}
+
+	/**
+	 * Updates types of the composite model using those of the base models.
+	 * Assumes that both base models share the same message, queue, comm, gcomm,
+	 * barrier, basedFilesystem types, etc.
+	 * 
+	 * @param compositeModel
+	 *            The composite model to be updated.
+	 * @param model0
+	 *            Base model 0.
+	 * @param model1
+	 *            Base model 1.
+	 */
+	private void completeTypes(Model compositeModel, Model model0, Model model1) {
+		if (model0.mesageType() != null)
+			compositeModel.setMessageType(model0.mesageType());
+		else
+			compositeModel.setMessageType(model1.mesageType());
+		if (model0.queueType() != null)
+			compositeModel.setQueueType(model0.queueType());
+		else
+			compositeModel.setQueueType(model1.queueType());
+		if (model0.commType() != null)
+			compositeModel.setCommType(model0.commType());
+		else
+			compositeModel.setCommType(model1.commType());
+		if (model0.gcommType() != null)
+			compositeModel.setGcommType(model0.gcommType());
+		else
+			compositeModel.setGcommType(model1.gcommType());
+		if (model0.barrierType() != null)
+			compositeModel.setBarrierType(model0.barrierType());
+		else
+			compositeModel.setBarrierType(model1.barrierType());
+		if (model0.basedFilesystemType() != null)
+			compositeModel.setBasedFilesystemType(model0.basedFilesystemType());
+		else
+			compositeModel.setBasedFilesystemType(model1.basedFilesystemType());
+		if (model0.fileType() != null)
+			compositeModel.setFileType(model0.fileType());
+		else
+			compositeModel.setFileType(model1.fileType());
+		if (model0.FILEtype() != null)
+			compositeModel.setFILEType(model0.FILEtype());
+		else
+			compositeModel.setFILEType(model1.FILEtype());
+		// TODO: how to build bundle types based on two models?
+		// if (model0.bundleType() != null)
+		// compositeModel.setBundleType(model0.bundleType());
+		// else
+		// compositeModel.setBundleType(model1.bundleType());
 	}
 
 	/**

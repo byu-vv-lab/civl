@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
  * Implementation of the enabler-related logics for system functions declared
@@ -76,6 +77,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		switch (name.name()) {
 		case "$comm_enqueue":
 		case "$comm_dequeue":
+		case "$barrier_enter":
 			return ampleSetWork(state, pid, call, reachableMemUnitsMap);
 		default:
 			return super.ampleSet(state, pid, statement, reachableMemUnitsMap);
@@ -118,9 +120,24 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$wait":
 			guard = getWaitGuard(state, pid, arguments, argumentValues);
 			break;
+		case "$barrier_exit":
+			try {
+				guard = getBarrierExitGuard(state, pid, arguments,
+						argumentValues);
+			} catch (UnsatisfiablePathConditionException e) {
+				// the error that caused the unsatifiable path condition should
+				// already have been reported.
+				return new Evaluation(state, universe.falseExpression());
+			}
+			break;
 		case "$bundle_pack":
 		case "$bundle_size":
 		case "$bundle_unpack":
+		case "$barrier_create":
+		case "$barrier_enter":
+		case "$barrier_destroy":
+		case "$gbarrier_create":
+		case "$gbarrier_destroy":
 		case "$comm_create":
 		case "$comm_defined":
 		case "$comm_enqueue":
@@ -134,7 +151,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$gcomm_create2":
 		case "$gcomm_defined":
 		case "$proc_defined":
-		//case "$proc_null":
+			// case "$proc_null":
 		case "$scope_parent":
 		case "$scope_defined":
 			guard = universe.trueExpression();
@@ -171,6 +188,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		SymbolicExpression[] argumentValues;
 		String function = call.function().name().name();
 		CIVLSource source = call.getSource();
+		Set<Integer> ampleSet = new HashSet<>();
 
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
@@ -188,18 +206,40 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		}
 
 		switch (function) {
+		case "$barrier_enter":
+			try {
+				SymbolicExpression barrier = evaluator.evaluate(state, pid, arguments[0]).value;
+				SymbolicExpression barrierObj = evaluator.dereference(source, state, barrier).value;
+				SymbolicExpression gbarrier = universe.tupleRead(barrierObj, oneObject);
+				SymbolicExpression gbarrierObj = evaluator.dereference(source, state, gbarrier).value;
+				SymbolicExpression procMapArray = universe.tupleRead(gbarrierObj, oneObject);
+				SymbolicSequence<?> procMapElements = (SymbolicSequence<?>) procMapArray.argument(0);
+				int count = procMapElements.size();
+				
+				for(int i = 0; i < count; i++){
+					SymbolicExpression processValue = procMapElements.get(i);
+					int otherPid = modelFactory.getProcessId(source, processValue);
+					
+					if(pid != otherPid){
+						ampleSet.add(otherPid);
+					}
+				}
+			} catch (UnsatisfiablePathConditionException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			return ampleSet;
 		case "$comm_dequeue":
 		case "$comm_enqueue":
-			Set<Integer> ampleSet = new HashSet<>();
-			Set<SymbolicExpression> commMemUnits = new HashSet<>();
+			Set<SymbolicExpression> handleObjMemUnits = new HashSet<>();
 
 			try {
 				evaluator.memoryUnitsOfExpression(state, pid, arguments[0],
-						commMemUnits);
+						handleObjMemUnits);
 			} catch (UnsatisfiablePathConditionException e) {
-				commMemUnits.add(argumentValues[0]);
+				handleObjMemUnits.add(argumentValues[0]);
 			}
-			for (SymbolicExpression memUnit : commMemUnits) {
+			for (SymbolicExpression memUnit : handleObjMemUnits) {
 				for (int otherPid : reachableMemUnitsMap.keySet()) {
 					if (otherPid == pid || ampleSet.contains(otherPid))
 						continue;
@@ -210,24 +250,48 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 				}
 			}
 			return ampleSet;
-		case "$wait":
-		case "$bundle_pack":
-		case "$bundle_size":
-		case "$bundle_unpack":
-		case "$comm_create":
-		case "$comm_probe":
-		case "$comm_seek":
-		case "$comm_size":
-		case "equalsTo":
-		case "$exit":
-		case "$free":
-		case "$gcomm_create2":
-		case "$scope_parent":
-			return new HashSet<>();
 		default:
-			throw new CIVLInternalException("Unknown civlc function: "
-					+ function, source);
+			throw new CIVLInternalException("Unreachable" + function, source);
 		}
+	}
+
+	/**
+	 * Computes the guard of $barrier_exit($barrier), i.e., when the
+	 * corresponding cell of in_barrier array in $gbarrier is false.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param arguments
+	 * @param argumentValues
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private BooleanExpression getBarrierExitGuard(State state, int pid,
+			List<Expression> arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		CIVLSource source = arguments.get(0).getSource();
+		SymbolicExpression barrier = argumentValues[0];
+		NumericExpression myPlace;
+		SymbolicExpression barrierObj;
+		SymbolicExpression gbarrier;
+		SymbolicExpression gbarrierObj;
+		Evaluation eval = evaluator.dereference(source, state, barrier);
+		SymbolicExpression inBarrierArray;
+		SymbolicExpression meInBarrier;
+
+		state = eval.state;
+		barrierObj = eval.value;
+		myPlace = (NumericExpression) universe
+				.tupleRead(barrierObj, zeroObject);
+		gbarrier = universe.tupleRead(barrierObj, oneObject);
+		eval = evaluator.dereference(source, state, gbarrier);
+		state = eval.state;
+		gbarrierObj = eval.value;
+		inBarrierArray = universe.tupleRead(gbarrierObj, twoObject);
+		meInBarrier = universe.arrayRead(inBarrierArray, myPlace);
+		if (meInBarrier.isTrue())
+			return universe.falseExpression();
+		return universe.trueExpression();
 	}
 
 	/**

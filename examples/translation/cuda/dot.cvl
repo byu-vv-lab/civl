@@ -109,4 +109,7 @@ int main( void ) {
   #define sum_squares(x)  (x*(x+1)*(2*x+1)/6)
   // check result
   $assert(c == 2 * sum_squares( (double)(N - 1) ));
+  $free(a);
+  $free(b);
+  $free(partial_c);
 }

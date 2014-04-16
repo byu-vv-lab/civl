@@ -130,5 +130,11 @@ public interface ProcessState {
 	 */
 	int atomicCount();
 
+	/**
+	 * This identifier is not part of the state. It is never renamed, helping to
+	 * identify a specific process when processes get collected.
+	 * 
+	 * @return The identifier of this process.
+	 */
 	int identifier();
 }

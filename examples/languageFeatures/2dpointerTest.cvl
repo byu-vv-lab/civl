@@ -4,36 +4,26 @@ int sh = 0;
 void Process(){
   double ** buf;
   int *p;
+  $scope myScope = $here;
   
   p = (int *)$malloc($here, 2 * sizeof(int));
   buf = (double **)$malloc($here, 2 * sizeof(double *));
   for(int i=0; i<2; i++){
-    buf[i] = (double *)$malloc($here, 
+    buf[i] = (double *)$malloc(myScope, 
 			       2 * sizeof(double));
   }
-
+  $free(p);
+  for(int i=0; i<2; i++){
+    $free(buf[i]);
+  }
+  $free(buf);
 }
-
-/*void Process(){
-  int *a[6];
-  int b[6];
-  
-  for(int i = 0; i < 6; i++){
-    b[i] = i;
-    a[i] = &b[i];
-  }
-  for(int i = 0; i < 6; i++){
-    sh ++;
-    *a[i] = *a[i] + sh;
-  }
-}*/
 
 void main(){
   $proc procs[2];
 
   procs[0] = $spawn Process();
   procs[1] = $spawn Process();
-
   $wait(procs[0]);
   $wait(procs[1]);
 }

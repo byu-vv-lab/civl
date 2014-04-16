@@ -21,7 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
- * A model of a Chapel program.
+ * A model of a CIVL program.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
@@ -54,6 +54,18 @@ public class CommonModel extends CommonSourceable implements Model {
 	 * The CIVL type FILE, defined in stdio. NULL if there is no IO operation.
 	 */
 	private CIVLStructOrUnionType FILEtype;
+
+	/**
+	 * The base type of the handle type $barrier. NULL if there is no barrier
+	 * operation.
+	 */
+	private CIVLType barrierType;
+
+	/**
+	 * The base type of the handle type $gbarrier. NULL if there is no barrier
+	 * operation.
+	 */
+	private CIVLType gbarrierType;
 
 	private ArrayList<MallocStatement> mallocStatements;
 
@@ -319,6 +331,26 @@ public class CommonModel extends CommonSourceable implements Model {
 	@Override
 	public void setFILEType(CIVLStructOrUnionType type) {
 		this.FILEtype = type;
+	}
+
+	@Override
+	public CIVLType gbarrierType() {
+		return this.gbarrierType;
+	}
+
+	@Override
+	public void setGbarrierType(CIVLType gbarrierType) {
+		this.gbarrierType = gbarrierType;
+	}
+
+	@Override
+	public CIVLType barrierType() {
+		return this.barrierType;
+	}
+
+	@Override
+	public void setBarrierType(CIVLType barrierType) {
+		this.barrierType = barrierType;
 	}
 
 }

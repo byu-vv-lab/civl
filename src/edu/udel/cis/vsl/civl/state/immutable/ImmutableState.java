@@ -603,7 +603,7 @@ public class ImmutableState implements State {
 			ImmutableDynamicScope scope = (ImmutableDynamicScope) dyscopes[i];
 
 			if (scope == null)
-				out.println("| | dyscope " + i + ": null");
+				out.println("| | dyscope - (scope<" +  i + ">): null");
 			else
 				scope.print(out, "" + i, "| | ");
 		}
@@ -612,7 +612,7 @@ public class ImmutableState implements State {
 			ProcessState process = processStates[i];
 
 			if (process == null)
-				out.println("| | process " + i + ": null");
+				out.println("| | process - (process<" + i + ">): null");
 			else
 				process.print(out, "| | ");
 		}

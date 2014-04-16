@@ -28,7 +28,7 @@ public class MPITranslationTest {
 	@Test
 	public void ring1() {
 		assertTrue(ui.run("verify", filename("ring1.c"), "-input__NPROCS=2",
-				"-mpi=true", "-showModel", "-showTransitions"));
+				"-showModel", "-showTransitions"));
 	}
 
 	@Ignore

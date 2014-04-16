@@ -162,8 +162,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 	/**
 	 * There are new nodes created by the transformer, other than parsing from
-	 * some source file. All new nodes share the same source. TODO create an
-	 * appropriate source.
+	 * some source file. All new nodes share the same source.
 	 */
 	private Source source;
 
@@ -777,7 +776,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		int count;
 		AssumeNode nprocsAssumption;
 
-		this.source = root.getSource();
+		this.source = root.getSource();// TODO needs a good source
 		assert this.astFactory == ast.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();

@@ -37,4 +37,5 @@ void MPI_Process (int __rank) {
   }
   tStart = $true;
   for (int i=0; i<2; i++) $wait(threads[i]);
+  $comm_destroy(MPI_COMM_WORLD);
 }

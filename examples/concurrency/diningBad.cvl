@@ -25,6 +25,11 @@ void dine(int id) {
 }
 
 void main() {
+  $proc philosophers[n];
+  
   for (int i = 0; i < n; i++) forks[i] = 0;
-  for (int i = 0; i < n; i++) $spawn dine(i);
+  for (int i = 0; i < n; i++)
+    philosophers[i] = $spawn dine(i);
+  for (int i = 0; i < n; i++)
+    $wait(philosophers[i]);
 }

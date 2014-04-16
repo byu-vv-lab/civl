@@ -169,11 +169,13 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 						.functionType(Arrays.asList(stringSymbolicType),
 								stringSymbolicType)));
 		this.filesystemStructType = model.basedFilesystemType();
-		this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
-				.getDynamicType(universe);
+		if (filesystemStructType != null)
+			this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
+					.getDynamicType(universe);
 		this.fileType = model.fileType();
-		this.fileSymbolicType = (SymbolicTupleType) this.fileType
-				.getDynamicType(universe);
+		if (fileType != null)
+			this.fileSymbolicType = (SymbolicTupleType) this.fileType
+					.getDynamicType(universe);
 		this.FILEtype = model.FILEtype();
 		numbers = new HashSet<Character>(10);
 		for (int i = 0; i < 10; i++) {
@@ -468,6 +470,9 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		case "$filesystem_create":
 			state = execute_filesystem_create(source, state, pid, lhs,
 					arguments, argumentValues);
+			break;
+		case "$filesystem_destroy":
+			state = executeFree(state, pid, arguments, argumentValues, source);
 			break;
 		case "fprintf":
 			state = execute_fprintf(source, state, pid, lhs, arguments,

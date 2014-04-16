@@ -1,0 +1,12 @@
+#include<civlc.h>
+$proc mainP=$proc_null;
+
+void process(){
+  $when(mainP != $proc_null);
+  $wait(mainP);
+}
+
+void main(){
+  $spawn process();
+  mainP = $self;
+}

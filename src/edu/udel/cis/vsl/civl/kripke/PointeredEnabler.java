@@ -43,8 +43,9 @@ public class PointeredEnabler extends Enabler implements
 	 */
 	public PointeredEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean showAmpleSet,
-			LibraryLoader libLoader) {
-		super(transitionFactory, evaluator, executor, showAmpleSet, libLoader);
+			boolean showAmpleSetWtStates, LibraryLoader libLoader) {
+		super(transitionFactory, evaluator, executor, showAmpleSet,
+				showAmpleSetWtStates, libLoader);
 	}
 
 	/* ************************* Methods from Enabler ********************** */
@@ -74,6 +75,8 @@ public class PointeredEnabler extends Enabler implements
 					debugOut.print(p.getPid() + "\t");
 				}
 				debugOut.println();
+				if (debugging || showAmpleSetWtStates)
+					state.print(debugOut);
 			}
 		}
 		// Compute the ample set (of transitions)

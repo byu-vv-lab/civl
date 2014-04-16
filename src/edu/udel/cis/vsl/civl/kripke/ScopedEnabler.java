@@ -71,8 +71,9 @@ public class ScopedEnabler extends Enabler implements
 	 */
 	public ScopedEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean sPor,
-			boolean showAmpleSet, LibraryLoader libLoader) {
-		super(transitionFactory, evaluator, executor, showAmpleSet, libLoader);
+			boolean showAmpleSet, boolean showAmpleSetWtStates,
+			LibraryLoader libLoader) {
+		super(transitionFactory, evaluator, executor, showAmpleSet, showAmpleSetWtStates, libLoader);
 		this.scpPor = sPor;
 		if (this.scpPor)
 			this.debugOut.println("scoped POR is enabled.");

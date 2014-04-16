@@ -74,7 +74,14 @@ public interface DynamicScope {
 	 *            a string to prepend to each line of output
 	 */
 	void print(PrintStream out, String prefix);
-	
+
 	int numberOfValues();
 
+	/**
+	 * This identifier is not part of the state. It is never renamed, helping to
+	 * identify a specific dynamic scope when scopes get collected.
+	 * 
+	 * @return The identifier of this scope.
+	 */
+	int identifier();
 }

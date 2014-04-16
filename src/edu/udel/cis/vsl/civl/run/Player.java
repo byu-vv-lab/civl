@@ -85,6 +85,8 @@ public abstract class Player {
 
 	protected int maxdepth;
 
+	protected boolean showAmpleSetWtStates; // false by default
+
 	protected boolean showAmpleSet; // false by default
 
 	protected boolean scpPor1; // false by default
@@ -130,15 +132,12 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.enablePrintfO);
 		this.showAmpleSet = (Boolean) config
 				.getValueOrDefault(UserInterface.showAmpleSetO);
+		this.showAmpleSetWtStates = (Boolean) config
+				.getValueOrDefault(UserInterface.showAmpleSetWtStatesO);
 		this.gui = (Boolean) config.getValueOrDefault(UserInterface.guiO);
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
-		// if (this.mpiMode)
-		// this.executor = new MPIExecutor(config, modelFactory, stateFactory,
-		// log, libraryLoader, out, this.enablePrintf, evaluator);
-		// else
 		this.executor = new CommonExecutor(config, modelFactory, stateFactory,
 				log, libraryLoader, out, this.enablePrintf, evaluator);
-		// this.evaluator.setExecutor(executor);
 		this.predicate = new StandardPredicate(log, universe, this.executor);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
@@ -159,13 +158,16 @@ public abstract class Player {
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 		if (this.scpPor1) {
 			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					false, showAmpleSet, this.libraryLoader);
+					false, showAmpleSet, this.showAmpleSetWtStates,
+					this.libraryLoader);
 		} else if (this.scpPor2) {
 			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					true, showAmpleSet, this.libraryLoader);
+					true, showAmpleSet, this.showAmpleSetWtStates,
+					this.libraryLoader);
 		} else {
 			enabler = new PointeredEnabler(transitionFactory, evaluator,
-					executor, showAmpleSet, this.libraryLoader);
+					executor, showAmpleSet, this.showAmpleSetWtStates,
+					this.libraryLoader);
 		}
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);

@@ -1,6 +1,7 @@
 /* Commandline execution:
  * 		civl verify locksGood.cvl
  * */
+#include<civlc.h>
 _Bool lock0 = 0;
 _Bool lock1 = 0;
 
@@ -27,6 +28,9 @@ void proc1() {
 }
 
 void main() {
-  $spawn proc0();
-  $spawn proc1();
+  $proc p0 = $spawn proc0();
+  $proc p1 = $spawn proc1();
+  
+  $wait(p0);
+  $wait(p1);
 }

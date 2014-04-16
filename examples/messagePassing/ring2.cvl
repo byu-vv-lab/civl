@@ -26,6 +26,7 @@ void MPI_Process (int __rank) {
   $assert(count == 1);
   $assert(stat.MPI_SOURCE == (rank+nprocs-1)%nprocs);
   $assert(stat.MPI_TAG == 0);
+  $comm_destroy(MPI_COMM_WORLD);
 
 // ******************** END PROGRAM SOURCE ***************************
 

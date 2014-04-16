@@ -96,6 +96,8 @@ public abstract class Enabler implements
 
 	protected LibraryLoader libraryLoader;
 
+	protected boolean showAmpleSetWtStates = false;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -114,11 +116,13 @@ public abstract class Enabler implements
 	 *            The option to enable or disable the printing of ample sets.
 	 */
 	protected Enabler(TransitionFactory transitionFactory, Evaluator evaluator,
-			Executor executor, boolean showAmpleSet, LibraryLoader libLoader) {
+			Executor executor, boolean showAmpleSet,
+			boolean showAmpleSetWtStates, LibraryLoader libLoader) {
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
 		this.executor = executor;
-		this.showAmpleSet = showAmpleSet;
+		this.showAmpleSet = showAmpleSet || showAmpleSetWtStates;
+		this.showAmpleSetWtStates = showAmpleSetWtStates;
 		this.modelFactory = evaluator.modelFactory();
 		this.universe = modelFactory.universe();
 		falseExpression = universe.falseExpression();
@@ -142,23 +146,24 @@ public abstract class Enabler implements
 	 * @return The symbolic expression of the guard of the given statement.
 	 */
 	public Evaluation getGuard(Statement statement, int pid, State state) {
-		// try {
-		// if (statement instanceof CallOrSpawnStatement) {
-		// if (((CallOrSpawnStatement) statement).isSystemCall()) {
-		// return getSystemGuard(state, pid,
-		// (CallOrSpawnStatement) statement);
-		// }
-		// }
 		try {
 			return evaluator.evaluate(state, pid, statement.guard());
 		} catch (UnsatisfiablePathConditionException e) {
 			return new Evaluation(state, this.falseExpression);
 		}
-		// } catch (UnsatisfiablePathConditionException e) {
-		// return new Evaluation(state, this.falseExpression);
-		// }
 	}
 
+	/**
+	 * Evaluates the guard of a system function call.
+	 * 
+	 * @param source
+	 * @param state
+	 * @param pid
+	 * @param library
+	 * @param function
+	 * @param arguments
+	 * @return
+	 */
 	public Evaluation getSystemGuard(CIVLSource source, State state, int pid,
 			String library, String function, List<Expression> arguments) {
 		LibraryEnabler libEnabler = libraryEnabler(source, library);
@@ -167,6 +172,18 @@ public abstract class Enabler implements
 				.evaluateGuard(source, state, pid, function, arguments);
 	}
 
+	/**
+	 * Computes the set of enabled transitions of a system function call.
+	 * 
+	 * @param source
+	 * @param state
+	 * @param call
+	 * @param pathCondition
+	 * @param pid
+	 * @param processIdentifier
+	 * @param assignAtomicLock
+	 * @return
+	 */
 	private ArrayList<SimpleTransition> getEnabledTransitionsOfSystemCall(
 			CIVLSource source, State state, CallOrSpawnStatement call,
 			BooleanExpression pathCondition, int pid, int processIdentifier,

@@ -177,6 +177,10 @@ public class FunctionTranslator {
 
 	private static final String GCOMM_TYPE = "__gcomm__";
 
+	private static final String GBARRIER_TYPE = "__gbarrier__";
+
+	private static final String BARRIER_TYPE = "__barrier__";
+
 	private static final String HEAP_TYPE = "__heap__";
 
 	private static final String MESSAGE_TYPE = "__message__";
@@ -3111,12 +3115,11 @@ public class FunctionTranslator {
 			break;
 		case DEREFERENCE:
 			Expression pointer = arguments.get(0);
-			
-			if(!pointer.getExpressionType().isPointerType()){
+
+			if (!pointer.getExpressionType().isPointerType()) {
 				pointer = this.arrayToPointer(pointer);
 			}
-			result = modelFactory.dereferenceExpression(source,
-					pointer);
+			result = modelFactory.dereferenceExpression(source, pointer);
 			break;
 		case CONDITIONAL:
 			result = modelFactory.conditionalExpression(source,
@@ -3579,6 +3582,16 @@ public class FunctionTranslator {
 			break;
 		case QUEUE_TYPE:
 			modelBuilder.queueType = result;
+			break;
+		case BARRIER_TYPE:
+			result.setHandleObjectType(true);
+			modelBuilder.barrierType = result;
+			modelBuilder.handledObjectTypes.add(result);
+			break;
+		case GBARRIER_TYPE:
+			result.setHandleObjectType(true);
+			modelBuilder.gbarrierType = result;
+			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case COMM_TYPE:
 			result.setHandleObjectType(true);

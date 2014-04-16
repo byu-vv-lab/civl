@@ -49,6 +49,7 @@ import edu.udel.cis.vsl.civl.transform.common.OmpPragmaTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
 import edu.udel.cis.vsl.civl.transition.CompoundTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
+import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -124,9 +125,17 @@ public class UserInterface {
 	public final static Option seedO = Option.newScalarOption("seed", STRING,
 			"set the random seed; applies only to run", null);
 
-	public final static Option showAmpleSetO = Option
-			.newScalarOption("showAmpleSet", BOOLEAN,
-					"print the ample set of each state", false);
+	public final static Option showAmpleSetO = Option.newScalarOption(
+			"showAmpleSet", BOOLEAN,
+			"print the ample set when it contains more than one processes",
+			false);
+
+	public final static Option showAmpleSetWtStatesO = Option
+			.newScalarOption(
+					"showAmpleSetWtStates",
+					BOOLEAN,
+					"print the ample set and the state when there are more than one processes in the ample set",
+					false);
 
 	public final static Option showModelO = Option.newScalarOption("showModel",
 			BOOLEAN, "print the model", false);
@@ -190,14 +199,6 @@ public class UserInterface {
 	 */
 	private final double startTime = System.currentTimeMillis();
 
-	// TODO: remove these
-	
-	private Preprocessor preprocessor;
-
-	private boolean hasStdio;
-	private boolean hasOmp;
-	private boolean hasMpi;
-
 	/* ************************** Constructors ***************************** */
 
 	public UserInterface() {
@@ -207,7 +208,7 @@ public class UserInterface {
 				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO, porO,
 				saveStatesO, simplifyO, solveO, enablePrintfO, mpiO,
-				showAmpleSetO, guiO);
+				showAmpleSetO, showAmpleSetWtStatesO, guiO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -262,23 +263,23 @@ public class UserInterface {
 					+ config.getFreeArg(numExpected + 1));
 	}
 
-	private Model extractModel(PrintStream out, GMCConfiguration config,
-			String filename, ModelFactory factory) throws ABCException,
-			IOException, CommandLineException {
+	private Pair<Model, Preprocessor> extractModel(PrintStream out,
+			GMCConfiguration config, String filename, ModelFactory factory)
+			throws ABCException, IOException, CommandLineException {
 		return extractModel(out, config, filename,
 				Models.newModelBuilder(factory));
 	}
 
-	private Model extractModel(PrintStream out, GMCConfiguration config,
-			String filename, SymbolicUniverse universe) throws ABCException,
-			IOException, CommandLineException {
+	private Pair<Model, Preprocessor> extractModel(PrintStream out,
+			GMCConfiguration config, String filename, SymbolicUniverse universe)
+			throws ABCException, IOException, CommandLineException {
 		return extractModel(out, config, filename,
 				Models.newModelBuilder(universe));
 	}
 
-	private Model extractModel(PrintStream out, GMCConfiguration config,
-			String filename, ModelBuilder modelBuilder) throws ABCException,
-			IOException, CommandLineException {
+	private Pair<Model, Preprocessor> extractModel(PrintStream out,
+			GMCConfiguration config, String filename, ModelBuilder modelBuilder)
+			throws ABCException, IOException, CommandLineException {
 		boolean parse = "parse".equals(config.getFreeArg(0));
 		boolean debug = config.isTrue(debugO);
 		boolean verbose = config.isTrue(verboseO);
@@ -286,8 +287,8 @@ public class UserInterface {
 		Activator frontEnd = getFrontEnd(filename, config);
 		Program program;
 		Model model;
+		Preprocessor preprocessor = frontEnd.getPreprocessor();
 
-		this.preprocessor = frontEnd.getPreprocessor();
 		if (verbose || debug) {
 			// shows absolutely everything
 			program = frontEnd.showTranslation(out);
@@ -296,7 +297,7 @@ public class UserInterface {
 			ABC.language = Language.CIVL_C;
 			program = frontEnd.getProgram();
 		}
-		applyTransformers(filename, program);
+		applyTransformers(filename, program, preprocessor);
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(config, program, coreName(filename),
@@ -306,7 +307,7 @@ public class UserInterface {
 		if (showModel || verbose || debug || parse) {
 			model.print(out, verbose || debug);
 		}
-		return model;
+		return new Pair<>(model, preprocessor);
 	}
 
 	/**
@@ -316,17 +317,18 @@ public class UserInterface {
 	 * @param program
 	 * @throws SyntaxException
 	 */
-	private void applyTransformers(String fileName, Program program)
-			throws SyntaxException {
-		Set<String> headers = this.preprocessor.headerFiles();
+	private void applyTransformers(String fileName, Program program,
+			Preprocessor preprocessor) throws SyntaxException {
+		Set<String> headers = preprocessor.headerFiles();
 		boolean isC = fileName.endsWith(".c");
+		boolean hasStdio = false, hasOmp = false, hasMpi = false;
 
 		if (headers.contains("stdio.h"))
-			this.hasStdio = true;
+			hasStdio = true;
 		if (isC && (headers.contains("omp.h") || program.hasOmpPragma()))
-			this.hasOmp = true;
+			hasOmp = true;
 		if (isC && headers.contains("mpi.h"))
-			this.hasMpi = true;
+			hasMpi = true;
 
 		// always apply general transformation.
 		if (!Transform.getCodes().contains(GeneralTransformer.CODE))
@@ -338,10 +340,10 @@ public class UserInterface {
 					return new GeneralTransformer(astFactory);
 				}
 			});
-		if (!this.hasMpi) {
+		if (!hasMpi) {
 			program.applyTransformer(GeneralTransformer.CODE);
 		}
-		if (this.hasStdio) {
+		if (hasStdio) {
 			if (!Transform.getCodes().contains(IOTransformer.CODE))
 				Transform.addTransform(new TransformRecord(IOTransformer.CODE,
 						IOTransformer.LONG_NAME,
@@ -355,7 +357,7 @@ public class UserInterface {
 			program.applyTransformer(IOTransformer.CODE);
 		}
 
-		if (this.hasOmp) {
+		if (hasOmp) {
 			if (!Transform.getCodes().contains(OpenMPTransformer.CODE))
 				Transform.addTransform(new TransformRecord(
 						OpenMPTransformer.CODE, OpenMPTransformer.LONG_NAME,
@@ -381,7 +383,7 @@ public class UserInterface {
 			program.applyTransformer(OpenMPTransformer.CODE);
 		}
 
-		if (this.hasMpi) {
+		if (hasMpi) {
 			if (!Transform.getCodes().contains(MPI2CIVLTransformer.CODE))
 				Transform.addTransform(new TransformRecord(
 						MPI2CIVLTransformer.CODE,
@@ -621,11 +623,12 @@ public class UserInterface {
 	public boolean runParse(GMCConfiguration config)
 			throws CommandLineException, ABCException, IOException {
 		SymbolicUniverse universe = SARL.newStandardUniverse();
+		Preprocessor preprocessor;
 
 		checkFilenames(1, config);
-		extractModel(out, config, config.getFreeArg(1), universe);
+		preprocessor = extractModel(out, config, config.getFreeArg(1), universe).right;
 		if (showShortFileNameList(config))
-			this.preprocessor.printShorterFileNameMap(out);
+			preprocessor.printShorterFileNameMap(out);
 		return true;
 	}
 
@@ -647,6 +650,8 @@ public class UserInterface {
 		Model model;
 		TracePlayer replayer;
 		boolean guiMode = config.isTrue(guiO);
+		Pair<Model, Preprocessor> modelAndPreprocessor;
+		Preprocessor preprocessor;
 
 		checkFilenames(1, config);
 		sourceFilename = config.getFreeArg(1);
@@ -665,11 +670,14 @@ public class UserInterface {
 				showProverQueriesO, enablePrintfO));
 		newConfig.setScalarValue(showTransitionsO, true);
 		newConfig.read(config);
-		model = extractModel(out, newConfig, sourceFilename, universe);
+		modelAndPreprocessor = extractModel(out, newConfig, sourceFilename,
+				universe);
+		model = modelAndPreprocessor.left;
+		preprocessor = modelAndPreprocessor.right;
 		if (showShortFileNameList(config))
 			preprocessor.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out,
-				this.preprocessor);
+				preprocessor);
 		if (guiMode) {
 			ArrayList<State> states = new ArrayList<>();
 			ArrayList<Transition> transitions = new ArrayList<>();
@@ -703,10 +711,14 @@ public class UserInterface {
 		String filename;
 		Model model;
 		TracePlayer player;
+		Pair<Model, Preprocessor> modelAndPreprocessor;
+		Preprocessor preprocessor;
 
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
-		model = extractModel(out, config, filename, universe);
+		modelAndPreprocessor = extractModel(out, config, filename, universe);
+		model = modelAndPreprocessor.left;
+		preprocessor = modelAndPreprocessor.right;
 		if (showShortFileNameList(config))
 			preprocessor.printShorterFileNameMap(out);
 		config.setScalarValue(showTransitionsO, true);
@@ -729,10 +741,14 @@ public class UserInterface {
 		Model model;
 		Verifier verifier;
 		boolean showShortFileName = showShortFileNameList(config);
+		Pair<Model, Preprocessor> modelAndPreprocessor;
+		Preprocessor preprocessor;
 
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
-		model = extractModel(out, config, filename, universe);
+		modelAndPreprocessor = extractModel(out, config, filename, universe);
+		model = modelAndPreprocessor.left;
+		preprocessor = modelAndPreprocessor.right;
 		if (showShortFileName)
 			preprocessor.printShorterFileNameMap(out);
 		verifier = new Verifier(config, model, out, startTime,
@@ -743,7 +759,7 @@ public class UserInterface {
 			verifier.terminateUpdater();
 			out.println();
 			out.println("Error: " + unimplemented.toString());
-			this.preprocessor.printShorterFileNameMap(out);
+			preprocessor.printShorterFileNameMap(out);
 			return false;
 		} catch (Exception e) {
 			verifier.terminateUpdater();
@@ -769,13 +785,19 @@ public class UserInterface {
 		boolean debug = config.isTrue(debugO);
 		boolean verbose = config.isTrue(verboseO);
 		boolean showModel = config.isTrue(showModelO);
+		Pair<Model, Preprocessor> modelAndPreprocessor0, modelAndPreprocessor1;
+		Preprocessor preprocessor;
 
 		assert !config.isTrue(mpiO);
 		checkFilenames(2, config);
 		filename0 = config.getFreeArg(1);
 		filename1 = config.getFreeArg(2);
-		model0 = extractModel(out, config, filename0, universe);
-		model1 = extractModel(out, config, filename1, model0.factory());
+		modelAndPreprocessor0 = extractModel(out, config, filename0, universe);
+		model0 = modelAndPreprocessor0.left;
+		modelAndPreprocessor1 = extractModel(out, config, filename1,
+				model0.factory());
+		model1 = modelAndPreprocessor1.left;
+		preprocessor = modelAndPreprocessor0.right;
 		combiner = Models.newModelCombiner(model0.factory());
 		compositeModel = combiner.combine(model0, model1);
 		if (showModel || verbose || debug) {
@@ -783,7 +805,7 @@ public class UserInterface {
 			compositeModel.print(out, verbose || debug);
 		}
 		if (showShortFileName)
-			this.preprocessor.printShorterFileNameMap(out);
+			preprocessor.printShorterFileNameMap(out);
 		verifier = new Verifier(config, compositeModel, out, startTime,
 				showShortFileName, preprocessor);
 		try {
@@ -869,7 +891,7 @@ public class UserInterface {
 			throw e;
 		} catch (CIVLException e) {
 			err.println(e);
-			preprocessor.printShorterFileNameMap(err);
+			// preprocessor.printShorterFileNameMap(err);
 		}
 		err.flush();
 		return false;

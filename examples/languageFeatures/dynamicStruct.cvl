@@ -5,6 +5,7 @@
 
 void f(int n) {
   int sum;
+  $proc fp = $proc_null;
   typedef struct foo {
     int sum;
     int bar[n];
@@ -13,7 +14,7 @@ void f(int n) {
   foo s;
   sum = (n * (n - 1)) / 2;
   if (n > 1) {
-    $spawn f(n-1);
+    fp = $spawn f(n-1);
   }
   s.sum = 0;
   for (int i = 0; i < n; i++) {
@@ -21,8 +22,11 @@ void f(int n) {
     s.sum += s.bar[i];
   }
   $assert(sum == s.sum);
+  if(fp != $proc_null) $wait(fp);
 }
 
 void main() {
-  $spawn f(3);
+  $proc fp = $spawn f(3);
+
+  $wait(fp);
 }
