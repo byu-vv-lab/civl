@@ -454,5 +454,14 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", filename("civlBarrier.cvl"), "-inputN=4"));
 
 	}
-
+	
+	@Test
+	public void memoryLeak() throws ABCException {
+		assertFalse(ui.run("verify", filename("memoryLeak.cvl")));
+	}
+	
+	@Test
+	public void processLeak() throws ABCException {
+		assertFalse(ui.run("verify", filename("processLeak.cvl")));
+	}
 }

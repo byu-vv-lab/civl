@@ -56,6 +56,10 @@ public class ImmutableStateFactory implements StateFactory {
 			100000);
 
 	private int stateCount = 0;
+	
+	private int processCount = 0;
+	
+	private int dyscopeCount = 0;
 
 	private Map<ImmutableState, ImmutableState> stateMap = new HashMap<>(
 			1000000);
@@ -93,7 +97,7 @@ public class ImmutableStateFactory implements StateFactory {
 	private ImmutableDynamicScope initialDynamicScope(Scope lexicalScope,
 			int parent, int dynamicScopeId, BitSet reachers) {
 		return new ImmutableDynamicScope(lexicalScope, parent, initialValues(
-				lexicalScope, dynamicScopeId), reachers);
+				lexicalScope, dynamicScopeId), reachers, this.dyscopeCount++);
 	}
 
 	private SymbolicExpression[] initialValues(Scope lexicalScope,
@@ -295,7 +299,7 @@ public class ImmutableStateFactory implements StateFactory {
 				values[i] = arguments[i];
 		bitSet.set(pid);
 		newScopes[sid] = new ImmutableDynamicScope(functionStaticScope,
-				containingDynamicScopeId, values, bitSet);
+				containingDynamicScopeId, values, bitSet, this.dyscopeCount++);
 		{
 			int id = containingDynamicScopeId;
 			ImmutableDynamicScope scope;
@@ -564,7 +568,7 @@ public class ImmutableStateFactory implements StateFactory {
 		ImmutableProcessState[] newProcesses;
 
 		newProcesses = theState.copyAndExpandProcesses();
-		newProcesses[numProcs] = new ImmutableProcessState(numProcs);
+		newProcesses[numProcs] = new ImmutableProcessState(numProcs, this.processCount++);
 		theState = theState.setProcessStates(newProcesses);
 		return pushCallStack2(theState, numProcs, function, arguments,
 				callerPid);
@@ -624,8 +628,8 @@ public class ImmutableStateFactory implements StateFactory {
 							Certainty.CONCRETE, "The unreachable dyscope "
 									+ scopeToBeRemoved.identifier() + "(scope<"
 									+ i + ">)" + " has a non-empty heap "
-									+ heapValue.toString() + ".",
-							state, heapVariable.getSource());
+									+ heapValue.toString() + ".", state,
+							heapVariable.getSource());
 				}
 			}
 		}
@@ -773,7 +777,8 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public State terminateProcess(State state, int pid) {
 		ImmutableState theState = (ImmutableState) state;
-		ImmutableProcessState emptyProcessState = new ImmutableProcessState(pid);
+		ImmutableProcessState emptyProcessState = new ImmutableProcessState(
+				pid, state.getProcessState(pid).identifier());
 
 		return theState.setProcessState(pid, emptyProcessState);
 	}

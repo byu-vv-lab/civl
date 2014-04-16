@@ -39,12 +39,6 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 */
 	private final static boolean debug = false;
 
-	/**
-	 * The number of instances of this class that have been created since the
-	 * class was loaded.
-	 */
-	static int instanceCount = 0;
-
 	/* ************************** Instance Fields ************************** */
 
 	/**
@@ -121,32 +115,6 @@ public class ImmutableDynamicScope implements DynamicScope {
 		this.variableValues = variableValues;
 		this.reachers = reachers;
 		this.identifier = identifier;
-	}
-
-	/**
-	 * Constructs a new immutable dynamic scope with the given fields. No data
-	 * is cloned---the given parameters become the fields of the new instance.
-	 * 
-	 * @param lexicalScope
-	 *            the static scope of which this dynamic scope is an instance
-	 * @param parent
-	 *            the dyscope ID of the parent of this dynamic scope in the
-	 *            dyscope tree
-	 * @param variableValues
-	 *            the array of values associated to the variables declared in
-	 *            the static scope
-	 * @param reachers
-	 *            the set of PIDs of processes that can reach this dyscope
-	 */
-	ImmutableDynamicScope(Scope lexicalScope, int parent,
-			SymbolicExpression[] variableValues, BitSet reachers) {
-		assert variableValues != null
-				&& variableValues.length == lexicalScope.numVariables();
-		this.lexicalScope = lexicalScope;
-		this.parent = parent;
-		this.variableValues = variableValues;
-		this.reachers = reachers;
-		this.identifier = instanceCount++;
 	}
 
 	/* ********************** Package-private Methods ********************** */
@@ -301,7 +269,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 		boolean first = true;
 
 		out.println(prefix + "dyscope " + identifier + "(scope<" + id
-				+ ">) (parent=scope<" + parent + ">, static=" + lexicalScope.id() + ")");
+				+ ">) (parent=scope<" + parent + ">, static="
+				+ lexicalScope.id() + ")");
 		out.print(prefix + "| reachers = {");
 		for (int j = 0; j < bitSetLength; j++) {
 			if (reachers.get(j)) {
