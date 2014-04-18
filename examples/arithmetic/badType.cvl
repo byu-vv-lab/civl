@@ -1,0 +1,8 @@
+/* This should generate an error since 0.0 is not an integer
+ */
+#include<civlc.h>
+#include<assert.h>
+void main() {
+  int x = 0.0;
+  assert (x==0);
+}
