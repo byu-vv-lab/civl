@@ -69,6 +69,12 @@ public class ImmutableDynamicScope implements DynamicScope {
 	private int parent;
 
 	/**
+	 * The identifier of the parent of this dynamic scope in the dynamic scope
+	 * tree, or na if this is the root (and therefore has no parent).
+	 */
+	private int parentIdentifier;
+
+	/**
 	 * Sets of PIDs of processes that can "reach" this dynamic scope.
 	 */
 	private BitSet reachers;
@@ -106,7 +112,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 * @param identifier
 	 *            the identifier of this dyscope
 	 */
-	ImmutableDynamicScope(Scope lexicalScope, int parent,
+	ImmutableDynamicScope(Scope lexicalScope, int parent, int parentIdentifier,
 			SymbolicExpression[] variableValues, BitSet reachers, int identifier) {
 		assert variableValues != null
 				&& variableValues.length == lexicalScope.numVariables();
@@ -138,10 +144,10 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 *            new value for the parent field
 	 * @return new instance same as original but with new parent value
 	 */
-	ImmutableDynamicScope setParent(int parent) {
-		return parent == this.parent ? this
-				: new ImmutableDynamicScope(lexicalScope, parent,
-						variableValues, reachers, this.identifier);
+	ImmutableDynamicScope setParent(int parent, int parentIdentifer) {
+		return parent == this.parent ? this : new ImmutableDynamicScope(
+				lexicalScope, parent, parentIdentifer, variableValues,
+				reachers, this.identifier);
 	}
 
 	/**
@@ -162,8 +168,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 * @return new instance same as original but with new reachers value
 	 */
 	ImmutableDynamicScope setReachers(BitSet reachers) {
-		return new ImmutableDynamicScope(lexicalScope, parent, variableValues,
-				reachers, this.identifier);
+		return new ImmutableDynamicScope(lexicalScope, parent,
+				parentIdentifier, variableValues, reachers, this.identifier);
 	}
 
 	/**
@@ -199,7 +205,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 */
 	ImmutableDynamicScope setVariableValues(
 			SymbolicExpression[] newVariableValues) {
-		return new ImmutableDynamicScope(lexicalScope, parent,
+		return new ImmutableDynamicScope(lexicalScope, parent, parentIdentifier,
 				newVariableValues, reachers, this.identifier);
 	}
 
@@ -268,8 +274,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 		int bitSetLength = reachers.length();
 		boolean first = true;
 
-		out.println(prefix + "dyscope " + identifier + "(scope<" + id
-				+ ">) (parent=scope<" + parent + ">, static="
+		out.println(prefix + "dyscope d" + identifier + " (id=" + id
+				+ ", parent=d" + parentIdentifier + ", static="
 				+ lexicalScope.id() + ")");
 		out.print(prefix + "| reachers = {");
 		for (int j = 0; j < bitSetLength; j++) {
@@ -298,7 +304,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 
 	ImmutableDynamicScope updateDyscopeIds(
 			Map<SymbolicExpression, SymbolicExpression> scopeSubMap,
-			SymbolicUniverse universe, int newParentId) {
+			SymbolicUniverse universe, int newParentId, int newParentIdentifier) {
 		Collection<Variable> scopeVariableIter = lexicalScope
 				.variablesWithScoperefs();
 		SymbolicExpression[] newValues = null;
@@ -318,8 +324,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 				}
 			}
 		}
-		return newValues == null ? setParent(newParentId)
-				: new ImmutableDynamicScope(lexicalScope, newParentId,
+		return newValues == null ? setParent(newParentId, newParentIdentifier)
+				: new ImmutableDynamicScope(lexicalScope, newParentId, newParentIdentifier,
 						newValues, reachers, this.identifier);
 	}
 
@@ -403,13 +409,18 @@ public class ImmutableDynamicScope implements DynamicScope {
 
 		System.arraycopy(variableValues, 0, newVariableValues, 0, n);
 		newVariableValues[vid] = value;
-		return new ImmutableDynamicScope(lexicalScope, parent,
+		return new ImmutableDynamicScope(lexicalScope, parent, parentIdentifier,
 				newVariableValues, reachers, this.identifier);
 	}
 
 	@Override
 	public int numberOfValues() {
 		return this.variableValues.length;
+	}
+
+	@Override
+	public int getParentIdentifier() {
+		return this.parentIdentifier;
 	}
 
 	/* ************************ Other Public Methods *********************** */

@@ -84,4 +84,12 @@ public interface DynamicScope {
 	 * @return The identifier of this scope.
 	 */
 	int identifier();
+
+	/**
+	 * The identifier of the parent of this dyscope in the dyscope tree. Returns
+	 * -1 when this is the root scope.
+	 * 
+	 * @return The identifier of the parent of this dyscope in the dyscope tree.
+	 */
+	int getParentIdentifier();
 }

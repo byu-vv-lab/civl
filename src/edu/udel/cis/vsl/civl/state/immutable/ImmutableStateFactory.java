@@ -56,9 +56,9 @@ public class ImmutableStateFactory implements StateFactory {
 			100000);
 
 	private int stateCount = 0;
-	
+
 	private int processCount = 0;
-	
+
 	private int dyscopeCount = 0;
 
 	private Map<ImmutableState, ImmutableState> stateMap = new HashMap<>(
@@ -95,9 +95,11 @@ public class ImmutableStateFactory implements StateFactory {
 	 * @return A new dynamic scope.
 	 */
 	private ImmutableDynamicScope initialDynamicScope(Scope lexicalScope,
-			int parent, int dynamicScopeId, BitSet reachers) {
-		return new ImmutableDynamicScope(lexicalScope, parent, initialValues(
-				lexicalScope, dynamicScopeId), reachers, this.dyscopeCount++);
+			int parent, int parentIdentifier, int dynamicScopeId,
+			BitSet reachers) {
+		return new ImmutableDynamicScope(lexicalScope, parent,
+				parentIdentifier, initialValues(lexicalScope, dynamicScopeId),
+				reachers, this.dyscopeCount++);
 	}
 
 	private SymbolicExpression[] initialValues(Scope lexicalScope,
@@ -263,7 +265,7 @@ public class ImmutableStateFactory implements StateFactory {
 		SymbolicExpression[] values;
 		ImmutableDynamicScope[] newScopes;
 		int sid;
-		int containingDynamicScopeId;
+		int containingDynamicScopeId, containingDynamicScopeIdentifier;
 		BitSet bitSet = new BitSet(newProcesses.length);
 
 		if (callerPid >= 0) {
@@ -298,8 +300,14 @@ public class ImmutableStateFactory implements StateFactory {
 			if (arguments[i] != null)
 				values[i] = arguments[i];
 		bitSet.set(pid);
+		if (containingDynamicScopeId < 0)
+			containingDynamicScopeIdentifier = -1;
+		else
+			containingDynamicScopeIdentifier = newScopes[containingDynamicScopeId]
+					.identifier();
 		newScopes[sid] = new ImmutableDynamicScope(functionStaticScope,
-				containingDynamicScopeId, values, bitSet, this.dyscopeCount++);
+				containingDynamicScopeId, containingDynamicScopeIdentifier,
+				values, bitSet, this.dyscopeCount++);
 		{
 			int id = containingDynamicScopeId;
 			ImmutableDynamicScope scope;
@@ -492,8 +500,9 @@ public class ImmutableStateFactory implements StateFactory {
 					newScopes[i] = dynamicScope.setReachers(newBitSet);
 				else
 					newScopes[i] = new ImmutableDynamicScope(staticScope,
-							dynamicScope.getParent(), newValues, newBitSet,
-							dynamicScope.identifier());
+							dynamicScope.getParent(),
+							dynamicScope.getParentIdentifier(), newValues,
+							newBitSet, dynamicScope.identifier());
 			} else if (newScopes != null) {
 				newScopes[i] = dynamicScope;
 			}
@@ -568,7 +577,8 @@ public class ImmutableStateFactory implements StateFactory {
 		ImmutableProcessState[] newProcesses;
 
 		newProcesses = theState.copyAndExpandProcesses();
-		newProcesses[numProcs] = new ImmutableProcessState(numProcs, this.processCount++);
+		newProcesses[numProcs] = new ImmutableProcessState(numProcs,
+				this.processCount++);
 		theState = theState.setProcessStates(newProcesses);
 		return pushCallStack2(theState, numProcs, function, arguments,
 				callerPid);
@@ -645,10 +655,11 @@ public class ImmutableStateFactory implements StateFactory {
 				if (newId >= 0) {
 					ImmutableDynamicScope oldScope = theState.getScope(i);
 					int oldParent = oldScope.getParent();
+					int oldParentIdentifier = oldScope.identifier();
 
 					newScopes[newId] = oldScope.updateDyscopeIds(scopeSubMap,
 							universe, oldParent < 0 ? oldParent
-									: oldToNew[oldParent]);
+									: oldToNew[oldParent], oldParentIdentifier);
 				}
 			}
 			for (int pid = 0; pid < numProcs; pid++)
@@ -825,13 +836,14 @@ public class ImmutableStateFactory implements StateFactory {
 		ImmutableProcessState[] processArray = theState.copyProcessStates();
 		int dynamicScopeId = theState.getProcessState(pid).getDyscopeId();
 		ImmutableDynamicScope dynamicScope = theState.getScope(dynamicScopeId);
+		int dynamicScopeIdentifier = dynamicScope.identifier();
 		Scope ss0 = dynamicScope.lexicalScope();
 		Scope ss1 = location.scope();
 
 		if (ss0 == ss1) {
 			processArray[pid] = theState.getProcessState(pid).replaceTop(
 					stackEntry(location, dynamicScopeId,
-							dynamicScope.identifier()));
+							dynamicScopeIdentifier));
 			return theState.setProcessStates(processArray);
 		} else {
 			Scope[] joinSequence = joinSequence(ss0, ss1);
@@ -843,11 +855,12 @@ public class ImmutableStateFactory implements StateFactory {
 				if (dynamicScopeId < 0)
 					throw new RuntimeException("State is inconsistent");
 				dynamicScope = theState.getScope(dynamicScopeId);
+				dynamicScopeIdentifier = dynamicScope.identifier();
 			}
 			if (joinSequence.length == 1) {
 				processArray[pid] = theState.getProcessState(pid).replaceTop(
 						stackEntry(location, dynamicScopeId,
-								dynamicScope.identifier()));
+								dynamicScopeIdentifier));
 				theState = theState.setProcessStates(processArray);
 			} else {
 				// iterate DOWN, adding new dynamic scopes...
@@ -865,7 +878,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 					reachers.set(pid);
 					newScopes[index] = initialDynamicScope(joinSequence[i],
-							dynamicScopeId, index, reachers);
+							dynamicScopeId, dynamicScopeIdentifier, index, reachers);
 					dynamicScopeId = index;
 					index++;
 				}
@@ -905,8 +918,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 		newValues[vid] = value;
 		newScope = new ImmutableDynamicScope(oldScope.lexicalScope(),
-				oldScope.getParent(), newValues, oldScope.getReachers(),
-				oldScope.identifier());
+				oldScope.getParent(), oldScope.getParentIdentifier(),
+				newValues, oldScope.getReachers(), oldScope.identifier());
 		newScopes[scopeId] = newScope;
 		theState = theState.setScopes(newScopes);
 		return theState;

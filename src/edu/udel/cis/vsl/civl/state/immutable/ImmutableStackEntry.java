@@ -120,7 +120,7 @@ public class ImmutableStackEntry implements StackEntry {
 				+ source.getSummary();
 
 		return "Frame[function=" + location.function().name() + ", location="
-				+ location.id() + locationString + ", dyscope=" + dyscopeIdentifier + "]";
+				+ location.id() + locationString + ", dyscope=d" + dyscopeIdentifier + "]";
 	}
 
 	@Override
