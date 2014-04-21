@@ -99,7 +99,7 @@ public class ArithmeticTest {
 	}
 
 	@Test
-	public void badType() {
-		assertTrue(ui.run("verify", "-echo", filename("badType.cvl")));
+	public void assignIntWtReal() {
+		assertTrue(ui.run("verify", "-echo", filename("assignIntWtReal.cvl")));
 	}
 }
