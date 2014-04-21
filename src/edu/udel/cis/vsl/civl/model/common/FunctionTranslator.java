@@ -2639,10 +2639,20 @@ public class FunctionTranslator {
 
 					result = modelFactory.integerLiteralExpression(source,
 							value);
-				} else
-					result = modelFactory.integerLiteralExpression(source,
-							BigInteger.valueOf(Long.parseLong(constantNode
-									.getStringRepresentation())));
+				} else {
+					String constantString = constantNode
+							.getStringRepresentation();
+
+					if (constantString.contains(".")) {
+						Expression realConstant = modelFactory.realLiteralExpression(source, BigDecimal
+								.valueOf(Double.parseDouble(constantString)));
+						
+						result = modelFactory.castExpression(source, modelFactory.integerType(), realConstant);
+					} else
+						result = modelFactory.integerLiteralExpression(source,
+								BigInteger.valueOf(Long
+										.parseLong(constantString)));
+				}
 				break;
 			case FLOAT:
 			case DOUBLE:
