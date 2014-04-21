@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.state.immutable;
 
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -16,6 +17,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 
 /**
  * Implementation of State based on the Immutable Pattern. This class is not
@@ -298,6 +300,54 @@ public class ImmutableState implements State {
 			return processState;
 		}
 		return canonicProcessState;
+	}
+
+	private void printImmutableDynamicScope(PrintStream out,
+			ImmutableDynamicScope dyscope, String id, String prefix) {
+		Scope lexicalScope = dyscope.lexicalScope();
+		int numVars = lexicalScope.numVariables();
+		BitSet reachers = dyscope.getReachers();
+		int bitSetLength = reachers.length();
+		boolean first = true;
+
+		out.println(prefix + "dyscope d" + dyscope.identifier() + " (id=" + id
+				+ ", parent=d" + dyscope.getParentIdentifier() + ", static="
+				+ lexicalScope.id() + ")");
+		out.print(prefix + "| reachers = {");
+		for (int j = 0; j < bitSetLength; j++) {
+			if (reachers.get(j)) {
+				if (first)
+					first = false;
+				else
+					out.print(",");
+				out.print(j);
+			}
+		}
+		out.println("}");
+		out.println(prefix + "| variables");
+		for (int i = 0; i < numVars; i++) {
+			Variable variable = lexicalScope.variable(i);
+			SymbolicExpression value = dyscope.getValue(i);
+
+			out.print(prefix + "| | " + variable.name() + " = ");
+			if (variable.type().isPointerType()) {
+				out.println(this.pointerValueToString(value));
+			} else
+				out.println(value);
+		}
+		out.flush();
+	}
+
+	private String pointerValueToString(SymbolicExpression pointer) {
+		StringBuffer result = new StringBuffer();
+
+		if (pointer.operator() == SymbolicOperator.NULL)
+			return pointer.toString();
+		else {
+			result.append('&');
+
+			return result.toString();
+		}
 	}
 
 	/* *********************** Package-private Methods ********************* */
@@ -589,7 +639,7 @@ public class ImmutableState implements State {
 		return onStack;
 	}
 
-	@Override
+	// @Override
 	public void print(PrintStream out) {
 		int numScopes = numScopes();
 		int numProcs = numProcs();
@@ -600,12 +650,13 @@ public class ImmutableState implements State {
 		out.println("| | " + pathCondition);
 		out.println("| Dynamic scopes");
 		for (int i = 0; i < numScopes; i++) {
-			ImmutableDynamicScope scope = (ImmutableDynamicScope) dyscopes[i];
+			ImmutableDynamicScope dyscope = (ImmutableDynamicScope) dyscopes[i];
 
-			if (scope == null)
-				out.println("| | dyscope - (id=" +  i + "): null");
+			if (dyscope == null)
+				out.println("| | dyscope - (id=" + i + "): null");
 			else
-				scope.print(out, "" + i, "| | ");
+				this.printImmutableDynamicScope(out, dyscope, "" + i, "| | ");
+			// dyscope.print(out, "" + i, "| | ");
 		}
 		out.println("| Process states");
 		for (int i = 0; i < numProcs; i++) {

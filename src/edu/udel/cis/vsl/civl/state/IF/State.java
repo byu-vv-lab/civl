@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
-import java.io.PrintStream;
-
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -140,7 +138,7 @@ public interface State {
 
 	SymbolicExpression valueOf(int pid, Variable variable);
 
-	void print(PrintStream out);
+	// void print(PrintStream out);
 
 	@Override
 	String toString();

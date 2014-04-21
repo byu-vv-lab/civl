@@ -461,7 +461,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			p = newState.getProcessState(pid);
 			if (this.showStates) {
 				out.println();
-				newState.print(out);
+				// newState.print(out);
+				this.stateFactory.printState(out, newState);
 			}
 			if (p != null && print && stepExecuted) {
 				printStatement(oldState, newState, executedStatement,
@@ -602,7 +603,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				|| (saveStates && showSavedStates && this.maxCanonicId > oldMaxCanonicId)) {
 			// in -savedStates mode, only print new states.
 			out.println();
-			state.print(out);
+			// state.print(out);
+			this.stateFactory.printState(out, state);
 		}
 		numProcs = state.numProcs();
 		if (numProcs > maxProcs)
@@ -687,13 +689,13 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			executor.evaluator().reportError(
 					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
 							"Non-determinism is encountered in $atom block.",
-							state, location.getSource()));
+							state, this.stateFactory, location.getSource()));
 			break;
 		case BLOCKED:
 			executor.evaluator().reportError(
 					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
 							"Blocked location is encountered in $atom block.",
-							state, location.getSource()));
+							state, this.stateFactory, location.getSource()));
 			break;
 		default:
 		}
@@ -772,7 +774,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 
 	@Override
 	public void printStateLong(PrintStream out, State state) {
-		state.print(out);
+		// state.print(out);
+		this.stateFactory.printState(out, state);
 	}
 
 	@Override

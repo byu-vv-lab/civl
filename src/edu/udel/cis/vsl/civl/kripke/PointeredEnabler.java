@@ -76,7 +76,8 @@ public class PointeredEnabler extends Enabler implements
 				}
 				debugOut.println();
 				if (debugging || showAmpleSetWtStates)
-					state.print(debugOut);
+//					state.print(debugOut);
+					this.stateFactory.printState(debugOut, state);
 			}
 		}
 		// Compute the ample set (of transitions)

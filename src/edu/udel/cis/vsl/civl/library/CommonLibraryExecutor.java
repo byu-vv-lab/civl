@@ -186,7 +186,7 @@ public abstract class CommonLibraryExecutor extends Library implements
 						CIVLStateException e = new CIVLStateException(
 								ErrorKind.MALLOC, certainty,
 								"Invalid pointer for heap", state,
-								pointerSource);
+								this.stateFactory, pointerSource);
 
 						evaluator.reportError(e);
 						state = state.setPathCondition(universe.and(
@@ -208,7 +208,7 @@ public abstract class CommonLibraryExecutor extends Library implements
 		{
 			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
 					Certainty.PROVEABLE, "Invalid pointer for heap", state,
-					pointerSource);
+					this.stateFactory, pointerSource);
 
 			evaluator.reportError(e);
 			state = state.setPathCondition(universe.falseExpression());

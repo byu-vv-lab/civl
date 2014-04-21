@@ -710,7 +710,7 @@ public class CommonEvaluator implements Evaluator {
 		} catch (SARLException e) {
 			CIVLStateException error = new CIVLStateException(
 					ErrorKind.INVALID_CAST, Certainty.NONE,
-					"SARL could not cast: " + e, eval.state,
+					"SARL could not cast: " + e, eval.state, this.stateFactory,
 					expression.getSource());
 
 			reportError(error);
@@ -1609,7 +1609,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException e = new CIVLStateException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
 					"Attempt to read uninitialized variable", state,
-					expression.getSource());
+					this.stateFactory, expression.getSource());
 
 			reportError(e);
 			throw new UnsatisfiablePathConditionException();
@@ -2340,7 +2340,8 @@ public class CommonEvaluator implements Evaluator {
 		} catch (CIVLInternalException e) {
 			CIVLStateException se = new CIVLStateException(
 					ErrorKind.DEREFERENCE, Certainty.MAYBE,
-					"Undefined pointer value?", state, source);
+					"Undefined pointer value?", state, this.stateFactory,
+					source);
 
 			reportError(se);
 			throw new UnsatisfiablePathConditionException();
@@ -2702,7 +2703,7 @@ public class CommonEvaluator implements Evaluator {
 			}
 		}
 		error = new CIVLStateException(errorKind, certainty, message, state,
-				source);
+				this.stateFactory, source);
 		reportError(error);
 		newPc = universe.and(pc, claim);
 		// need to check satisfiability again because failure to do so
@@ -2755,7 +2756,7 @@ public class CommonEvaluator implements Evaluator {
 			certainty = Certainty.PROVEABLE;
 		}
 		error = new CIVLStateException(errorKind, certainty, message, state,
-				source);
+				this.stateFactory, source);
 		reportError(error);
 	}
 
@@ -2816,15 +2817,15 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case DEREFERENCE:
 			DereferenceExpression deferenceExpression = (DereferenceExpression) expression;
-//			SymbolicExpression pointerValue;
-//
-//			try {
-//				pointerValue = this.evaluate(state, pid,
-//						deferenceExpression.pointer()).value;
-//			} catch (Exception ex) {
-//				return false;
-//			}
-//			this.findPointersInExpression(pointerValue, memoryUnits, state);
+			// SymbolicExpression pointerValue;
+			//
+			// try {
+			// pointerValue = this.evaluate(state, pid,
+			// deferenceExpression.pointer()).value;
+			// } catch (Exception ex) {
+			// return false;
+			// }
+			// this.findPointersInExpression(pointerValue, memoryUnits, state);
 			return memoryUnitsOfExpression(state, pid,
 					deferenceExpression.pointer(), memoryUnits);
 		case DOT:
@@ -2857,24 +2858,24 @@ public class CommonEvaluator implements Evaluator {
 
 			for (Expression field : fields) {
 				temp = memoryUnitsOfExpression(state, pid, field, memoryUnits);
-				if(!temp)
+				if (!temp)
 					return false;
 			}
 			break;
 		case SUBSCRIPT:
 			SubscriptExpression subscriptExpression = (SubscriptExpression) expression;
 
-			temp = memoryUnitsOfExpression(state, pid, subscriptExpression.array(),
-					memoryUnits);
-			if(!temp)
+			temp = memoryUnitsOfExpression(state, pid,
+					subscriptExpression.array(), memoryUnits);
+			if (!temp)
 				return false;
-			return memoryUnitsOfExpression(state, pid, subscriptExpression.index(),
-					memoryUnits);
+			return memoryUnitsOfExpression(state, pid,
+					subscriptExpression.index(), memoryUnits);
 		case UNARY:
 			UnaryExpression unaryExpression = (UnaryExpression) expression;
 
-			return memoryUnitsOfExpression(state, pid, unaryExpression.operand(),
-					memoryUnits);
+			return memoryUnitsOfExpression(state, pid,
+					unaryExpression.operand(), memoryUnits);
 		case UNDEFINED_PROC:
 			break;
 		case VARIABLE:
@@ -2906,7 +2907,7 @@ public class CommonEvaluator implements Evaluator {
 			for (Expression arg : ((AbstractFunctionCallExpression) expression)
 					.arguments()) {
 				temp = memoryUnitsOfExpression(state, pid, arg, memoryUnits);
-				if(!temp)
+				if (!temp)
 					return false;
 			}
 			break;

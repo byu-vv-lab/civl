@@ -73,7 +73,8 @@ public class ScopedEnabler extends Enabler implements
 			Evaluator evaluator, Executor executor, boolean sPor,
 			boolean showAmpleSet, boolean showAmpleSetWtStates,
 			LibraryLoader libLoader) {
-		super(transitionFactory, evaluator, executor, showAmpleSet, showAmpleSetWtStates, libLoader);
+		super(transitionFactory, evaluator, executor, showAmpleSet,
+				showAmpleSetWtStates, libLoader);
 		this.scpPor = sPor;
 		if (this.scpPor)
 			this.debugOut.println("scoped POR is enabled.");
@@ -95,7 +96,7 @@ public class ScopedEnabler extends Enabler implements
 				if (transitions.size() > 1) {
 					debugOut.println("Number of transitions at state "
 							+ state.identifier() + "is " + transitions.size());
-					state.print(debugOut);
+					this.stateFactory.printState(debugOut, state);
 				}
 			}
 		} else

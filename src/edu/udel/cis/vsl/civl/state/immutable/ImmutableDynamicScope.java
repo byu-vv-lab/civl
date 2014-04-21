@@ -267,7 +267,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 *            a name to use for this dynamic scope in the print out (e.g.,
 	 *            an ID number)
 	 * @param prefix
-	 *            a string to preprend to each line of output
+	 *            a string to prepend to each line of output
 	 */
 	void print(PrintStream out, String id, String prefix) {
 		int numVars = lexicalScope.numVariables();

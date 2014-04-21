@@ -235,7 +235,7 @@ public class Deadlock implements StatePredicateIF<State> {
 					+ "\n  Enabling predicate: " + predicate + "\n";
 			message += explanationWork(state);
 			violation = new CIVLStateException(ErrorKind.DEADLOCK, certainty,
-					message, state, source);
+					message, state, this.executor.stateFactory(), source);
 			return true;
 		}
 	}

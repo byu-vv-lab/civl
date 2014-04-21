@@ -3,11 +3,14 @@
  */
 package edu.udel.cis.vsl.civl.state.IF;
 
+import java.io.PrintStream;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.CommonModelFactory;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -375,4 +378,8 @@ public interface StateFactory {
 	 * @return The lowest common ancestor of the two given scopes.
 	 */
 	int lowestCommonAncestor(State state, int one, int another);
+
+	void printState(PrintStream out, State state);
+
+	void setEvaluator(Evaluator evaluator);
 }

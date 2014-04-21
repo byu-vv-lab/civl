@@ -125,6 +125,7 @@ public abstract class Player {
 		this.evaluator = new CommonEvaluator(config, modelFactory,
 				stateFactory, log);
 		evaluator.setSolve(solve);
+		this.stateFactory.setEvaluator(evaluator);
 		this.libraryLoader = new CommonLibraryLoader();
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));

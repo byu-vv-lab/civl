@@ -26,6 +26,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
@@ -98,6 +99,8 @@ public abstract class Enabler implements
 
 	protected boolean showAmpleSetWtStates = false;
 
+	protected StateFactory stateFactory;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -127,6 +130,7 @@ public abstract class Enabler implements
 		this.universe = modelFactory.universe();
 		falseExpression = universe.falseExpression();
 		this.libraryLoader = libLoader;
+		this.stateFactory = executor.stateFactory();
 	}
 
 	/* **************************** Public Methods ************************* */
@@ -399,7 +403,8 @@ public abstract class Enabler implements
 					throw new CIVLStateException(ErrorKind.INTERNAL,
 							Certainty.NONE,
 							"Argument to $choose_int not concrete: "
-									+ eval.value, eval.state, s.getSource());
+									+ eval.value, eval.state,
+							this.stateFactory, s.getSource());
 				upper = upperNumber.intValue();
 				if (assignAtomicLock != null) {
 					transitionStatement = new StatementList(assignAtomicLock, s);
@@ -437,7 +442,7 @@ public abstract class Enabler implements
 								ErrorKind.INVALID_PID,
 								Certainty.PROVEABLE,// TODO check message?
 								"Unable to call $wait on a process that has already been the target of a $wait.",
-								state, s.getSource());
+								state, this.stateFactory, s.getSource());
 
 						evaluator.reportError(e);
 						// TODO: recover: add a no-op transition

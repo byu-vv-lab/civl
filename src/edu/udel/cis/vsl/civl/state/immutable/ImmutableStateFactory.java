@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.state.immutable;
 
+import java.io.PrintStream;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,23 +8,37 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
+import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject.SymbolicObjectKind;
@@ -39,7 +54,11 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public class ImmutableStateFactory implements StateFactory {
 
-	/************************* Instance Fields *************************/
+	/* *************************** Static Fields *************************** */
+
+	private static String HEAP_VARIABLE = "__heap";
+
+	/* ************************** Instance Fields ************************** */
 
 	private GMCConfiguration config;
 
@@ -68,6 +87,11 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private SymbolicUniverse universe;
 
+	// TODO factor out common/side-effect free methods
+	private Evaluator evaluator;
+
+	private IntObject twoObj;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -80,6 +104,7 @@ public class ImmutableStateFactory implements StateFactory {
 		this.universe = modelFactory.universe();
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
 		this.simplify = config.isTrue(UserInterface.simplifyO);
+		this.twoObj = universe.intObject(2);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -215,6 +240,178 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private boolean nsat(BooleanExpression p) {
 		return trueReasoner.isValid(universe.not(p));
+	}
+
+	private String pointerValueToString(CIVLSource source, State state,
+			SymbolicExpression pointer) {
+		if (pointer.operator() == SymbolicOperator.NULL)
+			return pointer.toString();
+		else {
+			int dyscopeId = evaluator.getScopeId(source, pointer);
+
+			if (dyscopeId < 0)
+				return "UNDEFINED";
+			else {
+				int vid = evaluator.getVariableId(source, pointer);
+				ImmutableDynamicScope dyscope = (ImmutableDynamicScope) state
+						.getScope(dyscopeId);
+				Variable variable = dyscope.lexicalScope().variable(vid);
+				String variableName = variable.name().name();
+				ReferenceExpression reference = (ReferenceExpression) universe
+						.tupleRead(pointer, this.twoObj);
+
+				if (variableName.equals(HEAP_VARIABLE)) {
+					String resultString = heapObjectToString(source, dyscopeId,
+							variable.type(), reference).right;
+
+					return resultString;
+				} else {
+					StringBuffer result = new StringBuffer();
+
+					result.append('&');
+					result.append(variable.name());
+					result.append("<d");
+					result.append(dyscope.identifier());
+					result.append('>');
+					result.append(referenceToString(source, variable.type(),
+							reference).right);
+					return result.toString();
+				}
+			}
+		}
+	}
+
+	private Pair<Integer, String> heapObjectToString(CIVLSource source,
+			int dyscopeId, CIVLType type, ReferenceExpression reference) {
+		StringBuffer result = new StringBuffer();
+
+		if (reference.isIdentityReference()) {
+			result.append("&heapObject<d");
+			result.append(dyscopeId);
+			result.append(',');
+			return new Pair<>(0, result.toString());
+		} else if (reference.isArrayElementReference()) {
+			ArrayElementReference arrayEleRef = (ArrayElementReference) reference;
+			Pair<Integer, String> parentResult = heapObjectToString(source,
+					dyscopeId, type, arrayEleRef.getParent());
+			NumericExpression index = arrayEleRef.getIndex();
+
+			switch (parentResult.left) {
+			case 0:
+				throw new CIVLInternalException("Unreachable", source);
+			case 1:
+				result.append(parentResult.right);
+				// result.append("number of malloc calls: ");
+				result.append(index);
+				result.append('>');
+				return new Pair<>(2, result.toString());
+			case 2:
+				result.append(parentResult.right);
+				result.append('[');
+				result.append(index);
+				result.append(']');
+				return new Pair<>(-1, result.toString());
+			default:
+				return parentResult;
+			}
+		} else if (reference.isTupleComponentReference()) {
+			TupleComponentReference tupleCompRef = (TupleComponentReference) reference;
+			Pair<Integer, String> parentResult = heapObjectToString(source,
+					dyscopeId, type, tupleCompRef.getParent());
+			IntObject index = tupleCompRef.getIndex();
+
+			switch (parentResult.left) {
+			case 0:
+				result.append(parentResult.right);
+				// result.append("malloc id: ");
+				result.append(index.getInt());
+				result.append(',');
+				return new Pair<>(1, result.toString());
+			case 1:
+			case 2:
+				throw new CIVLInternalException("Unreachable", source);
+			default:
+				return parentResult;
+			}
+		} else {
+			throw new CIVLInternalException("Unreachable", source);
+		}
+	}
+
+	private Pair<CIVLType, String> referenceToString(CIVLSource source,
+			CIVLType type, ReferenceExpression reference) {
+		StringBuffer result = new StringBuffer();
+
+		if (reference.isIdentityReference())
+			return new Pair<>(type, result.toString());
+		if (reference.isArrayElementReference()) {
+			ArrayElementReference arrayEleRef = (ArrayElementReference) reference;
+			Pair<CIVLType, String> parentResult = this.referenceToString(
+					source, type, arrayEleRef.getParent());
+			String parent = parentResult.right;
+			CIVLType arrayEleType = ((CIVLArrayType) parentResult.left)
+					.elementType();
+			NumericExpression index = arrayEleRef.getIndex();
+
+			result.append(parent);
+			result.append('[');
+			result.append(index);
+			result.append(']');
+			return new Pair<>(arrayEleType, result.toString());
+		} else if (reference.isTupleComponentReference()) {
+			TupleComponentReference tupleComponentRef = (TupleComponentReference) reference;
+			IntObject index = tupleComponentRef.getIndex();
+			Pair<CIVLType, String> parentResult = this.referenceToString(
+					source, type, tupleComponentRef.getParent());
+			String parent = parentResult.right;
+			CIVLStructOrUnionType structOrUnionType = (CIVLStructOrUnionType) parentResult.left;
+			StructOrUnionField field = structOrUnionType.getField(index
+					.getInt());
+
+			result.append(parent);
+			result.append('.');
+			result.append(field.name());
+			return new Pair<CIVLType, String>(field.type(), result.toString());
+		} else {
+			throw new CIVLInternalException("Unreachable", source);
+		}
+	}
+
+	private void printDynamicScope(PrintStream out, State state,
+			ImmutableDynamicScope dyscope, String id, String prefix) {
+		Scope lexicalScope = dyscope.lexicalScope();
+		int numVars = lexicalScope.numVariables();
+		BitSet reachers = dyscope.getReachers();
+		int bitSetLength = reachers.length();
+		boolean first = true;
+
+		out.println(prefix + "dyscope d" + dyscope.identifier() + " (id=" + id
+				+ ", parent=d" + dyscope.getParentIdentifier() + ", static="
+				+ lexicalScope.id() + ")");
+		out.print(prefix + "| reachers = {");
+		for (int j = 0; j < bitSetLength; j++) {
+			if (reachers.get(j)) {
+				if (first)
+					first = false;
+				else
+					out.print(",");
+				out.print(j);
+			}
+		}
+		out.println("}");
+		out.println(prefix + "| variables");
+		for (int i = 0; i < numVars; i++) {
+			Variable variable = lexicalScope.variable(i);
+			SymbolicExpression value = dyscope.getValue(i);
+
+			out.print(prefix + "| | " + variable.name() + " = ");
+			if (variable.type().isPointerType()) {
+				out.println(pointerValueToString(variable.getSource(), state,
+						value));
+			} else
+				out.println(value);
+		}
+		out.flush();
 	}
 
 	private Map<SymbolicExpression, SymbolicExpression> procSubMap(
@@ -638,7 +835,7 @@ public class ImmutableStateFactory implements StateFactory {
 							Certainty.CONCRETE, "The unreachable dyscope "
 									+ scopeToBeRemoved.identifier() + "(scope<"
 									+ i + ">)" + " has a non-empty heap "
-									+ heapValue.toString() + ".", state,
+									+ heapValue.toString() + ".", state, this,
 							heapVariable.getSource());
 				}
 			}
@@ -721,6 +918,38 @@ public class ImmutableStateFactory implements StateFactory {
 		theState = new ImmutableState(processArray, newScopes,
 				theState.getPathCondition());
 		return theState;
+	}
+
+	@Override
+	public void printState(PrintStream out, State state) {
+		int numScopes = state.numScopes();
+		int numProcs = state.numProcs();
+
+		out.print("State " + state.identifier());
+		out.println();
+		out.println("| Path condition");
+		out.println("| | " + state.getPathCondition());
+		out.println("| Dynamic scopes");
+		for (int i = 0; i < numScopes; i++) {
+			ImmutableDynamicScope dyscope = (ImmutableDynamicScope) state
+					.getScope(i);
+
+			if (dyscope == null)
+				out.println("| | dyscope - (id=" + i + "): null");
+			else
+				printDynamicScope(out, state, dyscope, "" + i, "| | ");
+			// dyscope.print(out, "" + i, "| | ");
+		}
+		out.println("| Process states");
+		for (int pid = 0; pid < numProcs; pid++) {
+			ProcessState process = state.getProcessState(pid);
+
+			if (process == null)
+				out.println("| | process - (id=" + pid + "): null");
+			else
+				process.print(out, "| | ");
+		}
+		out.flush();
 	}
 
 	@Override
@@ -807,6 +1036,11 @@ public class ImmutableStateFactory implements StateFactory {
 		return this.setVariable(state, 0, 0, modelFactory.processValue(-1));
 	}
 
+	@Override
+	public void setEvaluator(Evaluator evaluator) {
+		this.evaluator = evaluator;
+	}
+
 	/**
 	 * Procedure:
 	 * 
@@ -841,9 +1075,10 @@ public class ImmutableStateFactory implements StateFactory {
 		Scope ss1 = location.scope();
 
 		if (ss0 == ss1) {
-			processArray[pid] = theState.getProcessState(pid).replaceTop(
-					stackEntry(location, dynamicScopeId,
-							dynamicScopeIdentifier));
+			processArray[pid] = theState.getProcessState(pid)
+					.replaceTop(
+							stackEntry(location, dynamicScopeId,
+									dynamicScopeIdentifier));
 			return theState.setProcessStates(processArray);
 		} else {
 			Scope[] joinSequence = joinSequence(ss0, ss1);
@@ -878,7 +1113,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 					reachers.set(pid);
 					newScopes[index] = initialDynamicScope(joinSequence[i],
-							dynamicScopeId, dynamicScopeIdentifier, index, reachers);
+							dynamicScopeId, dynamicScopeIdentifier, index,
+							reachers);
 					dynamicScopeId = index;
 					index++;
 				}

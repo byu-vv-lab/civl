@@ -418,7 +418,7 @@ public class CommonExecutor implements Executor {
 			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
 					certainty,
 					"Size argument to $malloc is not multiple of element size",
-					eval.state, source);
+					eval.state, this.stateFactory, source);
 
 			evaluator.reportError(e);
 			state = state.setPathCondition(universe.and(pathCondition, claim));
@@ -817,7 +817,7 @@ public class CommonExecutor implements Executor {
 								ErrorKind.INVALID_PID,
 								Certainty.PROVEABLE,
 								"Unable to call $wait on a process that has already been the target of a $wait.",
-								state, s.getSource());
+								state, this.stateFactory, s.getSource());
 
 						evaluator.reportError(e);
 						throw new UnsatisfiablePathConditionException();
