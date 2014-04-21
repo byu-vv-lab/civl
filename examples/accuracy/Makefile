@@ -1,11 +1,14 @@
 CIVL=civl
 VERIFY=$(CIVL) verify
 
-all: derivative derivativeBad diffusion laplace2d secondDerivative \
-	secondDerivativeBad
+all: derivative derivativeBackward derivativeBad diffusion laplace2d secondDerivative \
+	secondDerivativeBad upwindFirstOrder upwindSecondOrder upwindThirdOrder
 	
 derivative:
 	$(VERIFY) -inputnum_elements=5 derivative.cvl
+	
+derivativeBackward:
+	$(VERIFY) -inputnum_elements=5 derivativeBackward.cvl
 	
 derivativeBad:
 	$(VERIFY) -inputnum_elements=5 derivativeBad.cvl
@@ -21,3 +24,12 @@ secondDerivative:
 	
 secondDerivativeBad:
 	$(VERIFY) -inputnum_elements=5 secondDerivativeBad.cvl
+	
+upwindFirstOrder:
+	$(VERIFY) -inputn=4 upwindFirstOrder.cvl
+	
+upwindSecondOrder:
+	$(VERIFY) -inputn=5 upwindSecondOrder.cvl
+	
+upwindThirdOrder:
+	$(VERIFY) -inputn=5 upwindThirdOrder.cvl
