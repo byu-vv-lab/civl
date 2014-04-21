@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -334,10 +335,13 @@ public class CommonScope extends CommonSourceable implements Scope {
 						|| fieldContainsPointer;
 			}
 		} else if (type.isHeapType()) {
-			// Heaps start out incomplete, so let's assume this is true for now.
-			// Ultimately we'd like to only have this be true if the heap
-			// contains pointer types.
-			containsPointerType = true;
+			for (int i = 0; i < ((CIVLHeapType) type).getNumMallocs(); i++) {
+				boolean elementContainsPointer = containsPointerType(((CIVLHeapType) type)
+						.getMalloc(i).getStaticElementType());
+
+				containsPointerType = containsPointerType
+						|| elementContainsPointer;
+			}
 		} else if (type.isBundleType()) {
 			List<CIVLType> types = ((CIVLBundleType) type).types();
 
@@ -366,10 +370,12 @@ public class CommonScope extends CommonSourceable implements Scope {
 				containsScopeType = containsScopeType || fieldContainsScope;
 			}
 		} else if (type.isHeapType()) {
-			// Heaps start out incomplete, so let's assume this is true for now.
-			// Ultimately we'd like to only have this be true if the heap
-			// contains scope types.
-			containsScopeType = true;
+			for (int i = 0; i < ((CIVLHeapType) type).getNumMallocs(); i++) {
+				boolean elementContainsScope = containsScopeType(((CIVLHeapType) type)
+						.getMalloc(i).getStaticElementType());
+
+				containsScopeType = containsScopeType || elementContainsScope;
+			}
 		} else if (type.isBundleType()) {
 			List<CIVLType> types = ((CIVLBundleType) type).types();
 
@@ -397,10 +403,12 @@ public class CommonScope extends CommonSourceable implements Scope {
 				containsProcType = containsProcType || fieldContainsProc;
 			}
 		} else if (type.isHeapType()) {
-			// Heaps start out incomplete, so let's assume this is true for now.
-			// Ultimately we'd like to only have this be true if the heap
-			// contains process types.
-			containsProcType = true;
+			for (int i = 0; i < ((CIVLHeapType) type).getNumMallocs(); i++) {
+				boolean elementContainsProc = containsScopeType(((CIVLHeapType) type)
+						.getMalloc(i).getStaticElementType());
+
+				containsProcType = containsProcType || elementContainsProc;
+			}
 		} else if (type.isBundleType()) {
 			List<CIVLType> types = ((CIVLBundleType) type).types();
 
