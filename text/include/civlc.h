@@ -66,4 +66,9 @@ $gcomm $gcomm_create($scope scope, int size) {
 int $comm_place($comm comm){
  return comm->place;
 }
+
+void $barrier_call($barrier barrier) {
+  $barrier_enter(barrier);
+  $barrier_exit(barrier);
+}
 #endif
