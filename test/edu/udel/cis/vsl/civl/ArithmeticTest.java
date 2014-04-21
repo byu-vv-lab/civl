@@ -98,4 +98,8 @@ public class ArithmeticTest {
 		assertTrue(ui.run("verify", "-echo", filename("math.cvl")));
 	}
 
+	@Test
+	public void badType() {
+		assertTrue(ui.run("verify", "-echo", filename("badType.cvl")));
+	}
 }
