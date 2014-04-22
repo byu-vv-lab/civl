@@ -43,9 +43,10 @@ licenses.  See directory licenses for the license of each component.
    real value; issue with NULL pointer in bundle_pack(); etc.
 2. New system functions for barrier: $gbarrier_create($scope, int), 
    $barrier_create($scope, $gbarrier, int), $barrier_call($barrier), etc.
-   See examples/languageFeatures/civlBarrier.cvl as an example.
-3. New printing of dynamic scope, processes and pointers. See manual for 
-   more details.
+   See Section 7.3.3 of CIVL manual and examples/languageFeatures/civlBarrier.cvl
+   for more details.
+3. New printing of dynamic scope, processes and pointers. See Section 14.2 of 
+   CIVL manual for more details.
 
 ------------------------- Binary Installation -------------------------
 
