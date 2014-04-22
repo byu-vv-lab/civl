@@ -502,7 +502,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			// Certainty.CONCRETE,
 			// "Cannot extract concrete int value for gbarrier size",
 			// arguments[1]);
-			//using array lambda for symbolic array extent.
+			// using array lambda for symbolic array extent.
 			SymbolicCompleteArrayType arrayType;
 			NumericSymbolicConstant index;
 			SymbolicExpression procMapFunction;
@@ -521,8 +521,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			procMapArray = universe.arrayLambda(arrayType, procMapFunction);
 			index = (NumericSymbolicConstant) universe.symbolicConstant(
 					universe.stringObject("i"), integerType);
-			inBarrierFunction = universe.lambda(index,
-					universe.bool(false));
+			inBarrierFunction = universe.lambda(index, universe.bool(false));
 			arrayType = universe.arrayType(booleanType,
 					(NumericExpression) nprocs);
 			inBarrierArray = universe.arrayLambda(arrayType, inBarrierFunction);
@@ -1260,6 +1259,10 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = this.executeIntIterHasNext(state, pid, lhs, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$int_iter_next":
+			state = this.executeIntIterNext(state, pid, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
 		case "$proc_defined":
 			state = this.executeProcDefined(state, pid, lhs, arguments,
 					argumentValues);
@@ -1846,4 +1849,54 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	 * of the iterator. $int_iter $int_iter_create($scope scope, int *array, int
 	 * size);
 	 */
+
+	/**
+	 * Returns the next element in the iterator (and updates the iterator).
+	 * <code>int $int_iter_next($int_iter iter);</code>
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param lhs
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
+	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
+	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeIntIterNext(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression iterHandle = argumentValues[0];
+		SymbolicExpression array;
+		SymbolicExpression iterObj;
+		CIVLSource civlsource = arguments[0].getSource();
+		Evaluation eval;
+		NumericExpression index;
+		SymbolicExpression nextInt;
+
+		eval = evaluator.dereference(civlsource, state, iterHandle);
+		state = eval.state;
+		iterObj = eval.value;
+		array = universe.tupleRead(iterObj, oneObject);
+		index = (NumericExpression) universe.tupleRead(iterObj, twoObject);
+		nextInt = universe.arrayRead(array, index);
+		if (lhs != null) {
+			state = primaryExecutor.assign(state, pid, lhs, nextInt);
+		}
+		// updates iterator object
+		index = universe.add(index, one);
+		iterObj = universe.tupleWrite(iterObj, twoObject, index);
+		state = primaryExecutor.assign(source, state, iterHandle, iterObj);
+		return state;
+	}
 }
