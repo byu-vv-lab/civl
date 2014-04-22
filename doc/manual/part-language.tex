@@ -988,6 +988,72 @@ multithreaded MPI program.  In the code skeleton, each thread can
 access the local communicator object of its process, but not that of
 any other process.
 
+\subsection{Barriers: \cgbarrier{} and \cbarrier}
+\label{sec:barriers}
+
+CIVL-C defines a \emph{global barrier} type $\cgbarrier$ and a
+\emph{local barrier} type $\cbarrier$. They provide an implementation of 
+a barrier for concurrent programs.
+
+The global barrier is a shared object that must be declared in
+a scope containing all scopes in which the barrier will be called.
+ It is created by specifying the number of
+\emph{places} that will comprise the barrier. 
+
+Local barriers are created (typically in some child scope of the
+scope in which the global barrier is declared) by specifying the
+gobal barrier to which the local one will be associated and the
+place ID. The local barrier will be used in the call to the barrier; 
+it may be thought of as an ordered pair
+consisting of a reference to the global barrier and the integer
+place ID.  The place ID must be in $[0,\texttt{size}-1]$, where
+\texttt{size} is the size of the global barrier.    
+Only one call to \cbarriercreate{}
+may occur for each gbarrier-place pair.
+
+
+Both types ($\cgbarrier$ and $\cbarrier$) are handle types. When declared
+with a call to the corresponding creation function, they create an
+object in the specified scope and return a handle to that object. The
+object can only be accessed through the specified system functions
+that take this handle as an argument.
+
+
+\begin{figure}
+  \begin{small}
+\begin{verbatim}
+/* Creates a new barrier object and returns a handle to it.
+ * The barrier has the specified size.
+ * The new object will be allocated in the given scope. */
+$gbarrier $gbarrier_create($scope scope, int size);
+
+/* Destroys the gbarrier */
+void $gbarrier_destroy($gbarrier barrier);
+
+/* Creates a new local barrier object and returns a handle to it.
+ * The new barrier will be affiliated with the specified global
+ * barrier.   This local barrier handle will be used as an
+ * argument in most barrier functions.  The place must be in
+ * [0,size-1] and specifies the place in the global barrier
+ * that will be occupied by the local barrier.  
+ * Only one call to $barrier_create may occur for each barrier-place pair.
+ * The new object will be allocated in the given scope. */
+$barrier $barrier_create($scope scope, $gbarrier gbarrier, int place);
+
+/* Calls the barrier associated with this local barrier object.*/
+void $barrier_call($barrier barrier);
+
+/* Destroys the barrier. */
+void $barrier_destroy($barrier barrier);
+\end{verbatim}
+  \end{small}
+  \caption{The \emph{barrier} interface specifies handle 
+    types $\cgbarrier$ and $\cbarrier$ and the functions above}
+  \label{fig:barrier}
+\end{figure}
+
+The barrier interface is given in Fig.\ \ref{fig:barrier}.
+
 \chapter{Specification}
 
 \section{Overview}

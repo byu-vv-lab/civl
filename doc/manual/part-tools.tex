@@ -321,7 +321,15 @@ The \emph{variables} section of the dyscope representation consists of
 one line for each variable in the static scope corresponding to the
 dyscope.  There are also special hidden variables, such as the heap.
 In each case, the value assigned to the variable is shown.  A value of
-\texttt{NULL} indicates that the variable is currently undefined.
+\texttt{NULL} indicates that the variable is currently undefined.  The format for the
+value of a pointer depends on the type of object being referenced, as 
+follows:
+\begin{itemize}
+\item A variable: {\tt \&}\emph{variable} {\tt <}\emph{dyscope name}{\tt >}
+\item An element of an array: {\tt \&}\emph{array} {\tt <}\emph{dyscope name}{\tt >[}\emph{index}{\tt]}
+\item A struct field: {\tt \&}\emph{variable} {\tt <}\emph{dyscope name}{\tt >.}\emph{field}
+\item A heap cell: \emph{variable} {\tt <}\emph{dyscope name}{\tt,} \emph{malloc ID}{\tt,} \emph{malloc call number}{\tt >}
+\end{itemize}
 
 The process states section consists of one sub-section for each
 process currently in the state.  Like the dynamic scopes, the
