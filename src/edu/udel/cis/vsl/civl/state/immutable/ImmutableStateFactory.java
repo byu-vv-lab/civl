@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
@@ -28,6 +29,7 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.civl.util.Triple;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -42,6 +44,7 @@ import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject.SymbolicObjectKind;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
@@ -246,7 +249,15 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression pointer) {
 		if (pointer.operator() == SymbolicOperator.NULL)
 			return pointer.toString();
+		else if(pointer.operator() != SymbolicOperator.CONCRETE)
+			return pointer.toString();
 		else {
+			SymbolicTupleType pointerType = (SymbolicTupleType) pointer.type();
+			
+			if(!pointerType.name().getString().equalsIgnoreCase("pointer")){
+				return pointer.toString();
+			}
+			
 			int dyscopeId = evaluator.getScopeId(source, pointer);
 
 			if (dyscopeId < 0)
@@ -262,7 +273,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 				if (variableName.equals(HEAP_VARIABLE)) {
 					String resultString = heapObjectToString(source, dyscopeId,
-							variable.type(), reference).right;
+							variable.type(), reference).third;
 
 					return resultString;
 				} else {
@@ -281,57 +292,77 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 	}
 
-	private Pair<Integer, String> heapObjectToString(CIVLSource source,
-			int dyscopeId, CIVLType type, ReferenceExpression reference) {
+	private Triple<Integer, CIVLType, String> heapObjectToString(
+			CIVLSource source, int dyscopeId, CIVLType type,
+			ReferenceExpression reference) {
 		StringBuffer result = new StringBuffer();
 
 		if (reference.isIdentityReference()) {
 			result.append("&heapObject<d");
 			result.append(dyscopeId);
 			result.append(',');
-			return new Pair<>(0, result.toString());
+			return new Triple<>(0, type, result.toString());
 		} else if (reference.isArrayElementReference()) {
 			ArrayElementReference arrayEleRef = (ArrayElementReference) reference;
-			Pair<Integer, String> parentResult = heapObjectToString(source,
-					dyscopeId, type, arrayEleRef.getParent());
+			Triple<Integer, CIVLType, String> parentResult = heapObjectToString(
+					source, dyscopeId, type, arrayEleRef.getParent());
 			NumericExpression index = arrayEleRef.getIndex();
 
-			switch (parentResult.left) {
+			switch (parentResult.first) {
 			case 0:
 				throw new CIVLInternalException("Unreachable", source);
 			case 1:
-				result.append(parentResult.right);
+				result.append(parentResult.third);
 				// result.append("number of malloc calls: ");
 				result.append(index);
 				result.append('>');
-				return new Pair<>(2, result.toString());
+				return new Triple<>(2, parentResult.second, result.toString());
 			case 2:
-				result.append(parentResult.right);
+				result.append(parentResult.third);
 				result.append('[');
 				result.append(index);
 				result.append(']');
-				return new Pair<>(-1, result.toString());
+				return new Triple<>(-1, parentResult.second, result.toString());
 			default:
-				return parentResult;
+				CIVLType arrayEleType = ((CIVLArrayType) parentResult.second)
+				.elementType();
+				
+				result.append(parentResult.third);
+				result.append('[');
+				result.append(index);
+				result.append(']');
+				return new Triple<>(-1, arrayEleType, result.toString());
 			}
 		} else if (reference.isTupleComponentReference()) {
 			TupleComponentReference tupleCompRef = (TupleComponentReference) reference;
-			Pair<Integer, String> parentResult = heapObjectToString(source,
-					dyscopeId, type, tupleCompRef.getParent());
+			Triple<Integer, CIVLType, String> parentResult = heapObjectToString(
+					source, dyscopeId, type, tupleCompRef.getParent());
 			IntObject index = tupleCompRef.getIndex();
 
-			switch (parentResult.left) {
+			switch (parentResult.first) {
 			case 0:
-				result.append(parentResult.right);
+				CIVLHeapType heapType = (CIVLHeapType) parentResult.second;
+				int indexId = index.getInt();
+				CIVLType heapObjType = heapType.getMalloc(indexId)
+						.getStaticElementType();
+
+				result.append(parentResult.third);
 				// result.append("malloc id: ");
 				result.append(index.getInt());
 				result.append(',');
-				return new Pair<>(1, result.toString());
+				return new Triple<>(1, heapObjType, result.toString());
 			case 1:
 			case 2:
 				throw new CIVLInternalException("Unreachable", source);
 			default:
-				return parentResult;
+				CIVLStructOrUnionType structOrUnionType = (CIVLStructOrUnionType) parentResult.second;
+				StructOrUnionField field = structOrUnionType.getField(index
+						.getInt());
+
+				result.append(parentResult.third);
+				result.append('.');
+				result.append(field.name());
+				return new Triple<>(-1, field.type(), result.toString());
 			}
 		} else {
 			throw new CIVLInternalException("Unreachable", source);
