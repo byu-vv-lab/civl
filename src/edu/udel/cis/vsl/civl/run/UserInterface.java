@@ -297,7 +297,7 @@ public class UserInterface {
 			ABC.language = Language.CIVL_C;
 			program = frontEnd.getProgram();
 		}
-		applyTransformers(filename, program, preprocessor);
+		applyTransformers(filename, program, preprocessor, verbose || debug);
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(config, program, coreName(filename),
@@ -318,7 +318,8 @@ public class UserInterface {
 	 * @throws SyntaxException
 	 */
 	private void applyTransformers(String fileName, Program program,
-			Preprocessor preprocessor) throws SyntaxException {
+			Preprocessor preprocessor, boolean verboseOrDebug)
+			throws SyntaxException {
 		Set<String> headers = preprocessor.headerFiles();
 		boolean isC = fileName.endsWith(".c");
 		boolean hasStdio = false, hasOmp = false, hasMpi = false;
@@ -329,7 +330,6 @@ public class UserInterface {
 			hasOmp = true;
 		if (isC && headers.contains("mpi.h"))
 			hasMpi = true;
-
 		// always apply general transformation.
 		if (!Transform.getCodes().contains(GeneralTransformer.CODE))
 			Transform.addTransform(new TransformRecord(GeneralTransformer.CODE,
@@ -353,7 +353,8 @@ public class UserInterface {
 						return new IOTransformer(astFactory);
 					}
 				});
-			this.out.println("Apply IO transformer...");
+			if (verboseOrDebug)
+				this.out.println("Apply IO transformer...");
 			program.applyTransformer(IOTransformer.CODE);
 		}
 
@@ -377,9 +378,11 @@ public class UserInterface {
 						return new OmpPragmaTransformer(astFactory);
 					}
 				});
-			this.out.println("Apply OpenMP parser...");
+			if (verboseOrDebug)
+				this.out.println("Apply OpenMP parser...");
 			program.applyTransformer(OmpPragmaTransformer.CODE);
-			this.out.println("Apply OpenMP transformer...");
+			if (verboseOrDebug)
+				this.out.println("Apply OpenMP transformer...");
 			program.applyTransformer(OpenMPTransformer.CODE);
 		}
 
@@ -394,7 +397,8 @@ public class UserInterface {
 						return new MPI2CIVLTransformer(astFactory);
 					}
 				});
-			this.out.println("Apply MPI transformer...");
+			if (verboseOrDebug)
+				this.out.println("Apply MPI transformer...");
 			program.applyTransformer(MPI2CIVLTransformer.CODE);
 		}
 		// always apply pruner and side effect remover
