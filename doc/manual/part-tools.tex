@@ -233,52 +233,26 @@ initial or final points of a trace replay, or if the option
 \begin{figure}
   \begin{small}
 \begin{verbatim}
-State 84
+State 7
 | Path condition
-| | true
+| | 0 <= SIZEOF(dynamicType<146>)+-1
 | Dynamic scopes
-| | dyscope 0 (parent=-1, static=0)
-| | | reachers = {1,2}
+| | dyscope d0 (id=0, parent=d0, static=0)
+| | | reachers = {0}
 | | | variables
 | | | | __atomic_lock_var = process<-1>
 | | | | __heap = NULL
-| | | | BOUND = 3
-| | | | n = 2
-| | | | forks = X_s0v4[0:=0, 1:=-1]
-| | dyscope 1 (parent=2, static=5)
-| | | reachers = {1}
+| | dyscope d1 (id=1, parent=d0, static=4)
+| | | reachers = {0}
 | | | variables
-| | | | __heap = NULL
-| | | | left = 0
-| | | | right = 1
-| | dyscope 2 (parent=0, static=1)
-| | | reachers = {1}
-| | | variables
-| | | | id = 0
-| | | | __heap = NULL
-| | dyscope 3 (parent=4, static=5)
-| | | reachers = {2}
-| | | variables
-| | | | __heap = NULL
-| | | | left = 1
-| | | | right = 0
-| | dyscope 4 (parent=0, static=1)
-| | | reachers = {2}
-| | | variables
-| | | | id = 1
-| | | | __heap = NULL
+| | | | __heap = $heap<(A[1][])<H_p0s1v0i0l0[0:=A<(H_p0s1v0i0l0[0].0)[0:=1, 1:=2, 2:=3],2>]>>
+| | | | a = &heapObject<d1,0,0>[0]
+| | | | b = &heapObject<d1,0,0>[0].a[2]
 | Process states
-| | process 0
-| | | atomicCount = 0
+| | process p0 (id=0)
+| | | atomicCount=0
 | | | call stack
-| | process 1
-| | | atomicCount = 0
-| | | call stack
-| | | | Frame[function=dine, location=25, f0:22.32-44 "forks[right]", scope=1]
-| | process 2
-| | | atomicCount = 0
-| | | call stack
-| | | | Frame[function=dine, location=33, f0:26.32-44 "forks[right]", scope=3]
+| | | | Frame[function=_CIVL_system, location=14, f0:25.2-9 "$assert", dyscope=d1]
 \end{verbatim}
   \end{small}
   \caption{Complete print-out of a state}
