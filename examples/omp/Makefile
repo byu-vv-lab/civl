@@ -10,3 +10,5 @@ dotProduct_critical: dotProduct_critical.cvl
 dotProduct_orphan: dotProduct_orphan.cvl
 	civl verify dotProduct_orphan.cvl
 
+fig3.10-mxv-omp: fig3.10-mxv-omp.cvl
+	civl verify fig3.10-mxv-omp.cvl
