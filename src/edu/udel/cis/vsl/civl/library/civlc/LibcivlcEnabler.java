@@ -22,7 +22,6 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
  * Implementation of the enabler-related logics for system functions declared
@@ -73,11 +72,9 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		}
 		call = (CallOrSpawnStatement) statement;
 		name = call.function().name();
-
 		switch (name.name()) {
 		case "$comm_enqueue":
 		case "$comm_dequeue":
-		case "$barrier_enter":
 			return ampleSetWork(state, pid, call, reachableMemUnitsMap);
 		default:
 			return super.ampleSet(state, pid, statement, reachableMemUnitsMap);
@@ -106,7 +103,6 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-
 		switch (function) {
 		case "$comm_dequeue":
 			try {
@@ -154,7 +150,6 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$int_iter_hasNext":
 		case "$int_iter_next":
 		case "$proc_defined":
-			// case "$proc_null":
 		case "$scope_parent":
 		case "$scope_defined":
 			guard = universe.trueExpression();
@@ -209,29 +204,29 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		}
 
 		switch (function) {
-		case "$barrier_enter":
-			try {
-				SymbolicExpression barrier = evaluator.evaluate(state, pid, arguments[0]).value;
-				SymbolicExpression barrierObj = evaluator.dereference(source, state, barrier).value;
-				SymbolicExpression gbarrier = universe.tupleRead(barrierObj, oneObject);
-				SymbolicExpression gbarrierObj = evaluator.dereference(source, state, gbarrier).value;
-				SymbolicExpression procMapArray = universe.tupleRead(gbarrierObj, oneObject);
-				SymbolicSequence<?> procMapElements = (SymbolicSequence<?>) procMapArray.argument(0);
-				int count = procMapElements.size();
-				
-				for(int i = 0; i < count; i++){
-					SymbolicExpression processValue = procMapElements.get(i);
-					int otherPid = modelFactory.getProcessId(source, processValue);
-					
-					if(pid != otherPid){
-						ampleSet.add(otherPid);
-					}
-				}
-			} catch (UnsatisfiablePathConditionException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			return ampleSet;
+//		case "$barrier_enter":
+//			try {
+//				SymbolicExpression barrier = evaluator.evaluate(state, pid, arguments[0]).value;
+//				SymbolicExpression barrierObj = evaluator.dereference(source, state, barrier).value;
+//				SymbolicExpression gbarrier = universe.tupleRead(barrierObj, oneObject);
+//				SymbolicExpression gbarrierObj = evaluator.dereference(source, state, gbarrier).value;
+//				SymbolicExpression procMapArray = universe.tupleRead(gbarrierObj, oneObject);
+//				SymbolicSequence<?> procMapElements = (SymbolicSequence<?>) procMapArray.argument(0);
+//				int count = procMapElements.size();
+//				
+//				for(int i = 0; i < count; i++){
+//					SymbolicExpression processValue = procMapElements.get(i);
+//					int otherPid = modelFactory.getProcessId(source, processValue);
+//					
+//					if(pid != otherPid){
+//						ampleSet.add(otherPid);
+//					}
+//				}
+//			} catch (UnsatisfiablePathConditionException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//			return ampleSet;
 		case "$comm_dequeue":
 		case "$comm_enqueue":
 			Set<SymbolicExpression> handleObjMemUnits = new HashSet<>();
