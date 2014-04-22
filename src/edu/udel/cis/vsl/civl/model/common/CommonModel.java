@@ -67,6 +67,12 @@ public class CommonModel extends CommonSourceable implements Model {
 	 */
 	private CIVLType gbarrierType;
 
+	/**
+	 * The base type of the handle type $int_iter. NULL if there is no integer
+	 * iterator operation.
+	 */
+	private CIVLType intIterType;
+
 	private ArrayList<MallocStatement> mallocStatements;
 
 	/**
@@ -353,4 +359,13 @@ public class CommonModel extends CommonSourceable implements Model {
 		this.barrierType = barrierType;
 	}
 
+	@Override
+	public CIVLType intIterType() {
+		return this.intIterType;
+	}
+
+	@Override
+	public void setIntIterType(CIVLType intIterType) {
+		this.intIterType = intIterType;
+	}
 }

@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
@@ -440,4 +441,8 @@ public interface Evaluator {
 	 */
 	SymbolicExpression makePointer(int scopeId, int varId,
 			ReferenceExpression symRef);
+
+	Evaluation pointerAdd(State state, int pid, BinaryExpression expression,
+			SymbolicExpression pointer, NumericExpression offset)
+			throws UnsatisfiablePathConditionException;
 }

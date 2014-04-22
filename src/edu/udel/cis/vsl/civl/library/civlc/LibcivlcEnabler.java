@@ -150,6 +150,8 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$free":
 		case "$gcomm_create2":
 		case "$gcomm_defined":
+		case "$int_iter_create":
+		case "$int_iter_hasNext":
 		case "$proc_defined":
 			// case "$proc_null":
 		case "$scope_parent":

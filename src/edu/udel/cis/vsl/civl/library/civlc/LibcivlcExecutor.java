@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
+import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,6 +18,8 @@ import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -34,6 +37,7 @@ import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression.ReferenceKind;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -42,6 +46,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
@@ -471,9 +476,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		SymbolicExpression scope = argumentValues[0];
 		Expression scopeExpression = arguments[0];
 		SymbolicExpression procMapArray;
-		LinkedList<SymbolicExpression> procMapComponents = new LinkedList<>();
 		SymbolicExpression inBarrierArray;
-		LinkedList<SymbolicExpression> inBarrierComponents = new LinkedList<>();
 		List<SymbolicExpression> gbarrierComponents = new LinkedList<>();
 		int int_nprocs;
 		CIVLType gbarrierType = model.gbarrierType();
@@ -481,20 +484,49 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		IntegerNumber number_nprocs = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) nprocs);
 
-		if (number_nprocs != null)
+		if (number_nprocs != null) {
+			LinkedList<SymbolicExpression> procMapComponents = new LinkedList<>();
+			LinkedList<SymbolicExpression> inBarrierComponents = new LinkedList<>();
+
 			int_nprocs = number_nprocs.intValue();
-		else
-			throw new CIVLInternalException(
-					"Cannot extract concrete int value for gbarrier size",
-					arguments[1]);
-		for (int i = 0; i < int_nprocs; i++) {
-			inBarrierComponents.add(universe.bool(false));
-			procMapComponents.add(modelFactory.nullProcessValue());
+			for (int i = 0; i < int_nprocs; i++) {
+				inBarrierComponents.add(universe.bool(false));
+				procMapComponents.add(modelFactory.nullProcessValue());
+			}
+			inBarrierArray = universe.array(universe.booleanType(),
+					inBarrierComponents);
+			procMapArray = universe.array(modelFactory.processSymbolicType(),
+					procMapComponents);
+		} else {
+			// throw new CIVLExecutionException(ErrorKind.OTHER,
+			// Certainty.CONCRETE,
+			// "Cannot extract concrete int value for gbarrier size",
+			// arguments[1]);
+			//using array lambda for symbolic array extent.
+			SymbolicCompleteArrayType arrayType;
+			NumericSymbolicConstant index;
+			SymbolicExpression procMapFunction;
+			SymbolicExpression inBarrierFunction;
+			SymbolicType integerType = modelFactory.integerType()
+					.getDynamicType(universe);
+			SymbolicType booleanType = modelFactory.booleanType()
+					.getDynamicType(universe);
+
+			arrayType = universe.arrayType(modelFactory.processSymbolicType(),
+					(NumericExpression) nprocs);
+			index = (NumericSymbolicConstant) universe.symbolicConstant(
+					universe.stringObject("i"), integerType);
+			procMapFunction = universe.lambda(index,
+					modelFactory.nullProcessValue());
+			procMapArray = universe.arrayLambda(arrayType, procMapFunction);
+			index = (NumericSymbolicConstant) universe.symbolicConstant(
+					universe.stringObject("i"), integerType);
+			inBarrierFunction = universe.lambda(index,
+					universe.bool(false));
+			arrayType = universe.arrayType(booleanType,
+					(NumericExpression) nprocs);
+			inBarrierArray = universe.arrayLambda(arrayType, inBarrierFunction);
 		}
-		inBarrierArray = universe.array(universe.booleanType(),
-				inBarrierComponents);
-		procMapArray = universe.array(modelFactory.processSymbolicType(),
-				procMapComponents);
 		gbarrierComponents.add(nprocs);
 		gbarrierComponents.add(procMapArray);
 		gbarrierComponents.add(inBarrierArray);
@@ -910,8 +942,9 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			message = this.getEmptyMessage(state);
 		}
 		if (lhs != null) {
-			state = this.stateFactory.setVariable(state,
-					((VariableExpression) lhs).variable(), pid, message);
+			// state = this.stateFactory.setVariable(state,
+			// ((VariableExpression) lhs).variable(), pid, message);
+			state = primaryExecutor.assign(state, pid, lhs, message);
 		}
 		return state;
 	}
@@ -1219,6 +1252,14 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = this.executeGcommDefined(state, pid, lhs, arguments,
 					argumentValues);
 			break;
+		case "$int_iter_create":
+			state = this.executeIntIterCreate(state, pid, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
+		case "$int_iter_hasNext":
+			state = this.executeIntIterHasNext(state, pid, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
 		case "$proc_defined":
 			state = this.executeProcDefined(state, pid, lhs, arguments,
 					argumentValues);
@@ -1239,6 +1280,52 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 					call);
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
+
+	/**
+	 * Tells whether the integer iterator has any more elements.
+	 * <code>_Bool $int_iter_hasNext($int_iter iter);</code>
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param lhs
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
+	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
+	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeIntIterHasNext(State state, int pid,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression iterHandle = argumentValues[0];
+		SymbolicExpression iterObj;
+		CIVLSource civlsource = arguments[0].getSource();
+		Evaluation eval;
+		NumericExpression size, index;
+		SymbolicExpression hasNext;
+
+		eval = evaluator.dereference(civlsource, state, iterHandle);
+		state = eval.state;
+		iterObj = eval.value;
+		size = (NumericExpression) universe.tupleRead(iterObj, zeroObject);
+		index = (NumericExpression) universe.tupleRead(iterObj, twoObject);
+		hasNext = universe.lessThan(index, size);
+		if (lhs != null) {
+			state = primaryExecutor.assign(state, pid, lhs, hasNext);
+		}
 		return state;
 	}
 
@@ -1653,4 +1740,110 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 				emptyMessageComponents);
 		return message;
 	}
+
+	/**
+	 * Creates a new iterator for an array of integers, and returns the handle
+	 * of the iterator. The new object will be allocated in the given scope.<br>
+	 * <code>$int_iter $int_iter_create($scope scope, int *array, int
+	 * size);</code>
+	 * 
+	 * <code>
+	 * typedef struct __int_iter__ {<br>
+	 * &nbsp;&nbsp;int size;<br>
+	 * &nbsp;&nbsp;int content[];<br>
+	 * &nbsp;&nbsp;int index; //initialized as 0<br>
+	 * } $int_iter;
+	 * </code>
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process that the function call belongs to.
+	 * @param lhs
+	 *            The left hand side expression of the call, which is to be
+	 *            assigned with the returned value of the function call. If NULL
+	 *            then no assignment happens.
+	 * @param arguments
+	 *            The static representation of the arguments of the function
+	 *            call.
+	 * @param argumentValues
+	 *            The dynamic representation of the arguments of the function
+	 *            call.
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @return The new state after executing the function call.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeIntIterCreate(State state, int pid, LHSExpression lhs,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression intIterObj;
+		SymbolicExpression size = argumentValues[2];
+		SymbolicExpression currentIndex = universe.integer(0);
+		SymbolicExpression scope = argumentValues[0];
+		Expression scopeExpression = arguments[0];
+		SymbolicExpression arrayPointer = argumentValues[1];
+		Expression arrayPointerExpression = arguments[1];
+		SymbolicExpression intArray;
+		LinkedList<SymbolicExpression> intArrayComponents = new LinkedList<>();
+		List<SymbolicExpression> intIterComponents = new LinkedList<>();
+		int int_size;
+		CIVLType intIterType = model.intIterType();
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		IntegerNumber number_size = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) size);
+		Evaluation eval = evaluator.dereference(source, state, arrayPointer);
+		CIVLSource arrayPointerSource = arrayPointerExpression.getSource();
+
+		state = eval.state;
+		if (number_size != null)
+			int_size = number_size.intValue();
+		else
+			throw new CIVLInternalException(
+					"Cannot extract concrete int value for gbarrier size",
+					arguments[1]);
+		for (int i = 0; i < int_size; i++) {
+			BinaryExpression pointerAdditionExpression = modelFactory
+					.binaryExpression(arrayPointerExpression.getSource(),
+							BINARY_OPERATOR.POINTER_ADD,
+							arrayPointerExpression, modelFactory
+									.integerLiteralExpression(
+											arrayPointerExpression.getSource(),
+											BigInteger.valueOf(i)));
+			SymbolicExpression arrayElePointer;
+
+			eval = evaluator.pointerAdd(state, pid, pointerAdditionExpression,
+					arrayPointer, universe.integer(i));
+			state = eval.state;
+			arrayElePointer = eval.value;
+			eval = evaluator.dereference(arrayPointerSource, state,
+					arrayElePointer);
+			state = eval.state;
+			intArrayComponents.add(eval.value);
+		}
+		intArray = universe.array(
+				modelFactory.integerType().getDynamicType(universe),
+				intArrayComponents);
+		intIterComponents.add(size);
+		intIterComponents.add(intArray);
+		intIterComponents.add(currentIndex);
+		intIterObj = universe.tuple(
+				(SymbolicTupleType) intIterType.getDynamicType(universe),
+				intIterComponents);
+		state = primaryExecutor.malloc(source, state, pid, lhs,
+				scopeExpression, scope, intIterType, intIterObj);
+		return state;
+	}
+
+	/*
+	 * Tells whether the integer iterator has any more elements _Bool
+	 * $int_iter_hasNext($int_iter iter);
+	 * 
+	 * Returns the next element in the iterator (and updates the iterator) int
+	 * $int_iter_next($int_iter iter);
+	 * 
+	 * Creates a new iterator for an array of integers, and returns the handle
+	 * of the iterator. $int_iter $int_iter_create($scope scope, int *array, int
+	 * size);
+	 */
 }

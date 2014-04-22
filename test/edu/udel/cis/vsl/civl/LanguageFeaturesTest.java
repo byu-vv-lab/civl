@@ -179,7 +179,8 @@ public class LanguageFeaturesTest {
 	@Test
 	public void communicatorFeatures() {
 		assertTrue(ui.run("verify", filename("communicatorFeatures.cvl"),
-				"-inputNPROCS_BOUND=5", "-inputN_BOUND=3", "-enablePrintf=false"));
+				"-inputNPROCS_BOUND=5", "-inputN_BOUND=3",
+				"-enablePrintf=false"));
 	}
 
 	@Test
@@ -451,17 +452,22 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void civlBarrier() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlBarrier.cvl"), "-inputN=4"));
+		assertTrue(ui.run("verify", filename("civlBarrier.cvl")));
 
 	}
-	
+
 	@Test
 	public void memoryLeak() throws ABCException {
 		assertFalse(ui.run("verify", filename("memoryLeak.cvl")));
 	}
-	
+
 	@Test
 	public void processLeak() throws ABCException {
 		assertFalse(ui.run("verify", filename("processLeak.cvl")));
+	}
+
+	@Test
+	public void intIter() throws ABCException {
+		assertTrue(ui.run("verify", filename("intIter.cvl"), "-showStates", "-showModel"));
 	}
 }

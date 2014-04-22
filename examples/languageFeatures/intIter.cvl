@@ -1,0 +1,17 @@
+#include <civlc.h>
+
+void main(){
+  int a[5];
+  $int_iter iter;
+  int k = 0;
+  
+  for(int i = 0; i < 5; i++)
+    a[i] = i;
+  iter = $int_iter_create($here, a, 5);
+  while($int_iter_hasNext(iter)) {
+    int current = $int_iter_next(iter);
+    
+    $assert(current == k);
+    k++;
+  }
+}

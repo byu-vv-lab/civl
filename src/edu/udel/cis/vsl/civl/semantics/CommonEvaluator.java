@@ -1887,7 +1887,8 @@ public class CommonEvaluator implements Evaluator {
 	 * @return the result of evaluating the sum of the pointer and the integer
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Evaluation pointerAdd(State state, int pid,
+	@Override
+	public Evaluation pointerAdd(State state, int pid,
 			BinaryExpression expression, SymbolicExpression pointer,
 			NumericExpression offset)
 			throws UnsatisfiablePathConditionException {

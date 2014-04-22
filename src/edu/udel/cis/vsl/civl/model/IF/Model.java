@@ -197,13 +197,14 @@ public interface Model extends Sourceable {
 	void setFILEType(CIVLStructOrUnionType type);
 
 	/**
+	 * NULL if there is no barrier operation.
 	 * 
 	 * @return The base type of the handle $gbarrier
 	 */
 	CIVLType gbarrierType();
 
 	/**
-	 * NULL if there is no barrier operation.
+	 * Updates the base type of the $gbarrier handle.
 	 * 
 	 * @param gbarrierType
 	 *            The type to be used as the base type of the $gbarrier handle.
@@ -211,17 +212,33 @@ public interface Model extends Sourceable {
 	void setGbarrierType(CIVLType gbarrierType);
 
 	/**
+	 * NULL if there is no barrier operation.
 	 * 
-	 * @return The base type of the handle $barrier
+	 * @return The base type of the handle $barrier.
 	 */
 	CIVLType barrierType();
 
 	/**
-	 * NULL if there is no barrier operation.
+	 * Updates the base typeof the $barrier handle.
 	 * 
-	 * @param gbarrierType
+	 * @param barrierType
 	 *            The type to be used as the base type of the $barrier handle.
 	 */
 	void setBarrierType(CIVLType barrierType);
+
+	/**
+	 * NULL if there is no integer iterator operation.
+	 * 
+	 * @return The base type of the handle $int_iter.
+	 */
+	CIVLType intIterType();
+
+	/**
+	 * Updates the base typeof the $barrier handle.
+	 * 
+	 * @param intIterType
+	 *            The type to be used as the base type of the $int_iter handle.
+	 */
+	void setIntIterType(CIVLType intIterType);
 
 }

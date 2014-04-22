@@ -100,6 +100,11 @@ public class ModelBuilderWorker {
 	 * The type __gbarrier__, which is the base type of the handle $gbarrier.
 	 */
 	CIVLType gbarrierType;
+	
+	/**
+	 * The type __int_iter__, which is the base type of the handle $int_iter.
+	 */
+	CIVLType intIterType;
 
 	/**
 	 * The base type of the pointer type $filesystem; a structure type with
@@ -220,6 +225,8 @@ public class ModelBuilderWorker {
 	 * Mapping from ABC types to corresponding CIVL types.
 	 */
 	Map<Type, CIVLType> typeMap = new HashMap<Type, CIVLType>();
+
+	
 
 	/* **************************** Constructors *************************** */
 
@@ -445,6 +452,7 @@ public class ModelBuilderWorker {
 		model.setFileType(this.fileType);
 		model.setFILEType(this.FILEtype);
 		model.setBundleType(this.bundleType);
+		model.setIntIterType(this.intIterType);
 		model.setName(modelName);
 		// add all functions to model except main:
 		for (CIVLFunction f : functionMap.values())

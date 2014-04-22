@@ -181,6 +181,8 @@ public class FunctionTranslator {
 
 	private static final String BARRIER_TYPE = "__barrier__";
 
+	private static final String INT_ITER_TYPE = "__int_iter__";
+
 	private static final String HEAP_TYPE = "__heap__";
 
 	private static final String MESSAGE_TYPE = "__message__";
@@ -2644,10 +2646,13 @@ public class FunctionTranslator {
 							.getStringRepresentation();
 
 					if (constantString.contains(".")) {
-						Expression realConstant = modelFactory.realLiteralExpression(source, BigDecimal
-								.valueOf(Double.parseDouble(constantString)));
-						
-						result = modelFactory.castExpression(source, modelFactory.integerType(), realConstant);
+						Expression realConstant = modelFactory
+								.realLiteralExpression(source, BigDecimal
+										.valueOf(Double
+												.parseDouble(constantString)));
+
+						result = modelFactory.castExpression(source,
+								modelFactory.integerType(), realConstant);
 					} else
 						result = modelFactory.integerLiteralExpression(source,
 								BigInteger.valueOf(Long
@@ -3601,6 +3606,11 @@ public class FunctionTranslator {
 		case GBARRIER_TYPE:
 			result.setHandleObjectType(true);
 			modelBuilder.gbarrierType = result;
+			modelBuilder.handledObjectTypes.add(result);
+			break;
+		case INT_ITER_TYPE:
+			result.setHandleObjectType(true);
+			modelBuilder.intIterType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case COMM_TYPE:

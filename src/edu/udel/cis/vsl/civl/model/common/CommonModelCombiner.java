@@ -161,6 +161,10 @@ public class CommonModelCombiner implements ModelCombiner {
 			compositeModel.setFILEType(model0.FILEtype());
 		else
 			compositeModel.setFILEType(model1.FILEtype());
+		if (model0.intIterType() != null)
+			compositeModel.setIntIterType(model0.intIterType());
+		else
+			compositeModel.setIntIterType(model1.intIterType());
 		// TODO: how to build bundle types based on two models?
 		// if (model0.bundleType() != null)
 		// compositeModel.setBundleType(model0.bundleType());
