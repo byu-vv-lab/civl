@@ -26,7 +26,7 @@ void main() {
   {
     int nthreads = 1+$choose_int(THREAD_MAX);
     $proc threads[nthreads];
-    void loop(int tid, int nthreads) {
+    void loop(int tid) {
       float _sum = 0.0;
 
       for (int i=0; i<n; i++) {
@@ -40,7 +40,7 @@ void main() {
 
     printf("nthreads = %d\n", nthreads); // for debugging
     for (int tid=0; tid<nthreads; tid++)
-      threads[tid] = $spawn loop(tid, nthreads);
+      threads[tid] = $spawn loop(tid);
     for (int tid=0; tid<nthreads; tid++)
       $wait(threads[tid]);
   } /* End of omp for loop */

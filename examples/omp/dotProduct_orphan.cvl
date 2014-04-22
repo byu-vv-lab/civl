@@ -3,6 +3,7 @@
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #define VECLEN 10
 #define THREAD_MAX 4
 /* Does thread t own iteration i in loop with n iterations? */
@@ -36,17 +37,18 @@ void main () {
     a[i] = b[i] = 1.0 * i;
   sum = 0.0;
   { // #pragma omp parallel
-    int nthreads = 1+$choose_int(THREAD_MAX);
-    $proc threads[nthreads];
-    void parallel_body(int _nthreads, int _tid) {
-      dotprod(_nthreads, _tid);
+    int _nthreads = 1+$choose_int(THREAD_MAX);
+    $proc threads[_nthreads];
+    void parallel_body(int _tid) {
+      dotprod(_tid, _nthreads);
     }
 
-    for (int tid=0; tid<nthreads; tid++)
-      threads[tid] = $spawn parallel_body(tid, nthreads);
-    for (int tid=0; tid<nthreads; tid++)
+    for (int tid=0; tid<_nthreads; tid++)
+      threads[tid] = $spawn parallel_body(tid);
+    for (int tid=0; tid<_nthreads; tid++)
       $wait(threads[tid]);
   } // end of parallel region
 
   printf("Sum = %f\n",sum);
+  assert(sum==285);
 }
