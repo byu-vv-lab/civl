@@ -5,6 +5,8 @@
 #include<civlc.h>
  
 $input int N;
+$input int B;
+$assume N > 0 && N < B;
 $gbarrier gbarrier = $gbarrier_create($here, N);
 int counter = 0;
  

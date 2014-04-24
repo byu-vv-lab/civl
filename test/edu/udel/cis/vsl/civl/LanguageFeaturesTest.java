@@ -447,13 +447,11 @@ public class LanguageFeaturesTest {
 	@Test
 	public void civlExitBad() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlExitBad.cvl")));
-
 	}
 
 	@Test
 	public void civlBarrier() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlBarrier.cvl")));
-
+		assertTrue(ui.run("verify", filename("civlBarrier.cvl"), "-inputB=5"));
 	}
 
 	@Test
