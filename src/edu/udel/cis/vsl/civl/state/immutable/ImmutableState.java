@@ -588,6 +588,7 @@ public class ImmutableState implements State {
 	public ImmutableDynamicScope getScope(int id) {
 		return dyscopes[id];
 	}
+	
 
 	@Override
 	public int getScopeId(int pid, Variable variable) {
