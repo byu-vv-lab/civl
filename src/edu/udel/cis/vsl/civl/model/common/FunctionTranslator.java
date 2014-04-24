@@ -100,6 +100,7 @@ import edu.udel.cis.vsl.abc.ast.node.common.declaration.CommonFunctionDefinition
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.EnumerationType;
 import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
+import edu.udel.cis.vsl.abc.ast.type.IF.ObjectType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.QualifiedObjectType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
@@ -356,13 +357,58 @@ public class FunctionTranslator {
 		if (modelBuilder.mainFunctionNode == null) {
 			throw new CIVLSyntaxException("program must have a main function,",
 					modelFactory.sourceOf(rootNode));
+		} else {
+			Function mainFunction = modelBuilder.mainFunctionNode.getEntity();
+			FunctionType functionType = mainFunction.getType();
+			FunctionTypeNode functionTypeNode = modelBuilder.mainFunctionNode
+					.getTypeNode();
+			SequenceNode<VariableDeclarationNode> abcParameters = functionTypeNode
+					.getParameters();
+			int numParameters = abcParameters.numChildren();
+			ObjectType abcReturnType = functionType.getReturnType();
+			Scope scope = this.function.outerScope();
+
+			if(abcReturnType.kind() != TypeKind.VOID){
+				CIVLType returnType = translateABCType(
+						modelFactory.sourceOf(functionTypeNode.getReturnType().getSource()), scope,
+						abcReturnType);
+				
+				this.function.setReturnType(returnType);
+			}
+			if (numParameters > 0) {
+				List<Variable> parameters = new ArrayList<>();
+				List<CIVLType> parameterTypes = new ArrayList<>();
+				
+				for (int i = 0; i < numParameters; i++) {
+					VariableDeclarationNode decl = abcParameters
+							.getSequenceChild(i);
+
+					if (decl.getTypeNode().kind() == TypeNodeKind.VOID)
+						continue;
+					else {
+						CIVLType type = translateABCType(
+								modelFactory.sourceOf(decl), scope,
+								functionType.getParameterType(i));
+						CIVLSource source = modelFactory.sourceOf(decl
+								.getIdentifier());
+						Identifier variableName = modelFactory.identifier(
+								source, decl.getName());
+
+						parameters.add(modelFactory.variable(source, type,
+								variableName, parameters.size()));
+						parameterTypes.add(type);
+					}
+				}
+				this.function.setParameters(parameters);
+				this.function.setParameterTypes((CIVLType[]) parameters.toArray());
+			}
+			this.functionBodyNode = modelBuilder.mainFunctionNode.getBody();
+			this.isRootFunction = true;
+			body = this.translateFunctionBody();
+			this.isRootFunction = false;
+			body = initialization.combineWith(body);
+			functionInfo.completeFunction(body);
 		}
-		this.functionBodyNode = modelBuilder.mainFunctionNode.getBody();
-		this.isRootFunction = true;
-		body = this.translateFunctionBody();
-		this.isRootFunction = false;
-		body = initialization.combineWith(body);
-		functionInfo.completeFunction(body);
 	}
 
 	/* *************************** Private Methods ************************* */

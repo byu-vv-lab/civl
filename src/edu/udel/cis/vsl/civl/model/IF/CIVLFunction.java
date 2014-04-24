@@ -229,4 +229,8 @@ public interface CIVLFunction extends Sourceable {
 	 * @return
 	 */
 	boolean isNormal();
+
+	void setReturnType(CIVLType returnType);
+
+	void setParameterTypes(CIVLType[] types);
 }

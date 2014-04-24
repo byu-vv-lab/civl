@@ -485,11 +485,11 @@ public class CommonExecutor implements Executor {
 						continue;
 					if (!proc.hasEmptyStack()) {
 						throw new CIVLExecutionException(
-								ErrorKind.PROCESS_LEAK, Certainty.CONCRETE,
+								ErrorKind.PROCESS_LEAK,
+								Certainty.CONCRETE,
 								"Attempt to terminate the main process while process "
 										+ proc.identifier() + "(process<"
-										+ proc.getPid()
-										+ ">) is still running.",
+										+ proc.getPid() + ">) is still running",
 								statement.getSource());
 					}
 				}
@@ -502,6 +502,14 @@ public class CommonExecutor implements Executor {
 
 			returnValue = eval.value;
 			state = eval.state;
+			if (functionName.equals("_CIVL_system")) {
+				if (universe.equals(returnValue, universe.integer(0)).isFalse()) {
+					throw new CIVLExecutionException(ErrorKind.OTHER,
+							Certainty.CONCRETE,
+							"Program exits with error code: " + returnValue,
+							statement.getSource());
+				}
+			}
 		}
 		state = stateFactory.popCallStack(state, pid);
 		process = state.getProcessState(pid);

@@ -12,4 +12,8 @@ public interface CIVLFunctionType extends CIVLType {
 	 * @return The parameter types.
 	 */
 	CIVLType[] parameterTypes();
+	
+	void setReturnType(CIVLType type);
+	
+	void setParameterTypes(CIVLType[] types);
 }

@@ -1239,6 +1239,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		case "$gbarrier_destroy":
 		case "$comm_destroy":
 		case "$gcomm_destroy":
+		case "$int_iter_destroy":
 		case "$free":
 			state = executeFree(state, pid, arguments, argumentValues,
 					call.getSource());

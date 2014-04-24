@@ -75,7 +75,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	private static String GCOMM_TYPE = "$gcomm";
 
 	/**
-	 * The name of MPI_Comm type in both the orginal program and the final
+	 * The name of MPI_Comm type in both the original program and the final
 	 * CIVL-C program.
 	 */
 	private static String COMM_TYPE = "MPI_Comm";
@@ -338,7 +338,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		StatementNode assign;
 		ForLoopNode forLoop;
 		CompoundStatementNode mainBody;
-		LinkedList<VariableDeclarationNode> newFormalList;
+//		LinkedList<VariableDeclarationNode> newFormalList;
 		SequenceNode<VariableDeclarationNode> formals;
 		FunctionTypeNode mainType;
 		FunctionDefinitionNode mainFunction;
@@ -447,12 +447,12 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 		// constructing the function definition node.
 		mainBody = nodeFactory.newCompoundStatementNode(source, items);
-		newFormalList = new LinkedList<>();
-		newFormalList.add(nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, MPI_RANK),
-				nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT)));
+		// newFormalList = new LinkedList<>();
+		// newFormalList.add(nodeFactory.newVariableDeclarationNode(source,
+		// nodeFactory.newIdentifierNode(source, MPI_RANK),
+		// nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT)));
 		formals = nodeFactory.newSequenceNode(source,
-				"FormalParameterDeclarations", newFormalList);
+				"FormalParameterDeclarations",  new ArrayList<VariableDeclarationNode>());
 		mainType = nodeFactory.newFunctionTypeNode(source,
 				nodeFactory.newVoidTypeNode(source), formals, true);
 		mainFunction = nodeFactory.newFunctionDefinitionNode(source,

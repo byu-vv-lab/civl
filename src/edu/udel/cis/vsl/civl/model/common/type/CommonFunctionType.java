@@ -80,13 +80,13 @@ public class CommonFunctionType extends CommonType implements CIVLFunctionType {
 	public CIVLType[] parameterTypes() {
 		return this.parameterTypes;
 	}
-	
+
 	@Override
-	public String toString(){
+	public String toString() {
 		String result = returnType.toString() + " (";
-		
-		if(this.parameterTypes != null){
-			for(CIVLType type : parameterTypes){
+
+		if (this.parameterTypes != null) {
+			for (CIVLType type : parameterTypes) {
 				result += type.toString() + ", ";
 			}
 		}
@@ -94,6 +94,16 @@ public class CommonFunctionType extends CommonType implements CIVLFunctionType {
 		result += ")";
 		result = "(" + result + ")";
 		return result;
+	}
+
+	@Override
+	public void setReturnType(CIVLType type) {
+		this.returnType = type;
+	}
+
+	@Override
+	public void setParameterTypes(CIVLType[] types) {
+		this.parameterTypes = types;
 	}
 
 }

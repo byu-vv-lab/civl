@@ -152,6 +152,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$proc_defined":
 		case "$scope_parent":
 		case "$scope_defined":
+		case "$int_iter_destroy":
 			guard = universe.trueExpression();
 			break;
 		default:

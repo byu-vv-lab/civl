@@ -516,4 +516,14 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		return true;
 	}
 
+	@Override
+	public void setReturnType(CIVLType returnType) {
+		this.functionType.setReturnType(returnType);
+	}
+
+	@Override
+	public void setParameterTypes(CIVLType[] types) {
+		this.functionType.setParameterTypes(types);
+	}
+
 }

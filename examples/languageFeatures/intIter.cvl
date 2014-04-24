@@ -14,4 +14,5 @@ void main(){
     $assert(current == k);
     k++;
   }
+  $int_iter_destroy(iter);
 }
