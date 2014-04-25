@@ -397,19 +397,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		IntegerNumber number_nprocs = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) nprocs);
 
-		if (number_nprocs != null)
-			int_nprocs = number_nprocs.intValue();
-		else
-			throw new CIVLInternalException(
-					"Cannot extract concrete int value for gcomm size",
-					arguments[1]);
-		// isInit component
 		isInit = universe.bool(false);
-		for (int i = 0; i < int_nprocs; i++) {
-			isInitComponents.add(isInit);
-		}
-		isInitArray = universe.array(isInit.type(), isInitComponents);
-		// buf component
 		emptyMessages = universe.array(dynamicMessageType,
 				emptyMessagesComponents);
 		queueComponents.add(queueLength);
@@ -417,14 +405,45 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		assert dynamicQueueType instanceof SymbolicTupleType;
 		emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
 				queueComponents);
-		for (int i = 0; i < int_nprocs; i++) {
-			bufRowComponents.add(emptyQueue);
+		if (number_nprocs != null) {
+			int_nprocs = number_nprocs.intValue();
+			// isInit component
+			for (int i = 0; i < int_nprocs; i++) {
+				isInitComponents.add(isInit);
+				bufRowComponents.add(emptyQueue);
+			}
+			isInitArray = universe.array(isInit.type(), isInitComponents);
+			bufRow = universe.array(dynamicQueueType, bufRowComponents);
+			for (int i = 0; i < int_nprocs; i++) {
+				bufComponents.add(bufRow);
+			}
+			buf = universe.array(bufRow.type(), bufComponents);
+		} else {
+			SymbolicCompleteArrayType arrayType;
+			NumericSymbolicConstant index;
+			SymbolicExpression initFunction;
+			SymbolicExpression bufRowFunction;
+			SymbolicExpression bufFunction;
+			SymbolicType integerType = modelFactory.integerType()
+					.getDynamicType(universe);
+
+			arrayType = universe.arrayType(isInit.type(),
+					(NumericExpression) nprocs);
+			index = (NumericSymbolicConstant) universe.symbolicConstant(
+					universe.stringObject("i"), integerType);
+			initFunction = universe.lambda(index, isInit);
+			isInitArray = universe.arrayLambda(arrayType, initFunction);
+			index = (NumericSymbolicConstant) universe.symbolicConstant(
+					universe.stringObject("i"), integerType);
+			bufRowFunction = universe.lambda(index, emptyQueue);
+			arrayType = universe.arrayType(dynamicQueueType,
+					(NumericExpression) nprocs);
+			bufRow = universe.arrayLambda(arrayType, bufRowFunction);
+			bufFunction = universe.lambda(index, bufRow);
+			arrayType = universe.arrayType(bufRow.type(),
+					(NumericExpression) nprocs);
+			buf = universe.arrayLambda(arrayType, bufFunction);
 		}
-		bufRow = universe.array(dynamicQueueType, bufRowComponents);
-		for (int i = 0; i < int_nprocs; i++) {
-			bufComponents.add(bufRow);
-		}
-		buf = universe.array(bufRow.type(), bufComponents);
 		gcommComponents.add(nprocs);
 		gcommComponents.add(isInitArray);
 		gcommComponents.add(buf);
@@ -498,11 +517,6 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			procMapArray = universe.array(modelFactory.processSymbolicType(),
 					procMapComponents);
 		} else {
-			// throw new CIVLExecutionException(ErrorKind.OTHER,
-			// Certainty.CONCRETE,
-			// "Cannot extract concrete int value for gbarrier size",
-			// arguments[1]);
-			// using array lambda for symbolic array extent.
 			SymbolicCompleteArrayType arrayType;
 			NumericSymbolicConstant index;
 			SymbolicExpression procMapFunction;
@@ -1244,7 +1258,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = executeFree(state, pid, arguments, argumentValues,
 					call.getSource());
 			break;
-		case "$gcomm_create2":
+		case "$gcomm_create":
 			state = executeGcommCreate(state, pid, lhs, arguments,
 					argumentValues, call.getSource());
 			break;

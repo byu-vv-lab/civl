@@ -48,19 +48,6 @@ void $message_unpack($message message, void *buf, int size) {
     "Message of size %d exceeds the specified size %d.", message.size, size);
 }
 
-/* Creates a new global communicator object and returns a handle to it.
- * The global communicator will have size communication places.  The
- * global communicator defines a communication "universe" and encompasses
- * message buffers and all other components of the state associated to
- * message-passing.  The new object will be allocated in the given scope. */
-$gcomm $gcomm_create($scope scope, int size) {
-  $gcomm result;
-  
-  for (int i=0; i<size; i++) ;
-  result = $gcomm_create2(scope, size);
-  return result;
-}
-
 /* Returns the place of the local communicator.  This is the same as the
  * place argument used to create the local communicator. */
 int $comm_place($comm comm){
