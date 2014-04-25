@@ -28,8 +28,6 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.Transform;
 import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
-import edu.udel.cis.vsl.abc.transform.common.Pruner;
-import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.CIVL;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -411,12 +409,12 @@ public class UserInterface {
 		// always apply pruner and side effect remover
 		if (verboseOrDebug)
 			this.out.println("Apply pruner...");
-		program.applyTransformer(Pruner.CODE);
+		program.applyTransformer("prune");
 		if (verboseOrDebug)
 			frontEnd.printProgram(out, program);
 		if (verboseOrDebug)
 			this.out.println("Apply side-effect remover...");
-		program.applyTransformer(SideEffectRemover.CODE);
+		program.applyTransformer("sef");
 		if (verboseOrDebug)
 			frontEnd.printProgram(out, program);
 	}
