@@ -62,21 +62,21 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	/* ************************** Private Static Fields ********************** */
 
 	/**
-	 * The name of the identifier of the $comm variable in the final CIVL
+	 * The name of the identifier of the MPI_Comm variable in the final CIVL
 	 * program.
 	 */
 	private static String COMM_WORLD = "MPI_COMM_WORLD";
 
 	/**
-	 * The name of the identifier of the $gcomm variable in the final CIVL
+	 * The name of the identifier of the CMPI_Gcomm variable in the final CIVL
 	 * program.
 	 */
 	private static String GCOMM_WORLD = "GCOMM_WORLD";
 
 	/**
-	 * The name of $gcomm type in the final CIVL-C program.
+	 * The name of CMPI_Gcomm type in the final CIVL-C program.
 	 */
-	private static String GCOMM_TYPE = "$gcomm";
+	private static String GCOMM_TYPE = "CMPI_Gcomm";
 
 	/**
 	 * The name of MPI_Comm type in both the original program and the final
@@ -85,28 +85,28 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	private static String COMM_TYPE = "MPI_Comm";
 
 	/**
-	 * The name of the function to create a new $gcomm object in the final
+	 * The name of the function to create a new CMPI_Gcomm object in the final
 	 * CIVL-C program.
 	 */
-	private static String GCOMM_CREATE = "$gcomm_create";
+	private static String GCOMM_CREATE = "CMPI_Gcomm_create";
 
 	/**
-	 * The name of the function to create a new $comm object in the final CIVL-C
+	 * The name of the function to create a new MPI_Comm object in the final CIVL-C
 	 * program.
 	 */
-	private static String COMM_CREATE = "$comm_create";
+	private static String COMM_CREATE = "MPI_Comm_create";
 
 	/**
-	 * The name of the function to free a $gcomm object in the final CIVL-C
+	 * The name of the function to free a CMPI_Gcomm object in the final CIVL-C
 	 * program.
 	 */
-	private static String GCOMM_DESTROY = "$gcomm_destroy";
+	private static String GCOMM_DESTROY = "CMPI_Gcomm_destroy";
 
 	/**
-	 * The name of the function to free a $comm object in the final CIVL-C
+	 * The name of the function to free a MPI_Comm object in the final CIVL-C
 	 * program.
 	 */
-	private static String COMM_DESTROY = "$comm_destroy";
+	private static String COMM_DESTROY = "MPI_Comm_destroy";
 
 	/**
 	 * The name used for renaming the main function of the original MPI program.
@@ -529,7 +529,10 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 					.getSourceFile().getName();
 
 			root.removeChild(i);
-			if (sourceFile.equals("stdio.cvl")) {
+			if(sourceFile.equals("mpi.cvl")){
+				includedNodes.add(child);
+			}
+			else if (sourceFile.equals("stdio.cvl")) {
 				includedNodes.add(child);
 			} else if (sourceFile.endsWith(".h")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
