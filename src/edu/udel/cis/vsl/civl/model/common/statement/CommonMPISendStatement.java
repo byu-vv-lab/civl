@@ -102,7 +102,7 @@ public class CommonMPISendStatement extends CommonStatement implements
 			if (hasNewArg) {
 				newStatement = new CommonMPISendStatement(this.getSource(),
 						this.source(), this.lhs, this.arguments);
-				newStatement.setGuard(newGuard);
+				newStatement.setGuard(this.guard());
 			}
 		}
 

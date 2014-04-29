@@ -2388,13 +2388,7 @@ public class CommonModelFactory implements ModelFactory {
 				source, arrayType, elements);
 		Scope expressionScope = null;
 
-		if (elements != null) {
-			expressionScope = joinScope(elements);
-			// for (Expression element : elements) {
-			// expressionScope = join(expressionScope,
-			// element.expressionScope());
-			// }
-		}
+		expressionScope = joinScope(elements);
 		if (expressionScope != null)
 			arrayLiteral.setExpressionScope(expressionScope);
 		return arrayLiteral;
@@ -2407,12 +2401,7 @@ public class CommonModelFactory implements ModelFactory {
 				source, structType, fields);
 		Scope expressionScope = null;
 
-		if (fields != null) {
-			// for (Expression field : fields) {
-			// expressionScope = join(expressionScope, field.expressionScope());
-			// }
-			expressionScope = joinScope(fields);
-		}
+		expressionScope = joinScope(fields);
 		if (expressionScope != null)
 			structLiteral.setExpressionScope(expressionScope);
 		return structLiteral;

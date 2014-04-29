@@ -74,8 +74,8 @@ public class CommonLibraryLoader implements LibraryLoader {
 	@SuppressWarnings("unchecked")
 	@Override
 	public LibraryExecutor getLibraryExecutor(String name,
-			Executor primaryExecutor, PrintStream output, boolean enablePrintf,
-			ModelFactory modelFacotry) {
+			Executor primaryExecutor, PrintStream output, PrintStream err,
+			boolean enablePrintf, ModelFactory modelFacotry) {
 		LibraryExecutor result = libraryExecutorCache.get(name);
 
 		if (result == null) {
@@ -86,9 +86,10 @@ public class CommonLibraryLoader implements LibraryLoader {
 						.forName(aClassName);
 				Constructor<? extends LibraryExecutor> constructor = aClass
 						.getConstructor(Executor.class, PrintStream.class,
-								boolean.class, ModelFactory.class);
+								PrintStream.class, boolean.class,
+								ModelFactory.class);
 
-				result = constructor.newInstance(primaryExecutor, output,
+				result = constructor.newInstance(primaryExecutor, output, err,
 						enablePrintf, modelFacotry);
 			} catch (Exception e) {
 				throw new CIVLInternalException("Unable to load library: "

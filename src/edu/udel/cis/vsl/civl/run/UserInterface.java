@@ -694,7 +694,7 @@ public class UserInterface {
 		if (showShortFileNameList(config))
 			preprocessor.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out,
-				preprocessor);
+				err, preprocessor);
 		if (guiMode) {
 			ArrayList<State> states = new ArrayList<>();
 			ArrayList<Transition> transitions = new ArrayList<>();
@@ -739,7 +739,8 @@ public class UserInterface {
 		if (showShortFileNameList(config))
 			preprocessor.printShorterFileNameMap(out);
 		config.setScalarValue(showTransitionsO, true);
-		player = TracePlayer.randomPlayer(config, model, out, preprocessor);
+		player = TracePlayer
+				.randomPlayer(config, model, out, err, preprocessor);
 		out.println("\nRunning random simulation with seed " + player.getSeed()
 				+ " ...");
 		out.flush();
@@ -768,7 +769,7 @@ public class UserInterface {
 		preprocessor = modelAndPreprocessor.right;
 		if (showShortFileName)
 			preprocessor.printShorterFileNameMap(out);
-		verifier = new Verifier(config, model, out, startTime,
+		verifier = new Verifier(config, model, out, err, startTime,
 				showShortFileName, preprocessor);
 		try {
 			result = verifier.run();
@@ -823,7 +824,7 @@ public class UserInterface {
 		}
 		if (showShortFileName)
 			preprocessor.printShorterFileNameMap(out);
-		verifier = new Verifier(config, compositeModel, out, startTime,
+		verifier = new Verifier(config, compositeModel, out, err, startTime,
 				showShortFileName, preprocessor);
 		try {
 			result = verifier.run();

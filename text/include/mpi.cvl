@@ -7,6 +7,14 @@
   #endif
 #endif
 
+typedef enum __MPI_Status__ {
+  __UNINIT,
+  __INIT,
+  __FINALIZED
+} __MPI_Status__;
+
+__MPI_Status__ __my_status = __UNINIT;
+
 /****************************** Helper Functions **********************************/
 int sizeofDatatype(MPI_Datatype datatype) {
   switch (datatype) {
@@ -180,23 +188,28 @@ void MPI_Comm_destroy(MPI_Comm comm) {
 }
 
 int MPI_Init(int *argc, char *** argv){
+  __my_status = __INIT;
   return 0;
 }
 
 int __MPI_Init() {
+  __my_status = __INIT;
   return 0;
 }
 
 int MPI_Finalize() {
+  __my_status = __FINALIZED;
   return 0;
 }
 
 int MPI_Comm_size(MPI_Comm comm, int *size) {
+  $assert(__my_status == __INIT, "MPI status is not INIT.\n");
   *size = $comm_size(comm.p2p);
   return 0;
 }
 
 int MPI_Comm_rank(MPI_Comm comm, int *rank) {
+  $assert(__my_status == __INIT, "MPI status is not INIT.\n");
   *rank = $comm_place(comm.p2p);
   return 0;
 }
@@ -216,6 +229,7 @@ int CMPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
 
 int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
 	     int tag, MPI_Comm comm) {
+  $assert(__my_status == __INIT, "MPI status is not INIT.\n");
   return CMPI_Send(buf, count, datatype, dest, tag, comm.p2p);
 }
 
@@ -239,10 +253,12 @@ int CMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
 
 int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
 	     int tag, MPI_Comm comm, MPI_Status *status) {
+  $assert(__my_status == __INIT, "MPI status is not INIT.\n");
   return CMPI_Recv(buf, count, datatype, source, tag, comm.p2p, status);
 }
 
 int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) {
+  $assert(__my_status == __INIT, "MPI status is not INIT.\n");
   *count = status->size/sizeofDatatype(datatype);
   return 0;
 }
@@ -252,6 +268,7 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		 void *recvbuf, int recvcount, MPI_Datatype recvtype,
 		 int source, int recvtag,
 		 MPI_Comm comm, MPI_Status *status) {
+  $assert(__my_status == __INIT, "MPI status is not INIT.\n");
   MPI_Send(sendbuf, sendcount, sendtype, dest, sendtag, comm);
   MPI_Recv(recvbuf, recvcount, recvtype, source, recvtag, comm, status);
   return 0;
@@ -264,6 +281,8 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
 	      MPI_Comm comm) {
   int place = $comm_place(comm.col);
 
+  $assert(__my_status == __INIT, "MPI status is not INIT.\n");
+  place = $comm_place(comm.col);
   if (place == root) {
     int nprocs = $comm_size(comm.col);
 
@@ -280,9 +299,11 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
 /* Reduces values on all processes to a single value */
 int MPI_Reduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
                MPI_Op op, int root, MPI_Comm comm){
-  int place = $comm_place(comm.col);
+  int place;
   MPI_Status status;
   
+  $assert(__my_status == __INIT, "MPI status is not INIT.\n");
+  place = $comm_place(comm.col);
   //non-root
   CMPI_Send(sendbuf, count, datatype, root, REDUCE_TAG, comm.col);
   if(place != root)
@@ -379,10 +400,13 @@ int MPI_Reduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
 /* default root is 0 */
 int MPI_Allreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
                MPI_Op op, MPI_Comm comm){
-  int place = $comm_place(comm.col);
-  int root = 0;
+  int place;
+  int root;
   MPI_Status status;
-
+  
+  $assert(__my_status == __INIT, "MPI status is not INIT.\n");
+  place = $comm_place(comm.col);
+  root = 0;
   //non-root
   CMPI_Send(sendbuf, count, datatype, root, REDUCE_TAG, comm.col);
   if(place != root){

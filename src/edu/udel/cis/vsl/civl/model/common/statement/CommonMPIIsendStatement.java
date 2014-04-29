@@ -109,7 +109,7 @@ public class CommonMPIIsendStatement extends CommonStatement implements
 			if (hasNewArg) {
 				newStatement = new CommonMPIIsendStatement(this.getSource(),
 						this.source(), this.lhs, this.arguments);
-				newStatement.setGuard(newGuard);
+				newStatement.setGuard(this.guard());
 			}
 		}
 		return newStatement;

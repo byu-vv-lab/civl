@@ -29,3 +29,5 @@ FILE * stdin = $fopen(CIVL_filesystem, "CIVL_stdin", CIVL_FILE_MODE_R);
 
 // everything else: system function
 // at the end of this scope, copy all files from CIVL_filesystem to CIVL_output_filesystem
+// free file system.
+// $filesystem_copy_output(CIVL_filesystem, CIVL_output_filesystem);

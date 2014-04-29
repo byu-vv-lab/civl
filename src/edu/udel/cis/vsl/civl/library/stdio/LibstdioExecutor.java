@@ -98,6 +98,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	// file name of stdout/stdin
 	public final static String STDOUT = "CIVL_stdout";
 	public final static String STDIN = "CIVL_stdin";
+	public final static String STDERR = "CIVL_stderr";
 
 	/**
 	 * The base type of the pointer type $filesystem; a structure type with
@@ -135,7 +136,142 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 */
 	private SymbolicExpression emptyContents;
 
+	/**
+	 * Abstract function for the initial content of a file. Different files
+	 * should have different initial content.
+	 */
 	private SymbolicConstant initialContentsFunction;
+
+	/**
+	 * Abstract function to convert an integer into a string with a format:
+	 * <code>char* intToString(char* format, int data)</code>.
+	 */
+	private SymbolicConstant intToStringFunction;
+
+	/**
+	 * Abstract function to convert a double into a string with a format:
+	 * <code>char* doubleToString(char* format, double data)</code>.
+	 */
+	private SymbolicConstant doubleToStringFunction;
+
+	/**
+	 * Abstract function to convert a character into a string with a format:
+	 * <code>char* charToString(char* format, char data)</code>.
+	 */
+	private SymbolicConstant charToStringFunction;
+
+	/**
+	 * Abstract function to convert a string into a string with a format:
+	 * <code>char* stringDataToString(char* format, char* data)</code>.
+	 */
+	private SymbolicConstant stringDataToStringFunction;
+
+	/**
+	 * Abstract function to convert a pointer into a string with a format:
+	 * <code>char* pointerToString(char* format, char data)</code>.
+	 */
+	private SymbolicConstant pointerToStringFunction;
+
+	/**
+	 * Abstract function to convert a string into an integer according to a
+	 * format: <code>int stringToInt(char* format, char* string)</code>.
+	 */
+	private SymbolicConstant stringToIntFunction;
+
+	/**
+	 * Abstract function to convert a string into a double according to a
+	 * format: <code>double stringToDouble(char* format, char* string)</code>.
+	 */
+	private SymbolicConstant stringToDoubleFunction;
+
+	/**
+	 * Abstract function to convert a string into a character according to a
+	 * format: <code>char stringToChar(char* format, char* string)</code>.
+	 */
+	private SymbolicConstant stringToCharFunction;
+
+	/**
+	 * Abstract function to convert a string into a data of string type
+	 * according to a format:
+	 * <code>char* stringToStringData(char* format, char* string)</code>.
+	 */
+	private SymbolicConstant stringToStringDataFunction;
+
+	/**
+	 * Abstract function to convert a string into a pointer according to a
+	 * format: <code>void* stringToPointer(char* format, char* string)</code>.
+	 */
+	private SymbolicConstant stringToPointerFunction;
+
+	/**
+	 * Abstract function to read an integer from a string, returning the
+	 * symbolic expression representing the integer being read:
+	 * <code>char* carInt(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant carIntFunction;
+
+	/**
+	 * Abstract function to read an integer from a string, returning the
+	 * symbolic expression representing the remaining part of the string:
+	 * <code>char* carInt(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant cdrIntFunction;
+
+	/**
+	 * Abstract function to read a double from a string, returning the symbolic
+	 * expression representing the double being read:
+	 * <code>char* carDouble(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant carDoubleFunction;
+
+	/**
+	 * Abstract function to read a double from a string, returning the symbolic
+	 * expression representing the remaining part of the string:
+	 * <code>char* cdrDouble(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant cdrDoubleFunction;
+
+	/**
+	 * Abstract function to read a character from a string, returning the
+	 * symbolic expression representing the character being read:
+	 * <code>char* carCharacter(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant carCharFunction;
+
+	/**
+	 * Abstract function to read a character from a string, returning the
+	 * symbolic expression representing the remaining part of the string:
+	 * <code>char* cdrCharacter(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant cdrCharFunction;
+
+	/**
+	 * Abstract function to read a character from a string, returning the
+	 * symbolic expression representing the character being read:
+	 * <code>char* carCharacter(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant carPointerFunction;
+
+	/**
+	 * Abstract function to read a character from a string, returning the
+	 * symbolic expression representing the remaining part of the string:
+	 * <code>char* cdrCharacter(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant cdrPointerFunction;
+
+	/**
+	 * Abstract function to read a character from a string, returning the
+	 * symbolic expression representing the character being read:
+	 * <code>char* carCharacter(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant carStringFunction;
+
+	/**
+	 * Abstract function to read a character from a string, returning the
+	 * symbolic expression representing the remaining part of the string:
+	 * <code>char* cdrCharacter(char* string, char* format)</code>.
+	 */
+	private SymbolicConstant cdrStringFunction;
 
 	/**
 	 * The set of characters that are used to construct a number in a format
@@ -156,8 +292,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 *            True iff print is enabled, reflecting command line options.
 	 */
 	public LibstdioExecutor(Executor primaryExecutor, PrintStream output,
-			boolean enablePrintf, ModelFactory modelFactory) {
-		super(primaryExecutor, output, enablePrintf, modelFactory);
+			PrintStream err, boolean enablePrintf, ModelFactory modelFactory) {
+		super(primaryExecutor, output, err, enablePrintf, modelFactory);
 		Model model = modelFactory.model();
 
 		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
@@ -168,6 +304,9 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				.symbolicConstant(universe.stringObject("contents"), universe
 						.functionType(Arrays.asList(stringSymbolicType),
 								stringSymbolicType)));
+		createStringToDataFunctions();
+		createDataToStringFunctions();
+		createCharReadFunctions();
 		this.filesystemStructType = model.basedFilesystemType();
 		if (filesystemStructType != null)
 			this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
@@ -183,7 +322,199 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		}
 	}
 
+	private void createCharReadFunctions() {
+		carIntFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("carInt"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		cdrIntFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("cdrInt"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		carDoubleFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("carDouble"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		cdrDoubleFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("cdrDouble"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		carCharFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("carChar"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		cdrCharFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("cdrChar"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		carPointerFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("carPointer"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		cdrPointerFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("cdrPointer"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		carStringFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("carString"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		cdrStringFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("cdrString"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+	}
+
+	private void createDataToStringFunctions() {
+		intToStringFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("intToString"),
+						universe.functionType(
+								Arrays.asList(stringSymbolicType,
+										universe.integerType()),
+								stringSymbolicType)));
+		doubleToStringFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("doubleToString"),
+						universe.functionType(
+								Arrays.asList(stringSymbolicType,
+										universe.realType()),
+								stringSymbolicType)));
+		charToStringFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("charToString"),
+						universe.functionType(
+								Arrays.asList(stringSymbolicType,
+										universe.characterType()),
+								stringSymbolicType)));
+		stringDataToStringFunction = (SymbolicConstant) universe
+				.canonic(universe.symbolicConstant(universe
+						.stringObject("stringDataToString"), universe
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
+		pointerToStringFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("pointerToString"),
+						universe.functionType(
+								Arrays.asList(stringSymbolicType,
+										modelFactory.pointerSymbolicType()),
+								stringSymbolicType)));
+	}
+
+	private void createStringToDataFunctions() {
+		stringToIntFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("stringToInt"),
+						universe.functionType(
+								Arrays.asList(stringSymbolicType),
+								universe.integerType())));
+		stringToDoubleFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("stringToDouble"),
+						universe.functionType(
+								Arrays.asList(stringSymbolicType),
+								universe.realType())));
+		stringToCharFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("stringToChar"),
+						universe.functionType(
+								Arrays.asList(stringSymbolicType),
+								universe.characterType())));
+		stringToStringDataFunction = (SymbolicConstant) universe
+				.canonic(universe.symbolicConstant(universe
+						.stringObject("stringToStringData"), universe
+						.functionType(Arrays.asList(stringSymbolicType),
+								stringSymbolicType)));
+		stringToPointerFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("stringToPointer"),
+						universe.functionType(
+								Arrays.asList(stringSymbolicType),
+								modelFactory.pointerSymbolicType())));
+	}
+
 	/* *************************** Private Methods ************************* */
+
+	// private SymbolicExpression intToString(SymbolicExpression format,
+	// SymbolicExpression data) {
+	// return universe.apply(intToStringFunction, Arrays.asList(format, data));
+	// }
+	//
+	// private SymbolicExpression doubleToString(SymbolicExpression format,
+	// SymbolicExpression data) {
+	// return universe.apply(doubleToStringFunction,
+	// Arrays.asList(format, data));
+	// }
+	//
+	// private SymbolicExpression charToString(SymbolicExpression format,
+	// SymbolicExpression data) {
+	// return universe
+	// .apply(charToStringFunction, Arrays.asList(format, data));
+	// }
+	//
+	// private SymbolicExpression stringToString(SymbolicExpression format,
+	// SymbolicExpression data) {
+	// return universe.apply(stringToStringFunction,
+	// Arrays.asList(format, data));
+	// }
+
+	// private SymbolicExpression pointerToString(SymbolicExpression format,
+	// SymbolicExpression data) {
+	// return universe.apply(pointerToStringFunction,
+	// Arrays.asList(format, data));
+	// }
+	//
+	// private SymbolicExpression stringToInt(SymbolicExpression content) {
+	// return universe.apply(stringToIntFunction, Arrays.asList(content));
+	// }
+	//
+	// /**
+	// * Apply the abstract function:
+	// * <code>char* carInt(char** fileContent, char* format)</code>
+	// *
+	// * @param fileContent
+	// * @param format
+	// * @return
+	// */
+	// private SymbolicExpression carInt(SymbolicExpression fileContent,
+	// SymbolicExpression format) {
+	// return universe.apply(this.carIntFunction,
+	// Arrays.asList(fileContent, format));
+	// }
+
+	// /**
+	// * Apply the abstract function:
+	// * <code>char** cdrInt(char** fileContent, char* format)</code>
+	// *
+	// * @param fileContent
+	// * @param format
+	// * @return
+	// */
+	// private SymbolicExpression cdrInt(SymbolicExpression fileContent,
+	// SymbolicExpression format) {
+	// return universe.apply(this.cdrIntFunction,
+	// Arrays.asList(fileContent, format));
+	// }
+	//
+	// /**
+	// * Apply the abstract function:
+	// * <code>char* carInt(char** fileContent, char* format)</code>
+	// *
+	// * @param fileContent
+	// * @param string
+	// * @return
+	// */
+	// private SymbolicExpression carString(SymbolicExpression fileContent,
+	// SymbolicExpression string) {
+	// return universe.apply(this.carStringFunction,
+	// Arrays.asList(fileContent, string));
+	// }
+	//
+	// /**
+	// * Apply the abstract function:
+	// * <code>char** cdrInt(char** fileContent, char* format)</code>
+	// *
+	// * @param fileContent
+	// * @param string
+	// * @return
+	// */
+	// private SymbolicExpression cdrString(SymbolicExpression fileContent,
+	// SymbolicExpression string) {
+	// return universe.apply(this.cdrStringFunction,
+	// Arrays.asList(fileContent, string));
+	// }
 
 	/**
 	 * Given a symbolic expression of type array of char, returns a string
@@ -236,7 +567,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		} else
 			throw new CIVLUnimplementedFeatureException("non-concrete strings",
 					source);
-
 	}
 
 	/**
@@ -407,6 +737,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			SymbolicExpression filePointer = evaluator.makePointer(scopeId,
 					filesystemVid, ref);
 			SymbolicExpression fileStream;
+			SymbolicExpression scope = modelFactory.scopeValue(state
+					.getProcessState(pid).getDyscopeId());
 
 			streamComponents.add(filePointer);
 			streamComponents.add(filesystemPointer);
@@ -418,7 +750,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					(SymbolicTupleType) FILEtype.getDynamicType(universe),
 					streamComponents);
 			// do malloc, get pointer, do the assignments.
-			state = primaryExecutor.assign(state, pid, lhs, fileStream);
+			// state = primaryExecutor.assign(state, pid, lhs, fileStream);
+			state = primaryExecutor.malloc(source, state, pid, lhs,
+					expressions[0], scope, FILEtype, fileStream);
+
 		}
 		return state;
 	}
@@ -445,7 +780,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		CIVLSource source = statement.getSource();
 		LHSExpression lhs = statement.lhs();
 
-		statement = (CallOrSpawnStatement) statement;
 		numArgs = statement.arguments().size();
 		name = statement.function().name();
 		arguments = new Expression[numArgs];
@@ -478,6 +812,14 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			state = execute_fprintf(source, state, pid, lhs, arguments,
 					argumentValues);
 			break;
+		case "fscanf":
+			state = execute_fscanf(source, state, pid, lhs, arguments,
+					argumentValues);
+			break;
+		case "$filesystem_copy_output":
+			state = execute_filesystem_copy_output(source, state, pid,
+					arguments, argumentValues);
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(name.name(), statement);
 
@@ -486,7 +828,178 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		return state;
 	}
 
-	/* ************************ Methods from Library *********************** */
+	private State execute_filesystem_copy_output(CIVLSource source,
+			State state, int pid, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression civlFileSystemPointer = argumentValues[0];
+		SymbolicExpression arrayPointer = argumentValues[1];
+		SymbolicExpression fileArray;
+		Evaluation eval;
+		NumericExpression length;
+		ArrayElementReference fileArrayEleRef = (ArrayElementReference) universe
+				.tupleRead(arrayPointer, twoObject);
+		NumericExpression startIndex = fileArrayEleRef.getIndex();
+		int length_int;
+		SymbolicExpression scopeField = universe.tupleRead(arrayPointer,
+				zeroObject), varField = universe.tupleRead(arrayPointer,
+				oneObject);
+		CIVLSource arraySource = arguments[1].getSource();
+
+		eval = evaluator.dereference(arguments[0].getSource(), state,
+				civlFileSystemPointer);
+		state = eval.state;
+		fileArray = universe.tupleRead(eval.value, oneObject);
+		length = universe.length(fileArray);
+		length_int = evaluator.extractInt(arguments[0].getSource(), length);
+		for (int i = 0; i < length_int; i++) {
+			NumericExpression fileArrayIndex = universe.integer(i);
+			NumericExpression index = universe.add(startIndex, fileArrayIndex);
+			ArrayElementReference arrayEleRef = universe.arrayElementReference(
+					universe.identityReference(), index);
+			SymbolicExpression currentPointer = universe.tuple(
+					modelFactory.pointerSymbolicType(),
+					Arrays.asList(new SymbolicExpression[] { scopeField,
+							varField, arrayEleRef }));
+
+			state = primaryExecutor.assign(arraySource, state, currentPointer,
+					universe.arrayRead(fileArray, fileArrayIndex));
+		}
+		return state;
+	}
+
+	/**
+	 * Execute the function call for fprintf
+	 * <code>int fprintf(FILE * restrict stream,
+	 * const char * restrict format, ...)</code>.
+	 * 
+	 * @param source
+	 *            The source code element of the function call.
+	 * @param state
+	 *            The state where the function call happens.
+	 * @param pid
+	 *            The ID of the process that this function call belongs to.
+	 * @param lhs
+	 *            The left hand side of the function call.
+	 * @param arguments
+	 *            The list of CIVL expressions for the arguments of the function
+	 *            call.
+	 * @param argumentValues
+	 *            The list of symbolic expressions representing the value of the
+	 *            arguments of the function call.
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State execute_fscanf(CIVLSource source, State state, int pid,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression fileStream;
+		SymbolicExpression filePointer;
+		Evaluation eval;
+		SymbolicExpression fileObject;
+		StringBuffer formatBuffer;
+		Pair<State, StringBuffer> formatString;
+		NumericExpression position;
+
+		eval = evaluator.dereference(arguments[0].getSource(), state,
+				argumentValues[0]);
+		fileStream = eval.value;
+		state = eval.state;
+		filePointer = universe.tupleRead(fileStream, zeroObject);
+		position = (NumericExpression) universe
+				.tupleRead(fileStream, twoObject);
+		eval = evaluator.dereference(arguments[0].getSource(), state,
+				filePointer);
+		fileObject = eval.value;
+		state = eval.state;
+		formatString = this.getString(arguments[1].getSource(), state,
+				argumentValues[1]);
+		formatBuffer = formatString.right;
+		state = formatString.left;
+		{ // reads the file
+			SymbolicExpression fileContents = universe.tupleRead(fileObject,
+					oneObject);
+			List<Format> formats = this.splitFormat(arguments[1].getSource(),
+					formatBuffer);
+			int numOfFormats = formats.size();
+			int dataPointerIndex = 2;
+			int count = 0;
+
+			for (int i = 0; i < numOfFormats; i++) {
+				Format currentFormat = formats.get(i);
+				String formatValue = currentFormat.string.toString();
+				SymbolicExpression currentString = universe.arrayRead(
+						fileContents, position);
+				SymbolicExpression car, cdr, format, data;
+				SymbolicConstant carFunction = null, cdrFunction = null;
+				ConversionType conversion = currentFormat.type;
+				SymbolicConstant conversionFunction = null;
+
+				format = universe.stringExpression(formatValue);
+				switch (conversion) {
+				case INT:
+					conversionFunction = this.stringToIntFunction;
+					carFunction = this.carIntFunction;
+					cdrFunction = this.cdrIntFunction;
+					break;
+				case DOUBLE:
+					conversionFunction = this.stringToDoubleFunction;
+					carFunction = this.carDoubleFunction;
+					cdrFunction = this.cdrDoubleFunction;
+					break;
+				case POINTER:
+					conversionFunction = this.stringToPointerFunction;
+					carFunction = this.carPointerFunction;
+					cdrFunction = this.cdrPointerFunction;
+					break;
+				case CHAR:
+					conversionFunction = this.stringToCharFunction;
+					carFunction = this.carCharFunction;
+					cdrFunction = this.cdrCharFunction;
+					break;
+				case STRING:
+					conversionFunction = this.stringToStringDataFunction;
+					carFunction = this.carStringFunction;
+					cdrFunction = this.cdrStringFunction;
+					break;
+				default:
+				}
+				if (conversionFunction != null) {
+					car = universe.apply(carFunction,
+							Arrays.asList(currentString, format));
+					cdr = universe.apply(cdrFunction,
+							Arrays.asList(currentString, format));
+					data = universe.apply(conversionFunction,
+							Arrays.asList(car));
+					state = primaryExecutor.assign(source, state,
+							argumentValues[dataPointerIndex++], data);
+					count++;
+				} else {
+					car = universe.apply(this.carStringFunction,
+							Arrays.asList(currentString, format));
+					cdr = universe.apply(this.cdrStringFunction,
+							Arrays.asList(currentString, format));
+				}
+				fileContents = universe.arrayWrite(fileContents, position, car);
+				fileContents = universe.append(fileContents, cdr);
+				position = universe.add(position, universe.integer(1));
+			}
+			fileObject = universe.tupleWrite(fileObject, oneObject,
+					fileContents);
+			state = primaryExecutor.assign(source, state, filePointer,
+					fileObject);
+			fileStream = universe.tupleWrite(fileStream, twoObject, position);
+			state = primaryExecutor.assign(source, state, argumentValues[0],
+					fileStream);
+			if (lhs != null) {
+				SymbolicExpression countValue = universe.integer(count);
+
+				state = primaryExecutor.assign(state, pid, lhs, countValue);
+			}
+		}
+		return state;
+	}
 
 	/**
 	 * Execute the function call for fprintf
@@ -514,14 +1027,11 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression fileStream = argumentValues[0];
-		SymbolicExpression filePointer = universe.tupleRead(fileStream,
-				zeroObject);
-		Evaluation eval = evaluator.dereference(arguments[0].getSource(),
-				state, filePointer);
-		SymbolicExpression fileObject = eval.value;
-		SymbolicExpression fileName = universe
-				.tupleRead(fileObject, zeroObject);
+		SymbolicExpression fileStream;
+		SymbolicExpression filePointer;
+		Evaluation eval;
+		SymbolicExpression fileObject;
+		SymbolicExpression fileName;
 		Pair<State, StringBuffer> stringResult;
 		String fileNameString;
 		StringBuffer stringOfSymbolicExpression;
@@ -533,7 +1043,16 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		int sCount = 2;
 		Pair<State, StringBuffer> concreteString;
 
+		eval = evaluator.dereference(arguments[0].getSource(), state,
+				argumentValues[0]);
+		fileStream = eval.value;
 		state = eval.state;
+		filePointer = universe.tupleRead(fileStream, zeroObject);
+		eval = evaluator.dereference(arguments[0].getSource(), state,
+				filePointer);
+		fileObject = eval.value;
+		state = eval.state;
+		fileName = universe.tupleRead(fileObject, zeroObject);
 		stringResult = this.getString(source, state, fileName);
 		state = stringResult.left;
 		fileNameString = stringResult.right.substring(0,
@@ -573,35 +1092,55 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				printedContents.add(new StringBuffer(argumentValue.toString()));
 		}
 		if (fileNameString.equals(STDOUT)) {
-			this.printf(arguments[1].getSource(), formatBuffer, printedContents);
-		} else if (fileNameString.equalsIgnoreCase(STDIN)) {
+			this.printf(this.output, arguments[1].getSource(), formatBuffer,
+					printedContents);
+		} else if (fileNameString.equals(STDIN)) {
 			// TODO: stdin
-		}// TODO stderr,
+		} else if (fileNameString.equals(STDERR)) {
+			this.printf(this.err, arguments[1].getSource(), formatBuffer,
+					printedContents);
+		}
 		{ // updates the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,
 					oneObject);
-			List<StringBuffer> formats = this.splitFormat(
-					arguments[1].getSource(), formatBuffer);
+			List<Format> formats = this.splitFormat(arguments[1].getSource(),
+					formatBuffer);
 			int newContentCount = formats.size();
-			int formatIndex = 0;
+			int dataIndex = 2;
 
 			for (int i = 0; i < newContentCount; i++) {
-				StringBuffer current = formats.get(i);
-				SymbolicExpression newStringExpression;
+				Format currentFormat = formats.get(i);
+				SymbolicExpression newStringExpression = null;
+				ConversionType conversion = currentFormat.type;
+				String formatString = currentFormat.string.toString();
+				SymbolicConstant conversionFunction = null;
 
-				if (current.length() > 1) {
-					if (current.charAt(0) == '%' && current.charAt(1) != '%') {
-						newStringExpression = universe.stringExpression(current
-								.append(printedContents.get(formatIndex))
-								.toString());
-						formatIndex++;
-						fileContents = universe.append(fileContents,
-								newStringExpression);
-						continue;
-					}
+				switch (conversion) {
+				case INT:
+					conversionFunction = this.intToStringFunction;
+					break;
+				case DOUBLE:
+					conversionFunction = this.doubleToStringFunction;
+					break;
+				case CHAR:
+					conversionFunction = this.charToStringFunction;
+					break;
+				case STRING:
+					conversionFunction = this.stringDataToStringFunction;
+					break;
+				case POINTER:
+					conversionFunction = this.pointerToStringFunction;
+					break;
+				default:// VOID
+					newStringExpression = universe
+							.stringExpression(formatString
+									.replaceAll("%%", "%"));
 				}
-				newStringExpression = universe.stringExpression(current
-						.toString().replaceAll("%%", "%"));
+				if (conversionFunction != null)
+					newStringExpression = universe.apply(conversionFunction,
+							Arrays.asList(
+									universe.stringExpression(formatString),
+									argumentValues[dataIndex++]));
 				fileContents = universe.append(fileContents,
 						newStringExpression);
 			}
@@ -652,10 +1191,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 * @return A list of string buffers by splitting the format by conversion
 	 *         specifiers.
 	 */
-	private List<StringBuffer> splitFormat(CIVLSource source,
+	private List<Format> splitFormat(CIVLSource source,
 			StringBuffer formatBuffer) {
 		int count = formatBuffer.length();
-		List<StringBuffer> result = new ArrayList<>();
+		List<Format> result = new ArrayList<>();
 		StringBuffer stringBuffer = new StringBuffer();
 		boolean inConversion = false;
 		boolean hasFieldWidth = false;
@@ -664,6 +1203,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		for (int i = 0; i < count; i++) {
 			Character current = formatBuffer.charAt(i);
 			Character code;
+			ConversionType type = ConversionType.VOID;
 
 			if (current.equals('%')) {
 				code = formatBuffer.charAt(i + 1);
@@ -680,7 +1220,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 								+ stringBuffer + " is not allowed in fprintf",
 								source);
 					}
-					result.add(stringBuffer);
+					result.add(new Format(stringBuffer, type));
 					stringBuffer = new StringBuffer();
 				}
 				inConversion = true;
@@ -754,22 +1294,35 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					break;
 				default:
 				}
+				// conversion specifier
 				switch (current) {
 				case 'c':
 				case 'p':
-				case 'D':
 				case 'n':
 					if (hasFieldWidth || hasPrecision) {
 						throw new CIVLSyntaxException(
 								"Invalid precision for the format \"%"
 										+ current + "\"...", source);
 					}
+				default:
+				}
+				switch (current) {
+				case 'c':
+					type = ConversionType.CHAR;
+					break;
+				case 'p':
+				case 'n':
+					type = ConversionType.POINTER;
+					break;
 				case 'd':
 				case 'i':
 				case 'o':
 				case 'u':
 				case 'x':
 				case 'X':
+					type = ConversionType.INT;
+					stringBuffer.append(current);
+					break;
 				case 'a':
 				case 'A':
 				case 'e':
@@ -778,15 +1331,18 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				case 'F':
 				case 'g':
 				case 'G':
+					type = ConversionType.DOUBLE;
+					break;
 				case 's':
-					stringBuffer.append(current);
+					type = ConversionType.STRING;
 					break;
 				default:
 					stringBuffer.append(current);
 					throw new CIVLSyntaxException("The format %" + stringBuffer
 							+ " is not allowed in fprintf", source);
 				}
-				result.add(stringBuffer);
+				stringBuffer.append(current);
+				result.add(new Format(stringBuffer, type));
 				inConversion = false;
 				hasFieldWidth = false;
 				hasPrecision = false;
@@ -796,7 +1352,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			}
 		}
 		if (stringBuffer.length() > 0)
-			result.add(stringBuffer);
+			result.add(new Format(stringBuffer, ConversionType.VOID));
 		return result;
 	}
 
@@ -810,8 +1366,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 * @param arguments
 	 *            The list of arguments to be printed according to the format.
 	 */
-	private void printf(CIVLSource source, StringBuffer formatBuffer,
-			ArrayList<StringBuffer> arguments) {
+	private void printf(PrintStream printStream, CIVLSource source,
+			StringBuffer formatBuffer, ArrayList<StringBuffer> arguments) {
 		if (this.enablePrintf) {
 			String format = formatBuffer.substring(0);
 
@@ -833,7 +1389,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				}
 			}
 			try {
-				output.printf(format, arguments.toArray());
+				printStream.printf(format, arguments.toArray());
 
 			} catch (Exception e) {
 				throw new CIVLInternalException("unexpected error in printf",
@@ -841,6 +1397,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			}
 		}
 	}
+
+	/* ************************ Methods from Library *********************** */
 
 	@Override
 	public String name() {
@@ -871,4 +1429,17 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		return state;
 	}
 
+	enum ConversionType {
+		INT, DOUBLE, CHAR, STRING, POINTER, VOID
+	};
+
+	private class Format {
+		ConversionType type;
+		StringBuffer string;
+
+		Format(StringBuffer content, ConversionType conversion) {
+			this.string = content;
+			this.type = conversion;
+		}
+	}
 }

@@ -38,10 +38,10 @@ public class TracePlayer extends Player {
 	private long seed = 0;
 
 	public static TracePlayer guidedPlayer(GMCConfiguration config,
-			Model model, File traceFile, PrintStream out,
+			Model model, File traceFile, PrintStream out, PrintStream err,
 			Preprocessor preprocessor) throws CommandLineException,
 			IOException, MisguidedExecutionException {
-		TracePlayer result = new TracePlayer(config, model, out, preprocessor);
+		TracePlayer result = new TracePlayer(config, model, out, err, preprocessor);
 		GuidedTransitionChooser<State, Transition, TransitionSequence> guidedChooser = new GuidedTransitionChooser<>(
 				result.enabler, traceFile);
 
@@ -51,10 +51,10 @@ public class TracePlayer extends Player {
 	}
 
 	public static TracePlayer randomPlayer(GMCConfiguration config,
-			Model model, PrintStream out, Preprocessor preprocessor)
+			Model model, PrintStream out, PrintStream err, Preprocessor preprocessor)
 			throws CommandLineException, IOException,
 			MisguidedExecutionException {
-		TracePlayer result = new TracePlayer(config, model, out, preprocessor);
+		TracePlayer result = new TracePlayer(config, model, out, err, preprocessor);
 		String seedString = (String) config.getValue(UserInterface.seedO);
 		RandomTransitionChooser<State, Transition, TransitionSequence> chooser;
 
@@ -78,8 +78,9 @@ public class TracePlayer extends Player {
 	}
 
 	TracePlayer(GMCConfiguration config, Model model, PrintStream out,
+			PrintStream err,
 			Preprocessor preprocessor) throws CommandLineException {
-		super(config, model, out, preprocessor);
+		super(config, model, out, err, preprocessor);
 		// turn the following off because they duplicate what
 		// the Replayer prints:
 		// TODO check here
@@ -95,17 +96,17 @@ public class TracePlayer extends Player {
 	}
 
 	public TracePlayer(GMCConfiguration config, Model model,
-			TransitionChooser<State, Transition> chooser, PrintStream out,
+			TransitionChooser<State, Transition> chooser, PrintStream out, PrintStream err,
 			Preprocessor preprocessor) throws CommandLineException {
-		this(config, model, out, preprocessor);
+		this(config, model, out, err, preprocessor);
 		this.chooser = chooser;
 	}
 
 	public TracePlayer(GMCConfiguration config, Model model, File traceFile,
-			PrintStream out, Preprocessor preprocessor)
+			PrintStream out, PrintStream err, Preprocessor preprocessor)
 			throws CommandLineException, IOException,
 			MisguidedExecutionException {
-		this(config, model, out, preprocessor);
+		this(config, model, out, err, preprocessor);
 		this.chooser = new GuidedTransitionChooser<State, Transition, TransitionSequence>(
 				enabler, traceFile);
 	}

@@ -111,9 +111,9 @@ public class Verifier extends Player {
 	private double startTime;
 
 	public Verifier(GMCConfiguration config, Model model, PrintStream out,
-			double startTime, boolean shortFileNamesShown,
+			PrintStream err, double startTime, boolean shortFileNamesShown,
 			Preprocessor preprocessor) throws CommandLineException {
-		super(config, model, out, preprocessor);
+		super(config, model, out, err, preprocessor);
 		if (random) {
 			throw new CommandLineException(
 					"\"-random\" mode is incompatible with civl verify command.");

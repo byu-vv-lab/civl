@@ -268,7 +268,7 @@ public abstract class CommonStatement extends CommonSourceable implements
 		default:
 			result += toString();
 		}
-		if (source != null)
+		if (getSource() != null)
 			result += " at " + getSource().getSummary();
 		else
 			result += " at " + source.getSource().getSummary();

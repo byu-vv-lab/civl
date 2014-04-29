@@ -108,7 +108,7 @@ public class CommonMPIIrecvStatement extends CommonStatement implements
 			if (hasNewArg) {
 				newStatement = new CommonMPIIrecvStatement(this.getSource(),
 						this.source(), this.lhs, this.arguments);
-				newStatement.setGuard(newGuard);
+				newStatement.setGuard(this.guard());
 			}
 		}
 		return newStatement;

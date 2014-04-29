@@ -368,17 +368,17 @@ public class FunctionTranslator {
 			ObjectType abcReturnType = functionType.getReturnType();
 			Scope scope = this.function.outerScope();
 
-			if(abcReturnType.kind() != TypeKind.VOID){
+			if (abcReturnType.kind() != TypeKind.VOID) {
 				CIVLType returnType = translateABCType(
-						modelFactory.sourceOf(functionTypeNode.getReturnType().getSource()), scope,
-						abcReturnType);
-				
+						modelFactory.sourceOf(functionTypeNode.getReturnType()
+								.getSource()), scope, abcReturnType);
+
 				this.function.setReturnType(returnType);
 			}
 			if (numParameters > 0) {
 				List<Variable> parameters = new ArrayList<>();
 				List<CIVLType> parameterTypes = new ArrayList<>();
-				
+
 				for (int i = 0; i < numParameters; i++) {
 					VariableDeclarationNode decl = abcParameters
 							.getSequenceChild(i);
@@ -400,7 +400,8 @@ public class FunctionTranslator {
 					}
 				}
 				this.function.setParameters(parameters);
-				this.function.setParameterTypes((CIVLType[]) parameters.toArray());
+				this.function.setParameterTypes(parameters
+						.toArray(new CIVLType[parameters.size()]));
 			}
 			this.functionBodyNode = modelBuilder.mainFunctionNode.getBody();
 			this.isRootFunction = true;
@@ -3122,7 +3123,8 @@ public class FunctionTranslator {
 			VariableExpression varExpression = modelFactory.variableExpression(
 					source, scope.variable(name));
 
-			if (!this.isLHS && varExpression.variable().isOutput()) {
+			if (name.name().equals("CIVL_output_filesystem")) {
+			} else if (!this.isLHS && varExpression.variable().isOutput()) {
 				throw new CIVLSyntaxException(
 						"attempt to read the output variable " + name, source);
 			}
@@ -3655,7 +3657,7 @@ public class FunctionTranslator {
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case INT_ITER_TYPE:
-			result.setHandleObjectType(true);
+			// result.setHandleObjectType(true);
 			modelBuilder.intIterType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
@@ -3670,7 +3672,7 @@ public class FunctionTranslator {
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case FILE_SYSTEM_TYPE:
-			result.setHandleObjectType(true);
+			// result.setHandleObjectType(true);
 			modelBuilder.basedFilesystemType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
@@ -3679,6 +3681,7 @@ public class FunctionTranslator {
 			break;
 		case FILE_STREAM_TYPE:
 			modelBuilder.FILEtype = result;
+			modelBuilder.handledObjectTypes.add(result);
 			break;
 		default:
 		}

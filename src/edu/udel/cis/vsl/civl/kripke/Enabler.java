@@ -497,10 +497,6 @@ public abstract class Enabler implements
 	 * @return The enabled transitions that resume an atomic block.
 	 */
 	private TransitionSequence enabledAtomicTransitions(State state) {
-		// TransitionSequence transitions;
-		// ArrayList<Integer> resumableProcesses;
-		// AssignStatement assignStatement;
-		// Location pLocation;
 		int pidInAtomic;
 
 		pidInAtomic = executor.stateFactory().processInAtomic(state);
@@ -512,47 +508,10 @@ public abstract class Enabler implements
 
 			localTransitions.addAll(enabledTransitionsOfProcess(state,
 					pidInAtomic));
-			if (localTransitions.isEmpty()) {
-				// release atomic lock if the current location of the process
-				// that holds the lock is blocked
-				state = executor.stateFactory().releaseAtomicLock(state);
-			} else
+			if (!localTransitions.isEmpty())
 				return localTransitions;
 		}
 		return null;
-		// // TODO optimize the number of valid/prover calls
-		// resumableProcesses = executor.resumableAtomicProcesses(state);
-		// if (resumableProcesses.size() == 1) {
-		// int pid = resumableProcesses.get(0);
-		//
-		// p = state.getProcessState(pid);
-		// pLocation = p.getLocation();
-		// assignStatement = modelFactory.assignAtomicLockVariable(pid,
-		// pLocation);
-		// // only one process in atomic blocks could be resumed, so let
-		// // the process hold the atomic lock
-		// transitions = transitionFactory.newTransitionSequence(state);
-		// transitions.addAll(enabledTransitionsOfProcess(state, pid,
-		// assignStatement));
-		// if (transitions.isEmpty()) {
-		// throw new CIVLInternalException("unreachable", p.getLocation()
-		// .getSource());
-		// }
-		// return transitions;
-		// } else if (resumableProcesses.size() > 1) {
-		// // There are more than one processes trying to hold the atomic lock
-		// transitions = transitionFactory.newTransitionSequence(state);
-		// for (Integer pid : resumableProcesses) {
-		// pLocation = state.getProcessState(pid).getLocation();
-		// assignStatement = modelFactory.assignAtomicLockVariable(pid,
-		// pLocation);
-		// transitions.addAll(enabledTransitionsOfProcess(state, pid,
-		// assignStatement));
-		// }
-		// return transitions;
-		// } else {
-		// return null;
-		// }
 	}
 
 	public Evaluator evaluator() {

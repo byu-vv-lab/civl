@@ -138,7 +138,7 @@ public class CommonMPIRecvStatement extends CommonStatement implements
 				newStatement = new CommonMPIRecvStatement(this.getSource(),
 						this.source(), this.lhs, this.arguments,
 						this.modelFactory);
-				newStatement.setGuard(newGuard);
+				newStatement.setGuard(this.guard);
 			}
 		}
 

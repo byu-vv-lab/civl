@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.state.immutable;
 
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
@@ -249,15 +250,15 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression pointer) {
 		if (pointer.operator() == SymbolicOperator.NULL)
 			return pointer.toString();
-		else if(pointer.operator() != SymbolicOperator.CONCRETE)
+		else if (pointer.operator() != SymbolicOperator.CONCRETE)
 			return pointer.toString();
 		else {
 			SymbolicTupleType pointerType = (SymbolicTupleType) pointer.type();
-			
-			if(!pointerType.name().getString().equalsIgnoreCase("pointer")){
+
+			if (!pointerType.name().getString().equalsIgnoreCase("pointer")) {
 				return pointer.toString();
 			}
-			
+
 			int dyscopeId = evaluator.getScopeId(source, pointer);
 
 			if (dyscopeId < 0)
@@ -325,8 +326,8 @@ public class ImmutableStateFactory implements StateFactory {
 				return new Triple<>(-1, parentResult.second, result.toString());
 			default:
 				CIVLType arrayEleType = ((CIVLArrayType) parentResult.second)
-				.elementType();
-				
+						.elementType();
+
 				result.append(parentResult.third);
 				result.append('[');
 				result.append(index);
@@ -517,7 +518,7 @@ public class ImmutableStateFactory implements StateFactory {
 				throw new IllegalArgumentException(
 						"Called function not visible:\nfunction: " + function
 								+ "\npid: " + pid + "\ncallerPid:" + callerPid
-								+ "\narguments: " + arguments);
+								+ "\narguments: " + Arrays.toString(arguments));
 		} else {
 			containingDynamicScopeId = -1;
 		}

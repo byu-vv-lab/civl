@@ -50,7 +50,7 @@ public class ImmutableProcessState implements ProcessState {
 		 * The index of the next element that will be returned by the next call
 		 * to method {@link #next()}.
 		 */
-		private int i = array.length - 1;
+		private int i;
 
 		/* *************** Package-private Methods *************** */
 
@@ -62,6 +62,7 @@ public class ImmutableProcessState implements ProcessState {
 		 */
 		ReverseIterator(StackEntry[] array) {
 			this.array = array;
+			i = array.length - 1;
 		}
 
 		/* **************** Methods from Iterator **************** */

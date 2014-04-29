@@ -160,7 +160,7 @@ public class CommonFragment implements Fragment {
 	}
 
 	@Override
-	public void Print(PrintStream out) {
+	public void print(PrintStream out) {
 		out.println(this.toString());
 	}
 

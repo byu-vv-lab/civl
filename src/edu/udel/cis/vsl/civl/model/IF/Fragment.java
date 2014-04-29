@@ -78,7 +78,7 @@ public interface Fragment {
 	 * @param out
 	 *            the print stream
 	 */
-	void Print(PrintStream out);
+	void print(PrintStream out);
 
 	/**
 	 * Update the start location of this fragment

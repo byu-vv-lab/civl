@@ -17,7 +17,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
@@ -32,6 +31,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
+import edu.udel.cis.vsl.civl.util.Triple;
 
 /**
  * MPI2CIVLTransformer transforms an AST of an MPI program into an AST of an
@@ -91,8 +91,8 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	private static String GCOMM_CREATE = "CMPI_Gcomm_create";
 
 	/**
-	 * The name of the function to create a new MPI_Comm object in the final CIVL-C
-	 * program.
+	 * The name of the function to create a new MPI_Comm object in the final
+	 * CIVL-C program.
 	 */
 	private static String COMM_CREATE = "MPI_Comm_create";
 
@@ -130,6 +130,12 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	private static String MPI_INIT_NEW = "__MPI_Init";
 
 	/**
+	 * The name of the variable representing the status of an MPI process, which
+	 * is modified by MPI_Init() and MPI_Finalized().
+	 */
+	private static String MPI_STATUS = "__my_status";
+
+	/**
 	 * The name of the MPI procedure in the final CIVL-C program.
 	 */
 	private static String MPI_PROCESS = "MPI_Process";
@@ -141,10 +147,16 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	private static String NPROCS = "__NPROCS";
 
 	/**
-	 * The name of the input variable denoting the bound of the number of MPI
-	 * processes in the final CIVL-C program.
+	 * The name of the input variable denoting the upper bound of the number of
+	 * MPI processes in the final CIVL-C program.
 	 */
-	private static String NPROCS_BOUND = "__NPROCS_BOUND";
+	private static String NPROCS_UPPER_BOUND = "__NPROCS_UPPER_BOUND";
+
+	/**
+	 * The name of the input variable denoting the lower bound of the number of
+	 * MPI processes in the final CIVL-C program.
+	 */
+	private static String NPROCS_LOWER_BOUND = "__NPROCS_LOWER_BOUND";
 
 	/**
 	 * The name of the variable used to declare the array of references to all
@@ -185,9 +197,10 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 	/**
 	 * Creates a bound assumption node in the form of:
-	 * <code>$assume 0 < variable && variable <= upperBound</code>, where 0 is
-	 * an implicit lower bound. TODO: add lower bound as an input variable
+	 * <code>$assume lowerBound < variable && variable <= upperBound</code>.
 	 * 
+	 * @param lowerBound
+	 *            The lower bound of the variable.
 	 * @param variable
 	 *            The variable to be bounded.
 	 * @param upperBound
@@ -196,20 +209,21 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	 *         variable.
 	 * @throws SyntaxException
 	 */
-	private AssumeNode boundAssumption(String variable, String upperBound)
-			throws SyntaxException {
+	private AssumeNode boundAssumption(String lowerBound, String variable,
+			String upperBound) throws SyntaxException {
 		ExpressionNode variableExpression = nodeFactory
 				.newIdentifierExpressionNode(source,
 						nodeFactory.newIdentifierNode(source, variable));
 		ExpressionNode upperBoundExpression = nodeFactory
 				.newIdentifierExpressionNode(source,
 						nodeFactory.newIdentifierNode(source, upperBound));
-		IntegerConstantNode zero = nodeFactory.newIntegerConstantNode(source,
-				"0");
+		ExpressionNode lowerBoundExpression = nodeFactory
+				.newIdentifierExpressionNode(source,
+						nodeFactory.newIdentifierNode(source, lowerBound));
 		ExpressionNode lowerPart, upperPart;
 
 		lowerPart = nodeFactory.newOperatorNode(source, Operator.LT,
-				Arrays.asList(zero, variableExpression));
+				Arrays.asList(lowerBoundExpression, variableExpression));
 		variableExpression = variableExpression.copy();
 		upperPart = nodeFactory.newOperatorNode(source, Operator.LTE,
 				Arrays.asList(variableExpression, upperBoundExpression));
@@ -287,20 +301,18 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	 */
 	private VariableDeclarationNode gcommDeclaration() {
 		TypeNode gcommType;
-		List<ExpressionNode> gcommCreateArgs;// TODO uses Arrays.asList();
 		ExpressionNode gcommCreate;
 
 		gcommType = nodeFactory.newTypedefNameNode(
 				nodeFactory.newIdentifierNode(source, GCOMM_TYPE), null);
-		gcommCreateArgs = new ArrayList<>(2);
-		gcommCreateArgs.add(nodeFactory.newHereNode(source));
-		gcommCreateArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, NPROCS)));
-		gcommCreate = nodeFactory.newFunctionCallNode(
-				source,
-				nodeFactory.newIdentifierExpressionNode(source,
-						nodeFactory.newIdentifierNode(source, GCOMM_CREATE)),
-				gcommCreateArgs, null);
+		gcommCreate = nodeFactory
+				.newFunctionCallNode(source, nodeFactory
+						.newIdentifierExpressionNode(source, nodeFactory
+								.newIdentifierNode(source, GCOMM_CREATE)),
+						Arrays.asList(nodeFactory.newHereNode(source),
+								nodeFactory.newIdentifierExpressionNode(source,
+										nodeFactory.newIdentifierNode(source,
+												NPROCS))), null);
 		return nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, GCOMM_WORLD), gcommType,
 				gcommCreate);
@@ -308,16 +320,17 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 	/**
 	 * Creates the main function for the final program, which is: <br>
-	 * <code>void main(){</code><br>
-	 * <code>&nbsp;&nbsp;$proc procs[NPROCS];</code><br>
-	 * <code>&nbsp;&nbsp;for(int i = 0; i < NPROCS; i++){</code><br>
-	 * <code>&nbsp;&nbsp;&nbsp;&nbsp;procs[i] = $spawn MPI_Process(i);</code><br>
-	 * <code>&nbsp;&nbsp;}</code><br>
-	 * <code>&nbsp;&nbsp;for(int i = 0; i < NPROCS; i++){</code><br>
-	 * <code>&nbsp;&nbsp;&nbsp;&nbsp;$wait(procs[i]);</code><br>
-	 * <code>&nbsp;&nbsp;}</code><br>
-	 * <code>&nbsp;&nbsp;$gcomm_destroy(GCOMM_WORLD);</code><br>
-	 * <code>}</code><br>
+	 * 
+	 * <pre>
+	 * void main(){
+	 *   $proc procs[NPROCS]; 
+	 *   for(int i = 0; i < NPROCS; i++)
+	 *     procs[i] = $spawn MPI_Process(i);
+	 *   for(int i = 0; i < NPROCS; i++)
+	 *     $wait(procs[i]);
+	 *   $gcomm_destroy(GCOMM_WORLD);
+	 * }
+	 * </pre>
 	 * 
 	 * @return The function definition node representing the main function of
 	 *         the final program.
@@ -335,7 +348,6 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		StatementNode assign;
 		ForLoopNode forLoop;
 		CompoundStatementNode mainBody;
-		// LinkedList<VariableDeclarationNode> newFormalList;
 		SequenceNode<VariableDeclarationNode> formals;
 		FunctionTypeNode mainType;
 		FunctionDefinitionNode mainFunction;
@@ -397,7 +409,6 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		forLoop = nodeFactory.newForLoopNode(source, initializerNode,
 				loopCondition, incrementer, assign, null);
 		items.add(forLoop);
-
 		// second for loop;
 		initialList = new LinkedList<>();
 		initialList.add(nodeFactory.newVariableDeclarationNode(source,
@@ -421,7 +432,6 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		incrementer = nodeFactory.newOperatorNode(source,
 				Operator.POSTINCREMENT, operatorArgs);
 		callArgs = new ArrayList<>(1);
-
 		operatorArgs = new LinkedList<>();
 		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
 				nodeFactory.newIdentifierNode(source, PROCS)));
@@ -438,16 +448,10 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				loopCondition, incrementer,
 				nodeFactory.newExpressionStatementNode(waitProc), null);
 		items.add(forLoop);
-
 		// destroying GCOMM_WROLD;
 		items.add(gcommDestroy);
-
 		// constructing the function definition node.
 		mainBody = nodeFactory.newCompoundStatementNode(source, items);
-		// newFormalList = new LinkedList<>();
-		// newFormalList.add(nodeFactory.newVariableDeclarationNode(source,
-		// nodeFactory.newIdentifierNode(source, MPI_RANK),
-		// nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT)));
 		formals = nodeFactory.newSequenceNode(source,
 				"FormalParameterDeclarations",
 				new ArrayList<VariableDeclarationNode>());
@@ -465,45 +469,38 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	 * is a wrapper of the original MPI program with some additional features: <br>
 	 * 
 	 * <pre>
-	 * <code>void MPI_Process(){</code><br>
-	 * <code>&nbsp;&nbsp;$comm MPI_COMM_WORLD = $comm_create(...);</code><br>
-	 * <code>&nbsp;&nbsp;//SLIGHTLY-MODIFIED ORIGINAL PROGRAM;</code><br>
-	 * <code>&nbsp;&nbsp;int a, b, ...;</code><br>
-	 * <code>&nbsp;&nbsp;... function(){...}</code><br>
-	 * <code>&nbsp;&nbsp;...</code><br>
-	 * <code>&nbsp;&nbsp;... __main(){...} // renamed main() to __main()</code><br>
-	 * <code>&nbsp;&nbsp;....</code><br>
-	 * <code>&nbsp;&nbsp;//ORIGINAL PROGRAM ENDS HERE;</code><br>
-	 * <code>&nbsp;&nbsp;__main();</code><br>
-	 * <code>&nbsp;&nbsp;$comm_destroy(MPI_COMM_WORLD);</code><br>
-	 * <code>}</code>
+	 * void MPI_Process(){
+	 *   $comm MPI_COMM_WORLD = $comm_create(...);
+	 *   //SLIGHTLY-MODIFIED ORIGINAL PROGRAM;
+	 *   int a, b, ...;
+	 *   ... function(){...}
+	 *   ...
+	 *   ... __main(){...} // renamed main() to __main()
+	 *   ....
+	 *   //ORIGINAL PROGRAM ENDS HERE;
+	 *   __main();
+	 *   $comm_destroy(MPI_COMM_WORLD);
+	 * }
 	 * </pre>
 	 * 
 	 * @param root
 	 *            The root node of the AST of the original MPI program.
-	 * @param includedNodes
-	 *            The set of AST nodes that are parsed from header files. These
-	 *            nodes will be moved up to the higher scope (i.e., the file
-	 *            scope of the final AST). When invoking this function, this
-	 *            parameter should be an empty list and this function will
-	 *            update this list.
-	 * @param vars
-	 *            The list of variable declaration nodes that are the arguments
-	 *            of the original main function. These variables will be moved
-	 *            up to the higher scope (i.e., the file scope of the final AST)
-	 *            and become $input variables of the final AST. When invoking
-	 *            this function, this parameter should be an empty list and this
-	 *            function will update this list.
-	 * @return The function definition node of MPI_Process.
+	 * @return The function definition node of MPI_Process, the list of AST
+	 *         nodes that are parsed from header files and will be moved up to
+	 *         the higher scope (i.e., the file scope of the final AST), and the
+	 *         list of variable declaration nodes that are the arguments of the
+	 *         original main function which will be moved up to the higher scope
+	 *         (i.e., the file scope of the final AST) and become $input
+	 *         variables of the final AST.
 	 */
-	private FunctionDefinitionNode mpiProcess(SequenceNode<ASTNode> root,
-			List<ASTNode> includedNodes, List<VariableDeclarationNode> vars) {
-		List<BlockItemNode> items;// TODO uses Arrays.asList instead
+	private Triple<FunctionDefinitionNode, List<ASTNode>, List<VariableDeclarationNode>> mpiProcess(
+			SequenceNode<ASTNode> root) {
+		List<ASTNode> includedNodes = new ArrayList<>();
+		List<VariableDeclarationNode> vars = new ArrayList<>();
+		List<BlockItemNode> items;
 		int number;
 		ExpressionStatementNode callMain;
 		CompoundStatementNode mpiProcessBody;
-		List<VariableDeclarationNode> newFormalList;// TODO uses Arrays.asList
-													// instead
 		SequenceNode<VariableDeclarationNode> formals;
 		FunctionTypeNode mpiProcessType;
 		FunctionDefinitionNode mpiProcess;
@@ -518,7 +515,6 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 										nodeFactory.newIdentifierNode(source,
 												MPI_MAIN)),
 						new ArrayList<ExpressionNode>(), null));
-
 		// build MPI_Process() function:
 		items = new LinkedList<>();
 		number = root.numChildren();
@@ -529,10 +525,9 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 					.getSourceFile().getName();
 
 			root.removeChild(i);
-			if(sourceFile.equals("mpi.cvl")){
+			if (sourceFile.equals("mpi.cvl")) {
 				includedNodes.add(child);
-			}
-			else if (sourceFile.equals("stdio.cvl")) {
+			} else if (sourceFile.equals("stdio.cvl")) {
 				includedNodes.add(child);
 			} else if (sourceFile.endsWith(".h")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
@@ -541,6 +536,10 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 					if (sourceFile.equals("stdio.h")) {
 						// keep variable declaration nodes from stdio, i.e.,
 						// stdout, stdin, etc.
+						items.add(variableDeclaration);
+					} else if (variableDeclaration.getName().equals(MPI_STATUS)) {
+						// keep variable declaration node of __MPI_Status__
+						// __my_status = __UNINIT;
 						items.add(variableDeclaration);
 					} else if (!variableDeclaration.getName()
 							.equals(COMM_WORLD)) {
@@ -567,7 +566,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 					if (functionName.name().equals("main")) {
 						functionName.setName(MPI_MAIN);
-						processMainFunction(functionNode, vars);
+						vars.addAll(processMainFunction(functionNode));
 					}
 				}
 				items.add((BlockItemNode) child);
@@ -577,33 +576,36 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		items.add(commDestroy);
 		mpiProcessBody = nodeFactory.newCompoundStatementNode(root.getSource(),
 				items);
-		newFormalList = new LinkedList<>();
-		newFormalList.add(nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, MPI_RANK),
-				nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT)));
-		formals = nodeFactory.newSequenceNode(source,
-				"FormalParameterDeclarations", newFormalList);
+		formals = nodeFactory
+				.newSequenceNode(source, "FormalParameterDeclarations", Arrays
+						.asList(nodeFactory
+								.newVariableDeclarationNode(source, nodeFactory
+										.newIdentifierNode(source, MPI_RANK),
+										nodeFactory.newBasicTypeNode(source,
+												BasicTypeKind.INT))));
 		mpiProcessType = nodeFactory.newFunctionTypeNode(source,
 				nodeFactory.newVoidTypeNode(source), formals, true);
 		mpiProcess = nodeFactory.newFunctionDefinitionNode(source,
 				nodeFactory.newIdentifierNode(source, MPI_PROCESS),
 				mpiProcessType, null, mpiProcessBody);
-		return mpiProcess;
+		return new Triple<>(mpiProcess, includedNodes, vars);
 	}
 
 	/**
-	 * Creates the declaration node for the input variable <code>NPROCS</code>.
+	 * Declare a variable of a basic type with a specific name.
 	 * 
-	 * @return The declaration node of the input variable <code>NPROCS</code>.
+	 * @param type
+	 *            The kind of basic type.
+	 * @param name
+	 *            The name of the variable.
+	 * @return The variable declaration node.
 	 */
-	private VariableDeclarationNode nprocsBoundDeclaration() {
-		TypeNode nprocsBoundType = nodeFactory.newBasicTypeNode(source,
-				BasicTypeKind.INT);
+	private VariableDeclarationNode basicTypeVariableDeclaration(
+			BasicTypeKind type, String name) {
+		TypeNode typeNode = nodeFactory.newBasicTypeNode(source, type);
 
-		nprocsBoundType.setInputQualified(true);
 		return nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, NPROCS_BOUND),
-				nprocsBoundType);
+				nodeFactory.newIdentifierNode(source, name), typeNode);
 	}
 
 	/**
@@ -660,9 +662,8 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				List<ExpressionNode> arguments = new ArrayList<>(0);
 
 				functionExpression.getIdentifier().setName(MPI_INIT_NEW);
-				functionCall.setChild(1, nodeFactory.newSequenceNode(source,
-						"ActualParameterList", arguments));// TODO: add a setter
-															// for arguments.
+				functionCall.setArguments(nodeFactory.newSequenceNode(source,
+						"ActualParameterList", arguments));
 			}
 		}
 	}
@@ -676,16 +677,14 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	 * @param mainFunction
 	 *            The function definition node representing the original main
 	 *            function.
-	 * @param vars
-	 *            The list of variable declaration nodes that are the arguments
-	 *            of the original main function. These variables will be moved
-	 *            up to the higher scope (i.e., the file scope of the final AST)
-	 *            and become $input variables of the final AST. When invoking
-	 *            this function, this parameter should be an empty list and this
-	 *            function will update this list.
+	 * @return The list of variable declaration nodes that are the arguments of
+	 *         the original main function. These variables will be moved up to
+	 *         the higher scope (i.e., the file scope of the final AST) and
+	 *         become $input variables of the final AST.
 	 */
-	private void processMainFunction(FunctionDefinitionNode mainFunction,
-			List<VariableDeclarationNode> inputVars) {
+	private List<VariableDeclarationNode> processMainFunction(
+			FunctionDefinitionNode mainFunction) {
+		List<VariableDeclarationNode> inputVars = new ArrayList<>();
 		FunctionTypeNode functionType = mainFunction.getTypeNode();
 		SequenceNode<VariableDeclarationNode> parameters = functionType
 				.getParameters();
@@ -706,6 +705,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 					parameters.getSource(), "FormalParameterDeclarations",
 					newParameters));
 		}
+		return inputVars;
 	}
 
 	/* ********************* Methods From BaseTransformer ****************** */
@@ -714,54 +714,62 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	 * Transform an AST of a pure MPI program in C into an equivalent AST of
 	 * CIVL-C program.<br>
 	 * Given an MPI program:<br>
-	 * <code>#include &lt;mpi.h&gt;<br>
-	 * ...<br>
-	 * #include &lt;stdio.h&gt; <br>
-	 * int a, b, ...;<br>
-	 * ... function(){<br>
-	 * &nbsp;&nbsp;...<br>
-	 * }<br>
-	 * ...<br>
-	 * int main(){<br>
-	 * &nbsp;&nbsp;....<br>
-	 * }<br></code>
+	 * 
+	 * <pre>
+	 * #include &lt;mpi.h>
+	 * ...
+	 * #include &lt;stdio.h>
+	 * int a, b, ...;
+	 * ... function(){
+	 *   ...
+	 * }
+	 * ...
+	 * int main(){
+	 *   ....
+	 * }
+	 * </pre>
 	 * 
 	 * It is translated to the following program:<br>
-	 * <code>
-	 * #include &lt; mpi.h &gt; // all included files are moved above to the new file scope.<br>
-	 * ...<br>
-	 * #include &lt; stdio.h &gt;<br>
-	 * $input int argc;//optional, only necessary when the original main function has arguments.<br>
-	 * $input char** argv;//optional, only necessary when the original main function has arguments.<br>
-	 * $input int NPROCS;<br>
-	 * $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);<br>
-	 * <br>
-	 * void MPI_Process(int _rank){<br>
-	 * &nbsp;&nbsp;...<br>
-	 * }<br>
-	 * void main(){<br>
-	 * &nbsp;&nbsp;$proc procs[NPROCS];<br><br>
-	 * &nbsp;&nbsp;for(int i = 0; i < NPROCS; i++)<br>
-	 * &nbsp;&nbsp;&nbsp;&nbsp;procs[i] = $spawn MPI_Process(i);<br>
-	 * &nbsp;&nbsp;for(int i = 0; i < NPROCS; i++)<br>
-	 * &nbsp;&nbsp;&nbsp;&nbsp;$wait(procs[i]);<br>
-	 * &nbsp;&nbsp;$gcomm_destroy(GCOMM_WORLD);<br>
-	 * }</code> <br>
+	 * 
+	 * <pre>
+	 * #include &lt;mpi.h> // all included files are moved above to the new file scope.
+	 * ...
+	 * #include &lt;stdio.h>
+	 * $input int argc;//optional, only necessary when the original main function has arguments.
+	 * $input char** argv;//optional, only necessary when the original main function has arguments.
+	 * $input int NPROCS;
+	 * $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);
+	 * 
+	 * void MPI_Process(int _rank){
+	 *   ...
+	 * }
+	 * void main(){
+	 *   $proc procs[NPROCS];
+	 *   for(int i = 0; i < NPROCS; i++)
+	 *     procs[i] = $spawn MPI_Process(i);
+	 *   for(int i = 0; i < NPROCS; i++)
+	 *     $wait(procs[i]);
+	 *   $gcomm_destroy(GCOMM_WORLD);
+	 * }
+	 * </pre>
+	 * 
 	 * Whereas MPI_Process() is a wrapper of the original MPI program with some
 	 * special handling:<br>
-	 * <code>
-	 * void MPI_Process(){<br>
-	 * &nbsp;&nbsp;$comm MPI_COMM_WORLD = $comm_create(...);<br><br>
-	 * &nbsp;&nbsp;//SLIGHTLY-MODIFIED ORIGINAL PROGRAM;<br>
-	 * &nbsp;&nbsp;int a, b, ...;<br>
-	 * &nbsp;&nbsp;... function(){...}<br>
-	 * &nbsp;&nbsp;...<br>
-	 * &nbsp;&nbsp;... __main(){...} // renamed main() to __main()<br>
-	 * &nbsp;&nbsp;....<br>
-	 * &nbsp;&nbsp;//ORIGINAL PROGRAM ENDS HERE;<br>
-	 * &nbsp;&nbsp;__main();<br>
-	 * &nbsp;&nbsp;$comm_destroy(MPI_COMM_WORLD);<br>
-	 * }<br></code>
+	 * 
+	 * <pre>
+	 * void MPI_Process(){
+	 *   $comm MPI_COMM_WORLD = $comm_create(...);
+	 *   //SLIGHTLY-MODIFIED ORIGINAL PROGRAM;
+	 *   int a, b, ...;
+	 *   ... function(){...}
+	 *   ...
+	 *   ... __main(){...} // renamed main() to __main()
+	 *   ....
+	 *   //ORIGINAL PROGRAM ENDS HERE;
+	 *   __main();
+	 *   $comm_destroy(MPI_COMM_WORLD);
+	 * }
+	 * </pre>
 	 * 
 	 * @param ast
 	 *            The AST of the original MPI program in C.
@@ -777,12 +785,13 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		VariableDeclarationNode gcommWorld;
 		List<ASTNode> externalList;
 		VariableDeclarationNode nprocsVar;
-		VariableDeclarationNode nprocsBoundVar;
+		VariableDeclarationNode nprocsUpperBoundVar, nprocsLowerBoundVar;
 		SequenceNode<ASTNode> newRootNode;
 		List<ASTNode> includedNodes = new ArrayList<ASTNode>();
 		List<VariableDeclarationNode> mainParameters = new ArrayList<>();
 		int count;
 		AssumeNode nprocsAssumption;
+		Triple<FunctionDefinitionNode, List<ASTNode>, List<VariableDeclarationNode>> result;
 
 		this.source = root.getSource();// TODO needs a good source
 		assert this.astFactory == ast.getASTFactory();
@@ -792,17 +801,24 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		preprocessASTNode(root);
 		// declaring $input int NPROCS;
 		nprocsVar = this.nprocsDeclaration();
-		// declaring $input int NPROCS_BOUND;
-		nprocsBoundVar = this.nprocsBoundDeclaration();
-		// assuming 0 < NPROCS && NPROCS <= NPROCS_BOUND
+		// declaring $input int NPROCS_UPPER_BOUND;
+		nprocsUpperBoundVar = this.basicTypeVariableDeclaration(
+				BasicTypeKind.INT, NPROCS_UPPER_BOUND);
+		nprocsUpperBoundVar.getTypeNode().setInputQualified(true);
+		// declaring $input int NPROCS_LOWER_BOUND;
+		nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
+				BasicTypeKind.INT, NPROCS_LOWER_BOUND);
+		nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
+		// assuming NPROCS_LOWER_BOUND < NPROCS && NPROCS <= NPROCS_UPPER_BOUND
 		// TODO: think about code that can be reused for other transformers.
-		nprocsAssumption = this.boundAssumption(NPROCS, NPROCS_BOUND);
+		nprocsAssumption = this.boundAssumption(NPROCS_LOWER_BOUND, NPROCS,
+				NPROCS_UPPER_BOUND);
 		// declaring $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);
 		gcommWorld = this.gcommDeclaration();
-		// defining MPI_Process(_rank){...};
-		mpiProcess = this.mpiProcess((SequenceNode<ASTNode>) root,
-				includedNodes, mainParameters);// TODO make includedNodes and
-												// mainParameters return values.
+		result = this.mpiProcess((SequenceNode<ASTNode>) root);
+		mpiProcess = result.first;
+		includedNodes = result.second;
+		mainParameters = result.third;
 		// defining the main function;
 		mainFunction = mainFunction();
 		// the translated program is:
@@ -822,7 +838,8 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 			externalList.add(mainParameters.get(i));
 		}
 		externalList.add(nprocsVar);
-		externalList.add(nprocsBoundVar);
+		externalList.add(nprocsLowerBoundVar);
+		externalList.add(nprocsUpperBoundVar);
 		externalList.add(nprocsAssumption);
 		externalList.add(gcommWorld);
 		externalList.add(mpiProcess);

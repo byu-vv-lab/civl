@@ -57,7 +57,7 @@ public class MPIExecutor extends CommonExecutor {
 			StateFactory stateFactory, ErrorLog log, LibraryLoader loader,
 			PrintStream output, boolean enablePrintf, Evaluator evaluator) {
 		super(config, modelFactory, stateFactory, log, loader, output,
-				enablePrintf, evaluator);
+				System.err, enablePrintf, evaluator);
 		// this.mpiExecutor = (Libmpi) loader.getLibraryExecutor("mpi", this,
 		// this.output, this.enablePrintf, this.modelFactory);
 		rankExpression = ((MPIModelFactory) modelFactory).rankVariable();

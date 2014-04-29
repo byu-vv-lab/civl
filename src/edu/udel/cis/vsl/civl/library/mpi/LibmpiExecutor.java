@@ -35,9 +35,9 @@ public class LibmpiExecutor extends CommonLibraryExecutor implements
 
 	private MPIModelFactory mpiFactory;
 
-	public LibmpiExecutor(Executor primaryExecutor, PrintStream output,
+	public LibmpiExecutor(Executor primaryExecutor, PrintStream output, PrintStream err,
 			boolean enablePrintf, ModelFactory modelFactory) {
-		super(primaryExecutor, output, enablePrintf, modelFactory);
+		super(primaryExecutor, output, err, enablePrintf, modelFactory);
 		this.mpiFactory = (MPIModelFactory) modelFactory;
 	}
 

@@ -45,6 +45,8 @@ public abstract class Player {
 
 	protected PrintStream out;
 
+	protected PrintStream err;
+
 	protected String sessionName;
 
 	protected ModelFactory modelFactory;
@@ -108,13 +110,15 @@ public abstract class Player {
 	protected Preprocessor preprocessor;
 
 	public Player(GMCConfiguration config, Model model, PrintStream out,
-			Preprocessor preprocessor) throws CommandLineException {
+			PrintStream err, Preprocessor preprocessor)
+			throws CommandLineException {
 		SymbolicUniverse universe;
 
 		this.preprocessor = preprocessor;
 		this.config = config;
 		this.model = model;
 		this.out = out;
+		this.err = err;
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
@@ -124,6 +128,7 @@ public abstract class Player {
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.evaluator = new CommonEvaluator(config, modelFactory,
 				stateFactory, log);
+		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 		evaluator.setSolve(solve);
 		this.stateFactory.setEvaluator(evaluator);
 		this.libraryLoader = new CommonLibraryLoader();
@@ -138,7 +143,7 @@ public abstract class Player {
 		this.gui = (Boolean) config.getValueOrDefault(UserInterface.guiO);
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		this.executor = new CommonExecutor(config, modelFactory, stateFactory,
-				log, libraryLoader, out, this.enablePrintf, evaluator);
+				log, libraryLoader, out, err, this.enablePrintf, evaluator);
 		this.predicate = new StandardPredicate(log, universe, this.executor);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
@@ -156,7 +161,6 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.saveStatesO);
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
-		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 		if (this.scpPor1) {
 			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
 					false, showAmpleSet, this.showAmpleSetWtStates,

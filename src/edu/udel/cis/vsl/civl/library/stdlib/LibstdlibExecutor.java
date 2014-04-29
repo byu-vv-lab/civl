@@ -41,8 +41,8 @@ public class LibstdlibExecutor extends CommonLibraryExecutor implements
 	 *            True iff print is enabled, reflecting command line options.
 	 */
 	public LibstdlibExecutor(Executor primaryExecutor, PrintStream output,
-			boolean enablePrintf, ModelFactory modelFactory) {
-		super(primaryExecutor, output, enablePrintf, modelFactory);
+			PrintStream err, boolean enablePrintf, ModelFactory modelFactory) {
+		super(primaryExecutor, output, err, enablePrintf, modelFactory);
 	}
 
 	/* ************************ Methods from Library *********************** */

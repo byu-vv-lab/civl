@@ -142,6 +142,8 @@ public class CommonExecutor implements Executor {
 	 */
 	protected PrintStream output;
 
+	protected PrintStream err;
+
 	/** The factory used to produce and manipulate model states. */
 	protected StateFactory stateFactory;
 
@@ -169,36 +171,19 @@ public class CommonExecutor implements Executor {
 	 */
 	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log, LibraryLoader loader,
-			PrintStream output, boolean enablePrintf, Evaluator evaluator) {
+			PrintStream output, PrintStream err, boolean enablePrintf,
+			Evaluator evaluator) {
 		this.universe = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
 		this.evaluator = evaluator;
 		this.loader = loader;
 		this.output = output;
+		this.err = err;
 		this.enablePrintf = enablePrintf;
 		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
-				"civlc", this, this.output, this.enablePrintf,
+				"civlc", this, this.output, this.err, this.enablePrintf,
 				this.modelFactory);
-	}
-
-	/**
-	 * Create a new executor with null library loader.
-	 * 
-	 * @param model
-	 *            The model being executed.
-	 * @param universe
-	 *            A symbolic universe for creating new values.
-	 * @param stateFactory
-	 *            A state factory. Used by the Executor to create new processes.
-	 * @param prover
-	 *            A theorem prover for checking assertions.
-	 */
-	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactory stateFactory, ErrorLog log, PrintStream output,
-			boolean enablePrintf, Evaluator evaluator) {
-		this(config, modelFactory, stateFactory, log, null, output,
-				enablePrintf, evaluator);
 	}
 
 	/* ************************** Private methods ************************** */
@@ -326,7 +311,7 @@ public class CommonExecutor implements Executor {
 			// TODO: optimize this. store libraryExecutor in SystemFunction?
 			LibraryExecutor executor = loader.getLibraryExecutor(
 					((SystemFunction) statement.function()).getLibrary(), this,
-					output, this.enablePrintf, this.modelFactory);
+					output, this.err, this.enablePrintf, this.modelFactory);
 
 			state = executor.execute(state, pid, statement);
 		} else {
@@ -661,7 +646,7 @@ public class CommonExecutor implements Executor {
 			if (stdioExecutor == null)
 				this.stdioExecutor = (LibstdioExecutor) loader
 						.getLibraryExecutor("stdio", this, this.output,
-								this.enablePrintf, this.modelFactory);
+								this.err, this.enablePrintf, this.modelFactory);
 			return stdioExecutor;
 		default:
 			throw new CIVLInternalException("Unknown library: " + library,

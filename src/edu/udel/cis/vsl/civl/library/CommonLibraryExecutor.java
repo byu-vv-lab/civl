@@ -55,7 +55,9 @@ public abstract class CommonLibraryExecutor extends Library implements
 	/**
 	 * The output stream to be used for printing.
 	 */
-	protected PrintStream output = System.out;
+	protected PrintStream output;
+
+	protected PrintStream err;
 
 	/**
 	 * The primary executor of the system.
@@ -87,13 +89,15 @@ public abstract class CommonLibraryExecutor extends Library implements
 	 *            The model factory of the system.
 	 */
 	protected CommonLibraryExecutor(Executor primaryExecutor,
-			PrintStream output, boolean enablePrintf, ModelFactory modelFactory) {
+			PrintStream output, PrintStream err, boolean enablePrintf,
+			ModelFactory modelFactory) {
 		super(primaryExecutor.evaluator().universe());
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.stateFactory = evaluator.stateFactory();
 		this.enablePrintf = enablePrintf;
 		this.output = output;
+		this.err = err;
 		this.modelFactory = modelFactory;
 		this.model = modelFactory.model();
 	}

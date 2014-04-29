@@ -77,8 +77,8 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	 *            The model factory of the system.
 	 */
 	public LibcivlcExecutor(Executor primaryExecutor, PrintStream output,
-			boolean enablePrintf, ModelFactory modelFactory) {
-		super(primaryExecutor, output, enablePrintf, modelFactory);
+			PrintStream err, boolean enablePrintf, ModelFactory modelFactory) {
+		super(primaryExecutor, output, err, enablePrintf, modelFactory);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -1646,6 +1646,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 					state = state.setPathCondition(pathCondition);
 					reasoner = universe.reasoner(pathCondition);
 					array = universe.emptyArray(elementType);
+					break;
 				}
 				case OFFSET: {
 					// either size is zero or size is 1 and offset is 0
