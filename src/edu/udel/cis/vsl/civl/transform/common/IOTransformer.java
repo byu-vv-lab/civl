@@ -101,11 +101,14 @@ public class IOTransformer extends BaseTransformer {
 	private static String CIVL_FILE_MODE_WP = "CIVL_FILE_MODE_WP";// w+
 	private static String CIVL_FILE_MODE_WPX = "CIVL_FILE_MODE_WPX";// w+x
 	private static String CIVL_FILE_MODE_AP = "CIVL_FILE_MODE_AP";// a+
-	private static String CIVL_FILE_MODE_RPB = "CIVL_FILE_MODE_RPB";// r+b or rb+
-	private static String CIVL_FILE_MODE_WPB = "CIVL_FILE_MODE_WPB";// w+b or wb+
+	private static String CIVL_FILE_MODE_RPB = "CIVL_FILE_MODE_RPB";// r+b or
+																	// rb+
+	private static String CIVL_FILE_MODE_WPB = "CIVL_FILE_MODE_WPB";// w+b or
+																	// wb+
 	private static String CIVL_FILE_MODE_WPBX = "CIVL_FILE_MODE_WPBX";// w+bx or
 																		// wb+x
-	private static String CIVL_FILE_MODE_APB = "CIVL_FILE_MODE_APB";// a+b or ab+
+	private static String CIVL_FILE_MODE_APB = "CIVL_FILE_MODE_APB";// a+b or
+																	// ab+
 
 	/**
 	 * The string representation of the 16 modes of opening of a file in C.
@@ -175,10 +178,8 @@ public class IOTransformer extends BaseTransformer {
 		super(IOTransformer.CODE, IOTransformer.LONG_NAME,
 				IOTransformer.SHORT_DESCRIPTION, astFactory);
 	}
-	
-	/* *************************** Private Methods ************************* */
 
-	
+	/* *************************** Private Methods ************************* */
 
 	private void processFreeCall(ASTNode node) throws SyntaxException {
 		int numChildren = node.numChildren();
@@ -455,9 +456,9 @@ public class IOTransformer extends BaseTransformer {
 		functionCall.setChild(1, nodeFactory.newSequenceNode(source,
 				"ActualParameterList", arguments));
 	}
-	
+
 	/* ********************* Methods From BaseTransformer ****************** */
-	
+
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
 		ASTNode rootNode = unit.getRootNode();

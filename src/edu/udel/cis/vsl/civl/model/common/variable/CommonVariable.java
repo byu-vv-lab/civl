@@ -158,6 +158,9 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		if (isInput) {
 			result += "$input ";
 		}
+		if(isOutput){
+			result += "$output ";
+		}
 		result += name + " : " + type;
 		return result;
 	}

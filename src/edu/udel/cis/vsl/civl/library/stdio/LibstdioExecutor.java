@@ -292,8 +292,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 *            True iff print is enabled, reflecting command line options.
 	 */
 	public LibstdioExecutor(Executor primaryExecutor, PrintStream output,
-			PrintStream err, boolean enablePrintf, ModelFactory modelFactory) {
-		super(primaryExecutor, output, err, enablePrintf, modelFactory);
+			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
+			ModelFactory modelFactory) {
+		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
+				modelFactory);
 		Model model = modelFactory.model();
 
 		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe

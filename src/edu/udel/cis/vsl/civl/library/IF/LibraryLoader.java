@@ -20,7 +20,7 @@ public interface LibraryLoader {
 	 */
 	LibraryExecutor getLibraryExecutor(String name, Executor primaryExecutor,
 			PrintStream output, PrintStream err, boolean enablePrintf,
-			ModelFactory modelFacotry);
+			boolean statelessPrintf, ModelFactory modelFacotry);
 
 	/**
 	 * Gets the library enabler with the given name.

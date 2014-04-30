@@ -37,6 +37,9 @@ import edu.udel.cis.vsl.civl.util.Triple;
  * MPI2CIVLTransformer transforms an AST of an MPI program into an AST of an
  * equivalent CIVL-C program. See {@linkplain #transform(AST)}.
  * 
+ * TODO: translate MPI_Init() to __MPI_Init(MPI_COMM_WORLD); TODO: translate
+ * MPI_Finalize() to __MPI_Finalize(MPI_COMM_WORLD);
+ * 
  * @author Manchun Zheng (zmanchun)
  * 
  */
@@ -130,6 +133,17 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	private static String MPI_INIT_NEW = "__MPI_Init";
 
 	/**
+	 * The name of the function MPI_Init in the original MPI program.
+	 */
+	private static String MPI_FINALIZE = "MPI_Finalize";
+
+	/**
+	 * The name of the function translating MPI_Init in the final CIVL-C
+	 * program.
+	 */
+	private static String MPI_FINALIZE_NEW = "__MPI_Finalize";
+
+	/**
 	 * The name of the variable representing the status of an MPI process, which
 	 * is modified by MPI_Init() and MPI_Finalized().
 	 */
@@ -211,15 +225,11 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	 */
 	private AssumeNode boundAssumption(String lowerBound, String variable,
 			String upperBound) throws SyntaxException {
-		ExpressionNode variableExpression = nodeFactory
-				.newIdentifierExpressionNode(source,
-						nodeFactory.newIdentifierNode(source, variable));
-		ExpressionNode upperBoundExpression = nodeFactory
-				.newIdentifierExpressionNode(source,
-						nodeFactory.newIdentifierNode(source, upperBound));
-		ExpressionNode lowerBoundExpression = nodeFactory
-				.newIdentifierExpressionNode(source,
-						nodeFactory.newIdentifierNode(source, lowerBound));
+		ExpressionNode variableExpression = this.identifierExpression(variable);
+		ExpressionNode upperBoundExpression = this
+				.identifierExpression(upperBound);
+		ExpressionNode lowerBoundExpression = this
+				.identifierExpression(lowerBound);
 		ExpressionNode lowerPart, upperPart;
 
 		lowerPart = nodeFactory.newOperatorNode(source, Operator.LT,
@@ -251,15 +261,10 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				nodeFactory.newIdentifierNode(source, COMM_TYPE), null);
 		commCreateArgs = new ArrayList<>(3);
 		commCreateArgs.add(nodeFactory.newHereNode(source));
-		commCreateArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, GCOMM_WORLD)));
-		commCreateArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, MPI_RANK)));
-		commCreate = nodeFactory.newFunctionCallNode(
-				source,
-				nodeFactory.newIdentifierExpressionNode(source,
-						nodeFactory.newIdentifierNode(source, COMM_CREATE)),
-				commCreateArgs, null);
+		commCreateArgs.add(this.identifierExpression(GCOMM_WORLD));
+		commCreateArgs.add(this.identifierExpression(MPI_RANK));
+		commCreate = nodeFactory.newFunctionCallNode(source,
+				this.identifierExpression(COMM_CREATE), commCreateArgs, null);
 		return nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, COMM_WORLD), commType,
 				commCreate);
@@ -280,15 +285,12 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	 *         the specified communicator.
 	 */
 	private ExpressionStatementNode commDestroy(String destroy, String commName) {
-		IdentifierExpressionNode function = nodeFactory
-				.newIdentifierExpressionNode(source,
-						nodeFactory.newIdentifierNode(source, destroy));
-		List<ExpressionNode> arguments = new ArrayList<>(1);
+		ExpressionNode function = this.identifierExpression(destroy);
 
-		arguments.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, commName)));
 		return nodeFactory.newExpressionStatementNode(nodeFactory
-				.newFunctionCallNode(source, function, arguments, null));
+				.newFunctionCallNode(source, function,
+						Arrays.asList(this.identifierExpression(commName)),
+						null));
 	}
 
 	/**
@@ -305,14 +307,11 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 		gcommType = nodeFactory.newTypedefNameNode(
 				nodeFactory.newIdentifierNode(source, GCOMM_TYPE), null);
-		gcommCreate = nodeFactory
-				.newFunctionCallNode(source, nodeFactory
-						.newIdentifierExpressionNode(source, nodeFactory
-								.newIdentifierNode(source, GCOMM_CREATE)),
-						Arrays.asList(nodeFactory.newHereNode(source),
-								nodeFactory.newIdentifierExpressionNode(source,
-										nodeFactory.newIdentifierNode(source,
-												NPROCS))), null);
+		gcommCreate = nodeFactory.newFunctionCallNode(
+				source,
+				this.identifierExpression(GCOMM_CREATE),
+				Arrays.asList(nodeFactory.newHereNode(source),
+						this.identifierExpression(NPROCS)), null);
 		return nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, GCOMM_WORLD), gcommType,
 				gcommCreate);
@@ -342,9 +341,9 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		VariableDeclarationNode procsVar;
 		List<VariableDeclarationNode> initialList;
 		ForLoopInitializerNode initializerNode;
-		List<ExpressionNode> operatorArgs;
+		// List<ExpressionNode> operatorArgs;
 		ExpressionNode loopCondition, incrementer, spawnProc, waitProc, leftHandSide;
-		List<ExpressionNode> callArgs;
+		// List<ExpressionNode> callArgs;
 		StatementNode assign;
 		ForLoopNode forLoop;
 		CompoundStatementNode mainBody;
@@ -359,8 +358,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				.newArrayTypeNode(source,
 						nodeFactory.newTypedefNameNode(nodeFactory
 								.newIdentifierNode(source, PROC_TYPE), null),
-						nodeFactory.newIdentifierExpressionNode(source,
-								nodeFactory.newIdentifierNode(source, NPROCS)));
+						this.identifierExpression(NPROCS));
 		procsVar = nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, PROCS), procsType);
 		items.add(procsVar);
@@ -372,40 +370,27 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				nodeFactory.newIntegerConstantNode(source, "0")));
 		initializerNode = nodeFactory.newForLoopInitializerNode(source,
 				initialList);
-		operatorArgs = new LinkedList<>();
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, "i")));
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, NPROCS)));
-
-		loopCondition = nodeFactory.newOperatorNode(source, Operator.LT,
-				operatorArgs);
-		operatorArgs = new LinkedList<>();
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, "i")));
-
+		loopCondition = nodeFactory.newOperatorNode(
+				source,
+				Operator.LT,
+				Arrays.asList(this.identifierExpression("i"),
+						this.identifierExpression(NPROCS)));
 		incrementer = nodeFactory.newOperatorNode(source,
-				Operator.POSTINCREMENT, operatorArgs);
-		callArgs = new ArrayList<>(1);
-		callArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, "i")));
-		spawnProc = nodeFactory.newSpawnNode(source, nodeFactory
-				.newFunctionCallNode(source, nodeFactory
-						.newIdentifierExpressionNode(source, nodeFactory
-								.newIdentifierNode(source, MPI_PROCESS)),
-						callArgs, null));
-		operatorArgs = new LinkedList<>();
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, PROCS)));
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, "i")));
-		leftHandSide = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
-				operatorArgs);
-		operatorArgs = new LinkedList<>();
-		operatorArgs.add(leftHandSide);
-		operatorArgs.add(spawnProc);
+				Operator.POSTINCREMENT,
+				Arrays.asList(this.identifierExpression("i")));
+		spawnProc = nodeFactory.newSpawnNode(
+				source,
+				nodeFactory.newFunctionCallNode(source,
+						this.identifierExpression(MPI_PROCESS),
+						Arrays.asList(this.identifierExpression("i")), null));
+		leftHandSide = nodeFactory.newOperatorNode(
+				source,
+				Operator.SUBSCRIPT,
+				Arrays.asList(this.identifierExpression(PROCS),
+						this.identifierExpression("i")));
 		assign = nodeFactory.newExpressionStatementNode(nodeFactory
-				.newOperatorNode(source, Operator.ASSIGN, operatorArgs));
+				.newOperatorNode(source, Operator.ASSIGN,
+						Arrays.asList(leftHandSide, spawnProc)));
 		forLoop = nodeFactory.newForLoopNode(source, initializerNode,
 				loopCondition, incrementer, assign, null);
 		items.add(forLoop);
@@ -417,33 +402,21 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				nodeFactory.newIntegerConstantNode(source, "0")));
 		initializerNode = nodeFactory.newForLoopInitializerNode(source,
 				initialList);
-		operatorArgs = new LinkedList<>();
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, "i")));
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, NPROCS)));
-
-		loopCondition = nodeFactory.newOperatorNode(source, Operator.LT,
-				operatorArgs);
-		operatorArgs = new LinkedList<>();
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, "i")));
-
-		incrementer = nodeFactory.newOperatorNode(source,
-				Operator.POSTINCREMENT, operatorArgs);
-		callArgs = new ArrayList<>(1);
-		operatorArgs = new LinkedList<>();
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, PROCS)));
-		operatorArgs.add(nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, "i")));
-		callArgs.add(nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
-				operatorArgs));
-		waitProc = nodeFactory.newFunctionCallNode(
+		loopCondition = nodeFactory.newOperatorNode(
 				source,
-				nodeFactory.newIdentifierExpressionNode(source,
-						nodeFactory.newIdentifierNode(source, WAIT)), callArgs,
-				null);
+				Operator.LT,
+				Arrays.asList(this.identifierExpression("i"),
+						this.identifierExpression(NPROCS)));
+		incrementer = nodeFactory.newOperatorNode(source,
+				Operator.POSTINCREMENT,
+				Arrays.asList(this.identifierExpression("i")));
+		waitProc = nodeFactory.newFunctionCallNode(source, this
+				.identifierExpression(WAIT), Arrays
+				.asList((ExpressionNode) nodeFactory.newOperatorNode(
+						source,
+						Operator.SUBSCRIPT,
+						Arrays.asList(this.identifierExpression(PROCS),
+								this.identifierExpression("i")))), null);
 		forLoop = nodeFactory.newForLoopNode(source, initializerNode,
 				loopCondition, incrementer,
 				nodeFactory.newExpressionStatementNode(waitProc), null);
@@ -510,10 +483,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 		callMain = nodeFactory.newExpressionStatementNode(nodeFactory
 				.newFunctionCallNode(source,
-						nodeFactory
-								.newIdentifierExpressionNode(source,
-										nodeFactory.newIdentifierNode(source,
-												MPI_MAIN)),
+						this.identifierExpression(MPI_MAIN),
 						new ArrayList<ExpressionNode>(), null));
 		// build MPI_Process() function:
 		items = new LinkedList<>();
@@ -526,7 +496,17 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 			root.removeChild(i);
 			if (sourceFile.equals("mpi.cvl")) {
-				includedNodes.add(child);
+				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
+					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
+
+					if (variableDeclaration.getName().equals(MPI_STATUS))
+						// keep variable declaration node of __MPI_Status__
+						// __my_status = __UNINIT;
+						items.add(variableDeclaration);
+					else
+						includedNodes.add(child);
+				} else
+					includedNodes.add(child);
 			} else if (sourceFile.equals("stdio.cvl")) {
 				includedNodes.add(child);
 			} else if (sourceFile.endsWith(".h")) {
@@ -536,10 +516,6 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 					if (sourceFile.equals("stdio.h")) {
 						// keep variable declaration nodes from stdio, i.e.,
 						// stdout, stdin, etc.
-						items.add(variableDeclaration);
-					} else if (variableDeclaration.getName().equals(MPI_STATUS)) {
-						// keep variable declaration node of __MPI_Status__
-						// __my_status = __UNINIT;
 						items.add(variableDeclaration);
 					} else if (!variableDeclaration.getName()
 							.equals(COMM_WORLD)) {
@@ -648,8 +624,10 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	}
 
 	/**
+	 * 
 	 * Translates an <code>MPI_Init(...)</code> function call into
-	 * <code>__MPI_Init()</code>.
+	 * <code>__MPI_Init(MPI_COMM_WORLD)</code>.
+	 * 
 	 * 
 	 * @param functionCall
 	 */
@@ -657,15 +635,38 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		if (functionCall.getFunction().expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
 			IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
 					.getFunction();
+			String functionName = functionExpression.getIdentifier().name();
 
-			if (functionExpression.getIdentifier().name().equals(MPI_INIT)) {
-				List<ExpressionNode> arguments = new ArrayList<>(0);
+			if (functionName.equals(MPI_INIT)) {
+				ExpressionNode addressOf = nodeFactory.newOperatorNode(source,
+						Operator.ADDRESSOF,
+						Arrays.asList(this.identifierExpression(COMM_WORLD)));
 
 				functionExpression.getIdentifier().setName(MPI_INIT_NEW);
 				functionCall.setArguments(nodeFactory.newSequenceNode(source,
-						"ActualParameterList", arguments));
+						"ActualParameterList", Arrays.asList(addressOf)));
+			} else if (functionName.equals(MPI_FINALIZE)) {
+				ExpressionNode addressOf = nodeFactory.newOperatorNode(source,
+						Operator.ADDRESSOF,
+						Arrays.asList(this.identifierExpression(COMM_WORLD)));
+
+				functionExpression.getIdentifier().setName(MPI_FINALIZE_NEW);
+				functionCall.setArguments(nodeFactory.newSequenceNode(source,
+						"ActualParameterList", Arrays.asList(addressOf)));
 			}
 		}
+	}
+
+	/**
+	 * Creates an identifier expression node with a given name.
+	 * 
+	 * @param name
+	 *            The name of the identifier.
+	 * @return
+	 */
+	private ExpressionNode identifierExpression(String name) {
+		return nodeFactory.newIdentifierExpressionNode(source,
+				nodeFactory.newIdentifierNode(source, name));
 	}
 
 	/**

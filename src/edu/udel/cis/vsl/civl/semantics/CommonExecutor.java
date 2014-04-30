@@ -111,6 +111,11 @@ public class CommonExecutor implements Executor {
 	protected boolean enablePrintf;
 
 	/**
+	 * Prevent printf from modifying the file system. False by default.
+	 */
+	protected boolean statelessPrintf;
+
+	/**
 	 * The unique enabler used in the system. Used in this class to evaluate the
 	 * guard of a statement.
 	 */
@@ -172,7 +177,7 @@ public class CommonExecutor implements Executor {
 	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log, LibraryLoader loader,
 			PrintStream output, PrintStream err, boolean enablePrintf,
-			Evaluator evaluator) {
+			boolean statelessPrintf, Evaluator evaluator) {
 		this.universe = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
@@ -181,9 +186,10 @@ public class CommonExecutor implements Executor {
 		this.output = output;
 		this.err = err;
 		this.enablePrintf = enablePrintf;
+		this.statelessPrintf = statelessPrintf;
 		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
 				"civlc", this, this.output, this.err, this.enablePrintf,
-				this.modelFactory);
+				this.statelessPrintf, this.modelFactory);
 	}
 
 	/* ************************** Private methods ************************** */
@@ -311,7 +317,8 @@ public class CommonExecutor implements Executor {
 			// TODO: optimize this. store libraryExecutor in SystemFunction?
 			LibraryExecutor executor = loader.getLibraryExecutor(
 					((SystemFunction) statement.function()).getLibrary(), this,
-					output, this.err, this.enablePrintf, this.modelFactory);
+					output, this.err, this.enablePrintf, this.statelessPrintf,
+					this.modelFactory);
 
 			state = executor.execute(state, pid, statement);
 		} else {
@@ -646,7 +653,8 @@ public class CommonExecutor implements Executor {
 			if (stdioExecutor == null)
 				this.stdioExecutor = (LibstdioExecutor) loader
 						.getLibraryExecutor("stdio", this, this.output,
-								this.err, this.enablePrintf, this.modelFactory);
+								this.err, this.enablePrintf,
+								this.statelessPrintf, this.modelFactory);
 			return stdioExecutor;
 		default:
 			throw new CIVLInternalException("Unknown library: " + library,

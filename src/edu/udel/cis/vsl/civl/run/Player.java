@@ -109,6 +109,8 @@ public abstract class Player {
 
 	protected Preprocessor preprocessor;
 
+	protected boolean statelessPrintf;
+
 	public Player(GMCConfiguration config, Model model, PrintStream out,
 			PrintStream err, Preprocessor preprocessor)
 			throws CommandLineException {
@@ -136,6 +138,8 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.errorBoundO));
 		this.enablePrintf = (Boolean) config
 				.getValueOrDefault(UserInterface.enablePrintfO);
+		this.statelessPrintf = (Boolean) config
+				.getValueOrDefault(UserInterface.statelessPrintfO);
 		this.showAmpleSet = (Boolean) config
 				.getValueOrDefault(UserInterface.showAmpleSetO);
 		this.showAmpleSetWtStates = (Boolean) config
@@ -143,7 +147,8 @@ public abstract class Player {
 		this.gui = (Boolean) config.getValueOrDefault(UserInterface.guiO);
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		this.executor = new CommonExecutor(config, modelFactory, stateFactory,
-				log, libraryLoader, out, err, this.enablePrintf, evaluator);
+				log, libraryLoader, out, err, this.enablePrintf,
+				this.statelessPrintf, evaluator);
 		this.predicate = new StandardPredicate(log, universe, this.executor);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);

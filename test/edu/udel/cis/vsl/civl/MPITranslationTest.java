@@ -27,12 +27,12 @@ public class MPITranslationTest {
 
 	@Test
 	public void ring1() {
-		assertTrue(ui.run("verify", filename("ring1.c"), "-input__NPROCS=2", "-showTransitions", "-showModel"));
+		assertTrue(ui.run("verify", filename("ring1.c"), "-input__NPROCS=5", "-showAmpleSetWtStates", "-showModel"));
 	}
 	
 	@Test
 	public void reduce() {
-		assertTrue(ui.run("verify", filename("reduce.c"), "-input__NPROCS=7", "-showTransitions", "-showModel"));
+		assertTrue(ui.run("verify", filename("reduce.c"), "-input__NPROCS=7"));
 	}
 
 	@Ignore

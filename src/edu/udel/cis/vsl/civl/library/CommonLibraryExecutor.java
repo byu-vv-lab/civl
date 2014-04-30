@@ -73,6 +73,8 @@ public abstract class CommonLibraryExecutor extends Library implements
 	 * The static model of the program.
 	 */
 	protected Model model;
+	
+	protected boolean statelessPrintf;
 
 	/* **************************** Constructors *************************** */
 
@@ -89,13 +91,14 @@ public abstract class CommonLibraryExecutor extends Library implements
 	 *            The model factory of the system.
 	 */
 	protected CommonLibraryExecutor(Executor primaryExecutor,
-			PrintStream output, PrintStream err, boolean enablePrintf,
+			PrintStream output, PrintStream err, boolean enablePrintf, boolean statelessPrintf,
 			ModelFactory modelFactory) {
 		super(primaryExecutor.evaluator().universe());
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.stateFactory = evaluator.stateFactory();
 		this.enablePrintf = enablePrintf;
+		this.statelessPrintf = statelessPrintf;
 		this.output = output;
 		this.err = err;
 		this.modelFactory = modelFactory;

@@ -160,6 +160,10 @@ public class UserInterface {
 	public final static Option solveO = Option.newScalarOption("solve",
 			BOOLEAN, "try to solve for concrete counterexample", false);
 
+	public final static Option statelessPrintfO = Option.newScalarOption(
+			"statelessPrintf", BOOLEAN,
+			"prevent printf function modifying the file system", false);
+
 	public final static Option sysIncludePathO = Option.newScalarOption(
 			"sysIncludePath", STRING, "set the system include path", null);
 
@@ -206,7 +210,7 @@ public class UserInterface {
 				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO, porO,
 				saveStatesO, simplifyO, solveO, enablePrintfO, mpiO,
-				showAmpleSetO, showAmpleSetWtStatesO, guiO);
+				showAmpleSetO, showAmpleSetWtStatesO, statelessPrintfO, guiO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -684,7 +688,7 @@ public class UserInterface {
 		parser.parse(newConfig, traceFile); // gets free args verify filename
 		setToDefault(newConfig, Arrays.asList(showModelO, verboseO, debugO,
 				showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, enablePrintfO));
+				showProverQueriesO, enablePrintfO, statelessPrintfO));
 		newConfig.setScalarValue(showTransitionsO, true);
 		newConfig.read(config);
 		modelAndPreprocessor = extractModel(out, newConfig, sourceFilename,

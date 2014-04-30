@@ -77,8 +77,10 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	 *            The model factory of the system.
 	 */
 	public LibcivlcExecutor(Executor primaryExecutor, PrintStream output,
-			PrintStream err, boolean enablePrintf, ModelFactory modelFactory) {
-		super(primaryExecutor, output, err, enablePrintf, modelFactory);
+			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
+			ModelFactory modelFactory) {
+		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
+				modelFactory);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
