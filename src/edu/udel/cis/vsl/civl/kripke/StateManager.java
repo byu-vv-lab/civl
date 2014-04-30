@@ -132,8 +132,14 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	private int maxCanonicId = -1;
 
+	/**
+	 * True iff gui mode is enabled.
+	 */
 	private boolean guiMode = false;
 
+	/**
+	 * The compound transition established by the current nextStep call.
+	 */
 	private CompoundTransition compoundTransition;
 
 	/* ***************************** Constructor *************************** */
@@ -701,7 +707,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		}
 	}
 
-	/*********************** Methods from StateManagerIF *********************/
+	/* ********************* Methods from StateManagerIF ******************* */
 
 	@Override
 	public int getDepth(State state) {
@@ -813,7 +819,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		state.setSeen(value);
 	}
 
-	/************************** Other Public Methods *************************/
+	/* ************************ Other Public Methods *********************** */
 
 	/**
 	 * 
