@@ -27,7 +27,7 @@ public class MPITranslationTest {
 
 	@Test
 	public void ring1() {
-		assertTrue(ui.run("verify", filename("ring1.c"), "-input__NPROCS=5", "-showAmpleSetWtStates", "-showModel"));
+		assertTrue(ui.run("verify", filename("ring1.c"), "-input__NPROCS=5"));
 	}
 	
 	@Test
