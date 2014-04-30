@@ -20,14 +20,10 @@ import edu.udel.cis.vsl.abc.ABC.Language;
 import edu.udel.cis.vsl.abc.ABCException;
 import edu.udel.cis.vsl.abc.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.Activator;
-import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.Transform;
-import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
-import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 import edu.udel.cis.vsl.civl.CIVL;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -40,11 +36,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelCombiner;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
-import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
-import edu.udel.cis.vsl.civl.transform.common.MPI2CIVLTransformer;
-import edu.udel.cis.vsl.civl.transform.common.OmpPragmaTransformer;
-import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
+import edu.udel.cis.vsl.civl.transform.CIVLTransform;
 import edu.udel.cis.vsl.civl.transition.CompoundTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.util.Pair;
@@ -333,80 +325,32 @@ public class UserInterface {
 		if (isC && headers.contains("mpi.h"))
 			hasMpi = true;
 		// always apply general transformation.
-		if (!Transform.getCodes().contains(GeneralTransformer.CODE))
-			Transform.addTransform(new TransformRecord(GeneralTransformer.CODE,
-					GeneralTransformer.LONG_NAME,
-					GeneralTransformer.SHORT_DESCRIPTION) {
-				@Override
-				public Transformer create(ASTFactory astFactory) {
-					return new GeneralTransformer(astFactory);
-				}
-			});
 		if (!hasMpi) {
-			program.applyTransformer(GeneralTransformer.CODE);
+			CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL);
 		}
 		if (hasStdio) {
-			if (!Transform.getCodes().contains(IOTransformer.CODE))
-				Transform.addTransform(new TransformRecord(IOTransformer.CODE,
-						IOTransformer.LONG_NAME,
-						IOTransformer.SHORT_DESCRIPTION) {
-					@Override
-					public Transformer create(ASTFactory astFactory) {
-						return new IOTransformer(astFactory);
-					}
-				});
 			if (verboseOrDebug)
 				this.out.println("Apply IO transformer...");
-			program.applyTransformer(IOTransformer.CODE);
+			CIVLTransform.applyTransformer(program, CIVLTransform.IO);
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
-
 		}
 		if (hasOmp) {
-			if (!Transform.getCodes().contains(OpenMPTransformer.CODE))
-				Transform.addTransform(new TransformRecord(
-						OpenMPTransformer.CODE, OpenMPTransformer.LONG_NAME,
-						OpenMPTransformer.SHORT_DESCRIPTION) {
-					@Override
-					public Transformer create(ASTFactory astFactory) {
-						return new OpenMPTransformer(astFactory);
-					}
-				});
-			if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE))
-				Transform.addTransform(new TransformRecord(
-						OmpPragmaTransformer.CODE,
-						OmpPragmaTransformer.LONG_NAME,
-						OmpPragmaTransformer.SHORT_DESCRIPTION) {
-					@Override
-					public Transformer create(ASTFactory astFactory) {
-						return new OmpPragmaTransformer(astFactory);
-					}
-				});
 			if (verboseOrDebug)
 				this.out.println("Apply OpenMP parser...");
-			program.applyTransformer(OmpPragmaTransformer.CODE);
+			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA);
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 			if (verboseOrDebug)
 				this.out.println("Apply OpenMP transformer...");
-			program.applyTransformer(OpenMPTransformer.CODE);
+			CIVLTransform.applyTransformer(program, CIVLTransform.OMP);
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 		}
 		if (hasMpi) {
-			if (!Transform.getCodes().contains(MPI2CIVLTransformer.CODE))
-				Transform.addTransform(new TransformRecord(
-						MPI2CIVLTransformer.CODE,
-						MPI2CIVLTransformer.LONG_NAME,
-						MPI2CIVLTransformer.SHORT_DESCRIPTION) {
-					@Override
-					public Transformer create(ASTFactory astFactory) {
-						return new MPI2CIVLTransformer(astFactory);
-					}
-				});
 			if (verboseOrDebug)
 				this.out.println("Apply MPI transformer...");
-			program.applyTransformer(MPI2CIVLTransformer.CODE);
+			CIVLTransform.applyTransformer(program, CIVLTransform.MPI);
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 		}
