@@ -324,6 +324,12 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		}
 	}
 
+	/* ************************** Private Methods ************************** */
+
+	/**
+	 * This is a helper function of the constructor. It initializes all the
+	 * carType/cdrType abstract functions.
+	 */
 	private void createCharReadFunctions() {
 		carIntFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("carInt"), universe
@@ -367,6 +373,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 								stringSymbolicType), stringSymbolicType)));
 	}
 
+	/**
+	 * This is a helper function of the constructor. It initializes all the
+	 * abstract functions to convert a data of a certain type into a string.
+	 */
 	private void createDataToStringFunctions() {
 		intToStringFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("intToString"),
@@ -399,6 +409,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 								stringSymbolicType)));
 	}
 
+	/**
+	 * This is a helper function of the constructor. It initializes all the
+	 * abstract functions to convert a string to a data of certain type.
+	 */
 	private void createStringToDataFunctions() {
 		stringToIntFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("stringToInt"),
@@ -808,6 +822,9 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					arguments, argumentValues);
 			break;
 		case "$filesystem_destroy":
+			state = executeFree(state, pid, arguments, argumentValues, source);
+			break;
+		case "fclose":
 			state = executeFree(state, pid, arguments, argumentValues, source);
 			break;
 		case "fprintf":
@@ -1374,6 +1391,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			String format = formatBuffer.substring(0);
 
 			format = format.replaceAll("%lf", "%s");
+			format = format.replaceAll("%Lf", "%s");
 			format = format
 					.replaceAll(
 							"((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]",

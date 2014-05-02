@@ -11,6 +11,8 @@ int main(int argc, char * argv[]){
   char * s = "test%dString";
   double A[2];
   
+  printf("d is %Lf\n", d);
+  printf("d is %lf\n", d);
   printf("test0 aabb\r\n");
   printf("test1 aa\nbb aa\bbb aa\tbb \' \" \n");
   printf("test2 %d, %o, %x \n", i,i,i);
@@ -21,5 +23,4 @@ int main(int argc, char * argv[]){
   printf("test7 %d\n", &x);
   printf("test8 %f\n", A[0]);
   printf("test9 %%f, %d, %s, %.*f, %s%s%d%s\n", d, s, f, (s+1), (s+2), d, (s+3));
-  
 }
