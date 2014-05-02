@@ -591,6 +591,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		}
 		if (saveStates) {
 			state = stateFactory.canonic(state);
+			if (this.guiMode)
+				this.compoundTransition.updateFinalState(state);
 			this.maxCanonicId = state.getCanonicId();
 		} else {
 			state = stateFactory.collectProcesses(state);

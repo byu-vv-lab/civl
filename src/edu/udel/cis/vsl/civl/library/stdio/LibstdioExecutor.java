@@ -38,6 +38,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
@@ -203,75 +204,77 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 */
 	private SymbolicConstant stringToPointerFunction;
 
-	/**
-	 * Abstract function to read an integer from a string, returning the
-	 * symbolic expression representing the integer being read:
-	 * <code>char* carInt(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant carIntFunction;
-
-	/**
-	 * Abstract function to read an integer from a string, returning the
-	 * symbolic expression representing the remaining part of the string:
-	 * <code>char* carInt(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant cdrIntFunction;
-
-	/**
-	 * Abstract function to read a double from a string, returning the symbolic
-	 * expression representing the double being read:
-	 * <code>char* carDouble(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant carDoubleFunction;
-
-	/**
-	 * Abstract function to read a double from a string, returning the symbolic
-	 * expression representing the remaining part of the string:
-	 * <code>char* cdrDouble(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant cdrDoubleFunction;
-
-	/**
-	 * Abstract function to read a character from a string, returning the
-	 * symbolic expression representing the character being read:
-	 * <code>char* carCharacter(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant carCharFunction;
-
-	/**
-	 * Abstract function to read a character from a string, returning the
-	 * symbolic expression representing the remaining part of the string:
-	 * <code>char* cdrCharacter(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant cdrCharFunction;
-
-	/**
-	 * Abstract function to read a character from a string, returning the
-	 * symbolic expression representing the character being read:
-	 * <code>char* carCharacter(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant carPointerFunction;
-
-	/**
-	 * Abstract function to read a character from a string, returning the
-	 * symbolic expression representing the remaining part of the string:
-	 * <code>char* cdrCharacter(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant cdrPointerFunction;
-
-	/**
-	 * Abstract function to read a character from a string, returning the
-	 * symbolic expression representing the character being read:
-	 * <code>char* carCharacter(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant carStringFunction;
-
-	/**
-	 * Abstract function to read a character from a string, returning the
-	 * symbolic expression representing the remaining part of the string:
-	 * <code>char* cdrCharacter(char* string, char* format)</code>.
-	 */
-	private SymbolicConstant cdrStringFunction;
+	// /**
+	// * Abstract function to read an integer from a string, returning the
+	// * symbolic expression representing the integer being read:
+	// * <code>char* carInt(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant carIntFunction;
+	//
+	// /**
+	// * Abstract function to read an integer from a string, returning the
+	// * symbolic expression representing the remaining part of the string:
+	// * <code>char* carInt(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant cdrIntFunction;
+	//
+	// /**
+	// * Abstract function to read a double from a string, returning the
+	// symbolic
+	// * expression representing the double being read:
+	// * <code>char* carDouble(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant carDoubleFunction;
+	//
+	// /**
+	// * Abstract function to read a double from a string, returning the
+	// symbolic
+	// * expression representing the remaining part of the string:
+	// * <code>char* cdrDouble(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant cdrDoubleFunction;
+	//
+	// /**
+	// * Abstract function to read a character from a string, returning the
+	// * symbolic expression representing the character being read:
+	// * <code>char* carCharacter(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant carCharFunction;
+	//
+	// /**
+	// * Abstract function to read a character from a string, returning the
+	// * symbolic expression representing the remaining part of the string:
+	// * <code>char* cdrCharacter(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant cdrCharFunction;
+	//
+	// /**
+	// * Abstract function to read a character from a string, returning the
+	// * symbolic expression representing the character being read:
+	// * <code>char* carCharacter(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant carPointerFunction;
+	//
+	// /**
+	// * Abstract function to read a character from a string, returning the
+	// * symbolic expression representing the remaining part of the string:
+	// * <code>char* cdrCharacter(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant cdrPointerFunction;
+	//
+	// /**
+	// * Abstract function to read a character from a string, returning the
+	// * symbolic expression representing the character being read:
+	// * <code>char* carCharacter(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant carStringFunction;
+	//
+	// /**
+	// * Abstract function to read a character from a string, returning the
+	// * symbolic expression representing the remaining part of the string:
+	// * <code>char* cdrCharacter(char* string, char* format)</code>.
+	// */
+	// private SymbolicConstant cdrStringFunction;
 
 	/**
 	 * The set of characters that are used to construct a number in a format
@@ -297,18 +300,21 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
 				modelFactory);
 		Model model = modelFactory.model();
+		SymbolicType stringArrayType;
 
 		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
 				.arrayType(universe.characterType()));
+		stringArrayType = (SymbolicArrayType) universe.canonic(universe
+				.arrayType(stringSymbolicType));
 		emptyContents = universe.canonic(universe
 				.emptyArray(stringSymbolicType));
 		initialContentsFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("contents"), universe
 						.functionType(Arrays.asList(stringSymbolicType),
-								stringSymbolicType)));
+								stringArrayType)));
 		createStringToDataFunctions();
 		createDataToStringFunctions();
-		createCharReadFunctions();
+		// createCharReadFunctions();
 		this.filesystemStructType = model.basedFilesystemType();
 		if (filesystemStructType != null)
 			this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
@@ -327,51 +333,51 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	/* ************************** Private Methods ************************** */
 
 	/**
-	 * This is a helper function of the constructor. It initializes all the
-	 * carType/cdrType abstract functions.
+	 * // * This is a helper function of the constructor. It initializes all the
+	 * // * carType/cdrType abstract functions. //
 	 */
-	private void createCharReadFunctions() {
-		carIntFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("carInt"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-		cdrIntFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("cdrInt"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-		carDoubleFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("carDouble"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-		cdrDoubleFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("cdrDouble"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-		carCharFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("carChar"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-		cdrCharFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("cdrChar"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-		carPointerFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("carPointer"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-		cdrPointerFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("cdrPointer"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-		carStringFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("carString"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-		cdrStringFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("cdrString"), universe
-						.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), stringSymbolicType)));
-	}
+	// private void createCharReadFunctions() {
+	// carIntFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("carInt"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// cdrIntFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("cdrInt"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// carDoubleFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("carDouble"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// cdrDoubleFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("cdrDouble"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// carCharFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("carChar"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// cdrCharFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("cdrChar"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// carPointerFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("carPointer"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// cdrPointerFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("cdrPointer"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// carStringFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("carString"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// cdrStringFunction = (SymbolicConstant) universe.canonic(universe
+	// .symbolicConstant(universe.stringObject("cdrString"), universe
+	// .functionType(Arrays.asList(stringSymbolicType,
+	// stringSymbolicType), stringSymbolicType)));
+	// }
 
 	/**
 	 * This is a helper function of the constructor. It initializes all the
@@ -416,29 +422,27 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	private void createStringToDataFunctions() {
 		stringToIntFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("stringToInt"),
-						universe.functionType(
-								Arrays.asList(stringSymbolicType),
-								universe.integerType())));
+						universe.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), universe.integerType())));
 		stringToDoubleFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("stringToDouble"),
-						universe.functionType(
-								Arrays.asList(stringSymbolicType),
-								universe.realType())));
-		stringToCharFunction = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("stringToChar"),
-						universe.functionType(
-								Arrays.asList(stringSymbolicType),
-								universe.characterType())));
+						universe.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), universe.realType())));
+		stringToCharFunction = (SymbolicConstant) universe
+				.canonic(universe.symbolicConstant(universe
+						.stringObject("stringToChar"), universe.functionType(
+						Arrays.asList(stringSymbolicType, stringSymbolicType),
+						universe.characterType())));
 		stringToStringDataFunction = (SymbolicConstant) universe
 				.canonic(universe.symbolicConstant(universe
 						.stringObject("stringToStringData"), universe
-						.functionType(Arrays.asList(stringSymbolicType),
-								stringSymbolicType)));
+						.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), stringSymbolicType)));
 		stringToPointerFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("stringToPointer"),
-						universe.functionType(
-								Arrays.asList(stringSymbolicType),
-								modelFactory.pointerSymbolicType())));
+						universe.functionType(Arrays.asList(stringSymbolicType,
+								stringSymbolicType), modelFactory
+								.pointerSymbolicType())));
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -596,10 +600,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 * @return symbolic expression representing initial contents of that file
 	 */
 	private SymbolicExpression initialContents(SymbolicExpression filename) {
-		return universe.array(
-				stringSymbolicType,
-				Arrays.asList(universe.apply(initialContentsFunction,
-						Arrays.asList(filename))));
+		return universe.apply(initialContentsFunction, Arrays.asList(filename));
 	}
 
 	/**
@@ -950,8 +951,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				String formatValue = currentFormat.string.toString();
 				SymbolicExpression currentString = universe.arrayRead(
 						fileContents, position);
-				SymbolicExpression car, cdr, format, data;
-				SymbolicConstant carFunction = null, cdrFunction = null;
+				SymbolicExpression format, data;
+				// SymbolicConstant carFunction = null, cdrFunction = null;
 				ConversionType conversion = currentFormat.type;
 				SymbolicConstant conversionFunction = null;
 
@@ -959,49 +960,28 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				switch (conversion) {
 				case INT:
 					conversionFunction = this.stringToIntFunction;
-					carFunction = this.carIntFunction;
-					cdrFunction = this.cdrIntFunction;
 					break;
 				case DOUBLE:
 					conversionFunction = this.stringToDoubleFunction;
-					carFunction = this.carDoubleFunction;
-					cdrFunction = this.cdrDoubleFunction;
 					break;
 				case POINTER:
 					conversionFunction = this.stringToPointerFunction;
-					carFunction = this.carPointerFunction;
-					cdrFunction = this.cdrPointerFunction;
 					break;
 				case CHAR:
 					conversionFunction = this.stringToCharFunction;
-					carFunction = this.carCharFunction;
-					cdrFunction = this.cdrCharFunction;
 					break;
 				case STRING:
 					conversionFunction = this.stringToStringDataFunction;
-					carFunction = this.carStringFunction;
-					cdrFunction = this.cdrStringFunction;
 					break;
 				default:
 				}
 				if (conversionFunction != null) {
-					car = universe.apply(carFunction,
-							Arrays.asList(currentString, format));
-					cdr = universe.apply(cdrFunction,
-							Arrays.asList(currentString, format));
 					data = universe.apply(conversionFunction,
-							Arrays.asList(car));
+							Arrays.asList(format, currentString));
 					state = primaryExecutor.assign(source, state,
 							argumentValues[dataPointerIndex++], data);
 					count++;
-				} else {
-					car = universe.apply(this.carStringFunction,
-							Arrays.asList(currentString, format));
-					cdr = universe.apply(this.cdrStringFunction,
-							Arrays.asList(currentString, format));
 				}
-				fileContents = universe.arrayWrite(fileContents, position, car);
-				fileContents = universe.append(fileContents, cdr);
 				position = universe.add(position, universe.integer(1));
 			}
 			fileObject = universe.tupleWrite(fileObject, oneObject,
@@ -1340,7 +1320,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				case 'x':
 				case 'X':
 					type = ConversionType.INT;
-					stringBuffer.append(current);
 					break;
 				case 'a':
 				case 'A':
@@ -1460,6 +1439,11 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		Format(StringBuffer content, ConversionType conversion) {
 			this.string = content;
 			this.type = conversion;
+		}
+
+		@Override
+		public String toString() {
+			return this.string.toString();
 		}
 	}
 }

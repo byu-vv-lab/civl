@@ -2,6 +2,8 @@ package edu.udel.cis.vsl.civl.transition;
 
 import java.util.ArrayList;
 
+import edu.udel.cis.vsl.civl.state.IF.State;
+
 /**
  * This represents a complete transition of CIVL, which contains a number of
  * steps performing by a particular process.
@@ -59,6 +61,12 @@ public class CompoundTransition extends Transition {
 
 	public void setProcessIdentifier(int processIdentifier) {
 		this.processIdentifier = processIdentifier;
+	}
+
+	public void updateFinalState(State state) {
+		Step finalStep = this.steps.get(steps.size() - 1);
+
+		finalStep.setTarget(state);
 	}
 
 	@Override
