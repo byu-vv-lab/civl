@@ -325,9 +325,7 @@ public class UserInterface {
 		if (isC && headers.contains("mpi.h"))
 			hasMpi = true;
 		// always apply general transformation.
-		if (!hasMpi) {
-			CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL);
-		}
+		CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL);
 		if (hasStdio) {
 			if (verboseOrDebug)
 				this.out.println("Apply IO transformer...");

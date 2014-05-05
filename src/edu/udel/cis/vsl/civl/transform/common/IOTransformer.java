@@ -24,7 +24,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.value.IF.StringValue;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 
 /**
  * The IO transformer transforms<br>
@@ -37,7 +36,7 @@ import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
  * @author zmanchun
  * 
  */
-public class IOTransformer extends BaseTransformer {
+public class IOTransformer extends CIVLBaseTransformer {
 
 	/* ************************** Public Static Fields *********************** */
 	/**

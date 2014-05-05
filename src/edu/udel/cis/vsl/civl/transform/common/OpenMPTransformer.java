@@ -45,7 +45,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  * @author dwyer
  * 
  */
-public class OpenMPTransformer extends BaseTransformer {
+public class OpenMPTransformer extends CIVLBaseTransformer {
 
 	public static String CODE = "omp";
 	public static String LONG_NAME = "OMPTransformer";

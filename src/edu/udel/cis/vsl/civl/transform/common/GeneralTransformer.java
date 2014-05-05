@@ -11,12 +11,12 @@ import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
-import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 
-public class GeneralTransformer extends BaseTransformer implements Transformer {
+public class GeneralTransformer extends CIVLBaseTransformer {
 
 	public static String CODE = "general";
 	public static String LONG_NAME = "GeneralTransformer";
@@ -77,31 +77,120 @@ public class GeneralTransformer extends BaseTransformer implements Transformer {
 	 *            and become $input variables of the final AST. When invoking
 	 *            this function, this parameter should be an empty list and this
 	 *            function will update this list.
+	 * @throws SyntaxException
 	 */
 	private List<VariableDeclarationNode> processMainFunction(
-			FunctionDefinitionNode mainFunction) {
+			FunctionDefinitionNode mainFunction) throws SyntaxException {
 		List<VariableDeclarationNode> inputVars = new ArrayList<>();
 		FunctionTypeNode functionType = mainFunction.getTypeNode();
 		SequenceNode<VariableDeclarationNode> parameters = functionType
 				.getParameters();
 		int count = parameters.numChildren();
 
-		if (count > 0) {
-			List<VariableDeclarationNode> newParameters = new ArrayList<>(0);
+		if (count != 0 && count != 2) {
+			throw new SyntaxException(
+					"The main function should have 0 or 2 parameters instead of "
+							+ count, mainFunction.getSource());
+		}
+		if (count == 2) {
+			VariableDeclarationNode argcVar = parameters.getSequenceChild(0);
+			VariableDeclarationNode argvVar = parameters.getSequenceChild(1);
+			VariableDeclarationNode __argcVar = argcVar.copy();
+			VariableDeclarationNode __argvVar = argvVar.copy();
+			CompoundStatementNode functionBody = mainFunction.getBody();
+			String argcName = argcVar.getIdentifier().name();
+			String argvName = argvVar.getIdentifier().name();
+			String __argcName = "__" + argcName;
+			String __argvName = "__" + argvName;
+			// Source argvSource = argvVar.getSource();
+			// TypeNode argvType = nodeFactory
+			// .newArrayTypeNode(argvSource, nodeFactory.newArrayTypeNode(
+			// argvSource, nodeFactory.newBasicTypeNode(
+			// argvSource, BasicTypeKind.CHAR), null),
+			// identifierExpression(argvSource, __argcName));
 
-			for (int k = 0; k < count; k++) {
-				VariableDeclarationNode parameter = parameters
-						.getSequenceChild(k);
-
-				parameters.removeChild(k);
-				parameter.getTypeNode().setInputQualified(true);
-				inputVars.add(parameter);
-			}
+			parameters.removeChild(0);
+			parameters.removeChild(1);
+			__argcVar.getTypeNode().setInputQualified(true);
+			__argcVar.getIdentifier().setName(__argcName);
+			inputVars.add(__argcVar);
+			__argvVar.getTypeNode().setInputQualified(true);
+			__argvVar.getIdentifier().setName(__argvName);
+			// __argvVar.setTypeNode(argvType);
+			inputVars.add(__argvVar);
+			argcVar.setInitializer(identifierExpression(__argcVar.getSource(),
+					__argcName));
+			argvVar.setInitializer(identifierExpression(__argvVar.getSource(),
+					__argvName));
+			// argvVar.setTypeNode(argvType.copy());
+			// {
+			// Source source = argvVar.getSource();
+			// ForLoopInitializerNode initializerNode = nodeFactory
+			// .newForLoopInitializerNode(source, Arrays
+			// .asList(nodeFactory.newVariableDeclarationNode(
+			// source, nodeFactory.newIdentifierNode(
+			// source, "i"), nodeFactory
+			// .newBasicTypeNode(source,
+			// BasicTypeKind.INT),
+			// nodeFactory.newIntegerConstantNode(
+			// source, "0"))));
+			// ExpressionNode loopCondition = nodeFactory.newOperatorNode(
+			// source, Operator.LT, Arrays.asList(
+			// this.identifierExpression(source, "i"),
+			// this.identifierExpression(source, argcName)));
+			// ExpressionNode incrementer = nodeFactory.newOperatorNode(
+			// source, Operator.POSTINCREMENT,
+			// Arrays.asList(this.identifierExpression(source, "i")));
+			// ExpressionNode assignArgvVar = nodeFactory
+			// .newOperatorNode(source, Operator.ASSIGN, Arrays
+			// .asList((ExpressionNode) nodeFactory
+			// .newOperatorNode(source,
+			// Operator.SUBSCRIPT,
+			// Arrays.asList(
+			// identifierExpression(
+			// argvSource,
+			// argvName),
+			// identifierExpression(
+			// source, "i"))),
+			// nodeFactory.newOperatorNode(source,
+			// Operator.SUBSCRIPT,
+			// Arrays.asList(
+			// identifierExpression(
+			// argvSource,
+			// __argvName),
+			// identifierExpression(
+			// source, "i")))));
+			// ForLoopNode forLoop = nodeFactory.newForLoopNode(source,
+			// initializerNode, loopCondition, incrementer,
+			// nodeFactory.newExpressionStatementNode(assignArgvVar),
+			// null);
+			//
+			// functionBody = addNodeToBeginning(functionBody, forLoop);
+			// }
+			functionBody = addNodeToBeginning(functionBody, argvVar);
+			functionBody = addNodeToBeginning(functionBody, argcVar);
+			mainFunction.setBody(functionBody);
 			functionType.setParameters(nodeFactory.newSequenceNode(
 					parameters.getSource(), "FormalParameterDeclarations",
-					newParameters));
+					new ArrayList<VariableDeclarationNode>(0)));
 		}
 		return inputVars;
+	}
+
+	private CompoundStatementNode addNodeToBeginning(
+			CompoundStatementNode compoundNode, BlockItemNode node) {
+		int numChildren = compoundNode.numChildren();
+		List<BlockItemNode> nodeList = new ArrayList<>(numChildren + 1);
+
+		nodeList.add(node);
+		for (int i = 0; i < numChildren; i++) {
+			BlockItemNode child = compoundNode.getSequenceChild(i);
+
+			nodeList.add(child);
+			compoundNode.removeChild(i);
+		}
+		return nodeFactory.newCompoundStatementNode(compoundNode.getSource(),
+				nodeList);
 	}
 
 }

@@ -30,25 +30,21 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 import edu.udel.cis.vsl.civl.util.Triple;
 
 /**
  * MPI2CIVLTransformer transforms an AST of an MPI program into an AST of an
- * equivalent CIVL-C program. See {@linkplain #transform(AST)}.
- * 
- * TODO: translate MPI_Init() to __MPI_Init(MPI_COMM_WORLD); TODO: translate
- * MPI_Finalize() to __MPI_Finalize(MPI_COMM_WORLD);
+ * equivalent CIVL-C program. See {@linkplain #transform(AST)}. TODO: copy
+ * output files only for the mpi process with rank 0.
  * 
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class MPI2CIVLTransformer extends BaseTransformer {
+public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 
 	/* ************************** Public Static Fields *********************** */
 	/**
-	 * The code (short name) of this transformer. TODO: make an interface to get
-	 * the code
+	 * The code (short name) of this transformer.
 	 */
 	public static String CODE = "mpi";
 
@@ -225,11 +221,12 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	 */
 	private AssumeNode boundAssumption(String lowerBound, String variable,
 			String upperBound) throws SyntaxException {
-		ExpressionNode variableExpression = this.identifierExpression(variable);
-		ExpressionNode upperBoundExpression = this
-				.identifierExpression(upperBound);
-		ExpressionNode lowerBoundExpression = this
-				.identifierExpression(lowerBound);
+		ExpressionNode variableExpression = this.identifierExpression(source,
+				variable);
+		ExpressionNode upperBoundExpression = this.identifierExpression(source,
+				upperBound);
+		ExpressionNode lowerBoundExpression = this.identifierExpression(source,
+				lowerBound);
 		ExpressionNode lowerPart, upperPart;
 
 		lowerPart = nodeFactory.newOperatorNode(source, Operator.LT,
@@ -261,10 +258,11 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				nodeFactory.newIdentifierNode(source, COMM_TYPE), null);
 		commCreateArgs = new ArrayList<>(3);
 		commCreateArgs.add(nodeFactory.newHereNode(source));
-		commCreateArgs.add(this.identifierExpression(GCOMM_WORLD));
-		commCreateArgs.add(this.identifierExpression(MPI_RANK));
+		commCreateArgs.add(this.identifierExpression(source, GCOMM_WORLD));
+		commCreateArgs.add(this.identifierExpression(source, MPI_RANK));
 		commCreate = nodeFactory.newFunctionCallNode(source,
-				this.identifierExpression(COMM_CREATE), commCreateArgs, null);
+				this.identifierExpression(source, COMM_CREATE), commCreateArgs,
+				null);
 		return nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, COMM_WORLD), commType,
 				commCreate);
@@ -285,12 +283,11 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 	 *         the specified communicator.
 	 */
 	private ExpressionStatementNode commDestroy(String destroy, String commName) {
-		ExpressionNode function = this.identifierExpression(destroy);
+		ExpressionNode function = this.identifierExpression(source, destroy);
 
 		return nodeFactory.newExpressionStatementNode(nodeFactory
-				.newFunctionCallNode(source, function,
-						Arrays.asList(this.identifierExpression(commName)),
-						null));
+				.newFunctionCallNode(source, function, Arrays.asList(this
+						.identifierExpression(source, commName)), null));
 	}
 
 	/**
@@ -309,9 +306,9 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				nodeFactory.newIdentifierNode(source, GCOMM_TYPE), null);
 		gcommCreate = nodeFactory.newFunctionCallNode(
 				source,
-				this.identifierExpression(GCOMM_CREATE),
+				this.identifierExpression(source, GCOMM_CREATE),
 				Arrays.asList(nodeFactory.newHereNode(source),
-						this.identifierExpression(NPROCS)), null);
+						this.identifierExpression(source, NPROCS)), null);
 		return nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, GCOMM_WORLD), gcommType,
 				gcommCreate);
@@ -339,11 +336,8 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		List<BlockItemNode> items = new LinkedList<BlockItemNode>();
 		TypeNode procsType;
 		VariableDeclarationNode procsVar;
-		List<VariableDeclarationNode> initialList;
 		ForLoopInitializerNode initializerNode;
-		// List<ExpressionNode> operatorArgs;
 		ExpressionNode loopCondition, incrementer, spawnProc, waitProc, leftHandSide;
-		// List<ExpressionNode> callArgs;
 		StatementNode assign;
 		ForLoopNode forLoop;
 		CompoundStatementNode mainBody;
@@ -358,36 +352,36 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				.newArrayTypeNode(source,
 						nodeFactory.newTypedefNameNode(nodeFactory
 								.newIdentifierNode(source, PROC_TYPE), null),
-						this.identifierExpression(NPROCS));
+						this.identifierExpression(source, NPROCS));
 		procsVar = nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, PROCS), procsType);
 		items.add(procsVar);
 		// first for loop;
-		initialList = new LinkedList<>();
-		initialList.add(nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, "i"),
-				nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT),
-				nodeFactory.newIntegerConstantNode(source, "0")));
-		initializerNode = nodeFactory.newForLoopInitializerNode(source,
-				initialList);
+		initializerNode = nodeFactory
+				.newForLoopInitializerNode(source,
+						Arrays.asList(nodeFactory.newVariableDeclarationNode(
+								source, nodeFactory.newIdentifierNode(source,
+										"i"), nodeFactory.newBasicTypeNode(
+										source, BasicTypeKind.INT), nodeFactory
+										.newIntegerConstantNode(source, "0"))));
 		loopCondition = nodeFactory.newOperatorNode(
 				source,
 				Operator.LT,
-				Arrays.asList(this.identifierExpression("i"),
-						this.identifierExpression(NPROCS)));
+				Arrays.asList(this.identifierExpression(source, "i"),
+						this.identifierExpression(source, NPROCS)));
 		incrementer = nodeFactory.newOperatorNode(source,
 				Operator.POSTINCREMENT,
-				Arrays.asList(this.identifierExpression("i")));
-		spawnProc = nodeFactory.newSpawnNode(
-				source,
-				nodeFactory.newFunctionCallNode(source,
-						this.identifierExpression(MPI_PROCESS),
-						Arrays.asList(this.identifierExpression("i")), null));
+				Arrays.asList(this.identifierExpression(source, "i")));
+		spawnProc = nodeFactory.newSpawnNode(source, nodeFactory
+				.newFunctionCallNode(source,
+						this.identifierExpression(source, MPI_PROCESS),
+						Arrays.asList(this.identifierExpression(source, "i")),
+						null));
 		leftHandSide = nodeFactory.newOperatorNode(
 				source,
 				Operator.SUBSCRIPT,
-				Arrays.asList(this.identifierExpression(PROCS),
-						this.identifierExpression("i")));
+				Arrays.asList(this.identifierExpression(source, PROCS),
+						this.identifierExpression(source, "i")));
 		assign = nodeFactory.newExpressionStatementNode(nodeFactory
 				.newOperatorNode(source, Operator.ASSIGN,
 						Arrays.asList(leftHandSide, spawnProc)));
@@ -395,28 +389,31 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				loopCondition, incrementer, assign, null);
 		items.add(forLoop);
 		// second for loop;
-		initialList = new LinkedList<>();
-		initialList.add(nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, "i"),
-				nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT),
-				nodeFactory.newIntegerConstantNode(source, "0")));
-		initializerNode = nodeFactory.newForLoopInitializerNode(source,
-				initialList);
+		initializerNode = nodeFactory
+				.newForLoopInitializerNode(source,
+						Arrays.asList(nodeFactory.newVariableDeclarationNode(
+								source, nodeFactory.newIdentifierNode(source,
+										"i"), nodeFactory.newBasicTypeNode(
+										source, BasicTypeKind.INT), nodeFactory
+										.newIntegerConstantNode(source, "0"))));
 		loopCondition = nodeFactory.newOperatorNode(
 				source,
 				Operator.LT,
-				Arrays.asList(this.identifierExpression("i"),
-						this.identifierExpression(NPROCS)));
+				Arrays.asList(this.identifierExpression(source, "i"),
+						this.identifierExpression(source, NPROCS)));
 		incrementer = nodeFactory.newOperatorNode(source,
 				Operator.POSTINCREMENT,
-				Arrays.asList(this.identifierExpression("i")));
-		waitProc = nodeFactory.newFunctionCallNode(source, this
-				.identifierExpression(WAIT), Arrays
-				.asList((ExpressionNode) nodeFactory.newOperatorNode(
-						source,
-						Operator.SUBSCRIPT,
-						Arrays.asList(this.identifierExpression(PROCS),
-								this.identifierExpression("i")))), null);
+				Arrays.asList(this.identifierExpression(source, "i")));
+		waitProc = nodeFactory
+				.newFunctionCallNode(source, this.identifierExpression(source,
+						WAIT),
+						Arrays.asList((ExpressionNode) nodeFactory
+								.newOperatorNode(source, Operator.SUBSCRIPT,
+										Arrays.asList(this
+												.identifierExpression(source,
+														PROCS), this
+												.identifierExpression(source,
+														"i")))), null);
 		forLoop = nodeFactory.newForLoopNode(source, initializerNode,
 				loopCondition, incrementer,
 				nodeFactory.newExpressionStatementNode(waitProc), null);
@@ -483,7 +480,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 		callMain = nodeFactory.newExpressionStatementNode(nodeFactory
 				.newFunctionCallNode(source,
-						this.identifierExpression(MPI_MAIN),
+						this.identifierExpression(source, MPI_MAIN),
 						new ArrayList<ExpressionNode>(), null));
 		// build MPI_Process() function:
 		items = new LinkedList<>();
@@ -542,7 +539,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 					if (functionName.name().equals("main")) {
 						functionName.setName(MPI_MAIN);
-						vars.addAll(processMainFunction(functionNode));
+						// vars.addAll(processMainFunction(functionNode));
 					}
 				}
 				items.add((BlockItemNode) child);
@@ -639,16 +636,16 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 
 			if (functionName.equals(MPI_INIT)) {
 				ExpressionNode addressOf = nodeFactory.newOperatorNode(source,
-						Operator.ADDRESSOF,
-						Arrays.asList(this.identifierExpression(COMM_WORLD)));
+						Operator.ADDRESSOF, Arrays.asList(this
+								.identifierExpression(source, COMM_WORLD)));
 
 				functionExpression.getIdentifier().setName(MPI_INIT_NEW);
 				functionCall.setArguments(nodeFactory.newSequenceNode(source,
 						"ActualParameterList", Arrays.asList(addressOf)));
 			} else if (functionName.equals(MPI_FINALIZE)) {
 				ExpressionNode addressOf = nodeFactory.newOperatorNode(source,
-						Operator.ADDRESSOF,
-						Arrays.asList(this.identifierExpression(COMM_WORLD)));
+						Operator.ADDRESSOF, Arrays.asList(this
+								.identifierExpression(source, COMM_WORLD)));
 
 				functionExpression.getIdentifier().setName(MPI_FINALIZE_NEW);
 				functionCall.setArguments(nodeFactory.newSequenceNode(source,
@@ -657,57 +654,46 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		}
 	}
 
-	/**
-	 * Creates an identifier expression node with a given name.
-	 * 
-	 * @param name
-	 *            The name of the identifier.
-	 * @return
-	 */
-	private ExpressionNode identifierExpression(String name) {
-		return nodeFactory.newIdentifierExpressionNode(source,
-				nodeFactory.newIdentifierNode(source, name));
-	}
-
-	/**
-	 * Processes the original main function, including:
-	 * <ul>
-	 * <li>Removes all arguments of the function;</li>
-	 * </ul>
-	 * 
-	 * @param mainFunction
-	 *            The function definition node representing the original main
-	 *            function.
-	 * @return The list of variable declaration nodes that are the arguments of
-	 *         the original main function. These variables will be moved up to
-	 *         the higher scope (i.e., the file scope of the final AST) and
-	 *         become $input variables of the final AST.
-	 */
-	private List<VariableDeclarationNode> processMainFunction(
-			FunctionDefinitionNode mainFunction) {
-		List<VariableDeclarationNode> inputVars = new ArrayList<>();
-		FunctionTypeNode functionType = mainFunction.getTypeNode();
-		SequenceNode<VariableDeclarationNode> parameters = functionType
-				.getParameters();
-		int count = parameters.numChildren();
-
-		if (count > 0) {
-			List<VariableDeclarationNode> newParameters = new ArrayList<>(0);
-
-			for (int k = 0; k < count; k++) {
-				VariableDeclarationNode parameter = parameters
-						.getSequenceChild(k);
-
-				parameters.removeChild(k);
-				parameter.getTypeNode().setInputQualified(true);
-				inputVars.add(parameter);
-			}
-			functionType.setParameters(nodeFactory.newSequenceNode(
-					parameters.getSource(), "FormalParameterDeclarations",
-					newParameters));
-		}
-		return inputVars;
-	}
+	// /**
+	// * Processes the original main function, including:
+	// * <ul>
+	// * <li>Removes all arguments of the function;</li>
+	// * </ul>
+	// *
+	// * @param mainFunction
+	// * The function definition node representing the original main
+	// * function.
+	// * @return The list of variable declaration nodes that are the arguments
+	// of
+	// * the original main function. These variables will be moved up to
+	// * the higher scope (i.e., the file scope of the final AST) and
+	// * become $input variables of the final AST.
+	// */
+	// private List<VariableDeclarationNode> processMainFunction(
+	// FunctionDefinitionNode mainFunction) {
+	// List<VariableDeclarationNode> inputVars = new ArrayList<>();
+	// FunctionTypeNode functionType = mainFunction.getTypeNode();
+	// SequenceNode<VariableDeclarationNode> parameters = functionType
+	// .getParameters();
+	// int count = parameters.numChildren();
+	//
+	// if (count > 0) {
+	// List<VariableDeclarationNode> newParameters = new ArrayList<>(0);
+	//
+	// for (int k = 0; k < count; k++) {
+	// VariableDeclarationNode parameter = parameters
+	// .getSequenceChild(k);
+	//
+	// parameters.removeChild(k);
+	// parameter.getTypeNode().setInputQualified(true);
+	// inputVars.add(parameter);
+	// }
+	// functionType.setParameters(nodeFactory.newSequenceNode(
+	// parameters.getSource(), "FormalParameterDeclarations",
+	// newParameters));
+	// }
+	// return inputVars;
+	// }
 
 	/* ********************* Methods From BaseTransformer ****************** */
 
@@ -811,7 +797,6 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 				BasicTypeKind.INT, NPROCS_LOWER_BOUND);
 		nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
 		// assuming NPROCS_LOWER_BOUND < NPROCS && NPROCS <= NPROCS_UPPER_BOUND
-		// TODO: think about code that can be reused for other transformers.
 		nprocsAssumption = this.boundAssumption(NPROCS_LOWER_BOUND, NPROCS,
 				NPROCS_UPPER_BOUND);
 		// declaring $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);

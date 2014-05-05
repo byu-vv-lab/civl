@@ -18,10 +18,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
-import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 
-public class OmpPragmaTransformer extends BaseTransformer implements Transformer {
+public class OmpPragmaTransformer extends CIVLBaseTransformer {
 
 	public final static String CODE = "_omp_";
 	public final static String LONG_NAME = "Omp Parser";
