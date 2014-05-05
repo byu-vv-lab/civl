@@ -847,7 +847,7 @@ public class MPI2CIVLTransformer extends BaseTransformer {
 		externalList.add(mainFunction);
 		newRootNode = nodeFactory.newSequenceNode(null, "TranslationUnit",
 				externalList);
-		newAst = astFactory.newTranslationUnit(newRootNode);
+		newAst = astFactory.newAST(newRootNode);
 		return newAst;
 	}
 }

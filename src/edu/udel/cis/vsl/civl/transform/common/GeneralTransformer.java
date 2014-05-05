@@ -57,7 +57,7 @@ public class GeneralTransformer extends BaseTransformer implements Transformer {
 			root = nodeFactory.newSequenceNode(root.getSource(),
 					"TranslationUnit", newExternalList);
 		}
-		newAst = astFactory.newTranslationUnit(root);
+		newAst = astFactory.newAST(root);
 		return newAst;
 	}
 

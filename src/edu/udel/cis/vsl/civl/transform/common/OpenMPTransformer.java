@@ -78,7 +78,7 @@ public class OpenMPTransformer extends BaseTransformer {
 		System.out.println("LoopDependenceAnnotator Activated");
 		replaceIndependentOmpFor(rootNode);
 		
-		return astFactory.newTranslationUnit(rootNode);
+		return astFactory.newAST(rootNode);
 	}
 
 	AttributeKey getAttributeKey() {

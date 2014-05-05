@@ -42,7 +42,7 @@ public class OmpPragmaTransformer extends BaseTransformer implements Transformer
 
 		unit.release();
 		this.processASTNode(root);
-		return astFactory.newTranslationUnit(root);
+		return astFactory.newAST(root);
 	}
 
 	void processASTNode(ASTNode ast) throws SyntaxException {

@@ -468,7 +468,7 @@ public class IOTransformer extends BaseTransformer {
 		unit.release();
 		this.renameFunctionCalls(rootNode);
 		this.processFreeCall(rootNode);
-		return astFactory.newTranslationUnit(rootNode);
+		return astFactory.newAST(rootNode);
 	}
 
 }
