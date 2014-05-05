@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
@@ -11,9 +12,19 @@ import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
+import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
 public class GeneralTransformer extends CIVLBaseTransformer {
@@ -88,9 +99,15 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 		int count = parameters.numChildren();
 
 		if (count != 0 && count != 2) {
-			throw new SyntaxException(
-					"The main function should have 0 or 2 parameters instead of "
-							+ count, mainFunction.getSource());
+			if (count == 1) {
+				if (parameters.getSequenceChild(0).getTypeNode().typeNodeKind() != TypeNodeKind.VOID)
+					throw new SyntaxException(
+							"The main function should have 0 or 2 parameters instead of "
+									+ count, mainFunction.getSource());
+			} else
+				throw new SyntaxException(
+						"The main function should have 0 or 2 parameters instead of "
+								+ count, mainFunction.getSource());
 		}
 		if (count == 2) {
 			VariableDeclarationNode argcVar = parameters.getSequenceChild(0);
@@ -102,7 +119,9 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			String argvName = argvVar.getIdentifier().name();
 			String __argcName = "__" + argcName;
 			String __argvName = "__" + argvName;
-			// Source argvSource = argvVar.getSource();
+			TypeNode argvType = argvVar.getTypeNode();
+			ArgvTypeKind argvTypeKind = analyzeArgvType(argvType);
+			Source argvSource = argvVar.getSource();
 			// TypeNode argvType = nodeFactory
 			// .newArrayTypeNode(argvSource, nodeFactory.newArrayTypeNode(
 			// argvSource, nodeFactory.newBasicTypeNode(
@@ -120,53 +139,54 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			inputVars.add(__argvVar);
 			argcVar.setInitializer(identifierExpression(__argcVar.getSource(),
 					__argcName));
-			argvVar.setInitializer(identifierExpression(__argvVar.getSource(),
-					__argvName));
-			// argvVar.setTypeNode(argvType.copy());
-			// {
-			// Source source = argvVar.getSource();
-			// ForLoopInitializerNode initializerNode = nodeFactory
-			// .newForLoopInitializerNode(source, Arrays
-			// .asList(nodeFactory.newVariableDeclarationNode(
-			// source, nodeFactory.newIdentifierNode(
-			// source, "i"), nodeFactory
-			// .newBasicTypeNode(source,
-			// BasicTypeKind.INT),
-			// nodeFactory.newIntegerConstantNode(
-			// source, "0"))));
-			// ExpressionNode loopCondition = nodeFactory.newOperatorNode(
-			// source, Operator.LT, Arrays.asList(
-			// this.identifierExpression(source, "i"),
-			// this.identifierExpression(source, argcName)));
-			// ExpressionNode incrementer = nodeFactory.newOperatorNode(
-			// source, Operator.POSTINCREMENT,
-			// Arrays.asList(this.identifierExpression(source, "i")));
-			// ExpressionNode assignArgvVar = nodeFactory
-			// .newOperatorNode(source, Operator.ASSIGN, Arrays
-			// .asList((ExpressionNode) nodeFactory
-			// .newOperatorNode(source,
-			// Operator.SUBSCRIPT,
-			// Arrays.asList(
-			// identifierExpression(
-			// argvSource,
-			// argvName),
-			// identifierExpression(
-			// source, "i"))),
-			// nodeFactory.newOperatorNode(source,
-			// Operator.SUBSCRIPT,
-			// Arrays.asList(
-			// identifierExpression(
-			// argvSource,
-			// __argvName),
-			// identifierExpression(
-			// source, "i")))));
-			// ForLoopNode forLoop = nodeFactory.newForLoopNode(source,
-			// initializerNode, loopCondition, incrementer,
-			// nodeFactory.newExpressionStatementNode(assignArgvVar),
-			// null);
-			//
-			// functionBody = addNodeToBeginning(functionBody, forLoop);
-			// }
+
+			if (argvTypeKind == ArgvTypeKind.POINTER_POINTER_CHAR)
+				argvVar.setInitializer(identifierExpression(
+						__argvVar.getSource(), __argvName));
+			else if (argvTypeKind == ArgvTypeKind.ARRAY_POINTER_CHAR) {
+				Source source = argvVar.getSource();
+				ForLoopInitializerNode initializerNode = nodeFactory
+						.newForLoopInitializerNode(source, Arrays
+								.asList(nodeFactory.newVariableDeclarationNode(
+										source, nodeFactory.newIdentifierNode(
+												source, "i"), nodeFactory
+												.newBasicTypeNode(source,
+														BasicTypeKind.INT),
+										nodeFactory.newIntegerConstantNode(
+												source, "0"))));
+				ExpressionNode loopCondition = nodeFactory.newOperatorNode(
+						source, Operator.LT, Arrays.asList(
+								this.identifierExpression(source, "i"),
+								this.identifierExpression(source, argcName)));
+				ExpressionNode incrementer = nodeFactory.newOperatorNode(
+						source, Operator.POSTINCREMENT,
+						Arrays.asList(this.identifierExpression(source, "i")));
+				ExpressionNode assignArgvVar = nodeFactory
+						.newOperatorNode(source, Operator.ASSIGN, Arrays
+								.asList((ExpressionNode) nodeFactory
+										.newOperatorNode(source,
+												Operator.SUBSCRIPT,
+												Arrays.asList(
+														identifierExpression(
+																argvSource,
+																argvName),
+														identifierExpression(
+																source, "i"))),
+										nodeFactory.newOperatorNode(source,
+												Operator.SUBSCRIPT,
+												Arrays.asList(
+														identifierExpression(
+																argvSource,
+																__argvName),
+														identifierExpression(
+																source, "i")))));
+				ForLoopNode forLoop = nodeFactory.newForLoopNode(source,
+						initializerNode, loopCondition, incrementer,
+						nodeFactory.newExpressionStatementNode(assignArgvVar),
+						null);
+
+				functionBody = addNodeToBeginning(functionBody, forLoop);
+			}
 			functionBody = addNodeToBeginning(functionBody, argvVar);
 			functionBody = addNodeToBeginning(functionBody, argcVar);
 			mainFunction.setBody(functionBody);
@@ -175,6 +195,31 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 					new ArrayList<VariableDeclarationNode>(0)));
 		}
 		return inputVars;
+	}
+
+	public enum ArgvTypeKind {
+		POINTER_POINTER_CHAR, ARRAY_POINTER_CHAR, ARRAY_ARRAY_CAHR
+	};
+
+	private ArgvTypeKind analyzeArgvType(TypeNode type) throws SyntaxException {
+		TypeNodeKind typeKind = type.typeNodeKind();
+
+		switch (typeKind) {
+		case POINTER:
+			return ArgvTypeKind.POINTER_POINTER_CHAR;
+		case ARRAY:
+			ArrayTypeNode arrayType = (ArrayTypeNode) type;
+			TypeNode arrayEleType = arrayType.getElementType();
+			TypeKind arrayEleTypeKind = arrayEleType.getType().kind();
+
+			if (arrayEleTypeKind == TypeKind.POINTER)
+				return ArgvTypeKind.ARRAY_POINTER_CHAR;
+			else if (arrayEleTypeKind == TypeKind.ARRAY)
+				return ArgvTypeKind.ARRAY_ARRAY_CAHR;
+		default:
+			throw new SyntaxException("Invalid type " + type.getType()
+					+ " for argv of main.", null);
+		}
 	}
 
 	private CompoundStatementNode addNodeToBeginning(

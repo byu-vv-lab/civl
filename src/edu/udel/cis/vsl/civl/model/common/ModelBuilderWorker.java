@@ -59,12 +59,12 @@ public class ModelBuilderWorker {
 	int anonymousStructCounter = 0;
 
 	/** Used to shortcut checking whether circular types are bundleable. */
-	private List<CIVLType> bundleableEncountered = new LinkedList<CIVLType>();
+	private List<CIVLType> bundleableEncountered = new LinkedList<>();
 
 	/**
 	 * The types that may be part of a bundle.
 	 */
-	private LinkedList<CIVLType> bundleableTypeList = new LinkedList<CIVLType>();
+	private LinkedList<CIVLType> bundleableTypeList = new LinkedList<>();
 
 	/**
 	 * The unique type for a bundle.
@@ -155,7 +155,7 @@ public class ModelBuilderWorker {
 	 * process to determine if there were any command line arguments that were
 	 * not used. This usually indicates an error.
 	 */
-	Set<String> initializedInputs = new HashSet<String>();
+	Set<String> initializedInputs = new HashSet<>();
 
 	/**
 	 * The map formed from parsing the command line for "-input" options that

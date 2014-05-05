@@ -1049,6 +1049,13 @@ public class FunctionTranslator {
 			throw new CIVLException(
 					"result of $malloc/malloc not cast to pointer type", source);
 		elementType = ((CIVLPointerType) pointerType).baseType();
+		if (elementType.isVoidType()) {
+			throw new CIVLSyntaxException(
+					"missing cast to non-void pointer type around malloc expression: "
+							+ "CIVL-C requires that malloc expressions be enclosed in a cast to a pointer to a non-void type, "
+							+ "such as (double*)$malloc($here, n*sizeof(double))",
+					source);
+		}
 		modelFactory.setCurrentScope(scope);
 		if (callNode.getNumberOfArguments() == 1) {
 			scopeExpression = modelFactory.hereOrRootExpression(source, true);
@@ -2709,9 +2716,15 @@ public class FunctionTranslator {
 			case FLOAT:
 			case DOUBLE:
 			case LONG_DOUBLE:
-				result = modelFactory.realLiteralExpression(source, BigDecimal
-						.valueOf(Double.parseDouble(constantNode
-								.getStringRepresentation())));
+				String doubleString = constantNode.getStringRepresentation();
+
+				if (doubleString.endsWith("l") || doubleString.endsWith("L") || doubleString.endsWith("f") || doubleString.endsWith("F")) {
+					doubleString = doubleString.substring(0,
+							doubleString.length() - 1);
+				}
+				result = modelFactory.realLiteralExpression(source,
+						BigDecimal.valueOf(Double.parseDouble(doubleString)));
+
 				break;
 			case BOOL:
 				boolean value;
