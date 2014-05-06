@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.ABCException;
@@ -304,6 +305,7 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", filename("pointerAdd.cvl")));
 	}
 
+	@Ignore
 	@Test
 	public void printf() throws ABCException {
 		assertTrue(ui.run("verify", filename("printf.cvl"), "-showSavedStates"));
