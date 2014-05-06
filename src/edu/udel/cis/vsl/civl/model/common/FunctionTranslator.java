@@ -3245,8 +3245,7 @@ public class FunctionTranslator {
 					arguments.get(1));
 			break;
 		case MINUS:
-			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.MINUS, arguments.get(0), arguments.get(1));
+			result = translateMinusOperation(source, arguments.get(0), arguments.get(1));
 			break;
 		case MOD:
 			result = modelFactory.binaryExpression(source,
@@ -3332,6 +3331,54 @@ public class FunctionTranslator {
 					BINARY_OPERATOR.POINTER_ADD, pointer, offset);
 		}
 	}
+	
+	/**
+	 * Translate plus operation into an expression, as a helper method for
+	 * {@link #translateOperatorNode(OperatorNode, Scope)}.
+	 * 
+	 * @param source
+	 *            The CIVL source of the minus operator.
+	 * @param arg0
+	 *            The first argument of the minus operation.
+	 * @param arg1
+	 *            The second argument of the minus operation.
+	 * @return The CIVL expression of the minus operation.
+	 */
+	private Expression translateMinusOperation(CIVLSource source,
+			Expression arg0, Expression arg1) {
+		CIVLType type0 = arg0.getExpressionType();
+		CIVLType type1 = arg1.getExpressionType();
+		boolean isNumeric0 = type0.isNumericType() || type0.isScopeType();
+		boolean isNumeric1 = type1.isNumericType() || type1.isScopeType();
+
+		if (isNumeric0 && isNumeric1) {
+			return modelFactory.binaryExpression(source, BINARY_OPERATOR.MINUS,
+					arg0, arg1);
+		} else {
+			Expression pointer, offset;
+
+			if (isNumeric1) {
+				pointer = arrayToPointer(arg0);
+				offset = arg1;
+			} else if (isNumeric0) {
+				pointer = arrayToPointer(arg1);
+				offset = arg0;
+			} else
+				throw new CIVLInternalException(
+						"Expected at least one numeric argument", source);
+			if (!pointer.getExpressionType().isPointerType())
+				throw new CIVLInternalException(
+						"Expected expression of pointer type",
+						pointer.getSource());
+			if (!offset.getExpressionType().isIntegerType())
+				throw new CIVLInternalException(
+						"Expected expression of integer type",
+						offset.getSource());
+			return modelFactory.binaryExpression(source,
+					BINARY_OPERATOR.POINTER_SUBTRACT, pointer, offset);
+		}
+	}
+
 
 	/**
 	 * Translate a QuantifiedExpressionNode from AST into a CIVL Quantified
