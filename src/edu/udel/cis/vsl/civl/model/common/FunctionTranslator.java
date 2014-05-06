@@ -3188,6 +3188,7 @@ public class FunctionTranslator {
 		int numArgs = operatorNode.getNumberOfArguments();
 		List<Expression> arguments = new ArrayList<Expression>();
 		Expression result = null;
+		Expression booleanArg0, booleanArg1;
 
 		for (int i = 0; i < numArgs; i++) {
 			arguments.add(translateExpressionNode(operatorNode.getArgument(i),
@@ -3215,8 +3216,9 @@ public class FunctionTranslator {
 			result = modelFactory.dereferenceExpression(source, pointer);
 			break;
 		case CONDITIONAL:
-			result = modelFactory.conditionalExpression(source,
-					arguments.get(0), arguments.get(1), arguments.get(2));
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			result = modelFactory.conditionalExpression(source, booleanArg0,
+					arguments.get(1), arguments.get(2));
 			modelFactory
 					.addConditionalExpression((ConditionalExpression) result);
 			break;
@@ -3239,17 +3241,22 @@ public class FunctionTranslator {
 					arguments.get(0));
 			break;
 		case IMPLIES:
-			result = modelFactory
-					.binaryExpression(source, BINARY_OPERATOR.IMPLIES,
-							arguments.get(0), arguments.get(1));
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			result = modelFactory.binaryExpression(source,
+					BINARY_OPERATOR.IMPLIES, booleanArg0, booleanArg1);
 			break;
 		case LAND:
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
 			result = modelFactory.binaryExpression(source, BINARY_OPERATOR.AND,
-					arguments.get(0), arguments.get(1));
+					booleanArg0, booleanArg1);
 			break;
 		case LOR:
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
 			result = modelFactory.binaryExpression(source, BINARY_OPERATOR.OR,
-					arguments.get(0), arguments.get(1));
+					booleanArg0, booleanArg1);
 			break;
 		case LT:
 			result = modelFactory.binaryExpression(source,
