@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.CIVL;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.gui.CIVL_GUI;
 import edu.udel.cis.vsl.civl.model.Models;
@@ -725,6 +726,11 @@ public class UserInterface {
 			out.println("Error: " + unimplemented.toString());
 			preprocessor.printShorterFileNameMap(out);
 			return false;
+		} catch (CIVLSyntaxException syntax) {
+			verifier.terminateUpdater();
+			err.println(syntax);
+			preprocessor.printShorterFileNameMap(err);
+			return false;
 		} catch (Exception e) {
 			verifier.terminateUpdater();
 			throw e;
@@ -855,7 +861,7 @@ public class UserInterface {
 			throw e;
 		} catch (CIVLException e) {
 			err.println(e);
-			// preprocessor.printShorterFileNameMap(err);
+
 		}
 		err.flush();
 		return false;
