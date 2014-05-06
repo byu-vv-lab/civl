@@ -710,11 +710,18 @@ public class CommonExecutor implements Executor {
 		} else {
 			SymbolicExpression oldVariableValue = state.getVariableValue(sid,
 					vid);
-			SymbolicExpression newVariableValue = universe.assign(
-					oldVariableValue, symRef, value);
 
-			result = stateFactory
-					.setVariable(state, vid, sid, newVariableValue);
+			try {
+				SymbolicExpression newVariableValue = universe.assign(
+						oldVariableValue, symRef, value);
+
+				result = stateFactory.setVariable(state, vid, sid,
+						newVariableValue);
+			} catch (SARLException e) {
+				evaluator.logSimpleError(source, state, ErrorKind.DEREFERENCE,
+						"Invalid pointer dereference: " + pointer);
+				throw new UnsatisfiablePathConditionException();
+			}
 		}
 		return result;
 	}
