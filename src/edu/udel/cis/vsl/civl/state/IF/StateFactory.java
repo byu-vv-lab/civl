@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.state.IF;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -382,4 +383,60 @@ public interface StateFactory {
 	void printState(PrintStream out, State state);
 
 	void setEvaluator(Evaluator evaluator);
+
+	/**
+	 * <p>
+	 * Obtains the string representation of a symbolic expression, making
+	 * pointers represented in a user-friendly way.
+	 * </p>
+	 * If a pointer is pointing to
+	 * <ul>
+	 * <li>
+	 * 
+	 * <pre>
+	 * a variable: & variable &lt;dyscope name>;
+	 * e.g., int a = 9; int * p = &a;
+	 * then the representation of p would be &a&lt;d0> assuming that the name of the dynamic scope of a is d0.
+	 * </pre>
+	 * 
+	 * </li>
+	 * <li>
+	 * 
+	 * <pre>
+	 * an element of an array: &array<dyscope name>[index];
+	 * e.g., int a[5]; int *p = &a[1];
+	 * then the representation of p would be &a&lt;d0>[1] assuming that the name of the dynamic scope of a is d0.
+	 * </pre>
+	 * 
+	 * </li>
+	 * <li>
+	 * 
+	 * <pre>
+	 * a field of a struct: &struct&lt;dyscope name>.field;
+	 * e.g., typedef struct {int x; int y;} A; A s; int*p = &s.y;
+	 * then the representation of p would be &a&lt;d0>.y assuming that the name of the dynamic scope of a is d0.
+	 * </pre>
+	 * 
+	 * </li>
+	 * <li>
+	 * 
+	 * <pre>
+	 * a heap cell: heapObject&lt;dyscope name, malloc ID, number of malloc call>.
+	 * </pre>
+	 * 
+	 * </li>
+	 * </ul>
+	 * 
+	 * @param source
+	 *            The source code element of the symbolic expression.
+	 * @param state
+	 *            The state where the given symbolic expression is evaluated
+	 *            from.
+	 * @param symbolicExpression
+	 *            The symbolic expression whose string representation is to be
+	 *            obtained.
+	 * @return The string representation of the given symbolic expression
+	 */
+	String symbolicExpressionToString(CIVLSource source, State state,
+			SymbolicExpression symbolicExpression);
 }
