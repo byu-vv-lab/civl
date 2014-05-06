@@ -55,6 +55,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.DerivativeExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.DotNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.EnumerationConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.HereOrRootNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
@@ -2718,7 +2719,9 @@ public class FunctionTranslator {
 			case LONG_DOUBLE:
 				String doubleString = constantNode.getStringRepresentation();
 
-				if (doubleString.endsWith("l") || doubleString.endsWith("L") || doubleString.endsWith("f") || doubleString.endsWith("F")) {
+				if (doubleString.endsWith("l") || doubleString.endsWith("L")
+						|| doubleString.endsWith("f")
+						|| doubleString.endsWith("F")) {
 					doubleString = doubleString.substring(0,
 							doubleString.length() - 1);
 				}
@@ -2956,8 +2959,22 @@ public class FunctionTranslator {
 				} else if (conversion instanceof CompatiblePointerConversion) {
 					// nothing to do
 				} else if (conversion instanceof ArrayConversion) {
-					// we will ignore this one here because we want
-					// to keep it as array in subscript expressions
+					if (expressionNode.expressionKind() == ExpressionKind.OPERATOR
+							&& ((OperatorNode) expressionNode).getOperator() == Operator.SUBSCRIPT) {
+						// we will ignore this one here because we want
+						// to keep it as array in subscript expressions
+					} else if (result.expressionKind() == Expression.ExpressionKind.ADDRESS_OF
+							|| result.expressionKind() == Expression.ExpressionKind.ARRAY_LITERAL) {
+						// FIXME: Not sure why this needs to be checked...
+					} else {
+						assert result instanceof LHSExpression;
+						result = modelFactory.addressOfExpression(source,
+								modelFactory.subscriptExpression(source,
+										(LHSExpression) result,
+										modelFactory.integerLiteralExpression(
+												source, BigInteger.ZERO)));
+					}
+
 				} else if (conversion instanceof CompatibleStructureOrUnionConversion) {
 					// think about this
 					throw new CIVLUnimplementedFeatureException(
@@ -3245,7 +3262,8 @@ public class FunctionTranslator {
 					arguments.get(1));
 			break;
 		case MINUS:
-			result = translateMinusOperation(source, arguments.get(0), arguments.get(1));
+			result = translateMinusOperation(source, arguments.get(0),
+					arguments.get(1));
 			break;
 		case MOD:
 			result = modelFactory.binaryExpression(source,
@@ -3331,7 +3349,7 @@ public class FunctionTranslator {
 					BINARY_OPERATOR.POINTER_ADD, pointer, offset);
 		}
 	}
-	
+
 	/**
 	 * Translate plus operation into an expression, as a helper method for
 	 * {@link #translateOperatorNode(OperatorNode, Scope)}.
@@ -3378,7 +3396,6 @@ public class FunctionTranslator {
 					BINARY_OPERATOR.POINTER_SUBTRACT, pointer, offset);
 		}
 	}
-
 
 	/**
 	 * Translate a QuantifiedExpressionNode from AST into a CIVL Quantified
