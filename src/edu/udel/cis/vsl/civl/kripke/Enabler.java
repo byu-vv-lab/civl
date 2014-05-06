@@ -344,13 +344,13 @@ public abstract class Enabler implements
 		ArrayList<Transition> transitions = new ArrayList<>();
 		Statement assignAtomicLock = null;
 
+		if (pLocation == null)
+			return transitions;
 		if (executor.stateFactory().processInAtomic(state) != pid
 				&& p.atomicCount() > 0) {
 			assignAtomicLock = modelFactory.assignAtomicLockVariable(pid,
 					pLocation);
 		}
-		if (pLocation == null)
-			return transitions;
 		for (Statement s : pLocation.outgoing()) {
 			BooleanExpression newPathCondition = newPathCondition(state, pid, s);
 

@@ -798,7 +798,7 @@ public class FunctionTranslator {
 		for (Statement s : continues) {
 			s.setTarget(continueLocation);
 		}
-		loopEntrance.startLocation().setLoopPossible(true);
+		//loopEntrance.startLocation().setLoopPossible(true);
 		// the loop entrance location is the same as the loop exit location
 		loopExit = new CommonFragment(modelFactory.loopBranchStatement(
 				condition.getSource(), loopEntranceLocation, modelFactory

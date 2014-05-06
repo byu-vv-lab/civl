@@ -1,16 +1,22 @@
 #include <civlc.h>
+#include <stdio.h>
+
+$input int N;
+$input int B;
+$assume 0 < N && N < B;
 
 void main(){
-  int a[5];
+  int a[N];
   $int_iter iter;
   int k = 0;
   
-  for(int i = 0; i < 5; i++)
+  for(int i = 0; i < N; i++)
     a[i] = i;
-  iter = $int_iter_create($here, a, 5);
+  iter = $int_iter_create($here, a, N);
   while($int_iter_hasNext(iter)) {
     int current = $int_iter_next(iter);
     
+    printf("Current is %d.\n", current);
     $assert(current == k);
     k++;
   }

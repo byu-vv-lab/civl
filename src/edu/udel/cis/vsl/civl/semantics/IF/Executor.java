@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
+//TODO: apply new design: an executor takes a transition instead of a statement.
 public interface Executor {
 	/**
 	 * Assigns a value to the referenced cell in the state. Returns a new state
@@ -124,7 +125,8 @@ public interface Executor {
 	// SystemGuardExpression systemGuard);
 
 	/**
-	 * Execute a statement from a certain state and return the resulting state
+	 * Execute a statement from a certain state and return the resulting state.
+	 * 
 	 * TODO make sure the pid is never changed or return the new pid if changed
 	 * 
 	 * @param state

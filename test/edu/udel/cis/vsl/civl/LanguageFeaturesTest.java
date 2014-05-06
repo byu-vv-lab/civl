@@ -466,6 +466,6 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void intIter() throws ABCException {
-		assertTrue(ui.run("verify", filename("intIter.cvl")));
+		assertTrue(ui.run("verify", filename("intIter.cvl"), "-inputB=5"));
 	}
 }

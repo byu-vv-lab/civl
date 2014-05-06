@@ -211,4 +211,10 @@ public class StatementSet implements Statement {
 		return null;
 	}
 
+	@Override
+	public void setTargetTemp(Location target) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

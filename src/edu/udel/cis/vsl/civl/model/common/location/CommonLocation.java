@@ -255,13 +255,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public void loopAnalysis() {
-		if (this.loopPossible) {
-			// this is the loop entrance of a loop statement
-			// check if it is finite
-		} else {
-			// this is not the loop entrance of a loop statement, check if it is
-			// possible to form a loop by other statements like goto
-		}
+		
+//		if (this.loopPossible) {
+//			// this is the loop entrance of a loop statement
+//			// check if it is finite
+//		} else {
+//			// this is not the loop entrance of a loop statement, check if it is
+//			// possible to form a loop by other statements like goto
+//		}
 	}
 
 	@Override

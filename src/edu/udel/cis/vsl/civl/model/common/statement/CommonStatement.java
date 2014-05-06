@@ -98,10 +98,6 @@ public abstract class CommonStatement extends CommonSourceable implements
 		source.addOutgoing(this);
 	}
 
-	/**
-	 * @param target
-	 *            the target to set
-	 */
 	@Override
 	public void setTarget(Location target) {
 		if (this.target != null) {
@@ -111,10 +107,14 @@ public abstract class CommonStatement extends CommonSourceable implements
 		target.addIncoming(this);
 	}
 
-	/**
-	 * @param guard
-	 *            the guard to set
-	 */
+	@Override
+	public void setTargetTemp(Location target) {
+		if (this.target != null) {
+			this.target().removeIncoming(this);
+		}
+		this.target = target;
+	}
+
 	@Override
 	public void setGuard(Expression guard) {
 		this.guard = guard;

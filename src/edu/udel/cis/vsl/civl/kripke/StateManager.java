@@ -138,7 +138,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	private boolean guiMode = false;
 
 	/**
-	 * The compound transition established by the current nextStep call.
+	 * The compound transition established by the current nextStep call. TODO:
+	 * get rid of being an instance field, creating a new class NextStateWorker.
 	 */
 	private CompoundTransition compoundTransition;
 
@@ -323,14 +324,14 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	}
 
 	/**
-	 * Execute the enabled statements from a normal location in an $atomic
-	 * block. The result might be:
+	 * Execute the enabled statement from a normal location in an $atomic block.
+	 * The result might be:
 	 * <ol>
-	 * <li>a sudo noop statement and the original state, when the location is
+	 * <li>a pseudo noop statement and the original state, when the location is
 	 * non-deterministic;</li>
 	 * <li>the unique statement that is enabled and the resulting state, when
 	 * the location is deterministic and non-blocked; or</li>
-	 * <li>NULL, when the location is blocked.</li>
+	 * <li><code>null</code>, when the location is blocked.</li>
 	 * </ol>
 	 * 
 	 * @param pLocation
@@ -348,6 +349,9 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		State oldState = newState;
 		boolean executed = false;
 
+		// TODO: uses enabler to check if the current location is
+		// nondeterministic, blocked or deterministic and generate a transition
+		// to be executed by the executor.
 		for (Statement s : pLocation.outgoing()) {
 			Pair<StateStatusKind, State> temp = executor.executeStatement(
 					oldState, pLocation, s, pid);
@@ -367,8 +371,11 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				newState = temp.right;
 				executedStatement = s;
 				break;
-			default:// BLOCKED, continue to try executing next statement
+			case BLOCKED:// BLOCKED, continue to try executing next statement
 				continue;
+			default:
+				throw new CIVLInternalException("This is unreachable",
+						pLocation.getSource());
 			}
 		}
 		if (executedStatement != null)
@@ -377,8 +384,23 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	}
 
 	/**
-	 * Execute a sequence of purely local statements or statements defined in an
-	 * $atomic block of a certain process
+	 * Executes. a sequence of purely local statements or statements defined in
+	 * an $atomic block of a certain process.
+	 * <p>
+	 * Precondition: if atomic is true, then in the given state, process pid
+	 * must hold the atomic lock; otherwise, the location must be purely local (
+	 * {@linkplain Location#isPurelyLocal()} ).//TODO improve definition of
+	 * purely local.
+	 * </p>
+	 * 
+	 * <p>
+	 * Postcondition: if atomic is true, it returns the state after executing
+	 * all statements in the atomic block until an location with more than one
+	 * incoming statements is encountered, or an atomic_exit is encountered, or
+	 * there is no enabled statement for process pid, or there is
+	 * nondeterminism; if atomic is false, it returns the state after executing
+	 * the maximum sequence of purely location statements.
+	 * </p>
 	 * 
 	 * @param state
 	 *            The state to start with
@@ -391,12 +413,12 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 *            executing purely-local statements in non-atomic context.
 	 * @param print
 	 *            True iff each step is to be printed.
-	 * @return The resulting state
+	 * @return The resulting state after
 	 */
 	private State executeAtomicOrPurelyLocalStatements(State state, int pid,
 			Location location, boolean atomic, boolean print) {
 		Location pLocation = location;
-		ProcessState p = state.getProcessState(pid);
+		ProcessState procState = state.getProcessState(pid);
 		State newState = state;
 		Statement executedStatement = null;
 		boolean atomicLockVarChanged = false;
@@ -405,10 +427,15 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		boolean stepExecuted = false;
 
 		assert atomic || pLocation.isPurelyLocal();
-		while ((!atomic && pLocation != null && pLocation.isPurelyLocal())
-				|| (atomic && pLocation != null)) {
-			if (pLocation.isLoopPossible()) {
-				return newState;
+		while (true) {
+			if (atomic) {
+				// purely local already checks the number of incoming statements
+				// is no more than 1
+				if (pLocation.getNumIncoming() > 1)
+					break;
+			} else {
+				if (!pLocation.isPurelyLocal())
+					break;
 			}
 			atomicLockVarChanged = false;
 			oneStep = null;
@@ -424,7 +451,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				break;
 			case ATOMIC_ENTER:
 				if (atomic) {
-					if (!p.inAtomic())
+					if (!procState.inAtomic())
 						atomicLockVarChanged = true;
 					oneStep = executeAtomicEnter(pLocation, newState, pid);
 				} else {
@@ -464,24 +491,24 @@ public class StateManager implements StateManagerIF<State, Transition> {
 						return newState;
 				}
 			}
-			p = newState.getProcessState(pid);
+			procState = newState.getProcessState(pid);
 			if (this.showStates) {
 				out.println();
 				// newState.print(out);
 				this.stateFactory.printState(out, newState);
 			}
-			if (p != null && print && stepExecuted) {
+			if (procState != null && print && stepExecuted) {
 				printStatement(oldState, newState, executedStatement,
-						pLocation.atomicKind(), p.atomicCount(),
+						pLocation.atomicKind(), procState.atomicCount(),
 						atomicLockVarChanged);
 			} else if (print && stepExecuted) {
 				printStatement(oldState, newState, executedStatement,
 						pLocation.atomicKind(), 0, atomicLockVarChanged);
 			}
-			if (p != null && !p.hasEmptyStack())
-				pLocation = p.peekStack().location();
+			if (procState != null && !procState.hasEmptyStack())
+				pLocation = procState.peekStack().location();
 			else
-				pLocation = null;
+				break;
 		}
 		return newState;
 	}
@@ -504,7 +531,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		int pid;
 		Statement statement;
 		int numProcs;
-		ProcessState p;
+		ProcessState procState;
 		Location currentLocation;
 		boolean printTransitions = verbose || debug || showTransitions;
 		int oldMaxCanonicId = this.maxCanonicId;
@@ -513,17 +540,13 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		assert transition instanceof SimpleTransition;
 		pid = ((SimpleTransition) transition).pid();
 		processIdentifier = ((SimpleTransition) transition).processIdentifier();
-		p = state.getProcessState(pid);
-		currentLocation = p.getLocation();
+		procState = state.getProcessState(pid);
+		currentLocation = procState.getLocation();
 		if (this.guiMode)
 			this.compoundTransition = new CompoundTransition(pid,
 					processIdentifier);
 		switch (currentLocation.atomicKind()) {
 		case ATOMIC_ENTER:
-			printTransitionPrefix(printTransitions, state, processIdentifier);
-			state = executeAtomicOrPurelyLocalStatements(state, pid,
-					currentLocation, true, printTransitions);
-			break;
 		case ATOMIC_EXIT:
 			printTransitionPrefix(printTransitions, state, processIdentifier);
 			state = executeAtomicOrPurelyLocalStatements(state, pid,
@@ -535,9 +558,10 @@ public class StateManager implements StateManagerIF<State, Transition> {
 					printTransitions);
 			break;
 		case ATOM_EXIT:
-			throw new CIVLInternalException("Unreachable",
+			throw new CIVLInternalException(
+					"Atom exit is unreachable here because an atom block should be executed in one single transition.",
 					currentLocation.getSource());
-		default:// execute a normal transition
+		default:// execute a normal location
 			State oldState = state;
 
 			if (printTransitions) {
@@ -566,17 +590,20 @@ public class StateManager implements StateManagerIF<State, Transition> {
 						statement));
 			// sometimes the execution might allow the process to grab the
 			// atomic lock
-			if (executor.stateFactory().lockedByAtomic(state)) {
-				currentLocation = state.getProcessState(pid).getLocation();
-				state = executeAtomicOrPurelyLocalStatements(state, pid,
-						currentLocation, true, printTransitions);
-			}
+			procState = state.getProcessState(pid);
+			if (!procState.hasEmptyStack())
+				if (executor.stateFactory().lockedByAtomic(state)) {
+					currentLocation = state.getProcessState(pid).getLocation();
+
+					state = executeAtomicOrPurelyLocalStatements(state, pid,
+							currentLocation, true, printTransitions);
+				}
 		}
 		// do nothing when process pid terminates and is removed from the state
 		if (!stateFactory.lockedByAtomic(state) && state.numProcs() > pid) {
-			p = state.getProcessState(pid);
-			if (p != null && !p.hasEmptyStack()) {
-				Location newLocation = p.peekStack().location();
+			procState = state.getProcessState(pid);
+			if (procState != null && !procState.hasEmptyStack()) {
+				Location newLocation = procState.peekStack().location();
 
 				// execute purely local statements of the current process
 				// greedily

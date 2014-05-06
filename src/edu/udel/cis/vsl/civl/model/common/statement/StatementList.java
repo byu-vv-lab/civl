@@ -301,4 +301,10 @@ public class StatementList implements Statement {
 		return result;
 	}
 
+	@Override
+	public void setTargetTemp(Location target) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

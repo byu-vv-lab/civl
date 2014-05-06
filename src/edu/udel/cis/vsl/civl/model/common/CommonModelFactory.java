@@ -1799,7 +1799,7 @@ public class CommonModelFactory implements ModelFactory {
 				this.atomicLockVariableExpression,
 				this.selfExpression(this.systemSource), false);
 
-		assignStatement.setTarget(target);
+		assignStatement.setTargetTemp(target);
 		return assignStatement;
 	}
 

@@ -68,6 +68,12 @@ public interface Statement extends Sourceable {
 	 *            the target to set
 	 */
 	void setTarget(Location target);
+	
+	/**
+	 * @param target
+	 *            the target to set
+	 */
+	void setTargetTemp(Location target);
 
 	/**
 	 * @param guard
