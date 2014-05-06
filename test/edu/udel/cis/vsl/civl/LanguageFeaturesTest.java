@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.ABCException;
@@ -297,7 +296,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void pointers() throws ABCException {
-		assertTrue(ui.run("verify", filename("pointers.cvl")));
+		assertTrue(ui.run("verify", filename("pointers.cvl"), "-showStates"));
 	}
 
 	@Test
@@ -305,10 +304,9 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", filename("pointerAdd.cvl")));
 	}
 
-	@Ignore
 	@Test
 	public void printf() throws ABCException {
-		assertTrue(ui.run("verify", filename("printf.cvl"), "-showSavedStates"));
+		assertTrue(ui.run("verify", filename("printf.cvl"), "-input__argc=2"));
 	}
 
 	@Test
@@ -413,7 +411,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void assignInput() throws ABCException {
-		assertFalse(ui.run("verify", filename("assignInput.cvl"), "-showModel"));
+		assertFalse(ui.run("verify", filename("assignInput.cvl")));
 	}
 
 	@Test
@@ -438,7 +436,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void intToBool() throws ABCException {
-		assertTrue(ui.run("verify", filename("intToBool.cvl"), "-showModel"));
+		assertTrue(ui.run("verify", filename("intToBool.cvl")));
 	}
 
 	@Test
@@ -468,6 +466,6 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void intIter() throws ABCException {
-		assertTrue(ui.run("verify", filename("intIter.cvl"), "-showStates", "-showModel"));
+		assertTrue(ui.run("verify", filename("intIter.cvl")));
 	}
 }

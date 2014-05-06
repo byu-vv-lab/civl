@@ -59,15 +59,14 @@ public class OmpTransformerTest {
 			});
 		}
 		if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE)) {
-			Transform
-					.addTransform(new TransformRecord(OmpPragmaTransformer.CODE,
-							OmpPragmaTransformer.LONG_NAME,
-							OmpPragmaTransformer.SHORT_DESCRIPTION) {
-						@Override
-						public Transformer create(ASTFactory astFactory) {
-							return new OmpPragmaTransformer(astFactory);
-						}
-					});
+			Transform.addTransform(new TransformRecord(
+					OmpPragmaTransformer.CODE, OmpPragmaTransformer.LONG_NAME,
+					OmpPragmaTransformer.SHORT_DESCRIPTION) {
+				@Override
+				public Transformer create(ASTFactory astFactory) {
+					return new OmpPragmaTransformer(astFactory);
+				}
+			});
 		}
 		ABC.language = Language.CIVL_C;
 	}
@@ -100,8 +99,8 @@ public class OmpTransformerTest {
 
 	@Test
 	public void nested() throws ABCException, IOException {
-		//this.check("nested");
-		assertTrue(ui.run("parse", "-echo", filename("nested.c")));
+		assertTrue(ui.run("parse", "-echo", filename("nested.c"),
+				"-input__argc=2"));
 	}
 
 	@Test
