@@ -246,6 +246,10 @@ public class ImmutableStateFactory implements StateFactory {
 		return trueReasoner.isValid(universe.not(p));
 	}
 
+	
+	// TODO: need to export this method, or even better a more general
+	// method for pretty-printing values:
+	// String toString(SymbolicExpression value);
 	private String pointerValueToString(CIVLSource source, State state,
 			SymbolicExpression pointer) {
 		if (pointer.operator() == SymbolicOperator.NULL)
