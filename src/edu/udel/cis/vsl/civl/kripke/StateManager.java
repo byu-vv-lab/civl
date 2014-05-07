@@ -415,7 +415,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 *            True iff each step is to be printed.
 	 * @return The resulting state after
 	 */
-	private State executeAtomicOrPurelyLocalStatements(State state, int pid,
+	private State executeAtomicOrPurelyLocalStatements(boolean isFirst, State state, int pid,
 			Location location, boolean atomic, boolean print) {
 		Location pLocation = location;
 		ProcessState procState = state.getProcessState(pid);
@@ -431,12 +431,14 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			if (atomic) {
 				// purely local already checks the number of incoming statements
 				// is no more than 1
-				if (pLocation.getNumIncoming() > 1)
+				if (!isFirst && pLocation.getNumIncoming() > 1)
 					break;
 			} else {
 				if (!pLocation.isPurelyLocal())
 					break;
 			}
+			if(isFirst)
+				isFirst = false;
 			atomicLockVarChanged = false;
 			oneStep = null;
 			stepExecuted = true;
@@ -455,7 +457,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 						atomicLockVarChanged = true;
 					oneStep = executeAtomicEnter(pLocation, newState, pid);
 				} else {
-					newState = executeAtomicOrPurelyLocalStatements(newState,
+					newState = executeAtomicOrPurelyLocalStatements(false, newState,
 							pid, pLocation, true, print);
 					stepExecuted = false;
 				}
@@ -549,7 +551,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 		case ATOMIC_ENTER:
 		case ATOMIC_EXIT:
 			printTransitionPrefix(printTransitions, state, processIdentifier);
-			state = executeAtomicOrPurelyLocalStatements(state, pid,
+			state = executeAtomicOrPurelyLocalStatements(true, state, pid,
 					currentLocation, true, printTransitions);
 			break;
 		case ATOM_ENTER:
@@ -595,7 +597,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				if (executor.stateFactory().lockedByAtomic(state)) {
 					currentLocation = state.getProcessState(pid).getLocation();
 
-					state = executeAtomicOrPurelyLocalStatements(state, pid,
+					state = executeAtomicOrPurelyLocalStatements(false, state, pid,
 							currentLocation, true, printTransitions);
 				}
 		}
@@ -608,7 +610,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				// execute purely local statements of the current process
 				// greedily
 				if (newLocation != null && newLocation.isPurelyLocal()) {
-					state = executeAtomicOrPurelyLocalStatements(state, pid,
+					state = executeAtomicOrPurelyLocalStatements(false, state, pid,
 							newLocation, false, printTransitions);
 				}
 			}
