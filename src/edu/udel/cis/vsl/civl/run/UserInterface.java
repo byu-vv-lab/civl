@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.abc.transform.common.CompareCombiner;
 import edu.udel.cis.vsl.civl.CIVL;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -34,8 +35,6 @@ import edu.udel.cis.vsl.civl.model.Models;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
-import edu.udel.cis.vsl.civl.model.IF.ModelCombiner;
-import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.CIVLTransform;
 import edu.udel.cis.vsl.civl.transition.CompoundTransition;
@@ -256,13 +255,6 @@ public class UserInterface {
 		if (numSeen > numExpected)
 			throw new CommandLineException("Unexpected command line argument "
 					+ config.getFreeArg(numExpected + 1));
-	}
-
-	private Pair<Model, Preprocessor> extractModel(PrintStream out,
-			GMCConfiguration config, String filename, ModelFactory factory)
-			throws ABCException, IOException, CommandLineException {
-		return extractModel(out, config, filename,
-				Models.newModelBuilder(factory));
 	}
 
 	private Pair<Model, Preprocessor> extractModel(PrintStream out,
@@ -748,36 +740,64 @@ public class UserInterface {
 		SymbolicUniverse universe = SARL.newStandardUniverse();
 		boolean result = false;
 		String filename0, filename1;
-		Model model0, model1, compositeModel;
-		ModelCombiner combiner;
+		Program program0, program1, compositeProgram;
+		CompareCombiner combiner = new CompareCombiner();
+		Model model;
 		Verifier verifier;
 		boolean showShortFileName = showShortFileNameList(config);
 		boolean debug = config.isTrue(debugO);
 		boolean verbose = config.isTrue(verboseO);
 		boolean showModel = config.isTrue(showModelO);
-		Pair<Model, Preprocessor> modelAndPreprocessor0, modelAndPreprocessor1;
-		Preprocessor preprocessor;
+		Activator frontEnd0, frontEnd1;
+		boolean parse = "parse".equals(config.getFreeArg(0));
+		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
+		Preprocessor preprocessor0;
+		Preprocessor preprocessor1;
 
 		assert !config.isTrue(mpiO);
 		checkFilenames(2, config);
 		filename0 = config.getFreeArg(1);
 		filename1 = config.getFreeArg(2);
-		modelAndPreprocessor0 = extractModel(out, config, filename0, universe);
-		model0 = modelAndPreprocessor0.left;
-		modelAndPreprocessor1 = extractModel(out, config, filename1,
-				model0.factory());
-		model1 = modelAndPreprocessor1.left;
-		preprocessor = modelAndPreprocessor0.right;
-		combiner = Models.newModelCombiner(model0.factory());
-		compositeModel = combiner.combine(model0, model1);
-		if (showModel || verbose || debug) {
-			out.println("Composite Model");
-			compositeModel.print(out, verbose || debug);
+		frontEnd0 = getFrontEnd(filename0, config);
+		frontEnd1 = getFrontEnd(filename1, config);
+		preprocessor0 = frontEnd0.getPreprocessor();
+		preprocessor1 = frontEnd1.getPreprocessor();
+
+		if (verbose || debug) {
+			// shows absolutely everything
+			program0 = frontEnd0.showTranslation(out);
+			program1 = frontEnd1.showTranslation(out);
+		} else {
+			program0 = frontEnd0.getProgram();
+			applyTransformers(filename0, program0, preprocessor0, parse, frontEnd0);
+			program1 = frontEnd1.getProgram();
+			applyTransformers(filename1, program1, preprocessor1, parse, frontEnd1);
 		}
-		if (showShortFileName)
-			preprocessor.printShorterFileNameMap(out);
-		verifier = new Verifier(config, compositeModel, out, err, startTime,
-				showShortFileName, preprocessor);
+		if (verbose || debug)
+			out.println("Generating composite program...");
+		compositeProgram = frontEnd0.getProgramFactory().newProgram(
+				combiner.combine(program0.getAST(), program1.getAST()),
+				universe);
+		if (verbose || debug) {
+			compositeProgram.print(out);
+		}
+		if (showShortFileName) {
+			preprocessor0.printShorterFileNameMap(out);
+			preprocessor1.printShorterFileNameMap(out);
+		}
+
+		if (verbose || debug)
+			out.println("Extracting CIVL model...");
+		model = modelBuilder.buildModel(config, compositeProgram,
+				"Composite of " + coreName(filename0) + " and "
+						+ coreName(filename1), debug, out);
+		if (verbose || debug)
+			out.println(bar + " Model " + bar + "\n");
+		if (showModel || verbose || debug || parse) {
+			model.print(out, verbose || debug);
+		}
+		verifier = new Verifier(config, model, out, err, startTime,
+				showShortFileName, preprocessor0);
 		try {
 			result = verifier.run();
 		} catch (CIVLUnimplementedFeatureException unimplemented) {
