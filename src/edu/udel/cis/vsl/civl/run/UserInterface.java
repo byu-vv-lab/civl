@@ -275,6 +275,7 @@ public class UserInterface {
 		Program program;
 		Model model;
 		Preprocessor preprocessor = frontEnd.getPreprocessor();
+		List<String> inputVars = getInputVariables(config);
 
 		if (verbose || debug) {
 			// shows absolutely everything
@@ -283,7 +284,7 @@ public class UserInterface {
 			program = frontEnd.getProgram();
 		}
 		applyTransformers(filename, program, preprocessor, verbose || debug,
-				frontEnd);
+				frontEnd, inputVars);
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(config, program, coreName(filename),
@@ -296,6 +297,27 @@ public class UserInterface {
 		return new Pair<>(model, preprocessor);
 	}
 
+	private List<String> getInputVariables(GMCConfiguration config) {
+		Collection<Option> options = config.getOptions();
+		List<String> inputVars = new ArrayList<>();
+
+		for (Option option : options) {
+			Object optionValue = config.getValue(option);
+
+			if (optionValue != null) {
+				if (option.name().equals("input")) {
+					@SuppressWarnings("unchecked")
+					LinkedHashMap<Object, Object> hashMap = (LinkedHashMap<Object, Object>) optionValue;
+
+					for (Object key : hashMap.keySet()) {
+						inputVars.add(key.toString());
+					}
+				}
+			}
+		}
+		return inputVars;
+	}
+
 	/**
 	 * Apply transformers of the program.
 	 * 
@@ -305,7 +327,7 @@ public class UserInterface {
 	 */
 	private void applyTransformers(String fileName, Program program,
 			Preprocessor preprocessor, boolean verboseOrDebug,
-			Activator frontEnd) throws SyntaxException {
+			Activator frontEnd, List<String> inputVars) throws SyntaxException {
 		Set<String> headers = preprocessor.headerFiles();
 		boolean isC = fileName.endsWith(".c");
 		boolean hasStdio = false, hasOmp = false, hasMpi = false;
@@ -317,30 +339,35 @@ public class UserInterface {
 		if (isC && headers.contains("mpi.h"))
 			hasMpi = true;
 		// always apply general transformation.
-		CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL);
+		CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL,
+				inputVars, frontEnd.getASTBuilder());
 		if (hasStdio) {
 			if (verboseOrDebug)
 				this.out.println("Apply IO transformer...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.IO);
+			CIVLTransform.applyTransformer(program, CIVLTransform.IO,
+					inputVars, frontEnd.getASTBuilder());
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 		}
 		if (hasOmp) {
 			if (verboseOrDebug)
 				this.out.println("Apply OpenMP parser...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA);
+			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
+					inputVars, frontEnd.getASTBuilder());
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 			if (verboseOrDebug)
 				this.out.println("Apply OpenMP transformer...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.OMP);
+			CIVLTransform.applyTransformer(program, CIVLTransform.OMP,
+					inputVars, frontEnd.getASTBuilder());
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 		}
 		if (hasMpi) {
 			if (verboseOrDebug)
 				this.out.println("Apply MPI transformer...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.MPI);
+			CIVLTransform.applyTransformer(program, CIVLTransform.MPI,
+					inputVars, frontEnd.getASTBuilder());
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 		}
@@ -465,7 +492,7 @@ public class UserInterface {
 			Object optionValue = config.getValue(option);
 
 			if (optionValue != null) {
-				if (option.name().equalsIgnoreCase("input")) {
+				if (option.name().equals("input")) {
 					@SuppressWarnings("unchecked")
 					LinkedHashMap<Object, Object> hashMap = (LinkedHashMap<Object, Object>) optionValue;
 
@@ -478,7 +505,6 @@ public class UserInterface {
 					command = command + " -" + option.name() + "="
 							+ optionValue.toString();
 			}
-
 		}
 		if (numOfArgs > 1)
 			command = command + " " + config.getFreeArg(1);
@@ -753,6 +779,7 @@ public class UserInterface {
 		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
 		Preprocessor preprocessor0;
 		Preprocessor preprocessor1;
+		List<String> inputVars = getInputVariables(config);
 
 		assert !config.isTrue(mpiO);
 		checkFilenames(2, config);
@@ -769,17 +796,17 @@ public class UserInterface {
 			program1 = frontEnd1.showTranslation(out);
 		} else {
 			program0 = frontEnd0.getProgram();
+
 			applyTransformers(filename0, program0, preprocessor0, parse,
-					frontEnd0);
+					frontEnd0, inputVars);
 			program1 = frontEnd1.getProgram();
 			applyTransformers(filename1, program1, preprocessor1, parse,
-					frontEnd1);
+					frontEnd1, inputVars);
 		}
 		if (verbose || debug)
 			out.println("Generating composite program...");
 		compositeProgram = frontEnd0.getProgramFactory().newProgram(
-				combiner.combine(program0.getAST(), program1.getAST()),
-				universe);
+				combiner.combine(program0.getAST(), program1.getAST()));
 		if (verbose || debug) {
 			compositeProgram.print(out);
 		}

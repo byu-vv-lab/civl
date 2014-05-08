@@ -8,6 +8,7 @@ import java.util.Map;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
+import edu.udel.cis.vsl.civl.library.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -40,6 +41,11 @@ public class CommonLibraryLoader implements LibraryLoader {
 	 * The cache of known library executors.
 	 */
 	private Map<String, LibraryExecutor> libraryExecutorCache = new LinkedHashMap<>();
+
+	/**
+	 * The cache of known library evaluators.
+	 */
+	private Map<String, LibraryEvaluator> libraryEvaluatorCache = new LinkedHashMap<>();
 
 	/* ********************* Methods from LibraryLoader ******************** */
 
@@ -97,6 +103,31 @@ public class CommonLibraryLoader implements LibraryLoader {
 						+ name + "\n" + e.getMessage(), (CIVLSource) null);
 			}
 			libraryExecutorCache.put(name, result);
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public LibraryEvaluator getLibraryEvaluator(String name, Executor executor,
+			ModelFactory modelFacotry) {
+		LibraryEvaluator result = libraryEvaluatorCache.get(name);
+
+		if (result == null) {
+			String aClassName = className(name, "Evaluator");
+
+			try {
+				Class<? extends LibraryEvaluator> aClass = (Class<? extends LibraryEvaluator>) Class
+						.forName(aClassName);
+				Constructor<? extends LibraryEvaluator> constructor = aClass
+						.getConstructor(Executor.class, ModelFactory.class);
+
+				result = constructor.newInstance(executor, modelFacotry);
+			} catch (Exception e) {
+				throw new CIVLInternalException("Unable to load library: "
+						+ aClassName + "\n" + e.getMessage(), (CIVLSource) null);
+			}
+			libraryEvaluatorCache.put(name, result);
 		}
 		return result;
 	}

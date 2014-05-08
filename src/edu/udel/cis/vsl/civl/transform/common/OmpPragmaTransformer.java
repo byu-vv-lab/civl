@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.err.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.CIVLBaseTransformer;
 
 public class OmpPragmaTransformer extends CIVLBaseTransformer {
 
@@ -31,7 +32,7 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 	public OmpPragmaTransformer(ASTFactory astFactory) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 		this.ompBuilder = new OmpBuilder(nodeFactory.getValueFactory(),
-				this.nodeFactory, astFactory.getTokenFactory(), astFactory);
+				this.nodeFactory, astFactory.getTokenFactory(), this.astBuilder);
 	}
 
 	@Override

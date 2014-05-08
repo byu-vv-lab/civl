@@ -1557,4 +1557,6 @@ public interface ModelFactory {
 	SymbolicExpression nullScopeValue();
 
 	ProcnullExpression procnullExpression(CIVLSource source);
+
+	VariableExpression civlFilesystemVariableExpression();
 }

@@ -10,6 +10,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
@@ -30,7 +33,10 @@ import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
@@ -143,6 +149,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 */
 	private SymbolicConstant initialContentsFunction;
 
+	private SymbolicConstant fileLengthFunction;
+
 	/**
 	 * Abstract function to convert an integer into a string with a format:
 	 * <code>char* intToString(char* format, int data)</code>.
@@ -204,77 +212,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 */
 	private SymbolicConstant stringToPointerFunction;
 
-	// /**
-	// * Abstract function to read an integer from a string, returning the
-	// * symbolic expression representing the integer being read:
-	// * <code>char* carInt(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant carIntFunction;
-	//
-	// /**
-	// * Abstract function to read an integer from a string, returning the
-	// * symbolic expression representing the remaining part of the string:
-	// * <code>char* carInt(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant cdrIntFunction;
-	//
-	// /**
-	// * Abstract function to read a double from a string, returning the
-	// symbolic
-	// * expression representing the double being read:
-	// * <code>char* carDouble(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant carDoubleFunction;
-	//
-	// /**
-	// * Abstract function to read a double from a string, returning the
-	// symbolic
-	// * expression representing the remaining part of the string:
-	// * <code>char* cdrDouble(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant cdrDoubleFunction;
-	//
-	// /**
-	// * Abstract function to read a character from a string, returning the
-	// * symbolic expression representing the character being read:
-	// * <code>char* carCharacter(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant carCharFunction;
-	//
-	// /**
-	// * Abstract function to read a character from a string, returning the
-	// * symbolic expression representing the remaining part of the string:
-	// * <code>char* cdrCharacter(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant cdrCharFunction;
-	//
-	// /**
-	// * Abstract function to read a character from a string, returning the
-	// * symbolic expression representing the character being read:
-	// * <code>char* carCharacter(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant carPointerFunction;
-	//
-	// /**
-	// * Abstract function to read a character from a string, returning the
-	// * symbolic expression representing the remaining part of the string:
-	// * <code>char* cdrCharacter(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant cdrPointerFunction;
-	//
-	// /**
-	// * Abstract function to read a character from a string, returning the
-	// * symbolic expression representing the character being read:
-	// * <code>char* carCharacter(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant carStringFunction;
-	//
-	// /**
-	// * Abstract function to read a character from a string, returning the
-	// * symbolic expression representing the remaining part of the string:
-	// * <code>char* cdrCharacter(char* string, char* format)</code>.
-	// */
-	// private SymbolicConstant cdrStringFunction;
+	private SymbolicExpression EOF;
 
 	/**
 	 * The set of characters that are used to construct a number in a format
@@ -302,6 +240,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		Model model = modelFactory.model();
 		SymbolicType stringArrayType;
 
+		EOF = universe.canonic(universe.integer(-100));
 		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
 				.arrayType(universe.characterType()));
 		stringArrayType = (SymbolicArrayType) universe.canonic(universe
@@ -312,6 +251,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				.symbolicConstant(universe.stringObject("contents"), universe
 						.functionType(Arrays.asList(stringSymbolicType),
 								stringArrayType)));
+		fileLengthFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("fileLength"), universe
+						.functionType(Arrays.asList(stringSymbolicType),
+								universe.integerType())));
 		createStringToDataFunctions();
 		createDataToStringFunctions();
 		// createCharReadFunctions();
@@ -570,7 +513,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
 				int_arrayIndex = evaluator.extractInt(source, arrayIndex);
 			}
-			numChars = originalArray.size();
+			numChars = originalArray.size() - 1;//ignoring the '\0' at the end of the string.
 			stringChars = new char[numChars - int_arrayIndex];
 			for (int i = 0, j = int_arrayIndex; j < numChars; i++, j++) {
 				SymbolicExpression charExpr = originalArray.get(j);
@@ -601,6 +544,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 */
 	private SymbolicExpression initialContents(SymbolicExpression filename) {
 		return universe.apply(initialContentsFunction, Arrays.asList(filename));
+	}
+
+	private SymbolicExpression fileLength(SymbolicExpression filename) {
+		return universe.apply(this.fileLengthFunction, Arrays.asList(filename));
 	}
 
 	/**
@@ -657,6 +604,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		SymbolicSequence<?> fileSequence;
 		int numFiles;
 		int fileIndex;
+		SymbolicExpression length;
 		NumericExpression isInput, isOutput, isBinary, isWide = this.zero;
 		SymbolicExpression contents;
 		SymbolicExpression theFile;
@@ -734,8 +682,9 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				throw new CIVLUnimplementedFeatureException(
 						"FILE mode " + mode, modeSource);
 			}
+			length = this.fileLength(filename);
 			theFile = universe.tuple(fileSymbolicType, Arrays.asList(filename,
-					contents, isOutput, isInput, isBinary, isWide));
+					contents, isOutput, isInput, isBinary, isWide, length));
 			fileArray = universe.append(fileArray, theFile);
 			fileSystemStructure = universe.tupleWrite(fileSystemStructure,
 					oneObject, fileArray);
@@ -840,11 +789,109 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			state = execute_filesystem_copy_output(source, state, pid,
 					arguments, argumentValues);
 			break;
+		case "$textFileLength":
+			state = execute_text_file_length(source, state, pid, lhs,
+					arguments, argumentValues);
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(name.name(), statement);
 
 		}
 		state = stateFactory.setLocation(state, pid, statement.target());
+		return state;
+	}
+
+	private State execute_text_file_length(CIVLSource source, State state,
+			int pid, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		Expression fileSystemExpression = modelFactory
+				.civlFilesystemVariableExpression();
+		Evaluation eval = evaluator.evaluate(state, pid, fileSystemExpression);
+		SymbolicExpression filesystemPointer;
+		SymbolicExpression fileSystemStructure;
+		SymbolicExpression fileArray;
+		SymbolicSequence<?> fileSequence;
+		SymbolicExpression filename;
+		int numFiles;
+		int fileIndex;
+		SymbolicExpression theFile = null;
+		SymbolicExpression length;
+
+		filesystemPointer = eval.value;
+		state = eval.state;
+		eval = evaluator.dereference(fileSystemExpression.getSource(), state,
+				filesystemPointer);
+		state = eval.state;
+		fileSystemStructure = eval.value;
+		fileArray = universe.tupleRead(fileSystemStructure, oneObject);
+		eval = evaluator.getStringExpression(state, arguments[0].getSource(),
+				argumentValues[0]);
+		state = eval.state;
+		filename = eval.value;
+
+		// does a file by that name already exist in the filesystem?
+		// assume all are concrete.
+		if (fileArray.operator() != SymbolicOperator.CONCRETE)
+			throw new CIVLUnimplementedFeatureException(
+					"non-concrete file system", arguments[0]);
+		fileSequence = (SymbolicSequence<?>) fileArray.argument(0);
+		numFiles = fileSequence.size();
+		for (fileIndex = 0; fileIndex < numFiles; fileIndex++) {
+			SymbolicExpression tmpFile = fileSequence.get(fileIndex);
+			SymbolicExpression tmpFilename = universe.tupleRead(tmpFile,
+					zeroObject);
+
+			if (tmpFilename.equals(filename)) {
+				theFile = tmpFile;
+				break;
+			}
+		}
+		if (fileIndex == numFiles) {
+			// file not found: create it.
+			NumericExpression isInput = this.zero;
+			NumericExpression isOutput = this.zero;
+			NumericExpression isBinary = zero;
+			SymbolicExpression contents = initialContents(filename);
+			length = this.fileLength(filename);
+			SymbolicExpression isWide = this.zero;
+
+			theFile = universe.tuple(fileSymbolicType, Arrays.asList(filename,
+					contents, isOutput, isInput, isBinary, isWide, length));
+			fileArray = universe.append(fileArray, theFile);
+			fileSystemStructure = universe.tupleWrite(fileSystemStructure,
+					oneObject, fileArray);
+			state = primaryExecutor.assign(fileSystemExpression.getSource(),
+					state, filesystemPointer, fileSystemStructure);
+		} else {
+			SymbolicExpression isBinary = universe.tupleRead(theFile,
+					universe.intObject(4));
+
+			if (!isBinary.equals(this.zero)) {
+				throw new CIVLExecutionException(ErrorKind.OTHER,
+						Certainty.CONCRETE, "The file "
+								+ arguments[0].toString()
+								+ " is not a text file.", source);
+			}
+			length = universe.tupleRead(theFile,
+					universe.intObject(6));
+		}
+		if (lhs != null) {
+//			int scopeId = evaluator.getScopeId(
+//					fileSystemExpression.getSource(), filesystemPointer);
+//			int filesystemVid = evaluator.getVariableId(
+//					fileSystemExpression.getSource(), filesystemPointer);
+//			ReferenceExpression fileSystemRef = evaluator
+//					.getSymRef(filesystemPointer);
+//			ReferenceExpression ref = universe.tupleComponentReference(universe
+//					.arrayElementReference(universe.tupleComponentReference(
+//							fileSystemRef, oneObject), universe
+//							.integer(fileIndex)), universe.intObject(6));
+//			SymbolicExpression fileLengthPointer = evaluator.makePointer(
+//					scopeId, filesystemVid, ref);
+
+			state = primaryExecutor.assign(state, pid, lhs, length);
+		}
 		return state;
 	}
 
@@ -931,12 +978,29 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				.tupleRead(fileStream, twoObject);
 		eval = evaluator.dereference(arguments[0].getSource(), state,
 				filePointer);
-		fileObject = eval.value;
 		state = eval.state;
+		fileObject = eval.value;
+		{// checks file length
+			NumericExpression fileLength = (NumericExpression) universe
+					.tupleRead(fileObject, universe.intObject(6));
+			BooleanExpression positionExceedFileLength = universe
+					.lessThanEquals(fileLength, position);
+			Reasoner reasoner = universe.reasoner(state.getPathCondition());
+			ResultType positionExceedFileLengthValid = reasoner.valid(
+					positionExceedFileLength).getResultType();
+
+			if (positionExceedFileLengthValid == ResultType.YES) {
+				if (lhs != null) {
+					state = primaryExecutor.assign(state, pid, lhs, this.EOF);
+				}
+				return state;
+			}
+		}
 		formatString = this.getString(arguments[1].getSource(), state,
 				argumentValues[1]);
 		formatBuffer = formatString.right;
 		state = formatString.left;
+
 		{ // reads the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,
 					oneObject);

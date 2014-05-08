@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
@@ -81,6 +82,8 @@ public class ModelBuilderWorker {
 	 */
 	Map<CallOrSpawnStatement, Function> callStatements;
 
+	List<SystemFunctionCallExpression> systemCallExpressions = new ArrayList<>();
+
 	/**
 	 * The unique type for a comm.
 	 */
@@ -100,7 +103,7 @@ public class ModelBuilderWorker {
 	 * The type __gbarrier__, which is the base type of the handle $gbarrier.
 	 */
 	CIVLType gbarrierType;
-	
+
 	/**
 	 * The type __int_iter__, which is the base type of the handle $int_iter.
 	 */
@@ -225,8 +228,6 @@ public class ModelBuilderWorker {
 	 * Mapping from ABC types to corresponding CIVL types.
 	 */
 	Map<Type, CIVLType> typeMap = new HashMap<Type, CIVLType>();
-
-	
 
 	/* **************************** Constructors *************************** */
 
@@ -430,6 +431,11 @@ public class ModelBuilderWorker {
 			if (call.isSystemCall()) {
 				call.setGuard(factory.systemGuardExpression(call));
 			}
+		}
+
+		for (SystemFunctionCallExpression callExpression : this.systemCallExpressions) {
+			callExpression.setExpressionType(callExpression.callStatement()
+					.function().returnType());
 		}
 	}
 

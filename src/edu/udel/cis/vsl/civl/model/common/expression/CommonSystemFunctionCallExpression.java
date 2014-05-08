@@ -21,20 +21,17 @@ public class CommonSystemFunctionCallExpression extends CommonExpression
 
 	@Override
 	public ExpressionKind expressionKind() {
-		// TODO Auto-generated method stub
-		return null;
+		return ExpressionKind.SYSTEM_FUNC_CALL;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope) {
-		// TODO Auto-generated method stub
-		return null;
+		return callStatement.variableAddressedOf(scope);
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf() {
-		// TODO Auto-generated method stub
-		return null;
+		return callStatement.variableAddressedOf();
 	}
 
 	@Override
@@ -42,4 +39,8 @@ public class CommonSystemFunctionCallExpression extends CommonExpression
 		return this.callStatement;
 	}
 
+	@Override
+	public String toString() {
+		return this.callStatement.toString();
+	}
 }

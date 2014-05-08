@@ -128,12 +128,12 @@ public abstract class Player {
 				config);
 		this.transitionFactory = new TransitionFactory();
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
+		this.libraryLoader = new CommonLibraryLoader();
 		this.evaluator = new CommonEvaluator(config, modelFactory,
-				stateFactory, log);
+				stateFactory, log, this.libraryLoader);
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 		evaluator.setSolve(solve);
 		this.stateFactory.setEvaluator(evaluator);
-		this.libraryLoader = new CommonLibraryLoader();
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));
 		this.enablePrintf = (Boolean) config

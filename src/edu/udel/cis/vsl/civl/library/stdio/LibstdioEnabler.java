@@ -33,7 +33,7 @@ public class LibstdioEnabler extends CommonLibraryEnabler implements
 			ModelFactory modelFactory) {
 		super(primaryEnabler, output, modelFactory);
 	}
-	
+
 	/* ************************ Methods from Library *********************** */
 
 	@Override

@@ -66,6 +66,7 @@ public abstract class CommonExpression extends CommonSourceable implements
 	 * @param expressionType
 	 *            The type resulting from this expression.
 	 */
+	@Override
 	public void setExpressionType(CIVLType expressionType) {
 		this.expressionType = expressionType;
 	}

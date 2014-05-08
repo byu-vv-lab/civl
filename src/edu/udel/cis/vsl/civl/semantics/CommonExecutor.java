@@ -190,6 +190,7 @@ public class CommonExecutor implements Executor {
 		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
 				"civlc", this, this.output, this.err, this.enablePrintf,
 				this.statelessPrintf, this.modelFactory);
+		evaluator.setExecutor(this);
 	}
 
 	/* ************************** Private methods ************************** */
@@ -800,7 +801,7 @@ public class CommonExecutor implements Executor {
 		return state;
 	}
 
-	//TODO check system function calls
+	// TODO check system function calls
 	@Override
 	public Pair<StateStatusKind, State> executeStatement(State state,
 			Location location, Statement s, int pid) {

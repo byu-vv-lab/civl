@@ -197,6 +197,11 @@ public class CommonModelFactory implements ModelFactory {
 	 * The name of the atomic lock variable
 	 */
 	private static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
+	
+	/**
+	 * The name of the atomic lock variable
+	 */
+	private static final String CIVL_FILESYSTEM_NAME = "CIVL_filesystem";
 
 	/**
 	 * Amount by which to increase the list of cached scope values and process
@@ -232,6 +237,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * execution.
 	 */
 	private VariableExpression atomicLockVariableExpression;
+	
+	private VariableExpression civlFilesystemVariableExpression;
 
 	/**
 	 * The unique boolean type used in the system.
@@ -1125,7 +1132,7 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SystemFunctionCallExpression systemFunctionCallExpression(
 			CallOrSpawnStatement callStatement) {
-		return new CommonSystemFunctionCallExpression(null, callStatement);
+		return new CommonSystemFunctionCallExpression(callStatement.getSource(), callStatement);
 	}
 
 	/**
@@ -2028,7 +2035,12 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Variable variable(CIVLSource source, CIVLType type, Identifier name,
 			int vid) {
-		return new CommonVariable(source, type, name, vid);
+		Variable variable = new CommonVariable(source, type, name, vid);
+		
+		if(name.name().equals(CIVL_FILESYSTEM_NAME)){
+			this.civlFilesystemVariableExpression = this.variableExpression(source, variable);
+		}
+		return variable;
 	}
 
 	@Override
@@ -2496,6 +2508,11 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Model model() {
 		return this.modelBuilder.getModel();
+	}
+	
+	@Override
+	public VariableExpression civlFilesystemVariableExpression(){
+		return this.civlFilesystemVariableExpression;
 	}
 
 }

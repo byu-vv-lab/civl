@@ -23,7 +23,9 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.value.IF.StringValue;
 import edu.udel.cis.vsl.abc.err.ABCUnsupportedException;
 import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.abc.token.IF.StringLiteral;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.CIVLBaseTransformer;
 
 /**
  * The IO transformer transforms<br>
@@ -380,12 +382,13 @@ public class IOTransformer extends CIVLBaseTransformer {
 		if (modeArg instanceof StringLiteralNode) {
 			StringValue value = ((StringLiteralNode) modeArg)
 					.getConstantValue();
-			String modeString = this.processFopenMode(value.toString(),
+			String modeString = this.processFopenMode(
+					stringLiteralToString(value.getLiteral()),
 					modeArg.getSource());
 
 			source = modeArg.getSource();
-			arguments.add(nodeFactory.newIdentifierExpressionNode(source,
-					nodeFactory.newIdentifierNode(source, modeString)));
+			arguments.add(nodeFactory.newEnumerationConstantNode(nodeFactory
+					.newIdentifierNode(source, modeString)));
 		} else {
 			throw new ABCUnsupportedException(
 					"non-string-literal file mode of fopen");
@@ -399,8 +402,19 @@ public class IOTransformer extends CIVLBaseTransformer {
 				"ActualParameterList", arguments));
 	}
 
+	private String stringLiteralToString(StringLiteral stringLiteral) {
+		StringBuffer buffer = new StringBuffer();
+		int numOfChars = stringLiteral.getNumCharacters();
+
+		for (int i = 0; i < numOfChars - 1; i++) {
+			buffer.append(stringLiteral.getCharacter(i));
+		}
+		return buffer.toString();
+	}
+
 	private String processFopenMode(String mode, Source source)
 			throws SyntaxException {
+
 		if (mode.equals(FOPEN_R))
 			return CIVL_FILE_MODE_R;
 		if (mode.equals(FOPEN_W))

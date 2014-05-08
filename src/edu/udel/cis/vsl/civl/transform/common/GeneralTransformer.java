@@ -26,6 +26,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.CIVLBaseTransformer;
 
 public class GeneralTransformer extends CIVLBaseTransformer {
 
@@ -185,6 +186,11 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 						nodeFactory.newExpressionStatementNode(assignArgvVar),
 						null);
 
+				if (!inputVars.contains(__argcName)) {
+					throw new SyntaxException(
+							"Please specify the input variable __argc (e.g. \"-input__argc=5\")"
+									+ " which is used to update argc", source);
+				}
 				functionBody = addNodeToBeginning(functionBody, forLoop);
 			}
 			functionBody = addNodeToBeginning(functionBody, argvVar);
