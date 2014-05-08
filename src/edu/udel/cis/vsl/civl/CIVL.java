@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl;
 
-import edu.udel.cis.vsl.abc.ABC;
-import edu.udel.cis.vsl.abc.ABC.Language;
 import edu.udel.cis.vsl.civl.run.UserInterface;
 
 /**
@@ -12,11 +10,6 @@ import edu.udel.cis.vsl.civl.run.UserInterface;
  * 
  */
 public class CIVL {
-
-	/** Sets the front-end language to CIVL_C, not C. */
-	static {
-		ABC.language = Language.CIVL_C;
-	}
 
 	/** The version of this release of CIVL. */
 	public final static String version = "0.11";

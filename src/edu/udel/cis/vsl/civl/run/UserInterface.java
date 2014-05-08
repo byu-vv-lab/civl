@@ -16,10 +16,10 @@ import java.util.List;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ABC;
-import edu.udel.cis.vsl.abc.ABC.Language;
-import edu.udel.cis.vsl.abc.ABCException;
-import edu.udel.cis.vsl.abc.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.Activator;
+import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
+import edu.udel.cis.vsl.abc.err.ABCException;
+import edu.udel.cis.vsl.abc.err.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
@@ -276,7 +276,6 @@ public class UserInterface {
 		Model model;
 		Preprocessor preprocessor = frontEnd.getPreprocessor();
 
-		ABC.language = Language.CIVL_C;
 		if (verbose || debug) {
 			// shows absolutely everything
 			program = frontEnd.showTranslation(out);
@@ -420,7 +419,8 @@ public class UserInterface {
 			sysIncludes = new File[length + 1];
 			newSysIncludes.toArray(sysIncludes);
 		}
-		frontEnd = ABC.activator(file, sysIncludes, userIncludes);
+		frontEnd = ABC.activator(file, sysIncludes, userIncludes,
+				Language.CIVL_C);
 
 		return frontEnd;
 	}
@@ -769,9 +769,11 @@ public class UserInterface {
 			program1 = frontEnd1.showTranslation(out);
 		} else {
 			program0 = frontEnd0.getProgram();
-			applyTransformers(filename0, program0, preprocessor0, parse, frontEnd0);
+			applyTransformers(filename0, program0, preprocessor0, parse,
+					frontEnd0);
 			program1 = frontEnd1.getProgram();
-			applyTransformers(filename1, program1, preprocessor1, parse, frontEnd1);
+			applyTransformers(filename1, program1, preprocessor1, parse,
+					frontEnd1);
 		}
 		if (verbose || debug)
 			out.println("Generating composite program...");

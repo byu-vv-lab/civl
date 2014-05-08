@@ -13,10 +13,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.ABC;
-import edu.udel.cis.vsl.abc.ABC.Language;
-import edu.udel.cis.vsl.abc.ABCException;
 import edu.udel.cis.vsl.abc.Activator;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
+import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
+import edu.udel.cis.vsl.abc.err.ABCException;
 import edu.udel.cis.vsl.abc.transform.Transform;
 import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
@@ -68,7 +68,6 @@ public class OmpTransformerTest {
 				}
 			});
 		}
-		ABC.language = Language.CIVL_C;
 	}
 
 	@After
@@ -86,7 +85,8 @@ public class OmpTransformerTest {
 		this.systemIncludes = new File[0];
 		this.userIncludes = new File[0];
 		a = ABC.activator(new File(root, filenameRoot + ".c"), systemIncludes,
-				userIncludes);
+				userIncludes, Language.CIVL_C); // TODO: check this (language
+												// CIVL_C)
 		a.showTranslation(out, codes);
 	}
 

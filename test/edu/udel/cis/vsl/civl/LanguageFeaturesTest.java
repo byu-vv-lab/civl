@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import edu.udel.cis.vsl.abc.ABCException;
+import edu.udel.cis.vsl.abc.err.ABCException;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
