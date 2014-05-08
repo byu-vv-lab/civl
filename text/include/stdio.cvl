@@ -66,6 +66,7 @@ typedef struct $file {
   int isInput;        /* is this an input file? */
   int isBinary;       /* is this a binary file (not text)? */
   int isWide;         /* does this file have wide orientation? */
+  int length;
 } $file;
 
 /* A file system: a set of files.    The files in the array can be
@@ -176,3 +177,4 @@ FILE * $fopen($filesystem fs, const char * restrict filename,
  */
 void $filesystem_copy_output($filesystem fs, $file * output);
 
+int $textFileLength(char* file);
