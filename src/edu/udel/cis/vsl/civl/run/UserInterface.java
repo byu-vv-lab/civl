@@ -24,7 +24,8 @@ import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.common.CompareCombiner;
+import edu.udel.cis.vsl.abc.transform.IF.Combiner;
+import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.civl.CIVL;
 import edu.udel.cis.vsl.civl.err.CIVLException;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
@@ -767,7 +768,7 @@ public class UserInterface {
 		boolean result = false;
 		String filename0, filename1;
 		Program program0, program1, compositeProgram;
-		CompareCombiner combiner = new CompareCombiner();
+		Combiner combiner = Transform.newCompareCombiner();
 		Model model;
 		Verifier verifier;
 		boolean showShortFileName = showShortFileNameList(config);
