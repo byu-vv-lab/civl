@@ -3,7 +3,8 @@ package edu.udel.cis.vsl.civl.transform.common;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.udel.cis.vsl.abc.antlr2ast.impl.OmpBuilder;
+import edu.udel.cis.vsl.abc.antlr2ast.IF.Antlr2AST;
+import edu.udel.cis.vsl.abc.antlr2ast.IF.OmpBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -31,8 +32,7 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 
 	public OmpPragmaTransformer(ASTFactory astFactory) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
-		this.ompBuilder = new OmpBuilder(nodeFactory.getValueFactory(),
-				this.nodeFactory, astFactory.getTokenFactory(), this.astBuilder);
+		this.ompBuilder = Antlr2AST.newOmpBuilder(astFactory, astBuilder);
 	}
 
 	@Override
