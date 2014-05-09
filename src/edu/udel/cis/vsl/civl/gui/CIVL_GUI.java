@@ -201,8 +201,10 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 										var.getSource(), state, s));
 				if (!(variableName == "__heap" && s.isNull())) {
 					variables.add(variableNode);
-					vid++;
+					// vid++; this statement should be moved to be outside of
+					// the if block.
 				}
+				vid++;
 			}
 		}
 
@@ -241,7 +243,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// Create the root node of the entire tree
 		GUINODE top = new GUINODE(state.toString());
 		top.collapsed = false;
-		
+
 		// Node for the dyscopes of the state
 		DefaultMutableTreeNode dy = new DefaultMutableTreeNode("Dyscopes");
 
@@ -279,14 +281,13 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					if (n == null)
 						return;
 					if (n.getID() == ROOT_NODE) {
-						if(!n.isCollapsed()) {
+						if (!n.isCollapsed()) {
 							for (int i = stateTree.getRowCount() - 1; i > 0; i--) {
 								stateTree.collapseRow(i);
 							}
 							n.collapsed = true;
-						}
-						else{
-							for(int i = 0; i < stateTree.getRowCount(); i++) {
+						} else {
+							for (int i = 0; i < stateTree.getRowCount(); i++) {
 								stateTree.expandRow(i);
 							}
 							n.collapsed = false;
@@ -316,25 +317,25 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	JScrollPane drawTransitions() {
 		// The root of the tree
 		GUINODE top = new GUINODE("Transitions");
-		
+
 		top.add(new StateNode("State: 0", transitions[0].getStep(0).start()));
 
 		// For each transition
 		for (int i = 0; i < transitions.length; i++) {
 			StringBuffer transitionName = new StringBuffer();
-			transitionName.append("p" + transitions[i].processIdentifier() + ": ");
-			
-			for (Step s: transitions[i].getSteps()) {
-				if(transitionName.length() < 50){
+			transitionName.append("p" + transitions[i].processIdentifier()
+					+ ": ");
+
+			for (Step s : transitions[i].getSteps()) {
+				if (transitionName.length() < 50) {
 					transitionName.append(s.statement().toString() + "; ");
-				}
-				else{
+				} else {
 					transitionName.append("...");
 					break;
 				}
 			}
-			TransitionNode transitionNode = new TransitionNode(transitionName.toString(),
-					transitions[i], i);
+			TransitionNode transitionNode = new TransitionNode(
+					transitionName.toString(), transitions[i], i);
 
 			// What step you're on
 			int index = 0;
@@ -350,7 +351,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				// The executed statement
 				StatementNode statementNode = new StatementNode(s.statement()
 						.toString(), s.statement());
-				
+
 				// Add in the correct order
 				stepNode.add(statementNode);
 
@@ -436,7 +437,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		int getID() {
 			return id;
 		}
-		
+
 		boolean isCollapsed() {
 			return collapsed;
 		}
@@ -566,27 +567,27 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 			// If node is a root node collapse all of the roots children
 			if (n.getID() == ROOT_NODE) {
-				if(!n.isCollapsed()) {
+				if (!n.isCollapsed()) {
 					for (int i = transitionTree.getRowCount() - 1; i > 0; i--) {
 						transitionTree.collapseRow(i);
 					}
 					n.collapsed = true;
-				}
-				else{
-					for(int i = 0; i < transitionTree.getRowCount(); i++) {
+				} else {
+					for (int i = 0; i < transitionTree.getRowCount(); i++) {
 						transitionTree.expandRow(i);
 					}
 					n.collapsed = false;
 				}
 			}
-			
+
 			// If node is a transition node draw the single transition to the
 			// right side of the GUI
 			else if (n.getID() == TRANSITION_NODE) {
 				try {
 					TransitionNode t = (TransitionNode) n;
 					split.remove(split.getRightComponent());
-					rightView = drawState(t.transition.getStep(t.transition.getNumOfSteps() - 1).target());
+					rightView = drawState(t.transition.getStep(
+							t.transition.getNumOfSteps() - 1).target());
 					split.setRightComponent(rightView);
 				} catch (Exception tranEX) {
 					tranEX.printStackTrace();
@@ -608,13 +609,13 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 			// If node is a step node draw the target state of the step to the
 			// right side of the gui
-			else if(n.getID() == STEP_NODE) {				
-				try{
+			else if (n.getID() == STEP_NODE) {
+				try {
 					StepNode s = (StepNode) n;
 					split.remove(split.getRightComponent());
 					rightView = drawState(s.getStep().target());
 					split.setRightComponent(rightView);
-				} catch(Exception stepEX) {
+				} catch (Exception stepEX) {
 					return;
 				}
 			}
