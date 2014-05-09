@@ -2,7 +2,7 @@ package edu.udel.cis.vsl.civl.transform;
 
 import java.util.List;
 
-import edu.udel.cis.vsl.abc.antlr2ast.impl.ASTBuilder;
+import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;

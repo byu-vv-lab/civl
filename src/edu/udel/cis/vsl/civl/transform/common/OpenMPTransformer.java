@@ -28,7 +28,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.util.ExpressionEvaluator;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 import edu.udel.cis.vsl.civl.transform.CIVLBaseTransformer;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
@@ -75,10 +74,10 @@ public class OpenMPTransformer extends CIVLBaseTransformer {
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
-		
+
 		System.out.println("LoopDependenceAnnotator Activated");
 		replaceIndependentOmpFor(rootNode);
-		
+
 		return astFactory.newAST(rootNode);
 	}
 
@@ -126,8 +125,8 @@ public class OpenMPTransformer extends CIVLBaseTransformer {
 			}
 
 		} else if (node instanceof OmpForNode) {
-			OmpForNode ompFor = (OmpForNode)node;
-			
+			OmpForNode ompFor = (OmpForNode) node;
+
 			/*
 			 * We do not currently check for issues with canonical form.
 			 * Compilers are not required to check those constraints, so thee is
@@ -230,7 +229,7 @@ public class OpenMPTransformer extends CIVLBaseTransformer {
 			 * 
 			 * Note that we set up "beginBound" and "endBound" to be used to
 			 * constraint the range of the index expression in case it is needed
-			 * in determining the equivalence of loop index expressions.  These
+			 * in determining the equivalence of loop index expressions. These
 			 * bounds are currently not used in formulating the SARL queries.
 			 */
 
@@ -247,80 +246,85 @@ public class OpenMPTransformer extends CIVLBaseTransformer {
 
 			collectAssignRefExprs(body);
 
-//			System.out.println("Loop Dependence Analysis Info:");
-//			System.out.println("   writeVars:" + writeVars);
-//			System.out.println("   readVars:" + readVars);
-//			System.out.println("   writeArrayRefs:" + writeArrayRefs);
-//			System.out.println("   readArrayRefs:" + readArrayRefs);
+			// System.out.println("Loop Dependence Analysis Info:");
+			// System.out.println("   writeVars:" + writeVars);
+			// System.out.println("   readVars:" + readVars);
+			// System.out.println("   writeArrayRefs:" + writeArrayRefs);
+			// System.out.println("   readArrayRefs:" + readArrayRefs);
 
 			/*
 			 * Check for name-based dependences
 			 */
 			writeVars.retainAll(readVars);
 			boolean hasDeps = !writeVars.isEmpty();
-//			System.out.println("OMP For has scalar "
-//					+ (writeVars.isEmpty() ? "in" : "")
-//					+ "dependent loop iterations");
+			// System.out.println("OMP For has scalar "
+			// + (writeVars.isEmpty() ? "in" : "")
+			// + "dependent loop iterations");
 
 			/*
 			 * Check for array-based dependences
 			 */
 			hasDeps |= hasArrayRefDependences(writeArrayRefs, readArrayRefs);
-//			System.out.println("OMP For has array " + (hasDeps ? "" : "in")
-//					+ "dependent loop iterations");
-			
+			// System.out.println("OMP For has array " + (hasDeps ? "" : "in")
+			// + "dependent loop iterations");
+
 			if (!hasDeps) {
 				/*
-				 * Transform this OpenMP "for" into either:
-				 *   1) a plain loop if parent is an OpenMP "parallel" statement
-				 *   2) otherwise a "single" workshare
+				 * Transform this OpenMP "for" into either: 1) a plain loop if
+				 * parent is an OpenMP "parallel" statement 2) otherwise a
+				 * "single" workshare
 				 */
 				ASTNode parent = ompFor.parent();
 				if (parent instanceof OmpParallelNode) {
-					System.out.println("OpenMP Transformer: eliminating parallel and for");
-					
+					System.out
+							.println("OpenMP Transformer: eliminating parallel and for");
+
 					// Remove "for" node from "omp for" node
 					int forIndex = getChildIndex(ompFor, fln);
 					assert forIndex != -1;
 					ompFor.removeChild(forIndex);
-					
+
 					// Link "for" into the grand parent
 					ASTNode grand = parent.parent();
 					int parentIndex = getChildIndex(grand, parent);
 					assert parentIndex != -1;
 					grand.setChild(parentIndex, fln);
 				} else {
-					System.out.println("OpenMP Transformer: replacing for with single workshare");
+					System.out
+							.println("OpenMP Transformer: replacing for with single workshare");
 
 					int ompForIndex = getChildIndex(parent, ompFor);
 					assert ompForIndex != -1;
 					parent.removeChild(ompForIndex);
-					
-//					OmpNodeFactory ompFactory = new CommonOmpNodeFactory(new CommonValueFactory(new CommonTypeFactory()));
-//					List<CToken> singleBody = new ArrayList<CToken>();
-//					Iterator<CToken> tokIt = ompFor.getTokens();
-//					while (tokIt.hasNext()) {
-//						singleBody.add(tokIt.next());
-//						
-//					}
-					
+
+					// OmpNodeFactory ompFactory = new CommonOmpNodeFactory(new
+					// CommonValueFactory(new CommonTypeFactory()));
+					// List<CToken> singleBody = new ArrayList<CToken>();
+					// Iterator<CToken> tokIt = ompFor.getTokens();
+					// while (tokIt.hasNext()) {
+					// singleBody.add(tokIt.next());
+					//
+					// }
+
 					// OmpWorkshareNode single =
 					// ompFactory.newWorkshareNode(ompFor.getSource(),
 					// ompFor.getPragmaIdentifier(),
 					// singleBody, ompFor.getToken(ompFor.getNumTokens()-1),
 					// OmpWorkshareNodeKind.SINGLE);
 					fln.parent().removeChild(fln.childIndex());
-					OmpWorksharingNode single = nodeFactory.newOmpSingleNode(ompFor.getSource(), fln);
-					
+					OmpWorksharingNode single = nodeFactory.newOmpSingleNode(
+							ompFor.getSource(), fln);
+
 					// fln.parent().removeChild(fln.childIndex());
 					// single.setStatementNode(fln);
-					
-					// Transfer private, firstprivate, copyprivate, and nowait clauses to single
+
+					// Transfer private, firstprivate, copyprivate, and nowait
+					// clauses to single
 					single.setPrivateList(ompFor.privateList());
 					single.setFirstprivateList(ompFor.firstprivateList());
 					single.setCopyprivateList(ompFor.copyprivateList());
 					single.setNowait(ompFor.nowait());
-					
+
 					parent.setChild(ompForIndex, single);
 				}
 			}
@@ -338,14 +342,15 @@ public class OpenMPTransformer extends CIVLBaseTransformer {
 			}
 		}
 	}
-	
+
 	/*
 	 * Returns the index of "child" in the children of "node"; -1 if "child" is
 	 * not one of "node"'s children.
 	 */
 	private int getChildIndex(ASTNode node, ASTNode child) {
 		for (int childIndex = 0; childIndex < node.numChildren(); childIndex++) {
-			if (node.child(childIndex) == child) return childIndex;
+			if (node.child(childIndex) == child)
+				return childIndex;
 		}
 		return -1;
 	}
