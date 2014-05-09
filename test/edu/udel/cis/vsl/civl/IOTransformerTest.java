@@ -25,7 +25,11 @@ public class IOTransformerTest {
 
 	@Test
 	public void io() {
-		assertTrue(ui.run("verify", "-showModel", filename("io.cvl"),
-				"-showStates", "-showTransitions"));
+		assertTrue(ui.run("verify", "-showModel", filename("io.cvl")));
+	}
+
+	@Test
+	public void scanf() {
+		assertTrue(ui.run("verify", "-showModel", filename("fscanf.cvl")));
 	}
 }
