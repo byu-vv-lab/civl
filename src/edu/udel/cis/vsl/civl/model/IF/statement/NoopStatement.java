@@ -3,7 +3,6 @@
  */
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
-import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement.NoopKind;
 
 /**
  * Marker interface for a noop statement.
@@ -12,6 +11,10 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement.NoopKind
  * 
  */
 public interface NoopStatement extends Statement {
+
+	public enum NoopKind {
+		IF_ELSE, SWITCH, LOOP, NONE, GOTO, ATOMIC_ATOM
+	}
 
 	/**
 	 * Returns the kind of this noop statement, which might be a if-else

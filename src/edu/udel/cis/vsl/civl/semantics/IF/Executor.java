@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.CommonExecutor.StateStatusKind;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -230,5 +231,17 @@ public interface Executor {
 	 */
 	State executePrintf(State state, int pid, Expression[] expressions,
 			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException;
+	
+	/**
+	 * Returns the state that results from executing the statement, or null if
+	 * path condition becomes unsatisfiable.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param transition
+	 * @return
+	 */
+	State execute(State state, int pid, SimpleTransition transition)
 			throws UnsatisfiablePathConditionException;
 }

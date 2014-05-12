@@ -187,11 +187,13 @@ public abstract class Enabler implements
 	 * @param processIdentifier
 	 * @param assignAtomicLock
 	 * @return
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	private ArrayList<SimpleTransition> getEnabledTransitionsOfSystemCall(
+	private List<SimpleTransition> getEnabledTransitionsOfSystemCall(
 			CIVLSource source, State state, CallOrSpawnStatement call,
 			BooleanExpression pathCondition, int pid, int processIdentifier,
-			Statement assignAtomicLock) {
+			Statement assignAtomicLock)
+			throws UnsatisfiablePathConditionException {
 		LibraryEnabler libEnabler = libraryEnabler(source,
 				((SystemFunction) call.function()).getLibrary());
 
@@ -338,11 +340,12 @@ public abstract class Enabler implements
 	 * @return the list of enabled transitions of the given process at the
 	 *         specified state
 	 */
-	ArrayList<Transition> enabledTransitionsOfProcess(State state, int pid) {
+	ArrayList<SimpleTransition> enabledTransitionsOfProcess(State state, int pid) {
 		ProcessState p = state.getProcessState(pid);
 		Location pLocation = p.getLocation();
-		ArrayList<Transition> transitions = new ArrayList<>();
+		ArrayList<SimpleTransition> transitions = new ArrayList<>();
 		Statement assignAtomicLock = null;
+		int numOutgoing;
 
 		if (pLocation == null)
 			return transitions;
@@ -351,12 +354,15 @@ public abstract class Enabler implements
 			assignAtomicLock = modelFactory.assignAtomicLockVariable(pid,
 					pLocation);
 		}
-		for (Statement s : pLocation.outgoing()) {
-			BooleanExpression newPathCondition = newPathCondition(state, pid, s);
+		numOutgoing = pLocation.getNumOutgoing();
+		for (int i = 0; i < numOutgoing; i++) {
+			Statement statement = pLocation.getOutgoing(i);
+			BooleanExpression newPathCondition = newPathCondition(state, pid,
+					statement);
 
 			if (!newPathCondition.isFalse()) {
-				transitions.addAll(enabledTransitionsOfStatement(state, s,
-						newPathCondition, pid, assignAtomicLock));
+				transitions.addAll(enabledTransitionsOfStatement(state,
+						statement, newPathCondition, pid, assignAtomicLock));
 			}
 		}
 		return transitions;
@@ -382,8 +388,8 @@ public abstract class Enabler implements
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
 	 */
-	public ArrayList<SimpleTransition> enabledTransitionsOfStatement(
-			State state, Statement s, BooleanExpression pathCondition, int pid,
+	public List<SimpleTransition> enabledTransitionsOfStatement(State state,
+			Statement s, BooleanExpression pathCondition, int pid,
 			Statement assignAtomicLock) {
 		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
 		Statement transitionStatement = null;

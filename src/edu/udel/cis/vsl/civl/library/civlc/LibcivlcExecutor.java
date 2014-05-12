@@ -1221,6 +1221,11 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			state = executeGbarrierCreate(state, pid, lhs, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$choose_int_work":
+			if (lhs != null)
+				state = primaryExecutor.assign(state, pid, lhs,
+						argumentValues[0]);
+			break;
 		case "$comm_create":
 			state = this.executeCommCreate(state, pid, lhs, arguments,
 					argumentValues);

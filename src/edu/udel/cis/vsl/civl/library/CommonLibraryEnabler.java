@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -129,9 +130,10 @@ public abstract class CommonLibraryEnabler extends Library implements
 	}
 
 	@Override
-	public ArrayList<SimpleTransition> enabledTransitions(State state,
+	public List<SimpleTransition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
-			int pid, int processIdentifier, Statement assignAtomicLock) {
+			int pid, int processIdentifier, Statement assignAtomicLock)
+			throws UnsatisfiablePathConditionException {
 		Statement transitionStatement;
 		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
 

@@ -23,10 +23,6 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public class CommonNoopStatement extends CommonStatement implements
 		NoopStatement {
 
-	public enum NoopKind {
-		IF_ELSE, SWITCH, LOOP, NONE, GOTO, ATOMIC_ATOM
-	}
-
 	protected NoopKind noopKind;
 
 	/**

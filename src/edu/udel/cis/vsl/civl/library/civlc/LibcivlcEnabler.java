@@ -1,12 +1,18 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.Enabler;
@@ -15,13 +21,19 @@ import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.Evaluation;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 /**
  * Implementation of the enabler-related logics for system functions declared
@@ -32,6 +44,9 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		LibraryEnabler {
+
+	private static String chooseIntWork = "$choose_int_work";
+	private FunctionPointerExpression chooseIntWorkPointer;
 
 	/* **************************** Constructors *************************** */
 	/**
@@ -47,6 +62,20 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 	public LibcivlcEnabler(Enabler primaryEnabler, PrintStream output,
 			ModelFactory modelFactory) {
 		super(primaryEnabler, output, modelFactory);
+
+		CIVLSource source = modelFactory.model().getSource();
+		SystemFunction chooseIntWorkFunction = modelFactory.systemFunction(
+				source,
+				modelFactory.identifier(source, chooseIntWork),
+				Arrays.asList(modelFactory.variable(source,
+						modelFactory.integerType(),
+						modelFactory.identifier(source, "n"), 0)),
+				modelFactory.integerType(), modelFactory.model().system()
+						.containingScope(), "civlc");
+
+		chooseIntWorkPointer = modelFactory.functionPointerExpression(source,
+				chooseIntWorkFunction);
+
 	}
 
 	/* ************************ Methods from Library *********************** */
@@ -79,6 +108,64 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		default:
 			return super.ampleSet(state, pid, statement, reachableMemUnitsMap);
 		}
+	}
+
+	@Override
+	public List<SimpleTransition> enabledTransitions(State state,
+			CallOrSpawnStatement call, BooleanExpression pathCondition,
+			int pid, int processIdentifier, Statement assignAtomicLock)
+			throws UnsatisfiablePathConditionException {
+		String functionName = call.function().name().name();
+		CallOrSpawnStatement callWorker;
+		List<Expression> arguments = call.arguments();
+		List<SimpleTransition> localTransitions = new ArrayList<>();
+		Statement transitionStatement;
+
+		switch (functionName) {
+		case "$choose_int":
+			Evaluation eval = evaluator.evaluate(
+					state.setPathCondition(pathCondition), pid,
+					arguments.get(0));
+			IntegerNumber upperNumber = (IntegerNumber) universe.reasoner(
+					eval.state.getPathCondition()).extractNumber(
+					(NumericExpression) eval.value);
+			int upper;
+
+			if (upperNumber == null)
+				throw new CIVLStateException(ErrorKind.INTERNAL,
+						Certainty.NONE,
+						"Argument to $choose_int not concrete: " + eval.value,
+						eval.state, this.stateFactory, arguments.get(0)
+								.getSource());
+			upper = upperNumber.intValue();
+
+			for (int i = 0; i < upper; i++) {
+				Expression workerArg = modelFactory.integerLiteralExpression(
+						arguments.get(0).getSource(), BigInteger.valueOf(i));
+
+				callWorker = modelFactory.callOrSpawnStatement(
+						call.getSource(), call.source(), true,
+						Arrays.asList(workerArg), null);
+				callWorker.setTargetTemp(call.target());
+				callWorker.setFunction(chooseIntWorkPointer);
+				callWorker.setLhs(call.lhs());
+				if (assignAtomicLock != null) {
+					transitionStatement = new StatementList(assignAtomicLock,
+							callWorker);
+				} else {
+					transitionStatement = callWorker;
+				}
+				localTransitions.add(transitionFactory.newSimpleTransition(
+						pathCondition, pid, processIdentifier,
+						transitionStatement));
+			}
+
+			break;
+		default:
+			return super.enabledTransitions(state, call, pathCondition, pid,
+					processIdentifier, assignAtomicLock);
+		}
+		return localTransitions;
 	}
 
 	@Override
@@ -153,6 +240,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		case "$scope_parent":
 		case "$scope_defined":
 		case "$int_iter_destroy":
+		case "$choose_int":
 			guard = universe.trueExpression();
 			break;
 		default:
@@ -205,29 +293,35 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		}
 
 		switch (function) {
-//		case "$barrier_enter":
-//			try {
-//				SymbolicExpression barrier = evaluator.evaluate(state, pid, arguments[0]).value;
-//				SymbolicExpression barrierObj = evaluator.dereference(source, state, barrier).value;
-//				SymbolicExpression gbarrier = universe.tupleRead(barrierObj, oneObject);
-//				SymbolicExpression gbarrierObj = evaluator.dereference(source, state, gbarrier).value;
-//				SymbolicExpression procMapArray = universe.tupleRead(gbarrierObj, oneObject);
-//				SymbolicSequence<?> procMapElements = (SymbolicSequence<?>) procMapArray.argument(0);
-//				int count = procMapElements.size();
-//				
-//				for(int i = 0; i < count; i++){
-//					SymbolicExpression processValue = procMapElements.get(i);
-//					int otherPid = modelFactory.getProcessId(source, processValue);
-//					
-//					if(pid != otherPid){
-//						ampleSet.add(otherPid);
-//					}
-//				}
-//			} catch (UnsatisfiablePathConditionException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-//			return ampleSet;
+		// case "$barrier_enter":
+		// try {
+		// SymbolicExpression barrier = evaluator.evaluate(state, pid,
+		// arguments[0]).value;
+		// SymbolicExpression barrierObj = evaluator.dereference(source, state,
+		// barrier).value;
+		// SymbolicExpression gbarrier = universe.tupleRead(barrierObj,
+		// oneObject);
+		// SymbolicExpression gbarrierObj = evaluator.dereference(source, state,
+		// gbarrier).value;
+		// SymbolicExpression procMapArray = universe.tupleRead(gbarrierObj,
+		// oneObject);
+		// SymbolicSequence<?> procMapElements = (SymbolicSequence<?>)
+		// procMapArray.argument(0);
+		// int count = procMapElements.size();
+		//
+		// for(int i = 0; i < count; i++){
+		// SymbolicExpression processValue = procMapElements.get(i);
+		// int otherPid = modelFactory.getProcessId(source, processValue);
+		//
+		// if(pid != otherPid){
+		// ampleSet.add(otherPid);
+		// }
+		// }
+		// } catch (UnsatisfiablePathConditionException e1) {
+		// // TODO Auto-generated catch block
+		// e1.printStackTrace();
+		// }
+		// return ampleSet;
 		case "$comm_dequeue":
 		case "$comm_enqueue":
 			Set<SymbolicExpression> handleObjMemUnits = new HashSet<>();

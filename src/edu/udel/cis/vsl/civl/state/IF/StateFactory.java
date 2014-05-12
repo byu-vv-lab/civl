@@ -308,7 +308,7 @@ public interface StateFactory {
 	 * 
 	 * @param state
 	 *            The state to be checked
-	 * @return NULL iff there is no process holding the atomic lock, otherwise
+	 * @return -1 iff there is no process holding the atomic lock, otherwise
 	 *         return the process that holds the atomic lock
 	 */
 	int processInAtomic(State state);

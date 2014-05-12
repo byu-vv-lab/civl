@@ -1318,43 +1318,43 @@ public class FunctionTranslator {
 		return bodyFragment;
 	}
 
-	/**
-	 * Translate a function call of the function $choose_int into a choose
-	 * statement. An syntax exception will be thrown if this $choose_int
-	 * function call is found to be within an $atom block.
-	 * 
-	 * @param source
-	 *            The CIVL source of the function call.
-	 * @param location
-	 *            The location of the function call.
-	 * @param scope
-	 *            The scope of this function call.
-	 * @param lhs
-	 *            The left hand side expression
-	 * @param arguments
-	 *            The list of arguments for choose_int function call. The number
-	 *            of arguments should be exactly one, otherwise an exception
-	 *            will be thrown.
-	 * @return The new choose statement.
-	 */
-	private Statement translateChooseIntFunctionCall(CIVLSource source,
-			Location location, Scope scope, LHSExpression lhs,
-			ArrayList<Expression> arguments) {
-		int numberOfArgs = arguments.size();
-
-		if (this.inAtom()) {
-			throw new CIVLSyntaxException(
-					"The non-deterministic function $choose_int is not allowed in $atom block.",
-					source);
-		}
-		if (numberOfArgs != 1) {
-			throw new CIVLSyntaxException(
-					"The function $choose_int should have exactly one argument.",
-					source);
-		}
-		return modelFactory.chooseStatement(source, location, lhs,
-				arguments.get(0));
-	}
+//	/**
+//	 * Translate a function call of the function $choose_int into a choose
+//	 * statement. An syntax exception will be thrown if this $choose_int
+//	 * function call is found to be within an $atom block.
+//	 * 
+//	 * @param source
+//	 *            The CIVL source of the function call.
+//	 * @param location
+//	 *            The location of the function call.
+//	 * @param scope
+//	 *            The scope of this function call.
+//	 * @param lhs
+//	 *            The left hand side expression
+//	 * @param arguments
+//	 *            The list of arguments for choose_int function call. The number
+//	 *            of arguments should be exactly one, otherwise an exception
+//	 *            will be thrown.
+//	 * @return The new choose statement.
+//	 */
+//	private Statement translateChooseIntFunctionCall(CIVLSource source,
+//			Location location, Scope scope, LHSExpression lhs,
+//			ArrayList<Expression> arguments) {
+//		int numberOfArgs = arguments.size();
+//
+//		if (this.inAtom()) {
+//			throw new CIVLSyntaxException(
+//					"The non-deterministic function $choose_int is not allowed in $atom block.",
+//					source);
+//		}
+//		if (numberOfArgs != 1) {
+//			throw new CIVLSyntaxException(
+//					"The function $choose_int should have exactly one argument.",
+//					source);
+//		}
+//		return modelFactory.chooseStatement(source, location, lhs,
+//				arguments.get(0));
+//	}
 
 	/**
 	 * Translate a choose node into a fragment that has multiple outgoing
@@ -1722,9 +1722,9 @@ public class FunctionTranslator {
 		case "$assert":
 			return translateAssertFunctionCall(source, location, scope,
 					arguments);
-		case "$choose_int":
-			return translateChooseIntFunctionCall(source, location, scope, lhs,
-					arguments);
+//		case "$choose_int":
+//			return translateChooseIntFunctionCall(source, location, scope, lhs,
+//					arguments);
 		default:
 			return callOrSpawnStatement(scope, location, functionCallNode, lhs,
 					arguments, isCall);

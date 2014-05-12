@@ -513,7 +513,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
 				int_arrayIndex = evaluator.extractInt(source, arrayIndex);
 			}
-			numChars = originalArray.size() - 1;//ignoring the '\0' at the end of the string.
+			numChars = originalArray.size() - 1;// ignoring the '\0' at the end
+												// of the string.
 			stringChars = new char[numChars - int_arrayIndex];
 			for (int i = 0, j = int_arrayIndex; j < numChars; i++, j++) {
 				SymbolicExpression charExpr = originalArray.get(j);
@@ -608,13 +609,16 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		NumericExpression isInput, isOutput, isBinary, isWide = this.zero;
 		SymbolicExpression contents;
 		SymbolicExpression theFile;
-		NumericExpression pos0 = null, pos1 = null;
+		NumericExpression pos0 = zero, pos1 = zero;
+		boolean isInputFile = false;
 		int scopeId = evaluator.getScopeId(expressions[0].getSource(),
 				filesystemPointer);
 		int filesystemVid = evaluator.getVariableId(expressions[0].getSource(),
 				filesystemPointer);
 		ReferenceExpression fileSystemRef = evaluator
 				.getSymRef(filesystemPointer);
+		Pair<State, StringBuffer> fileNameStringPair;
+		String fileNameString;
 
 		state = eval.state;
 		fileSystemStructure = eval.value;
@@ -623,6 +627,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				argumentValues[1]);
 		state = eval.state;
 		filename = eval.value;
+		fileNameStringPair = this.getString(expressions[1].getSource(), state,
+				argumentValues[1]);
+		state = fileNameStringPair.left;
+		fileNameString = fileNameStringPair.right.toString();
 
 		// does a file by that name already exist in the filesystem?
 		// assume all are concrete.
@@ -647,6 +655,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			case CIVL_FILE_MODE_R:
 				// assume file exists with unconstrained contents
 				isInput = this.one;
+				isInputFile = true;
 				isOutput = this.zero;
 				isBinary = zero;
 				contents = initialContents(filename);
@@ -664,6 +673,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			case CIVL_FILE_MODE_A:
 				// assume file exists
 				isInput = one;
+				isInputFile = true;
 				isOutput = one;
 				isBinary = zero;
 				contents = initialContents(filename);
@@ -673,6 +683,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			case CIVL_FILE_MODE_RP:
 				// assume file exists
 				isInput = one;
+				isInputFile = true;
 				isOutput = one;
 				isBinary = zero;
 				contents = initialContents(filename);
@@ -688,6 +699,15 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			fileArray = universe.append(fileArray, theFile);
 			fileSystemStructure = universe.tupleWrite(fileSystemStructure,
 					oneObject, fileArray);
+			if (fileNameString.equals(STDIN))
+				isInputFile = false;
+			if (isInputFile) {
+				BooleanExpression positiveLength = universe.lessThan(zero,
+						(NumericExpression) length);
+
+				state = state.setPathCondition(universe.and(
+						state.getPathCondition(), positiveLength));
+			}
 			state = primaryExecutor.assign(expressions[1].getSource(), state,
 					filesystemPointer, fileSystemStructure);
 		}
@@ -873,22 +893,22 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 								+ arguments[0].toString()
 								+ " is not a text file.", source);
 			}
-			length = universe.tupleRead(theFile,
-					universe.intObject(6));
+			length = universe.tupleRead(theFile, universe.intObject(6));
 		}
 		if (lhs != null) {
-//			int scopeId = evaluator.getScopeId(
-//					fileSystemExpression.getSource(), filesystemPointer);
-//			int filesystemVid = evaluator.getVariableId(
-//					fileSystemExpression.getSource(), filesystemPointer);
-//			ReferenceExpression fileSystemRef = evaluator
-//					.getSymRef(filesystemPointer);
-//			ReferenceExpression ref = universe.tupleComponentReference(universe
-//					.arrayElementReference(universe.tupleComponentReference(
-//							fileSystemRef, oneObject), universe
-//							.integer(fileIndex)), universe.intObject(6));
-//			SymbolicExpression fileLengthPointer = evaluator.makePointer(
-//					scopeId, filesystemVid, ref);
+			// int scopeId = evaluator.getScopeId(
+			// fileSystemExpression.getSource(), filesystemPointer);
+			// int filesystemVid = evaluator.getVariableId(
+			// fileSystemExpression.getSource(), filesystemPointer);
+			// ReferenceExpression fileSystemRef = evaluator
+			// .getSymRef(filesystemPointer);
+			// ReferenceExpression ref =
+			// universe.tupleComponentReference(universe
+			// .arrayElementReference(universe.tupleComponentReference(
+			// fileSystemRef, oneObject), universe
+			// .integer(fileIndex)), universe.intObject(6));
+			// SymbolicExpression fileLengthPointer = evaluator.makePointer(
+			// scopeId, filesystemVid, ref);
 
 			state = primaryExecutor.assign(state, pid, lhs, length);
 		}
@@ -1338,15 +1358,19 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				switch (current) {
 				case 'h':
 				case 'l':
-					Character next = formatBuffer.charAt(i + 1);
+					stringBuffer.append(current);
+					if (i + 1 >= count)
+						throw new CIVLSyntaxException("The format "
+								+ stringBuffer + " is not allowed.", source);
+					else {
+						Character next = formatBuffer.charAt(i + 1);
 
-					if (next.equals(current)) {
-						i++;
-						stringBuffer.append(current);
-						stringBuffer.append(next);
-					} else
-						stringBuffer.append(current);
-					current = formatBuffer.charAt(++i);
+						if (next.equals(current)) {
+							i++;
+							stringBuffer.append(next);
+						}
+						current = formatBuffer.charAt(++i);
+					}
 					break;
 				case 'j':
 				case 'z':

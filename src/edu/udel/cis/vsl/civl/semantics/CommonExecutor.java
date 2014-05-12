@@ -51,6 +51,8 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.transition.ChooseTransition;
+import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -638,6 +640,19 @@ public class CommonExecutor implements Executor {
 		}
 	}
 
+	// private State executeNoop(State state, int pid, NoopStatement statement)
+	// {
+	// NoopKind kind = statement.noopKind();
+	//
+	// //IF_ELSE, SWITCH, LOOP, NONE, GOTO, ATOMIC_ATOM
+	// switch(kind){
+	// case ATOMIC_ATOM:
+	// default:
+	//
+	// }
+	// return state;
+	// }
+
 	/**
 	 * TODO javadocs
 	 * 
@@ -1099,5 +1114,29 @@ public class CommonExecutor implements Executor {
 			}
 		}
 		return state;
+	}
+
+	@Override
+	public State execute(State state, int pid, SimpleTransition transition)
+			throws UnsatisfiablePathConditionException {
+		state = state.setPathCondition(transition.pathCondition());
+
+		if (transition instanceof ChooseTransition) {
+			Statement statement = transition.statement();
+
+			if (statement instanceof StatementList) {
+				state = this.executeStatementList(state, pid,
+						(StatementList) statement,
+						((ChooseTransition) transition).value());
+			} else {
+				assert statement instanceof ChooseStatement;
+				state = this.executeChoose(state, pid,
+						(ChooseStatement) statement,
+						((ChooseTransition) transition).value());
+			}
+			return state;
+		} else {
+			return this.execute(state, pid, transition.statement());
+		}
 	}
 }

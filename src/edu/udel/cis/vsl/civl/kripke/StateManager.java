@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.kripke;
 
 import java.io.PrintStream;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
@@ -39,7 +40,16 @@ import edu.udel.cis.vsl.gmc.StateManagerIF;
  */
 public class StateManager implements StateManagerIF<State, Transition> {
 
+	static enum EnabledStatus {
+		BLOCKED, DETERMINISTIC, LOOP_POSSIBLE, NONDETERMINISTIC, NONE, TERMINATED
+	}
+
 	/* *************************** Instance Fields ************************* */
+
+	/**
+	 * The unique enabler instance used by the system
+	 */
+	private Enabler enabler;
 
 	/**
 	 * The unique executor instance used by the system
@@ -152,6 +162,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 */
 	public StateManager(Executor executor) {
 		this.executor = executor;
+		this.enabler = executor.enabler();
 		this.stateFactory = executor.stateFactory();
 	}
 
@@ -415,8 +426,9 @@ public class StateManager implements StateManagerIF<State, Transition> {
 	 *            True iff each step is to be printed.
 	 * @return The resulting state after
 	 */
-	private State executeAtomicOrPurelyLocalStatements(boolean isFirst, State state, int pid,
-			Location location, boolean atomic, boolean print) {
+	private State executeAtomicOrPurelyLocalStatements(boolean isFirst,
+			State state, int pid, Location location, boolean atomic,
+			boolean print) {
 		Location pLocation = location;
 		ProcessState procState = state.getProcessState(pid);
 		State newState = state;
@@ -437,7 +449,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				if (!pLocation.isPurelyLocal())
 					break;
 			}
-			if(isFirst)
+			if (isFirst)
 				isFirst = false;
 			atomicLockVarChanged = false;
 			oneStep = null;
@@ -457,8 +469,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 						atomicLockVarChanged = true;
 					oneStep = executeAtomicEnter(pLocation, newState, pid);
 				} else {
-					newState = executeAtomicOrPurelyLocalStatements(false, newState,
-							pid, pLocation, true, print);
+					newState = executeAtomicOrPurelyLocalStatements(false,
+							newState, pid, pLocation, true, print);
 					stepExecuted = false;
 				}
 				break;
@@ -513,6 +525,186 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				break;
 		}
 		return newState;
+	}
+
+	/**
+	 * Execute a transition (obtained by the enabler) of a state. When the
+	 * corresponding process is in atomic/atom execution, continue to execute
+	 * more statements as many as possible. Also execute more purely local
+	 * statements if possible.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param transition
+	 *            The transition to be executed.
+	 * @return the resulting state after execute
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State nextStateWork1(State state, Transition transition)
+			throws UnsatisfiablePathConditionException {
+		int pid;
+		int numProcs;
+		boolean printTransitions = verbose || debug || showTransitions;
+		int oldMaxCanonicId = this.maxCanonicId;
+		int processIdentifier;
+		SimpleTransition firstTransition;
+
+		assert transition instanceof SimpleTransition;
+		pid = ((SimpleTransition) transition).pid();
+		processIdentifier = ((SimpleTransition) transition).processIdentifier();
+		firstTransition = (SimpleTransition) transition;
+		// procState = state.getProcessState(pid);
+		// currentLocation = procState.getLocation();
+		if (this.guiMode)
+			this.compoundTransition = new CompoundTransition(pid,
+					processIdentifier);
+		state = executor.execute(state, pid, firstTransition);
+		if (printTransitions) {
+			// TODO print transition
+		}
+		{
+			StateStatus stateStatus = possibleToExecuteMore(state, pid, 0);
+
+			while (stateStatus.possibleToExecute) {
+				assert stateStatus.enabledTransition != null;
+				assert stateStatus.enabledStatus == EnabledStatus.DETERMINISTIC;
+				assert stateStatus.newAtomCount >= 0;
+
+				state = executor.execute(state, pid,
+						stateStatus.enabledTransition);
+				if (this.showStates)
+					stateFactory.printState(out, state);
+				stateStatus = possibleToExecuteMore(state, pid,
+						stateStatus.newAtomCount);
+			}
+			assert stateStatus.newAtomCount == 0;
+			assert stateStatus.enabledStatus != EnabledStatus.DETERMINISTIC;
+			if (stateStatus.enabledStatus == EnabledStatus.BLOCKED) {
+				if (stateFactory.lockedByAtomic(state)) {
+					state = stateFactory.releaseAtomicLock(state);
+				}
+			}
+		}
+		// if (printTransitions) {
+		// out.print("--> ");
+		// }
+		if (saveStates) {
+			state = stateFactory.canonic(state);
+			if (this.guiMode)
+				this.compoundTransition.updateFinalState(state);
+			this.maxCanonicId = state.getCanonicId();
+		} else {
+			state = stateFactory.collectProcesses(state);
+			state = stateFactory.collectScopes(state);
+			if (simplify)
+				state = stateFactory.simplify(state);
+			state.commit();
+		}
+		if (verbose || debug || showTransitions) {
+			out.println(state);
+		}
+		if (debug
+				|| verbose
+				|| (!saveStates && showStates)
+				|| (saveStates && showStates && this.maxCanonicId > oldMaxCanonicId)
+				|| (saveStates && showSavedStates && this.maxCanonicId > oldMaxCanonicId)) {
+			// in -savedStates mode, only print new states.
+			out.println();
+			// state.print(out);
+			this.stateFactory.printState(out, state);
+		}
+		numProcs = state.numProcs();
+		if (numProcs > maxProcs)
+			maxProcs = numProcs;
+		return state;
+
+	}
+
+	private class StateStatus {
+		EnabledStatus enabledStatus;
+		boolean possibleToExecute;
+		SimpleTransition enabledTransition;
+		int newAtomCount;
+
+		StateStatus(boolean possible, SimpleTransition transition,
+				int atomCount, EnabledStatus status) {
+			this.possibleToExecute = possible;
+			this.enabledTransition = transition;
+			this.newAtomCount = atomCount;
+			this.enabledStatus = status;
+		}
+	}
+
+	private StateStatus possibleToExecuteMore(State state, int pid,
+			int atomCount) {
+		List<SimpleTransition> enabled;
+		ProcessState procState = state.getProcessState(pid);
+		Location pLocation;
+		boolean inAtomic = false;
+		boolean inAtom = false;
+
+		if (procState == null || procState.hasEmptyStack())
+			return new StateStatus(false, null, atomCount,
+					EnabledStatus.TERMINATED);
+		else
+			pLocation = procState.getLocation();
+		if (pLocation == null)
+			return new StateStatus(false, null, atomCount,
+					EnabledStatus.TERMINATED);
+		enabled = enabler.enabledTransitionsOfProcess(state, pid);
+		if (pLocation.enterAtom()) {
+			atomCount++;
+		} else if (pLocation.leaveAtom()) {
+			inAtom = true;
+			atomCount--;
+		}
+		if (inAtom || atomCount > 0) {
+			// in atom execution
+			if (enabled.size() == 1) {
+				return new StateStatus(true, enabled.get(0), atomCount,
+						EnabledStatus.DETERMINISTIC);
+			} else if (enabled.size() > 1) {// non deterministic
+				reportError(StateStatusKind.NONDETERMINISTIC, state, pLocation);
+				return new StateStatus(false, null, atomCount,
+						EnabledStatus.NONDETERMINISTIC);
+			} else {// blocked
+				return new StateStatus(false, null, atomCount,
+						EnabledStatus.BLOCKED);
+			}
+		} else {
+			int pidInAtomic = stateFactory.processInAtomic(state);
+
+			if (pidInAtomic != -1) { // some other process is holding the atomic
+										// lock.
+				if (pidInAtomic != pid) {
+					throw new CIVLStateException(
+							ErrorKind.OTHER,
+							Certainty.CONCRETE,
+							"There is another process other than the current process holding the atomic lock.",
+							state, stateFactory, pLocation.getSource());
+				} else { // the process is in atomic execution
+
+					if (pLocation.getNumIncoming() > 1) // possible loop, save
+														// state
+						return new StateStatus(false, null, atomCount,
+								EnabledStatus.LOOP_POSSIBLE);
+					inAtomic = true;
+				}
+			}
+			if (inAtomic || pLocation.isPurelyLocal()) {
+				if (enabled.size() == 1)
+					return new StateStatus(true, enabled.get(0), atomCount,
+							EnabledStatus.DETERMINISTIC);
+				else if (enabled.size() > 1) {// blocking
+					return new StateStatus(false, null, atomCount,
+							EnabledStatus.NONDETERMINISTIC);
+				} else {
+					return new StateStatus(false, null, atomCount,
+							EnabledStatus.BLOCKED);
+				}
+			}
+			return new StateStatus(false, null, atomCount, EnabledStatus.NONE);
+		}
 	}
 
 	/**
@@ -597,8 +789,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				if (executor.stateFactory().lockedByAtomic(state)) {
 					currentLocation = state.getProcessState(pid).getLocation();
 
-					state = executeAtomicOrPurelyLocalStatements(false, state, pid,
-							currentLocation, true, printTransitions);
+					state = executeAtomicOrPurelyLocalStatements(false, state,
+							pid, currentLocation, true, printTransitions);
 				}
 		}
 		// do nothing when process pid terminates and is removed from the state
@@ -610,8 +802,8 @@ public class StateManager implements StateManagerIF<State, Transition> {
 				// execute purely local statements of the current process
 				// greedily
 				if (newLocation != null && newLocation.isPurelyLocal()) {
-					state = executeAtomicOrPurelyLocalStatements(false, state, pid,
-							newLocation, false, printTransitions);
+					state = executeAtomicOrPurelyLocalStatements(false, state,
+							pid, newLocation, false, printTransitions);
 				}
 			}
 		}
@@ -757,7 +949,7 @@ public class StateManager implements StateManagerIF<State, Transition> {
 			}
 		}
 		try {
-			return nextStateWork(state, transition);
+			return nextStateWork1(state, transition);
 		} catch (UnsatisfiablePathConditionException e) {
 			// problem is the interface requires an actual State
 			// be returned. There is no concept of executing a

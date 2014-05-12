@@ -78,7 +78,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void atomChooseBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("atomChooseBad.cvl")));
+		assertFalse(ui.run("verify", "-showStates", "-showModel", filename("atomChooseBad.cvl")));
 	}
 
 	@Test

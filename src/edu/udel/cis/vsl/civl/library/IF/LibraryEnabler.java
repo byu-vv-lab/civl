@@ -1,10 +1,10 @@
 package edu.udel.cis.vsl.civl.library.IF;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.CommonLibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -74,7 +74,8 @@ public interface LibraryEnabler {
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
 	 */
-	ArrayList<SimpleTransition> enabledTransitions(State state,
+	List<SimpleTransition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
-			int pid, int processIdentifier, Statement assignAtomicLock);
+			int pid, int processIdentifier, Statement assignAtomicLock)
+			throws UnsatisfiablePathConditionException;
 }

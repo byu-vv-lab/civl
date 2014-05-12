@@ -4,7 +4,8 @@
  */
 #include <stdio.h>
 void main(){
-	char a = 'a';
-	a = 'b';
-	printf("The char value is %c", a);
+  char a = 'a';
+  
+  a = 'b';
+  printf("The char value is %c", a);
 }
