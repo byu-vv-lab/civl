@@ -118,13 +118,6 @@ public interface Executor {
 	State execute(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException;
 
-	// LibraryExecutor libraryExecutor(CallOrSpawnStatement statement);
-	//
-	// LibraryExecutor libraryExecutor(CIVLSource source, String library);
-
-	// Evaluation evaluateSystemGuard(State state, int pid,
-	// SystemGuardExpression systemGuard);
-
 	/**
 	 * Execute a statement from a certain state and return the resulting state.
 	 * 

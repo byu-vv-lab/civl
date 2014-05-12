@@ -2434,12 +2434,6 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public int findRank(SymbolicExpression comm, int pid) {
-		SymbolicExpression place = this.universe.tupleRead(comm, zeroObj);
-		return this.extractInt(null, (NumericExpression) place);
-	}
-
-	@Override
 	public SymbolicExpression getParentPointer(SymbolicExpression pointer) {
 		ReferenceExpression symRef = getSymRef(pointer);
 

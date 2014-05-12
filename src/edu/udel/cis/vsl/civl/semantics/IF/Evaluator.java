@@ -105,16 +105,6 @@ public interface Evaluator {
 	int extractInt(CIVLSource source, NumericExpression expression);
 
 	/**
-	 * Look up a given communicator to find the rank of a certain process. TODO
-	 * removed after gcomm/comm is implemented.
-	 * 
-	 * @param comm
-	 * @param pid
-	 * @return
-	 */
-	int findRank(SymbolicExpression comm, int pid);
-
-	/**
 	 * Returns the parent pointer of the given pointer, or null if the given
 	 * pointer is a variable pointer (i.e., has no parent pointer). TODO move to
 	 * Libcivlc?
