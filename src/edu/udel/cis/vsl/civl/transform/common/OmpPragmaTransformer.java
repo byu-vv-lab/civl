@@ -61,7 +61,7 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 
 					ast.removeChild(i);
 					switch (ompNode.ompNodeKind()) {
-					case STATEMENT:
+					case EXECUTABLE:
 						OmpStatementNode ompStatementNode = (OmpStatementNode) ompNode;
 
 						if (ompStatementNode.completed()) {
