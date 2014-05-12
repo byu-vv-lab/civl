@@ -1,10 +1,15 @@
 /*****************************************************************************
-* FILE: bug3.c
+* SOURCE: This is a translation of a Pthread program from the Lawrence Livermore
+* Computing Center POSIX Threads Programming Exercise at:
+* https://computing.llnl.gov/tutorials/pthreads/exercise.html
+* SUPERSOURCE: Adapted from example code in "Pthreads Programming", B. Nichols
+*   et al. O'Reilly and Associates.
+* FILE: bug3.cvl
 * DESCRIPTION:
 *   This "hello world" Pthreads program demonstrates an unsafe (incorrect) 
 *   way to pass thread arguments at thread creation. Compare with hello_arg1.c.
-* AUTHOR: Blaise Barney
-* LAST REVISED: 01/29/09
+* Command line execution:
+* civl verify bug3.cvl
 ******************************************************************************/
 #include "pthread.cvh"
 #include <civlc.h>

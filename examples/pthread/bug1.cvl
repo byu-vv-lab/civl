@@ -1,14 +1,19 @@
 /*****************************************************************************
-* FILE: bug1.c
+* SOURCE: This is a translation of a Pthread program from the Lawrence Livermore
+* Computing Center POSIX Threads Programming Exercise at:
+* https://computing.llnl.gov/tutorials/pthreads/exercise.html
+* SUPERSOURCE: Adapted from example code in "Pthreads Programming", B. Nichols
+*   et al. O'Reilly and Associates.
+* FILE: bug1.cvl
 * DESCRIPTION:
-*   This example has a bug. It is a variation on the condvar.c example. 
+*  	This example has a bug. It is a variation on the condvar.cvl example. 
 *   Instead of just one thread waiting for the condition signal, there are
 *   four threads waiting for the same signal. Find out how to fix the
-*   program. The solution program is bug1fix.c.
-* SOURCE: Adapted from example code in "Pthreads Programming", B. Nichols
-*   et al. O'Reilly and Associates.
-* LAST REVISED: 07/06/05  Blaise Barney
+*   program. The solution program is bug1fix.cvl
+* Command line execution:
+* civl verify bug1.cvl
 ******************************************************************************/
+
 #include "pthread.cvh"
 #include <civlc.h>
 #include <stdio.h>

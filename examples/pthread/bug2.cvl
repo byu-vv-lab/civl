@@ -1,5 +1,5 @@
 /******************************************************************************
-* FILE: bug2.c
+* FILE: bug2.cvl
 * DESCRIPTION:
 *   A "hello world" Pthreads program that dumps core.  Figure out why and
 *   then fix it - or else see the solution bug2fix.c.
