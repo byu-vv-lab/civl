@@ -5,8 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.Before;
@@ -17,14 +16,12 @@ import edu.udel.cis.vsl.abc.Activator;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
+import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
-import edu.udel.cis.vsl.abc.transform.common.Pruner;
-import edu.udel.cis.vsl.abc.transform.common.SideEffectRemover;
 import edu.udel.cis.vsl.civl.run.UserInterface;
-import edu.udel.cis.vsl.civl.transform.common.OmpPragmaTransformer;
-import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
+import edu.udel.cis.vsl.civl.transform.CIVLTransform;
 
 public class OmpTransformerTest {
 
@@ -48,26 +45,26 @@ public class OmpTransformerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		if (!Transform.getCodes().contains(OpenMPTransformer.CODE)) {
-			Transform.addTransform(new TransformRecord(OpenMPTransformer.CODE,
-					OpenMPTransformer.LONG_NAME,
-					OpenMPTransformer.SHORT_DESCRIPTION) {
-				@Override
-				public Transformer create(ASTFactory astFactory) {
-					return new OpenMPTransformer(astFactory);
-				}
-			});
-		}
-		if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE)) {
-			Transform.addTransform(new TransformRecord(
-					OmpPragmaTransformer.CODE, OmpPragmaTransformer.LONG_NAME,
-					OmpPragmaTransformer.SHORT_DESCRIPTION) {
-				@Override
-				public Transformer create(ASTFactory astFactory) {
-					return new OmpPragmaTransformer(astFactory);
-				}
-			});
-		}
+//		if (!Transform.getCodes().contains(OpenMPTransformer.CODE)) {
+//			Transform.addTransform(new TransformRecord(OpenMPTransformer.CODE,
+//					OpenMPTransformer.LONG_NAME,
+//					OpenMPTransformer.SHORT_DESCRIPTION) {
+//				@Override
+//				public Transformer create(ASTFactory astFactory) {
+//					return new OpenMPTransformer(astFactory);
+//				}
+//			});
+//		}
+//		if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE)) {
+//			Transform.addTransform(new TransformRecord(
+//					OmpPragmaTransformer.CODE, OmpPragmaTransformer.LONG_NAME,
+//					OmpPragmaTransformer.SHORT_DESCRIPTION) {
+//				@Override
+//				public Transformer create(ASTFactory astFactory) {
+//					return new OmpPragmaTransformer(astFactory);
+//				}
+//			});
+//		}
 	}
 
 	@After
@@ -75,19 +72,32 @@ public class OmpTransformerTest {
 	}
 
 	private void check(String filenameRoot) throws ABCException, IOException {
-		Activator a;
-		List<String> codes = new LinkedList<String>();
+		Activator frontEnd;
+		Program program;
 
-		codes.add(Pruner.CODE);
-		codes.add(SideEffectRemover.CODE);
-		codes.add(OmpPragmaTransformer.CODE);
-		codes.add(OpenMPTransformer.CODE);
 		this.systemIncludes = new File[0];
 		this.userIncludes = new File[0];
-		a = ABC.activator(new File(root, filenameRoot + ".c"), systemIncludes,
-				userIncludes, Language.CIVL_C); // TODO: check this (language
-												// CIVL_C)
-		a.showTranslation(out, codes);
+		frontEnd = ABC.activator(new File(root, filenameRoot + ".c"),
+				systemIncludes, userIncludes, Language.CIVL_C);
+		program = frontEnd.showTranslation(out);
+
+		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
+				new ArrayList<String>(0), frontEnd.getASTBuilder());
+		out.println("======== After applying OpenMP Pragma Transformer ========");
+		frontEnd.printProgram(out, program);
+
+		CIVLTransform.applyTransformer(program, CIVLTransform.OMP,
+				new ArrayList<String>(0), frontEnd.getASTBuilder());
+		out.println("======== After applying OpenMP to CIVL Transformer ========");
+		frontEnd.printProgram(out, program);
+
+		program.applyTransformer("prune");
+		out.println("======== After applying Pruner ========");
+		frontEnd.printProgram(out, program);
+
+		program.applyTransformer("sef");
+		out.println("======== After applying Side Effect Remover ========");
+		frontEnd.printProgram(out, program);
 	}
 
 	/* **************************** Test Methods *************************** */
