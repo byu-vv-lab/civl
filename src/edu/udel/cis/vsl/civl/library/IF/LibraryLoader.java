@@ -2,7 +2,7 @@ package edu.udel.cis.vsl.civl.library.IF;
 
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.kripke.Enabler;
+import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 
@@ -35,7 +35,7 @@ public interface LibraryLoader {
 	 *            The model factory to be used in the library enabler.
 	 * @return The library enabler of the given name.
 	 */
-	LibraryEnabler getLibraryEnabler(String name, Enabler primaryEnabler,
+	LibraryEnabler getLibraryEnabler(String name, CommonEnabler primaryEnabler,
 			PrintStream output, ModelFactory modelFacotry);
 
 	LibraryEvaluator getLibraryEvaluator(String name, Executor executor,

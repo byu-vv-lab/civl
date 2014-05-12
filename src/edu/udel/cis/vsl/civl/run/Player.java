@@ -4,22 +4,20 @@ import java.io.File;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
-import edu.udel.cis.vsl.civl.kripke.Enabler;
-import edu.udel.cis.vsl.civl.kripke.PointeredEnabler;
-import edu.udel.cis.vsl.civl.kripke.ScopedEnabler;
-import edu.udel.cis.vsl.civl.kripke.StateManager;
-import edu.udel.cis.vsl.civl.library.CommonLibraryLoader;
+import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.kripke.IF.Kripkes;
+import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
+import edu.udel.cis.vsl.civl.library.IF.Libraries;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
-import edu.udel.cis.vsl.civl.semantics.CommonEvaluator;
-import edu.udel.cis.vsl.civl.semantics.CommonExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.state.States;
+import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.state.IF.States;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
@@ -128,8 +126,8 @@ public abstract class Player {
 				config);
 		this.transitionFactory = new TransitionFactory();
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
-		this.libraryLoader = new CommonLibraryLoader();
-		this.evaluator = new CommonEvaluator(config, modelFactory,
+		this.libraryLoader = Libraries.newLibraryLoader();
+		this.evaluator = Semantics.newEvaluator(config, modelFactory,
 				stateFactory, log, this.libraryLoader);
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 		evaluator.setSolve(solve);
@@ -146,8 +144,8 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.showAmpleSetWtStatesO);
 		this.gui = (Boolean) config.getValueOrDefault(UserInterface.guiO);
 		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
-		this.executor = new CommonExecutor(config, modelFactory, stateFactory,
-				log, libraryLoader, out, err, this.enablePrintf,
+		this.executor = Semantics.newExecutor(config, modelFactory,
+				stateFactory, log, libraryLoader, out, err, this.enablePrintf,
 				this.statelessPrintf, evaluator);
 		this.predicate = new StandardPredicate(log, universe, this.executor);
 		this.random = config.isTrue(UserInterface.randomO);
@@ -166,33 +164,15 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.saveStatesO);
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
-		if (this.scpPor1) {
-			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					false, showAmpleSet, this.showAmpleSetWtStates,
-					this.libraryLoader);
-		} else if (this.scpPor2) {
-			enabler = new ScopedEnabler(transitionFactory, evaluator, executor,
-					true, showAmpleSet, this.showAmpleSetWtStates,
-					this.libraryLoader);
-		} else {
-			enabler = new PointeredEnabler(transitionFactory, evaluator,
-					executor, showAmpleSet, this.showAmpleSetWtStates,
-					this.libraryLoader);
-		}
+		enabler = Kripkes.newEnabler(transitionFactory, evaluator, executor,
+				showAmpleSet, this.showAmpleSetWtStates, this.libraryLoader);
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);
 		this.executor.setEnabler((Enabler) this.enabler);
 		this.evaluator.setEnabler((Enabler) this.enabler);
-		stateManager = new StateManager(executor);
-		stateManager.setOutputStream(out);
-		stateManager.setVerbose(verbose);
-		stateManager.setDebug(debug);
-		stateManager.setGuiMode(this.gui);
-		stateManager.setShowStates(showStates);
-		stateManager.setShowSavedStates(showSavedStates);
-		stateManager.setShowTransitions(showTransitions);
-		stateManager.setSaveStates(saveStates);
-		stateManager.setSimplify(simplify);
+		stateManager = Kripkes.newStateManager(executor, out, verbose, debug,
+				gui, showStates, showSavedStates, showTransitions, saveStates,
+				simplify);
 	}
 
 	public void printResult() {

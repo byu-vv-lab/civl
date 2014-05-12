@@ -1,27 +1,42 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.kripke.Enabler;
+import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
-import edu.udel.cis.vsl.civl.semantics.CommonExecutor.StateStatusKind;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
-import edu.udel.cis.vsl.civl.util.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 //TODO: apply new design: an executor takes a transition instead of a statement.
 public interface Executor {
+
+	/* ******************************* Types ******************************* */
+
+	/**
+	 * The status of the execution of a statement.
+	 * 
+	 * <ol>
+	 * <li>NORMAL: normal execution;</li>
+	 * <li>NONDETERMINISTIC: nondeterminism exists in the statement;</li>
+	 * <li>BLOCKED: the statement is blocked.</li>
+	 * </ol>
+	 * 
+	 * @author Manchun Zheng (zmanchun)
+	 */
+	public enum StateStatusKind {
+		NORMAL, NONDETERMINISTIC, BLOCKED
+	}
+
 	/**
 	 * Assigns a value to the referenced cell in the state. Returns a new state
 	 * which is equivalent to the old state except that the memory specified by
@@ -119,27 +134,6 @@ public interface Executor {
 			throws UnsatisfiablePathConditionException;
 
 	/**
-	 * Execute a statement from a certain state and return the resulting state.
-	 * 
-	 * TODO make sure the pid is never changed or return the new pid if changed
-	 * 
-	 * @param state
-	 *            The state to execute the statement with
-	 * @param location
-	 *            The location of the statement, satisfying that
-	 *            <code>s.source() == location</code>.
-	 * @param s
-	 *            The statement to be executed
-	 * @param pid
-	 *            The id of the process that the statement <code>s</code>
-	 *            belongs to. Precondition:
-	 *            <code>state.getProcessState(pid).getLocation() == location</code>
-	 * @return
-	 */
-	Pair<StateStatusKind, State> executeStatement(State state,
-			Location location, Statement s, int pid);
-
-	/**
 	 * Returns the number of "steps" executed since this Executor was created.
 	 * 
 	 * @return the number of steps executed
@@ -225,7 +219,7 @@ public interface Executor {
 	State executePrintf(State state, int pid, Expression[] expressions,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException;
-	
+
 	/**
 	 * Returns the state that results from executing the statement, or null if
 	 * path condition becomes unsatisfiable.

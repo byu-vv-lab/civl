@@ -7,19 +7,13 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.Activator;
-import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.abc.transform.IF.Transform;
-import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
-import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 import edu.udel.cis.vsl.civl.run.UserInterface;
 import edu.udel.cis.vsl.civl.transform.CIVLTransform;
 
@@ -41,34 +35,6 @@ public class OmpTransformerTest {
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
-	}
-
-	@Before
-	public void setUp() throws Exception {
-//		if (!Transform.getCodes().contains(OpenMPTransformer.CODE)) {
-//			Transform.addTransform(new TransformRecord(OpenMPTransformer.CODE,
-//					OpenMPTransformer.LONG_NAME,
-//					OpenMPTransformer.SHORT_DESCRIPTION) {
-//				@Override
-//				public Transformer create(ASTFactory astFactory) {
-//					return new OpenMPTransformer(astFactory);
-//				}
-//			});
-//		}
-//		if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE)) {
-//			Transform.addTransform(new TransformRecord(
-//					OmpPragmaTransformer.CODE, OmpPragmaTransformer.LONG_NAME,
-//					OmpPragmaTransformer.SHORT_DESCRIPTION) {
-//				@Override
-//				public Transformer create(ASTFactory astFactory) {
-//					return new OmpPragmaTransformer(astFactory);
-//				}
-//			});
-//		}
-	}
-
-	@After
-	public void tearDown() throws Exception {
 	}
 
 	private void check(String filenameRoot) throws ABCException, IOException {
