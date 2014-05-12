@@ -10,7 +10,7 @@ import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 
 public abstract class CIVLBaseTransformer extends BaseTransformer {
 
-	protected List<String> inputVars;
+	protected List<String> inputVariableNames;
 
 	protected ASTBuilder astBuilder;
 
@@ -32,7 +32,7 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 	}
 
 	protected void setInputVars(List<String> inputVars) {
-		this.inputVars = inputVars;
+		this.inputVariableNames = inputVars;
 	}
 
 	protected void setASTBuilder(ASTBuilder astBuilder) {
