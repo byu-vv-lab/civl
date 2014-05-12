@@ -730,9 +730,9 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	// }
 
 	private AssumeNode nprocsAssumption() throws SyntaxException {
-		if (this.inputVars.contains(NPROCS))
+		if (this.inputVariableNames.contains(NPROCS))
 			return null;
-		if (this.inputVars.contains(NPROCS_LOWER_BOUND))
+		if (this.inputVariableNames.contains(NPROCS_LOWER_BOUND))
 			return this.boundAssumption(NPROCS_LOWER_BOUND, NPROCS,
 					NPROCS_UPPER_BOUND);
 		return upperBoundAssumption(NPROCS, NPROCS_UPPER_BOUND);
@@ -832,21 +832,21 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		// declaring $input int NPROCS;
 		nprocsVar = this.nprocsDeclaration();
 		// declaring $input int NPROCS_UPPER_BOUND;
-		if (!this.inputVars.contains(NPROCS)
-				&& this.inputVars.contains(NPROCS_UPPER_BOUND)) {
+		if (!this.inputVariableNames.contains(NPROCS)
+				&& this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
 			nprocsUpperBoundVar = this.basicTypeVariableDeclaration(
 					BasicTypeKind.INT, NPROCS_UPPER_BOUND);
 			nprocsUpperBoundVar.getTypeNode().setInputQualified(true);
 		}
-		if (!this.inputVars.contains(NPROCS)
-				&& this.inputVars.contains(NPROCS_LOWER_BOUND)) {
+		if (!this.inputVariableNames.contains(NPROCS)
+				&& this.inputVariableNames.contains(NPROCS_LOWER_BOUND)) {
 			// declaring $input int NPROCS_LOWER_BOUND;
 			nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
 					BasicTypeKind.INT, NPROCS_LOWER_BOUND);
 			nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
 		}
-		if (!this.inputVars.contains(NPROCS)
-				&& !this.inputVars.contains(NPROCS_UPPER_BOUND)) {
+		if (!this.inputVariableNames.contains(NPROCS)
+				&& !this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
 			throw new SyntaxException(
 					"Please specify the number of processes (e.g., -input__NPROCS=5)"
 							+ "or the upper bound of number of processes (e.g. -input__NPROCS_UPPER_BOUND=6)",

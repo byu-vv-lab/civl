@@ -186,7 +186,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 						nodeFactory.newExpressionStatementNode(assignArgvVar),
 						null);
 
-				if (!inputVars.contains(__argcName)) {
+				if (!inputVariableNames.contains(__argcName)) {
 					throw new SyntaxException(
 							"Please specify the input variable __argc (e.g. \"-input__argc=5\")"
 									+ " which is used to update argc", source);
