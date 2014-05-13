@@ -468,4 +468,9 @@ public class LanguageFeaturesTest {
 	public void intIter() throws ABCException {
 		assertTrue(ui.run("verify", filename("intIter.cvl"), "-inputB=5"));
 	}
+	
+	@Test
+	public void comma() throws ABCException {
+		assertTrue(ui.run("verify", filename("comma.cvl"), "-inputn=5"));
+	}
 }
