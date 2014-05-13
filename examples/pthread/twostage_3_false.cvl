@@ -11,7 +11,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <pthread.cvh>
+#include <civlc.h>
 //#include <assert.h>
 
 #define USAGE "./twostage <param1> <param2>\n"

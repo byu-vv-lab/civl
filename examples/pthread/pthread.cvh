@@ -97,9 +97,11 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
    error will be returned stating the the thread cannot be joined.
 */ 
 int pthread_join(pthread_t thread, void **value_ptr) {
-  if(thread.attr->detachstate == 0){
-    $assert($false, "Thread is designated as unjoinable");
-    return 1;
+  if(thread.attr != NULL){
+    if(thread.attr->detachstate == 0){
+      $assert($false, "Thread is designated as unjoinable");
+      return 1;
+    }
   }
   $wait(thread.thr);
   return 0;
