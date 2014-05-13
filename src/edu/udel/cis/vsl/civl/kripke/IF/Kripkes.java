@@ -17,11 +17,11 @@ public class Kripkes {
 				showAmpleSet, showAmpleSetWtStates, libLoader);
 	}
 
-	public static StateManager newStateManager(Executor executor,
+	public static StateManager newStateManager(Enabler enabler, Executor executor,
 			PrintStream out, boolean verbose, boolean debug, boolean gui,
 			boolean showStates, boolean showSavedStates,
 			boolean showTransitions, boolean saveStates, boolean simplify) {
-		return new CommonStateManager(executor, out, verbose, debug, gui,
+		return new CommonStateManager(enabler, executor, out, verbose, debug, gui,
 				showStates, showSavedStates, showTransitions, saveStates,
 				simplify);
 	}

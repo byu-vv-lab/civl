@@ -779,10 +779,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			state = eval.state;
 		}
 		switch (name.name()) {
-		case "printf":
-			state = primaryExecutor.executePrintf(state, pid, arguments,
-					argumentValues);
-			break;
+//		case "printf":
+//			state = primaryExecutor.executePrintf(state, pid, arguments,
+//					argumentValues);
+//			break;
 		case "$fopen":
 			state = execute_fopen(source, state, pid, lhs, arguments,
 					argumentValues);

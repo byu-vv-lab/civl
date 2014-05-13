@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
@@ -18,7 +18,6 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
@@ -36,8 +35,6 @@ import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
-import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 /**
  * Enabler implements {@link EnablerIF} for CIVL models. It is an abstract class
@@ -373,34 +370,7 @@ public abstract class CommonEnabler implements Enabler {
 		int processIdentifier = state.getProcessState(pid).identifier();
 
 		try {
-			if (s instanceof ChooseStatement) {
-				Evaluation eval = evaluator.evaluate(
-						state.setPathCondition(pathCondition), pid,
-						((ChooseStatement) s).rhs());
-				IntegerNumber upperNumber = (IntegerNumber) universe.reasoner(
-						eval.state.getPathCondition()).extractNumber(
-						(NumericExpression) eval.value);
-				int upper;
-
-				if (upperNumber == null)
-					throw new CIVLStateException(ErrorKind.INTERNAL,
-							Certainty.NONE,
-							"Argument to $choose_int not concrete: "
-									+ eval.value, eval.state,
-							this.stateFactory, s.getSource());
-				upper = upperNumber.intValue();
-				if (assignAtomicLock != null) {
-					transitionStatement = new StatementList(assignAtomicLock, s);
-				} else {
-					transitionStatement = s;
-				}
-				for (int i = 0; i < upper; i++) {
-					localTransitions.add(transitionFactory.newChooseTransition(
-							eval.state.getPathCondition(), pid,
-							processIdentifier, transitionStatement,
-							universe.integer(i)));
-				}
-			} else {
+			{
 				if (s instanceof CallOrSpawnStatement) {
 					CallOrSpawnStatement call = (CallOrSpawnStatement) s;
 

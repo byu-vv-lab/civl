@@ -1,41 +1,16 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
-import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
-//TODO: apply new design: an executor takes a transition instead of a statement.
 public interface Executor {
-
-	/* ******************************* Types ******************************* */
-
-	/**
-	 * The status of the execution of a statement.
-	 * 
-	 * <ol>
-	 * <li>NORMAL: normal execution;</li>
-	 * <li>NONDETERMINISTIC: nondeterminism exists in the statement;</li>
-	 * <li>BLOCKED: the statement is blocked.</li>
-	 * </ol>
-	 * 
-	 * @author Manchun Zheng (zmanchun)
-	 */
-	public enum StateStatusKind {
-		NORMAL, NONDETERMINISTIC, BLOCKED
-	}
 
 	/**
 	 * Assigns a value to the referenced cell in the state. Returns a new state
@@ -75,37 +50,9 @@ public interface Executor {
 			throws UnsatisfiablePathConditionException;
 
 	/**
-	 * Execute a choose statement. This is like an assignment statement where
-	 * the variable gets assigned a particular value between 0 and arg-1,
-	 * inclusive. The value is assigned for each transition from the choose
-	 * source location by the Enabler.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The process id of the currently executing process.
-	 * @param statement
-	 *            A choose statement to be executed.
-	 * @param value
-	 *            The value assigned to the variable for this particular
-	 *            transition. This concrete value should be provided by the
-	 *            enabler.
-	 * @return The updated state of the program.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	State executeChoose(State state, int pid, ChooseStatement statement,
-			SymbolicExpression value)
-			throws UnsatisfiablePathConditionException;
-
-	/**
 	 * @return The state factory associated with this executor.
 	 */
 	StateFactory stateFactory();
-
-	/**
-	 * @return The symbolic universe associated with this executor.
-	 */
-	SymbolicUniverse universe();
 
 	/**
 	 * @return The evaluator used by this executor.
@@ -113,48 +60,11 @@ public interface Executor {
 	Evaluator evaluator();
 
 	/**
-	 * @return The model factory used by this executor.
-	 */
-	ModelFactory modelFactory();
-
-	State executeStatementList(State state, int pid, StatementList statement,
-			SymbolicExpression value)
-			throws UnsatisfiablePathConditionException;
-
-	/**
-	 * Returns the state that results from executing the statement, or null if
-	 * path condition becomes unsatisfiable.
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param statement
-	 * @return
-	 */
-	State execute(State state, int pid, Statement statement)
-			throws UnsatisfiablePathConditionException;
-
-	/**
 	 * Returns the number of "steps" executed since this Executor was created.
 	 * 
 	 * @return the number of steps executed
 	 */
 	long getNumSteps();
-
-	/**
-	 * Update the enabler to be used in the executor.
-	 * 
-	 * @param enabler
-	 *            the enabler to be used.
-	 */
-	void setEnabler(Enabler enabler);
-
-	/**
-	 * The enabler used in the executor should be the unique one used in the
-	 * whole system.
-	 * 
-	 * @return The enabler used in the executor.
-	 */
-	Enabler enabler();
 
 	/**
 	 * Adds a new object to the heap of a certain scope; sets the pointer of the
@@ -186,38 +96,6 @@ public interface Executor {
 	State malloc(CIVLSource source, State state, int pid, LHSExpression lhs,
 			Expression scopeExpression, SymbolicExpression scopeValue,
 			CIVLType objectType, SymbolicExpression objectValue)
-			throws UnsatisfiablePathConditionException;
-
-	LibraryExecutor libraryExecutor(CIVLSource source, String library);
-
-	/**
-	 * Execute <code>printf()</code> function. See C11 Sec. 7.21.6.1 and
-	 * 7.21.6.3. Prototype:
-	 * 
-	 * <pre>
-	 * int printf(const char * restrict format, ...);
-	 * </pre>
-	 * 
-	 * Escape characters can be supported; the following have been tested:
-	 * <code>\n</code>, <code>\r</code>, <code>\b</code>, <code>\t</code>,
-	 * <code>\"</code>, <code>\'</code>, and <code>\\</code>. Some (but not all)
-	 * format specifiers can be supported and the following have been tested:
-	 * <code>%d</code>, <code>%o</code>, <code>%x</code>, <code>%f</code>,
-	 * <code>%e</code>, <code>%g</code>, <code>%a</code>, <code>%c</code>,
-	 * <code>%p</code>, and <code>%s</code>.
-	 * 
-	 * TODO CIVL currently dosen't support 'printf("%c" , c)'(where c is a char
-	 * type variable)?
-	 * 
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param argumentValues
-	 * @return State
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	State executePrintf(State state, int pid, Expression[] expressions,
-			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException;
 
 	/**

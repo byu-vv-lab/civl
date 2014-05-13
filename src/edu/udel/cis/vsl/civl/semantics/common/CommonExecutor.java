@@ -11,14 +11,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.library.common.civlc.LibcivlcExecutor;
@@ -35,7 +34,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -52,7 +50,6 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.transition.ChooseTransition;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.ErrorLog;
@@ -100,12 +97,6 @@ public class CommonExecutor implements Executor {
 	 * Prevent printf from modifying the file system. False by default.
 	 */
 	protected boolean statelessPrintf;
-
-	/**
-	 * The unique enabler used in the system. Used in this class to evaluate the
-	 * guard of a statement.
-	 */
-	protected Enabler enabler;
 
 	/** The Evaluator used to evaluate expressions. */
 	protected Evaluator evaluator;
@@ -433,471 +424,32 @@ public class CommonExecutor implements Executor {
 	}
 
 	/**
-	 * Execute a return statement.
+	 * Execute <code>printf()</code> function. See C11 Sec. 7.21.6.1 and
+	 * 7.21.6.3. Prototype:
+	 * 
+	 * <pre>
+	 * int printf(const char * restrict format, ...);
+	 * </pre>
+	 * 
+	 * Escape characters can be supported; the following have been tested:
+	 * <code>\n</code>, <code>\r</code>, <code>\b</code>, <code>\t</code>,
+	 * <code>\"</code>, <code>\'</code>, and <code>\\</code>. Some (but not all)
+	 * format specifiers can be supported and the following have been tested:
+	 * <code>%d</code>, <code>%o</code>, <code>%x</code>, <code>%f</code>,
+	 * <code>%e</code>, <code>%g</code>, <code>%a</code>, <code>%c</code>,
+	 * <code>%p</code>, and <code>%s</code>.
+	 * 
+	 * TODO CIVL currently dosen't support 'printf("%c" , c)'(where c is a char
+	 * type variable)?
+	 * 
 	 * 
 	 * @param state
-	 *            The state of the program.
 	 * @param pid
-	 *            The process id of the currently executing process.
-	 * @param statement
-	 *            The return statement to be executed.
-	 * @return The updated state of the program.
+	 * @param argumentValues
+	 * @return State
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeReturn(State state, int pid, ReturnStatement statement)
-			throws UnsatisfiablePathConditionException {
-		Expression expr = statement.expression();
-		ProcessState process;
-		SymbolicExpression returnValue;
-		String functionName;
-
-		process = state.getProcessState(pid);
-		functionName = process.peekStack().location().function().name().name();
-		if (functionName.equals("_CIVL_system")) {
-			assert pid == 0;
-			if (state.numProcs() > 1) {
-				for (ProcessState proc : state.getProcessStates()) {
-					if (proc == null)
-						continue;
-					if (proc.getPid() == pid)
-						continue;
-					if (!proc.hasEmptyStack()) {
-						throw new CIVLExecutionException(
-								ErrorKind.PROCESS_LEAK,
-								Certainty.CONCRETE,
-								"Attempt to terminate the main process while process "
-										+ proc.identifier() + "(process<"
-										+ proc.getPid() + ">) is still running",
-								statement.getSource());
-					}
-				}
-			}
-		}
-		if (expr == null) {
-			returnValue = null;
-		} else {
-			Evaluation eval = evaluator.evaluate(state, pid, expr);
-
-			returnValue = eval.value;
-			state = eval.state;
-			if (functionName.equals("_CIVL_system")) {
-				if (universe.equals(returnValue, universe.integer(0)).isFalse()) {
-					throw new CIVLExecutionException(ErrorKind.OTHER,
-							Certainty.CONCRETE,
-							"Program exits with error code: " + returnValue,
-							statement.getSource());
-				}
-			}
-		}
-		state = stateFactory.popCallStack(state, pid);
-		process = state.getProcessState(pid);
-		if (!process.hasEmptyStack()) {
-			StackEntry returnContext = process.peekStack();
-			Location returnLocation = returnContext.location();
-			CallOrSpawnStatement call = (CallOrSpawnStatement) returnLocation
-					.getSoleOutgoing();
-
-			if (call.lhs() != null)
-				state = assign(state, pid, call.lhs(), returnValue);
-			state = stateFactory.setLocation(state, pid, call.target());
-		}
-		return state;
-	}
-
-	/**
-	 * Executes a spawn statement. The state will be updated with a new process
-	 * whose start location is the beginning of the forked function.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The process id of the currently executing process.
-	 * @param statement
-	 *            A spawn statement to be executed.
-	 * @return The updated state of the program.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State executeSpawn(State state, int pid,
-			CallOrSpawnStatement statement)
-			throws UnsatisfiablePathConditionException {
-		CIVLFunction function = statement.function();
-		int newPid = state.numProcs();
-		List<Expression> argumentExpressions = statement.arguments();
-		int numArgs = argumentExpressions.size();
-		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
-
-		assert !statement.isCall();
-		if (function == null) {
-			Pair<State, CIVLFunction> eval = evaluator
-					.evaluateFunctionExpression(state, pid,
-							statement.functionExpression());
-
-			state = eval.left;
-			function = eval.right;
-		}
-		for (int i = 0; i < numArgs; i++) {
-			Evaluation eval = evaluator.evaluate(state, pid,
-					argumentExpressions.get(i));
-
-			state = eval.state;
-			arguments[i] = eval.value;
-		}
-		state = stateFactory.addProcess(state, function, arguments, pid);
-		if (statement.lhs() != null)
-			state = assign(state, pid, statement.lhs(),
-					modelFactory.processValue(newPid));
-		state = stateFactory.setLocation(state, pid, statement.target());
-		return state;
-	}
-
-	/**
-	 * Execute a join statement. The state will be updated to no longer have the
-	 * joined process.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The process id of the currently executing process.
-	 * @param statement
-	 *            The join statement to be executed.
-	 * @return The updated state of the program.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State executeWait(State state, int pid, WaitStatement statement)
-			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluator.evaluate(state, pid, statement.process());
-		SymbolicExpression procVal = eval.value;
-		int joinedPid = modelFactory.getProcessId(statement.process()
-				.getSource(), procVal);
-
-		state = stateFactory.setLocation(eval.state, pid, statement.target());
-		state = stateFactory.removeProcess(state, joinedPid);
-		return state;
-	}
-
-	/**
-	 * Execute a generic statement. All statements except a Choose should be
-	 * handled by this method.
-	 * 
-	 * @param State
-	 *            The state of the program.
-	 * @param pid
-	 *            The process id of the currently executing process.
-	 * @param statement
-	 *            The statement to be executed.
-	 * @return The updated state of the program.
-	 */
-	private State executeWork(State state, int pid, Statement statement)
-			throws UnsatisfiablePathConditionException {
-		numSteps++;
-
-		switch (statement.statementKind()) {
-		case ASSERT:
-			return executeAssert(state, pid, (AssertStatement) statement);
-		case ASSIGN:
-			return executeAssign(state, pid, (AssignStatement) statement);
-		case ASSUME:
-			return executeAssume(state, pid, (AssumeStatement) statement);
-		case CALL_OR_SPAWN:
-			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
-
-			if (call.isCall())
-				return executeCall(state, pid, call);
-			else
-				return executeSpawn(state, pid, call);
-		case CHOOSE:
-			throw new CIVLInternalException("Should be unreachable", statement);
-		case MALLOC:
-			return executeMalloc(state, pid, (MallocStatement) statement);
-		case NOOP:
-			return stateFactory.setLocation(state, pid, statement.target());
-		case RETURN:
-			return executeReturn(state, pid, (ReturnStatement) statement);
-		case STATEMENT_LIST:
-			return executeStatementList(state, pid, (StatementList) statement,
-					null);
-		case WAIT:
-			return executeWait(state, pid, (WaitStatement) statement);
-		default:
-			throw new CIVLInternalException("Unknown statement kind", statement);
-		}
-	}
-
-	// private State executeNoop(State state, int pid, NoopStatement statement)
-	// {
-	// NoopKind kind = statement.noopKind();
-	//
-	// //IF_ELSE, SWITCH, LOOP, NONE, GOTO, ATOMIC_ATOM
-	// switch(kind){
-	// case ATOMIC_ATOM:
-	// default:
-	//
-	// }
-	// return state;
-	// }
-
-	/**
-	 * TODO javadocs
-	 * 
-	 * @param source
-	 * @param library
-	 * @return
-	 */
-	@Override
-	public LibraryExecutor libraryExecutor(CIVLSource source, String library) {
-		switch (library) {
-		case "civlc":
-			return civlcExecutor;
-		case "stdio":
-			if (stdioExecutor == null)
-				this.stdioExecutor = (LibstdioExecutor) loader
-						.getLibraryExecutor("stdio", this, this.output,
-								this.err, this.enablePrintf,
-								this.statelessPrintf, this.modelFactory);
-			return stdioExecutor;
-		default:
-			throw new CIVLInternalException("Unknown library: " + library,
-					source);
-		}
-	}
-
-	/* ********************* Methods from Executor ************************* */
-
-	@Override
-	public State assign(CIVLSource source, State state,
-			SymbolicExpression pointer, SymbolicExpression value)
-			throws UnsatisfiablePathConditionException {
-		return this.assign(source, state, pointer, value, false);
-	}
-
-	private State assign(CIVLSource source, State state,
-			SymbolicExpression pointer, SymbolicExpression value,
-			boolean isInitialization)
-			throws UnsatisfiablePathConditionException {
-		int vid = evaluator.getVariableId(source, pointer);
-		int sid = evaluator.getScopeId(source, pointer);
-		ReferenceExpression symRef = evaluator.getSymRef(pointer);
-		State result;
-		Variable variable;
-
-		if (sid < 0) {
-			evaluator
-					.logSimpleError(source, state, ErrorKind.DEREFERENCE,
-							"Attempt to dereference pointer into scope which has been removed from state");
-			throw new UnsatisfiablePathConditionException();
-		}
-		variable = state.getScope(sid).lexicalScope().variable(vid);
-		if (!isInitialization) {
-			if (variable.isInput()) {
-				evaluator
-						.logSimpleError(source, state, ErrorKind.INPUT_WRITE,
-								"Attempt to write to input variable "
-										+ variable.name());
-				throw new UnsatisfiablePathConditionException();
-			} else if (variable.isConst()) {
-				evaluator.logSimpleError(
-						source,
-						state,
-						ErrorKind.CONSTANT_WRITE,
-						"Attempt to write to constant variable "
-								+ variable.name());
-				throw new UnsatisfiablePathConditionException();
-			}
-		}
-		if (symRef.isIdentityReference()) {
-			result = stateFactory.setVariable(state, vid, sid, value);
-		} else {
-			SymbolicExpression oldVariableValue = state.getVariableValue(sid,
-					vid);
-
-			try {
-				SymbolicExpression newVariableValue = universe.assign(
-						oldVariableValue, symRef, value);
-
-				result = stateFactory.setVariable(state, vid, sid,
-						newVariableValue);
-			} catch (SARLException e) {
-				evaluator.logSimpleError(source, state, ErrorKind.DEREFERENCE,
-						"Invalid pointer dereference: " + pointer);
-				throw new UnsatisfiablePathConditionException();
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public State assign(State state, int pid, LHSExpression lhs,
-			SymbolicExpression value)
-			throws UnsatisfiablePathConditionException {
-		return this.assign(state, pid, lhs, value, false);
-	}
-
-	private State assign(State state, int pid, LHSExpression lhs,
-			SymbolicExpression value, boolean isInitialization)
-			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluator.reference(state, pid, lhs);
-
-		if (lhs instanceof DotExpression) {
-			DotExpression dot = (DotExpression) lhs;
-
-			if (dot.isUnion()) {
-				int memberIndex = dot.fieldIndex();
-
-				value = evaluator.universe().unionInject(
-						(SymbolicUnionType) (dot.structOrUnion()
-								.getExpressionType().getDynamicType(evaluator
-								.universe())),
-						evaluator.universe().intObject(memberIndex), value);
-			}
-		}
-		// TODO check if lhs is constant or input value
-		return assign(lhs.getSource(), eval.state, eval.value, value,
-				isInitialization);
-	}
-
-	@Override
-	public Enabler enabler() {
-		return this.enabler;
-	}
-
-	// @Override
-	// public Evaluation evaluateSystemGuard(State state, int pid,
-	// SystemGuardExpression systemGuard) {
-	// LibraryExecutor libExecutor = libraryExecutor(systemGuard.getSource(),
-	// systemGuard.library());
-	//
-	// return libExecutor.getGuard(state, pid, systemGuard.functionName(),
-	// systemGuard.arguments(), systemGuard.getSource());
-	// }
-
-	@Override
-	public Evaluator evaluator() {
-		return evaluator;
-	}
-
-	@Override
-	public State execute(State state, int pid, Statement statement)
-			throws UnsatisfiablePathConditionException {
-		try {
-			return executeWork(state, pid, statement);
-		} catch (SARLException e) {
-			// e.printStackTrace(System.err);
-			// System.err.flush();
-			throw new CIVLInternalException("SARL exception: " + e, statement);
-		} catch (CIVLExecutionException e) {
-			evaluator.reportError(e);
-			throw new UnsatisfiablePathConditionException();
-		}
-	}
-
-	@Override
-	public State executeChoose(State state, int pid, ChooseStatement statement,
-			SymbolicExpression value)
-			throws UnsatisfiablePathConditionException {
-		state = assign(state, pid, statement.getLhs(), value);
-		state = stateFactory.setLocation(state, pid, statement.target());
-		return state;
-	}
-
-	@Override
-	public State executeStatementList(State state, int pid,
-			StatementList statement, SymbolicExpression value)
-			throws UnsatisfiablePathConditionException {
-		int count = statement.statements().size();
-
-		for (int i = 0; i < count; i++) {
-			Statement stmt = statement.statements().get(i);
-
-			if (stmt instanceof ChooseStatement) {
-				state = executeChoose(state, pid, (ChooseStatement) stmt, value);
-			} else {
-				state = executeWork(state, pid, stmt);
-			}
-		}
-		return state;
-	}
-
-	@Override
-	public long getNumSteps() {
-		return numSteps;
-	}
-
-	@Override
-	public ModelFactory modelFactory() {
-		return modelFactory;
-	}
-
-	@Override
-	public State malloc(CIVLSource source, State state, int pid,
-			LHSExpression lhs, Expression scopeExpression,
-			SymbolicExpression scopeValue, CIVLType objectType,
-			SymbolicExpression objectValue)
-			throws UnsatisfiablePathConditionException {
-		int index = modelFactory.getHeapFieldId(objectType);
-		IntObject indexObj = universe.intObject(index);
-		int dyScopeID;
-		DynamicScope dyScope;
-		int heapVariableId;
-		ReferenceExpression symRef;
-		SymbolicExpression heapValue;
-		SymbolicExpression heapPointer;
-		SymbolicExpression heapField;
-		SymbolicExpression newObject;
-		NumericExpression fieldLength;
-		SymbolicExpression firstElementPointer; // returned value
-		ArrayList<SymbolicExpression> elements = new ArrayList<>();
-		CIVLSource scopeSource = scopeExpression == null ? null
-				: scopeExpression.getSource();
-
-		elements.add(objectValue);
-		heapValue = evaluator.heapValue(source, state, scopeValue);
-		dyScopeID = modelFactory.getScopeId(scopeSource, scopeValue);
-		dyScope = state.getScope(dyScopeID);
-		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
-		heapField = universe.tupleRead(heapValue, indexObj);
-		fieldLength = universe.length(heapField);
-		newObject = universe.array(objectType.getDynamicType(universe),
-				elements);
-		heapField = universe.append(heapField, newObject);
-		heapValue = universe.tupleWrite(heapValue, indexObj, heapField);
-		state = stateFactory.setVariable(state, heapVariableId, dyScopeID,
-				heapValue);
-		if (lhs != null) {
-			symRef = (ReferenceExpression) universe.canonic(universe
-					.identityReference());
-			heapPointer = universe.tuple(
-					modelFactory.pointerSymbolicType(),
-					Arrays.asList(new SymbolicExpression[] {
-							modelFactory.scopeValue(dyScopeID),
-							universe.integer(heapVariableId), symRef }));
-			symRef = universe.tupleComponentReference(symRef, indexObj);
-			symRef = universe.arrayElementReference(symRef, fieldLength);
-			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
-			firstElementPointer = evaluator.setSymRef(heapPointer, symRef);
-			state = assign(state, pid, lhs, firstElementPointer);
-		}
-		return state;
-	}
-
-	// (State state, int pid, MallocStatement statement)
-
-	@Override
-	public void setEnabler(Enabler enabler) {
-		this.enabler = enabler;
-	}
-
-	@Override
-	public StateFactory stateFactory() {
-		return stateFactory;
-	}
-
-	@Override
-	public SymbolicUniverse universe() {
-		return universe;
-	}
-
-	@Override
-	public State executePrintf(State state, int pid, Expression[] expressions,
+	private State executePrintf(State state, int pid, Expression[] expressions,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		if (this.enablePrintf) {
@@ -1049,27 +601,409 @@ public class CommonExecutor implements Executor {
 		return state;
 	}
 
+	/**
+	 * Execute a return statement.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The process id of the currently executing process.
+	 * @param statement
+	 *            The return statement to be executed.
+	 * @return The updated state of the program.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeReturn(State state, int pid, ReturnStatement statement)
+			throws UnsatisfiablePathConditionException {
+		Expression expr = statement.expression();
+		ProcessState process;
+		SymbolicExpression returnValue;
+		String functionName;
+
+		process = state.getProcessState(pid);
+		functionName = process.peekStack().location().function().name().name();
+		if (functionName.equals("_CIVL_system")) {
+			assert pid == 0;
+			if (state.numProcs() > 1) {
+				for (ProcessState proc : state.getProcessStates()) {
+					if (proc == null)
+						continue;
+					if (proc.getPid() == pid)
+						continue;
+					if (!proc.hasEmptyStack()) {
+						throw new CIVLExecutionException(
+								ErrorKind.PROCESS_LEAK,
+								Certainty.CONCRETE,
+								"Attempt to terminate the main process while process "
+										+ proc.identifier() + "(process<"
+										+ proc.getPid() + ">) is still running",
+								statement.getSource());
+					}
+				}
+			}
+		}
+		if (expr == null) {
+			returnValue = null;
+		} else {
+			Evaluation eval = evaluator.evaluate(state, pid, expr);
+
+			returnValue = eval.value;
+			state = eval.state;
+			if (functionName.equals("_CIVL_system")) {
+				if (universe.equals(returnValue, universe.integer(0)).isFalse()) {
+					throw new CIVLExecutionException(ErrorKind.OTHER,
+							Certainty.CONCRETE,
+							"Program exits with error code: " + returnValue,
+							statement.getSource());
+				}
+			}
+		}
+		state = stateFactory.popCallStack(state, pid);
+		process = state.getProcessState(pid);
+		if (!process.hasEmptyStack()) {
+			StackEntry returnContext = process.peekStack();
+			Location returnLocation = returnContext.location();
+			CallOrSpawnStatement call = (CallOrSpawnStatement) returnLocation
+					.getSoleOutgoing();
+
+			if (call.lhs() != null)
+				state = assign(state, pid, call.lhs(), returnValue);
+			state = stateFactory.setLocation(state, pid, call.target());
+		}
+		return state;
+	}
+
+	/**
+	 * Executes a spawn statement. The state will be updated with a new process
+	 * whose start location is the beginning of the forked function.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The process id of the currently executing process.
+	 * @param statement
+	 *            A spawn statement to be executed.
+	 * @return The updated state of the program.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeSpawn(State state, int pid,
+			CallOrSpawnStatement statement)
+			throws UnsatisfiablePathConditionException {
+		CIVLFunction function = statement.function();
+		int newPid = state.numProcs();
+		List<Expression> argumentExpressions = statement.arguments();
+		int numArgs = argumentExpressions.size();
+		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
+
+		assert !statement.isCall();
+		if (function == null) {
+			Pair<State, CIVLFunction> eval = evaluator
+					.evaluateFunctionExpression(state, pid,
+							statement.functionExpression());
+
+			state = eval.left;
+			function = eval.right;
+		}
+		for (int i = 0; i < numArgs; i++) {
+			Evaluation eval = evaluator.evaluate(state, pid,
+					argumentExpressions.get(i));
+
+			state = eval.state;
+			arguments[i] = eval.value;
+		}
+		state = stateFactory.addProcess(state, function, arguments, pid);
+		if (statement.lhs() != null)
+			state = assign(state, pid, statement.lhs(),
+					modelFactory.processValue(newPid));
+		state = stateFactory.setLocation(state, pid, statement.target());
+		return state;
+	}
+
+	/**
+	 * Returns the state that results from executing the statement, or null if
+	 * path condition becomes unsatisfiable.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param statement
+	 * @return
+	 */
+	private State execute(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
+		try {
+			return executeWork(state, pid, statement);
+		} catch (SARLException e) {
+			// e.printStackTrace(System.err);
+			// System.err.flush();
+			throw new CIVLInternalException("SARL exception: " + e, statement);
+		} catch (CIVLExecutionException e) {
+			evaluator.reportError(e);
+			throw new UnsatisfiablePathConditionException();
+		}
+	}
+
+	private State executeStatementList(State state, int pid,
+			StatementList statement, SymbolicExpression value)
+			throws UnsatisfiablePathConditionException {
+		int count = statement.statements().size();
+
+		for (int i = 0; i < count; i++) {
+			Statement stmt = statement.statements().get(i);
+
+			state = executeWork(state, pid, stmt);
+		}
+		return state;
+	}
+
+	/**
+	 * Execute a join statement. The state will be updated to no longer have the
+	 * joined process.
+	 * 
+	 * @param state
+	 *            The state of the program.
+	 * @param pid
+	 *            The process id of the currently executing process.
+	 * @param statement
+	 *            The join statement to be executed.
+	 * @return The updated state of the program.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeWait(State state, int pid, WaitStatement statement)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluator.evaluate(state, pid, statement.process());
+		SymbolicExpression procVal = eval.value;
+		int joinedPid = modelFactory.getProcessId(statement.process()
+				.getSource(), procVal);
+
+		state = stateFactory.setLocation(eval.state, pid, statement.target());
+		state = stateFactory.removeProcess(state, joinedPid);
+		return state;
+	}
+
+	/**
+	 * Execute a generic statement. All statements except a Choose should be
+	 * handled by this method.
+	 * 
+	 * @param State
+	 *            The state of the program.
+	 * @param pid
+	 *            The process id of the currently executing process.
+	 * @param statement
+	 *            The statement to be executed.
+	 * @return The updated state of the program.
+	 */
+	private State executeWork(State state, int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
+		numSteps++;
+
+		switch (statement.statementKind()) {
+		case ASSERT:
+			return executeAssert(state, pid, (AssertStatement) statement);
+		case ASSIGN:
+			return executeAssign(state, pid, (AssignStatement) statement);
+		case ASSUME:
+			return executeAssume(state, pid, (AssumeStatement) statement);
+		case CALL_OR_SPAWN:
+			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
+
+			if (call.isCall())
+				return executeCall(state, pid, call);
+			else
+				return executeSpawn(state, pid, call);
+		case CHOOSE:
+			throw new CIVLInternalException("Should be unreachable", statement);
+		case MALLOC:
+			return executeMalloc(state, pid, (MallocStatement) statement);
+		case NOOP:
+			return stateFactory.setLocation(state, pid, statement.target());
+		case RETURN:
+			return executeReturn(state, pid, (ReturnStatement) statement);
+		case STATEMENT_LIST:
+			return executeStatementList(state, pid, (StatementList) statement,
+					null);
+		case WAIT:
+			return executeWait(state, pid, (WaitStatement) statement);
+		default:
+			throw new CIVLInternalException("Unknown statement kind", statement);
+		}
+	}
+
+	/**
+	 * TODO
+	 * 
+	 * @param source
+	 * @param state
+	 * @param pointer
+	 * @param value
+	 * @param isInitialization
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State assign(CIVLSource source, State state,
+			SymbolicExpression pointer, SymbolicExpression value,
+			boolean isInitialization)
+			throws UnsatisfiablePathConditionException {
+		int vid = evaluator.getVariableId(source, pointer);
+		int sid = evaluator.getScopeId(source, pointer);
+		ReferenceExpression symRef = evaluator.getSymRef(pointer);
+		State result;
+		Variable variable;
+
+		if (sid < 0) {
+			evaluator
+					.logSimpleError(source, state, ErrorKind.DEREFERENCE,
+							"Attempt to dereference pointer into scope which has been removed from state");
+			throw new UnsatisfiablePathConditionException();
+		}
+		variable = state.getScope(sid).lexicalScope().variable(vid);
+		if (!isInitialization) {
+			if (variable.isInput()) {
+				evaluator
+						.logSimpleError(source, state, ErrorKind.INPUT_WRITE,
+								"Attempt to write to input variable "
+										+ variable.name());
+				throw new UnsatisfiablePathConditionException();
+			} else if (variable.isConst()) {
+				evaluator.logSimpleError(
+						source,
+						state,
+						ErrorKind.CONSTANT_WRITE,
+						"Attempt to write to constant variable "
+								+ variable.name());
+				throw new UnsatisfiablePathConditionException();
+			}
+		}
+		if (symRef.isIdentityReference()) {
+			result = stateFactory.setVariable(state, vid, sid, value);
+		} else {
+			SymbolicExpression oldVariableValue = state.getVariableValue(sid,
+					vid);
+
+			try {
+				SymbolicExpression newVariableValue = universe.assign(
+						oldVariableValue, symRef, value);
+
+				result = stateFactory.setVariable(state, vid, sid,
+						newVariableValue);
+			} catch (SARLException e) {
+				evaluator.logSimpleError(source, state, ErrorKind.DEREFERENCE,
+						"Invalid pointer dereference: " + pointer);
+				throw new UnsatisfiablePathConditionException();
+			}
+		}
+		return result;
+	}
+
+	private State assign(State state, int pid, LHSExpression lhs,
+			SymbolicExpression value, boolean isInitialization)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluator.reference(state, pid, lhs);
+
+		if (lhs instanceof DotExpression) {
+			DotExpression dot = (DotExpression) lhs;
+
+			if (dot.isUnion()) {
+				int memberIndex = dot.fieldIndex();
+
+				value = evaluator.universe().unionInject(
+						(SymbolicUnionType) (dot.structOrUnion()
+								.getExpressionType().getDynamicType(evaluator
+								.universe())),
+						evaluator.universe().intObject(memberIndex), value);
+			}
+		}
+		// TODO check if lhs is constant or input value
+		return assign(lhs.getSource(), eval.state, eval.value, value,
+				isInitialization);
+	}
+
+	/* *********************** Methods from Executor *********************** */
+
+	@Override
+	public State assign(CIVLSource source, State state,
+			SymbolicExpression pointer, SymbolicExpression value)
+			throws UnsatisfiablePathConditionException {
+		return this.assign(source, state, pointer, value, false);
+	}
+
+	@Override
+	public State assign(State state, int pid, LHSExpression lhs,
+			SymbolicExpression value)
+			throws UnsatisfiablePathConditionException {
+		return this.assign(state, pid, lhs, value, false);
+	}
+
+	@Override
+	public Evaluator evaluator() {
+		return evaluator;
+	}
+
+	@Override
+	public long getNumSteps() {
+		return numSteps;
+	}
+
+	@Override
+	public State malloc(CIVLSource source, State state, int pid,
+			LHSExpression lhs, Expression scopeExpression,
+			SymbolicExpression scopeValue, CIVLType objectType,
+			SymbolicExpression objectValue)
+			throws UnsatisfiablePathConditionException {
+		int index = modelFactory.getHeapFieldId(objectType);
+		IntObject indexObj = universe.intObject(index);
+		int dyScopeID;
+		DynamicScope dyScope;
+		int heapVariableId;
+		ReferenceExpression symRef;
+		SymbolicExpression heapValue;
+		SymbolicExpression heapPointer;
+		SymbolicExpression heapField;
+		SymbolicExpression newObject;
+		NumericExpression fieldLength;
+		SymbolicExpression firstElementPointer; // returned value
+		ArrayList<SymbolicExpression> elements = new ArrayList<>();
+		CIVLSource scopeSource = scopeExpression == null ? null
+				: scopeExpression.getSource();
+
+		elements.add(objectValue);
+		heapValue = evaluator.heapValue(source, state, scopeValue);
+		dyScopeID = modelFactory.getScopeId(scopeSource, scopeValue);
+		dyScope = state.getScope(dyScopeID);
+		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
+		heapField = universe.tupleRead(heapValue, indexObj);
+		fieldLength = universe.length(heapField);
+		newObject = universe.array(objectType.getDynamicType(universe),
+				elements);
+		heapField = universe.append(heapField, newObject);
+		heapValue = universe.tupleWrite(heapValue, indexObj, heapField);
+		state = stateFactory.setVariable(state, heapVariableId, dyScopeID,
+				heapValue);
+		if (lhs != null) {
+			symRef = (ReferenceExpression) universe.canonic(universe
+					.identityReference());
+			heapPointer = universe.tuple(
+					modelFactory.pointerSymbolicType(),
+					Arrays.asList(new SymbolicExpression[] {
+							modelFactory.scopeValue(dyScopeID),
+							universe.integer(heapVariableId), symRef }));
+			symRef = universe.tupleComponentReference(symRef, indexObj);
+			symRef = universe.arrayElementReference(symRef, fieldLength);
+			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
+			firstElementPointer = evaluator.setSymRef(heapPointer, symRef);
+			state = assign(state, pid, lhs, firstElementPointer);
+		}
+		return state;
+	}
+
+	@Override
+	public StateFactory stateFactory() {
+		return stateFactory;
+	}
+
 	@Override
 	public State execute(State state, int pid, SimpleTransition transition)
 			throws UnsatisfiablePathConditionException {
 		state = state.setPathCondition(transition.pathCondition());
-
-		if (transition instanceof ChooseTransition) {
-			Statement statement = transition.statement();
-
-			if (statement instanceof StatementList) {
-				state = this.executeStatementList(state, pid,
-						(StatementList) statement,
-						((ChooseTransition) transition).value());
-			} else {
-				assert statement instanceof ChooseStatement;
-				state = this.executeChoose(state, pid,
-						(ChooseStatement) statement,
-						((ChooseTransition) transition).value());
-			}
-			return state;
-		} else {
-			return this.execute(state, pid, transition.statement());
-		}
+		return this.execute(state, pid, transition.statement());
 	}
 }

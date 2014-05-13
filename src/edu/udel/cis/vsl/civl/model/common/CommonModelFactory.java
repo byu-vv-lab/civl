@@ -73,7 +73,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
@@ -134,7 +133,6 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonChooseStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonGotoBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonIfElseBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonLoopBranchStatement;
@@ -197,7 +195,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * The name of the atomic lock variable
 	 */
 	private static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
-	
+
 	/**
 	 * The name of the atomic lock variable
 	 */
@@ -237,7 +235,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * execution.
 	 */
 	private VariableExpression atomicLockVariableExpression;
-	
+
 	private VariableExpression civlFilesystemVariableExpression;
 
 	/**
@@ -253,11 +251,6 @@ public class CommonModelFactory implements ModelFactory {
 	 * The unique char type used in the system.
 	 */
 	private CIVLPrimitiveType charType;
-
-	/**
-	 * TODO Why do we need an ID for each ChooseStatement?
-	 */
-	private int chooseID = 0;
 
 	/**
 	 * The number of conditional expressions that have been encountered, used to
@@ -1041,7 +1034,7 @@ public class CommonModelFactory implements ModelFactory {
 		((CommonSelfExpression) result).setExpressionType(processType);
 		return result;
 	}
-	
+
 	@Override
 	public ProcnullExpression procnullExpression(CIVLSource source) {
 		ProcnullExpression result = new CommonProcnullExpression(source);
@@ -1132,7 +1125,8 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SystemFunctionCallExpression systemFunctionCallExpression(
 			CallOrSpawnStatement callStatement) {
-		return new CommonSystemFunctionCallExpression(callStatement.getSource(), callStatement);
+		return new CommonSystemFunctionCallExpression(
+				callStatement.getSource(), callStatement);
 	}
 
 	/**
@@ -1384,24 +1378,6 @@ public class CommonModelFactory implements ModelFactory {
 		result.setStatementScope(statementScope);
 		if (guard != null)
 			result.setGuard(guard);
-		return result;
-	}
-
-	@Override
-	public ChooseStatement chooseStatement(CIVLSource civlSource,
-			Location source, LHSExpression lhs, Expression argument) {
-		ChooseStatement result;
-
-		if (lhs == null) {
-			throw new CIVLInternalException(
-					"Side-effect remover failed to translate away function calls as expressions",
-					civlSource);
-		}
-		result = new CommonChooseStatement(civlSource, source, lhs, argument,
-				chooseID++);
-		result.setStatementScope(join(lhs.expressionScope(),
-				argument.expressionScope()));
-		((CommonExpression) result.guard()).setExpressionType(booleanType);
 		return result;
 	}
 
@@ -2036,9 +2012,10 @@ public class CommonModelFactory implements ModelFactory {
 	public Variable variable(CIVLSource source, CIVLType type, Identifier name,
 			int vid) {
 		Variable variable = new CommonVariable(source, type, name, vid);
-		
-		if(name.name().equals(CIVL_FILESYSTEM_NAME)){
-			this.civlFilesystemVariableExpression = this.variableExpression(source, variable);
+
+		if (name.name().equals(CIVL_FILESYSTEM_NAME)) {
+			this.civlFilesystemVariableExpression = this.variableExpression(
+					source, variable);
 		}
 		return variable;
 	}
@@ -2100,7 +2077,7 @@ public class CommonModelFactory implements ModelFactory {
 	public SymbolicExpression undefinedScopeValue() {
 		return this.undefinedScopeValue;
 	}
-	
+
 	@Override
 	public SymbolicExpression nullScopeValue() {
 		return this.nullScopeValue;
@@ -2509,9 +2486,9 @@ public class CommonModelFactory implements ModelFactory {
 	public Model model() {
 		return this.modelBuilder.getModel();
 	}
-	
+
 	@Override
-	public VariableExpression civlFilesystemVariableExpression(){
+	public VariableExpression civlFilesystemVariableExpression() {
 		return this.civlFilesystemVariableExpression;
 	}
 

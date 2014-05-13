@@ -6,10 +6,11 @@ package edu.udel.cis.vsl.civl.predicate.IF;
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.MAYBE;
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.YES;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -45,11 +46,9 @@ public class Deadlock implements StatePredicateIF<State> {
 
 	private SymbolicUniverse universe;
 
-	// private Evaluator evaluator;
+	private Enabler enabler;
 
 	private Executor executor;
-
-	// private ModelFactory modelFactory;
 
 	/**
 	 * If violation is found it is cached here.
@@ -83,11 +82,13 @@ public class Deadlock implements StatePredicateIF<State> {
 	 *            The theorem prover to check validity of statement guards under
 	 *            the path condition.
 	 */
-	public Deadlock(SymbolicUniverse symbolicUniverse, Executor executor) {
+	public Deadlock(SymbolicUniverse symbolicUniverse, Enabler enabler,
+			Executor executor) {
 		this.universe = symbolicUniverse;
 		// this.evaluator = evaluator;
 		// this.modelFactory = evaluator.modelFactory();
 		this.falseExpr = symbolicUniverse.falseExpression();
+		this.enabler = enabler;
 		this.executor = executor;
 	}
 
@@ -138,8 +139,8 @@ public class Deadlock implements StatePredicateIF<State> {
 				for (Statement statement : location.outgoing()) {
 					BooleanExpression guard;
 
-					guard = (BooleanExpression) executor.enabler().getGuard(
-							statement, pid, state).value;
+					guard = (BooleanExpression) enabler.getGuard(statement,
+							pid, state).value;
 
 					// if (statement instanceof WaitStatement) {
 					// // TODO: Check that the guard is actually true, but it
@@ -205,8 +206,8 @@ public class Deadlock implements StatePredicateIF<State> {
 			if (source == null)
 				source = location.getSource();
 			for (Statement s : location.outgoing()) {
-				BooleanExpression guard = (BooleanExpression) executor
-						.enabler().getGuard(s, pid, state).value;
+				BooleanExpression guard = (BooleanExpression) enabler.getGuard(
+						s, pid, state).value;
 
 				if (guard.isFalse())
 					continue;

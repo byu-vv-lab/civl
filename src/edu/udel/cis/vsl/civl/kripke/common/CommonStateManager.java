@@ -10,11 +10,11 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.Executor.StateStatusKind;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -197,12 +197,12 @@ public class CommonStateManager implements StateManager {
 	 * @param executor
 	 *            The unique executor to by used in the system.
 	 */
-	public CommonStateManager(Executor executor, PrintStream out,
-			boolean verbose, boolean debug, boolean gui, boolean showStates,
-			boolean showSavedStates, boolean showTransitions,
-			boolean saveStates, boolean simplify) {
+	public CommonStateManager(Enabler enabler, Executor executor,
+			PrintStream out, boolean verbose, boolean debug, boolean gui,
+			boolean showStates, boolean showSavedStates,
+			boolean showTransitions, boolean saveStates, boolean simplify) {
 		this.executor = executor;
-		this.enabler = (CommonEnabler) executor.enabler();
+		this.enabler = (CommonEnabler) enabler;
 		this.stateFactory = executor.stateFactory();
 		this.out = out;
 		this.verbose = verbose;
@@ -388,10 +388,11 @@ public class CommonStateManager implements StateManager {
 				return new StateStatus(true, enabled.get(0), atomCount,
 						EnabledStatus.DETERMINISTIC);
 			} else if (enabled.size() > 1) {// non deterministic
-				reportError(StateStatusKind.NONDETERMINISTIC, state, pLocation);
+				reportError(EnabledStatus.NONDETERMINISTIC, state, pLocation);
 				return new StateStatus(false, null, atomCount,
 						EnabledStatus.NONDETERMINISTIC);
 			} else {// blocked
+				reportError(EnabledStatus.BLOCKED, state, pLocation);
 				return new StateStatus(false, null, atomCount,
 						EnabledStatus.BLOCKED);
 			}
@@ -496,9 +497,9 @@ public class CommonStateManager implements StateManager {
 	 * @param location
 	 *            The location that the error occurs.
 	 */
-	private void reportError(StateStatusKind kind, State state,
+	private void reportError(EnabledStatus enabled, State state,
 			Location location) {
-		switch (kind) {
+		switch (enabled) {
 		case NONDETERMINISTIC:
 			executor.evaluator().reportError(
 					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,

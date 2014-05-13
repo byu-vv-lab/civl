@@ -6,7 +6,6 @@ package edu.udel.cis.vsl.civl.transition;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A factory to create transitions and transition sequences.
@@ -43,31 +42,6 @@ public class TransitionFactory {
 			Statement statement) {
 		return new SimpleTransition(pathCondition, pid, processIdentifier,
 				statement);
-	}
-
-	/**
-	 * Create a new choose transition.
-	 * 
-	 * @param pathCondition
-	 *            The path condition that should be used when executing the
-	 *            statement
-	 * @param pid
-	 *            The process id of the process executing this transition.
-	 * @param processIdentifier
-	 *            The process identifier of the process executing this
-	 *            transition.
-	 * @param statement
-	 *            The statement corresponding to this transition.
-	 * @param value
-	 *            The value of returned by the choose for this transition.
-	 * @return A new simple transition with the given path condition and
-	 *         statement.
-	 */
-	public SimpleTransition newChooseTransition(
-			BooleanExpression pathCondition, int pid, int processIdentifier,
-			Statement statement, SymbolicExpression value) {
-		return new ChooseTransition(pathCondition, pid, processIdentifier,
-				statement, value);
 	}
 
 	/**

@@ -140,7 +140,6 @@ public abstract class Player {
 		this.executor = Semantics.newExecutor(config, modelFactory,
 				stateFactory, log, libraryLoader, out, err, this.enablePrintf,
 				this.statelessPrintf, evaluator);
-		this.predicate = new StandardPredicate(log, universe, this.executor);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
 		this.debug = config.isTrue(UserInterface.debugO);
@@ -157,11 +156,12 @@ public abstract class Player {
 				showAmpleSet, this.showAmpleSetWtStates, this.libraryLoader);
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);
-		this.executor.setEnabler((Enabler) this.enabler);
+		this.predicate = new StandardPredicate(log, universe,
+				(Enabler) this.enabler, this.executor);
 		this.evaluator.setEnabler((Enabler) this.enabler);
-		stateManager = Kripkes.newStateManager(executor, out, verbose, debug,
-				gui, showStates, showSavedStates, showTransitions, saveStates,
-				simplify);
+		stateManager = Kripkes.newStateManager((Enabler) enabler, executor,
+				out, verbose, debug, gui, showStates, showSavedStates,
+				showTransitions, saveStates, simplify);
 	}
 
 	public void printResult() {

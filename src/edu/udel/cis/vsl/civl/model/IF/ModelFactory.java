@@ -55,7 +55,6 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ChooseStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -155,8 +154,8 @@ public interface ModelFactory {
 	 * @param types
 	 *            the set of all dynamic types which occur as bundle elements
 	 */
-	void completeBundleType(CIVLBundleType bundleType,
- List<CIVLType> eleTypes, Collection<SymbolicType> types);
+	void completeBundleType(CIVLBundleType bundleType, List<CIVLType> eleTypes,
+			Collection<SymbolicType> types);
 
 	/**
 	 * Completes the heap type.
@@ -857,26 +856,6 @@ public interface ModelFactory {
 	CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
 			Location source, boolean isCall, List<Expression> arguments,
 			Expression guard);
-
-	/**
-	 * A choose statement is of the form <code>x = $choose_int(n)</code>;
-	 * 
-	 * When a choose statement is executed, the left hand side will be assigned
-	 * a new symbolic constant. A bound on the values of that symbolic constant
-	 * will be added to the path condition.
-	 * 
-	 * @param civlSource
-	 *            The CIVL source of the choose statement
-	 * @param source
-	 *            The source location for this statement.
-	 * @param lhs
-	 *            The left hand side of the choose statement.
-	 * @param argument
-	 *            The argument to choose_int().
-	 * @return A new choose statement.
-	 */
-	ChooseStatement chooseStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Expression argument);
 
 	/**
 	 * A goto branch statement is of the form <code> goto label; </code>. When a
