@@ -37,7 +37,25 @@ public class OmpTransformerTest {
 		return new File(rootDir, name).getPath();
 	}
 
-	private void check(String filenameRoot) throws ABCException, IOException {
+	/**
+	 * tests an OpenMP program by applying the following transformers in
+	 * sequence:
+	 * <ol>
+	 * <li>OpenMP Pragma transformer;</li>
+	 * <li>OpenMP to CIVL transformer;</li>
+	 * <li>Pruner;</li>
+	 * <li>Side Effect Remover.</li>
+	 * </ol>
+	 * 
+	 * @param filenameRoot
+	 *            The file name of the OpenMP program (without extension).
+	 * @param debug
+	 *            The flag to be set for printing.
+	 * @throws ABCException
+	 * @throws IOException
+	 */
+	private void check(String filenameRoot, boolean debug) throws ABCException,
+			IOException {
 		Activator frontEnd;
 		Program program;
 
@@ -45,97 +63,108 @@ public class OmpTransformerTest {
 		this.userIncludes = new File[0];
 		frontEnd = ABC.activator(new File(root, filenameRoot + ".c"),
 				systemIncludes, userIncludes, Language.CIVL_C);
-		program = frontEnd.showTranslation(out);
+		if (debug)
+			program = frontEnd.showTranslation(out);
+		else
+			program = frontEnd.getProgram();
 
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
 				new ArrayList<String>(0), frontEnd.getASTBuilder());
-		out.println("======== After applying OpenMP Pragma Transformer ========");
-		frontEnd.printProgram(out, program);
+		if (debug) {
+			out.println("======== After applying OpenMP Pragma Transformer ========");
+			frontEnd.printProgram(out, program);
+		}
 
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP,
 				new ArrayList<String>(0), frontEnd.getASTBuilder());
-		out.println("======== After applying OpenMP to CIVL Transformer ========");
-		frontEnd.printProgram(out, program);
+		if (debug) {
+			out.println("======== After applying OpenMP to CIVL Transformer ========");
+			frontEnd.printProgram(out, program);
+		}
 
 		program.applyTransformer("prune");
-		out.println("======== After applying Pruner ========");
-		frontEnd.printProgram(out, program);
+		if (debug) {
+			out.println("======== After applying Pruner ========");
+			frontEnd.printProgram(out, program);
+		}
 
 		program.applyTransformer("sef");
-		out.println("======== After applying Side Effect Remover ========");
-		frontEnd.printProgram(out, program);
+		if (debug) {
+			out.println("======== After applying Side Effect Remover ========");
+			frontEnd.printProgram(out, program);
+		}
 	}
 
 	/* **************************** Test Methods *************************** */
 
 	@Test
 	public void dotProduct_critical1() throws ABCException, IOException {
-		assertTrue(ui.run("parse", "-echo", filename("dotProduct_critical.c")));
+		assertTrue(ui.run("parse", filename("dotProduct_critical.c")));
 	}
 
 	@Test
 	public void nested() throws ABCException, IOException {
-		assertTrue(ui.run("parse", "-echo", filename("nested.c"),
+		assertTrue(ui.run("parse", filename("nested.c"),
 				"-input__argc=2"));
 	}
 
 	@Test
 	public void dotProduct_critical() throws ABCException, IOException {
-		check("dotProduct_critical");
+		check("dotProduct_critical", false);
 	}
 
 	@Test
 	public void dotProduct_orphan() throws ABCException, IOException {
-		check("dotProduct_orphan");
+		check("dotProduct_orphan", false);
 	}
 
 	@Test
 	public void dotProduct1() throws ABCException, IOException {
-		check("dotProduct1");
+		check("dotProduct1", false);
 	}
 
 	@Test
 	public void matProduct1() throws ABCException, IOException {
-		check("matProduct1");
+		check("matProduct1", false);
 	}
 
 	@Test
 	public void matProduct2() throws ABCException, IOException {
-		check("matProduct2");
+		check("matProduct2", false);
 	}
 
 	@Test
 	public void raceCond1() throws ABCException, IOException {
-		check("raceCond1");
+		check("raceCond1", false);
 	}
 
 	@Test
 	public void raceCond2() throws ABCException, IOException {
-		check("raceCond2");
+		check("raceCond2", false);
 	}
 
 	@Test
 	public void vecAdd_deadlock() throws ABCException, IOException {
-		check("vecAdd_deadlock");
+		check("vecAdd_deadlock", false);
 	}
 
 	@Test
 	public void vecAdd_fix() throws ABCException, IOException {
-		check("vecAdd_fix");
+		check("vecAdd_fix", false);
 	}
 
 	@Test
 	public void fig310_mxv_omp() throws ABCException, IOException {
-		check("fig3.10-mxv-omp");
+		check("fig3.10-mxv-omp", false);
 	}
 
 	@Test
 	public void fig498_threadprivate() throws ABCException, IOException {
-		check("fig4.98-threadprivate");
+		check("fig4.98-threadprivate", false);
 	}
 
 	@Test
 	public void parallelfor() throws ABCException, IOException {
-		check("parallelfor");
+		check("parallelfor", false);
 	}
 }
