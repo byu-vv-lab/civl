@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.util;
+package edu.udel.cis.vsl.civl.util.IF;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;

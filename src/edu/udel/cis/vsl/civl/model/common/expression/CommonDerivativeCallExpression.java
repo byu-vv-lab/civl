@@ -8,7 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 
 public class CommonDerivativeCallExpression extends
 		CommonAbstractFunctionCallExpression implements

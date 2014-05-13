@@ -25,7 +25,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 
 public class CommonAccuracyAssumptionBuilder implements
 		AccuracyAssumptionBuilder {

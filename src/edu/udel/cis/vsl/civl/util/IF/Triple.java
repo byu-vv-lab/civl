@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.util;
+package edu.udel.cis.vsl.civl.util.IF;
 
 public class Triple<R, S, T> {
 	public R first;

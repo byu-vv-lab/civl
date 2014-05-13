@@ -54,7 +54,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.transition.ChooseTransition;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
-import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;

@@ -15,7 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 
 /**
  * Maintains the information, e.g. labeled location, goto statements,

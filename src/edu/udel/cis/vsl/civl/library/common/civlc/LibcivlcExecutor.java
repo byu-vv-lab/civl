@@ -30,7 +30,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.util.Singleton;
+import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;

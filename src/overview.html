@@ -1,0 +1,43 @@
+
+<html>
+<body>
+
+ <p>Welcome to CIVL, the Concurrency Intermediate Verification Language tool. 
+ CIVL is a Java project for verifying concurrent programs written in CIVL-C, 
+ which is a C dialect with extensions to concurrent language constructs. 
+ The CIVL project uses ABC, SARL and GMC.
+ The CIVL tool can be used to perform a number of tasks, including the following:
+ <ol>
+ <li>preprocess or pass a CIVL-C program;</i>
+ <li>verify a CIVL-C program;</li>
+ <li>run a CIVL-C program;</li>
+ <li>replay traces for a program.</li>
+ </ol>
+
+	In addition, it provides a framework for developing your own libraries
+	or transformations on ASTs of  various language extensions and libraries.
+	</p>
+
+	There is a simple command-line interface for CIVL (see {@link
+	edu.udel.cis.vsl.civl.CIVL CIVL}), but most users will want to use CIVL
+	through its API. To use the API, it is helpful to have some
+	understanding of the modular structure of CIVL. The CIVL source code is
+	decomposed into modules, each with a well-defined interface and set of
+	responsibilities. Some of these modules are decomposed further into
+	sub-modules. The top-level modules are:
+	<ol>
+
+		<li><strong>util</strong>
+			<ol>
+				<li>responsibilities: simple general-purpose utility classes
+					that do not use other parts of CIVL</li>
+				<li>uses: nothing</li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.util.IF}</li>
+				<li>entry point: none</li>
+			</ol></li>
+
+	</ol>
+
+</body>
+</html>
+

@@ -9,7 +9,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.transition.TransitionSequence;
-import edu.udel.cis.vsl.civl.util.Printable;
+import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
 import edu.udel.cis.vsl.gmc.ExcessiveErrorException;

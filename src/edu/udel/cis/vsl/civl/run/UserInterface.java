@@ -40,7 +40,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.CIVLTransform;
 import edu.udel.cis.vsl.civl.transition.CompoundTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
-import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;

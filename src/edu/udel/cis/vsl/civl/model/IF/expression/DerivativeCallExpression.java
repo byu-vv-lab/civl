@@ -3,7 +3,7 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 
 /**
  * An uninterpreted call to the derivative of an abstract function.

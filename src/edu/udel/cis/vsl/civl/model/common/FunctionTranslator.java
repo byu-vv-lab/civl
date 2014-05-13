@@ -157,7 +157,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
-import edu.udel.cis.vsl.civl.util.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 
 /**

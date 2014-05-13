@@ -31,7 +31,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.transform.CIVLBaseTransformer;
-import edu.udel.cis.vsl.civl.util.Triple;
+import edu.udel.cis.vsl.civl.util.IF.Triple;
 
 /**
  * MPI2CIVLTransformer transforms an AST of an MPI program into an AST of an

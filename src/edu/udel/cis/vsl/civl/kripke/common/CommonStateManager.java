@@ -20,7 +20,7 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.transition.CompoundTransition;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.Transition;
-import edu.udel.cis.vsl.civl.util.Printable;
+import edu.udel.cis.vsl.civl.util.IF.Printable;
 
 /**
  * @author Timothy K. Zirkel (zirkel)
