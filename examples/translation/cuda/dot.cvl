@@ -23,31 +23,14 @@ void gpu(){
     int num_in_barrier =0;
     int barrier_size = 0;
     double cache[threadsPerBlock];
-    int in_barrier[threadsPerBlock];
+    $gbarrier gbarrier = $gbarrier_create($here, threadsPerBlock);
     $proc threads[threadsPerBlock];
-    
-    void __sync_init(int* in_barrier, int size) {
-      barrier_size = size;
-      for (int i=0; i<size; i++) in_barrier[i] = 0;
-    }
    
-    // model the synchronization of threads in the same block
-    void __syncthreads(int* in_barrier, int tid) {
-      $atomic {
-        in_barrier[tid] = 1; // I am in the barrier
-        num_in_barrier++; // increment number in barrier
-        if (num_in_barrier == barrier_size) { // I am last to enter
-          for (int i=0; i<barrier_size; i++) in_barrier[i] = 0; // release all
-          num_in_barrier = 0; // now none are in barrier
-        }
-      }
-      $when (in_barrier[tid] == 0); // wait till I am released
-    }
-
     void gpuThread(int threadID){
       int tid = threadID + blockID * threadsPerBlock;
       int cacheIndex = threadID;
       double temp = 0;
+      $barrier barrier = $barrier_create($here, gbarrier, threadID);
       
       $atomic {
         while (tid < N) {
@@ -58,26 +41,27 @@ void gpu(){
         cache[cacheIndex] = temp;
       }
       // synchronize threads
-      __syncthreads(in_barrier, threadID);
+      $barrier_call(barrier);
       int i = threadsPerBlock/2;
       while (i != 0) {
         if (cacheIndex < i)
           cache[cacheIndex] += cache[cacheIndex + i];
         // synchronize threads
-        __syncthreads(in_barrier, threadID);
+        $barrier_call(barrier);
         i /= 2;
       }
       if (cacheIndex == 0)
         partial_c[blockID] = cache[0];
+      $barrier_destroy(barrier);
     }
-
-    __sync_init(in_barrier, threadsPerBlock);
+    
     for(int i = 0; i < threadsPerBlock; i++) {
       threads[i] = $spawn gpuThread(i);
     }
     for(int i = 0; i < threadsPerBlock; i++) {
       $wait(threads[i]);
     }
+    $gbarrier_destroy(gbarrier);
   }
  
   for(int i = 0; i < blocksPerGrid; i++) {
