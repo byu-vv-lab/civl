@@ -12,8 +12,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
 /**
  * The parent of all statements.
@@ -68,7 +68,7 @@ public interface Statement extends Sourceable {
 	 *            the target to set
 	 */
 	void setTarget(Location target);
-	
+
 	/**
 	 * @param target
 	 *            the target to set

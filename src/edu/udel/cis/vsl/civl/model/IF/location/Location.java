@@ -12,7 +12,6 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 
 /**
  * The parent of all locations.
@@ -21,6 +20,24 @@ import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
  * 
  */
 public interface Location extends Sourceable {
+
+	/**
+	 * Atomic flags of a location:
+	 * <ul>
+	 * <li>NONE: no $atomic/$atom boundary;</li>
+	 * <li>ATOMIC_ENTER/ATOM_ENTER: the location is the starting point of an
+	 * $atomic/$atom block;</li>
+	 * <li>ATOMIC_EXIT/ATOM_EXIT: the location is the ending point of an
+	 * $atomic/$atom block.</li>
+	 * </ul>
+	 * 
+	 * @author Manchun Zheng
+	 * 
+	 */
+	public enum AtomicKind {
+		NONE, ATOMIC_ENTER, ATOMIC_EXIT, ATOM_ENTER, ATOM_EXIT
+	}
+
 	/**
 	 * @return The unique ID number of this location.
 	 */

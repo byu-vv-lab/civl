@@ -3,8 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.transition;
 
+import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
@@ -18,7 +18,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 public class SimpleTransition extends Transition {
 
 	protected int pid;
-	
+
 	protected int processIdentifier;
 
 	protected Statement statement;
@@ -34,12 +34,13 @@ public class SimpleTransition extends Transition {
 	 * @param pid
 	 *            The process id of the process executing this transition.
 	 * @param processIdentifier
-	 *            The process identifier of the process executing this transition.
+	 *            The process identifier of the process executing this
+	 *            transition.
 	 * @param statement
 	 *            The statement corresponding to this transition.
 	 */
-	public SimpleTransition(BooleanExpression pathCondition, int pid, int processIdentifier,
-			Statement statement) {
+	public SimpleTransition(BooleanExpression pathCondition, int pid,
+			int processIdentifier, Statement statement) {
 		super(pathCondition);
 		this.pid = pid;
 		this.statement = statement;
@@ -83,8 +84,8 @@ public class SimpleTransition extends Transition {
 		result += statement.toStepString(AtomicKind.NONE, pid, false);
 		return result;
 	}
-	
-	public int processIdentifier(){
+
+	public int processIdentifier() {
 		return this.processIdentifier;
 	}
 

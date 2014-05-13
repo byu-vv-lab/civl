@@ -27,23 +27,6 @@ import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
  */
 public class CommonLocation extends CommonSourceable implements Location {
 
-	/**
-	 * Atomic flags of a location:
-	 * <ul>
-	 * <li>NONE: no $atomic/$atom boundary;</li>
-	 * <li>ATOMIC_ENTER/ATOM_ENTER: the location is the starting point of an
-	 * $atomic/$atom block;</li>
-	 * <li>ATOMIC_EXIT/ATOM_EXIT: the location is the ending point of an
-	 * $atomic/$atom block.</li>
-	 * </ul>
-	 * 
-	 * @author Manchun Zheng
-	 * 
-	 */
-	public enum AtomicKind {
-		NONE, ATOMIC_ENTER, ATOMIC_EXIT, ATOM_ENTER, ATOM_EXIT
-	}
-
 	/* ************************** Instance Fields ************************** */
 
 	/**
@@ -255,14 +238,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public void loopAnalysis() {
-		
-//		if (this.loopPossible) {
-//			// this is the loop entrance of a loop statement
-//			// check if it is finite
-//		} else {
-//			// this is not the loop entrance of a loop statement, check if it is
-//			// possible to form a loop by other statements like goto
-//		}
+
+		// if (this.loopPossible) {
+		// // this is the loop entrance of a loop statement
+		// // check if it is finite
+		// } else {
+		// // this is not the loop entrance of a loop statement, check if it is
+		// // possible to form a loop by other statements like goto
+		// }
 	}
 
 	@Override
@@ -541,7 +524,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 					CIVLFunction function = ((CallOrSpawnStatement) statement)
 							.function();
 
-					if (function != null && !checkedFunctions.contains(function)) {
+					if (function != null
+							&& !checkedFunctions.contains(function)) {
 						workingFunctions.add(function);
 					}
 				}

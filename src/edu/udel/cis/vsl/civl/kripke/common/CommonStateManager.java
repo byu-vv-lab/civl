@@ -6,12 +6,13 @@ package edu.udel.cis.vsl.civl.kripke.common;
 import java.io.PrintStream;
 import java.util.List;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor.StateStatusKind;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -19,6 +20,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.transition.CompoundTransition;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
+import edu.udel.cis.vsl.civl.transition.Step;
 import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 
@@ -190,6 +192,7 @@ public class CommonStateManager implements StateManager {
 		int oldMaxCanonicId = this.maxCanonicId;
 		int processIdentifier;
 		SimpleTransition firstTransition;
+		State oldState = state;
 
 		assert transition instanceof SimpleTransition;
 		pid = ((SimpleTransition) transition).pid();
@@ -202,7 +205,13 @@ public class CommonStateManager implements StateManager {
 					processIdentifier);
 		state = executor.execute(state, pid, firstTransition);
 		if (printTransitions) {
-			// TODO print transition
+			printTransitionPrefix(oldState, processIdentifier);
+			printStatement(oldState, state, firstTransition, AtomicKind.NONE,
+					processIdentifier, false);
+		}
+		if (this.guiMode) {
+			this.compoundTransition.addStep(new Step(oldState, state,
+					firstTransition.statement()));
 		}
 		{
 			StateStatus stateStatus = possibleToExecuteMore(state, pid, 0);
@@ -214,6 +223,16 @@ public class CommonStateManager implements StateManager {
 
 				state = executor.execute(state, pid,
 						stateStatus.enabledTransition);
+				if (printTransitions) {
+					printStatement(oldState, state,
+							stateStatus.enabledTransition, AtomicKind.NONE,
+							processIdentifier, false);
+				}
+				if (this.guiMode) {
+					this.compoundTransition.addStep(new Step(oldState, state,
+							stateStatus.enabledTransition.statement()));
+				}
+				oldState = state;
 				if (this.showStates)
 					stateFactory.printState(out, state);
 				stateStatus = possibleToExecuteMore(state, pid,
@@ -227,9 +246,9 @@ public class CommonStateManager implements StateManager {
 				}
 			}
 		}
-		// if (printTransitions) {
-		// out.print("--> ");
-		// }
+		if (printTransitions) {
+			out.print("--> ");
+		}
 		if (saveStates) {
 			state = stateFactory.canonic(state);
 			if (this.guiMode)
@@ -349,55 +368,48 @@ public class CommonStateManager implements StateManager {
 		}
 	}
 
-	// /**
-	// * Print a step of a statement, in the following form:
-	// * <code>src->dst: statement at file:location text;</code>For example,<br>
-	// * <code>32->17: sum = (sum+(3*i)) at f0:20.14-24 "sum += 3*i";</code><br>
-	// * When the atomic lock variable is changed during executing the
-	// statement,
-	// * then the corresponding information is printed as well. For example,<br>
-	// * <code>13->6: ($ATOMIC_LOCK_VAR = $self) x = 0 at f0:30.17-22
-	// "x = 0";</code>
-	// *
-	// * @param s
-	// * The statement that has been executed in the current step.
-	// * @param atomicKind
-	// * The atomic kind of the source location of the statement.
-	// * @param atomCount
-	// * The atomic/atom count of the process that the statement
-	// * belongs to.
-	// * @param atomicLockVarChanged
-	// * True iff the atomic lock variable is changed during the
-	// * execution of the statement.
-	// */
-	// private void printStatement(State currentState, State newState,
-	// Statement s, AtomicKind atomicKind, int atomCount,
-	// boolean atomicLockVarChanged) {
-	// if (this.guiMode) {
-	// this.compoundTransition
-	// .addStep(new Step(currentState, newState, s));
-	// }
-	// out.print(s.toStepString(atomicKind, atomCount, atomicLockVarChanged));
-	// }
+	/**
+	 * Print a step of a statement, in the following form:
+	 * <code>src->dst: statement at file:location text;</code>For example,<br>
+	 * <code>32->17: sum = (sum+(3*i)) at f0:20.14-24 "sum += 3*i";</code><br>
+	 * When the atomic lock variable is changed during executing the statement,
+	 * then the corresponding information is printed as well. For example,<br>
+	 * <code>13->6: ($ATOMIC_LOCK_VAR = $self) x = 0 at f0:30.17-22
+	 "x = 0";</code>
+	 * 
+	 * @param s
+	 *            The statement that has been executed in the current step.
+	 * @param atomicKind
+	 *            The atomic kind of the source location of the statement.
+	 * @param atomCount
+	 *            The atomic/atom count of the process that the statement
+	 *            belongs to.
+	 * @param atomicLockVarChanged
+	 *            True iff the atomic lock variable is changed during the
+	 *            execution of the statement.
+	 */
+	private void printStatement(State currentState, State newState,
+			SimpleTransition transition, AtomicKind atomicKind, int atomCount,
+			boolean atomicLockVarChanged) {
+		out.print(transition.statement().toStepString(atomicKind, atomCount,
+				atomicLockVarChanged));
+	}
 
-	// /**
-	// * Print the prefix of a transition.
-	// *
-	// * @param printTransitions
-	// * True iff each step is to be printed.
-	// * @param state
-	// * The source state of the transition.
-	// * @param processIdentifier
-	// * The identifier of the process that this transition associates
-	// * with.
-	// */
-	// private void printTransitionPrefix(boolean printTransitions, State state,
-	// int processIdentifier) {
-	// if (printTransitions) {
-	// out.print(state + ", proc ");
-	// out.println(processIdentifier + ":");
-	// }
-	// }
+	/**
+	 * Print the prefix of a transition.
+	 * 
+	 * @param printTransitions
+	 *            True iff each step is to be printed.
+	 * @param state
+	 *            The source state of the transition.
+	 * @param processIdentifier
+	 *            The identifier of the process that this transition associates
+	 *            with.
+	 */
+	private void printTransitionPrefix(State state, int processIdentifier) {
+		out.print(state + ", proc ");
+		out.println(processIdentifier + ":");
+	}
 
 	/**
 	 * Print the updated status.

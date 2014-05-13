@@ -97,7 +97,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
-import edu.udel.cis.vsl.abc.ast.node.common.declaration.CommonFunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.EnumerationType;
 import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
@@ -109,7 +108,6 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
-import edu.udel.cis.vsl.abc.ast.type.common.CommonCharType;
 import edu.udel.cis.vsl.abc.ast.value.IF.CharacterValue;
 import edu.udel.cis.vsl.abc.ast.value.IF.IntegerValue;
 import edu.udel.cis.vsl.abc.ast.value.IF.Value;
@@ -141,6 +139,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
@@ -155,7 +154,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
-import edu.udel.cis.vsl.civl.model.common.location.CommonLocation.AtomicKind;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
@@ -237,10 +235,10 @@ public class FunctionTranslator {
 	 */
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
 
-	/**
-	 * The current translation is a left hand side expression.
-	 */
-	private boolean isLHS = false;
+	// /**
+	// * The current translation is a left hand side expression.
+	// */
+	// private boolean isLHS = false;
 
 	private boolean isRootFunction = false;
 
@@ -1094,9 +1092,9 @@ public class FunctionTranslator {
 		Statement assignStatement;
 
 		modelFactory.setCurrentScope(scope);
-		this.isLHS = true;
+		// this.isLHS = true;
 		leftExpression = translateExpressionNode(lhs, scope, true);
-		this.isLHS = false;
+		// this.isLHS = false;
 		assert assignNode.getOperator() == Operator.ASSIGN;
 		if (!(leftExpression instanceof LHSExpression))
 			throw new CIVLInternalException("expected LHS expression, not "
@@ -1318,43 +1316,43 @@ public class FunctionTranslator {
 		return bodyFragment;
 	}
 
-//	/**
-//	 * Translate a function call of the function $choose_int into a choose
-//	 * statement. An syntax exception will be thrown if this $choose_int
-//	 * function call is found to be within an $atom block.
-//	 * 
-//	 * @param source
-//	 *            The CIVL source of the function call.
-//	 * @param location
-//	 *            The location of the function call.
-//	 * @param scope
-//	 *            The scope of this function call.
-//	 * @param lhs
-//	 *            The left hand side expression
-//	 * @param arguments
-//	 *            The list of arguments for choose_int function call. The number
-//	 *            of arguments should be exactly one, otherwise an exception
-//	 *            will be thrown.
-//	 * @return The new choose statement.
-//	 */
-//	private Statement translateChooseIntFunctionCall(CIVLSource source,
-//			Location location, Scope scope, LHSExpression lhs,
-//			ArrayList<Expression> arguments) {
-//		int numberOfArgs = arguments.size();
-//
-//		if (this.inAtom()) {
-//			throw new CIVLSyntaxException(
-//					"The non-deterministic function $choose_int is not allowed in $atom block.",
-//					source);
-//		}
-//		if (numberOfArgs != 1) {
-//			throw new CIVLSyntaxException(
-//					"The function $choose_int should have exactly one argument.",
-//					source);
-//		}
-//		return modelFactory.chooseStatement(source, location, lhs,
-//				arguments.get(0));
-//	}
+	// /**
+	// * Translate a function call of the function $choose_int into a choose
+	// * statement. An syntax exception will be thrown if this $choose_int
+	// * function call is found to be within an $atom block.
+	// *
+	// * @param source
+	// * The CIVL source of the function call.
+	// * @param location
+	// * The location of the function call.
+	// * @param scope
+	// * The scope of this function call.
+	// * @param lhs
+	// * The left hand side expression
+	// * @param arguments
+	// * The list of arguments for choose_int function call. The number
+	// * of arguments should be exactly one, otherwise an exception
+	// * will be thrown.
+	// * @return The new choose statement.
+	// */
+	// private Statement translateChooseIntFunctionCall(CIVLSource source,
+	// Location location, Scope scope, LHSExpression lhs,
+	// ArrayList<Expression> arguments) {
+	// int numberOfArgs = arguments.size();
+	//
+	// if (this.inAtom()) {
+	// throw new CIVLSyntaxException(
+	// "The non-deterministic function $choose_int is not allowed in $atom block.",
+	// source);
+	// }
+	// if (numberOfArgs != 1) {
+	// throw new CIVLSyntaxException(
+	// "The function $choose_int should have exactly one argument.",
+	// source);
+	// }
+	// return modelFactory.chooseStatement(source, location, lhs,
+	// arguments.get(0));
+	// }
 
 	/**
 	 * Translate a choose node into a fragment that has multiple outgoing
@@ -1722,9 +1720,10 @@ public class FunctionTranslator {
 		case "$assert":
 			return translateAssertFunctionCall(source, location, scope,
 					arguments);
-//		case "$choose_int":
-//			return translateChooseIntFunctionCall(source, location, scope, lhs,
-//					arguments);
+			// case "$choose_int":
+			// return translateChooseIntFunctionCall(source, location, scope,
+			// lhs,
+			// arguments);
 		default:
 			return callOrSpawnStatement(scope, location, functionCallNode, lhs,
 					arguments, isCall);
@@ -1827,7 +1826,7 @@ public class FunctionTranslator {
 		// ignore pure function declarations for functions that have its
 		// corresponding definition node.
 		if ((entity.getDefinition() != null)
-				&& (!(node instanceof CommonFunctionDefinitionNode)))
+				&& (!(node instanceof FunctionDefinitionNode)))
 			return;
 		result = modelBuilder.functionMap.get(entity);
 		if (result == null) {
@@ -2784,8 +2783,12 @@ public class FunctionTranslator {
 				} else if (((PointerType) convertedType).referencedType()
 						.kind() == TypeKind.QUALIFIED
 						&& ((QualifiedObjectType) ((PointerType) convertedType)
-								.referencedType()).getBaseType() instanceof CommonCharType) {
-					isSupportedChar = true;
+								.referencedType()).getBaseType() instanceof StandardBasicType) {
+					StandardBasicType basicType = (StandardBasicType) (((QualifiedObjectType) ((PointerType) convertedType)
+							.referencedType()).getBaseType());
+
+					if (basicType.getBasicTypeKind() == BasicTypeKind.CHAR)
+						isSupportedChar = true;
 				}
 				if (isSupportedChar) {
 					StringLiteralNode stringLiteralNode = (StringLiteralNode) constantNode;
@@ -3156,11 +3159,11 @@ public class FunctionTranslator {
 			VariableExpression varExpression = modelFactory.variableExpression(
 					source, scope.variable(name));
 
-			if (name.name().equals("CIVL_output_filesystem")) {
-			} else if (!this.isLHS && varExpression.variable().isOutput()) {
-				throw new CIVLSyntaxException(
-						"attempt to read the output variable " + name, source);
-			}
+			// if (name.name().equals("CIVL_output_filesystem")) {
+			// } else if (!this.isLHS && varExpression.variable().isOutput()) {
+			// throw new CIVLSyntaxException(
+			// "attempt to read the output variable " + name, source);
+			// }
 			result = varExpression;
 		} else if (scope.getFunction(name) != null) {
 			result = modelFactory.functionPointerExpression(source,
