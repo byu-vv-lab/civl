@@ -20,8 +20,6 @@ import edu.udel.cis.vsl.civl.err.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
-import edu.udel.cis.vsl.civl.library.IF.LibraryEvaluator;
-import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -62,12 +60,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.WaitGuardExpression;
-import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
@@ -83,7 +79,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -135,10 +130,6 @@ public class CommonEvaluator implements Evaluator {
 	/* *************************** Instance Fields ************************* */
 
 	private Enabler enabler;
-
-	private Executor executor;
-
-	private LibraryLoader libraryLoader;
 
 	/**
 	 * An uninterpreted function used to evaluate "BigO" of an expression. It
@@ -311,10 +302,9 @@ public class CommonEvaluator implements Evaluator {
 	 *            The error logging facility.
 	 */
 	public CommonEvaluator(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactory stateFactory, ErrorLog log, LibraryLoader libLoader) {
+			StateFactory stateFactory, ErrorLog log) {
 		SymbolicType dynamicToIntType;
 
-		this.libraryLoader = libLoader;
 		this.config = config;
 		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
@@ -2290,10 +2280,6 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateSystemGuard(state, pid,
 					(SystemGuardExpression) expression);
 			break;
-		case SYSTEM_FUNC_CALL:
-			result = evaluateSystemFunctionCall(state, pid,
-					(SystemFunctionCallExpression) expression);
-			break;
 		case UNARY:
 			result = evaluateUnary(state, pid, (UnaryExpression) expression);
 			break;
@@ -2317,17 +2303,6 @@ public class CommonEvaluator implements Evaluator {
 					+ kind, expression.getSource());
 		}
 		return result;
-	}
-
-	private Evaluation evaluateSystemFunctionCall(State state, int pid,
-			SystemFunctionCallExpression expression)
-			throws UnsatisfiablePathConditionException {
-		CallOrSpawnStatement call = expression.callStatement();
-		LibraryEvaluator libEvaluator = this.libraryLoader.getLibraryEvaluator(
-				((SystemFunction) call.function()).getLibrary(), executor,
-				modelFactory);
-
-		return libEvaluator.evaluate(state, pid, call);
 	}
 
 	@Override
@@ -3176,10 +3151,4 @@ public class CommonEvaluator implements Evaluator {
 	public SymbolicUniverse universe() {
 		return universe;
 	}
-
-	@Override
-	public void setExecutor(Executor executor) {
-		this.executor = executor;
-	}
-
 }

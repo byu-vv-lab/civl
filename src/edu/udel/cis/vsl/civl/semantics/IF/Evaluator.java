@@ -434,6 +434,4 @@ public interface Evaluator {
 	Evaluation pointerAdd(State state, int pid, BinaryExpression expression,
 			SymbolicExpression pointer, NumericExpression offset)
 			throws UnsatisfiablePathConditionException;
-
-	void setExecutor(Executor executor);
 }

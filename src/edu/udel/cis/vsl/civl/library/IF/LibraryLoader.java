@@ -37,7 +37,4 @@ public interface LibraryLoader {
 	 */
 	LibraryEnabler getLibraryEnabler(String name, CommonEnabler primaryEnabler,
 			PrintStream output, ModelFactory modelFacotry);
-
-	LibraryEvaluator getLibraryEvaluator(String name, Executor executor,
-			ModelFactory modelFacotry);
 }

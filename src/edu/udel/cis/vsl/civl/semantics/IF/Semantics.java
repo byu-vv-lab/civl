@@ -12,8 +12,9 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 /**
  * Entry point of the module civl.semantics.
+ * 
  * @author zmanchun
- *
+ * 
  */
 public class Semantics {
 	public static Executor newExecutor(GMCConfiguration config,
@@ -25,10 +26,8 @@ public class Semantics {
 	}
 
 	public static Evaluator newEvaluator(GMCConfiguration config,
-			ModelFactory modelFactory, StateFactory stateFactory, ErrorLog log,
-			LibraryLoader libLoader) {
-		return new CommonEvaluator(config, modelFactory, stateFactory, log,
-				libLoader);
+			ModelFactory modelFactory, StateFactory stateFactory, ErrorLog log) {
+		return new CommonEvaluator(config, modelFactory, stateFactory, log);
 	}
 
 }

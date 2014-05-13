@@ -94,17 +94,6 @@ public class UserInterface {
 	public final static Option minO = Option.newScalarOption("min", BOOLEAN,
 			"search for minimal counterexample", false);
 
-	public final static Option mpiO = Option.newScalarOption("mpi", BOOLEAN,
-			"apply MPI transformation?", false);
-
-	public final static Option porO = Option
-			.newScalarOption(
-					"por",
-					STRING,
-					"partial order reduction (por) choices:\n"
-							+ "    std (standard por) or scp1 (scoped por 1) or scp1 (scoped por 2)",
-					"std");
-
 	public final static Option randomO = Option.newScalarOption("random",
 			BOOLEAN, "select enabled transitions randomly; default for run,\n"
 					+ "    ignored for all other commands", null);
@@ -201,9 +190,9 @@ public class UserInterface {
 				verboseO, randomO, guidedO, seedO, debugO, echoO,
 				userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO, porO,
-				saveStatesO, simplifyO, solveO, enablePrintfO, mpiO,
-				showAmpleSetO, showAmpleSetWtStatesO, statelessPrintfO, guiO);
+				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO,
+				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
+				showAmpleSetWtStatesO, statelessPrintfO, guiO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -782,7 +771,6 @@ public class UserInterface {
 		Preprocessor preprocessor1;
 		List<String> inputVars = getInputVariables(config);
 
-		assert !config.isTrue(mpiO);
 		checkFilenames(2, config);
 		filename0 = config.getFreeArg(1);
 		filename1 = config.getFreeArg(2);

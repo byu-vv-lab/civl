@@ -176,7 +176,6 @@ public class CommonExecutor implements Executor {
 		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
 				"civlc", this, this.output, this.err, this.enablePrintf,
 				this.statelessPrintf, this.modelFactory);
-		evaluator.setExecutor(this);
 	}
 
 	/* ************************** Private methods ************************** */

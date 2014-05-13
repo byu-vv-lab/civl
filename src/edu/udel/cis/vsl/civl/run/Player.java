@@ -89,10 +89,6 @@ public abstract class Player {
 
 	protected boolean showAmpleSet; // false by default
 
-	protected boolean scpPor1; // false by default
-
-	protected boolean scpPor2; // false by default
-
 	protected boolean saveStates; // true by default
 
 	protected boolean simplify; // true by default
@@ -100,8 +96,6 @@ public abstract class Player {
 	protected boolean solve; // false by default
 
 	protected boolean enablePrintf; // true by default
-
-	protected boolean mpiMode; // false by default
 
 	protected boolean gui; // false by default, only works with Replay mode.
 
@@ -128,7 +122,7 @@ public abstract class Player {
 		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.libraryLoader = Libraries.newLibraryLoader();
 		this.evaluator = Semantics.newEvaluator(config, modelFactory,
-				stateFactory, log, this.libraryLoader);
+				stateFactory, log);
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
 		evaluator.setSolve(solve);
 		this.stateFactory.setEvaluator(evaluator);
@@ -143,7 +137,6 @@ public abstract class Player {
 		this.showAmpleSetWtStates = (Boolean) config
 				.getValueOrDefault(UserInterface.showAmpleSetWtStatesO);
 		this.gui = (Boolean) config.getValueOrDefault(UserInterface.guiO);
-		this.mpiMode = (Boolean) config.getValueOrDefault(UserInterface.mpiO);
 		this.executor = Semantics.newExecutor(config, modelFactory,
 				stateFactory, log, libraryLoader, out, err, this.enablePrintf,
 				this.statelessPrintf, evaluator);
@@ -156,10 +149,6 @@ public abstract class Player {
 		this.showTransitions = config.isTrue(UserInterface.showTransitionsO);
 		this.minimize = config.isTrue(UserInterface.minO);
 		this.maxdepth = (int) config.getValueOrDefault(UserInterface.maxdepthO);
-		this.scpPor1 = ((String) config.getValueOrDefault(UserInterface.porO))
-				.equalsIgnoreCase("scp1");
-		this.scpPor2 = ((String) config.getValueOrDefault(UserInterface.porO))
-				.equalsIgnoreCase("scp2");
 		this.saveStates = (Boolean) config
 				.getValueOrDefault(UserInterface.saveStatesO);
 		this.simplify = (Boolean) config
