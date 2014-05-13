@@ -626,15 +626,7 @@ public class CommonStateManager implements StateManager {
 		state.setSeen(value);
 	}
 
-	/* ************************ Other Public Methods *********************** */
-
-	/**
-	 * 
-	 * @return the debugging option, true if under debug mode, otherwise false.
-	 */
-	public boolean getDebug() {
-		return debug;
-	}
+	/* ****************** Public Methods from StateManager ***************** */
 
 	@Override
 	public long getNumStateInstances() {
@@ -646,106 +638,9 @@ public class CommonStateManager implements StateManager {
 		return stateFactory.getNumStatesSaved();
 	}
 
-	/**
-	 * The whole system should be using the same print stream to print
-	 * information in different components.
-	 * 
-	 * @return the output stream used by the state manager
-	 */
-	public PrintStream getOutputStream() {
-		return out;
-	}
-
-	/**
-	 * -saveStates is always true in depth first search.
-	 * 
-	 * @return the value of the option -saveStates
-	 */
-	public boolean getSaveStates() {
-		return saveStates;
-	}
-
-	/**
-	 * -showSavedStates is false by default
-	 * 
-	 * @return the value of the option -showSavedStates
-	 */
-	public boolean getShowSavedStates() {
-		return showSavedStates;
-	}
-
-	/**
-	 * -showStates is false by default
-	 * 
-	 * @return the value of the option -showStates
-	 */
-	public boolean getShowStates() {
-		return showStates;
-	}
-
-	/**
-	 * -showTransitions is false by default
-	 * 
-	 * @return the value of the option -showTransitions
-	 */
-	public boolean getShowTransitions() {
-		return showTransitions;
-	}
-
-	/**
-	 * -simplify is true by default
-	 * 
-	 * @return the value of the option -simplify
-	 */
-	public boolean getSimplify() {
-		return simplify;
-	}
-
-	/**
-	 * The updater, see also {@link #updater}.
-	 * 
-	 * @return the updater.
-	 */
-	public Printable getUpdater() {
-		return updater;
-	}
-
-	/**
-	 * -verbose is false by default
-	 * 
-	 * @return the value of the option -verbose
-	 */
-	public boolean getVerbose() {
-		return verbose;
-	}
-
 	@Override
 	public int maxProcs() {
 		return maxProcs;
-	}
-
-	/**
-	 * Set the field debug.
-	 * 
-	 * @param value
-	 *            The value to be used.
-	 */
-	public void setDebug(boolean value) {
-		this.debug = value;
-	}
-
-	public void setGuiMode(boolean value) {
-		this.guiMode = value;
-	}
-
-	/**
-	 * Set the field savedStates.
-	 * 
-	 * @param value
-	 *            The value to be used.
-	 */
-	public void setSaveStates(boolean value) {
-		this.saveStates = value;
 	}
 
 	@Override
@@ -763,30 +658,6 @@ public class CommonStateManager implements StateManager {
 		this.showTransitions = value;
 	}
 
-	/**
-	 * Set the field simplify.
-	 * 
-	 * @param value
-	 *            The value to be used.
-	 */
-	public void setSimplify(boolean value) {
-		simplify = value;
-	}
-
-	/**
-	 * Set the field savedStates.
-	 * 
-	 * @param updater
-	 *            The value to be used.
-	 */
-	public void setUpdater(Printable updater) {
-		this.updater = updater;
-	}
-
-	public void setOutputStream(PrintStream out) {
-		this.out = out;
-	}
-
 	@Override
 	public void setVerbose(boolean value) {
 		this.verbose = value;
@@ -797,4 +668,8 @@ public class CommonStateManager implements StateManager {
 		printUpdate = true;
 	}
 
+	@Override
+	public void setUpdater(Printable updater) {
+		this.updater = updater;
+	}
 }
