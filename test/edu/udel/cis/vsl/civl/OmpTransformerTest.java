@@ -14,8 +14,8 @@ import edu.udel.cis.vsl.abc.Activator;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.civl.run.UserInterface;
-import edu.udel.cis.vsl.civl.transform.CIVLTransform;
+import edu.udel.cis.vsl.civl.run.IF.UserInterface;
+import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
 
 public class OmpTransformerTest {
 

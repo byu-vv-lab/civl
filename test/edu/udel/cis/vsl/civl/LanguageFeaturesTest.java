@@ -12,7 +12,7 @@ import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
 public class LanguageFeaturesTest {
 

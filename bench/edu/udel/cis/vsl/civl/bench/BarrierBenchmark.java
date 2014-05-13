@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.bench;
 
-import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
 /**
  * Benchmark of the barrier example. Execution time should be within 20 to 58

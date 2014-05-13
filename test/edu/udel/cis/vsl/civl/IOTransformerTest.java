@@ -6,7 +6,7 @@ import java.io.File;
 
 import org.junit.Test;
 
-import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
 public class IOTransformerTest {
 	/* *************************** Static Fields *************************** */

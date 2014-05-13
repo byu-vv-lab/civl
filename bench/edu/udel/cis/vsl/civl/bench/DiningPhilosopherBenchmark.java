@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.bench;
 
-import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
 /**
  * Benchmark of the dining philosopher example. Execution time should be within
