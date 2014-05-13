@@ -32,8 +32,53 @@ import edu.udel.cis.vsl.civl.util.IF.Printable;
  */
 public class CommonStateManager implements StateManager {
 
+	/**
+	 * The enabling status of a process at a state.
+	 * 
+	 * @author Manchun Zheng
+	 * 
+	 */
 	static enum EnabledStatus {
 		BLOCKED, DETERMINISTIC, LOOP_POSSIBLE, NONDETERMINISTIC, NONE, TERMINATED
+	}
+
+	/**
+	 * A helper class to keep track of analysis result of states in the sense
+	 * that if they are allowed to be executed further.
+	 * 
+	 * @author Manchun Zheng
+	 * 
+	 */
+	private class StateStatus {
+		/**
+		 * The enabling status of the current process at the current state.
+		 */
+		EnabledStatus enabledStatus;
+
+		/**
+		 * The result of the enabling analysis: i.e., whether the process is
+		 * allowed to execute more.
+		 */
+		boolean possibleToExecute;
+
+		/**
+		 * The current enabled transition of the current process. Not NULL only
+		 * when the process is allowed to execute more.
+		 */
+		SimpleTransition enabledTransition;
+
+		/**
+		 * Keep track of the number of incomplete atom blocks.
+		 */
+		int atomCount;
+
+		StateStatus(boolean possible, SimpleTransition transition,
+				int atomCount, EnabledStatus status) {
+			this.possibleToExecute = possible;
+			this.enabledTransition = transition;
+			this.atomCount = atomCount;
+			this.enabledStatus = status;
+		}
 	}
 
 	/* *************************** Instance Fields ************************* */
@@ -174,8 +219,8 @@ public class CommonStateManager implements StateManager {
 	/**
 	 * Execute a transition (obtained by the enabler) of a state. When the
 	 * corresponding process is in atomic/atom execution, continue to execute
-	 * more statements as many as possible. Also execute more purely local
-	 * statements if possible.
+	 * more statements as many as possible. Also execute more statements if
+	 * possible.
 	 * 
 	 * @param state
 	 *            The current state
@@ -219,7 +264,7 @@ public class CommonStateManager implements StateManager {
 			while (stateStatus.possibleToExecute) {
 				assert stateStatus.enabledTransition != null;
 				assert stateStatus.enabledStatus == EnabledStatus.DETERMINISTIC;
-				assert stateStatus.newAtomCount >= 0;
+				assert stateStatus.atomCount >= 0;
 
 				state = executor.execute(state, pid,
 						stateStatus.enabledTransition);
@@ -236,9 +281,9 @@ public class CommonStateManager implements StateManager {
 				if (this.showStates)
 					stateFactory.printState(out, state);
 				stateStatus = possibleToExecuteMore(state, pid,
-						stateStatus.newAtomCount);
+						stateStatus.atomCount);
 			}
-			assert stateStatus.newAtomCount == 0;
+			assert stateStatus.atomCount == 0;
 			assert stateStatus.enabledStatus != EnabledStatus.DETERMINISTIC;
 			if (stateStatus.enabledStatus == EnabledStatus.BLOCKED) {
 				if (stateFactory.lockedByAtomic(state)) {
@@ -281,21 +326,39 @@ public class CommonStateManager implements StateManager {
 
 	}
 
-	private class StateStatus {
-		EnabledStatus enabledStatus;
-		boolean possibleToExecute;
-		SimpleTransition enabledTransition;
-		int newAtomCount;
-
-		StateStatus(boolean possible, SimpleTransition transition,
-				int atomCount, EnabledStatus status) {
-			this.possibleToExecute = possible;
-			this.enabledTransition = transition;
-			this.newAtomCount = atomCount;
-			this.enabledStatus = status;
-		}
-	}
-
+	/**
+	 * analyzes if the current process is allowed to execute one more transition
+	 * at the given state. Conditions for a process p at a state s to execute
+	 * more:
+	 * <ul>
+	 * <li>p is about to enter an atom block or p is already in some atom
+	 * blocks:
+	 * <ul>
+	 * <li>the size of enabled(p, s) should be exactly 1;</li>
+	 * <li>otherwise, an error will be reported.</li>
+	 * </ul>
+	 * </li> or
+	 * <li>p is currently holding the atomic lock:
+	 * <ol>
+	 * <li>the current location of p has exactly one incoming statement;</li>
+	 * <li>the size of enabled(p, s) should be exactly 1.</li>
+	 * </ol>
+	 * </li> or
+	 * <li>the current location of p is purely local;
+	 * <ul>
+	 * <li>the size of enabled(p, s) is exactly 1.</li>
+	 * </ul>
+	 * </li>
+	 * </ul>
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the current process.
+	 * @param atomCount
+	 *            The number of incomplete atom blocks.
+	 * @return
+	 */
 	private StateStatus possibleToExecuteMore(State state, int pid,
 			int atomCount) {
 		List<SimpleTransition> enabled;
@@ -525,7 +588,6 @@ public class CommonStateManager implements StateManager {
 
 	@Override
 	public void printStateLong(PrintStream out, State state) {
-		// state.print(out);
 		this.stateFactory.printState(out, state);
 	}
 
