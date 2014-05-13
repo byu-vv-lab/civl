@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
-import edu.udel.cis.vsl.civl.run.UserInterface;
+import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
 /**
  * Main CIVL class, containing main method and a few static methods for running

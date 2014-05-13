@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.common.CommonLibraryEnabler;

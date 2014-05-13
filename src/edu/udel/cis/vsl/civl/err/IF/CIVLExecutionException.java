@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.err;
+package edu.udel.cis.vsl.civl.err.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;

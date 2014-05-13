@@ -2,11 +2,11 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;

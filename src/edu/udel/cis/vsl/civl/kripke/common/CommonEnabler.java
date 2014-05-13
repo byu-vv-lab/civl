@@ -4,11 +4,11 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;

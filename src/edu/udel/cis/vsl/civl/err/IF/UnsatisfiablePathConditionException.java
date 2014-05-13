@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.err;
+package edu.udel.cis.vsl.civl.err.IF;
 
 /**
  * Thrown when a path condition becomes unsatisfiable, typically due to a side

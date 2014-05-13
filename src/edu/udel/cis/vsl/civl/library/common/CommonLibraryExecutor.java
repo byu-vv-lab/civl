@@ -2,10 +2,10 @@ package edu.udel.cis.vsl.civl.library.common;
 
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;

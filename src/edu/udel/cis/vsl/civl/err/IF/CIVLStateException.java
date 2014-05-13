@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.err;
+package edu.udel.cis.vsl.civl.err.IF;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;

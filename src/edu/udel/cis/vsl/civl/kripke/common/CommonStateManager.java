@@ -6,10 +6,10 @@ package edu.udel.cis.vsl.civl.kripke.common;
 import java.io.PrintStream;
 import java.util.List;
 
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
@@ -64,31 +64,31 @@ public class CommonStateManager implements StateManager {
 
 	/**
 	 * Save states during search?
-	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#saveStatesO}
+	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#saveStatesO}
 	 */
 	private boolean saveStates = true;
 
 	/**
 	 * Print saved states (i.e., canonicalized states)?
-	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#showSavedStatesO}
+	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#showSavedStatesO}
 	 */
 	private boolean showSavedStates = false;
 
 	/**
 	 * Print all states (including states that are not saved)?
-	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#showStatesO}
+	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#showStatesO}
 	 */
 	private boolean showStates = false;
 
 	/**
 	 * Print transitions?
-	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#showTransitionsO}
+	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#showTransitionsO}
 	 */
 	private boolean showTransitions = false;
 
 	/**
 	 * Simplify state returned by nextState?
-	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#simplifyO}
+	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#simplifyO}
 	 */
 	private boolean simplify = true;
 
@@ -99,7 +99,7 @@ public class CommonStateManager implements StateManager {
 
 	/**
 	 * Turn on/off verbose mode.
-	 * {@link edu.udel.cis.vsl.civl.run.UserInterface#verboseO}
+	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#verboseO}
 	 */
 	private boolean verbose = false;
 

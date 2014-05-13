@@ -1,10 +1,10 @@
-package edu.udel.cis.vsl.civl.run;
+package edu.udel.cis.vsl.civl.run.IF;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
-import edu.udel.cis.vsl.civl.log.CIVLLogEntry;
+import edu.udel.cis.vsl.civl.log.IF.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transition.Transition;

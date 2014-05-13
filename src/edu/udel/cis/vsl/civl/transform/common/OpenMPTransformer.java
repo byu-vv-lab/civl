@@ -28,7 +28,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.util.ExpressionEvaluator;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.transform.CIVLBaseTransformer;
+import edu.udel.cis.vsl.civl.transform.IF.CIVLBaseTransformer;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**

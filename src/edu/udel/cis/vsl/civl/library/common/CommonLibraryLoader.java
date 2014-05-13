@@ -5,7 +5,7 @@ import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;

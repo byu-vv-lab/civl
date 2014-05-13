@@ -5,4 +5,4 @@
  * @author 
  *
  */
-package edu.udel.cis.vsl.civl.gui;
+package edu.udel.cis.vsl.civl.gui.IF;

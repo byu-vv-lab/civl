@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.run;
+package edu.udel.cis.vsl.civl.run.IF;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -11,7 +11,7 @@ import edu.udel.cis.vsl.civl.library.IF.Libraries;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.predicate.StandardPredicate;
+import edu.udel.cis.vsl.civl.predicate.IF.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;

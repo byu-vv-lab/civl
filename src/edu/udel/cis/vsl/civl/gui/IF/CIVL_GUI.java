@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.gui;
+package edu.udel.cis.vsl.civl.gui.IF;
 
 import java.awt.Dimension;
 

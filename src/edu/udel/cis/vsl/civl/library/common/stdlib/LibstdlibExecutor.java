@@ -5,8 +5,8 @@ package edu.udel.cis.vsl.civl.library.common.stdlib;
 
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.err.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.library.common.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;

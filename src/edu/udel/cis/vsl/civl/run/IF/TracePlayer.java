@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.run;
+package edu.udel.cis.vsl.civl.run.IF;
 
 import java.io.File;
 import java.io.IOException;

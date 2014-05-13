@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
-import edu.udel.cis.vsl.civl.err.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
