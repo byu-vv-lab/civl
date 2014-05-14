@@ -1,5 +1,5 @@
 /** 
- * This package handles system functions. It provides interfaces for 
+ * Module <strong>library</strong> models various libraries. It provides interfaces for 
  * evaluating the guard of system function calls, computing enabled 
  * transitions (for various POR) for system function calls, implementing the 
  * semantics (execution) of each system function call. Currently, there are 

@@ -2,25 +2,28 @@
 <html>
 <body>
 
- <p>Welcome to CIVL, the Concurrency Intermediate Verification Language tool. 
- CIVL is a Java project for verifying concurrent programs written in CIVL-C, 
- which is a C dialect with extensions to concurrent language constructs. 
- The CIVL project uses ABC, SARL and GMC.
- The CIVL tool can be used to perform a number of tasks, including the following:
- <ol>
- <li>preprocess or pass a CIVL-C program;</i>
- <li>verify a CIVL-C program;</li>
- <li>run a CIVL-C program;</li>
- <li>replay traces for a program.</li>
- </ol>
+	<p>Welcome to CIVL, the Concurrency Intermediate Verification
+		Language tool. CIVL is a Java project for verifying concurrent
+		programs written in CIVL-C, which is a C dialect with extensions to
+		concurrent language constructs. The CIVL project uses ABC, SARL and
+		GMC. The CIVL tool can be used to perform a number of tasks, including
+		the following:
+	<ol>
+		<li>preprocess or pass a CIVL-C program;</i>
+		<li>verify a CIVL-C program;</li>
+		<li>run a CIVL-C program;</li>
+		<li>replay traces for a program.</li>
+	</ol>
 
 	In addition, it provides a framework for developing your own libraries
-	or transformations on ASTs of  various language extensions and libraries.
+	or transformations on ASTs of various language extensions and
+	libraries.
 	</p>
 
 	There is a simple command-line interface for CIVL (see {@link
 	edu.udel.cis.vsl.civl.CIVL CIVL}), but most users will want to use CIVL
-	through its API. To use the API, it is helpful to have some
+	through the user interface (see {@link
+	edu.udel.cis.vsl.civl.run.IF.UserInterface UserInterface}). To use the API, it is helpful to have some
 	understanding of the modular structure of CIVL. The CIVL source code is
 	decomposed into modules, each with a well-defined interface and set of
 	responsibilities. Some of these modules are decomposed further into
@@ -35,6 +38,23 @@
 				<li>interface: {@link edu.udel.cis.vsl.civl.util.IF}</li>
 				<li>entry point: none</li>
 			</ol></li>
+
+		<li><strong>transform</strong>
+			<ol>
+				<li>responsibilities: transformations of an AST</li>
+				<li>uses: <strong>abc</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.transform.IF}</li>
+				<li>entry point: CIVLTransform</li>
+			</ol></li>
+
+		<li><strong>run</strong>
+			<ol>
+				<li>responsibilities: parsing command line inputs and initial
+					configurations of the tool</li>
+				<li>uses: <strong>transform</strong>, <strong>abc</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.run.IF}</li>
+				<li>entry point: UserInterface</li>
+			</ol></li> TBC.
 
 	</ol>
 

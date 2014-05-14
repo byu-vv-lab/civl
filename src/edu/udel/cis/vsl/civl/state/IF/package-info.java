@@ -1,5 +1,5 @@
 /**
- * The state module is responsible for the creation and manipulation of
+ * Module <strong>state</strong> is responsible for the creation and manipulation of
  * states of a CIVL model.
  * 
  * The entry point to this module in the class {@link edu.udel.cis.vsl.civl.state.IF.States}.

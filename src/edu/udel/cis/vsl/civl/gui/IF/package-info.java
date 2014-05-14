@@ -1,8 +1,4 @@
 /**
- * This package is for the implementation of the GUI for traces.
- */
-/**
- * @author 
- *
+ * Module <strong>gui</strong> provides a graphical interface for viewing counterexample traces.
  */
 package edu.udel.cis.vsl.civl.gui.IF;

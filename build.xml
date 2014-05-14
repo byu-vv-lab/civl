@@ -163,7 +163,12 @@
 	<target name="javadoc">
 		<delete dir="${javadoc.dir}" quiet="true" />
 		<mkdir dir="${javadoc.dir}" />
-		<javadoc destdir="${javadoc.dir}" Overview="src/overview.html" author="false" version="true" use="true" windowtitle="API for CIVL ${revision}" access="public" classpathref="test.execute.classpath" sourcepath="${src.dir}" failonerror="false">
+		<javadoc destdir="${javadoc.dir}" Overview="src/overview.html" author="false" version="true" use="true" windowtitle="API for CIVL ${revision}" access="public" classpathref="test.execute.classpath" failonerror="false">
+			<packageset dir="${src.dir}" defaultexcludes="yes">
+				<include name="**/IF" />
+				<include name="**/IF/**" />
+				<include name="edu/udel/cis/vsl/civl" />
+			</packageset>
 		</javadoc>
 	</target>
 
