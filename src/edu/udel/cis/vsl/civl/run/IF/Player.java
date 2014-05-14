@@ -159,9 +159,10 @@ public abstract class Player {
 		this.predicate = new StandardPredicate(log, universe,
 				(Enabler) this.enabler, this.executor);
 		this.evaluator.setEnabler((Enabler) this.enabler);
-		stateManager = Kripkes.newStateManager((Enabler) enabler, executor,
-				out, verbose, debug, gui, showStates, showSavedStates,
-				showTransitions, saveStates, simplify);
+		stateManager = Kripkes.newStateManager(this.transitionFactory,
+				(Enabler) enabler, executor, out, verbose, debug, gui,
+				showStates, showSavedStates, showTransitions, saveStates,
+				simplify);
 	}
 
 	public void printResult() {

@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.civl.transition.CompoundTransition;
 import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.transition.Step;
 import edu.udel.cis.vsl.civl.transition.Transition;
+import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 
 /**
@@ -190,6 +191,8 @@ public class CommonStateManager implements StateManager {
 	 */
 	private CompoundTransition compoundTransition;
 
+	private TransitionFactory transitionFactory;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -197,10 +200,12 @@ public class CommonStateManager implements StateManager {
 	 * @param executor
 	 *            The unique executor to by used in the system.
 	 */
-	public CommonStateManager(Enabler enabler, Executor executor,
-			PrintStream out, boolean verbose, boolean debug, boolean gui,
-			boolean showStates, boolean showSavedStates,
-			boolean showTransitions, boolean saveStates, boolean simplify) {
+	public CommonStateManager(TransitionFactory transitionFactory,
+			Enabler enabler, Executor executor, PrintStream out,
+			boolean verbose, boolean debug, boolean gui, boolean showStates,
+			boolean showSavedStates, boolean showTransitions,
+			boolean saveStates, boolean simplify) {
+		this.transitionFactory = transitionFactory;
 		this.executor = executor;
 		this.enabler = (CommonEnabler) enabler;
 		this.stateFactory = executor.stateFactory();
@@ -244,8 +249,8 @@ public class CommonStateManager implements StateManager {
 		processIdentifier = ((SimpleTransition) transition).processIdentifier();
 		firstTransition = (SimpleTransition) transition;
 		if (this.guiMode)
-			this.compoundTransition = new CompoundTransition(pid,
-					processIdentifier);
+			this.compoundTransition = this.transitionFactory
+					.newCompoundTransition(pid, processIdentifier);
 		state = executor.execute(state, pid, firstTransition);
 		if (printTransitions) {
 			printTransitionPrefix(oldState, processIdentifier);

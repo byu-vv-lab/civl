@@ -56,4 +56,8 @@ public class TransitionFactory {
 		return new TransitionSequence(state);
 	}
 
+	public CompoundTransition newCompoundTransition(int pid,
+			int processIdentifier) {
+		return new CompoundTransition(pid, processIdentifier);
+	}
 }
