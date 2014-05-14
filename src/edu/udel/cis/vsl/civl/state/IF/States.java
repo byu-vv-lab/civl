@@ -1,7 +1,7 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.state.immutable.ImmutableStateFactory;
+import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableStateFactory;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 /**

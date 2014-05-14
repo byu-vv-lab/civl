@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.state.immutable;
+package edu.udel.cis.vsl.civl.state.common.immutable;
 
 import java.io.PrintStream;
 import java.util.Arrays;
