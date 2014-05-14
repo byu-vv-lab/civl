@@ -11,12 +11,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.library.common.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -495,7 +495,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			int int_arrayIndex;
 			StringBuffer result = new StringBuffer();
 			int numChars;
-			char[] stringChars;
+			// char[] stringChars;
 
 			if (charPointer.type() instanceof SymbolicArrayType) {
 				originalArray = (SymbolicSequence<?>) charPointer.argument(0);
@@ -513,10 +513,11 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
 				int_arrayIndex = evaluator.extractInt(source, arrayIndex);
 			}
-			numChars = originalArray.size() - 1;// ignoring the '\0' at the end
-												// of the string.
-			stringChars = new char[numChars - int_arrayIndex];
-			for (int i = 0, j = int_arrayIndex; j < numChars; i++, j++) {
+			numChars = originalArray.size();// ignoring the '\0' at the end
+											// of the string.
+											// stringChars = new char[numChars -
+											// int_arrayIndex];
+			for (int j = int_arrayIndex; j < numChars; j++) {
 				SymbolicExpression charExpr = originalArray.get(j);
 				Character theChar = universe.extractCharacter(charExpr);
 
@@ -524,9 +525,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 					throw new CIVLUnimplementedFeatureException(
 							"non-concrete character in string at position " + j,
 							source);
-				stringChars[i] = theChar;
+				if (theChar != '\0')
+					result.append(theChar);
 			}
-			result.append(stringChars);
+			// result.append(stringChars);
 			return new Pair<>(state, result);
 		} else
 			throw new CIVLUnimplementedFeatureException("non-concrete strings",
@@ -699,7 +701,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			fileArray = universe.append(fileArray, theFile);
 			fileSystemStructure = universe.tupleWrite(fileSystemStructure,
 					oneObject, fileArray);
-			if (fileNameString.equals(STDIN))
+			if (fileNameString.compareTo(STDIN) == 0)
 				isInputFile = false;
 			if (isInputFile) {
 				BooleanExpression positiveLength = universe.lessThan(zero,
@@ -779,10 +781,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			state = eval.state;
 		}
 		switch (name.name()) {
-//		case "printf":
-//			state = primaryExecutor.executePrintf(state, pid, arguments,
-//					argumentValues);
-//			break;
+		// case "printf":
+		// state = primaryExecutor.executePrintf(state, pid, arguments,
+		// argumentValues);
+		// break;
 		case "$fopen":
 			state = execute_fopen(source, state, pid, lhs, arguments,
 					argumentValues);
@@ -1138,8 +1140,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		fileName = universe.tupleRead(fileObject, zeroObject);
 		stringResult = this.getString(source, state, fileName);
 		state = stringResult.left;
-		fileNameString = stringResult.right.substring(0,
-				stringResult.right.length() - 1);
+		fileNameString = stringResult.right.toString();
 		concreteString = this.getString(arguments[1].getSource(), state,
 				argumentValues[1]);
 		formatBuffer = concreteString.right;
@@ -1174,10 +1175,10 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			} else
 				printedContents.add(new StringBuffer(argumentValue.toString()));
 		}
-		if (fileNameString.equals(STDOUT)) {
+		if (fileNameString.compareTo(STDOUT) == 0) {
 			this.printf(this.output, arguments[1].getSource(), formatBuffer,
 					printedContents);
-		} else if (fileNameString.equals(STDIN)) {
+		} else if (fileNameString.compareTo(STDIN) == 0) {
 			// TODO: stdin
 		} else if (fileNameString.equals(STDERR)) {
 			this.printf(this.err, arguments[1].getSource(), formatBuffer,

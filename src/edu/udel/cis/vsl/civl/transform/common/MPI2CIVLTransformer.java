@@ -849,7 +849,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 			throw new SyntaxException(
 					"Please specify the number of processes (e.g., -input__NPROCS=5)"
 							+ "or the upper bound of number of processes (e.g. -input__NPROCS_UPPER_BOUND=6)",
-					source);
+					source);//TODO improve messages with pragma.
 		}
 		// assuming NPROCS_LOWER_BOUND < NPROCS && NPROCS <= NPROCS_UPPER_BOUND
 		nprocsAssumption = this.nprocsAssumption();
