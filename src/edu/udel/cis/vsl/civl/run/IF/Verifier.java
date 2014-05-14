@@ -4,11 +4,11 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
+import edu.udel.cis.vsl.civl.kripke.IF.Transition;
+import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.log.IF.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.transition.Transition;
-import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.DfsSearcher;

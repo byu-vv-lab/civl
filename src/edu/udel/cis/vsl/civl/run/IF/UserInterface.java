@@ -32,14 +32,14 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
+import edu.udel.cis.vsl.civl.kripke.IF.CompoundTransition;
+import edu.udel.cis.vsl.civl.kripke.IF.Transition;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.Models;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
-import edu.udel.cis.vsl.civl.transition.CompoundTransition;
-import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
@@ -662,7 +662,8 @@ public class UserInterface {
 			stateArray = new State[states.size()];
 			states.toArray(stateArray);
 			// result = replayer.replayForGui(states, transitions);
-			tranArray = new CompoundTransition[transitions.size()];
+			tranArray = replayer.transitionFactory
+					.newCompoundTransitionArray(transitions.size());
 			transitions.toArray(tranArray);
 			gui = new CIVL_GUI(tranArray, replayer.stateFactory);
 			// runGui(states, transitions, replayer.stateManager);

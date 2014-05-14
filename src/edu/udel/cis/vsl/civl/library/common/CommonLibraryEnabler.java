@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
+import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -15,13 +17,11 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
+import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.transition.SimpleTransition;
-import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -45,16 +45,6 @@ public abstract class CommonLibraryEnabler extends Library implements
 	 * The model factory of the system.
 	 */
 	protected ModelFactory modelFactory;
-
-	// /**
-	// * The symbolic expression of one.
-	// */
-	// protected NumericExpression one;
-	//
-	// /**
-	// * The symbolic object of integer one.
-	// */
-	// protected IntObject oneObject;
 
 	/**
 	 * The output stream to be used for printing.
@@ -103,8 +93,8 @@ public abstract class CommonLibraryEnabler extends Library implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	protected CommonLibraryEnabler(CommonEnabler primaryEnabler, PrintStream output,
-			ModelFactory modelFactory) {
+	protected CommonLibraryEnabler(CommonEnabler primaryEnabler,
+			PrintStream output, ModelFactory modelFactory) {
 		super(primaryEnabler.evaluator().universe());
 		this.primaryEnabler = primaryEnabler;
 		this.transitionFactory = primaryEnabler.transitionFactory();
@@ -130,15 +120,16 @@ public abstract class CommonLibraryEnabler extends Library implements
 	}
 
 	@Override
-	public List<SimpleTransition> enabledTransitions(State state,
+	public List<SingleTransition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
 			int pid, int processIdentifier, Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException {
 		Statement transitionStatement;
-		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
+		ArrayList<SingleTransition> localTransitions = new ArrayList<>();
 
 		if (assignAtomicLock != null) {
-			StatementList statementList = new StatementList(assignAtomicLock);
+			StatementList statementList = modelFactory
+					.statmentList(assignAtomicLock);
 
 			statementList.add(call);
 			transitionStatement = statementList;

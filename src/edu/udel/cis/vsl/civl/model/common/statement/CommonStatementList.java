@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -25,7 +26,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class StatementList implements Statement {
+public class CommonStatementList implements StatementList {
 
 	/* *************************** Instance Fields ************************* */
 
@@ -39,7 +40,7 @@ public class StatementList implements Statement {
 	/**
 	 * Create an empty statement list.
 	 */
-	public StatementList() {
+	public CommonStatementList() {
 		statements = new ArrayList<>();
 	}
 
@@ -50,7 +51,7 @@ public class StatementList implements Statement {
 	 *            The list of statements to be used for the new StatementList
 	 *            object.
 	 */
-	public StatementList(ArrayList<Statement> stmts) {
+	public CommonStatementList(ArrayList<Statement> stmts) {
 		statements = stmts;
 	}
 
@@ -60,7 +61,7 @@ public class StatementList implements Statement {
 	 * @param statement
 	 *            The statement to be used to create the statement list.
 	 */
-	public StatementList(Statement statement) {
+	public CommonStatementList(Statement statement) {
 		statements = new ArrayList<>();
 		this.statements.add(statement);
 	}
@@ -73,7 +74,7 @@ public class StatementList implements Statement {
 	 * @param statement2
 	 *            The second statement in the list.
 	 */
-	public StatementList(Statement statement1, Statement statement2) {
+	public CommonStatementList(Statement statement1, Statement statement2) {
 		statements = new ArrayList<>(2);
 		this.statements.add(statement1);
 		this.statements.add(statement2);

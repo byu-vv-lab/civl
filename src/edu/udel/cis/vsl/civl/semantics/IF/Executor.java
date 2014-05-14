@@ -1,13 +1,13 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public interface Executor {
@@ -107,6 +107,6 @@ public interface Executor {
 	 * @param transition
 	 * @return
 	 */
-	State execute(State state, int pid, SimpleTransition transition)
+	State execute(State state, int pid, SingleTransition transition)
 			throws UnsatisfiablePathConditionException;
 }

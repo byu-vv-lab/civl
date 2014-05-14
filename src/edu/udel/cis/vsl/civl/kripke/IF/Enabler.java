@@ -7,8 +7,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.transition.Transition;
-import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 
 public interface Enabler extends
@@ -27,7 +25,7 @@ public interface Enabler extends
 	 */
 	Evaluation getSystemGuard(CIVLSource source, State state, int pid,
 			String library, String function, List<Expression> arguments);
-	
+
 	/**
 	 * Computes the guard of a statement. Since we have SystemGuardExpression
 	 * and WaitGuardExpression, we don't need to compute the guard for system

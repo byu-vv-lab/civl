@@ -10,19 +10,18 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.kripke.IF.CompoundTransition;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
+import edu.udel.cis.vsl.civl.kripke.IF.Transition;
+import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.transition.CompoundTransition;
-import edu.udel.cis.vsl.civl.transition.SimpleTransition;
-import edu.udel.cis.vsl.civl.transition.Step;
-import edu.udel.cis.vsl.civl.transition.Transition;
-import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 
 /**
@@ -66,14 +65,14 @@ public class CommonStateManager implements StateManager {
 		 * The current enabled transition of the current process. Not NULL only
 		 * when the process is allowed to execute more.
 		 */
-		SimpleTransition enabledTransition;
+		SingleTransition enabledTransition;
 
 		/**
 		 * Keep track of the number of incomplete atom blocks.
 		 */
 		int atomCount;
 
-		StateStatus(boolean possible, SimpleTransition transition,
+		StateStatus(boolean possible, SingleTransition transition,
 				int atomCount, EnabledStatus status) {
 			this.possibleToExecute = possible;
 			this.enabledTransition = transition;
@@ -167,7 +166,7 @@ public class CommonStateManager implements StateManager {
 	private boolean printUpdate = false;
 
 	/**
-	 * Number of calls to method {@link #nextState(State, Transition)}
+	 * Number of calls to method {@link #nextState(State, CommonTransition)}
 	 */
 	private int nextStateCalls = 0;
 
@@ -241,13 +240,13 @@ public class CommonStateManager implements StateManager {
 		boolean printTransitions = verbose || debug || showTransitions;
 		int oldMaxCanonicId = this.maxCanonicId;
 		int processIdentifier;
-		SimpleTransition firstTransition;
+		SingleTransition firstTransition;
 		State oldState = state;
 
-		assert transition instanceof SimpleTransition;
-		pid = ((SimpleTransition) transition).pid();
-		processIdentifier = ((SimpleTransition) transition).processIdentifier();
-		firstTransition = (SimpleTransition) transition;
+		assert transition instanceof SingleTransition;
+		pid = ((SingleTransition) transition).pid();
+		processIdentifier = ((SingleTransition) transition).processIdentifier();
+		firstTransition = (SingleTransition) transition;
 		if (this.guiMode)
 			this.compoundTransition = this.transitionFactory
 					.newCompoundTransition(pid, processIdentifier);
@@ -258,7 +257,7 @@ public class CommonStateManager implements StateManager {
 					processIdentifier, false);
 		}
 		if (this.guiMode) {
-			this.compoundTransition.addStep(new Step(oldState, state,
+			this.compoundTransition.addStep(new CommonStep(oldState, state,
 					firstTransition.statement()));
 		}
 		{
@@ -277,8 +276,8 @@ public class CommonStateManager implements StateManager {
 							processIdentifier, false);
 				}
 				if (this.guiMode) {
-					this.compoundTransition.addStep(new Step(oldState, state,
-							stateStatus.enabledTransition.statement()));
+					this.compoundTransition.addStep(new CommonStep(oldState,
+							state, stateStatus.enabledTransition.statement()));
 				}
 				oldState = state;
 				if (this.showStates)
@@ -364,7 +363,7 @@ public class CommonStateManager implements StateManager {
 	 */
 	private StateStatus possibleToExecuteMore(State state, int pid,
 			int atomCount) {
-		List<SimpleTransition> enabled;
+		List<SingleTransition> enabled;
 		ProcessState procState = state.getProcessState(pid);
 		Location pLocation;
 		boolean inAtomic = false;
@@ -456,7 +455,7 @@ public class CommonStateManager implements StateManager {
 	 *            execution of the statement.
 	 */
 	private void printStatement(State currentState, State newState,
-			SimpleTransition transition, AtomicKind atomicKind, int atomCount,
+			SingleTransition transition, AtomicKind atomicKind, int atomCount,
 			boolean atomicLockVarChanged) {
 		out.print(transition.statement().toStepString(atomicKind, atomCount,
 				atomicLockVarChanged));

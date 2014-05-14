@@ -7,6 +7,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Stack;
 
+import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
+import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -16,9 +19,6 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.transition.Transition;
-import edu.udel.cis.vsl.civl.transition.TransitionFactory;
-import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -34,8 +34,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  * @author Manchun Zheng (zmanchun)
  * @author Timothy K. Zirkel (zirkel)
  */
-public class ScopedEnabler extends CommonEnabler implements
-		EnablerIF<State, Transition, TransitionSequence> {
+public class ScopedEnabler extends CommonEnabler implements Enabler {
 
 	/* *************************** Instance Fields ************************* */
 

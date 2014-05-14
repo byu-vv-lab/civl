@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.transition;
+package edu.udel.cis.vsl.civl.kripke.IF;
 
 import java.util.LinkedList;
 

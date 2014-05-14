@@ -1,8 +1,9 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.transition;
+package edu.udel.cis.vsl.civl.kripke.common;
 
+import edu.udel.cis.vsl.civl.kripke.IF.Transition;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
@@ -22,13 +23,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
-public class Transition {
+public class CommonTransition implements Transition {
 
 	private BooleanExpression pathCondition;
 
 	private Model model;
 
-	public Transition() {
+	public CommonTransition() {
 
 	}
 
@@ -39,7 +40,7 @@ public class Transition {
 	 *            The path condition that should be used when executing the
 	 *            statement * transition.
 	 */
-	public Transition(BooleanExpression pathCondition) {
+	public CommonTransition(BooleanExpression pathCondition) {
 		this.pathCondition = pathCondition;
 	}
 

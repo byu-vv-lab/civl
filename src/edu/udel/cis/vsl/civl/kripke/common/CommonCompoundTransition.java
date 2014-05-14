@@ -1,7 +1,9 @@
-package edu.udel.cis.vsl.civl.transition;
+package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.util.ArrayList;
 
+import edu.udel.cis.vsl.civl.kripke.IF.CompoundTransition;
+import edu.udel.cis.vsl.civl.kripke.IF.Step;
 import edu.udel.cis.vsl.civl.state.IF.State;
 
 /**
@@ -20,12 +22,13 @@ import edu.udel.cis.vsl.civl.state.IF.State;
  * @author Manchun Zheng
  * 
  */
-public class CompoundTransition extends Transition {
+public class CommonCompoundTransition extends CommonTransition implements
+		CompoundTransition {
 	private int pid;
 	private int processIdentifier;
 	private ArrayList<Step> steps;
 
-	public CompoundTransition(int pid, int processIdentifier) {
+	public CommonCompoundTransition(int pid, int processIdentifier) {
 		this.pid = pid;
 		this.processIdentifier = processIdentifier;
 		this.steps = new ArrayList<>();

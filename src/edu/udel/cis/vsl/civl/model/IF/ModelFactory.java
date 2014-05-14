@@ -58,6 +58,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
@@ -1538,4 +1539,8 @@ public interface ModelFactory {
 	ProcnullExpression procnullExpression(CIVLSource source);
 
 	VariableExpression civlFilesystemVariableExpression();
+
+	StatementList statmentList(Statement stmt);
+
+	StatementList statmentList(Statement stmt1, Statement stmt2);
 }

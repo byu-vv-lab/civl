@@ -18,10 +18,11 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
-import edu.udel.cis.vsl.civl.library.common.civlc.LibcivlcExecutor;
-import edu.udel.cis.vsl.civl.library.common.stdio.LibstdioExecutor;
+//import edu.udel.cis.vsl.civl.library.common.civlc.LibcivlcExecutor;
+//import edu.udel.cis.vsl.civl.library.common.stdio.LibstdioExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -37,11 +38,11 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
@@ -50,7 +51,6 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -83,10 +83,10 @@ public class CommonExecutor implements Executor {
 
 	/* *************************** Instance Fields ************************* */
 
-	/**
-	 * The unique library executor for civlc.h.
-	 */
-	protected LibcivlcExecutor civlcExecutor;
+//	/**
+//	 * The unique library executor for civlc.h.
+//	 */
+//	protected LibcivlcExecutor civlcExecutor;
 
 	/**
 	 * Enable or disable printing. True by default.
@@ -129,10 +129,10 @@ public class CommonExecutor implements Executor {
 	/** The factory used to produce and manipulate model states. */
 	protected StateFactory stateFactory;
 
-	/**
-	 * The unique library executor for stdio.h.
-	 */
-	protected LibstdioExecutor stdioExecutor;
+//	/**
+//	 * The unique library executor for stdio.h.
+//	 */
+//	protected LibstdioExecutor stdioExecutor;
 
 	/** The symbolic universe used to manage all symbolic expressions. */
 	protected SymbolicUniverse universe;
@@ -164,9 +164,9 @@ public class CommonExecutor implements Executor {
 		this.err = err;
 		this.enablePrintf = enablePrintf;
 		this.statelessPrintf = statelessPrintf;
-		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
-				"civlc", this, this.output, this.err, this.enablePrintf,
-				this.statelessPrintf, this.modelFactory);
+//		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
+//				"civlc", this, this.output, this.err, this.enablePrintf,
+//				this.statelessPrintf, this.modelFactory);
 	}
 
 	/* ************************** Private methods ************************** */
@@ -1001,7 +1001,7 @@ public class CommonExecutor implements Executor {
 	}
 
 	@Override
-	public State execute(State state, int pid, SimpleTransition transition)
+	public State execute(State state, int pid, SingleTransition transition)
 			throws UnsatisfiablePathConditionException {
 		state = state.setPathCondition(transition.pathCondition());
 		return this.execute(state, pid, transition.statement());

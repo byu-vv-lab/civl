@@ -10,6 +10,10 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
+import edu.udel.cis.vsl.civl.kripke.IF.Transition;
+import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
+import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -19,18 +23,14 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.transition.SimpleTransition;
-import edu.udel.cis.vsl.civl.transition.Transition;
-import edu.udel.cis.vsl.civl.transition.TransitionFactory;
-import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -163,7 +163,7 @@ public abstract class CommonEnabler implements Enabler {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private List<SimpleTransition> getEnabledTransitionsOfSystemCall(
+	private List<SingleTransition> getEnabledTransitionsOfSystemCall(
 			CIVLSource source, State state, CallOrSpawnStatement call,
 			BooleanExpression pathCondition, int pid, int processIdentifier,
 			Statement assignAtomicLock)
@@ -314,10 +314,10 @@ public abstract class CommonEnabler implements Enabler {
 	 * @return the list of enabled transitions of the given process at the
 	 *         specified state
 	 */
-	ArrayList<SimpleTransition> enabledTransitionsOfProcess(State state, int pid) {
+	ArrayList<SingleTransition> enabledTransitionsOfProcess(State state, int pid) {
 		ProcessState p = state.getProcessState(pid);
 		Location pLocation = p.getLocation();
-		ArrayList<SimpleTransition> transitions = new ArrayList<>();
+		ArrayList<SingleTransition> transitions = new ArrayList<>();
 		Statement assignAtomicLock = null;
 		int numOutgoing;
 
@@ -362,10 +362,10 @@ public abstract class CommonEnabler implements Enabler {
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
 	 */
-	public List<SimpleTransition> enabledTransitionsOfStatement(State state,
-			Statement s, BooleanExpression pathCondition, int pid,
+	public List<SingleTransition> enabledTransitionsOfStatement(
+			State state, Statement s, BooleanExpression pathCondition, int pid,
 			Statement assignAtomicLock) {
-		ArrayList<SimpleTransition> localTransitions = new ArrayList<>();
+		ArrayList<SingleTransition> localTransitions = new ArrayList<>();
 		Statement transitionStatement = null;
 		int processIdentifier = state.getProcessState(pid).identifier();
 
@@ -409,8 +409,8 @@ public abstract class CommonEnabler implements Enabler {
 				}
 				if (transitionStatement != null) {
 					if (assignAtomicLock != null) {
-						StatementList statementList = new StatementList(
-								assignAtomicLock);
+						StatementList statementList = modelFactory
+								.statmentList(assignAtomicLock);
 
 						statementList.add(s);
 						transitionStatement = statementList;

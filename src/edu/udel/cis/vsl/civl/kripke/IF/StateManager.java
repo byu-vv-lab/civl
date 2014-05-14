@@ -1,19 +1,10 @@
 package edu.udel.cis.vsl.civl.kripke.IF;
 
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.transition.Transition;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
 
 public interface StateManager extends StateManagerIF<State, Transition> {
-
-	// /**
-	// * Set the field out.
-	// *
-	// * @param out
-	// * The output stream to be used.
-	// */
-	// void setOutputStream(PrintStream out);
 
 	/**
 	 * Set the field verbose.

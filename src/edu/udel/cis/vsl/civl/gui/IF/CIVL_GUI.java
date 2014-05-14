@@ -11,15 +11,16 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
+import edu.udel.cis.vsl.civl.kripke.IF.CompoundTransition;
+import edu.udel.cis.vsl.civl.kripke.IF.Step;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-import edu.udel.cis.vsl.civl.state.immutable.ImmutableDynamicScope;
-import edu.udel.cis.vsl.civl.transition.CompoundTransition;
-import edu.udel.cis.vsl.civl.transition.Step;
+//import edu.udel.cis.vsl.civl.state.immutable.ImmutableDynamicScope;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public class CIVL_GUI extends JFrame implements TreeSelectionListener {
@@ -162,11 +163,11 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 */
 	JScrollPane drawState(State state) {
 		int numDyscopes = state.numScopes();
-		ImmutableDynamicScope[] dyscopes = new ImmutableDynamicScope[numDyscopes];
+		DynamicScope[] dyscopes = new DynamicScope[numDyscopes];
 
 		// Create an array of dyscopes
 		for (int i = 0; i < state.numScopes(); i++) {
-			dyscopes[i] = (ImmutableDynamicScope) state.getScope(i);
+			dyscopes[i] = state.getScope(i);
 		}
 
 		// Make an array of nodes corresponding to the dyscopes of the state

@@ -9,12 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.common.CommonLibraryEnabler;
@@ -26,10 +27,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.common.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.transition.SimpleTransition;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -111,14 +110,14 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 	}
 
 	@Override
-	public List<SimpleTransition> enabledTransitions(State state,
+	public List<SingleTransition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
 			int pid, int processIdentifier, Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException {
 		String functionName = call.function().name().name();
 		CallOrSpawnStatement callWorker;
 		List<Expression> arguments = call.arguments();
-		List<SimpleTransition> localTransitions = new ArrayList<>();
+		List<SingleTransition> localTransitions = new ArrayList<>();
 		Statement transitionStatement;
 
 		switch (functionName) {
@@ -150,8 +149,8 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 				callWorker.setFunction(chooseIntWorkPointer);
 				callWorker.setLhs(call.lhs());
 				if (assignAtomicLock != null) {
-					transitionStatement = new StatementList(assignAtomicLock,
-							callWorker);
+					transitionStatement = modelFactory.statmentList(
+							assignAtomicLock, callWorker);
 				} else {
 					transitionStatement = callWorker;
 				}

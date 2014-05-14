@@ -77,6 +77,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
@@ -139,6 +140,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonLoopBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonMallocStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonStatementList;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonSwitchBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
@@ -1503,6 +1505,16 @@ public class CommonModelFactory implements ModelFactory {
 		if (guard != null)
 			result.setGuard(guard);
 		return result;
+	}
+
+	@Override
+	public StatementList statmentList(Statement stmt) {
+		return new CommonStatementList(stmt);
+	}
+
+	@Override
+	public StatementList statmentList(Statement stmt1, Statement stmt2) {
+		return new CommonStatementList(stmt1, stmt2);
 	}
 
 	@Override

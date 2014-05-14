@@ -7,7 +7,6 @@ import edu.udel.cis.vsl.civl.kripke.common.PointeredEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.transition.TransitionFactory;
 
 public class Kripkes {
 	public static Enabler newEnabler(TransitionFactory transitionFactory,

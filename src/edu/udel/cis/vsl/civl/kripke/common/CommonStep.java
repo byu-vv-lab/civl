@@ -1,5 +1,6 @@
-package edu.udel.cis.vsl.civl.transition;
+package edu.udel.cis.vsl.civl.kripke.common;
 
+import edu.udel.cis.vsl.civl.kripke.IF.Step;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.IF.State;
 
@@ -9,12 +10,12 @@ import edu.udel.cis.vsl.civl.state.IF.State;
  * @author Manchun Zheng
  * 
  */
-public class Step {
+public class CommonStep implements Step {
 	private State start;
 	private State target;
 	private Statement statement;
 
-	public Step(State start, State target, Statement statement) {
+	public CommonStep(State start, State target, Statement statement) {
 		this.start = start;
 		this.target = target;
 		this.statement = statement;

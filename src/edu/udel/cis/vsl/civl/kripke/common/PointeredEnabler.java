@@ -2,14 +2,14 @@ package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.util.ArrayList;
 
+import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
+import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.transition.Transition;
-import edu.udel.cis.vsl.civl.transition.TransitionFactory;
-import edu.udel.cis.vsl.civl.transition.TransitionSequence;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 
 /**
@@ -19,8 +19,7 @@ import edu.udel.cis.vsl.gmc.EnablerIF;
  * 
  * @author Manchun Zheng (zmanchun)
  */
-public class PointeredEnabler extends CommonEnabler implements
-		EnablerIF<State, Transition, TransitionSequence> {
+public class PointeredEnabler extends CommonEnabler implements Enabler {
 
 	/* ***************************** Constructors ************************** */
 
@@ -76,7 +75,7 @@ public class PointeredEnabler extends CommonEnabler implements
 				}
 				debugOut.println();
 				if (debugging || showAmpleSetWtStates)
-//					state.print(debugOut);
+					// state.print(debugOut);
 					this.stateFactory.printState(debugOut, state);
 			}
 		}

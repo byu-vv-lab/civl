@@ -1,8 +1,10 @@
 /**
  * 
  */
-package edu.udel.cis.vsl.civl.transition;
+package edu.udel.cis.vsl.civl.kripke.IF;
 
+import edu.udel.cis.vsl.civl.kripke.common.CommonCompoundTransition;
+import edu.udel.cis.vsl.civl.kripke.common.CommonSingleTransition;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -37,11 +39,16 @@ public class TransitionFactory {
 	 * @return A new simple transition with the given path condition and
 	 *         statement.
 	 */
-	public SimpleTransition newSimpleTransition(
+	public CommonSingleTransition newSimpleTransition(
 			BooleanExpression pathCondition, int pid, int processIdentifier,
 			Statement statement) {
-		return new SimpleTransition(pathCondition, pid, processIdentifier,
-				statement);
+		return new CommonSingleTransition(pathCondition, pid,
+				processIdentifier, statement);
+	}
+
+	public CompoundTransition newCompoundTransition(int pid,
+			int processIdentifier) {
+		return new CommonCompoundTransition(pid, processIdentifier);
 	}
 
 	/**
@@ -56,8 +63,8 @@ public class TransitionFactory {
 		return new TransitionSequence(state);
 	}
 
-	public CompoundTransition newCompoundTransition(int pid,
-			int processIdentifier) {
-		return new CompoundTransition(pid, processIdentifier);
+	public CompoundTransition[] newCompoundTransitionArray(int size) {
+		return new CommonCompoundTransition[size];
 	}
+
 }
