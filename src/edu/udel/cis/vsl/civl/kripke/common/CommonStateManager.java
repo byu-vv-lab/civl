@@ -243,8 +243,6 @@ public class CommonStateManager implements StateManager {
 		pid = ((SimpleTransition) transition).pid();
 		processIdentifier = ((SimpleTransition) transition).processIdentifier();
 		firstTransition = (SimpleTransition) transition;
-		// procState = state.getProcessState(pid);
-		// currentLocation = procState.getLocation();
 		if (this.guiMode)
 			this.compoundTransition = new CompoundTransition(pid,
 					processIdentifier);

@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.transform.IF;
+package edu.udel.cis.vsl.civl.transform.common;
 
 import java.util.List;
 
@@ -8,11 +8,18 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 
+/**
+ * 
+ * @author zmanchun
+ *
+ */
 public abstract class CIVLBaseTransformer extends BaseTransformer {
 
 	protected List<String> inputVariableNames;
 
 	protected ASTBuilder astBuilder;
+	
+	protected boolean debug;
 
 	protected CIVLBaseTransformer(String code, String longName,
 			String shortDescription, ASTFactory astFactory) {
@@ -31,11 +38,11 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 				nodeFactory.newIdentifierNode(source, name));
 	}
 
-	protected void setInputVars(List<String> inputVars) {
+	public void setInputVars(List<String> inputVars) {
 		this.inputVariableNames = inputVars;
 	}
 
-	protected void setASTBuilder(ASTBuilder astBuilder) {
+	public void setASTBuilder(ASTBuilder astBuilder) {
 		this.astBuilder = astBuilder;
 	}
 

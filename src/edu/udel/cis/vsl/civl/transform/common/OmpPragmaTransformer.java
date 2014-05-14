@@ -19,7 +19,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.transform.IF.CIVLBaseTransformer;
 
 public class OmpPragmaTransformer extends CIVLBaseTransformer {
 

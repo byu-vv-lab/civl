@@ -25,7 +25,6 @@ import edu.udel.cis.vsl.abc.err.IF.ABCUnsupportedException;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.StringLiteral;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.transform.IF.CIVLBaseTransformer;
 
 /**
  * The IO transformer transforms<br>
