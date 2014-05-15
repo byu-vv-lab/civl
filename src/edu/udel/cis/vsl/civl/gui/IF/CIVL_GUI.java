@@ -13,21 +13,24 @@ import javax.swing.tree.TreeSelectionModel;
 
 import edu.udel.cis.vsl.civl.kripke.IF.CompoundTransition;
 import edu.udel.cis.vsl.civl.kripke.IF.Step;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
-//import edu.udel.cis.vsl.civl.state.immutable.ImmutableDynamicScope;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
+/**
+ * This class is the graphical user interface for replaying attempted
+ * verifications of CIVL-C programs
+ * 
+ * @author Ben Handanyan (bhandy)
+ * 
+ */
 public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
-	/* *************************** Fields *************************** */
-
-	private StateFactory stateFactory;
+	/* ************************ Final Fields ************************ */
 
 	/**
 	 * 
@@ -39,7 +42,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * root of the tree. Used by the selection listener so that when clicked the
 	 * tree will collapse the children of the root node
 	 */
-	final int ROOT_NODE = 0;
+	private static final int ROOT_NODE = 0;
 
 	/**
 	 * Only used for TransitionNode (see Private Classes) to indicate that it is
@@ -47,7 +50,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * selection listener so that when clicked it will display the transition's
 	 * tree on the right side of the GUI
 	 */
-	final int TRANSITION_NODE = 1;
+	private static final int TRANSITION_NODE = 1;
 
 	/**
 	 * Only used for StateNode (see Private Classes) to indicate that it is a
@@ -55,15 +58,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * that when clicked it will display the state tree on the right side of the
 	 * GUI
 	 */
-	final int STATE_NODE = 2;
-
-	/**
-	 * Only used for StatementNode (see Private Classes) to indicate that it is
-	 * a node representing a statement. It is used by the three selection
-	 * listener so that when clicked it will display the statement as a tree on
-	 * the right side of the GUI
-	 */
-	final int STATEMENT_NODE = 3;
+	private static final int STATE_NODE = 2;
 
 	/**
 	 * Only used for StepNode (see Private Classes) to indicate that it is a
@@ -71,56 +66,49 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * that when clicked it will display the target state of the step as a tree
 	 * on the right side of the GUI
 	 */
-	final int STEP_NODE = 4;
+	private static final int STEP_NODE = 3;
+
+	/* *************************** Fields *************************** */
 
 	/**
 	 * A tree that represents the transitions of the execution. It is drawn once
 	 * when the GUI is created
 	 */
-	JTree transitionTree;
+	private JTree transitionTree;
 
 	/**
 	 * A tree that represents the selected state. States are drawn when the user
 	 * selects a StateNode from the transitionTree on the left side of the GUI
 	 */
-	JTree stateTree;
-
-	/**
-	 * A tree that represents the selected transition. It is drawn when a
-	 * TransitionNode is selected from the transitionTree on the left side of
-	 * the GUI
-	 */
-	JTree singleTransTree;
-
-	/**
-	 * A tree that represents the selected statement. It is drawn when a
-	 * StatementNode is selected from the transitionTree on the left side of the
-	 * GUI
-	 */
-	JTree statementTree;
+	private JTree stateTree;
 
 	/**
 	 * The view currently displayed on the left side of the GUI. Only the
 	 * transitionTree is ever drawn as the leftView
 	 */
-	JScrollPane leftView;
+	private JScrollPane leftView;
 
 	/**
 	 * The view currently displayed on the right side of the GUI. This can be
 	 * one of the following: stateTree, statementTree, or singleTransTree
 	 */
-	JScrollPane rightView;
+	private JScrollPane rightView;
 
 	/**
 	 * The split pane that is added to the frame. It contains the leftView and
 	 * the rightView
 	 */
-	JSplitPane split;
+	private JSplitPane split;
 
 	/**
 	 * The list of transitions of the execution
 	 */
-	CompoundTransition[] transitions;
+	private CompoundTransition[] transitions;
+
+	/**
+	 * The stateFactory of the current state
+	 */
+	private StateFactory stateFactory;
 
 	/* *************************** Constructor *************************** */
 
@@ -145,7 +133,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	/**
 	 * Initialize the components of the CIVL GUI
 	 */
-	void initComponents() {
+	private void initComponents() {
 		leftView = drawTransitions();
 		rightView = drawState(transitions[0].getStep(0).start());
 		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftView, rightView);
@@ -161,51 +149,50 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * @return JScrollPane rightView with stateTree as its component with the
 	 *         new state drawn
 	 */
-	JScrollPane drawState(State state) {
+	private JScrollPane drawState(State state) {
+		JTree oldTree = stateTree;
 		int numDyscopes = state.numScopes();
 		DynamicScope[] dyscopes = new DynamicScope[numDyscopes];
 
 		// Create an array of dyscopes
-		for (int i = 0; i < state.numScopes(); i++) {
-			dyscopes[i] = state.getScope(i);
+		for (int i = 0; i < numDyscopes; i++) {
+			dyscopes[i] = (DynamicScope) state.getScope(i);
 		}
 
 		// Make an array of nodes corresponding to the dyscopes of the state
-		DefaultMutableTreeNode[] treeNodes = new DefaultMutableTreeNode[dyscopes.length];
+		DyscopeNode[] treeNodes = new DyscopeNode[dyscopes.length];
 		for (int i = 0; i < dyscopes.length; i++) {
-			treeNodes[i] = new DefaultMutableTreeNode("d"
-					+ dyscopes[i].identifier() + " (id=" + i + ", static="
-					+ dyscopes[i].lexicalScope().id() + ")");
+			treeNodes[i] = new DyscopeNode("d" + dyscopes[i].identifier()
+					+ " (static = " + dyscopes[i].lexicalScope().id() + ")");
 		}
 
 		// For each dyscope
 		// This comes first because Variables should be listed
 		// before the current dyscopes children dyscopes
 		for (int i = 0; i < dyscopes.length; i++) {
+			if (dyscopes[i].numberOfValues() > 0) {
+				// Create a Variables node and add it to the dyscope's node
+				DefaultMutableTreeNode variables = new DefaultMutableTreeNode(
+						"Variables");
 
-			// Create a Variables node and add it to the dyscope's node
-			DefaultMutableTreeNode variables = new DefaultMutableTreeNode(
-					"Variables");
-			treeNodes[i].add(variables);
+				// Keep track of which variable we're on with vid
+				int vid = 0;
 
-			// Keep track of which variable we're on with vid
-			int vid = 0;
-
-			// For each variable value of the dyscope
-			for (SymbolicExpression s : dyscopes[i].getValues()) {
-				Variable var = dyscopes[i].lexicalScope().variable(vid);
-				String variableName = var.name().name();
-				DefaultMutableTreeNode variableNode = new DefaultMutableTreeNode(
-						variableName
-								+ " = "
-								+ stateFactory.symbolicExpressionToString(
-										var.getSource(), state, s));
-				if (!(variableName == "__heap" && s.isNull())) {
-					variables.add(variableNode);
-					// vid++; this statement should be moved to be outside of
-					// the if block.
+				// For each variable value of the dyscope
+				for (SymbolicExpression s : dyscopes[i].getValues()) {
+					Variable var = dyscopes[i].lexicalScope().variable(vid);
+					String variableName = var.name().name();
+					DefaultMutableTreeNode variableNode = new DefaultMutableTreeNode(
+							variableName
+									+ " = "
+									+ stateFactory.symbolicExpressionToString(
+											var.getSource(), state, s));
+					if (!(variableName == "__heap" && s.isNull())) {
+						variables.add(variableNode);
+					}
+					vid++;
 				}
-				vid++;
+				treeNodes[i].add(variables);
 			}
 		}
 
@@ -213,11 +200,36 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// This comes second so that the child dyscopes are listed under
 		// the current dyscopes variables
 		for (int i = 0; i < dyscopes.length; i++) {
+
 			// If the dyscope isn't the root dyscope (ie parentID != -1) add
 			// it's node to the node corresponding to it's parent dyscope
 			int parentID = state.getParentId(i);
 			if (parentID != -1) {
-				treeNodes[parentID].add(treeNodes[i]);
+				DefaultMutableTreeNode children;
+
+				// If no children nodes have been added yet
+				if (treeNodes[parentID].getChildren() == null) {
+					children = new DefaultMutableTreeNode("Child Dyscopes");
+
+					// Set the children node as the parent's child dyscope node
+					treeNodes[parentID].setChildNode(children);
+
+					// Add the current node to the parent dyscopes children
+					// dyscopes node
+					treeNodes[parentID].getChildren().add(treeNodes[i]);
+
+					// Add the children dyscopes node to the parent node
+					treeNodes[parentID].add(treeNodes[parentID].getChildren());
+				}
+				// Children nodes have already been created
+				else {
+					// Set the children to be the child dyscope node
+					children = treeNodes[parentID].getChildren();
+
+					// Add the current node to the parent dyscopes children
+					// dyscopes node
+					treeNodes[parentID].getChildren().add(treeNodes[i]);
+				}
 			}
 		}
 
@@ -228,17 +240,16 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// The process states of the state
 		DefaultMutableTreeNode procs = new DefaultMutableTreeNode(
 				"Process States");
-		DefaultMutableTreeNode procNode;
-		String output = "";
 
 		// Add the process states
+		int stackEntryCount = 0;
 		for (ProcessState p : state.getProcessStates()) {
-			// p.identifier()
 			for (StackEntry s : p.getStackEntries()) {
-				output += s.toString() + "\n";
+				DefaultMutableTreeNode stackEntryNode = new DefaultMutableTreeNode(
+						"p" + p.identifier() + ": " + s.toString());
+				procs.add(stackEntryNode);
+				stackEntryCount++;
 			}
-			procNode = new DefaultMutableTreeNode(output);
-			procs.add(procNode);
 		}
 
 		// Create the root node of the entire tree
@@ -257,17 +268,38 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// Add the dyscopes to the root of the tree
 		top.add(dy);
 
-		// Add the process states to the root of the tree
-		top.add(procs);
+		// Add the process states to the root of the tree only if there are
+		// stack entries to display
+		if (stackEntryCount > 0)
+			top.add(procs);
 
 		// Make the stateTree a JTree with the top as the root
 		stateTree = new JTree(top);
 		stateTree.getSelectionModel().setSelectionMode(
 				TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-		// Expand all nodes by default
-		for (int i = 0; i < stateTree.getRowCount(); i++) {
-			stateTree.expandRow(i);
+		final int rowCount = stateTree.getRowCount();
+		// Expand all nodes by default if no oldTree
+		if (oldTree == null) {
+			for (int i = 0; i < rowCount; i++) {
+				stateTree.expandRow(i);
+			}
+		}
+		// If there was a tree previously drawn, draw the state with the same
+		// nodes expanded and collapsed as the oldTree
+		else {
+			final int oldRowCount = oldTree.getRowCount();
+			for (int i = 0; i < rowCount; i++) {
+				if (i < oldRowCount) {
+					TreeUtil.restoreExpanstionState(stateTree, i,
+							TreeUtil.getExpansionState(oldTree, i));
+				} else {
+					// We have reached nodes that were not in the oldTree
+					// These nodes will be collapsed by default, so break the
+					// loop over the nodes
+					break;
+				}
+			}
 		}
 
 		// Listen for the root node to be selected
@@ -283,12 +315,12 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 						return;
 					if (n.getID() == ROOT_NODE) {
 						if (!n.isCollapsed()) {
-							for (int i = stateTree.getRowCount() - 1; i > 0; i--) {
+							for (int i = rowCount - 1; i > 0; i--) {
 								stateTree.collapseRow(i);
 							}
 							n.collapsed = true;
 						} else {
-							for (int i = 0; i < stateTree.getRowCount(); i++) {
+							for (int i = 0; i < rowCount; i++) {
 								stateTree.expandRow(i);
 							}
 							n.collapsed = false;
@@ -297,9 +329,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				} catch (Exception ex) {
 					return;
 				}
-
 			}
-
 		});
 
 		// Create the view of the tree and set its preferred size
@@ -315,7 +345,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * @return JScrollPane leftView with transitionTree as its component with
 	 *         the new state drawn
 	 */
-	JScrollPane drawTransitions() {
+	private JScrollPane drawTransitions() {
 		// The root of the tree
 		GUINODE top = new GUINODE("Transitions");
 
@@ -323,10 +353,16 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 		// For each transition
 		for (int i = 0; i < transitions.length; i++) {
+			if (transitions[i].getNumOfSteps() < 1) {
+				break;
+			}
+
+			// The name of the transition
 			StringBuffer transitionName = new StringBuffer();
 			transitionName.append("p" + transitions[i].processIdentifier()
 					+ ": ");
 
+			// Add step information to the name of the transition
 			for (Step s : transitions[i].getSteps()) {
 				if (transitionName.length() < 50) {
 					transitionName.append(s.statement().toString() + "; ");
@@ -335,26 +371,21 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					break;
 				}
 			}
+
+			// Create the transition node
 			TransitionNode transitionNode = new TransitionNode(
-					transitionName.toString(), transitions[i], i);
+					transitionName.toString(), transitions[i]);
 
 			// What step you're on
 			int index = 0;
 
 			// For each step in the transition
 			for (Step s : transitions[i].getSteps()) {
-				StepNode stepNode = new StepNode("Step " + index + ": "
-						+ s.toString(), s);
+				StepNode stepNode = new StepNode(index + ": "
+						+ s.statement().toString(), s);
 
 				// Add the step to the transition
 				transitionNode.add(stepNode);
-
-				// The executed statement
-				StatementNode statementNode = new StatementNode(s.statement()
-						.toString(), s.statement());
-
-				// Add in the correct order
-				stepNode.add(statementNode);
 
 				// Move to next step
 				index++;
@@ -378,54 +409,14 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		return leftView;
 	}
 
-	/**
-	 * Draws the Statement object to a JTree of nodes, and then makes a pane
-	 * with that tree and returns the view of that tree
-	 * 
-	 * @param statement
-	 *            The Statement object that is drawn
-	 * @return JScrollPane rightView with statementTree as its component with
-	 *         the new state drawn
-	 */
-
-	JScrollPane drawStatement(Statement statement) {
-		DefaultMutableTreeNode top = new DefaultMutableTreeNode("Statement");
-
-		// Add the source location summary
-		top.add(new DefaultMutableTreeNode(statement.getSource().getSummary()));
-
-		// Add the source location
-		top.add(new DefaultMutableTreeNode("Source:" + statement.source().id()));
-
-		// Add the guard
-		top.add(new DefaultMutableTreeNode("Guard: "
-				+ statement.guard().toString()));
-
-		// Add the target location
-		top.add(new DefaultMutableTreeNode("Target: " + statement.target().id()));
-
-		// Make the statement treee
-		statementTree = new JTree(top);
-		statementTree.getSelectionModel().setSelectionMode(
-				TreeSelectionModel.SINGLE_TREE_SELECTION);
-
-		// Create the view of the tree and set its preferred size
-		rightView = new JScrollPane(statementTree);
-		rightView.setPreferredSize(new Dimension(600, 500));
-		return rightView;
-	}
-
 	/* *************************** Private Classes *************************** */
 
 	/**
 	 * A GUINODE will be used only for the root nodes of any tree in this GUI.
 	 * The reason a GUINODE is used is to be able to collapse all nodes when the
 	 * root node is clicked
-	 * 
-	 * @author Ben
-	 * 
 	 */
-	class GUINODE extends DefaultMutableTreeNode {
+	private class GUINODE extends DefaultMutableTreeNode {
 		static final long serialVersionUID = 1L;
 		final int id = ROOT_NODE;
 		boolean collapsed;
@@ -446,42 +437,48 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	}
 
 	/**
-	 * Node corresponding to a transition.
-	 * 
-	 * @author Ben
-	 * 
+	 * A DyscopeNode is a node in the stateTree that keeps track of the children
+	 * of the current dyscope. It is used so that all children of the current
+	 * dyscope can be added to a folder called children dyscopes within this
+	 * dyscope in the tree representation of a state
 	 */
-	class TransitionNode extends GUINODE {
+	private class DyscopeNode extends DefaultMutableTreeNode {
+		private static final long serialVersionUID = 1L;
+		DefaultMutableTreeNode children;
+
+		public DyscopeNode(String name) {
+			super(name);
+		}
+
+		void setChildNode(DefaultMutableTreeNode n) {
+			children = n;
+		}
+
+		DefaultMutableTreeNode getChildren() {
+			return children;
+		}
+	}
+
+	/**
+	 * Node corresponding to a transition.
+	 */
+	private class TransitionNode extends GUINODE {
 		static final long serialVersionUID = 1L;
 		final int id = TRANSITION_NODE;
 		CompoundTransition transition;
-		int num;
 
-		TransitionNode(String name, CompoundTransition t, int num) {
+		TransitionNode(String name, CompoundTransition t) {
 			super(name);
 			transition = t;
-			this.num = num;
-		}
-
-		CompoundTransition getTransition() {
-			return transition;
 		}
 
 		int getID() {
 			return id;
 		}
-
-		int getNum() {
-			return num;
-		}
-
 	}
 
 	/**
 	 * Node corresponding to a State
-	 * 
-	 * @author Ben
-	 * 
 	 */
 	private class StateNode extends GUINODE {
 		static final long serialVersionUID = 1L;
@@ -506,10 +503,8 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 	/**
 	 * Node corresponding to a Step
-	 * 
-	 * @author Ben
 	 */
-	class StepNode extends GUINODE {
+	private class StepNode extends GUINODE {
 		static final long serialVersionUID = 1L;
 		final int id = STEP_NODE;
 		Step step;
@@ -529,33 +524,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 	}
 
-	/**
-	 * Node corresponding to a Statement
-	 * 
-	 * @author Ben
-	 * 
-	 */
-	class StatementNode extends GUINODE {
-		static final long serialVersionUID = 1L;
-		final int id = STATEMENT_NODE;
-		Statement statement;
-
-		StatementNode(String name, Statement s) {
-			super(name);
-			statement = s;
-		}
-
-		Statement getStatement() {
-			return statement;
-		}
-
-		int getID() {
-			return id;
-		}
-
-	}
-
-	/* ***************** TreeSelectionListener Methods ***************** */
+	/* ***************** TreeSelectionListener Method ***************** */
 
 	@Override
 	public void valueChanged(TreeSelectionEvent e) {
@@ -568,13 +537,14 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 			// If node is a root node collapse all of the roots children
 			if (n.getID() == ROOT_NODE) {
+				final int transitionRowCount = transitionTree.getRowCount();
 				if (!n.isCollapsed()) {
-					for (int i = transitionTree.getRowCount() - 1; i > 0; i--) {
+					for (int i = transitionRowCount - 1; i > 0; i--) {
 						transitionTree.collapseRow(i);
 					}
 					n.collapsed = true;
 				} else {
-					for (int i = 0; i < transitionTree.getRowCount(); i++) {
+					for (int i = 0; i < transitionRowCount; i++) {
 						transitionTree.expandRow(i);
 					}
 					n.collapsed = false;
@@ -586,12 +556,14 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 			else if (n.getID() == TRANSITION_NODE) {
 				try {
 					TransitionNode t = (TransitionNode) n;
-					split.remove(split.getRightComponent());
+					if (split.getRightComponent() != null) {
+						split.remove(split.getRightComponent());
+					}
 					rightView = drawState(t.transition.getStep(
 							t.transition.getNumOfSteps() - 1).target());
 					split.setRightComponent(rightView);
 				} catch (Exception tranEX) {
-					tranEX.printStackTrace();
+					return;
 				}
 			}
 
@@ -600,11 +572,13 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 			else if (n.getID() == STATE_NODE) {
 				try {
 					StateNode s = (StateNode) n;
-					split.remove(split.getRightComponent());
+					if (split.getRightComponent() != null) {
+						split.remove(split.getRightComponent());
+					}
 					rightView = drawState(s.getState());
 					split.setRightComponent(rightView);
 				} catch (Exception stateEX) {
-					stateEX.printStackTrace();
+					return;
 				}
 			}
 
@@ -613,24 +587,13 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 			else if (n.getID() == STEP_NODE) {
 				try {
 					StepNode s = (StepNode) n;
-					split.remove(split.getRightComponent());
+					if (split.getRightComponent() != null) {
+						split.remove(split.getRightComponent());
+					}
 					rightView = drawState(s.getStep().target());
 					split.setRightComponent(rightView);
 				} catch (Exception stepEX) {
 					return;
-				}
-			}
-
-			// If node is a statement node draw the statement to the right side
-			// of the GUI
-			else if (n.getID() == STATEMENT_NODE) {
-				try {
-					StatementNode s = (StatementNode) n;
-					split.remove(split.getRightComponent());
-					rightView = drawStatement(s.getStatement());
-					split.setRightComponent(rightView);
-				} catch (Exception statementEX) {
-					statementEX.printStackTrace();
 				}
 			}
 		}
