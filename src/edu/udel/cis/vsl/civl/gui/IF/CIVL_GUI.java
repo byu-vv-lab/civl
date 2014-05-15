@@ -13,6 +13,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 import edu.udel.cis.vsl.civl.kripke.IF.CompoundTransition;
 import edu.udel.cis.vsl.civl.kripke.IF.Step;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -243,12 +244,16 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 		// Add the process states
 		for (ProcessState p : state.getProcessStates()) {
-			DefaultMutableTreeNode proc = new DefaultMutableTreeNode("p" + p.identifier() + " (id=" + p.getPid() + ")");
-			for (StackEntry s : p.getStackEntries()) {
-				DefaultMutableTreeNode stackEntryNode = new DefaultMutableTreeNode(s.toString());
-				proc.add(stackEntryNode);
+			if (p != null) {
+				DefaultMutableTreeNode proc = new DefaultMutableTreeNode("p"
+						+ p.identifier() + " (id=" + p.getPid() + ")");
+				for (StackEntry s : p.getStackEntries()) {
+					DefaultMutableTreeNode stackEntryNode = new DefaultMutableTreeNode(
+							s.toString());
+					proc.add(stackEntryNode);
+				}
+				procs.add(proc);
 			}
-			procs.add(proc);
 		}
 
 		// Create the root node of the entire tree
@@ -276,19 +281,17 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		stateTree.getSelectionModel().setSelectionMode(
 				TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-		final int rowCount = stateTree.getRowCount();
 		// Expand all nodes by default if no oldTree
 		if (oldTree == null) {
-			for (int i = 0; i < rowCount; i++) {
+			for (int i = 0; i < stateTree.getRowCount(); i++) {
 				stateTree.expandRow(i);
 			}
 		}
 		// If there was a tree previously drawn, draw the state with the same
 		// nodes expanded and collapsed as the oldTree
 		else {
-			final int oldRowCount = oldTree.getRowCount();
-			for (int i = 0; i < rowCount; i++) {
-				if (i < oldRowCount) {
+			for (int i = 0; i < stateTree.getRowCount(); i++) {
+				if (i < oldTree.getRowCount()) {
 					TreeUtil.restoreExpanstionState(stateTree, i,
 							TreeUtil.getExpansionState(oldTree, i));
 				} else {
@@ -313,12 +316,12 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 						return;
 					if (n.getID() == ROOT_NODE) {
 						if (!n.isCollapsed()) {
-							for (int i = rowCount - 1; i > 0; i--) {
+							for (int i = stateTree.getRowCount() - 1; i > 0; i--) {
 								stateTree.collapseRow(i);
 							}
 							n.collapsed = true;
 						} else {
-							for (int i = 0; i < rowCount; i++) {
+							for (int i = 0; i < stateTree.getRowCount(); i++) {
 								stateTree.expandRow(i);
 							}
 							n.collapsed = false;
@@ -374,19 +377,24 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 			TransitionNode transitionNode = new TransitionNode(
 					transitionName.toString(), transitions[i]);
 
-			// What step you're on
-			int index = 0;
-
 			// For each step in the transition
 			for (Step s : transitions[i].getSteps()) {
-				StepNode stepNode = new StepNode(index + ": "
-						+ s.statement().toString(), s);
+				Statement stmt = s.statement();
 
+				boolean targetIsNull = false;
+				if (stmt.target() == null)
+					targetIsNull = true;
+
+				StepNode stepNode;
+				if (!targetIsNull) {
+					stepNode = new StepNode(stmt.source().id() + "->"
+							+ stmt.target().id() + ": " + stmt.toString(), s);
+				} else {
+					stepNode = new StepNode(stmt.source().id() + "->" + "RET"
+							+ ": " + stmt.toString(), s);
+				}
 				// Add the step to the transition
 				transitionNode.add(stepNode);
-
-				// Move to next step
-				index++;
 			}
 
 			// Add transition to the root node
@@ -535,17 +543,20 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 			// If node is a root node collapse all of the roots children
 			if (n.getID() == ROOT_NODE) {
-				final int transitionRowCount = transitionTree.getRowCount();
-				if (!n.isCollapsed()) {
-					for (int i = transitionRowCount - 1; i > 0; i--) {
-						transitionTree.collapseRow(i);
+				try {
+					if (!n.isCollapsed()) {
+						for (int i = transitionTree.getRowCount() - 1; i > 0; i--) {
+							transitionTree.collapseRow(i);
+						}
+						n.collapsed = true;
+					} else {
+						for (int i = 0; i < transitionTree.getRowCount(); i++) {
+							transitionTree.expandRow(i);
+						}
+						n.collapsed = false;
 					}
-					n.collapsed = true;
-				} else {
-					for (int i = 0; i < transitionRowCount; i++) {
-						transitionTree.expandRow(i);
-					}
-					n.collapsed = false;
+				} catch (Exception rootEX) {
+					rootEX.printStackTrace();
 				}
 			}
 
@@ -561,7 +572,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 							t.transition.getNumOfSteps() - 1).target());
 					split.setRightComponent(rightView);
 				} catch (Exception tranEX) {
-					return;
+					tranEX.printStackTrace();
 				}
 			}
 
@@ -576,7 +587,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					rightView = drawState(s.getState());
 					split.setRightComponent(rightView);
 				} catch (Exception stateEX) {
-					return;
+					stateEX.printStackTrace();
 				}
 			}
 
@@ -591,7 +602,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					rightView = drawState(s.getStep().target());
 					split.setRightComponent(rightView);
 				} catch (Exception stepEX) {
-					return;
+					stepEX.printStackTrace();
 				}
 			}
 		}
@@ -599,7 +610,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// If the node wasn't a GUINODE (or a node extending from GUINODE)
 		// Do nothing
 		catch (Exception ex) {
-			return;
+			ex.printStackTrace();
 		}
 	}
 }
