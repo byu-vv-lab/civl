@@ -28,7 +28,7 @@ public class TreeUtil {
 	 * @param tree
 	 * 			The JTree
 	 * @param row
-	 * 			The row
+	 * 			The row in the tree
 	 * @return String
 	 */
 	public static String getExpansionState(JTree tree, int row) {
@@ -47,10 +47,14 @@ public class TreeUtil {
 	}
 
 	/**
-	 * Restore the expansion 
+	 * Restore the expansion state of a node in a JTree
+	 * 
 	 * @param tree
+	 * 			The JTree
 	 * @param row
+	 * 		The row in the tree
 	 * @param expansionState
+	 * 		The expansion state that you wish to restore
 	 */
 	public static void restoreExpanstionState(JTree tree, int row,
 			String expansionState) {
