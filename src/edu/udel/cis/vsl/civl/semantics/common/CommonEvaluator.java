@@ -1,26 +1,23 @@
 package edu.udel.cis.vsl.civl.semantics.common;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.IF.CIVLException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
-import edu.udel.cis.vsl.civl.log.IF.CIVLLogEntry;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -79,23 +76,19 @@ import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
-import edu.udel.cis.vsl.gmc.ErrorLog;
-import edu.udel.cis.vsl.gmc.GMCConfiguration;
-import edu.udel.cis.vsl.sarl.IF.ModelResult;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.ValidityResult;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.OffsetReference;
@@ -142,22 +135,12 @@ public class CommonEvaluator implements Evaluator {
 	 * (possibly nested) quantified expressions. LinkedList is used instead of
 	 * Stack because of its more intuitive iteration order.
 	 */
-	private LinkedList<SymbolicConstant> boundVariables = new LinkedList<SymbolicConstant>();
+	private LinkedList<SymbolicConstant> boundVariables = new LinkedList<>();
 
 	/**
 	 * The symbolic bundle type.
 	 */
 	private SymbolicUnionType bundleType;
-
-	/**
-	 * The gmc configuration.
-	 */
-	private GMCConfiguration config;
-
-	/**
-	 * The symbolic dynamic type.
-	 */
-	private SymbolicTupleType dynamicType;
 
 	private SymbolicType gcommType;
 
@@ -172,11 +155,6 @@ public class CommonEvaluator implements Evaluator {
 	 * TODO ????
 	 */
 	private ReferenceExpression identityReference;
-
-	/**
-	 * The error logging facility.
-	 */
-	private ErrorLog log;
 
 	/**
 	 * The unique model factory used in the system.
@@ -221,11 +199,6 @@ public class CommonEvaluator implements Evaluator {
 	private SymbolicTupleType functionPointerType;
 
 	/**
-	 * TODO ???
-	 */
-	private Map<SymbolicType, NumericExpression> sizeofDynamicMap = new HashMap<>();
-
-	/**
 	 * An uninterpreted function used to evaluate "sizeof" on a type. It takes
 	 * as input one expression of type dynamicType and returns an integer
 	 * expression.
@@ -233,30 +206,9 @@ public class CommonEvaluator implements Evaluator {
 	private SymbolicExpression sizeofFunction;
 
 	/**
-	 * Solve for concrete counterexamples?
-	 */
-	private boolean solve = false;
-
-	/**
 	 * The unique state factory used in the system.
 	 */
 	private StateFactory stateFactory;
-
-	/**
-	 * Reasoner with trivial context "true". Used to determine satisfiability of
-	 * path conditions.
-	 */
-	private Reasoner trueReasoner;
-
-	/**
-	 * The symbolic int object of 2.
-	 */
-	private IntObject twoObj;
-
-	/**
-	 * Map from symbolic type to a canonic symbolic expression of that type.
-	 */
-	private Map<SymbolicType, SymbolicExpression> typeExpressionMap = new HashMap<SymbolicType, SymbolicExpression>();
 
 	/**
 	 * The unique symbolic universe used in the system.
@@ -287,6 +239,10 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private SymbolicExpression nullCharExpr;
 
+	private SymbolicUtility symbolicUtil;
+
+	private CIVLErrorLogger errorLogger;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -301,42 +257,34 @@ public class CommonEvaluator implements Evaluator {
 	 * @param log
 	 *            The error logging facility.
 	 */
-	public CommonEvaluator(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactory stateFactory, ErrorLog log) {
-		SymbolicType dynamicToIntType;
-
-		this.config = config;
+	public CommonEvaluator(ModelFactory modelFactory,
+			StateFactory stateFactory, SymbolicUtility symbolicUtil,
+			CIVLErrorLogger errorLogger) {
+		this.errorLogger = errorLogger;
+		this.symbolicUtil = symbolicUtil;
 		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
 		this.universe = stateFactory.symbolicUniverse();
-		dynamicType = modelFactory.dynamicSymbolicType();
 		pointerType = modelFactory.pointerSymbolicType();
 		functionPointerType = modelFactory.functionPointerSymbolicType();
 		heapType = modelFactory.heapSymbolicType();
 		bundleType = modelFactory.bundleSymbolicType();
-		this.log = log;
 		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
 		oneObj = (IntObject) universe.canonic(universe.intObject(1));
-		twoObj = (IntObject) universe.canonic(universe.intObject(2));
 		identityReference = (ReferenceExpression) universe.canonic(universe
 				.identityReference());
 		zero = (NumericExpression) universe.canonic(universe.integer(0));
 		zeroR = (NumericExpression) universe.canonic(universe.zeroReal());
 		one = (NumericExpression) universe.canonic(universe.integer(1));
-		nullPointer = universe.canonic(makePointer(-1, -1,
+		nullPointer = universe.canonic(symbolicUtil.makePointer(-1, -1,
 				universe.nullReference()));
 		nullExpression = universe.nullExpression();
-		dynamicToIntType = universe.functionType(new Singleton<SymbolicType>(
-				dynamicType), universe.integerType());
-		sizeofFunction = universe.symbolicConstant(
-				universe.stringObject("SIZEOF"), dynamicToIntType);
-		sizeofFunction = universe.canonic(sizeofFunction);
+		sizeofFunction = symbolicUtil.sizeofFunction();
 		bigOFunction = universe.symbolicConstant(
 				universe.stringObject("BIG_O"), universe.functionType(
 						new Singleton<SymbolicType>(universe.realType()),
 						universe.realType()));
 		bigOFunction = universe.canonic(bigOFunction);
-		trueReasoner = universe.reasoner(universe.trueExpression());
 		if (modelFactory.model().gcommType() != null)
 			gcommType = modelFactory.model().gcommType()
 					.getDynamicType(universe);
@@ -422,7 +370,7 @@ public class CommonEvaluator implements Evaluator {
 			throws UnsatisfiablePathConditionException {
 		TypeEvaluation typeEval = getDynamicType(state, pid, type, source,
 				isDefinition);
-		SymbolicExpression expr = expressionOfType(typeEval.type);
+		SymbolicExpression expr = symbolicUtil.expressionOfType(typeEval.type);
 		Evaluation result = new Evaluation(typeEval.state, expr);
 
 		return result;
@@ -687,8 +635,8 @@ public class CommonEvaluator implements Evaluator {
 					.getResultType();
 
 			if (resultType != ResultType.YES) {
-				state = logError(expression.getSource(), state, claim,
-						resultType, ErrorKind.INVALID_CAST,
+				state = errorLogger.logError(expression.getSource(), state,
+						claim, resultType, ErrorKind.INVALID_CAST,
 						"Cast from non-zero integer to pointer");
 				eval.state = state;
 			}
@@ -716,7 +664,7 @@ public class CommonEvaluator implements Evaluator {
 					"SARL could not cast: " + e, eval.state, this.stateFactory,
 					expression.getSource());
 
-			reportError(error);
+			errorLogger.reportError(error);
 			throw new UnsatisfiablePathConditionException();
 		}
 		return eval;
@@ -937,7 +885,7 @@ public class CommonEvaluator implements Evaluator {
 					universe.intObject(fieldIndex), structValue);
 
 			if (test.isFalse()) {
-				logSimpleError(expression.getSource(), eval.state,
+				errorLogger.logSimpleError(expression.getSource(), eval.state,
 						ErrorKind.UNION,
 						"Attempt to access an invalid union member");
 				throw new UnsatisfiablePathConditionException();
@@ -1097,9 +1045,9 @@ public class CommonEvaluator implements Evaluator {
 					.getResultType();
 
 			if (resultType != ResultType.YES) {
-				eval.state = logError(expression.getSource(), eval.state,
-						claim, resultType, ErrorKind.DIVISION_BY_ZERO,
-						"Division by zero");
+				eval.state = errorLogger.logError(expression.getSource(),
+						eval.state, claim, resultType,
+						ErrorKind.DIVISION_BY_ZERO, "Division by zero");
 			}
 			eval.value = universe.divide((NumericExpression) left, denominator);
 		}
@@ -1136,8 +1084,9 @@ public class CommonEvaluator implements Evaluator {
 
 			// TODO: check not negative
 			if (resultType != ResultType.YES) {
-				eval.state = this.logError(expression.getSource(), eval.state,
-						claim, resultType, ErrorKind.DIVISION_BY_ZERO,
+				eval.state = errorLogger.logError(expression.getSource(),
+						eval.state, claim, resultType,
+						ErrorKind.DIVISION_BY_ZERO,
 						"Modulus denominator is zero");
 			}
 			eval.value = universe.modulo((NumericExpression) left, denominator);
@@ -1183,13 +1132,15 @@ public class CommonEvaluator implements Evaluator {
 
 		if (expressionType.equals(modelFactory.scopeType())) {
 			if (expressionValue.equals(modelFactory.undefinedScopeValue())) {
-				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+				errorLogger.logSimpleError(source, state,
+						ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid scope reference");
 				throw new UnsatisfiablePathConditionException();
 			}
 		} else if (expressionType.equals(modelFactory.processType())) {
 			if (expressionValue.equals(modelFactory.undefinedProcessValue())) {
-				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+				errorLogger.logSimpleError(source, state,
+						ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid process reference");
 				throw new UnsatisfiablePathConditionException();
 			}
@@ -1197,15 +1148,18 @@ public class CommonEvaluator implements Evaluator {
 			if (expressionValue.equals(nullPointer))
 				return;
 			try {
-				int scopeID = this.getScopeId(source, expressionValue);
+				int scopeID = symbolicUtil.getScopeId(source, expressionValue);
 
 				if (scopeID < 0) {
-					logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
-							"Attempt to evaluate a pointer refererring to memory of an invalid scope");
+					errorLogger
+							.logSimpleError(source, state,
+									ErrorKind.MEMORY_LEAK,
+									"Attempt to evaluate a pointer refererring to memory of an invalid scope");
 					throw new UnsatisfiablePathConditionException();
 				}
 			} catch (Exception e) {
-				logSimpleError(source, state, ErrorKind.UNDEFINED_VALUE,
+				errorLogger.logSimpleError(source, state,
+						ErrorKind.UNDEFINED_VALUE,
 						"Attempt to use undefined pointer");
 				throw new UnsatisfiablePathConditionException();
 			}
@@ -1443,8 +1397,8 @@ public class CommonEvaluator implements Evaluator {
 					.getResultType();
 
 			if (resultType != ResultType.YES) {
-				eval.state = logError(expression.getSource(), eval.state,
-						claim, resultType, ErrorKind.OUT_OF_BOUNDS,
+				eval.state = errorLogger.logError(expression.getSource(),
+						eval.state, claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 						"Out of bounds array index:\nindex = " + index
 								+ "\nlength = " + length);
 			}
@@ -1615,7 +1569,7 @@ public class CommonEvaluator implements Evaluator {
 					"Attempt to read uninitialized variable", state,
 					this.stateFactory, expression.getSource());
 
-			reportError(e);
+			errorLogger.reportError(e);
 			throw new UnsatisfiablePathConditionException();
 		}
 		return new Evaluation(state, value);
@@ -1663,51 +1617,6 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Given a symbolic type, returns a canonic symbolic expression which
-	 * somehow wraps that type so it can be used as a value. Nothing should be
-	 * assumed about the symbolic expression. To extract the type from such an
-	 * expression, use method {@link #getType}.
-	 * 
-	 * @param type
-	 *            a symbolic type
-	 * @return a canonic symbolic expression wrapping that type
-	 */
-	private SymbolicExpression expressionOfType(SymbolicType type) {
-		SymbolicExpression result;
-
-		type = (SymbolicType) universe.canonic(type);
-		result = typeExpressionMap.get(type);
-		if (result == null) {
-			SymbolicExpression id = universe.integer(type.id());
-
-			result = universe.canonic(universe.tuple(dynamicType,
-					new Singleton<SymbolicExpression>(id)));
-			typeExpressionMap.put(type, result);
-		}
-		return result;
-	}
-
-	/**
-	 * Gets a concrete Java int from the field of a symbolic expression of tuple
-	 * type or throws exception.
-	 * 
-	 * @param tuple
-	 *            symbolic expression of tuple type
-	 * @param fieldIndex
-	 *            index of a field in that tuple
-	 * @return the concrete int value of that field
-	 * @throws CIVLInternalException
-	 *             if a concrete integer value cannot be extracted
-	 */
-	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
-			IntObject fieldIndex) {
-		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
-				fieldIndex);
-
-		return extractInt(source, field);
-	}
-
-	/**
 	 * Finds pointers contained in a given expression recursively.
 	 * 
 	 * @param expr
@@ -1729,7 +1638,7 @@ public class CommonEvaluator implements Evaluator {
 				set.add(expr);
 				try {
 					if (expr.operator() == SymbolicOperator.CONCRETE
-							&& getScopeId(null, expr) >= 0) {
+							&& symbolicUtil.getScopeId(null, expr) >= 0) {
 						// if (getScopeId(null, expr) >= 0) {
 						eval = this.dereference(null, state, expr);
 						pointerValue = eval.value;
@@ -1869,7 +1778,7 @@ public class CommonEvaluator implements Evaluator {
 	 * @return the symbolic type used to create that expression
 	 */
 	private SymbolicType getType(CIVLSource source, SymbolicExpression expr) {
-		int id = extractIntField(source, expr, zeroObj);
+		int id = symbolicUtil.extractIntField(source, expr, zeroObj);
 
 		return (SymbolicType) universe.objectWithId(id);
 	}
@@ -1896,10 +1805,10 @@ public class CommonEvaluator implements Evaluator {
 			BinaryExpression expression, SymbolicExpression pointer,
 			NumericExpression offset)
 			throws UnsatisfiablePathConditionException {
-		ReferenceExpression symRef = getSymRef(pointer);
+		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
 
 		if (symRef.isArrayElementReference()) {
-			SymbolicExpression arrayPointer = parentPointer(
+			SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
 					expression.getSource(), pointer);
 			Evaluation eval = dereference(expression.getSource(), state,
 					arrayPointer);
@@ -1919,14 +1828,16 @@ public class CommonEvaluator implements Evaluator {
 						.valid(claim).getResultType();
 
 				if (resultType != ResultType.YES) {
-					eval.state = logError(expression.getSource(), eval.state,
-							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
+					eval.state = errorLogger.logError(expression.getSource(),
+							eval.state, claim, resultType,
+							ErrorKind.OUT_OF_BOUNDS,
 							"Pointer addition resulted in out of bounds array index:\nindex = "
 									+ newIndex + "\nlength = " + length);
 				}
 			}
-			eval.value = setSymRef(pointer, universe.arrayElementReference(
-					arrayElementRef.getParent(), newIndex));
+			eval.value = symbolicUtil.setSymRef(pointer, universe
+					.arrayElementReference(arrayElementRef.getParent(),
+							newIndex));
 			return eval;
 		} else if (symRef.isOffsetReference()) {
 			OffsetReference offsetRef = (OffsetReference) symRef;
@@ -1941,12 +1852,12 @@ public class CommonEvaluator implements Evaluator {
 			Evaluation eval;
 
 			if (resultType != ResultType.YES) {
-				state = logError(expression.getSource(), state, claim,
-						resultType, ErrorKind.OUT_OF_BOUNDS,
+				state = errorLogger.logError(expression.getSource(), state,
+						claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 						"Pointer addition resulted in out of bounds object pointer:\noffset = "
 								+ newOffset);
 			}
-			eval = new Evaluation(state, setSymRef(pointer,
+			eval = new Evaluation(state, symbolicUtil.setSymRef(pointer,
 					universe.offsetReference(offsetRef.getParent(), newOffset)));
 			return eval;
 		} else
@@ -2000,10 +1911,10 @@ public class CommonEvaluator implements Evaluator {
 			BinaryExpression expression, SymbolicExpression pointer,
 			NumericExpression offset)
 			throws UnsatisfiablePathConditionException {
-		ReferenceExpression symRef = getSymRef(pointer);
+		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
 
 		if (symRef.isArrayElementReference()) {
-			SymbolicExpression arrayPointer = parentPointer(
+			SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
 					expression.getSource(), pointer);
 			Evaluation eval = dereference(expression.getSource(), state,
 					arrayPointer);
@@ -2023,14 +1934,16 @@ public class CommonEvaluator implements Evaluator {
 						.valid(claim).getResultType();
 
 				if (resultType != ResultType.YES) {
-					eval.state = logError(expression.getSource(), eval.state,
-							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
+					eval.state = errorLogger.logError(expression.getSource(),
+							eval.state, claim, resultType,
+							ErrorKind.OUT_OF_BOUNDS,
 							"Pointer subtraction resulted in out of bounds array index:\nindex = "
 									+ newIndex + "\nlength = " + length);
 				}
 			}
-			eval.value = setSymRef(pointer, universe.arrayElementReference(
-					arrayElementRef.getParent(), newIndex));
+			eval.value = symbolicUtil.setSymRef(pointer, universe
+					.arrayElementReference(arrayElementRef.getParent(),
+							newIndex));
 			return eval;
 		} else if (symRef.isOffsetReference()) {
 			OffsetReference offsetRef = (OffsetReference) symRef;
@@ -2045,12 +1958,12 @@ public class CommonEvaluator implements Evaluator {
 			Evaluation eval;
 
 			if (resultType != ResultType.YES) {
-				state = logError(expression.getSource(), state, claim,
-						resultType, ErrorKind.OUT_OF_BOUNDS,
+				state = errorLogger.logError(expression.getSource(), state,
+						claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 						"Pointer subtraction resulted in out of bounds object pointer:\noffset = "
 								+ newOffset);
 			}
-			eval = new Evaluation(state, setSymRef(pointer,
+			eval = new Evaluation(state, symbolicUtil.setSymRef(pointer,
 					universe.offsetReference(offsetRef.getParent(), newOffset)));
 			return eval;
 		} else
@@ -2087,8 +2000,8 @@ public class CommonEvaluator implements Evaluator {
 		state = eval.left;
 		function = eval.right;
 		if (function == null) {
-			this.logSimpleError(expression.getSource(), state, ErrorKind.OTHER,
-					"function body cann't be found");
+			errorLogger.logSimpleError(expression.getSource(), state,
+					ErrorKind.OTHER, "function body cann't be found");
 			throw new UnsatisfiablePathConditionException();
 		}
 		if (function.isSystem()) {
@@ -2133,12 +2046,13 @@ public class CommonEvaluator implements Evaluator {
 			Expression pointer = ((DereferenceExpression) expression).pointer();
 
 			eval = evaluate(state, pid, pointer);
-			int sid = getScopeId(pointer.getSource(), eval.value);
+			int sid = symbolicUtil.getScopeId(pointer.getSource(), eval.value);
 			state = eval.state;
 			if (sid < 0) {
-				logSimpleError(pointer.getSource(), state,
-						ErrorKind.DEREFERENCE,
-						"Attempt to dereference pointer into scope which has been removed from state");
+				errorLogger
+						.logSimpleError(pointer.getSource(), state,
+								ErrorKind.DEREFERENCE,
+								"Attempt to dereference pointer into scope which has been removed from state");
 				throw new UnsatisfiablePathConditionException();
 			}
 			return new Evaluation(state, modelFactory.scopeValue(sid));
@@ -2347,32 +2261,21 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public int extractInt(CIVLSource source, NumericExpression expression) {
-		IntegerNumber result = (IntegerNumber) universe
-				.extractNumber(expression);
-
-		// TODO make expression
-		if (result == null)
-			throw new CIVLInternalException(
-					"Unable to extract concrete int from " + expression, source);
-		return result.intValue();
-	}
-
-	@Override
 	public Evaluation dereference(CIVLSource source, State state,
 			SymbolicExpression pointer)
 			throws UnsatisfiablePathConditionException {
 		// how to figure out if pointer is null pointer?
 		try {
-			int sid = getScopeId(source, pointer);
+			int sid = symbolicUtil.getScopeId(source, pointer);
 
 			if (sid < 0) {
-				logSimpleError(source, state, ErrorKind.DEREFERENCE,
-						"Attempt to dereference pointer into scope which has been removed from state");
+				errorLogger
+						.logSimpleError(source, state, ErrorKind.DEREFERENCE,
+								"Attempt to dereference pointer into scope which has been removed from state");
 				throw new UnsatisfiablePathConditionException();
 			} else {
-				int vid = getVariableId(source, pointer);
-				ReferenceExpression symRef = getSymRef(pointer);
+				int vid = symbolicUtil.getVariableId(source, pointer);
+				ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
 				// Variable variable = state.getScope(sid).lexicalScope()
 				// .variable(vid);
 				SymbolicExpression variableValue;
@@ -2388,7 +2291,7 @@ public class CommonEvaluator implements Evaluator {
 				try {
 					deref = universe.dereference(variableValue, symRef);
 				} catch (SARLException e) {
-					logSimpleError(
+					errorLogger.logSimpleError(
 							source,
 							state,
 							ErrorKind.DEREFERENCE,
@@ -2404,19 +2307,9 @@ public class CommonEvaluator implements Evaluator {
 					"Undefined pointer value?", state, this.stateFactory,
 					source);
 
-			reportError(se);
+			errorLogger.reportError(se);
 			throw new UnsatisfiablePathConditionException();
 		}
-	}
-
-	@Override
-	public SymbolicExpression getParentPointer(SymbolicExpression pointer) {
-		ReferenceExpression symRef = getSymRef(pointer);
-
-		if (symRef instanceof NTReferenceExpression)
-			return setSymRef(pointer,
-					((NTReferenceExpression) symRef).getParent());
-		return null;
 	}
 
 	@Override
@@ -2448,23 +2341,17 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public int getScopeId(CIVLSource source, SymbolicExpression pointer) {
-		return modelFactory.getScopeId(source,
-				universe.tupleRead(pointer, zeroObj));
-	}
-
-	@Override
 	public Evaluation getStringExpression(State state, CIVLSource source,
 			SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException {
 		BooleanExpression pc = state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(pc);
-		ReferenceExpression symRef = this.getSymRef(charPointer);
+		ReferenceExpression symRef = symbolicUtil.getSymRef(charPointer);
 
 		if (symRef.isArrayElementReference()) {
 			ArrayElementReference arrayEltRef = (ArrayElementReference) symRef;
-			SymbolicExpression arrayReference = this.parentPointer(source,
-					charPointer);
+			SymbolicExpression arrayReference = symbolicUtil.parentPointer(
+					source, charPointer);
 			NumericExpression indexExpr = arrayEltRef.getIndex();
 			Evaluation eval = this.dereference(source, state, arrayReference);
 			int index;
@@ -2524,102 +2411,15 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public SymbolicExpression getSubArray(SymbolicExpression array,
-			NumericExpression startIndex, NumericExpression endIndex,
-			State state, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		// if startIndex is zero and endIndex is length, return array
-		// verify startIndex >=0 and endIndex<= Length
-		// if startIndex==endIndex return emptyArray
-		// else if startIndex and endIndex are concrete, create concrete array
-		// else need array lambdas or subsequence operation: todo
-		BooleanExpression pathCondition = state.getPathCondition();
-		Reasoner reasoner = universe.reasoner(pathCondition);
-		NumericExpression length = universe.length(array);
-		SymbolicArrayType arrayType = (SymbolicArrayType) array.type();
-		SymbolicType elementType = arrayType.elementType();
-
-		if (reasoner.isValid(universe.equals(zero, startIndex))
-				&& reasoner.isValid(universe.equals(length, endIndex)))
-			return array;
-		else {
-			BooleanExpression claim = universe.lessThanEquals(zero, startIndex);
-			ResultType valid = reasoner.valid(claim).getResultType();
-
-			if (valid != ResultType.YES) {
-				state = logError(source, state, claim, valid,
-						ErrorKind.OUT_OF_BOUNDS, "negative start index");
-				pathCondition = state.getPathCondition();
-				reasoner = universe.reasoner(pathCondition);
-			}
-			claim = universe.lessThanEquals(endIndex, length);
-			valid = reasoner.valid(claim).getResultType();
-			if (valid != ResultType.YES) {
-				state = logError(source, state, claim, valid,
-						ErrorKind.OUT_OF_BOUNDS,
-						"end index exceeds length of array");
-				pathCondition = state.getPathCondition();
-				reasoner = universe.reasoner(pathCondition);
-			}
-			claim = universe.lessThanEquals(startIndex, endIndex);
-			valid = reasoner.valid(claim).getResultType();
-			if (valid != ResultType.YES) {
-				state = logError(source, state, claim, valid,
-						ErrorKind.OUT_OF_BOUNDS,
-						"start index greater than end index");
-				pathCondition = state.getPathCondition();
-				reasoner = universe.reasoner(pathCondition);
-			}
-			if (reasoner.isValid(universe.equals(startIndex, endIndex))) {
-				return universe.emptyArray(elementType);
-			} else {
-				IntegerNumber concreteStart = (IntegerNumber) reasoner
-						.extractNumber(startIndex);
-				IntegerNumber concreteEnd = (IntegerNumber) reasoner
-						.extractNumber(endIndex);
-
-				if (concreteStart != null && concreteEnd != null) {
-					int startInt = concreteStart.intValue();
-					int endInt = concreteEnd.intValue();
-					LinkedList<SymbolicExpression> valueList = new LinkedList<SymbolicExpression>();
-
-					for (int i = startInt; i < endInt; i++)
-						valueList.add(universe.arrayRead(array,
-								universe.integer(i)));
-					return universe.array(elementType, valueList);
-				}
-			}
-		}
-		throw new CIVLInternalException("Unable to extract sub-array", source);
-	}
-
-	@Override
-	public ReferenceExpression getSymRef(SymbolicExpression pointer) {
-		SymbolicExpression result = universe.tupleRead(pointer, twoObj);
-
-		assert result instanceof ReferenceExpression;
-		return (ReferenceExpression) result;
-	}
-
-	@Override
-	public int getVariableId(CIVLSource source, SymbolicExpression pointer) {
-		return extractIntField(source, pointer, oneObj);
-	}
-
-	// @Override
-	// public void setExecutor(Executor executor) {
-	// this.executor = executor;
-	// }
-
-	@Override
 	public SymbolicExpression heapValue(CIVLSource source, State state,
 			SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException {
 		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
 
 		if (dyScopeID < 0) {
-			logSimpleError(source, state, ErrorKind.DEREFERENCE,
-					"Attempt to dereference pointer into scope which has been removed from state");
+			errorLogger
+					.logSimpleError(source, state, ErrorKind.DEREFERENCE,
+							"Attempt to dereference pointer into scope which has been removed from state");
 			throw new UnsatisfiablePathConditionException();
 		} else {
 			DynamicScope dyScope = state.getScope(dyScopeID);
@@ -2627,14 +2427,15 @@ public class CommonEvaluator implements Evaluator {
 			SymbolicExpression heapValue;
 
 			if (heapVariable == null) {
-				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
-						"Attempt to dereference pointer into a heap that never exists");
+				errorLogger
+						.logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+								"Attempt to dereference pointer into a heap that never exists");
 				throw new UnsatisfiablePathConditionException();
 			}
 
 			heapValue = dyScope.getValue(heapVariable.vid());
 			if (heapValue.equals(universe.nullExpression()))
-				heapValue = this.initialHeapValue();
+				heapValue = symbolicUtil.initialHeapValue();
 			return heapValue;
 		}
 	}
@@ -2648,62 +2449,29 @@ public class CommonEvaluator implements Evaluator {
 		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
 
 		if (dyScopeID < 0) {
-			logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
-					"Attempt to access the heap of the scope that has been removed from state");
+			errorLogger
+					.logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+							"Attempt to access the heap of the scope that has been removed from state");
 			throw new UnsatisfiablePathConditionException();
 		} else {
 			DynamicScope dyScope = state.getScope(dyScopeID);
 			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
 
 			if (heapVariable == null) {
-				logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+				errorLogger.logSimpleError(source, state,
+						ErrorKind.MEMORY_LEAK,
 						"Attempt to access a heap that never exists");
 				throw new UnsatisfiablePathConditionException();
 			}
-			return makePointer(dyScopeID, heapVariable.vid(), symRef);
+			return symbolicUtil.makePointer(dyScopeID, heapVariable.vid(),
+					symRef);
 		}
-	}
-
-	// @Override
-	// public void setExecutor(Executor executor) {
-	// this.executor = executor;
-	// }
-
-	@Override
-	public SymbolicExpression initialHeapValue() {
-		return modelFactory.heapType().getInitialValue();
-	}
-
-	@Override
-	public boolean isProcInCommWithRank(SymbolicExpression comm, int pid,
-			int rank) {
-		SymbolicExpression procMatrix = this.universe.tupleRead(comm,
-				universe.intObject(1));
-		SymbolicExpression procQueue = this.universe.arrayRead(procMatrix,
-				universe.integer(rank));
-		int procRowLength = this.extractInt(
-				null,
-				(NumericExpression) universe.tupleRead(procQueue,
-						universe.intObject(0)));
-		SymbolicExpression procRow = universe.tupleRead(procQueue,
-				universe.intObject(1));
-
-		for (int j = 0; j < procRowLength; j++) {
-			SymbolicExpression proc = universe.arrayRead(procRow,
-					universe.integer(j));
-			int procId = this.modelFactory.getProcessId(null, proc);
-
-			if (procId == pid)
-				return true;
-		}
-		return false;
 	}
 
 	@Override
 	public int joinedIDofWait(State state, ProcessState p, WaitStatement wait) {
-		Evaluation eval;
 		try {
-			eval = evaluate(state, p.getPid(), wait.process());
+			Evaluation eval = evaluate(state, p.getPid(), wait.process());
 			SymbolicExpression procVal = eval.value;
 
 			return modelFactory.getProcessId(wait.process().getSource(),
@@ -2711,121 +2479,6 @@ public class CommonEvaluator implements Evaluator {
 		} catch (UnsatisfiablePathConditionException e) {
 		}
 		return -1;
-	}
-
-	@Override
-	public State logError(CIVLSource source, State state,
-			BooleanExpression claim, ResultType resultType,
-			ErrorKind errorKind, String message)
-			throws UnsatisfiablePathConditionException {
-		BooleanExpression pc = state.getPathCondition(), newPc;
-		BooleanExpression npc = universe.not(pc);
-		ValidityResult validityResult = trueReasoner.valid(npc);
-		ResultType nsat = validityResult.getResultType();
-		Certainty certainty;
-		CIVLStateException error;
-
-		// performance! need to cache the satisfiability of each pc somewhere
-		// negation is slow
-		// maybe add "nsat" to Reasoner.
-		if (nsat == ResultType.YES)
-			// no error to report---an infeasible path
-			throw new UnsatisfiablePathConditionException();
-		if (nsat == ResultType.MAYBE)
-			certainty = Certainty.MAYBE;
-		else { // pc is definitely satisfiable
-			certainty = null;
-			if (resultType == ResultType.NO) {
-				// need something satisfying PC and not claim...
-				if (solve) {
-					ValidityResult claimResult = trueReasoner
-							.validOrModel(universe.or(npc, claim));
-
-					if (claimResult.getResultType() == ResultType.NO) {
-						Map<SymbolicConstant, SymbolicExpression> model = ((ModelResult) claimResult)
-								.getModel();
-
-						if (model != null) {
-							certainty = Certainty.CONCRETE;
-							message += "\nCounterexample:\n" + model + "\n";
-						}
-					}
-				}
-				if (certainty == null)
-					certainty = Certainty.PROVEABLE;
-			} else {
-				certainty = Certainty.MAYBE;
-			}
-		}
-		error = new CIVLStateException(errorKind, certainty, message, state,
-				this.stateFactory, source);
-		reportError(error);
-		newPc = universe.and(pc, claim);
-		// need to check satisfiability again because failure to do so
-		// could lead to a SARLException when some subsequent evaluation
-		// takes place
-		nsat = trueReasoner.valid(universe.not(newPc)).getResultType();
-		if (nsat == ResultType.YES)
-			throw new UnsatisfiablePathConditionException();
-		state = state.setPathCondition(newPc);
-		return state;
-	}
-
-	/**
-	 * Checks whether the path condition is satisfiable and logs an error if it
-	 * is (or might be). If the path condition is definitely unsatisfiable,
-	 * there is no error to log, and an UnsatisfiablePathConditionException is
-	 * thrown.
-	 * 
-	 * @param source
-	 *            source code element used to report the error
-	 * @param state
-	 *            the current state in which the possible error is detected
-	 * @param errorKind
-	 *            the kind of error (e.g., DEREFERENCE)
-	 * @param message
-	 *            the message to include in the error report
-	 * @throws UnsatisfiablePathConditionException
-	 *             if the path condition is definitely unsatisfiable
-	 */
-	@Override
-	public void logSimpleError(CIVLSource source, State state,
-			ErrorKind errorKind, String message)
-			throws UnsatisfiablePathConditionException {
-		BooleanExpression pc = state.getPathCondition();
-		BooleanExpression npc = universe.not(pc);
-		ValidityResult validityResult = trueReasoner.valid(npc);
-		ResultType nsat = validityResult.getResultType();
-		Certainty certainty;
-		CIVLStateException error;
-
-		// performance! need to cache the satisfiability of each pc somewhere
-		// negation is slow
-		// maybe add "nsat" to Reasoner.
-		if (nsat == ResultType.YES)
-			// no error to report---an infeasible path
-			throw new UnsatisfiablePathConditionException();
-		if (nsat == ResultType.MAYBE)
-			certainty = Certainty.MAYBE;
-		else { // pc is definitely satisfiable
-			certainty = Certainty.PROVEABLE;
-		}
-		error = new CIVLStateException(errorKind, certainty, message, state,
-				this.stateFactory, source);
-		reportError(error);
-	}
-
-	@Override
-	public SymbolicExpression makePointer(int scopeId, int varId,
-			ReferenceExpression symRef) {
-		SymbolicExpression scopeField = modelFactory.scopeValue(scopeId);
-		SymbolicExpression varField = universe.integer(varId);
-		SymbolicExpression result = universe.tuple(
-				pointerType,
-				Arrays.asList(new SymbolicExpression[] { scopeField, varField,
-						symRef }));
-
-		return result;
 	}
 
 	@Override
@@ -2952,7 +2605,7 @@ public class CommonEvaluator implements Evaluator {
 			// atomic_enter statement is always considered as dependent with all
 			// processes since it accesses the global variable __atomic_lock_var
 			if (!variable.isConst() && !type.isHandleObjectType()) {
-				eval = new Evaluation(state, makePointer(sid, vid,
+				eval = new Evaluation(state, symbolicUtil.makePointer(sid, vid,
 						identityReference));
 				memoryUnits.addAll(pointersInExpression(eval.value, state));
 			}
@@ -2991,8 +2644,8 @@ public class CommonEvaluator implements Evaluator {
 	public Set<SymbolicExpression> memoryUnitsOfVariable(
 			SymbolicExpression variableValue, int dyScopeID, int vid,
 			State state) {
-		Evaluation eval = new Evaluation(state, makePointer(dyScopeID, vid,
-				identityReference));
+		Evaluation eval = new Evaluation(state, symbolicUtil.makePointer(
+				dyScopeID, vid, identityReference));
 
 		return pointersInExpression(eval.value, state);
 	}
@@ -3000,18 +2653,6 @@ public class CommonEvaluator implements Evaluator {
 	@Override
 	public ModelFactory modelFactory() {
 		return modelFactory;
-	}
-
-	@Override
-	public SymbolicExpression parentPointer(CIVLSource source,
-			SymbolicExpression pointer) {
-		ReferenceExpression symRef = getSymRef(pointer);
-
-		if (symRef instanceof NTReferenceExpression)
-			return setSymRef(pointer,
-					((NTReferenceExpression) symRef).getParent());
-		throw new CIVLInternalException("Expected non-trivial pointer: "
-				+ pointer, source);
 	}
 
 	@Override
@@ -3024,13 +2665,14 @@ public class CommonEvaluator implements Evaluator {
 			int sid = state.getScopeId(pid, variable);
 			int vid = variable.vid();
 
-			result = new Evaluation(state, makePointer(sid, vid,
+			result = new Evaluation(state, symbolicUtil.makePointer(sid, vid,
 					identityReference));
 		} else if (operand instanceof SubscriptExpression) {
 			Evaluation refEval = reference(state, pid,
 					((SubscriptExpression) operand).array());
 			SymbolicExpression arrayPointer = refEval.value;
-			ReferenceExpression oldSymRef = getSymRef(arrayPointer);
+			ReferenceExpression oldSymRef = symbolicUtil
+					.getSymRef(arrayPointer);
 			NumericExpression index;
 			ReferenceExpression newSymRef;
 
@@ -3038,7 +2680,7 @@ public class CommonEvaluator implements Evaluator {
 					((SubscriptExpression) operand).index());
 			index = (NumericExpression) result.value;
 			newSymRef = universe.arrayElementReference(oldSymRef, index);
-			result.value = setSymRef(arrayPointer, newSymRef);
+			result.value = symbolicUtil.setSymRef(arrayPointer, newSymRef);
 		} else if (operand instanceof DereferenceExpression) {
 			result = evaluate(state, pid,
 					((DereferenceExpression) operand).pointer());
@@ -3050,12 +2692,13 @@ public class CommonEvaluator implements Evaluator {
 				Evaluation eval = reference(state, pid,
 						(LHSExpression) dot.structOrUnion());
 				SymbolicExpression structPointer = eval.value;
-				ReferenceExpression oldSymRef = getSymRef(structPointer);
+				ReferenceExpression oldSymRef = symbolicUtil
+						.getSymRef(structPointer);
 				ReferenceExpression newSymRef = universe
 						.tupleComponentReference(oldSymRef,
 								universe.intObject(index));
 
-				eval.value = setSymRef(structPointer, newSymRef);
+				eval.value = symbolicUtil.setSymRef(structPointer, newSymRef);
 				result = eval;
 			} else {
 				return reference(state, pid,
@@ -3070,9 +2713,9 @@ public class CommonEvaluator implements Evaluator {
 	@Override
 	public SymbolicType referencedType(CIVLSource source, State state,
 			SymbolicExpression pointer) {
-		int sid = getScopeId(source, pointer);
-		int vid = getVariableId(source, pointer);
-		ReferenceExpression symRef = getSymRef(pointer);
+		int sid = symbolicUtil.getScopeId(source, pointer);
+		int vid = symbolicUtil.getVariableId(source, pointer);
+		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
 		SymbolicExpression variableValue = state.getScope(sid).getValue(vid);
 		SymbolicType variableType = variableValue.type();
 		SymbolicType result = universe.referencedType(variableType, symRef);
@@ -3081,67 +2724,8 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public void reportError(CIVLExecutionException err) {
-		try {
-			log.report(new CIVLLogEntry(config, err));
-		} catch (FileNotFoundException e) {
-			throw new CIVLException(e.toString(), err.getSource());
-		}
-	}
-
-	@Override
 	public void setEnabler(Enabler enabler) {
 		this.enabler = enabler;
-	}
-
-	@Override
-	public void setSolve(boolean value) {
-		this.solve = value;
-	}
-
-	@Override
-	public SymbolicExpression setSymRef(SymbolicExpression pointer,
-			ReferenceExpression symRef) {
-		return universe.tupleWrite(pointer, twoObj, symRef);
-	}
-
-	@Override
-	public NumericExpression sizeof(CIVLSource source, SymbolicType type) {
-		NumericExpression result = sizeofDynamicMap.get(type);
-
-		if (result == null) {
-
-			if (type.isBoolean())
-				result = modelFactory.booleanType().getSizeof();
-			else if (type == modelFactory.dynamicSymbolicType())
-				result = modelFactory.dynamicType().getSizeof();
-			else if (type.isInteger())
-				result = modelFactory.integerType().getSizeof();
-			else if (type == modelFactory.processSymbolicType())
-				result = modelFactory.processType().getSizeof();
-			else if (type.isReal())
-				result = modelFactory.realType().getSizeof();
-			else if (type == modelFactory.scopeSymbolicType())
-				result = modelFactory.scopeType().getSizeof();
-			else if (type instanceof SymbolicCompleteArrayType) {
-				SymbolicCompleteArrayType arrayType = (SymbolicCompleteArrayType) type;
-
-				result = sizeof(source, arrayType.elementType());
-				result = universe.multiply(arrayType.extent(),
-						(NumericExpression) result);
-			} else if (type instanceof SymbolicArrayType) {
-				throw new CIVLInternalException(
-						"sizeof applied to incomplete array type", source);
-			} else {
-				// wrap the type in an expression of type dynamicTYpe
-				SymbolicExpression typeExpr = expressionOfType(type);
-
-				result = (NumericExpression) universe.apply(sizeofFunction,
-						new Singleton<SymbolicExpression>(typeExpr));
-			}
-			sizeofDynamicMap.put(type, result);
-		}
-		return result;
 	}
 
 	public StateFactory stateFactory() {
@@ -3150,5 +2734,10 @@ public class CommonEvaluator implements Evaluator {
 
 	public SymbolicUniverse universe() {
 		return universe;
+	}
+
+	@Override
+	public SymbolicUtility symbolicUtility() {
+		return symbolicUtil;
 	}
 }

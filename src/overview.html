@@ -23,11 +23,12 @@
 	There is a simple command-line interface for CIVL (see {@link
 	edu.udel.cis.vsl.civl.CIVL CIVL}), but most users will want to use CIVL
 	through the user interface (see {@link
-	edu.udel.cis.vsl.civl.run.IF.UserInterface UserInterface}). To use the API, it is helpful to have some
-	understanding of the modular structure of CIVL. The CIVL source code is
-	decomposed into modules, each with a well-defined interface and set of
-	responsibilities. Some of these modules are decomposed further into
-	sub-modules. The top-level modules are:
+	edu.udel.cis.vsl.civl.run.IF.UserInterface UserInterface}). To use the
+	API, it is helpful to have some understanding of the modular structure
+	of CIVL. The CIVL source code is decomposed into modules, each with a
+	well-defined interface and set of responsibilities. Some of these
+	modules are decomposed further into sub-modules. The top-level modules
+	are:
 	<ol>
 
 		<li><strong>util</strong>
@@ -42,19 +43,90 @@
 		<li><strong>transform</strong>
 			<ol>
 				<li>responsibilities: transformations of an AST</li>
-				<li>uses: <strong>abc</strong></li>
+				<li>uses: <strong>abc</strong>, <strong>sarl</strong></li>
 				<li>interface: {@link edu.udel.cis.vsl.civl.transform.IF}</li>
 				<li>entry point: CIVLTransform</li>
 			</ol></li>
+
+		<li><strong>model</strong>
+			<ol>
+				<li>responsibilities: definitions of the control flow graph
+					representation of a CIVL-C program</li>
+				<li>uses: <strong>err</strong>, <strong>run</strong>, <strong>util</strong>,
+					<strong>abc</strong>, <strong>gmc</strong>, <strong>sarl</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.model.IF}</li>
+				<li>entry point: Models</li>
+				<li>submodules
+					<ol>
+						<li><strong>expression</strong>
+							<ol>
+								<li>responsibilities: definitions of various expressions of
+									CIVL</li>
+								<li>interface: {@link
+									edu.udel.cis.vsl.civl.model.IF.expression}</li>
+								<li>entry point: none</li>
+							</ol></li>
+						<li><strong>location</strong>
+							<ol>
+								<li>responsibilities: definitions a location in the control
+									flow graph of a CIVL-C program</li>
+								<li>interface: {@link
+									edu.udel.cis.vsl.civl.model.IF.location}</li>
+								<li>entry point: none</li>
+							</ol></li>
+						<li><strong>statement</strong>
+							<ol>
+								<li>responsibilities: definitions of various statements of
+									CIVL</li>
+								<li>interface: {@link
+									edu.udel.cis.vsl.civl.model.IF.statement}</li>
+								<li>entry point: none</li>
+							</ol></li>
+						<li><strong>type</strong>
+							<ol>
+								<li>responsibilities: definitions of various types of CIVL</li>
+								<li>interface: {@link edu.udel.cis.vsl.civl.model.IF.type}</li>
+								<li>entry point: none</li>
+							</ol></li>
+						<li><strong>variable</strong>
+							<ol>
+								<li>responsibilities: definitions of a variable of CIVL</li>
+								<li>interface: {@link
+									edu.udel.cis.vsl.civl.model.IF.variable}</li>
+								<li>entry point: none</li>
+							</ol></li>
+					</ol>
+				</li>
+			</ol></li>
+
+		<li><strong>err</strong>
+			<ol>
+				<li>responsibilities: general exception classes that can be
+					thrown by CIVL.</li>
+				<li>uses: <strong>model</strong>, <strong>state</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.err.IF}</li>
+				<li>entry point: none</li>
+			</ol></li>TBC.
 
 		<li><strong>run</strong>
 			<ol>
 				<li>responsibilities: parsing command line inputs and initial
 					configurations of the tool</li>
-				<li>uses: <strong>transform</strong>, <strong>abc</strong></li>
+				<li>uses: <strong>err</strong>, <strong>kripke</strong>, <strong>model</strong>,
+					<strong>state</strong>, <strong>transform</strong>, <strong>util</strong>,
+					<strong>abc</strong>, <strong>gmc</strong>, <strong>sarl</strong></li>
 				<li>interface: {@link edu.udel.cis.vsl.civl.run.IF}</li>
 				<li>entry point: UserInterface</li>
-			</ol></li> TBC.
+			</ol></li>
+
+		<li><strong>main</strong>
+			<ol>
+				<li>responsibilities: parsing command line inputs and initial
+					configurations of the tool</li>
+				<li>uses: <strong>run</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl}</li>
+				<li>entry point: CIVL</li>
+			</ol></li>
 
 	</ol>
 

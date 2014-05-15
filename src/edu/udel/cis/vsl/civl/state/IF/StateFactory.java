@@ -11,7 +11,6 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.CommonModelFactory;
-import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -382,8 +381,6 @@ public interface StateFactory {
 
 	void printState(PrintStream out, State state);
 
-	void setEvaluator(Evaluator evaluator);
-
 	/**
 	 * <p>
 	 * Obtains the string representation of a symbolic expression, making
@@ -396,32 +393,32 @@ public interface StateFactory {
 	 * <pre>
 	 * a variable: & variable &lt;dyscope name>;
 	 * e.g., int a = 9; int * p = &a;
-	 * then the representation of p would be &a&lt;d0> assuming that the name of the dynamic scope of a is d0.
+	 * then the representation of p would be &&lt;d0>a assuming that the name of the dynamic scope of a is d0.
 	 * </pre>
 	 * 
 	 * </li>
 	 * <li>
 	 * 
 	 * <pre>
-	 * an element of an array: &array<dyscope name>[index];
+	 * an element of an array: &<dyscope name>array[index];
 	 * e.g., int a[5]; int *p = &a[1];
-	 * then the representation of p would be &a&lt;d0>[1] assuming that the name of the dynamic scope of a is d0.
+	 * then the representation of p would be &&lt;d0>a[1] assuming that the name of the dynamic scope of a is d0.
 	 * </pre>
 	 * 
 	 * </li>
 	 * <li>
 	 * 
 	 * <pre>
-	 * a field of a struct: &struct&lt;dyscope name>.field;
+	 * a field of a struct: &&lt;dyscope name>struct.field;
 	 * e.g., typedef struct {int x; int y;} A; A s; int*p = &s.y;
-	 * then the representation of p would be &a&lt;d0>.y assuming that the name of the dynamic scope of a is d0.
+	 * then the representation of p would be &&lt;d0>a.y assuming that the name of the dynamic scope of a is d0.
 	 * </pre>
 	 * 
 	 * </li>
 	 * <li>
 	 * 
 	 * <pre>
-	 * a heap cell: heapObject&lt;dyscope name, malloc ID, number of malloc call>.
+	 * a heap cell: &lt;dyscope name>heap&lt;malloc ID, number of malloc call>.
 	 * </pre>
 	 * 
 	 * </li>

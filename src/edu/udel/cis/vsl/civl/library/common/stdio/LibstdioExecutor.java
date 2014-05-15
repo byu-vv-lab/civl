@@ -31,6 +31,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -234,9 +235,9 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 	 */
 	public LibstdioExecutor(Executor primaryExecutor, PrintStream output,
 			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFactory) {
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
 		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
-				modelFactory);
+				modelFactory, symbolicUtil);
 		Model model = modelFactory.model();
 		SymbolicType stringArrayType;
 
@@ -501,9 +502,9 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				originalArray = (SymbolicSequence<?>) charPointer.argument(0);
 				int_arrayIndex = 0;
 			} else {
-				SymbolicExpression arrayPointer = evaluator.parentPointer(
+				SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
 						source, charPointer);
-				ArrayElementReference arrayRef = (ArrayElementReference) evaluator
+				ArrayElementReference arrayRef = (ArrayElementReference) symbolicUtil
 						.getSymRef(charPointer);
 				NumericExpression arrayIndex = arrayRef.getIndex();
 				Evaluation eval = evaluator.dereference(source, state,
@@ -511,7 +512,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 
 				state = eval.state;
 				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
-				int_arrayIndex = evaluator.extractInt(source, arrayIndex);
+				int_arrayIndex = symbolicUtil.extractInt(source, arrayIndex);
 			}
 			numChars = originalArray.size();// ignoring the '\0' at the end
 											// of the string.
@@ -599,7 +600,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		Evaluation eval = evaluator.dereference(expressions[0].getSource(),
 				state, filesystemPointer);
 		CIVLSource modeSource = expressions[2].getSource();
-		int mode = evaluator.extractInt(modeSource,
+		int mode = symbolicUtil.extractInt(modeSource,
 				(NumericExpression) argumentValues[2]);
 		SymbolicExpression fileSystemStructure;
 		SymbolicExpression fileArray;
@@ -613,11 +614,11 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		SymbolicExpression theFile;
 		NumericExpression pos0 = zero, pos1 = zero;
 		boolean isInputFile = false;
-		int scopeId = evaluator.getScopeId(expressions[0].getSource(),
+		int scopeId = symbolicUtil.getScopeId(expressions[0].getSource(),
 				filesystemPointer);
-		int filesystemVid = evaluator.getVariableId(expressions[0].getSource(),
-				filesystemPointer);
-		ReferenceExpression fileSystemRef = evaluator
+		int filesystemVid = symbolicUtil.getVariableId(
+				expressions[0].getSource(), filesystemPointer);
+		ReferenceExpression fileSystemRef = symbolicUtil
 				.getSymRef(filesystemPointer);
 		Pair<State, StringBuffer> fileNameStringPair;
 		String fileNameString;
@@ -722,7 +723,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			ReferenceExpression ref = universe.arrayElementReference(
 					universe.tupleComponentReference(fileSystemRef, oneObject),
 					universe.integer(fileIndex));
-			SymbolicExpression filePointer = evaluator.makePointer(scopeId,
+			SymbolicExpression filePointer = symbolicUtil.makePointer(scopeId,
 					filesystemVid, ref);
 			SymbolicExpression fileStream;
 			SymbolicExpression scope = modelFactory.scopeValue(state
@@ -940,7 +941,7 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 		state = eval.state;
 		fileArray = universe.tupleRead(eval.value, oneObject);
 		length = universe.length(fileArray);
-		length_int = evaluator.extractInt(arguments[0].getSource(), length);
+		length_int = symbolicUtil.extractInt(arguments[0].getSource(), length);
 		for (int i = 0; i < length_int; i++) {
 			NumericExpression fileArrayIndex = universe.integer(i);
 			NumericExpression index = universe.add(startIndex, fileArrayIndex);

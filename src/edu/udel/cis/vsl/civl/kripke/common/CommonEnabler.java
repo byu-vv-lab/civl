@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
@@ -98,6 +99,8 @@ public abstract class CommonEnabler implements Enabler {
 
 	protected StateFactory stateFactory;
 
+	protected CIVLErrorLogger errorLogger;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -117,8 +120,10 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	protected CommonEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean showAmpleSet,
-			boolean showAmpleSetWtStates, LibraryLoader libLoader) {
+			boolean showAmpleSetWtStates, LibraryLoader libLoader,
+			CIVLErrorLogger errorLogger) {
 		this.transitionFactory = transitionFactory;
+		this.errorLogger = errorLogger;
 		this.evaluator = evaluator;
 		this.executor = executor;
 		this.showAmpleSet = showAmpleSet || showAmpleSetWtStates;
@@ -177,7 +182,7 @@ public abstract class CommonEnabler implements Enabler {
 
 	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
 		return this.libraryLoader.getLibraryEnabler(library, this,
-				this.debugOut, evaluator.modelFactory());
+				this.debugOut, evaluator.modelFactory(), evaluator.symbolicUtility());
 	}
 
 	/**
@@ -362,8 +367,8 @@ public abstract class CommonEnabler implements Enabler {
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
 	 */
-	public List<SingleTransition> enabledTransitionsOfStatement(
-			State state, Statement s, BooleanExpression pathCondition, int pid,
+	public List<SingleTransition> enabledTransitionsOfStatement(State state,
+			Statement s, BooleanExpression pathCondition, int pid,
 			Statement assignAtomicLock) {
 		ArrayList<SingleTransition> localTransitions = new ArrayList<>();
 		Statement transitionStatement = null;
@@ -397,7 +402,7 @@ public abstract class CommonEnabler implements Enabler {
 								"Unable to call $wait on a process that has already been the target of a $wait.",
 								state, this.stateFactory, s.getSource());
 
-						evaluator.reportError(e);
+						errorLogger.reportError(e);
 						// TODO: recover: add a no-op transition
 						throw e;
 					}

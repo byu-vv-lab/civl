@@ -6,6 +6,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -42,9 +43,10 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	 */
 	public PointeredEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean showAmpleSet,
-			boolean showAmpleSetWtStates, LibraryLoader libLoader) {
+			boolean showAmpleSetWtStates, LibraryLoader libLoader,
+			CIVLErrorLogger errorLogger) {
 		super(transitionFactory, evaluator, executor, showAmpleSet,
-				showAmpleSetWtStates, libLoader);
+				showAmpleSetWtStates, libLoader, errorLogger);
 	}
 
 	/* ************************* Methods from Enabler ********************** */

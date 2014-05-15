@@ -92,4 +92,12 @@ public interface DynamicScope {
 	 * @return The identifier of the parent of this dyscope in the dyscope tree.
 	 */
 	int getParentIdentifier();
+
+	/**
+	 * This name of the dynamic scope, which is not part of the state and is
+	 * immutable. It is <code>"d" + identifier</code>.
+	 * 
+	 * @return The name of this dynamic scope.
+	 */
+	String name();
 }

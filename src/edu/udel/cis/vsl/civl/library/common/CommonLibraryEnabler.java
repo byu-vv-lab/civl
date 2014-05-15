@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -66,21 +67,6 @@ public abstract class CommonLibraryEnabler extends Library implements
 	 */
 	protected TransitionFactory transitionFactory;
 
-	// /**
-	// * The symbolic universe for symbolic computations.
-	// */
-	// protected SymbolicUniverse universe;
-	//
-	// /**
-	// * The symbolic expression of zero.
-	// */
-	// protected NumericExpression zero;
-	//
-	// /**
-	// * The symbolic object of integer zero.
-	// */
-	// protected IntObject zeroObject;
-
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -94,8 +80,9 @@ public abstract class CommonLibraryEnabler extends Library implements
 	 *            The model factory of the system.
 	 */
 	protected CommonLibraryEnabler(CommonEnabler primaryEnabler,
-			PrintStream output, ModelFactory modelFactory) {
-		super(primaryEnabler.evaluator().universe());
+			PrintStream output, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(primaryEnabler.evaluator().universe(), symbolicUtil);
 		this.primaryEnabler = primaryEnabler;
 		this.transitionFactory = primaryEnabler.transitionFactory();
 		this.evaluator = primaryEnabler.evaluator();

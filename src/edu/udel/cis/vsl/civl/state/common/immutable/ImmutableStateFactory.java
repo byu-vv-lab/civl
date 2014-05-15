@@ -7,10 +7,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -24,7 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
-import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -90,14 +90,13 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private SymbolicUniverse universe;
 
-	// TODO factor out common/side-effect free methods
-	private Evaluator evaluator;
-
 	private IntObject twoObj;
 
 	private SymbolicType pointerType;
 
 	private CIVLType heapType;
+
+	private SymbolicUtility symbolicUtil;
 
 	/* **************************** Constructors *************************** */
 
@@ -105,7 +104,8 @@ public class ImmutableStateFactory implements StateFactory {
 	 * Factory to create all state objects.
 	 */
 	public ImmutableStateFactory(ModelFactory modelFactory,
-			GMCConfiguration config) {
+			GMCConfiguration config, SymbolicUtility symbolicUtil) {
+		this.symbolicUtil = symbolicUtil;
 		this.modelFactory = modelFactory;
 		this.config = config;
 		this.universe = modelFactory.universe();
@@ -200,9 +200,10 @@ public class ImmutableStateFactory implements StateFactory {
 		StringBuffer result = new StringBuffer();
 
 		if (reference.isIdentityReference()) {
-			result.append("&heapObject<d");
+			result.append("&<d");
 			result.append(dyscopeId);
-			result.append(',');
+			result.append(">");
+			result.append("heap<");
 			return new Triple<>(0, type, result.toString());
 		} else if (reference.isArrayElementReference()) {
 			ArrayElementReference arrayEleRef = (ArrayElementReference) reference;
@@ -466,14 +467,14 @@ public class ImmutableStateFactory implements StateFactory {
 			return pointer.toString();
 		else {
 			SymbolicTupleType pointerType = (SymbolicTupleType) pointer.type();
+			int dyscopeId, vid;
 
 			if (!pointerType.name().getString().equalsIgnoreCase("pointer")) {
 				return pointer.toString();
 			}
 
-			int dyscopeId = evaluator.getScopeId(source, pointer);
-			int vid = evaluator.getVariableId(source, pointer);
-
+			dyscopeId = symbolicUtil.getScopeId(source, pointer);
+			vid = symbolicUtil.getVariableId(source, pointer);
 			if (dyscopeId == -1 && vid == -1)
 				return "NULL";
 			if (dyscopeId < 0)
@@ -494,10 +495,10 @@ public class ImmutableStateFactory implements StateFactory {
 					StringBuffer result = new StringBuffer();
 
 					result.append('&');
-					result.append(variable.name());
-					result.append("<d");
-					result.append(dyscope.identifier());
+					result.append("<");
+					result.append(dyscope.name());
 					result.append('>');
+					result.append(variable.name());
 					result.append(referenceToString(source, variable.type(),
 							reference).right);
 					return result.toString();
@@ -528,7 +529,7 @@ public class ImmutableStateFactory implements StateFactory {
 		int bitSetLength = reachers.length();
 		boolean first = true;
 
-		out.println(prefix + "dyscope d" + dyscope.identifier() + " (id=" + id
+		out.println(prefix + "dyscope " + dyscope.name() + " (id=" + id
 				+ ", parent=d" + dyscope.getParentIdentifier() + ", static="
 				+ lexicalScope.id() + ")");
 		out.print(prefix + "| reachers = {");
@@ -1394,9 +1395,9 @@ public class ImmutableStateFactory implements StateFactory {
 
 				if (!this.isEmptyHeap(heapValue)) {
 					throw new CIVLStateException(ErrorKind.MEMORY_LEAK,
-							Certainty.CONCRETE, "The unreachable dyscope d"
-									+ scopeToBeRemoved.identifier() + "(id="
-									+ i + ")" + " has a non-empty heap "
+							Certainty.CONCRETE, "The unreachable dyscope "
+									+ scopeToBeRemoved.name() + "(id=" + i
+									+ ")" + " has a non-empty heap "
 									+ heapValue.toString() + ".", state, this,
 							heapVariable.getSource());
 				}
@@ -1629,11 +1630,6 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public State releaseAtomicLock(State state) {
 		return this.setVariable(state, 0, 0, modelFactory.processValue(-1));
-	}
-
-	@Override
-	public void setEvaluator(Evaluator evaluator) {
-		this.evaluator = evaluator;
 	}
 
 	/**

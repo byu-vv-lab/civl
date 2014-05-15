@@ -6,13 +6,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
+import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.library.common.CommonLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -29,6 +29,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -78,9 +79,9 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	 */
 	public LibcivlcExecutor(Executor primaryExecutor, PrintStream output,
 			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFactory) {
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
 		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
-				modelFactory);
+				modelFactory, symbolicUtil);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -170,8 +171,8 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			array = universe.emptyArray(elementType);
 			bundle = universe.unionInject(symbolicBundleType, indexObj, array);
 		} else if (!size.isZero()
-				&& evaluator.getScopeId(source, pointer) == -1
-				&& evaluator.getVariableId(source, pointer) == -1) {
+				&& symbolicUtil.getScopeId(source, pointer) == -1
+				&& symbolicUtil.getVariableId(source, pointer) == -1) {
 			throw new CIVLSyntaxException(
 					"Packing a NULL message with size larger than 0", source);
 		} else {
@@ -223,7 +224,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		arrayObject = argumentValues[0].argument(1);
 		assert arrayObject instanceof SymbolicExpression;
 		array = (SymbolicExpression) arrayObject;
-		size = evaluator.sizeof(civlSource, array.type());
+		size = symbolicUtil.sizeof(civlSource, array.type());
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, lhs, size);
 		return state;
@@ -254,7 +255,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression bundle = argumentValues[0];
 		SymbolicExpression pointer = argumentValues[1];
-		ReferenceExpression symRef = evaluator.getSymRef(pointer);
+		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
 		ReferenceKind kind = symRef.referenceKind();
 		SymbolicExpression array = (SymbolicExpression) bundle.argument(1);
 		NumericExpression length = universe.length(array);
@@ -285,8 +286,8 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 				if (kind == ReferenceKind.ARRAY_ELEMENT) {
 					NumericExpression pointerIndex = ((ArrayElementReference) symRef)
 							.getIndex();
-					SymbolicExpression parentPointer = evaluator.parentPointer(
-							source, pointer);
+					SymbolicExpression parentPointer = symbolicUtil
+							.parentPointer(source, pointer);
 					Evaluation eval = evaluator.dereference(source, state,
 							parentPointer);
 					SymbolicExpression targetArray = eval.value;
@@ -698,9 +699,9 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		nprocs = universe.tupleRead(gbarrierObj, zeroObject);
 		inBarrierArray = universe.tupleRead(gbarrierObj, twoObject);
 		numInBarrier = universe.tupleRead(gbarrierObj, threeObject);
-		nprocs_int = evaluator.extractInt(civlsource,
+		nprocs_int = symbolicUtil.extractInt(civlsource,
 				(NumericExpression) nprocs);
-		numInBarrier_int = evaluator.extractInt(civlsource,
+		numInBarrier_int = symbolicUtil.extractInt(civlsource,
 				(NumericExpression) numInBarrier);
 		numInBarrier_int++;
 		if (numInBarrier_int == nprocs_int) {
@@ -1019,9 +1020,9 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
 		dest = universe.tupleRead(comm, zeroObject);
-		int_source = evaluator.extractInt(civlsource,
+		int_source = symbolicUtil.extractInt(civlsource,
 				(NumericExpression) source);
-		int_tag = evaluator.extractInt(civlsource, (NumericExpression) tag);
+		int_tag = symbolicUtil.extractInt(civlsource, (NumericExpression) tag);
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
 		// specific source and tag
 		if (int_source >= 0 && int_tag >= 0) {
@@ -1029,7 +1030,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = evaluator.extractInt(civlsource,
+			int_queueLength = symbolicUtil.extractInt(civlsource,
 					(NumericExpression) queueLength);
 			for (int i = 0; i < int_queueLength; i++) {
 				newMessage = universe.arrayRead(messages, universe.integer(i));
@@ -1045,7 +1046,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = evaluator.extractInt(civlsource,
+			int_queueLength = symbolicUtil.extractInt(civlsource,
 					(NumericExpression) queueLength);
 			if (int_queueLength > 0) {
 				newMessage = universe.arrayRead(messages, zero);
@@ -1127,7 +1128,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		queueLength = universe.tupleRead(queue, zeroObject);
 		messages = universe.tupleRead(queue, oneObject);
 		messages = universe.append(messages, newMessage);
-		int_queueLength = evaluator.extractInt(civlsource,
+		int_queueLength = symbolicUtil.extractInt(civlsource,
 				(NumericExpression) queueLength);
 		int_queueLength++;
 		queueLength = universe.integer(int_queueLength);
@@ -1471,7 +1472,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 	 * @return
 	 */
 	private SymbolicExpression isValidPointer(SymbolicExpression pointer) {
-		int scopeId = evaluator.getScopeId(null, pointer);
+		int scopeId = symbolicUtil.getScopeId(null, pointer);
 
 		if (scopeId >= 0)
 			return universe.bool(true);
@@ -1570,11 +1571,12 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			NumericExpression size, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression array = null;
-		ReferenceExpression symRef = evaluator.getSymRef(pointer);
+		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
 		ReferenceKind kind = symRef.referenceKind();
 		SymbolicType elementType = evaluator.referencedType(source, state,
 				pointer);
-		NumericExpression elementSize = evaluator.sizeof(source, elementType);
+		NumericExpression elementSize = symbolicUtil
+				.sizeof(source, elementType);
 		BooleanExpression pathCondition = state.getPathCondition();
 		BooleanExpression zeroSizeClaim = universe.equals(size, zero);
 		Reasoner reasoner = universe.reasoner(pathCondition);
@@ -1613,7 +1615,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 							"sizeof element does not divide size argument",
 							state, this.stateFactory, source);
 
-					evaluator.reportError(e);
+					errorLogger.reportError(e);
 					pathCondition = universe.and(pathCondition, divisibility);
 					state = state.setPathCondition(pathCondition);
 					reasoner = universe.reasoner(pathCondition);
@@ -1623,15 +1625,15 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 				case ARRAY_ELEMENT: {
 					NumericExpression startIndex = ((ArrayElementReference) symRef)
 							.getIndex();
-					SymbolicExpression arrayPointer = evaluator.parentPointer(
-							source, pointer);
+					SymbolicExpression arrayPointer = symbolicUtil
+							.parentPointer(source, pointer);
 					Evaluation eval = evaluator.dereference(source, state,
 							arrayPointer);
 					SymbolicExpression originalArray = eval.value;
 					NumericExpression endIndex = universe
 							.add(startIndex, count);
 					state = eval.state;
-					array = evaluator.getSubArray(originalArray, startIndex,
+					array = symbolicUtil.getSubArray(originalArray, startIndex,
 							endIndex, state, source);
 					break;
 				}
@@ -1648,7 +1650,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 							"null pointer only valid with size 0", state,
 							this.stateFactory, source);
 
-					evaluator.reportError(e);
+					errorLogger.reportError(e);
 					pathCondition = universe.and(pathCondition, zeroSizeClaim);
 					state = state.setPathCondition(pathCondition);
 					reasoner = universe.reasoner(pathCondition);
@@ -1706,9 +1708,10 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 		SymbolicExpression queueLength;
 		SymbolicExpression messages = null;
 		SymbolicExpression message = null;
-		int int_source = evaluator.extractInt(civlsource,
+		int int_source = symbolicUtil.extractInt(civlsource,
 				(NumericExpression) source);
-		int int_tag = evaluator.extractInt(civlsource, (NumericExpression) tag);
+		int int_tag = symbolicUtil.extractInt(civlsource,
+				(NumericExpression) tag);
 		int int_queueLength;
 
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
@@ -1718,7 +1721,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = evaluator.extractInt(civlsource,
+			int_queueLength = symbolicUtil.extractInt(civlsource,
 					(NumericExpression) queueLength);
 			for (int i = 0; i < int_queueLength; i++) {
 				message = universe.arrayRead(messages, universe.integer(i));
@@ -1733,7 +1736,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = evaluator.extractInt(civlsource,
+			int_queueLength = symbolicUtil.extractInt(civlsource,
 					(NumericExpression) queueLength);
 			if (int_queueLength > 0)
 				message = universe.arrayRead(messages, zero);

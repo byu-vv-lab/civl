@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -32,9 +33,9 @@ public class LibmpiExecutor extends CommonLibraryExecutor implements
 
 	public LibmpiExecutor(Executor primaryExecutor, PrintStream output,
 			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFactory) {
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
 		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
-				modelFactory);
+				modelFactory, symbolicUtil);
 	}
 
 	@Override

@@ -28,6 +28,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -59,8 +60,8 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 	 *            The model factory of the system.
 	 */
 	public LibcivlcEnabler(CommonEnabler primaryEnabler, PrintStream output,
-			ModelFactory modelFactory) {
-		super(primaryEnabler, output, modelFactory);
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
+		super(primaryEnabler, output, modelFactory, symbolicUtil);
 
 		CIVLSource source = modelFactory.model().getSource();
 		SystemFunction chooseIntWorkFunction = modelFactory.systemFunction(
@@ -455,9 +456,10 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 		SymbolicExpression queueLength;
 		SymbolicExpression messages = null;
 		SymbolicExpression message = null;
-		int int_source = evaluator.extractInt(civlsource,
+		int int_source = symbolicUtil.extractInt(civlsource,
 				(NumericExpression) source);
-		int int_tag = evaluator.extractInt(civlsource, (NumericExpression) tag);
+		int int_tag = symbolicUtil.extractInt(civlsource,
+				(NumericExpression) tag);
 		int int_queueLength;
 
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
@@ -467,7 +469,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = evaluator.extractInt(civlsource,
+			int_queueLength = symbolicUtil.extractInt(civlsource,
 					(NumericExpression) queueLength);
 			for (int i = 0; i < int_queueLength; i++) {
 				message = universe.arrayRead(messages, universe.integer(i));
@@ -482,7 +484,7 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = evaluator.extractInt(civlsource,
+			int_queueLength = symbolicUtil.extractInt(civlsource,
 					(NumericExpression) queueLength);
 			if (int_queueLength > 0)
 				message = universe.arrayRead(messages, zero);

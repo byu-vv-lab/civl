@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -41,9 +42,10 @@ public class LibstdlibExecutor extends CommonLibraryExecutor implements
 	 *            True iff print is enabled, reflecting command line options.
 	 */
 	public LibstdlibExecutor(Executor primaryExecutor, PrintStream output,
-			PrintStream err, boolean enablePrintf, boolean statelessPrintf,ModelFactory modelFactory) {
+			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
 		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
-				modelFactory);
+				modelFactory, symbolicUtil);
 	}
 
 	/* ************************ Methods from Library *********************** */

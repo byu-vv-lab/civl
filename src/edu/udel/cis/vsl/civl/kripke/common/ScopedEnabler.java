@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -71,9 +72,9 @@ public class ScopedEnabler extends CommonEnabler implements Enabler {
 	public ScopedEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean sPor,
 			boolean showAmpleSet, boolean showAmpleSetWtStates,
-			LibraryLoader libLoader) {
+			LibraryLoader libLoader, CIVLErrorLogger errorLogger) {
 		super(transitionFactory, evaluator, executor, showAmpleSet,
-				showAmpleSetWtStates, libLoader);
+				showAmpleSetWtStates, libLoader, errorLogger);
 		this.scpPor = sPor;
 		if (this.scpPor)
 			this.debugOut.println("scoped POR is enabled.");

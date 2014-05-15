@@ -2,11 +2,12 @@ package edu.udel.cis.vsl.civl.library.common;
 
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
+import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -15,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
@@ -73,8 +75,10 @@ public abstract class CommonLibraryExecutor extends Library implements
 	 * The static model of the program.
 	 */
 	protected Model model;
-	
+
 	protected boolean statelessPrintf;
+
+	protected CIVLErrorLogger errorLogger;
 
 	/* **************************** Constructors *************************** */
 
@@ -91,9 +95,10 @@ public abstract class CommonLibraryExecutor extends Library implements
 	 *            The model factory of the system.
 	 */
 	protected CommonLibraryExecutor(Executor primaryExecutor,
-			PrintStream output, PrintStream err, boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFactory) {
-		super(primaryExecutor.evaluator().universe());
+			PrintStream output, PrintStream err, boolean enablePrintf,
+			boolean statelessPrintf, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(primaryExecutor.evaluator().universe(), symbolicUtil);
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.stateFactory = evaluator.stateFactory();
@@ -103,6 +108,7 @@ public abstract class CommonLibraryExecutor extends Library implements
 		this.err = err;
 		this.modelFactory = modelFactory;
 		this.model = modelFactory.model();
+		this.errorLogger = primaryExecutor.errorLogger();
 	}
 
 	/* ************************* Protected Methods ************************* */
@@ -169,15 +175,16 @@ public abstract class CommonLibraryExecutor extends Library implements
 	private Evaluation getAndCheckHeapObjectPointer(
 			SymbolicExpression heapPointer, SymbolicExpression pointer,
 			CIVLSource pointerSource, State state) {
-		SymbolicExpression objectPointer = evaluator.getParentPointer(pointer);
+		SymbolicExpression objectPointer = symbolicUtil.parentPointer(
+				pointerSource, pointer);
 
 		if (objectPointer != null) {
-			SymbolicExpression fieldPointer = evaluator
-					.getParentPointer(objectPointer);
+			SymbolicExpression fieldPointer = symbolicUtil.parentPointer(
+					pointerSource, objectPointer);
 
 			if (fieldPointer != null) {
-				SymbolicExpression actualHeapPointer = evaluator
-						.getParentPointer(fieldPointer);
+				SymbolicExpression actualHeapPointer = symbolicUtil
+						.parentPointer(pointerSource, fieldPointer);
 
 				if (actualHeapPointer != null) {
 					BooleanExpression pathCondition = state.getPathCondition();
@@ -195,11 +202,11 @@ public abstract class CommonLibraryExecutor extends Library implements
 								"Invalid pointer for heap", state,
 								this.stateFactory, pointerSource);
 
-						evaluator.reportError(e);
+						errorLogger.reportError(e);
 						state = state.setPathCondition(universe.and(
 								pathCondition, claim));
 					}
-					symRef = evaluator.getSymRef(pointer);
+					symRef = symbolicUtil.getSymRef(pointer);
 					if (symRef instanceof ArrayElementReference) {
 						NumericExpression index = ((ArrayElementReference) symRef)
 								.getIndex();
@@ -217,7 +224,7 @@ public abstract class CommonLibraryExecutor extends Library implements
 					Certainty.PROVEABLE, "Invalid pointer for heap", state,
 					this.stateFactory, pointerSource);
 
-			evaluator.reportError(e);
+			errorLogger.reportError(e);
 			state = state.setPathCondition(universe.falseExpression());
 			return new Evaluation(state, objectPointer);
 		}
@@ -233,7 +240,7 @@ public abstract class CommonLibraryExecutor extends Library implements
 	 */
 	private int getMallocIndex(SymbolicExpression pointer) {
 		// ref points to element 0 of an array:
-		NTReferenceExpression ref = (NTReferenceExpression) evaluator
+		NTReferenceExpression ref = (NTReferenceExpression) symbolicUtil
 				.getSymRef(pointer);
 		// objectPointer points to array:
 		NTReferenceExpression objectPointer = (NTReferenceExpression) ref

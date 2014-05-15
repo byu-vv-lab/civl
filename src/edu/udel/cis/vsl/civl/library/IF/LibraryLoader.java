@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 
 /**
  * The class loader for library enabler/executor.
@@ -20,7 +21,8 @@ public interface LibraryLoader {
 	 */
 	LibraryExecutor getLibraryExecutor(String name, Executor primaryExecutor,
 			PrintStream output, PrintStream err, boolean enablePrintf,
-			boolean statelessPrintf, ModelFactory modelFacotry);
+			boolean statelessPrintf, ModelFactory modelFacotry,
+			SymbolicUtility symbolicUtil);
 
 	/**
 	 * Gets the library enabler with the given name.
@@ -36,5 +38,6 @@ public interface LibraryLoader {
 	 * @return The library enabler of the given name.
 	 */
 	LibraryEnabler getLibraryEnabler(String name, CommonEnabler primaryEnabler,
-			PrintStream output, ModelFactory modelFacotry);
+			PrintStream output, ModelFactory modelFacotry,
+			SymbolicUtility symbolicUtil);
 }

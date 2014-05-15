@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 
 /**
  * The loader for library enabler or executor.
@@ -47,7 +48,7 @@ public class CommonLibraryLoader implements LibraryLoader {
 	@Override
 	public LibraryEnabler getLibraryEnabler(String name,
 			CommonEnabler primaryEnabler, PrintStream output,
-			ModelFactory modelFacotry) {
+			ModelFactory modelFacotry, SymbolicUtility symbolicUtil) {
 		LibraryEnabler result = libraryEnablerCache.get(name);
 
 		if (result == null) {
@@ -58,10 +59,10 @@ public class CommonLibraryLoader implements LibraryLoader {
 						.forName(aClassName);
 				Constructor<? extends LibraryEnabler> constructor = aClass
 						.getConstructor(CommonEnabler.class, PrintStream.class,
-								ModelFactory.class);
+								ModelFactory.class, SymbolicUtility.class);
 
 				result = constructor.newInstance(primaryEnabler, output,
-						modelFacotry);
+						modelFacotry, symbolicUtil);
 			} catch (Exception e) {
 				throw new CIVLInternalException("Unable to load library: "
 						+ name + "\n" + e.getMessage(), (CIVLSource) null);
@@ -76,7 +77,7 @@ public class CommonLibraryLoader implements LibraryLoader {
 	public LibraryExecutor getLibraryExecutor(String name,
 			Executor primaryExecutor, PrintStream output, PrintStream err,
 			boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFacotry) {
+			ModelFactory modelFacotry, SymbolicUtility symbolicUtil) {
 		LibraryExecutor result = libraryExecutorCache.get(name);
 
 		if (result == null) {
@@ -88,10 +89,12 @@ public class CommonLibraryLoader implements LibraryLoader {
 				Constructor<? extends LibraryExecutor> constructor = aClass
 						.getConstructor(Executor.class, PrintStream.class,
 								PrintStream.class, boolean.class,
-								boolean.class, ModelFactory.class);
+								boolean.class, ModelFactory.class,
+								SymbolicUtility.class);
 
 				result = constructor.newInstance(primaryExecutor, output, err,
-						enablePrintf, statelessPrintf, modelFacotry);
+						enablePrintf, statelessPrintf, modelFacotry,
+						symbolicUtil);
 			} catch (Exception e) {
 				throw new CIVLInternalException("Unable to load library: "
 						+ name + "\n" + e.getMessage(), (CIVLSource) null);

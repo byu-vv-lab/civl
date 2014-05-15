@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.kripke.IF.Transition;
 import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
@@ -192,6 +193,8 @@ public class CommonStateManager implements StateManager {
 
 	private TransitionFactory transitionFactory;
 
+	private CIVLErrorLogger errorLogger;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -203,7 +206,7 @@ public class CommonStateManager implements StateManager {
 			Enabler enabler, Executor executor, PrintStream out,
 			boolean verbose, boolean debug, boolean gui, boolean showStates,
 			boolean showSavedStates, boolean showTransitions,
-			boolean saveStates, boolean simplify) {
+			boolean saveStates, boolean simplify, CIVLErrorLogger errorLogger) {
 		this.transitionFactory = transitionFactory;
 		this.executor = executor;
 		this.enabler = (CommonEnabler) enabler;
@@ -217,6 +220,7 @@ public class CommonStateManager implements StateManager {
 		this.showTransitions = showTransitions;
 		this.saveStates = saveStates;
 		this.simplify = simplify;
+		this.errorLogger = errorLogger;
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -503,16 +507,16 @@ public class CommonStateManager implements StateManager {
 			Location location) {
 		switch (enabled) {
 		case NONDETERMINISTIC:
-			executor.evaluator().reportError(
-					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
-							"Non-determinism is encountered in $atom block.",
-							state, this.stateFactory, location.getSource()));
+			errorLogger.reportError(new CIVLStateException(ErrorKind.OTHER,
+					Certainty.CONCRETE,
+					"Non-determinism is encountered in $atom block.", state,
+					this.stateFactory, location.getSource()));
 			break;
 		case BLOCKED:
-			executor.evaluator().reportError(
-					new CIVLStateException(ErrorKind.OTHER, Certainty.CONCRETE,
-							"Blocked location is encountered in $atom block.",
-							state, this.stateFactory, location.getSource()));
+			errorLogger.reportError(new CIVLStateException(ErrorKind.OTHER,
+					Certainty.CONCRETE,
+					"Blocked location is encountered in $atom block.", state,
+					this.stateFactory, location.getSource()));
 			break;
 		default:
 		}

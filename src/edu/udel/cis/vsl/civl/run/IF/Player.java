@@ -12,12 +12,14 @@ import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.library.IF.Libraries;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.predicate.IF.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.States;
@@ -103,6 +105,10 @@ public abstract class Player {
 
 	protected boolean statelessPrintf;
 
+	protected SymbolicUtility symbolicUtil;
+
+	protected CIVLErrorLogger errorLogger;
+
 	public Player(GMCConfiguration config, Model model, PrintStream out,
 			PrintStream err, Preprocessor preprocessor)
 			throws CommandLineException {
@@ -116,18 +122,19 @@ public abstract class Player {
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
-		this.stateFactory = States.newImmutableStateFactory(modelFactory,
-				config);
-		this.transitionFactory = new TransitionFactory();
-		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
-		this.libraryLoader = Libraries.newLibraryLoader();
-		this.evaluator = Semantics.newEvaluator(config, modelFactory,
-				stateFactory, log);
 		this.solve = (Boolean) config.getValueOrDefault(UserInterface.solveO);
-		evaluator.setSolve(solve);
-		this.stateFactory.setEvaluator(evaluator);
+		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
 		this.log.setErrorBound((int) config
 				.getValueOrDefault(UserInterface.errorBoundO));
+		errorLogger = new CIVLErrorLogger(config, log, universe, solve);
+		this.symbolicUtil = Semantics.newSymbolicUtility(universe,
+				modelFactory, errorLogger);
+		this.stateFactory = States.newImmutableStateFactory(modelFactory,
+				config, symbolicUtil);
+		this.errorLogger.setStateFactory(stateFactory);
+		this.libraryLoader = Libraries.newLibraryLoader();
+		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
+				symbolicUtil, errorLogger);
 		this.enablePrintf = (Boolean) config
 				.getValueOrDefault(UserInterface.enablePrintfO);
 		this.statelessPrintf = (Boolean) config
@@ -139,7 +146,7 @@ public abstract class Player {
 		this.gui = (Boolean) config.getValueOrDefault(UserInterface.guiO);
 		this.executor = Semantics.newExecutor(config, modelFactory,
 				stateFactory, log, libraryLoader, out, err, this.enablePrintf,
-				this.statelessPrintf, evaluator);
+				this.statelessPrintf, evaluator, errorLogger);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
 		this.debug = config.isTrue(UserInterface.debugO);
@@ -152,8 +159,10 @@ public abstract class Player {
 				.getValueOrDefault(UserInterface.saveStatesO);
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
+		this.transitionFactory = new TransitionFactory();
 		enabler = Kripkes.newEnabler(transitionFactory, evaluator, executor,
-				showAmpleSet, this.showAmpleSetWtStates, this.libraryLoader);
+				showAmpleSet, this.showAmpleSetWtStates, this.libraryLoader,
+				errorLogger);
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);
 		this.predicate = new StandardPredicate(log, universe,
@@ -162,7 +171,7 @@ public abstract class Player {
 		stateManager = Kripkes.newStateManager(this.transitionFactory,
 				(Enabler) enabler, executor, out, verbose, debug, gui,
 				showStates, showSavedStates, showTransitions, saveStates,
-				simplify);
+				simplify, errorLogger);
 	}
 
 	public void printResult() {

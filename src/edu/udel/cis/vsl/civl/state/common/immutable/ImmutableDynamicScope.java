@@ -93,6 +93,11 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 */
 	private int identifier;
 
+	/**
+	 * This name is not part of the state and it is unique and immutable.
+	 */
+	private String name;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -121,6 +126,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 		this.variableValues = variableValues;
 		this.reachers = reachers;
 		this.identifier = identifier;
+		this.name = "d" + identifier;
 	}
 
 	/* ********************** Package-private Methods ********************** */
@@ -205,8 +211,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 */
 	ImmutableDynamicScope setVariableValues(
 			SymbolicExpression[] newVariableValues) {
-		return new ImmutableDynamicScope(lexicalScope, parent, parentIdentifier,
-				newVariableValues, reachers, this.identifier);
+		return new ImmutableDynamicScope(lexicalScope, parent,
+				parentIdentifier, newVariableValues, reachers, this.identifier);
 	}
 
 	/**
@@ -325,8 +331,9 @@ public class ImmutableDynamicScope implements DynamicScope {
 			}
 		}
 		return newValues == null ? setParent(newParentId, newParentIdentifier)
-				: new ImmutableDynamicScope(lexicalScope, newParentId, newParentIdentifier,
-						newValues, reachers, this.identifier);
+				: new ImmutableDynamicScope(lexicalScope, newParentId,
+						newParentIdentifier, newValues, reachers,
+						this.identifier);
 	}
 
 	/*************************** Methods from Object *************************/
@@ -409,8 +416,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 
 		System.arraycopy(variableValues, 0, newVariableValues, 0, n);
 		newVariableValues[vid] = value;
-		return new ImmutableDynamicScope(lexicalScope, parent, parentIdentifier,
-				newVariableValues, reachers, this.identifier);
+		return new ImmutableDynamicScope(lexicalScope, parent,
+				parentIdentifier, newVariableValues, reachers, this.identifier);
 	}
 
 	@Override
@@ -421,6 +428,11 @@ public class ImmutableDynamicScope implements DynamicScope {
 	@Override
 	public int getParentIdentifier() {
 		return this.parentIdentifier;
+	}
+	
+	@Override
+	public String name() {
+		return this.name;
 	}
 
 	/* ************************ Other Public Methods *********************** */

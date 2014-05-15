@@ -2,11 +2,8 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -21,10 +18,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -92,39 +86,6 @@ public interface Evaluator {
 			CIVLType type) throws UnsatisfiablePathConditionException;
 
 	/**
-	 * 
-	 * Gets a Java concrete int from a symbolic expression or throws exception.
-	 * 
-	 * @param expression
-	 *            a numeric expression expected to hold concrete int value
-	 * @return the concrete int
-	 * @throws CIVLInternalException
-	 *             if a concrete integer value cannot be extracted
-	 */
-	int extractInt(CIVLSource source, NumericExpression expression);
-
-	/**
-	 * Returns the parent pointer of the given pointer, or null if the given
-	 * pointer is a variable pointer (i.e., has no parent pointer). TODO move to
-	 * Libcivlc?
-	 * 
-	 * @param pointer
-	 *            any pointer value
-	 * @return parent pointer or null
-	 */
-	SymbolicExpression getParentPointer(SymbolicExpression pointer);
-
-	/**
-	 * Given a pointer value, returns the dynamic scope ID component of that
-	 * pointer value.
-	 * 
-	 * @param pointer
-	 *            a pointer value
-	 * @return the dynamic scope ID component of that pointer value
-	 */
-	int getScopeId(CIVLSource source, SymbolicExpression pointer);
-
-	/**
 	 * Given a pointer to char, returns the symbolic expression of type array of
 	 * char which is the string pointed to.
 	 * 
@@ -156,54 +117,6 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 
 	/**
-	 * Given an array, a start index, and end index, returns the array which is
-	 * the subsequence of the given array consisting of the elements in
-	 * positions start index through end index minus one. The length of the new
-	 * array is endIndex - startIndex. TODO move to libcivlc?
-	 * 
-	 * @param array
-	 * @param startIndex
-	 * @param endIndex
-	 * @param assumption
-	 * @param source
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	SymbolicExpression getSubArray(SymbolicExpression array,
-			NumericExpression startIndex, NumericExpression endIndex,
-			State state, CIVLSource source)
-			throws UnsatisfiablePathConditionException;
-
-	/**
-	 * Given a pointer value, returns the symbolic reference component of that
-	 * value. The "symRef" refers to a sub-structure of the variable pointed to.
-	 * 
-	 * @param pointer
-	 *            a pointer value
-	 * @return the symRef component
-	 */
-	ReferenceExpression getSymRef(SymbolicExpression pointer);
-
-	/**
-	 * Given a pointer value, returns the variable ID component of that value.
-	 * 
-	 * @param pointer
-	 *            a pointer value
-	 * @return the variable ID component of that value
-	 */
-	int getVariableId(CIVLSource source, SymbolicExpression pointer);
-
-	/**
-	 * Look up a given communicator to find the rank of a certain process. TODO
-	 * remove this method when gcomm/comm is implemented.
-	 * 
-	 * @param comm
-	 * @param pid
-	 * @return
-	 */
-	boolean isProcInCommWithRank(SymbolicExpression comm, int pid, int rank);
-
-	/**
 	 * Calculate the ID of the process that a given wait statement is waiting
 	 * for.
 	 * 
@@ -216,36 +129,6 @@ public interface Evaluator {
 	 * @return The ID of the process that the wait statement is waiting for.
 	 */
 	int joinedIDofWait(State state, ProcessState p, WaitStatement wait);
-
-	/**
-	 * Report a (possible) error detected in the course of evaluating an
-	 * expression.
-	 * 
-	 * Protocol for checking conditions and reporting and recovering from
-	 * errors. First, check some condition holds and call the result of that
-	 * check "condsat", which may be YES, NO, or MAYBE. If condsat is YES,
-	 * proceed. Otherwise, there is a problem: call this method.
-	 * 
-	 * This method first checks the satisfiability of the path condition, call
-	 * the result "pcsat". Logs a violation with certainty determined as
-	 * follows:
-	 * <ul>
-	 * <li>pcsat=YES && condsat=NO : certainty=PROVEABLE</li>
-	 * <li>pcsat=YES && condsat=MAYBE : certainty=MAYBE</li>
-	 * <li>pcsat=MAYBE && condsat=NO : certainty=MAYBE</li>
-	 * <li>pcsat=MAYBE && condsat=MAYBE : certainty=MAYBE</li>
-	 * <li>pcsat=NO: no error to report</li>
-	 * </ul>
-	 * 
-	 * Returns the state obtained by adding the claim to the pc of the given
-	 * state.
-	 * 
-	 * TODO: move this to its own package, like log, make public
-	 * 
-	 */
-	State logError(CIVLSource source, State state, BooleanExpression claim,
-			ResultType resultType, ErrorKind errorKind, String message)
-			throws UnsatisfiablePathConditionException;
 
 	/**
 	 * Compute the reachable memory units of an expression recursively.
@@ -291,20 +174,6 @@ public interface Evaluator {
 	ModelFactory modelFactory();
 
 	/**
-	 * Given a non-trivial pointer, i.e., a pointer to some location inside an
-	 * object, returns the parent pointer. For example, a pointer to an array
-	 * element returns the pointer to the array.
-	 * 
-	 * @param pointer
-	 *            non-trivial pointer
-	 * @return pointer to parent
-	 * @throws CIVLInternalException
-	 *             if pointer is trivial
-	 */
-	SymbolicExpression parentPointer(CIVLSource source,
-			SymbolicExpression pointer);
-
-	/**
 	 * Creates a pointer value by evaluating a left-hand-side expression in the
 	 * given state.
 	 * 
@@ -339,49 +208,6 @@ public interface Evaluator {
 			SymbolicExpression pointer);
 
 	/**
-	 * Writes the given execution exception to the log.
-	 * 
-	 * @param err
-	 *            a CIVL execution exception
-	 */
-	void reportError(CIVLExecutionException err);
-
-	/**
-	 * Update the option for whether to solve for concrete counterexamples or
-	 * not.
-	 * 
-	 * @param value
-	 *            The option (true of false).
-	 */
-	void setSolve(boolean value);
-
-	/**
-	 * Returns the pointer value obtained by replacing the symRef component of
-	 * the given pointer value with the given symRef.
-	 * 
-	 * @param pointer
-	 *            a pointer value
-	 * @param symRef
-	 *            a symbolic refererence expression
-	 * @return the pointer obtained by modifying the given one by replacing its
-	 *         symRef field with the given symRef
-	 */
-	SymbolicExpression setSymRef(SymbolicExpression pointer,
-			ReferenceExpression symRef);
-
-	/**
-	 * Compute the symbolic representation of the size of a given symbolic type.
-	 * 
-	 * @param source
-	 *            The source code element to be used in the error report (if
-	 *            any).
-	 * @param type
-	 *            The symbolic type whose size is to evaluated.
-	 * @return The symbolic representation of the symbolic type.
-	 */
-	NumericExpression sizeof(CIVLSource source, SymbolicType type);
-
-	/**
 	 * The state factory should be the unique one used in the system.
 	 * 
 	 * @return The state factory of the evaluator.
@@ -395,11 +221,6 @@ public interface Evaluator {
 	 */
 	SymbolicUniverse universe();
 
-	// void setExecutor(Executor executor);
-
-	void logSimpleError(CIVLSource source, State state, ErrorKind errorKind,
-			String message) throws UnsatisfiablePathConditionException;
-
 	SymbolicExpression heapPointer(CIVLSource source, State state,
 			SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
@@ -408,30 +229,15 @@ public interface Evaluator {
 			SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
 
-	SymbolicExpression initialHeapValue();
-
 	void setEnabler(Enabler enabler);
 
 	Pair<State, CIVLFunction> evaluateFunctionExpression(State state, int pid,
 			Expression functionExpression)
 			throws UnsatisfiablePathConditionException;
 
-	/**
-	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
-	 * symbolic reference value.
-	 * 
-	 * @param scopeId
-	 *            ID number of a dynamic scope
-	 * @param varId
-	 *            ID number of a variable within that scope
-	 * @param symRef
-	 *            a symbolic reference to a point within the variable
-	 * @return a pointer value as specified by the 3 components
-	 */
-	SymbolicExpression makePointer(int scopeId, int varId,
-			ReferenceExpression symRef);
-
 	Evaluation pointerAdd(State state, int pid, BinaryExpression expression,
 			SymbolicExpression pointer, NumericExpression offset)
 			throws UnsatisfiablePathConditionException;
+
+	SymbolicUtility symbolicUtility();
 }

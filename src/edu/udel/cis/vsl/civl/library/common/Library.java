@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.library.common;
 
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
@@ -59,6 +60,11 @@ public abstract class Library {
 	protected SymbolicUniverse universe;
 
 	/**
+	 * The symbolic universe for symbolic computations.
+	 */
+	protected SymbolicUtility symbolicUtil;
+
+	/**
 	 * Returns the name associated to this library executor or enabler, for
 	 * example, "stdio".
 	 * 
@@ -66,7 +72,7 @@ public abstract class Library {
 	 */
 	public abstract String name();
 
-	protected Library(SymbolicUniverse universe) {
+	protected Library(SymbolicUniverse universe, SymbolicUtility symbolicUtil) {
 		this.universe = universe;
 		this.zero = universe.zeroInt();
 		this.one = universe.oneInt();
@@ -76,5 +82,6 @@ public abstract class Library {
 		this.oneObject = universe.intObject(1);
 		this.twoObject = universe.intObject(2);
 		this.threeObject = universe.intObject(3);
+		this.symbolicUtil = symbolicUtil;
 	}
 }

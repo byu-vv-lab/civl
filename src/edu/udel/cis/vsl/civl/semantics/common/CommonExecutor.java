@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 //import edu.udel.cis.vsl.civl.library.common.civlc.LibcivlcExecutor;
 //import edu.udel.cis.vsl.civl.library.common.stdio.LibstdioExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -46,6 +47,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
@@ -82,11 +84,6 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 public class CommonExecutor implements Executor {
 
 	/* *************************** Instance Fields ************************* */
-
-//	/**
-//	 * The unique library executor for civlc.h.
-//	 */
-//	protected LibcivlcExecutor civlcExecutor;
 
 	/**
 	 * Enable or disable printing. True by default.
@@ -129,13 +126,12 @@ public class CommonExecutor implements Executor {
 	/** The factory used to produce and manipulate model states. */
 	protected StateFactory stateFactory;
 
-//	/**
-//	 * The unique library executor for stdio.h.
-//	 */
-//	protected LibstdioExecutor stdioExecutor;
+	protected SymbolicUtility symbolicUtil;
 
 	/** The symbolic universe used to manage all symbolic expressions. */
 	protected SymbolicUniverse universe;
+
+	protected CIVLErrorLogger errorLogger;
 
 	/* ***************************** Constructors ************************** */
 
@@ -154,7 +150,8 @@ public class CommonExecutor implements Executor {
 	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log, LibraryLoader loader,
 			PrintStream output, PrintStream err, boolean enablePrintf,
-			boolean statelessPrintf, Evaluator evaluator) {
+			boolean statelessPrintf, Evaluator evaluator,
+			CIVLErrorLogger errorLogger) {
 		this.universe = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
@@ -164,9 +161,8 @@ public class CommonExecutor implements Executor {
 		this.err = err;
 		this.enablePrintf = enablePrintf;
 		this.statelessPrintf = statelessPrintf;
-//		this.civlcExecutor = (LibcivlcExecutor) loader.getLibraryExecutor(
-//				"civlc", this, this.output, this.err, this.enablePrintf,
-//				this.statelessPrintf, this.modelFactory);
+		this.symbolicUtil = evaluator.symbolicUtility();
+		this.errorLogger = errorLogger;
 	}
 
 	/* ************************** Private methods ************************** */
@@ -213,7 +209,7 @@ public class CommonExecutor implements Executor {
 			}
 			// TODO: USE GENERAL METHOD ... state = evaluator.logError in own
 			// class
-			state = evaluator.logError(statement.getSource(), state,
+			state = errorLogger.logError(statement.getSource(), state,
 					assertValue, resultType, ErrorKind.ASSERTION_VIOLATION,
 					"Cannot prove assertion holds: " + statement.toString()
 							+ "\n  Path condition: " + state.getPathCondition()
@@ -295,7 +291,7 @@ public class CommonExecutor implements Executor {
 			LibraryExecutor executor = loader.getLibraryExecutor(
 					((SystemFunction) statement.function()).getLibrary(), this,
 					output, this.err, this.enablePrintf, this.statelessPrintf,
-					this.modelFactory);
+					this.modelFactory, this.symbolicUtil);
 
 			state = executor.execute(state, pid, statement);
 		} else {
@@ -368,7 +364,7 @@ public class CommonExecutor implements Executor {
 		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
 		heapValue = dyScope.getValue(heapVariableId);
 		if (heapValue.equals(universe.nullExpression())) {
-			heapValue = evaluator.initialHeapValue();
+			heapValue = symbolicUtil.initialHeapValue();
 		}
 		eval = evaluator.evaluate(state, pid, statement.getSizeExpression());
 		state = eval.state;
@@ -389,13 +385,13 @@ public class CommonExecutor implements Executor {
 					"Size argument to $malloc is not multiple of element size",
 					eval.state, this.stateFactory, source);
 
-			evaluator.reportError(e);
+			errorLogger.reportError(e);
 			state = state.setPathCondition(universe.and(pathCondition, claim));
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
 		heapField = universe.tupleRead(heapValue, indexObj);
 		lengthExpression = universe.length(heapField);
-		length = evaluator.extractInt(source, lengthExpression);
+		length = symbolicUtil.extractInt(source, lengthExpression);
 		newObjectName = universe.stringObject("H_p" + pid + "s" + sid + "v"
 				+ heapVariableId + "i" + index + "l" + length);
 		newObjectType = universe.arrayType(statement.getDynamicElementType(),
@@ -416,7 +412,7 @@ public class CommonExecutor implements Executor {
 			symRef = universe.tupleComponentReference(symRef, indexObj);
 			symRef = universe.arrayElementReference(symRef, lengthExpression);
 			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
-			firstElementPointer = evaluator.setSymRef(heapPointer, symRef);
+			firstElementPointer = symbolicUtil.setSymRef(heapPointer, symRef);
 			state = assign(state, pid, lhs, firstElementPointer);
 		}
 		state = stateFactory.setLocation(state, pid, statement.target());
@@ -468,8 +464,8 @@ public class CommonExecutor implements Executor {
 
 			// don't assume argumentValues[0] is a pointer to an element of an
 			// array. Check it. If it is not, through an exception.
-			SymbolicExpression arrayPointer = evaluator.parentPointer(source,
-					argumentValues[0]);
+			SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
+					source, argumentValues[0]);
 			Evaluation eval = evaluator
 					.dereference(source, state, arrayPointer);
 
@@ -542,14 +538,15 @@ public class CommonExecutor implements Executor {
 								"Array pointer unaccepted",
 								expressions[i].getSource());
 					}
-					arrayPointer = evaluator.parentPointer(source, argument);
-					ref = evaluator.getSymRef(argument);
+					arrayPointer = symbolicUtil.parentPointer(source, argument);
+					ref = symbolicUtil.getSymRef(argument);
 					assert (ref.isArrayElementReference());
-					arrayRef = (ArrayElementReference) evaluator
+					arrayRef = (ArrayElementReference) symbolicUtil
 							.getSymRef(argument);
 					arrayIndex = arrayRef.getIndex();
 					// what if the index is symbolic ?
-					int_arrayIndex = evaluator.extractInt(source, arrayIndex);
+					int_arrayIndex = symbolicUtil
+							.extractInt(source, arrayIndex);
 					// index is not necessarily 0! FIX ME!
 					eval = evaluator.dereference(source, state, arrayPointer);
 					originalArray = (SymbolicSequence<?>) eval.value
@@ -737,7 +734,7 @@ public class CommonExecutor implements Executor {
 			// System.err.flush();
 			throw new CIVLInternalException("SARL exception: " + e, statement);
 		} catch (CIVLExecutionException e) {
-			evaluator.reportError(e);
+			errorLogger.reportError(e);
 			throw new UnsatisfiablePathConditionException();
 		}
 	}
@@ -843,14 +840,14 @@ public class CommonExecutor implements Executor {
 			SymbolicExpression pointer, SymbolicExpression value,
 			boolean isInitialization)
 			throws UnsatisfiablePathConditionException {
-		int vid = evaluator.getVariableId(source, pointer);
-		int sid = evaluator.getScopeId(source, pointer);
-		ReferenceExpression symRef = evaluator.getSymRef(pointer);
+		int vid = symbolicUtil.getVariableId(source, pointer);
+		int sid = symbolicUtil.getScopeId(source, pointer);
+		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
 		State result;
 		Variable variable;
 
 		if (sid < 0) {
-			evaluator
+			errorLogger
 					.logSimpleError(source, state, ErrorKind.DEREFERENCE,
 							"Attempt to dereference pointer into scope which has been removed from state");
 			throw new UnsatisfiablePathConditionException();
@@ -858,13 +855,13 @@ public class CommonExecutor implements Executor {
 		variable = state.getScope(sid).lexicalScope().variable(vid);
 		if (!isInitialization) {
 			if (variable.isInput()) {
-				evaluator
+				errorLogger
 						.logSimpleError(source, state, ErrorKind.INPUT_WRITE,
 								"Attempt to write to input variable "
 										+ variable.name());
 				throw new UnsatisfiablePathConditionException();
 			} else if (variable.isConst()) {
-				evaluator.logSimpleError(
+				errorLogger.logSimpleError(
 						source,
 						state,
 						ErrorKind.CONSTANT_WRITE,
@@ -886,8 +883,9 @@ public class CommonExecutor implements Executor {
 				result = stateFactory.setVariable(state, vid, sid,
 						newVariableValue);
 			} catch (SARLException e) {
-				evaluator.logSimpleError(source, state, ErrorKind.DEREFERENCE,
-						"Invalid pointer dereference: " + pointer);
+				errorLogger.logSimpleError(source, state,
+						ErrorKind.DEREFERENCE, "Invalid pointer dereference: "
+								+ pointer);
 				throw new UnsatisfiablePathConditionException();
 			}
 		}
@@ -989,7 +987,7 @@ public class CommonExecutor implements Executor {
 			symRef = universe.tupleComponentReference(symRef, indexObj);
 			symRef = universe.arrayElementReference(symRef, fieldLength);
 			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
-			firstElementPointer = evaluator.setSymRef(heapPointer, symRef);
+			firstElementPointer = symbolicUtil.setSymRef(heapPointer, symRef);
 			state = assign(state, pid, lhs, firstElementPointer);
 		}
 		return state;
@@ -1005,5 +1003,10 @@ public class CommonExecutor implements Executor {
 			throws UnsatisfiablePathConditionException {
 		state = state.setPathCondition(transition.pathCondition());
 		return this.execute(state, pid, transition.statement());
+	}
+
+	@Override
+	public CIVLErrorLogger errorLogger() {
+		return this.errorLogger;
 	}
 }
