@@ -242,14 +242,13 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				"Process States");
 
 		// Add the process states
-		int stackEntryCount = 0;
 		for (ProcessState p : state.getProcessStates()) {
+			DefaultMutableTreeNode proc = new DefaultMutableTreeNode("p" + p.identifier() + " (id=" + p.getPid() + ")");
 			for (StackEntry s : p.getStackEntries()) {
-				DefaultMutableTreeNode stackEntryNode = new DefaultMutableTreeNode(
-						"p" + p.identifier() + ": " + s.toString());
-				procs.add(stackEntryNode);
-				stackEntryCount++;
+				DefaultMutableTreeNode stackEntryNode = new DefaultMutableTreeNode(s.toString());
+				proc.add(stackEntryNode);
 			}
+			procs.add(proc);
 		}
 
 		// Create the root node of the entire tree
@@ -270,8 +269,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 		// Add the process states to the root of the tree only if there are
 		// stack entries to display
-		if (stackEntryCount > 0)
-			top.add(procs);
+		top.add(procs);
 
 		// Make the stateTree a JTree with the top as the root
 		stateTree = new JTree(top);
