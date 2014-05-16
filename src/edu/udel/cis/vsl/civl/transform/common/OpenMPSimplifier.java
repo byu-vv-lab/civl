@@ -232,7 +232,14 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			/*
 			 * Accumulate the set of memory-referencing expressions, i.e.,
 			 * variable references, array index expressions, on the LHS and the
-			 * RHS
+			 * RHS.  
+			 * 
+			 * This is a flow-insensitive analysis which makes the treatment
+			 * of NOWAIT possible, but means that precision may be sacrificed.
+			 * 
+			 * TBD: extend this to handle NOWAIT clauses on loops.  This must be done
+			 * "higher up" in the AST until the next barrier is reached (either explicit 
+			 * or implicit).
 			 */
 			StatementNode body = fln.getBody();
 			writeVars = new HashSet<Entity>();

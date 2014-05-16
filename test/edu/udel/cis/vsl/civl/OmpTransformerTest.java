@@ -75,10 +75,10 @@ public class OmpTransformerTest {
 			frontEnd.printProgram(out, program);
 		}
 
-		CIVLTransform.applyTransformer(program, CIVLTransform.OMP,
+		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 				new ArrayList<String>(0), frontEnd.getASTBuilder());
 		if (debug) {
-			out.println("======== After applying OpenMP to CIVL Transformer ========");
+			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program);
 		}
 
