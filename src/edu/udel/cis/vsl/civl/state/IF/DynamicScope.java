@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
 import java.io.PrintStream;
+import java.util.BitSet;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -100,4 +101,11 @@ public interface DynamicScope {
 	 * @return The name of this dynamic scope.
 	 */
 	String name();
+
+	/**
+	 * Returns the reachers field.
+	 * 
+	 * @return the reachers field
+	 */
+	BitSet getReachers();
 }

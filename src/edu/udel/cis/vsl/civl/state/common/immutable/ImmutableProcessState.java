@@ -391,14 +391,15 @@ public class ImmutableProcessState implements ProcessState {
 
 	@Override
 	public void print(PrintStream out, String prefix) {
-		out.println(prefix + "process p" + identifier + "(id=" + pid + ")");
-		out.println(prefix + "| atomicCount=" + atomicCount);
-		out.println(prefix + "| call stack");
-		for (int i = 0; i < callStack.length; i++) {
-			StackEntry frame = callStack[i];
-
-			out.println(prefix + "| | " + frame);
-		}
+		out.print(this.toStringBuffer(prefix));
+		// out.println(prefix + "process p" + identifier + "(id=" + pid + ")");
+		// out.println(prefix + "| atomicCount=" + atomicCount);
+		// out.println(prefix + "| call stack");
+		// for (int i = 0; i < callStack.length; i++) {
+		// StackEntry frame = callStack[i];
+		//
+		// out.println(prefix + "| | " + frame);
+		// }
 		out.flush();
 	}
 
@@ -445,6 +446,23 @@ public class ImmutableProcessState implements ProcessState {
 	public String toString() {
 		return "State of process " + pid + " (call stack length = "
 				+ callStack.length + ")";
+	}
+
+	@Override
+	public StringBuffer toStringBuffer(String prefix) {
+		StringBuffer result = new StringBuffer();
+
+		result.append(prefix + "process p" + identifier + "(id=" + pid + ")\n");
+		if (atomicCount != 0)
+			result.append(prefix + "| atomicCount=" + atomicCount + "\n");
+		result.append(prefix + "| call stack\n");
+		for (int i = 0; i < callStack.length; i++) {
+			StackEntry frame = callStack[i];
+
+			result.append(prefix + "| | " + frame);
+			result.append("\n");
+		}
+		return result;
 	}
 
 }

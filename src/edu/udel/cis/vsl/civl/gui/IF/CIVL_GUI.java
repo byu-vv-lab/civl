@@ -15,11 +15,11 @@ import edu.udel.cis.vsl.civl.kripke.IF.CompoundTransition;
 import edu.udel.cis.vsl.civl.kripke.IF.Step;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -109,7 +109,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	/**
 	 * The stateFactory of the current state
 	 */
-	private StateFactory stateFactory;
+	private SymbolicUtility symbolicUtil;
 
 	/* *************************** Constructor *************************** */
 
@@ -119,9 +119,10 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * @param transitions
 	 *            the array of transitions of the execution
 	 */
-	public CIVL_GUI(CompoundTransition[] transitions, StateFactory stateFactory) {
+	public CIVL_GUI(CompoundTransition[] transitions,
+			SymbolicUtility symbolicUtil) {
 		this.transitions = transitions;
-		this.stateFactory = stateFactory;
+		this.symbolicUtil = symbolicUtil;
 		initComponents();
 		setPreferredSize(new Dimension(1500, 1000));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -186,7 +187,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					DefaultMutableTreeNode variableNode = new DefaultMutableTreeNode(
 							variableName
 									+ " = "
-									+ stateFactory.symbolicExpressionToString(
+									+ symbolicUtil.symbolicExpressionToString(
 											var.getSource(), state, s));
 					if (!(variableName == "__heap" && s.isNull())) {
 						variables.add(variableNode);

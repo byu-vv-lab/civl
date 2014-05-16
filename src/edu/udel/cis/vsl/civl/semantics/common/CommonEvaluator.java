@@ -661,7 +661,8 @@ public class CommonEvaluator implements Evaluator {
 		} catch (SARLException e) {
 			CIVLStateException error = new CIVLStateException(
 					ErrorKind.INVALID_CAST, Certainty.NONE,
-					"SARL could not cast: " + e, eval.state, this.stateFactory,
+					"SARL could not cast: " + e, eval.state,
+					this.symbolicUtil.stateToString(state),
 					expression.getSource());
 
 			errorLogger.reportError(error);
@@ -1567,7 +1568,8 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException e = new CIVLStateException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
 					"Attempt to read uninitialized variable", state,
-					this.stateFactory, expression.getSource());
+					this.symbolicUtil.stateToString(state),
+					expression.getSource());
 
 			errorLogger.reportError(e);
 			throw new UnsatisfiablePathConditionException();
@@ -2304,8 +2306,8 @@ public class CommonEvaluator implements Evaluator {
 		} catch (CIVLInternalException e) {
 			CIVLStateException se = new CIVLStateException(
 					ErrorKind.DEREFERENCE, Certainty.MAYBE,
-					"Undefined pointer value?", state, this.stateFactory,
-					source);
+					"Undefined pointer value?", state,
+					this.symbolicUtil.stateToString(state), source);
 
 			errorLogger.reportError(se);
 			throw new UnsatisfiablePathConditionException();

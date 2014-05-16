@@ -137,4 +137,6 @@ public interface ProcessState {
 	 * @return The identifier of this process.
 	 */
 	int identifier();
+	
+	StringBuffer toStringBuffer(String prefix);
 }

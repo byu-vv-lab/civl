@@ -131,14 +131,14 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 					(NumericExpression) eval.value);
 			int upper;
 
-			if (upperNumber == null)
+			if (upperNumber == null) {
 				throw new CIVLStateException(ErrorKind.INTERNAL,
 						Certainty.NONE,
 						"Argument to $choose_int not concrete: " + eval.value,
-						eval.state, this.stateFactory, arguments.get(0)
+						eval.state, symbolicUtil.stateToString(state), arguments.get(0)
 								.getSource());
+			}
 			upper = upperNumber.intValue();
-
 			for (int i = 0; i < upper; i++) {
 				Expression workerArg = modelFactory.integerLiteralExpression(
 						arguments.get(0).getSource(), BigInteger.valueOf(i));

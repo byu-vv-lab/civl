@@ -5,7 +5,6 @@ import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 
 /**
  * Extends an execution exception with a state at which error occurred.
@@ -25,15 +24,15 @@ public class CIVLStateException extends CIVLExecutionException {
 	 */
 	private State state;
 
-	private StateFactory stateFactory;
+	private StringBuffer stateString;
 
 	public CIVLStateException(ErrorKind kind, Certainty certainty,
-			String message, State state, StateFactory stateFactory,
+			String message, State state, StringBuffer stateString,
 			CIVLSource source) {
 		super(kind, certainty, message, source);
 		assert state != null;
 		this.state = state;
-		this.stateFactory = stateFactory;
+		this.stateString = stateString;
 	}
 
 	public String toString() {
@@ -41,8 +40,7 @@ public class CIVLStateException extends CIVLExecutionException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		PrintStream ps = new PrintStream(baos);
 
-		this.stateFactory.printState(ps, state);
-		// state.print(ps);
+		ps.print(stateString);
 		result += baos.toString();
 		return result;
 	}

@@ -156,12 +156,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 				reachers, this.identifier);
 	}
 
-	/**
-	 * Returns the reachers field.
-	 * 
-	 * @return the reachers field
-	 */
-	BitSet getReachers() {
+	@Override
+	public BitSet getReachers() {
 		return reachers;
 	}
 

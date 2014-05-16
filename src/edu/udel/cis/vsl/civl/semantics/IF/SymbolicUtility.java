@@ -156,4 +156,9 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression makePointer(int scopeId, int varId,
 			ReferenceExpression symRef);
+
+	StringBuffer stateToString(State state);
+
+	String symbolicExpressionToString(CIVLSource source, State state,
+			SymbolicExpression symbolicExpression);
 }

@@ -96,7 +96,8 @@ public class ScopedEnabler extends CommonEnabler implements Enabler {
 				if (transitions.size() > 1) {
 					debugOut.println("Number of transitions at state "
 							+ state.identifier() + "is " + transitions.size());
-					this.stateFactory.printState(debugOut, state);
+					debugOut.print(evaluator.symbolicUtility().stateToString(
+							state));
 				}
 			}
 		} else

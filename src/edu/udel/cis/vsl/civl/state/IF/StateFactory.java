@@ -3,10 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.state.IF;
 
-import java.io.PrintStream;
-
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -378,62 +375,4 @@ public interface StateFactory {
 	 * @return The lowest common ancestor of the two given scopes.
 	 */
 	int lowestCommonAncestor(State state, int one, int another);
-
-	void printState(PrintStream out, State state);
-
-	/**
-	 * <p>
-	 * Obtains the string representation of a symbolic expression, making
-	 * pointers represented in a user-friendly way.
-	 * </p>
-	 * If a pointer is pointing to
-	 * <ul>
-	 * <li>
-	 * 
-	 * <pre>
-	 * a variable: & variable &lt;dyscope name>;
-	 * e.g., int a = 9; int * p = &a;
-	 * then the representation of p would be &&lt;d0>a assuming that the name of the dynamic scope of a is d0.
-	 * </pre>
-	 * 
-	 * </li>
-	 * <li>
-	 * 
-	 * <pre>
-	 * an element of an array: &<dyscope name>array[index];
-	 * e.g., int a[5]; int *p = &a[1];
-	 * then the representation of p would be &&lt;d0>a[1] assuming that the name of the dynamic scope of a is d0.
-	 * </pre>
-	 * 
-	 * </li>
-	 * <li>
-	 * 
-	 * <pre>
-	 * a field of a struct: &&lt;dyscope name>struct.field;
-	 * e.g., typedef struct {int x; int y;} A; A s; int*p = &s.y;
-	 * then the representation of p would be &&lt;d0>a.y assuming that the name of the dynamic scope of a is d0.
-	 * </pre>
-	 * 
-	 * </li>
-	 * <li>
-	 * 
-	 * <pre>
-	 * a heap cell: &lt;dyscope name>heap&lt;malloc ID, number of malloc call>.
-	 * </pre>
-	 * 
-	 * </li>
-	 * </ul>
-	 * 
-	 * @param source
-	 *            The source code element of the symbolic expression.
-	 * @param state
-	 *            The state where the given symbolic expression is evaluated
-	 *            from.
-	 * @param symbolicExpression
-	 *            The symbolic expression whose string representation is to be
-	 *            obtained.
-	 * @return The string representation of the given symbolic expression
-	 */
-	String symbolicExpressionToString(CIVLSource source, State state,
-			SymbolicExpression symbolicExpression);
 }

@@ -10,8 +10,8 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.ModelResult;
@@ -48,7 +48,7 @@ public class CIVLErrorLogger {
 	 */
 	private boolean solve = false;
 
-	private StateFactory stateFactory;
+	private SymbolicUtility symbolicUtil;
 
 	public CIVLErrorLogger(GMCConfiguration config, ErrorLog log,
 			SymbolicUniverse universe, boolean solve) {
@@ -57,10 +57,6 @@ public class CIVLErrorLogger {
 		this.universe = universe;
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
 		this.solve = solve;
-	}
-
-	public void setStateFactory(StateFactory stateFactory) {
-		this.stateFactory = stateFactory;
 	}
 
 	/**
@@ -133,7 +129,7 @@ public class CIVLErrorLogger {
 			}
 		}
 		error = new CIVLStateException(errorKind, certainty, message, state,
-				this.stateFactory, source);
+				symbolicUtil.stateToString(state), source);
 		reportError(error);
 		newPc = universe.and(pc, claim);
 		// need to check satisfiability again because failure to do so
@@ -199,7 +195,11 @@ public class CIVLErrorLogger {
 			certainty = Certainty.PROVEABLE;
 		}
 		error = new CIVLStateException(errorKind, certainty, message, state,
-				this.stateFactory, source);
+				symbolicUtil.stateToString(state), source);
 		reportError(error);
+	}
+
+	public void setSymbolicUtility(SymbolicUtility symbolicUtil) {
+		this.symbolicUtil = symbolicUtil;
 	}
 }

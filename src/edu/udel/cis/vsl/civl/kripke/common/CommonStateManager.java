@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -195,6 +196,8 @@ public class CommonStateManager implements StateManager {
 
 	private CIVLErrorLogger errorLogger;
 
+	private SymbolicUtility symbolicUtil;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -221,6 +224,7 @@ public class CommonStateManager implements StateManager {
 		this.saveStates = saveStates;
 		this.simplify = simplify;
 		this.errorLogger = errorLogger;
+		this.symbolicUtil = executor.evaluator().symbolicUtility();
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -285,7 +289,8 @@ public class CommonStateManager implements StateManager {
 				}
 				oldState = state;
 				if (this.showStates)
-					stateFactory.printState(out, state);
+					// stateFactory.printState(out, state);
+					out.print(this.symbolicUtil.stateToString(state));
 				stateStatus = possibleToExecuteMore(state, pid,
 						stateStatus.atomCount);
 			}
@@ -323,7 +328,8 @@ public class CommonStateManager implements StateManager {
 			// in -savedStates mode, only print new states.
 			out.println();
 			// state.print(out);
-			this.stateFactory.printState(out, state);
+			// this.stateFactory.printState(out, state);
+			out.print(this.symbolicUtil.stateToString(state));
 		}
 		numProcs = state.numProcs();
 		if (numProcs > maxProcs)
@@ -412,7 +418,9 @@ public class CommonStateManager implements StateManager {
 							ErrorKind.OTHER,
 							Certainty.CONCRETE,
 							"There is another process other than the current process holding the atomic lock.",
-							state, stateFactory, pLocation.getSource());
+							state, this.executor.evaluator().symbolicUtility()
+									.stateToString(state), pLocation
+									.getSource());
 				} else { // the process is in atomic execution
 
 					if (pLocation.getNumIncoming() > 1) // possible loop, save
@@ -510,13 +518,15 @@ public class CommonStateManager implements StateManager {
 			errorLogger.reportError(new CIVLStateException(ErrorKind.OTHER,
 					Certainty.CONCRETE,
 					"Non-determinism is encountered in $atom block.", state,
-					this.stateFactory, location.getSource()));
+					this.executor.evaluator().symbolicUtility()
+							.stateToString(state), location.getSource()));
 			break;
 		case BLOCKED:
 			errorLogger.reportError(new CIVLStateException(ErrorKind.OTHER,
 					Certainty.CONCRETE,
 					"Blocked location is encountered in $atom block.", state,
-					this.stateFactory, location.getSource()));
+					this.executor.evaluator().symbolicUtility()
+							.stateToString(state), location.getSource()));
 			break;
 		default:
 		}
@@ -595,7 +605,7 @@ public class CommonStateManager implements StateManager {
 
 	@Override
 	public void printStateLong(PrintStream out, State state) {
-		this.stateFactory.printState(out, state);
+		out.print(this.symbolicUtil.stateToString(state));
 	}
 
 	@Override

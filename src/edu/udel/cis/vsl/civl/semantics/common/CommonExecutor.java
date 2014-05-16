@@ -383,7 +383,7 @@ public class CommonExecutor implements Executor {
 			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
 					certainty,
 					"Size argument to $malloc is not multiple of element size",
-					eval.state, this.stateFactory, source);
+					eval.state, this.symbolicUtil.stateToString(state), source);
 
 			errorLogger.reportError(e);
 			state = state.setPathCondition(universe.and(pathCondition, claim));

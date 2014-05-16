@@ -330,7 +330,8 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 											Certainty.CONCRETE,
 											"Attempt to write beyond array bound: index="
 													+ targetIndex, state,
-											this.stateFactory, source);
+											symbolicUtil.stateToString(state),
+											source);
 								}
 							}
 							state = primaryExecutor.assign(source, state,
@@ -1613,7 +1614,7 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 					CIVLStateException e = new CIVLStateException(
 							ErrorKind.OTHER, certainty,
 							"sizeof element does not divide size argument",
-							state, this.stateFactory, source);
+							state, symbolicUtil.stateToString(state), source);
 
 					errorLogger.reportError(e);
 					pathCondition = universe.and(pathCondition, divisibility);
@@ -1641,14 +1642,14 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 					throw new CIVLStateException(ErrorKind.POINTER,
 							Certainty.MAYBE,
 							"unable to get concrete count of 0 or 1 from size",
-							state, this.stateFactory, source);
+							state, symbolicUtil.stateToString(state), source);
 				case NULL: { // size must be 0
 					Certainty certainty = zeroSizeValid == ResultType.MAYBE ? Certainty.MAYBE
 							: Certainty.PROVEABLE;
 					CIVLStateException e = new CIVLStateException(
 							ErrorKind.POINTER, certainty,
 							"null pointer only valid with size 0", state,
-							this.stateFactory, source);
+							symbolicUtil.stateToString(state), source);
 
 					errorLogger.reportError(e);
 					pathCondition = universe.and(pathCondition, zeroSizeClaim);
@@ -1661,13 +1662,13 @@ public class LibcivlcExecutor extends CommonLibraryExecutor implements
 					// either size is zero or size is 1 and offset is 0
 					throw new CIVLStateException(ErrorKind.POINTER,
 							Certainty.MAYBE, "possible out of bounds pointer",
-							state, this.stateFactory, source);
+							state, symbolicUtil.stateToString(state), source);
 				}
 				case TUPLE_COMPONENT: {
 					throw new CIVLStateException(ErrorKind.POINTER,
 							Certainty.MAYBE,
 							"unable to get concrete count of 0 or 1 from size",
-							state, this.stateFactory, source);
+							state, symbolicUtil.stateToString(state), source);
 				}
 				case UNION_MEMBER:
 					throw new CIVLInternalException("dereference union member",

@@ -131,7 +131,7 @@ public abstract class Player {
 				modelFactory, errorLogger);
 		this.stateFactory = States.newImmutableStateFactory(modelFactory,
 				config, symbolicUtil);
-		this.errorLogger.setStateFactory(stateFactory);
+		this.errorLogger.setSymbolicUtility(symbolicUtil);
 		this.libraryLoader = Libraries.newLibraryLoader();
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
 				symbolicUtil, errorLogger);

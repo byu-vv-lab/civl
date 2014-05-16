@@ -163,7 +163,8 @@ public class Verifier extends Player {
 		updateThread.start();
 		if (debug || showStates || verbose) {
 			out.println();
-			stateFactory.printState(out, initialState);
+			// stateFactory.printState(out, initialState);
+			out.print(symbolicUtil.stateToString(initialState));
 			// initialState.print(out);
 		}
 		try {

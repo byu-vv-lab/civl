@@ -182,7 +182,8 @@ public abstract class CommonEnabler implements Enabler {
 
 	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
 		return this.libraryLoader.getLibraryEnabler(library, this,
-				this.debugOut, evaluator.modelFactory(), evaluator.symbolicUtility());
+				this.debugOut, evaluator.modelFactory(),
+				evaluator.symbolicUtility());
 	}
 
 	/**
@@ -400,8 +401,8 @@ public abstract class CommonEnabler implements Enabler {
 								ErrorKind.INVALID_PID,
 								Certainty.PROVEABLE,// TODO check message?
 								"Unable to call $wait on a process that has already been the target of a $wait.",
-								state, this.stateFactory, s.getSource());
-
+								state, this.evaluator.symbolicUtility()
+										.stateToString(state), s.getSource());
 						errorLogger.reportError(e);
 						// TODO: recover: add a no-op transition
 						throw e;

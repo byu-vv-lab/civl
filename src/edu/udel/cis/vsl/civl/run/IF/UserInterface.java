@@ -665,7 +665,7 @@ public class UserInterface {
 			tranArray = replayer.transitionFactory
 					.newCompoundTransitionArray(transitions.size());
 			transitions.toArray(tranArray);
-			gui = new CIVL_GUI(tranArray, replayer.stateFactory);
+			gui = new CIVL_GUI(tranArray, replayer.symbolicUtil);
 			// runGui(states, transitions, replayer.stateManager);
 			result = false;
 		} else {
