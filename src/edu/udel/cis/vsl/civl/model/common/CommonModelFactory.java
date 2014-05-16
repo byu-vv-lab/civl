@@ -196,11 +196,6 @@ public class CommonModelFactory implements ModelFactory {
 	/**
 	 * The name of the atomic lock variable
 	 */
-	private static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
-
-	/**
-	 * The name of the atomic lock variable
-	 */
 	private static final String CIVL_FILESYSTEM_NAME = "CIVL_filesystem";
 
 	/**
@@ -217,8 +212,6 @@ public class CommonModelFactory implements ModelFactory {
 	private static final String CONDITIONAL_VARIABLE_PREFIX = "__cond_var_";
 
 	private static final String ANONYMOUS_VARIABLE_PREFIX = "__anon_";
-
-	private static final String HEAP_VAR = "__heap";
 
 	/* ************************** Instance Fields ************************** */
 
@@ -2502,6 +2495,20 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public VariableExpression civlFilesystemVariableExpression() {
 		return this.civlFilesystemVariableExpression;
+	}
+
+	@Override
+	public boolean isPocessIdDefined(int pid) {
+		if (pid == -1)
+			return false;
+		return true;
+	}
+
+	@Override
+	public boolean isScopeIdDefined(int scopeId) {
+		if (scopeId == -1)
+			return false;
+		return true;
 	}
 
 }

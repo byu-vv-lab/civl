@@ -495,8 +495,6 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 			SymbolicSequence<?> originalArray;
 			int int_arrayIndex;
 			StringBuffer result = new StringBuffer();
-			int numChars;
-			// char[] stringChars;
 
 			if (charPointer.type() instanceof SymbolicArrayType) {
 				originalArray = (SymbolicSequence<?>) charPointer.argument(0);
@@ -514,22 +512,8 @@ public class LibstdioExecutor extends CommonLibraryExecutor implements
 				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
 				int_arrayIndex = symbolicUtil.extractInt(source, arrayIndex);
 			}
-			numChars = originalArray.size();// ignoring the '\0' at the end
-											// of the string.
-											// stringChars = new char[numChars -
-											// int_arrayIndex];
-			for (int j = int_arrayIndex; j < numChars; j++) {
-				SymbolicExpression charExpr = originalArray.get(j);
-				Character theChar = universe.extractCharacter(charExpr);
-
-				if (theChar == null)
-					throw new CIVLUnimplementedFeatureException(
-							"non-concrete character in string at position " + j,
-							source);
-				if (theChar != '\0')
-					result.append(theChar);
-			}
-			// result.append(stringChars);
+			result = symbolicUtil.charArrayToString(source, originalArray,
+					int_arrayIndex, false);
 			return new Pair<>(state, result);
 		} else
 			throw new CIVLUnimplementedFeatureException("non-concrete strings",

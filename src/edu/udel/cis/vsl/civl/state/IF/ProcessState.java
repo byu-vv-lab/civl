@@ -137,6 +137,14 @@ public interface ProcessState {
 	 * @return The identifier of this process.
 	 */
 	int identifier();
-	
+
 	StringBuffer toStringBuffer(String prefix);
+
+	/**
+	 * This name is not part of the state. It is immutable and never renamed,
+	 * helping to identify a specific process when processes get collected.
+	 * 
+	 * @return The name of this process.
+	 */
+	String name();
 }

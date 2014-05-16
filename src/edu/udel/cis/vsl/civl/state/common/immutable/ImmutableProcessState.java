@@ -127,6 +127,12 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	private int identifier;
 
+	/**
+	 * This name is not part of the state. It is immutable and never renamed,
+	 * helping to identify a specific process when processes get collected.
+	 */
+	private String name;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -148,6 +154,7 @@ public class ImmutableProcessState implements ProcessState {
 		this.callStack = stack;
 		this.atomicCount = atomicCount;
 		this.identifier = identifier;
+		this.name = "p" + identifier;
 	}
 
 	/**
@@ -463,6 +470,11 @@ public class ImmutableProcessState implements ProcessState {
 			result.append("\n");
 		}
 		return result;
+	}
+	
+	@Override
+	public String name() {
+		return name;
 	}
 
 }

@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 public interface SymbolicUtility {
 	/**
@@ -161,4 +162,7 @@ public interface SymbolicUtility {
 
 	String symbolicExpressionToString(CIVLSource source, State state,
 			SymbolicExpression symbolicExpression);
+
+	StringBuffer charArrayToString(CIVLSource source,
+			SymbolicSequence<?> charArray, int startIndex, boolean forPrint);
 }

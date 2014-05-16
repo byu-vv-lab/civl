@@ -1,13 +1,13 @@
 package edu.udel.cis.vsl.civl.semantics.common;
 
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -92,6 +92,12 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 	private CIVLHeapType heapType;
 
+	private SymbolicTupleType procType;
+
+	private SymbolicTupleType scopeType;
+
+	private SymbolicTupleType functionPointerType;
+
 	public CommonSymbolicUtility(SymbolicUniverse universe,
 			ModelFactory modelFactory, CIVLErrorLogger errLogger) {
 		SymbolicType dynamicToIntType;
@@ -111,7 +117,9 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		this.twoObj = (IntObject) universe.canonic(universe.intObject(2));
 		zero = (NumericExpression) universe.canonic(universe.integer(0));
 		this.heapType = modelFactory.heapType();
-
+		this.procType = this.modelFactory.processSymbolicType();
+		this.scopeType = this.modelFactory.scopeSymbolicType();
+		this.functionPointerType = modelFactory.functionPointerSymbolicType();
 	}
 
 	@Override
@@ -327,6 +335,49 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	/**
+	 * Obtains the string representation of a symbolic expression which is a
+	 * pointer.
+	 * 
+	 * @param source
+	 *            The source code element of the symbolic expression
+	 * @param state
+	 *            The state that the given symbolic expression belongs to
+	 * @param pointer
+	 *            The symbolic expression that is to be evaluated
+	 * @return the string representation of a symbolic expression which is a
+	 *         pointer
+	 */
+	private String functionPointerValueToString(CIVLSource source, State state,
+			SymbolicExpression pointer) {
+		if (pointer.operator() == SymbolicOperator.NULL)
+			return pointer.toString();
+		else if (pointer.operator() != SymbolicOperator.CONCRETE)
+			return pointer.toString();
+		else {
+			int dyscopeId = getScopeId(source, pointer);
+			if (dyscopeId < 0)
+				return "UNDEFINED";
+			else {
+				DynamicScope dyScope = state.getScope(dyscopeId);
+				SymbolicExpression funcNameExpression = universe.tupleRead(
+						pointer, oneObj);
+				StringBuffer funcName = this.charArrayToString(source,
+						(SymbolicSequence<?>) funcNameExpression.argument(0),
+						0, true);
+				StringBuffer result = new StringBuffer();
+
+				result.append('&');
+				result.append("<");
+				result.append("scope ");
+				result.append(dyScope.lexicalScope().id());
+				result.append(">(function)");
+				result.append(funcName);
+				return result.toString();
+			}
+		}
+	}
+
+	/**
 	 * <p>
 	 * Obtains the string representation of a symbolic expression, making
 	 * pointers represented in a user-friendly way.
@@ -380,16 +431,53 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	 * @param atomize
 	 *            True iff this is an atomic symbolic expression.
 	 * @return The string representation of the given symbolic expression
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private String symbolicExpressionToString(CIVLSource source, State state,
 			SymbolicExpression symbolicExpression, boolean atomize) {
 		StringBuffer result = new StringBuffer();
 		SymbolicType type = symbolicExpression.type();
+		SymbolicType charType = modelFactory.charType()
+				.getDynamicType(universe);
 
 		if (type == null)
 			return "NULL";
 		else if (type.equals(this.pointerType)) {
 			return pointerValueToString(source, state, symbolicExpression);
+		} else if (type.equals(this.functionPointerType)) {
+			return functionPointerValueToString(source, state,
+					symbolicExpression);
+		} else if (symbolicExpression.operator() == SymbolicOperator.CONCRETE
+				&& type instanceof SymbolicArrayType
+				&& ((SymbolicArrayType) type).elementType().equals(charType)) {
+
+			result.append("\"");
+			result.append(this.charArrayToString(source,
+					(SymbolicSequence<?>) symbolicExpression.argument(0), 0,
+					true));
+			result.append("\"");
+			return result.toString();
+
+		} else if (type.equals(procType)) {
+			int pid = modelFactory.getProcessId(source, symbolicExpression);
+
+			if (!modelFactory.isPocessIdDefined(pid)) {
+				return "UNDEFINED";
+			}
+			if (pid < 0)
+				return "$proc_null";
+			else
+				return state.getProcessState(pid).name();
+		} else if (type.equals(scopeType)) {
+			int scopeId = modelFactory.getScopeId(source, symbolicExpression);
+
+			if (!modelFactory.isScopeIdDefined(scopeId)) {
+				return "UNDEFINED";
+			}
+			if (scopeId < 0)
+				return "$scope_null";
+			else
+				return state.getScope(scopeId).name();
 		} else {
 			SymbolicOperator operator = symbolicExpression.operator();
 			SymbolicObject[] arguments = symbolicExpression.arguments();
@@ -745,8 +833,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			if (dyscopeId < 0)
 				return "UNDEFINED";
 			else {
-				ImmutableDynamicScope dyscope = (ImmutableDynamicScope) state
-						.getScope(dyscopeId);
+				DynamicScope dyscope = state.getScope(dyscopeId);
 				Variable variable = dyscope.lexicalScope().variable(vid);
 				ReferenceExpression reference = (ReferenceExpression) universe
 						.tupleRead(pointer, this.twoObj);
@@ -1052,34 +1139,102 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			DynamicScope dyscope, String id, String prefix) {
 		Scope lexicalScope = dyscope.lexicalScope();
 		int numVars = lexicalScope.numVariables();
-		BitSet reachers = dyscope.getReachers();
-		int bitSetLength = reachers.length();
-		boolean first = true;
+		// BitSet reachers = dyscope.getReachers();
+		// int bitSetLength = reachers.length();
+		// boolean first = true;
 		StringBuffer result = new StringBuffer();
 
 		result.append(prefix + "dyscope " + dyscope.name() + " (id=" + id
 				+ ", parent=d" + dyscope.getParentIdentifier() + ", static="
 				+ lexicalScope.id() + ")\n");
-		result.append(prefix + "| reachers = {");
-		for (int j = 0; j < bitSetLength; j++) {
-			if (reachers.get(j)) {
-				if (first)
-					first = false;
-				else
-					result.append(",");
-				result.append(j);
-			}
-		}
-		result.append("}\n");
+		// result.append(prefix + "| reachers = {");
+		// for (int j = 0; j < bitSetLength; j++) {
+		// if (reachers.get(j)) {
+		// if (first)
+		// first = false;
+		// else
+		// result.append(",");
+		// result.append(j);
+		// }
+		// }
+		// result.append("}\n");
 		result.append(prefix + "| variables\n");
 		for (int i = 0; i < numVars; i++) {
 			Variable variable = lexicalScope.variable(i);
 			SymbolicExpression value = dyscope.getValue(i);
+			String varName = variable.name().name();
 
+			if (varName.equals(ModelFactory.HEAP_VAR) && value.isNull()) {
+				continue;
+			} else if (varName.equals(ModelFactory.ATOMIC_LOCK_VARIABLE)
+					&& modelFactory.isProcessDefined(variable.getSource(),
+							value).isFalse()) {
+				continue;
+			}
 			result.append(prefix + "| | " + variable.name() + " = ");
 			result.append(symbolicExpressionToString(variable.getSource(),
 					state, value));
 			result.append("\n");
+		}
+		return result;
+	}
+
+	/**
+	 * Given a symbolic expression of type array of char, returns a string
+	 * representation. If it is a concrete array of char consisting of concrete
+	 * characters, this will be the obvious string. Otherwise the result is
+	 * something readable but unspecified.
+	 * 
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	@Override
+	public StringBuffer charArrayToString(CIVLSource source,
+			SymbolicSequence<?> charArray, int startIndex, boolean forPrint) {
+		StringBuffer result = new StringBuffer();
+		int numChars;
+
+		numChars = charArray.size();// ignoring the '\0' at the end
+									// of the string.
+									// stringChars = new char[numChars -
+									// int_arrayIndex];
+		for (int j = startIndex; j < numChars; j++) {
+			SymbolicExpression charExpr = charArray.get(j);
+			Character theChar = universe.extractCharacter(charExpr);
+
+			if (theChar == null)
+				throw new CIVLUnimplementedFeatureException(
+						"non-concrete character in string at position " + j,
+						source);
+			if (theChar != '\0') {
+				if (forPrint) {
+					String theCharToString;
+					switch (theChar) {
+					case '\u000C':
+						theCharToString = "\\f";
+						break;
+					case '\u0007':
+						theCharToString = "\\a";
+						break;
+					case '\b':
+						theCharToString = "\\b";
+						break;
+					case '\n':
+						theCharToString = "\\n";
+						break;
+					case '\t':
+						theCharToString = "\\t";
+						break;
+					case '\r':
+						theCharToString = "\\r";
+						break;
+					default:
+						theCharToString = theChar.toString();
+					}
+					result.append(theCharToString);
+				} else {
+					result.append(theChar);
+				}
+			}
 		}
 		return result;
 	}

@@ -108,6 +108,16 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  */
 public interface ModelFactory {
 
+	/**
+	 * The name of the heap variable
+	 */
+	public static final String HEAP_VAR = "__heap";
+
+	/**
+	 * The name of the atomic lock variable
+	 */
+	public static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
+
 	/* *********************************************************************
 	 * CIVL Types
 	 * *********************************************************************
@@ -1528,8 +1538,12 @@ public interface ModelFactory {
 
 	SymbolicExpression nullProcessValue();
 
+	boolean isPocessIdDefined(int pid);
+
 	SymbolicExpression isProcessDefined(CIVLSource source,
 			SymbolicExpression processValue);
+
+	boolean isScopeIdDefined(int scopeId);
 
 	SymbolicExpression isScopeDefined(CIVLSource source,
 			SymbolicExpression scopeValue);

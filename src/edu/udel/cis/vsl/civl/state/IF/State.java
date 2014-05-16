@@ -251,5 +251,4 @@ public interface State {
 	State setVariable(int vid, int scopeId, SymbolicExpression value);
 
 	int getCanonicId();
-
 }
