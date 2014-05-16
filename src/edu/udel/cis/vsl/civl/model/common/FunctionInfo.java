@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common;
 
-import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -121,7 +121,8 @@ public class FunctionInfo {
 
 	/**
 	 * 
-	 * @param name The name of a bound variable.
+	 * @param name
+	 *            The name of a bound variable.
 	 * @return The CIVL type of the bound variable with the given name.
 	 */
 	public CIVLType boundVariableType(Identifier name) {
@@ -130,7 +131,8 @@ public class FunctionInfo {
 				return p.right;
 			}
 		}
-		throw new CIVLInternalException("Unknown bound variable", name.getSource());
+		throw new CIVLInternalException("Unknown bound variable",
+				name.getSource());
 	}
 
 	/**
@@ -147,34 +149,35 @@ public class FunctionInfo {
 	 *            a fragment translated from the body of the function
 	 */
 	public void completeFunction(Fragment functionBody) {
-		ArrayDeque<Location> workingLocations = new ArrayDeque<Location>();
 		Location location;
+		boolean first = true;
+		Stack<Location> working = new Stack<>();
+		Set<Location> visited = new HashSet<>();
 
-		// start from the start location of the fragment
-		workingLocations.add(functionBody.startLocation());
-		function.setStartLocation(functionBody.startLocation());
 		for (Statement s : gotoStatements.keySet()) {
 			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
 		}
-		while (workingLocations.size() > 0) {
-			// use first-in-first-out order to traverse locations so that they
-			// are in natural order of the location id's
-			location = workingLocations.pollFirst();
-			function.addLocation(location);
-			if (location.getNumOutgoing() > 0) {
-				// for each statement in the outgoing set of a location, add
-				// itself to function, and add its target location into the
-				// working stack if it hasn't been encountered before.
-				for (Statement statement : location.outgoing()) {
-					Location newLocation = statement.target();
+		// start from the start location of the fragment
+		location = functionBody.startLocation();
+		working.add(location);
+		while (!working.isEmpty()) {
+			Location current = working.pop();
+			int outCount = current.getNumOutgoing();
 
-					function.addStatement(statement);
-					if (newLocation != null) {
-						if (!function.locations().contains(newLocation)) {
-							workingLocations.add(newLocation);
-						}
+			if (first) {
+				function.setStartLocation(current);
+				first = false;
+			} else
+				function.addLocation(current);
+			for (int i = outCount - 1; i >= 0; i--) {
+				Statement stmt = current.getOutgoing(i);
+				Location newLoc = stmt.target();
+
+				if (newLoc != null)
+					if (!visited.contains(newLoc)) {
+						working.push(newLoc);
+						visited.add(newLoc);
 					}
-				}
 			}
 		}
 	}

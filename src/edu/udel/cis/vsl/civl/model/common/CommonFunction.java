@@ -223,8 +223,8 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		if (!isSystem()) {
 			out.println(prefix + "| locations (start=" + startLocation.id()
 					+ ")");
-			for (Location loc : locations) {
-				loc.print(prefix + "| | ", out, isDebug);
+			for (Location location : this.locations) {
+				location.print(prefix + "| | ", out, isDebug);
 			}
 		}
 		out.flush();

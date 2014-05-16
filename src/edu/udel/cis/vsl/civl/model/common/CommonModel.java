@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
@@ -307,6 +308,17 @@ public class CommonModel extends CommonSourceable implements Model {
 	@Override
 	public void complete() {
 		this.system.outerScope().complete();
+		this.renumberLocations();
+	}
+
+	private void renumberLocations() {
+		int id = 0;
+
+		for (CIVLFunction function : this.functions) {
+			for (Location location : function.locations()) {
+				location.setId(id++);
+			}
+		}
 	}
 
 	@Override
