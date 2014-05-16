@@ -14,13 +14,13 @@ import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
 import edu.udel.cis.vsl.civl.transform.common.MPI2CIVLTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OmpPragmaTransformer;
-import edu.udel.cis.vsl.civl.transform.common.OpenMPTransformer;
+import edu.udel.cis.vsl.civl.transform.common.OpenMPSimplifier;
 
 public class CIVLTransform {
 	public static String GENERAL = GeneralTransformer.CODE;
 	public static String IO = IOTransformer.CODE;
 	public static String OMP_PRAGMA = OmpPragmaTransformer.CODE;
-	public static String OMP = OpenMPTransformer.CODE;
+	public static String OMP_SIMPLIFY = OpenMPSimplifier.CODE;
 	public static String MPI = MPI2CIVLTransformer.CODE;
 
 	static {
@@ -41,13 +41,13 @@ public class CIVLTransform {
 					return new IOTransformer(astFactory);
 				}
 			});
-		if (!Transform.getCodes().contains(OpenMPTransformer.CODE))
-			Transform.addTransform(new TransformRecord(OpenMPTransformer.CODE,
-					OpenMPTransformer.LONG_NAME,
-					OpenMPTransformer.SHORT_DESCRIPTION) {
+		if (!Transform.getCodes().contains(OpenMPSimplifier.CODE))
+			Transform.addTransform(new TransformRecord(OpenMPSimplifier.CODE,
+					OpenMPSimplifier.LONG_NAME,
+					OpenMPSimplifier.SHORT_DESCRIPTION) {
 				@Override
 				public Transformer create(ASTFactory astFactory) {
-					return new OpenMPTransformer(astFactory);
+					return new OpenMPSimplifier(astFactory);
 				}
 			});
 		if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE))
@@ -91,7 +91,7 @@ public class CIVLTransform {
 			throws SyntaxException {
 		if (code.equals(CIVLTransform.GENERAL) || code.equals(CIVLTransform.IO)
 				|| code.equals(CIVLTransform.MPI)
-				|| code.equals(CIVLTransform.OMP)
+				|| code.equals(CIVLTransform.OMP_SIMPLIFY)
 				|| code.equals(CIVLTransform.OMP_PRAGMA)) {
 			CIVLBaseTransformer transformer = (CIVLBaseTransformer) Transform
 					.newTransformer(code, program.getAST().getASTFactory());

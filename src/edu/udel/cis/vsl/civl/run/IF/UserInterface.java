@@ -348,7 +348,7 @@ public class UserInterface {
 				frontEnd.printProgram(out, program);
 			if (verboseOrDebug)
 				this.out.println("Apply OpenMP transformer...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.OMP,
+			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 					inputVars, frontEnd.getASTBuilder());
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);

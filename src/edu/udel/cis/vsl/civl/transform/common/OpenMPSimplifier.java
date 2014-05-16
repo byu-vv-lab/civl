@@ -31,24 +31,23 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
- * Transform OpenMP Constructs to CIVL-C.
+ * This transformer analyzes OpenMP constructs and converts them to
+ * simpler, i.e., less concurrent, instances of constructs.
  * 
  * This transform operates in two phases:
  * 
- * 1) Analyze and transform the OpenMP constructs that cannot influence
- * behavior, i.e., those that are exclusively performance related, those that
- * can be expressed as a logically equivalent sequential form
- * 
- * 2) Transform the remaining constructs to CIVL-C
+ * 1) Analyze OpenMP workshares to determine those that are provably thread-independent, i.e.,
+ *    execution of workshares in parallel is guaranteed to compute the same result.
+ * 2) Transform OpenMP constructs based on the analysis results.
  * 
  * @author dwyer
  * 
  */
-public class OpenMPTransformer extends CIVLBaseTransformer {
+public class OpenMPSimplifier extends CIVLBaseTransformer {
 
 	public static String CODE = "omp";
-	public static String LONG_NAME = "OMPTransformer";
-	public static String SHORT_DESCRIPTION = "transforms C/OpenMP program to CIVL-C";
+	public static String LONG_NAME = "OpenMPSimplifier";
+	public static String SHORT_DESCRIPTION = "simplifies independent C/OpenMP constructs";
 
 	private AttributeKey dependenceKey;
 
@@ -61,9 +60,7 @@ public class OpenMPTransformer extends CIVLBaseTransformer {
 
 	private List<Entity> privateIDs;
 
-	private SymbolicUniverse universe;
-
-	public OpenMPTransformer(ASTFactory astFactory) {
+	public OpenMPSimplifier(ASTFactory astFactory) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 	}
 
