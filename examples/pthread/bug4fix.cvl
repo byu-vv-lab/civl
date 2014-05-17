@@ -43,16 +43,15 @@ void *sub1(void *t)
   */
   pthread_mutex_lock(&count_mutex);
   if (count < THRESHOLD) {
-    printf("sub1: thread=%ld going into wait. count=%d\n",tid,count);
+    printf("sub1: thread=%d going into wait. count=%d\n",tid,count); // Removed l from %ld
     pthread_cond_wait(&count_condvar, &count_mutex);
-    printf("sub1: thread=%ld Condition variable signal received.",tid);
+    printf("sub1: thread=%d Condition variable signal received.",tid); // Removed l from %ld
     printf(" count=%d\n",count);
     /* do some work */
-    sleep(1);
+    //sleep(1);
     count++;
     finalresult += myresult;
-    printf("sub1: thread=%ld count now equals=%d myresult=%e. Done.\n",
-           tid,count,myresult);
+    printf("sub1: thread=%d count now equals=%d myresult=%e. Done.\n",tid,count,myresult); // Removed l from %ld
     }
   else {
     printf("sub1: count=%d. Not as expected.",count); 
@@ -79,16 +78,16 @@ void *sub2(void *t)
     reached.  Note that this occurs while mutex is locked. 
     */
     if (count == THRESHOLD) {
-      printf("sub2: thread=%ld Threshold reached. count=%d. ",tid,count);
+      printf("sub2: thread=%d Threshold reached. count=%d. ",tid,count); // Removed l from %ld
       pthread_cond_signal(&count_condvar);
       printf("Just sent signal.\n");
       }
     else {
-      printf("sub2: thread=%ld did work. count=%d\n",tid,count);
+      printf("sub2: thread=%d did work. count=%d\n",tid,count); // Removed l from %ld
       }
     pthread_mutex_unlock(&count_mutex);
     }
-    printf("sub2: thread=%ld  myresult=%e. Done. \n",tid,myresult);
+    printf("sub2: thread=%d  myresult=%e. Done. \n",tid,myresult); // Removed l from %ld
   pthread_exit(NULL);
 }
 

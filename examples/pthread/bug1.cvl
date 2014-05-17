@@ -11,7 +11,7 @@
 *   four threads waiting for the same signal. Find out how to fix the
 *   program. The solution program is bug1fix.cvl
 * Command line execution:
-* civl verify bug1.cvl
+* civl verify -inputNUM_THREADS=6 -inputTCOUNT=10 -inputCOUNT_LIMIT=12 bug1.cvl
 ******************************************************************************/
 
 #include "pthread.cvh"
@@ -19,11 +19,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_THREADS  6
-#define TCOUNT 10
-#define COUNT_LIMIT 12
+$input int NUM_THREADS; //Changed definitions to input variables
+$input int TCOUNT;
+$input int COUNT_LIMIT;
 
-int     count = 0;
+int count = 0;
 pthread_mutex_t count_mutex;
 pthread_cond_t count_threshold_cv;
 
@@ -31,7 +31,7 @@ void *inc_count(void *idp)
 {
   int j,i;
   double result=0.0;
-  long my_id = (long)*idp;
+  long my_id = (long)*idp; // Changed to dereference
   for (i=0; i < TCOUNT; i++) {
     pthread_mutex_lock(&count_mutex);
     count++;
@@ -42,13 +42,13 @@ void *inc_count(void *idp)
     */
     if (count == COUNT_LIMIT) {
       pthread_cond_signal(&count_threshold_cv);
-      printf("inc_count(): thread %d, count = %d  Threshold reached.\n", my_id, count);
+      printf("inc_count(): thread %d, count = %d  Threshold reached.\n", my_id, count); //removed l from %ld
       }
-    printf("inc_count(): thread %d, count = %d, unlocking mutex\n", my_id, count);
+    printf("inc_count(): thread %d, count = %d, unlocking mutex\n", my_id, count); //removed l from %ld
     pthread_mutex_unlock(&count_mutex);
 
     /* Do some work so threads can alternate on mutex lock */
-    //sleep(1);
+    //sleep(1); removed sleep, unnecessary
     }
   pthread_exit(NULL);
 }
@@ -86,6 +86,8 @@ int main(int argc, char *argv[])
 
   /*
   For portability, explicitly create threads in a joinable state 
+  Created variables for casting as we are unable to currently cast raw integer values as
+  void pointers.
   */
   int zero = 0;
   int one = 1;

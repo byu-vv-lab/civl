@@ -17,10 +17,10 @@ void *PrintHello(void *threadid)
 {
    int i;
    double myresult=0.0;
-   printf("thread=%ld: starting...\n", threadid);
+   printf("thread=%d: starting...\n", threadid); // Removed l from %ld
    for (i=0; i<1000000; i++)
       myresult += sin(i) * tan(i);
-   printf("thread=%ld result=%e. Done.\n",threadid,myresult);
+   printf("thread=%d result=%e. Done.\n",threadid,myresult); // Removed l from %ld
    pthread_exit(NULL);
 }
 
