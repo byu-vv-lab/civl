@@ -45,16 +45,16 @@ int main (int argc, char *argv[])
       printf("Main: creating thread %ld\n", t);
       rc = pthread_create(&thread[t], &attr, BusyWork, (void *)&t); //Added address as conversion from
       if (rc) {														// int directly to void * is unsupported
-         $assert(false, "ERROR; return code from pthread_create() is" + (char)rc);
+        $assert(false, "ERROR; return code from pthread_create() is %d", rc);
          }
       }
 
    /* Free attribute and wait for the other threads */
-   pthread_attr_destroy(&attr);
+   pthread_attr_destroy(&attr); 
    for(t=0; t<NUM_THREADS; t++) {
       rc = pthread_join(thread[t], &status);
       if (rc) {
-         $assert(false, "ERROR; return code from pthread_create() is" + (char)rc);
+         $assert(false, "ERROR; return code from pthread_create() is %d", rc);
          }
       printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
       }

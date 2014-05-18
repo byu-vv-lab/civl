@@ -1,5 +1,5 @@
 /******************************************************************************
-* FILE: arrayloops.c
+* FILE: arrayloops.cvl
 * DESCRIPTION:
 *   Example code demonstrating decomposition of array processing by
 *   distributing loop iterations.  A global sum is maintained by a mutex
@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
   pthread_attr_destroy(&attr);
   pthread_mutex_destroy(&sum_mutex);
   pthread_exit (NULL);
+  return 0;
 }
 
 
