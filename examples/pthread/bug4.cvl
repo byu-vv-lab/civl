@@ -10,7 +10,7 @@
 *   problem. It resembles the condvar.cvl program. One possible solution can
 *   be found in bug4fix.cvl
 * Command line execution:
-* civl verify bug4.cvl
+* civl verify -inputNUM_THREADS=3 -inputITERATIONS=10 -inputTHRESHOLD=12 bug4.cvl
 ******************************************************************************/
 #include "pthread.cvh"
 #include <civlc.h>
@@ -19,9 +19,10 @@
 #include <math.h>
 
 /* Define and scope what needs to be seen by everyone */
-#define NUM_THREADS  3
-#define ITERATIONS 10
-#define THRESHOLD 12
+$input int NUM_THREADS;
+$input int ITERATIONS;
+$input int THRESHOLD; 
+
 int count = 0;
 double finalresult=0.0;
 pthread_mutex_t count_mutex;

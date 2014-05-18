@@ -1,12 +1,15 @@
 /*****************************************************************************
-* FILE: bug6.c
+* SOURCE: This is a translation of a Pthread program from the Lawrence Livermore
+* Computing Center POSIX Threads Programming Exercise at:
+* https://computing.llnl.gov/tutorials/pthreads/exercise.html
+* FILE: bug6.cvl
 * DESCRIPTION:
 *   This example demonstrates a race condition with a global variable that
 *   gives obviously wrong results. Figure out how to fix the problem - or see
 *   bug6fix.c for one solution. The dotprod_mutex.c example provides a much
 *   more efficient way of solving this problem than bug6fix.c (FYI).
-* SOURCE: 07/06/05 Blaise Barney
-* LAST REVISED: 01/29/09 Blaise Barney
+* Command line execution:
+* civl verify -inputNUM_THRDS=5 -inputVECLEN=1000 bug6.cvl
 ******************************************************************************/
 #include "pthread.cvh"
 #include <civlc.h>
@@ -14,8 +17,8 @@
 #include <stdlib.h>
 
 /* Define global data where everyone can see them */
-#define NUMTHRDS 8
-#define VECLEN 1000
+$input int NUMTHRDS;
+$input int VECLEN;
 int *a, *b; 
 long sum=0;
 

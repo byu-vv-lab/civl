@@ -3,11 +3,11 @@
 * the Pthread benchmarks of SV-COMP 2014.
 * https://svn.sosy-lab.org/software/sv-benchmarks/tags/svcomp14/
 * FILE: fib_bench_false.cvl
-* DESCRIPTION: Simple program of threads interacting which causes an error when
-* their total reaches a certain value. The fix simply involves changing the output
-* for which an error will be caused; specifically, here error is caused when i or j
-* >=144, the fix has i or j > 144.
-*
+* DESCRIPTION: 
+*   Simple program of threads interacting which causes an error when
+*   their total reaches a certain value. The fix simply involves changing the output
+*   for which an error will be caused; specifically, here error is caused when i or j
+*   >=144, the fix has i or j > 144.
 * Command line execution:
 * civl verify -inputNUM=5 fib_bench_false.cvl
 ******************************************************************************/

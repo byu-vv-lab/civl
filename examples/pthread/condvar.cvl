@@ -1,4 +1,9 @@
-/******************************************************************************
+/*****************************************************************************
+* SOURCE: This is a translation of a Pthread program from the Lawrence Livermore
+* Computing Center POSIX Threads Programming Exercise at:
+* https://computing.llnl.gov/tutorials/pthreads/exercise.html
+* SUPERSOURCE: Adapted from example code in "Pthreads Programming", B. Nichols
+*   et al. O'Reilly and Associates.
 * FILE: condvar.cvl
 * DESCRIPTION:
 *   Example code for using Pthreads condition variables.  The main thread
@@ -8,18 +13,17 @@
 *   incrementing threads. The waiting thread "awakens" and then modifies
 *   count. The program continues until the incrementing threads reach
 *   TCOUNT. The main program prints the final value of count.
-* SOURCE: Adapted from example code in "Pthreads Programming", B. Nichols
-*   et al. O'Reilly and Associates. 
-* LAST REVISED: 10/14/10  Blaise Barney
+* Command line execution:
+* civl verify -inputNUM_THREADS=3 -inputTCOUNT=10 -inputCOUNT_LIMIT=12 condvar.cvl
 ******************************************************************************/
 #include "pthread.cvh"
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_THREADS  3
-#define TCOUNT 10
-#define COUNT_LIMIT 12
+$input int NUM_THREADS;
+$input int TCOUNT;
+$input int COUNT_LIMIT;
 
 int count = 0;
 pthread_mutex_t count_mutex;
@@ -81,7 +85,7 @@ void *watch_count(void *t)
   pthread_exit(NULL);
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
   int i, rc; 
   long t1=1, t2=2, t3=3;

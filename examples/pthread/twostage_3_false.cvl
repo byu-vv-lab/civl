@@ -4,7 +4,7 @@
 * https://svn.sosy-lab.org/software/sv-benchmarks/tags/svcomp14/
 * FILE: twostage_3_false.cvl
 * DESCRIPTION:
-*
+* 
 * Command line execution:
 * civl verify twostage_3_false.cvl
 ******************************************************************************/

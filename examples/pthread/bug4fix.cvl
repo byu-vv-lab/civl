@@ -11,16 +11,17 @@
 *   call is not made if the value of count is not what it expects. Its work is
 *   also placed after it is awakened, while count is locked.
 * Command line execution:
-* civl verify bug4fix.cvl
+* civl verify -inputNUM_THREADS=3 -inputITERATIONS=10 -inputTHRESHOLD=12 bug4fix.cvl
 ******************************************************************************/
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 /* Define and scope what needs to be seen by everyone */
-#define NUM_THREADS  3
-#define ITERATIONS 10
-#define THRESHOLD 12
+$input int NUM_THREADS;
+$input int ITERATIONS;
+$input int THRESHOLD; 
+
 int count = 0;
 double finalresult=0.0;
 pthread_mutex_t count_mutex;

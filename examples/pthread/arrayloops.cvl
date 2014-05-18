@@ -1,19 +1,23 @@
-/******************************************************************************
+/*****************************************************************************
+* SOURCE: This is a translation of a Pthread program from the Lawrence Livermore
+* Computing Center POSIX Threads Programming Exercise at:
+* https://computing.llnl.gov/tutorials/pthreads/exercise.html
 * FILE: arrayloops.cvl
 * DESCRIPTION:
 *   Example code demonstrating decomposition of array processing by
 *   distributing loop iterations.  A global sum is maintained by a mutex
 *   variable.  
-* AUTHOR: Blaise Barney
-* LAST REVISED: 01/29/09
+* Command line execution:
+* civl verify -inputNTHREADS=4 -inputARRAYSIZE=1000000 arrayloops.cvl
 ******************************************************************************/
 #include "pthread.cvh"
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NTHREADS      4
-#define ARRAYSIZE   1000000
+$input int NTHREADS; // Changed definitions to input variables
+$input int ARRAYSIZE;
+
 #define ITERATIONS   ARRAYSIZE / NTHREADS
 
 double  sum=0.0, a[ARRAYSIZE];
