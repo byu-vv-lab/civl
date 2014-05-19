@@ -107,7 +107,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	private CompoundTransition[] transitions;
 
 	/**
-	 * The stateFactory of the current state
+	 * The SymbolicUtility of the current state
 	 */
 	private SymbolicUtility symbolicUtil;
 
@@ -172,90 +172,19 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// This comes first because Variables should be listed
 		// before the current dyscopes children dyscopes
 		for (int i = 0; i < dyscopes.length; i++) {
-			if (dyscopes[i].numberOfValues() > 0) {
-				// Create a Variables node and add it to the dyscope's node
-				DefaultMutableTreeNode variables = new DefaultMutableTreeNode(
-						"Variables");
-
-				// Keep track of which variable we're on with vid
-				int vid = 0;
-
-				// For each variable value of the dyscope
-				for (SymbolicExpression s : dyscopes[i].getValues()) {
-					Variable var = dyscopes[i].lexicalScope().variable(vid);
-					String variableName = var.name().name();
-					DefaultMutableTreeNode variableNode = new DefaultMutableTreeNode(
-							variableName
-									+ " = "
-									+ symbolicUtil.symbolicExpressionToString(
-											var.getSource(), state, s));
-					if (!(variableName == "__heap" && s.isNull())) {
-						variables.add(variableNode);
-					}
-					vid++;
-				}
-				treeNodes[i].add(variables);
-			}
+			DefaultMutableTreeNode variables = makeVariables(state, dyscopes[i]);
+			treeNodes[i].add(variables);
 		}
 
 		// For each dyscope
 		// This comes second so that the child dyscopes are listed under
 		// the current dyscopes variables
 		for (int i = 0; i < dyscopes.length; i++) {
-
-			// If the dyscope isn't the root dyscope (ie parentID != -1) add
-			// it's node to the node corresponding to it's parent dyscope
-			int parentID = state.getParentId(i);
-			if (parentID != -1) {
-				DefaultMutableTreeNode children;
-
-				// If no children nodes have been added yet
-				if (treeNodes[parentID].getChildren() == null) {
-					children = new DefaultMutableTreeNode("Child Dyscopes");
-
-					// Set the children node as the parent's child dyscope node
-					treeNodes[parentID].setChildNode(children);
-
-					// Add the current node to the parent dyscopes children
-					// dyscopes node
-					treeNodes[parentID].getChildren().add(treeNodes[i]);
-
-					// Add the children dyscopes node to the parent node
-					treeNodes[parentID].add(treeNodes[parentID].getChildren());
-				}
-				// Children nodes have already been created
-				else {
-					// Set the children to be the child dyscope node
-					children = treeNodes[parentID].getChildren();
-
-					// Add the current node to the parent dyscopes children
-					// dyscopes node
-					treeNodes[parentID].getChildren().add(treeNodes[i]);
-				}
-			}
+			arrangeChildDyscopes(state, i, treeNodes);
 		}
-
-		// The path condition
-		DefaultMutableTreeNode pathCond = new DefaultMutableTreeNode(
-				"Path Condition: " + state.getPathCondition().toString());
 
 		// The process states of the state
-		DefaultMutableTreeNode procs = new DefaultMutableTreeNode(
-				"Process States");
-
-		// Add the process states
-		for (ProcessState p : state.getProcessStates()) {
-			if (p != null) {
-				DefaultMutableTreeNode proc = new DefaultMutableTreeNode("p"
-						+ p.identifier() + " (id=" + p.getPid() + ")");
-				for (StackEntry s : p.getStackEntries()) {
-					DefaultMutableTreeNode stackEntryNode = new DefaultMutableTreeNode(
-							s.toString());
-					proc.add(stackEntryNode);
-				}
-				procs.add(proc);
-			}
-		}
+		DefaultMutableTreeNode procs = makeProcessStates(state);
 
 		// Create the root node of the entire tree
 		GUINODE top = new GUINODE(state.toString());
@@ -268,7 +197,8 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		dy.add(treeNodes[0]);
 
 		// Add the path condition to the root of the tree
-		top.add(pathCond);
+		top.add(new DefaultMutableTreeNode(
+				"Path Condition: " + state.getPathCondition().toString()));
 
 		// Add the dyscopes to the root of the tree
 		top.add(dy);
@@ -282,28 +212,8 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		stateTree.getSelectionModel().setSelectionMode(
 				TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-		// Expand all nodes by default if no oldTree
-		if (oldTree == null) {
-			for (int i = 0; i < stateTree.getRowCount(); i++) {
-				stateTree.expandRow(i);
-			}
-		}
-		// If there was a tree previously drawn, draw the state with the same
-		// nodes expanded and collapsed as the oldTree
-		else {
-			for (int i = 0; i < stateTree.getRowCount(); i++) {
-				if (i < oldTree.getRowCount()) {
-					TreeUtil.restoreExpanstionState(stateTree, i,
-							TreeUtil.getExpansionState(oldTree, i));
-				} else {
-					// We have reached nodes that were not in the oldTree
-					// These nodes will be collapsed by default, so break the
-					// loop over the nodes
-					break;
-				}
-			}
-		}
-
+		setDyscopeNodeExpansion(oldTree,stateTree);
+		
 		// Listen for the root node to be selected
 		// Collapse the root nodes children
 		stateTree.addTreeSelectionListener(new TreeSelectionListener() {
@@ -341,6 +251,149 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	}
 
 	/**
+	 * Make the variable nodes for the given dynamic scope
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param dScope
+	 *            The given dynamic scope
+	 * @return TreeNode
+	 */
+	private DefaultMutableTreeNode makeVariables(State state,
+			DynamicScope dScope) {
+		if (dScope.numberOfValues() > 0) {
+			// Create a Variables node and add it to the dyscope's node
+			DefaultMutableTreeNode variables = new DefaultMutableTreeNode(
+					"Variables");
+
+			// Keep track of which variable we're on with vid
+			int vid = 0;
+
+			// For each variable value of the dyscope
+			for (SymbolicExpression s : dScope.getValues()) {
+				Variable var = dScope.lexicalScope().variable(vid);
+				String variableName = var.name().name();
+				DefaultMutableTreeNode variableNode = new DefaultMutableTreeNode(
+						variableName
+								+ " = "
+								+ symbolicUtil.symbolicExpressionToString(
+										var.getSource(), state, s));
+				if (!(variableName == "__heap" && s.isNull())) {
+					variables.add(variableNode);
+				}
+				vid++;
+			}
+			return variables;
+		}
+		return null;
+	}
+
+	/**
+	 * Display the dyscopes nodes in a tree pattern that resembles their
+	 * parent/child relationship in the state
+	 * 
+	 * @param state
+	 * 		The current state
+	 * @param index
+	 * 		The current index
+	 * @param treeNodes
+	 * 		Array of dyscope nodes
+	 */
+	private void arrangeChildDyscopes(State state, int index,
+			DyscopeNode[] treeNodes) {
+		// If the dyscope isn't the root dyscope (ie parentID != -1) add
+		// it's node to the node corresponding to it's parent dyscope
+		int parentID = state.getParentId(index);
+		if (parentID != -1) {
+			DefaultMutableTreeNode children;
+
+			// If no children nodes have been added yet
+			if (treeNodes[parentID].getChildren() == null) {
+				children = new DefaultMutableTreeNode("Child Dyscopes");
+
+				// Set the children node as the parent's child dyscope node
+				treeNodes[parentID].setChildNode(children);
+
+				// Add the current node to the parent dyscopes children
+				// dyscopes node
+				treeNodes[parentID].getChildren().add(treeNodes[index]);
+
+				// Add the children dyscopes node to the parent node
+				treeNodes[parentID].add(treeNodes[parentID].getChildren());
+			}
+			// Children nodes have already been created
+			else {
+				// Set the children to be the child dyscope node
+				children = treeNodes[parentID].getChildren();
+
+				// Add the current node to the parent dyscopes children
+				// dyscopes node
+				treeNodes[parentID].getChildren().add(treeNodes[index]);
+			}
+		}
+	}
+	
+	/**
+	 * Make the process state nodes for the given state
+	 * @param state
+	 * 		The current state
+	 * @return
+	 * 		TreeNode
+	 */
+	private DefaultMutableTreeNode makeProcessStates(State state) {
+		// The process states of the state
+		DefaultMutableTreeNode procs = new DefaultMutableTreeNode(
+				"Process States");
+
+		// Add the process states
+		for (ProcessState p : state.getProcessStates()) {
+			if (p != null) {
+				DefaultMutableTreeNode proc = new DefaultMutableTreeNode("p"
+						+ p.identifier() + " (id=" + p.getPid() + ")");
+				for (StackEntry s : p.getStackEntries()) {
+					DefaultMutableTreeNode stackEntryNode = new DefaultMutableTreeNode(
+							s.toString());
+					proc.add(stackEntryNode);
+				}
+				procs.add(proc);
+			}
+		}
+		return procs;
+	}
+	
+	/**
+	 * Expand/collapse the nodes of the newTree to replicate the oldTree
+	 * 
+	 * TODO: Make expansion correspond to nodes and not rows in JTree
+	 * 
+	 * @param oldTree
+	 * @param newTree
+	 */
+	private void setDyscopeNodeExpansion(JTree oldTree, JTree newTree) {
+		// Expand all nodes by default if no oldTree
+		if (oldTree == null) {
+			for (int i = 0; i < newTree.getRowCount(); i++) {
+				newTree.expandRow(i);
+			}
+		}
+		// If there was a tree previously drawn, draw the state with the same
+		// nodes expanded and collapsed as the oldTree
+		else {
+			for (int i = 0; i < newTree.getRowCount(); i++) {
+				if (i < oldTree.getRowCount()) {
+					TreeUtil.restoreExpanstionState(newTree, i,
+							TreeUtil.getExpansionState(oldTree, i));
+				} else {
+					// We have reached nodes that were not in the oldTree
+					// These nodes will be collapsed by default, so break the
+					// loop over the nodes
+					break;
+				}
+			}
+		}
+	}
+
+	/**
 	 * Draws the transitions array to a JTree of nodes, and then makes a pane
 	 * with that tree and returns the view of that tree
 	 * 
@@ -359,41 +412,17 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				break;
 			}
 
-			// The name of the transition
-			StringBuffer transitionName = new StringBuffer();
-			transitionName.append("p" + transitions[i].processIdentifier()
-					+ ": ");
-
-			// Add step information to the name of the transition
-			for (Step s : transitions[i].getSteps()) {
-				if (transitionName.length() < 50) {
-					transitionName.append(s.statement().toString() + "; ");
-				} else {
-					transitionName.append("...");
-					break;
-				}
-			}
+			String transitionName = getTransitionName(transitions[i]);
 
 			// Create the transition node
 			TransitionNode transitionNode = new TransitionNode(
-					transitionName.toString(), transitions[i]);
+					transitionName, transitions[i]);
 
 			// For each step in the transition
 			for (Step s : transitions[i].getSteps()) {
-				Statement stmt = s.statement();
+				//Make the step node
+				StepNode stepNode = makeStepNode(s);
 
-				boolean targetIsNull = false;
-				if (stmt.target() == null)
-					targetIsNull = true;
-
-				StepNode stepNode;
-				if (!targetIsNull) {
-					stepNode = new StepNode(stmt.source().id() + "->"
-							+ stmt.target().id() + ": " + stmt.toString(), s);
-				} else {
-					stepNode = new StepNode(stmt.source().id() + "->" + "RET"
-							+ ": " + stmt.toString(), s);
-				}
 				// Add the step to the transition
 				transitionNode.add(stepNode);
 			}
@@ -414,6 +443,57 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		leftView = new JScrollPane(transitionTree);
 		leftView.setPreferredSize(new Dimension(600, 500));
 		return leftView;
+	}
+	
+	/**
+	 * Returns a string of the transition name
+	 * 
+	 * @param transition
+	 * 		The current transition
+	 * @return
+	 * 		String
+	 */
+	private String getTransitionName(CompoundTransition transition) {
+		// The name of the transition
+		StringBuffer transitionName = new StringBuffer();
+		transitionName.append("p" + transition.processIdentifier()
+				+ ": ");
+
+		// Add step information to the name of the transition
+		for (Step s : transition.getSteps()) {
+			if (transitionName.length() < 50) {
+				transitionName.append(s.statement().toString() + "; ");
+			} else {
+				transitionName.append("...");
+				break;
+			}
+		}
+		return transitionName.toString();
+	}
+	
+	/**
+	 * Make a step node out of the given step
+	 * @param step
+	 * 		The current step
+	 * @return
+	 * 		StepNode
+	 */
+	private StepNode makeStepNode(Step step) {
+		Statement stmt = step.statement();
+
+		String targetString;
+
+		StepNode stepNode;
+		if (stmt.target() != null) {
+			targetString = String.valueOf(stmt.target().id());
+		} else {
+			targetString = "RET";
+		}
+
+		stepNode = new StepNode(stmt.source().id() + "->"
+				+ targetString + ": " + stmt.toString(), step);
+		return stepNode;
+
 	}
 
 	/* *************************** Private Classes *************************** */
