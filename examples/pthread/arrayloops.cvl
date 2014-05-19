@@ -38,7 +38,7 @@ void *do_work(void *tid)
     a[i] = i * 1.0;
     mysum = mysum + a[i];
     }
-
+  printf("1");
   /* Lock the mutex and update the global sum, then exit */
   pthread_mutex_lock (&sum_mutex);
   sum = sum + mysum;
@@ -47,7 +47,7 @@ void *do_work(void *tid)
 }
 
 
-int main(int argc, char *argv[])
+int main(void)
 {
   int i, start, tids[NTHREADS];
   pthread_t threads[NTHREADS];

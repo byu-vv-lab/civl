@@ -61,7 +61,7 @@ void *dotprod(void *arg)
    int i, start, end, len ;
    long offset;
    double mysum, *x, *y;
-   offset = (long)arg;
+   offset = (long)*arg;
      
    len = dotstr.veclen;
    start = offset*len;
@@ -85,7 +85,7 @@ structure, and unlock it upon updating.
 */
    pthread_mutex_lock (&mutexsum);
    dotstr.sum += mysum;
-   printf("Thread %ld did %d to %d:  mysum=%f global sum=%f\n",offset,start,end,mysum,dotstr.sum);
+   printf("Thread %d did %d to %d:  mysum=%f global sum=%f\n",offset,start,end,mysum,dotstr.sum); //Removed l from %ld, unsupported
    pthread_mutex_unlock (&mutexsum);
 
    pthread_exit((void*) 0);
@@ -102,7 +102,7 @@ threads it creates. Note also that we free up handles  when they are
 no longer needed.
 */
 
-int main (int argc, char *argv[])
+int main (void)
 {
 long i;
 double *a, *b;
@@ -136,7 +136,7 @@ for(i=0;i<NUMTHRDS;i++)
    * The offset is specified by 'i'. The size of
    * the data for each thread is indicated by VECLEN.
    */
-   pthread_create(&callThd[i], &attr, dotprod, (void *)i); 
+   pthread_create(&callThd[i], &attr, dotprod, (void *)&i); 
    }
 
 pthread_attr_destroy(&attr);

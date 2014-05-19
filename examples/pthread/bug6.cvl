@@ -39,14 +39,14 @@ void *dotprod(void *arg)
    printf("thread: %d starting. start=%d end=%d\n",tid,start,end-1); // Removed l from %ld, unsupported
    for (i=start; i<end ; i++) 
       sum += (a[i] * b[i]);
-   printf("thread: %d done. Global sum now is=%li\n",tid,sum); // Removed l from %ld, unsupported
+   printf("thread: %d done. Global sum now is=%d\n",tid,sum); // Removed l from %ld, unsupported
 
    pthread_exit((void*) 0);
 }
 
 
 
-int main (int argc, char *argv[])
+int main (void)
 {
   long i;
   void *status;
@@ -69,7 +69,6 @@ int main (int argc, char *argv[])
   for(i=0; i<NUMTHRDS; i++) 
     pthread_create(&threads[i], &attr, dotprod, (void *)&i); 
 
-  pthread_attr_destroy(&attr);
 
   /* Wait on the threads for final result */
   for(i=0; i<NUMTHRDS; i++) 
@@ -77,9 +76,11 @@ int main (int argc, char *argv[])
   
   /* After joining, print out the results and cleanup */
   printf ("Final Global Sum=%d\n",sum);
+  pthread_attr_destroy(&attr);
   free (a);
   free (b);
-  pthread_exit(NULL);
+  return 0;
+  //pthread_exit(NULL);
 }   
 
 

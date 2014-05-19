@@ -30,20 +30,20 @@ void *dotprod(void *arg)
    */
    int i, start, end, offset, len;
    long tid;
-   tid = (long)arg;
+   tid = (long)*arg;
    offset = tid;
    len = VECLEN;
    start = offset*len;
    end   = start + len;
 
 /* Perform my section of the dot product */
-   printf("thread: %ld starting. start=%d end=%d\n",tid,start,end-1);
+   printf("thread: %d starting. start=%d end=%d\n",tid,start,end-1); // Removed l from %ld, unsupported
    for (i=start; i<end ; i++) {
       pthread_mutex_lock(&mutexsum);
       sum += (a[i] * b[i]);
       pthread_mutex_unlock(&mutexsum);
       }
-   printf("thread: %ld done. Global sum now is=%li\n",tid,sum);
+   printf("thread: %d done. Global sum now is=%li\n",tid,sum); // Removed l from %ld, unsupported
 
    pthread_exit((void*) 0);
 }
@@ -72,7 +72,7 @@ pthread_mutex_init(&mutexsum, NULL);
 pthread_attr_init(&attr);
 pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 for(i=0;i<NUMTHRDS;i++)
-   pthread_create(&threads[i], &attr, dotprod, (void *)i); 
+   pthread_create(&threads[i], &attr, dotprod, (void *)&i); 
 
 pthread_attr_destroy(&attr);
 

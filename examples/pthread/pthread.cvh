@@ -10,6 +10,10 @@
 #define PTHREAD_MUTEX_RECURSIVE	1
 #define PTHREAD_MUTEX_ERRORCHECK 2
 
+//Mutex Robustness Types
+#define PTHREAD_MUTEX_STALLED 0
+#define PTHREAD_MUTEX_ROBUST 1
+
 //Attribute Constants
 #define PTHREAD_CREATE_DETACHED 0
 #define PTHREAD_CREATE_JOINABLE 1
@@ -39,6 +43,11 @@ typedef struct {
   const pthread_attr_t *attr;
 } pthread_t;
 
+/* pthread_attr_init method definition
+  As stated in the specification, 'The pthread_attr_init( ) function shall initialize a thread attributes object attr with the default
+  value for all of the individual attributes used by a given implementation.' At the moment, the pthread_attr_t is very basic, but will
+  be improved upon at a later date.
+*/ 
 int pthread_attr_init(pthread_attr_t *attr){
   attr->stacksize = 0;
   attr->guardsize = 0;
@@ -50,7 +59,13 @@ int pthread_attr_init(pthread_attr_t *attr){
   return 0;
 }
 
-//Destroy thread attribute
+/* pthread_attr_destroy method definition
+  As stated in the specification, 'The pthread_attr_destroy( ) function shall destroy a thread attributes object. An implementation
+  may cause pthread_attr_destroy( ) to set attr to an implementation-defined invalid value. A
+  destroyed attr attributes object can be reinitialized using pthread_attr_init( ); the results of
+  otherwise referencing the object after it has been destroyed are undefined.'
+  This implementation effectively uninitializes the attr variable, which works according with the specification's requirements.
+*/
 int pthread_attr_destroy(pthread_attr_t *attr)
 { 
   pthread_attr_t blank;
@@ -160,6 +175,7 @@ int pthread_attr_getschedpolicy(const pthread_attr_t *attr, int *policy)
 /* pthread_mutexattr_t struct definition
 Fields: robust: defines the robustness of the mutex
 
+
 */
 typedef struct {
   int robust;
@@ -194,20 +210,17 @@ typedef struct {
   $proc owner;
   int lock;
   int prioceiling;
+  int kind;
   pthread_mutexattr_t *attr;
 } pthread_mutex_t;
 
 //Initializes mutex as unlocked and with attributes defined by attr
 int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr){
-  if(attr == NULL){
-    *(mutex->attr) = PTHREAD_MUTEX_INITIALIZER;
-  }
-  else{
-    mutex->attr = attr;
-  } 
+  mutex->attr = attr;
   mutex->lock = 0;
   mutex->count = 0;
   mutex->owner = $proc_null;
+  mutex->kind = 0;
   return 0;
 }
 
@@ -294,7 +307,7 @@ int pthread_detach(pthread_t thread);
 */
 int pthread_mutex_lock(pthread_mutex_t *mutex) {
   $atomic{
-  if (mutex->attr->type == PTHREAD_MUTEX_NORMAL){
+  if (mutex->kind == PTHREAD_MUTEX_NORMAL){
     if (mutex->lock != 0) 
     {
       if(mutex->owner == $proc_null){
@@ -325,7 +338,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
       if(mutex->owner == $self)
       {
         // Checks for recursive mutex, otherwise returns an error 
-        if (mutex->attr->type == 1) {
+        if (mutex->kind == 1) {
           mutex->count++;
           if(mutex->count==0){
             mutex->lock = 0;
@@ -350,7 +363,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 
 int pthread_mutex_unlock(pthread_mutex_t *mutex) {
   $atomic{
-  if (mutex->attr->type == 0 || mutex->attr->type == 2) {
+  if (mutex->kind == 0 || mutex->kind == 2) {
     int idx;
     // Attempts unlock, if already unlocked, returns error
     if (mutex->lock == 0) {
@@ -367,7 +380,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
     if(mutex->owner == $self)
     {
       //Checks for recursive mutex
-      _Bool tmp = !(mutex->attr->type == 1);
+      _Bool tmp = !(mutex->kind == 1);
       if (--mutex->count == 0){
         mutex->lock = 0;
         mutex->owner = $proc_null;
