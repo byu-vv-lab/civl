@@ -34,9 +34,8 @@ int main(void){
     printf("Creating thread %d\n", t);
     rc = pthread_create(&threads[t], NULL, PrintHello, (void *)&t);
     if (rc) {
-      printf("ERROR; return code from pthread_create() is %d\n", rc);
-      exit(-1);
-      $assert($false, "ERROR; return code from pthread_create() is");
+      $assert(false, "ERROR; return code from pthread_create() is %d", rc);
+      return 0;
     }
   }
   //pthread_exit(NULL);

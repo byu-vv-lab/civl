@@ -46,7 +46,7 @@ int main (int argc, char *argv[])
    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
    for(t=0; t<NUM_THREADS; t++) {
-      printf("Main: creating thread %ld\n", t);
+      printf("Main: creating thread %d\n", t);
       rc = pthread_create(&thread[t], &attr, BusyWork, (void *)&t); //Added address as conversion from
       if (rc) {														// int directly to void * is unsupported
         $assert(false, "ERROR; return code from pthread_create() is %d", rc);
@@ -60,7 +60,7 @@ int main (int argc, char *argv[])
       if (rc) {
          $assert(false, "ERROR; return code from pthread_create() is %d", rc);
          }
-      printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
+      printf("Main: completed join with thread %d having a status of %d\n",t,(long)status);
       }
  
 printf("Main: program completed. Exiting.\n");

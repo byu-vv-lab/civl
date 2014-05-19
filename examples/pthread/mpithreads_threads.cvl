@@ -89,8 +89,8 @@ void *dotprod(void *arg)
    unlock it upon updating.
    */
    pthread_mutex_lock (&mutexsum);
-   printf("Thread %ld adding partial sum of %f to global sum of %f\n",
-          arg, mysum, dotstr.sum);
+   printf("Thread %d adding partial sum of %f to global sum of %f\n",
+          arg, mysum, dotstr.sum); // Removed l from %ld
    dotstr.sum += mysum;
    pthread_mutex_unlock (&mutexsum);
 
@@ -139,7 +139,7 @@ for(i=0;i<MAXTHRDS;i++) {
   The offset is specified by 'i'. The size of
   the data for each thread is indicated by VECLEN.
   */
-  pthread_create( &callThd[i], &attr, dotprod, (void *)i); 
+  pthread_create( &callThd[i], &attr, dotprod, (void *)&i); 
   }
 
 pthread_attr_destroy(&attr);

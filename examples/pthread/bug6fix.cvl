@@ -43,12 +43,12 @@ void *dotprod(void *arg)
       sum += (a[i] * b[i]);
       pthread_mutex_unlock(&mutexsum);
       }
-   printf("thread: %d done. Global sum now is=%li\n",tid,sum); // Removed l from %ld, unsupported
+   printf("thread: %d done. Global sum now is=%d\n",tid,sum); // Removed l from %ld, unsupported
 
    pthread_exit((void*) 0);
 }
 
-int main (int argc, char *argv[])
+int main (void)
 {
 long i;
 void *status;
@@ -77,12 +77,12 @@ for(i=0;i<NUMTHRDS;i++)
 pthread_attr_destroy(&attr);
 
 /* Wait on the other threads for final result */
-
 for(i=0;i<NUMTHRDS;i++) {
   pthread_join(threads[i], &status);
   }
 /* After joining, print out the results and cleanup */
 printf ("Final Global Sum=%li\n",sum);
+
 free (a);
 free (b);
 pthread_mutex_destroy(&mutexsum);

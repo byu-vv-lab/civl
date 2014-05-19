@@ -69,14 +69,13 @@ int main (void)
   for(i=0; i<NUMTHRDS; i++) 
     pthread_create(&threads[i], &attr, dotprod, (void *)&i); 
 
-
+  pthread_attr_destroy(&attr);
   /* Wait on the threads for final result */
   for(i=0; i<NUMTHRDS; i++) 
     pthread_join(threads[i], &status);
   
   /* After joining, print out the results and cleanup */
   printf ("Final Global Sum=%d\n",sum);
-  pthread_attr_destroy(&attr);
   free (a);
   free (b);
   return 0;
