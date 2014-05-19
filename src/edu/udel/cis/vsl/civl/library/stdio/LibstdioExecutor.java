@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
@@ -20,8 +22,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -1158,7 +1158,9 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				state = concreteString.left;
 				printedContents.add(stringOfSymbolicExpression);
 			} else
-				printedContents.add(new StringBuffer(argumentValue.toString()));
+				printedContents.add(new StringBuffer(this.symbolicUtil
+						.symbolicExpressionToString(arguments[i].getSource(),
+								state, argumentValue)));
 		}
 		if (fileNameString.compareTo(STDOUT) == 0) {
 			this.printf(this.output, arguments[1].getSource(), formatBuffer,

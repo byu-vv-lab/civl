@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -20,8 +22,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -507,20 +507,6 @@ public class CommonExecutor implements Executor {
 				}
 				sCount++;
 			}
-			// format = formatBuffer.toString();
-			// splitedFormats = format.split("%s");
-			// for (int k = 0; k < splitedFormats.length - 1; k++) {
-			// int splitedFormatsLength;
-			//
-			// splitedFormatsLength = splitedFormats[k]
-			// .split("((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]").length;
-			// //is it true? string.split("REX").length == 0 ==> string is fully
-			// matched with "REX".
-			// if (splitedFormatsLength == 0)
-			// splitedFormatsLength = 2;
-			// sCount += splitedFormatsLength;
-			// sIndexes.add(sCount);
-			// }
 			for (int i = 1; i < argumentValues.length; i++) {
 				SymbolicExpression argument = argumentValues[i];
 				CIVLType argumentType = expressions[i].getExpressionType();
@@ -562,7 +548,8 @@ public class CommonExecutor implements Executor {
 					stringOfSymbolicExpression.delete(0,
 							stringOfSymbolicExpression.length());
 				} else
-					arguments.add(argument.toString());
+					arguments.add(symbolicUtil.symbolicExpressionToString(
+							expressions[i].getSource(), state, argument));
 			}
 
 			// TODO: print pointers in a much nicer way
