@@ -1,22 +1,22 @@
 package edu.udel.cis.vsl.civl.state.common.immutable;
 
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.simplifyO;
+
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.run.IF.UserInterface;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -70,21 +70,18 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private SymbolicUniverse universe;
 
-	private SymbolicUtility symbolicUtil;
-
 	/* **************************** Constructors *************************** */
 
 	/**
 	 * Factory to create all state objects.
 	 */
 	public ImmutableStateFactory(ModelFactory modelFactory,
-			GMCConfiguration config, SymbolicUtility symbolicUtil) {
-		this.symbolicUtil = symbolicUtil;
+			GMCConfiguration config) {
 		this.modelFactory = modelFactory;
 		this.config = config;
 		this.universe = modelFactory.universe();
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
-		this.simplify = config.isTrue(UserInterface.simplifyO);
+		this.simplify = config.isTrue(simplifyO);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -594,9 +591,11 @@ public class ImmutableStateFactory implements StateFactory {
 	 * scopes are collected, the flyweight representative is taken, simplify is
 	 * called if that option is selected, then the flyweight representative is
 	 * taken again.
+	 * 
+	 * @throws CIVLStateException
 	 */
 	@Override
-	public ImmutableState canonic(State state) {
+	public ImmutableState canonic(State state) throws CIVLStateException {
 		ImmutableState theState = (ImmutableState) state;
 
 		theState = collectProcesses(theState);
@@ -617,7 +616,7 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public ImmutableState collectScopes(State state) {
+	public ImmutableState collectScopes(State state) throws CIVLStateException {
 		ImmutableState theState = (ImmutableState) state;
 		int oldNumScopes = theState.numScopes();
 		int[] oldToNew = numberScopes(theState);
@@ -644,7 +643,6 @@ public class ImmutableStateFactory implements StateFactory {
 									+ scopeToBeRemoved.name() + "(id=" + i
 									+ ")" + " has a non-empty heap "
 									+ heapValue.toString() + ".", state,
-							this.symbolicUtil.stateToString(state),
 							heapVariable.getSource());
 				}
 			}
@@ -693,7 +691,7 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public ImmutableState initialState(Model model) {
+	public ImmutableState initialState(Model model) throws CIVLStateException {
 		ImmutableState state = new ImmutableState(new ImmutableProcessState[0],
 				new ImmutableDynamicScope[0], universe.trueExpression());
 		CIVLFunction function = model.system();

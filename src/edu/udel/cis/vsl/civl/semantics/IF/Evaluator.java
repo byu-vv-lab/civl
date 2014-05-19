@@ -2,11 +2,11 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -228,8 +228,6 @@ public interface Evaluator {
 	SymbolicExpression heapValue(CIVLSource source, State state,
 			SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
-
-	void setEnabler(Enabler enabler);
 
 	Pair<State, CIVLFunction> evaluateFunctionExpression(State state, int pid,
 			Expression functionExpression)

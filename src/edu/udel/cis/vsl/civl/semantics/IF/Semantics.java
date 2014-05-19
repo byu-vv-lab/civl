@@ -2,16 +2,16 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.common.CommonEvaluator;
 import edu.udel.cis.vsl.civl.semantics.common.CommonExecutor;
+import edu.udel.cis.vsl.civl.semantics.common.CommonLibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.common.CommonLibraryExecutorLoader;
-import edu.udel.cis.vsl.civl.semantics.common.CommonSymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * Entry point of the module civl.semantics.
@@ -25,6 +25,10 @@ public class Semantics {
 		return new CommonLibraryExecutorLoader();
 	}
 
+	public static LibraryEvaluatorLoader newLibraryEvaluatorLoader() {
+		return new CommonLibraryEvaluatorLoader();
+	}
+
 	public static Executor newExecutor(GMCConfiguration config,
 			ModelFactory modelFactory, StateFactory stateFactory, ErrorLog log,
 			LibraryExecutorLoader loader, PrintStream output, PrintStream err,
@@ -36,14 +40,9 @@ public class Semantics {
 	}
 
 	public static Evaluator newEvaluator(ModelFactory modelFactory,
-			StateFactory stateFactory, SymbolicUtility symbolicUtil,
-			CIVLErrorLogger errLogger) {
-		return new CommonEvaluator(modelFactory, stateFactory, symbolicUtil,
-				errLogger);
-	}
-
-	public static SymbolicUtility newSymbolicUtility(SymbolicUniverse universe,
-			ModelFactory modelFactory, CIVLErrorLogger errLogger) {
-		return new CommonSymbolicUtility(universe, modelFactory, errLogger);
+			StateFactory stateFactory, LibraryEvaluatorLoader loader,
+			SymbolicUtility symbolicUtil, CIVLErrorLogger errLogger) {
+		return new CommonEvaluator(modelFactory, stateFactory, loader,
+				symbolicUtil, errLogger);
 	}
 }

@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableStateFactory;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
@@ -26,9 +25,8 @@ public class States {
 	 * @return a new immutable state factory
 	 */
 	public static StateFactory newImmutableStateFactory(
-			ModelFactory modelFactory, GMCConfiguration config,
-			SymbolicUtility symbolicUtil) {
-		return new ImmutableStateFactory(modelFactory, config, symbolicUtil);
+			ModelFactory modelFactory, GMCConfiguration config) {
+		return new ImmutableStateFactory(modelFactory, config);
 	}
 
 }

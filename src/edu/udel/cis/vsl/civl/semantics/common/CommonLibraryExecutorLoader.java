@@ -5,13 +5,13 @@ import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 
 public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 

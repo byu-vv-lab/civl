@@ -6,22 +6,24 @@ package edu.udel.cis.vsl.civl.kripke.common;
 import java.io.PrintStream;
 import java.util.List;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.CompoundTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.semantics.common.CommonStep;
+import edu.udel.cis.vsl.civl.semantics.common.CommonTransition;
+import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -307,13 +309,29 @@ public class CommonStateManager implements StateManager {
 			out.print("--> ");
 		}
 		if (saveStates) {
-			state = stateFactory.canonic(state);
+			try {
+				state = stateFactory.canonic(state);
+			} catch (CIVLStateException stex) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						stex.kind(), stex.certainty(), stex.message(),
+						symbolicUtil.stateToString(state), stex.source());
+
+				errorLogger.reportError(err);
+			}
 			if (this.guiMode)
 				this.compoundTransition.updateFinalState(state);
 			this.maxCanonicId = state.getCanonicId();
 		} else {
 			state = stateFactory.collectProcesses(state);
-			state = stateFactory.collectScopes(state);
+			try {
+				state = stateFactory.collectScopes(state);
+			} catch (CIVLStateException stex) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						stex.kind(), stex.certainty(), stex.message(),
+						symbolicUtil.stateToString(state), stex.source());
+
+				errorLogger.reportError(err);
+			}
 			if (simplify)
 				state = stateFactory.simplify(state);
 			state.commit();
@@ -415,11 +433,11 @@ public class CommonStateManager implements StateManager {
 			if (pidInAtomic != -1) { // some other process is holding the atomic
 										// lock.
 				if (pidInAtomic != pid) {
-					throw new CIVLStateException(
+					throw new CIVLExecutionException(
 							ErrorKind.OTHER,
 							Certainty.CONCRETE,
 							"There is another process other than the current process holding the atomic lock.",
-							state, this.executor.evaluator().symbolicUtility()
+							this.executor.evaluator().symbolicUtility()
 									.stateToString(state), pLocation
 									.getSource());
 				} else { // the process is in atomic execution
@@ -515,16 +533,16 @@ public class CommonStateManager implements StateManager {
 			Location location) {
 		switch (enabled) {
 		case NONDETERMINISTIC:
-			errorLogger.reportError(new CIVLStateException(ErrorKind.OTHER,
+			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
 					Certainty.CONCRETE,
-					"Non-determinism is encountered in $atom block.", state,
+					"Non-determinism is encountered in $atom block.",
 					this.executor.evaluator().symbolicUtility()
 							.stateToString(state), location.getSource()));
 			break;
 		case BLOCKED:
-			errorLogger.reportError(new CIVLStateException(ErrorKind.OTHER,
+			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
 					Certainty.CONCRETE,
-					"Blocked location is encountered in $atom block.", state,
+					"Blocked location is encountered in $atom block.",
 					this.executor.evaluator().symbolicUtility()
 							.stateToString(state), location.getSource()));
 			break;

@@ -10,21 +10,18 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
-//import edu.udel.cis.vsl.civl.library.common.civlc.LibcivlcExecutor;
-//import edu.udel.cis.vsl.civl.library.common.stdio.LibstdioExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -41,13 +38,13 @@ import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
@@ -210,7 +207,8 @@ public class CommonExecutor implements Executor {
 			// TODO: USE GENERAL METHOD ... state = evaluator.logError in own
 			// class
 			state = errorLogger.logError(statement.getSource(), state,
-					assertValue, resultType, ErrorKind.ASSERTION_VIOLATION,
+					symbolicUtil.stateToString(state), assertValue, resultType,
+					ErrorKind.ASSERTION_VIOLATION,
 					"Cannot prove assertion holds: " + statement.toString()
 							+ "\n  Path condition: " + state.getPathCondition()
 							+ "\n  Assertion: " + assertValue + "\n");
@@ -384,9 +382,9 @@ public class CommonExecutor implements Executor {
 			String message = "For a $malloc returning " + elementType
 					+ "*, the size argument must be a multiple of sizeof("
 					+ elementType + ")";
-			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
-					certainty, message, eval.state,
-					this.symbolicUtil.stateToString(state), source);
+			CIVLExecutionException e = new CIVLExecutionException(
+					ErrorKind.MALLOC, certainty, message,
+					symbolicUtil.stateToString(state), source);
 
 			errorLogger.reportError(e);
 			state = state.setPathCondition(universe.and(pathCondition, claim));
@@ -851,7 +849,9 @@ public class CommonExecutor implements Executor {
 
 		if (sid < 0) {
 			errorLogger
-					.logSimpleError(source, state, ErrorKind.DEREFERENCE,
+					.logSimpleError(source, state,
+							symbolicUtil.stateToString(state),
+							ErrorKind.DEREFERENCE,
 							"Attempt to dereference pointer into scope which has been removed from state");
 			throw new UnsatisfiablePathConditionException();
 		}
@@ -859,7 +859,9 @@ public class CommonExecutor implements Executor {
 		if (!isInitialization) {
 			if (variable.isInput()) {
 				errorLogger
-						.logSimpleError(source, state, ErrorKind.INPUT_WRITE,
+						.logSimpleError(source, state,
+								symbolicUtil.stateToString(state),
+								ErrorKind.INPUT_WRITE,
 								"Attempt to write to input variable "
 										+ variable.name());
 				throw new UnsatisfiablePathConditionException();
@@ -867,6 +869,7 @@ public class CommonExecutor implements Executor {
 				errorLogger.logSimpleError(
 						source,
 						state,
+						symbolicUtil.stateToString(state),
 						ErrorKind.CONSTANT_WRITE,
 						"Attempt to write to constant variable "
 								+ variable.name());
@@ -887,6 +890,7 @@ public class CommonExecutor implements Executor {
 						newVariableValue);
 			} catch (SARLException e) {
 				errorLogger.logSimpleError(source, state,
+						symbolicUtil.stateToString(state),
 						ErrorKind.DEREFERENCE, "Invalid pointer dereference: "
 								+ pointer);
 				throw new UnsatisfiablePathConditionException();

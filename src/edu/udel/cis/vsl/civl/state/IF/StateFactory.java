@@ -60,14 +60,14 @@ public interface StateFactory {
 	 *            any non-null CIVL state
 	 * @return the canonical version of the given state
 	 */
-	State canonic(State state);
+	State canonic(State state) throws CIVLStateException ;
 
 	/**
 	 * Returns the canonic, initial state for a CIVL Model.
 	 * 
 	 * @return the initial state
 	 */
-	State initialState(Model model);
+	State initialState(Model model) throws CIVLStateException ;
 
 	/**
 	 * Updates the value assigned to a variable in the state. Specifically,
@@ -270,7 +270,7 @@ public interface StateFactory {
 	 * @return the state after canonicalizing scopes, which may be this state or
 	 *         a new one
 	 */
-	State collectScopes(State state);
+	State collectScopes(State state) throws CIVLStateException;
 
 	/**
 	 * Performs a garbage collection and canonicalization of the process states.

@@ -3,7 +3,7 @@ package edu.udel.cis.vsl.civl.model.common.type;
 import java.math.BigInteger;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;

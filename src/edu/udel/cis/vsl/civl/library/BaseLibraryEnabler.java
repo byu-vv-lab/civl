@@ -7,19 +7,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
-import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -92,12 +89,6 @@ public abstract class BaseLibraryEnabler extends Library implements
 	}
 
 	/* ********************* Methods from LibraryEnabler ******************* */
-
-	@Override
-	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments) {
-		return new Evaluation(state, universe.trueExpression());
-	}
 
 	@Override
 	public Set<Integer> ampleSet(State state, int pid,

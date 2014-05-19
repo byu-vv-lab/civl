@@ -1,25 +1,25 @@
-package edu.udel.cis.vsl.civl.semantics.common;
+package edu.udel.cis.vsl.civl.dynamic.common;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -204,7 +204,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			ResultType valid = reasoner.valid(claim).getResultType();
 
 			if (valid != ResultType.YES) {
-				state = errorLogger.logError(source, state, claim, valid,
+				state = errorLogger.logError(source, state, this.stateToString(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS, "negative start index");
 				pathCondition = state.getPathCondition();
 				reasoner = universe.reasoner(pathCondition);
@@ -212,7 +212,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			claim = universe.lessThanEquals(endIndex, length);
 			valid = reasoner.valid(claim).getResultType();
 			if (valid != ResultType.YES) {
-				state = errorLogger.logError(source, state, claim, valid,
+				state = errorLogger.logError(source, state, this.stateToString(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"end index exceeds length of array");
 				pathCondition = state.getPathCondition();
@@ -221,7 +221,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			claim = universe.lessThanEquals(startIndex, endIndex);
 			valid = reasoner.valid(claim).getResultType();
 			if (valid != ResultType.YES) {
-				state = errorLogger.logError(source, state, claim, valid,
+				state = errorLogger.logError(source, state, this.stateToString(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"start index greater than end index");
 				pathCondition = state.getPathCondition();

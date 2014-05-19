@@ -1,7 +1,6 @@
-package edu.udel.cis.vsl.civl.semantics.IF;
+package edu.udel.cis.vsl.civl.dynamic.IF;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;

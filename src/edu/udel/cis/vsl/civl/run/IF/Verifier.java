@@ -1,13 +1,17 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.maxdepthO;
+
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
+import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.CommandLineException;
@@ -127,7 +131,7 @@ public class Verifier extends Player {
 		log.setSearcher(searcher);
 		if (minimize)
 			log.setMinimize(true);
-		if (config.getValue(UserInterface.maxdepthO) != null)
+		if (config.getValue(maxdepthO) != null)
 			searcher.boundDepth(maxdepth);
 		stateManager.setUpdater(updater);
 		this.shortFileNamesShown = shortFileNamesShown;
@@ -156,52 +160,61 @@ public class Verifier extends Player {
 	}
 
 	public boolean run() throws FileNotFoundException {
-		State initialState = stateFactory.initialState(model);
-		boolean violationFound = false;
-
-		updateThread = new Thread(new UpdaterRunnable(updatePeriod * 1000));
-		updateThread.start();
-		if (debug || showStates || verbose) {
-			out.println();
-			// stateFactory.printState(out, initialState);
-			out.print(symbolicUtil.stateToString(initialState));
-			// initialState.print(out);
-		}
 		try {
-			while (true) {
-				boolean workRemains;
+			State initialState = stateFactory.initialState(model);
+			boolean violationFound = false;
 
-				if (violationFound)
-					workRemains = searcher.proceedToNewState() ? searcher
-							.search() : false;
-				else
-					workRemains = searcher.search(initialState);
-				if (!workRemains)
-					break;
-				log.report(new CIVLLogEntry(config, predicate.getViolation()));
-				violationFound = true;
-			}
-		} catch (ExcessiveErrorException e) {
-			violationFound = true;
-			if (!shortFileNamesShown) {
-				preprocessor.printShorterFileNameMap(out);
+			updateThread = new Thread(new UpdaterRunnable(updatePeriod * 1000));
+			updateThread.start();
+			if (debug || showStates || verbose) {
 				out.println();
+				// stateFactory.printState(out, initialState);
+				out.print(symbolicUtil.stateToString(initialState));
+				// initialState.print(out);
 			}
-			out.println("Error bound exceeded: search terminated");
-		}
-		terminateUpdater();
-		if (violationFound || log.numEntries() > 0) {
-			result = "The program MAY NOT be correct.  See " + log.getLogFile();
 			try {
-				log.save();
-			} catch (FileNotFoundException e) {
-				System.err.println("Failed to print log file "
-						+ log.getLogFile());
+				while (true) {
+					boolean workRemains;
+
+					if (violationFound)
+						workRemains = searcher.proceedToNewState() ? searcher
+								.search() : false;
+					else
+						workRemains = searcher.search(initialState);
+					if (!workRemains)
+						break;
+					log.report(new CIVLLogEntry(config, predicate
+							.getViolation()));
+					violationFound = true;
+				}
+			} catch (ExcessiveErrorException e) {
+				violationFound = true;
+				if (!shortFileNamesShown) {
+					preprocessor.printShorterFileNameMap(out);
+					out.println();
+				}
+				out.println("Error bound exceeded: search terminated");
 			}
-		} else {
-			result = "The standard properties hold for all executions.";
+			terminateUpdater();
+			if (violationFound || log.numEntries() > 0) {
+				result = "The program MAY NOT be correct.  See "
+						+ log.getLogFile();
+				try {
+					log.save();
+				} catch (FileNotFoundException e) {
+					System.err.println("Failed to print log file "
+							+ log.getLogFile());
+				}
+			} else {
+				result = "The standard properties hold for all executions.";
+			}
+			return !violationFound && log.numEntries() == 0;
+		} catch (CIVLStateException stateException) {
+			throw new CIVLExecutionException(stateException.kind(),
+					stateException.certainty(), stateException.getMessage(),
+					symbolicUtil.stateToString(stateException.state()),
+					stateException.source());
 		}
-		return !violationFound && log.numEntries() == 0;
 	}
 
 	/**

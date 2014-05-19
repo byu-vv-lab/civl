@@ -2,7 +2,7 @@ package edu.udel.cis.vsl.civl.model.IF.type;
 
 import java.util.Collection;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 
 /**

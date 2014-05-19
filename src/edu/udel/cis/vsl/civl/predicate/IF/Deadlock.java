@@ -5,15 +5,14 @@ package edu.udel.cis.vsl.civl.predicate.IF;
 
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.MAYBE;
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.YES;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -53,7 +52,7 @@ public class Deadlock implements StatePredicateIF<State> {
 	/**
 	 * If violation is found it is cached here.
 	 */
-	private CIVLStateException violation = null;
+	private CIVLExecutionException violation = null;
 
 	private BooleanExpression falseExpr;
 
@@ -235,9 +234,9 @@ public class Deadlock implements StatePredicateIF<State> {
 			message += "  Path condition: " + state.getPathCondition()
 					+ "\n  Enabling predicate: " + predicate + "\n";
 			message += explanationWork(state);
-			violation = new CIVLStateException(ErrorKind.DEADLOCK, certainty,
-					message, state, this.executor.evaluator().symbolicUtility()
-							.stateToString(state), source);
+			violation = new CIVLExecutionException(ErrorKind.DEADLOCK,
+					certainty, message, this.executor.evaluator()
+							.symbolicUtility().stateToString(state), source);
 			return true;
 		}
 	}

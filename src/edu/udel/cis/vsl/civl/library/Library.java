@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.library;
 
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;

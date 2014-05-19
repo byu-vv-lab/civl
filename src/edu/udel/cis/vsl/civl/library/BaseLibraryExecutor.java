@@ -2,21 +2,21 @@ package edu.udel.cis.vsl.civl.library;
 
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
@@ -94,10 +94,9 @@ public abstract class BaseLibraryExecutor extends Library implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	protected BaseLibraryExecutor(Executor primaryExecutor,
-			PrintStream output, PrintStream err, boolean enablePrintf,
-			boolean statelessPrintf, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
+	protected BaseLibraryExecutor(Executor primaryExecutor, PrintStream output,
+			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
 		super(primaryExecutor.evaluator().universe(), symbolicUtil);
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
@@ -197,9 +196,9 @@ public abstract class BaseLibraryExecutor extends Library implements
 					if (valid != ResultType.YES) {
 						Certainty certainty = valid == ResultType.NO ? Certainty.PROVEABLE
 								: Certainty.MAYBE;
-						CIVLStateException e = new CIVLStateException(
+						CIVLExecutionException e = new CIVLExecutionException(
 								ErrorKind.MALLOC, certainty,
-								"Invalid pointer for heap", state,
+								"Invalid pointer for heap",
 								symbolicUtil.stateToString(state),
 								pointerSource);
 
@@ -221,8 +220,9 @@ public abstract class BaseLibraryExecutor extends Library implements
 			}
 		}
 		{
-			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
-					Certainty.PROVEABLE, "Invalid pointer for heap", state,
+			CIVLExecutionException e = new CIVLExecutionException(
+					ErrorKind.MALLOC, Certainty.PROVEABLE,
+					"Invalid pointer for heap",
 					symbolicUtil.stateToString(state), pointerSource);
 
 			errorLogger.reportError(e);

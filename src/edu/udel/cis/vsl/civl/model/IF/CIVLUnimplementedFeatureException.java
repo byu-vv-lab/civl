@@ -1,7 +1,5 @@
-package edu.udel.cis.vsl.civl.err.IF;
+package edu.udel.cis.vsl.civl.model.IF;
 
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 
 /**
  * An exception thrown when there is not necessarily anything wrong with the

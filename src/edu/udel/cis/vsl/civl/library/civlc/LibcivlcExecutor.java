@@ -5,18 +5,17 @@ import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -26,10 +25,10 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -325,11 +324,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 									targetArray = universe.arrayWrite(
 											targetArray, targetIndex, element);
 								} catch (SARLException e) {
-									throw new CIVLStateException(
+									throw new CIVLExecutionException(
 											ErrorKind.OUT_OF_BOUNDS,
 											Certainty.CONCRETE,
 											"Attempt to write beyond array bound: index="
-													+ targetIndex, state,
+													+ targetIndex,
 											symbolicUtil.stateToString(state),
 											source);
 								}
@@ -1611,10 +1610,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				if (divisibilityValid != ResultType.YES) {
 					Certainty certainty = divisibilityValid == ResultType.MAYBE ? Certainty.MAYBE
 							: Certainty.PROVEABLE;
-					CIVLStateException e = new CIVLStateException(
+					CIVLExecutionException e = new CIVLExecutionException(
 							ErrorKind.OTHER, certainty,
 							"sizeof element does not divide size argument",
-							state, symbolicUtil.stateToString(state), source);
+							symbolicUtil.stateToString(state), source);
 
 					errorLogger.reportError(e);
 					pathCondition = universe.and(pathCondition, divisibility);
@@ -1639,16 +1638,16 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					break;
 				}
 				case IDENTITY:
-					throw new CIVLStateException(ErrorKind.POINTER,
+					throw new CIVLExecutionException(ErrorKind.POINTER,
 							Certainty.MAYBE,
 							"unable to get concrete count of 0 or 1 from size",
-							state, symbolicUtil.stateToString(state), source);
+							symbolicUtil.stateToString(state), source);
 				case NULL: { // size must be 0
 					Certainty certainty = zeroSizeValid == ResultType.MAYBE ? Certainty.MAYBE
 							: Certainty.PROVEABLE;
-					CIVLStateException e = new CIVLStateException(
+					CIVLExecutionException e = new CIVLExecutionException(
 							ErrorKind.POINTER, certainty,
-							"null pointer only valid with size 0", state,
+							"null pointer only valid with size 0",
 							symbolicUtil.stateToString(state), source);
 
 					errorLogger.reportError(e);
@@ -1660,15 +1659,15 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				}
 				case OFFSET: {
 					// either size is zero or size is 1 and offset is 0
-					throw new CIVLStateException(ErrorKind.POINTER,
+					throw new CIVLExecutionException(ErrorKind.POINTER,
 							Certainty.MAYBE, "possible out of bounds pointer",
-							state, symbolicUtil.stateToString(state), source);
+							symbolicUtil.stateToString(state), source);
 				}
 				case TUPLE_COMPONENT: {
-					throw new CIVLStateException(ErrorKind.POINTER,
+					throw new CIVLExecutionException(ErrorKind.POINTER,
 							Certainty.MAYBE,
 							"unable to get concrete count of 0 or 1 from size",
-							state, symbolicUtil.stateToString(state), source);
+							symbolicUtil.stateToString(state), source);
 				}
 				case UNION_MEMBER:
 					throw new CIVLInternalException("dereference union member",

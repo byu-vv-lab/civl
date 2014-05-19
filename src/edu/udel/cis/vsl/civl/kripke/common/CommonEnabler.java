@@ -4,24 +4,22 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
@@ -146,15 +144,6 @@ public abstract class CommonEnabler implements Enabler {
 		}
 	}
 
-	@Override
-	public Evaluation getSystemGuard(CIVLSource source, State state, int pid,
-			String library, String function, List<Expression> arguments) {
-		LibraryEnabler libEnabler = libraryEnabler(source, library);
-
-		return libEnabler
-				.evaluateGuard(source, state, pid, function, arguments);
-	}
-
 	/**
 	 * Computes the set of enabled transitions of a system function call.
 	 * 
@@ -182,8 +171,8 @@ public abstract class CommonEnabler implements Enabler {
 
 	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
 		return this.libraryLoader.getLibraryEnabler(library, this, evaluator,
-				this.transitionFactory, this.debugOut, evaluator.modelFactory(),
-				evaluator.symbolicUtility());
+				this.transitionFactory, this.debugOut,
+				evaluator.modelFactory(), evaluator.symbolicUtility());
 	}
 
 	/**
@@ -397,12 +386,12 @@ public abstract class CommonEnabler implements Enabler {
 							eval.value);
 
 					if (pidValue < 0) {
-						CIVLExecutionException e = new CIVLStateException(
+						CIVLExecutionException e = new CIVLExecutionException(
 								ErrorKind.INVALID_PID,
 								Certainty.PROVEABLE,// TODO check message?
 								"Unable to call $wait on a process that has already been the target of a $wait.",
-								state, this.evaluator.symbolicUtility()
-										.stateToString(state), s.getSource());
+								this.evaluator.symbolicUtility().stateToString(
+										state), s.getSource());
 						errorLogger.reportError(e);
 						// TODO: recover: add a no-op transition
 						throw e;

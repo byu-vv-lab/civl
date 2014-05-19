@@ -4,12 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -29,13 +26,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * 
  */
 public interface LibraryEnabler {
-	/**
-	 * Gets a guard for a system function. This is an extra guard relating to
-	 * the particular system function, and needs to be checked in addition to
-	 * the "regular" guard in the transition system.
-	 */
-	Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments);
 
 	/**
 	 * Computes the ample set process ID's from a system function call.

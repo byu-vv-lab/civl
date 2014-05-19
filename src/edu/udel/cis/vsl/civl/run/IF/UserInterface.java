@@ -1,8 +1,36 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
-import static edu.udel.cis.vsl.gmc.Option.OptionType.BOOLEAN;
-import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
-import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.bar;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.date;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.debugO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.echoO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.enablePrintfO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.errorBoundO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.guiO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.guidedO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.idO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.inputO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.maxdepthO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.minO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.randomO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.saveStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.seedO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showAmpleSetO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showAmpleSetWtStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showModelO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showProverQueriesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showQueriesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showSavedStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showTransitionsO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.simplifyO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.solveO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.statelessPrintfO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.sysIncludePathO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.traceO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.userIncludePathO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.verboseO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.version;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -26,13 +54,12 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.Combiner;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
-import edu.udel.cis.vsl.civl.CIVL;
-import edu.udel.cis.vsl.civl.err.IF.CIVLException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.Models;
@@ -56,110 +83,6 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  * 
  */
 public class UserInterface {
-
-	/* *************************** Static fields *************************** */
-
-	/**
-	 * A string printed before and after titles of sections of output to make
-	 * them stand out among the clutter.
-	 */
-	public final static String bar = "===================";
-
-	public final static Option debugO = Option.newScalarOption("debug",
-			BOOLEAN, "debug mode: print very detailed information", false);
-
-	public final static Option echoO = Option.newScalarOption("echo", BOOLEAN,
-			"print the command line", false);
-
-	public final static Option enablePrintfO = Option.newScalarOption(
-			"enablePrintf", BOOLEAN, "enable printf function", true);
-
-	public final static Option errorBoundO = Option.newScalarOption(
-			"errorBound", INTEGER, "stop after finding this many errors", 1);
-
-	public final static Option guidedO = Option.newScalarOption("guided",
-			BOOLEAN, "user guided simulation; applies only to run, ignored\n"
-					+ "    for all other commands", null);
-
-	public final static Option idO = Option.newScalarOption("id", INTEGER,
-			"ID number of trace to replay; applies only to replay command", 0);
-
-	public final static Option inputO = Option
-			.newMapOption("input",
-					"initialize input variable KEY to VALUE; applies only to run and verify");
-
-	public final static Option maxdepthO = Option.newScalarOption("maxdepth",
-			INTEGER, "bound on search depth", Integer.MAX_VALUE);
-
-	public final static Option minO = Option.newScalarOption("min", BOOLEAN,
-			"search for minimal counterexample", false);
-
-	public final static Option randomO = Option.newScalarOption("random",
-			BOOLEAN, "select enabled transitions randomly; default for run,\n"
-					+ "    ignored for all other commands", null);
-
-	public final static Option saveStatesO = Option.newScalarOption(
-			"saveStates", BOOLEAN, "save states during depth-first search",
-			true);
-
-	public final static Option seedO = Option.newScalarOption("seed", STRING,
-			"set the random seed; applies only to run", null);
-
-	public final static Option showAmpleSetO = Option.newScalarOption(
-			"showAmpleSet", BOOLEAN,
-			"print the ample set when it contains more than one processes",
-			false);
-
-	public final static Option showAmpleSetWtStatesO = Option
-			.newScalarOption(
-					"showAmpleSetWtStates",
-					BOOLEAN,
-					"print the ample set and the state when there are more than one processes in the ample set",
-					false);
-
-	public final static Option showModelO = Option.newScalarOption("showModel",
-			BOOLEAN, "print the model", false);
-
-	public final static Option showProverQueriesO = Option.newScalarOption(
-			"showProverQueries", BOOLEAN, "print theorem prover queries only",
-			false);
-
-	public final static Option showQueriesO = Option.newScalarOption(
-			"showQueries", BOOLEAN, "print all queries", false);
-
-	public final static Option showSavedStatesO = Option.newScalarOption(
-			"showSavedStates", BOOLEAN, "print saved states only", false);
-
-	public final static Option showStatesO = Option.newScalarOption(
-			"showStates", BOOLEAN, "print all states", false);
-
-	public final static Option showTransitionsO = Option.newScalarOption(
-			"showTransitions", BOOLEAN, "print transitions", false);
-
-	public final static Option simplifyO = Option.newScalarOption("simplify",
-			BOOLEAN, "simplify states?", true);
-
-	public final static Option solveO = Option.newScalarOption("solve",
-			BOOLEAN, "try to solve for concrete counterexample", false);
-
-	public final static Option statelessPrintfO = Option.newScalarOption(
-			"statelessPrintf", BOOLEAN,
-			"prevent printf function modifying the file system", false);
-
-	public final static Option sysIncludePathO = Option.newScalarOption(
-			"sysIncludePath", STRING, "set the system include path", null);
-
-	public final static Option traceO = Option.newScalarOption("trace", STRING,
-			"filename of trace to replay", null);
-
-	public final static Option userIncludePathO = Option.newScalarOption(
-			"userIncludePath", STRING, "set the user include path", null);
-
-	public final static Option verboseO = Option.newScalarOption("verbose",
-			BOOLEAN, "verbose mode", false);
-
-	public final static Option guiO = Option.newScalarOption("gui", BOOLEAN,
-			"launch GUI? (under development, only works with replay)", false);
 
 	/* ************************* Instance fields *************************** */
 
@@ -854,7 +777,7 @@ public class UserInterface {
 		SymbolicUniverse universe = SARL.newStandardUniverse();
 		String command;
 
-		out.println("CIVL v" + CIVL.version + " of " + CIVL.date
+		out.println("CIVL v" + version + " of " + date
 				+ " -- http://vsl.cis.udel.edu/civl");
 		out.flush();
 		if (config.isTrue(echoO))

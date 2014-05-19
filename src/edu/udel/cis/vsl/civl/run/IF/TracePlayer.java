@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.seedO;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -7,8 +9,10 @@ import java.util.ArrayList;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
+import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -57,7 +61,7 @@ public class TracePlayer extends Player {
 			IOException, MisguidedExecutionException {
 		TracePlayer result = new TracePlayer(config, model, out, err,
 				preprocessor);
-		String seedString = (String) config.getValue(UserInterface.seedO);
+		String seedString = (String) config.getValue(seedO);
 		RandomTransitionChooser<State, Transition, TransitionSequence> chooser;
 
 		if (seedString == null)
@@ -115,24 +119,38 @@ public class TracePlayer extends Player {
 	}
 
 	public boolean run() throws MisguidedExecutionException {
-		State initialState = stateFactory.initialState(model);
-		boolean violation = replayer.play(initialState, chooser);
+		try {
+			State initialState = stateFactory.initialState(model);
+			boolean violation = replayer.play(initialState, chooser);
 
-		violation = violation || log.numErrors() > 0;
-		if (violation) {
-			out.println("Violation(s) found.");
-			out.flush();
+			violation = violation || log.numErrors() > 0;
+			if (violation) {
+				out.println("Violation(s) found.");
+				out.flush();
+			}
+			return !violation;
+		} catch (CIVLStateException stateException) {
+			throw new CIVLExecutionException(stateException.kind(),
+					stateException.certainty(), stateException.getMessage(),
+					symbolicUtil.stateToString(stateException.state()),
+					stateException.source());
 		}
-		return !violation;
 	}
 
 	public void replayForGui(ArrayList<State> states,
 			ArrayList<Transition> transitions)
 			throws MisguidedExecutionException {
-		State initialState = stateFactory.initialState(model);
+		try {
+			State initialState = stateFactory.initialState(model);
 
-		states.add(initialState);
-		replayer.playForUi(initialState, chooser, states, transitions);
+			states.add(initialState);
+			replayer.playForUi(initialState, chooser, states, transitions);
+		} catch (CIVLStateException stateException) {
+			throw new CIVLExecutionException(stateException.kind(),
+					stateException.certainty(), stateException.getMessage(),
+					symbolicUtil.stateToString(stateException.state()),
+					stateException.source());
+		}
 	}
 
 	public void printStats() {

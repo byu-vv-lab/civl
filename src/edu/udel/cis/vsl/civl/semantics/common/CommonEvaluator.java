@@ -8,19 +8,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
+//import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
@@ -73,9 +72,11 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -121,7 +122,9 @@ public class CommonEvaluator implements Evaluator {
 
 	/* *************************** Instance Fields ************************* */
 
-	private Enabler enabler;
+	// private Enabler enabler;
+
+	private LibraryEvaluatorLoader libLoader;
 
 	/**
 	 * An uninterpreted function used to evaluate "BigO" of an expression. It
@@ -257,8 +260,9 @@ public class CommonEvaluator implements Evaluator {
 	 *            The error logging facility.
 	 */
 	public CommonEvaluator(ModelFactory modelFactory,
-			StateFactory stateFactory, SymbolicUtility symbolicUtil,
-			CIVLErrorLogger errorLogger) {
+			StateFactory stateFactory, LibraryEvaluatorLoader loader,
+			SymbolicUtility symbolicUtil, CIVLErrorLogger errorLogger) {
+		this.libLoader = loader;
 		this.errorLogger = errorLogger;
 		this.symbolicUtil = symbolicUtil;
 		this.modelFactory = modelFactory;
@@ -635,7 +639,8 @@ public class CommonEvaluator implements Evaluator {
 
 			if (resultType != ResultType.YES) {
 				state = errorLogger.logError(expression.getSource(), state,
-						claim, resultType, ErrorKind.INVALID_CAST,
+						this.symbolicUtil.stateToString(state), claim,
+						resultType, ErrorKind.INVALID_CAST,
 						"Cast from non-zero integer to pointer");
 				eval.state = state;
 			}
@@ -658,9 +663,9 @@ public class CommonEvaluator implements Evaluator {
 		try {
 			eval.value = universe.cast(endType, eval.value);
 		} catch (SARLException e) {
-			CIVLStateException error = new CIVLStateException(
+			CIVLExecutionException error = new CIVLExecutionException(
 					ErrorKind.INVALID_CAST, Certainty.NONE,
-					"SARL could not cast: " + e, eval.state,
+					"SARL could not cast: " + e,
 					this.symbolicUtil.stateToString(state),
 					expression.getSource());
 
@@ -886,6 +891,7 @@ public class CommonEvaluator implements Evaluator {
 
 			if (test.isFalse()) {
 				errorLogger.logSimpleError(expression.getSource(), eval.state,
+						this.symbolicUtil.stateToString(state),
 						ErrorKind.UNION,
 						"Attempt to access an invalid union member");
 				throw new UnsatisfiablePathConditionException();
@@ -1046,8 +1052,10 @@ public class CommonEvaluator implements Evaluator {
 
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
-						eval.state, claim, resultType,
-						ErrorKind.DIVISION_BY_ZERO, "Division by zero");
+						eval.state,
+						this.symbolicUtil.stateToString(eval.state), claim,
+						resultType, ErrorKind.DIVISION_BY_ZERO,
+						"Division by zero");
 			}
 			eval.value = universe.divide((NumericExpression) left, denominator);
 		}
@@ -1085,8 +1093,9 @@ public class CommonEvaluator implements Evaluator {
 			// TODO: check not negative
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
-						eval.state, claim, resultType,
-						ErrorKind.DIVISION_BY_ZERO,
+						eval.state,
+						this.symbolicUtil.stateToString(eval.state), claim,
+						resultType, ErrorKind.DIVISION_BY_ZERO,
 						"Modulus denominator is zero");
 			}
 			eval.value = universe.modulo((NumericExpression) left, denominator);
@@ -1133,6 +1142,7 @@ public class CommonEvaluator implements Evaluator {
 		if (expressionType.equals(modelFactory.scopeType())) {
 			if (expressionValue.equals(modelFactory.undefinedScopeValue())) {
 				errorLogger.logSimpleError(source, state,
+						symbolicUtil.stateToString(state),
 						ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid scope reference");
 				throw new UnsatisfiablePathConditionException();
@@ -1140,6 +1150,7 @@ public class CommonEvaluator implements Evaluator {
 		} else if (expressionType.equals(modelFactory.processType())) {
 			if (expressionValue.equals(modelFactory.undefinedProcessValue())) {
 				errorLogger.logSimpleError(source, state,
+						symbolicUtil.stateToString(state),
 						ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid process reference");
 				throw new UnsatisfiablePathConditionException();
@@ -1153,12 +1164,14 @@ public class CommonEvaluator implements Evaluator {
 				if (scopeID < 0) {
 					errorLogger
 							.logSimpleError(source, state,
+									symbolicUtil.stateToString(state),
 									ErrorKind.MEMORY_LEAK,
 									"Attempt to evaluate a pointer refererring to memory of an invalid scope");
 					throw new UnsatisfiablePathConditionException();
 				}
 			} catch (Exception e) {
 				errorLogger.logSimpleError(source, state,
+						symbolicUtil.stateToString(state),
 						ErrorKind.UNDEFINED_VALUE,
 						"Attempt to use undefined pointer");
 				throw new UnsatisfiablePathConditionException();
@@ -1398,7 +1411,8 @@ public class CommonEvaluator implements Evaluator {
 
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
-						eval.state, claim, resultType, ErrorKind.OUT_OF_BOUNDS,
+						eval.state, symbolicUtil.stateToString(eval.state),
+						claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 						"Out of bounds array index:\nindex = " + index
 								+ "\nlength = " + length);
 			}
@@ -1547,9 +1561,9 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicExpression value = state.valueOf(pid, expression.variable());
 
 		if (value == null || value.isNull()) {
-			CIVLExecutionException e = new CIVLStateException(
+			CIVLExecutionException e = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
-					"Attempt to read uninitialized variable", state,
+					"Attempt to read uninitialized variable",
 					this.symbolicUtil.stateToString(state),
 					expression.getSource());
 
@@ -1595,9 +1609,18 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private Evaluation evaluateSystemGuard(State state, int pid,
 			SystemGuardExpression expression) {
-		return enabler.getSystemGuard(expression.getSource(), state, pid,
+		return getSystemGuard(expression.getSource(), state, pid,
 				expression.library(), expression.functionName(),
 				expression.arguments());
+	}
+
+	private Evaluation getSystemGuard(CIVLSource source, State state, int pid,
+			String library, String function, List<Expression> arguments) {
+		LibraryEvaluator libEvaluator = this.libLoader.getLibraryEvaluator(
+				library, this, this.modelFactory, symbolicUtil);
+
+		return libEvaluator.evaluateGuard(source, state, pid, function,
+				arguments);
 	}
 
 	/**
@@ -1813,8 +1836,8 @@ public class CommonEvaluator implements Evaluator {
 
 				if (resultType != ResultType.YES) {
 					eval.state = errorLogger.logError(expression.getSource(),
-							eval.state, claim, resultType,
-							ErrorKind.OUT_OF_BOUNDS,
+							eval.state, symbolicUtil.stateToString(eval.state),
+							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 							"Pointer addition resulted in out of bounds array index:\nindex = "
 									+ newIndex + "\nlength = " + length);
 				}
@@ -1837,7 +1860,8 @@ public class CommonEvaluator implements Evaluator {
 
 			if (resultType != ResultType.YES) {
 				state = errorLogger.logError(expression.getSource(), state,
-						claim, resultType, ErrorKind.OUT_OF_BOUNDS,
+						symbolicUtil.stateToString(state), claim, resultType,
+						ErrorKind.OUT_OF_BOUNDS,
 						"Pointer addition resulted in out of bounds object pointer:\noffset = "
 								+ newOffset);
 			}
@@ -1919,8 +1943,8 @@ public class CommonEvaluator implements Evaluator {
 
 				if (resultType != ResultType.YES) {
 					eval.state = errorLogger.logError(expression.getSource(),
-							eval.state, claim, resultType,
-							ErrorKind.OUT_OF_BOUNDS,
+							eval.state, symbolicUtil.stateToString(eval.state),
+							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 							"Pointer subtraction resulted in out of bounds array index:\nindex = "
 									+ newIndex + "\nlength = " + length);
 				}
@@ -1943,7 +1967,8 @@ public class CommonEvaluator implements Evaluator {
 
 			if (resultType != ResultType.YES) {
 				state = errorLogger.logError(expression.getSource(), state,
-						claim, resultType, ErrorKind.OUT_OF_BOUNDS,
+						symbolicUtil.stateToString(state), claim, resultType,
+						ErrorKind.OUT_OF_BOUNDS,
 						"Pointer subtraction resulted in out of bounds object pointer:\noffset = "
 								+ newOffset);
 			}
@@ -1985,13 +2010,14 @@ public class CommonEvaluator implements Evaluator {
 		function = eval.right;
 		if (function == null) {
 			errorLogger.logSimpleError(expression.getSource(), state,
-					ErrorKind.OTHER, "function body cann't be found");
+					symbolicUtil.stateToString(state), ErrorKind.OTHER,
+					"function body cann't be found");
 			throw new UnsatisfiablePathConditionException();
 		}
 		if (function.isSystem()) {
 			SystemFunction systemFunction = (SystemFunction) function;
 
-			return enabler.getSystemGuard(expression.getSource(), state, pid,
+			return getSystemGuard(expression.getSource(), state, pid,
 					systemFunction.getLibrary(), systemFunction.name().name(),
 					expression.arguments());
 		}
@@ -2035,6 +2061,7 @@ public class CommonEvaluator implements Evaluator {
 			if (sid < 0) {
 				errorLogger
 						.logSimpleError(pointer.getSource(), state,
+								symbolicUtil.stateToString(state),
 								ErrorKind.DEREFERENCE,
 								"Attempt to dereference pointer into scope which has been removed from state");
 				throw new UnsatisfiablePathConditionException();
@@ -2254,7 +2281,9 @@ public class CommonEvaluator implements Evaluator {
 
 			if (sid < 0) {
 				errorLogger
-						.logSimpleError(source, state, ErrorKind.DEREFERENCE,
+						.logSimpleError(source, state,
+								symbolicUtil.stateToString(state),
+								ErrorKind.DEREFERENCE,
 								"Attempt to dereference pointer into scope which has been removed from state");
 				throw new UnsatisfiablePathConditionException();
 			} else {
@@ -2278,6 +2307,7 @@ public class CommonEvaluator implements Evaluator {
 					errorLogger.logSimpleError(
 							source,
 							state,
+							symbolicUtil.stateToString(state),
 							ErrorKind.DEREFERENCE,
 							"Illegal pointer dereference "
 									+ source.getSummary());
@@ -2286,9 +2316,9 @@ public class CommonEvaluator implements Evaluator {
 				return new Evaluation(state, deref);
 			}
 		} catch (CIVLInternalException e) {
-			CIVLStateException se = new CIVLStateException(
+			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.DEREFERENCE, Certainty.MAYBE,
-					"Undefined pointer value?", state,
+					"Undefined pointer value?",
 					this.symbolicUtil.stateToString(state), source);
 
 			errorLogger.reportError(se);
@@ -2402,7 +2432,9 @@ public class CommonEvaluator implements Evaluator {
 
 		if (dyScopeID < 0) {
 			errorLogger
-					.logSimpleError(source, state, ErrorKind.DEREFERENCE,
+					.logSimpleError(source, state,
+							symbolicUtil.stateToString(state),
+							ErrorKind.DEREFERENCE,
 							"Attempt to dereference pointer into scope which has been removed from state");
 			throw new UnsatisfiablePathConditionException();
 		} else {
@@ -2412,7 +2444,9 @@ public class CommonEvaluator implements Evaluator {
 
 			if (heapVariable == null) {
 				errorLogger
-						.logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+						.logSimpleError(source, state,
+								symbolicUtil.stateToString(state),
+								ErrorKind.MEMORY_LEAK,
 								"Attempt to dereference pointer into a heap that never exists");
 				throw new UnsatisfiablePathConditionException();
 			}
@@ -2434,7 +2468,9 @@ public class CommonEvaluator implements Evaluator {
 
 		if (dyScopeID < 0) {
 			errorLogger
-					.logSimpleError(source, state, ErrorKind.MEMORY_LEAK,
+					.logSimpleError(source, state,
+							symbolicUtil.stateToString(state),
+							ErrorKind.MEMORY_LEAK,
 							"Attempt to access the heap of the scope that has been removed from state");
 			throw new UnsatisfiablePathConditionException();
 		} else {
@@ -2443,6 +2479,7 @@ public class CommonEvaluator implements Evaluator {
 
 			if (heapVariable == null) {
 				errorLogger.logSimpleError(source, state,
+						symbolicUtil.stateToString(state),
 						ErrorKind.MEMORY_LEAK,
 						"Attempt to access a heap that never exists");
 				throw new UnsatisfiablePathConditionException();
@@ -2705,11 +2742,6 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicType result = universe.referencedType(variableType, symRef);
 
 		return result;
-	}
-
-	@Override
-	public void setEnabler(Enabler enabler) {
-		this.enabler = enabler;
 	}
 
 	public StateFactory stateFactory() {

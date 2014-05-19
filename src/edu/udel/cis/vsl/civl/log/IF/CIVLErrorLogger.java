@@ -3,14 +3,12 @@ package edu.udel.cis.vsl.civl.log.IF;
 import java.io.FileNotFoundException;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
-import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
-import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -48,8 +46,6 @@ public class CIVLErrorLogger {
 	 */
 	private boolean solve = false;
 
-	private SymbolicUtility symbolicUtil;
-
 	public CIVLErrorLogger(GMCConfiguration config, ErrorLog log,
 			SymbolicUniverse universe, boolean solve) {
 		this.log = log;
@@ -86,15 +82,15 @@ public class CIVLErrorLogger {
 	 * 
 	 */
 	public State logError(CIVLSource source, State state,
-			BooleanExpression claim, ResultType resultType,
-			ErrorKind errorKind, String message)
+			StringBuffer stateString, BooleanExpression claim,
+			ResultType resultType, ErrorKind errorKind, String message)
 			throws UnsatisfiablePathConditionException {
 		BooleanExpression pc = state.getPathCondition(), newPc;
 		BooleanExpression npc = universe.not(pc);
 		ValidityResult validityResult = trueReasoner.valid(npc);
 		ResultType nsat = validityResult.getResultType();
 		Certainty certainty;
-		CIVLStateException error;
+		CIVLExecutionException error;
 
 		// performance! need to cache the satisfiability of each pc somewhere
 		// negation is slow
@@ -128,8 +124,8 @@ public class CIVLErrorLogger {
 				certainty = Certainty.MAYBE;
 			}
 		}
-		error = new CIVLStateException(errorKind, certainty, message, state,
-				symbolicUtil.stateToString(state), source);
+		error = new CIVLExecutionException(errorKind, certainty, message,
+				stateString, source);
 		reportError(error);
 		newPc = universe.and(pc, claim);
 		// need to check satisfiability again because failure to do so
@@ -174,14 +170,14 @@ public class CIVLErrorLogger {
 	 *             if the path condition is definitely unsatisfiable
 	 */
 	public void logSimpleError(CIVLSource source, State state,
-			ErrorKind errorKind, String message)
+			StringBuffer stateString, ErrorKind errorKind, String message)
 			throws UnsatisfiablePathConditionException {
 		BooleanExpression pc = state.getPathCondition();
 		BooleanExpression npc = universe.not(pc);
 		ValidityResult validityResult = trueReasoner.valid(npc);
 		ResultType nsat = validityResult.getResultType();
 		Certainty certainty;
-		CIVLStateException error;
+		CIVLExecutionException error;
 
 		// performance! need to cache the satisfiability of each pc somewhere
 		// negation is slow
@@ -194,12 +190,8 @@ public class CIVLErrorLogger {
 		else { // pc is definitely satisfiable
 			certainty = Certainty.PROVEABLE;
 		}
-		error = new CIVLStateException(errorKind, certainty, message, state,
-				symbolicUtil.stateToString(state), source);
+		error = new CIVLExecutionException(errorKind, certainty, message,
+				stateString, source);
 		reportError(error);
-	}
-
-	public void setSymbolicUtility(SymbolicUtility symbolicUtil) {
-		this.symbolicUtil = symbolicUtil;
 	}
 }

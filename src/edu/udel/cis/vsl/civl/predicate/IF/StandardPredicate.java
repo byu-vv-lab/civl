@@ -3,8 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.predicate.IF;
 
-import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.ErrorLog;
