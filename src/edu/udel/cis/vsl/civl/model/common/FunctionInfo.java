@@ -173,6 +173,7 @@ public class FunctionInfo {
 				Statement stmt = current.getOutgoing(i);
 				Location newLoc = stmt.target();
 
+				function.addStatement(stmt);
 				if (newLoc != null)
 					if (!visited.contains(newLoc)) {
 						working.push(newLoc);

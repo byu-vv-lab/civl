@@ -44,7 +44,7 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 	public String toString() {
 		switch (value) {
 		case 0:
-			return "'\\0'";
+			return "";
 		case '\u000C':
 			return "\\f";
 		case '\u0007':
@@ -52,11 +52,11 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 		case '\b':
 			return "\\b";
 		case '\n':
-			return "'\\n'";
+			return "\\n";
 		case '\t':
-			return "'\\t'";
+			return "\\t";
 		case '\r':
-			return "'\\r'";
+			return "\\r";
 		case ' ':
 			return "' '";
 		}

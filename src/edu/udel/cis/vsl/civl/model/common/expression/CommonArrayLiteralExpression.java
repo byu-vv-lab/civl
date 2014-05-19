@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -32,16 +33,35 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		String result = "{";
+		StringBuffer result = new StringBuffer();
+		CIVLType eleType = this.arrayType().elementType();
+		boolean first;
 
+		if (eleType instanceof CIVLPrimitiveType) {
+			if (((CIVLPrimitiveType) eleType).isCharType()) {
+				result.append('\"');
+				for (Expression element : elements) {
+					result.append(element.toString());
+				}
+				result.append('\"');
+				return result.toString();
+			}
+		}
+		result.append("{");
+		first = true;
 		if (elements != null) {
 			for (Expression element : elements) {
-				result += element.toString() + ", ";
+				if (first) {
+					result.append(element.toString());
+					first = false;
+				} else {
+					result.append(", ");
+					result.append(element.toString());
+				}
 			}
-			result = result.substring(0, result.length() - 2);
 		}
-		result += "}";
-		return result;
+		result.append("}");
+		return result.toString();
 	}
 
 	@Override

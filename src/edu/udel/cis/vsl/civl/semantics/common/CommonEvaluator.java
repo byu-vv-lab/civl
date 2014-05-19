@@ -54,7 +54,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.StringLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
@@ -1451,23 +1450,6 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluate a string literal expression.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The pid of the currently executing process.
-	 * @param expression
-	 *            The string literal expression.
-	 * @return The symbolic representation of the string literal expression.
-	 */
-	private Evaluation evaluateStringLiteral(State state, int pid,
-			StringLiteralExpression expression) {
-		return new Evaluation(state, universe.stringExpression(expression
-				.value()));
-	}
-
-	/**
 	 * Evaluate a struct literal expression.
 	 * 
 	 * @param state
@@ -2180,10 +2162,10 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateSizeofExpressionExpression(state, pid,
 					(SizeofExpressionExpression) expression);
 			break;
-		case STRING_LITERAL:
-			result = evaluateStringLiteral(state, pid,
-					(StringLiteralExpression) expression);
-			break;
+		// case STRING_LITERAL:
+		// result = evaluateStringLiteral(state, pid,
+		// (StringLiteralExpression) expression);
+		// break;
 		case STRUCT_OR_UNION_LITERAL:
 			result = evaluateStructOrUnionLiteral(state, pid,
 					(StructOrUnionLiteralExpression) expression);

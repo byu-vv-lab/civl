@@ -380,10 +380,13 @@ public class CommonExecutor implements Executor {
 		if (validity != ResultType.YES) {
 			Certainty certainty = validity == ResultType.NO ? Certainty.PROVEABLE
 					: Certainty.MAYBE;
+			String elementType = statement.getStaticElementType().toString();
+			String message = "For a $malloc returning " + elementType
+					+ "*, the size argument must be a multiple of sizeof("
+					+ elementType + ")";
 			CIVLStateException e = new CIVLStateException(ErrorKind.MALLOC,
-					certainty,
-					"Size argument to $malloc is not multiple of element size",
-					eval.state, this.symbolicUtil.stateToString(state), source);
+					certainty, message, eval.state,
+					this.symbolicUtil.stateToString(state), source);
 
 			errorLogger.reportError(e);
 			state = state.setPathCondition(universe.and(pathCondition, claim));

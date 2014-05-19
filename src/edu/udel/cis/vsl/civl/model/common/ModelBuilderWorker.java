@@ -476,7 +476,6 @@ public class ModelBuilderWorker {
 		Set<Variable> addressedOfVariables = new HashSet<>();
 
 		for (CIVLFunction f : model.functions()) {
-			f.simplify();
 			// identify all purely local variables
 			f.purelyLocalAnalysis();
 			f.setModel(model);
@@ -570,7 +569,6 @@ public class ModelBuilderWorker {
 		completeBundleType();
 		completeHeapType();
 		completeModel(system);
-
 		this.staticAnalysis();
 	}
 

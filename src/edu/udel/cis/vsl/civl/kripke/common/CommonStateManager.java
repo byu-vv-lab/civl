@@ -422,7 +422,6 @@ public class CommonStateManager implements StateManager {
 									.stateToString(state), pLocation
 									.getSource());
 				} else { // the process is in atomic execution
-
 					if (pLocation.getNumIncoming() > 1) // possible loop, save
 														// state
 						return new StateStatus(false, null, atomCount,

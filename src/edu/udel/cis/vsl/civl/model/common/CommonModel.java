@@ -315,6 +315,7 @@ public class CommonModel extends CommonSourceable implements Model {
 		int id = 0;
 
 		for (CIVLFunction function : this.functions) {
+			function.simplify();
 			for (Location location : function.locations()) {
 				location.setId(id++);
 			}
