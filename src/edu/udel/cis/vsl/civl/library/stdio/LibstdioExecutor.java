@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.common.stdio;
+package edu.udel.cis.vsl.civl.library.stdio;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -17,8 +17,7 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.library.common.CommonLibraryExecutor;
+import edu.udel.cis.vsl.civl.library.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -31,6 +30,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
@@ -82,7 +82,7 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class LibstdioExecutor extends CommonLibraryExecutor implements
+public class LibstdioExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
 
 	// the different file modes; see stdio.cvl:

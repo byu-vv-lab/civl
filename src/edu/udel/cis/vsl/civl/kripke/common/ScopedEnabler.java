@@ -8,9 +8,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
-import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
+import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -18,6 +16,8 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
@@ -72,7 +72,7 @@ public class ScopedEnabler extends CommonEnabler implements Enabler {
 	public ScopedEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean sPor,
 			boolean showAmpleSet, boolean showAmpleSetWtStates,
-			LibraryLoader libLoader, CIVLErrorLogger errorLogger) {
+			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger) {
 		super(transitionFactory, evaluator, executor, showAmpleSet,
 				showAmpleSetWtStates, libLoader, errorLogger);
 		this.scpPor = sPor;

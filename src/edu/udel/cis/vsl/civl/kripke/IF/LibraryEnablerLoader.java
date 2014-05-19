@@ -1,29 +1,13 @@
-package edu.udel.cis.vsl.civl.library.IF;
+package edu.udel.cis.vsl.civl.kripke.IF;
 
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 
-/**
- * The class loader for library enabler/executor.
- * 
- * @author Manchun Zheng (zmanchun)
- * @author Timothy K. Zirkel (zirkel)
- * 
- */
-public interface LibraryLoader {
-
-	/**
-	 * Get the library executor with the given name.
-	 */
-	LibraryExecutor getLibraryExecutor(String name, Executor primaryExecutor,
-			PrintStream output, PrintStream err, boolean enablePrintf,
-			boolean statelessPrintf, ModelFactory modelFacotry,
-			SymbolicUtility symbolicUtil);
-
+public interface LibraryEnablerLoader {
 	/**
 	 * Gets the library enabler with the given name.
 	 * 
@@ -37,7 +21,8 @@ public interface LibraryLoader {
 	 *            The model factory to be used in the library enabler.
 	 * @return The library enabler of the given name.
 	 */
-	LibraryEnabler getLibraryEnabler(String name, CommonEnabler primaryEnabler,
+	LibraryEnabler getLibraryEnabler(String name, Enabler primaryEnabler,
+			Evaluator evaluator, TransitionFactory transitionFactory,
 			PrintStream output, ModelFactory modelFacotry,
 			SymbolicUtility symbolicUtil);
 }

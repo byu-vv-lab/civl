@@ -18,9 +18,6 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
-import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 //import edu.udel.cis.vsl.civl.library.common.civlc.LibcivlcExecutor;
 //import edu.udel.cis.vsl.civl.library.common.stdio.LibstdioExecutor;
@@ -47,6 +44,9 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -102,7 +102,7 @@ public class CommonExecutor implements Executor {
 	 * The loader used to find Executors for system functions declared in
 	 * libraries.
 	 */
-	protected LibraryLoader loader;
+	protected LibraryExecutorLoader loader;
 
 	/**
 	 * The unique model factory used in the system.
@@ -148,9 +148,9 @@ public class CommonExecutor implements Executor {
 	 *            A theorem prover for checking assertions.
 	 */
 	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactory stateFactory, ErrorLog log, LibraryLoader loader,
-			PrintStream output, PrintStream err, boolean enablePrintf,
-			boolean statelessPrintf, Evaluator evaluator,
+			StateFactory stateFactory, ErrorLog log,
+			LibraryExecutorLoader loader, PrintStream output, PrintStream err,
+			boolean enablePrintf, boolean statelessPrintf, Evaluator evaluator,
 			CIVLErrorLogger errorLogger) {
 		this.universe = modelFactory.universe();
 		this.stateFactory = stateFactory;

@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.common.civlc;
+package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
 import java.math.BigInteger;
@@ -15,10 +15,9 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
-import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
-import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
-import edu.udel.cis.vsl.civl.library.common.CommonLibraryEnabler;
+import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
+import edu.udel.cis.vsl.civl.library.BaseLibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -28,7 +27,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -42,7 +44,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class LibcivlcEnabler extends CommonLibraryEnabler implements
+public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		LibraryEnabler {
 
 	private static String chooseIntWork = "$choose_int_work";
@@ -59,9 +61,11 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	public LibcivlcEnabler(CommonEnabler primaryEnabler, PrintStream output,
+	public LibcivlcEnabler(Enabler primaryEnabler, Evaluator evaluator,
+			TransitionFactory transitionFactory, PrintStream output,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryEnabler, output, modelFactory, symbolicUtil);
+		super(primaryEnabler, evaluator, transitionFactory, output,
+				modelFactory, symbolicUtil);
 
 		CIVLSource source = modelFactory.model().getSource();
 		SystemFunction chooseIntWorkFunction = modelFactory.systemFunction(
@@ -135,8 +139,8 @@ public class LibcivlcEnabler extends CommonLibraryEnabler implements
 				throw new CIVLStateException(ErrorKind.INTERNAL,
 						Certainty.NONE,
 						"Argument to $choose_int not concrete: " + eval.value,
-						eval.state, symbolicUtil.stateToString(state), arguments.get(0)
-								.getSource());
+						eval.state, symbolicUtil.stateToString(state),
+						arguments.get(0).getSource());
 			}
 			upper = upperNumber.intValue();
 			for (int i = 0; i < upper; i++) {

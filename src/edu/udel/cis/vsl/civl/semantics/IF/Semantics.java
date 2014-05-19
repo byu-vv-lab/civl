@@ -2,11 +2,11 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.common.CommonEvaluator;
 import edu.udel.cis.vsl.civl.semantics.common.CommonExecutor;
+import edu.udel.cis.vsl.civl.semantics.common.CommonLibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.common.CommonSymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.gmc.ErrorLog;
@@ -20,9 +20,14 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  * 
  */
 public class Semantics {
+
+	public static LibraryExecutorLoader newLibraryExecutorLoader() {
+		return new CommonLibraryExecutorLoader();
+	}
+
 	public static Executor newExecutor(GMCConfiguration config,
 			ModelFactory modelFactory, StateFactory stateFactory, ErrorLog log,
-			LibraryLoader loader, PrintStream output, PrintStream err,
+			LibraryExecutorLoader loader, PrintStream output, PrintStream err,
 			boolean enablePrintf, boolean statelessPrintf, Evaluator evaluator,
 			CIVLErrorLogger errLogger) {
 		return new CommonExecutor(config, modelFactory, stateFactory, log,

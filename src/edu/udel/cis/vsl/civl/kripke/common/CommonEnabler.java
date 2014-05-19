@@ -10,12 +10,8 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
-import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
-import edu.udel.cis.vsl.civl.kripke.IF.Transition;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
-import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
-import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
+import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
+import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -29,6 +25,10 @@ import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -93,7 +93,7 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	protected BooleanExpression falseExpression;
 
-	protected LibraryLoader libraryLoader;
+	protected LibraryEnablerLoader libraryLoader;
 
 	protected boolean showAmpleSetWtStates = false;
 
@@ -120,7 +120,7 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	protected CommonEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean showAmpleSet,
-			boolean showAmpleSetWtStates, LibraryLoader libLoader,
+			boolean showAmpleSetWtStates, LibraryEnablerLoader libLoader,
 			CIVLErrorLogger errorLogger) {
 		this.transitionFactory = transitionFactory;
 		this.errorLogger = errorLogger;
@@ -181,8 +181,8 @@ public abstract class CommonEnabler implements Enabler {
 	}
 
 	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
-		return this.libraryLoader.getLibraryEnabler(library, this,
-				this.debugOut, evaluator.modelFactory(),
+		return this.libraryLoader.getLibraryEnabler(library, this, evaluator,
+				this.transitionFactory, this.debugOut, evaluator.modelFactory(),
 				evaluator.symbolicUtility());
 	}
 

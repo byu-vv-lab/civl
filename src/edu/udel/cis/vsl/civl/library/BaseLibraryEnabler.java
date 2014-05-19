@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.common;
+package edu.udel.cis.vsl.civl.library;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -8,10 +8,8 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.kripke.IF.SingleTransition;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
-import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
-import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
+import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -20,7 +18,9 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -32,7 +32,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public abstract class CommonLibraryEnabler extends Library implements
+public abstract class BaseLibraryEnabler extends Library implements
 		LibraryEnabler {
 
 	/* *************************** Instance Fields ************************* */
@@ -55,7 +55,7 @@ public abstract class CommonLibraryEnabler extends Library implements
 	/**
 	 * The enabler for normal CIVL execution.
 	 */
-	protected CommonEnabler primaryEnabler;
+	protected Enabler primaryEnabler;
 
 	/**
 	 * The state factory for state-related computation.
@@ -79,13 +79,13 @@ public abstract class CommonLibraryEnabler extends Library implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	protected CommonLibraryEnabler(CommonEnabler primaryEnabler,
-			PrintStream output, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
-		super(primaryEnabler.evaluator().universe(), symbolicUtil);
+	protected BaseLibraryEnabler(Enabler primaryEnabler, Evaluator evaluator,
+			TransitionFactory transitionFactory, PrintStream output,
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
+		super(evaluator.universe(), symbolicUtil);
 		this.primaryEnabler = primaryEnabler;
-		this.transitionFactory = primaryEnabler.transitionFactory();
-		this.evaluator = primaryEnabler.evaluator();
+		this.transitionFactory = transitionFactory;
+		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
 		this.output = output;
 		this.modelFactory = modelFactory;

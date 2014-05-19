@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.common;
+package edu.udel.cis.vsl.civl.semantics.common;
 
 import java.io.PrintStream;
 import java.lang.reflect.Constructor;
@@ -6,73 +6,31 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.err.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler;
-import edu.udel.cis.vsl.civl.library.IF.LibraryEnabler;
-import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 
-/**
- * The loader for library enabler or executor.
- * 
- * @author Manchun Zheng (zmanchun)
- * 
- */
-public class CommonLibraryLoader implements LibraryLoader {
+public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 
 	/* **************************** Static Fields ************************** */
 
 	/**
 	 * The prefix of the full name of the class of a library enabler/executor.
 	 */
-	private final static String CLASS_PREFIX = "edu.udel.cis.vsl.civl.library.common.";
+	private final static String CLASS_PREFIX = "edu.udel.cis.vsl.civl.library.";
 
 	/* *************************** Instance Fields ************************* */
-
-	/**
-	 * The cache of known library enablers.
-	 */
-	private Map<String, LibraryEnabler> libraryEnablerCache = new LinkedHashMap<>();
 
 	/**
 	 * The cache of known library executors.
 	 */
 	private Map<String, LibraryExecutor> libraryExecutorCache = new LinkedHashMap<>();
 
-	/* ********************* Methods from LibraryLoader ******************** */
+	/* ***************** Methods from LibraryExecutorLoader **************** */
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public LibraryEnabler getLibraryEnabler(String name,
-			CommonEnabler primaryEnabler, PrintStream output,
-			ModelFactory modelFacotry, SymbolicUtility symbolicUtil) {
-		LibraryEnabler result = libraryEnablerCache.get(name);
-
-		if (result == null) {
-			String aClassName = this.className(name, "Enabler");
-
-			try {
-				Class<? extends LibraryEnabler> aClass = (Class<? extends LibraryEnabler>) Class
-						.forName(aClassName);
-				Constructor<? extends LibraryEnabler> constructor = aClass
-						.getConstructor(CommonEnabler.class, PrintStream.class,
-								ModelFactory.class, SymbolicUtility.class);
-
-				result = constructor.newInstance(primaryEnabler, output,
-						modelFacotry, symbolicUtil);
-			} catch (Exception e) {
-				throw new CIVLInternalException("Unable to load library: "
-						+ name + "\n" + e.getMessage(), (CIVLSource) null);
-			}
-			libraryEnablerCache.put(name, result);
-		}
-		return result;
-	}
-
-	@SuppressWarnings("unchecked")
 	@Override
 	public LibraryExecutor getLibraryExecutor(String name,
 			Executor primaryExecutor, PrintStream output, PrintStream err,
@@ -84,6 +42,7 @@ public class CommonLibraryLoader implements LibraryLoader {
 			String aClassName = className(name, "Executor");
 
 			try {
+				@SuppressWarnings("unchecked")
 				Class<? extends LibraryExecutor> aClass = (Class<? extends LibraryExecutor>) Class
 						.forName(aClassName);
 				Constructor<? extends LibraryExecutor> constructor = aClass

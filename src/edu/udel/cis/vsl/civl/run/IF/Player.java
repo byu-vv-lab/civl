@@ -6,20 +6,20 @@ import java.io.PrintStream;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.Kripkes;
+import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
-import edu.udel.cis.vsl.civl.kripke.IF.Transition;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
-import edu.udel.cis.vsl.civl.library.IF.Libraries;
-import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.predicate.IF.StandardPredicate;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.States;
@@ -63,7 +63,9 @@ public abstract class Player {
 
 	protected StandardPredicate predicate;
 
-	protected LibraryLoader libraryLoader;
+	protected LibraryEnablerLoader libraryEnablerLoader;
+
+	protected LibraryExecutorLoader libraryExecutorLoader;
 
 	protected Executor executor;
 
@@ -132,7 +134,7 @@ public abstract class Player {
 		this.stateFactory = States.newImmutableStateFactory(modelFactory,
 				config, symbolicUtil);
 		this.errorLogger.setSymbolicUtility(symbolicUtil);
-		this.libraryLoader = Libraries.newLibraryLoader();
+		// this.libraryLoader = Libraries.newLibraryLoader();
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
 				symbolicUtil, errorLogger);
 		this.enablePrintf = (Boolean) config
@@ -144,9 +146,11 @@ public abstract class Player {
 		this.showAmpleSetWtStates = (Boolean) config
 				.getValueOrDefault(UserInterface.showAmpleSetWtStatesO);
 		this.gui = (Boolean) config.getValueOrDefault(UserInterface.guiO);
-		this.executor = Semantics.newExecutor(config, modelFactory,
-				stateFactory, log, libraryLoader, out, err, this.enablePrintf,
-				this.statelessPrintf, evaluator, errorLogger);
+		this.libraryExecutorLoader = Semantics.newLibraryExecutorLoader();
+		this.executor = Semantics
+				.newExecutor(config, modelFactory, stateFactory, log,
+						libraryExecutorLoader, out, err, this.enablePrintf,
+						this.statelessPrintf, evaluator, errorLogger);
 		this.random = config.isTrue(UserInterface.randomO);
 		this.verbose = config.isTrue(UserInterface.verboseO);
 		this.debug = config.isTrue(UserInterface.debugO);
@@ -160,9 +164,10 @@ public abstract class Player {
 		this.simplify = (Boolean) config
 				.getValueOrDefault(UserInterface.simplifyO);
 		this.transitionFactory = new TransitionFactory();
+		this.libraryEnablerLoader = Kripkes.newLibraryEnablerLoader();
 		enabler = Kripkes.newEnabler(transitionFactory, evaluator, executor,
-				showAmpleSet, this.showAmpleSetWtStates, this.libraryLoader,
-				errorLogger);
+				showAmpleSet, this.showAmpleSetWtStates,
+				this.libraryEnablerLoader, errorLogger);
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);
 		this.predicate = new StandardPredicate(log, universe,

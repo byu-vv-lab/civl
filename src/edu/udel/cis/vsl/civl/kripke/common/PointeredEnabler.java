@@ -3,12 +3,12 @@ package edu.udel.cis.vsl.civl.kripke.common;
 import java.util.ArrayList;
 
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionFactory;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
-import edu.udel.cis.vsl.civl.library.IF.LibraryLoader;
+import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.EnablerIF;
@@ -43,7 +43,7 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	 */
 	public PointeredEnabler(TransitionFactory transitionFactory,
 			Evaluator evaluator, Executor executor, boolean showAmpleSet,
-			boolean showAmpleSetWtStates, LibraryLoader libLoader,
+			boolean showAmpleSetWtStates, LibraryEnablerLoader libLoader,
 			CIVLErrorLogger errorLogger) {
 		super(transitionFactory, evaluator, executor, showAmpleSet,
 				showAmpleSetWtStates, libLoader, errorLogger);
@@ -78,8 +78,9 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 				debugOut.println();
 				if (debugging || showAmpleSetWtStates)
 					// state.print(debugOut);
-					//this.stateFactory.printState(debugOut, state);
-					debugOut.print(evaluator.symbolicUtility().stateToString(state));
+					// this.stateFactory.printState(debugOut, state);
+					debugOut.print(evaluator.symbolicUtility().stateToString(
+							state));
 			}
 		}
 		// Compute the ample set (of transitions)

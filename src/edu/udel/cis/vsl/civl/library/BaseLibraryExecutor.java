@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.common;
+package edu.udel.cis.vsl.civl.library;
 
 import java.io.PrintStream;
 
@@ -6,7 +6,6 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.Certainty;
 import edu.udel.cis.vsl.civl.err.IF.CIVLExecutionException.ErrorKind;
 import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -16,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -34,7 +34,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public abstract class CommonLibraryExecutor extends Library implements
+public abstract class BaseLibraryExecutor extends Library implements
 		LibraryExecutor {
 
 	/* ************************** Instance Fields ************************** */
@@ -94,7 +94,7 @@ public abstract class CommonLibraryExecutor extends Library implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	protected CommonLibraryExecutor(Executor primaryExecutor,
+	protected BaseLibraryExecutor(Executor primaryExecutor,
 			PrintStream output, PrintStream err, boolean enablePrintf,
 			boolean statelessPrintf, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil) {

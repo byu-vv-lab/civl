@@ -6,9 +6,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
-import edu.udel.cis.vsl.civl.kripke.IF.Transition;
-import edu.udel.cis.vsl.civl.kripke.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;

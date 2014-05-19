@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.common.civlc;
+package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
 import java.math.BigInteger;
@@ -13,8 +13,7 @@ import edu.udel.cis.vsl.civl.err.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.err.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.err.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.library.IF.LibraryExecutor;
-import edu.udel.cis.vsl.civl.library.common.CommonLibraryExecutor;
+import edu.udel.cis.vsl.civl.library.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -29,6 +28,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
@@ -60,7 +60,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class LibcivlcExecutor extends CommonLibraryExecutor implements
+public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
 
 	/* **************************** Constructors *************************** */
