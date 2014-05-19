@@ -4,7 +4,7 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.library.BaseLibraryEvaluator;
+import edu.udel.cis.vsl.civl.library.IF.BaseLibraryEvaluator;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;

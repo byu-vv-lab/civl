@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library;
+package edu.udel.cis.vsl.civl.library.IF;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
