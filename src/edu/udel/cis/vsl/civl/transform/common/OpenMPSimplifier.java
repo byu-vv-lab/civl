@@ -28,26 +28,26 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.util.ExpressionEvaluator;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
- * This transformer analyzes OpenMP constructs and converts them to
- * simpler, i.e., less concurrent, instances of constructs.
+ * This transformer analyzes OpenMP constructs and converts them to simpler,
+ * i.e., less concurrent, instances of constructs.
  * 
  * This transform operates in two phases:
  * 
- * 1) Analyze OpenMP workshares to determine those that are provably thread-independent, i.e.,
- *    execution of workshares in parallel is guaranteed to compute the same result.
- * 2) Transform OpenMP constructs based on the analysis results.
+ * 1) Analyze OpenMP workshares to determine those that are provably
+ * thread-independent, i.e., execution of workshares in parallel is guaranteed
+ * to compute the same result. 2) Transform OpenMP constructs based on the
+ * analysis results.
  * 
  * @author dwyer
  * 
  */
 public class OpenMPSimplifier extends CIVLBaseTransformer {
 
-	public static String CODE = "omp";
-	public static String LONG_NAME = "OpenMPSimplifier";
-	public static String SHORT_DESCRIPTION = "simplifies independent C/OpenMP constructs";
+	public final static String CODE = "omp";
+	public final static String LONG_NAME = "OpenMPSimplifier";
+	public final static String SHORT_DESCRIPTION = "simplifies independent C/OpenMP constructs";
 
 	private AttributeKey dependenceKey;
 
@@ -60,8 +60,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 
 	private List<Entity> privateIDs;
 
-	public OpenMPSimplifier(ASTFactory astFactory) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
+	public OpenMPSimplifier(ASTFactory astFactory, boolean debug) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, debug);
 	}
 
 	public AST transform(AST unit) throws SyntaxException {
@@ -232,14 +232,14 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			/*
 			 * Accumulate the set of memory-referencing expressions, i.e.,
 			 * variable references, array index expressions, on the LHS and the
-			 * RHS.  
+			 * RHS.
 			 * 
-			 * This is a flow-insensitive analysis which makes the treatment
-			 * of NOWAIT possible, but means that precision may be sacrificed.
+			 * This is a flow-insensitive analysis which makes the treatment of
+			 * NOWAIT possible, but means that precision may be sacrificed.
 			 * 
-			 * TBD: extend this to handle NOWAIT clauses on loops.  This must be done
-			 * "higher up" in the AST until the next barrier is reached (either explicit 
-			 * or implicit).
+			 * TBD: extend this to handle NOWAIT clauses on loops. This must be
+			 * done "higher up" in the AST until the next barrier is reached
+			 * (either explicit or implicit).
 			 */
 			StatementNode body = fln.getBody();
 			writeVars = new HashSet<Entity>();

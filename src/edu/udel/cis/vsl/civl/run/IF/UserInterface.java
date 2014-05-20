@@ -253,12 +253,12 @@ public class UserInterface {
 			hasMpi = true;
 		// always apply general transformation.
 		CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL,
-				inputVars, frontEnd.getASTBuilder());
+				inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
 		if (hasStdio) {
 			if (verboseOrDebug)
 				this.out.println("Apply IO transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.IO,
-					inputVars, frontEnd.getASTBuilder());
+					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 		}
@@ -266,13 +266,13 @@ public class UserInterface {
 			if (verboseOrDebug)
 				this.out.println("Apply OpenMP parser...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
-					inputVars, frontEnd.getASTBuilder());
+					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 			if (verboseOrDebug)
 				this.out.println("Apply OpenMP transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-					inputVars, frontEnd.getASTBuilder());
+					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 		}
@@ -280,7 +280,7 @@ public class UserInterface {
 			if (verboseOrDebug)
 				this.out.println("Apply MPI transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.MPI,
-					inputVars, frontEnd.getASTBuilder());
+					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
 			if (verboseOrDebug)
 				frontEnd.printProgram(out, program);
 		}

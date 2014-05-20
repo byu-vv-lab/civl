@@ -6,9 +6,6 @@ import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.transform.IF.Transform;
-import edu.udel.cis.vsl.abc.transform.IF.TransformRecord;
-import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 import edu.udel.cis.vsl.civl.transform.common.CIVLBaseTransformer;
 import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
@@ -16,59 +13,26 @@ import edu.udel.cis.vsl.civl.transform.common.MPI2CIVLTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OmpPragmaTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPSimplifier;
 
+/**
+ * This class manages the set of transformations provided by CIVL.
+ * 
+ * It provides a static method
+ * {@link #applyTransformer(Program, String, List, ASTBuilder)} to apply a
+ * certain transformer to a given program.
+ * 
+ * @author Manchun Zheng
+ * 
+ */
 public class CIVLTransform {
-	public static String GENERAL = GeneralTransformer.CODE;
-	public static String IO = IOTransformer.CODE;
-	public static String OMP_PRAGMA = OmpPragmaTransformer.CODE;
-	public static String OMP_SIMPLIFY = OpenMPSimplifier.CODE;
-	public static String MPI = MPI2CIVLTransformer.CODE;
-
-	static {
-		if (!Transform.getCodes().contains(GeneralTransformer.CODE))
-			Transform.addTransform(new TransformRecord(GeneralTransformer.CODE,
-					GeneralTransformer.LONG_NAME,
-					GeneralTransformer.SHORT_DESCRIPTION) {
-				@Override
-				public Transformer create(ASTFactory astFactory) {
-					return new GeneralTransformer(astFactory);
-				}
-			});
-		if (!Transform.getCodes().contains(IOTransformer.CODE))
-			Transform.addTransform(new TransformRecord(IOTransformer.CODE,
-					IOTransformer.LONG_NAME, IOTransformer.SHORT_DESCRIPTION) {
-				@Override
-				public Transformer create(ASTFactory astFactory) {
-					return new IOTransformer(astFactory);
-				}
-			});
-		if (!Transform.getCodes().contains(OpenMPSimplifier.CODE))
-			Transform.addTransform(new TransformRecord(OpenMPSimplifier.CODE,
-					OpenMPSimplifier.LONG_NAME,
-					OpenMPSimplifier.SHORT_DESCRIPTION) {
-				@Override
-				public Transformer create(ASTFactory astFactory) {
-					return new OpenMPSimplifier(astFactory);
-				}
-			});
-		if (!Transform.getCodes().contains(OmpPragmaTransformer.CODE))
-			Transform.addTransform(new TransformRecord(
-					OmpPragmaTransformer.CODE, OmpPragmaTransformer.LONG_NAME,
-					OmpPragmaTransformer.SHORT_DESCRIPTION) {
-				@Override
-				public Transformer create(ASTFactory astFactory) {
-					return new OmpPragmaTransformer(astFactory);
-				}
-			});
-		if (!Transform.getCodes().contains(MPI2CIVLTransformer.CODE))
-			Transform.addTransform(new TransformRecord(
-					MPI2CIVLTransformer.CODE, MPI2CIVLTransformer.LONG_NAME,
-					MPI2CIVLTransformer.SHORT_DESCRIPTION) {
-				@Override
-				public Transformer create(ASTFactory astFactory) {
-					return new MPI2CIVLTransformer(astFactory);
-				}
-			});
-	}
+	/**
+	 * A list of codes of transformers provided by CIVL. Add one entry here when
+	 * you create a new transformer, following the same pattern as the others.
+	 */
+	public final static String GENERAL = GeneralTransformer.CODE;
+	public final static String IO = IOTransformer.CODE;
+	public final static String OMP_PRAGMA = OmpPragmaTransformer.CODE;
+	public final static String OMP_SIMPLIFY = OpenMPSimplifier.CODE;
+	public final static String MPI = MPI2CIVLTransformer.CODE;
 
 	/**
 	 * Applies a transformer to a program.
@@ -84,23 +48,46 @@ public class CIVLTransform {
 	 *            <li>"_omp_": OpenMP pragma transformer</li>
 	 *            <li>"omp": OpenMP-to-CIVL transformer</li>
 	 *            </ul>
+	 * @param inputVars
+	 *            The list of variable names that appear in "-input" options
+	 *            specified by users in CIVL's command line.
+	 * @param astBuilder
+	 *            The AST builder to be reused in the transformer to parse
+	 *            tokens. For example, the OpenMP pragma transformer uses the
+	 *            AST builder to parse expressions.
+	 * @param debug
+	 *            The flag to turn on/off debugging. Useful for printing more
+	 *            information in debug mode.
 	 * @throws SyntaxException
 	 */
 	public static void applyTransformer(Program program, String code,
-			List<String> inputVars, ASTBuilder astBuilder)
+			List<String> inputVars, ASTBuilder astBuilder, boolean debug)
 			throws SyntaxException {
-		if (code.equals(CIVLTransform.GENERAL) || code.equals(CIVLTransform.IO)
-				|| code.equals(CIVLTransform.MPI)
-				|| code.equals(CIVLTransform.OMP_SIMPLIFY)
-				|| code.equals(CIVLTransform.OMP_PRAGMA)) {
-			CIVLBaseTransformer transformer = (CIVLBaseTransformer) Transform
-					.newTransformer(code, program.getAST().getASTFactory());
+		CIVLBaseTransformer transformer;
+		ASTFactory astFactory = program.getAST().getASTFactory();
 
-			transformer.setASTBuilder(astBuilder);
-			transformer.setInputVars(inputVars);
-			program.apply(transformer);
-		} else {
+		switch (code) {
+		case CIVLTransform.GENERAL:
+			transformer = new GeneralTransformer(astFactory, inputVars, debug);
+			break;
+		case CIVLTransform.IO:
+			transformer = new IOTransformer(astFactory, inputVars, debug);
+			break;
+		case CIVLTransform.MPI:
+			transformer = new MPI2CIVLTransformer(astFactory, inputVars, debug);
+			break;
+		case CIVLTransform.OMP_PRAGMA:
+			transformer = new OmpPragmaTransformer(astFactory, inputVars,
+					astBuilder, debug);
+			break;
+		case CIVLTransform.OMP_SIMPLIFY:
+			transformer = new OpenMPSimplifier(astFactory, debug);
+			break;
+		default:
+			// try applying the transformer from ABC, might fail.
 			program.applyTransformer(code);
+			return;
 		}
+		program.apply(transformer);
 	}
 }

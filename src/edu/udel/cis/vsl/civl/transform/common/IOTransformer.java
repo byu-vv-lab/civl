@@ -43,17 +43,17 @@ public class IOTransformer extends CIVLBaseTransformer {
 	/**
 	 * The code (short name) of this transformer.
 	 */
-	public static String CODE = "io";
+	public final static String CODE = "io";
 
 	/**
 	 * The long name of the transformer.
 	 */
-	public static String LONG_NAME = "IOTransformer";
+	public final static String LONG_NAME = "IOTransformer";
 
 	/**
 	 * The description of this transformer.
 	 */
-	public static String SHORT_DESCRIPTION = "transforms C program with IO to CIVL-C";
+	public final static String SHORT_DESCRIPTION = "transforms C program with IO to CIVL-C";
 
 	/* ************************** Private Static Fields ********************** */
 	/**
@@ -174,9 +174,11 @@ public class IOTransformer extends CIVLBaseTransformer {
 
 	/* ****************************** Constructor ************************** */
 
-	public IOTransformer(ASTFactory astFactory) {
+	public IOTransformer(ASTFactory astFactory, List<String> inputVariables,
+			boolean debug) {
 		super(IOTransformer.CODE, IOTransformer.LONG_NAME,
-				IOTransformer.SHORT_DESCRIPTION, astFactory);
+				IOTransformer.SHORT_DESCRIPTION, astFactory, inputVariables,
+				debug);
 	}
 
 	/* *************************** Private Methods ************************* */

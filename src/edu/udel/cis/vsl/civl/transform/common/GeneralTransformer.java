@@ -24,12 +24,14 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
 public class GeneralTransformer extends CIVLBaseTransformer {
 
-	public static String CODE = "general";
-	public static String LONG_NAME = "GeneralTransformer";
-	public static String SHORT_DESCRIPTION = "transforms general features of C programs to CIVL-C";
+	public final static String CODE = "general";
+	public final static String LONG_NAME = "GeneralTransformer";
+	public final static String SHORT_DESCRIPTION = "transforms general features of C programs to CIVL-C";
 
-	public GeneralTransformer(ASTFactory astFactory) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
+	public GeneralTransformer(ASTFactory astFactory,
+			List<String> inputVariables, boolean debug) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
+				debug);
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.transform.common;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.antlr2ast.IF.Antlr2AST;
 import edu.udel.cis.vsl.abc.antlr2ast.IF.OmpBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
@@ -29,17 +30,17 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 
 	private OmpBuilder ompBuilder;
 
-	public OmpPragmaTransformer(ASTFactory astFactory) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
+	public OmpPragmaTransformer(ASTFactory astFactory,
+			List<String> inputVariables, ASTBuilder astBuilder, boolean debug) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
+				astBuilder, debug);
 		this.ompBuilder = Antlr2AST.newOmpBuilder(astFactory, astBuilder);
-
 	}
 
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
 		ASTNode root = unit.getRootNode();
 
-		this.ompBuilder = Antlr2AST.newOmpBuilder(astFactory, astBuilder);
 		unit.release();
 		this.processASTNode(root);
 		return astFactory.newAST(root);
@@ -65,7 +66,7 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 					case EXECUTABLE:
 						OmpStatementNode ompStatementNode = (OmpStatementNode) ompNode;
 
-						if (ompStatementNode.completed()) {
+						if (ompStatementNode.isComplete()) {
 							ast.setChild(i, ompNode);
 						} else if (ompStatementNode instanceof OmpForNode) {
 							OmpForNode ompForNode = (OmpForNode) ompStatementNode;

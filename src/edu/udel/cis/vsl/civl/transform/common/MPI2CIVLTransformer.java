@@ -46,17 +46,17 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	/**
 	 * The code (short name) of this transformer.
 	 */
-	public static String CODE = "mpi";
+	public final static String CODE = "mpi";
 
 	/**
 	 * The long name of the transformer.
 	 */
-	public static String LONG_NAME = "MPITransformer";
+	public final static String LONG_NAME = "MPITransformer";
 
 	/**
 	 * The description of this transformer.
 	 */
-	public static String SHORT_DESCRIPTION = "transforms C/MPI program to CIVL-C";
+	public final static String SHORT_DESCRIPTION = "transforms C/MPI program to CIVL-C";
 
 	/* ************************** Private Static Fields ********************** */
 
@@ -199,8 +199,10 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 * @param astFactory
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
-	public MPI2CIVLTransformer(ASTFactory astFactory) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
+	public MPI2CIVLTransformer(ASTFactory astFactory,
+			List<String> inputVariables, boolean debug) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
+				debug);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -572,7 +574,6 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 
 					if (functionName.name().equals("main")) {
 						functionName.setName(MPI_MAIN);
-						// vars.addAll(processMainFunction(functionNode));
 					}
 				}
 				items.add((BlockItemNode) child);
@@ -687,47 +688,13 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		}
 	}
 
-	// /**
-	// * Processes the original main function, including:
-	// * <ul>
-	// * <li>Removes all arguments of the function;</li>
-	// * </ul>
-	// *
-	// * @param mainFunction
-	// * The function definition node representing the original main
-	// * function.
-	// * @return The list of variable declaration nodes that are the arguments
-	// of
-	// * the original main function. These variables will be moved up to
-	// * the higher scope (i.e., the file scope of the final AST) and
-	// * become $input variables of the final AST.
-	// */
-	// private List<VariableDeclarationNode> processMainFunction(
-	// FunctionDefinitionNode mainFunction) {
-	// List<VariableDeclarationNode> inputVars = new ArrayList<>();
-	// FunctionTypeNode functionType = mainFunction.getTypeNode();
-	// SequenceNode<VariableDeclarationNode> parameters = functionType
-	// .getParameters();
-	// int count = parameters.numChildren();
-	//
-	// if (count > 0) {
-	// List<VariableDeclarationNode> newParameters = new ArrayList<>(0);
-	//
-	// for (int k = 0; k < count; k++) {
-	// VariableDeclarationNode parameter = parameters
-	// .getSequenceChild(k);
-	//
-	// parameters.removeChild(k);
-	// parameter.getTypeNode().setInputQualified(true);
-	// inputVars.add(parameter);
-	// }
-	// functionType.setParameters(nodeFactory.newSequenceNode(
-	// parameters.getSource(), "FormalParameterDeclarations",
-	// newParameters));
-	// }
-	// return inputVars;
-	// }
-
+	/**
+	 * Creates the assumption node for NPROCS.
+	 * 
+	 * @return the assumption node of NPROCS, null if the input variable list
+	 *         already contains NPROCS.
+	 * @throws SyntaxException
+	 */
 	private AssumeNode nprocsAssumption() throws SyntaxException {
 		if (this.inputVariableNames.contains(NPROCS))
 			return null;
@@ -849,7 +816,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 			throw new SyntaxException(
 					"Please specify the number of processes (e.g., -input__NPROCS=5)"
 							+ "or the upper bound of number of processes (e.g. -input__NPROCS_UPPER_BOUND=6)",
-					source);//TODO improve messages with pragma.
+					source);// TODO improve messages with pragma.
 		}
 		// assuming NPROCS_LOWER_BOUND < NPROCS && NPROCS <= NPROCS_UPPER_BOUND
 		nprocsAssumption = this.nprocsAssumption();
