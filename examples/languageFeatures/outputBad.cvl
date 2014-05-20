@@ -8,13 +8,7 @@ typedef struct A{
 $output A k;
 
 void main(){
-  //A* p = &k;
-  int * ka = &(k.a);
+  int ka = (k.a);
   
-  *ka = 8;
-  /*q[0] = k;
-  q[0].a = 1;
-  q[0].b = 1;
-  p->a = 1;
-  p->b = 1;*/
+  ka = 1 + 1;
 }
