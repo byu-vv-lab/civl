@@ -8,8 +8,8 @@
 * DESCRIPTION:
 *  	This example has a bug. It is a variation on the condvar.cvl example. 
 *   Instead of just one thread waiting for the condition signal, there are
-*   four threads waiting for the same signal. Find out how to fix the
-*   program. The solution program is bug1fix.cvl
+*   four threads waiting for the same signal causing a deadlock.
+*   The solution program is bug1fix.cvl
 * Command line execution:
 * civl verify -inputNUM_THREADS=6 -inputTCOUNT=10 -inputCOUNT_LIMIT=12 bug1.cvl
 ******************************************************************************/
@@ -32,6 +32,7 @@ void *inc_count(void *idp)
   int j,i;
   double result=0.0;
   long my_id = (long)*idp; // Changed to dereference
+  
   for (i=0; i < TCOUNT; i++) {
     pthread_mutex_lock(&count_mutex);
     count++;
@@ -71,7 +72,7 @@ void *watch_count(void *idp)
   pthread_cond_wait(&count_threshold_cv, &count_mutex);
   printf("***Thread %d Condition signal received.\n", my_id);
   pthread_mutex_unlock(&count_mutex);
-  pthread_exit(NULL, false, NULL, 0);
+  pthread_exit(NULL, false, NULL, 0); //Different parameters
 }
 
 int main(void)
@@ -116,6 +117,6 @@ int main(void)
 
   pthread_mutex_destroy(&count_mutex);
   pthread_cond_destroy(&count_threshold_cv);
-  pthread_exit (NULL, true, NULL, 0);
+  pthread_exit (NULL, true, NULL, 0); //Different parameters
   return 0;
 }

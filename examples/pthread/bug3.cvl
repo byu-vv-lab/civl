@@ -7,10 +7,12 @@
 * FILE: bug3.cvl
 * DESCRIPTION:
 *   This "hello world" Pthreads program demonstrates an unsafe (incorrect) 
-*   way to pass thread arguments at thread creation. Compare with hello_arg1.c.
+*   way to pass thread arguments by address at thread creation resulting in
+*   a non-unique value for each thread's argument.
 * Command line execution:
 * civl verify -inputNUM_THREADS=8 bug3.cvl
 ******************************************************************************/
+
 #include "pthread.cvh"
 #include <civlc.h>
 #include <stdio.h>
@@ -19,10 +21,11 @@
 $input int NUM_THREADS;
 
 void *PrintHello(void *threadid){
-  long taskid = (long)*threadid;
+  long taskid = (long)*threadid; // Dereference rather than direct conv
+  
   //sleep(1);
   printf("Hello from thread %d\n", taskid);
-  pthread_exit(NULL, false, NULL, 0);
+  pthread_exit(NULL, false, NULL, 0); //Different parameters
 }
 
 int main(void){
@@ -38,7 +41,7 @@ int main(void){
       return 0;
     }
   }
-  pthread_exit(NULL,true, threads, NUM_THREADS);
+  pthread_exit(NULL,true, threads, NUM_THREADS); //Different parameters
   return 0;
 }
 

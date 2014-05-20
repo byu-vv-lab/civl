@@ -20,6 +20,7 @@
 * Command line execution:
 * civl verify -inputMAXTHRDS=8 -inputVECLEN=100 mpithreads_thread.cvl
 ******************************************************************************/
+
 #include "pthread.cvh"
 #include <civlc.h>
 #include <stdio.h>
@@ -32,12 +33,12 @@ the structure.  This structure is unchanged from the sequential version.
 */
 
 typedef struct 
- {
-   double      *a;
-   double      *b;
-   double     sum; 
-   int     veclen; 
- } DOTDATA;
+{
+  double      *a;
+  double      *b;
+  double     sum; 
+  int     veclen; 
+} DOTDATA;
 
 /* Define globally accessible variables and a mutex */
 
@@ -60,41 +61,39 @@ function is accessed from the globally accessible structure.
 void *dotprod(void *arg)
 {
 
-   /* Define and use local variables for convenience */
+  /* Define and use local variables for convenience */
 
-   int i, start, end, len ;
-   long offset;
-   double mysum, *x, *y;
-   offset = (long)*arg;
+  int i, start, end, len ;
+  long offset;
+  double mysum, *x, *y;
+  offset = (long)*arg; // Dereference rather than direct conv
      
-   len = dotstr.veclen;
-   start = offset*len;
-   end   = start + len;
-   x = dotstr.a;
-   y = dotstr.b;
+  len = dotstr.veclen;
+  start = offset*len;
+  end   = start + len;
+  x = dotstr.a;
+  y = dotstr.b;
 
-   /*
-   Perform the dot product and assign result to the appropriate variable in 
-   the structure. 
-   */
+  /*
+  Perform the dot product and assign result to the appropriate variable in 
+  the structure. 
+  */
 
-   mysum = 0;
-   for (i=start; i<end ; i++) 
-    {
-      mysum += (x[i] * y[i]);
-    }
+  mysum = 0;
+  for (i=start; i<end ; i++){
+    mysum += (x[i] * y[i]);
+  }
 
-   /*
-   Lock a mutex prior to updating the value in the shared structure, and 
-   unlock it upon updating.
-   */
-   pthread_mutex_lock (&mutexsum);
-   printf("Thread %d adding partial sum of %f to global sum of %f\n",
-          arg, mysum, dotstr.sum); // Removed l from %ld
-   dotstr.sum += mysum;
-   pthread_mutex_unlock (&mutexsum);
+  /*
+  Lock a mutex prior to updating the value in the shared structure, and 
+  unlock it upon updating.
+  */
+  pthread_mutex_lock (&mutexsum);
+  printf("Thread %d adding partial sum of %f to global sum of %f\n", arg, mysum, dotstr.sum); // Removed l from %ld
+  dotstr.sum += mysum;
+  pthread_mutex_unlock (&mutexsum);
 
-   pthread_exit(NULL, false, NULL, 0);
+  pthread_exit(NULL, false, NULL, 0); //Different parameters
 }
 
 /* 
@@ -109,55 +108,54 @@ that we free up handles  when they are no longer needed.
 
 int main (void)
 {
-long t[MAXTHRDS];
-long i;
-double *a, *b;
-void *status;
-pthread_attr_t attr;
+  long t[MAXTHRDS];
+  long i;
+  double *a, *b;
+  void *status;
+  pthread_attr_t attr;
 
-/* Assign storage and initialize values */
-a = (double*) malloc (MAXTHRDS*VECLEN*sizeof(double));
-b = (double*) malloc (MAXTHRDS*VECLEN*sizeof(double));
+  /* Assign storage and initialize values */
+  a = (double*) malloc (MAXTHRDS*VECLEN*sizeof(double));
+  b = (double*) malloc (MAXTHRDS*VECLEN*sizeof(double));
   
-for (i=0; i<VECLEN*MAXTHRDS; i++) {
-  a[i]=1;
-  b[i]=a[i];
+  for (i=0; i<VECLEN*MAXTHRDS; i++) {
+    a[i]=1;
+    b[i]=a[i];
   }
 
-dotstr.veclen = VECLEN; 
-dotstr.a = a; 
-dotstr.b = b; 
-dotstr.sum=0;
+  dotstr.veclen = VECLEN;
+  dotstr.a = a; 
+  dotstr.b = b; 
+  dotstr.sum=0;
 
-pthread_mutex_init(&mutexsum, NULL);
+  pthread_mutex_init(&mutexsum, NULL);
          
-/* Create threads to perform the dotproduct  */
-pthread_attr_init(&attr);
-pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+  /* Create threads to perform the dotproduct  */
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-for(i=0;i<MAXTHRDS;i++) {
-  /* Each thread works on a different set of data.
-  The offset is specified by 'i'. The size of
-  the data for each thread is indicated by VECLEN.
-  */
-  t[i] = i;
-  pthread_create( &callThd[i], &attr, dotprod, (void *)&t[i]); 
+  for(i=0;i<MAXTHRDS;i++) {
+    /* Each thread works on a different set of data.
+    The offset is specified by 'i'. The size of
+    the data for each thread is indicated by VECLEN.
+    */
+    //Add values into array and use address so that each value is unique as int to void * conversion is not supported
+    t[i] = i;
+    pthread_create( &callThd[i], &attr, dotprod, (void *)&t[i]); 
   }
 
-pthread_attr_destroy(&attr);
+  pthread_attr_destroy(&attr);
 
-/* Wait on the other threads */
-for(i=0;i<MAXTHRDS;i++) {
-  pthread_join( callThd[i], &status);
+  /* Wait on the other threads */
+  for(i=0;i<MAXTHRDS;i++) {
+    pthread_join( callThd[i], &status);
   }
 
-/* After joining, print out the results and cleanup */
-printf ("Done. Threaded version: sum =  %f \n", dotstr.sum);
-free (a);
-free (b);
-pthread_mutex_destroy(&mutexsum);
-pthread_exit(NULL, true, NULL, 0);
-return 0;
+  /* After joining, print out the results and cleanup */
+  printf ("Done. Threaded version: sum =  %f \n", dotstr.sum);
+  free (a);
+  free (b);
+  pthread_mutex_destroy(&mutexsum);
+  pthread_exit(NULL, true, NULL, 0); //Different parameters
+  return 0;
 }   
-
-

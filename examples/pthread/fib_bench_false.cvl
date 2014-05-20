@@ -25,7 +25,7 @@ void *t1(void* arg)
 
   for (k = 0; k < NUM; k++)
     i+=j;  
-  pthread_exit(NULL, false, NULL, 0);
+  pthread_exit(NULL, false, NULL, 0); //Different parameters
 }
 
 void *t2(void* arg)

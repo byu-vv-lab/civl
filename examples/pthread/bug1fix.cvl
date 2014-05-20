@@ -12,6 +12,7 @@
 * Command line execution:
 * civl verify -inputNUM_THREADS=6 -inputTCOUNT=10 -inputCOUNT_LIMIT=12 bug1fix.cvl
 ******************************************************************************/
+
 #include "pthread.cvh"
 #include <civlc.h>
 #include <stdio.h>
@@ -31,6 +32,7 @@ void *inc_count(void *idp)
   int j,i;
   double result=0.0;
   long my_id = (long)*idp; //Changed to dereference, can't directly convert from void* to long
+  
   for (i=0; i < TCOUNT; i++) {
     pthread_mutex_lock(&count_mutex);
     count++;
@@ -72,7 +74,7 @@ void *watch_count(void *idp)
   pthread_cond_wait(&count_threshold_cv, &count_mutex);
   printf("***Thread %d Condition signal received.\n", my_id); // Removed l from %ld, unsupported
   pthread_mutex_unlock(&count_mutex);
-  pthread_exit(NULL, false, NULL, 0);
+  pthread_exit(NULL, false, NULL, 0); //Different parameters
 }
 
 int main(void)
@@ -116,7 +118,7 @@ int main(void)
   pthread_attr_destroy(&attr);
   pthread_mutex_destroy(&count_mutex);
   pthread_cond_destroy(&count_threshold_cv);
-  pthread_exit(NULL, true, NULL, 0);
+  pthread_exit(NULL, true, NULL, 0); //Different parameters
 
 }
 

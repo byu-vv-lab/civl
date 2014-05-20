@@ -1,3 +1,13 @@
+/*
+  All specification references correspond to pages in the Standard for Information Technology–
+Portable Operating System Interface (POSIX ® )IEEE Computer Society Base Specifications, Issue 7.
+
+Standard modifications to each translation:
+header files are altered
+errors are changed to assertion violations with appropriate messages
+appropriate definitions are changed to input variables
+*/
+
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,8 +33,23 @@
 #define PTHREAD_MUTEX_INITIALIZER	{0,0,0,PTHREAD_MUTEX_NORMAL,__LOCK_INITIALIZER}
 #define PTHREAD_COND_INITIALIZER	{__LOCK_INITIALIZER,0}
 
+/* Struct definitions */
+
 /* pthread_attr_t struct definition
+  Description: This struct corresponds to the pthread_attr_t which is the attribute of a pthread_t. It's fields
+  define the way the pthread_t is able to interact (join/detach), (memory capacity), (scope) etc.
+  
+  Fields: void * stackaddr: The address of the attr's stack in memory
+  size_t stacksize: The memory capacity for the attr's stack
+  size_t guardsize: The guardsize attribute controls the size of the guard area for the created thread’s stack. The
+                    guardsize attribute provides protection against overflow of the stack pointer.
+  int detachstate: Defines a threads ability to join with two values: PTHREAD_CREATE_DETACHED and PTHREAD_CREATE_JOINABLE
+  int inheritsched: The inheritance scheduling policy of the thread
+  int contentionscope: Defines the contention scope of the thread
+  int schedpolicy: Determines the scheduling policy of the thread
+  
 */
+
 typedef struct {
   void *stackaddr;
   size_t stacksize;
@@ -32,22 +57,87 @@ typedef struct {
   int detachstate;
   int inheritsched;
   int contentionscope;
-  int policy;
+  int schedpolicy;
 } pthread_attr_t;
 
-/* pthread_t struct definition
-Contains a $proc and a pthread_attr_t which describes how it interacts with other threads and certain methods
+/* pthread_mutexattr_t struct definition
+  Description: The pthread_mutexattr_t defines multiple attributes of a mutex and controls its interactions with threads 
+  Fields: robust: defines the robustness of the mutex; if robust and the owning thread terminates, it will notify the 
+          next thread of this to prevent deadlocks and other errors
+          pshared: defines the process shared element of the thread and which processes can interact with the mutex
+          protocol: defines the priority protocol of the mutex and which threads may interact first
+          type: defines the type of the mutex as either PTHREAD_MUTEX_DEFAULT/NORMAL, PTHREAD_MUTEX_ERRORCHECK, or 
+          PTHREAD_MUTEX_RECURSIVE, each explained in pthread_mutex_lock below
+          prioceiling: defines the lowest priority the mutex's critical section can be at
 */
+
+typedef struct {
+  int robust;
+  int pshared;
+  int protocol;
+  int type;
+  int prioceiling;
+}pthread_mutexattr_t;
+
+/* pthread_mutex_t struct definition
+  Description: The pthread_mutex_t is a locking mechanism for threads to interact with in order to control the scheduling
+  of the threads. It can be locked, which allows for blocking of other threads waiting on the mutex and unlocked, allowing
+  access. It has a pthread_mutexattr_t which defines its behavior.
+  Fields: count - used for recursive mutex, incremented when locked, decremented when unlocked, mutex released when count is 0
+  owner - current process owner of the mutex
+  lock - int of 0 or 1, respectively 0 if unlocked, 1 if locked
+  prioceiling - allows locking without adherence to the priority ceiling
+  attr - see above
+*/
+
+typedef struct {
+  int count;
+  $proc owner;
+  int lock;
+  int prioceiling;
+  pthread_mutexattr_t *attr;
+} pthread_mutex_t;
+
+//Unimplemented
+/*
+typedef struct {
+  int pshared;
+  clockid_t clock_id;
+}pthread_condattr_t;
+*/
+
+/* pthread_cond_t struct definition
+  Description: The pthread_cond_t is another locking mechanism which interacts with the mutex variable. When
+  the mutex is locked, the condition can be accessed, leading the accessing thread to unlock it, and sleep
+  until the signal is given
+  Fields: proccount - specifies the number of processes/threads still waiting on this condition variable
+  signal - Boolean value stating whether the condition is satisfied (indicated by 1) or not (0)
+*/
+
+typedef struct {
+  int proccount;
+  _Bool signal;
+} pthread_cond_t;
+
+/* pthread_t struct definition
+  Description: The pthread_t is a struct containing a $proc variable as well as a thread attribute which defines
+  its interactions with other threads. It encapsulates the $proc and allows attributes to apply to it.
+  Fields: thr: the $proc variable that is the heart of the thread
+  attr: see above
+*/
+
 typedef struct {
   $proc thr;
   const pthread_attr_t *attr;
 } pthread_t;
 
 /* pthread_attr_init method definition
-  As stated in the specification, 'The pthread_attr_init( ) function shall initialize a thread attributes object attr with the default
-  value for all of the individual attributes used by a given implementation.' At the moment, the pthread_attr_t is very basic, but will
-  be improved upon at a later date.
+  The pthread_attr_init() initializes an attribute with the default values defined for it by an implementation.  
+  At the moment, the pthread_attr_t is very basic, only supporting joining/detaching but will be improved 
+  upon at a later date.
+  Corresponding specification: p. 153
 */ 
+
 int pthread_attr_init(pthread_attr_t *attr){
   attr->stacksize = 0;
   attr->guardsize = 0;
@@ -55,25 +145,24 @@ int pthread_attr_init(pthread_attr_t *attr){
   //attr->inheritsched = PTHREAD_EXPLICIT_SCHED;
   //attr->scope = PTHREAD_SCOPE_SYSTEM;
   attr->stackaddr = NULL;
-  //attr->policy = SCHED_OTHER;
+  //attr->schedpolicy = SCHED_OTHER;
   return 0;
 }
 
 /* pthread_attr_destroy method definition
-  As stated in the specification, 'The pthread_attr_destroy( ) function shall destroy a thread attributes object. An implementation
-  may cause pthread_attr_destroy( ) to set attr to an implementation-defined invalid value. A
-  destroyed attr attributes object can be reinitialized using pthread_attr_init( ); the results of
-  otherwise referencing the object after it has been destroyed are undefined.'
-  This implementation effectively uninitializes the attr variable, which works according with the specification's requirements.
+  This implementation effectively uninitializes the attr variable, which works accordingly with the specification's requirements.
+  Corresponding specification: p. 153/4
 */
 int pthread_attr_destroy(pthread_attr_t *attr)
 { 
   pthread_attr_t blank;
+  
   *attr = blank;
   return 0; 
 }
 
-//Set the detachstate attribute 
+//Set the detachstate attribute
+//Corresponding specification: p. 153/4 
 int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
 {
   attr->detachstate = detachstate;
@@ -81,6 +170,7 @@ int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
 }
 
 //Return the detachstate attribute
+//Corresponding specification: p. 153/4 
 int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)
 {
   *detachstate = attr->detachstate;
@@ -88,6 +178,7 @@ int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)
 }
 
 //Set scheduling inheritance 
+//Corresponding specification: p. 153/4 
 int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched)
 {
   attr->inheritsched = inheritsched;
@@ -95,6 +186,7 @@ int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched)
 }
 
 //Return the scheduling inheritance 
+//Corresponding specification: p. 153/4 
 int pthread_attr_getinheritsched(const pthread_attr_t *attr, int *inheritsched)
 {
   *inheritsched = attr->inheritsched;
@@ -102,6 +194,7 @@ int pthread_attr_getinheritsched(const pthread_attr_t *attr, int *inheritsched)
 }
 
 /*Set scheduling contention scope 
+//Corresponding specification: p. 153/4 
 int pthread_attr_setscope(pthread_attr_t *attr, int contentionscope)
 {
   attr->scope = contentionscope;
@@ -109,6 +202,7 @@ int pthread_attr_setscope(pthread_attr_t *attr, int contentionscope)
 }
 
 //Return the scheduling contention scope 
+//Corresponding specification: p. 153/4 
 int pthread_attr_getscope(const pthread_attr_t *attr, int *contentionscope)
 {
   *contentionscope = attr->scope;
@@ -117,6 +211,7 @@ int pthread_attr_getscope(const pthread_attr_t *attr, int *contentionscope)
 */
  
 //Set the starting address of the stack of the thread
+//Corresponding specification: p. 153/4 
 int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr)
 {
   attr->stackaddr = stackaddr;
@@ -124,6 +219,7 @@ int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr)
 }
  
 //Return the address for the stack
+//Corresponding specification: p. 153/4 
 int pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stackaddr)
 {
   *stackaddr = attr->stackaddr;
@@ -131,6 +227,7 @@ int pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stackaddr)
 }
 
 //Set stack size
+//Corresponding specification: p. 153/4 
 int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize)
 {
   attr->stacksize = stacksize;
@@ -138,6 +235,7 @@ int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize)
 }
 
 //Return the stack size
+//Corresponding specification: p. 153/4
 int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize)
 {
   *stacksize = attr->stacksize;
@@ -145,6 +243,7 @@ int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize)
 }
 
 //Set guard size
+//Corresponding specification: p. 153/4 
 int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize)
 {
   attr->guardsize = guardsize;
@@ -152,6 +251,7 @@ int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize)
 }
 
 // Return guard size
+//Corresponding specification: p. 153/4 
 int pthread_attr_getguardsize(const pthread_attr_t *attr, size_t *guardsize)
 {
   *guardsize = attr->guardsize;
@@ -159,31 +259,25 @@ int pthread_attr_getguardsize(const pthread_attr_t *attr, size_t *guardsize)
 }
 
 //Set scheduling policy
+//Corresponding specification: p. 153/4 
 int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy)
 {
-  attr->policy = policy;
+  attr->schedpolicy = policy;
   return 0;
 }
 
 // Return scheduling policy
+//Corresponding specification: p. 153/4
 int pthread_attr_getschedpolicy(const pthread_attr_t *attr, int *policy)
 {
-  *policy = attr->policy;
+  *policy = attr->schedpolicy;
   return 0;
 }
 
-/* pthread_mutexattr_t struct definition
-Fields: robust: defines the robustness of the mutex
-
-
+/* pthread_mutexattr_init method definition
+  This method defines the default values for each of the mutexattr's field
+  //Corresponding specification: p. 165
 */
-typedef struct {
-  int robust;
-  int pshared;
-  int protocol;
-  int type;
-  int prioceiling;
-}pthread_mutexattr_t;
 
 int pthread_mutexattr_init(pthread_mutexattr_t *attr){
   attr->robust = 0;
@@ -194,26 +288,24 @@ int pthread_mutexattr_init(pthread_mutexattr_t *attr){
   return 0;
 }
 
+/* pthread_mutexattr_destroy method definition
+  This implementation effectively uninitializes the attr variable, which works accordingly with the specification's requirements.
+  //Corresponding specification: p. 165
+*/
+
 int pthread_mutexattr_destroy(pthread_mutexattr_t *attr){
   pthread_mutexattr_t blank;
+  
   *attr = blank;
   return 0;
 }
 
-/* pthread_mutex_t struct definition
-Fields: count - used for recursive mutex, incremented when locked, decremented when unlocked, mutex released when count is 0
-owner - current process owner of the mutex
-lock - int of 0 or 1, respectively 0 if unlocked, 1 if locked
+/* pthread_mutex_init method definition
+  This method initializes each of the mutex's default values as well as being able to take values from another attribute
+  if desired, otherwise the attribute field may be NULL
+  //Corresponding specification: p. 164
 */
-typedef struct {
-  int count;
-  $proc owner;
-  int lock;
-  int prioceiling;
-  pthread_mutexattr_t *attr;
-} pthread_mutex_t;
 
-//Initializes mutex as unlocked and with attributes defined by attr
 int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr){
   if(attr == NULL){
     mutex->attr = (pthread_mutexattr_t *)malloc(sizeof(pthread_mutexattr_t));
@@ -233,39 +325,37 @@ int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr){
   return 0;
 }
 
+/* pthread_mutex_destroy method definition
+  This implementation effectively uninitializes the mutex variable, which works accordingly with the specification's requirements.
+  //Corresponding specification: p. 164 
+*/
+
 int pthread_mutex_destroy(pthread_mutex_t *mutex){
   pthread_mutex_t blank;
+  
   *mutex = blank;
   return 0;
 }
 
-/*
-typedef struct {
-  int pshared;
-  clockid_t clock_id;
-}pthread_condattr_t;
-*/
-
-/* pthread_cond_t struct definition
-Fields: procount - specifies the number of processes/threads still waiting on this condition variable
-signal - Boolean value stating whether the condition is satisfied (indicated by 1) or not (0)
-*/
-typedef struct {
-  int proccount;
-  _Bool signal;
-} pthread_cond_t;
-
-/* Initializes the condition variable so that it begins with 0 processes waiting on it as well as a signal set to be zero
+/* pthread_cond_init method definition 
+  Initializes the condition variable so that it begins with 0 processes waiting on it as well as a signal set to be zero
    **Needs to be modified to work with condition attributes as the second parameter
+  //Corresponding specification: p. 158 
 */
+
 void pthread_cond_init(pthread_cond_t *cond, void *arg){
   cond->proccount = 0;
   cond->signal = 0;
 }
 
-/* Unitializes the condition parameter and then frees the data used to store it. If certains threads are still waiting when 
-   pthread_cond_destroy is called, an error will be triggered.
+
+
+/* pthread_cond_destroy method definition
+  This implementation effectively uninitializes the cond variable, which works accordingly with the specification's requirements.
+  If any threads are still waiting on the condition upon destruction, an error is returned.
+  //Corresponding specification: p. 158 
 */
+
 int pthread_cond_destroy(pthread_cond_t *cond){
   if(cond->proccount != 0){
     $assert($false, "ERROR: Threads still waiting on specified condition variable");
@@ -277,6 +367,12 @@ int pthread_cond_destroy(pthread_cond_t *cond){
   return 0;
 }
 
+/* pthread_create method definition
+  Description: Defines a pthread_t by assigning it an attribute value (by value so the original attribute's state is
+  irrelevant), and spawning a process as the thr field with arguments void *arg
+  //Corresponding specification: p. 160
+*/
+
 int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void*), void *arg){
   thread->thr = $spawn start_routine(arg);
   if(attr == NULL){
@@ -287,7 +383,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
     thread->attr->detachstate = 1;
     thread->attr->inheritsched = 0;
     thread->attr->contentionscope = 0;
-    thread->attr->policy = 0;
+    thread->attr->schedpolicy = 0;
   }
   else{
     thread->attr = (pthread_attr_t *)malloc(sizeof(pthread_attr_t));
@@ -297,15 +393,18 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
     thread->attr->detachstate = attr->detachstate;
     thread->attr->inheritsched = attr->inheritsched;
     thread->attr->contentionscope = attr->contentionscope;
-    thread->attr->policy = attr->policy;
+    thread->attr->schedpolicy = attr->schedpolicy;
   }
   return 0;
 }
 
-/* Causes current thread to wait on thread specified as a paremeter. If specified thread's detachstate field is set as PTHREAD_CREATE_DETACHED,
-   error will be returned stating the the thread cannot be joined.
+/* pthread_join method definition 
+  Description: Causes current thread to wait on thread specified as a parameter. If specified thread's detachstate field is set as PTHREAD_CREATE_DETACHED,
+  error will be returned stating the the thread cannot be joined.
+  //Corresponding specification: p. 160
 */ 
-int pthread_join(pthread_t thread, void **value_ptr) {
+
+int pthread_join(pthread_t thread, void **value_ptr){
   if(thread.attr != NULL){
     if(thread.attr->detachstate == 0){
       $assert($false, "Thread is designated as unjoinable");
@@ -316,9 +415,12 @@ int pthread_join(pthread_t thread, void **value_ptr) {
   return 0;
 }
 
-/* Calls CIVL $exit method causing the current thread to immediately terminate
-
+/* pthread_exit method definition
+  Description: Causes current thread to immediately terminate; if currently in the main method as specified by the 
+  isMain parameter, the main method will wait for each thread to terminate before it terminates
+  //Corresponding specification: p. 160 
 */
+
 int pthread_exit(void *arg, _Bool isMain, pthread_t *arr, int len){
   if(isMain){
     for(int i = 0; i<len; i++)
@@ -328,53 +430,62 @@ int pthread_exit(void *arg, _Bool isMain, pthread_t *arr, int len){
   return 0;
 }
 
+//Unimplemented
 int pthread_detach(pthread_t thread);
 
-/* pthread_mutex_lock takes in a mutex variable and acts accordingly to its current state and type
-   PTHREAD_MUTEX_NORMAL: Checks to see whether mutex is already locked and behaves accordingly
-     locked and owner: Relock error, returns 0
-     locked and not owner: Waits until mutex is unlocked and then locks and becomes owner
-     unlocked and not owner: Locks the mutex and becomes owner
-   PTHREAD_MUTEX_RECURSIVE
+/* pthread_mutex_lock method definition
+  Description: pthread_mutex_lock takes in a mutex variable and acts accordingly to its current state and type
+  PTHREAD_MUTEX_NORMAL: Checks to see whether mutex is already locked and behaves accordingly
+    locked and owner: Relock error, returns 0
+    locked and not owner: Waits until mutex is unlocked and then locks and becomes owner
+    unlocked and not owner: Locks the mutex and becomes owner
+  PTHREAD_MUTEX_RECURSIVE: A recursive mutex increments its count when it is locked and decremented when
+  it is unlocked and the lock is released when the count reaches 0.
+  PTHREAD_MUTEX_ERRORCHECK: Currently implemented similarly to PTHREAD_MUTEX_NORMAL
+  //Corresponding specification: p. 163 
 */
-int pthread_mutex_lock(pthread_mutex_t *mutex) {
+
+int pthread_mutex_lock(pthread_mutex_t *mutex){
   $atomic{
-  if (mutex->attr->type == PTHREAD_MUTEX_NORMAL){
-    if (mutex->lock != 0) 
-    {
-      if(mutex->owner == $proc_null){
-        $when(mutex->lock == 0);
-      }
-      else{
-        if(mutex->owner == $self){
-          $assert($false, "ERROR: Relock attempted");
-          return 0;
+    if (mutex->attr->type == PTHREAD_MUTEX_NORMAL){
+      if (mutex->lock != 0) {
+        if(mutex->owner == $proc_null){
+          $when(mutex->lock == 0);
         }
         else{
-          $when(mutex->lock == 0); 
+          if(mutex->owner == $self){
+            $assert($false, "ERROR: Relock attempted");
+            return 0;
+          }
+          else{
+            $when(mutex->lock == 0); 
+          }
         }
       }
-    }
-    mutex->owner = $self;
-    mutex->lock = 1;
-  } 
-  else {
-    int tmp = mutex->lock;
-    mutex->lock = 1;
-    if (tmp == 0) { // Attempts lock and checks for whether lock is already locked
-      mutex->count = 1; 
       mutex->owner = $self;
+      mutex->lock = 1;
     } 
     else {
-    //Checks for ownership, otherwise returns error
-      if(mutex->owner == $self)
-      {
-        // Checks for recursive mutex, otherwise returns an error 
-        if (mutex->attr->type == 1) {
-          mutex->count++;
-          if(mutex->count==0){
-            mutex->lock = 0;
-            mutex->owner = $proc_null;
+      int tmp = mutex->lock;
+      mutex->lock = 1;
+      if (tmp == 0) { // Attempts lock and checks for whether lock is already locked
+        mutex->count = 1; 
+        mutex->owner = $self;
+      } 
+      else {
+        //Checks for ownership, otherwise returns error
+        if(mutex->owner == $self){
+          // Checks for recursive mutex, otherwise returns an error 
+          if (mutex->attr->type == 1) {
+            mutex->count++;
+            if(mutex->count==0){
+              mutex->lock = 0;
+              mutex->owner = $proc_null;
+            }
+          }
+          else {
+            $assert($false);
+            return 0;
           }
         }
         else {
@@ -382,74 +493,92 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
           return 0;
         }
       }
+    }
+    return 0;
+  }
+}
+
+/* pthread_mutex_lock method definition
+  Description: pthread_mutex_lock takes in a mutex variable and acts accordingly to its current state and type
+  PTHREAD_MUTEX_NORMAL: Checks to see whether mutex is already unlocked and behaves accordingly
+    unlocked: returns error
+    locked: unlocks
+  PTHREAD_MUTEX_RECURSIVE: A recursive mutex increments its count when it is locked and decremented when
+  it is unlocked and the lock is released when the count reaches 0.
+  PTHREAD_MUTEX_ERRORCHECK: Currently implemented similarly to PTHREAD_MUTEX_NORMAL
+  //Corresponding specification: p. 163 
+*/
+
+int pthread_mutex_unlock(pthread_mutex_t *mutex){
+  $atomic{
+    if (mutex->attr->type == 0 || mutex->attr->type == 2) {
+      int idx;
+      // Attempts unlock, if already unlocked, returns error
+      if (mutex->lock == 0) {
+        $assert($false, "Attempting to unlock unlocked lock\n");
+        return 0;
+      } 
+      else {
+        mutex->lock = 0;
+        mutex->owner = $proc_null;
+      }
+    } 
+    else {
+      //Checks for ownership of thread, if not, returns error
+      if(mutex->owner == $self)
+      {
+        //Checks for recursive mutex
+        _Bool tmp = !(mutex->attr->type == 1);
+        if (--mutex->count == 0){
+          mutex->lock = 0;
+          mutex->owner = $proc_null;
+        }
+      }
       else {
         $assert($false);
         return 0;
       }
     }
-  }
-  return 0;
-  }
-}
-
-
-int pthread_mutex_unlock(pthread_mutex_t *mutex) {
-  $atomic{
-  if (mutex->attr->type == 0 || mutex->attr->type == 2) {
-    int idx;
-    // Attempts unlock, if already unlocked, returns error
-    if (mutex->lock == 0) {
-      $assert($false, "Attempting to unlock unlocked lock\n");
-      return 0;
-    } 
-    else {
-      mutex->lock = 0;
-      mutex->owner = $proc_null;
-    }
-  } 
-  else {
-    //Checks for ownership of thread, if not, returns error
-    if(mutex->owner == $self)
-    {
-      //Checks for recursive mutex
-      _Bool tmp = !(mutex->attr->type == 1);
-      if (--mutex->count == 0){
-        mutex->lock = 0;
-        mutex->owner = $proc_null;
-      }
-    }
-    else {
-      $assert($false);
-      return 0;
-    }
-  }
-  return 0;
+    return 0;
   }
 }
 
+/* pthread_cond_wait method definition
+  Description: Checks for calling thread as owner of the mutex, then increments proccount, unlocks the mutex 
+  and sleeps. Awakens upon signal and decrements proccount and locks mutex.
+  //Corresponding specification: p. 158
+*/
 
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex){
-  if(mutex->owner != $self)
-  {
+  if(mutex->owner != $self){
     printf("Mutex not owned by thread");
     $assert($false);
     return 0;
   }
-  $atomic{
   cond->proccount= cond->proccount+1;
   pthread_mutex_unlock(mutex);
+  
   $when(cond->signal);
   cond->signal = false;
   --cond->proccount;
   $when(mutex->lock == 0){pthread_mutex_lock(mutex);}
   return 0;
-  }
 }
+
+/* pthread_cond_signal method definition
+  Description: Signals the condition by setting the signal to true
+  //Corresponding specification: p. 158
+*/
 
 int pthread_cond_signal(pthread_cond_t *cond){
   cond->signal = true;
   return 0;
 }
+
+/* pthread_cond_broadcast method definition
+  Description: Repeated signals the condition until all processes waiting have been signalled and awoken
+  //Corresponding specification: p. 157 
+*/
 
 int pthread_cond_broadcast(pthread_cond_t *cond){
   while(cond->proccount > 0){

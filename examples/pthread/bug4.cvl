@@ -12,6 +12,7 @@
 * Command line execution:
 * civl verify -inputNUM_THREADS=3 -inputITERATIONS=10 -inputTHRESHOLD=12 bug4.cvl
 ******************************************************************************/
+
 #include "pthread.cvh"
 #include <civlc.h>
 #include <stdio.h>
@@ -28,7 +29,6 @@ double finalresult=0.0;
 pthread_mutex_t count_mutex;
 pthread_cond_t count_condvar;
 
-
 void *sub1(void *t)
 {
   int i; 
@@ -37,6 +37,7 @@ void *sub1(void *t)
  
   /* do some work */
   //sleep(1); Removed, unnecessary
+  
   /*
   Lock mutex and wait for signal only if count is what is expected.  Note
   that the pthread_cond_wait routine will automatically and atomically
@@ -54,7 +55,7 @@ void *sub1(void *t)
   finalresult += myresult;
   printf("sub1: thread=%d count now equals=%d myresult=%e. Done.\n",tid,count,myresult); // Removed l from %ld
   pthread_mutex_unlock(&count_mutex);
-  pthread_exit(NULL, false, NULL, 0);
+  pthread_exit(NULL, false, NULL, 0); //Different parameters
 }
 
 void *sub2(void *t) 
@@ -69,6 +70,7 @@ void *sub2(void *t)
     pthread_mutex_lock(&count_mutex);
     finalresult += myresult;
     count++;
+    
     /* 
     Check the value of count and signal waiting thread when condition is
     reached.  Note that this occurs while mutex is locked. 
@@ -84,10 +86,8 @@ void *sub2(void *t)
     pthread_mutex_unlock(&count_mutex);
     }
     printf("sub2: thread=%d  myresult=%e. Done. \n",tid,myresult); // Removed l from %ld
-  pthread_exit(NULL, false, NULL, 0);
+  pthread_exit(NULL, false, NULL, 0); //Different parameters
 }
-
-
 
 int main(void)
 {
@@ -103,7 +103,7 @@ int main(void)
   /* For portability, explicitly create threads in a joinable state */
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  pthread_create(&threads[0], &attr, sub1, (void *)&t1);
+  pthread_create(&threads[0], &attr, sub1, (void *)&t1); //Pointers used as conversion from int to void* is not supported
   pthread_create(&threads[1], &attr, sub2, (void *)&t2);
   pthread_create(&threads[2], &attr, sub2, (void *)&t3);
 
@@ -118,7 +118,7 @@ int main(void)
   pthread_attr_destroy(&attr);
   pthread_mutex_destroy(&count_mutex);
   pthread_cond_destroy(&count_condvar);
-  pthread_exit (NULL, true, NULL, 0);
+  pthread_exit (NULL, true, NULL, 0); //Different parameters
 
 }
 
