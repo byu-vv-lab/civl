@@ -1558,19 +1558,32 @@ public class CommonEvaluator implements Evaluator {
 	private Evaluation evaluateVariable(State state, int pid,
 			VariableExpression expression)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression value = state.valueOf(pid, expression.variable());
-
-		if (value == null || value.isNull()) {
+		if (expression.variable().isOutput()) {
 			CIVLExecutionException e = new CIVLExecutionException(
-					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
-					"Attempt to read uninitialized variable",
+					ErrorKind.OUTPUT_READ, Certainty.CONCRETE,
+					"Attempt to read the output variable "
+							+ expression.variable().name(),
 					this.symbolicUtil.stateToString(state),
 					expression.getSource());
 
 			errorLogger.reportError(e);
 			throw new UnsatisfiablePathConditionException();
+		} else {
+			SymbolicExpression value = state
+					.valueOf(pid, expression.variable());
+
+			if (value == null || value.isNull()) {
+				CIVLExecutionException e = new CIVLExecutionException(
+						ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
+						"Attempt to read uninitialized variable",
+						this.symbolicUtil.stateToString(state),
+						expression.getSource());
+
+				errorLogger.reportError(e);
+				throw new UnsatisfiablePathConditionException();
+			}
+			return new Evaluation(state, value);
 		}
-		return new Evaluation(state, value);
 	}
 
 	private Evaluation evaluateWaitGuard(State state, int pid,

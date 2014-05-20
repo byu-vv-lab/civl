@@ -23,5 +23,4 @@ public interface VariableExpression extends LHSExpression {
 	 *            The variable.
 	 */
 	void setVariable(Variable variable);
-
 }

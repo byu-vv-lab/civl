@@ -605,7 +605,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		ReferenceExpression fileSystemRef = symbolicUtil
 				.getSymRef(filesystemPointer);
 		Pair<State, StringBuffer> fileNameStringPair;
-		String fileNameString;
+//		String fileNameString;
 
 		state = eval.state;
 		fileSystemStructure = eval.value;
@@ -617,7 +617,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		fileNameStringPair = this.getString(expressions[1].getSource(), state,
 				argumentValues[1]);
 		state = fileNameStringPair.left;
-		fileNameString = fileNameStringPair.right.toString();
+//		fileNameString = fileNameStringPair.right.toString();
 
 		// does a file by that name already exist in the filesystem?
 		// assume all are concrete.
@@ -686,8 +686,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			fileArray = universe.append(fileArray, theFile);
 			fileSystemStructure = universe.tupleWrite(fileSystemStructure,
 					oneObject, fileArray);
-			if (fileNameString.compareTo(STDIN) == 0)
-				isInputFile = false;
 			if (isInputFile) {
 				BooleanExpression positiveLength = universe.lessThan(zero,
 						(NumericExpression) length);
