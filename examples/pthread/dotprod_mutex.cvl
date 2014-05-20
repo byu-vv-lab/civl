@@ -88,7 +88,7 @@ structure, and unlock it upon updating.
    printf("Thread %d did %d to %d:  mysum=%f global sum=%f\n",offset,start,end,mysum,dotstr.sum); //Removed l from %ld, unsupported
    pthread_mutex_unlock (&mutexsum);
 
-   pthread_exit((void*) 0);
+   pthread_exit(NULL, false, NULL, 0);
 }
 
 /* 
@@ -105,6 +105,7 @@ no longer needed.
 int main (void)
 {
 long i;
+long j[NUMTHRDS];
 double *a, *b;
 void *status;
 pthread_attr_t attr;
@@ -136,7 +137,8 @@ for(i=0;i<NUMTHRDS;i++)
    * The offset is specified by 'i'. The size of
    * the data for each thread is indicated by VECLEN.
    */
-   pthread_create(&callThd[i], &attr, dotprod, (void *)&i); 
+   j[i] = (long)i;
+   pthread_create(&callThd[i], &attr, dotprod, (void *)&j[i]); 
    }
 
 pthread_attr_destroy(&attr);
@@ -151,5 +153,5 @@ printf ("Sum =  %f \n", dotstr.sum);
 free (a);
 free (b);
 pthread_mutex_destroy(&mutexsum);
-pthread_exit(NULL);
+pthread_exit(NULL, true, NULL, 0);
 }   

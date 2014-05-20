@@ -22,7 +22,7 @@ void *PrintHello(void *threadid)
    int i;
    double myresult=0.0;
    printf("thread=%d: starting...\n", threadid); // Removed l from %ld
-   for (i=0; i<10; i++)
+   for (i=0; i<1000; i++)
       myresult += sin(i) * tan(i);
    printf("thread=%d result=%e. Done.\n",threadid,myresult); // Removed l from %ld
    pthread_exit(NULL, false, NULL, 0);
@@ -42,7 +42,7 @@ for(i=0;i<NUM_THREADS;i++){
     exit(-1);
     }
   }
-pthread_exit(NULL, true, threads, NUM_THREADS); // Changed pthread_exit
+//pthread_exit(NULL, true, threads, NUM_THREADS); // Changed pthread_exit
 printf("Main: Done.\n");
 }
 

@@ -15,6 +15,7 @@
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "math.cvh"
 
 $input int NUM_THREADS;
 
@@ -25,19 +26,20 @@ void *BusyWork(void *t)
    double result=0.0;
    tid = (long)*t;
    printf("Thread %d starting...\n",tid); // Removed l from %ld, unsupported
-   for (i=0; i<1000000; i++)
+   for (i=0; i<100; i++)
    {
       result = result + sin(i) * tan(i);
    }
    printf("Thread %d done. Result = %e\n",tid, result); // Removed l from %ld, unsupported
-   pthread_exit((void*) t);
+   pthread_exit((void*) t, false, NULL, 0);
 }
 
-int main (int argc, char *argv[])
+int main (void)
 {
    pthread_t thread[NUM_THREADS];
    pthread_attr_t attr;
    int rc;
+   long j[NUM_THREADS];
    long t;
    void *status;
 
@@ -47,7 +49,8 @@ int main (int argc, char *argv[])
 
    for(t=0; t<NUM_THREADS; t++) {
       printf("Main: creating thread %d\n", t);
-      rc = pthread_create(&thread[t], &attr, BusyWork, (void *)&t); //Added address as conversion from
+      j[t] = (long)t;
+      rc = pthread_create(&thread[t], &attr, BusyWork, (void *)&j[t]); //Added address as conversion from
       if (rc) {														// int directly to void * is unsupported
         $assert(false, "ERROR; return code from pthread_create() is %d", rc);
          }
@@ -60,11 +63,12 @@ int main (int argc, char *argv[])
       if (rc) {
          $assert(false, "ERROR; return code from pthread_create() is %d", rc);
          }
-      printf("Main: completed join with thread %d having a status of %d\n",t,(long)status);
+      //printf("Main: completed join with thread %d having a status of %d\n",t,(long)*status);
+      //Will emulate passing value of status later
       }
  
 printf("Main: program completed. Exiting.\n");
-pthread_exit(NULL);
+pthread_exit(NULL, false, NULL, 0);
 }
 
 

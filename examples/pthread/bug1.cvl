@@ -50,7 +50,7 @@ void *inc_count(void *idp)
     /* Do some work so threads can alternate on mutex lock */
     //sleep(1); removed sleep, unnecessary
     }
-  pthread_exit(NULL);
+  pthread_exit(NULL, false, NULL, 0);
 }
 
 void *watch_count(void *idp) 
@@ -71,7 +71,7 @@ void *watch_count(void *idp)
   pthread_cond_wait(&count_threshold_cv, &count_mutex);
   printf("***Thread %d Condition signal received.\n", my_id);
   pthread_mutex_unlock(&count_mutex);
-  pthread_exit(NULL);
+  pthread_exit(NULL, false, NULL, 0);
 }
 
 int main(void)
@@ -116,6 +116,6 @@ int main(void)
 
   pthread_mutex_destroy(&count_mutex);
   pthread_cond_destroy(&count_threshold_cv);
-  pthread_exit (NULL);
+  pthread_exit (NULL, true, NULL, 0);
   return 0;
 }

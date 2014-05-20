@@ -65,7 +65,7 @@ void *dotprod(void *arg)
    int i, start, end, len ;
    long offset;
    double mysum, *x, *y;
-   offset = (long)arg;
+   offset = (long)*arg;
      
    len = dotstr.veclen;
    start = offset*len;
@@ -94,7 +94,7 @@ void *dotprod(void *arg)
    dotstr.sum += mysum;
    pthread_mutex_unlock (&mutexsum);
 
-   pthread_exit((void*) 0);
+   pthread_exit(NULL, false, NULL, 0);
 }
 
 /* 
@@ -107,8 +107,9 @@ that allow the main thread to join with the threads it creates. Note also
 that we free up handles  when they are no longer needed.
 */
 
-int main (int argc, char *argv[])
+int main (void)
 {
+long t[MAXTHRDS];
 long i;
 double *a, *b;
 void *status;
@@ -139,7 +140,8 @@ for(i=0;i<MAXTHRDS;i++) {
   The offset is specified by 'i'. The size of
   the data for each thread is indicated by VECLEN.
   */
-  pthread_create( &callThd[i], &attr, dotprod, (void *)&i); 
+  t[i] = i;
+  pthread_create( &callThd[i], &attr, dotprod, (void *)&t[i]); 
   }
 
 pthread_attr_destroy(&attr);
@@ -154,7 +156,8 @@ printf ("Done. Threaded version: sum =  %f \n", dotstr.sum);
 free (a);
 free (b);
 pthread_mutex_destroy(&mutexsum);
-pthread_exit(NULL);
+pthread_exit(NULL, true, NULL, 0);
+return 0;
 }   
 
 

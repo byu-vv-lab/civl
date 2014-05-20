@@ -16,7 +16,7 @@
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include "math.cvh"
 
 /* Define and scope what needs to be seen by everyone */
 $input int NUM_THREADS;
@@ -54,7 +54,7 @@ void *sub1(void *t)
   finalresult += myresult;
   printf("sub1: thread=%d count now equals=%d myresult=%e. Done.\n",tid,count,myresult); // Removed l from %ld
   pthread_mutex_unlock(&count_mutex);
-  pthread_exit(NULL);
+  pthread_exit(NULL, false, NULL, 0);
 }
 
 void *sub2(void *t) 
@@ -64,7 +64,7 @@ void *sub2(void *t)
   double myresult=0.0;
 
   for (i=0; i<ITERATIONS; i++) {
-    for (j=0; j<100000; j++)
+    for (j=0; j<10; j++)
       myresult += sin(j) * tan(i);
     pthread_mutex_lock(&count_mutex);
     finalresult += myresult;
@@ -84,7 +84,7 @@ void *sub2(void *t)
     pthread_mutex_unlock(&count_mutex);
     }
     printf("sub2: thread=%d  myresult=%e. Done. \n",tid,myresult); // Removed l from %ld
-  pthread_exit(NULL);
+  pthread_exit(NULL, false, NULL, 0);
 }
 
 
@@ -118,7 +118,7 @@ int main(void)
   pthread_attr_destroy(&attr);
   pthread_mutex_destroy(&count_mutex);
   pthread_cond_destroy(&count_condvar);
-  pthread_exit (NULL);
+  pthread_exit (NULL, true, NULL, 0);
 
 }
 

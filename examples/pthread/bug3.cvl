@@ -22,7 +22,7 @@ void *PrintHello(void *threadid){
   long taskid = (long)*threadid;
   //sleep(1);
   printf("Hello from thread %d\n", taskid);
-  //pthread_exit(NULL);
+  pthread_exit(NULL, false, NULL, 0);
 }
 
 int main(void){
@@ -38,7 +38,7 @@ int main(void){
       return 0;
     }
   }
-  //pthread_exit(NULL);
+  pthread_exit(NULL,true, threads, NUM_THREADS);
   return 0;
 }
 

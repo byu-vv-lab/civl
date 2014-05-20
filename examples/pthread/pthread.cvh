@@ -435,33 +435,27 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex){
     $assert($false);
     return 0;
   }
+  $atomic{
   cond->proccount= cond->proccount+1;
   pthread_mutex_unlock(mutex);
   $when(cond->signal);
-  cond->signal = 0;
+  cond->signal = false;
   --cond->proccount;
   $when(mutex->lock == 0){pthread_mutex_lock(mutex);}
   return 0;
+  }
 }
 
 int pthread_cond_signal(pthread_cond_t *cond){
-  cond->signal = 1;
+  cond->signal = true;
   return 0;
 }
 
 int pthread_cond_broadcast(pthread_cond_t *cond){
   while(cond->proccount > 0){
-    cond->signal = 1;
+    cond->signal = true;
   }
   return 0;
-}
- 
-double sin(int a){
-  return 1.0;
-}
-
-double cos(int b){
-  return 1.0;
 }
 
  

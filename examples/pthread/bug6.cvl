@@ -9,7 +9,7 @@
 *   bug6fix.c for one solution. The dotprod_mutex.c example provides a much
 *   more efficient way of solving this problem than bug6fix.c (FYI).
 * Command line execution:
-* civl verify -inputNUM_THRDS=5 -inputVECLEN=10 bug6.cvl
+* civl verify -inputNUMTHRDS=5 -inputVECLEN=10 bug6.cvl
 ******************************************************************************/
 #include "pthread.cvh"
 #include <civlc.h>
@@ -17,7 +17,7 @@
 #include <stdlib.h>
 
 /* Define global data where everyone can see them */
-$input int NUM_THRDS;
+$input int NUMTHRDS;
 $input int VECLEN;
 int *a, *b; 
 long sum=0;
@@ -48,16 +48,16 @@ void *dotprod(void *arg)
 int main (void)
 {
   long i;
-  long j[NUM_THRDS];
+  long j[NUMTHRDS];
   void *status;
-  pthread_t threads[NUM_THRDS];
+  pthread_t threads[NUMTHRDS];
   pthread_attr_t attr;
 
   /* Assign storage and initialize values */
-  a = (int*) malloc (NUM_THRDS*VECLEN*sizeof(int));
-  b = (int*) malloc (NUM_THRDS*VECLEN*sizeof(int));
+  a = (int*) malloc (NUMTHRDS*VECLEN*sizeof(int));
+  b = (int*) malloc (NUMTHRDS*VECLEN*sizeof(int));
   
-  for (i=0; i<VECLEN*NUM_THRDS; i++)
+  for (i=0; i<VECLEN*NUMTHRDS; i++)
     a[i]= b[i]=1;
 
   /* Create threads as joinable, each of which will execute the dot product
@@ -66,13 +66,13 @@ int main (void)
    */
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  for(i=0; i<NUM_THRDS; i++){
+  for(i=0; i<NUMTHRDS; i++){
     j[i] = (long)i;
     pthread_create(&threads[i], &attr, dotprod, (void *)&j[i]); 
   }
   pthread_attr_destroy(&attr);
   /* Wait on the threads for final result */
-  for(i=0; i<NUM_THRDS; i++) 
+  for(i=0; i<NUMTHRDS; i++) 
     pthread_join(threads[i], &status);
   
   /* After joining, print out the results and cleanup */
