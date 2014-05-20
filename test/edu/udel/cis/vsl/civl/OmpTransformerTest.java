@@ -69,14 +69,14 @@ public class OmpTransformerTest {
 			program = frontEnd.getProgram();
 
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
-				new ArrayList<String>(0), frontEnd.getASTBuilder());
+				new ArrayList<String>(0), frontEnd.getASTBuilder(), debug);
 		if (debug) {
 			out.println("======== After applying OpenMP Pragma Transformer ========");
 			frontEnd.printProgram(out, program);
 		}
 
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-				new ArrayList<String>(0), frontEnd.getASTBuilder());
+				new ArrayList<String>(0), frontEnd.getASTBuilder(), debug);
 		if (debug) {
 			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program);
