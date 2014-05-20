@@ -306,7 +306,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void printf() throws ABCException {
-		assertTrue(ui.run("verify", filename("printf.cvl"), "-input__argc=2"));
+		assertTrue(ui.run("verify", filename("printf.cvl")));
 	}
 
 	@Test

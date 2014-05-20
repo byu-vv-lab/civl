@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
@@ -12,12 +11,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
@@ -113,7 +108,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			VariableDeclarationNode argcVar = parameters.getSequenceChild(0);
 			VariableDeclarationNode argvVar = parameters.getSequenceChild(1);
 			VariableDeclarationNode __argcVar = argcVar.copy();
-			VariableDeclarationNode __argvVar = argvVar.copy();
+			VariableDeclarationNode __argvVar;
 			CompoundStatementNode functionBody = mainFunction.getBody();
 			String argcName = argcVar.getIdentifier().name();
 			String argvName = argvVar.getIdentifier().name();
@@ -121,77 +116,30 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			String __argvName = "__" + argvName;
 			TypeNode argvType = argvVar.getTypeNode();
 			ArgvTypeKind argvTypeKind = analyzeArgvType(argvType);
-			Source argvSource = argvVar.getSource();
-			// TypeNode argvType = nodeFactory
-			// .newArrayTypeNode(argvSource, nodeFactory.newArrayTypeNode(
-			// argvSource, nodeFactory.newBasicTypeNode(
-			// argvSource, BasicTypeKind.CHAR), null),
-			// identifierExpression(argvSource, __argcName));
+			Source source = argvVar.getSource();
+			TypeNode pointerOfPointerOfChar = nodeFactory
+					.newPointerTypeNode(source, nodeFactory.newPointerTypeNode(
+							source, nodeFactory.newBasicTypeNode(source,
+									BasicTypeKind.CHAR), null), null);
 
 			parameters.removeChild(0);
 			parameters.removeChild(1);
 			__argcVar.getTypeNode().setInputQualified(true);
 			__argcVar.getIdentifier().setName(__argcName);
 			inputVars.add(__argcVar);
-			__argvVar.getTypeNode().setInputQualified(true);
-			__argvVar.getIdentifier().setName(__argvName);
-			// __argvVar.setTypeNode(argvType);
+			__argvVar = inputArgvDeclaration(argvVar, __argvName);
 			inputVars.add(__argvVar);
 			argcVar.setInitializer(identifierExpression(__argcVar.getSource(),
 					__argcName));
+			if (argvTypeKind != ArgvTypeKind.POINTER_POINTER_CHAR) {
 
-			if (argvTypeKind == ArgvTypeKind.POINTER_POINTER_CHAR)
-				argvVar.setInitializer(identifierExpression(
-						__argvVar.getSource(), __argvName));
-			else if (argvTypeKind == ArgvTypeKind.ARRAY_POINTER_CHAR) {
-				Source source = argvVar.getSource();
-				ForLoopInitializerNode initializerNode = nodeFactory
-						.newForLoopInitializerNode(source, Arrays
-								.asList(nodeFactory.newVariableDeclarationNode(
-										source, nodeFactory.newIdentifierNode(
-												source, "i"), nodeFactory
-												.newBasicTypeNode(source,
-														BasicTypeKind.INT),
-										nodeFactory.newIntegerConstantNode(
-												source, "0"))));
-				ExpressionNode loopCondition = nodeFactory.newOperatorNode(
-						source, Operator.LT, Arrays.asList(
-								this.identifierExpression(source, "i"),
-								this.identifierExpression(source, argcName)));
-				ExpressionNode incrementer = nodeFactory.newOperatorNode(
-						source, Operator.POSTINCREMENT,
-						Arrays.asList(this.identifierExpression(source, "i")));
-				ExpressionNode assignArgvVar = nodeFactory
-						.newOperatorNode(source, Operator.ASSIGN, Arrays
-								.asList((ExpressionNode) nodeFactory
-										.newOperatorNode(source,
-												Operator.SUBSCRIPT,
-												Arrays.asList(
-														identifierExpression(
-																argvSource,
-																argvName),
-														identifierExpression(
-																source, "i"))),
-										nodeFactory.newOperatorNode(source,
-												Operator.SUBSCRIPT,
-												Arrays.asList(
-														identifierExpression(
-																argvSource,
-																__argvName),
-														identifierExpression(
-																source, "i")))));
-				ForLoopNode forLoop = nodeFactory.newForLoopNode(source,
-						initializerNode, loopCondition, incrementer,
-						nodeFactory.newExpressionStatementNode(assignArgvVar),
-						null);
-
-				if (!inputVariableNames.contains(__argcName)) {
-					throw new SyntaxException(
-							"Please specify the input variable __argc (e.g. \"-input__argc=5\")"
-									+ " which is used to update argc", source);
-				}
-				functionBody = addNodeToBeginning(functionBody, forLoop);
+				argvVar.setTypeNode(pointerOfPointerOfChar.copy());
 			}
+			argvVar.setInitializer(nodeFactory.newCastNode(
+					source,
+					pointerOfPointerOfChar.copy(),
+					nodeFactory.newIdentifierExpressionNode(source,
+							nodeFactory.newIdentifierNode(source, __argvName))));
 			functionBody = addNodeToBeginning(functionBody, argvVar);
 			functionBody = addNodeToBeginning(functionBody, argcVar);
 			mainFunction.setBody(functionBody);
@@ -200,6 +148,27 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 					new ArrayList<VariableDeclarationNode>(0)));
 		}
 		return inputVars;
+	}
+
+	/**
+	 * Declares <code>$input char __argv[][];</code>.
+	 * 
+	 * @param oldArgv
+	 * @return
+	 */
+	private VariableDeclarationNode inputArgvDeclaration(
+			VariableDeclarationNode oldArgv, String argvNewName) {
+		VariableDeclarationNode __argv = oldArgv.copy();
+		Source source = oldArgv.getSource();
+		TypeNode arrayOfString = nodeFactory.newArrayTypeNode(source,
+				nodeFactory.newArrayTypeNode(source, nodeFactory
+						.newBasicTypeNode(source, BasicTypeKind.CHAR), null),
+				null);
+
+		__argv.getIdentifier().setName(argvNewName);
+		arrayOfString.setInputQualified(true);
+		__argv.setTypeNode(arrayOfString);
+		return __argv;
 	}
 
 	public enum ArgvTypeKind {

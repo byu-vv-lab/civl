@@ -104,8 +104,7 @@ public class OmpTransformerTest {
 
 	@Test
 	public void nested() throws ABCException, IOException {
-		assertTrue(ui.run("parse", filename("nested.c"),
-				"-input__argc=2"));
+		assertTrue(ui.run("parse", filename("nested.c")));
 	}
 
 	@Test
