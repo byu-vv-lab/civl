@@ -373,9 +373,9 @@ int MPI_Reduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
 	minDouble(results, buf.D, real_count, nprocs);
       break;
     } 
-    MPI_Sendrecv(results, real_count, MPI_INT,
+    MPI_Sendrecv(results, real_count, datatype,
 		     place, 0,
-		     recvbuf, real_count, MPI_INT,
+		     recvbuf, real_count, datatype,
 		     place, 0,
 		     comm, &status);
     $free(recv);
@@ -482,9 +482,9 @@ int MPI_Allreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype
 	minDouble(results, buf.D, real_count, nprocs);
       break;
     }
-    MPI_Sendrecv(results, real_count, MPI_INT,
+    MPI_Sendrecv(results, real_count, datatype,
 		     place, 0,
-		     recvbuf, real_count, MPI_INT,
+		     recvbuf, real_count, datatype,
 		     place, 0,
 		     comm, &status);
     MPI_Bcast(results, real_count, datatype, root,
