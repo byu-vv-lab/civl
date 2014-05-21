@@ -288,7 +288,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					SymbolicExpression parentPointer = symbolicUtil
 							.parentPointer(source, pointer);
 					Evaluation eval = evaluator.dereference(source, state,
-							parentPointer);
+							parentPointer, false);
 					SymbolicExpression targetArray = eval.value;
 					BooleanExpression claim;
 
@@ -609,7 +609,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					Certainty.CONCRETE, "Invalid place " + place_num
 							+ " used in $barrier_create().", source);
 		}
-		eval = this.evaluator.dereference(civlsource, state, gbarrier);
+		eval = this.evaluator.dereference(civlsource, state, gbarrier, false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		totalPlaces = ((IntegerNumber) universe
@@ -687,13 +687,13 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		int numInBarrier_int;
 		int nprocs_int;
 
-		eval = evaluator.dereference(civlsource, state, barrier);
+		eval = evaluator.dereference(civlsource, state, barrier, false);
 		state = eval.state;
 		barrierObj = eval.value;
 		myPlace = (NumericExpression) universe
 				.tupleRead(barrierObj, zeroObject);
 		gbarrier = universe.tupleRead(barrierObj, oneObject);
-		eval = evaluator.dereference(civlsource, state, gbarrier);
+		eval = evaluator.dereference(civlsource, state, gbarrier, false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		nprocs = universe.tupleRead(gbarrierObj, zeroObject);
@@ -773,7 +773,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		CIVLType commType = model.commType();
 		Evaluation eval;
 
-		eval = this.evaluator.dereference(civlsource, state, gcommHandle);
+		eval = this.evaluator.dereference(civlsource, state, gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
 		isInitArray = universe.tupleRead(gcomm, oneObject);
@@ -833,11 +833,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		CIVLSource civlsource = arguments[0].getSource();
 		Evaluation eval;
 
-		eval = evaluator.dereference(civlsource, state, commHandle);
+		eval = evaluator.dereference(civlsource, state, commHandle, false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
 		nprocs = universe.tupleRead(gcomm, zeroObject);
@@ -886,11 +886,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		CIVLSource civlsource = arguments[0].getSource();
 		Evaluation eval;
 
-		eval = evaluator.dereference(civlsource, state, commHandle);
+		eval = evaluator.dereference(civlsource, state, commHandle, false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
 		dest = universe.tupleRead(comm, zeroObject);
@@ -944,11 +944,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		CIVLSource civlsource = arguments[0].getSource();
 		Evaluation eval;
 
-		eval = evaluator.dereference(civlsource, state, commHandle);
+		eval = evaluator.dereference(civlsource, state, commHandle, false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
 		dest = universe.tupleRead(comm, zeroObject);
@@ -1011,11 +1011,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		int int_tag;
 		int MessageIndexInMessagesArray = -1;
 
-		eval = evaluator.dereference(civlsource, state, commHandle);
+		eval = evaluator.dereference(civlsource, state, commHandle, false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
@@ -1112,11 +1112,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		int int_queueLength;
 
-		eval = evaluator.dereference(civlsource, state, commHandle);
+		eval = evaluator.dereference(civlsource, state, commHandle, false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
@@ -1343,7 +1343,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		NumericExpression size, index;
 		SymbolicExpression hasNext;
 
-		eval = evaluator.dereference(civlsource, state, iterHandle);
+		eval = evaluator.dereference(civlsource, state, iterHandle, false);
 		state = eval.state;
 		iterObj = eval.value;
 		size = (NumericExpression) universe.tupleRead(iterObj, zeroObject);
@@ -1593,7 +1593,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 
 			if (oneCountValid == ResultType.YES) {
 				Evaluation eval = evaluator.dereference(
-						pointerExpr.getSource(), state, pointer);
+						pointerExpr.getSource(), state, pointer, false);
 				SymbolicExpression element0 = eval.value;
 
 				state = eval.state;
@@ -1628,7 +1628,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					SymbolicExpression arrayPointer = symbolicUtil
 							.parentPointer(source, pointer);
 					Evaluation eval = evaluator.dereference(source, state,
-							arrayPointer);
+							arrayPointer, false);
 					SymbolicExpression originalArray = eval.value;
 					NumericExpression endIndex = universe
 							.add(startIndex, count);
@@ -1821,7 +1821,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		IntegerNumber number_size = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) size);
-		Evaluation eval = evaluator.dereference(source, state, arrayPointer);
+		Evaluation eval = evaluator.dereference(source, state, arrayPointer, false);
 		CIVLSource arrayPointerSource = arrayPointerExpression.getSource();
 
 		state = eval.state;
@@ -1846,7 +1846,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = eval.state;
 			arrayElePointer = eval.value;
 			eval = evaluator.dereference(arrayPointerSource, state,
-					arrayElePointer);
+					arrayElePointer, false);
 			state = eval.state;
 			intArrayComponents.add(eval.value);
 		}
@@ -1910,7 +1910,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		NumericExpression index;
 		SymbolicExpression nextInt;
 
-		eval = evaluator.dereference(civlsource, state, iterHandle);
+		eval = evaluator.dereference(civlsource, state, iterHandle, false);
 		state = eval.state;
 		iterObj = eval.value;
 		array = universe.tupleRead(iterObj, oneObject);

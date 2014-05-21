@@ -37,7 +37,7 @@ public interface Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	Evaluation dereference(CIVLSource source, State state,
-			SymbolicExpression pointer)
+			SymbolicExpression pointer, boolean checkedOutput)
 			throws UnsatisfiablePathConditionException;
 
 	/**

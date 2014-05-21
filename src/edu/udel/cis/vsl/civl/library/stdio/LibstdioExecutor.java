@@ -506,7 +506,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 						.getSymRef(charPointer);
 				NumericExpression arrayIndex = arrayRef.getIndex();
 				Evaluation eval = evaluator.dereference(source, state,
-						arrayPointer);
+						arrayPointer, false);
 
 				state = eval.state;
 				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
@@ -582,7 +582,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression filesystemPointer = argumentValues[0];
 		Evaluation eval = evaluator.dereference(expressions[0].getSource(),
-				state, filesystemPointer);
+				state, filesystemPointer, false);
 		CIVLSource modeSource = expressions[2].getSource();
 		int mode = symbolicUtil.extractInt(modeSource,
 				(NumericExpression) argumentValues[2]);
@@ -826,7 +826,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		filesystemPointer = eval.value;
 		state = eval.state;
 		eval = evaluator.dereference(fileSystemExpression.getSource(), state,
-				filesystemPointer);
+				filesystemPointer, false);
 		state = eval.state;
 		fileSystemStructure = eval.value;
 		fileArray = universe.tupleRead(fileSystemStructure, oneObject);
@@ -919,7 +919,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		CIVLSource arraySource = arguments[1].getSource();
 
 		eval = evaluator.dereference(arguments[0].getSource(), state,
-				civlFileSystemPointer);
+				civlFileSystemPointer, false);
 		state = eval.state;
 		fileArray = universe.tupleRead(eval.value, oneObject);
 		length = universe.length(fileArray);
@@ -975,14 +975,14 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		NumericExpression position;
 
 		eval = evaluator.dereference(arguments[0].getSource(), state,
-				argumentValues[0]);
+				argumentValues[0], false);
 		fileStream = eval.value;
 		state = eval.state;
 		filePointer = universe.tupleRead(fileStream, zeroObject);
 		position = (NumericExpression) universe
 				.tupleRead(fileStream, twoObject);
 		eval = evaluator.dereference(arguments[0].getSource(), state,
-				filePointer);
+				filePointer, false);
 		state = eval.state;
 		fileObject = eval.value;
 		{// checks file length
@@ -1112,12 +1112,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		Pair<State, StringBuffer> concreteString;
 
 		eval = evaluator.dereference(arguments[0].getSource(), state,
-				argumentValues[0]);
+				argumentValues[0], false);
 		fileStream = eval.value;
 		state = eval.state;
 		filePointer = universe.tupleRead(fileStream, zeroObject);
 		eval = evaluator.dereference(arguments[0].getSource(), state,
-				filePointer);
+				filePointer, false);
 		fileObject = eval.value;
 		state = eval.state;
 		fileName = universe.tupleRead(fileObject, zeroObject);

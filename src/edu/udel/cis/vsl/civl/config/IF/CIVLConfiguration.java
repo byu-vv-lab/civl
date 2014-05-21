@@ -15,7 +15,10 @@ public interface CIVLConfiguration {
 	 */
 	public final static String date = "2014-04-22";
 	
-	/* *************************** Static fields *************************** */
+	/**
+	 * The prefix of the full name of the class of a library enabler/executor.
+	 */
+	public final static String LIBRARY_PREFIX = "edu.udel.cis.vsl.civl.library.";
 
 	/**
 	 * A string printed before and after titles of sections of output to make

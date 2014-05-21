@@ -467,8 +467,8 @@ public class CommonExecutor implements Executor {
 			// array. Check it. If it is not, through an exception.
 			SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
 					source, argumentValues[0]);
-			Evaluation eval = evaluator
-					.dereference(source, state, arrayPointer);
+			Evaluation eval = evaluator.dereference(source, state,
+					arrayPointer, false);
 
 			if (eval.value.operator() != SymbolicOperator.CONCRETE)
 				throw new CIVLUnimplementedFeatureException(
@@ -535,7 +535,8 @@ public class CommonExecutor implements Executor {
 					int_arrayIndex = symbolicUtil
 							.extractInt(source, arrayIndex);
 					// index is not necessarily 0! FIX ME!
-					eval = evaluator.dereference(source, state, arrayPointer);
+					eval = evaluator.dereference(source, state, arrayPointer,
+							false);
 					originalArray = (SymbolicSequence<?>) eval.value
 							.argument(0);
 					state = eval.state;

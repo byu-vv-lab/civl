@@ -5,6 +5,7 @@ import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
@@ -16,13 +17,6 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 
 public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
-
-	/* **************************** Static Fields ************************** */
-
-	/**
-	 * The prefix of the full name of the class of a library enabler/executor.
-	 */
-	private final static String CLASS_PREFIX = "edu.udel.cis.vsl.civl.library.";
 
 	/* *************************** Instance Fields ************************* */
 
@@ -77,7 +71,8 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 	 *         given library.
 	 */
 	private String className(String library, String suffix) {
-		String result = CLASS_PREFIX + library + ".Lib" + library + suffix;
+		String result = CIVLConfiguration.LIBRARY_PREFIX + library + ".Lib"
+				+ library + suffix;
 
 		return result;
 	}

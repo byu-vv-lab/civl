@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -13,13 +14,6 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 
 public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
-
-	/* **************************** Static Fields ************************** */
-
-	/**
-	 * The prefix of the full name of the class of a library enabler/executor.
-	 */
-	private final static String CLASS_PREFIX = "edu.udel.cis.vsl.civl.library.";
 
 	/* *************************** Instance Fields ************************* */
 
@@ -70,7 +64,8 @@ public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 	 *         given library.
 	 */
 	private String className(String library, String suffix) {
-		String result = CLASS_PREFIX + library + ".Lib" + library + suffix;
+		String result = CIVLConfiguration.LIBRARY_PREFIX + library + ".Lib"
+				+ library + suffix;
 
 		return result;
 	}

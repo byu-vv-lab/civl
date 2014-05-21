@@ -347,7 +347,7 @@ public class CommonEvaluator implements Evaluator {
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluate(state, pid, operand);
 
-		return dereference(operand.getSource(), eval.state, eval.value);
+		return dereference(operand.getSource(), eval.state, eval.value, true);
 	}
 
 	/**
@@ -1660,7 +1660,7 @@ public class CommonEvaluator implements Evaluator {
 					if (expr.operator() == SymbolicOperator.CONCRETE
 							&& symbolicUtil.getScopeId(null, expr) >= 0) {
 						// if (getScopeId(null, expr) >= 0) {
-						eval = this.dereference(null, state, expr);
+						eval = this.dereference(null, state, expr, false);
 						pointerValue = eval.value;
 						state = eval.state;
 						if (pointerValue.type() != null
@@ -1831,7 +1831,7 @@ public class CommonEvaluator implements Evaluator {
 			SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
 					expression.getSource(), pointer);
 			Evaluation eval = dereference(expression.getSource(), state,
-					arrayPointer);
+					arrayPointer, false);
 			// eval.value is now a symbolic expression of array type.
 			SymbolicArrayType arrayType = (SymbolicArrayType) eval.value.type();
 			ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
@@ -1938,7 +1938,7 @@ public class CommonEvaluator implements Evaluator {
 			SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
 					expression.getSource(), pointer);
 			Evaluation eval = dereference(expression.getSource(), state,
-					arrayPointer);
+					arrayPointer, false);
 			// eval.value is now a symbolic expression of array type.
 			SymbolicArrayType arrayType = (SymbolicArrayType) eval.value.type();
 			ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
@@ -2286,7 +2286,7 @@ public class CommonEvaluator implements Evaluator {
 
 	@Override
 	public Evaluation dereference(CIVLSource source, State state,
-			SymbolicExpression pointer)
+			SymbolicExpression pointer, boolean checkOutput)
 			throws UnsatisfiablePathConditionException {
 		// how to figure out if pointer is null pointer?
 		try {
@@ -2302,18 +2302,22 @@ public class CommonEvaluator implements Evaluator {
 			} else {
 				int vid = symbolicUtil.getVariableId(source, pointer);
 				ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
-				Variable variable = state.getScope(sid).lexicalScope()
-						.variable(vid);
+
 				SymbolicExpression variableValue;
 				SymbolicExpression deref;
 
-				if (variable.isOutput()) {
-					errorLogger.logSimpleError(source, state,
-							symbolicUtil.stateToString(state),
-							ErrorKind.OUTPUT_READ,
-							"Attempt to read output variable "
-									+ variable.name().name());
-					throw new UnsatisfiablePathConditionException();
+				if (checkOutput) {
+					Variable variable = state.getScope(sid).lexicalScope()
+							.variable(vid);
+
+					if (variable.isOutput()) {
+						errorLogger.logSimpleError(source, state,
+								symbolicUtil.stateToString(state),
+								ErrorKind.OUTPUT_READ,
+								"Attempt to read output variable "
+										+ variable.name().name());
+						throw new UnsatisfiablePathConditionException();
+					}
 				}
 				variableValue = state.getScope(sid).getValue(vid);
 				try {
@@ -2382,7 +2386,7 @@ public class CommonEvaluator implements Evaluator {
 			SymbolicExpression arrayReference = symbolicUtil.parentPointer(
 					source, charPointer);
 			NumericExpression indexExpr = arrayEltRef.getIndex();
-			Evaluation eval = this.dereference(source, state, arrayReference);
+			Evaluation eval = this.dereference(source, state, arrayReference, false);
 			int index;
 
 			if (indexExpr.isZero())

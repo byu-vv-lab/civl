@@ -72,8 +72,10 @@ public class CIVLExecutionException extends CIVLException {
 		result.append(certainty);
 		result.append(")\n");
 		result.append(super.toString());
-		if (this.stateString != null)
+		if (this.stateString != null) {
+			result.append("\n");
 			result.append(this.stateString);
+		}
 		return result.toString();
 	}
 }

@@ -133,7 +133,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		SymbolicExpression barrierObj;
 		SymbolicExpression gbarrier;
 		SymbolicExpression gbarrierObj;
-		Evaluation eval = evaluator.dereference(source, state, barrier);
+		Evaluation eval = evaluator.dereference(source, state, barrier, false);
 		SymbolicExpression inBarrierArray;
 		SymbolicExpression meInBarrier;
 
@@ -142,7 +142,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		myPlace = (NumericExpression) universe
 				.tupleRead(barrierObj, zeroObject);
 		gbarrier = universe.tupleRead(barrierObj, oneObject);
-		eval = evaluator.dereference(source, state, gbarrier);
+		eval = evaluator.dereference(source, state, gbarrier, false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		inBarrierArray = universe.tupleRead(gbarrierObj, twoObject);
@@ -178,11 +178,11 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		boolean enabled = false;
 		Evaluation eval;
 
-		eval = evaluator.dereference(civlsource, state, commHandle);
+		eval = evaluator.dereference(civlsource, state, commHandle, false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle);
+		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
 		dest = universe.tupleRead(comm, zeroObject);
