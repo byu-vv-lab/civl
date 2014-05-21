@@ -1612,7 +1612,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 							: Certainty.PROVEABLE;
 					CIVLExecutionException e = new CIVLExecutionException(
 							ErrorKind.OTHER, certainty,
-							"sizeof element does not divide size argument",
+							"sizeof element ( "  + elementSize + ") does not divide size argument (" + size + ")",
 							symbolicUtil.stateToString(state), source);
 
 					errorLogger.reportError(e);
