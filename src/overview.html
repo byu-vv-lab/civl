@@ -60,8 +60,8 @@
 			<ol>
 				<li>responsibilities: definitions of the control flow graph
 					representation of a CIVL-C program</li>
-				<li>uses: <strong>util</strong>, <strong>config</strong>,
-					<strong>abc</strong>, <strong>gmc</strong>, <strong>sarl</strong></li>
+				<li>uses: <strong>util</strong>, <strong>config</strong>, <strong>abc</strong>,
+					<strong>gmc</strong>, <strong>sarl</strong></li>
 				<li>interface: {@link edu.udel.cis.vsl.civl.model.IF}</li>
 				<li>entry point: Models</li>
 				<li>submodules
@@ -107,13 +107,12 @@
 				</li>
 			</ol></li>
 
-<li><strong>state</strong>
+		<li><strong>state</strong>
 			<ol>
-				<li>responsibilities: general exception classes that can be
-					thrown by CIVL.</li>
-				<li>uses: <strong>model</strong>, <strong>state</strong></li>
-				<li>interface: {@link edu.udel.cis.vsl.civl.err.IF}</li>
-				<li>entry point: none</li>
+				<li>responsibilities: creation and manipulation of states of a CIVL model.</li>
+				<li>uses: <strong>config</strong>, <strong>model</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.state.IF}</li>
+				<li>entry point: States</li>
 			</ol></li>TBC.
 
 		<li><strong>run</strong>

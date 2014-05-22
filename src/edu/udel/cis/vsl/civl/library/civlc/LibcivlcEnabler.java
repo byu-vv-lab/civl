@@ -162,7 +162,6 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 						pathCondition, pid, processIdentifier,
 						transitionStatement));
 			}
-
 			break;
 		default:
 			return super.enabledTransitions(state, call, pathCondition, pid,

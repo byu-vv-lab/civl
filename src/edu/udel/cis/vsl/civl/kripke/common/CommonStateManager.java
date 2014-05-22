@@ -9,6 +9,7 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
+import edu.udel.cis.vsl.civl.kripke.common.StateStatus.EnabledStatus;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -36,56 +37,6 @@ import edu.udel.cis.vsl.civl.util.IF.Printable;
  * 
  */
 public class CommonStateManager implements StateManager {
-
-	/**
-	 * The enabling status of a process at a state.
-	 * 
-	 * @author Manchun Zheng
-	 * 
-	 */
-	static enum EnabledStatus {
-		BLOCKED, DETERMINISTIC, LOOP_POSSIBLE, NONDETERMINISTIC, NONE, TERMINATED
-	}
-
-	/**
-	 * A helper class to keep track of analysis result of states in the sense
-	 * that if they are allowed to be executed further.
-	 * 
-	 * @author Manchun Zheng
-	 * 
-	 */
-	private class StateStatus {
-		/**
-		 * The enabling status of the current process at the current state.
-		 */
-		EnabledStatus enabledStatus;
-
-		/**
-		 * The result of the enabling analysis: i.e., whether the process is
-		 * allowed to execute more.
-		 */
-		boolean possibleToExecute;
-
-		/**
-		 * The current enabled transition of the current process. Not NULL only
-		 * when the process is allowed to execute more.
-		 */
-		SingleTransition enabledTransition;
-
-		/**
-		 * Keep track of the number of incomplete atom blocks.
-		 */
-		int atomCount;
-
-		StateStatus(boolean possible, SingleTransition transition,
-				int atomCount, EnabledStatus status) {
-			this.possibleToExecute = possible;
-			this.enabledTransition = transition;
-			this.atomCount = atomCount;
-			this.enabledStatus = status;
-		}
-	}
-
 	/* *************************** Instance Fields ************************* */
 
 	/**
@@ -253,6 +204,7 @@ public class CommonStateManager implements StateManager {
 		int processIdentifier;
 		SingleTransition firstTransition;
 		State oldState = state;
+		StateStatus stateStatus;
 
 		assert transition instanceof SingleTransition;
 		pid = ((SingleTransition) transition).pid();
@@ -267,51 +219,38 @@ public class CommonStateManager implements StateManager {
 			printStatement(oldState, state, firstTransition, AtomicKind.NONE,
 					processIdentifier, false);
 		}
-		if (this.guiMode) {
+		if (this.guiMode)
 			this.compoundTransition.addStep(new CommonStep(oldState, state,
 					firstTransition.statement()));
+		for (stateStatus = singleEnabled(state, pid, 0); stateStatus.val; stateStatus = singleEnabled(
+				state, pid, stateStatus.atomCount)) {
+			assert stateStatus.enabledTransition != null;
+			assert stateStatus.enabledStatus == EnabledStatus.DETERMINISTIC;
+			assert stateStatus.atomCount >= 0;
+			state = executor.execute(state, pid, stateStatus.enabledTransition);
+			if (printTransitions)
+				printStatement(oldState, state, stateStatus.enabledTransition,
+						AtomicKind.NONE, processIdentifier, false);
+			if (this.guiMode)
+				this.compoundTransition.addStep(new CommonStep(oldState, state,
+						stateStatus.enabledTransition.statement()));
+			oldState = state;
+			if (this.showStates)
+				out.print(this.symbolicUtil.stateToString(state));
 		}
-		{
-			StateStatus stateStatus = possibleToExecuteMore(state, pid, 0);
-
-			while (stateStatus.possibleToExecute) {
-				assert stateStatus.enabledTransition != null;
-				assert stateStatus.enabledStatus == EnabledStatus.DETERMINISTIC;
-				assert stateStatus.atomCount >= 0;
-
-				state = executor.execute(state, pid,
-						stateStatus.enabledTransition);
-				if (printTransitions) {
-					printStatement(oldState, state,
-							stateStatus.enabledTransition, AtomicKind.NONE,
-							processIdentifier, false);
-				}
-				if (this.guiMode) {
-					this.compoundTransition.addStep(new CommonStep(oldState,
-							state, stateStatus.enabledTransition.statement()));
-				}
-				oldState = state;
-				if (this.showStates)
-					// stateFactory.printState(out, state);
-					out.print(this.symbolicUtil.stateToString(state));
-				stateStatus = possibleToExecuteMore(state, pid,
-						stateStatus.atomCount);
-			}
-			assert stateStatus.atomCount == 0;
-			assert stateStatus.enabledStatus != EnabledStatus.DETERMINISTIC;
-			if (stateStatus.enabledStatus == EnabledStatus.BLOCKED) {
-				if (stateFactory.lockedByAtomic(state)) {
-					state = stateFactory.releaseAtomicLock(state);
-				}
-			}
-		}
-		if (printTransitions) {
+		assert stateStatus.atomCount == 0;
+		assert stateStatus.enabledStatus != EnabledStatus.DETERMINISTIC;
+		if (stateStatus.enabledStatus == EnabledStatus.BLOCKED
+				&& stateFactory.lockedByAtomic(state))
+			state = stateFactory.releaseAtomicLock(state);
+		if (printTransitions)
 			out.print("--> ");
-		}
 		if (saveStates) {
 			try {
 				state = stateFactory.canonic(state);
 			} catch (CIVLStateException stex) {
+				// TODO state never gets canonicalized and then gmc can't figure
+				// out if it has been seen before.
 				CIVLExecutionException err = new CIVLExecutionException(
 						stex.kind(), stex.certainty(), stex.message(),
 						symbolicUtil.stateToString(state), stex.source());
@@ -336,9 +275,8 @@ public class CommonStateManager implements StateManager {
 				state = stateFactory.simplify(state);
 			state.commit();
 		}
-		if (verbose || debug || showTransitions) {
+		if (verbose || debug || showTransitions)
 			out.println(state);
-		}
 		if (debug
 				|| verbose
 				|| (!saveStates && showStates)
@@ -346,21 +284,20 @@ public class CommonStateManager implements StateManager {
 				|| (saveStates && showSavedStates && this.maxCanonicId > oldMaxCanonicId)) {
 			// in -savedStates mode, only print new states.
 			out.println();
-			// state.print(out);
-			// this.stateFactory.printState(out, state);
 			out.print(this.symbolicUtil.stateToString(state));
 		}
 		numProcs = state.numProcs();
 		if (numProcs > maxProcs)
 			maxProcs = numProcs;
 		return state;
-
 	}
 
 	/**
-	 * analyzes if the current process is allowed to execute one more transition
-	 * at the given state. Conditions for a process p at a state s to execute
-	 * more:
+	 * Analyzes if the current process has a single (deterministic) enabled
+	 * transition at the given state. The point of this is that a sequence of
+	 * these kind of transitions can be launched together to form a big
+	 * transition. TODO Predicates are not checked for intermediate states.
+	 * Conditions for a process p at a state s to execute more:
 	 * <ul>
 	 * <li>p is about to enter an atom block or p is already in some atom
 	 * blocks:
@@ -390,8 +327,7 @@ public class CommonStateManager implements StateManager {
 	 *            The number of incomplete atom blocks.
 	 * @return
 	 */
-	private StateStatus possibleToExecuteMore(State state, int pid,
-			int atomCount) {
+	private StateStatus singleEnabled(State state, int pid, int atomCount) {
 		List<SingleTransition> enabled;
 		ProcessState procState = state.getProcessState(pid);
 		Location pLocation;
@@ -403,22 +339,20 @@ public class CommonStateManager implements StateManager {
 					EnabledStatus.TERMINATED);
 		else
 			pLocation = procState.getLocation();
-		if (pLocation == null)
-			return new StateStatus(false, null, atomCount,
-					EnabledStatus.TERMINATED);
+		assert pLocation != null;
 		enabled = enabler.enabledTransitionsOfProcess(state, pid);
-		if (pLocation.enterAtom()) {
+		if (pLocation.enterAtom())
 			atomCount++;
-		} else if (pLocation.leaveAtom()) {
+		else if (pLocation.leaveAtom()) {
 			inAtom = true;
 			atomCount--;
 		}
 		if (inAtom || atomCount > 0) {
 			// in atom execution
-			if (enabled.size() == 1) {
+			if (enabled.size() == 1)
 				return new StateStatus(true, enabled.get(0), atomCount,
 						EnabledStatus.DETERMINISTIC);
-			} else if (enabled.size() > 1) {// non deterministic
+			else if (enabled.size() > 1) {// non deterministic
 				reportError(EnabledStatus.NONDETERMINISTIC, state, pLocation);
 				return new StateStatus(false, null, atomCount,
 						EnabledStatus.NONDETERMINISTIC);
@@ -430,35 +364,25 @@ public class CommonStateManager implements StateManager {
 		} else {
 			int pidInAtomic = stateFactory.processInAtomic(state);
 
-			if (pidInAtomic != -1) { // some other process is holding the atomic
-										// lock.
-				if (pidInAtomic != pid) {
-					throw new CIVLExecutionException(
-							ErrorKind.OTHER,
-							Certainty.CONCRETE,
-							"There is another process other than the current process holding the atomic lock.",
-							this.executor.evaluator().symbolicUtility()
-									.stateToString(state), pLocation
-									.getSource());
-				} else { // the process is in atomic execution
-					if (pLocation.getNumIncoming() > 1) // possible loop, save
-														// state
-						return new StateStatus(false, null, atomCount,
-								EnabledStatus.LOOP_POSSIBLE);
-					inAtomic = true;
-				}
+			if (pidInAtomic != -1) {
+				// the process is in atomic execution
+				assert pidInAtomic == pid;
+				if (pLocation.getNumIncoming() > 1)
+					// possible loop, save state
+					return new StateStatus(false, null, atomCount,
+							EnabledStatus.LOOP_POSSIBLE);
+				inAtomic = true;
 			}
 			if (inAtomic || pLocation.isPurelyLocal()) {
 				if (enabled.size() == 1)
 					return new StateStatus(true, enabled.get(0), atomCount,
 							EnabledStatus.DETERMINISTIC);
-				else if (enabled.size() > 1) {// blocking
+				else if (enabled.size() > 1) // blocking
 					return new StateStatus(false, null, atomCount,
 							EnabledStatus.NONDETERMINISTIC);
-				} else {
+				else
 					return new StateStatus(false, null, atomCount,
 							EnabledStatus.BLOCKED);
-				}
 			}
 			return new StateStatus(false, null, atomCount, EnabledStatus.NONE);
 		}

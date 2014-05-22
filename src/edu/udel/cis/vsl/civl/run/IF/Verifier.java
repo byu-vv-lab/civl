@@ -183,6 +183,7 @@ public class Verifier extends Player {
 						workRemains = searcher.search(initialState);
 					if (!workRemains)
 						break;
+					//TODO get rid of using log
 					log.report(new CIVLLogEntry(config, predicate
 							.getViolation()));
 					violationFound = true;
