@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 

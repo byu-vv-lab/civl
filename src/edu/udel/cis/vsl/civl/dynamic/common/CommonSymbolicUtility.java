@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -23,6 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableDynamicScope;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;

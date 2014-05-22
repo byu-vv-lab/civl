@@ -1,7 +1,6 @@
 /**
+ * Module <strong>config</strong> provides static configurations of the system.
  * 
- */
-/**
  * @author zmanchun
  *
  */

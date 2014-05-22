@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 //import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
@@ -81,6 +80,7 @@ import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;

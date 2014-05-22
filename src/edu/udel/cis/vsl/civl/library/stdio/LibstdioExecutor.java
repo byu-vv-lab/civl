@@ -11,7 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -33,6 +32,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;

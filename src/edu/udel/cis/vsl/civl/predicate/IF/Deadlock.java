@@ -5,7 +5,6 @@ package edu.udel.cis.vsl.civl.predicate.IF;
 
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.MAYBE;
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.YES;
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
@@ -16,6 +15,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;

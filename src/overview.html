@@ -40,6 +40,14 @@
 				<li>entry point: none</li>
 			</ol></li>
 
+		<li><strong>config</strong>
+			<ol>
+				<li>responsibilities: static configurations of the system</li>
+				<li>uses: <strong>gmc</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.config.IF}</li>
+				<li>entry point: CIVLConfiguration</li>
+			</ol></li>
+
 		<li><strong>transform</strong>
 			<ol>
 				<li>responsibilities: transformations of an AST</li>
@@ -52,7 +60,7 @@
 			<ol>
 				<li>responsibilities: definitions of the control flow graph
 					representation of a CIVL-C program</li>
-				<li>uses: <strong>err</strong>, <strong>run</strong>, <strong>util</strong>,
+				<li>uses: <strong>util</strong>, <strong>config</strong>,
 					<strong>abc</strong>, <strong>gmc</strong>, <strong>sarl</strong></li>
 				<li>interface: {@link edu.udel.cis.vsl.civl.model.IF}</li>
 				<li>entry point: Models</li>
@@ -99,7 +107,7 @@
 				</li>
 			</ol></li>
 
-		<li><strong>err</strong>
+<li><strong>state</strong>
 			<ol>
 				<li>responsibilities: general exception classes that can be
 					thrown by CIVL.</li>

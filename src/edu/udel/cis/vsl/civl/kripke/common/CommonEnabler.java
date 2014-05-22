@@ -4,7 +4,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
@@ -30,6 +29,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;

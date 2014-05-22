@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
@@ -29,6 +28,7 @@ import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 

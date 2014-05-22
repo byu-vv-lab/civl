@@ -7,7 +7,6 @@ import java.io.PrintStream;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
@@ -27,6 +26,7 @@ import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 
 /**
@@ -116,31 +116,31 @@ public class CommonStateManager implements StateManager {
 
 	/**
 	 * Save states during search?
-	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#saveStatesO}
+	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#saveStatesO}
 	 */
 	private boolean saveStates = true;
 
 	/**
 	 * Print saved states (i.e., canonicalized states)?
-	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#showSavedStatesO}
+	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#showSavedStatesO}
 	 */
 	private boolean showSavedStates = false;
 
 	/**
 	 * Print all states (including states that are not saved)?
-	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#showStatesO}
+	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#showStatesO}
 	 */
 	private boolean showStates = false;
 
 	/**
 	 * Print transitions?
-	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#showTransitionsO}
+	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#showTransitionsO}
 	 */
 	private boolean showTransitions = false;
 
 	/**
 	 * Simplify state returned by nextState?
-	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#simplifyO}
+	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#simplifyO}
 	 */
 	private boolean simplify = true;
 

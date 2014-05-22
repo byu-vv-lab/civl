@@ -3,13 +3,13 @@ package edu.udel.cis.vsl.civl.log.IF;
 import java.io.FileNotFoundException;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.ModelResult;

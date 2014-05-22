@@ -1,8 +1,8 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
-import edu.udel.cis.vsl.civl.dynamic.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 
 /**
  * A Library Executor provides the semantics for system functions defined in a
