@@ -11,6 +11,8 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.gmc.LogEntry;
 
 /**
+ * This represents an entry in the error log of CIVL.
+ * 
  * @author zirkel
  * 
  */

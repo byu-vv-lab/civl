@@ -11,6 +11,12 @@ import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
+/**
+ * A SymbolicUtility provides all the common operations of symbolic expressions.
+ * 
+ * @author Manchun Zheng
+ * 
+ */
 public interface SymbolicUtility {
 	/**
 	 * 

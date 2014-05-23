@@ -15,7 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
- * A function.
+ * A CIVL function.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 

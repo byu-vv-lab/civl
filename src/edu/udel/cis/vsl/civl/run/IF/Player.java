@@ -181,8 +181,8 @@ public abstract class Player {
 		this.simplify = (Boolean) config.getValueOrDefault(simplifyO);
 		this.transitionFactory = new TransitionFactory();
 		this.libraryEnablerLoader = Kripkes.newLibraryEnablerLoader();
-		enabler = Kripkes.newEnabler(transitionFactory, evaluator, executor,
-				showAmpleSet, this.showAmpleSetWtStates,
+		enabler = Kripkes.newEnabler(transitionFactory, stateFactory,
+				evaluator, showAmpleSet, this.showAmpleSetWtStates,
 				this.libraryEnablerLoader, errorLogger);
 		enabler.setDebugOut(out);
 		enabler.setDebugging(debug);

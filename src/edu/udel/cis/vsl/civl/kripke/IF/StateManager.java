@@ -5,6 +5,12 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
 
+/**
+ * StateManager extends {@link StateManagerIF} for CIVL models.
+ * 
+ * @author Manchun Zheng
+ * 
+ */
 public interface StateManager extends StateManagerIF<State, Transition> {
 
 	/**

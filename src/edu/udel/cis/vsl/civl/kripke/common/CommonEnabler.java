@@ -21,7 +21,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
@@ -60,11 +59,6 @@ public abstract class CommonEnabler implements Enabler {
 	 * The unique evaluator used by the system.
 	 */
 	protected Evaluator evaluator;
-
-	/**
-	 * The unique executor used by the system.
-	 */
-	protected Executor executor;
 
 	/**
 	 * The unique model factory used by the system.
@@ -117,20 +111,19 @@ public abstract class CommonEnabler implements Enabler {
 	 *            The option to enable or disable the printing of ample sets.
 	 */
 	protected CommonEnabler(TransitionFactory transitionFactory,
-			Evaluator evaluator, Executor executor, boolean showAmpleSet,
-			boolean showAmpleSetWtStates, LibraryEnablerLoader libLoader,
-			CIVLErrorLogger errorLogger) {
+			StateFactory stateFactory, Evaluator evaluator,
+			boolean showAmpleSet, boolean showAmpleSetWtStates,
+			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger) {
 		this.transitionFactory = transitionFactory;
 		this.errorLogger = errorLogger;
 		this.evaluator = evaluator;
-		this.executor = executor;
 		this.showAmpleSet = showAmpleSet || showAmpleSetWtStates;
 		this.showAmpleSetWtStates = showAmpleSetWtStates;
 		this.modelFactory = evaluator.modelFactory();
 		this.universe = modelFactory.universe();
 		falseExpression = universe.falseExpression();
 		this.libraryLoader = libLoader;
-		this.stateFactory = executor.stateFactory();
+		this.stateFactory = stateFactory;
 	}
 
 	/* **************************** Public Methods ************************* */
@@ -318,8 +311,7 @@ public abstract class CommonEnabler implements Enabler {
 
 		if (pLocation == null)
 			return transitions;
-		if (executor.stateFactory().processInAtomic(state) != pid
-				&& p.atomicCount() > 0) {
+		if (stateFactory.processInAtomic(state) != pid && p.atomicCount() > 0) {
 			assignAtomicLock = modelFactory.assignAtomicLockVariable(pid,
 					pLocation);
 		}
@@ -447,7 +439,7 @@ public abstract class CommonEnabler implements Enabler {
 	private TransitionSequence enabledAtomicTransitions(State state) {
 		int pidInAtomic;
 
-		pidInAtomic = executor.stateFactory().processInAtomic(state);
+		pidInAtomic = stateFactory.processInAtomic(state);
 		if (pidInAtomic >= 0) {
 			// execute a transition in an atomic block of a certain process
 			// without interleaving with other processes

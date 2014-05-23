@@ -6,8 +6,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 
 /**
- * The Library class implements the common logic of library enabler and library
- * executor.
+ * The Library class provides the common data and operations of library
+ * evaluator, enabler, and executor.
  * 
  * @author Manchun Zheng (zmanchun)
  * 
@@ -72,6 +72,14 @@ public abstract class Library {
 	 */
 	public abstract String name();
 
+	/**
+	 * Creates a new instance of a library.
+	 * 
+	 * @param universe
+	 *            The symbolic universe to be used.
+	 * @param symbolicUtil
+	 *            The symbolic utility to be used.
+	 */
 	protected Library(SymbolicUniverse universe, SymbolicUtility symbolicUtil) {
 		this.universe = universe;
 		this.zero = universe.zeroInt();

@@ -24,7 +24,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
- * This class implements the common logic of library enablers.
+ * This class provides the common data and operations of library enablers.
  * 
  * @author Manchun Zheng (zmanchun)
  * 

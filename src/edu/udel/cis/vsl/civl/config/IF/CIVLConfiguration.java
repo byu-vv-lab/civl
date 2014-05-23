@@ -5,6 +5,12 @@ import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
 import edu.udel.cis.vsl.gmc.Option;
 
+/**
+ * This interface manages all constant configurations of the system.
+ * 
+ * @author Manchun Zheng
+ * 
+ */
 public interface CIVLConfiguration {
 	/** The version of this release of CIVL. */
 	public final static String version = "0.11";
@@ -14,7 +20,7 @@ public interface CIVLConfiguration {
 	 * ISO 8601.
 	 */
 	public final static String date = "2014-04-22";
-	
+
 	/**
 	 * The prefix of the full name of the class of a library enabler/executor.
 	 */
@@ -121,6 +127,5 @@ public interface CIVLConfiguration {
 
 	public final static Option guiO = Option.newScalarOption("gui", BOOLEAN,
 			"launch GUI? (under development, only works with replay)", false);
-
 
 }

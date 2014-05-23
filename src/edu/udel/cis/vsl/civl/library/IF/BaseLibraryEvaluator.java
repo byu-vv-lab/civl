@@ -12,6 +12,12 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 
+/**
+ * This class provides the common data and operations of library evaluators.
+ * 
+ * @author Manchun Zheng
+ * 
+ */
 public abstract class BaseLibraryEvaluator extends Library implements
 		LibraryEvaluator {
 	/**

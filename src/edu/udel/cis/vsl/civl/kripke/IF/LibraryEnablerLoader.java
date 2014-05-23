@@ -7,6 +7,12 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 
+/**
+ * This provides the operation to load a certain library enabler dynamically.
+ * 
+ * @author Manchun Zheng
+ * 
+ */
 public interface LibraryEnablerLoader {
 	/**
 	 * Gets the library enabler with the given name.
