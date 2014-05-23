@@ -43,7 +43,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
-import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
@@ -994,7 +994,7 @@ public class CommonExecutor implements Executor {
 	}
 
 	@Override
-	public State execute(State state, int pid, SingleTransition transition)
+	public State execute(State state, int pid, Transition transition)
 			throws UnsatisfiablePathConditionException {
 		state = state.setPathCondition(transition.pathCondition());
 		return this.execute(state, pid, transition.statement());

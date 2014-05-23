@@ -27,7 +27,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -114,14 +114,14 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	}
 
 	@Override
-	public List<SingleTransition> enabledTransitions(State state,
+	public List<Transition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
 			int pid, int processIdentifier, Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException {
 		String functionName = call.function().name().name();
 		CallOrSpawnStatement callWorker;
 		List<Expression> arguments = call.arguments();
-		List<SingleTransition> localTransitions = new ArrayList<>();
+		List<Transition> localTransitions = new ArrayList<>();
 		Statement transitionStatement;
 
 		switch (functionName) {

@@ -344,7 +344,7 @@ public class CommonCallStatement extends CommonStatement implements
 			result += " at " + getSource().getSummary();
 		else
 			result += " at " + source().getSource().getSummary();
-		result += ";\n";
+		result += ";";
 		return result;
 	}
 

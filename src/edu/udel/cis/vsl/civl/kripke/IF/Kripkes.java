@@ -18,19 +18,18 @@ public class Kripkes {
 		return new PointeredEnabler(transitionFactory, evaluator, executor,
 				showAmpleSet, showAmpleSetWtStates, libLoader, errorLogger);
 	}
-	
+
 	public static LibraryEnablerLoader newLibraryEnablerLoader() {
 		return new CommonLibraryEnablerLoader();
 	}
 
-	public static StateManager newStateManager(
-			TransitionFactory transitionFactory, Enabler enabler,
+	public static StateManager newStateManager(Enabler enabler,
 			Executor executor, PrintStream out, boolean verbose, boolean debug,
-			boolean gui, boolean showStates, boolean showSavedStates,
+			boolean showStates, boolean showSavedStates,
 			boolean showTransitions, boolean saveStates, boolean simplify,
 			CIVLErrorLogger errorLogger) {
-		return new CommonStateManager(transitionFactory, enabler, executor,
-				out, verbose, debug, gui, showStates, showSavedStates,
-				showTransitions, saveStates, simplify, errorLogger);
+		return new CommonStateManager(enabler, executor, out, verbose, debug,
+				showStates, showSavedStates, showTransitions, saveStates,
+				simplify, errorLogger);
 	}
 }

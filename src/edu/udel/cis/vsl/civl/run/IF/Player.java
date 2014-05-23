@@ -188,10 +188,9 @@ public abstract class Player {
 		enabler.setDebugging(debug);
 		this.predicate = new StandardPredicate(log, universe,
 				(Enabler) this.enabler, this.executor);
-		stateManager = Kripkes.newStateManager(this.transitionFactory,
-				(Enabler) enabler, executor, out, verbose, debug, gui,
-				showStates, showSavedStates, showTransitions, saveStates,
-				simplify, errorLogger);
+		stateManager = Kripkes.newStateManager((Enabler) enabler, executor,
+				out, verbose, debug, showStates, showSavedStates,
+				showTransitions, saveStates, simplify, errorLogger);
 	}
 
 	public void printResult() {

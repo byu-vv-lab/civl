@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
-import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 
 /**
  * A helper class to keep track of analysis result of states in the sense that
@@ -35,7 +35,7 @@ class StateStatus {
 	 * The current enabled transition of the current process. Not NULL only when
 	 * the process is allowed to execute more.
 	 */
-	SingleTransition enabledTransition;
+	Transition enabledTransition;
 
 	/**
 	 * Keep track of the number of incomplete atom blocks.
@@ -55,7 +55,7 @@ class StateStatus {
 	 * @param status
 	 *            The status of the state.
 	 */
-	StateStatus(boolean result, SingleTransition transition, int atomCount,
+	StateStatus(boolean result, Transition transition, int atomCount,
 			EnabledStatus status) {
 		this.val = result;
 		this.enabledTransition = transition;

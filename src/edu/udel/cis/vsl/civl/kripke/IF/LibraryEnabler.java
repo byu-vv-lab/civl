@@ -6,7 +6,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -63,7 +63,7 @@ public interface LibraryEnabler {
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
 	 */
-	List<SingleTransition> enabledTransitions(State state,
+	List<Transition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
 			int pid, int processIdentifier, Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException;

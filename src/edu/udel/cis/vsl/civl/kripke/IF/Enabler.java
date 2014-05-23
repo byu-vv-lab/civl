@@ -7,6 +7,12 @@ import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 
+/**
+ * Enabler extends {@link EnablerIF} for CIVL models.
+ * 
+ * @author Manchun Zheng
+ * 
+ */
 public interface Enabler extends
 		EnablerIF<State, Transition, TransitionSequence> {
 

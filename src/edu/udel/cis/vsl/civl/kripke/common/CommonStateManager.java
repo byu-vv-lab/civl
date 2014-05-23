@@ -9,6 +9,7 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
+import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
 import edu.udel.cis.vsl.civl.kripke.common.StateStatus.EnabledStatus;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
@@ -16,12 +17,8 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.semantics.IF.CompoundTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
-import edu.udel.cis.vsl.civl.semantics.common.CommonStep;
 import edu.udel.cis.vsl.civl.semantics.common.CommonTransition;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -29,6 +26,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
+import edu.udel.cis.vsl.gmc.TraceStepIF;
 
 /**
  * @author Timothy K. Zirkel (zirkel)
@@ -138,15 +136,15 @@ public class CommonStateManager implements StateManager {
 	/**
 	 * True iff gui mode is enabled.
 	 */
-	private boolean guiMode = false;
+	// private boolean guiMode = false;
 
 	/**
 	 * The compound transition established by the current nextStep call. TODO:
 	 * get rid of being an instance field, creating a new class NextStateWorker.
 	 */
-	private CompoundTransition compoundTransition;
+	// private CompoundTransition compoundTransition;
 
-	private TransitionFactory transitionFactory;
+	// private TransitionFactory transitionFactory;
 
 	private CIVLErrorLogger errorLogger;
 
@@ -159,19 +157,17 @@ public class CommonStateManager implements StateManager {
 	 * @param executor
 	 *            The unique executor to by used in the system.
 	 */
-	public CommonStateManager(TransitionFactory transitionFactory,
-			Enabler enabler, Executor executor, PrintStream out,
-			boolean verbose, boolean debug, boolean gui, boolean showStates,
-			boolean showSavedStates, boolean showTransitions,
-			boolean saveStates, boolean simplify, CIVLErrorLogger errorLogger) {
-		this.transitionFactory = transitionFactory;
+	public CommonStateManager(Enabler enabler, Executor executor,
+			PrintStream out, boolean verbose, boolean debug,
+			boolean showStates, boolean showSavedStates,
+			boolean showTransitions, boolean saveStates, boolean simplify,
+			CIVLErrorLogger errorLogger) {
 		this.executor = executor;
 		this.enabler = (CommonEnabler) enabler;
 		this.stateFactory = executor.stateFactory();
 		this.out = out;
 		this.verbose = verbose;
 		this.debug = debug;
-		this.guiMode = gui;
 		this.showStates = showStates;
 		this.showSavedStates = showSavedStates;
 		this.showTransitions = showTransitions;
@@ -192,36 +188,33 @@ public class CommonStateManager implements StateManager {
 	 *            The current state
 	 * @param transition
 	 *            The transition to be executed.
-	 * @return the resulting state after execute
+	 * @return the resulting trace step after executing the state.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State nextStateWork(State state, Transition transition)
-			throws UnsatisfiablePathConditionException {
+	private TraceStepIF<Transition, State> nextStateWork(State state,
+			Transition transition) throws UnsatisfiablePathConditionException {
 		int pid;
 		int numProcs;
 		boolean printTransitions = verbose || debug || showTransitions;
 		int oldMaxCanonicId = this.maxCanonicId;
 		int processIdentifier;
-		SingleTransition firstTransition;
+		Transition firstTransition;
 		State oldState = state;
 		StateStatus stateStatus;
+		TraceStep traceStep;
 
-		assert transition instanceof SingleTransition;
-		pid = ((SingleTransition) transition).pid();
-		processIdentifier = ((SingleTransition) transition).processIdentifier();
-		firstTransition = (SingleTransition) transition;
-		if (this.guiMode)
-			this.compoundTransition = this.transitionFactory
-					.newCompoundTransition(pid, processIdentifier);
+		assert transition instanceof Transition;
+		pid = ((Transition) transition).pid();
+		processIdentifier = ((Transition) transition).processIdentifier();
+		traceStep = new CommonTraceStep(processIdentifier);
+		firstTransition = (Transition) transition;
 		state = executor.execute(state, pid, firstTransition);
 		if (printTransitions) {
 			printTransitionPrefix(oldState, processIdentifier);
 			printStatement(oldState, state, firstTransition, AtomicKind.NONE,
 					processIdentifier, false);
 		}
-		if (this.guiMode)
-			this.compoundTransition.addStep(new CommonStep(oldState, state,
-					firstTransition.statement()));
+		traceStep.addAtomicStep(new CommonAtomicStep(state, firstTransition));
 		for (stateStatus = singleEnabled(state, pid, 0); stateStatus.val; stateStatus = singleEnabled(
 				state, pid, stateStatus.atomCount)) {
 			assert stateStatus.enabledTransition != null;
@@ -231,9 +224,8 @@ public class CommonStateManager implements StateManager {
 			if (printTransitions)
 				printStatement(oldState, state, stateStatus.enabledTransition,
 						AtomicKind.NONE, processIdentifier, false);
-			if (this.guiMode)
-				this.compoundTransition.addStep(new CommonStep(oldState, state,
-						stateStatus.enabledTransition.statement()));
+			traceStep.addAtomicStep(new CommonAtomicStep(state,
+					stateStatus.enabledTransition));
 			oldState = state;
 			if (this.showStates)
 				out.print(this.symbolicUtil.stateToString(state));
@@ -257,8 +249,7 @@ public class CommonStateManager implements StateManager {
 
 				errorLogger.reportError(err);
 			}
-			if (this.guiMode)
-				this.compoundTransition.updateFinalState(state);
+			traceStep.setResult(state);
 			this.maxCanonicId = state.getCanonicId();
 		} else {
 			state = stateFactory.collectProcesses(state);
@@ -289,7 +280,7 @@ public class CommonStateManager implements StateManager {
 		numProcs = state.numProcs();
 		if (numProcs > maxProcs)
 			maxProcs = numProcs;
-		return state;
+		return traceStep;
 	}
 
 	/**
@@ -328,7 +319,7 @@ public class CommonStateManager implements StateManager {
 	 * @return
 	 */
 	private StateStatus singleEnabled(State state, int pid, int atomCount) {
-		List<SingleTransition> enabled;
+		List<Transition> enabled;
 		ProcessState procState = state.getProcessState(pid);
 		Location pLocation;
 		boolean inAtomic = false;
@@ -409,10 +400,11 @@ public class CommonStateManager implements StateManager {
 	 *            execution of the statement.
 	 */
 	private void printStatement(State currentState, State newState,
-			SingleTransition transition, AtomicKind atomicKind, int atomCount,
+			Transition transition, AtomicKind atomicKind, int atomCount,
 			boolean atomicLockVarChanged) {
 		out.print(transition.statement().toStepString(atomicKind, atomCount,
 				atomicLockVarChanged));
+		out.println();
 	}
 
 	/**
@@ -427,7 +419,7 @@ public class CommonStateManager implements StateManager {
 	 *            with.
 	 */
 	private void printTransitionPrefix(State state, int processIdentifier) {
-		out.print(state + ", proc ");
+		out.print(state + ", p");
 		out.println(processIdentifier + ":");
 	}
 
@@ -481,8 +473,34 @@ public class CommonStateManager implements StateManager {
 		return state.getDepth();
 	}
 
+	// @Override
+	// public State nextState(State state, Transition transition) {
+	// nextStateCalls++;
+	// if (nextStateCalls % 100 == 0) {
+	// synchronized (this) {
+	// if (printUpdate) {
+	// printUpdateWork();
+	// printUpdate = false;
+	// }
+	// }
+	// }
+	// try {
+	// return nextStateWork(state, transition);
+	// } catch (UnsatisfiablePathConditionException e) {
+	// // problem is the interface requires an actual State
+	// // be returned. There is no concept of executing a
+	// // transition and getting null or an exception.
+	// // since the error has been logged, just stutter:
+	// return state;
+	// }
+	//
+	// }
+
 	@Override
-	public State nextState(State state, Transition transition) {
+	public TraceStepIF<Transition, State> nextState(State state,
+			Transition transition) {
+		TraceStepIF<Transition, State> result;
+
 		nextStateCalls++;
 		if (nextStateCalls % 100 == 0) {
 			synchronized (this) {
@@ -493,41 +511,15 @@ public class CommonStateManager implements StateManager {
 			}
 		}
 		try {
-			return nextStateWork(state, transition);
+			result = nextStateWork(state, transition);
 		} catch (UnsatisfiablePathConditionException e) {
 			// problem is the interface requires an actual State
 			// be returned. There is no concept of executing a
 			// transition and getting null or an exception.
 			// since the error has been logged, just stutter:
-			return state;
+			result = new NullTraceStep(state);
 		}
-
-	}
-
-	@Override
-	public Object[] nextStateForUi(State state, Transition transition) {
-		Object[] results = new Object[2];
-
-		nextStateCalls++;
-		if (nextStateCalls % 100 == 0) {
-			synchronized (this) {
-				if (printUpdate) {
-					printUpdateWork();
-					printUpdate = false;
-				}
-			}
-		}
-		try {
-			results[0] = nextStateWork(state, transition);
-		} catch (UnsatisfiablePathConditionException e) {
-			// problem is the interface requires an actual State
-			// be returned. There is no concept of executing a
-			// transition and getting null or an exception.
-			// since the error has been logged, just stutter:
-			results[0] = state;
-		}
-		results[1] = this.compoundTransition;
-		return results;
+		return result;
 	}
 
 	@Override

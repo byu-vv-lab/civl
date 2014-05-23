@@ -63,7 +63,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.Models;
-import edu.udel.cis.vsl.civl.semantics.IF.CompoundTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
@@ -73,6 +72,7 @@ import edu.udel.cis.vsl.gmc.CommandLineParser;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.gmc.MisguidedExecutionException;
 import edu.udel.cis.vsl.gmc.Option;
+import edu.udel.cis.vsl.gmc.Trace;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
@@ -547,6 +547,7 @@ public class UserInterface {
 		boolean guiMode = config.isTrue(guiO);
 		Pair<Model, Preprocessor> modelAndPreprocessor;
 		Preprocessor preprocessor;
+		Trace<Transition, State> trace;
 
 		checkFilenames(1, config);
 		sourceFilename = config.getFreeArg(1);
@@ -573,26 +574,11 @@ public class UserInterface {
 			preprocessor.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out,
 				err, preprocessor);
+		trace = replayer.run();
+		result = trace.result();
 		if (guiMode) {
-			ArrayList<State> states = new ArrayList<>();
-			ArrayList<Transition> transitions = new ArrayList<>();
-			CompoundTransition[] tranArray;
-			State[] stateArray;
 			@SuppressWarnings("unused")
-			CIVL_GUI gui;
-
-			replayer.replayForGui(states, transitions);
-			stateArray = new State[states.size()];
-			states.toArray(stateArray);
-			// result = replayer.replayForGui(states, transitions);
-			tranArray = replayer.transitionFactory
-					.newCompoundTransitionArray(transitions.size());
-			transitions.toArray(tranArray);
-			gui = new CIVL_GUI(tranArray, replayer.symbolicUtil);
-			// runGui(states, transitions, replayer.stateManager);
-			result = false;
-		} else {
-			result = replayer.run();
+			CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicUtil);
 		}
 		printStats(out, universe);
 		replayer.printStats();
@@ -623,7 +609,7 @@ public class UserInterface {
 		out.println("\nRunning random simulation with seed " + player.getSeed()
 				+ " ...");
 		out.flush();
-		result = player.run();
+		result = player.run().result();
 		printStats(out, universe);
 		player.printStats();
 		out.println();

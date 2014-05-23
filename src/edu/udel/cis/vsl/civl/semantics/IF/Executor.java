@@ -107,7 +107,7 @@ public interface Executor {
 	 * @param transition
 	 * @return
 	 */
-	State execute(State state, int pid, SingleTransition transition)
+	State execute(State state, int pid, Transition transition)
 			throws UnsatisfiablePathConditionException;
 
 	CIVLErrorLogger errorLogger();

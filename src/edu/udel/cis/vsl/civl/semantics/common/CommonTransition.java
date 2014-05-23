@@ -3,22 +3,15 @@
  */
 package edu.udel.cis.vsl.civl.semantics.common;
 
-import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
- * A transition represents a single atomic step of execution in a CIVL model.
- * They are further specialized into simple and synchronous transitions in
- * sub-classes. However, every transition must have a path condition and must
- * belong to one model.
- * 
- * The path condition is the conjunction of the path condition in the pre-state
- * and the result of evaluating the guard. It is therefore the condition that
- * should hold when execution of the statement wrapped by this transition
- * begins. It is stored in the Transition as an optimization: since it must be
- * computed once when determining whether the transition is enabled, there is no
- * need to compute it again when executing the transition.
+ * A simple transition involves a single atomic statement in one process. It is
+ * to be contrasted with a synchronous transition, which involves two statements
+ * executing together in two different processes.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
@@ -27,52 +20,83 @@ public class CommonTransition implements Transition {
 
 	private BooleanExpression pathCondition;
 
-	private Model model;
+	// private Model model;
 
-	public CommonTransition() {
+	protected int pid;
 
-	}
+	protected int processIdentifier;
+
+	protected Statement statement;
 
 	/**
-	 * A transition.
+	 * A simple transition involves a single atomic statement in one process. It
+	 * is to be contrasted with a synchronous transition, which involves two
+	 * statements executing together in two different processes.
 	 * 
 	 * @param pathCondition
-	 *            The path condition that should be used when executing the
-	 *            statement * transition.
+	 *            The path condition that should be used when executing
+	 *            statement
+	 * @param pid
+	 *            The process id of the process executing this transition.
+	 * @param processIdentifier
+	 *            The process identifier of the process executing this
+	 *            transition.
+	 * @param statement
+	 *            The statement corresponding to this transition.
 	 */
-	public CommonTransition(BooleanExpression pathCondition) {
+	public CommonTransition(BooleanExpression pathCondition, int pid,
+			int processIdentifier, Statement statement) {
 		this.pathCondition = pathCondition;
+		this.pid = pid;
+		this.statement = statement;
+		this.processIdentifier = processIdentifier;
 	}
 
 	/**
-	 * @return The path condition that should result after executing the
-	 *         transition.
+	 * @return The process id of the process executing this transition.
 	 */
+	public int pid() {
+		return pid;
+	}
+
+	/**
+	 * @return The statement corresponding to this transition.
+	 */
+	public Statement statement() {
+		return statement;
+	}
+
+	/**
+	 * @param pid
+	 *            The process id of the process executing this transition.
+	 */
+	public void setPid(int pid) {
+		this.pid = pid;
+	}
+
+	/**
+	 * @param statement
+	 *            The statement corresponding to this transition.
+	 */
+	public void setStatement(Statement statement) {
+		this.statement = statement;
+	}
+
+	@Override
+	public String toString() {
+		String result = "p" + processIdentifier + ": ";
+
+		result += statement.toStepString(AtomicKind.NONE, pid, false);
+		return result;
+	}
+
+	public int processIdentifier() {
+		return this.processIdentifier;
+	}
+
+	@Override
 	public BooleanExpression pathCondition() {
-		return pathCondition;
-	}
-
-	/**
-	 * @return The model to which this transition belongs.
-	 */
-	public Model model() {
-		return model;
-	}
-
-	/**
-	 * @param The
-	 *            sets path condition to be used when executing statement
-	 */
-	public void setPathCondition(BooleanExpression pathCondition) {
-		this.pathCondition = pathCondition;
-	}
-
-	/**
-	 * @param The
-	 *            model to which this transition belongs.
-	 */
-	public void setModel(Model model) {
-		this.model = model;
+		return this.pathCondition;
 	}
 
 }

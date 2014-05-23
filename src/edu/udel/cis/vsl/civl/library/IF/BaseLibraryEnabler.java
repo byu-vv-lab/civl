@@ -15,7 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -98,12 +98,12 @@ public abstract class BaseLibraryEnabler extends Library implements
 	}
 
 	@Override
-	public List<SingleTransition> enabledTransitions(State state,
+	public List<Transition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
 			int pid, int processIdentifier, Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException {
 		Statement transitionStatement;
-		ArrayList<SingleTransition> localTransitions = new ArrayList<>();
+		ArrayList<Transition> localTransitions = new ArrayList<>();
 
 		if (assignAtomicLock != null) {
 			StatementList statementList = modelFactory

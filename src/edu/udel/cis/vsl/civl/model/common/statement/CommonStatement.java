@@ -272,7 +272,7 @@ public abstract class CommonStatement extends CommonSourceable implements
 			result += " at " + getSource().getSummary();
 		else
 			result += " at " + source.getSource().getSummary();
-		result += ";\n";
+		result += ";";
 		return result;
 	}
 

@@ -5,7 +5,6 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.seedO;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -20,6 +19,7 @@ import edu.udel.cis.vsl.gmc.GuidedTransitionChooser;
 import edu.udel.cis.vsl.gmc.MisguidedExecutionException;
 import edu.udel.cis.vsl.gmc.RandomTransitionChooser;
 import edu.udel.cis.vsl.gmc.Replayer;
+import edu.udel.cis.vsl.gmc.Trace;
 import edu.udel.cis.vsl.gmc.TransitionChooser;
 
 /**
@@ -118,17 +118,20 @@ public class TracePlayer extends Player {
 				enabler, traceFile);
 	}
 
-	public boolean run() throws MisguidedExecutionException {
+	public Trace<Transition, State> run() throws MisguidedExecutionException {
 		try {
 			State initialState = stateFactory.initialState(model);
-			boolean violation = replayer.play(initialState, chooser);
+			Trace<Transition, State> trace = replayer.play(initialState,
+					chooser)[0];
+			boolean violation = trace.violation();
 
 			violation = violation || log.numErrors() > 0;
 			if (violation) {
 				out.println("Violation(s) found.");
 				out.flush();
 			}
-			return !violation;
+			trace.setViolation(violation);
+			return trace;
 		} catch (CIVLStateException stateException) {
 			throw new CIVLExecutionException(stateException.kind(),
 					stateException.certainty(), stateException.getMessage(),
@@ -137,21 +140,22 @@ public class TracePlayer extends Player {
 		}
 	}
 
-	public void replayForGui(ArrayList<State> states,
-			ArrayList<Transition> transitions)
-			throws MisguidedExecutionException {
-		try {
-			State initialState = stateFactory.initialState(model);
-
-			states.add(initialState);
-			replayer.playForUi(initialState, chooser, states, transitions);
-		} catch (CIVLStateException stateException) {
-			throw new CIVLExecutionException(stateException.kind(),
-					stateException.certainty(), stateException.getMessage(),
-					symbolicUtil.stateToString(stateException.state()),
-					stateException.source());
-		}
-	}
+	// public Trace<Transition, State>[] replayForGui(ArrayList<State> states,
+	// ArrayList<Transition> transitions)
+	// throws MisguidedExecutionException {
+	// try {
+	// State initialState = stateFactory.initialState(model);
+	// State[] stateArray = new State[] { initialState };
+	//
+	// states.add(initialState);
+	// return replayer.play(stateArray, chooser);
+	// } catch (CIVLStateException stateException) {
+	// throw new CIVLExecutionException(stateException.kind(),
+	// stateException.certainty(), stateException.getMessage(),
+	// symbolicUtil.stateToString(stateException.state()),
+	// stateException.source());
+	// }
+	// }
 
 	public void printStats() {
 		out.print("   statesInstantiated  : ");

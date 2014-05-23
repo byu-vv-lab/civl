@@ -22,7 +22,6 @@ import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.SingleTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
@@ -36,8 +35,9 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
- * Enabler implements {@link EnablerIF} for CIVL models. It is an abstract class
- * and can have different implementations for different reduction techniques.
+ * CommonEnabler implements {@link EnablerIF} for CIVL models. It is an abstract
+ * class and can have different implementations for different reduction
+ * techniques.
  * 
  * @author Manchun Zheng (zmanchun)
  * @author Timothy K. Zirkel (zirkel)
@@ -157,7 +157,7 @@ public abstract class CommonEnabler implements Enabler {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private List<SingleTransition> getEnabledTransitionsOfSystemCall(
+	private List<Transition> getEnabledTransitionsOfSystemCall(
 			CIVLSource source, State state, CallOrSpawnStatement call,
 			BooleanExpression pathCondition, int pid, int processIdentifier,
 			Statement assignAtomicLock)
@@ -309,10 +309,10 @@ public abstract class CommonEnabler implements Enabler {
 	 * @return the list of enabled transitions of the given process at the
 	 *         specified state
 	 */
-	ArrayList<SingleTransition> enabledTransitionsOfProcess(State state, int pid) {
+	ArrayList<Transition> enabledTransitionsOfProcess(State state, int pid) {
 		ProcessState p = state.getProcessState(pid);
 		Location pLocation = p.getLocation();
-		ArrayList<SingleTransition> transitions = new ArrayList<>();
+		ArrayList<Transition> transitions = new ArrayList<>();
 		Statement assignAtomicLock = null;
 		int numOutgoing;
 
@@ -357,10 +357,10 @@ public abstract class CommonEnabler implements Enabler {
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
 	 */
-	public List<SingleTransition> enabledTransitionsOfStatement(State state,
+	public List<Transition> enabledTransitionsOfStatement(State state,
 			Statement s, BooleanExpression pathCondition, int pid,
 			Statement assignAtomicLock) {
-		ArrayList<SingleTransition> localTransitions = new ArrayList<>();
+		ArrayList<Transition> localTransitions = new ArrayList<>();
 		Statement transitionStatement = null;
 		int processIdentifier = state.getProcessState(pid).identifier();
 

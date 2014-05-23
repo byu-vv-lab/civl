@@ -12,14 +12,16 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.kripke.IF.AtomicStep;
+import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.semantics.IF.CompoundTransition;
-import edu.udel.cis.vsl.civl.semantics.IF.Step;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.gmc.Trace;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -104,7 +106,9 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	/**
 	 * The list of transitions of the execution
 	 */
-	private CompoundTransition[] transitions;
+	private TraceStep[] transitions;
+
+	private State initState;
 
 	/**
 	 * The SymbolicUtility of the current state
@@ -119,9 +123,10 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * @param transitions
 	 *            the array of transitions of the execution
 	 */
-	public CIVL_GUI(CompoundTransition[] transitions,
-			SymbolicUtility symbolicUtil) {
-		this.transitions = transitions;
+	public CIVL_GUI(Trace<Transition, State> trace, SymbolicUtility symbolicUtil) {
+		this.initState = trace.init();
+		this.transitions = new TraceStep[trace.traceSteps().size()];
+		trace.traceSteps().toArray(this.transitions);
 		this.symbolicUtil = symbolicUtil;
 		initComponents();
 		setPreferredSize(new Dimension(1500, 1000));
@@ -137,7 +142,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 */
 	private void initComponents() {
 		leftView = drawTransitions();
-		rightView = drawState(transitions[0].getStep(0).start());
+		rightView = drawState(this.initState);
 		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftView, rightView);
 		add(split); // To the CIVL_GUI JFrame
 	}
@@ -197,8 +202,8 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		dy.add(treeNodes[0]);
 
 		// Add the path condition to the root of the tree
-		top.add(new DefaultMutableTreeNode(
-				"Path Condition: " + state.getPathCondition().toString()));
+		top.add(new DefaultMutableTreeNode("Path Condition: "
+				+ state.getPathCondition().toString()));
 
 		// Add the dyscopes to the root of the tree
 		top.add(dy);
@@ -212,8 +217,8 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		stateTree.getSelectionModel().setSelectionMode(
 				TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-		setDyscopeNodeExpansion(oldTree,stateTree);
-		
+		setDyscopeNodeExpansion(oldTree, stateTree);
+
 		// Listen for the root node to be selected
 		// Collapse the root nodes children
 		stateTree.addTreeSelectionListener(new TreeSelectionListener() {
@@ -293,11 +298,11 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * parent/child relationship in the state
 	 * 
 	 * @param state
-	 * 		The current state
+	 *            The current state
 	 * @param index
-	 * 		The current index
+	 *            The current index
 	 * @param treeNodes
-	 * 		Array of dyscope nodes
+	 *            Array of dyscope nodes
 	 */
 	private void arrangeChildDyscopes(State state, int index,
 			DyscopeNode[] treeNodes) {
@@ -332,13 +337,13 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 			}
 		}
 	}
-	
+
 	/**
 	 * Make the process state nodes for the given state
+	 * 
 	 * @param state
-	 * 		The current state
-	 * @return
-	 * 		TreeNode
+	 *            The current state
+	 * @return TreeNode
 	 */
 	private DefaultMutableTreeNode makeProcessStates(State state) {
 		// The process states of the state
@@ -360,7 +365,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		}
 		return procs;
 	}
-	
+
 	/**
 	 * Expand/collapse the nodes of the newTree to replicate the oldTree
 	 * 
@@ -404,7 +409,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// The root of the tree
 		GUINODE top = new GUINODE("Transitions");
 
-		top.add(new StateNode("State: 0", transitions[0].getStep(0).start()));
+		top.add(new StateNode("State: 0", this.initState));
 
 		// For each transition
 		for (int i = 0; i < transitions.length; i++) {
@@ -415,12 +420,12 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 			String transitionName = getTransitionName(transitions[i]);
 
 			// Create the transition node
-			TransitionNode transitionNode = new TransitionNode(
-					transitionName, transitions[i]);
+			TransitionNode transitionNode = new TransitionNode(transitionName,
+					transitions[i]);
 
 			// For each step in the transition
-			for (Step s : transitions[i].getSteps()) {
-				//Make the step node
+			for (AtomicStep s : transitions[i].getAtomicSteps()) {
+				// Make the step node
 				StepNode stepNode = makeStepNode(s);
 
 				// Add the step to the transition
@@ -444,23 +449,21 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		leftView.setPreferredSize(new Dimension(600, 500));
 		return leftView;
 	}
-	
+
 	/**
 	 * Returns a string of the transition name
 	 * 
 	 * @param transition
-	 * 		The current transition
-	 * @return
-	 * 		String
+	 *            The current transition
+	 * @return String
 	 */
-	private String getTransitionName(CompoundTransition transition) {
+	private String getTransitionName(TraceStep transition) {
 		// The name of the transition
 		StringBuffer transitionName = new StringBuffer();
-		transitionName.append("p" + transition.processIdentifier()
-				+ ": ");
+		transitionName.append("p" + transition.processIdentifier() + ": ");
 
 		// Add step information to the name of the transition
-		for (Step s : transition.getSteps()) {
+		for (AtomicStep s : transition.getAtomicSteps()) {
 			if (transitionName.length() < 50) {
 				transitionName.append(s.statement().toString() + "; ");
 			} else {
@@ -470,15 +473,15 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		}
 		return transitionName.toString();
 	}
-	
+
 	/**
 	 * Make a step node out of the given step
+	 * 
 	 * @param step
-	 * 		The current step
-	 * @return
-	 * 		StepNode
+	 *            The current step
+	 * @return StepNode
 	 */
-	private StepNode makeStepNode(Step step) {
+	private StepNode makeStepNode(AtomicStep step) {
 		Statement stmt = step.statement();
 
 		String targetString;
@@ -490,8 +493,8 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 			targetString = "RET";
 		}
 
-		stepNode = new StepNode(stmt.source().id() + "->"
-				+ targetString + ": " + stmt.toString(), step);
+		stepNode = new StepNode(stmt.source().id() + "->" + targetString + ": "
+				+ stmt.toString(), step);
 		return stepNode;
 
 	}
@@ -552,9 +555,9 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	private class TransitionNode extends GUINODE {
 		static final long serialVersionUID = 1L;
 		final int id = TRANSITION_NODE;
-		CompoundTransition transition;
+		TraceStep transition;
 
-		TransitionNode(String name, CompoundTransition t) {
+		TransitionNode(String name, TraceStep t) {
 			super(name);
 			transition = t;
 		}
@@ -594,14 +597,14 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	private class StepNode extends GUINODE {
 		static final long serialVersionUID = 1L;
 		final int id = STEP_NODE;
-		Step step;
+		AtomicStep step;
 
-		public StepNode(String name, Step s) {
+		public StepNode(String name, AtomicStep s) {
 			super(name);
 			step = s;
 		}
 
-		Step getStep() {
+		AtomicStep getStep() {
 			return step;
 		}
 
@@ -649,8 +652,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					if (split.getRightComponent() != null) {
 						split.remove(split.getRightComponent());
 					}
-					rightView = drawState(t.transition.getStep(
-							t.transition.getNumOfSteps() - 1).target());
+					rightView = drawState(t.transition.result());
 					split.setRightComponent(rightView);
 				} catch (Exception tranEX) {
 					tranEX.printStackTrace();
@@ -680,7 +682,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					if (split.getRightComponent() != null) {
 						split.remove(split.getRightComponent());
 					}
-					rightView = drawState(s.getStep().target());
+					rightView = drawState(s.getStep().result());
 					split.setRightComponent(rightView);
 				} catch (Exception stepEX) {
 					stepEX.printStackTrace();

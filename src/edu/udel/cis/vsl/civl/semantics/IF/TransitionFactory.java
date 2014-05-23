@@ -4,8 +4,7 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.semantics.common.CommonCompoundTransition;
-import edu.udel.cis.vsl.civl.semantics.common.CommonSingleTransition;
+import edu.udel.cis.vsl.civl.semantics.common.CommonTransition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
@@ -39,16 +38,11 @@ public class TransitionFactory {
 	 * @return A new simple transition with the given path condition and
 	 *         statement.
 	 */
-	public CommonSingleTransition newSimpleTransition(
+	public CommonTransition newSimpleTransition(
 			BooleanExpression pathCondition, int pid, int processIdentifier,
 			Statement statement) {
-		return new CommonSingleTransition(pathCondition, pid,
+		return new CommonTransition(pathCondition, pid,
 				processIdentifier, statement);
-	}
-
-	public CompoundTransition newCompoundTransition(int pid,
-			int processIdentifier) {
-		return new CommonCompoundTransition(pid, processIdentifier);
 	}
 
 	/**
@@ -62,9 +56,4 @@ public class TransitionFactory {
 	public TransitionSequence newTransitionSequence(State state) {
 		return new TransitionSequence(state);
 	}
-
-	public CompoundTransition[] newCompoundTransitionArray(int size) {
-		return new CommonCompoundTransition[size];
-	}
-
 }

@@ -298,7 +298,7 @@ public class CommonStatementList implements StatementList {
 			result += " at " + getSource().getSummary();
 		else
 			result += " at " + this.source().getSource().getSummary();
-		result += ";\n";
+		result += ";";
 		return result;
 	}
 
