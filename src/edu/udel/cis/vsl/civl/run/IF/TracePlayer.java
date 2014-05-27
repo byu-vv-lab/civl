@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
+import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.Model;
-import edu.udel.cis.vsl.civl.semantics.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;

@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.semantics.IF;
+package edu.udel.cis.vsl.civl.log.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;

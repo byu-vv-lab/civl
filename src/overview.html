@@ -109,19 +109,97 @@
 
 		<li><strong>state</strong>
 			<ol>
-				<li>responsibilities: creation and manipulation of states of a CIVL model.</li>
-				<li>uses: <strong>config</strong>, <strong>model</strong></li>
+				<li>responsibilities: creation and manipulation of states of a
+					CIVL model.</li>
+				<li>uses: <strong>config</strong>, <strong>model</strong>, <strong>gmc</strong>,
+					<strong>sarl</strong></li>
 				<li>interface: {@link edu.udel.cis.vsl.civl.state.IF}</li>
 				<li>entry point: States</li>
-			</ol></li>TBC.
+			</ol></li>
+
+		<li><strong>log</strong>
+			<ol>
+				<li>responsibilities: data structures for logging errors during
+					verification.</li>
+				<li>uses: <strong>model</strong>, <strong>state</strong>, <strong>gmc</strong>,
+					<strong>sarl</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.log.IF}</li>
+				<li>entry point: none</li>
+			</ol></li>
+
+		<li><strong>dynamic</strong>
+			<ol>
+				<li>responsibilities: general computations of symbolic
+					expressions, including the pretty printing method.</li>
+				<li>uses: <strong>util</strong>,<strong>model</strong>, <strong>state</strong>,
+					<strong>log</strong>, <strong>sarl</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.dynamic.IF}</li>
+				<li>entry point: Dynamics</li>
+			</ol></li>
+
+		<li><strong>semantics</strong>
+			<ol>
+				<li>responsibilities: implementation of the semantics of
+					CIVL-C.</li>
+				<li>uses: <strong>util</strong>, <strong>config</strong>, <strong>model</strong>,
+					<strong>state</strong>, <strong>log</strong>, <strong>dynamic</strong>,
+					<strong>sarl</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.semantics.IF}</li>
+				<li>entry point: Semantics</li>
+			</ol></li>
+
+		<li><strong>kripke</strong>
+			<ol>
+				<li>responsibilities: implementation of the semantics of
+					CIVL-C.</li>
+				<li>uses: <strong>util</strong>, <strong>config</strong>, <strong>model</strong>,
+					<strong>state</strong>, <strong>log</strong>, <strong>dynamic</strong>,
+					<strong>semantics</strong>, <strong>gmc</strong>, <strong>sarl</strong>
+				</li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.kripke.IF}</li>
+				<li>entry point: Kripkes</li>
+			</ol></li>
+
+		<li><strong>predicate</strong>
+			<ol>
+				<li>responsibilities: definitions of predicates that are
+					required to hold for any CIVL-C programs.</li>
+				<li>uses: <strong>model</strong>, <strong>state</strong>, <strong>log</strong>,
+					<strong>dynamic</strong>, <strong>semantics</strong>, <strong>kripke</strong>,
+					<strong>gmc</strong>, <strong>sarl</strong>
+				</li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.predicate.IF}</li>
+				<li>entry point: none</li>
+			</ol></li>
+
+		<li><strong>gui</strong>
+			<ol>
+				<li>responsibilities: graphical interfaces for viewing
+					counterexample traces.</li>
+				<li>uses: <strong>model</strong>, <strong>state</strong>, <strong>dynamic</strong>,
+					<strong>kripke</strong>, <strong>gmc</strong>, <strong>sarl</strong>
+				</li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.gui.IF}</li>
+				<li>entry point: none</li>
+			</ol></li>
+
+		<li><strong>library</strong>
+			<ol>
+				<li>responsibilities: base implementation of libraries.</li>
+				<li>uses: <strong>model</strong>, <strong>state</strong>, <strong>log</strong>,
+					<strong>dynamic</strong>, <strong>semantics</strong>, <strong>kripke</strong>,
+					<strong>sarl</strong></li>
+				<li>interface: {@link edu.udel.cis.vsl.civl.library.IF}</li>
+				<li>entry point: none</li>
+			</ol></li>
 
 		<li><strong>run</strong>
 			<ol>
 				<li>responsibilities: parsing command line inputs and initial
-					configurations of the tool</li>
-				<li>uses: <strong>err</strong>, <strong>kripke</strong>, <strong>model</strong>,
-					<strong>state</strong>, <strong>transform</strong>, <strong>util</strong>,
-					<strong>abc</strong>, <strong>gmc</strong>, <strong>sarl</strong></li>
+					configurations of the tool.</li>
+				<li>uses: <strong>kripke</strong>, <strong>model</strong>, <strong>state</strong>,
+					<strong>transform</strong>, <strong>util</strong>, <strong>abc</strong>,
+					<strong>gmc</strong>, <strong>sarl</strong></li>
 				<li>interface: {@link edu.udel.cis.vsl.civl.run.IF}</li>
 				<li>entry point: UserInterface</li>
 			</ol></li>
