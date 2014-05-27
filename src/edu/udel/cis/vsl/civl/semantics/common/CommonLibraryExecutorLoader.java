@@ -40,13 +40,13 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 				Class<? extends LibraryExecutor> aClass = (Class<? extends LibraryExecutor>) Class
 						.forName(aClassName);
 				Constructor<? extends LibraryExecutor> constructor = aClass
-						.getConstructor(Executor.class, PrintStream.class,
-								PrintStream.class, boolean.class,
-								boolean.class, ModelFactory.class,
-								SymbolicUtility.class);
+						.getConstructor(String.class, Executor.class,
+								PrintStream.class, PrintStream.class,
+								boolean.class, boolean.class,
+								ModelFactory.class, SymbolicUtility.class);
 
-				result = constructor.newInstance(primaryExecutor, output, err,
-						enablePrintf, statelessPrintf, modelFacotry,
+				result = constructor.newInstance(name, primaryExecutor, output,
+						err, enablePrintf, statelessPrintf, modelFacotry,
 						symbolicUtil);
 			} catch (Exception e) {
 				throw new CIVLInternalException("Unable to load library: "

@@ -32,18 +32,10 @@ public class LibstdlibEnabler extends BaseLibraryEnabler implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	public LibstdlibEnabler(Enabler primaryEnabler, Evaluator evaluator,
+	public LibstdlibEnabler(String name, Enabler primaryEnabler, Evaluator evaluator,
 			TransitionFactory transitionFactory, PrintStream output,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryEnabler, evaluator, transitionFactory, output,
+		super(name, primaryEnabler, evaluator, transitionFactory, output,
 				modelFactory, symbolicUtil);
 	}
-
-	/* ************************ Methods from Library *********************** */
-
-	@Override
-	public String name() {
-		return "stdlib";
-	}
-
 }

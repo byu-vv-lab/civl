@@ -31,32 +31,18 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public class LibmpiExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
 
-	public LibmpiExecutor(Executor primaryExecutor, PrintStream output,
-			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
-				modelFactory, symbolicUtil);
-	}
-
-	@Override
-	public String name() {
-		return "mpi";
+	public LibmpiExecutor(String name, Executor primaryExecutor,
+			PrintStream output, PrintStream err, boolean enablePrintf,
+			boolean statelessPrintf, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(name, primaryExecutor, output, err, enablePrintf,
+				statelessPrintf, modelFactory, symbolicUtil);
 	}
 
 	@Override
 	public State execute(State state, int pid, CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		return this.executeWork(state, pid, statement);
-	}
-
-	@Override
-	public State initialize(State state) {
-		return state;
-	}
-
-	@Override
-	public State wrapUp(State state) {
-		return state;
 	}
 
 	/* ************************* private methods **************************** */

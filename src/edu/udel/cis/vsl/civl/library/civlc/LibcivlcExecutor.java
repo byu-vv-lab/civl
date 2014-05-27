@@ -7,14 +7,14 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -76,11 +76,12 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	public LibcivlcExecutor(Executor primaryExecutor, PrintStream output,
-			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
-				modelFactory, symbolicUtil);
+	public LibcivlcExecutor(String name, Executor primaryExecutor,
+			PrintStream output, PrintStream err, boolean enablePrintf,
+			boolean statelessPrintf, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(name, primaryExecutor, output, err, enablePrintf,
+				statelessPrintf, modelFactory, symbolicUtil);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -89,21 +90,6 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	public State execute(State state, int pid, CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		return executeWork(state, pid, statement);
-	}
-
-	@Override
-	public State initialize(State state) {
-		return state;
-	}
-
-	@Override
-	public String name() {
-		return "civlc";
-	}
-
-	@Override
-	public State wrapUp(State state) {
-		return state;
 	}
 
 	/* ************************** Private Methods ************************** */
@@ -773,7 +759,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		CIVLType commType = model.commType();
 		Evaluation eval;
 
-		eval = this.evaluator.dereference(civlsource, state, gcommHandle, false);
+		eval = this.evaluator
+				.dereference(civlsource, state, gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
 		isInitArray = universe.tupleRead(gcomm, oneObject);
@@ -1611,8 +1598,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					Certainty certainty = divisibilityValid == ResultType.MAYBE ? Certainty.MAYBE
 							: Certainty.PROVEABLE;
 					CIVLExecutionException e = new CIVLExecutionException(
-							ErrorKind.OTHER, certainty,
-							"sizeof element ( "  + elementSize + ") does not divide size argument (" + size + ")",
+							ErrorKind.OTHER, certainty, "sizeof element ( "
+									+ elementSize
+									+ ") does not divide size argument ("
+									+ size + ")",
 							symbolicUtil.stateToString(state), source);
 
 					errorLogger.reportError(e);
@@ -1821,7 +1810,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		IntegerNumber number_size = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) size);
-		Evaluation eval = evaluator.dereference(source, state, arrayPointer, false);
+		Evaluation eval = evaluator.dereference(source, state, arrayPointer,
+				false);
 		CIVLSource arrayPointerSource = arrayPointerExpression.getSource();
 
 		state = eval.state;

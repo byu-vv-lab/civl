@@ -64,13 +64,7 @@ public abstract class Library {
 	 */
 	protected SymbolicUtility symbolicUtil;
 
-	/**
-	 * Returns the name associated to this library executor or enabler, for
-	 * example, "stdio".
-	 * 
-	 * @return
-	 */
-	public abstract String name();
+	protected String name;
 
 	/**
 	 * Creates a new instance of a library.
@@ -80,7 +74,9 @@ public abstract class Library {
 	 * @param symbolicUtil
 	 *            The symbolic utility to be used.
 	 */
-	protected Library(SymbolicUniverse universe, SymbolicUtility symbolicUtil) {
+	protected Library(String name, SymbolicUniverse universe,
+			SymbolicUtility symbolicUtil) {
+		this.name = name;
 		this.universe = universe;
 		this.zero = universe.zeroInt();
 		this.one = universe.oneInt();
@@ -91,5 +87,15 @@ public abstract class Library {
 		this.twoObject = universe.intObject(2);
 		this.threeObject = universe.intObject(3);
 		this.symbolicUtil = symbolicUtil;
+	}
+
+	/**
+	 * Returns the name associated to this library executor or enabler, for
+	 * example, "stdio".
+	 * 
+	 * @return
+	 */
+	public String name() {
+		return this.name;
 	}
 }

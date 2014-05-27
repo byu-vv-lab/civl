@@ -19,16 +19,10 @@ import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
  */
 public class LibmpiEnabler extends BaseLibraryEnabler implements LibraryEnabler {
 
-	public LibmpiEnabler(Enabler primaryEnabler, Evaluator evaluator,
+	public LibmpiEnabler(String name, Enabler primaryEnabler, Evaluator evaluator,
 			TransitionFactory transitionFactory, PrintStream output,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryEnabler, evaluator, transitionFactory, output,
+		super(name, primaryEnabler, evaluator, transitionFactory, output,
 				modelFactory, symbolicUtil);
 	}
-
-	@Override
-	public String name() {
-		return "mpi";
-	}
-
 }

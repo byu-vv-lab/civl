@@ -76,10 +76,11 @@ public abstract class BaseLibraryEnabler extends Library implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	protected BaseLibraryEnabler(Enabler primaryEnabler, Evaluator evaluator,
-			TransitionFactory transitionFactory, PrintStream output,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(evaluator.universe(), symbolicUtil);
+	public BaseLibraryEnabler(String name, Enabler primaryEnabler,
+			Evaluator evaluator, TransitionFactory transitionFactory,
+			PrintStream output, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(name, evaluator.universe(), symbolicUtil);
 		this.primaryEnabler = primaryEnabler;
 		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;

@@ -47,9 +47,9 @@ public abstract class BaseLibraryEvaluator extends Library implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	protected BaseLibraryEvaluator(Evaluator evaluator,
+	public BaseLibraryEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(evaluator.universe(), symbolicUtil);
+		super(name, evaluator.universe(), symbolicUtil);
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
 		this.modelFactory = modelFactory;

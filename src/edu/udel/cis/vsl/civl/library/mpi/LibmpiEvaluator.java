@@ -9,15 +9,8 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 public class LibmpiEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
 
-	public LibmpiEvaluator(Evaluator evaluator, ModelFactory modelFactory,
+	public LibmpiEvaluator(String name, Evaluator evaluator, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil) {
-		super(evaluator, modelFactory, symbolicUtil);
+		super(name, evaluator, modelFactory, symbolicUtil);
 	}
-
-	@Override
-	public String name() {
-		// TODO Auto-generated method stub
-		return "mpi";
-	}
-
 }

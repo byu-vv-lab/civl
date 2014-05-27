@@ -21,14 +21,9 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
 
-	public LibcivlcEvaluator(Evaluator evaluator, ModelFactory modelFactory,
+	public LibcivlcEvaluator(String name, Evaluator evaluator, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil) {
-		super(evaluator, modelFactory, symbolicUtil);
-	}
-
-	@Override
-	public String name() {
-		return "civlc";
+		super(name, evaluator, modelFactory, symbolicUtil);
 	}
 
 	@Override

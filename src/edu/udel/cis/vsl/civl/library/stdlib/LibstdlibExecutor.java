@@ -41,18 +41,12 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 	 * @param enablePrintf
 	 *            True iff print is enabled, reflecting command line options.
 	 */
-	public LibstdlibExecutor(Executor primaryExecutor, PrintStream output,
-			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
-				modelFactory, symbolicUtil);
-	}
-
-	/* ************************ Methods from Library *********************** */
-
-	@Override
-	public String name() {
-		return "stdlib";
+	public LibstdlibExecutor(String name, Executor primaryExecutor,
+			PrintStream output, PrintStream err, boolean enablePrintf,
+			boolean statelessPrintf, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(name, primaryExecutor, output, err, enablePrintf,
+				statelessPrintf, modelFactory, symbolicUtil);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -61,16 +55,6 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 	public State execute(State state, int pid, CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		return executeWork(state, pid, statement);
-	}
-
-	@Override
-	public State initialize(State state) {
-		return state;
-	}
-
-	@Override
-	public State wrapUp(State state) {
-		return state;
 	}
 
 	/* *************************** Private Methods ************************* */

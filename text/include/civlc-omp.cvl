@@ -1,0 +1,89 @@
+/* This header file defines standard types and provides
+ * function prototypes used in the OpenMP to CIVLC transformation.
+ */
+ 
+#ifdef __CIVLC_OMP__
+#else
+#define __CIVLC_OMP__
+
+#include<civlc.h>
+
+/* Specifies the sequence of iterations to be assigned to one 
+ * thread executing an omp for loop. */
+typedef struct {
+  int numIters;
+  int collapse;
+  int iters[][]; 
+} CIVL_omp_loop_info;
+
+/* Specifies the subset of section assigned to one thread executing 
+ * an omp sections construct. */
+typedef struct {
+  int numSections;
+  int sections[];
+} CIVL_omp_sections_info;
+
+/* The global work-sharing state. */
+typedef struct __omp_gws__ {
+  int size;
+  _Bool occupied[];
+  CIVL_omp_loop_info loops[];
+  CIVL_omp_sections_info sections[];
+} $omp_gws;
+
+/* The local state: a reference to a global object and a thread ID. */
+typedef struct __omp_ws__ {
+  int tid;
+  $omp_gws gws;
+} $omp_ws;
+
+/* Does a barrier on _barrier and a flush on all shared variables. 
+ * After this completes, all local copies will agree with each other 
+ * and with the shared copy of the variable, and all state variables 
+ * will be -1. */
+void barrier_and_flush();
+
+/* Creates new global work-sharing state object, returning
+ * handle to it.  nthreads is the number of threads in
+ * the parallel region.  There is one of these per parallel region,
+ * created upon entering the region */
+$omp_gws $omp_gws_create($scope scope, int nthreads);
+
+void $omp_gws_destroy($omp_gws gws);
+
+/* Creates a local work-sharing object, which is basically
+ * a pair consisting of a global work-sharing handle and
+ * a thread id. */
+$omp_ws $omp_ws_create($scope scope, $omp_gws, int tid);
+
+void $omp_ws_destroy($omp_ws ws);
+
+/* for "for" loops only: called when a thread arrives, it
+ * returns the sequence of loop iterations to be performed by
+ * the thread.  Parameter location is the ID of the model location
+ * of the top of the loop.  It is needed to check that all threads
+ * encounter the same worksharing statements in the same order.
+ * The implementation will need the value start, the initial value of the loop variable;
+ * end is its final value; and inc, the increment (which can be
+ * positive or negative).   These values can all be obtained by getting
+ * the loop statement from the location and evaluating the expressions
+ * occurring there.*/
+CIVL_omp_loop_info $omp_ws_arrive_loop($omp_ws ws, int location);
+
+/* for sections: called at arrival, returns the sequence of sections to
+ * be executed by calling thread.  The sections are numbered in order,
+ * starting from 0. */
+CIVL_omp_sections_info $omp_ws_arrive_sections($omp_ws ws, int location);
+
+/* for single: called on arrival, returns whether or not to execute
+ * the single code */
+_Bool $omp_ws_arrive_single($omp_ws ws, int location);
+
+/* called when arriving at a barrier.  This does not
+ * impose the barrier, you still need to call system function
+ * $barrier... for that.  This is needed to ensure all threads
+ * in the team call the same sequence of worksharing and barrier
+ * constructs.  */
+void $omp_ws_arrive_barrier($omp_ws ws, int location);
+
+#endif

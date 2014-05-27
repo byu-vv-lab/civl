@@ -36,14 +36,14 @@ public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 				Class<? extends LibraryEvaluator> aClass = (Class<? extends LibraryEvaluator>) Class
 						.forName(aClassName);
 				Constructor<? extends LibraryEvaluator> constructor = aClass
-						.getConstructor(Evaluator.class, ModelFactory.class,
+						.getConstructor(String.class, Evaluator.class, ModelFactory.class,
 								SymbolicUtility.class);
 
-				result = constructor.newInstance(primaryEvaluator,
+				result = constructor.newInstance(name, primaryEvaluator,
 						modelFacotry, symbolicUtil);
 			} catch (Exception e) {
-				throw new CIVLInternalException("Unable to load library: "
-						+ name + "\n" + e.getMessage(), (CIVLSource) null);
+				throw new CIVLInternalException("Unable to load library evaluator for "
+						+ name + ".h.\n" + e.getMessage(), (CIVLSource) null);
 			}
 			libraryEvaluatorCache.put(name, result);
 		}

@@ -22,20 +22,4 @@ public interface LibraryExecutor {
 	 */
 	State execute(State state, int pid, CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException;
-
-	// TODO: Is this ever being done?
-	/**
-	 * Initializes the part of the state dealing with the library.
-	 */
-	State initialize(State state);
-
-	/**
-	 * A method invoked at any terminal state. The library performs any final
-	 * actions before system shutdown and may also check certain properties hold
-	 * and throw an exception or log errors if they do not. For example, the MPI
-	 * library may check there are no unreceived messages. The stdio library may
-	 * check there are no open streams.
-	 */
-	State wrapUp(State state);
-
 }

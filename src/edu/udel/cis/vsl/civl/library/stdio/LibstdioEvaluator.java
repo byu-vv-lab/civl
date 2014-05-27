@@ -9,14 +9,8 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 public class LibstdioEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
 
-	public LibstdioEvaluator(Evaluator evaluator, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
-		super(evaluator, modelFactory, symbolicUtil);
+	public LibstdioEvaluator(String name, Evaluator evaluator,
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
+		super(name, evaluator, modelFactory, symbolicUtil);
 	}
-
-	@Override
-	public String name() {
-		return "stdio";
-	}
-
 }

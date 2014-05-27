@@ -6,7 +6,7 @@ all: adderBad barrierBad blockAdderBad diningBad \
 
 adderBad: adderBad.cvl
 	$(VERIFY) adderBad.cvl -inputB=4 -min
-	$(CIVL) replay adderBad.vcl -gui
+	$(CIVL) replay adderBad.vcl -gui //cvl
 	
 # Two kinds of violations are found in the following:
 # a deadlock, and an assertion violation:

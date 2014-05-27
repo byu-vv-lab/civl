@@ -42,11 +42,11 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 				Class<? extends LibraryEnabler> aClass = (Class<? extends LibraryEnabler>) Class
 						.forName(aClassName);
 				Constructor<? extends LibraryEnabler> constructor = aClass
-						.getConstructor(Enabler.class, Evaluator.class,
+						.getConstructor(String.class, Enabler.class, Evaluator.class,
 								TransitionFactory.class, PrintStream.class,
 								ModelFactory.class, SymbolicUtility.class);
 
-				result = constructor.newInstance(primaryEnabler, evaluator,
+				result = constructor.newInstance(name, primaryEnabler, evaluator,
 						transitionFactory, output, modelFacotry, symbolicUtil);
 			} catch (Exception e) {
 				throw new CIVLInternalException("Unable to load library: "

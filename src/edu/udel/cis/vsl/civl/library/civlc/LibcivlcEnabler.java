@@ -60,10 +60,10 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	public LibcivlcEnabler(Enabler primaryEnabler, Evaluator evaluator,
+	public LibcivlcEnabler(String name, Enabler primaryEnabler, Evaluator evaluator,
 			TransitionFactory transitionFactory, PrintStream output,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryEnabler, evaluator, transitionFactory, output,
+		super(name, primaryEnabler, evaluator, transitionFactory, output,
 				modelFactory, symbolicUtil);
 
 		CIVLSource source = modelFactory.model().getSource();
@@ -79,14 +79,6 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		chooseIntWorkPointer = modelFactory.functionPointerExpression(source,
 				chooseIntWorkFunction);
 
-	}
-
-	/* ************************ Methods from Library *********************** */
-
-	@Override
-	public String name() {
-		// TODO Auto-generated method stub
-		return "civlc";
 	}
 
 	/* ********************* Methods from LibraryEnabler ******************* */

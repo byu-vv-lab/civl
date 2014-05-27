@@ -94,10 +94,11 @@ public abstract class BaseLibraryExecutor extends Library implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	protected BaseLibraryExecutor(Executor primaryExecutor, PrintStream output,
-			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryExecutor.evaluator().universe(), symbolicUtil);
+	public BaseLibraryExecutor(String name, Executor primaryExecutor,
+			PrintStream output, PrintStream err, boolean enablePrintf,
+			boolean statelessPrintf, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(name, primaryExecutor.evaluator().universe(), symbolicUtil);
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.stateFactory = evaluator.stateFactory();

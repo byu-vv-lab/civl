@@ -32,18 +32,12 @@ public class LibstdioEnabler extends BaseLibraryEnabler implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	public LibstdioEnabler(Enabler primaryEnabler, Evaluator evaluator,
-			TransitionFactory transitionFactory, PrintStream output,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryEnabler, evaluator, transitionFactory, output,
+	public LibstdioEnabler(String name, Enabler primaryEnabler,
+			Evaluator evaluator, TransitionFactory transitionFactory,
+			PrintStream output, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(name, primaryEnabler, evaluator, transitionFactory, output,
 				modelFactory, symbolicUtil);
-	}
-
-	/* ************************ Methods from Library *********************** */
-
-	@Override
-	public String name() {
-		return "stdio";
 	}
 
 }

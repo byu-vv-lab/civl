@@ -233,11 +233,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 * @param enablePrintf
 	 *            True iff print is enabled, reflecting command line options.
 	 */
-	public LibstdioExecutor(Executor primaryExecutor, PrintStream output,
-			PrintStream err, boolean enablePrintf, boolean statelessPrintf,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(primaryExecutor, output, err, enablePrintf, statelessPrintf,
-				modelFactory, symbolicUtil);
+	public LibstdioExecutor(String name, Executor primaryExecutor,
+			PrintStream output, PrintStream err, boolean enablePrintf,
+			boolean statelessPrintf, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(name, primaryExecutor, output, err, enablePrintf,
+				statelessPrintf, modelFactory, symbolicUtil);
 		Model model = modelFactory.model();
 		SymbolicType stringArrayType;
 
@@ -275,53 +276,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
-
-	/**
-	 * // * This is a helper function of the constructor. It initializes all the
-	 * // * carType/cdrType abstract functions. //
-	 */
-	// private void createCharReadFunctions() {
-	// carIntFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("carInt"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// cdrIntFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("cdrInt"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// carDoubleFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("carDouble"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// cdrDoubleFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("cdrDouble"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// carCharFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("carChar"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// cdrCharFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("cdrChar"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// carPointerFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("carPointer"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// cdrPointerFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("cdrPointer"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// carStringFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("carString"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// cdrStringFunction = (SymbolicConstant) universe.canonic(universe
-	// .symbolicConstant(universe.stringObject("cdrString"), universe
-	// .functionType(Arrays.asList(stringSymbolicType,
-	// stringSymbolicType), stringSymbolicType)));
-	// }
 
 	/**
 	 * This is a helper function of the constructor. It initializes all the
@@ -605,7 +559,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		ReferenceExpression fileSystemRef = symbolicUtil
 				.getSymRef(filesystemPointer);
 		Pair<State, StringBuffer> fileNameStringPair;
-//		String fileNameString;
+		// String fileNameString;
 
 		state = eval.state;
 		fileSystemStructure = eval.value;
@@ -617,7 +571,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		fileNameStringPair = this.getString(expressions[1].getSource(), state,
 				argumentValues[1]);
 		state = fileNameStringPair.left;
-//		fileNameString = fileNameStringPair.right.toString();
+		// fileNameString = fileNameStringPair.right.toString();
 
 		// does a file by that name already exist in the filesystem?
 		// assume all are concrete.
@@ -1471,13 +1425,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		}
 	}
 
-	/* ************************ Methods from Library *********************** */
-
-	@Override
-	public String name() {
-		return "stdio";
-	}
-
 	/* ******************** Methods from LibraryExecutor ******************* */
 
 	@Override
@@ -1486,23 +1433,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		return executeWork(state, pid, (CallOrSpawnStatement) statement);
 	}
 
-	@Override
-	public State initialize(State state) {
-		// create abstract functions
-		// create stdout, stdin
-		// need to find variable called CIVL_files, but which process looks?
-		// can make all these functions take an extra argument ($filesystem).
-		// like malloc, can have two versions
-		// or know which process is invoking and look up from there
-		return state;
-	}
-
-	@Override
-	public State wrapUp(State state) {
-		return state;
-	}
-
-	enum ConversionType {
+	private enum ConversionType {
 		INT, DOUBLE, CHAR, STRING, POINTER, VOID
 	};
 
