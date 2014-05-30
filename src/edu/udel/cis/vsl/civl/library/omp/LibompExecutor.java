@@ -195,32 +195,45 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		// the gws object to be created
 		SymbolicExpression gwsObj;
+		// the CIVL type of __omp_gws__
 		CIVLType gwsType = model.ompGwsType();
+		// the representation of the CIVL type of __omp_gws__ in SARL
 		SymbolicType dynamicGwsType = gwsType.getDynamicType(universe);
-		// the scope that the gws object belongs to
+		// the value of the first argument, which is scope.
 		SymbolicExpression scope = argumentValues[0];
+		// the CIVL expression of the first argument of the function call
 		Expression scopeExpression = arguments[0];
+		// the value of the second argument, which is nthread.
 		SymbolicExpression nthreads = argumentValues[1];
+		// the second field isInit of the __omp_gws__ object to be created
 		SymbolicExpression isInit;
+		// the representation of false in SARL
 		SymbolicExpression falseValue = universe.canonic(universe.bool(false));
+		// the list of components of the array isInit
 		List<SymbolicExpression> isInitComponents = new LinkedList<>();
+		// the third field loops of the __omp_gws__ object to be created
 		SymbolicExpression loops = universe.array(this.dynamicOmpLoopInfoType,
 				new LinkedList<SymbolicExpression>());
+		// the last field sections of the __omp_gws__ object to be created
 		SymbolicExpression sections = universe.array(
 				this.dynamicOmpSectionsInfoType,
 				new LinkedList<SymbolicExpression>());
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		// try to infer the concrete value of nthreads
 		IntegerNumber number_nthreads = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) nthreads);
 
 		if (number_nthreads != null) {
+			// nthreads is concrete
 			int int_nthreads = number_nthreads.intValue();
+
 			// isInit component
 			for (int i = 0; i < int_nthreads; i++) {
 				isInitComponents.add(falseValue);
 			}
 			isInit = universe.array(universe.booleanType(), isInitComponents);
 		} else {
+			// nthreads is symbolic, use array lambda to initialize isInit.
 			SymbolicCompleteArrayType arrayType;
 			NumericSymbolicConstant index;
 			SymbolicExpression initFunction;
@@ -231,11 +244,18 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 					(NumericExpression) nthreads);
 			index = (NumericSymbolicConstant) universe.symbolicConstant(
 					universe.stringObject("i"), integerType);
+			// initFunction(i): isInit[i] = false;
 			initFunction = universe.lambda(index, falseValue);
 			isInit = universe.arrayLambda(arrayType, initFunction);
 		}
+		// creates the __omp_gws__ object as a tuple using the four elements in
+		// order specified above: nthreads, isInit, loops, sections.
 		gwsObj = universe.tuple((SymbolicTupleType) dynamicGwsType,
 				Arrays.asList(nthreads, isInit, loops, sections));
+		// malloc a memory unit in the heap of the given scope to store the
+		// newly created __omp_gws__ object, and assign lhs with the
+		// corresponding handle $omp_gws, which is in fact a pointer to the
+		// __omp_gws__ object.
 		state = primaryExecutor.malloc(source, state, pid, lhs,
 				scopeExpression, scope, gwsType, gwsObj);
 		return state;
