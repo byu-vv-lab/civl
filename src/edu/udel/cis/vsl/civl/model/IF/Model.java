@@ -150,7 +150,7 @@ public interface Model extends Sourceable {
 	CIVLType gcommType();
 
 	/**
-	 * NULL if there is no communicater operation.
+	 * NULL if there is no communicator operation.
 	 * 
 	 * @param gcommType
 	 *            The gcomm type used by this model
@@ -219,7 +219,7 @@ public interface Model extends Sourceable {
 	CIVLType barrierType();
 
 	/**
-	 * Updates the base typeof the $barrier handle.
+	 * Updates the base type of the $barrier handle.
 	 * 
 	 * @param barrierType
 	 *            The type to be used as the base type of the $barrier handle.
@@ -234,11 +234,41 @@ public interface Model extends Sourceable {
 	CIVLType intIterType();
 
 	/**
-	 * Updates the base typeof the $barrier handle.
+	 * Updates the base type of the $barrier handle.
 	 * 
 	 * @param intIterType
 	 *            The type to be used as the base type of the $int_iter handle.
 	 */
 	void setIntIterType(CIVLType intIterType);
+
+	/**
+	 * Updates the base type of the $omp_gws handle.
+	 * 
+	 * @param ompGwsType
+	 *            The type to be used as the base type of the $omp_gws handle.
+	 */
+	CIVLType ompGwsType();
+
+	/**
+	 * NULL if there is no omp_gws operation.
+	 * 
+	 * @return The base type of the handle $omp_gws.
+	 */
+	void setOmpGwsType(CIVLType ompGwsType);
+
+	/**
+	 * NULL if there is no omp_ws operation.
+	 * 
+	 * @return The base type of the handle $omp_ws.
+	 */
+	CIVLType ompWsType();
+
+	/**
+	 * Updates the base type of the $omp_ws handle.
+	 * 
+	 * @param ompWsType
+	 *            The type to be used as the base type of the $omp_ws handle.
+	 */
+	void setOmpWsType(CIVLType ompWsType);
 
 }

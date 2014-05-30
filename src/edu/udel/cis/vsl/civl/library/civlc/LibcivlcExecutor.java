@@ -370,11 +370,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression queueLength = universe.integer(0);
 		SymbolicExpression emptyQueue;
 		SymbolicExpression emptyMessages;
-		LinkedList<SymbolicExpression> emptyMessagesComponents = new LinkedList<>();
-		LinkedList<SymbolicExpression> isInitComponents = new LinkedList<>();
-		LinkedList<SymbolicExpression> queueComponents = new LinkedList<>();
-		LinkedList<SymbolicExpression> bufRowComponents = new LinkedList<>();
-		LinkedList<SymbolicExpression> bufComponents = new LinkedList<>();
+		List<SymbolicExpression> emptyMessagesComponents = new LinkedList<>();
+		List<SymbolicExpression> isInitComponents = new LinkedList<>();
+		List<SymbolicExpression> queueComponents = new LinkedList<>();
+		List<SymbolicExpression> bufRowComponents = new LinkedList<>();
+		List<SymbolicExpression> bufComponents = new LinkedList<>();
 		List<SymbolicExpression> gcommComponents = new LinkedList<>();
 		int int_nprocs;
 		CIVLType queueType = model.queueType();

@@ -128,6 +128,16 @@ public class ModelBuilderWorker {
 	CIVLStructOrUnionType FILEtype;
 
 	/**
+	 * The type __omp_gws__, which is the base type of the handle $omp_gws.
+	 */
+	CIVLType ompGwsType;
+
+	/**
+	 * The type __omp_ws__, which is the base type of the handle $omp_ws.
+	 */
+	CIVLType ompWsType;
+
+	/**
 	 * Configuration information for the generic model checker.
 	 */
 	private GMCConfiguration config;
@@ -460,6 +470,8 @@ public class ModelBuilderWorker {
 		model.setFILEType(this.FILEtype);
 		model.setBundleType(this.bundleType);
 		model.setIntIterType(this.intIterType);
+		model.setOmpGwsType(this.ompGwsType);
+		model.setOmpWsType(this.ompWsType);
 		model.setName(modelName);
 		// add all functions to model except main:
 		for (CIVLFunction f : functionMap.values())

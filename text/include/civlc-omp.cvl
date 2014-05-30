@@ -25,8 +25,8 @@ typedef struct {
 
 /* The global work-sharing state. */
 typedef struct __omp_gws__ {
-  int size;
-  _Bool occupied[];
+  int nthreads;
+  _Bool isInit[];
   CIVL_omp_loop_info loops[];
   CIVL_omp_sections_info sections[];
 } $omp_gws;
@@ -46,9 +46,11 @@ void barrier_and_flush();
 /* Creates new global work-sharing state object, returning
  * handle to it.  nthreads is the number of threads in
  * the parallel region.  There is one of these per parallel region,
- * created upon entering the region */
+ * created upon entering the region. */
 $omp_gws $omp_gws_create($scope scope, int nthreads);
 
+/* Deallocates the object that associates with the given 
+ * $omp_gws handle. */
 void $omp_gws_destroy($omp_gws gws);
 
 /* Creates a local work-sharing object, which is basically
@@ -56,6 +58,8 @@ void $omp_gws_destroy($omp_gws gws);
  * a thread id. */
 $omp_ws $omp_ws_create($scope scope, $omp_gws, int tid);
 
+/* Deallocates the object that associates with the given 
+ * $omp_ws handle. */
 void $omp_ws_destroy($omp_ws ws);
 
 /* for "for" loops only: called when a thread arrives, it

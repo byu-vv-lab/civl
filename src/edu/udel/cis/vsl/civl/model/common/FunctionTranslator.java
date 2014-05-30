@@ -169,23 +169,27 @@ import edu.udel.cis.vsl.gmc.CommandLineException;
  */
 public class FunctionTranslator {
 
+	private static final String BARRIER_TYPE = "__barrier__";
+
 	private static final String BUNDLE_TYPE = "__bundle__";
 
 	private static final String COMM_TYPE = "__comm__";
 
 	private static final String DYNAMIC_TYPE = "__dynamic__";
 
-	private static final String GCOMM_TYPE = "__gcomm__";
-
 	private static final String GBARRIER_TYPE = "__gbarrier__";
 
-	private static final String BARRIER_TYPE = "__barrier__";
-
-	private static final String INT_ITER_TYPE = "__int_iter__";
+	private static final String GCOMM_TYPE = "__gcomm__";
 
 	private static final String HEAP_TYPE = "__heap__";
 
+	private static final String INT_ITER_TYPE = "__int_iter__";
+
 	private static final String MESSAGE_TYPE = "__message__";
+
+	private static final String OMP_GWS_TYPE = "__omp_gws__";
+
+	private static final String OMP_WS_TYPE = "__omp_ws__";
 
 	private static final String PROC_TYPE = "__proc__";
 
@@ -3744,6 +3748,16 @@ public class FunctionTranslator {
 		case GBARRIER_TYPE:
 			result.setHandleObjectType(true);
 			modelBuilder.gbarrierType = result;
+			modelBuilder.handledObjectTypes.add(result);
+			break;
+		case OMP_GWS_TYPE:
+			result.setHandleObjectType(true);
+			modelBuilder.ompGwsType = result;
+			modelBuilder.handledObjectTypes.add(result);
+			break;
+		case OMP_WS_TYPE:
+			result.setHandleObjectType(true);
+			modelBuilder.ompWsType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case INT_ITER_TYPE:

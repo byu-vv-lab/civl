@@ -69,6 +69,18 @@ public class CommonModel extends CommonSourceable implements Model {
 	private CIVLType gbarrierType;
 
 	/**
+	 * The base type of the handle type $omp_gws. NULL if there is no omp_gws
+	 * operation.
+	 */
+	private CIVLType ompGwsType;
+
+	/**
+	 * The base type of the handle type $omp_ws. NULL if there is no omp_ws
+	 * operation.
+	 */
+	private CIVLType ompWsType;
+
+	/**
 	 * The base type of the handle type $int_iter. NULL if there is no integer
 	 * iterator operation.
 	 */
@@ -380,5 +392,25 @@ public class CommonModel extends CommonSourceable implements Model {
 	@Override
 	public void setIntIterType(CIVLType intIterType) {
 		this.intIterType = intIterType;
+	}
+
+	@Override
+	public void setOmpGwsType(CIVLType ompGwsType) {
+		this.ompGwsType = ompGwsType;
+	}
+
+	@Override
+	public void setOmpWsType(CIVLType ompWsType) {
+		this.ompWsType = ompWsType;
+	}
+
+	@Override
+	public CIVLType ompGwsType() {
+		return this.ompGwsType;
+	}
+
+	@Override
+	public CIVLType ompWsType() {
+		return this.ompWsType;
 	}
 }
