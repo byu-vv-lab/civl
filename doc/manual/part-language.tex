@@ -113,7 +113,7 @@ branch of the \texttt{if} statement, instantiating scope 3 under the
 instance of scope 1.  It then spawns two copies of procedure
 \texttt{f1}, creating processes $p_2$ and $p_3$ and two instances of
 scope 2.  Then $p_1$ spawns \texttt{f2}, creating process $p_4$ and an
-instance of scope 4.  Note that the instance of scope 4 is a chile of
+instance of scope 4.  Note that the instance of scope 4 is a child of
 the instance of scope 3, since the (static) scope 4 is a child of
 scope 3.  Finally, $p_1$ calls \texttt{f2}, pushing a new entry on its
 stack and creating another instance of scope 4.  The final state
