@@ -239,11 +239,6 @@ public class FunctionTranslator {
 	 */
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
 
-	// /**
-	// * The current translation is a left hand side expression.
-	// */
-	// private boolean isLHS = false;
-
 	private boolean isRootFunction = false;
 
 	/* **************************** Constructors *************************** */
@@ -3216,6 +3211,36 @@ public class FunctionTranslator {
 		case BIG_O:
 			result = modelFactory.unaryExpression(source, UNARY_OPERATOR.BIG_O,
 					arguments.get(0));
+			break;
+		case BITAND:
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			result = modelFactory.binaryExpression(source,
+					BINARY_OPERATOR.BITAND, booleanArg0, booleanArg1);
+			break;
+		case BITCOMPLEMENT:
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			result = modelFactory.binaryExpression(source,
+					BINARY_OPERATOR.BITCOMPLEMENT, booleanArg0, booleanArg1);
+			break;
+		case BITXOR:
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			result = modelFactory.binaryExpression(source,
+					BINARY_OPERATOR.BITXOR, booleanArg0, booleanArg1);
+			break;
+		case SHIFTLEFT:
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			result = modelFactory.binaryExpression(source,
+					BINARY_OPERATOR.SHIFTLEFT, booleanArg0, booleanArg1);
+			break;
+		case SHIFTRIGHT:
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			result = modelFactory.binaryExpression(source,
+					BINARY_OPERATOR.SHIFTRIGHT, booleanArg0, booleanArg1);
 			break;
 		case DEREFERENCE:
 			Expression pointer = arguments.get(0);

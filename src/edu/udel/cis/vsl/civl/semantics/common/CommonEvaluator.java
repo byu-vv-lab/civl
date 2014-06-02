@@ -122,8 +122,6 @@ public class CommonEvaluator implements Evaluator {
 
 	/* *************************** Instance Fields ************************* */
 
-	// private Enabler enabler;
-
 	private LibraryEvaluatorLoader libLoader;
 
 	/**
@@ -245,6 +243,12 @@ public class CommonEvaluator implements Evaluator {
 
 	private CIVLErrorLogger errorLogger;
 
+	private SymbolicConstant bitAndFunc;
+	private SymbolicConstant bitComplementFunc;
+	private SymbolicConstant bitXorFunc;
+	private SymbolicConstant shiftLeftFunc;
+	private SymbolicConstant shiftRightFunc;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -295,6 +299,26 @@ public class CommonEvaluator implements Evaluator {
 			commType = modelFactory.model().commType().getDynamicType(universe);
 		charType = universe.characterType();
 		nullCharExpr = universe.canonic(universe.character('\u0000'));
+		this.bitAndFunc = universe.symbolicConstant(universe
+				.stringObject("bitand"), universe.functionType(
+				Arrays.asList(universe.integerType(), universe.integerType()),
+				universe.integerType()));
+		this.bitComplementFunc = universe.symbolicConstant(universe
+				.stringObject("bitcomplement"), universe.functionType(
+				Arrays.asList(universe.integerType(), universe.integerType()),
+				universe.integerType()));
+		this.bitXorFunc = universe.symbolicConstant(universe
+				.stringObject("bitxor"), universe.functionType(
+				Arrays.asList(universe.integerType(), universe.integerType()),
+				universe.integerType()));
+		this.shiftLeftFunc = universe.symbolicConstant(universe
+				.stringObject("shiftleft"), universe.functionType(
+				Arrays.asList(universe.integerType(), universe.integerType()),
+				universe.integerType()));
+		this.shiftRightFunc = universe.symbolicConstant(universe
+				.stringObject("shiftright"), universe.functionType(
+				Arrays.asList(universe.integerType(), universe.integerType()),
+				universe.integerType()));
 	}
 
 	/* ************************** Private Methods ************************** */
@@ -541,14 +565,24 @@ public class CommonEvaluator implements Evaluator {
 			throws UnsatisfiablePathConditionException {
 		BINARY_OPERATOR operator = expression.operator();
 
-		if (operator == BINARY_OPERATOR.AND)
+		switch (operator) {
+		case AND:
 			return evaluateAnd(state, pid, expression);
-		if (operator == BINARY_OPERATOR.OR)
+		case OR:
 			return evaluateOr(state, pid, expression);
-		if (operator == BINARY_OPERATOR.IMPLIES)
+		case IMPLIES:
 			return evaluateImplies(state, pid, expression);
-		else {
-
+		case BITAND:
+			return evaluateBitand(state, pid, expression);
+		case BITCOMPLEMENT:
+			return evaluateBitcomplement(state, pid, expression);
+		case BITXOR:
+			return evaluateBitxor(state, pid, expression);
+		case SHIFTLEFT:
+			return evaluateShiftleft(state, pid, expression);
+		case SHIFTRIGHT:
+			return evaluateShiftright(state, pid, expression);
+		default:
 			if (expression.left().getExpressionType() != null
 					&& expression.left().getExpressionType()
 							.equals(modelFactory.scopeType())) {
@@ -557,6 +591,73 @@ public class CommonEvaluator implements Evaluator {
 				return evaluateNumericOperations(state, pid, expression);
 			}
 		}
+	}
+
+	private Evaluation evaluateBitand(State state, int pid,
+			BinaryExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluate(state, pid, expression.left());
+		SymbolicExpression left = eval.value, right, result;
+
+		eval = evaluate(eval.state, pid, expression.right());
+		right = eval.value;
+		state = eval.state;
+		result = universe.apply(this.bitAndFunc, Arrays.asList(left, right));
+		return new Evaluation(state, result);
+	}
+
+	private Evaluation evaluateBitcomplement(State state, int pid,
+			BinaryExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluate(state, pid, expression.left());
+		SymbolicExpression left = eval.value, right, result;
+
+		eval = evaluate(eval.state, pid, expression.right());
+		right = eval.value;
+		state = eval.state;
+		result = universe.apply(this.bitComplementFunc,
+				Arrays.asList(left, right));
+		return new Evaluation(state, result);
+	}
+
+	private Evaluation evaluateBitxor(State state, int pid,
+			BinaryExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluate(state, pid, expression.left());
+		SymbolicExpression left = eval.value, right, result;
+
+		eval = evaluate(eval.state, pid, expression.right());
+		right = eval.value;
+		state = eval.state;
+		result = universe.apply(this.bitXorFunc, Arrays.asList(left, right));
+		return new Evaluation(state, result);
+	}
+
+	private Evaluation evaluateShiftleft(State state, int pid,
+			BinaryExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluate(state, pid, expression.left());
+		SymbolicExpression left = eval.value, right, result;
+
+		eval = evaluate(eval.state, pid, expression.right());
+		right = eval.value;
+		state = eval.state;
+		result = universe.apply(this.shiftLeftFunc, Arrays.asList(left, right));
+		return new Evaluation(state, result);
+	}
+
+	private Evaluation evaluateShiftright(State state, int pid,
+			BinaryExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluate(state, pid, expression.left());
+		SymbolicExpression left = eval.value, right, result;
+
+		eval = evaluate(eval.state, pid, expression.right());
+		right = eval.value;
+		state = eval.state;
+		result = universe
+				.apply(this.shiftRightFunc, Arrays.asList(left, right));
+		return new Evaluation(state, result);
 	}
 
 	/**
