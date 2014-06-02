@@ -117,6 +117,11 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
+	public void bitwise(){
+		assertTrue(ui.run("verify", filename("bitwise.cvl")));
+	}
+	
+	@Test
 	public void breakStatement() throws ABCException {
 		assertTrue(ui.run("verify", filename("break.cvl")));
 	}

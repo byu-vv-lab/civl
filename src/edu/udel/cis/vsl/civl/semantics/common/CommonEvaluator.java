@@ -245,6 +245,7 @@ public class CommonEvaluator implements Evaluator {
 
 	private SymbolicConstant bitAndFunc;
 	private SymbolicConstant bitComplementFunc;
+	private SymbolicConstant bitOrFunc;
 	private SymbolicConstant bitXorFunc;
 	private SymbolicConstant shiftLeftFunc;
 	private SymbolicConstant shiftRightFunc;
@@ -305,6 +306,10 @@ public class CommonEvaluator implements Evaluator {
 				universe.integerType()));
 		this.bitComplementFunc = universe.symbolicConstant(universe
 				.stringObject("bitcomplement"), universe.functionType(
+				Arrays.asList(universe.integerType(), universe.integerType()),
+				universe.integerType()));
+		this.bitOrFunc = universe.symbolicConstant(universe
+				.stringObject("bitor"), universe.functionType(
 				Arrays.asList(universe.integerType(), universe.integerType()),
 				universe.integerType()));
 		this.bitXorFunc = universe.symbolicConstant(universe
@@ -576,6 +581,8 @@ public class CommonEvaluator implements Evaluator {
 			return evaluateBitand(state, pid, expression);
 		case BITCOMPLEMENT:
 			return evaluateBitcomplement(state, pid, expression);
+		case BITOR:
+			return evaluateBitor(state, pid, expression);
 		case BITXOR:
 			return evaluateBitxor(state, pid, expression);
 		case SHIFTLEFT:
@@ -617,6 +624,19 @@ public class CommonEvaluator implements Evaluator {
 		state = eval.state;
 		result = universe.apply(this.bitComplementFunc,
 				Arrays.asList(left, right));
+		return new Evaluation(state, result);
+	}
+
+	private Evaluation evaluateBitor(State state, int pid,
+			BinaryExpression expression)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluate(state, pid, expression.left());
+		SymbolicExpression left = eval.value, right, result;
+
+		eval = evaluate(eval.state, pid, expression.right());
+		right = eval.value;
+		state = eval.state;
+		result = universe.apply(this.bitOrFunc, Arrays.asList(left, right));
 		return new Evaluation(state, result);
 	}
 
