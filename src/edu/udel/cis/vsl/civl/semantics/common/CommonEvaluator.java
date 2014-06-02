@@ -1881,6 +1881,20 @@ public class CommonEvaluator implements Evaluator {
 			eval = new Evaluation(state, symbolicUtil.setSymRef(pointer,
 					universe.offsetReference(offsetRef.getParent(), newOffset)));
 			return eval;
+		} else if (symRef.isIdentityReference()) {
+			BooleanExpression claim = universe.equals(zero, offset);
+			BooleanExpression assumption = state.getPathCondition();
+			ResultType resultType = universe.reasoner(assumption).valid(claim)
+					.getResultType();
+
+			if (resultType != ResultType.YES) {
+				state = errorLogger.logError(expression.getSource(), state,
+						symbolicUtil.stateToString(state), claim, resultType,
+						ErrorKind.OUT_OF_BOUNDS,
+						"Pointer addition resulted in out of bounds object pointer:\noffset = "
+								+ offset);
+			}
+			return new Evaluation(state, pointer);
 		} else
 			throw new CIVLUnimplementedFeatureException(
 					"Pointer addition for anything other than array elements or variables",
@@ -2386,7 +2400,8 @@ public class CommonEvaluator implements Evaluator {
 			SymbolicExpression arrayReference = symbolicUtil.parentPointer(
 					source, charPointer);
 			NumericExpression indexExpr = arrayEltRef.getIndex();
-			Evaluation eval = this.dereference(source, state, arrayReference, false);
+			Evaluation eval = this.dereference(source, state, arrayReference,
+					false);
 			int index;
 
 			if (indexExpr.isZero())

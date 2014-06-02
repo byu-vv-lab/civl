@@ -111,7 +111,7 @@ public interface CIVLConfiguration {
 
 	public final static Option statelessPrintfO = Option.newScalarOption(
 			"statelessPrintf", BOOLEAN,
-			"prevent printf function modifying the file system", false);
+			"prevent printf function modifying the file system", true);
 
 	public final static Option sysIncludePathO = Option.newScalarOption(
 			"sysIncludePath", STRING, "set the system include path", null);

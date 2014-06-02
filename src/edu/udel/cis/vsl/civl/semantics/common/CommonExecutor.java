@@ -877,10 +877,14 @@ public class CommonExecutor implements Executor {
 				result = stateFactory.setVariable(state, vid, sid,
 						newVariableValue);
 			} catch (SARLException e) {
-				errorLogger.logSimpleError(source, state,
+				errorLogger.logSimpleError(
+						source,
+						state,
 						symbolicUtil.stateToString(state),
-						ErrorKind.DEREFERENCE, "Invalid pointer dereference: "
-								+ pointer);
+						ErrorKind.DEREFERENCE,
+						"Invalid pointer dereference: "
+								+ symbolicUtil.symbolicExpressionToString(
+										source, state, pointer));
 				throw new UnsatisfiablePathConditionException();
 			}
 		}
