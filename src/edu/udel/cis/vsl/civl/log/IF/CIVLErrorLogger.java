@@ -86,7 +86,7 @@ public class CIVLErrorLogger {
 	 * TODO: move this to its own package, like log, make public
 	 * 
 	 */
-	public State logError(CIVLSource source, State state,
+	public State logError(CIVLSource source, State state, String process,
 			StringBuffer stateString, BooleanExpression claim,
 			ResultType resultType, ErrorKind errorKind, String message)
 			throws UnsatisfiablePathConditionException {
@@ -129,8 +129,8 @@ public class CIVLErrorLogger {
 				certainty = Certainty.MAYBE;
 			}
 		}
-		error = new CIVLExecutionException(errorKind, certainty, message,
-				stateString, source);
+		error = new CIVLExecutionException(errorKind, certainty, process,
+				message, stateString, source);
 		reportError(error);
 		newPc = universe.and(pc, claim);
 		// need to check satisfiability again because failure to do so
@@ -174,7 +174,7 @@ public class CIVLErrorLogger {
 	 * @throws UnsatisfiablePathConditionException
 	 *             if the path condition is definitely unsatisfiable
 	 */
-	public void logSimpleError(CIVLSource source, State state,
+	public void logSimpleError(CIVLSource source, State state, String process,
 			StringBuffer stateString, ErrorKind errorKind, String message)
 			throws UnsatisfiablePathConditionException {
 		BooleanExpression pc = state.getPathCondition();
@@ -195,8 +195,8 @@ public class CIVLErrorLogger {
 		else { // pc is definitely satisfiable
 			certainty = Certainty.PROVEABLE;
 		}
-		error = new CIVLExecutionException(errorKind, certainty, message,
-				stateString, source);
+		error = new CIVLExecutionException(errorKind, certainty, process,
+				message, stateString, source);
 		reportError(error);
 	}
 }

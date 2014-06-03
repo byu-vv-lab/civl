@@ -202,10 +202,12 @@ public class CommonStateManager implements StateManager {
 		State oldState = state;
 		StateStatus stateStatus;
 		TraceStep traceStep;
+		String process;
 
 		assert transition instanceof Transition;
 		pid = ((Transition) transition).pid();
 		processIdentifier = ((Transition) transition).processIdentifier();
+		process = "p" + processIdentifier + " (id = " + pid + ")";
 		traceStep = new CommonTraceStep(processIdentifier);
 		firstTransition = (Transition) transition;
 		state = executor.execute(state, pid, firstTransition);
@@ -215,8 +217,8 @@ public class CommonStateManager implements StateManager {
 					processIdentifier, false);
 		}
 		traceStep.addAtomicStep(new CommonAtomicStep(state, firstTransition));
-		for (stateStatus = singleEnabled(state, pid, 0); stateStatus.val; stateStatus = singleEnabled(
-				state, pid, stateStatus.atomCount)) {
+		for (stateStatus = singleEnabled(state, pid, 0, process); stateStatus.val; stateStatus = singleEnabled(
+				state, pid, stateStatus.atomCount, process)) {
 			assert stateStatus.enabledTransition != null;
 			assert stateStatus.enabledStatus == EnabledStatus.DETERMINISTIC;
 			assert stateStatus.atomCount >= 0;
@@ -244,7 +246,7 @@ public class CommonStateManager implements StateManager {
 				// TODO state never gets canonicalized and then gmc can't figure
 				// out if it has been seen before.
 				CIVLExecutionException err = new CIVLExecutionException(
-						stex.kind(), stex.certainty(), stex.message(),
+						stex.kind(), stex.certainty(), process, stex.message(),
 						symbolicUtil.stateToString(state), stex.source());
 
 				errorLogger.reportError(err);
@@ -257,7 +259,7 @@ public class CommonStateManager implements StateManager {
 				state = stateFactory.collectScopes(state);
 			} catch (CIVLStateException stex) {
 				CIVLExecutionException err = new CIVLExecutionException(
-						stex.kind(), stex.certainty(), stex.message(),
+						stex.kind(), stex.certainty(), process, stex.message(),
 						symbolicUtil.stateToString(state), stex.source());
 
 				errorLogger.reportError(err);
@@ -318,7 +320,8 @@ public class CommonStateManager implements StateManager {
 	 *            The number of incomplete atom blocks.
 	 * @return
 	 */
-	private StateStatus singleEnabled(State state, int pid, int atomCount) {
+	private StateStatus singleEnabled(State state, int pid, int atomCount,
+			String process) {
 		List<Transition> enabled;
 		ProcessState procState = state.getProcessState(pid);
 		Location pLocation;
@@ -344,11 +347,12 @@ public class CommonStateManager implements StateManager {
 				return new StateStatus(true, enabled.get(0), atomCount,
 						EnabledStatus.DETERMINISTIC);
 			else if (enabled.size() > 1) {// non deterministic
-				reportError(EnabledStatus.NONDETERMINISTIC, state, pLocation);
+				reportError(EnabledStatus.NONDETERMINISTIC, state, pLocation,
+						process);
 				return new StateStatus(false, null, atomCount,
 						EnabledStatus.NONDETERMINISTIC);
 			} else {// blocked
-				reportError(EnabledStatus.BLOCKED, state, pLocation);
+				reportError(EnabledStatus.BLOCKED, state, pLocation, process);
 				return new StateStatus(false, null, atomCount,
 						EnabledStatus.BLOCKED);
 			}
@@ -446,18 +450,18 @@ public class CommonStateManager implements StateManager {
 	 *            The location that the error occurs.
 	 */
 	private void reportError(EnabledStatus enabled, State state,
-			Location location) {
+			Location location, String process) {
 		switch (enabled) {
 		case NONDETERMINISTIC:
 			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE,
+					Certainty.CONCRETE, process,
 					"Non-determinism is encountered in $atom block.",
 					this.executor.evaluator().symbolicUtility()
 							.stateToString(state), location.getSource()));
 			break;
 		case BLOCKED:
 			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE,
+					Certainty.CONCRETE, process,
 					"Blocked location is encountered in $atom block.",
 					this.executor.evaluator().symbolicUtility()
 							.stateToString(state), location.getSource()));

@@ -36,7 +36,7 @@ public interface Evaluator {
 	 * @return the value pointed to
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	Evaluation dereference(CIVLSource source, State state,
+	Evaluation dereference(CIVLSource source, State state, String process,
 			SymbolicExpression pointer, boolean checkedOutput)
 			throws UnsatisfiablePathConditionException;
 
@@ -112,8 +112,8 @@ public interface Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 *             of something goes wrong evaluating the string
 	 */
-	Evaluation getStringExpression(State state, CIVLSource source,
-			SymbolicExpression charPointer)
+	Evaluation getStringExpression(State state, String process,
+			CIVLSource source, SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException;
 
 	/**
@@ -164,7 +164,7 @@ public interface Evaluator {
 	 */
 	Set<SymbolicExpression> memoryUnitsOfVariable(
 			SymbolicExpression variableValue, int dyScopeID, int vid,
-			State state);
+			State state, String process);
 
 	/**
 	 * The model factory should be the unqiue one used in the system.
@@ -222,19 +222,20 @@ public interface Evaluator {
 	SymbolicUniverse universe();
 
 	SymbolicExpression heapPointer(CIVLSource source, State state,
-			SymbolicExpression scopeValue)
+			String process, SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
 
 	SymbolicExpression heapValue(CIVLSource source, State state,
-			SymbolicExpression scopeValue)
+			String process, SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
 
 	Pair<State, CIVLFunction> evaluateFunctionExpression(State state, int pid,
 			Expression functionExpression)
 			throws UnsatisfiablePathConditionException;
 
-	Evaluation pointerAdd(State state, int pid, BinaryExpression expression,
-			SymbolicExpression pointer, NumericExpression offset)
+	Evaluation pointerAdd(State state, int pid, String process,
+			BinaryExpression expression, SymbolicExpression pointer,
+			NumericExpression offset)
 			throws UnsatisfiablePathConditionException;
 
 	SymbolicUtility symbolicUtility();

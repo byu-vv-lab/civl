@@ -68,6 +68,8 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 		String functionName = call.function().name().name();
 		LHSExpression lhs = call.lhs();
 		CIVLSource source = call.getSource();
+		int processIdentifier = state.getProcessState(pid).identifier();
+		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
@@ -85,17 +87,17 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 					argumentValues);
 			break;
 		case "$omp_gws_create":
-			state = executeGwsCreate(source, state, numArgs, lhs, arguments,
-					argumentValues);
+			state = executeGwsCreate(source, state, pid, process, lhs,
+					arguments, argumentValues);
 			break;
 		case "$omp_gws_destroy":
 		case "$omp_ws_destroy":
-			state = executeFree(state, pid, arguments, argumentValues,
+			state = executeFree(state, pid, process, arguments, argumentValues,
 					call.getSource());
 			break;
 		case "$omp_ws_create":
-			state = executeWsCreate(source, state, numArgs, lhs, arguments,
-					argumentValues);
+			state = executeWsCreate(source, state, pid, process, lhs,
+					arguments, argumentValues);
 			break;
 		case "$omp_ws_arrive_loop":
 			state = executeArrriveLoop(source, state, numArgs, lhs, arguments,
@@ -190,7 +192,7 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeGwsCreate(CIVLSource source, State state, int pid,
-			LHSExpression lhs, Expression[] arguments,
+			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		// the gws object to be created
@@ -256,7 +258,7 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 		// newly created __omp_gws__ object, and assign lhs with the
 		// corresponding handle $omp_gws, which is in fact a pointer to the
 		// __omp_gws__ object.
-		state = primaryExecutor.malloc(source, state, pid, lhs,
+		state = primaryExecutor.malloc(source, state, pid, process, lhs,
 				scopeExpression, scope, gwsType, gwsObj);
 		return state;
 	}
@@ -297,7 +299,7 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeWsCreate(CIVLSource source, State state, int pid,
-			LHSExpression lhs, Expression[] arguments,
+			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression scope = argumentValues[0];
@@ -311,8 +313,8 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression isInit;
 		Evaluation eval;
 
-		eval = this.evaluator.dereference(arguments[1].getSource(), state, gws,
-				false);
+		eval = this.evaluator.dereference(arguments[1].getSource(), state,
+				process, gws, false);
 		state = eval.state;
 		gwsObj = eval.value;
 		isInit = universe.tupleRead(gwsObj, oneObject);
@@ -324,10 +326,10 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 				universe.bool(true));
 		gwsObj = universe.tupleWrite(gwsObj, oneObject, isInit);
 		state = this.primaryExecutor.assign(arguments[1].getSource(), state,
-				gws, gwsObj);
+				process, gws, gwsObj);
 		wsObj = universe.tuple((SymbolicTupleType) dynamicWsType,
 				Arrays.asList(tid, gws));
-		state = this.primaryExecutor.malloc(source, state, pid, lhs,
+		state = this.primaryExecutor.malloc(source, state, pid, process, lhs,
 				scopeExpression, scope, wsType, wsObj);
 		return state;
 	}

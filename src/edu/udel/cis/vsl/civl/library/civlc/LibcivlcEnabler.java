@@ -60,9 +60,10 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	public LibcivlcEnabler(String name, Enabler primaryEnabler, Evaluator evaluator,
-			TransitionFactory transitionFactory, PrintStream output,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
+	public LibcivlcEnabler(String name, Enabler primaryEnabler,
+			Evaluator evaluator, TransitionFactory transitionFactory,
+			PrintStream output, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
 		super(name, primaryEnabler, evaluator, transitionFactory, output,
 				modelFactory, symbolicUtil);
 
@@ -115,6 +116,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		List<Expression> arguments = call.arguments();
 		List<Transition> localTransitions = new ArrayList<>();
 		Statement transitionStatement;
+		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		switch (functionName) {
 		case "$choose_int":
@@ -128,7 +130,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 
 			if (upperNumber == null) {
 				throw new CIVLExecutionException(ErrorKind.INTERNAL,
-						Certainty.NONE,
+						Certainty.NONE, process,
 						"Argument to $choose_int not concrete: " + eval.value,
 						symbolicUtil.stateToString(state), arguments.get(0)
 								.getSource());

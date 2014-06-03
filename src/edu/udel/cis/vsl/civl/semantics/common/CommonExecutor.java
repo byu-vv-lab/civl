@@ -173,7 +173,8 @@ public class CommonExecutor implements Executor {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeAssert(State state, int pid, AssertStatement statement)
+	private State executeAssert(State state, int pid, String process,
+			AssertStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid,
 				statement.getExpression());
@@ -200,13 +201,13 @@ public class CommonExecutor implements Executor {
 						state = eval.state;
 						argumentValues[i] = eval.value;
 					}
-					state = this.executePrintf(state, pid, arguments,
+					state = this.executePrintf(state, pid, process, arguments,
 							argumentValues);
 				}
 			}
 			// TODO: USE GENERAL METHOD ... state = evaluator.logError in own
 			// class
-			state = errorLogger.logError(statement.getSource(), state,
+			state = errorLogger.logError(statement.getSource(), state, process,
 					symbolicUtil.stateToString(state), assertValue, resultType,
 					ErrorKind.ASSERTION_VIOLATION,
 					"Cannot prove assertion holds: " + statement.toString()
@@ -232,12 +233,13 @@ public class CommonExecutor implements Executor {
 	 * @return The updated state of the program
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeAssign(State state, int pid, AssignStatement statement)
+	private State executeAssign(State state, int pid, String process,
+			AssignStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid, statement.rhs());
 
-		state = assign(eval.state, pid, statement.getLhs(), eval.value,
-				statement.isInitialization());
+		state = assign(eval.state, pid, process, statement.getLhs(),
+				eval.value, statement.isInitialization());
 		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
@@ -326,7 +328,8 @@ public class CommonExecutor implements Executor {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeMalloc(State state, int pid, MallocStatement statement)
+	private State executeMalloc(State state, int pid, String process,
+			MallocStatement statement)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource source = statement.getSource();
 		int sid = state.getProcessState(pid).getDyscopeId();
@@ -386,7 +389,7 @@ public class CommonExecutor implements Executor {
 					+ "      expected size argument: a multile of "
 					+ elementSize.toString();
 			CIVLExecutionException e = new CIVLExecutionException(
-					ErrorKind.MALLOC, certainty, message,
+					ErrorKind.MALLOC, certainty, process, message,
 					symbolicUtil.stateToString(state), source);
 
 			errorLogger.reportError(e);
@@ -417,7 +420,7 @@ public class CommonExecutor implements Executor {
 			symRef = universe.arrayElementReference(symRef, lengthExpression);
 			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
 			firstElementPointer = symbolicUtil.setSymRef(heapPointer, symRef);
-			state = assign(state, pid, lhs, firstElementPointer);
+			state = assign(state, pid, process, lhs, firstElementPointer);
 		}
 		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
@@ -449,8 +452,8 @@ public class CommonExecutor implements Executor {
 	 * @return State
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executePrintf(State state, int pid, Expression[] expressions,
-			SymbolicExpression[] argumentValues)
+	private State executePrintf(State state, int pid, String process,
+			Expression[] expressions, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		if (this.enablePrintf) {
 			// using StringBuffer instead for performance
@@ -470,7 +473,7 @@ public class CommonExecutor implements Executor {
 			// array. Check it. If it is not, through an exception.
 			SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
 					source, argumentValues[0]);
-			Evaluation eval = evaluator.dereference(source, state,
+			Evaluation eval = evaluator.dereference(source, state, process,
 					arrayPointer, false);
 
 			if (eval.value.operator() != SymbolicOperator.CONCRETE)
@@ -538,8 +541,8 @@ public class CommonExecutor implements Executor {
 					int_arrayIndex = symbolicUtil
 							.extractInt(source, arrayIndex);
 					// index is not necessarily 0! FIX ME!
-					eval = evaluator.dereference(source, state, arrayPointer,
-							false);
+					eval = evaluator.dereference(source, state, process,
+							arrayPointer, false);
 					originalArray = (SymbolicSequence<?>) eval.value
 							.argument(0);
 					state = eval.state;
@@ -602,15 +605,17 @@ public class CommonExecutor implements Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeReturn(State state, int pid, ReturnStatement statement)
+	private State executeReturn(State state, int pid, String process,
+			ReturnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		Expression expr = statement.expression();
-		ProcessState process;
+		ProcessState processState;
 		SymbolicExpression returnValue;
 		String functionName;
 
-		process = state.getProcessState(pid);
-		functionName = process.peekStack().location().function().name().name();
+		processState = state.getProcessState(pid);
+		functionName = processState.peekStack().location().function().name()
+				.name();
 		if (functionName.equals("_CIVL_system")) {
 			assert pid == 0;
 			if (state.numProcs() > 1) {
@@ -623,6 +628,7 @@ public class CommonExecutor implements Executor {
 						throw new CIVLExecutionException(
 								ErrorKind.PROCESS_LEAK,
 								Certainty.CONCRETE,
+								process,
 								"Attempt to terminate the main process while process "
 										+ proc.identifier() + "(process<"
 										+ proc.getPid() + ">) is still running",
@@ -641,22 +647,22 @@ public class CommonExecutor implements Executor {
 			if (functionName.equals("_CIVL_system")) {
 				if (universe.equals(returnValue, universe.integer(0)).isFalse()) {
 					throw new CIVLExecutionException(ErrorKind.OTHER,
-							Certainty.CONCRETE,
+							Certainty.CONCRETE, process,
 							"Program exits with error code: " + returnValue,
 							statement.getSource());
 				}
 			}
 		}
 		state = stateFactory.popCallStack(state, pid);
-		process = state.getProcessState(pid);
-		if (!process.hasEmptyStack()) {
-			StackEntry returnContext = process.peekStack();
+		processState = state.getProcessState(pid);
+		if (!processState.hasEmptyStack()) {
+			StackEntry returnContext = processState.peekStack();
 			Location returnLocation = returnContext.location();
 			CallOrSpawnStatement call = (CallOrSpawnStatement) returnLocation
 					.getSoleOutgoing();
 
 			if (call.lhs() != null)
-				state = assign(state, pid, call.lhs(), returnValue);
+				state = assign(state, pid, process, call.lhs(), returnValue);
 			state = stateFactory.setLocation(state, pid, call.target());
 		}
 		return state;
@@ -675,7 +681,7 @@ public class CommonExecutor implements Executor {
 	 * @return The updated state of the program.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeSpawn(State state, int pid,
+	private State executeSpawn(State state, int pid, String process,
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		CIVLFunction function = statement.function();
@@ -702,7 +708,7 @@ public class CommonExecutor implements Executor {
 		}
 		state = stateFactory.addProcess(state, function, arguments, pid);
 		if (statement.lhs() != null)
-			state = assign(state, pid, statement.lhs(),
+			state = assign(state, pid, process, statement.lhs(),
 					modelFactory.processValue(newPid));
 		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
@@ -717,7 +723,7 @@ public class CommonExecutor implements Executor {
 	 * @param statement
 	 * @return
 	 */
-	private State execute(State state, int pid, Statement statement)
+	private State executeStatement(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
 		try {
 			return executeWork(state, pid, statement);
@@ -783,13 +789,17 @@ public class CommonExecutor implements Executor {
 	 */
 	private State executeWork(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
-		numSteps++;
+		int processIdentifier = state.getProcessState(pid).identifier();
+		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
+		numSteps++;
 		switch (statement.statementKind()) {
 		case ASSERT:
-			return executeAssert(state, pid, (AssertStatement) statement);
+			return executeAssert(state, pid, process,
+					(AssertStatement) statement);
 		case ASSIGN:
-			return executeAssign(state, pid, (AssignStatement) statement);
+			return executeAssign(state, pid, process,
+					(AssignStatement) statement);
 		case ASSUME:
 			return executeAssume(state, pid, (AssumeStatement) statement);
 		case CALL_OR_SPAWN:
@@ -798,15 +808,17 @@ public class CommonExecutor implements Executor {
 			if (call.isCall())
 				return executeCall(state, pid, call);
 			else
-				return executeSpawn(state, pid, call);
+				return executeSpawn(state, pid, process, call);
 		case CHOOSE:
 			throw new CIVLInternalException("Should be unreachable", statement);
 		case MALLOC:
-			return executeMalloc(state, pid, (MallocStatement) statement);
+			return executeMalloc(state, pid, process,
+					(MallocStatement) statement);
 		case NOOP:
 			return stateFactory.setLocation(state, pid, statement.target());
 		case RETURN:
-			return executeReturn(state, pid, (ReturnStatement) statement);
+			return executeReturn(state, pid, process,
+					(ReturnStatement) statement);
 		case STATEMENT_LIST:
 			return executeStatementList(state, pid, (StatementList) statement,
 					null);
@@ -828,7 +840,7 @@ public class CommonExecutor implements Executor {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State assign(CIVLSource source, State state,
+	private State assign(CIVLSource source, State state, String process,
 			SymbolicExpression pointer, SymbolicExpression value,
 			boolean isInitialization)
 			throws UnsatisfiablePathConditionException {
@@ -840,7 +852,7 @@ public class CommonExecutor implements Executor {
 
 		if (sid < 0) {
 			errorLogger
-					.logSimpleError(source, state,
+					.logSimpleError(source, state, process,
 							symbolicUtil.stateToString(state),
 							ErrorKind.DEREFERENCE,
 							"Attempt to dereference pointer into scope which has been removed from state");
@@ -850,7 +862,7 @@ public class CommonExecutor implements Executor {
 		if (!isInitialization) {
 			if (variable.isInput()) {
 				errorLogger
-						.logSimpleError(source, state,
+						.logSimpleError(source, state, process,
 								symbolicUtil.stateToString(state),
 								ErrorKind.INPUT_WRITE,
 								"Attempt to write to input variable "
@@ -860,6 +872,7 @@ public class CommonExecutor implements Executor {
 				errorLogger.logSimpleError(
 						source,
 						state,
+						process,
 						symbolicUtil.stateToString(state),
 						ErrorKind.CONSTANT_WRITE,
 						"Attempt to write to constant variable "
@@ -883,6 +896,7 @@ public class CommonExecutor implements Executor {
 				errorLogger.logSimpleError(
 						source,
 						state,
+						process,
 						symbolicUtil.stateToString(state),
 						ErrorKind.DEREFERENCE,
 						"Invalid pointer dereference: "
@@ -894,8 +908,9 @@ public class CommonExecutor implements Executor {
 		return result;
 	}
 
-	private State assign(State state, int pid, LHSExpression lhs,
-			SymbolicExpression value, boolean isInitialization)
+	private State assign(State state, int pid, String process,
+			LHSExpression lhs, SymbolicExpression value,
+			boolean isInitialization)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.reference(state, pid, lhs);
 
@@ -913,24 +928,24 @@ public class CommonExecutor implements Executor {
 			}
 		}
 		// TODO check if lhs is constant or input value
-		return assign(lhs.getSource(), eval.state, eval.value, value,
+		return assign(lhs.getSource(), eval.state, process, eval.value, value,
 				isInitialization);
 	}
 
 	/* *********************** Methods from Executor *********************** */
 
 	@Override
-	public State assign(CIVLSource source, State state,
+	public State assign(CIVLSource source, State state, String process,
 			SymbolicExpression pointer, SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
-		return this.assign(source, state, pointer, value, false);
+		return this.assign(source, state, process, pointer, value, false);
 	}
 
 	@Override
-	public State assign(State state, int pid, LHSExpression lhs,
-			SymbolicExpression value)
+	public State assign(State state, int pid, String process,
+			LHSExpression lhs, SymbolicExpression value)
 			throws UnsatisfiablePathConditionException {
-		return this.assign(state, pid, lhs, value, false);
+		return this.assign(state, pid, process, lhs, value, false);
 	}
 
 	@Override
@@ -945,7 +960,7 @@ public class CommonExecutor implements Executor {
 
 	@Override
 	public State malloc(CIVLSource source, State state, int pid,
-			LHSExpression lhs, Expression scopeExpression,
+			String process, LHSExpression lhs, Expression scopeExpression,
 			SymbolicExpression scopeValue, CIVLType objectType,
 			SymbolicExpression objectValue)
 			throws UnsatisfiablePathConditionException {
@@ -966,7 +981,7 @@ public class CommonExecutor implements Executor {
 				: scopeExpression.getSource();
 
 		elements.add(objectValue);
-		heapValue = evaluator.heapValue(source, state, scopeValue);
+		heapValue = evaluator.heapValue(source, state, process, scopeValue);
 		dyScopeID = modelFactory.getScopeId(scopeSource, scopeValue);
 		dyScope = state.getScope(dyScopeID);
 		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
@@ -990,7 +1005,7 @@ public class CommonExecutor implements Executor {
 			symRef = universe.arrayElementReference(symRef, fieldLength);
 			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
 			firstElementPointer = symbolicUtil.setSymRef(heapPointer, symRef);
-			state = assign(state, pid, lhs, firstElementPointer);
+			state = assign(state, pid, process, lhs, firstElementPointer);
 		}
 		return state;
 	}
@@ -1004,7 +1019,7 @@ public class CommonExecutor implements Executor {
 	public State execute(State state, int pid, Transition transition)
 			throws UnsatisfiablePathConditionException {
 		state = state.setPathCondition(transition.pathCondition());
-		return this.execute(state, pid, transition.statement());
+		return this.executeStatement(state, pid, transition.statement());
 	}
 
 	@Override

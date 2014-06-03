@@ -78,6 +78,8 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		int numArgs;
+		int processIdentifier = state.getProcessState(pid).identifier();
+		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		numArgs = call.arguments().size();
 		name = call.function().name();
@@ -93,7 +95,7 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 		}
 		switch (name.name()) {
 		case "free":
-			state = executeFree(state, pid, arguments, argumentValues,
+			state = executeFree(state, pid, process, arguments, argumentValues,
 					call.getSource());
 			break;
 		default:

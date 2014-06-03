@@ -118,7 +118,7 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression getSubArray(SymbolicExpression array,
 			NumericExpression startIndex, NumericExpression endIndex,
-			State state, CIVLSource source)
+			State state, String process, CIVLSource source)
 			throws UnsatisfiablePathConditionException;
 
 	/**

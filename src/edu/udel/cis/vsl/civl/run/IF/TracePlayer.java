@@ -134,28 +134,12 @@ public class TracePlayer extends Player {
 			return trace;
 		} catch (CIVLStateException stateException) {
 			throw new CIVLExecutionException(stateException.kind(),
-					stateException.certainty(), stateException.getMessage(),
+					stateException.certainty(), "",
+					stateException.getMessage(),
 					symbolicUtil.stateToString(stateException.state()),
 					stateException.source());
 		}
 	}
-
-	// public Trace<Transition, State>[] replayForGui(ArrayList<State> states,
-	// ArrayList<Transition> transitions)
-	// throws MisguidedExecutionException {
-	// try {
-	// State initialState = stateFactory.initialState(model);
-	// State[] stateArray = new State[] { initialState };
-	//
-	// states.add(initialState);
-	// return replayer.play(stateArray, chooser);
-	// } catch (CIVLStateException stateException) {
-	// throw new CIVLExecutionException(stateException.kind(),
-	// stateException.certainty(), stateException.getMessage(),
-	// symbolicUtil.stateToString(stateException.state()),
-	// stateException.source());
-	// }
-	// }
 
 	public void printStats() {
 		out.print("   statesInstantiated  : ");

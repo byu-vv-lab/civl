@@ -26,8 +26,8 @@ public interface Executor {
 	 * @return the new state
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	State assign(CIVLSource source, State state, SymbolicExpression pointer,
-			SymbolicExpression value)
+	State assign(CIVLSource source, State state, String process,
+			SymbolicExpression pointer, SymbolicExpression value)
 			throws UnsatisfiablePathConditionException;
 
 	/**
@@ -45,7 +45,7 @@ public interface Executor {
 	 * @return the new state
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	State assign(State state, int pid, LHSExpression lhs,
+	State assign(State state, int pid, String process, LHSExpression lhs,
 			SymbolicExpression value)
 			throws UnsatisfiablePathConditionException;
 
@@ -93,9 +93,10 @@ public interface Executor {
 	 *         given scope.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	State malloc(CIVLSource source, State state, int pid, LHSExpression lhs,
-			Expression scopeExpression, SymbolicExpression scopeValue,
-			CIVLType objectType, SymbolicExpression objectValue)
+	State malloc(CIVLSource source, State state, int pid, String process,
+			LHSExpression lhs, Expression scopeExpression,
+			SymbolicExpression scopeValue, CIVLType objectType,
+			SymbolicExpression objectValue)
 			throws UnsatisfiablePathConditionException;
 
 	/**

@@ -355,6 +355,7 @@ public abstract class CommonEnabler implements Enabler {
 		ArrayList<Transition> localTransitions = new ArrayList<>();
 		Statement transitionStatement = null;
 		int processIdentifier = state.getProcessState(pid).identifier();
+		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		try {
 			{
@@ -380,7 +381,8 @@ public abstract class CommonEnabler implements Enabler {
 					if (pidValue < 0) {
 						CIVLExecutionException e = new CIVLExecutionException(
 								ErrorKind.INVALID_PID,
-								Certainty.PROVEABLE,// TODO check message?
+								Certainty.PROVEABLE,
+								process,// TODO check message?
 								"Unable to call $wait on a process that has already been the target of a $wait.",
 								this.evaluator.symbolicUtility().stateToString(
 										state), s.getSource());

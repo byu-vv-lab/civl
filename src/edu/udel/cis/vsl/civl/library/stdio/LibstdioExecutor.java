@@ -443,7 +443,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Pair<State, StringBuffer> getString(CIVLSource source, State state,
-			SymbolicExpression charPointer)
+			String process, SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException {
 		if (charPointer.operator() == SymbolicOperator.CONCRETE) {
 			SymbolicSequence<?> originalArray;
@@ -459,7 +459,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				ArrayElementReference arrayRef = (ArrayElementReference) symbolicUtil
 						.getSymRef(charPointer);
 				NumericExpression arrayIndex = arrayRef.getIndex();
-				Evaluation eval = evaluator.dereference(source, state,
+				Evaluation eval = evaluator.dereference(source, state, process,
 						arrayPointer, false);
 
 				state = eval.state;
@@ -504,8 +504,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State execute_filesystem_create(CIVLSource source, State state,
-			int pid, LHSExpression lhs, Expression[] expressions,
-			SymbolicExpression[] argumentValues)
+			int pid, String process, LHSExpression lhs,
+			Expression[] expressions, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression scope = argumentValues[0];
 		LinkedList<SymbolicExpression> filesystemComponents = new LinkedList<>();
@@ -518,8 +518,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		filesystemComponents.add(filesArray);
 		filesystem = universe.tuple(filesystemStructSymbolicType,
 				filesystemComponents);
-		state = primaryExecutor.malloc(source, state, pid, lhs, expressions[0],
-				scope, filesystemStructType, filesystem);
+		state = primaryExecutor.malloc(source, state, pid, process, lhs,
+				expressions[0], scope, filesystemStructType, filesystem);
 		return state;
 	}
 
@@ -531,12 +531,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 * 
 	 */
 	private State execute_fopen(CIVLSource source, State state, int pid,
-			LHSExpression lhs, Expression[] expressions,
+			String process, LHSExpression lhs, Expression[] expressions,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression filesystemPointer = argumentValues[0];
 		Evaluation eval = evaluator.dereference(expressions[0].getSource(),
-				state, filesystemPointer, false);
+				state, process, filesystemPointer, false);
 		CIVLSource modeSource = expressions[2].getSource();
 		int mode = symbolicUtil.extractInt(modeSource,
 				(NumericExpression) argumentValues[2]);
@@ -564,12 +564,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		state = eval.state;
 		fileSystemStructure = eval.value;
 		fileArray = universe.tupleRead(fileSystemStructure, oneObject);
-		eval = evaluator.getStringExpression(state, expressions[1].getSource(),
-				argumentValues[1]);
+		eval = evaluator.getStringExpression(state, process,
+				expressions[1].getSource(), argumentValues[1]);
 		state = eval.state;
 		filename = eval.value;
 		fileNameStringPair = this.getString(expressions[1].getSource(), state,
-				argumentValues[1]);
+				process, argumentValues[1]);
 		state = fileNameStringPair.left;
 		// fileNameString = fileNameStringPair.right.toString();
 
@@ -648,7 +648,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 						state.getPathCondition(), positiveLength));
 			}
 			state = primaryExecutor.assign(expressions[1].getSource(), state,
-					filesystemPointer, fileSystemStructure);
+					process, filesystemPointer, fileSystemStructure);
 		}
 		// now theFile is the new file and fileIndex is its index
 		// malloc a new FILE object with appropriate pointers
@@ -676,7 +676,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 					streamComponents);
 			// do malloc, get pointer, do the assignments.
 			// state = primaryExecutor.assign(state, pid, lhs, fileStream);
-			state = primaryExecutor.malloc(source, state, pid, lhs,
+			state = primaryExecutor.malloc(source, state, pid, process, lhs,
 					expressions[0], scope, FILEtype, fileStream);
 
 		}
@@ -704,6 +704,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		int numArgs;
 		CIVLSource source = statement.getSource();
 		LHSExpression lhs = statement.lhs();
+		int processIdentifier = state.getProcessState(pid).identifier();
+		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		numArgs = statement.arguments().size();
 		name = statement.function().name();
@@ -723,33 +725,35 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		// argumentValues);
 		// break;
 		case "$fopen":
-			state = execute_fopen(source, state, pid, lhs, arguments,
+			state = execute_fopen(source, state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
 		case "$filesystem_create":
-			state = execute_filesystem_create(source, state, pid, lhs,
+			state = execute_filesystem_create(source, state, pid, process, lhs,
 					arguments, argumentValues);
 			break;
 		case "$filesystem_destroy":
-			state = executeFree(state, pid, arguments, argumentValues, source);
+			state = executeFree(state, pid, process, arguments, argumentValues,
+					source);
 			break;
 		case "fclose":
-			state = executeFree(state, pid, arguments, argumentValues, source);
+			state = executeFree(state, pid, process, arguments, argumentValues,
+					source);
 			break;
 		case "fprintf":
-			state = execute_fprintf(source, state, pid, lhs, arguments,
-					argumentValues);
+			state = execute_fprintf(source, state, pid, process, lhs,
+					arguments, argumentValues);
 			break;
 		case "fscanf":
-			state = execute_fscanf(source, state, pid, lhs, arguments,
+			state = execute_fscanf(source, state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
 		case "$filesystem_copy_output":
-			state = execute_filesystem_copy_output(source, state, pid,
+			state = execute_filesystem_copy_output(source, state, pid, process,
 					arguments, argumentValues);
 			break;
 		case "$textFileLength":
-			state = execute_text_file_length(source, state, pid, lhs,
+			state = execute_text_file_length(source, state, pid, process, lhs,
 					arguments, argumentValues);
 			break;
 		default:
@@ -761,7 +765,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	}
 
 	private State execute_text_file_length(CIVLSource source, State state,
-			int pid, LHSExpression lhs, Expression[] arguments,
+			int pid, String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		Expression fileSystemExpression = modelFactory
@@ -780,12 +784,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		filesystemPointer = eval.value;
 		state = eval.state;
 		eval = evaluator.dereference(fileSystemExpression.getSource(), state,
-				filesystemPointer, false);
+				process, filesystemPointer, false);
 		state = eval.state;
 		fileSystemStructure = eval.value;
 		fileArray = universe.tupleRead(fileSystemStructure, oneObject);
-		eval = evaluator.getStringExpression(state, arguments[0].getSource(),
-				argumentValues[0]);
+		eval = evaluator.getStringExpression(state, process,
+				arguments[0].getSource(), argumentValues[0]);
 		state = eval.state;
 		filename = eval.value;
 
@@ -821,41 +825,26 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			fileSystemStructure = universe.tupleWrite(fileSystemStructure,
 					oneObject, fileArray);
 			state = primaryExecutor.assign(fileSystemExpression.getSource(),
-					state, filesystemPointer, fileSystemStructure);
+					state, process, filesystemPointer, fileSystemStructure);
 		} else {
 			SymbolicExpression isBinary = universe.tupleRead(theFile,
 					universe.intObject(4));
 
 			if (!isBinary.equals(this.zero)) {
 				throw new CIVLExecutionException(ErrorKind.OTHER,
-						Certainty.CONCRETE, "The file "
+						Certainty.CONCRETE, process, "The file "
 								+ arguments[0].toString()
 								+ " is not a text file.", source);
 			}
 			length = universe.tupleRead(theFile, universe.intObject(6));
 		}
-		if (lhs != null) {
-			// int scopeId = evaluator.getScopeId(
-			// fileSystemExpression.getSource(), filesystemPointer);
-			// int filesystemVid = evaluator.getVariableId(
-			// fileSystemExpression.getSource(), filesystemPointer);
-			// ReferenceExpression fileSystemRef = evaluator
-			// .getSymRef(filesystemPointer);
-			// ReferenceExpression ref =
-			// universe.tupleComponentReference(universe
-			// .arrayElementReference(universe.tupleComponentReference(
-			// fileSystemRef, oneObject), universe
-			// .integer(fileIndex)), universe.intObject(6));
-			// SymbolicExpression fileLengthPointer = evaluator.makePointer(
-			// scopeId, filesystemVid, ref);
-
-			state = primaryExecutor.assign(state, pid, lhs, length);
-		}
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, process, lhs, length);
 		return state;
 	}
 
 	private State execute_filesystem_copy_output(CIVLSource source,
-			State state, int pid, Expression[] arguments,
+			State state, int pid, String process, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression civlFileSystemPointer = argumentValues[0];
@@ -872,7 +861,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				oneObject);
 		CIVLSource arraySource = arguments[1].getSource();
 
-		eval = evaluator.dereference(arguments[0].getSource(), state,
+		eval = evaluator.dereference(arguments[0].getSource(), state, process,
 				civlFileSystemPointer, false);
 		state = eval.state;
 		fileArray = universe.tupleRead(eval.value, oneObject);
@@ -888,7 +877,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 					Arrays.asList(new SymbolicExpression[] { scopeField,
 							varField, arrayEleRef }));
 
-			state = primaryExecutor.assign(arraySource, state, currentPointer,
+			state = primaryExecutor.assign(arraySource, state, process,
+					currentPointer,
 					universe.arrayRead(fileArray, fileArrayIndex));
 		}
 		return state;
@@ -917,7 +907,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State execute_fscanf(CIVLSource source, State state, int pid,
-			LHSExpression lhs, Expression[] arguments,
+			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression fileStream;
@@ -928,14 +918,14 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		Pair<State, StringBuffer> formatString;
 		NumericExpression position;
 
-		eval = evaluator.dereference(arguments[0].getSource(), state,
+		eval = evaluator.dereference(arguments[0].getSource(), state, process,
 				argumentValues[0], false);
 		fileStream = eval.value;
 		state = eval.state;
 		filePointer = universe.tupleRead(fileStream, zeroObject);
 		position = (NumericExpression) universe
 				.tupleRead(fileStream, twoObject);
-		eval = evaluator.dereference(arguments[0].getSource(), state,
+		eval = evaluator.dereference(arguments[0].getSource(), state, process,
 				filePointer, false);
 		state = eval.state;
 		fileObject = eval.value;
@@ -950,12 +940,13 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 
 			if (positionExceedFileLengthValid == ResultType.YES) {
 				if (lhs != null) {
-					state = primaryExecutor.assign(state, pid, lhs, this.EOF);
+					state = primaryExecutor.assign(state, pid, process, lhs,
+							this.EOF);
 				}
 				return state;
 			}
 		}
-		formatString = this.getString(arguments[1].getSource(), state,
+		formatString = this.getString(arguments[1].getSource(), state, process,
 				argumentValues[1]);
 		formatBuffer = formatString.right;
 		state = formatString.left;
@@ -1001,7 +992,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				if (conversionFunction != null) {
 					data = universe.apply(conversionFunction,
 							Arrays.asList(format, currentString));
-					state = primaryExecutor.assign(source, state,
+					state = primaryExecutor.assign(source, state, process,
 							argumentValues[dataPointerIndex++], data);
 					count++;
 				}
@@ -1009,15 +1000,16 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			}
 			fileObject = universe.tupleWrite(fileObject, oneObject,
 					fileContents);
-			state = primaryExecutor.assign(source, state, filePointer,
+			state = primaryExecutor.assign(source, state, process, filePointer,
 					fileObject);
 			fileStream = universe.tupleWrite(fileStream, twoObject, position);
-			state = primaryExecutor.assign(source, state, argumentValues[0],
-					fileStream);
+			state = primaryExecutor.assign(source, state, process,
+					argumentValues[0], fileStream);
 			if (lhs != null) {
 				SymbolicExpression countValue = universe.integer(count);
 
-				state = primaryExecutor.assign(state, pid, lhs, countValue);
+				state = primaryExecutor.assign(state, pid, process, lhs,
+						countValue);
 			}
 		}
 		return state;
@@ -1046,7 +1038,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State execute_fprintf(CIVLSource source, State state, int pid,
-			LHSExpression lhs, Expression[] arguments,
+			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression fileStream;
@@ -1065,21 +1057,21 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		int sCount = 2;
 		Pair<State, StringBuffer> concreteString;
 
-		eval = evaluator.dereference(arguments[0].getSource(), state,
+		eval = evaluator.dereference(arguments[0].getSource(), state, process,
 				argumentValues[0], false);
 		fileStream = eval.value;
 		state = eval.state;
 		filePointer = universe.tupleRead(fileStream, zeroObject);
-		eval = evaluator.dereference(arguments[0].getSource(), state,
+		eval = evaluator.dereference(arguments[0].getSource(), state, process,
 				filePointer, false);
 		fileObject = eval.value;
 		state = eval.state;
 		fileName = universe.tupleRead(fileObject, zeroObject);
-		stringResult = this.getString(source, state, fileName);
+		stringResult = this.getString(source, state, process, fileName);
 		state = stringResult.left;
 		fileNameString = stringResult.right.toString();
 		concreteString = this.getString(arguments[1].getSource(), state,
-				argumentValues[1]);
+				process, argumentValues[1]);
 		formatBuffer = concreteString.right;
 		state = concreteString.left;
 		pattern = Pattern
@@ -1105,7 +1097,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 							arguments[i].getSource());
 				}
 				concreteString = this.getString(arguments[i].getSource(),
-						state, argumentValue);
+						state, process, argumentValue);
 				stringOfSymbolicExpression = concreteString.right;
 				state = concreteString.left;
 				printedContents.add(stringOfSymbolicExpression);
@@ -1169,7 +1161,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			}
 			fileObject = universe.tupleWrite(fileObject, oneObject,
 					fileContents);
-			state = primaryExecutor.assign(source, state, filePointer,
+			state = primaryExecutor.assign(source, state, process, filePointer,
 					fileObject);
 		}
 		return state;

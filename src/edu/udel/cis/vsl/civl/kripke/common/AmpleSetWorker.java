@@ -20,9 +20,9 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -777,6 +777,7 @@ public class AmpleSetWorker {
 		// only look at the top stack is sufficient
 		StackEntry callStack = p.peekStack();
 		int dyScopeID = callStack.scope();
+		String process = "p" + p.identifier() + " (id = " + p.getPid() + ")";
 
 		while (dyScopeID >= 0) {
 			if (checkedDyScopes.contains(dyScopeID))
@@ -789,7 +790,7 @@ public class AmpleSetWorker {
 					Variable variable = dyScope.lexicalScope().variable(vid);
 					Set<SymbolicExpression> varMemUnits = evaluator
 							.memoryUnitsOfVariable(dyScope.getValue(vid),
-									dyScopeID, vid, state);
+									dyScopeID, vid, state, process);
 					boolean permission = writableVariables.contains(variable) ? true
 							: false;
 

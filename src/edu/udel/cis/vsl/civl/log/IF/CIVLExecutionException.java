@@ -17,6 +17,8 @@ public class CIVLExecutionException extends CIVLException {
 
 	private ErrorKind kind;
 
+	private String process;
+
 	/**
 	 * Constructs new CIVLException with given fields.
 	 * 
@@ -31,27 +33,30 @@ public class CIVLExecutionException extends CIVLException {
 	 *            the source code element associated to the error; may be null
 	 */
 	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
-			String message, CIVLSource source) {
+			String process, String message, CIVLSource source) {
 		super(message, source);
 		assert kind != null;
 		assert certainty != null;
+		this.process = process;
 		this.kind = kind;
 		this.certainty = certainty;
 	}
 
 	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
-			String message, StringBuffer stateString, CIVLSource source) {
+			String process, String message, StringBuffer stateString,
+			CIVLSource source) {
 		super(message, source);
 		assert kind != null;
 		assert certainty != null;
+		this.process = process;
 		this.stateString = stateString;
 		this.kind = kind;
 		this.certainty = certainty;
 	}
 
 	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
-			String message, Sourceable sourceable) {
-		this(kind, certainty, message, sourceable.getSource());
+			String process, String message, Sourceable sourceable) {
+		this(kind, certainty, process, message, sourceable.getSource());
 	}
 
 	public Certainty certainty() {
@@ -66,7 +71,9 @@ public class CIVLExecutionException extends CIVLException {
 	public String toString() {
 		StringBuffer result = new StringBuffer();
 
-		result.append("CIVL execution error (kind: ");
+		result.append("CIVL execution error in ");
+		result.append(process);
+		result.append(" (kind: ");
 		result.append(kind);
 		result.append(", certainty: ");
 		result.append(certainty);

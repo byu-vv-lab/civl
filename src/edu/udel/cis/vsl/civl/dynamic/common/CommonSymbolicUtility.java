@@ -184,7 +184,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	@Override
 	public SymbolicExpression getSubArray(SymbolicExpression array,
 			NumericExpression startIndex, NumericExpression endIndex,
-			State state, CIVLSource source)
+			State state, String process, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		// if startIndex is zero and endIndex is length, return array
 		// verify startIndex >=0 and endIndex<= Length
@@ -205,7 +205,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			ResultType valid = reasoner.valid(claim).getResultType();
 
 			if (valid != ResultType.YES) {
-				state = errorLogger.logError(source, state,
+				state = errorLogger.logError(source, state, process,
 						this.stateToString(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS, "negative start index");
 				pathCondition = state.getPathCondition();
@@ -214,7 +214,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			claim = universe.lessThanEquals(endIndex, length);
 			valid = reasoner.valid(claim).getResultType();
 			if (valid != ResultType.YES) {
-				state = errorLogger.logError(source, state,
+				state = errorLogger.logError(source, state, process,
 						this.stateToString(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"end index exceeds length of array");
@@ -224,7 +224,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			claim = universe.lessThanEquals(startIndex, endIndex);
 			valid = reasoner.valid(claim).getResultType();
 			if (valid != ResultType.YES) {
-				state = errorLogger.logError(source, state,
+				state = errorLogger.logError(source, state, process,
 						this.stateToString(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"start index greater than end index");
@@ -251,8 +251,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				} else {
 					NumericExpression subLength = universe.subtract(endIndex,
 							startIndex);
-					SymbolicCompleteArrayType subArrayType = universe.arrayType(elementType,
-							subLength);
+					SymbolicCompleteArrayType subArrayType = universe
+							.arrayType(elementType, subLength);
 					NumericSymbolicConstant index = (NumericSymbolicConstant) universe
 							.symbolicConstant(universe.stringObject("i"),
 									universe.integerType());
@@ -260,7 +260,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 							index,
 							universe.arrayRead(array,
 									universe.add(startIndex, index)));
-					
+
 					return universe.arrayLambda(subArrayType, subArrayFunction);
 
 				}

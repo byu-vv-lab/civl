@@ -21,8 +21,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
 
-	public LibcivlcEvaluator(String name, Evaluator evaluator, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
+	public LibcivlcEvaluator(String name, Evaluator evaluator,
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
 		super(name, evaluator, modelFactory, symbolicUtil);
 	}
 
@@ -32,6 +32,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		SymbolicExpression[] argumentValues;
 		int numArgs;
 		BooleanExpression guard;
+		int processIdentifier = state.getProcessState(pid).identifier();
+		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		numArgs = arguments.size();
 		argumentValues = new SymbolicExpression[numArgs];
@@ -51,7 +53,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		switch (function) {
 		case "$comm_dequeue":
 			try {
-				guard = getDequeueGuard(state, pid, arguments, argumentValues);
+				guard = getDequeueGuard(state, pid, process, arguments,
+						argumentValues);
 			} catch (UnsatisfiablePathConditionException e) {
 				// the error that caused the unsatifiable path condition should
 				// already have been reported.
@@ -63,7 +66,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 			break;
 		case "$barrier_exit":
 			try {
-				guard = getBarrierExitGuard(state, pid, arguments,
+				guard = getBarrierExitGuard(state, pid, process, arguments,
 						argumentValues);
 			} catch (UnsatisfiablePathConditionException e) {
 				// the error that caused the unsatifiable path condition should
@@ -120,7 +123,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression getBarrierExitGuard(State state, int pid,
-			List<Expression> arguments, SymbolicExpression[] argumentValues)
+			String process, List<Expression> arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource source = arguments.get(0).getSource();
 		SymbolicExpression barrier = argumentValues[0];
@@ -128,7 +132,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		SymbolicExpression barrierObj;
 		SymbolicExpression gbarrier;
 		SymbolicExpression gbarrierObj;
-		Evaluation eval = evaluator.dereference(source, state, barrier, false);
+		Evaluation eval = evaluator.dereference(source, state, process,
+				barrier, false);
 		SymbolicExpression inBarrierArray;
 		SymbolicExpression meInBarrier;
 
@@ -137,7 +142,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		myPlace = (NumericExpression) universe
 				.tupleRead(barrierObj, zeroObject);
 		gbarrier = universe.tupleRead(barrierObj, oneObject);
-		eval = evaluator.dereference(source, state, gbarrier, false);
+		eval = evaluator.dereference(source, state, process, gbarrier, false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		inBarrierArray = universe.tupleRead(gbarrierObj, twoObject);
@@ -159,7 +164,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression getDequeueGuard(State state, int pid,
-			List<Expression> arguments, SymbolicExpression[] argumentValues)
+			String process, List<Expression> arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression commHandle = argumentValues[0];
 		SymbolicExpression source = argumentValues[1];
@@ -173,11 +179,13 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		boolean enabled = false;
 		Evaluation eval;
 
-		eval = evaluator.dereference(civlsource, state, commHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, commHandle,
+				false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, gcommHandle,
+				false);
 		state = eval.state;
 		gcomm = eval.value;
 		dest = universe.tupleRead(comm, zeroObject);

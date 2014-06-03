@@ -183,7 +183,7 @@ public class Verifier extends Player {
 						workRemains = searcher.search(initialState);
 					if (!workRemains)
 						break;
-					//TODO get rid of using log
+					// TODO get rid of using log
 					log.report(new CIVLLogEntry(config, predicate
 							.getViolation()));
 					violationFound = true;
@@ -212,7 +212,8 @@ public class Verifier extends Player {
 			return !violationFound && log.numEntries() == 0;
 		} catch (CIVLStateException stateException) {
 			throw new CIVLExecutionException(stateException.kind(),
-					stateException.certainty(), stateException.getMessage(),
+					stateException.certainty(), "",
+					stateException.getMessage(),
 					symbolicUtil.stateToString(stateException.state()),
 					stateException.source());
 		}

@@ -125,7 +125,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeBundlePack(State state, int pid,
+	private State executeBundlePack(State state, int pid, String process,
 			CIVLBundleType bundleType, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
@@ -166,12 +166,12 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			symbolicBundleType = bundleType.getDynamicType(universe);
 			index = bundleType.getIndexOf(pureElementType);
 			indexObj = universe.intObject(index);
-			array = getArrayFromPointer(state, pointerExpr, pointer, size,
-					source);
+			array = getArrayFromPointer(state, process, pointerExpr, pointer,
+					size, source);
 			bundle = universe.unionInject(symbolicBundleType, indexObj, array);
 		}
 		if (lhs != null)
-			state = primaryExecutor.assign(state, pid, lhs, bundle);
+			state = primaryExecutor.assign(state, pid, process, lhs, bundle);
 		return state;
 	}
 
@@ -197,9 +197,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeBundleSize(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource civlSource) throws UnsatisfiablePathConditionException {
+	private State executeBundleSize(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource civlSource)
+			throws UnsatisfiablePathConditionException {
 		SymbolicObject arrayObject;
 		SymbolicExpression array;
 		NumericExpression size;
@@ -211,7 +212,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		array = (SymbolicExpression) arrayObject;
 		size = symbolicUtil.sizeof(civlSource, array.type());
 		if (lhs != null)
-			state = primaryExecutor.assign(state, pid, lhs, size);
+			state = primaryExecutor.assign(state, pid, process, lhs, size);
 		return state;
 	}
 
@@ -235,7 +236,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeBundleUnpack(State state, int pid,
+	private State executeBundleUnpack(State state, int pid, String process,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression bundle = argumentValues[0];
@@ -261,7 +262,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			if (oneLengthValid == ResultType.YES) {
 				SymbolicExpression element = universe.arrayRead(array, zero);
 
-				state = primaryExecutor.assign(source, state, pointer, element);
+				state = primaryExecutor.assign(source, state, process, pointer,
+						element);
 				return state;
 			} else {
 				// if pointer is to element 0 of an array and lengths are equal,
@@ -274,7 +276,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					SymbolicExpression parentPointer = symbolicUtil
 							.parentPointer(source, pointer);
 					Evaluation eval = evaluator.dereference(source, state,
-							parentPointer, false);
+							process, parentPointer, false);
 					SymbolicExpression targetArray = eval.value;
 					BooleanExpression claim;
 
@@ -285,7 +287,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 							universe.equals(length,
 									universe.length(targetArray)));
 					if (reasoner.isValid(claim)) {
-						state = primaryExecutor.assign(source, state,
+						state = primaryExecutor.assign(source, state, process,
 								parentPointer, array);
 
 						return state;
@@ -312,7 +314,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 								} catch (SARLException e) {
 									throw new CIVLExecutionException(
 											ErrorKind.OUT_OF_BOUNDS,
-											Certainty.CONCRETE,
+											Certainty.CONCRETE, process,
 											"Attempt to write beyond array bound: index="
 													+ targetIndex,
 											symbolicUtil.stateToString(state),
@@ -320,7 +322,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 								}
 							}
 							state = primaryExecutor.assign(source, state,
-									parentPointer, targetArray);
+									process, parentPointer, targetArray);
 							return state;
 						}
 					}
@@ -356,9 +358,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeGcommCreate(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
+	private State executeGcommCreate(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression gcomm;
 		SymbolicExpression nprocs = argumentValues[1];
 		SymbolicExpression scope = argumentValues[0];
@@ -439,7 +442,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		gcomm = universe.tuple(
 				(SymbolicTupleType) gcommType.getDynamicType(universe),
 				gcommComponents);
-		state = primaryExecutor.malloc(source, state, pid, lhs,
+		state = primaryExecutor.malloc(source, state, pid, process, lhs,
 				scopeExpression, scope, gcommType, gcomm);
 		return state;
 	}
@@ -474,7 +477,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeGbarrierCreate(State state, int pid,
+	private State executeGbarrierCreate(State state, int pid, String process,
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
@@ -532,7 +535,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		gbarrierObj = universe.tuple(
 				(SymbolicTupleType) gbarrierType.getDynamicType(universe),
 				gbarrierComponents);
-		state = primaryExecutor.malloc(source, state, pid, lhs,
+		state = primaryExecutor.malloc(source, state, pid, process, lhs,
 				scopeExpression, scope, gbarrierType, gbarrierObj);
 		return state;
 	}
@@ -568,9 +571,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeBarrierCreate(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
+	private State executeBarrierCreate(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression scope = argumentValues[0];
 		Expression scopeExpression = arguments[0];
 		SymbolicExpression gbarrier = argumentValues[1];
@@ -588,10 +592,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 
 		if (place_num < 0) {
 			throw new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE, "Invalid place " + place_num
+					Certainty.CONCRETE, process, "Invalid place " + place_num
 							+ " used in $barrier_create().", source);
 		}
-		eval = this.evaluator.dereference(civlsource, state, gbarrier, false);
+		eval = this.evaluator.dereference(civlsource, state, process, gbarrier,
+				false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		totalPlaces = ((IntegerNumber) universe
@@ -601,6 +606,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			throw new CIVLExecutionException(
 					ErrorKind.OTHER,
 					Certainty.CONCRETE,
+					process,
 					"Place "
 							+ place_num
 							+ " used in $barrier_create() exceeds the size of the $gbarrier.",
@@ -610,7 +616,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		if (!universe.arrayRead(procMapArray, (NumericExpression) place)
 				.equals(modelFactory.nullProcessValue())) {
 			throw new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE,
+					Certainty.CONCRETE, process,
 					"Attempt to create a barrier using an invalid place.",
 					source);
 		}
@@ -620,16 +626,16 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		procMapArray = universe.arrayWrite(procMapArray,
 				(NumericExpression) place, modelFactory.processValue(pid));
 		gbarrierObj = universe.tupleWrite(gbarrierObj, oneObject, procMapArray);
-		state = this.primaryExecutor.assign(civlsource, state, gbarrier,
-				gbarrierObj);
+		state = this.primaryExecutor.assign(civlsource, state, process,
+				gbarrier, gbarrierObj);
 		// builds barrier object
 		barrierComponents.add(place);
 		barrierComponents.add(gbarrier);
 		barrierObj = universe.tuple(
 				(SymbolicTupleType) barrierType.getDynamicType(universe),
 				barrierComponents);
-		state = this.primaryExecutor.malloc(civlsource, state, pid, lhs,
-				scopeExpression, scope, barrierType, barrierObj);
+		state = this.primaryExecutor.malloc(civlsource, state, pid, process,
+				lhs, scopeExpression, scope, barrierType, barrierObj);
 		return state;
 	}
 
@@ -653,7 +659,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeBarrierEnter(State state, int pid,
+	private State executeBarrierEnter(State state, int pid, String process,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource civlsource = arguments[0].getSource();
@@ -669,13 +675,15 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		int numInBarrier_int;
 		int nprocs_int;
 
-		eval = evaluator.dereference(civlsource, state, barrier, false);
+		eval = evaluator
+				.dereference(civlsource, state, process, barrier, false);
 		state = eval.state;
 		barrierObj = eval.value;
 		myPlace = (NumericExpression) universe
 				.tupleRead(barrierObj, zeroObject);
 		gbarrier = universe.tupleRead(barrierObj, oneObject);
-		eval = evaluator.dereference(civlsource, state, gbarrier, false);
+		eval = evaluator.dereference(civlsource, state, process, gbarrier,
+				false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		nprocs = universe.tupleRead(gbarrierObj, zeroObject);
@@ -704,8 +712,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				inBarrierArray);
 		gbarrierObj = universe.tupleWrite(gbarrierObj, this.threeObject,
 				numInBarrier);
-		state = this.primaryExecutor.assign(civlsource, state, gbarrier,
-				gbarrierObj);
+		state = this.primaryExecutor.assign(civlsource, state, process,
+				gbarrier, gbarrierObj);
 		return state;
 	}
 
@@ -740,8 +748,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommCreate(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeCommCreate(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression scope = argumentValues[0];
 		Expression scopeExpression = arguments[0];
@@ -755,8 +764,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		CIVLType commType = model.commType();
 		Evaluation eval;
 
-		eval = this.evaluator
-				.dereference(civlsource, state, gcommHandle, false);
+		eval = this.evaluator.dereference(civlsource, state, process,
+				gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
 		isInitArray = universe.tupleRead(gcomm, oneObject);
@@ -769,16 +778,16 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		isInitArray = universe.arrayWrite(isInitArray,
 				(NumericExpression) place, universe.bool(true));
 		gcomm = universe.tupleWrite(gcomm, oneObject, isInitArray);
-		state = this.primaryExecutor.assign(civlsource, state, gcommHandle,
-				gcomm);
+		state = this.primaryExecutor.assign(civlsource, state, process,
+				gcommHandle, gcomm);
 		// builds comm
 		commComponents.add(place);
 		commComponents.add(gcommHandle);
 		comm = universe.tuple(
 				(SymbolicTupleType) commType.getDynamicType(universe),
 				commComponents);
-		state = this.primaryExecutor.malloc(civlsource, state, pid, lhs,
-				scopeExpression, scope, commType, comm);
+		state = this.primaryExecutor.malloc(civlsource, state, pid, process,
+				lhs, scopeExpression, scope, commType, comm);
 		return state;
 	}
 
@@ -805,8 +814,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommSize(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeCommSize(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression commHandle = argumentValues[0];
 		SymbolicExpression comm;
@@ -816,16 +826,19 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		CIVLSource civlsource = arguments[0].getSource();
 		Evaluation eval;
 
-		eval = evaluator.dereference(civlsource, state, commHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, commHandle,
+				false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, gcommHandle,
+				false);
 		state = eval.state;
 		gcomm = eval.value;
 		nprocs = universe.tupleRead(gcomm, zeroObject);
 		if (lhs != null) {
-			state = this.primaryExecutor.assign(state, pid, lhs, nprocs);
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					nprocs);
 		}
 		return state;
 	}
@@ -854,8 +867,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommProbe(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeCommProbe(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression commHandle = argumentValues[0];
 		SymbolicExpression comm;
@@ -869,11 +883,13 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		CIVLSource civlsource = arguments[0].getSource();
 		Evaluation eval;
 
-		eval = evaluator.dereference(civlsource, state, commHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, commHandle,
+				false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, gcommHandle,
+				false);
 		state = eval.state;
 		gcomm = eval.value;
 		dest = universe.tupleRead(comm, zeroObject);
@@ -913,8 +929,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommSeek(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeCommSeek(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression commHandle = argumentValues[0];
 		SymbolicExpression comm;
@@ -927,11 +944,13 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		CIVLSource civlsource = arguments[0].getSource();
 		Evaluation eval;
 
-		eval = evaluator.dereference(civlsource, state, commHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, commHandle,
+				false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, gcommHandle,
+				false);
 		state = eval.state;
 		gcomm = eval.value;
 		dest = universe.tupleRead(comm, zeroObject);
@@ -943,7 +962,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		if (lhs != null) {
 			// state = this.stateFactory.setVariable(state,
 			// ((VariableExpression) lhs).variable(), pid, message);
-			state = primaryExecutor.assign(state, pid, lhs, message);
+			state = primaryExecutor.assign(state, pid, process, lhs, message);
 		}
 		return state;
 	}
@@ -971,8 +990,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommDequeue(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeCommDequeue(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource civlsource = arguments[0].getSource();
 		SymbolicExpression commHandle = argumentValues[0];
@@ -994,11 +1014,13 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		int int_tag;
 		int MessageIndexInMessagesArray = -1;
 
-		eval = evaluator.dereference(civlsource, state, commHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, commHandle,
+				false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, gcommHandle,
+				false);
 		state = eval.state;
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
@@ -1048,10 +1070,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		bufRow = universe.arrayWrite(bufRow, (NumericExpression) dest, queue);
 		buf = universe.arrayWrite(buf, (NumericExpression) source, bufRow);
 		gcomm = universe.tupleWrite(gcomm, universe.intObject(2), buf);
-		state = this.primaryExecutor.assign(civlsource, state, gcommHandle,
-				gcomm);
+		state = this.primaryExecutor.assign(civlsource, state, process,
+				gcommHandle, gcomm);
 		if (lhs != null) {
-			state = this.primaryExecutor.assign(state, pid, lhs, newMessage);
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					newMessage);
 		}
 		return state;
 	}
@@ -1076,7 +1099,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommEnqueue(State state, int pid,
+	private State executeCommEnqueue(State state, int pid, String process,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource civlsource = arguments[0].getSource();
@@ -1095,11 +1118,13 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		int int_queueLength;
 
-		eval = evaluator.dereference(civlsource, state, commHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, commHandle,
+				false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(civlsource, state, gcommHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, gcommHandle,
+				false);
 		state = eval.state;
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
@@ -1120,8 +1145,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		bufRow = universe.arrayWrite(bufRow, (NumericExpression) dest, queue);
 		buf = universe.arrayWrite(buf, (NumericExpression) source, bufRow);
 		gcomm = universe.tupleWrite(gcomm, universe.intObject(2), buf);
-		state = this.primaryExecutor.assign(civlsource, state, gcommHandle,
-				gcomm);
+		state = this.primaryExecutor.assign(civlsource, state, process,
+				gcommHandle, gcomm);
 		return state;
 	}
 
@@ -1163,6 +1188,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression[] argumentValues;
 		LHSExpression lhs;
 		int numArgs;
+		int processIdentifier = state.getProcessState(pid).identifier();
+		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		numArgs = call.arguments().size();
 		name = call.function().name();
@@ -1179,62 +1206,64 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		}
 		switch (name.name()) {
 		case "$bundle_pack":
-			state = executeBundlePack(state, pid, (CIVLBundleType) call
-					.function().returnType(), lhs, arguments, argumentValues,
-					call.getSource());
+			state = executeBundlePack(state, pid, process,
+					(CIVLBundleType) call.function().returnType(), lhs,
+					arguments, argumentValues, call.getSource());
 			break;
 		case "$bundle_size":
-			state = executeBundleSize(state, pid, lhs, arguments,
+			state = executeBundleSize(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
 			break;
 		case "$bundle_unpack":
-			state = executeBundleUnpack(state, pid, arguments, argumentValues,
-					call.getSource());
+			state = executeBundleUnpack(state, pid, process, arguments,
+					argumentValues, call.getSource());
 			break;
 		case "$barrier_create":
-			state = executeBarrierCreate(state, pid, lhs, arguments,
+			state = executeBarrierCreate(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
 			break;
 		case "$barrier_enter":
-			state = executeBarrierEnter(state, pid, arguments, argumentValues);
+			state = executeBarrierEnter(state, pid, process, arguments,
+					argumentValues);
 			break;
 		case "$barrier_exit":
 			// does nothing
 			break;
 		case "$gbarrier_create":
-			state = executeGbarrierCreate(state, pid, lhs, arguments,
+			state = executeGbarrierCreate(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
 			break;
 		case "$choose_int_work":
 			if (lhs != null)
-				state = primaryExecutor.assign(state, pid, lhs,
+				state = primaryExecutor.assign(state, pid, process, lhs,
 						argumentValues[0]);
 			break;
 		case "$comm_create":
-			state = this.executeCommCreate(state, pid, lhs, arguments,
+			state = this.executeCommCreate(state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
 		case "$comm_defined":
-			state = this.executeCommDefined(state, pid, lhs, arguments,
-					argumentValues);
+			state = this.executeCommDefined(state, pid, process, lhs,
+					arguments, argumentValues);
 			break;
 		case "$comm_dequeue":
-			state = executeCommDequeue(state, pid, lhs, arguments,
+			state = executeCommDequeue(state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
 		case "$comm_enqueue":
-			state = executeCommEnqueue(state, pid, arguments, argumentValues);
+			state = executeCommEnqueue(state, pid, process, arguments,
+					argumentValues);
 			break;
 		case "$comm_seek":
-			state = this.executeCommSeek(state, pid, lhs, arguments,
+			state = this.executeCommSeek(state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
 		case "$comm_probe":
-			state = this.executeCommProbe(state, pid, lhs, arguments,
+			state = this.executeCommProbe(state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
 		case "$comm_size":
-			state = this.executeCommSize(state, pid, lhs, arguments,
+			state = this.executeCommSize(state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
 		case "$exit":// return immediately since no transitions needed after an
@@ -1246,40 +1275,40 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		case "$gcomm_destroy":
 		case "$int_iter_destroy":
 		case "$free":
-			state = executeFree(state, pid, arguments, argumentValues,
+			state = executeFree(state, pid, process, arguments, argumentValues,
 					call.getSource());
 			break;
 		case "$gcomm_create":
-			state = executeGcommCreate(state, pid, lhs, arguments,
+			state = executeGcommCreate(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
 			break;
 		case "$gcomm_defined":
-			state = this.executeGcommDefined(state, pid, lhs, arguments,
-					argumentValues);
+			state = this.executeGcommDefined(state, pid, process, lhs,
+					arguments, argumentValues);
 			break;
 		case "$int_iter_create":
-			state = this.executeIntIterCreate(state, pid, lhs, arguments,
-					argumentValues, call.getSource());
+			state = this.executeIntIterCreate(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
 			break;
 		case "$int_iter_hasNext":
-			state = this.executeIntIterHasNext(state, pid, lhs, arguments,
-					argumentValues, call.getSource());
+			state = this.executeIntIterHasNext(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
 			break;
 		case "$int_iter_next":
-			state = this.executeIntIterNext(state, pid, lhs, arguments,
-					argumentValues, call.getSource());
+			state = this.executeIntIterNext(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
 			break;
 		case "$proc_defined":
-			state = this.executeProcDefined(state, pid, lhs, arguments,
-					argumentValues);
+			state = this.executeProcDefined(state, pid, process, lhs,
+					arguments, argumentValues);
 			break;
 		case "$scope_defined":
-			state = this.executeScopeDefined(state, pid, lhs, arguments,
-					argumentValues);
+			state = this.executeScopeDefined(state, pid, process, lhs,
+					arguments, argumentValues);
 			break;
 		case "$scope_parent":
-			state = this.executeScopeParent(state, pid, lhs, arguments,
-					argumentValues);
+			state = this.executeScopeParent(state, pid, process, lhs,
+					arguments, argumentValues);
 			break;
 		case "$wait":// return immediately since target location has been set.
 			return executeWait(state, pid, arguments, argumentValues,
@@ -1315,7 +1344,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeIntIterHasNext(State state, int pid,
+	private State executeIntIterHasNext(State state, int pid, String process,
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
@@ -1326,14 +1355,15 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		NumericExpression size, index;
 		SymbolicExpression hasNext;
 
-		eval = evaluator.dereference(civlsource, state, iterHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, iterHandle,
+				false);
 		state = eval.state;
 		iterObj = eval.value;
 		size = (NumericExpression) universe.tupleRead(iterObj, zeroObject);
 		index = (NumericExpression) universe.tupleRead(iterObj, twoObject);
 		hasNext = universe.lessThan(index, size);
 		if (lhs != null) {
-			state = primaryExecutor.assign(state, pid, lhs, hasNext);
+			state = primaryExecutor.assign(state, pid, process, lhs, hasNext);
 		}
 		return state;
 	}
@@ -1355,13 +1385,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCommDefined(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeCommDefined(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression result = this.isValidPointer(argumentValues[0]);
 
 		if (lhs != null)
-			state = primaryExecutor.assign(state, pid, lhs, result);
+			state = primaryExecutor.assign(state, pid, process, lhs, result);
 		return state;
 	}
 
@@ -1383,13 +1414,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeGcommDefined(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeGcommDefined(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression result = this.isValidPointer(argumentValues[0]);
 
 		if (lhs != null)
-			state = primaryExecutor.assign(state, pid, lhs, result);
+			state = primaryExecutor.assign(state, pid, process, lhs, result);
 		return state;
 	}
 
@@ -1409,14 +1441,15 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeScopeDefined(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeScopeDefined(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression result = modelFactory.isScopeDefined(
 				arguments[0].getSource(), argumentValues[0]);
 
 		if (lhs != null)
-			state = primaryExecutor.assign(state, pid, lhs, result);
+			state = primaryExecutor.assign(state, pid, process, lhs, result);
 		return state;
 	}
 
@@ -1436,14 +1469,15 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeProcDefined(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeProcDefined(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression result = modelFactory.isProcessDefined(
 				arguments[0].getSource(), argumentValues[0]);
 
 		if (lhs != null)
-			state = primaryExecutor.assign(state, pid, lhs, result);
+			state = primaryExecutor.assign(state, pid, process, lhs, result);
 		return state;
 	}
 
@@ -1483,8 +1517,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 *             if the assignment of the left hand side expression fails.
 	 */
-	private State executeScopeParent(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
+	private State executeScopeParent(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression scopeValue = argumentValues[0];
 		Expression scopeExpression = arguments[0];
@@ -1494,7 +1529,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression parentScope = modelFactory.scopeValue(parentID);
 
 		if (lhs != null) {
-			state = this.primaryExecutor.assign(state, pid, lhs, parentScope);
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					parentScope);
 		}
 		return state;
 	}
@@ -1549,7 +1585,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 *         points to.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private SymbolicExpression getArrayFromPointer(State state,
+	private SymbolicExpression getArrayFromPointer(State state, String process,
 			Expression pointerExpr, SymbolicExpression pointer,
 			NumericExpression size, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
@@ -1575,8 +1611,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					.getResultType();
 
 			if (oneCountValid == ResultType.YES) {
-				Evaluation eval = evaluator.dereference(
-						pointerExpr.getSource(), state, pointer, false);
+				Evaluation eval = evaluator
+						.dereference(pointerExpr.getSource(), state, process,
+								pointer, false);
 				SymbolicExpression element0 = eval.value;
 
 				state = eval.state;
@@ -1594,8 +1631,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					Certainty certainty = divisibilityValid == ResultType.MAYBE ? Certainty.MAYBE
 							: Certainty.PROVEABLE;
 					CIVLExecutionException e = new CIVLExecutionException(
-							ErrorKind.OTHER, certainty, "sizeof element ( "
-									+ elementSize
+							ErrorKind.OTHER, certainty, process,
+							"sizeof element ( " + elementSize
 									+ ") does not divide size argument ("
 									+ size + ")",
 							symbolicUtil.stateToString(state), source);
@@ -1613,25 +1650,25 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					SymbolicExpression arrayPointer = symbolicUtil
 							.parentPointer(source, pointer);
 					Evaluation eval = evaluator.dereference(source, state,
-							arrayPointer, false);
+							process, arrayPointer, false);
 					SymbolicExpression originalArray = eval.value;
 					NumericExpression endIndex = universe
 							.add(startIndex, count);
 					state = eval.state;
 					array = symbolicUtil.getSubArray(originalArray, startIndex,
-							endIndex, state, source);
+							endIndex, state, process, source);
 					break;
 				}
 				case IDENTITY:
 					throw new CIVLExecutionException(ErrorKind.POINTER,
-							Certainty.MAYBE,
+							Certainty.MAYBE, process,
 							"unable to get concrete count of 0 or 1 from size",
 							symbolicUtil.stateToString(state), source);
 				case NULL: { // size must be 0
 					Certainty certainty = zeroSizeValid == ResultType.MAYBE ? Certainty.MAYBE
 							: Certainty.PROVEABLE;
 					CIVLExecutionException e = new CIVLExecutionException(
-							ErrorKind.POINTER, certainty,
+							ErrorKind.POINTER, certainty, process,
 							"null pointer only valid with size 0",
 							symbolicUtil.stateToString(state), source);
 
@@ -1645,12 +1682,13 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				case OFFSET: {
 					// either size is zero or size is 1 and offset is 0
 					throw new CIVLExecutionException(ErrorKind.POINTER,
-							Certainty.MAYBE, "possible out of bounds pointer",
+							Certainty.MAYBE, process,
+							"possible out of bounds pointer",
 							symbolicUtil.stateToString(state), source);
 				}
 				case TUPLE_COMPONENT: {
 					throw new CIVLExecutionException(ErrorKind.POINTER,
-							Certainty.MAYBE,
+							Certainty.MAYBE, process,
 							"unable to get concrete count of 0 or 1 from size",
 							symbolicUtil.stateToString(state), source);
 				}
@@ -1788,9 +1826,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeIntIterCreate(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
+	private State executeIntIterCreate(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression intIterObj;
 		SymbolicExpression size = argumentValues[2];
 		SymbolicExpression currentIndex = universe.integer(0);
@@ -1806,8 +1845,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		IntegerNumber number_size = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) size);
-		Evaluation eval = evaluator.dereference(source, state, arrayPointer,
-				false);
+		Evaluation eval = evaluator.dereference(source, state, process,
+				arrayPointer, false);
 		CIVLSource arrayPointerSource = arrayPointerExpression.getSource();
 
 		state = eval.state;
@@ -1827,11 +1866,12 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 											BigInteger.valueOf(i)));
 			SymbolicExpression arrayElePointer;
 
-			eval = evaluator.pointerAdd(state, pid, pointerAdditionExpression,
-					arrayPointer, universe.integer(i));
+			eval = evaluator.pointerAdd(state, pid, process,
+					pointerAdditionExpression, arrayPointer,
+					universe.integer(i));
 			state = eval.state;
 			arrayElePointer = eval.value;
-			eval = evaluator.dereference(arrayPointerSource, state,
+			eval = evaluator.dereference(arrayPointerSource, state, process,
 					arrayElePointer, false);
 			state = eval.state;
 			intArrayComponents.add(eval.value);
@@ -1845,7 +1885,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		intIterObj = universe.tuple(
 				(SymbolicTupleType) intIterType.getDynamicType(universe),
 				intIterComponents);
-		state = primaryExecutor.malloc(source, state, pid, lhs,
+		state = primaryExecutor.malloc(source, state, pid, process, lhs,
 				scopeExpression, scope, intIterType, intIterObj);
 		return state;
 	}
@@ -1885,9 +1925,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeIntIterNext(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
+	private State executeIntIterNext(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression iterHandle = argumentValues[0];
 		SymbolicExpression array;
 		SymbolicExpression iterObj;
@@ -1896,19 +1937,21 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		NumericExpression index;
 		SymbolicExpression nextInt;
 
-		eval = evaluator.dereference(civlsource, state, iterHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, iterHandle,
+				false);
 		state = eval.state;
 		iterObj = eval.value;
 		array = universe.tupleRead(iterObj, oneObject);
 		index = (NumericExpression) universe.tupleRead(iterObj, twoObject);
 		nextInt = universe.arrayRead(array, index);
 		if (lhs != null) {
-			state = primaryExecutor.assign(state, pid, lhs, nextInt);
+			state = primaryExecutor.assign(state, pid, process, lhs, nextInt);
 		}
 		// updates iterator object
 		index = universe.add(index, one);
 		iterObj = universe.tupleWrite(iterObj, twoObject, index);
-		state = primaryExecutor.assign(source, state, iterHandle, iterObj);
+		state = primaryExecutor.assign(source, state, process, iterHandle,
+				iterObj);
 		return state;
 	}
 }

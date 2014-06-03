@@ -132,9 +132,9 @@ public abstract class BaseLibraryExecutor extends Library implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	protected State executeFree(State state, int pid, Expression[] arguments,
-			SymbolicExpression[] argumentValues, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
+	protected State executeFree(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
 		Expression pointerExpression = arguments[0];
 		SymbolicExpression firstElementPointer = argumentValues[0];
 		CIVLHeapType heapType = modelFactory.heapType();
@@ -145,15 +145,16 @@ public abstract class BaseLibraryExecutor extends Library implements
 		int index;
 		SymbolicExpression undef;
 		SymbolicExpression heapPointer = evaluator.heapPointer(source, state,
-				heapScopeID);
+				process, heapScopeID);
 
 		eval = getAndCheckHeapObjectPointer(heapPointer, firstElementPointer,
-				pointerExpression.getSource(), state);
+				pointerExpression.getSource(), state, process);
 		state = eval.state;
 		heapObjectPointer = eval.value;
 		index = getMallocIndex(firstElementPointer);
 		undef = heapType.getMalloc(index).getUndefinedObject();
-		state = primaryExecutor.assign(source, state, heapObjectPointer, undef);
+		state = primaryExecutor.assign(source, state, process,
+				heapObjectPointer, undef);
 		return state;
 	}
 
@@ -174,7 +175,7 @@ public abstract class BaseLibraryExecutor extends Library implements
 	 */
 	private Evaluation getAndCheckHeapObjectPointer(
 			SymbolicExpression heapPointer, SymbolicExpression pointer,
-			CIVLSource pointerSource, State state) {
+			CIVLSource pointerSource, State state, String process) {
 		SymbolicExpression objectPointer = symbolicUtil.parentPointer(
 				pointerSource, pointer);
 
@@ -198,7 +199,7 @@ public abstract class BaseLibraryExecutor extends Library implements
 						Certainty certainty = valid == ResultType.NO ? Certainty.PROVEABLE
 								: Certainty.MAYBE;
 						CIVLExecutionException e = new CIVLExecutionException(
-								ErrorKind.MALLOC, certainty,
+								ErrorKind.MALLOC, certainty, process,
 								"Invalid pointer for heap",
 								symbolicUtil.stateToString(state),
 								pointerSource);
@@ -222,7 +223,7 @@ public abstract class BaseLibraryExecutor extends Library implements
 		}
 		{
 			CIVLExecutionException e = new CIVLExecutionException(
-					ErrorKind.MALLOC, Certainty.PROVEABLE,
+					ErrorKind.MALLOC, Certainty.PROVEABLE, process,
 					"Invalid pointer for heap",
 					symbolicUtil.stateToString(state), pointerSource);
 
