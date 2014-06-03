@@ -380,9 +380,11 @@ public class CommonExecutor implements Executor {
 					: Certainty.MAYBE;
 			String elementType = statement.getStaticElementType().toString();
 			String message = "For a $malloc returning " + elementType
-					+ "*, the size argument (which is " + mallocSize.toString()
-					+ ") must be a multiple of sizeof(" + elementType + ") (which is "
-					+ elementSize.toString() + ")";
+					+ "*, the size argument must be a multiple of sizeof("
+					+ elementType + ")\n" + "      actual size argument: "
+					+ mallocSize.toString() + "\n"
+					+ "      expected size argument: a multile of "
+					+ elementSize.toString();
 			CIVLExecutionException e = new CIVLExecutionException(
 					ErrorKind.MALLOC, certainty, message,
 					symbolicUtil.stateToString(state), source);

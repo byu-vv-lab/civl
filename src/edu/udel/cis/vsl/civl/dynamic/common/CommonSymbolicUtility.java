@@ -7,12 +7,12 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
@@ -34,6 +34,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
@@ -204,7 +205,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			ResultType valid = reasoner.valid(claim).getResultType();
 
 			if (valid != ResultType.YES) {
-				state = errorLogger.logError(source, state, this.stateToString(state), claim, valid,
+				state = errorLogger.logError(source, state,
+						this.stateToString(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS, "negative start index");
 				pathCondition = state.getPathCondition();
 				reasoner = universe.reasoner(pathCondition);
@@ -212,7 +214,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			claim = universe.lessThanEquals(endIndex, length);
 			valid = reasoner.valid(claim).getResultType();
 			if (valid != ResultType.YES) {
-				state = errorLogger.logError(source, state, this.stateToString(state), claim, valid,
+				state = errorLogger.logError(source, state,
+						this.stateToString(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"end index exceeds length of array");
 				pathCondition = state.getPathCondition();
@@ -221,7 +224,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			claim = universe.lessThanEquals(startIndex, endIndex);
 			valid = reasoner.valid(claim).getResultType();
 			if (valid != ResultType.YES) {
-				state = errorLogger.logError(source, state, this.stateToString(state), claim, valid,
+				state = errorLogger.logError(source, state,
+						this.stateToString(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"start index greater than end index");
 				pathCondition = state.getPathCondition();
@@ -244,10 +248,24 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 						valueList.add(universe.arrayRead(array,
 								universe.integer(i)));
 					return universe.array(elementType, valueList);
+				} else {
+					NumericExpression subLength = universe.subtract(endIndex,
+							startIndex);
+					SymbolicCompleteArrayType subArrayType = universe.arrayType(elementType,
+							subLength);
+					NumericSymbolicConstant index = (NumericSymbolicConstant) universe
+							.symbolicConstant(universe.stringObject("i"),
+									universe.integerType());
+					SymbolicExpression subArrayFunction = universe.lambda(
+							index,
+							universe.arrayRead(array,
+									universe.add(startIndex, index)));
+					
+					return universe.arrayLambda(subArrayType, subArrayFunction);
+
 				}
 			}
 		}
-		throw new CIVLInternalException("Unable to extract sub-array", source);
 	}
 
 	@Override

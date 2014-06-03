@@ -510,22 +510,18 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			NumericSymbolicConstant index;
 			SymbolicExpression procMapFunction;
 			SymbolicExpression inBarrierFunction;
-			SymbolicType integerType = modelFactory.integerType()
-					.getDynamicType(universe);
-			SymbolicType booleanType = modelFactory.booleanType()
-					.getDynamicType(universe);
 
 			arrayType = universe.arrayType(modelFactory.processSymbolicType(),
 					(NumericExpression) nprocs);
 			index = (NumericSymbolicConstant) universe.symbolicConstant(
-					universe.stringObject("i"), integerType);
+					universe.stringObject("i"), universe.integerType());
 			procMapFunction = universe.lambda(index,
 					modelFactory.nullProcessValue());
 			procMapArray = universe.arrayLambda(arrayType, procMapFunction);
 			index = (NumericSymbolicConstant) universe.symbolicConstant(
-					universe.stringObject("i"), integerType);
+					universe.stringObject("i"), universe.integerType());
 			inBarrierFunction = universe.lambda(index, universe.bool(false));
-			arrayType = universe.arrayType(booleanType,
+			arrayType = universe.arrayType(universe.booleanType(),
 					(NumericExpression) nprocs);
 			inBarrierArray = universe.arrayLambda(arrayType, inBarrierFunction);
 		}
