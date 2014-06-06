@@ -1,0 +1,73 @@
+use demoCL to get hardware info (driver version openCL 1.1)
+
+square.c
+
+
+Types:
+size_t
+cl_device_id
+cl_context
+cl_command_queue
+cl_program
+cl_kernel
+
+cl_mem
+Types for now are just structs, see cl.h
+------Above this line are implemented-------
+Hardware methods:
+
+methods are externs
+  Declared but not defined unless given one
+
+clGetDeviceIDs
+  uses int err, takes 5 parameters
+  http://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clGetDeviceIDs.html
+  -in progress-
+  
+  cl_int clGetPlatformIDs(	cl_uint num_entries,
+ 	cl_platform_id *platforms,
+ 	cl_uint *num_platforms)
+ 	
+clCreateContext
+  uses a cl_context context, takes 6 parameters
+  http://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clCreateContext.html
+  openCL uses them for commands, memory, program, kernel objects, executing kernels
+
+Kernels and other:
+clCreateCommandQueue
+  uses a cl_command_queue commands, takes 4 parameters
+  uses &device_id and &err
+  http://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clCreateCommandQueue.html
+  
+clCreateProgramWithSource
+  uses cl_program program, takes 5 parameters
+  uses context
+  
+clBuildProgram
+
+clGetProgramBuildInfo
+
+clCreateKernel
+
+clCreateBuffer
+
+clEnqueueWriteBuffer
+
+clSetKernelArg
+
+clGetKernelWorkGroupInfo
+
+clEnqueueReadBuffer
+
+clReleaseMemObject
+
+clReleaseProgram
+
+clReleaseKernel
+
+clReleaseCommandQueue
+
+clReleaseContext
+
+ToDo before this ToDo:
+Implement source code from header files and other code
