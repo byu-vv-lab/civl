@@ -1,6 +1,6 @@
 /*
-  All specification references correspond to pages in the Standard for Information Technology–
-Portable Operating System Interface (POSIX ® )IEEE Computer Society Base Specifications, Issue 7.
+  All specification references correspond to pages in the Standard for Information Technology
+Portable Operating System Interface (POSIX)IEEE Computer Society Base Specifications, Issue 7.
 
 Standard modifications to each translation:
 header files are altered
@@ -33,6 +33,14 @@ appropriate definitions are changed to input variables
 #define PTHREAD_MUTEX_INITIALIZER	{0,0,0,PTHREAD_MUTEX_NORMAL,__LOCK_INITIALIZER}
 #define PTHREAD_COND_INITIALIZER	{__LOCK_INITIALIZER,0}
 
+//Error definitions
+#define EINVAL 1       //Designates an invalid value
+#define ENOTSUP 2
+#define EOWNERDEAD 3   //Designates the termination of the owning thread
+
+
+
+
 /* Struct definitions */
 
 /* pthread_attr_t struct definition
@@ -41,7 +49,7 @@ appropriate definitions are changed to input variables
   
   Fields: void * stackaddr: The address of the attr's stack in memory
   size_t stacksize: The memory capacity for the attr's stack
-  size_t guardsize: The guardsize attribute controls the size of the guard area for the created thread’s stack. The
+  size_t guardsize: The guardsize attribute controls the size of the guard area for the created thread' stack. The
                     guardsize attribute provides protection against overflow of the stack pointer.
   int detachstate: Defines a threads ability to join with two values: PTHREAD_CREATE_DETACHED and PTHREAD_CREATE_JOINABLE
   int inheritsched: The inheritance scheduling policy of the thread
@@ -209,35 +217,20 @@ int pthread_attr_getscope(const pthread_attr_t *attr, int *contentionscope)
   return 0;
 }
 */
- 
-//Set the starting address of the stack of the thread
-//Corresponding specification: p. 153/4 
-int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr)
-{
-  attr->stackaddr = stackaddr;
-  return 0;
-}
- 
-//Return the address for the stack
-//Corresponding specification: p. 153/4 
-int pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stackaddr)
-{
-  *stackaddr = attr->stackaddr;
-  return 0;
-}
 
-//Set stack size
-//Corresponding specification: p. 153/4 
-int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize)
-{
+// Set the stack size and stack address of the specified pthread_attr_t
+// Corresponding specification p.1548
+int pthread_attr_setstack(pthread_attr_t *attr, void * stackaddr, size_t stacksize){ 
+  attr->stackaddr = stackaddr;
   attr->stacksize = stacksize;
   return 0;
 }
 
-//Return the stack size
-//Corresponding specification: p. 153/4
-int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize)
+// Get the stack size and stack address of the specified pthread_attr_t
+// Corresponding specification p.1548
+int pthread_attr_getstack(const pthread_attr_t *attr, void ** stackaddr, size_t *stacksize){
 {
+  *stackaddr = attr->stackaddr;
   *stacksize = attr->stacksize;
   return 0;
 }
@@ -299,6 +292,57 @@ int pthread_mutexattr_destroy(pthread_mutexattr_t *attr){
   *attr = blank;
   return 0;
 }
+
+int pthread_mutexattr_getrobust(const pthread_mutexattr_t *attr, int *robust){
+  *robust = attr->robust;
+  return 0;
+}
+
+int pthread mutexattr_setrobust(pthread_mutexattr_t *attr, int robust){
+  attr->robust = robust;
+  return 0;
+}
+
+int pthread_mutexattr_getpshared(const pthread_mutexattr_t *attr, int *pshared){
+  *pshared = attr->pshared;
+  return 0;
+}
+
+int pthread mutexattr_setpshared(pthread_mutexattr_t *attr, int pshared){
+  attr->pshared = pshared;
+  return 0;
+}
+
+int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *attr, int *protocol){
+  *protocol = attr->protocol;
+  return 0;
+}
+
+int pthread mutexattr_setprotocol(pthread_mutexattr_t *attr, int protocol){
+  attr->protocol = protocol;
+  return 0;
+}
+
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *type){
+  *type = attr->type;
+  return 0;
+}
+
+int pthread mutexattr_settype(pthread_mutexattr_t *attr, int type){
+  attr->type = type;
+  return 0;
+}
+
+int pthread_mutexattr_getprioceiling(const pthread_mutexattr_t *attr, int *prioceiling){
+  *prioceiling = attr->prioceiling;
+  return 0;
+}
+
+int pthread mutexattr_setprioceiling(pthread_mutexattr_t *attr, int prioceiling){
+  attr->prioceiling = prioceiling;
+  return 0;
+}
+
 
 /* pthread_mutex_init method definition
   This method initializes each of the mutex's default values as well as being able to take values from another attribute
@@ -450,11 +494,17 @@ int pthread_mutex_lock(pthread_mutex_t *mutex){
     if (mutex->attr->type == PTHREAD_MUTEX_NORMAL){
       if (mutex->lock != 0) {
         if(mutex->owner == $proc_null){
-          $when(mutex->lock == 0);
+          if(mutex->attr->robust == PTHREAD_MUTEX_ROBUST){
+            $when(mutex->lock == 0);
+          }
+          else{
+            $assert($false);
+            return EOWNERDEAD;
+          }
         }
         else{
           if(mutex->owner == $self){
-            $assert($false, "ERROR: Relock attempted");
+            $assert($false);
             return 0;
           }
           else{
@@ -467,6 +517,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex){
     } 
     else {
       int tmp = mutex->lock;
+      
       mutex->lock = 1;
       if (tmp == 0) { // Attempts lock and checks for whether lock is already locked
         mutex->count = 1; 
@@ -476,12 +527,8 @@ int pthread_mutex_lock(pthread_mutex_t *mutex){
         //Checks for ownership, otherwise returns error
         if(mutex->owner == $self){
           // Checks for recursive mutex, otherwise returns an error 
-          if (mutex->attr->type == 1) {
+          if (mutex->attr->type == PTHREAD_MUTEX_RECURSIVE) {
             mutex->count++;
-            if(mutex->count==0){
-              mutex->lock = 0;
-              mutex->owner = $proc_null;
-            }
           }
           else {
             $assert($false);
@@ -489,7 +536,52 @@ int pthread_mutex_lock(pthread_mutex_t *mutex){
           }
         }
         else {
-          $assert($false);
+          $assert($false, "ERROR: Relock attempted on non-recursive mutex\n");
+          return 0;
+        }
+      }
+    }
+    return 0;
+  }
+}
+
+/* pthread_mutex_lock method definition
+  Description: pthread_mutex_trylock takes in a mutex variable and acts similarly to pthread_mutex_lock except that 
+  if the mutex is locked, success will be returned immediately. In the case of a recursive mutex, the count will
+  be incremented and will return successfully.
+  //Corresponding specification: p. 163 
+*/
+
+int pthread_mutex_trylock(pthread_mutex_t *mutex){
+  $atomic{
+    if (mutex->attr->type == PTHREAD_MUTEX_NORMAL){
+      if (mutex->lock != 0) {
+        return 0;
+      }
+      mutex->owner = $self;
+      mutex->lock = 1;
+    } 
+    else {
+      int tmp = mutex->lock;
+      
+      mutex->lock = 1;
+      if (tmp == 0) { // Attempts lock and checks for whether lock is already locked
+        mutex->count = 1; 
+        mutex->owner = $self;
+      } 
+      else {
+        //Checks for ownership, otherwise returns error
+        if(mutex->owner == $self){
+          // Checks for recursive mutex, otherwise returns an error 
+          if (mutex->attr->type == PTHREAD_MUTEX_RECURSIVE) {
+            mutex->count++;
+          }
+          else {
+            $assert($false);
+            return 0;
+          }
+        }
+        else {
           return 0;
         }
       }
@@ -513,11 +605,16 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex){
   $atomic{
     if (mutex->attr->type == 0 || mutex->attr->type == 2) {
       int idx;
+      
       // Attempts unlock, if already unlocked, returns error
-      if (mutex->lock == 0) {
+      if (mutex->lock == 0 && mutex->attr->type == PTHREAD_MUTEX_DEFAULT) {
+        $assert($false);
+        return 0;
+      }
+      else if (mutex->lock == 0 && mutex->attr->type == PTHREAD_MUTEX_ERRORCHECK){
         $assert($false, "Attempting to unlock unlocked lock\n");
         return 0;
-      } 
+      }
       else {
         mutex->lock = 0;
         mutex->owner = $proc_null;
@@ -529,6 +626,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex){
       {
         //Checks for recursive mutex
         _Bool tmp = !(mutex->attr->type == 1);
+        
         if (--mutex->count == 0){
           mutex->lock = 0;
           mutex->owner = $proc_null;
@@ -543,6 +641,19 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex){
   }
 }
 
+/* pthread_mutex_consistent method definition
+  Description: Checks for robustness of mutex: if robust, the mutex is unlocked, otherwise an error is caused
+  and EINVAL is returned
+*/
+int pthread_mutex_consistent(pthread_mutex_t *mutex){
+  if(mutex->attr->robust == PTHREAD_MUTEX_ROBUST){
+    mutex->lock = 0;
+    return 0;
+  }
+  $assert($false);
+  return EINVAL;
+}
+
 /* pthread_cond_wait method definition
   Description: Checks for calling thread as owner of the mutex, then increments proccount, unlocks the mutex 
   and sleeps. Awakens upon signal and decrements proccount and locks mutex.
@@ -555,6 +666,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex){
     $assert($false);
     return 0;
   }
+  
   cond->proccount= cond->proccount+1;
   pthread_mutex_unlock(mutex);
   
