@@ -12,6 +12,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.gui.common.DyscopeNode;
+import edu.udel.cis.vsl.civl.gui.common.GUINODE;
+import edu.udel.cis.vsl.civl.gui.common.GUINODE.GUINodeKind;
+import edu.udel.cis.vsl.civl.gui.common.StateNode;
+import edu.udel.cis.vsl.civl.gui.common.StepNode;
+import edu.udel.cis.vsl.civl.gui.common.TransitionNode;
+import edu.udel.cis.vsl.civl.gui.common.TreeUtil;
 import edu.udel.cis.vsl.civl.kripke.IF.AtomicStep;
 import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -33,45 +40,14 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
-	/* ************************ Final Fields ************************ */
+	/* **************************** Final Fields *************************** */
 
 	/**
 	 * 
 	 */
 	static final long serialVersionUID = 1L;
 
-	/**
-	 * Only used for GUINODE (see Private Classes) to indicate that it is the
-	 * root of the tree. Used by the selection listener so that when clicked the
-	 * tree will collapse the children of the root node
-	 */
-	private static final int ROOT_NODE = 0;
-
-	/**
-	 * Only used for TransitionNode (see Private Classes) to indicate that it is
-	 * a node representing a compound transition. It is used by the tree
-	 * selection listener so that when clicked it will display the transition's
-	 * tree on the right side of the GUI
-	 */
-	private static final int TRANSITION_NODE = 1;
-
-	/**
-	 * Only used for StateNode (see Private Classes) to indicate that it is a
-	 * node representing a State. It is used by the tree selection listener so
-	 * that when clicked it will display the state tree on the right side of the
-	 * GUI
-	 */
-	private static final int STATE_NODE = 2;
-
-	/**
-	 * Only used for StepNode (see Private Classes) to indicate that it is a
-	 * node representing a step. It is used by the three selection listener so
-	 * that when clicked it will display the target state of the step as a tree
-	 * on the right side of the GUI
-	 */
-	private static final int STEP_NODE = 3;
-
-	/* *************************** Fields *************************** */
+	/* ************************** instance Fields ************************** */
 
 	/**
 	 * A tree that represents the transitions of the execution. It is drawn once
@@ -115,7 +91,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 */
 	private SymbolicUtility symbolicUtil;
 
-	/* *************************** Constructor *************************** */
+	/* **************************** Constructor **************************** */
 
 	/**
 	 * Constructs a new CIVL_GUI using a list of transitions
@@ -135,7 +111,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		setVisible(true);
 	}
 
-	/* *************************** Methods *************************** */
+	/* ************************** private Methods ************************** */
 
 	/**
 	 * Initialize the components of the CIVL GUI
@@ -193,7 +169,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 		// Create the root node of the entire tree
 		GUINODE top = new GUINODE(state.toString());
-		top.collapsed = false;
+		top.setCollapsed(false);
 
 		// Node for the dyscopes of the state
 		DefaultMutableTreeNode dy = new DefaultMutableTreeNode("Dyscopes");
@@ -230,17 +206,17 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 							.getLastSelectedPathComponent();
 					if (n == null)
 						return;
-					if (n.getID() == ROOT_NODE) {
+					if (n.getKind() == GUINodeKind.ROOT_NODE) {
 						if (!n.isCollapsed()) {
 							for (int i = stateTree.getRowCount() - 1; i > 0; i--) {
 								stateTree.collapseRow(i);
 							}
-							n.collapsed = true;
+							n.setCollapsed(true);
 						} else {
 							for (int i = 0; i < stateTree.getRowCount(); i++) {
 								stateTree.expandRow(i);
 							}
-							n.collapsed = false;
+							n.setCollapsed(false);
 						}
 					}
 				} catch (Exception ex) {
@@ -248,7 +224,6 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				}
 			}
 		});
-
 		// Create the view of the tree and set its preferred size
 		rightView = new JScrollPane(stateTree);
 		rightView.setPreferredSize(new Dimension(500, 500));
@@ -501,119 +476,6 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 	/* *************************** Private Classes *************************** */
 
-	/**
-	 * A GUINODE will be used only for the root nodes of any tree in this GUI.
-	 * The reason a GUINODE is used is to be able to collapse all nodes when the
-	 * root node is clicked
-	 */
-	private class GUINODE extends DefaultMutableTreeNode {
-		static final long serialVersionUID = 1L;
-		final int id = ROOT_NODE;
-		boolean collapsed;
-
-		public GUINODE(String name) {
-			super(name);
-			collapsed = true;
-		}
-
-		int getID() {
-			return id;
-		}
-
-		boolean isCollapsed() {
-			return collapsed;
-		}
-
-	}
-
-	/**
-	 * A DyscopeNode is a node in the stateTree that keeps track of the children
-	 * of the current dyscope. It is used so that all children of the current
-	 * dyscope can be added to a folder called children dyscopes within this
-	 * dyscope in the tree representation of a state
-	 */
-	private class DyscopeNode extends DefaultMutableTreeNode {
-		private static final long serialVersionUID = 1L;
-		DefaultMutableTreeNode children;
-
-		public DyscopeNode(String name) {
-			super(name);
-		}
-
-		void setChildNode(DefaultMutableTreeNode n) {
-			children = n;
-		}
-
-		DefaultMutableTreeNode getChildren() {
-			return children;
-		}
-	}
-
-	/**
-	 * Node corresponding to a transition.
-	 */
-	private class TransitionNode extends GUINODE {
-		static final long serialVersionUID = 1L;
-		final int id = TRANSITION_NODE;
-		TraceStep transition;
-
-		TransitionNode(String name, TraceStep t) {
-			super(name);
-			transition = t;
-		}
-
-		int getID() {
-			return id;
-		}
-	}
-
-	/**
-	 * Node corresponding to a State
-	 */
-	private class StateNode extends GUINODE {
-		static final long serialVersionUID = 1L;
-		final int id = STATE_NODE;
-		State state;
-
-		StateNode(String name, State s) {
-			super(name);
-			state = s;
-
-		}
-
-		State getState() {
-			return state;
-		}
-
-		int getID() {
-			return id;
-		}
-
-	}
-
-	/**
-	 * Node corresponding to a Step
-	 */
-	private class StepNode extends GUINODE {
-		static final long serialVersionUID = 1L;
-		final int id = STEP_NODE;
-		AtomicStep step;
-
-		public StepNode(String name, AtomicStep s) {
-			super(name);
-			step = s;
-		}
-
-		AtomicStep getStep() {
-			return step;
-		}
-
-		int getID() {
-			return id;
-		}
-
-	}
-
 	/* ***************** TreeSelectionListener Method ***************** */
 
 	@Override
@@ -626,18 +488,18 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				return;
 
 			// If node is a root node collapse all of the roots children
-			if (n.getID() == ROOT_NODE) {
+			if (n.getKind() == GUINodeKind.ROOT_NODE) {
 				try {
 					if (!n.isCollapsed()) {
 						for (int i = transitionTree.getRowCount() - 1; i > 0; i--) {
 							transitionTree.collapseRow(i);
 						}
-						n.collapsed = true;
+						n.setCollapsed(true);
 					} else {
 						for (int i = 0; i < transitionTree.getRowCount(); i++) {
 							transitionTree.expandRow(i);
 						}
-						n.collapsed = false;
+						n.setCollapsed(false);
 					}
 				} catch (Exception rootEX) {
 					rootEX.printStackTrace();
@@ -646,13 +508,13 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 			// If node is a transition node draw the single transition to the
 			// right side of the GUI
-			else if (n.getID() == TRANSITION_NODE) {
+			else if (n.getKind() == GUINodeKind.TRANSITION_NODE) {
 				try {
 					TransitionNode t = (TransitionNode) n;
 					if (split.getRightComponent() != null) {
 						split.remove(split.getRightComponent());
 					}
-					rightView = drawState(t.transition.result());
+					rightView = drawState(t.transition().result());
 					split.setRightComponent(rightView);
 				} catch (Exception tranEX) {
 					tranEX.printStackTrace();
@@ -661,7 +523,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 			// If node is a state node draw the state to the right side of the
 			// GUI
-			else if (n.getID() == STATE_NODE) {
+			else if (n.getKind() == GUINodeKind.STATE_NODE) {
 				try {
 					StateNode s = (StateNode) n;
 					if (split.getRightComponent() != null) {
@@ -676,7 +538,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 			// If node is a step node draw the target state of the step to the
 			// right side of the gui
-			else if (n.getID() == STEP_NODE) {
+			else if (n.getKind() == GUINodeKind.STEP_NODE) {
 				try {
 					StepNode s = (StepNode) n;
 					if (split.getRightComponent() != null) {
@@ -689,7 +551,6 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				}
 			}
 		}
-
 		// If the node wasn't a GUINODE (or a node extending from GUINODE)
 		// Do nothing
 		catch (Exception ex) {

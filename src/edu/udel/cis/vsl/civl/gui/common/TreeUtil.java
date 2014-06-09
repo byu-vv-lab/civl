@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.gui.IF;
+package edu.udel.cis.vsl.civl.gui.common;
 
 import java.util.StringTokenizer;
 

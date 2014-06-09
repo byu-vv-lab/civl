@@ -98,6 +98,15 @@ public class CommonBinaryExpression extends CommonExpression implements
 		String op = "";
 
 		switch (operator) {
+		case BITAND:
+			op = "&";
+			break;
+		case BITOR:
+			op = "|";
+			break;
+		case BITXOR:
+			op = "^";
+			break;
 		case PLUS:
 			op = "+";
 			break;
@@ -139,6 +148,12 @@ public class CommonBinaryExpression extends CommonExpression implements
 			break;
 		case POINTER_SUBTRACT:
 			op = "-";
+			break;
+		case SHIFTLEFT:
+			op = "<<";
+			break;
+		case SHIFTRIGHT:
+			op = ">>";
 			break;
 		default:
 			throw new CIVLInternalException("Unknown operator: " + operator,

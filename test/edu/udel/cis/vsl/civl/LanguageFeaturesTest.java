@@ -478,4 +478,9 @@ public class LanguageFeaturesTest {
 	public void comma() throws ABCException {
 		assertTrue(ui.run("verify", filename("comma.cvl"), "-inputn=5"));
 	}
+	
+	@Test
+	public void assignIntWtReal() {
+		assertFalse(ui.run("verify", filename("assignIntWtReal.cvl")));
+	}
 }

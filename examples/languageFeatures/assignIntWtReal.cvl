@@ -6,6 +6,6 @@
 #include<civlc.h>
 #include<assert.h>
 void main() {
-  int x = 1.5; // implictly convert 0.0 to int.
+  int x = 1.0; // illegal initializer, should report an error.
   assert (x==1);
 }

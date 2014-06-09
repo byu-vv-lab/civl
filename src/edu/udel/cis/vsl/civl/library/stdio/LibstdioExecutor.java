@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -16,7 +14,6 @@ import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
-import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
@@ -109,10 +106,10 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	public final static String STDIN = "CIVL_stdin";
 	public final static String STDERR = "CIVL_stderr";
 
-//	/**
-//	 * Enable or disable printing. By default true, i.e., enable printing.
-//	 */
-//	private boolean enablePrintf;
+	// /**
+	// * Enable or disable printing. By default true, i.e., enable printing.
+	// */
+	// private boolean enablePrintf;
 
 	/**
 	 * The base type of the pointer type $filesystem; a structure type with
@@ -966,10 +963,9 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		StringBuffer formatBuffer;
 		ArrayList<StringBuffer> printedContents = new ArrayList<>();
 		ArrayList<Integer> sIndexes = new ArrayList<>();
-		Pattern pattern;
-		Matcher matcher;
 		int sCount = 2;
 		Pair<State, StringBuffer> concreteString;
+		List<Format> formats;
 
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
 				argumentValues[0], false);
@@ -988,15 +984,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				process, argumentValues[1]);
 		formatBuffer = concreteString.right;
 		state = concreteString.left;
-		pattern = Pattern
-				.compile("((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[sdfoxegacpuxADEFGX]");
-		matcher = pattern.matcher(formatBuffer);
-		while (matcher.find()) {
-			String formatSpecifier = matcher.group();
-			if (formatSpecifier.compareTo("%s") == 0) {
-				sIndexes.add(sCount);
-			}
-			sCount++;
+		formats = this.splitFormat(arguments[1].getSource(), formatBuffer);
+		for (Format format : formats) {
+			if (format.type == ConversionType.STRING)
+				sIndexes.add(sCount++);
+			else if (format.type != ConversionType.VOID)
+				sCount++;
 		}
 		for (int i = 2; i < argumentValues.length; i++) {
 			SymbolicExpression argumentValue = argumentValues[i];
@@ -1021,23 +1014,20 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 								state, argumentValue)));
 		}
 		if (fileNameString.compareTo(STDOUT) == 0) {
-			this.splitFormat(arguments[1].getSource(),
-					formatBuffer);
-			this.printf(civlConfig.out(), arguments[1].getSource(),
-					formatBuffer, printedContents);
+			this.printf(civlConfig.out(), arguments[1].getSource(), formats,
+					printedContents);
 			if (civlConfig.statelessPrintf())
 				return state;
 		} else if (fileNameString.compareTo(STDIN) == 0) {
 			// TODO: stdin
 		} else if (fileNameString.equals(STDERR)) {
-			this.printf(civlConfig.err(), arguments[1].getSource(),
-					formatBuffer, printedContents);
+			this.printf(civlConfig.err(), arguments[1].getSource(), formats,
+					printedContents);
 		}
 		{ // updates the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,
 					oneObject);
-			List<Format> formats = this.splitFormat(arguments[1].getSource(),
-					formatBuffer);
+
 			int newContentCount = formats.size();
 			int dataIndex = 2;
 
@@ -1303,33 +1293,20 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 *            The list of arguments to be printed according to the format.
 	 */
 	private void printf(PrintStream printStream, CIVLSource source,
-			StringBuffer formatBuffer, ArrayList<StringBuffer> arguments) {
+			List<Format> formats, ArrayList<StringBuffer> arguments) {
 		if (this.civlConfig.enablePrintf()) {
-			String format = formatBuffer.substring(0);
+			int argIndex = 0;
 
-			format = format.replaceAll("%lf", "%s");
-			format = format.replaceAll("%Lf", "%s");
-			format = format
-					.replaceAll(
-							"((?<=[^%])|^)%[0-9]*[.]?[0-9|*]*[dfoxegacpuxADEFGX]",
-							"%s");
-			for (int i = 0; i < format.length(); i++) {
-				if (format.charAt(i) == '%') {
-					if (format.charAt(i + 1) == '%') {
-						i++;
-						continue;
-					}
-					if (format.charAt(i + 1) != 's')
-						throw new CIVLSyntaxException("The format:%"
-								+ format.charAt(i + 1)
-								+ " is not allowed in printf", source);
+			for (Format format : formats) {
+				String formatString = format.toString();
+
+				switch (format.type) {
+				case VOID:
+					printStream.print(formatString);
+					break;
+				default:
+					printStream.printf("%s", arguments.get(argIndex++));
 				}
-			}
-			try {
-				printStream.printf(format, arguments.toArray());
-			} catch (Exception e) {
-				throw new CIVLInternalException("unexpected error in printf",
-						source);
 			}
 		}
 	}

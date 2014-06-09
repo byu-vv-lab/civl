@@ -97,9 +97,4 @@ public class ArithmeticTest {
 	public void math() {
 		assertTrue(ui.run("verify", "-echo", filename("math.cvl")));
 	}
-
-	@Test
-	public void assignIntWtReal() {
-		assertTrue(ui.run("verify", "-echo", filename("assignIntWtReal.cvl")));
-	}
 }

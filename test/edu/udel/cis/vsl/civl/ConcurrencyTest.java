@@ -32,7 +32,7 @@ public class ConcurrencyTest {
 
 	@Test
 	public void adder2() {
-		assertTrue(ui.run("verify", filename("adder2.cvl"), "-inputN=4"));
+		assertTrue(ui.run("verify", filename("adder2.cvl"), "-inputN=4", "-showStates"));
 	}
 
 	@Test
