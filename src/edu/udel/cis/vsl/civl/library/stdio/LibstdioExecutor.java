@@ -109,10 +109,10 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	public final static String STDIN = "CIVL_stdin";
 	public final static String STDERR = "CIVL_stderr";
 
-	/**
-	 * Enable or disable printing. By default true, i.e., enable printing.
-	 */
-	private boolean enablePrintf;
+//	/**
+//	 * Enable or disable printing. By default true, i.e., enable printing.
+//	 */
+//	private boolean enablePrintf;
 
 	/**
 	 * The base type of the pointer type $filesystem; a structure type with
@@ -1304,7 +1304,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 */
 	private void printf(PrintStream printStream, CIVLSource source,
 			StringBuffer formatBuffer, ArrayList<StringBuffer> arguments) {
-		if (this.enablePrintf) {
+		if (this.civlConfig.enablePrintf()) {
 			String format = formatBuffer.substring(0);
 
 			format = format.replaceAll("%lf", "%s");
