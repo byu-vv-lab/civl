@@ -5,7 +5,7 @@ import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
@@ -71,7 +71,7 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 	 *         given library.
 	 */
 	private String className(String library, String suffix) {
-		String result = CIVLConfiguration.LIBRARY_PREFIX + library + ".Lib"
+		String result = CIVLConstants.LIBRARY_PREFIX + library + ".Lib"
 				+ library + suffix;
 
 		return result;

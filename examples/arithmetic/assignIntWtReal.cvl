@@ -6,6 +6,6 @@
 #include<civlc.h>
 #include<assert.h>
 void main() {
-  int x = 0.0; // implictly convert 0.0 to int.
-  assert (x==0);
+  int x = 1.5; // implictly convert 0.0 to int.
+  assert (x==1);
 }

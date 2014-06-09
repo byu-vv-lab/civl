@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.library.IF;
 
-import java.io.PrintStream;
-
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
@@ -40,11 +39,6 @@ public abstract class BaseLibraryExecutor extends Library implements
 	/* ************************** Instance Fields ************************** */
 
 	/**
-	 * Enable or disable printing. By default true, i.e., enable printing.
-	 */
-	protected boolean enablePrintf;
-
-	/**
 	 * The evaluator for evaluating expressions.
 	 */
 	protected Evaluator evaluator;
@@ -53,13 +47,6 @@ public abstract class BaseLibraryExecutor extends Library implements
 	 * The model factory of the system.
 	 */
 	protected ModelFactory modelFactory;
-
-	/**
-	 * The output stream to be used for printing.
-	 */
-	protected PrintStream output;
-
-	protected PrintStream err;
 
 	/**
 	 * The primary executor of the system.
@@ -76,9 +63,11 @@ public abstract class BaseLibraryExecutor extends Library implements
 	 */
 	protected Model model;
 
-	protected boolean statelessPrintf;
+	// protected boolean statelessPrintf;
 
 	protected CIVLErrorLogger errorLogger;
+
+	protected CIVLConfiguration civlConfig;
 
 	/* **************************** Constructors *************************** */
 
@@ -95,17 +84,13 @@ public abstract class BaseLibraryExecutor extends Library implements
 	 *            The model factory of the system.
 	 */
 	public BaseLibraryExecutor(String name, Executor primaryExecutor,
-			PrintStream output, PrintStream err, boolean enablePrintf,
-			boolean statelessPrintf, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
+			CIVLConfiguration civlConfig) {
 		super(name, primaryExecutor.evaluator().universe(), symbolicUtil);
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.stateFactory = evaluator.stateFactory();
-		this.enablePrintf = enablePrintf;
-		this.statelessPrintf = statelessPrintf;
-		this.output = output;
-		this.err = err;
+		this.civlConfig = civlConfig;
 		this.modelFactory = modelFactory;
 		this.model = modelFactory.model();
 		this.errorLogger = primaryExecutor.errorLogger();

@@ -110,6 +110,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.ast.value.IF.CharacterValue;
 import edu.udel.cis.vsl.abc.ast.value.IF.IntegerValue;
+import edu.udel.cis.vsl.abc.ast.value.IF.RealFloatingValue;
 import edu.udel.cis.vsl.abc.ast.value.IF.Value;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
@@ -2673,10 +2674,18 @@ public class FunctionTranslator {
 						.getConstantValue()).getIntegerValue();
 
 				result = modelFactory.integerLiteralExpression(source, value);
-			} else
-				result = modelFactory.integerLiteralExpression(source,
-						BigInteger.valueOf(Long.parseLong(constantNode
-								.getStringRepresentation())));
+			} else{
+				Value value = constantNode.getConstantValue();
+
+				if (value instanceof IntegerValue) 
+					result = modelFactory.integerLiteralExpression(source,
+							((IntegerValue) value).getIntegerValue());
+				else if (value instanceof RealFloatingValue) 
+					result = modelFactory.integerLiteralExpression(source,
+							((RealFloatingValue) value).getWholePartValue());
+				else
+					throw new CIVLSyntaxException("Invalid constant for integers", source);
+				}
 			break;
 		case BASIC: {
 			switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
@@ -2695,21 +2704,16 @@ public class FunctionTranslator {
 					result = modelFactory.integerLiteralExpression(source,
 							value);
 				} else {
-					String constantString = constantNode
-							.getStringRepresentation();
+					Value value = constantNode.getConstantValue();
 
-					if (constantString.contains(".")) {
-						Expression realConstant = modelFactory
-								.realLiteralExpression(source, BigDecimal
-										.valueOf(Double
-												.parseDouble(constantString)));
-
-						result = modelFactory.castExpression(source,
-								modelFactory.integerType(), realConstant);
-					} else
+					if (value instanceof IntegerValue) 
 						result = modelFactory.integerLiteralExpression(source,
-								BigInteger.valueOf(Long
-										.parseLong(constantString)));
+								((IntegerValue) value).getIntegerValue());
+					else if (value instanceof RealFloatingValue) 
+						result = modelFactory.integerLiteralExpression(source,
+								((RealFloatingValue) value).getWholePartValue());
+					else
+						throw new CIVLSyntaxException("Invalid constant for integers", source);
 				}
 				break;
 			case FLOAT:

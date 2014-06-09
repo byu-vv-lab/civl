@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
@@ -112,13 +113,16 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	protected CommonEnabler(TransitionFactory transitionFactory,
 			StateFactory stateFactory, Evaluator evaluator,
-			boolean showAmpleSet, boolean showAmpleSetWtStates,
-			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger) {
+			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
+			CIVLConfiguration civlConfig) {
 		this.transitionFactory = transitionFactory;
 		this.errorLogger = errorLogger;
 		this.evaluator = evaluator;
-		this.showAmpleSet = showAmpleSet || showAmpleSetWtStates;
-		this.showAmpleSetWtStates = showAmpleSetWtStates;
+		this.debugOut = civlConfig.out();
+		this.debugging = civlConfig.debug();
+		this.showAmpleSet = civlConfig.showAmpleSet()
+				|| civlConfig.showAmpleSetWtStates();
+		this.showAmpleSetWtStates = civlConfig.showAmpleSetWtStates();
 		this.modelFactory = evaluator.modelFactory();
 		this.universe = modelFactory.universe();
 		falseExpression = universe.falseExpression();
@@ -195,6 +199,8 @@ public abstract class CommonEnabler implements Enabler {
 		}
 		if (reasoner.isValid(universe.not(guard)))
 			return this.falseExpression;
+		if(reasoner.isValid(guard))
+			return pathCondition;
 		return universe.and(pathCondition, guard);
 	}
 

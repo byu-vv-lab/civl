@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.kripke.IF;
 
-import java.io.PrintStream;
-
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.kripke.common.CommonLibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.kripke.common.CommonStateManager;
 import edu.udel.cis.vsl.civl.kripke.common.PointeredEnabler;
@@ -40,10 +39,10 @@ public class Kripkes {
 	 */
 	public static Enabler newEnabler(TransitionFactory transitionFactory,
 			StateFactory stateFactory, Evaluator evaluator,
-			boolean showAmpleSet, boolean showAmpleSetWtStates,
-			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger) {
+			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
+			CIVLConfiguration civlConfig) {
 		return new PointeredEnabler(transitionFactory, stateFactory, evaluator,
-				showAmpleSet, showAmpleSetWtStates, libLoader, errorLogger);
+				libLoader, errorLogger, civlConfig);
 	}
 
 	/**
@@ -84,12 +83,8 @@ public class Kripkes {
 	 * @return
 	 */
 	public static StateManager newStateManager(Enabler enabler,
-			Executor executor, PrintStream out, boolean verbose, boolean debug,
-			boolean showStates, boolean showSavedStates,
-			boolean showTransitions, boolean saveStates, boolean simplify,
-			CIVLErrorLogger errorLogger) {
-		return new CommonStateManager(enabler, executor, out, verbose, debug,
-				showStates, showSavedStates, showTransitions, saveStates,
-				simplify, errorLogger);
+			Executor executor, CIVLErrorLogger errorLogger,
+			CIVLConfiguration config) {
+		return new CommonStateManager(enabler, executor, errorLogger, config);
 	}
 }

@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.maxdepthO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -125,7 +125,7 @@ public class Verifier extends Player {
 		this.startTime = startTime;
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
-		if (debug)
+		if (civlConfig.debug())
 			searcher.setDebugOut(out);
 		searcher.setName(sessionName);
 		log.setSearcher(searcher);
@@ -143,20 +143,20 @@ public class Verifier extends Player {
 	 * general UserInterface class.
 	 */
 	public void printStats() {
-		out.print("   maxProcs            : ");
-		out.println(stateManager.maxProcs());
-		out.print("   statesInstantiated  : ");
-		out.println(stateManager.getNumStateInstances());
-		out.print("   statesSaved         : ");
-		out.println(stateManager.getNumStatesSaved());
-		out.print("   statesSeen          : ");
-		out.println(searcher.numStatesSeen());
-		out.print("   statesMatched       : ");
-		out.println(searcher.numStatesMatched());
-		out.print("   steps               : ");
-		out.println(executor.getNumSteps());
-		out.print("   transitions         : ");
-		out.println(searcher.numTransitions());
+		civlConfig.out().print("   maxProcs            : ");
+		civlConfig.out().println(stateManager.maxProcs());
+		civlConfig.out().print("   statesInstantiated  : ");
+		civlConfig.out().println(stateManager.getNumStateInstances());
+		civlConfig.out().print("   statesSaved         : ");
+		civlConfig.out().println(stateManager.getNumStatesSaved());
+		civlConfig.out().print("   statesSeen          : ");
+		civlConfig.out().println(searcher.numStatesSeen());
+		civlConfig.out().print("   statesMatched       : ");
+		civlConfig.out().println(searcher.numStatesMatched());
+		civlConfig.out().print("   steps               : ");
+		civlConfig.out().println(executor.getNumSteps());
+		civlConfig.out().print("   transitions         : ");
+		civlConfig.out().println(searcher.numTransitions());
 	}
 
 	public boolean run() throws FileNotFoundException {
@@ -166,10 +166,10 @@ public class Verifier extends Player {
 
 			updateThread = new Thread(new UpdaterRunnable(updatePeriod * 1000));
 			updateThread.start();
-			if (debug || showStates || verbose) {
-				out.println();
+			if (civlConfig.debugOrVerbose() || civlConfig.showStates()) {
+				civlConfig.out().println();
 				// stateFactory.printState(out, initialState);
-				out.print(symbolicUtil.stateToString(initialState));
+				civlConfig.out().print(symbolicUtil.stateToString(initialState));
 				// initialState.print(out);
 			}
 			try {
@@ -191,10 +191,10 @@ public class Verifier extends Player {
 			} catch (ExcessiveErrorException e) {
 				violationFound = true;
 				if (!shortFileNamesShown) {
-					preprocessor.printShorterFileNameMap(out);
-					out.println();
+					preprocessor.printShorterFileNameMap(civlConfig.out());
+					civlConfig.out().println();
 				}
-				out.println("Error bound exceeded: search terminated");
+				civlConfig.out().println("Error bound exceeded: search terminated");
 			}
 			terminateUpdater();
 			if (violationFound || log.numEntries() > 0) {

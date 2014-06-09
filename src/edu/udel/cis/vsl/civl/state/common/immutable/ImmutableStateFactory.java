@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.state.common.immutable;
 
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.simplifyO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
 
 import java.util.Arrays;
 import java.util.BitSet;

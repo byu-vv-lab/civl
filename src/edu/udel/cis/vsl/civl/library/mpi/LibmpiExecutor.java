@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.library.mpi;
 
-import java.io.PrintStream;
-
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -32,11 +31,9 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
 
 	public LibmpiExecutor(String name, Executor primaryExecutor,
-			PrintStream output, PrintStream err, boolean enablePrintf,
-			boolean statelessPrintf, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
-		super(name, primaryExecutor, output, err, enablePrintf,
-				statelessPrintf, modelFactory, symbolicUtil);
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
+			CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
 	}
 
 	@Override

@@ -1,36 +1,36 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.bar;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.date;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.debugO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.echoO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.enablePrintfO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.errorBoundO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.guiO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.guidedO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.idO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.inputO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.maxdepthO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.minO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.randomO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.saveStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.seedO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showAmpleSetO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showAmpleSetWtStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showModelO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showProverQueriesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showQueriesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showSavedStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showTransitionsO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.simplifyO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.solveO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.statelessPrintfO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.sysIncludePathO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.traceO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.userIncludePathO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.verboseO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.version;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.bar;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.date;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.debugO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.echoO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.enablePrintfO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.errorBoundO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guiO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guidedO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.idO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.inputO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.randomO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.saveStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.seedO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetWtStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showModelO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showProverQueriesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showQueriesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showSavedStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.sysIncludePathO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.userIncludePathO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.version;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -45,6 +45,11 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.Activator;
+import edu.udel.cis.vsl.abc.ast.IF.AST;
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
@@ -189,6 +194,7 @@ public class UserInterface {
 		Model model;
 		Preprocessor preprocessor = frontEnd.getPreprocessor();
 		List<String> inputVars = getInputVariables(config);
+		boolean hasFscanf = false;
 
 		if (verbose || debug) {
 			// shows absolutely everything
@@ -198,16 +204,53 @@ public class UserInterface {
 		}
 		applyTransformers(filename, program, preprocessor, verbose || debug,
 				frontEnd, inputVars);
+		hasFscanf = hasFscanf(program);
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(config, program, coreName(filename),
 				debug, out);
+		model.setHasFscanf(hasFscanf);
 		if (verbose || debug)
 			out.println(bar + " Model " + bar + "\n");
 		if (showModel || verbose || debug || parse) {
 			model.print(out, verbose || debug);
 		}
 		return new Pair<>(model, preprocessor);
+	}
+
+	private boolean hasFscanf(Program program) {
+		AST ast = program.getAST();
+		ASTNode root = ast.getRootNode();
+
+		return checkForFscanf(root);
+	}
+
+	private boolean checkForFscanf(ASTNode node) {
+		int numChildren = node.numChildren();
+		boolean result = false;
+
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = node.child(i);
+
+			if (child != null) {
+				result = checkForFscanf(child);
+				if (result)
+					return true;
+			}
+		}
+		if (node instanceof FunctionCallNode) {
+			FunctionCallNode functionCall = (FunctionCallNode) node;
+
+			if (functionCall.getFunction().expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+				IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
+						.getFunction();
+				String functionName = functionExpression.getIdentifier().name();
+
+				if (functionName.equals("fscanf"))
+					return true;
+			}
+		}
+		return false;
 	}
 
 	private List<String> getInputVariables(GMCConfiguration config) {

@@ -468,14 +468,12 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		} else if (symbolicExpression.operator() == SymbolicOperator.CONCRETE
 				&& type instanceof SymbolicArrayType
 				&& ((SymbolicArrayType) type).elementType().equals(charType)) {
-
 			result.append("\"");
 			result.append(this.charArrayToString(source,
 					(SymbolicSequence<?>) symbolicExpression.argument(0), 0,
 					true));
 			result.append("\"");
 			return result.toString();
-
 		} else if (type.equals(procType)) {
 			int pid = modelFactory.getProcessId(source, symbolicExpression);
 
@@ -484,14 +482,18 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			}
 			if (pid < 0)
 				return "$proc_null";
-			else
-				return state.getProcessState(pid).name();
+			else {
+				ProcessState procState = state.getProcessState(pid);
+
+				if (procState == null)
+					return "UNDEFINED";
+				return procState.name();
+			}
 		} else if (type.equals(scopeType)) {
 			int scopeId = modelFactory.getScopeId(source, symbolicExpression);
 
-			if (!modelFactory.isScopeIdDefined(scopeId)) {
+			if (!modelFactory.isScopeIdDefined(scopeId))
 				return "UNDEFINED";
-			}
 			if (scopeId < 0)
 				return "$scope_null";
 			else

@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.kripke.common;
 import java.io.PrintStream;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
@@ -47,62 +48,65 @@ public class CommonStateManager implements StateManager {
 	 */
 	private Executor executor;
 
-	/**
-	 * The flag to turn on/off printing of debugging information.
-	 */
-	private boolean debug = false;
+	private CIVLConfiguration config;
+
+	// /**
+	// * The flag to turn on/off printing of debugging information.
+	// */
+	// private boolean debug = false;
 
 	/**
 	 * The maximal number of processes at a state, initialized as 0.
 	 */
 	private int maxProcs = 0;
 
-	/**
-	 * The output stream to be used in this class to print states, transitions,
-	 * warnings, etc.
-	 */
-	private PrintStream out = null;
+	// /**
+	// * The output stream to be used in this class to print states,
+	// transitions,
+	// * warnings, etc.
+	// */
+	// private PrintStream out = null;
 
-	/**
-	 * Save states during search?
-	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#saveStatesO}
-	 */
-	private boolean saveStates = true;
+	// /**
+	// * Save states during search?
+	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#saveStatesO}
+	// */
+	// private boolean saveStates = true;
 
-	/**
-	 * Print saved states (i.e., canonicalized states)?
-	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#showSavedStatesO}
-	 */
-	private boolean showSavedStates = false;
+	// /**
+	// * Print saved states (i.e., canonicalized states)?
+	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#showSavedStatesO}
+	// */
+	// private boolean showSavedStates = false;
 
-	/**
-	 * Print all states (including states that are not saved)?
-	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#showStatesO}
-	 */
-	private boolean showStates = false;
+	// /**
+	// * Print all states (including states that are not saved)?
+	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#showStatesO}
+	// */
+	// private boolean showStates = false;
 
-	/**
-	 * Print transitions?
-	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#showTransitionsO}
-	 */
-	private boolean showTransitions = false;
+	// /**
+	// * Print transitions?
+	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#showTransitionsO}
+	// */
+	// private boolean showTransitions = false;
 
-	/**
-	 * Simplify state returned by nextState?
-	 * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration#simplifyO}
-	 */
-	private boolean simplify = true;
+	// /**
+	// * Simplify state returned by nextState?
+	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#simplifyO}
+	// */
+	// private boolean simplify = true;
 
 	/**
 	 * The unique state factory used by the system.
 	 */
 	private StateFactory stateFactory;
 
-	/**
-	 * Turn on/off verbose mode.
-	 * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#verboseO}
-	 */
-	private boolean verbose = false;
+	// /**
+	// * Turn on/off verbose mode.
+	// * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#verboseO}
+	// */
+	// private boolean verbose = false;
 
 	/**
 	 * The object whose toString() method will be used to print the periodic
@@ -158,21 +162,11 @@ public class CommonStateManager implements StateManager {
 	 *            The unique executor to by used in the system.
 	 */
 	public CommonStateManager(Enabler enabler, Executor executor,
-			PrintStream out, boolean verbose, boolean debug,
-			boolean showStates, boolean showSavedStates,
-			boolean showTransitions, boolean saveStates, boolean simplify,
-			CIVLErrorLogger errorLogger) {
+			CIVLErrorLogger errorLogger, CIVLConfiguration config) {
 		this.executor = executor;
 		this.enabler = (CommonEnabler) enabler;
 		this.stateFactory = executor.stateFactory();
-		this.out = out;
-		this.verbose = verbose;
-		this.debug = debug;
-		this.showStates = showStates;
-		this.showSavedStates = showSavedStates;
-		this.showTransitions = showTransitions;
-		this.saveStates = saveStates;
-		this.simplify = simplify;
+		this.config = config;
 		this.errorLogger = errorLogger;
 		this.symbolicUtil = executor.evaluator().symbolicUtility();
 	}
@@ -195,7 +189,7 @@ public class CommonStateManager implements StateManager {
 			Transition transition) throws UnsatisfiablePathConditionException {
 		int pid;
 		int numProcs;
-		boolean printTransitions = verbose || debug || showTransitions;
+		boolean printTransitions = this.config.printTransitions();
 		int oldMaxCanonicId = this.maxCanonicId;
 		int processIdentifier;
 		Transition firstTransition;
@@ -229,8 +223,8 @@ public class CommonStateManager implements StateManager {
 			traceStep.addAtomicStep(new CommonAtomicStep(state,
 					stateStatus.enabledTransition));
 			oldState = state;
-			if (this.showStates)
-				out.print(this.symbolicUtil.stateToString(state));
+			if (this.config.printStates())
+				config.out().print(this.symbolicUtil.stateToString(state));
 		}
 		assert stateStatus.atomCount == 0;
 		assert stateStatus.enabledStatus != EnabledStatus.DETERMINISTIC;
@@ -238,8 +232,8 @@ public class CommonStateManager implements StateManager {
 				&& stateFactory.lockedByAtomic(state))
 			state = stateFactory.releaseAtomicLock(state);
 		if (printTransitions)
-			out.print("--> ");
-		if (saveStates) {
+			config.out().print("--> ");
+		if (config.saveStates()) {
 			try {
 				state = stateFactory.canonic(state);
 			} catch (CIVLStateException stex) {
@@ -264,20 +258,19 @@ public class CommonStateManager implements StateManager {
 
 				errorLogger.reportError(err);
 			}
-			if (simplify)
+			if (config.simplify())
 				state = stateFactory.simplify(state);
 			state.commit();
 		}
-		if (verbose || debug || showTransitions)
-			out.println(state);
-		if (debug
-				|| verbose
-				|| (!saveStates && showStates)
-				|| (saveStates && showStates && this.maxCanonicId > oldMaxCanonicId)
-				|| (saveStates && showSavedStates && this.maxCanonicId > oldMaxCanonicId)) {
+		if (config.printTransitions())
+			config.out().println(state);
+		if (config.debugOrVerbose()
+				|| (!config.saveStates() && config.showStates())
+				|| (config.saveStates() && config.showStates() && this.maxCanonicId > oldMaxCanonicId)
+				|| (config.saveStates() && config.showSavedStates() && this.maxCanonicId > oldMaxCanonicId)) {
 			// in -savedStates mode, only print new states.
-			out.println();
-			out.print(this.symbolicUtil.stateToString(state));
+			config.out().println();
+			config.out().print(this.symbolicUtil.stateToString(state));
 		}
 		numProcs = state.numProcs();
 		if (numProcs > maxProcs)
@@ -406,9 +399,9 @@ public class CommonStateManager implements StateManager {
 	private void printStatement(State currentState, State newState,
 			Transition transition, AtomicKind atomicKind, int atomCount,
 			boolean atomicLockVarChanged) {
-		out.print(transition.statement().toStepString(atomicKind, atomCount,
+		config.out().print(transition.statement().toStepString(atomicKind, atomCount,
 				atomicLockVarChanged));
-		out.println();
+		config.out().println();
 	}
 
 	/**
@@ -423,16 +416,16 @@ public class CommonStateManager implements StateManager {
 	 *            with.
 	 */
 	private void printTransitionPrefix(State state, int processIdentifier) {
-		out.print(state + ", p");
-		out.println(processIdentifier + ":");
+		config.out().print(state + ", p");
+		config.out().println(processIdentifier + ":");
 	}
 
 	/**
 	 * Print the updated status.
 	 */
 	private void printUpdateWork() {
-		updater.print(out);
-		out.flush();
+		updater.print(config.out());
+		config.out().flush();
 	}
 
 	/**
@@ -598,25 +591,26 @@ public class CommonStateManager implements StateManager {
 		return maxProcs;
 	}
 
-	@Override
-	public void setShowSavedStates(boolean value) {
-		this.showSavedStates = value;
-	}
-
-	@Override
-	public void setShowStates(boolean value) {
-		this.showStates = value;
-	}
-
-	@Override
-	public void setShowTransitions(boolean value) {
-		this.showTransitions = value;
-	}
-
-	@Override
-	public void setVerbose(boolean value) {
-		this.verbose = value;
-	}
+	//
+	// @Override
+	// public void setShowSavedStates(boolean value) {
+	// this.showSavedStates = value;
+	// }
+	//
+	// @Override
+	// public void setShowStates(boolean value) {
+	// this.showStates = value;
+	// }
+	//
+	// @Override
+	// public void setShowTransitions(boolean value) {
+	// this.showTransitions = value;
+	// }
+	//
+	// @Override
+	// public void setVerbose(boolean value) {
+	// this.verbose = value;
+	// }
 
 	@Override
 	public synchronized void printUpdate() {

@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.seedO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.seedO;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,14 +90,16 @@ public class TracePlayer extends Player {
 		// turn the following off because they duplicate what
 		// the Replayer prints:
 		// TODO check here
-		stateManager.setShowStates(false);
-		stateManager.setShowSavedStates(false);
-		stateManager.setShowTransitions(showTransitions);
-		stateManager.setVerbose(false);
+		// stateManager.setShowStates(false);
+		// stateManager.setShowSavedStates(false);
+		//civlConfig.setShowStates(false);
+		civlConfig.setShowSavedStates(false);
+		civlConfig.setShowTransitions(true);
+		civlConfig.setVerbose(false);
 		log.setSearcher(null);
 		replayer = new Replayer<State, Transition>(stateManager, out);
-		replayer.setPrintAllStates(showStates || verbose || debug
-				|| showSavedStates);
+		replayer.setPrintAllStates(civlConfig.showStates()
+				|| civlConfig.debugOrVerbose() || civlConfig.showSavedStates());
 		replayer.setPredicate(predicate);
 	}
 
@@ -127,8 +129,8 @@ public class TracePlayer extends Player {
 
 			violation = violation || log.numErrors() > 0;
 			if (violation) {
-				out.println("Violation(s) found.");
-				out.flush();
+				civlConfig.out().println("Violation(s) found.");
+				civlConfig.out().flush();
 			}
 			trace.setViolation(violation);
 			return trace;
@@ -142,13 +144,14 @@ public class TracePlayer extends Player {
 	}
 
 	public void printStats() {
-		out.print("   statesInstantiated  : ");
-		out.println(stateManager.getNumStateInstances());
-		out.print("   statesSaved         : ");
-		out.println(stateManager.getNumStatesSaved());
-		out.println("   maxProcs            : " + stateManager.maxProcs());
+		civlConfig.out().print("   statesInstantiated  : ");
+		civlConfig.out().println(stateManager.getNumStateInstances());
+		civlConfig.out().print("   statesSaved         : ");
+		civlConfig.out().println(stateManager.getNumStatesSaved());
+		civlConfig.out().println(
+				"   maxProcs            : " + stateManager.maxProcs());
 		if (isRandom)
-			out.println("   seed                : " + seed);
+			civlConfig.out().println("   seed                : " + seed);
 
 	}
 

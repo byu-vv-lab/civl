@@ -87,6 +87,8 @@ public class CommonModel extends CommonSourceable implements Model {
 	private CIVLType intIterType;
 
 	private ArrayList<MallocStatement> mallocStatements;
+	
+	private boolean hasFscanf;
 
 	/**
 	 * A model of a Chapel program.
@@ -103,7 +105,7 @@ public class CommonModel extends CommonSourceable implements Model {
 		super(source);
 		this.modelFactory = factory;
 		this.system = system;
-		functions = new LinkedList<CIVLFunction>();
+		functions = new LinkedList<>();
 		functions.add(system);
 	}
 
@@ -412,5 +414,15 @@ public class CommonModel extends CommonSourceable implements Model {
 	@Override
 	public CIVLType ompWsType() {
 		return this.ompWsType;
+	}
+	
+	@Override
+	public void setHasFscanf(boolean value) {
+		this.hasFscanf = value;
+	}
+
+	@Override
+	public boolean hasFscanf() {
+		return this.hasFscanf;
 	}
 }

@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.util.ArrayList;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
@@ -43,10 +44,10 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	 */
 	public PointeredEnabler(TransitionFactory transitionFactory,
 			StateFactory stateFactory, Evaluator evaluator,
-			boolean showAmpleSet, boolean showAmpleSetWtStates,
-			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger) {
-		super(transitionFactory, stateFactory, evaluator, showAmpleSet,
-				showAmpleSetWtStates, libLoader, errorLogger);
+			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
+			CIVLConfiguration civlConfig) {
+		super(transitionFactory, stateFactory, evaluator, libLoader,
+				errorLogger, civlConfig);
 	}
 
 	/* ************************* Methods from Enabler ********************** */

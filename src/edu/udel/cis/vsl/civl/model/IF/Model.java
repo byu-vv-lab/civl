@@ -271,4 +271,8 @@ public interface Model extends Sourceable {
 	 */
 	void setOmpWsType(CIVLType ompWsType);
 
+	void setHasFscanf(boolean value);
+
+	boolean hasFscanf();
+
 }

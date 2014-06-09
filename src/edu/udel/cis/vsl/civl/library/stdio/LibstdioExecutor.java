@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
@@ -107,6 +108,11 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	public final static String STDOUT = "CIVL_stdout";
 	public final static String STDIN = "CIVL_stdin";
 	public final static String STDERR = "CIVL_stderr";
+
+	/**
+	 * Enable or disable printing. By default true, i.e., enable printing.
+	 */
+	private boolean enablePrintf;
 
 	/**
 	 * The base type of the pointer type $filesystem; a structure type with
@@ -234,11 +240,9 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 *            True iff print is enabled, reflecting command line options.
 	 */
 	public LibstdioExecutor(String name, Executor primaryExecutor,
-			PrintStream output, PrintStream err, boolean enablePrintf,
-			boolean statelessPrintf, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
-		super(name, primaryExecutor, output, err, enablePrintf,
-				statelessPrintf, modelFactory, symbolicUtil);
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
+			CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
 		Model model = modelFactory.model();
 		SymbolicType stringArrayType;
 
@@ -259,7 +263,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 								universe.integerType())));
 		createStringToDataFunctions();
 		createDataToStringFunctions();
-		// createCharReadFunctions();
 		this.filesystemStructType = model.basedFilesystemType();
 		if (filesystemStructType != null)
 			this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
@@ -344,95 +347,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* *************************** Private Methods ************************* */
-
-	// private SymbolicExpression intToString(SymbolicExpression format,
-	// SymbolicExpression data) {
-	// return universe.apply(intToStringFunction, Arrays.asList(format, data));
-	// }
-	//
-	// private SymbolicExpression doubleToString(SymbolicExpression format,
-	// SymbolicExpression data) {
-	// return universe.apply(doubleToStringFunction,
-	// Arrays.asList(format, data));
-	// }
-	//
-	// private SymbolicExpression charToString(SymbolicExpression format,
-	// SymbolicExpression data) {
-	// return universe
-	// .apply(charToStringFunction, Arrays.asList(format, data));
-	// }
-	//
-	// private SymbolicExpression stringToString(SymbolicExpression format,
-	// SymbolicExpression data) {
-	// return universe.apply(stringToStringFunction,
-	// Arrays.asList(format, data));
-	// }
-
-	// private SymbolicExpression pointerToString(SymbolicExpression format,
-	// SymbolicExpression data) {
-	// return universe.apply(pointerToStringFunction,
-	// Arrays.asList(format, data));
-	// }
-	//
-	// private SymbolicExpression stringToInt(SymbolicExpression content) {
-	// return universe.apply(stringToIntFunction, Arrays.asList(content));
-	// }
-	//
-	// /**
-	// * Apply the abstract function:
-	// * <code>char* carInt(char** fileContent, char* format)</code>
-	// *
-	// * @param fileContent
-	// * @param format
-	// * @return
-	// */
-	// private SymbolicExpression carInt(SymbolicExpression fileContent,
-	// SymbolicExpression format) {
-	// return universe.apply(this.carIntFunction,
-	// Arrays.asList(fileContent, format));
-	// }
-
-	// /**
-	// * Apply the abstract function:
-	// * <code>char** cdrInt(char** fileContent, char* format)</code>
-	// *
-	// * @param fileContent
-	// * @param format
-	// * @return
-	// */
-	// private SymbolicExpression cdrInt(SymbolicExpression fileContent,
-	// SymbolicExpression format) {
-	// return universe.apply(this.cdrIntFunction,
-	// Arrays.asList(fileContent, format));
-	// }
-	//
-	// /**
-	// * Apply the abstract function:
-	// * <code>char* carInt(char** fileContent, char* format)</code>
-	// *
-	// * @param fileContent
-	// * @param string
-	// * @return
-	// */
-	// private SymbolicExpression carString(SymbolicExpression fileContent,
-	// SymbolicExpression string) {
-	// return universe.apply(this.carStringFunction,
-	// Arrays.asList(fileContent, string));
-	// }
-	//
-	// /**
-	// * Apply the abstract function:
-	// * <code>char** cdrInt(char** fileContent, char* format)</code>
-	// *
-	// * @param fileContent
-	// * @param string
-	// * @return
-	// */
-	// private SymbolicExpression cdrString(SymbolicExpression fileContent,
-	// SymbolicExpression string) {
-	// return universe.apply(this.cdrStringFunction,
-	// Arrays.asList(fileContent, string));
-	// }
 
 	/**
 	 * Given a symbolic expression of type array of char, returns a string
@@ -640,7 +554,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			fileArray = universe.append(fileArray, theFile);
 			fileSystemStructure = universe.tupleWrite(fileSystemStructure,
 					oneObject, fileArray);
-			if (isInputFile) {
+			if (isInputFile && modelFactory.model().hasFscanf()) {
 				BooleanExpression positiveLength = universe.lessThan(zero,
 						(NumericExpression) length);
 
@@ -1107,13 +1021,17 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 								state, argumentValue)));
 		}
 		if (fileNameString.compareTo(STDOUT) == 0) {
-			this.printf(this.output, arguments[1].getSource(), formatBuffer,
-					printedContents);
+			this.splitFormat(arguments[1].getSource(),
+					formatBuffer);
+			this.printf(civlConfig.out(), arguments[1].getSource(),
+					formatBuffer, printedContents);
+			if (civlConfig.statelessPrintf())
+				return state;
 		} else if (fileNameString.compareTo(STDIN) == 0) {
 			// TODO: stdin
 		} else if (fileNameString.equals(STDERR)) {
-			this.printf(this.err, arguments[1].getSource(), formatBuffer,
-					printedContents);
+			this.printf(civlConfig.err(), arguments[1].getSource(),
+					formatBuffer, printedContents);
 		}
 		{ // updates the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,
@@ -1409,7 +1327,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			}
 			try {
 				printStream.printf(format, arguments.toArray());
-
 			} catch (Exception e) {
 				throw new CIVLInternalException("unexpected error in printf",
 						source);

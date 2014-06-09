@@ -1,27 +1,28 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.debugO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.enablePrintfO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.errorBoundO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.guiO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.maxdepthO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.minO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.randomO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.saveStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showAmpleSetO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showAmpleSetWtStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showSavedStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.showTransitionsO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.simplifyO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.solveO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.statelessPrintfO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration.verboseO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.debugO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.enablePrintfO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.errorBoundO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guiO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.randomO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.saveStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetWtStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showSavedStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
 
 import java.io.File;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.Dynamics;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -63,9 +64,9 @@ public abstract class Player {
 
 	protected Model model;
 
-	protected PrintStream out;
-
-	protected PrintStream err;
+	// protected PrintStream out;
+	//
+	// protected PrintStream err;
 
 	protected String sessionName;
 
@@ -95,15 +96,15 @@ public abstract class Player {
 
 	protected boolean random;
 
-	protected boolean verbose;
+	// protected boolean verbose;
 
-	protected boolean debug;
+	// protected boolean debug;
 
-	protected boolean showStates;
+	// protected boolean showStates;
 
-	protected boolean showSavedStates;
+	// protected boolean showSavedStates;
 
-	protected boolean showTransitions;
+	// protected boolean showTransitions;
 
 	protected String result;
 
@@ -111,27 +112,29 @@ public abstract class Player {
 
 	protected int maxdepth;
 
-	protected boolean showAmpleSetWtStates; // false by default
+	// protected boolean showAmpleSetWtStates; // false by default
 
-	protected boolean showAmpleSet; // false by default
+	// protected boolean showAmpleSet; // false by default
 
-	protected boolean saveStates; // true by default
+	// protected boolean saveStates; // true by default
 
-	protected boolean simplify; // true by default
+	// protected boolean simplify; // true by default
 
 	protected boolean solve; // false by default
 
-	protected boolean enablePrintf; // true by default
+	// protected boolean enablePrintf; // true by default
 
 	protected boolean gui; // false by default, only works with Replay mode.
 
 	protected Preprocessor preprocessor;
 
-	protected boolean statelessPrintf;
+	// protected boolean statelessPrintf;
 
 	protected SymbolicUtility symbolicUtil;
 
 	protected CIVLErrorLogger errorLogger;
+
+	protected CIVLConfiguration civlConfig = new CIVLConfiguration();
 
 	public Player(GMCConfiguration config, Model model, PrintStream out,
 			PrintStream err, Preprocessor preprocessor)
@@ -141,8 +144,27 @@ public abstract class Player {
 		this.preprocessor = preprocessor;
 		this.config = config;
 		this.model = model;
-		this.out = out;
-		this.err = err;
+		civlConfig.setOut(out);
+		civlConfig.setErr(err);
+		civlConfig.setDebug((Boolean) config.getValueOrDefault(debugO));
+		civlConfig.setEnablePrintf((Boolean) config
+				.getValueOrDefault(enablePrintfO));
+		civlConfig.setSaveStates((Boolean) config
+				.getValueOrDefault(saveStatesO));
+		civlConfig.setShowAmpleSet((Boolean) config
+				.getValueOrDefault(showAmpleSetO));
+		civlConfig.setShowAmpleSetWtStates((Boolean) config
+				.getValueOrDefault(showAmpleSetWtStatesO));
+		civlConfig.setShowSavedStates((Boolean) config
+				.getValueOrDefault(showSavedStatesO));
+		civlConfig.setShowStates((Boolean) config
+				.getValueOrDefault(showStatesO));
+		civlConfig.setShowTransitions((Boolean) config
+				.getValueOrDefault(showTransitionsO));
+		civlConfig.setSimplify((Boolean) config.getValueOrDefault(simplifyO));
+		civlConfig.setStatelessPrintf((Boolean) config
+				.getValueOrDefault(statelessPrintfO));
+		civlConfig.setVerbose((Boolean) config.getValueOrDefault(verboseO));
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
@@ -157,44 +179,30 @@ public abstract class Player {
 		this.libraryEvaluatorLoader = Semantics.newLibraryEvaluatorLoader();
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
 				libraryEvaluatorLoader, symbolicUtil, errorLogger);
-		this.enablePrintf = (Boolean) config.getValueOrDefault(enablePrintfO);
-		this.statelessPrintf = (Boolean) config
-				.getValueOrDefault(statelessPrintfO);
-		this.showAmpleSet = (Boolean) config.getValueOrDefault(showAmpleSetO);
-		this.showAmpleSetWtStates = (Boolean) config
-				.getValueOrDefault(showAmpleSetWtStatesO);
+
 		this.gui = (Boolean) config.getValueOrDefault(guiO);
 		this.libraryExecutorLoader = Semantics.newLibraryExecutorLoader();
-		this.executor = Semantics
-				.newExecutor(config, modelFactory, stateFactory, log,
-						libraryExecutorLoader, out, err, this.enablePrintf,
-						this.statelessPrintf, evaluator, errorLogger);
+		this.executor = Semantics.newExecutor(config, modelFactory,
+				stateFactory, log, libraryExecutorLoader, evaluator,
+				errorLogger, civlConfig);
 		this.random = config.isTrue(randomO);
-		this.verbose = config.isTrue(verboseO);
-		this.debug = config.isTrue(debugO);
-		this.showStates = config.isTrue(showStatesO);
-		this.showSavedStates = config.isTrue(showSavedStatesO);
-		this.showTransitions = config.isTrue(showTransitionsO);
 		this.minimize = config.isTrue(minO);
 		this.maxdepth = (int) config.getValueOrDefault(maxdepthO);
-		this.saveStates = (Boolean) config.getValueOrDefault(saveStatesO);
-		this.simplify = (Boolean) config.getValueOrDefault(simplifyO);
+
 		this.transitionFactory = new TransitionFactory();
 		this.libraryEnablerLoader = Kripkes.newLibraryEnablerLoader();
 		enabler = Kripkes.newEnabler(transitionFactory, stateFactory,
-				evaluator, showAmpleSet, this.showAmpleSetWtStates,
-				this.libraryEnablerLoader, errorLogger);
-		enabler.setDebugOut(out);
-		enabler.setDebugging(debug);
+				evaluator, this.libraryEnablerLoader, errorLogger, civlConfig);
+		// enabler.setDebugOut(out);
+		// enabler.setDebugging(debug);
 		this.predicate = new StandardPredicate(log, universe,
 				(Enabler) this.enabler, this.executor);
 		stateManager = Kripkes.newStateManager((Enabler) enabler, executor,
-				out, verbose, debug, showStates, showSavedStates,
-				showTransitions, saveStates, simplify, errorLogger);
+				errorLogger, civlConfig);
 	}
 
 	public void printResult() {
-		out.println(result);
+		civlConfig.out().println(result);
 	}
 
 }

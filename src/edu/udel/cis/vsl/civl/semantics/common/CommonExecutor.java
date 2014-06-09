@@ -3,13 +3,13 @@
  */
 package edu.udel.cis.vsl.civl.semantics.common;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
@@ -82,53 +82,55 @@ public class CommonExecutor implements Executor {
 
 	/* *************************** Instance Fields ************************* */
 
-	/**
-	 * Enable or disable printing. True by default.
-	 */
-	protected boolean enablePrintf;
-
-	/**
-	 * Prevent printf from modifying the file system. False by default.
-	 */
-	protected boolean statelessPrintf;
+	// /**
+	// * Enable or disable printing. True by default.
+	// */
+	// protected boolean enablePrintf;
+	//
+	// /**
+	// * Prevent printf from modifying the file system. False by default.
+	// */
+	// protected boolean statelessPrintf;
 
 	/** The Evaluator used to evaluate expressions. */
-	protected Evaluator evaluator;
+	private Evaluator evaluator;
 
 	/**
 	 * The loader used to find Executors for system functions declared in
 	 * libraries.
 	 */
-	protected LibraryExecutorLoader loader;
+	private LibraryExecutorLoader loader;
 
 	/**
 	 * The unique model factory used in the system.
 	 */
-	protected ModelFactory modelFactory;
+	private ModelFactory modelFactory;
 
 	/**
 	 * The number of steps that have been executed by this executor. A "step" is
 	 * defined to be a call to method
 	 * {@link #executeWork(State, int, Statement)}.
 	 */
-	protected long numSteps = 0;
+	private long numSteps = 0;
 
-	/**
-	 * The printing stream to be used.
-	 */
-	protected PrintStream output;
-
-	protected PrintStream err;
+	// /**
+	// * The printing stream to be used.
+	// */
+	// protected PrintStream output;
+	//
+	// protected PrintStream err;
 
 	/** The factory used to produce and manipulate model states. */
-	protected StateFactory stateFactory;
+	private StateFactory stateFactory;
 
-	protected SymbolicUtility symbolicUtil;
+	private SymbolicUtility symbolicUtil;
 
 	/** The symbolic universe used to manage all symbolic expressions. */
-	protected SymbolicUniverse universe;
+	private SymbolicUniverse universe;
 
-	protected CIVLErrorLogger errorLogger;
+	private CIVLErrorLogger errorLogger;
+
+	private CIVLConfiguration civlConfig;
 
 	/* ***************************** Constructors ************************** */
 
@@ -146,18 +148,14 @@ public class CommonExecutor implements Executor {
 	 */
 	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
 			StateFactory stateFactory, ErrorLog log,
-			LibraryExecutorLoader loader, PrintStream output, PrintStream err,
-			boolean enablePrintf, boolean statelessPrintf, Evaluator evaluator,
-			CIVLErrorLogger errorLogger) {
+			LibraryExecutorLoader loader, Evaluator evaluator,
+			CIVLErrorLogger errorLogger, CIVLConfiguration civlConfig) {
+		this.civlConfig = civlConfig;
 		this.universe = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
 		this.evaluator = evaluator;
 		this.loader = loader;
-		this.output = output;
-		this.err = err;
-		this.enablePrintf = enablePrintf;
-		this.statelessPrintf = statelessPrintf;
 		this.symbolicUtil = evaluator.symbolicUtility();
 		this.errorLogger = errorLogger;
 	}
@@ -189,7 +187,7 @@ public class CommonExecutor implements Executor {
 		resultType = valid.getResultType();
 		if (resultType != ResultType.YES) {
 			if (statement.printfArguments() != null) {
-				if (!this.enablePrintf) {
+				if (!civlConfig.enablePrintf()) {
 					return state;
 				} else {
 					// obtain printf() arguments
@@ -287,11 +285,9 @@ public class CommonExecutor implements Executor {
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		if (statement.function() instanceof SystemFunction) {
-			// TODO: optimize this. store libraryExecutor in SystemFunction?
 			LibraryExecutor executor = loader.getLibraryExecutor(
 					((SystemFunction) statement.function()).getLibrary(), this,
-					output, this.err, this.enablePrintf, this.statelessPrintf,
-					this.modelFactory, this.symbolicUtil);
+					this.modelFactory, this.symbolicUtil, this.civlConfig);
 
 			state = executor.execute(state, pid, statement);
 		} else {
@@ -455,7 +451,7 @@ public class CommonExecutor implements Executor {
 	private State executePrintf(State state, int pid, String process,
 			Expression[] expressions, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		if (this.enablePrintf) {
+		if (civlConfig.enablePrintf()) {
 			// using StringBuffer instead for performance
 			StringBuffer stringOfSymbolicExpression = new StringBuffer();
 			StringBuffer formatBuffer = new StringBuffer();
@@ -584,7 +580,7 @@ public class CommonExecutor implements Executor {
 				}
 			}
 			try {
-				output.printf(format, arguments.toArray());
+				civlConfig.out().printf(format, arguments.toArray());
 			} catch (Exception e) {
 				throw new CIVLInternalException("unexpected error in printf",
 						expressions[0].getSource());

@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF;
 
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.common.ABC_CIVLSource;
 
 /**
  * An exception thrown when there is not necessarily anything wrong with the
@@ -24,6 +26,10 @@ public class CIVLUnimplementedFeatureException extends CIVLException {
 
 	public CIVLUnimplementedFeatureException(String feature) {
 		this(feature, (CIVLSource) null);
+	}
+
+	public CIVLUnimplementedFeatureException(String feature, Source source) {
+		this(feature, new ABC_CIVLSource(source));
 	}
 
 }

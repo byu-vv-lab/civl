@@ -1,131 +1,150 @@
 package edu.udel.cis.vsl.civl.config.IF;
 
-import static edu.udel.cis.vsl.gmc.Option.OptionType.BOOLEAN;
-import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
-import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
-import edu.udel.cis.vsl.gmc.Option;
+import java.io.PrintStream;
 
-/**
- * This interface manages all constant configurations of the system.
- * 
- * @author Manchun Zheng
- * 
- */
-public interface CIVLConfiguration {
-	/** The version of this release of CIVL. */
-	public final static String version = "0.11";
+public class CIVLConfiguration {
+	private boolean debug = false;
+	private boolean enablePrintf = true;
+	// private int errorBound = 1;
+//	private boolean needsInputFileLength = false;
+	private boolean saveStates = true;
+	private boolean showAmpleSet = false;
+	private boolean showAmpleSetWtStates = false;
+	private boolean showSavedStates = false;
+	private boolean showStates = false;
+	private boolean showTransitions = false;
+	private boolean simplify = true;
+	private boolean statelessPrintf = true;
+	private boolean verbose = false;
+	private PrintStream out;
+	private PrintStream err;
 
-	/**
-	 * The date of this release of CIVL. Format: YYYY-MM-DD in accordance with
-	 * ISO 8601.
-	 */
-	public final static String date = "2014-04-22";
+	public CIVLConfiguration() {
 
-	/**
-	 * The prefix of the full name of the class of a library enabler/executor.
-	 */
-	public final static String LIBRARY_PREFIX = "edu.udel.cis.vsl.civl.library.";
+	}
 
-	/**
-	 * A string printed before and after titles of sections of output to make
-	 * them stand out among the clutter.
-	 */
-	public final static String bar = "===================";
+	public void setOut(PrintStream out) {
+		this.out = out;
+	}
 
-	public final static Option debugO = Option.newScalarOption("debug",
-			BOOLEAN, "debug mode: print very detailed information", false);
+	public void setErr(PrintStream err) {
+		this.err = err;
+	}
 
-	public final static Option echoO = Option.newScalarOption("echo", BOOLEAN,
-			"print the command line", false);
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+	}
 
-	public final static Option enablePrintfO = Option.newScalarOption(
-			"enablePrintf", BOOLEAN, "enable printf function", true);
+	public void setEnablePrintf(boolean enablePrintf) {
+		this.enablePrintf = enablePrintf;
+	}
 
-	public final static Option errorBoundO = Option.newScalarOption(
-			"errorBound", INTEGER, "stop after finding this many errors", 1);
+	// public void setErrorbound(int bound) {
+	// this.errorBound = bound;
+	// }
 
-	public final static Option guidedO = Option.newScalarOption("guided",
-			BOOLEAN, "user guided simulation; applies only to run, ignored\n"
-					+ "    for all other commands", null);
+//	public void setNeedsInputFileLength(boolean needsInputFileLength) {
+//		this.needsInputFileLength = needsInputFileLength;
+//	}
 
-	public final static Option idO = Option.newScalarOption("id", INTEGER,
-			"ID number of trace to replay; applies only to replay command", 0);
+	public void setSaveStates(boolean saveStates) {
+		this.saveStates = saveStates;
+	}
 
-	public final static Option inputO = Option
-			.newMapOption("input",
-					"initialize input variable KEY to VALUE; applies only to run and verify");
+	public void setShowAmpleSet(boolean showAmpleSet) {
+		this.showAmpleSet = showAmpleSet;
+	}
 
-	public final static Option maxdepthO = Option.newScalarOption("maxdepth",
-			INTEGER, "bound on search depth", Integer.MAX_VALUE);
+	public void setShowAmpleSetWtStates(boolean showAmpleSetWtStates) {
+		this.showAmpleSetWtStates = showAmpleSetWtStates;
+	}
 
-	public final static Option minO = Option.newScalarOption("min", BOOLEAN,
-			"search for minimal counterexample", false);
+	public void setShowSavedStates(boolean showSavedStates) {
+		this.showSavedStates = showSavedStates;
+	}
 
-	public final static Option randomO = Option.newScalarOption("random",
-			BOOLEAN, "select enabled transitions randomly; default for run,\n"
-					+ "    ignored for all other commands", null);
+	public void setShowStates(boolean showStates) {
+		this.showStates = showStates;
+	}
 
-	public final static Option saveStatesO = Option.newScalarOption(
-			"saveStates", BOOLEAN, "save states during depth-first search",
-			true);
+	public void setShowTransitions(boolean showTransitions) {
+		this.showTransitions = showTransitions;
+	}
 
-	public final static Option seedO = Option.newScalarOption("seed", STRING,
-			"set the random seed; applies only to run", null);
+	public void setSimplify(boolean simplify) {
+		this.simplify = simplify;
+	}
 
-	public final static Option showAmpleSetO = Option.newScalarOption(
-			"showAmpleSet", BOOLEAN,
-			"print the ample set when it contains more than one processes",
-			false);
+	public void setStatelessPrintf(boolean statelessPrintf) {
+		this.statelessPrintf = statelessPrintf;
+	}
 
-	public final static Option showAmpleSetWtStatesO = Option
-			.newScalarOption(
-					"showAmpleSetWtStates",
-					BOOLEAN,
-					"print the ample set and the state when there are more than one processes in the ample set",
-					false);
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
+	}
 
-	public final static Option showModelO = Option.newScalarOption("showModel",
-			BOOLEAN, "print the model", false);
+	public boolean debug() {
+		return debug;
+	}
 
-	public final static Option showProverQueriesO = Option.newScalarOption(
-			"showProverQueries", BOOLEAN, "print theorem prover queries only",
-			false);
+	public boolean debugOrVerbose() {
+		return debug || verbose;
+	}
 
-	public final static Option showQueriesO = Option.newScalarOption(
-			"showQueries", BOOLEAN, "print all queries", false);
+	public boolean enablePrintf() {
+		return this.enablePrintf;
+	}
 
-	public final static Option showSavedStatesO = Option.newScalarOption(
-			"showSavedStates", BOOLEAN, "print saved states only", false);
+	// public boolean needsInputFileLength() {
+	// return this.needsInputFileLength;
+	// }
 
-	public final static Option showStatesO = Option.newScalarOption(
-			"showStates", BOOLEAN, "print all states", false);
+	public boolean saveStates() {
+		return this.saveStates;
+	}
 
-	public final static Option showTransitionsO = Option.newScalarOption(
-			"showTransitions", BOOLEAN, "print transitions", false);
+	public boolean showAmpleSet() {
+		return this.showAmpleSet;
+	}
 
-	public final static Option simplifyO = Option.newScalarOption("simplify",
-			BOOLEAN, "simplify states?", true);
+	public boolean showAmpleSetWtStates() {
+		return this.showAmpleSetWtStates;
+	}
 
-	public final static Option solveO = Option.newScalarOption("solve",
-			BOOLEAN, "try to solve for concrete counterexample", false);
+	public boolean showSavedStates() {
+		return this.showSavedStates;
+	}
 
-	public final static Option statelessPrintfO = Option.newScalarOption(
-			"statelessPrintf", BOOLEAN,
-			"prevent printf function modifying the file system", true);
+	public boolean showStates() {
+		return this.showStates;
+	}
 
-	public final static Option sysIncludePathO = Option.newScalarOption(
-			"sysIncludePath", STRING, "set the system include path", null);
+	public boolean showTransitions() {
+		return this.showTransitions;
+	}
 
-	public final static Option traceO = Option.newScalarOption("trace", STRING,
-			"filename of trace to replay", null);
+	public boolean simplify() {
+		return this.simplify;
+	}
 
-	public final static Option userIncludePathO = Option.newScalarOption(
-			"userIncludePath", STRING, "set the user include path", null);
+	public boolean statelessPrintf() {
+		return this.statelessPrintf;
+	}
 
-	public final static Option verboseO = Option.newScalarOption("verbose",
-			BOOLEAN, "verbose mode", false);
+	public PrintStream out() {
+		return this.out;
+	}
 
-	public final static Option guiO = Option.newScalarOption("gui", BOOLEAN,
-			"launch GUI? (under development, only works with replay)", false);
+	public PrintStream err() {
+		return this.err;
+	}
+
+	public boolean printTransitions() {
+		return this.showTransitions || this.verbose || this.debug;
+	}
+
+	public boolean printStates() {
+		return this.showStates || this.verbose || this.debug;
+	}
 
 }

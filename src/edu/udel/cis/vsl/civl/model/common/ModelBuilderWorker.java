@@ -17,7 +17,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -260,7 +260,7 @@ public class ModelBuilderWorker {
 			Program program, String name, boolean debugging,
 			PrintStream debugOut) {
 		this.config = config;
-		this.inputInitMap = config.getMapValue(CIVLConfiguration.inputO);
+		this.inputInitMap = config.getMapValue(CIVLConstants.inputO);
 		this.factory = factory;
 		this.program = program;
 		this.factory.setTokenFactory(program.getTokenFactory());
