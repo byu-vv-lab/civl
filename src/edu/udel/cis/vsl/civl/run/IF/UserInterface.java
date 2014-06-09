@@ -613,8 +613,6 @@ public class UserInterface {
 				universe);
 		model = modelAndPreprocessor.left;
 		preprocessor = modelAndPreprocessor.right;
-		if (showShortFileNameList(config))
-			preprocessor.printShorterFileNameMap(out);
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out,
 				err, preprocessor);
 		trace = replayer.run();
@@ -626,6 +624,7 @@ public class UserInterface {
 		printStats(out, universe);
 		replayer.printStats();
 		out.println();
+		preprocessor.printShorterFileNameMap(out);
 		return result;
 	}
 

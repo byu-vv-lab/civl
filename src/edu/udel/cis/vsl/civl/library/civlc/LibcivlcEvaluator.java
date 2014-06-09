@@ -189,7 +189,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		state = eval.state;
 		gcomm = eval.value;
 		dest = universe.tupleRead(comm, zeroObject);
-		newMessage = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
+		newMessage = this.getMatchedMessageFromGcomm(gcomm, source, dest,
 				tag, civlsource);
 		if (newMessage != null)
 			enabled = true;
@@ -214,7 +214,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * @return The matched message, NULL if no matched message found.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private SymbolicExpression getMatchedMessageFromGcomm(int pid,
+	private SymbolicExpression getMatchedMessageFromGcomm(
 			SymbolicExpression gcomm, SymbolicExpression source,
 			SymbolicExpression dest, SymbolicExpression tag,
 			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
