@@ -1,12 +1,18 @@
-
+#include <civlc.h>
+#include <stdio.h>
 #include "openCL.cvl"
 void main()
 {
   int err;
-  err = clGetDeviceIDs(cl_platform_id platform,
-  cl_device_type device_type,
-  cl_uint num_entries,
-  cl_device_id *devices,
-  cl_uint *num_devices)
-  $assert err == CL_SUCCESS;
+  int num_entries = 3;
+  
+  cl_device_id device_id;
+  
+  err = clGetDeviceIDs(NULL,
+  CL_DEVICE_TYPE_GPU,
+  num_entries,
+  &device_id,
+  NULL);
+  printf("devices is %d", device_id[0]);
+  $assert (err == CL_SUCCESS);
 }
