@@ -1,5 +1,5 @@
 #include<mpi.h>
-#include<stdio.h>
+//#include<stdio.h>
 int myrank;
 int nprocs;
 int left;
@@ -22,6 +22,6 @@ void main(int argc,  char **argv) {
         MPI_Recv(&data, 0, MPI_INT, left, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Send(&data, 0, MPI_INT, right, 0, MPI_COMM_WORLD);
     }
-    printf("I'm process %d.\n", myrank);
+    //printf("I'm process %d.\n", myrank);
     MPI_Finalize();
 }

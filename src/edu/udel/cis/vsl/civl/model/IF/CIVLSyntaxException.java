@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF;
 
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.common.ABC_CIVLSource;
 
 /**
  * An exception thrown when there is syntax error in the program being verified,
@@ -26,5 +28,9 @@ public class CIVLSyntaxException extends CIVLException {
 
 	public CIVLSyntaxException(String message) {
 		super("Syntax error: " + message, (CIVLSource) null);
+	}
+
+	public CIVLSyntaxException(String message, Source source) {
+		this(message, new ABC_CIVLSource(source));
 	}
 }

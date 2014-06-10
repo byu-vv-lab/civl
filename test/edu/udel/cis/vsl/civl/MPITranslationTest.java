@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -35,19 +36,29 @@ public class MPITranslationTest {
 		assertTrue(ui.run("verify", filename("reduce.c"), "-input__NPROCS=2"));
 	}
 
-	@Ignore
 	@Test
 	public void mpithreads_mpi() {
 		assertTrue(ui.run("verify", filename("mpithreads_mpi.c"),
-				"-input__NPROCS=2", "-mpi=true", "-showModel",
-				"-showTransitions"));
+				"-input__NPROCS=2"));
 	}
 
 	@Ignore
 	@Test
 	public void adder_par() {
 		assertTrue(ui.run("verify", filename("adder_par.c"),
-				"-input__NPROCS=2", "-mpi=true", "-showModel",
-				"-showTransitions"));
+				"-input__NPROCS=2", "-showModel", "-showTransitions"));
+	}
+
+	@Test
+	public void mpi_pi_send() {
+		assertTrue(ui.run("verify", filename("mpi_pi_send.c"),
+				"-input__NPROCS=3"));
+	}
+
+	@Test
+	public void mpi_prime() {
+		assertFalse(ui
+				.run("verify", filename("mpi_prime.c"), "-input__NPROCS=4"));
+		assertFalse(ui.run("replay", filename("mpi_prime.c")));
 	}
 }

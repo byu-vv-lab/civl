@@ -48,7 +48,7 @@ all access to the input is through a structure of type DOTDATA and all
 output from this function is written into this same structure. 
 */
 
-void *dotprod()
+void dotprod()
 {
 
    /* Define and use local variables for convenience */
@@ -126,4 +126,5 @@ if (myid == 0)
 free (a);
 free (b);
 MPI_Finalize();
+return 0;
 }   

@@ -25,6 +25,7 @@ import edu.udel.cis.vsl.abc.err.IF.ABCUnsupportedException;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.StringLiteral;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
 
 /**
  * The IO transformer transforms<br>
@@ -471,18 +472,38 @@ public class IOTransformer extends CIVLBaseTransformer {
 				"ActualParameterList", arguments));
 	}
 
+	private void removeNodes(ASTNode node) {
+		String sourceFile = node.getSource().getFirstToken().getSourceFile()
+				.getName();
+
+		if (sourceFile.equals("stdio-c.cvl")) {
+			node.parent().removeChild(node.childIndex());
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child != null)
+					removeNodes(child);
+			}
+		}
+	}
+
 	/* ********************* Methods From BaseTransformer ****************** */
 
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
+		boolean hasScanf = CIVLTransform.hasFunctionCalls(unit,
+				Arrays.asList(SCANF, FSCANF));
 		ASTNode rootNode = unit.getRootNode();
 
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
-		this.renameFunctionCalls(rootNode);
-		this.processFreeCall(rootNode);
+		if (hasScanf) {
+			this.renameFunctionCalls(rootNode);
+			this.processFreeCall(rootNode);
+		} else {
+			// remove nodes from stdio-c.cvl
+			removeNodes(rootNode);
+		}
 		return astFactory.newAST(rootNode);
 	}
-
 }

@@ -32,6 +32,7 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
+//TODO: translate exit(k) to return k;
 /**
  * MPI2CIVLTransformer transforms an AST of an MPI program into an AST of an
  * equivalent CIVL-C program. See {@linkplain #transform(AST)}. TODO: copy
@@ -523,9 +524,12 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		items.add(commVar);
 		for (int i = 0; i < number; i++) {
 			ASTNode child = root.child(i);
-			String sourceFile = child.getSource().getFirstToken()
-					.getSourceFile().getName();
+			String sourceFile;
 
+			if (child == null)
+				continue;
+			sourceFile = child.getSource().getFirstToken().getSourceFile()
+					.getName();
 			root.removeChild(i);
 			if (sourceFile.equals("mpi.cvl")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
@@ -789,7 +793,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		AssumeNode nprocsAssumption = null;
 		Triple<FunctionDefinitionNode, List<ASTNode>, List<VariableDeclarationNode>> result;
 
-		this.source = root.getSource();// TODO needs a good source
+		this.source = getMainSource(root);// TODO needs a good source
 		assert this.astFactory == ast.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();
@@ -859,4 +863,28 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		newAst = astFactory.newAST(newRootNode);
 		return newAst;
 	}
+
+	private Source getMainSource(ASTNode node) {
+		if (node.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
+			FunctionDefinitionNode functionNode = (FunctionDefinitionNode) node;
+			IdentifierNode functionName = (IdentifierNode) functionNode
+					.child(0);
+
+			if (functionName.name().equals("main")) {
+				return node.getSource();
+			}
+		}
+		for (ASTNode child : node.children()) {
+			if (child == null)
+				continue;
+			else {
+				Source childResult = getMainSource(child);
+
+				if (childResult != null)
+					return childResult;
+			}
+		}
+		return null;
+	}
+
 }

@@ -45,11 +45,6 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.Activator;
-import edu.udel.cis.vsl.abc.ast.IF.AST;
-import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
@@ -196,61 +191,34 @@ public class UserInterface {
 		List<String> inputVars = getInputVariables(config);
 		boolean hasFscanf = false;
 
-		if (verbose || debug) {
-			// shows absolutely everything
-			program = frontEnd.showTranslation(out);
-		} else {
-			program = frontEnd.getProgram();
-		}
-		applyTransformers(filename, program, preprocessor, verbose || debug,
-				frontEnd, inputVars);
-		hasFscanf = hasFscanf(program);
-		if (verbose || debug)
-			out.println("Extracting CIVL model...");
-		model = modelBuilder.buildModel(config, program, coreName(filename),
-				debug, out);
-		model.setHasFscanf(hasFscanf);
-		if (verbose || debug)
-			out.println(bar + " Model " + bar + "\n");
-		if (showModel || verbose || debug || parse) {
-			model.print(out, verbose || debug);
-		}
-		return new Pair<>(model, preprocessor);
-	}
-
-	private boolean hasFscanf(Program program) {
-		AST ast = program.getAST();
-		ASTNode root = ast.getRootNode();
-
-		return checkForFscanf(root);
-	}
-
-	private boolean checkForFscanf(ASTNode node) {
-		int numChildren = node.numChildren();
-		boolean result = false;
-
-		for (int i = 0; i < numChildren; i++) {
-			ASTNode child = node.child(i);
-
-			if (child != null) {
-				result = checkForFscanf(child);
-				if (result)
-					return true;
+		try {
+			if (verbose || debug) {
+				// shows absolutely everything
+				program = frontEnd.showTranslation(out);
+			} else {
+				program = frontEnd.getProgram();
 			}
-		}
-		if (node instanceof FunctionCallNode) {
-			FunctionCallNode functionCall = (FunctionCallNode) node;
 
-			if (functionCall.getFunction().expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
-				IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
-						.getFunction();
-				String functionName = functionExpression.getIdentifier().name();
-
-				if (functionName.equals("fscanf"))
-					return true;
+			applyTransformers(filename, program, preprocessor,
+					verbose || debug, frontEnd, inputVars);
+			hasFscanf = CIVLTransform.hasFunctionCalls(program.getAST(),
+					Arrays.asList("scanf", "fscanf"));
+			if (verbose || debug)
+				out.println("Extracting CIVL model...");
+			model = modelBuilder.buildModel(config, program,
+					coreName(filename), debug, out);
+			model.setHasFscanf(hasFscanf);
+			if (verbose || debug)
+				out.println(bar + " Model " + bar + "\n");
+			if (showModel || verbose || debug || parse) {
+				model.print(out, verbose || debug);
 			}
+			return new Pair<>(model, preprocessor);
+		} catch (CIVLException ex) {
+			err.println(ex);
+			preprocessor.printShorterFileNameMap(err);
 		}
-		return false;
+		return null;
 	}
 
 	private List<String> getInputVariables(GMCConfiguration config) {
@@ -302,8 +270,10 @@ public class UserInterface {
 				this.out.println("Apply IO transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.IO,
 					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
-			if (verboseOrDebug)
+			if (verboseOrDebug) {
 				frontEnd.printProgram(out, program);
+				CIVLTransform.printProgram2CIVL(out, program);
+			}
 		}
 		if (hasOmp) {
 			if (verboseOrDebug)
@@ -316,28 +286,36 @@ public class UserInterface {
 				this.out.println("Apply OpenMP transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
-			if (verboseOrDebug)
+			if (verboseOrDebug) {
 				frontEnd.printProgram(out, program);
+				CIVLTransform.printProgram2CIVL(out, program);
+			}
 		}
 		if (hasMpi) {
 			if (verboseOrDebug)
 				this.out.println("Apply MPI transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.MPI,
 					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
-			if (verboseOrDebug)
+			if (verboseOrDebug) {
 				frontEnd.printProgram(out, program);
+				CIVLTransform.printProgram2CIVL(out, program);
+			}
 		}
 		// always apply pruner and side effect remover
 		if (verboseOrDebug)
 			this.out.println("Apply pruner...");
 		program.applyTransformer("prune");
-		if (verboseOrDebug)
+		if (verboseOrDebug) {
 			frontEnd.printProgram(out, program);
+			CIVLTransform.printProgram2CIVL(out, program);
+		}
 		if (verboseOrDebug)
 			this.out.println("Apply side-effect remover...");
 		program.applyTransformer("sef");
-		if (verboseOrDebug)
+		if (verboseOrDebug) {
 			frontEnd.printProgram(out, program);
+			CIVLTransform.printProgram2CIVL(out, program);
+		}
 	}
 
 	/**
@@ -562,9 +540,13 @@ public class UserInterface {
 			throws CommandLineException, ABCException, IOException {
 		SymbolicUniverse universe = SARL.newStandardUniverse();
 		Preprocessor preprocessor;
+		Pair<Model, Preprocessor> result;
 
 		checkFilenames(1, config);
-		preprocessor = extractModel(out, config, config.getFreeArg(1), universe).right;
+		result = extractModel(out, config, config.getFreeArg(1), universe);
+		if (result == null)
+			return false;
+		preprocessor = result.right;
 		if (showShortFileNameList(config))
 			preprocessor.printShorterFileNameMap(out);
 		return true;
@@ -684,6 +666,8 @@ public class UserInterface {
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
 		modelAndPreprocessor = extractModel(out, config, filename, universe);
+		if (modelAndPreprocessor == null)
+			return false;
 		model = modelAndPreprocessor.left;
 		preprocessor = modelAndPreprocessor.right;
 		if (showShortFileName)

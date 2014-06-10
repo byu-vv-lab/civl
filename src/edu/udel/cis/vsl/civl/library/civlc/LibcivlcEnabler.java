@@ -141,7 +141,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 						arguments.get(0).getSource(), BigInteger.valueOf(i));
 
 				callWorker = modelFactory.callOrSpawnStatement(
-						call.getSource(), call.source(), true,
+						call.getSource(), null, true,
 						Arrays.asList(workerArg), null);
 				callWorker.setTargetTemp(call.target());
 				callWorker.setFunction(chooseIntWorkPointer);

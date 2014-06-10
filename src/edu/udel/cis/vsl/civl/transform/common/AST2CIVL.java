@@ -1,13 +1,24 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
+import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
+import edu.udel.cis.vsl.abc.ast.entity.IF.Field;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.compound.CompoundInitializerNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.compound.CompoundLiteralObject;
+import edu.udel.cis.vsl.abc.ast.node.IF.compound.LiteralObject;
+import edu.udel.cis.vsl.abc.ast.node.IF.compound.ScalarLiteralObject;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.AbstractFunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
@@ -21,28 +32,52 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode.BlockItemKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode.StatementKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.BasicTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.EnumerationTypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypedefNameNode;
+import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 
 public class AST2CIVL {
-	public Map<String, StringBuffer> astToCIVL(AST ast) {
+	private final static String indention = "  ";
+
+	public Map<String, StringBuffer> astToCIVL(PrintStream out, AST ast) {
 		Map<String, StringBuffer> results = new LinkedHashMap<>();
 		Set<String> headers = new LinkedHashSet<>();
 		ASTNode root = ast.getRootNode();
-		String sourceFile = root.getSource().getFirstToken().getSourceFile()
-				.getName();
 
-		results.put(sourceFile, new StringBuffer());
 		for (ASTNode child : root.children()) {
 			this.externalDef2CIVL((ExternalDefinitionNode) child, results,
 					headers);
+		}
+		for (Entry<String, StringBuffer> entry : results.entrySet()) {
+			out.print("================");
+			out.println(entry.getKey());
+			out.print(entry.getValue());
 		}
 		return results;
 	}
@@ -52,7 +87,6 @@ public class AST2CIVL {
 		String sourceFile = extern.getSource().getFirstToken().getSourceFile()
 				.getName();
 		StringBuffer myBuffer;
-		StringBuffer nodeBuffer = new StringBuffer();
 
 		switch (sourceFile) {
 		case "assert.h":
@@ -63,6 +97,7 @@ public class AST2CIVL {
 		case "math.h":
 		case "mpi-common.h":
 		case "mpi.h":
+		case "mpi.cvl":
 		case "omp-common.h":
 		case "omp.h":
 		case "pthread.h":
@@ -73,6 +108,7 @@ public class AST2CIVL {
 		case "stdio-common.h":
 		case "stdio.h":
 		case "stdlib.h":
+		case "stdlib-common.h":
 		case "string-common.h":
 		case "string.h":
 			headers.add(sourceFile);
@@ -83,41 +119,334 @@ public class AST2CIVL {
 		}
 		myBuffer = results.get(sourceFile);
 		if (extern instanceof AssumeNode) {
-			nodeBuffer.append(assume2CIVL((AssumeNode) extern));
-		} else if (extern instanceof VariableDeclarationNode) {
-			nodeBuffer
-					.append(variableDeclaration2CIVL((VariableDeclarationNode) extern));
-		}
+			myBuffer.append(assume2CIVL("", (AssumeNode) extern));
 
+		} else if (extern instanceof VariableDeclarationNode) {
+			myBuffer.append(variableDeclaration2CIVL("",
+					(VariableDeclarationNode) extern));
+			myBuffer.append(";");
+		} else if (extern instanceof FunctionDeclarationNode) {
+			myBuffer.append(functionDeclaration2CIVL("",
+					(FunctionDeclarationNode) extern));
+		}
+		myBuffer.append("\n");
 	}
 
-	private StringBuffer variableDeclaration2CIVL(
+	private StringBuffer functionDeclaration2CIVL(String prefix,
+			FunctionDeclarationNode function) {
+		StringBuffer result = new StringBuffer();
+		FunctionTypeNode typeNode = function.getTypeNode();
+		TypeNode returnType = typeNode.getReturnType();
+		SequenceNode<VariableDeclarationNode> paras = typeNode.getParameters();
+		int numOfParas = paras.numChildren();
+
+		if (function instanceof AbstractFunctionDefinitionNode)
+			result.append("$abstract ");
+		result.append(prefix);
+		result.append(type2CIVL(returnType));
+		result.append(" ");
+		result.append(function.getName());
+		result.append("(");
+		for (int i = 0; i < numOfParas; i++) {
+			if (i != 0)
+				result.append(", ");
+			result.append(variableDeclaration2CIVL("",
+					paras.getSequenceChild(i)));
+		}
+		result.append(")");
+
+		if (function instanceof FunctionDefinitionNode) {
+			CompoundStatementNode body = ((FunctionDefinitionNode) function)
+					.getBody();
+
+			result.append("\n");
+			result.append(compoundStatement2CIVL(prefix + indention, body));
+		} else
+			result.append(";");
+		return result;
+	}
+
+	private StringBuffer compoundStatement2CIVL(String prefix,
+			CompoundStatementNode compound) {
+		StringBuffer result = new StringBuffer();
+		int numChildren = compound.numChildren();
+		String myPrefix = prefix.substring(0, prefix.length() - 2);
+
+		result.append(myPrefix);
+		result.append("{\n");
+		for (int i = 0; i < numChildren; i++) {
+			BlockItemNode child = compound.getSequenceChild(i);
+
+			if (child != null) {
+				result.append(blockItem2CIVL(prefix, child));
+				result.append("\n");
+			}
+		}
+		result.append(myPrefix);
+		result.append("}");
+		return result;
+	}
+
+	private StringBuffer blockItem2CIVL(String prefix, BlockItemNode block) {
+		BlockItemKind kind = block.blockItemKind();
+
+		switch (kind) {
+		case STATEMENT:
+			return statement2CIVL(prefix, (StatementNode) block);
+		case ORDINARY_DECLARATION:
+			if (block instanceof VariableDeclarationNode) {
+				StringBuffer result = variableDeclaration2CIVL(prefix,
+						(VariableDeclarationNode) block);
+
+				result.append(";");
+				return result;
+			} else if (block instanceof FunctionDeclarationNode) {
+				return functionDeclaration2CIVL(prefix,
+						(FunctionDeclarationNode) block);
+			}
+		default:
+			return null;
+		}
+	}
+
+	private StringBuffer statement2CIVL(String prefix, StatementNode statement) {
+		StatementKind kind = statement.statementKind();
+
+		switch (kind) {
+		case ASSUME:
+			return assume2CIVL(prefix, (AssumeNode) statement);
+		case COMPOUND:
+			return compoundStatement2CIVL(prefix,
+					(CompoundStatementNode) statement);
+		case EXPRESSION:
+			return expressionStatement2CIVL(prefix,
+					(ExpressionStatementNode) statement);
+		case FOR:
+			return for2CIVL(prefix, (ForLoopNode) statement);
+		case IF:
+			return if2CIVL(prefix, (IfNode) statement);
+		case NULL:
+			return new StringBuffer(";");
+		case RETURN:
+			return return2CIVL(prefix, (ReturnNode) statement);
+		case WHEN:
+			return when2CIVL(prefix, (WhenNode) statement);
+		default:
+		}
+		return null;
+	}
+
+	private StringBuffer return2CIVL(String prefix, ReturnNode returnNode) {
+		StringBuffer result = new StringBuffer();
+		ExpressionNode expr = returnNode.getExpression();
+
+		result.append(prefix);
+		result.append("return");
+		if (expr != null) {
+			result.append(" ");
+			result.append(expression2CIVL(expr));
+		}
+		result.append(";");
+		return result;
+	}
+
+	private StringBuffer if2CIVL(String prefix, IfNode ifNode) {
+		StringBuffer result = new StringBuffer();
+		ExpressionNode condition = ifNode.getCondition();
+		StatementNode trueBranch = ifNode.getTrueBranch();
+		StatementNode falseBranch = ifNode.getFalseBranch();
+		String myIndent = prefix + indention;
+
+		result.append(prefix);
+		result.append("if(");
+		if (condition != null)
+			result.append(expression2CIVL(condition));
+		result.append(")");
+		if (trueBranch == null)
+			result.append(";");
+		else {
+			result.append("\n");
+			result.append(statement2CIVL(myIndent, trueBranch));
+		}
+		if (falseBranch != null) {
+			result.append("\n");
+			result.append(prefix);
+			result.append("else\n");
+			result.append(statement2CIVL(myIndent, falseBranch));
+		}
+		return result;
+	}
+
+	private StringBuffer for2CIVL(String prefix, ForLoopNode loop) {
+		StringBuffer result = new StringBuffer();
+		ForLoopInitializerNode init = loop.getInitializer();
+		ExpressionNode condition = loop.getCondition();
+		ExpressionNode incrementer = loop.getIncrementer();
+		StatementNode body = loop.getBody();
+		String myIndent = prefix + indention;
+
+		result.append(prefix);
+		result.append("for(");
+		if (init != null) {
+			if (init instanceof ExpressionNode)
+				result.append(expression2CIVL((ExpressionNode) init));
+			else if (init instanceof DeclarationListNode) {
+				DeclarationListNode list = (DeclarationListNode) init;
+				int num = list.numChildren();
+
+				for (int i = 0; i < num; i++) {
+					VariableDeclarationNode var = list.getSequenceChild(i);
+
+					if (i != 0)
+						result.append(", ");
+					result.append(variableDeclaration2CIVL("", var));
+				}
+			}
+		}
+		result.append("; ");
+		if (condition != null) {
+			result.append(expression2CIVL(condition));
+		}
+		result.append("; ");
+		if (incrementer != null) {
+			result.append(expression2CIVL(incrementer));
+		}
+		result.append(")");
+		if (body == null)
+			result.append(";");
+		else {
+			result.append("\n");
+			result.append(statement2CIVL(myIndent, body));
+		}
+		return result;
+	}
+
+	private StringBuffer expressionStatement2CIVL(String prefix,
+			ExpressionStatementNode expr) {
+		StringBuffer result = new StringBuffer();
+
+		result.append(prefix);
+		result.append(expression2CIVL(expr.getExpression()));
+		result.append(";");
+		return result;
+	}
+
+	private StringBuffer when2CIVL(String prefix, WhenNode when) {
+		StringBuffer result = new StringBuffer();
+		String myIndent = prefix + indention;
+
+		result.append(prefix);
+		result.append("$when(");
+		result.append(expression2CIVL(when.getGuard()));
+		result.append(")\n");
+		result.append(statement2CIVL(myIndent, when.getBody()));
+		return result;
+	}
+
+	private StringBuffer variableDeclaration2CIVL(String prefix,
 			VariableDeclarationNode variable) {
 		StringBuffer result = new StringBuffer();
 		InitializerNode init = variable.getInitializer();
+		TypeNode typeNode = variable.getTypeNode();
 
-		result.append(type2CIVL(variable.getTypeNode()));
+		result.append(prefix);
+		if (typeNode.isInputQualified())
+			result.append("$input ");
+		if (typeNode.isOutputQualified())
+			result.append("$output ");
+		result.append(type2CIVL(typeNode));
 		result.append(" ");
 		result.append(variable.getName());
 		if (init != null) {
 			result.append(" = ");
 			result.append(initializer2CIVL(init));
 		}
-		result.append(";");
 		return result;
 	}
 
 	private StringBuffer initializer2CIVL(InitializerNode init) {
 		StringBuffer result = new StringBuffer();
 
-		// if(init )
+		if (init instanceof ExpressionNode)
+			return expression2CIVL((ExpressionNode) init);
+		else if (init instanceof CompoundInitializerNode) {
+
+		} else
+			throw new CIVLSyntaxException("Invalid initializer: "
+					+ init.toString(), init.getSource());
 
 		return result;
 	}
 
-	private StringBuffer assume2CIVL(AssumeNode assume) {
+	private StringBuffer compoundLiteralObject2CIVL(Source source, Type type,
+			CompoundLiteralObject compoundObj) {
+		StringBuffer result = new StringBuffer();
+		TypeKind typeKind = type.kind();
+		int size = compoundObj.size();
+
+		switch (typeKind) {
+		case ARRAY: {
+			Type elementType = ((ArrayType) type).getElementType();
+
+			result.append("{");
+			for (int i = 0; i < size; i++) {
+				if (i != 0)
+					result.append(", ");
+				// result.append("[");
+				// result.append(i);
+				// result.append("]=");
+				result.append(literalObject2CIVL(source, elementType,
+						compoundObj.get(i)));
+			}
+			result.append("}");
+		}
+			break;
+		case STRUCTURE_OR_UNION: {
+			StructureOrUnionType structType = (StructureOrUnionType) type;
+
+			if (!structType.isStruct())
+				throw new CIVLSyntaxException(
+						"Invalid type of compound initializer: union", source);
+			result.append("{");
+			for (int i = 0; i < size; i++) {
+				Field field = structType.getField(i);
+
+				if (i != 0)
+					result.append(", ");
+				result.append(".");
+				result.append(field.getName());
+				result.append("=");
+				result.append(literalObject2CIVL(source, field.getType(),
+						compoundObj.get(i)));
+			}
+			result.append("}");
+		}
+			break;
+		default:
+			throw new CIVLSyntaxException(
+					"Invalid type of compound initializer: " + typeKind, source);
+		}
+
+		return result;
+
+	}
+
+	private StringBuffer literalObject2CIVL(Source source, Type type,
+			LiteralObject obj) {
+		if (obj instanceof CompoundLiteralObject)
+			return compoundLiteralObject2CIVL(source, type,
+					(CompoundLiteralObject) obj);
+		else if (obj instanceof ScalarLiteralObject)
+			return expression2CIVL(((ScalarLiteralObject) obj).getExpression());
+		else
+			throw new CIVLSyntaxException("Invalid literal object: " + obj,
+					source);
+	}
+
+	private StringBuffer assume2CIVL(String prefix, AssumeNode assume) {
 		StringBuffer result = new StringBuffer();
 
+		result.append(prefix);
 		result.append("$assume ");
 		result.append(expression2CIVL(assume.getExpression()));
 		result.append(";");
@@ -150,7 +479,7 @@ public class AST2CIVL {
 			break;
 		}
 		case CONSTANT: {
-			result.append(((ConstantNode) expression).getConstantValue());
+			result.append(((ConstantNode) expression).getStringRepresentation());
 			break;
 		}
 		case DOT: {
@@ -169,7 +498,7 @@ public class AST2CIVL {
 			result.append("(");
 			for (int i = 0; i < argNum; i++) {
 				if (i > 0)
-					result.append(",");
+					result.append(", ");
 				result.append(expression2CIVL(call.getArgument(i)));
 			}
 			result.append(")");
@@ -298,6 +627,10 @@ public class AST2CIVL {
 			result.append(" + ");
 			result.append(arg1);
 			break;
+		case POSTINCREMENT:
+			result.append(arg0);
+			result.append("++");
+			break;
 		case SHIFTLEFT:
 			result.append(arg0);
 			result.append(" << ");
@@ -329,7 +662,7 @@ public class AST2CIVL {
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(
-					"translating expression node of " + op
+					"translating operator node of " + op
 							+ " kind into CIVL code", operator.getSource());
 		}
 
@@ -341,6 +674,17 @@ public class AST2CIVL {
 		TypeNodeKind kind = type.kind();
 
 		switch (kind) {
+		case ARRAY: {
+			ArrayTypeNode arrayType = (ArrayTypeNode) type;
+			ExpressionNode extent = arrayType.getExtent();
+
+			result.append(type2CIVL(arrayType.getElementType()));
+			result.append("[");
+			if (extent != null)
+				result.append(expression2CIVL(extent));
+			result.append("]");
+		}
+			break;
 		case VOID:
 			result.append("void");
 			break;
@@ -362,6 +706,13 @@ public class AST2CIVL {
 		case SCOPE:
 			result.append("$scope");
 			break;
+		case FUNCTION: {
+			FunctionTypeNode funcType = (FunctionTypeNode) type;
+
+			result.append(type2CIVL(funcType.getReturnType()));
+			result.append(" ");
+
+		}
 		default:
 			throw new CIVLUnimplementedFeatureException(
 					"translating type node of " + kind + " kind into CIVL code",
@@ -438,8 +789,8 @@ public class AST2CIVL {
 		return result;
 	}
 
-//	private void astNode2CIVL(String prefix, ASTNode node,
-//			Map<String, StringBuffer> results, Set<String> headers) {
-//
-//	}
+	// private void astNode2CIVL(String prefix, ASTNode node,
+	// Map<String, StringBuffer> results, Set<String> headers) {
+	//
+	// }
 }

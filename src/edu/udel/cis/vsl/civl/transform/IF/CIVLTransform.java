@@ -1,11 +1,18 @@
 package edu.udel.cis.vsl.civl.transform.IF;
 
+import java.io.PrintStream;
 import java.util.List;
 
 import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
+import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.common.AST2CIVL;
 import edu.udel.cis.vsl.civl.transform.common.CIVLBaseTransformer;
 import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
@@ -89,5 +96,50 @@ public class CIVLTransform {
 			return;
 		}
 		program.apply(transformer);
+	}
+	
+	/**
+	 * Prints 
+	 * @param program
+	 */
+	public static void printProgram2CIVL(PrintStream out, Program program){
+		AST2CIVL toCIVL = new AST2CIVL();
+		
+		toCIVL.astToCIVL(out, program.getAST());
+	}
+
+	public static boolean hasFunctionCalls(AST ast, List<String> functions) {
+		ASTNode root = ast.getRootNode();
+
+		return checkFunctionCalls(root, functions);
+	}
+
+	private static boolean checkFunctionCalls(ASTNode node,
+			List<String> functions) {
+		int numChildren = node.numChildren();
+		boolean result = false;
+
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = node.child(i);
+
+			if (child != null) {
+				result = checkFunctionCalls(child, functions);
+				if (result)
+					return true;
+			}
+		}
+		if (node instanceof FunctionCallNode) {
+			FunctionCallNode functionCall = (FunctionCallNode) node;
+
+			if (functionCall.getFunction().expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+				IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
+						.getFunction();
+				String functionName = functionExpression.getIdentifier().name();
+
+				if (functions.contains(functionName))
+					return true;
+			}
+		}
+		return false;
 	}
 }

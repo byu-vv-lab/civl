@@ -655,6 +655,10 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			state = execute_fprintf(source, state, pid, process, lhs,
 					arguments, argumentValues);
 			break;
+		case "printf":
+			state = execute_printf(source, state, pid, process, lhs, arguments,
+					argumentValues);
+			break;
 		case "fscanf":
 			state = execute_fscanf(source, state, pid, process, lhs, arguments,
 					argumentValues);
@@ -1072,6 +1076,56 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			state = primaryExecutor.assign(source, state, process, filePointer,
 					fileObject);
 		}
+		return state;
+	}
+
+	private State execute_printf(CIVLSource source, State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		StringBuffer stringOfSymbolicExpression;
+		StringBuffer formatBuffer;
+		ArrayList<StringBuffer> printedContents = new ArrayList<>();
+		ArrayList<Integer> sIndexes = new ArrayList<>();
+		int sCount = 1;
+		Pair<State, StringBuffer> concreteString;
+		List<Format> formats;
+
+		concreteString = this.getString(arguments[0].getSource(), state,
+				process, argumentValues[0]);
+		formatBuffer = concreteString.right;
+		state = concreteString.left;
+		formats = this.splitFormat(arguments[0].getSource(), formatBuffer);
+		for (Format format : formats) {
+			if (format.type == ConversionType.STRING)
+				sIndexes.add(sCount++);
+			else if (format.type != ConversionType.VOID)
+				sCount++;
+		}
+		for (int i = 1; i < argumentValues.length; i++) {
+			SymbolicExpression argumentValue = argumentValues[i];
+			CIVLType argumentType = arguments[i].getExpressionType();
+
+			if (argumentType instanceof CIVLPointerType
+					&& ((CIVLPointerType) argumentType).baseType().isCharType()
+					&& argumentValue.operator() == SymbolicOperator.CONCRETE) {
+				// also check format code is %s before doing this
+				if (!sIndexes.contains(i)) {
+					throw new CIVLSyntaxException("Array pointer unaccepted",
+							arguments[i].getSource());
+				}
+				concreteString = this.getString(arguments[i].getSource(),
+						state, process, argumentValue);
+				stringOfSymbolicExpression = concreteString.right;
+				state = concreteString.left;
+				printedContents.add(stringOfSymbolicExpression);
+			} else
+				printedContents.add(new StringBuffer(this.symbolicUtil
+						.symbolicExpressionToString(arguments[i].getSource(),
+								state, argumentValue)));
+		}
+		this.printf(civlConfig.out(), arguments[0].getSource(), formats,
+				printedContents);
 		return state;
 	}
 
