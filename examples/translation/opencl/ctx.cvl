@@ -2,20 +2,23 @@
     
     
     
-    typedef struct
-   {
-   int yes;
-   int *no;
-   }
+typedef struct
+{
+  int yes;
+  int *no;
+}
 *cl_context;
 
 
 void main()
 {
-  cl_context *ctx;
+  cl_context ctx;
   
-  ctx->yes = 5;
-  ctx->no = 5;
+  int x = 5;
+  int *y = &x;
+  
+  ctx->yes = x;
+  //ctx->no = y;
   
 }
 
