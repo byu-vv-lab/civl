@@ -31,6 +31,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode.BlockItemKind;
@@ -40,9 +41,12 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.JumpNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.JumpNode.JumpKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode.StatementKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.BasicTypeNode;
@@ -71,8 +75,9 @@ public class AST2CIVL {
 		ASTNode root = ast.getRootNode();
 
 		for (ASTNode child : root.children()) {
-			this.externalDef2CIVL((ExternalDefinitionNode) child, results,
-					headers);
+			if (child != null)
+				this.externalDef2CIVL((ExternalDefinitionNode) child, results,
+						headers);
 		}
 		for (Entry<String, StringBuffer> entry : results.entrySet()) {
 			out.print("================");
@@ -225,15 +230,45 @@ public class AST2CIVL {
 			return for2CIVL(prefix, (ForLoopNode) statement);
 		case IF:
 			return if2CIVL(prefix, (IfNode) statement);
+		case JUMP:
+			return jump2CIVL(prefix, (JumpNode) statement);
 		case NULL:
 			return new StringBuffer(";");
 		case RETURN:
 			return return2CIVL(prefix, (ReturnNode) statement);
+		case SWITCH:
+			return switch2CIVL(prefix, (SwitchNode) statement);
 		case WHEN:
 			return when2CIVL(prefix, (WhenNode) statement);
 		default:
 		}
 		return null;
+	}
+
+	private StringBuffer switch2CIVL(String prefix, SwitchNode swtichNode) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private StringBuffer jump2CIVL(String prefix, JumpNode jump) {
+		JumpKind kind = jump.getKind();
+		StringBuffer result = new StringBuffer();
+
+		switch (kind) {
+		case GOTO:
+			result.append("goto");
+			break;
+		case CONTINUE:
+			result.append("continue;");
+			break;
+		case BREAK:
+			result.append("break;");
+			break;
+		case RETURN:
+			return return2CIVL(prefix, (ReturnNode) jump);
+		default:
+		}
+		return result;
 	}
 
 	private StringBuffer return2CIVL(String prefix, ReturnNode returnNode) {
@@ -490,30 +525,36 @@ public class AST2CIVL {
 			result.append(dot.getFieldName().name());
 			break;
 		}
-		case FUNCTION_CALL: {
-			FunctionCallNode call = (FunctionCallNode) expression;
-			int argNum = call.getNumberOfArguments();
-
-			result.append(expression2CIVL(call.getFunction()));
-			result.append("(");
-			for (int i = 0; i < argNum; i++) {
-				if (i > 0)
-					result.append(", ");
-				result.append(expression2CIVL(call.getArgument(i)));
-			}
-			result.append(")");
-			break;
-		}
+		case FUNCTION_CALL:
+			return functionCall2CIVL((FunctionCallNode) expression);
 		case IDENTIFIER_EXPRESSION:
 			result.append(((IdentifierExpressionNode) expression)
 					.getIdentifier().name());
 			break;
 		case OPERATOR:
 			result = operator2CIVL((OperatorNode) expression);
+			break;
+		case SPAWN:
+			result.append("$spawn ");
+			result.append(functionCall2CIVL(((SpawnNode) expression).getCall()));
+			break;
 		default:
-
 		}
+		return result;
+	}
 
+	private StringBuffer functionCall2CIVL(FunctionCallNode call) {
+		int argNum = call.getNumberOfArguments();
+		StringBuffer result = new StringBuffer();
+
+		result.append(expression2CIVL(call.getFunction()));
+		result.append("(");
+		for (int i = 0; i < argNum; i++) {
+			if (i > 0)
+				result.append(", ");
+			result.append(expression2CIVL(call.getArgument(i)));
+		}
+		result.append(")");
 		return result;
 	}
 

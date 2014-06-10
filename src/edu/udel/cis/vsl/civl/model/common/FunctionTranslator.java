@@ -90,7 +90,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.NullStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.WaitNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.EnumerationTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
@@ -213,11 +212,6 @@ public class FunctionTranslator {
 	 * The unique model factory to be used in the system.
 	 */
 	private ModelFactory modelFactory;
-
-	/**
-	 * Keep track of the number of incomplete $atom block during translation.
-	 */
-	private int atomCount = 0;
 
 	/**
 	 * The unique model builder of the system.
@@ -551,9 +545,9 @@ public class FunctionTranslator {
 		case SWITCH:
 			result = translateSwitchNode(scope, (SwitchNode) statementNode);
 			break;
-		case WAIT:
-			result = translateWaitNode(scope, (WaitNode) statementNode);
-			break;
+		// case WAIT:
+		// result = translateWaitNode(scope, (WaitNode) statementNode);
+		// break;
 		case WHEN:
 			result = translateWhenNode(scope, (WhenNode) statementNode);
 			break;
@@ -966,15 +960,6 @@ public class FunctionTranslator {
 	}
 
 	/**
-	 * 
-	 * @return True when there are incomplete $atom blocks being translating,
-	 *         i.e, when the number of active $atom blocks is greater than 0.
-	 */
-	private boolean inAtom() {
-		return atomCount > 0;
-	}
-
-	/**
 	 * Is the ABC expression node an expression of the form
 	 * <code>(t)$malloc(...)</code>? I.e., a cast expression for which the
 	 * argument is a malloc call?
@@ -1306,53 +1291,11 @@ public class FunctionTranslator {
 		Location end = modelFactory.location(
 				modelFactory.sourceOfEnd(atomicNode), scope);
 
-		if (atomicNode.isAtom())
-			this.atomCount++;
 		bodyFragment = translateStatementNode(scope, bodyNode);
-		if (atomicNode.isAtom())
-			this.atomCount--;
 		bodyFragment = modelFactory.atomicFragment(atomicNode.isAtom(),
 				bodyFragment, start, end);
 		return bodyFragment;
 	}
-
-	// /**
-	// * Translate a function call of the function $choose_int into a choose
-	// * statement. An syntax exception will be thrown if this $choose_int
-	// * function call is found to be within an $atom block.
-	// *
-	// * @param source
-	// * The CIVL source of the function call.
-	// * @param location
-	// * The location of the function call.
-	// * @param scope
-	// * The scope of this function call.
-	// * @param lhs
-	// * The left hand side expression
-	// * @param arguments
-	// * The list of arguments for choose_int function call. The number
-	// * of arguments should be exactly one, otherwise an exception
-	// * will be thrown.
-	// * @return The new choose statement.
-	// */
-	// private Statement translateChooseIntFunctionCall(CIVLSource source,
-	// Location location, Scope scope, LHSExpression lhs,
-	// ArrayList<Expression> arguments) {
-	// int numberOfArgs = arguments.size();
-	//
-	// if (this.inAtom()) {
-	// throw new CIVLSyntaxException(
-	// "The non-deterministic function $choose_int is not allowed in $atom block.",
-	// source);
-	// }
-	// if (numberOfArgs != 1) {
-	// throw new CIVLSyntaxException(
-	// "The function $choose_int should have exactly one argument.",
-	// source);
-	// }
-	// return modelFactory.chooseStatement(source, location, lhs,
-	// arguments.get(0));
-	// }
 
 	/**
 	 * Translate a choose node into a fragment that has multiple outgoing
@@ -2529,28 +2472,6 @@ public class FunctionTranslator {
 	}
 
 	/**
-	 * Translate a Wait node to a fragment of a CIVL join statement
-	 * 
-	 * @param scope
-	 *            The scope
-	 * @param waitNode
-	 *            The wait node
-	 * @return the fragment of the wait statement
-	 */
-	private Fragment translateWaitNode(Scope scope, WaitNode waitNode) {
-		CIVLSource source = modelFactory.sourceOf(waitNode);
-		Location location = modelFactory.location(
-				modelFactory.sourceOfBeginning(waitNode), scope);
-
-		if (inAtom()) {
-			throw new CIVLSyntaxException(
-					"$wait statement is not allowed in $atom blocks,", source);
-		}
-		return modelFactory.joinFragment(source, location,
-				translateExpressionNode(waitNode.getExpression(), scope, true));
-	}
-
-	/**
 	 * Translate a when node into a fragment of a when statement
 	 * 
 	 * @param scope
@@ -2674,18 +2595,19 @@ public class FunctionTranslator {
 						.getConstantValue()).getIntegerValue();
 
 				result = modelFactory.integerLiteralExpression(source, value);
-			} else{
+			} else {
 				Value value = constantNode.getConstantValue();
 
-				if (value instanceof IntegerValue) 
+				if (value instanceof IntegerValue)
 					result = modelFactory.integerLiteralExpression(source,
 							((IntegerValue) value).getIntegerValue());
-				else if (value instanceof RealFloatingValue) 
+				else if (value instanceof RealFloatingValue)
 					result = modelFactory.integerLiteralExpression(source,
 							((RealFloatingValue) value).getWholePartValue());
 				else
-					throw new CIVLSyntaxException("Invalid constant for integers", source);
-				}
+					throw new CIVLSyntaxException(
+							"Invalid constant for integers", source);
+			}
 			break;
 		case BASIC: {
 			switch (((StandardBasicType) convertedType).getBasicTypeKind()) {
@@ -2706,14 +2628,17 @@ public class FunctionTranslator {
 				} else {
 					Value value = constantNode.getConstantValue();
 
-					if (value instanceof IntegerValue) 
+					if (value instanceof IntegerValue)
 						result = modelFactory.integerLiteralExpression(source,
 								((IntegerValue) value).getIntegerValue());
-					else if (value instanceof RealFloatingValue) 
-						result = modelFactory.integerLiteralExpression(source,
-								((RealFloatingValue) value).getWholePartValue());
+					else if (value instanceof RealFloatingValue)
+						result = modelFactory
+								.integerLiteralExpression(source,
+										((RealFloatingValue) value)
+												.getWholePartValue());
 					else
-						throw new CIVLSyntaxException("Invalid constant for integers", source);
+						throw new CIVLSyntaxException(
+								"Invalid constant for integers", source);
 				}
 				break;
 			case FLOAT:

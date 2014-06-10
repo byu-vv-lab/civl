@@ -97,14 +97,18 @@ public class CIVLTransform {
 		}
 		program.apply(transformer);
 	}
-	
+
 	/**
-	 * Prints 
+	 * Prints the AST of a given program in the representation of CIVL-C code.
+	 * 
+	 * @param out
+	 *            The print stream to be used.
 	 * @param program
+	 *            The program to be printed.
 	 */
-	public static void printProgram2CIVL(PrintStream out, Program program){
+	public static void printProgram2CIVL(PrintStream out, Program program) {
 		AST2CIVL toCIVL = new AST2CIVL();
-		
+
 		toCIVL.astToCIVL(out, program.getAST());
 	}
 
