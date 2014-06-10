@@ -1,4 +1,4 @@
-use demoCL to get hardware info (driver version openCL 1.1)
+use demoCL in Xcode to get hardware info (driver version openCL 1.1)
 
 square.c
 
@@ -22,7 +22,7 @@ methods are externs
 clGetDeviceIDs
   uses int err, takes 5 parameters
   http://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clGetDeviceIDs.html
-  -in progress-
+  -IN PROGRESS-
   
   cl_int clGetPlatformIDs(	cl_uint num_entries,
  	cl_platform_id *platforms,
@@ -32,6 +32,7 @@ clCreateContext
   uses a cl_context context, takes 6 parameters
   http://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clCreateContext.html
   openCL uses them for commands, memory, program, kernel objects, executing kernels
+  -IN PROGRESS-
 
 Kernels and other:
 clCreateCommandQueue
@@ -69,5 +70,3 @@ clReleaseCommandQueue
 
 clReleaseContext
 
-ToDo before this ToDo:
-Implement source code from header files and other code

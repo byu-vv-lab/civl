@@ -1,8 +1,8 @@
-//#include "openCL_platform.cvl"
+#include "openCL_platform.cvl"
 
 typedef struct _cl_platform_id *    cl_platform_id;
 typedef struct _cl_device_id *      cl_device_id;
-typedef struct _cl_context *        cl_context;
+//typedef struct _cl_context *        cl_context;
 typedef struct _cl_command_queue *  cl_command_queue;
 typedef struct _cl_mem *            cl_mem;
 typedef struct _cl_program *        cl_program;
@@ -30,6 +30,8 @@ typedef cl_bitfield         cl_device_exec_capabilities;
 typedef cl_bitfield         cl_command_queue_properties;
 typedef int            cl_device_partition_property;
 typedef cl_bitfield         cl_device_affinity_domain;
+
+
 /*
 typedef cl_uint             cl_bool;
 typedef cl_ulong            cl_bitfield;
@@ -75,6 +77,34 @@ typedef cl_uint             cl_kernel_work_group_info;
 typedef cl_uint             cl_event_info;
 typedef cl_uint             cl_command_type;
 typedef cl_uint             cl_profiling_info;
+
+/*
+struct _cl_context
+{
+  cl_context_properties *properties,
+  cl_uint num_devices,
+  cl_device_id *devices,
+  void (CL_CALLBACK *pn_notify)(const char *, const void *, size_t, void *),
+  void *user_data,
+  cl_int *errcode_ret);
+}
+typedef struct _cl_context *        cl_context;
+*/
+
+    typedef struct
+   {
+   cl_context_properties *properties;
+   cl_uint num_devices;
+   cl_device_id *devices;
+   void (CL_CALLBACK *pfn_notify)(const char *, const void *, size_t, void *);
+   void *user_data;
+   cl_int *errcode_ret;
+   }
+_cl_context;
+
+typedef struct _cl_context* cl_context;
+
+
 
 /*
 typedef struct _cl_image_format {

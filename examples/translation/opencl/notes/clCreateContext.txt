@@ -1,0 +1,4 @@
+ToDo:
+  Make the usage of the struct correct
+Done:
+  make the cl_context struct

@@ -5,6 +5,8 @@ $input int DEVICE_ID;
 $input int DEVICE_ID_BOUND;
 
 $assume 0 < DEVICE_ID && DEVICE_ID < DEVICE_ID_BOUND;
+
+
   
 
 int clGetDeviceIDs(cl_platform_id platform, 
@@ -40,8 +42,6 @@ int clGetDeviceIDs(cl_platform_id platform,
   */
     while (i < num_entries)
     {
-      //if devices not null/0? What does that even mean?
-      //If there isn't anything there, you can't add in?
       if(devices)
       {
         devices[0] = (cl_device_id)(&DEVICE_ID);
@@ -73,9 +73,9 @@ int clGetDeviceIDs(cl_platform_id platform,
 
   }
   
-  
 
-  /*
+
+
 cl_context clCreateContext(const cl_context_properties  *properties,
                  cl_uint                       num_devices,
                  const cl_device_id *          devices,
@@ -83,27 +83,39 @@ cl_context clCreateContext(const cl_context_properties  *properties,
                  void *                        user_data,
                  cl_int *                      errcode_ret)
 {
-//Anything to do with the void parameters is not implemented yet
   cl_int default_errcode_ret;
+  
   if(!errcode_ret)
+  {
     errcode_ret = &default_errcode_ret;
+  }
+    /*
+  if (!devices || !num_devices || !pfn_notify && user_data}}
+  {
+    *errcode_ret = CL_INVALID_VALUE;
+    return 0;
+  }
+    */
+  *errcode_ret = CL_SUCCESS;
+  cl_context *ctx;
+
     
-    if (!devices || !num_devices || !pfn_notify && user_data}}
-    {
-      *errcode_ret = CL_INVALID_VALUE;
-      return 0;
-    }
-    *errcode_ret = CL_SUCCESS;
-    *ctx = new 
-    
-    if(*errcode_ret != CL_SUCCESS)
-    {
-      delete ctx;
-      return 0;
-    }
+  ctx->properties = properties;
+  ctx->num_devices = num_devices;
+  ctx->devices = devices;
+  ctx->pfn_notify = pfn_notify;
+  ctx->user_data = user_data;
+  ctx->errcode_ret = errorcode_ret;
+    /*
+  if(*errcode_ret != CL_SUCCESS)
+  {
+    delete ctx;
+    return 0;
+  }
+  */
   return(_cl_context*) ctx;
-    
+   
 }
-*/
+
 
 

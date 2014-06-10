@@ -1,0 +1,10 @@
+ToDo:
+  device_type
+  num_entries is useless
+    devices only uses devices[0];
+    No error message "handling"
+    Based off of the "only does host CPU" code
+  
+Done:
+  Returns CL_SUCCESS
+  Adds a single device to devices[0]
