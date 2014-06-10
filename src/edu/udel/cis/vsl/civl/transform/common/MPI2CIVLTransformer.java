@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
@@ -60,6 +61,8 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	public final static String SHORT_DESCRIPTION = "transforms C/MPI program to CIVL-C";
 
 	/* ************************** Private Static Fields ********************** */
+
+	private static String EXIT = "exit";
 
 	/**
 	 * The name of the identifier of the MPI_Comm variable in the final CIVL
@@ -688,6 +691,14 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 				functionExpression.getIdentifier().setName(MPI_FINALIZE_NEW);
 				functionCall.setArguments(nodeFactory.newSequenceNode(source,
 						"ActualParameterList", Arrays.asList(addressOf)));
+			} else if (functionName.equals(EXIT)) {
+				int myIndex = functionCall.parent().childIndex();
+				ExpressionNode value = functionCall.getArgument(0).copy();
+				ReturnNode returnNode = nodeFactory
+						.newReturnNode(source, value);
+				ASTNode parent = functionCall.parent().parent();
+
+				parent.setChild(myIndex, returnNode);
 			}
 		}
 	}
