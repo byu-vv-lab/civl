@@ -609,6 +609,10 @@ public class UserInterface {
 				showProverQueriesO, enablePrintfO, statelessPrintfO));
 		newConfig.setScalarValue(showTransitionsO, true);
 		newConfig.read(config);
+		if (newConfig.isTrue(showProverQueriesO))
+			universe.setShowProverQueries(true);
+		if (newConfig.isTrue(showQueriesO))
+			universe.setShowQueries(true);
 		modelAndPreprocessor = extractModel(out, newConfig, sourceFilename,
 				universe);
 		model = modelAndPreprocessor.left;
@@ -638,6 +642,10 @@ public class UserInterface {
 		Pair<Model, Preprocessor> modelAndPreprocessor;
 		Preprocessor preprocessor;
 
+		if (config.isTrue(showProverQueriesO))
+			universe.setShowProverQueries(true);
+		if (config.isTrue(showQueriesO))
+			universe.setShowQueries(true);
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
 		modelAndPreprocessor = extractModel(out, config, filename, universe);
@@ -669,6 +677,10 @@ public class UserInterface {
 		Pair<Model, Preprocessor> modelAndPreprocessor;
 		Preprocessor preprocessor;
 
+		if (config.isTrue(showProverQueriesO))
+			universe.setShowProverQueries(true);
+		if (config.isTrue(showQueriesO))
+			universe.setShowQueries(true);
 		checkFilenames(1, config);
 		filename = config.getFreeArg(1);
 		modelAndPreprocessor = extractModel(out, config, filename, universe);
