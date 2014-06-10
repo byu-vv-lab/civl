@@ -1,6 +1,6 @@
 #include <civlc.h>
 #include <stdio.h>
-#include "openCL.cvl"
+#include "setup/openCL.cvl"
 void main()
 {
   int err;

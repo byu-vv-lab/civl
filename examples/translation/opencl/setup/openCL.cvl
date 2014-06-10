@@ -32,11 +32,12 @@ int clGetDeviceIDs(cl_platform_id platform,
   //device_type type a bitfield that somehow gets type of OpenCL device
   //use the device types, look in openCLtypes and look for CL_DEVICE_TYPE_...
 
-  
+  /*
   if(device_type & (CL_DEVICE_TYPE_DEFAULT | CL_DEVICE_TYPE_CPU | 
     CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR | 
     CL_DEVICE_TYPE_CUSTOM | CL_DEVICE_TYPE_ALL))
   {
+  */
     while (i < num_entries)
     {
       //if devices not null/0? What does that even mean?
@@ -57,7 +58,7 @@ int clGetDeviceIDs(cl_platform_id platform,
     {
       *num_devices = i;
     }
-  }
+  //}
 /*
   else
   {
