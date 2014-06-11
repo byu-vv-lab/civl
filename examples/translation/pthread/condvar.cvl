@@ -16,7 +16,7 @@
 * Command line execution:
 * civl verify -inputNUM_THREADS=3 -inputTCOUNT=10 -inputCOUNT_LIMIT=12 condvar.cvl
 ******************************************************************************/
-#include "pthread.cvh"
+#include <pthread.h>
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>

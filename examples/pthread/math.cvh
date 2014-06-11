@@ -1,3 +1,0 @@
-$abstract double sin(int x);
-$abstract double cos(int x);
-$abstract double tan(int x);

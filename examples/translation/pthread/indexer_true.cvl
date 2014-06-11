@@ -8,7 +8,7 @@
 * civl verify -inputSIZE=8 -inputMAX=4 -inputNUM_THREADS=13 indexer_true.cvl
 ******************************************************************************/
 #include <stdlib.h>
-#include "pthread.cvh"
+#include "pthread.h"
 #include <civlc.h>
 
 $input int SIZE;

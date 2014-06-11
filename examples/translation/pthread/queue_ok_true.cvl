@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
-#include "pthread.cvh"
+#include "pthread.h"
 
 #define SIZE	(4)
 #define EMPTY	(-1)

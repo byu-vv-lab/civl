@@ -11,7 +11,7 @@
 * civl verify -inputNTHREADS=4 -inputARRAYSIZE=1000000 arrayloops.cvl
 ******************************************************************************/
 
-#include "pthread.cvh"
+#include "pthread.h"
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>

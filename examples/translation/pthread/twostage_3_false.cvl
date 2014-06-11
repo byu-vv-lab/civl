@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "pthread.cvh"
+#include "pthread.h"
 #include <civlc.h>
 //#include <assert.h>
 

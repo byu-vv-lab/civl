@@ -2,7 +2,7 @@
    http://www.model.in.tum.de/~popeea/research/threader
 */
 #include <civlc.h>
-#include "pthread.cvh"
+#include "pthread.h"
 #define assert(e) if (!(e)) $assert($false);
 
 int flag1 = 0, flag2 = 0; // boolean flags

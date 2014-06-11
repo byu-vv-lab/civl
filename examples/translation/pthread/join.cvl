@@ -12,7 +12,7 @@
 * civl verify -inputNUM_THREADS=4 join.cvl
 ******************************************************************************/
 
-#include "pthread.cvh"
+#include "pthread.h"
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>

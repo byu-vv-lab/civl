@@ -14,9 +14,11 @@
 * civl verify -inputNUM_THREADS=3 -inputITERATIONS=10 -inputTHRESHOLD=12 bug4fix.cvl
 ******************************************************************************/
 
-#include <pthread.h>
+#include "pthread.h"
+#include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "math.cvh"
 
 /* Define and scope what needs to be seen by everyone */
 $input int NUM_THREADS;

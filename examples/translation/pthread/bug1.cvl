@@ -14,7 +14,7 @@
 * civl verify -inputNUM_THREADS=6 -inputTCOUNT=10 -inputCOUNT_LIMIT=12 bug1.cvl
 ******************************************************************************/
 
-#include "pthread.cvh"
+#include "pthread.h"
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>

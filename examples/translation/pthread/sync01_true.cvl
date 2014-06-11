@@ -8,7 +8,7 @@
 */
 
 #include <civlc.h>
-#include "pthread.cvh"
+#include "pthread.h"
 
 int  num;
 pthread_mutex_t  m;

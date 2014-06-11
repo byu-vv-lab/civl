@@ -6,7 +6,7 @@
    by Cormac Flanagan, Stephen Freund, Shaz Qadeer.
 */
 
-#include "pthread.cvh"
+#include "pthread.h"
 #include <civlc.h>
 #define assert(e) if (!(e)) $assert($false);
 

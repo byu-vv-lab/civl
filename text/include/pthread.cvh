@@ -15,22 +15,31 @@ appropriate definitions are changed to input variables
 #include <stdbool.h>
 
 //Mutex types
-#define PTHREAD_MUTEX_DEFAULT	0
-#define PTHREAD_MUTEX_NORMAL	0
-#define PTHREAD_MUTEX_RECURSIVE	1
-#define PTHREAD_MUTEX_ERRORCHECK 2
+enum{
+PTHREAD_MUTEX_NORMAL,
+PTHREAD_MUTEX_RECURSIVE,
+PTHREAD_MUTEX_ERRORCHECK
+};
 
-//Mutex Robustness Types
-#define PTHREAD_MUTEX_STALLED 0
-#define PTHREAD_MUTEX_ROBUST 1
+enum{
+PTHREAD_MUTEX_STALLED,
+PTHREAD_MUTEX_ROBUST
+};
 
-//Attribute Constants
-#define PTHREAD_CREATE_DETACHED 0
-#define PTHREAD_CREATE_JOINABLE 1
-#define PTHREAD_SCOPE_SYSTEM 0
-#define PTHREAD_SCOPE_PROCESS 1
-#define PTHREAD_INHERIT_SCHED 0
-#define PTHREAD_EXPLICIT_SCHED 1
+enum{
+PTHREAD_CREATE_DETACHED,
+PTHREAD_CREATE_JOINABLE
+};
+
+enum{
+PTHREAD_SCOPE_SYSTEM,
+PTHREAD_SCOPE_PROCESS
+};
+
+enum{
+PTHREAD_INHERIT_SCHED,
+PTHREAD_EXPLICIT_SCHED
+};
 
 //Mutex initializer
 #define __LOCK_INITIALIZER	0
@@ -38,12 +47,14 @@ appropriate definitions are changed to input variables
 #define PTHREAD_COND_INITIALIZER	{__LOCK_INITIALIZER,0}
 
 //Error definitions
-#define EINVAL 1       //Designates an invalid value
-#define ENOTSUP 2
-#define EOWNERDEAD 3   //Designates the termination of the owning thread
-#define EBUSY 4        //Mutex is already locked
-#define EDEADLK 5      //If mutex type is errorcheck and already owns the mutex
-#define EPERM 6        //If mutex is robust or errorcheck and does not own the mutex
+enum{
+EINVAL,      //Designates an invalid value
+ENOTSUP,
+EOWNERDEAD,  //Designates the termination of the owning thread
+EBUSY,        //Mutex is already locked
+EDEADLK,      //If mutex type is errorcheck and already owns the mutex
+EPERM        //If mutex is robust or errorcheck and does not own the mutex
+};
 
 extern void *value = NULL;
 
@@ -606,7 +617,7 @@ int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr){
     mutex->attr->robust = 0;
     mutex->attr->pshared = 0;
     mutex->attr->protocol = 0;
-    mutex->attr->type = PTHREAD_MUTEX_DEFAULT;
+    mutex->attr->type = PTHREAD_MUTEX_NORMAL;
     mutex->attr->prioceiling = 0;
   }
   else{
@@ -737,6 +748,7 @@ int pthread_join(pthread_t thread, void **value_ptr){
     }
   }
   $wait(thread.thr);
+  if(value_ptr!=NULL)
     value_ptr = &value;
   return 0;
 }
@@ -917,7 +929,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex){
       int idx;
       
       // Attempts unlock, if already unlocked, returns error
-      if (mutex->lock == 0 && mutex->attr->type == PTHREAD_MUTEX_DEFAULT) {
+      if (mutex->lock == 0 && mutex->attr->type == PTHREAD_MUTEX_NORMAL) {
         $assert($false);
         return 0;
       }

@@ -13,7 +13,7 @@
 * civl verify -inputNUM_THREADS=3 -inputITERATIONS=10 -inputTHRESHOLD=12 bug4.cvl
 ******************************************************************************/
 
-#include "pthread.cvh"
+#include "pthread.h"
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>

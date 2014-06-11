@@ -12,7 +12,7 @@
 ******************************************************************************/
 
 #include <civlc.h>
-#include "pthread.cvh"
+#include "pthread.h"
 #include <stdio.h>
 #include <stdlib.h>
 

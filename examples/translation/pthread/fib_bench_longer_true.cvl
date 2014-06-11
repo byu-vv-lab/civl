@@ -10,7 +10,7 @@
 * Command line execution:
 * civl verify -inputNUM=6 fib_bench_longer_true.cvl
 ******************************************************************************/
-#include "pthread.cvh"
+#include "pthread.h"
 #include <civlc.h>
 
 int i=1, j=1;

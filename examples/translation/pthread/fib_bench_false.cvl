@@ -13,7 +13,7 @@
 ******************************************************************************/
 
 #include <civlc.h>
-#include "pthread.cvh"
+#include "pthread.h"
 
 int i=1, j=1;
 

@@ -15,7 +15,7 @@
 * civl verify -inputNUMTHRDS=4 -inputVECLEN=100000 dotprod_mutex.cvl
 ******************************************************************************/
 
-#include "pthread.cvh"
+#include "pthread.h"
 #include <civlc.h>
 #include <stdio.h>
 #include <stdlib.h>
