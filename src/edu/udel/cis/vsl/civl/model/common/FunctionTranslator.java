@@ -464,7 +464,7 @@ public class FunctionTranslator {
 			stringLiteral = modelFactory.arrayLiteralExpression(source,
 					arrayType, chars);
 			anonAssign = modelFactory.assignStatement(source,
-					modelFactory.location(source, modelFactory.currentScope()),
+					modelFactory.location(source, scope),
 					anonVariable, stringLiteral, true);
 			arguments.add(arrayToPointer(anonVariable));
 			assertion = modelFactory.assertStatement(source, location,

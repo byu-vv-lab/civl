@@ -82,6 +82,11 @@ public class AST2CIVL {
 		for (Entry<String, StringBuffer> entry : results.entrySet()) {
 			out.print("================");
 			out.println(entry.getKey());
+			for (String header : headers) {
+				out.print("#include <");
+				out.print(header);
+				out.println(">");
+			}
 			out.print(entry.getValue());
 		}
 		return results;
@@ -96,27 +101,28 @@ public class AST2CIVL {
 		switch (sourceFile) {
 		case "assert.h":
 		case "civlc.h":
-		case "civlc-common.h":
-		case "civlc-omp.cvl":
 		case "float.h":
 		case "math.h":
-		case "mpi-common.h":
 		case "mpi.h":
-		case "mpi.cvl":
-		case "omp-common.h":
 		case "omp.h":
 		case "pthread.h":
-		case "stdio-c.cvl":
-		case "stdio.cvl":
 		case "stdbool.h":
 		case "stddef.h":
-		case "stdio-common.h":
 		case "stdio.h":
 		case "stdlib.h":
-		case "stdlib-common.h":
-		case "string-common.h":
 		case "string.h":
 			headers.add(sourceFile);
+			return;
+		case "stdlib-common.h":
+		case "string-common.h":
+		case "stdio-common.h":
+		case "omp-common.h":
+		case "mpi-common.h":
+		case "civlc-common.h":
+		case "civlc-omp.cvl":
+		case "stdio-c.cvl":
+		case "stdio.cvl":
+		case "mpi.cvl":
 			return;
 		default:
 			if (!results.containsKey(sourceFile))
