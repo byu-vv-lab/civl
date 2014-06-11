@@ -1,28 +1,14 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
-import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.DotNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 
@@ -138,7 +124,28 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 				nodeFactory.newIdentifierNode(source, name));
 	}
 
-	
+	protected Source getMainSource(ASTNode node) {
+		if (node.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
+			FunctionDefinitionNode functionNode = (FunctionDefinitionNode) node;
+			IdentifierNode functionName = (IdentifierNode) functionNode
+					.child(0);
+
+			if (functionName.name().equals("main")) {
+				return node.getSource();
+			}
+		}
+		for (ASTNode child : node.children()) {
+			if (child == null)
+				continue;
+			else {
+				Source childResult = getMainSource(child);
+
+				if (childResult != null)
+					return childResult;
+			}
+		}
+		return null;
+	}
 
 	/* *************************** Public Methods ************************* */
 

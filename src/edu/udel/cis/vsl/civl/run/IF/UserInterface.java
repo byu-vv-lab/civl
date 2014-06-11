@@ -254,12 +254,14 @@ public class UserInterface {
 			Activator frontEnd, List<String> inputVars) throws SyntaxException {
 		Set<String> headers = preprocessor.headerFiles();
 		boolean isC = fileName.endsWith(".c");
-		boolean hasStdio = false, hasOmp = false, hasMpi = false;
+		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
 
 		if (headers.contains("stdio.h"))
 			hasStdio = true;
 		if (isC && (headers.contains("omp.h") || program.hasOmpPragma()))
 			hasOmp = true;
+		if(isC  && headers.contains("pthread.h"))
+			hasPthread = true;
 		if (isC && headers.contains("mpi.h"))
 			hasMpi = true;
 		// always apply general transformation.
@@ -285,6 +287,16 @@ public class UserInterface {
 			if (verboseOrDebug)
 				this.out.println("Apply OpenMP transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
+					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
+			if (verboseOrDebug) {
+				frontEnd.printProgram(out, program);
+				CIVLTransform.printProgram2CIVL(out, program);
+			}
+		}
+		if (hasPthread) {
+			if (verboseOrDebug)
+				this.out.println("Apply Pthread transformer...");
+			CIVLTransform.applyTransformer(program, CIVLTransform.PTHREAD,
 					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
 			if (verboseOrDebug) {
 				frontEnd.printProgram(out, program);

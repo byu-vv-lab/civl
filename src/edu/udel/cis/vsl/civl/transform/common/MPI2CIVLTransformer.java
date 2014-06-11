@@ -875,27 +875,4 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		return newAst;
 	}
 
-	private Source getMainSource(ASTNode node) {
-		if (node.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
-			FunctionDefinitionNode functionNode = (FunctionDefinitionNode) node;
-			IdentifierNode functionName = (IdentifierNode) functionNode
-					.child(0);
-
-			if (functionName.name().equals("main")) {
-				return node.getSource();
-			}
-		}
-		for (ASTNode child : node.children()) {
-			if (child == null)
-				continue;
-			else {
-				Source childResult = getMainSource(child);
-
-				if (childResult != null)
-					return childResult;
-			}
-		}
-		return null;
-	}
-
 }

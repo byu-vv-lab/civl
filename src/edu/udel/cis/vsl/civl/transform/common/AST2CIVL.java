@@ -31,7 +31,12 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeableNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeofNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SpawnNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode.BlockItemKind;
@@ -40,9 +45,11 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.GotoNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.JumpNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.JumpNode.JumpKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode.StatementKind;
@@ -123,6 +130,7 @@ public class AST2CIVL {
 		case "stdio-c.cvl":
 		case "stdio.cvl":
 		case "mpi.cvl":
+		case "pthread.cvh":
 			return;
 		default:
 			if (!results.containsKey(sourceFile))
@@ -216,7 +224,9 @@ public class AST2CIVL {
 						(FunctionDeclarationNode) block);
 			}
 		default:
-			return null;
+			throw new CIVLUnimplementedFeatureException(
+					"translating block item node of " + kind
+							+ " kind into CIVL code", block.getSource());
 		}
 	}
 
@@ -234,10 +244,14 @@ public class AST2CIVL {
 					(ExpressionStatementNode) statement);
 		case FOR:
 			return for2CIVL(prefix, (ForLoopNode) statement);
+		case GOTO:
+			return goto2CIVL(prefix, (GotoNode) statement);
 		case IF:
 			return if2CIVL(prefix, (IfNode) statement);
 		case JUMP:
 			return jump2CIVL(prefix, (JumpNode) statement);
+		case LABELED:
+			return labeled2CIVL(prefix, (LabeledStatementNode) statement);
 		case NULL:
 			return new StringBuffer(";");
 		case RETURN:
@@ -247,13 +261,55 @@ public class AST2CIVL {
 		case WHEN:
 			return when2CIVL(prefix, (WhenNode) statement);
 		default:
+			throw new CIVLUnimplementedFeatureException(
+					"translating statement node of " + kind
+							+ " kind into CIVL code", statement.getSource());
 		}
-		return null;
+	}
+
+	private StringBuffer goto2CIVL(String prefix, GotoNode go2) {
+		StringBuffer result = new StringBuffer();
+
+		result.append(prefix);
+		result.append("goto ");
+		result.append(go2.getLabel().name());
+		result.append(";");
+		return result;
+	}
+
+	private StringBuffer labeled2CIVL(String prefix,
+			LabeledStatementNode labeled) {
+		LabelNode label = labeled.getLabel();
+		StatementNode statement = labeled.getStatement();
+		StringBuffer result = new StringBuffer();
+		String myIndent = prefix + indention;
+
+		result.append(prefix);
+		if (label instanceof OrdinaryLabelNode) {
+			OrdinaryLabelNode ordinary = (OrdinaryLabelNode) label;
+			result.append(ordinary.getName());
+			result.append(":\n");
+		} else {
+			// switch label
+			SwitchLabelNode switchLabel = (SwitchLabelNode) label;
+			boolean isDefault = switchLabel.isDefault();
+
+			if (isDefault)
+				result.append("default:\n");
+			else {
+				result.append("case ");
+				result.append(expression2CIVL(switchLabel.getExpression()));
+				result.append(":\n");
+			}
+		}
+		result.append(statement2CIVL(myIndent, statement));
+		return result;
 	}
 
 	private StringBuffer switch2CIVL(String prefix, SwitchNode swtichNode) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new CIVLUnimplementedFeatureException(
+				"translating switch node into CIVL code",
+				swtichNode.getSource());
 	}
 
 	private StringBuffer jump2CIVL(String prefix, JumpNode jump) {
@@ -273,6 +329,9 @@ public class AST2CIVL {
 		case RETURN:
 			return return2CIVL(prefix, (ReturnNode) jump);
 		default:
+			throw new CIVLUnimplementedFeatureException(
+					"translating jump node of " + kind + " kind into CIVL code",
+					jump.getSource());
 		}
 		return result;
 	}
@@ -467,9 +526,7 @@ public class AST2CIVL {
 			throw new CIVLSyntaxException(
 					"Invalid type of compound initializer: " + typeKind, source);
 		}
-
 		return result;
-
 	}
 
 	private StringBuffer literalObject2CIVL(Source source, Type type,
@@ -520,7 +577,14 @@ public class AST2CIVL {
 			break;
 		}
 		case CONSTANT: {
-			result.append(((ConstantNode) expression).getStringRepresentation());
+			String constant = ((ConstantNode) expression)
+					.getStringRepresentation();
+
+			if (constant.equals("\\false"))
+				constant = "$false";
+			else if (constant.equals("\\true"))
+				constant = "$true";
+			result.append(constant);
 			break;
 		}
 		case DOT: {
@@ -540,13 +604,26 @@ public class AST2CIVL {
 		case OPERATOR:
 			result = operator2CIVL((OperatorNode) expression);
 			break;
+		case SIZEOF:
+			result.append("sizeof(");
+			result.append(sizeable2CIVL(((SizeofNode) expression).getArgument()));
+			break;
 		case SPAWN:
 			result.append("$spawn ");
 			result.append(functionCall2CIVL(((SpawnNode) expression).getCall()));
 			break;
 		default:
+			throw new CIVLUnimplementedFeatureException(
+					"translating expression node of " + kind
+							+ " kind into CIVL code", expression.getSource());
 		}
 		return result;
+	}
+
+	private StringBuffer sizeable2CIVL(SizeableNode argument) {
+		if (argument instanceof ExpressionNode)
+			return expression2CIVL((ExpressionNode) argument);
+		return type2CIVL((TypeNode) argument);
 	}
 
 	private StringBuffer functionCall2CIVL(FunctionCallNode call) {
@@ -669,11 +746,18 @@ public class AST2CIVL {
 			result.append(" != ");
 			result.append(arg1);
 			break;
+		case NOT:
+			result.append("!");
+			result.append(arg0);
+			break;
 		case PLUS:
 			result.append(arg0);
 			result.append(" + ");
 			result.append(arg1);
 			break;
+		case PREDECREMENT:
+			result.append("--");
+			result.append(arg0);
 		case POSTINCREMENT:
 			result.append(arg0);
 			result.append("++");
@@ -712,7 +796,6 @@ public class AST2CIVL {
 					"translating operator node of " + op
 							+ " kind into CIVL code", operator.getSource());
 		}
-
 		return result;
 	}
 
@@ -744,8 +827,8 @@ public class AST2CIVL {
 			result.append(((StructureOrUnionTypeNode) type).getName());
 			break;
 		case POINTER:
-			result.append("*");
 			result.append(type2CIVL(((PointerTypeNode) type).referencedType()));
+			result.append("*");
 			break;
 		case TYPEDEF_NAME:
 			result.append(((TypedefNameNode) type).getName().name());
@@ -755,10 +838,22 @@ public class AST2CIVL {
 			break;
 		case FUNCTION: {
 			FunctionTypeNode funcType = (FunctionTypeNode) type;
+			SequenceNode<VariableDeclarationNode> paras = funcType
+					.getParameters();
+			int i = 0;
 
+			result.append(" (");
 			result.append(type2CIVL(funcType.getReturnType()));
-			result.append(" ");
-
+			result.append(" (");
+			for (VariableDeclarationNode para : paras) {
+				if (i != 0)
+					result.append(", ");
+				result.append(variableDeclaration2CIVL("", para));
+				i++;
+			}
+			result.append(")");
+			result.append(")");
+			break;
 		}
 		default:
 			throw new CIVLUnimplementedFeatureException(
@@ -831,13 +926,10 @@ public class AST2CIVL {
 			result.append("unsigned short");
 			break;
 		default:
-
+			throw new CIVLUnimplementedFeatureException(
+					"translating basic type node of " + basicKind
+							+ " kind into CIVL code", type.getSource());
 		}
 		return result;
 	}
-
-	// private void astNode2CIVL(String prefix, ASTNode node,
-	// Map<String, StringBuffer> results, Set<String> headers) {
-	//
-	// }
 }

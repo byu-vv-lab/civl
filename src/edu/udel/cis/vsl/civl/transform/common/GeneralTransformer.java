@@ -11,22 +11,35 @@ import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
+import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 
 public class GeneralTransformer extends CIVLBaseTransformer {
 
 	public final static String CODE = "general";
 	public final static String LONG_NAME = "GeneralTransformer";
 	public final static String SHORT_DESCRIPTION = "transforms general features of C programs to CIVL-C";
+
+	private final static String MALLOC = "malloc";
 
 	public GeneralTransformer(ASTFactory astFactory,
 			List<String> inputVariables, boolean debug) {
@@ -43,6 +56,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 		List<ASTNode> newExternalList = new ArrayList<>();
 
 		unit.release();
+		processMalloc(root);
 		for (ASTNode child : root) {
 			if (child.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
 				FunctionDefinitionNode functionNode = (FunctionDefinitionNode) child;
@@ -67,6 +81,70 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 		}
 		newAst = astFactory.newAST(root);
 		return newAst;
+	}
+
+	private void processMalloc(ASTNode node) {
+		if (node instanceof FunctionCallNode) {
+			FunctionCallNode funcCall = (FunctionCallNode) node;
+
+			if (funcCall.getFunction().expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+				IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) funcCall
+						.getFunction();
+				String functionName = functionExpression.getIdentifier().name();
+
+				if (functionName.equals(MALLOC)) {
+					ASTNode parent = funcCall.parent();
+					int callIndex = funcCall.childIndex();
+
+					if (!(parent instanceof CastNode)) {
+						if (parent instanceof OperatorNode) {
+							ExpressionNode lhs = ((OperatorNode) parent)
+									.getArgument(0);
+							Type type = lhs.getInitialType();
+							TypeNode typeNode;
+							CastNode castNode;
+
+							if (type.kind() != TypeKind.POINTER)
+								throw new CIVLSyntaxException(
+										"The left hand side of a malloc call must be of pointer"
+												+ " type.", lhs.getSource());
+							typeNode = this.typeNode(lhs.getSource(), type);
+							parent.removeChild(callIndex);
+							castNode = nodeFactory.newCastNode(funcCall.getSource(), typeNode, funcCall);
+							parent.setChild(callIndex, castNode);
+						}
+					}
+				}
+			}
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child != null) {
+					processMalloc(child);
+				}
+			}
+		}
+
+	}
+
+	private TypeNode typeNode(Source source, Type type) {
+		switch (type.kind()) {
+		case VOID:
+			return nodeFactory.newVoidTypeNode(source);
+		case BASIC:
+			return nodeFactory.newBasicTypeNode(source,
+					((StandardBasicType) type).getBasicTypeKind());
+		case OTHER_INTEGER:
+			return nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT);
+		case ARRAY:
+			return nodeFactory.newArrayTypeNode(source,
+					this.typeNode(source, ((ArrayType) type).getElementType()),
+					((ArrayType) type).getVariableSize().copy());
+		case POINTER:
+			return nodeFactory.newPointerTypeNode(source, this.typeNode(source,
+					((PointerType) type).referencedType()), null);
+		default:
+		}
+		return null;
 	}
 
 	/**
