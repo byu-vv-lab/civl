@@ -154,6 +154,8 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
@@ -202,6 +204,8 @@ public class FunctionTranslator {
 	private static final String FILE_STREAM_TYPE = "FILE";
 
 	/* ************************** Instance Fields ************************** */
+
+	private int atomicCount = 0;
 
 	/**
 	 * Store temporary information of the function being processed
@@ -464,8 +468,8 @@ public class FunctionTranslator {
 			stringLiteral = modelFactory.arrayLiteralExpression(source,
 					arrayType, chars);
 			anonAssign = modelFactory.assignStatement(source,
-					modelFactory.location(source, scope),
-					anonVariable, stringLiteral, true);
+					modelFactory.location(source, scope), anonVariable,
+					stringLiteral, true);
 			arguments.add(arrayToPointer(anonVariable));
 			assertion = modelFactory.assertStatement(source, location,
 					modelFactory.booleanLiteralExpression(source, false),
@@ -1291,7 +1295,9 @@ public class FunctionTranslator {
 		Location end = modelFactory.location(
 				modelFactory.sourceOfEnd(atomicNode), scope);
 
+		this.atomicCount++;
 		bodyFragment = translateStatementNode(scope, bodyNode);
+		this.atomicCount--;
 		bodyFragment = modelFactory.atomicFragment(atomicNode.isAtom(),
 				bodyFragment, start, end);
 		return bodyFragment;
@@ -1803,14 +1809,21 @@ public class FunctionTranslator {
 				// of a function with no parameters.
 				if (decl.getTypeNode().kind() == TypeNodeKind.VOID)
 					continue;
-				CIVLType type = translateABCType(modelFactory.sourceOf(decl),
-						scope, functionType.getParameterType(i));
-				CIVLSource source = modelFactory.sourceOf(decl.getIdentifier());
-				Identifier variableName = modelFactory.identifier(source,
-						decl.getName());
+				else {
+					CIVLType type = translateABCType(
+							modelFactory.sourceOf(decl), scope,
+							functionType.getParameterType(i));
+					CIVLSource source = modelFactory.sourceOf(decl
+							.getIdentifier());
+					Identifier variableName = modelFactory.identifier(source,
+							decl.getName());
+					Variable parameter = modelFactory.variable(source, type,
+							variableName, parameters.size());
 
-				parameters.add(modelFactory.variable(source, type,
-						variableName, parameters.size()));
+					if (decl.getTypeNode().isConstQualified())
+						parameter.setConst(true);
+					parameters.add(parameter);
+				}
 			}
 			if (entity.getDefinition() == null) { // abstract or system function
 				if (node instanceof AbstractFunctionDefinitionNode) {
@@ -2064,10 +2077,10 @@ public class FunctionTranslator {
 	 * @return The fragment of the return statement
 	 */
 	private Fragment translateReturnNode(Scope scope, ReturnNode returnNode) {
-		Location location = modelFactory.location(
-				modelFactory.sourceOfBeginning(returnNode), scope);
+		Location location;
 		Expression expression;
 		CIVLFunction function = this.functionInfo.function();
+		Fragment returnFragment, atomicReleaseFragment = new CommonFragment();
 
 		if (returnNode.getExpression() != null) {
 			expression = translateExpressionNode(returnNode.getExpression(),
@@ -2076,8 +2089,26 @@ public class FunctionTranslator {
 				expression = modelFactory.booleanExpression(expression);
 		} else
 			expression = null;
-		return modelFactory.returnFragment(modelFactory.sourceOf(returnNode),
-				location, expression, function);
+		if (this.atomicCount > 0) {
+			Statement leaveAtomic;
+
+			for (int i = 0; i < this.atomicCount; i++) {
+				location = modelFactory.location(
+						modelFactory.sourceOfBeginning(returnNode), scope);
+				leaveAtomic = new CommonAtomicLockAssignStatement(
+						location.getSource(), location, false,
+						modelFactory.atomicLockVariableExpression(),
+						new CommonUndefinedProcessExpression(modelFactory
+								.systemSource()));
+				atomicReleaseFragment.addNewStatement(leaveAtomic);
+			}
+		}
+		location = modelFactory.location(
+				modelFactory.sourceOfBeginning(returnNode), scope);
+		returnFragment = modelFactory.returnFragment(
+				modelFactory.sourceOf(returnNode), location, expression,
+				function);
+		return atomicReleaseFragment.combineWith(returnFragment);
 	}
 
 	/**
