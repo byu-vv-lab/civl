@@ -1,6 +1,6 @@
 ToDo:
-  Whatever that "delete ctx" is
+  Implementation of "delete ctx"
   Possible fix later down the line
 Done:
-  Everything else, probably
+  Everything else
   

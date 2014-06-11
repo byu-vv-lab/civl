@@ -2,7 +2,7 @@ ToDo:
   device_type
   num_entries is useless
     devices only uses devices[0];
-    No error message "handling"
+    No error message "handling", but may be outside of verification tool scope
     Based off of the "only does host CPU" code
   
 Done:

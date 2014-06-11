@@ -1,6 +1,8 @@
 
 #include "cl.cvl"
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 $input int DEVICE_ID;
 $input int DEVICE_ID_BOUND;
@@ -72,8 +74,8 @@ int clGetDeviceIDs(cl_platform_id platform,
  	
   return CL_SUCCESS;
 
-  }
-  
+}
+
 
 
 
@@ -85,6 +87,7 @@ cl_context clCreateContext(const cl_context_properties  *properties,
                  cl_int *                      errcode_ret)
 {
   cl_int default_errcode_ret;
+  cl_context ctx;
   
   if(!errcode_ret)
   {
@@ -98,7 +101,7 @@ cl_context clCreateContext(const cl_context_properties  *properties,
   }
     
   *errcode_ret = CL_SUCCESS;
-  cl_context ctx;
+  
   ctx = (cl_context)malloc(sizeof(_cl_context));
 
   
@@ -119,18 +122,77 @@ cl_context clCreateContext(const cl_context_properties  *properties,
   return(cl_context) ctx;
    
 }
-/*
+
 cl_command_queue clCreateCommandQueue(cl_context context,
   cl_device_id device,
   cl_command_queue_properties properties,
   cl_int* errcode_ret)
 {
+  cl_int default_errcode_ret;
+  cl_command_queue cmd;
+  
+     // No errcode_ret ?
+  if (!errcode_ret)
+  {
+    errcode_ret = &default_errcode_ret;
+  }
+  
+  cmd = (cl_command_queue)malloc(sizeof(_cl_command_queue));
+  
+  cmd->context = context;
+  cmd->device = device;
+  cmd->properties = properties;
+  cmd->errcode_ret = errcode_ret;
+  
+  return cmd;
   
   
 }
-*/
-cl_command_queue clCreateCommandQueue(cl_context context)
+
+cl_program clCreateProgramWithSource(cl_context context,
+  cl_uint count,
+  const char** strings,
+  const size_t * lengths,
+  cl_int * errcode_ret)
 {
+  cl_int default_errcode_ret;
+  
+  if(!errcode_ret)
+  {
+    errcode_ret = &default_errcode_ret;
+  }
+  
+  *errcode_ret = CL_SUCCESS;
+  //*errcode_ret = loadSources(count, strings, lengths);
+  
+  //corrects 
+  for (cl_uint i = 0; i < count; i++)
+  {
+    size_t len = 0;
+    const char *data = strings[i];
+    
+    if (lengths && lengths[i])
+    {
+      len = lengths[i];
+    }
+    else
+    {
+      len = strlen(data);
+    }
+    
+    //remove trailing \0's, or null characters
+    while (len > 0 && data[len-1] == 0)
+    {
+      len--;
+    }
+    //merge strings? The assignment isn't used anywhere
+    //consider it later, if needed
+    
+  }
+  $assert (*errcode_ret != CL_SUCCESS);
+  //the original for loop can make *errcode_ret not CL_SUCCESS, this is a placeholder
+  
+  return (cl_program) program;
 }
 
 

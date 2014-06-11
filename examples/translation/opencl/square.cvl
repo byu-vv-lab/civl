@@ -1,6 +1,23 @@
 #include <civlc.h>
 #include <stdio.h>
 #include "setup/openCL.cvl"
+
+//this is the kernel that gets loaded into the program
+// Simple compute kernel which computes the square of an input array 
+//CIVL can't turn a string into a function at this time
+
+const char *KernelSource = "__kernel void square(   __global float* input,   __global float* output,   const unsigned int count){   int i = get_global_id(0);   if(i < count)       output[i] = input[i] * input[i];}";
+
+/*
+void square(float* input, float* output, const unsigned int count)
+{
+  int i = get_global_id(0);
+  if (i < count)
+  {
+    output[i] = input[i] * input[i];
+  }
+}
+*/
 void main()
 {
   int err;
@@ -9,8 +26,11 @@ void main()
   cl_device_id device_id;
   cl_context context;
   cl_command_queue commands; 
+  cl_program program;
+  cl_kernel kernel;
   
   //assumes you have hardware that works, does not check that part
+  //fills the device_id with device ids, returns CL_SUCCESS if it works
   err = clGetDeviceIDs(NULL,
   CL_DEVICE_TYPE_GPU,
   num_entries,
@@ -19,10 +39,13 @@ void main()
   printf("devices is %d", device_id[0]);
   $assert (err == CL_SUCCESS);
   
-  
+  //Returns a context, which has device information
   context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
   $assert (context != NULL);
   
-  //commands = clCreateCommandQueue(context, device_id, 0, &err);
-  commands = clCreateCommandQueue(context);
+  commands = clCreateCommandQueue(context, device_id, 0, &err);
+  $assert (commands != NULL);
+
+  program = clCreateProgramWithSource(context, 1, (const char **) & KernelSource, NULL, &err);
+  //$assert (program != NULL);
 }
