@@ -7,9 +7,10 @@
 #include<string-common.h>
 
 /* Copies a region of memory */
-void memcpy(void *p, void *q, size_t size) {
+void* memcpy(void *p, void *q, const size_t size) {
   $atom {
     $bundle bundle = $bundle_pack(q, size);
     $bundle_unpack(bundle, p);
   }
+  return p;
 }

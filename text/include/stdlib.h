@@ -36,4 +36,7 @@ void exit(int status){
   $exit();
 }
 
+void sleep(int i){
+}
+
 #endif
