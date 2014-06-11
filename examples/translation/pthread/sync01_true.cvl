@@ -25,6 +25,7 @@ void *thread1(void*arg)
 
   pthread_mutex_unlock(&m);
   pthread_cond_signal(&full);
+  return NULL;
 }
 
 
@@ -40,6 +41,8 @@ void *thread2(void*arg)
   pthread_mutex_unlock(&m);
 
   pthread_cond_signal(&empty);
+
+  return NULL;
 }
 
 
@@ -50,8 +53,8 @@ void main()
   num = 1;
 
   pthread_mutex_init(&m, 0);
-  pthread_cond_init(&empty, 0);
-  pthread_cond_init(&full, 0);
+  pthread_cond_init(&empty, NULL);
+  pthread_cond_init(&full, NULL);
   
   pthread_create(&t1, 0, thread1, 0);
   pthread_create(&t2, 0, thread2, 0);

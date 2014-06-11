@@ -1,31 +1,63 @@
 CIVL=civl
 VERIFY=$(CIVL) verify
-REPLAY=$(CIVL) replay
 
-all: queue_false queue_ok_true \
-	stack_false stack_true \
-	stateful01_false stateful01_true sync01_true
-	
-queue_false: queue_false.cvl
-	$(VERIFY) queue_false.cvl -enablePrintf=false -min
-	$(REPLAY) queue_false.cvl
-	
-queue_ok_true: queue_ok_true.cvl
-	$(VERIFY) queue_ok_true.cvl
-	
-stack_false: stack_false.cvl
-	$(VERIFY) -inputSIZE=8 stack_false.cvl -min
-	$(REPLAY) stack_false.cvl
-	
-stack_true: stack_true.cvl
-	$(VERIFY) -inputSIZE=8  stack_true.cvl
-	
-stateful01_false: stateful01_false.cvl
-	$(VERIFY) stateful01_false.cvl -min
-	$(REPLAY) stateful01_false.cvl
+all: arrayloops bug1 bug1fix bug3 bug4 bug4fix bug5 bug6 bug6fix\
+ condvar detached dotprod_mutex fib_bench_false join mpithreads_threads
 
-stateful01_true: stateful01_true.cvl
-	$(VERIFY) stateful01_true.cvl
+arrayloops: arrayloops.cvl
+	$(VERIFY) arrayloops.cvl -inputNTHREADS=4 -inputARRAYSIZE=1000000 
+
+bug1: bug1.cvl
+	$(VERIFY) bug1.cvl -inputNUM_THREADS=6 -inputTCOUNT=10 -inputCOUNT_LIMIT=12
+	$(CIVL) replay bug1.cvl
 	
-sync01_true: sync01_true.cvl
-	$(VERIFY) sync01_true.cvl
+bug1fix: bug1fix.cvl
+	$(VERIFY) bug1fix.cvl -inputNUM_THREADS=6 -inputTCOUNT=10 -inputCOUNT_LIMIT=12
+	
+bug3: bug3.cvl
+	$(VERIFY) bug3.cvl -INPUTNUM_THREADS=8
+	$(CIVL) replay bug3.cvl
+	
+bug4: bug4.cvl
+	$(VERIFY) bug4.cvl -inputNUM_THREADS=3 -inputITERATIONS=10 -inputTHRESHOLD=12
+	$(CIVL) replay bug4.cvl
+
+bug4fix: bug4fix.cvl
+	$(VERIFY) bug4fix.cvl -inputNUM_THREADS=3 -inputITERATIONS=10 -inputTHRESHOLD=12
+	
+bug5: bug5.cvl
+	$(VERIFY) bug5fix.cvl -inputNUM_THREADS=5
+	$(CIVL) replay bug5.cvl
+	
+bug6: bug6.cvl
+	$(VERIFY) bug6.cvl -inputNUM_THRDS=5 -inputVECLEN=1000
+	$(CIVL) replay bug6.cvl
+
+bug6fix: bug6fix.cvl
+	$(VERIFY) bug6fix.cvl -inputNUM_THRDS=5 -inputVECLEN=1000
+
+condvar: condvar.cvl
+	$(VERIFY) condvar.cvl -inputNUM_THREADS=3 -inputTCOUNT=10 -inputCOUNT_LIMIT=12
+	
+detached: detached.cvl
+	$(VERIFY) detached.cvl -inputNUM_THREADS=4
+	
+dotprod_mutex: dotprod_mutex.cvl
+	$(VERIFY) dotprod_mutex.cvl -inputNUMTHRDS=4 -inputVECLEN=100000
+	
+fib_bench_false: fib_bench_false.cvl
+	$(VERIFY) fib_bench_false.cvl -inputNUM=5
+	$(CIVL) replay fib_bench_false.cvl
+	
+join: join.cvl
+	$(VERIFY) join.cvl -inputNUM_THREADS=4
+
+mpithreads_threads: mpithreads_threads.cvl
+	$(VERIFY) mpithreads_threads.cvl -inputMAXTHRDS=8 -inputVECLEN=100
+
+twostage_3_false: twostage_3_false.cvl
+	$(VERIFY) twostage_3_false.cvl
+	$(CIVL) replay twostate_3_false.cvl
+	
+clean:
+	rm -rf CIVLREP *~
