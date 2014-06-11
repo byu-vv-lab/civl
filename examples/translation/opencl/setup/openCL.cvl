@@ -1,5 +1,6 @@
 
 #include "cl.cvl"
+#include <stdlib.h>
 
 $input int DEVICE_ID;
 $input int DEVICE_ID_BOUND;
@@ -89,33 +90,47 @@ cl_context clCreateContext(const cl_context_properties  *properties,
   {
     errcode_ret = &default_errcode_ret;
   }
-    /*
-  if (!devices || !num_devices || !pfn_notify && user_data}}
+    
+  if (!devices || !num_devices || (!pfn_notify && user_data))
   {
     *errcode_ret = CL_INVALID_VALUE;
     return 0;
   }
-    */
-  *errcode_ret = CL_SUCCESS;
-  cl_context *ctx;
-
     
+  *errcode_ret = CL_SUCCESS;
+  cl_context ctx;
+  ctx = (cl_context)malloc(sizeof(_cl_context));
+
+  
   ctx->properties = properties;
   ctx->num_devices = num_devices;
   ctx->devices = devices;
   ctx->pfn_notify = pfn_notify;
   ctx->user_data = user_data;
-  ctx->errcode_ret = errorcode_ret;
-    /*
+  ctx->errcode_ret = errcode_ret;
+  
+    
   if(*errcode_ret != CL_SUCCESS)
   {
-    delete ctx;
+    //delete ctx;
     return 0;
   }
-  */
-  return(_cl_context*) ctx;
+  
+  return(cl_context) ctx;
    
 }
-
+/*
+cl_command_queue clCreateCommandQueue(cl_context context,
+  cl_device_id device,
+  cl_command_queue_properties properties,
+  cl_int* errcode_ret)
+{
+  
+  
+}
+*/
+cl_command_queue clCreateCommandQueue(cl_context context)
+{
+}
 
 

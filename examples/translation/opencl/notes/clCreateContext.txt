@@ -1,4 +1,6 @@
 ToDo:
-  Make the usage of the struct correct
+  Whatever that "delete ctx" is
+  Possible fix later down the line
 Done:
-  make the cl_context struct
+  Everything else, probably
+  

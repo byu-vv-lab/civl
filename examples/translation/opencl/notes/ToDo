@@ -32,7 +32,7 @@ clCreateContext
   uses a cl_context context, takes 6 parameters
   http://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clCreateContext.html
   openCL uses them for commands, memory, program, kernel objects, executing kernels
-  -IN PROGRESS-
+  [x]
 
 Kernels and other:
 clCreateCommandQueue

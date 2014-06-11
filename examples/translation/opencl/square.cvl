@@ -7,7 +7,10 @@ void main()
   int num_entries = 3;
   
   cl_device_id device_id;
+  cl_context context;
+  cl_command_queue commands; 
   
+  //assumes you have hardware that works, does not check that part
   err = clGetDeviceIDs(NULL,
   CL_DEVICE_TYPE_GPU,
   num_entries,
@@ -15,4 +18,11 @@ void main()
   NULL);
   printf("devices is %d", device_id[0]);
   $assert (err == CL_SUCCESS);
+  
+  
+  context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
+  $assert (context != NULL);
+  
+  //commands = clCreateCommandQueue(context, device_id, 0, &err);
+  commands = clCreateCommandQueue(context);
 }
