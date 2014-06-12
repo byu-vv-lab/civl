@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -46,6 +47,7 @@ public class PthreadTransformerTest {
 		assertFalse(ui.run("verify", filename("bug4.c")));
 	}
 
+	@Ignore
 	@Test
 	public void mpithreads_threads() throws ABCException {
 		assertTrue(ui.run("verify", filename("mpithreads_threads.c"),
