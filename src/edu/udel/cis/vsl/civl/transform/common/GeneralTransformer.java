@@ -110,7 +110,8 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 												+ " type.", lhs.getSource());
 							typeNode = this.typeNode(lhs.getSource(), type);
 							parent.removeChild(callIndex);
-							castNode = nodeFactory.newCastNode(funcCall.getSource(), typeNode, funcCall);
+							castNode = nodeFactory.newCastNode(
+									funcCall.getSource(), typeNode, funcCall);
 							parent.setChild(callIndex, castNode);
 						}
 					}
@@ -141,7 +142,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 					((ArrayType) type).getVariableSize().copy());
 		case POINTER:
 			return nodeFactory.newPointerTypeNode(source, this.typeNode(source,
-					((PointerType) type).referencedType()), null);
+					((PointerType) type).referencedType()));
 		default:
 		}
 		return null;
@@ -197,10 +198,9 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			TypeNode argvType = argvVar.getTypeNode();
 			ArgvTypeKind argvTypeKind = analyzeArgvType(argvType);
 			Source source = argvVar.getSource();
-			TypeNode pointerOfPointerOfChar = nodeFactory
-					.newPointerTypeNode(source, nodeFactory.newPointerTypeNode(
-							source, nodeFactory.newBasicTypeNode(source,
-									BasicTypeKind.CHAR), null), null);
+			TypeNode pointerOfPointerOfChar = nodeFactory.newPointerTypeNode(
+					source, nodeFactory.newPointerTypeNode(source, nodeFactory
+							.newBasicTypeNode(source, BasicTypeKind.CHAR)));
 
 			parameters.removeChild(0);
 			parameters.removeChild(1);

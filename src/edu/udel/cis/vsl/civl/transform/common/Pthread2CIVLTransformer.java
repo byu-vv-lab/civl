@@ -77,7 +77,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		ExpressionNode nullNode = nodeFactory.newCastNode(
 				source,
 				nodeFactory.newPointerTypeNode(source,
-						nodeFactory.newVoidTypeNode(source), null),
+						nodeFactory.newVoidTypeNode(source)),
 				nodeFactory.newIntegerConstantNode(source, "0"));
 
 		return nodeFactory.newReturnNode(source, nullNode);

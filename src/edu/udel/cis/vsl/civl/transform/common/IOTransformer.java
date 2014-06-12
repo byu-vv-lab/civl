@@ -259,7 +259,7 @@ public class IOTransformer extends CIVLBaseTransformer {
 		nullPointer = nodeFactory.newCastNode(
 				source,
 				nodeFactory.newPointerTypeNode(source,
-						nodeFactory.newVoidTypeNode(source), null),
+						nodeFactory.newVoidTypeNode(source)),
 				nodeFactory.newIntegerConstantNode(source, "0"));
 		condition = nodeFactory.newOperatorNode(source, Operator.NEQ,
 				Arrays.asList(argument.copy(), nullPointer));
