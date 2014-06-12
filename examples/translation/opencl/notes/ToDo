@@ -44,10 +44,13 @@ clCreateCommandQueue
 clCreateProgramWithSource
   uses cl_program program, takes 5 parameters
   uses context
-  -in progress-
+  -IN PROGRESS-
+  
+clCreateProgramWithBinary
+  -IN PROGRESS-
   
 clBuildProgram
-  -in progress-
+  -IN PROGRESS-
 
 clGetProgramBuildInfo
 

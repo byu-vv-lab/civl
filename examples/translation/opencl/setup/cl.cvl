@@ -1,4 +1,8 @@
 #include "openCL_platform.cvl"
+typedef int bool;
+#define true 1
+#define false 0
+
 
 typedef struct _cl_platform_id *    cl_platform_id;
 typedef struct _cl_device_id *      cl_device_id;
@@ -108,6 +112,10 @@ typedef struct
   cl_uint count;
   const char ** strings;
   const size_t * lengths;
+  
+  const char **binaries;
+  cl_uint num_devices;
+  cl_device_id * device_list;
 }
 _cl_program;
 typedef _cl_program* cl_program;

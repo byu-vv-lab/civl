@@ -49,5 +49,5 @@ void main()
   program = clCreateProgramWithSource(context, 1, (const char **) & KernelSource, NULL, &err);
   $assert (program != NULL);
   
-  err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+  //err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
 }

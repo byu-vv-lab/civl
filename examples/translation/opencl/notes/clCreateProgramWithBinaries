@@ -1,0 +1,4 @@
+ToDo:
+  Make the information for context
+Done:
+  This one uses more variables for loadBinaries, do something about the struct
