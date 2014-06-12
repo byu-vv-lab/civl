@@ -5,6 +5,7 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 
 public interface LibraryEvaluator {
 	/**
@@ -13,6 +14,7 @@ public interface LibraryEvaluator {
 	 * the "regular" guard in the transition system.
 	 */
 	Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments);
+			String function, List<Expression> arguments)
+			throws UnsatisfiablePathConditionException;
 
 }

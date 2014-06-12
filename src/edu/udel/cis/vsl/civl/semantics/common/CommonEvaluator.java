@@ -1753,16 +1753,17 @@ public class CommonEvaluator implements Evaluator {
 	 *            The system guard expression to be evaluated.
 	 * @return The result of the evaluation, including the state and the
 	 *         symbolic expression of the value.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateSystemGuard(State state, int pid,
-			SystemGuardExpression expression) {
+			SystemGuardExpression expression) throws UnsatisfiablePathConditionException {
 		return getSystemGuard(expression.getSource(), state, pid,
 				expression.library(), expression.functionName(),
 				expression.arguments());
 	}
 
 	private Evaluation getSystemGuard(CIVLSource source, State state, int pid,
-			String library, String function, List<Expression> arguments) {
+			String library, String function, List<Expression> arguments) throws UnsatisfiablePathConditionException {
 		LibraryEvaluator libEvaluator = this.libLoader.getLibraryEvaluator(
 				library, this, this.modelFactory, symbolicUtil);
 

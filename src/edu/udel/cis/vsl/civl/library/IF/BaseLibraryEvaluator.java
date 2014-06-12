@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 
 /**
  * This class provides the common data and operations of library evaluators.
@@ -59,7 +60,8 @@ public abstract class BaseLibraryEvaluator extends Library implements
 
 	@Override
 	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments) {
+			String function, List<Expression> arguments)
+			throws UnsatisfiablePathConditionException {
 		return new Evaluation(state, universe.trueExpression());
 	}
 

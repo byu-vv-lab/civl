@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.library.IF;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 
@@ -66,6 +67,9 @@ public abstract class Library {
 
 	protected String name;
 
+	protected BooleanExpression trueValue;
+	protected BooleanExpression falseValue;
+
 	/**
 	 * Creates a new instance of a library.
 	 * 
@@ -87,6 +91,8 @@ public abstract class Library {
 		this.twoObject = universe.intObject(2);
 		this.threeObject = universe.intObject(3);
 		this.symbolicUtil = symbolicUtil;
+		this.trueValue = universe.trueExpression();
+		this.falseValue = universe.falseExpression();
 	}
 
 	/**
