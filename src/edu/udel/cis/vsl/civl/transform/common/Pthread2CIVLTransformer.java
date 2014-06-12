@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
 //TODO: add arguments to pthread_exit();
+//TODO: If the start_routine returns, the effect shall be as if there was an implicit call to pthread_exit() using the return value of start_routine as the exit status.
 
 public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	/* ************************** Public Static Fields *********************** */

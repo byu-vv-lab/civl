@@ -17,15 +17,15 @@ import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
+import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.type.CommonFunctionType;
 
 /**
@@ -389,12 +389,12 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 				Statement s = loc.getOutgoing(0);
 
 				// The only statement of loc is a no-op statement
-				if (s instanceof CommonNoopStatement) {
+				if (s instanceof NoopStatement) {
 					Expression guard = s.guard();
 
 					// The guard of the no-op is true
-					if (guard instanceof CommonBooleanLiteralExpression) {
-						if (((CommonBooleanLiteralExpression) guard).value()) {
+					if (guard instanceof BooleanLiteralExpression) {
+						if (((BooleanLiteralExpression) guard).value()) {
 							Location target = s.target();
 
 							// Record the index of loc so that it can be

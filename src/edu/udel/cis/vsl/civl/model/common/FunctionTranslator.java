@@ -155,6 +155,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
@@ -206,6 +207,8 @@ public class FunctionTranslator {
 	/* ************************** Instance Fields ************************** */
 
 	private int atomicCount = 0;
+
+	private int atomCount = 0;
 
 	/**
 	 * Store temporary information of the function being processed
@@ -1295,9 +1298,15 @@ public class FunctionTranslator {
 		Location end = modelFactory.location(
 				modelFactory.sourceOfEnd(atomicNode), scope);
 
-		this.atomicCount++;
+		if (atomicNode.isAtom())
+			this.atomCount++;
+		else
+			this.atomicCount++;
 		bodyFragment = translateStatementNode(scope, bodyNode);
-		this.atomicCount--;
+		if (atomicNode.isAtom())
+			this.atomCount--;
+		else
+			this.atomicCount--;
 		bodyFragment = modelFactory.atomicFragment(atomicNode.isAtom(),
 				bodyFragment, start, end);
 		return bodyFragment;
@@ -2089,12 +2098,25 @@ public class FunctionTranslator {
 				expression = modelFactory.booleanExpression(expression);
 		} else
 			expression = null;
+		if (this.atomCount > 0) {
+			Statement leaveAtom;
+
+			for (int i = 0; i < this.atomCount; i++) {
+				location = modelFactory.location(
+						modelFactory.sourceOfBeginning(returnNode), scope);
+				location.setLeaveAtomic(true);
+				leaveAtom = new CommonAtomBranchStatement(location.getSource(),
+						location, false);
+				atomicReleaseFragment.addNewStatement(leaveAtom);
+			}
+		}
 		if (this.atomicCount > 0) {
 			Statement leaveAtomic;
 
 			for (int i = 0; i < this.atomicCount; i++) {
 				location = modelFactory.location(
 						modelFactory.sourceOfBeginning(returnNode), scope);
+				location.setLeaveAtomic(false);
 				leaveAtomic = new CommonAtomicLockAssignStatement(
 						location.getSource(), location, false,
 						modelFactory.atomicLockVariableExpression(),
@@ -2580,15 +2602,15 @@ public class FunctionTranslator {
 
 		modelFactory.setCurrentScope(scope);
 		castExpression = translateExpressionNode(argumentNode, scope, true);
-		if (castType.isPointerType()
-				&& !castExpression.getExpressionType().isPointerType()
-				&& castExpression instanceof LHSExpression) {
-			result = modelFactory.castExpression(source, castType,
-					modelFactory.addressOfExpression(source,
-							(LHSExpression) castExpression));
-		} else
-			result = modelFactory.castExpression(source, castType,
-					castExpression);
+		castExpression = arrayToPointer(castExpression);
+		// if (castType.isPointerType()
+		// && !castExpression.getExpressionType().isPointerType()
+		// && castExpression instanceof LHSExpression) {
+		// result = modelFactory.castExpression(source, castType,
+		// modelFactory.addressOfExpression(source,
+		// (LHSExpression) castExpression));
+		// } else
+		result = modelFactory.castExpression(source, castType, castExpression);
 		return result;
 	}
 

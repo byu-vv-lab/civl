@@ -761,13 +761,23 @@ public class CommonEvaluator implements Evaluator {
 					.getResultType();
 
 			if (resultType != ResultType.YES) {
-				state = errorLogger.logError(expression.getSource(), state,
-						process, this.symbolicUtil.stateToString(state), claim,
-						resultType, ErrorKind.INVALID_CAST,
-						"Cast from non-zero integer to pointer");
-				eval.state = state;
-			}
-			eval.value = nullPointer;
+				if (((CIVLPointerType) castType).baseType().isVoidType())
+					eval.value = value;
+				else {
+					state = errorLogger.logError(expression.getSource(), state,
+							process, this.symbolicUtil.stateToString(state),
+							claim, resultType, ErrorKind.INVALID_CAST,
+							"Cast from non-zero integer to pointer");
+					eval.state = state;
+				}
+			} else
+				eval.value = nullPointer;
+			return eval;
+		} else if (argType.isPointerType() && castType.isIntegerType()) {
+			if (universe.equals(nullPointer, value).isTrue())
+				eval.value = universe.integer(0);
+			else
+				eval.value = value;
 			return eval;
 		} else if (argType.isPointerType() && castType.isPointerType()) {
 			// pointer to pointer: for now...no change.
