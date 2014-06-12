@@ -826,7 +826,8 @@ int pthread_mutex_lock(pthread_mutex_t *mutex){
           }
         }
       }
-      $atom{
+      $atomic{
+        $when(mutex->lock==0);
         mutex->lock = 1;
         mutex->owner = $self;
       }
