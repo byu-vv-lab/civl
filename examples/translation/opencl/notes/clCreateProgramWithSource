@@ -5,12 +5,12 @@ ToDo:
       How to make it so that we can go __global string [name]?
     How to convert to regular method?
     How to pass in a method as parameter in c?
-  
-  
+  Handling the length of lengths
+  strlen not supported
   Two paths:
     Turn into completely regular methods right now
       Have to deal with those types later
     Make structs/typedefs for them of kernel
       What to do about __global and __local? (also applies to the one above)
 Done:
-  
+  Returns a program

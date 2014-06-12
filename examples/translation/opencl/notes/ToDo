@@ -39,13 +39,15 @@ clCreateCommandQueue
   uses a cl_command_queue commands, takes 4 parameters
   uses &device_id and &err
   http://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clCreateCommandQueue.html
-  -in progress-
+  [x]
   
 clCreateProgramWithSource
   uses cl_program program, takes 5 parameters
   uses context
+  -in progress-
   
 clBuildProgram
+  -in progress-
 
 clGetProgramBuildInfo
 

@@ -10,8 +10,15 @@ $input int DEVICE_ID_BOUND;
 $assume 0 < DEVICE_ID && DEVICE_ID < DEVICE_ID_BOUND;
 
 
-  
-
+/*  
+ Gives back an int for the error code, fills devices with ids of devices
+ See cl.cvl for files
+ platform - The platform, can be NULL
+ device_type - Has the device type
+ num_entries - Is the max number of devices that can be filled
+ devices - A pointer that will contain the IDs
+ num_devices - Says how many devices were added, can be NULL
+*/
 int clGetDeviceIDs(cl_platform_id platform, 
   cl_device_type device_type, 
   cl_uint num_entries, 
@@ -33,10 +40,8 @@ int clGetDeviceIDs(cl_platform_id platform,
   {
     return CL_INVALID_VALUE;
   }
- 	*/
-  //device_type type a bitfield that somehow gets type of OpenCL device
-  //use the device types, look in openCLtypes and look for CL_DEVICE_TYPE_...
-
+  
+  //CIVL cannot pass this if block if not commented out
   /*
   if(device_type & (CL_DEVICE_TYPE_DEFAULT | CL_DEVICE_TYPE_CPU | 
     CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR | 
@@ -76,8 +81,15 @@ int clGetDeviceIDs(cl_platform_id platform,
 
 }
 
-
-
+/*
+  Creates the cl_context that will be used in later types to be made
+  properties - Context property names
+  num_devices - Number of devices
+  devices - Pointer to the devices from clGetDeviceIDs
+  pfn_notify - Callback function to report errors. Can be NULL
+  user_data - Part of pfn_notify. Can be NULL
+  errcode_ret - Returns proper error code.
+*/
 
 cl_context clCreateContext(const cl_context_properties  *properties,
                  cl_uint                       num_devices,
@@ -123,6 +135,12 @@ cl_context clCreateContext(const cl_context_properties  *properties,
    
 }
 
+/* Creates a cl_command_queue
+  context - The context created from clCreateContext
+  device - The pointer to IDs from clGetDeviceIDs
+  properties - Bitfield for properties, see cl.cvl
+  errcode_ret - Returns proper error code.
+*/
 cl_command_queue clCreateCommandQueue(cl_context context,
   cl_device_id device,
   cl_command_queue_properties properties,
@@ -145,10 +163,15 @@ cl_command_queue clCreateCommandQueue(cl_context context,
   cmd->errcode_ret = errcode_ret;
   
   return cmd;
-  
-  
 }
 
+/*Makes a program from context. Not quite like the original implementation
+  context - From clCreateContext
+  count - number of source codes for strings
+  strings - Array of chars that makes up code
+  lengths - string length, if NULL nulls the strings
+  errcode_ret - Returns proper error code
+*/
 cl_program clCreateProgramWithSource(cl_context context,
   cl_uint count,
   const char** strings,
@@ -156,6 +179,9 @@ cl_program clCreateProgramWithSource(cl_context context,
   cl_int * errcode_ret)
 {
   cl_int default_errcode_ret;
+  cl_program program;
+  
+  program = (cl_program)malloc(sizeof(_cl_program));
   
   if(!errcode_ret)
   {
@@ -163,9 +189,11 @@ cl_program clCreateProgramWithSource(cl_context context,
   }
   
   *errcode_ret = CL_SUCCESS;
-  //*errcode_ret = loadSources(count, strings, lengths);
+  //*errcode_ret = program->loadSources(count, strings, lengths);
+
   
-  //corrects 
+  //corrects lengths, not implemented fully yet
+  /*
   for (cl_uint i = 0; i < count; i++)
   {
     size_t len = 0;
@@ -177,19 +205,24 @@ cl_program clCreateProgramWithSource(cl_context context,
     }
     else
     {
-      len = strlen(data);
+      //len = strlen(data);
+      //strlen is not supported
     }
     
+    
     //remove trailing \0's, or null characters
-    while (len > 0 && data[len-1] == 0)
+    while (len > 0 && (data[len-1] == ))
     {
       len--;
     }
-    //merge strings? The assignment isn't used anywhere
-    //consider it later, if needed
     
   }
-  $assert (*errcode_ret != CL_SUCCESS);
+  */
+  program->context = context;
+  program->count = count;
+  program->strings = strings;
+  program->lengths = lengths;
+  $assert (*errcode_ret == CL_SUCCESS);
   //the original for loop can make *errcode_ret not CL_SUCCESS, this is a placeholder
   
   return (cl_program) program;
