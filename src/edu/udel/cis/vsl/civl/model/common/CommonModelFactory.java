@@ -2511,4 +2511,13 @@ public class CommonModelFactory implements ModelFactory {
 		return true;
 	}
 
+	@Override
+	public boolean isProcNull(CIVLSource source, SymbolicExpression procValue) {
+		int pid = extractIntField(source, procValue, zeroObj);
+
+		if (pid == -2)
+			return true;
+		return false;
+	}
+
 }

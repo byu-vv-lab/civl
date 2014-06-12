@@ -1557,4 +1557,17 @@ public interface ModelFactory {
 	StatementList statmentList(Statement stmt);
 
 	StatementList statmentList(Statement stmt1, Statement stmt2);
+
+	/**
+	 * Checks if the given process value equals to the $proc_null constant. An
+	 * error is reported if the given process value is not of $proc type.
+	 * 
+	 * @param source
+	 *            The source code element for error report.
+	 * @param procValue
+	 *            The process value to be checked.
+	 * @return True iff the given process value equals to the $proc_null
+	 *         constant.
+	 */
+	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
 }
