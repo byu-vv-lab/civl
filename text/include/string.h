@@ -1,10 +1,10 @@
 /* CIVL model of string.h */
 
-#ifdef __CIVLC__
+#ifdef __STRING__
 #else
-#include<civlc.h>
-#endif
+#define __STRING__
 #include<string-common.h>
+#include<civlc.h>
 
 /* Copies a region of memory */
 void* memcpy(void *p, void *q, const size_t size) {
@@ -14,3 +14,5 @@ void* memcpy(void *p, void *q, const size_t size) {
   }
   return p;
 }
+
+#endif

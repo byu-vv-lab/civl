@@ -1756,14 +1756,16 @@ public class CommonEvaluator implements Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateSystemGuard(State state, int pid,
-			SystemGuardExpression expression) throws UnsatisfiablePathConditionException {
+			SystemGuardExpression expression)
+			throws UnsatisfiablePathConditionException {
 		return getSystemGuard(expression.getSource(), state, pid,
 				expression.library(), expression.functionName(),
 				expression.arguments());
 	}
 
 	private Evaluation getSystemGuard(CIVLSource source, State state, int pid,
-			String library, String function, List<Expression> arguments) throws UnsatisfiablePathConditionException {
+			String library, String function, List<Expression> arguments)
+			throws UnsatisfiablePathConditionException {
 		LibraryEvaluator libEvaluator = this.libLoader.getLibraryEvaluator(
 				library, this, this.modelFactory, symbolicUtil);
 
@@ -2939,5 +2941,36 @@ public class CommonEvaluator implements Evaluator {
 	@Override
 	public SymbolicUtility symbolicUtility() {
 		return symbolicUtil;
+	}
+
+	@Override
+	public Evaluation getSubArray(CIVLSource source, State state,
+			String process, SymbolicExpression arrayPointer, int startIndex)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression oldArray;
+		NumericExpression offSet;
+		SymbolicCompleteArrayType arrayType;
+		NumericSymbolicConstant index;
+		SymbolicExpression arrayFunction;
+		SymbolicExpression result;
+
+		if (arrayPointer.type() instanceof SymbolicArrayType)
+			oldArray = arrayPointer;
+		else {
+			Evaluation eval;
+
+			arrayPointer = symbolicUtil.parentPointer(source, arrayPointer);
+			eval = dereference(source, state, process, arrayPointer, false);
+			state = eval.state;
+			oldArray = eval.value;
+		}
+		offSet = universe.integer(startIndex);
+		arrayType = (SymbolicCompleteArrayType) oldArray.type();
+		index = (NumericSymbolicConstant) universe.symbolicConstant(
+				universe.stringObject("i"), universe.integerType());
+		arrayFunction = universe.lambda(index,
+				universe.arrayRead(oldArray, universe.add(index, offSet)));
+		result = universe.arrayLambda(arrayType, arrayFunction);
+		return new Evaluation(state, result);
 	}
 }

@@ -104,7 +104,9 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		state = eval.state;
 		mutex = eval.value;
 		mutex_attr_pointer = universe.tupleRead(mutex, fourObject);
-		mutex_attr = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
+		eval = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
+		mutex_attr = eval.value;
+		state = eval.state;
 		mutex = universe.tupleWrite(mutex, twoObject, one);
 		mutex = universe.tupleWrite(mutex, oneObject, pidValue);
 		state = primaryExecutor.assign(mutexSource, state, process,

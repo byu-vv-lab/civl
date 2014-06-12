@@ -51,8 +51,8 @@ public class MPITranslationTest {
 
 	@Test
 	public void mpi_pi_send() {
-		assertTrue(ui.run("verify", filename("mpi_pi_send.c"),
-				"-input__NPROCS=3"));
+		assertTrue(ui.run("parse", filename("mpi_pi_send.c"),
+				"-input__NPROCS=3", "-debug"));
 	}
 
 	@Test

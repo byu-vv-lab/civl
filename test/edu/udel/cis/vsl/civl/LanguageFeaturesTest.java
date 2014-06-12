@@ -52,33 +52,14 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void assertNonNullPointer() throws ABCException {
-		assertTrue(ui.run("verify", filename("assertNonNullPointer.cvl")));
-	}
-
-	@Test
-	public void assertNullPointer() throws ABCException {
-		assertFalse(ui.run("verify", filename("assertNullPointer.cvl")));
-	}
-
-	@Test
-	public void assertPrintf() throws ABCException {
-		assertFalse(ui.run("verify", filename("assertPrintf.cvl")));
-	}
-
-	@Test
-	public void assert1() throws ABCException {
-		assertTrue(ui.run("verify", filename("assert1.cvl")));
-	}
-
-	@Test
 	public void assume() throws ABCException {
 		assertTrue(ui.run("verify", filename("assume.cvl")));
 	}
 
 	@Test
 	public void atomChooseBad() throws ABCException {
-		assertFalse(ui.run("verify", "-showStates", "-showModel", filename("atomChooseBad.cvl")));
+		assertFalse(ui.run("verify", "-showStates", "-showModel",
+				filename("atomChooseBad.cvl")));
 	}
 
 	@Test
@@ -117,10 +98,10 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void bitwise(){
+	public void bitwise() {
 		assertTrue(ui.run("verify", filename("bitwise.cvl")));
 	}
-	
+
 	@Test
 	public void breakStatement() throws ABCException {
 		assertTrue(ui.run("verify", filename("break.cvl")));
@@ -147,11 +128,6 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void bundleStructComponent() throws ABCException {
-		assertFalse(ui.run("verify", filename("bundleStructComponent.cvl")));
-	}
-
-	@Test
 	public void cAssert() throws ABCException {
 		assertFalse(ui.run("verify", filename("cAssert.cvl")));
 	}
@@ -169,23 +145,6 @@ public class LanguageFeaturesTest {
 	@Test
 	public void choose() throws ABCException {
 		assertTrue(ui.run("verify", filename("choose.cvl")));
-	}
-
-	@Test
-	public void chooseInt() throws ABCException {
-		assertTrue(ui.run("verify", filename("chooseInt.cvl")));
-	}
-
-	@Test
-	public void commBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("commBad.cvl")));
-	}
-
-	@Test
-	public void communicatorFeatures() {
-		assertTrue(ui.run("verify", filename("communicatorFeatures.cvl"),
-				"-inputNPROCS_BOUND=5", "-inputN_BOUND=3",
-				"-enablePrintf=false"));
 	}
 
 	@Test
@@ -216,11 +175,6 @@ public class LanguageFeaturesTest {
 	@Test
 	public void emptyWhen() throws ABCException {
 		assertTrue(ui.run("verify", filename("emptyWhen.cvl")));
-	}
-
-	@Test
-	public void exit() {
-		assertTrue(ui.run("verify", filename("exit.cvl")));
 	}
 
 	@Test
@@ -269,21 +223,6 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void memcpy() throws ABCException {
-		assertTrue(ui.run("verify", filename("memcpy.cvl")));
-	}
-
-	@Test
-	public void messageUnpackBad1() throws ABCException {
-		assertFalse(ui.run("verify", filename("messageUnpackBad1.cvl")));
-	}
-
-	@Test
-	public void messageUnpackBad2() throws ABCException {
-		assertFalse(ui.run("verify", filename("messageUnpackBad2.cvl")));
-	}
-
-	@Test
 	public void minimal() throws ABCException {
 		assertTrue(ui.run("verify", filename("minimal.cvl")));
 	}
@@ -307,16 +246,6 @@ public class LanguageFeaturesTest {
 	@Test
 	public void pointerAdd() throws ABCException {
 		assertTrue(ui.run("verify", filename("pointerAdd.cvl")));
-	}
-
-	@Test
-	public void printf() throws ABCException {
-		assertTrue(ui.run("verify", filename("printf.cvl")));
-	}
-
-	@Test
-	public void printfBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("printfBad.cvl")));
 	}
 
 	@Test
@@ -450,16 +379,6 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void civlExitBad() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlExitBad.cvl")));
-	}
-
-	@Test
-	public void civlBarrier() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlBarrier.cvl"), "-inputB=5"));
-	}
-
-	@Test
 	public void memoryLeak() throws ABCException {
 		assertFalse(ui.run("verify", filename("memoryLeak.cvl")));
 	}
@@ -470,17 +389,12 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void intIter() throws ABCException {
-		assertTrue(ui.run("verify", filename("intIter.cvl"), "-inputB=5"));
-	}
-	
-	@Test
 	public void comma() throws ABCException {
 		assertTrue(ui.run("verify", filename("comma.cvl"), "-inputn=5"));
 	}
-	
+
 	@Test
 	public void assignIntWtReal() {
-		assertFalse(ui.run("verify", filename("assignIntWtReal.cvl")));
+		assertTrue(ui.run("verify", filename("assignIntWtReal.cvl")));
 	}
 }

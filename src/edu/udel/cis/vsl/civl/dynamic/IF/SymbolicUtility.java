@@ -171,4 +171,6 @@ public interface SymbolicUtility {
 
 	StringBuffer charArrayToString(CIVLSource source,
 			SymbolicSequence<?> charArray, int startIndex, boolean forPrint);
+
+	int getArrayIndex(CIVLSource source, SymbolicExpression charPointer);
 }

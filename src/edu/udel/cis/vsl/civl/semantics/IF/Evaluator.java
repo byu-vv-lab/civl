@@ -239,4 +239,8 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 
 	SymbolicUtility symbolicUtility();
+
+	Evaluation getSubArray(CIVLSource source, State state, String process,
+			SymbolicExpression arrayPointer, int startIndex)
+			throws UnsatisfiablePathConditionException;
 }

@@ -1211,12 +1211,11 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	public StringBuffer charArrayToString(CIVLSource source,
 			SymbolicSequence<?> charArray, int startIndex, boolean forPrint) {
 		StringBuffer result = new StringBuffer();
-		int numChars;
-
-		numChars = charArray.size();// ignoring the '\0' at the end
-									// of the string.
-									// stringChars = new char[numChars -
-									// int_arrayIndex];
+		int numChars = charArray.size();// ignoring the '\0' at the
+													// end
+		// of the string.
+		// stringChars = new char[numChars -
+		// int_arrayIndex];
 		for (int j = startIndex; j < numChars; j++) {
 			SymbolicExpression charExpr = charArray.get(j);
 			Character theChar = universe.extractCharacter(charExpr);
@@ -1257,5 +1256,19 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public int getArrayIndex(CIVLSource source, SymbolicExpression charPointer) {
+		int int_arrayIndex;
+
+		if (charPointer.type() instanceof SymbolicArrayType) {
+			int_arrayIndex = 0;
+		} else {
+			ArrayElementReference arrayRef = (ArrayElementReference) getSymRef(charPointer);
+			NumericExpression arrayIndex = arrayRef.getIndex();
+			int_arrayIndex = extractInt(source, arrayIndex);
+		}
+		return int_arrayIndex;
 	}
 }

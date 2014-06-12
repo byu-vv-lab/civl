@@ -106,11 +106,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	public final static String STDIN = "CIVL_stdin";
 	public final static String STDERR = "CIVL_stderr";
 
-	// /**
-	// * Enable or disable printing. By default true, i.e., enable printing.
-	// */
-	// private boolean enablePrintf;
-
 	/**
 	 * The base type of the pointer type $filesystem; a structure type with
 	 * fields (0) scope, and (1) files.
