@@ -14,15 +14,20 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 
 public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
+	
+	private IntObject fourObject;
 
 	public LibpthreadExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
 			CIVLConfiguration civlConfig) {
 		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+		this.fourObject = universe.intObject(4);
 	}
 
 	@Override
@@ -84,10 +89,13 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		Evaluation eval;
+		Evaluation eval, eval1;
 		CIVLSource mutexSource = arguments[0].getSource();
 		SymbolicExpression mutex_pointer = argumentValues[0];
 		SymbolicExpression mutex;
+		SymbolicExpression mutex_attr;
+		SymbolicExpression mutex_attr_pointer;
+		NumericExpression mutex_type;
 		SymbolicExpression pidValue = modelFactory.processValue(pid);
 
 		// TODO: check the case for "return EOWNERDEAD".
@@ -95,11 +103,14 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 				mutex_pointer, false);
 		state = eval.state;
 		mutex = eval.value;
+		mutex_attr_pointer = universe.tupleRead(mutex, fourObject);
+		mutex_attr = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
 		mutex = universe.tupleWrite(mutex, twoObject, one);
 		mutex = universe.tupleWrite(mutex, oneObject, pidValue);
 		state = primaryExecutor.assign(mutexSource, state, process,
 				mutex_pointer, mutex);
 		if (lhs != null) {
+			
 			state = primaryExecutor.assign(state, pid, process, lhs, zero);
 		}
 		return state;

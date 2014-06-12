@@ -87,6 +87,7 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 		SymbolicExpression mutex_attr;
 		NumericExpression mutex_type;
 		NumericExpression mutex_lock;
+		NumericExpression mutex_robust;
 		SymbolicExpression mutex_owner;
 		int owner_id;// if(owner_id == pid)
 
@@ -99,6 +100,7 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 			return new Evaluation(state, this.trueValue);
 		mutex_owner = universe.tupleRead(mutex, oneObject);
 		owner_id = modelFactory.getProcessId(mutexSource, mutex_owner);
+		
 		mutex_attr_pointer = universe.tupleRead(mutex, fourObject);
 		eval = evaluator.dereference(mutexSource, state, process,
 				mutex_attr_pointer, false);
@@ -106,11 +108,26 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 		mutex_attr = eval.value;
 		mutex_type = (NumericExpression) universe.tupleRead(mutex_attr,
 				threeObject);
+		mutex_robust = (NumericExpression) universe.tupleRead(mutex_attr, zeroObject);
 		if (mutex_type.isZero())// PTHREAD_MUTEX_NORMAL
 		{// TODO
+			if(!mutex_lock.isZero()){
+				if(true)// TODO proc_null checking 
+				{
+					if(!mutex_robust.isOne())
+					{
+						return new Evaluation(state, this.trueValue);
+					}
+				}	
+				else{
+					if(owner_id == pid){
+						return new Evaluation(state, this.trueValue);
+					}
+				}
+			}
 
 		} else {
-			// TODO
+			return new Evaluation(state, this.trueValue);
 		}
 		return new Evaluation(state, this.falseValue);
 	}
