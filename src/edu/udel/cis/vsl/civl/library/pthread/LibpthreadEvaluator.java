@@ -46,7 +46,7 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 			try {
 				eval = evaluator.evaluate(state, pid, arguments.get(i));
 			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
+				// the error that caused the unsatisfiable path condition should
 				// already have been reported.
 				return new Evaluation(state, universe.falseExpression());
 			}
@@ -111,22 +111,30 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 		mutex_robust = (NumericExpression) universe.tupleRead(mutex_attr, zeroObject);
 		if (mutex_type.isZero())// PTHREAD_MUTEX_NORMAL
 		{// TODO
-			if(!mutex_lock.isZero()){
-				if(true)// TODO proc_null checking 
+			if(!mutex_lock.isZero())
+			{
+				if(owner_id==0)// TODO proc_null checking 
 				{
 					if(!mutex_robust.isOne())
 					{
 						return new Evaluation(state, this.trueValue);
 					}
 				}	
-				else{
-					if(owner_id == pid){
+				else
+				{
+					if(owner_id == pid)
+					{
 						return new Evaluation(state, this.trueValue);
 					}
 				}
 			}
-
-		} else {
+			else
+			{
+				return new Evaluation(state, this.trueValue);
+			}
+		} 
+		else
+		{
 			return new Evaluation(state, this.trueValue);
 		}
 		return new Evaluation(state, this.falseValue);

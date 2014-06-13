@@ -54,7 +54,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
-
+			
 			arguments[i] = statement.arguments().get(i);
 			eval = evaluator.evaluate(state, pid, arguments[i]);
 			argumentValues[i] = eval.value;
@@ -89,12 +89,14 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		Evaluation eval, eval1;
+		Evaluation eval;
 		CIVLSource mutexSource = arguments[0].getSource();
 		SymbolicExpression mutex_pointer = argumentValues[0];
 		SymbolicExpression mutex;
+		@SuppressWarnings("unused")
 		SymbolicExpression mutex_attr;
 		SymbolicExpression mutex_attr_pointer;
+		@SuppressWarnings("unused")
 		NumericExpression mutex_type;
 		SymbolicExpression pidValue = modelFactory.processValue(pid);
 
@@ -104,6 +106,10 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		state = eval.state;
 		mutex = eval.value;
 		mutex_attr_pointer = universe.tupleRead(mutex, fourObject);
+		mutexSource = arguments[0].getSource();
+		eval = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
+		state = eval.state;
+		mutex_attr = eval.value;
 		eval = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
 		mutex_attr = eval.value;
 		state = eval.state;
