@@ -38,6 +38,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode.BlockItemKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
@@ -130,7 +131,8 @@ public class AST2CIVL {
 		case "stdio-c.cvl":
 		case "stdio.cvl":
 		case "mpi.cvl":
-		case "pthread.cvh":
+		case "pthread-c.cvl":
+		case "pthread.cvl":
 			return;
 		default:
 			if (!results.containsKey(sourceFile))
@@ -236,6 +238,8 @@ public class AST2CIVL {
 		switch (kind) {
 		case ASSUME:
 			return assume2CIVL(prefix, (AssumeNode) statement);
+		case ATOMIC:
+			return atomic2CIVL(prefix, (AtomicNode) statement);
 		case COMPOUND:
 			return compoundStatement2CIVL(prefix,
 					(CompoundStatementNode) statement);
@@ -265,6 +269,18 @@ public class AST2CIVL {
 					"translating statement node of " + kind
 							+ " kind into CIVL code", statement.getSource());
 		}
+	}
+
+	private StringBuffer atomic2CIVL(String prefix, AtomicNode atomicNode) {
+		StringBuffer result = new StringBuffer();
+
+		result.append(prefix);
+		if (atomicNode.isAtom())
+			result.append("$atom\n");
+		else
+			result.append("$atomic\n");
+		result.append(statement2CIVL(prefix + indention, atomicNode.getBody()));
+		return result;
 	}
 
 	private StringBuffer goto2CIVL(String prefix, GotoNode go2) {

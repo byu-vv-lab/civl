@@ -197,6 +197,7 @@ public class CommonStateManager implements StateManager {
 		StateStatus stateStatus;
 		TraceStep traceStep;
 		String process;
+		int atomCount = 0;
 
 		assert transition instanceof Transition;
 		pid = ((Transition) transition).pid();
@@ -204,6 +205,8 @@ public class CommonStateManager implements StateManager {
 		process = "p" + processIdentifier + " (id = " + pid + ")";
 		traceStep = new CommonTraceStep(processIdentifier);
 		firstTransition = (Transition) transition;
+		if(state.getProcessState(pid).getLocation().enterAtom())
+			atomCount = 1;
 		state = executor.execute(state, pid, firstTransition);
 		if (printTransitions) {
 			printTransitionPrefix(oldState, processIdentifier);
@@ -211,7 +214,7 @@ public class CommonStateManager implements StateManager {
 					processIdentifier, false);
 		}
 		traceStep.addAtomicStep(new CommonAtomicStep(state, firstTransition));
-		for (stateStatus = singleEnabled(state, pid, 0, process); stateStatus.val; stateStatus = singleEnabled(
+		for (stateStatus = singleEnabled(state, pid, atomCount, process); stateStatus.val; stateStatus = singleEnabled(
 				state, pid, stateStatus.atomCount, process)) {
 			assert stateStatus.enabledTransition != null;
 			assert stateStatus.enabledStatus == EnabledStatus.DETERMINISTIC;
@@ -328,8 +331,12 @@ public class CommonStateManager implements StateManager {
 			pLocation = procState.getLocation();
 		assert pLocation != null;
 		enabled = enabler.enabledTransitionsOfProcess(state, pid);
-		if (pLocation.enterAtom())
+		if (pLocation.enterAtom()){
+			if(atomCount == 0 && !pLocation.isPurelyLocal())
+				return new StateStatus(false, null, 0,
+						EnabledStatus.UNSAFE);
 			atomCount++;
+			}
 		else if (pLocation.leaveAtom()) {
 			inAtom = true;
 			atomCount--;

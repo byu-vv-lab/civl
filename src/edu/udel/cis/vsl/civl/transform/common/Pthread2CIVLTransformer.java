@@ -1,10 +1,15 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
+import java.util.Arrays;
+
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
@@ -13,9 +18,15 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
 //TODO: add arguments to pthread_exit();
-//TODO: If the start_routine returns, the effect shall be as if there was an implicit call to pthread_exit() using the return value of start_routine as the exit status.
+//TODO: If the start_routine returns, the effect shall be as if there was an 
+//implicit call to pthread_exit() using the return value of start_routine as the exit status.
 
 public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
+
+	private final static String PTHREAD_EXIT = "pthread_exit";
+	
+	private final static String PTHREAD_EXIT_NEW = "_pthread_exit";
+
 	/* ************************** Public Static Fields *********************** */
 	/**
 	 * The code (short name) of this transformer.
@@ -67,10 +78,50 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		String name = function.getName();
 		TypeNode returnType = function.getTypeNode().getReturnType();
 
-		if (name.equals("main"))
+		if (name.equals("main")) {
+			process_pthread_exit(function, true);
 			return;
+		}
 		if (this.isVoidPointer(returnType)) {
+			process_pthread_exit(function, false);
 			function.getBody().addSequenceChild(this.returnNull());
+		}
+	}
+
+	/**
+	 * In main(), translate pthread_exit(arg) to pthread_exit(arg, true); in
+	 * other function, translate pthread_exit(arg) to pthread_exit(arg, false).
+	 * 
+	 * @param function
+	 */
+	private void process_pthread_exit(FunctionDefinitionNode function,
+			boolean isMain) {
+		for (ASTNode child : function.children()) {
+			if (child == null)
+				continue;
+			if (child instanceof FunctionCallNode) {
+				FunctionCallNode funcCall = (FunctionCallNode) child;
+				ExpressionNode funcName = funcCall.getFunction();
+
+				if (funcName instanceof IdentifierExpressionNode) {
+					IdentifierExpressionNode name = (IdentifierExpressionNode) funcName;
+					String nameString = name.getIdentifier().name();
+
+					if (nameString.equals(PTHREAD_EXIT)) {
+						ExpressionNode isMainArg = nodeFactory
+								.newBooleanConstantNode(source, isMain);
+						ExpressionNode oldArg = funcCall.getArgument(0);
+						SequenceNode<ExpressionNode> newArgs;
+
+						name.getIdentifier().setName(PTHREAD_EXIT_NEW);
+						oldArg.parent().removeChild(oldArg.childIndex());
+						newArgs = nodeFactory.newSequenceNode(source,
+								"Actual parameters",
+								Arrays.asList(oldArg, isMainArg));
+						funcCall.setArguments(newArgs);
+					}
+				}
+			}
 		}
 	}
 
