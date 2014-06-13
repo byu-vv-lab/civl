@@ -96,8 +96,6 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 		state = eval.state;
 		mutex = eval.value;
 		mutex_lock = (NumericExpression) universe.tupleRead(mutex, twoObject);
-		if (mutex_lock.isZero())
-			return new Evaluation(state, this.trueValue);
 		mutex_owner = universe.tupleRead(mutex, oneObject);
 		owner_id = modelFactory.getProcessId(mutexSource, mutex_owner);
 		
@@ -109,11 +107,11 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 		mutex_type = (NumericExpression) universe.tupleRead(mutex_attr,
 				threeObject);
 		mutex_robust = (NumericExpression) universe.tupleRead(mutex_attr, zeroObject);
-		if (mutex_type.isZero())// PTHREAD_MUTEX_NORMAL
+		if (mutex_type.isZero() || mutex_type == two)// PTHREAD_MUTEX_NORMAL
 		{// TODO
 			if(!mutex_lock.isZero())
 			{
-				if(owner_id==0)// TODO proc_null checking 
+				if(modelFactory.isProcNull(mutexSource, mutex_owner))// TODO proc_null checking 
 				{
 					if(!mutex_robust.isOne())
 					{

@@ -93,7 +93,7 @@ void *t1(void*arg)
       error();
     pthread_mutex_unlock(&m);
   }
-  return NULL;
+  pthread_exit(NULL, false);
 }
 
 void *t2(void*arg) 
@@ -111,7 +111,7 @@ void *t2(void*arg)
     }    
     pthread_mutex_unlock(&m);
   }
-  return NULL;
+  pthread_exit(NULL, false);
 }
 
 

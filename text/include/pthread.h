@@ -18,6 +18,7 @@ appropriate definitions are changed to input variables
 #include <assert.h>
 #include <stdbool.h>
 #include <pthread.cvl>
+int pthread_mutex_lock(pthread_mutex_t *mutex);
 #include <pthread-c.cvl>
 
 #endif

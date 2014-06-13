@@ -630,6 +630,7 @@ int pthread_join(pthread_t thread, void **value_ptr){
 int pthread_exit(void *value_ptr, _Bool isMain){
   if(isMain){
     for(int i = 0; i<_pool.len; i++)
+    if($proc_defined(_pool.threads[i]->thr))
       $wait(_pool.threads[i]->thr);
     $exit();
     return 0;
@@ -660,6 +661,7 @@ int pthread_detach(pthread_t thread);
   * @return Returns 0 upon successful completion, EOWNERDEAD upon termination of owner, 
   */
 
+/*
 int pthread_mutex_lock(pthread_mutex_t *mutex){
   $atomic{
     if (mutex->attr->type == PTHREAD_MUTEX_NORMAL){
@@ -718,7 +720,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex){
     return 0;
   }
 }
-
+*/
 /**
   * Takes in a mutex variable and acts similarly to pthread_mutex_lock except that 
   * if the mutex is locked, it will return immeditately. In the case of a recursive mutex, the count will

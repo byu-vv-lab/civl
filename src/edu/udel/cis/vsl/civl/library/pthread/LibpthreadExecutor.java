@@ -3,9 +3,12 @@ package edu.udel.cis.vsl.civl.library.pthread;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -93,11 +96,15 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		CIVLSource mutexSource = arguments[0].getSource();
 		SymbolicExpression mutex_pointer = argumentValues[0];
 		SymbolicExpression mutex;
-		@SuppressWarnings("unused")
 		SymbolicExpression mutex_attr;
 		SymbolicExpression mutex_attr_pointer;
-		@SuppressWarnings("unused")
+		SymbolicExpression mutex_owner;
+		NumericExpression mutex_lock;
 		NumericExpression mutex_type;
+		NumericExpression mutex_robust;
+		NumericExpression mutex_count;
+		NumericExpression tmp;
+		int owner_id;
 		SymbolicExpression pidValue = modelFactory.processValue(pid);
 
 		// TODO: check the case for "return EOWNERDEAD".
@@ -105,16 +112,64 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 				mutex_pointer, false);
 		state = eval.state;
 		mutex = eval.value;
+		mutex_count = (NumericExpression) universe.tupleRead(mutex, zeroObject);
+		mutex_lock = (NumericExpression) universe.tupleRead(mutex, twoObject);
+		mutex_owner = universe.tupleRead(mutex, oneObject);
+		owner_id = modelFactory.getProcessId(mutexSource, mutex_owner);
 		mutex_attr_pointer = universe.tupleRead(mutex, fourObject);
 		mutexSource = arguments[0].getSource();
 		eval = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
 		state = eval.state;
 		mutex_attr = eval.value;
-		eval = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
-		mutex_attr = eval.value;
-		state = eval.state;
-		mutex = universe.tupleWrite(mutex, twoObject, one);
-		mutex = universe.tupleWrite(mutex, oneObject, pidValue);
+		mutex_robust = (NumericExpression) universe.tupleRead(mutex, zeroObject);
+		mutex_type = (NumericExpression) universe.tupleRead(mutex_attr, threeObject);
+		
+		if(mutex_type.isZero() || mutex_type == two)
+		{
+			if(!mutex_lock.isZero())
+			{
+				if(modelFactory.isProcNull(mutexSource, mutex_owner))
+				{
+					if(!mutex_robust.isOne())
+					{
+						state = primaryExecutor.assign(state, pid, process, lhs, two);
+						throw new CIVLExecutionException(ErrorKind.DEADLOCK,
+								Certainty.CONCRETE, process, "Mutex lock owner"
+										+ " has terminated without releasing mutex", source);
+					}
+				}
+				else{
+					if(owner_id == pid){
+						throw new CIVLExecutionException(ErrorKind.OTHER,
+								Certainty.CONCRETE, process, "Relock attempted on mutex", source);
+					}
+				}
+			}
+			mutex = universe.tupleWrite(mutex, twoObject, one);
+			mutex = universe.tupleWrite(mutex, oneObject, pidValue);
+		}
+		else{
+			tmp = mutex_lock;
+			mutex = universe.tupleWrite(mutex, twoObject, one);
+			if(tmp.isZero()){
+				mutex = universe.tupleWrite(mutex, oneObject, pidValue);
+				mutex = universe.tupleWrite(mutex, zeroObject, one);
+			}
+			else{
+				if(owner_id==pid){
+					universe.add(mutex_count, one);
+					mutex = universe.tupleWrite(mutex, oneObject, pidValue);
+					mutex = universe.tupleWrite(mutex, zeroObject, mutex_count);
+				}
+				else{
+					throw new CIVLExecutionException(ErrorKind.OTHER,
+							Certainty.CONCRETE, process, "Current thread does not already own recursive mutex", source);
+				}
+			}
+			
+		}
+		
+
 		state = primaryExecutor.assign(mutexSource, state, process,
 				mutex_pointer, mutex);
 		if (lhs != null) {
