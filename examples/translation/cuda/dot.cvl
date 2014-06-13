@@ -1,6 +1,6 @@
 /* dot product of two arrays.
  *  Command line execution:
- *     
+ *  civl verify dot.cvl -inputN_BOUND=8 -inputTHREADS_PER_BLOCK=4 
  */
 #include <civlc.h>
 #include <stdio.h>
@@ -31,6 +31,7 @@ void gpu(){
       int cacheIndex = threadID;
       double temp = 0;
       $barrier barrier = $barrier_create($here, gbarrier, threadID);
+      int i;
       
       $atomic {
         while (tid < N) {
@@ -42,7 +43,7 @@ void gpu(){
       }
       // synchronize threads
       $barrier_call(barrier);
-      int i = threadsPerBlock/2;
+      i = threadsPerBlock/2;
       while (i != 0) {
         if (cacheIndex < i)
           cache[cacheIndex] += cache[cacheIndex + i];
@@ -63,10 +64,11 @@ void gpu(){
     }
     $gbarrier_destroy(gbarrier);
   }
- 
+  // spawns gpublock's
   for(int i = 0; i < blocksPerGrid; i++) {
     blocks[i] = $spawn gpuBlock(i);  
   }
+  // waits for gpublock's
   for(int i = 0; i < blocksPerGrid; i++) {
     $wait(blocks[i]);
   }
