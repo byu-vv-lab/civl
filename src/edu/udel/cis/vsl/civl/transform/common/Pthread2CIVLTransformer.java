@@ -24,7 +24,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 	private final static String PTHREAD_EXIT = "pthread_exit";
-	
+
 	private final static String PTHREAD_EXIT_NEW = "_pthread_exit";
 
 	/* ************************** Public Static Fields *********************** */
@@ -96,7 +96,11 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	 */
 	private void process_pthread_exit(FunctionDefinitionNode function,
 			boolean isMain) {
-		for (ASTNode child : function.children()) {
+		process_pthread_exit_worker(function, isMain);
+	}
+
+	private void process_pthread_exit_worker(ASTNode node, boolean isMain) {
+		for (ASTNode child : node.children()) {
 			if (child == null)
 				continue;
 			if (child instanceof FunctionCallNode) {
@@ -121,6 +125,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 						funcCall.setArguments(newArgs);
 					}
 				}
+			} else {
+				process_pthread_exit_worker(child, isMain);
 			}
 		}
 	}

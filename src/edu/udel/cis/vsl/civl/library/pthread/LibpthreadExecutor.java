@@ -4,11 +4,11 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -23,7 +23,7 @@ import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 
 public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
-	
+
 	private IntObject fourObject;
 
 	public LibpthreadExecutor(String name, Executor primaryExecutor,
@@ -57,7 +57,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
-			
+
 			arguments[i] = statement.arguments().get(i);
 			eval = evaluator.evaluate(state, pid, arguments[i]);
 			argumentValues[i] = eval.value;
@@ -68,9 +68,38 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			state = execute_pthread_mutex_lock(state, pid, process, lhs,
 					arguments, argumentValues, source);
 			break;
+		case "_add_thread":
+			state = execute_add_thread(state, pid, process, arguments,
+					argumentValues, source);
+			break;
 		default:
 		}
 		state = stateFactory.setLocation(state, pid, statement.target());
+		return state;
+	}
+
+	private State execute_add_thread(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression poolPointer = argumentValues[0];
+		SymbolicExpression threadPointer = argumentValues[1];
+		CIVLSource poolPointerSource = arguments[0].getSource();
+		SymbolicExpression pool;
+		Evaluation eval = evaluator.dereference(poolPointerSource, state,
+				process, poolPointer, false);
+		NumericExpression len;
+		SymbolicExpression threads;
+
+		pool = eval.value;
+		state = eval.state;
+		len = (NumericExpression) universe.tupleRead(pool, oneObject);
+		threads = universe.tupleRead(pool, zeroObject);
+		threads = universe.append(threads, threadPointer);
+		len = universe.add(len, one);
+		pool = universe.tupleWrite(pool, zeroObject, threads);
+		pool = universe.tupleWrite(pool, oneObject, len);
+		state = primaryExecutor.assign(poolPointerSource, state, process,
+				poolPointer, pool);
 		return state;
 	}
 
@@ -118,62 +147,66 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		owner_id = modelFactory.getProcessId(mutexSource, mutex_owner);
 		mutex_attr_pointer = universe.tupleRead(mutex, fourObject);
 		mutexSource = arguments[0].getSource();
-		eval = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
+		eval = evaluator.dereference(mutexSource, state, process,
+				mutex_attr_pointer, false);
 		state = eval.state;
 		mutex_attr = eval.value;
-		mutex_robust = (NumericExpression) universe.tupleRead(mutex, zeroObject);
-		mutex_type = (NumericExpression) universe.tupleRead(mutex_attr, threeObject);
-		
-		if(mutex_type.isZero() || mutex_type == two)
-		{
-			if(!mutex_lock.isZero())
-			{
-				if(modelFactory.isProcNull(mutexSource, mutex_owner))
-				{
-					if(!mutex_robust.isOne())
-					{
-						state = primaryExecutor.assign(state, pid, process, lhs, two);
-						throw new CIVLExecutionException(ErrorKind.DEADLOCK,
-								Certainty.CONCRETE, process, "Mutex lock owner"
-										+ " has terminated without releasing mutex", source);
+		mutex_robust = (NumericExpression) universe
+				.tupleRead(mutex, zeroObject);
+		mutex_type = (NumericExpression) universe.tupleRead(mutex_attr,
+				threeObject);
+
+		if (mutex_type.isZero() || mutex_type == two) {
+			if (!mutex_lock.isZero()) {
+				if (modelFactory.isProcNull(mutexSource, mutex_owner)) {
+					if (!mutex_robust.isOne()) {
+						state = primaryExecutor.assign(state, pid, process,
+								lhs, two);
+						throw new CIVLExecutionException(
+								ErrorKind.DEADLOCK,
+								Certainty.CONCRETE,
+								process,
+								"Mutex lock owner"
+										+ " has terminated without releasing mutex",
+								source);
 					}
-				}
-				else{
-					if(owner_id == pid){
+				} else {
+					if (owner_id == pid) {
 						throw new CIVLExecutionException(ErrorKind.OTHER,
-								Certainty.CONCRETE, process, "Relock attempted on mutex", source);
+								Certainty.CONCRETE, process,
+								"Relock attempted on mutex", source);
 					}
 				}
 			}
 			mutex = universe.tupleWrite(mutex, twoObject, one);
 			mutex = universe.tupleWrite(mutex, oneObject, pidValue);
-		}
-		else{
+		} else {
 			tmp = mutex_lock;
 			mutex = universe.tupleWrite(mutex, twoObject, one);
-			if(tmp.isZero()){
+			if (tmp.isZero()) {
 				mutex = universe.tupleWrite(mutex, oneObject, pidValue);
 				mutex = universe.tupleWrite(mutex, zeroObject, one);
-			}
-			else{
-				if(owner_id==pid){
+			} else {
+				if (owner_id == pid) {
 					universe.add(mutex_count, one);
 					mutex = universe.tupleWrite(mutex, oneObject, pidValue);
 					mutex = universe.tupleWrite(mutex, zeroObject, mutex_count);
-				}
-				else{
-					throw new CIVLExecutionException(ErrorKind.OTHER,
-							Certainty.CONCRETE, process, "Current thread does not already own recursive mutex", source);
+				} else {
+					throw new CIVLExecutionException(
+							ErrorKind.OTHER,
+							Certainty.CONCRETE,
+							process,
+							"Current thread does not already own recursive mutex",
+							source);
 				}
 			}
-			
+
 		}
-		
 
 		state = primaryExecutor.assign(mutexSource, state, process,
 				mutex_pointer, mutex);
 		if (lhs != null) {
-			
+
 			state = primaryExecutor.assign(state, pid, process, lhs, zero);
 		}
 		return state;

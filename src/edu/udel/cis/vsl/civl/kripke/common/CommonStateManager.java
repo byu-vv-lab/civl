@@ -36,6 +36,7 @@ import edu.udel.cis.vsl.gmc.TraceStepIF;
  * 
  */
 public class CommonStateManager implements StateManager {
+	
 	/* *************************** Instance Fields ************************* */
 
 	/**
@@ -50,63 +51,15 @@ public class CommonStateManager implements StateManager {
 
 	private CIVLConfiguration config;
 
-	// /**
-	// * The flag to turn on/off printing of debugging information.
-	// */
-	// private boolean debug = false;
-
 	/**
 	 * The maximal number of processes at a state, initialized as 0.
 	 */
 	private int maxProcs = 0;
 
-	// /**
-	// * The output stream to be used in this class to print states,
-	// transitions,
-	// * warnings, etc.
-	// */
-	// private PrintStream out = null;
-
-	// /**
-	// * Save states during search?
-	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#saveStatesO}
-	// */
-	// private boolean saveStates = true;
-
-	// /**
-	// * Print saved states (i.e., canonicalized states)?
-	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#showSavedStatesO}
-	// */
-	// private boolean showSavedStates = false;
-
-	// /**
-	// * Print all states (including states that are not saved)?
-	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#showStatesO}
-	// */
-	// private boolean showStates = false;
-
-	// /**
-	// * Print transitions?
-	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#showTransitionsO}
-	// */
-	// private boolean showTransitions = false;
-
-	// /**
-	// * Simplify state returned by nextState?
-	// * {@link edu.udel.cis.vsl.civl.config.IF.CIVLConstants#simplifyO}
-	// */
-	// private boolean simplify = true;
-
 	/**
 	 * The unique state factory used by the system.
 	 */
 	private StateFactory stateFactory;
-
-	// /**
-	// * Turn on/off verbose mode.
-	// * {@link edu.udel.cis.vsl.civl.run.IF.UserInterface#verboseO}
-	// */
-	// private boolean verbose = false;
 
 	/**
 	 * The object whose toString() method will be used to print the periodic

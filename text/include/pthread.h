@@ -19,6 +19,10 @@ appropriate definitions are changed to input variables
 #include <stdbool.h>
 #include <pthread.cvl>
 int pthread_mutex_lock(pthread_mutex_t *mutex);
+void _add_thread(__pthread_pool_t* pool, pthread_t* thread);
 #include <pthread-c.cvl>
+
+int pthread_exit(void *value_ptr);
+
 
 #endif
