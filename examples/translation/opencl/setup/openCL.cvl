@@ -1,7 +1,7 @@
 
 #include "cl.cvl"
-#include <stdlib.h>
-#include <string.h>
+#include<string.h>
+#include<stdlib.h>
 #include <stdio.h>
 
 $input int DEVICE_ID;
@@ -191,8 +191,8 @@ cl_program clCreateProgramWithSource(cl_context context,
   *errcode_ret = CL_SUCCESS;
   //*errcode_ret = program->loadSources(count, strings, lengths);
 
-  //corrects lengths, not implemented fully yet
-  /*
+  //corrects lengths
+  
   for (cl_uint i = 0; i < count; i++)
   {
     size_t len = 0;
@@ -204,19 +204,19 @@ cl_program clCreateProgramWithSource(cl_context context,
     }
     else
     {
-      //len = strlen(data);
-      //strlen is not supported
+      len = strlen(data);
     }
     
     
-    //remove trailing \0's, or null characters
-    while (len > 0 && (data[len-1] == ))
+    //remove trailing \0's, or null characters at EOF
+    //remember that '' is char, "" is string
+    while (len > 0 && (data[len-1] == '\0'))
     {
       len--;
     }
     
   }
-  */
+  
   program->context = context;
   program->count = count;
   program->strings = strings;
@@ -259,7 +259,7 @@ cl_program clCreateProgramWithBinaries(cl_context context,
   }
   
   *errcode_ret = CL_SUCCESS;
-  //*errcode_ret = program->loadSources(count, strings, lengths);
+  //*errcode_ret = program->loadBinaries(count, strings, lengths);
 
   
   for (cl_uint i = 0; i < num_devices; i++)
@@ -282,7 +282,7 @@ cl_program clCreateProgramWithBinaries(cl_context context,
       if(device_list[i] == context_devices[j])
       {
         found = true;
-        break;
+        return 0;
       }
     }
     
@@ -303,14 +303,14 @@ cl_program clCreateProgramWithBinaries(cl_context context,
 
 /* "Builds" a program executable from the source/binary
   program - The program, from clCreateProgramWithBinary or clCreateProgramWithContext
-  num_devices - 
-  device_list - 
-  options - 
-  pfn_notify - 
-  user_data - 
+  num_devices - Number of devices in device_list, can be 0
+  device_list - List of devices, can be NULL
+  options - Pointer describing build options, can be NULL
+  pfn_notify - Function pointer to notification routine, can be NULL and won't return until build is completed
+  user_data - argument for pfn_notify, can be NULL
 */
 /*
-cl_int clBuildProgram(cl_program program,
+void clBuildProgram(cl_program program,
   cl_uint num_devices,
   const cl_device_id *device_list,
   const char *options,
@@ -318,5 +318,14 @@ cl_int clBuildProgram(cl_program program,
   void *user_data)
 {
   
+  if (num_devices)
+  {
+    cl_uint context_num_devices = 0;
+    cl_device_id *context_devices;
+    cl_context *context = (cl_context *) program->context;
+    cl_int result;
+    
+    context_devices = (cl_device_id *) 
+  }
 }
 */

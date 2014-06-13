@@ -6,8 +6,21 @@
 // Simple compute kernel which computes the square of an input array 
 //CIVL can't turn a string into a function at this time
 
-const char *KernelSource = "__kernel void square(   __global float* input,   __global float* output,   const unsigned int count){   int i = get_global_id(0);   if(i < count)       output[i] = input[i] * input[i];}";
+//const char *KernelSource = "__kernel void square(   __global float* input,   __global float* output,   const unsigned int count){   int i = get_global_id(0);   if(i < count)       output[i] = input[i] * input[i];}";
 
+// Simple compute kernel which computes the square of an input array 
+//
+const char *KernelSource = "\n" \
+"__kernel void square(                                                       \n" \
+"   __global float* input,                                              \n" \
+"   __global float* output,                                             \n" \
+"   const unsigned int count)                                           \n" \
+"{                                                                      \n" \
+"   int i = get_global_id(0);                                           \n" \
+"   if(i < count)                                                       \n" \
+"       output[i] = input[i] * input[i];                                \n" \
+"}                                                                      \n" \
+"\n";
 /*
 void square(float* input, float* output, const unsigned int count)
 {

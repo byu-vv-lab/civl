@@ -47,7 +47,7 @@ clCreateProgramWithSource
   -IN PROGRESS-
   
 clCreateProgramWithBinary
-  -IN PROGRESS-
+  [x], see clCreateProgramWithSource
   
 clBuildProgram
   -IN PROGRESS-
@@ -76,3 +76,7 @@ clReleaseCommandQueue
 
 clReleaseContext
 
+flam naught shy stub
+bash
+
+Found a bug on concatenating strings with /
