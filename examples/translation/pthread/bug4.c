@@ -10,16 +10,16 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 /* Define and scope what needs to be seen by everyone */
 #define NUM_THREADS  3
-#define ITERATIONS 10
-#define THRESHOLD 12
+#define ITERATIONS 3
+#define THRESHOLD 6
 int count = 0;
 double finalresult=0.0;
 pthread_mutex_t count_mutex;
 pthread_cond_t count_condvar;
-
 
 void *sub1(void *t)
 {
@@ -57,7 +57,7 @@ void *sub2(void *t)
   double myresult=0.0;
 
   for (i=0; i<ITERATIONS; i++) {
-    for (j=0; j<100000; j++)
+    for (j=0; j<5; j++)
       myresult += sin(j) * tan(i);
     pthread_mutex_lock(&count_mutex);
     finalresult += myresult;
@@ -79,8 +79,6 @@ void *sub2(void *t)
     printf("sub2: thread=%ld  myresult=%e. Done. \n",tid,myresult);
   pthread_exit(NULL);
 }
-
-
 
 int main(int argc, char *argv[])
 {
@@ -112,7 +110,6 @@ int main(int argc, char *argv[])
   pthread_mutex_destroy(&count_mutex);
   pthread_cond_destroy(&count_condvar);
   pthread_exit (NULL);
-
 }
 
 
