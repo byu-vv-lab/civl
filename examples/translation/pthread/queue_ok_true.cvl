@@ -38,6 +38,7 @@ int init(QType *q)
   q->head=0;
   q->tail=0;
   q->amount=0;
+  return 0;
 }
 
 int nondet() 
@@ -154,7 +155,7 @@ void main()
   dequeue_flag=FALSE;
 
   init(&queue);
-  pthread_mutex_init(&m, PTHREAD_MUTEX_DEFAULT);
+  pthread_mutex_init(&m, 0);
   
   int tmp = empty(&queue);
   if (tmp != EMPTY) {

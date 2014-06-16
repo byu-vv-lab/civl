@@ -25,12 +25,9 @@ __pthread_pool_t _pool={.len = 0};
   */
 
 int pthread_attr_init(pthread_attr_t *attr){
-  attr->stacksize = 0;
-  attr->guardsize = 0;
   attr->detachstate = PTHREAD_CREATE_DETACHED;
   //attr->inheritsched = PTHREAD_EXPLICIT_SCHED;
   attr->contentionscope = PTHREAD_SCOPE_SYSTEM;
-  attr->stackaddr = NULL;
   //attr->schedpolicy = SCHED_OTHER;
   return 0;
 }
@@ -152,81 +149,6 @@ int pthread_attr_setscope(pthread_attr_t *attr, int contentionscope)
 int pthread_attr_getscope(const pthread_attr_t *attr, int *contentionscope)
 {
   *contentionscope = attr->contentionscope;
-  return 0;
-}
-
-
-/**
-  * Sets the stack address and stacksize fields of the attribute
-  * Corresponding specification: p. 1548-50
-  *
-  * @param *attr
-  *            The attribute to have it's stack address and stack size set
-  * @param *stackaddr
-  *            The address to which the attribute's stack address is set  
-  * @param stacksize
-  *            The size to which the attribute's stack size is set  
-  * @return Returns 0 upon successful completion
-  */
-
-int pthread_attr_setstack(pthread_attr_t *attr, void * stackaddr, size_t stacksize){ 
-  attr->stackaddr = stackaddr;
-  attr->stacksize = stacksize;
-  return 0;
-}
-
-/**
-  * Stores the stack address and size values in alternate locations
-  * Corresponding specification: p. 1548-50
-  *
-  * @param *attr
-  *            The attribute whose stack address and size are to be stored
-  * @param **stackaddr
-  *            The location at which the attribute's stackaddr is to be stored 
-  * @param *stacksize
-  *            The location at which the attribute's stacksize is to be stored   
-  * @return Returns 0 upon successful completion
-  */
-// Get the stack size and stack address of the specified pthread_attr_t
-// Corresponding specification p.1548
-int pthread_attr_getstack(const pthread_attr_t *attr, void ** stackaddr, size_t *stacksize)
-{
-  *stackaddr = attr->stackaddr;
-  *stacksize = attr->stacksize;
-  return 0;
-}
-
-/**
-  * Sets the guardsize field of the attribute
-  * Corresponding specification: p. 1537-9
-  *
-  * @param *attr
-  *            The attribute to have it's guardsize set
-  * @param guardsize
-  *            The guardsize to which the attribute's guardsize is set  
-  * @return Returns 0 upon successful completion
-  */
-  
-int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize)
-{
-  attr->guardsize = guardsize;
-  return 0;
-}
-
-/**
-  * Stores the guardsize value in an alternate location
-  * Corresponding specification: p. 1537-9
-  *
-  * @param *attr
-  *            The attribute whose guardsize is to be stored
-  * @param *guardsize
-  *            The location at which the attribute's guardsize is to be stored  
-  * @return Returns 0 upon successful completion
-  */
-
-int pthread_attr_getguardsize(const pthread_attr_t *attr, size_t *guardsize)
-{
-  *guardsize = attr->guardsize;
   return 0;
 }
 
@@ -564,9 +486,6 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
   thread->thr = $spawn start_routine(arg);
   if(attr == NULL){
     thread->attr = (pthread_attr_t *)malloc(sizeof(pthread_attr_t));
-    thread->attr->stackaddr = NULL;
-    thread->attr->stacksize = 0;
-    thread->attr->guardsize = 0;
     thread->attr->detachstate = 1;
     thread->attr->inheritsched = 0;
     thread->attr->contentionscope = 0;
@@ -574,9 +493,6 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
   }
   else{
     thread->attr = (pthread_attr_t *)malloc(sizeof(pthread_attr_t));
-    thread->attr->stackaddr = attr->stackaddr;
-    thread->attr->stacksize = attr->stacksize;
-    thread->attr->guardsize = attr->guardsize;
     thread->attr->detachstate = attr->detachstate;
     thread->attr->inheritsched = attr->inheritsched;
     thread->attr->contentionscope = attr->contentionscope;
@@ -667,62 +583,60 @@ int pthread_detach(pthread_t thread);
 
 /*
 int pthread_mutex_lock(pthread_mutex_t *mutex){
-  $atomic{
-    if (mutex->attr->type == PTHREAD_MUTEX_NORMAL){
-      if (mutex->lock != 0) {
-        if(mutex->owner == $proc_null){
-          if(mutex->attr->robust == PTHREAD_MUTEX_ROBUST){
-            $when(mutex->lock == 0);
-          }
-          else{
-            $assert($false);
-            return EOWNERDEAD;
-          }
-        }
-        else{
-          if(mutex->owner == $self){
-            $assert($false);
-            return 0;
-          }
-          else{
-            $when(mutex->lock == 0); 
-          }
-        }
-      }
+  $choose{
+    $when((mutex->attr->type == PTHREAD_MUTEX_NORMAL || mutex->attr->type == PTHREAD_MUTEX_ERRORCHECK) && mutex->lock != 0 && mutex->owner == $proc_null && mutex->attr->robust == PTHREAD_MUTEX_ROBUST && mutex->lock == 0)
+    {
       $atomic{
-        $when(mutex->lock==0);
         mutex->lock = 1;
+        mutex->count = 1;
         mutex->owner = $self;
-      }
-    } 
-    else {
-      int tmp = mutex->lock;
-      
-      mutex->lock = 1;
-      if (tmp == 0) { // Attempts lock and checks for whether lock is already locked
-        mutex->count = 1; 
-        mutex->owner = $self;
-      } 
-      else {
-        //Checks for ownership, otherwise returns error
-        if(mutex->owner == $self){
-          // Checks for recursive mutex, otherwise returns an error 
-          if (mutex->attr->type == PTHREAD_MUTEX_RECURSIVE) {
-            mutex->count++;
-          }
-          else {
-            $assert($false);
-            return 0;
-          }
-        }
-        else {
-          $assert($false, "ERROR: Relock attempted on non-recursive mutex\n");
-          return 0;
-        }
       }
     }
-    return 0;
+    $when((mutex->attr->type == PTHREAD_MUTEX_NORMAL || mutex->attr->type == PTHREAD_MUTEX_ERRORCHECK) && mutex->lock != 0 && mutex->owner != $proc_null && mutex->owner != $self && mutex->lock == 0)
+    {
+      $atomic{
+        mutex->lock = 1;
+        mutex->count = 1;
+        mutex->owner = $self;
+      }
+    }
+    $when((mutex->attr->type != PTHREAD_MUTEX_NORMAL && mutex->attr->type != PTHREAD_MUTEX_ERRORCHECK) && mutex->lock != 0 && mutex->owner != $self && mutex->owner != $proc_null && mutex->lock == 0)
+    {
+      $atomic{
+        mutex->lock = 1;
+        mutex->count = 1;
+        mutex->owner = $self;
+      }
+    }
+    $when((mutex->attr->type == PTHREAD_MUTEX_NORMAL || mutex->attr->type == PTHREAD_MUTEX_ERRORCHECK) && mutex->lock == 0 && mutex->owner == $proc_null)
+    {
+      $atomic{
+        mutex->lock = 1;
+        mutex->count = 1;
+        mutex->owner = $self;
+      }
+    }
+    $when((mutex->attr->type == PTHREAD_MUTEX_NORMAL || mutex->attr->type == PTHREAD_MUTEX_ERRORCHECK) && mutex->lock != 0 && mutex->owner == $proc_null && mutex->attr->robust != PTHREAD_MUTEX_ROBUST)
+    {
+      $assert($false, "Owner terminated without releasing mutex and was not robust");
+      return EOWNERDEAD;
+    }
+    $when((mutex->attr->type == PTHREAD_MUTEX_NORMAL || mutex->attr->type == PTHREAD_MUTEX_ERRORCHECK) && mutex->lock != 0 && mutex->owner != $proc_null && mutex->owner== $self)
+    {
+      $assert($false, "Attempting to relock locked lock");
+      return EDEADLK;
+    }
+    $when((mutex->attr->type != PTHREAD_MUTEX_NORMAL && mutex->attr->type != PTHREAD_MUTEX_ERRORCHECK) && mutex->lock != 0 && mutex->owner == $self)
+    {
+      mutex->count++;
+    }
+    $when((mutex->attr->type != PTHREAD_MUTEX_NORMAL && mutex->attr->type != PTHREAD_MUTEX_ERRORCHECK) && mutex->lock != 0 && mutex->owner != $self && mutex->owner == $proc_null && mutex->attr->robust != PTHREAD_MUTEX_ROBUST)
+    { 
+      $assert($false, "Attempting to relock locked lock");
+      return EDEADLK;
+    }
   }
+  return 0;
 }
 */
 /**
@@ -792,8 +706,6 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex){
 int pthread_mutex_unlock(pthread_mutex_t *mutex){
   $atomic{
     if (mutex->attr->type == 0 || mutex->attr->type == 2) {
-      int idx;
-      
       // Attempts unlock, if already unlocked, returns error
       if (mutex->lock == 0) {
         $assert($false, "Attempting to unlock unlocked lock\n");
@@ -808,9 +720,6 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex){
       //Checks for ownership of thread, if not, returns error
       if(mutex->owner == $self)
       {
-        //Checks for recursive mutex
-        _Bool tmp = !(mutex->attr->type == 1);
-        
         if (--mutex->count == 0){
           mutex->lock = 0;
           mutex->owner = $proc_null;
@@ -866,6 +775,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex){
   cond->proccount= cond->proccount+1;
   pthread_mutex_unlock(mutex);
   
+  cond->signal = false;
   $when(cond->signal);
   cond->signal = false;
   --cond->proccount;

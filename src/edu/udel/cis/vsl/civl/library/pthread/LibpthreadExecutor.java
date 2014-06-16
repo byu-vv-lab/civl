@@ -68,6 +68,10 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			state = execute_pthread_mutex_lock(state, pid, process, lhs,
 					arguments, argumentValues, source);
 			break;
+		case "pthread_mutex_unlock":
+			state = execute_pthread_mutex_unlock(state, pid, process, lhs,
+					arguments, argumentValues, source);
+			break;
 		case "_add_thread":
 			state = execute_add_thread(state, pid, process, arguments,
 					argumentValues, source);
@@ -207,6 +211,84 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 				mutex_pointer, mutex);
 		if (lhs != null) {
 
+			state = primaryExecutor.assign(state, pid, process, lhs, zero);
+		}
+		return state;
+	}
+	
+	/**
+	 * * typedef struct { int count; $proc owner; int lock; int prioceiling;
+	 * pthread_mutexattr_t *attr; } pthread_mutex_t;
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State execute_pthread_mutex_unlock(State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval;
+		CIVLSource mutexSource = arguments[0].getSource();
+		SymbolicExpression mutex_pointer = argumentValues[0];
+		SymbolicExpression mutex;
+		SymbolicExpression mutex_attr;
+		SymbolicExpression mutex_attr_pointer;
+		SymbolicExpression mutex_owner;
+		NumericExpression mutex_lock;
+		NumericExpression mutex_type;
+		NumericExpression mutex_count;
+		int owner_id;
+		
+		eval = evaluator.dereference(mutexSource, state, process,
+				mutex_pointer, false);
+		state = eval.state;
+		mutex = eval.value;
+		mutex_count = (NumericExpression) universe.tupleRead(mutex, zeroObject);
+		mutex_lock = (NumericExpression) universe.tupleRead(mutex, twoObject);
+		mutex_owner = universe.tupleRead(mutex, oneObject);
+		owner_id = modelFactory.getProcessId(mutexSource, mutex_owner);
+		mutex_attr_pointer = universe.tupleRead(mutex, fourObject);
+		mutexSource = arguments[0].getSource();
+		eval = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
+		state = eval.state;
+		mutex_attr = eval.value;
+		mutex_type = (NumericExpression) universe.tupleRead(mutex_attr, threeObject);
+		if(mutex_type.isZero()|| mutex_type == two){
+			if(mutex_lock.isZero()){
+				throw new CIVLExecutionException(ErrorKind.OTHER,
+						Certainty.CONCRETE, process, "Attempted to unlock already unlocked lock", source);
+			}
+			else{
+				mutex = universe.tupleWrite(mutex, twoObject, zero);
+				//TODO add proc_null assignment to owner
+			}
+		}
+		else{
+			if(owner_id==pid){
+				universe.subtract(mutex_count, one);
+				mutex = universe.tupleWrite(mutex, zeroObject, mutex_count);
+				if(mutex_count.isZero()){
+					mutex = universe.tupleWrite(mutex, twoObject, one);
+					//TODO add proc_null assignment to owner
+				}
+			}
+			else{
+				throw new CIVLExecutionException(ErrorKind.OTHER,
+						Certainty.CONCRETE, process, "Recursive mutex attempts unlock without being owner", source);
+			}
+			
+		}
+		state = primaryExecutor.assign(mutexSource, state, process,
+				mutex_pointer, mutex);
+		if (lhs != null) {
+			
 			state = primaryExecutor.assign(state, pid, process, lhs, zero);
 		}
 		return state;

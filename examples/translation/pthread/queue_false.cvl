@@ -41,6 +41,7 @@ int init(QType *q)
   q->head=0;
   q->tail=0;
   q->amount=0;
+  return 0;
 }
 
 int empty(QType *q) 
@@ -131,6 +132,7 @@ void *t1(void *arg)
     }
     pthread_mutex_unlock(&mutex);
   }	
+  return NULL;
 }
 
 void *t2(void *arg) 
@@ -152,7 +154,7 @@ void *t2(void *arg)
     }
     pthread_mutex_unlock(&mutex);
   }
-
+  return NULL;
 }
 
 void main() 
@@ -162,7 +164,7 @@ void main()
   enqueue_flag=TRUE;
   dequeue_flag=FALSE;
   
-  pthread_mutex_init(&mutex, PTHREAD_MUTEX_DEFAULT);
+  pthread_mutex_init(&mutex, 0);
   init(&queue);
   int tmp = empty(&queue);
   if (!tmp==EMPTY) {

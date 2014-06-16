@@ -55,7 +55,7 @@ void *sub1(void *t)
   finalresult += myresult;
   printf("sub1: thread=%d count now equals=%d myresult=%e. Done.\n",tid,count,myresult); // Removed l from %ld
   pthread_mutex_unlock(&count_mutex);
-  pthread_exit(NULL, false, NULL, 0); //Different parameters
+  _pthread_exit(NULL, false); //Different parameters
 }
 
 void *sub2(void *t) 
@@ -86,7 +86,7 @@ void *sub2(void *t)
     pthread_mutex_unlock(&count_mutex);
     }
     printf("sub2: thread=%d  myresult=%e. Done. \n",tid,myresult); // Removed l from %ld
-  pthread_exit(NULL, false, NULL, 0); //Different parameters
+  _pthread_exit(NULL, false); //Different parameters
 }
 
 int main(void)
@@ -118,7 +118,7 @@ int main(void)
   pthread_attr_destroy(&attr);
   pthread_mutex_destroy(&count_mutex);
   pthread_cond_destroy(&count_condvar);
-  pthread_exit (NULL, true, NULL, 0); //Different parameters
+  _pthread_exit (NULL, true); //Different parameters
 
 }
 

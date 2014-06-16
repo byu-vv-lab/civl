@@ -53,7 +53,7 @@ void *inc_count(void *t)
     /* Do some work so threads can alternate on mutex lock */
     //sleep(1);
   }
-  pthread_exit(NULL, false); //Different parameters
+  _pthread_exit(NULL, false); //Different parameters
 }
 
 void *watch_count(void *t) 
@@ -80,7 +80,7 @@ void *watch_count(void *t)
     }
   printf("watch_count(): thread %d Unlocking mutex.\n", my_id);
   pthread_mutex_unlock(&count_mutex);
-  pthread_exit(NULL, false); //Different parameters
+  _pthread_exit(NULL, false); //Different parameters
 }
 
 int main(void)
