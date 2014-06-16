@@ -13,8 +13,8 @@
 #include <stdlib.h>
 
 /* Define global data where everyone can see them */
-#define NUMTHRDS 8
-#define VECLEN 100000
+#define NUMTHRDS 3
+#define VECLEN 4
 int *a, *b; 
 long sum=0;
 
@@ -39,8 +39,6 @@ void *dotprod(void *arg)
 
    pthread_exit((void*) 0);
 }
-
-
 
 int main (int argc, char *argv[])
 {
