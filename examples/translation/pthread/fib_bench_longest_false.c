@@ -35,10 +35,14 @@ main(int argc, char **argv)
 
   pthread_create(&id1, NULL, t1, NULL);
   pthread_create(&id2, NULL, t2, NULL);
+    
+  pthread_join(id1, 0);
+  pthread_join(id2, 0);
 
   if (i >= 46368 || j >= 46368) {
-    ERROR:
-    goto ERROR;
+    $assert(false);
+    //ERROR:
+    //goto ERROR;
   }
 
   return 0;

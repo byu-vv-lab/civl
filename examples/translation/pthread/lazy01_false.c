@@ -9,6 +9,7 @@ void *thread1(void *arg)
   pthread_mutex_lock(&mutex);
   data++;
   pthread_mutex_unlock(&mutex);
+  pthread_exit(NULL);
 }
 
 
@@ -17,6 +18,7 @@ void *thread2(void *arg)
   pthread_mutex_lock(&mutex);
   data+=2;
   pthread_mutex_unlock(&mutex);
+  pthread_exit(NULL);
 }
 
 
@@ -25,9 +27,9 @@ void *thread3(void *arg)
   pthread_mutex_lock(&mutex);
   if (data >= 3){
     ERROR: goto ERROR;
-    ;
   }
-  pthread_mutex_unlock(&mutex);    
+  pthread_mutex_unlock(&mutex);
+  pthread_exit(NULL);
 }
 
 

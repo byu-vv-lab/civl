@@ -38,7 +38,6 @@ main(int argc, char **argv)
   pthread_join(id2, 0);
 
   printf("%d", i);
-  printf("%d", i);
     
   if (i >= 144 || j >= 144) {
     ERROR:

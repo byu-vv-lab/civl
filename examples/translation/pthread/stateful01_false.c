@@ -12,6 +12,7 @@ void * thread1(void * arg)
   pthread_mutex_lock(&ma);
   data2++;
   pthread_mutex_unlock(&ma);
+  pthread_exit(NULL);
 }
 
 
@@ -24,6 +25,7 @@ void * thread2(void * arg)
   pthread_mutex_lock(&ma);
   data2-=6;
   pthread_mutex_unlock(&ma);
+  pthread_exit(NULL);
 }
 
 
@@ -42,11 +44,10 @@ int main()
   
   pthread_join(t1, 0);
   pthread_join(t2, 0);
-
+    
   if (data1==16 && data2==5)
   {
-    ERROR: goto ERROR;
-      ;    
+  ERROR: goto ERROR;
   }
 
   return 0;
