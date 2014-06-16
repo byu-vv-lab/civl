@@ -13,8 +13,13 @@
 #include <stdlib.h>
 
 /* Define global data where everyone can see them */
+<<<<<<< .mine
+#define NUMTHRDS 8
+#define VECLEN 10
+=======
 #define NUMTHRDS 3
 #define VECLEN 4
+>>>>>>> .r1114
 int *a, *b; 
 long sum=0;
 
