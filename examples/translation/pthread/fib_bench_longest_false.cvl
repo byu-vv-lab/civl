@@ -24,10 +24,10 @@ void *t1(void* arg)
     
     for (k = 0; k < NUM; k++)
     {
-        printf("%d",k);
+        printf("%d",i);
         i+=j;
     }
-    pthread_exit(NULL, false, NULL, 0); //Different parameters
+    _pthread_exit(NULL, false); //Different parameters
 }
 
 void *t2(void* arg)
@@ -36,11 +36,10 @@ void *t2(void* arg)
     
     for (k = 0; k < NUM; k++)
 	{
-	    printf("%d",k);
         j+=i;
     }	
     	
-    pthread_exit(NULL, false, NULL, 0); //Different parameters
+    _pthread_exit(NULL, false); //Different parameters
 }
 
 int main(int argc, char **argv)

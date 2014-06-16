@@ -773,9 +773,9 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex){
   }
   
   cond->proccount= cond->proccount+1;
+  cond->signal = false;
   pthread_mutex_unlock(mutex);
   
-  cond->signal = false;
   $when(cond->signal);
   cond->signal = false;
   --cond->proccount;

@@ -17,6 +17,7 @@ void * thread1(void * arg)
 
   pthread_mutex_unlock(&m);
   pthread_cond_signal(&full);
+  pthread_exit(NULL);
 }
 
 
@@ -32,6 +33,7 @@ void * thread2(void * arg)
   pthread_mutex_unlock(&m);
 
   pthread_cond_signal(&empty);
+  pthread_exit(NULL);
 }
 
 
