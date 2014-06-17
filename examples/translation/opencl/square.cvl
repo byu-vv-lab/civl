@@ -22,6 +22,16 @@ const char *KernelSource = "\n" \
 "}                                                                      \n" \
 "\n";
 /*
+void square(float* input, float* output, int count)
+{
+  int i = get_global_id(0);
+  if(i < count)
+  {
+    output[i] = input[i] * input[i];
+  }
+}
+*/
+/*
 void square(float* input, float* output, const unsigned int count)
 {
   int i = get_global_id(0);
@@ -34,33 +44,41 @@ void square(float* input, float* output, const unsigned int count)
 void main()
 {
   int err;
-  int num_entries = 3;
+  int num_entries = 1;
   
   cl_device_id device_id;
   cl_context context;
   cl_command_queue commands; 
   cl_program program;
   cl_kernel kernel;
+
   
   //assumes you have hardware that works, does not check that part
   //fills the device_id with device ids, returns CL_SUCCESS if it works
+  
   err = clGetDeviceIDs(NULL,
   CL_DEVICE_TYPE_GPU,
   num_entries,
   &device_id,
   NULL);
+  //for non arrays, print using device_id[0], otherwise use *device_id[0];
   printf("devices is %d", device_id[0]);
   $assert (err == CL_SUCCESS);
   
+  //if not using an array, use &device_id
   //Returns a context, which has device information
   context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
   $assert (context != NULL);
   
   commands = clCreateCommandQueue(context, device_id, 0, &err);
   $assert (commands != NULL);
-
+  //if not using an array, use device_id, no []
   program = clCreateProgramWithSource(context, 1, (const char **) & KernelSource, NULL, &err);
   $assert (program != NULL);
   
-  //err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+  err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+  $assert (err == CL_SUCCESS);
+  
+  kernel = clCreateKernel(program, "square", &err);
+  $assert (kernel != NULL || err == CL_SUCCESS);
 }

@@ -4,16 +4,18 @@ typedef int bool;
 #define false 0
 
 
+
 typedef struct _cl_platform_id *    cl_platform_id;
-typedef struct _cl_device_id *      cl_device_id;
+//typedef struct _cl_device_id *      cl_device_id;
 //typedef struct _cl_context *        cl_context;
 //typedef struct _cl_command_queue *  cl_command_queue;
 typedef struct _cl_mem *            cl_mem;
 //typedef struct _cl_program *        cl_program;
-typedef struct _cl_kernel *         cl_kernel;
+//typedef struct _cl_kernel *         cl_kernel;
 typedef struct _cl_event *          cl_event;
 typedef struct _cl_sampler *        cl_sampler;
 
+typedef struct __kernel;
 
 typedef unsigned int        cl_uint;
 typedef signed   int        cl_int;
@@ -82,7 +84,14 @@ typedef cl_uint             cl_event_info;
 typedef cl_uint             cl_command_type;
 typedef cl_uint             cl_profiling_info;
 
-
+typedef struct
+{
+  cl_context_info param_name;
+  size_t param_value_size;
+  void * param_value;
+  size_t * param_value_size_ret;
+} _cl_device_id;
+typedef struct _cl_device_id *      cl_device_id;
 
 typedef struct
 {
@@ -119,6 +128,13 @@ typedef struct
 }
 _cl_program;
 typedef _cl_program* cl_program;
+
+typedef struct
+{
+  const char * kernel_name;
+  cl_int * errcode_ret;
+} _cl_kernel;
+typedef _cl_kernel* cl_kernel;
 
 /*
 typedef struct _cl_image_format {

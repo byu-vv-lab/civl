@@ -22,7 +22,7 @@ methods are externs
 clGetDeviceIDs
   uses int err, takes 5 parameters
   http://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clGetDeviceIDs.html
-  -IN PROGRESS-
+  [x]
   
   cl_int clGetPlatformIDs(	cl_uint num_entries,
  	cl_platform_id *platforms,
@@ -50,33 +50,54 @@ clCreateProgramWithBinary
   [x], see clCreateProgramWithSource
   
 clBuildProgram
-  -IN PROGRESS-
+  [x]
 
-clGetProgramBuildInfo
+//clGetProgramBuildInfo
 
 clCreateKernel
+[x]
 
 clCreateBuffer
+[]
 
 clEnqueueWriteBuffer
+[]
 
 clSetKernelArg
+[]
 
 clGetKernelWorkGroupInfo
+[]
 
 clEnqueueReadBuffer
+[]
 
 clReleaseMemObject
+[]
 
 clReleaseProgram
+[]
 
 clReleaseKernel
+[]
 
 clReleaseCommandQueue
+[]
 
 clReleaseContext
+[]
+
+Kernel code changes
+[6/17/14, 12:34:48 PM] Jean Jacques Rousseau: oh, right
+[6/17/14, 12:35:48 PM] Jean Jacques Rousseau: although, I think I found it
+[6/17/14, 12:36:04 PM] Jean Jacques Rousseau: this Comm is a struct, and one of the fields is storing the rank
+[6/17/14, 12:36:12 PM] Jean Jacques Rousseau: when you make it, put in the rank yourself
 
 flam naught shy stub
 bash
+Done: clGetDeviceIDs, clCreateKernel
 
-Found a bug on concatenating strings with /
+ToDo:
+
+Problems:
+Alterations to clGetDeviceIDs, slight problems with structs and pointers combined

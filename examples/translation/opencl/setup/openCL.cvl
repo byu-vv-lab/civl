@@ -1,3 +1,5 @@
+//NOTE: anything to do with program is probably partially useless
+//The "kernel" text cannot be used, they are vestigal structures
 
 #include "cl.cvl"
 #include<string.h>
@@ -9,6 +11,8 @@ $input int DEVICE_ID_BOUND;
 
 $assume 0 < DEVICE_ID && DEVICE_ID < DEVICE_ID_BOUND;
 
+//kernels
+//int get_global_id
 
 /*  
  Gives back an int for the error code, fills devices with ids of devices
@@ -22,8 +26,8 @@ $assume 0 < DEVICE_ID && DEVICE_ID < DEVICE_ID_BOUND;
 int clGetDeviceIDs(cl_platform_id platform, 
   cl_device_type device_type, 
   cl_uint num_entries, 
-  cl_device_id *devices, 
-  cl_uint *num_devices)
+  cl_device_id * devices,
+  cl_uint * num_devices)
   {
   //$assume device_type == CL_DEVICE_TYPE_DEFAULT;
   int i = 0;
@@ -53,7 +57,6 @@ int clGetDeviceIDs(cl_platform_id platform,
       if(devices)
       {
         devices[0] = (cl_device_id)(&DEVICE_ID);
-        //how to say "use anything"?
         i++;
       }
       else
@@ -76,7 +79,6 @@ int clGetDeviceIDs(cl_platform_id platform,
   //*devices list of devices found, use
   //cl_device_id device_id;
   //&device_id
- 	
   return CL_SUCCESS;
 
 }
@@ -166,6 +168,7 @@ cl_command_queue clCreateCommandQueue(cl_context context,
 }
 
 /*Makes a program from context. Not quite like the original implementation
+  Note that the strings part is useless, that part cannot be used in CIVL
   context - From clCreateContext
   count - number of source codes for strings
   strings - Array of chars that makes up code
@@ -309,8 +312,8 @@ cl_program clCreateProgramWithBinaries(cl_context context,
   pfn_notify - Function pointer to notification routine, can be NULL and won't return until build is completed
   user_data - argument for pfn_notify, can be NULL
 */
-/*
-void clBuildProgram(cl_program program,
+
+cl_int clBuildProgram(cl_program program,
   cl_uint num_devices,
   const cl_device_id *device_list,
   const char *options,
@@ -325,7 +328,57 @@ void clBuildProgram(cl_program program,
     cl_context *context = (cl_context *) program->context;
     cl_int result;
     
-    context_devices = (cl_device_id *) 
+    context_devices = (cl_device_id *) malloc(context_num_devices * sizeof(cl_device_id));
+    
+    if(result != CL_SUCCESS)
+    {
+      return result;
+    }
+    
+    for (int i = 0; i < num_devices; i++)
+    {
+      bool found = false;
+      
+      for (int j = 0; j < context_num_devices; j++)
+      {
+        if (device_list[i] == context_devices[j])
+        {
+          found = true;
+          break;
+        }
+      }
+      if (!found)
+      {
+        return CL_INVALID_DEVICE;
+      }
+    }
+    
+    
   }
+  return CL_SUCCESS;
+  
 }
+/* 
+  program - program from clCreateProgramWithX
+  kernel_name - name of the kernel, should be the same as the method or else
+  errcode_ret - Returns proper error code
 */
+cl_kernel clCreateKernel(cl_program program,
+  const char * kernel_name,
+  cl_int * errcode_ret)
+{
+  cl_int dummy_errcode;
+  
+  if (!errcode_ret)
+  {
+    errcode_ret = &dummy_errcode;
+  }
+  
+  cl_kernel kernel = (cl_kernel)malloc(sizeof(_cl_kernel));
+  
+  kernel->kernel_name = kernel_name;
+  kernel->errcode_ret = errcode_ret;
+  
+  return (cl_kernel)kernel;
+}
+
