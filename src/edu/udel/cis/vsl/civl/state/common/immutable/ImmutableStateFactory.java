@@ -804,7 +804,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 	@Override
 	public boolean lockedByAtomic(State state) {
-		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0, 0);
+		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0,
+				modelFactory.atomicLockVariableExpression().variable().vid());
 		int atomicPid = modelFactory.getProcessId(modelFactory.systemSource(),
 				symbolicAtomicPid);
 
