@@ -103,7 +103,7 @@ public class ImmutableProcessState implements ProcessState {
 	private boolean hashed = false;
 
 	/**
-	 * The process ID (pid).
+	 * The PID.
 	 */
 	private int pid;
 
@@ -302,7 +302,8 @@ public class ImmutableProcessState implements ProcessState {
 	 * according to the given map.
 	 * 
 	 * @param oldToNew
-	 *            an array which maps old dyscope IDs to their new values
+	 *            an array which maps old dyscope IDs to their new values, i.e.,
+	 *            <code>oldToNew[oldId] = newId</code>.
 	 * @return an ImmutableProcessState which is equivalent to this one except
 	 *         that the dyscopeIDs in the call stack entries have been replaced
 	 *         with new values according to the given map
@@ -349,6 +350,8 @@ public class ImmutableProcessState implements ProcessState {
 
 	@Override
 	public int getDyscopeId() {
+		if (callStack.length == 0)
+			return -1;
 		return callStack[0].scope();
 	}
 
