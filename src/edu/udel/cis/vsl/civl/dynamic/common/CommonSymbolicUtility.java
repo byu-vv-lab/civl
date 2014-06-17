@@ -1187,8 +1187,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			if (varName.equals(ModelFactory.HEAP_VAR) && value.isNull()) {
 				continue;
 			} else if (varName.equals(ModelFactory.ATOMIC_LOCK_VARIABLE)
-					&& modelFactory.isProcessDefined(variable.getSource(),
-							value).isFalse()) {
+					&& (value.isNull() || modelFactory.isProcessDefined(variable.getSource(),
+							value).isFalse())) {
 				continue;
 			}
 			result.append(prefix + "| | " + variable.name() + " = ");
