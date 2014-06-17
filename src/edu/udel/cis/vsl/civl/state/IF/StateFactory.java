@@ -7,7 +7,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.CommonModelFactory;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -60,14 +59,14 @@ public interface StateFactory {
 	 *            any non-null CIVL state
 	 * @return the canonical version of the given state
 	 */
-	State canonic(State state) throws CIVLStateException ;
+	State canonic(State state) throws CIVLStateException;
 
 	/**
 	 * Returns the canonic, initial state for a CIVL Model.
 	 * 
 	 * @return the initial state
 	 */
-	State initialState(Model model) throws CIVLStateException ;
+	State initialState(Model model) throws CIVLStateException;
 
 	/**
 	 * Updates the value assigned to a variable in the state. Specifically,
@@ -79,7 +78,7 @@ public interface StateFactory {
 	 * @param variable
 	 *            The variable to update
 	 * @param pid
-	 *            The pid of the process containing the variable
+	 *            The PID of the process containing the variable
 	 * @param value
 	 *            The new value to be assigned to the variable
 	 * @return A new state that is the old state modified by updating the value
@@ -89,13 +88,15 @@ public interface StateFactory {
 			SymbolicExpression value);
 
 	/**
+	 * <p>
 	 * Updates the value assigned to a variable in the state. Specifically,
 	 * returns a state which is equivalent to the given one, except that the
 	 * value assigned to the specified variable is replaced by the given value.
-	 * 
+	 * </p>
+	 * <p>
 	 * In this version of the method, the variable is specified by its dynamic
 	 * scope ID and variable ID.
-	 * 
+	 * </p>
 	 * 
 	 * @param state
 	 *            The old state
@@ -116,6 +117,7 @@ public interface StateFactory {
 			SymbolicExpression value);
 
 	/**
+	 * <p>
 	 * Adds a new process. The new process is created and one entry is pushed
 	 * onto its call stack. That entry will have a dynamic scope whose parent is
 	 * determined by the calling process (the process that is executing the
@@ -123,12 +125,14 @@ public interface StateFactory {
 	 * parent dynamic scope is computed by starting with the current dynamic
 	 * scope of the caller, and working up the parent chain, stopping at the
 	 * first dynamic scope whose static scope matches the containing scope of
-	 * the function. If no such dyanmic scope is found in the chain, an
+	 * the function. If no such dynamic scope is found in the chain, an
 	 * IllegalArgumentException is thrown. Hence the calling process must have a
 	 * non-empty call stack.
-	 * 
-	 * The PID of the new process will be state.numProcs(), where state is the
-	 * pre-state (the given state), not the new state.
+	 * </p>
+	 * <p>
+	 * The PID of the new process will be {@link State#numProcs()}, where state
+	 * is the pre-state (the given state), not the new state.
+	 * </p>
 	 * 
 	 * @param state
 	 *            The old state.
@@ -137,7 +141,7 @@ public interface StateFactory {
 	 * @param arguments
 	 *            The arguments to this function call.
 	 * @param callerPid
-	 *            the pid of the process that is creating the new process
+	 *            the PID of the process that is creating the new process
 	 * 
 	 * @return A new state that is the old state modified by adding a process
 	 *         whose location is the start location of the function and with a
@@ -169,7 +173,7 @@ public interface StateFactory {
 	 * @param state
 	 *            The old state
 	 * @param pid
-	 *            The process ID
+	 *            The PID
 	 * @return A new state that is the same as the old state with the process
 	 *         state set to null
 	 */
@@ -187,7 +191,7 @@ public interface StateFactory {
 	 * @param state
 	 *            The old state.
 	 * @param pid
-	 *            The pid of the process making the move.
+	 *            The PID of the process making the move.
 	 * @param location
 	 *            The target location.
 	 * @return A new state that is the same as the old state with the given
@@ -204,7 +208,7 @@ public interface StateFactory {
 	 * @param state
 	 *            The old state
 	 * @param pid
-	 *            The pid of the process making the call
+	 *            The PID of the process making the call
 	 * @param function
 	 *            The function being called
 	 * @param arguments
@@ -223,7 +227,7 @@ public interface StateFactory {
 	 * @param state
 	 *            The old state.
 	 * @param pid
-	 *            The pid of the process returning from a call.
+	 *            The PID of the process returning from a call.
 	 * @return A new state that is the same as the old state but with the call
 	 *         stack for the given process popped.
 	 */
@@ -287,19 +291,19 @@ public interface StateFactory {
 	 * Checks if any process at the state is holding the atomic lock, i.e, the
 	 * process is executing some atomic blocks.
 	 * <p>
-	 * This information is maintained as a global variable
-	 * {@link CommonModelFactory#ATOMIC_LOCK_VARIABLE} of $proc type in the root
-	 * scope in the CIVL model (always with index 0), and it gets automatically
-	 * updated when process id's are renumbered.
+	 * This information is maintained as a global variable of <code>$proc</code>
+	 * type in the root scope in the CIVL model (always with index 0), and it
+	 * gets automatically updated when process id's are renumbered.
+	 * </p>
 	 * 
 	 * @param state
 	 *            The state to be checked
-	 * @return True iff the value of the variable $atomicLock is not undefined.
+	 * @return True iff the value of the variable atomic lock is not undefined.
 	 */
 	boolean lockedByAtomic(State state);
 
 	/**
-	 * Returns the Id of the process that holds the atomic lock at a certain
+	 * Returns the PID of the process that holds the atomic lock at a certain
 	 * state
 	 * 
 	 * @param state
@@ -310,20 +314,22 @@ public interface StateFactory {
 	int processInAtomic(State state);
 
 	/**
-	 * Declares that the process with the given pid now owns the atomic lock.
+	 * Declares that the process with the given PID now owns the atomic lock.
+	 * Precondition: no process is holding the atomic lock in the given state.
 	 * 
 	 * @param state
 	 *            any non-null CIVL state
 	 * @param pid
-	 *            The pid of the process that is going to take the atomic lock
-	 * @return a state equivalent to given one except that process pid now owns
+	 *            The PID of the process that is going to take the atomic lock
+	 * @return a state equivalent to given one except that process PID now owns
 	 *         the atomic lock
 	 */
 	State getAtomicLock(State state, int pid);
 
 	/**
 	 * Releases the atomic lock, by updating the atomic lock variable with the
-	 * undefined process value.
+	 * undefined process value. If atomic lock of the given state is already
+	 * released, this is a no op.
 	 * 
 	 * @param state
 	 *            any non-null CIVL state
@@ -333,20 +339,22 @@ public interface StateFactory {
 	State releaseAtomicLock(State state);
 
 	/**
-	 * Sets the process state assigned to the given PID to the given
-	 * ProcessState value.
 	 * <p>
-	 * Precondition: <code>p.pid() == pid</code>.
+	 * Updates the state by replacing the process state with the given one where
+	 * the PID of the old process state is the same as the given process state.
+	 * </p>
+	 * <p>
+	 * Precondition: the PID of the given process state should be in [0,
+	 * numProcs-1].
+	 * </p>
 	 * 
 	 * @param state
 	 *            A non-null CIVL state
 	 * @param processState
 	 *            The process state to assign to PID
-	 * @param pid
-	 *            The process id of the process to be updated
-	 * @return The new state after updating the process with the specified id
+	 * @return The new state after updating the process with the specified PID
 	 */
-	State setProcessState(State state, ProcessState processState, int pid);
+	State setProcessState(State state, ProcessState processState);
 
 	/**
 	 * Checks if one dyscope is strictly the descendant of the other (not equal
@@ -355,24 +363,26 @@ public interface StateFactory {
 	 * @param state
 	 *            The current state.
 	 * @param ancestor
-	 *            The ID of the ancestor scope.
+	 *            The ID of the ancestor dyscope.
 	 * @param descendant
-	 *            The ID of the descendant scope.
-	 * @return True iff ancestor scope is really an ancestor of the descendant
-	 *         scope and they must not be equal to each other.
+	 *            The ID of the descendant dyscope.
+	 * @return True iff ancestor dyscope is really an ancestor of the descendant
+	 *         dyscope and they must not be equal to each other.
 	 */
-	boolean isDesendantOf(State state, int ancestor, int descendant);
+	boolean isDescendantOf(State state, int ancestor, int descendant);
 
 	/**
-	 * Computes the lowest common ancestor of two given scopes.
+	 * Computes the lowest common ancestor of two given dyscopes. The returned
+	 * value is always a dyscope ID.
 	 * 
 	 * @param state
 	 *            The current state.
 	 * @param one
-	 *            One dynamic scope.
+	 *            One dyscope.
 	 * @param another
 	 *            Another dynamic scope.
-	 * @return The lowest common ancestor of the two given scopes.
+	 * @return The dyscope ID of the lowest common ancestor of the two given
+	 *         dyscopes.
 	 */
 	int lowestCommonAncestor(State state, int one, int another);
 }

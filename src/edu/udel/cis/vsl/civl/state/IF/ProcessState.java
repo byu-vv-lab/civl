@@ -44,7 +44,7 @@ public interface ProcessState {
 
 	/**
 	 * The ID of the dynamic scope of the top frame on the call stack. Undefined
-	 * behavior if call stack is empty
+	 * behavior if call stack is empty.
 	 * 
 	 * @return the dyscope id of the dyscope on the top frame of the call stack
 	 */
@@ -80,13 +80,6 @@ public interface ProcessState {
 	 * @return iterator from bottom to top
 	 */
 	Iterator<? extends StackEntry> bottomToTopIterator();
-
-	/**
-	 * Determines whether the process state is "purely local". This means: TODO
-	 * 
-	 * @return true iff this process state is purely local
-	 */
-	boolean isPurelyLocalProc();
 
 	/**
 	 * Prints a human-readable form of this process state.

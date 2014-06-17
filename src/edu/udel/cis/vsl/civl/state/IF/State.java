@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
+import java.io.PrintStream;
+
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -19,11 +21,10 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * hashCode methods. Those methods should depend only on the three intrinsic
  * data listed above.
  * 
- * States may be mutable or immutable (or something in between). The contract
- * for the state modules does not specify this. However, states must supply a
- * "commit" method. After invoking this method, the state must be essentially
- * immutable, which means its intrinsic data (and therefore hash code) cannot
- * change.
+ * States should be immutable (or something in between). The contract for the
+ * state modules does not specify this. However, states must supply a "commit"
+ * method. After invoking this method, the state must be essentially immutable,
+ * which means its intrinsic data (and therefore hash code) cannot change.
  * 
  * 
  * The processes and dynamic scopes are ordered within any one State. However
@@ -54,11 +55,6 @@ public interface State {
 	 * @return string canonicId:instanceId
 	 */
 	String identifier();
-
-	/**
-	 * Makes this state immutable (if it is not already).
-	 */
-	void commit();
 
 	/**
 	 * Returns the number of dynamic scopes in this state.
@@ -132,13 +128,43 @@ public interface State {
 	 */
 	int getParentId(int scopeId);
 
+	/**
+	 * Given a process ID and a variable, returns the first dynamic scope ID
+	 * reachable from the given process.
+	 * 
+	 * @param pid
+	 *            The ID of the process whose current dynamic scope is the
+	 *            starting point of the searching.
+	 * @param variable
+	 *            The variable to be searched for.
+	 * @return The dynamic scope reachable from the process whose static scope
+	 *         is the scope of the given variable.
+	 */
 	int getScopeId(int pid, Variable variable);
 
+	/**
+	 * Given a dynamic scope ID and a variable ID, returns the value of the
+	 * first corresponding variable.
+	 * 
+	 * @param scopeId
+	 *            The dynamic scope ID.
+	 * @param variableId
+	 *            The variable ID
+	 * @return The value of the corresponding variable.
+	 */
 	SymbolicExpression getVariableValue(int scopeId, int variableId);
 
+	/**
+	 * Given a process ID and a variable, returns the value of the variable.
+	 * 
+	 * @param pid
+	 *            The ID of the process whose current dynamic scope is the
+	 *            starting point of the searching.
+	 * @param variable
+	 *            The variable whose value is to be searched for.
+	 * @return
+	 */
 	SymbolicExpression valueOf(int pid, Variable variable);
-
-	// void print(PrintStream out);
 
 	@Override
 	String toString();
@@ -166,7 +192,8 @@ public interface State {
 
 	/**
 	 * Returns the process state for the pid-th process. The process state
-	 * encodes the state of the call stack for the process.
+	 * encodes the state of the call stack for the process. The result could be
+	 * null when the process has terminated but not yet removed from the state.
 	 * 
 	 * The processes in this state are numbered with consecutive integers
 	 * starting from 0. This number is the PID.
@@ -191,12 +218,25 @@ public interface State {
 	 */
 	DynamicScope getScope(int id);
 
+	/**
+	 * Given a process ID and a static scope, returns the ID of the first
+	 * dynamic scope corresponding to the static scope and reachable from the
+	 * given process.
+	 * 
+	 * @param pid
+	 *            The ID of the process whose current dynamic scope is the
+	 *            starting point of the searching.
+	 * @param scope
+	 *            The static scope
+	 * @return the ID of the first dynamic scope corresponding to the static
+	 *         scope and reachable from the given process.
+	 */
 	int getDyScope(int pid, Scope scope);
 
 	/**
 	 * Returns the set of process states as an Iterable. This should not be
 	 * modified. It is convenient when you want to iterate over the states,
-	 * e.g., <code>for (ProcessState p : sstate.getProcessStates())</code>.
+	 * e.g., <code>for (ProcessState p : state.getProcessStates())</code>.
 	 * Alternatively, you can invoke the <code>iterator()</code> method to get
 	 * an <code>Iterator</code>.
 	 * 
@@ -220,6 +260,8 @@ public interface State {
 	 * is referenced in a frame on p's call stack to d, following the "parent"
 	 * edges in the scope tree.
 	 * 
+	 * @param sid
+	 *            The dynamic scope ID
 	 * @return the number of processes which can reach this dynamic scope
 	 */
 	int numberOfReachers(int sid);
@@ -227,6 +269,8 @@ public interface State {
 	/**
 	 * Is this dynamic scope reachable by the process with the given PID?
 	 * 
+	 * @param sid
+	 *            The dynamic scope ID
 	 * @param pid
 	 *            the process ID (PID)
 	 * @return true iff this dynamic scope is reachable from the process with
@@ -235,11 +279,10 @@ public interface State {
 	boolean reachableByProcess(int sid, int pid);
 
 	/**
-	 * Updates the value of a variable in this state. Returns either a new state
-	 * or this one, depending on whether this state is mutable.
+	 * Updates the value of a variable in this state. Returns a new state.
 	 * 
-	 * @param variable
-	 *            The dynamic variable to update.
+	 * @param vid
+	 *            The ID of variable to be updated.
 	 * @param scopeID
 	 *            The dynamic scope ID of the dynamic scope containing the
 	 *            variable.
@@ -250,5 +293,20 @@ public interface State {
 	 */
 	State setVariable(int vid, int scopeId, SymbolicExpression value);
 
+	/**
+	 * Returns the canonic ID of the state. Returns -1 when the state is not yet
+	 * canonicalized.
+	 * 
+	 * @return the canonic ID of the state, or -1 when the state is not yet
+	 *         canonicalized.
+	 */
 	int getCanonicId();
+
+	/**
+	 * Prints the state to a given print stream.
+	 * 
+	 * @param out
+	 *            The print stream to be used.
+	 */
+	void print(PrintStream out);
 }

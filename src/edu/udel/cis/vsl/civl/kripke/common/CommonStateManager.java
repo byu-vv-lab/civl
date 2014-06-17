@@ -216,7 +216,6 @@ public class CommonStateManager implements StateManager {
 			}
 			if (config.simplify())
 				state = stateFactory.simplify(state);
-			state.commit();
 		}
 		if (config.printTransitions())
 			config.out().println(state);

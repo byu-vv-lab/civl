@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 
@@ -39,7 +38,7 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	class ReverseIterator implements Iterator<StackEntry> {
 
-		/* ******************* Instance Fields ******************* */
+		/* ************************ Instance Fields ************************ */
 
 		/**
 		 * The array over which we are iterating.
@@ -52,7 +51,7 @@ public class ImmutableProcessState implements ProcessState {
 		 */
 		private int i;
 
-		/* *************** Package-private Methods *************** */
+		/* ******************** Package-private Methods ******************** */
 
 		/**
 		 * Creates a new reverse iterator for the given array.
@@ -65,7 +64,7 @@ public class ImmutableProcessState implements ProcessState {
 			i = array.length - 1;
 		}
 
-		/* **************** Methods from Iterator **************** */
+		/* ********************* Methods from Iterator ********************* */
 
 		@Override
 		public boolean hasNext() {
@@ -127,12 +126,6 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	private int identifier;
 
-	/**
-	 * This name is not part of the state. It is immutable and never renamed,
-	 * helping to identify a specific process when processes get collected.
-	 */
-	private String name;
-
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -154,7 +147,6 @@ public class ImmutableProcessState implements ProcessState {
 		this.callStack = stack;
 		this.atomicCount = atomicCount;
 		this.identifier = identifier;
-		this.name = "p" + identifier;
 	}
 
 	/**
@@ -260,16 +252,41 @@ public class ImmutableProcessState implements ProcessState {
 		return canonic;
 	}
 
+	/**
+	 * Updates the PID.
+	 * 
+	 * @param pid
+	 *            The new process ID.
+	 * @return A new instance of process state with only the PID being changed.
+	 */
 	ImmutableProcessState setPid(int pid) {
 		return new ImmutableProcessState(pid, this.identifier, callStack,
 				this.atomicCount);
 	}
 
+	/**
+	 * Updates the call stack using a given array of stack entries.
+	 * 
+	 * @param frames
+	 *            The new call stack to be used.
+	 * @return A new instance of process state with only the call stack being
+	 *         changed.
+	 */
 	ProcessState setStackEntries(StackEntry[] frames) {
 		return new ImmutableProcessState(pid, this.identifier, frames,
 				this.atomicCount);
 	}
 
+	/**
+	 * Updates a certain entry of the call stack.
+	 * 
+	 * @param index
+	 *            The index of the stack entry to be updated.
+	 * @param frame
+	 *            The new stack entry to be used.
+	 * @return A new instance of process state with only the stack entry of the
+	 *         given index being changed.
+	 */
 	ProcessState setStackEntry(int index, StackEntry frame) {
 		int n = callStack.length;
 		StackEntry[] newStack = new StackEntry[n];
@@ -373,17 +390,6 @@ public class ImmutableProcessState implements ProcessState {
 				this.callStack, this.atomicCount + 1);
 	}
 
-	@Override
-	public boolean isPurelyLocalProc() {
-		Iterable<Statement> stmts = this.callStack[0].location().outgoing();
-
-		for (Statement s : stmts) {
-			if (!s.isPurelyLocal())
-				return false;
-		}
-		return true;
-	}
-
 	/**
 	 * {@inheritDoc} Look at the first entry on the call stack, but do not
 	 * remove it.
@@ -399,20 +405,34 @@ public class ImmutableProcessState implements ProcessState {
 	@Override
 	public void print(PrintStream out, String prefix) {
 		out.print(this.toStringBuffer(prefix));
-		// out.println(prefix + "process p" + identifier + "(id=" + pid + ")");
-		// out.println(prefix + "| atomicCount=" + atomicCount);
-		// out.println(prefix + "| call stack");
-		// for (int i = 0; i < callStack.length; i++) {
-		// StackEntry frame = callStack[i];
-		//
-		// out.println(prefix + "| | " + frame);
-		// }
 		out.flush();
 	}
 
 	@Override
 	public int stackSize() {
 		return callStack.length;
+	}
+
+	@Override
+	public StringBuffer toStringBuffer(String prefix) {
+		StringBuffer result = new StringBuffer();
+
+		result.append(prefix + "process p" + identifier + "(id=" + pid + ")\n");
+		if (atomicCount != 0)
+			result.append(prefix + "| atomicCount=" + atomicCount + "\n");
+		result.append(prefix + "| call stack\n");
+		for (int i = 0; i < callStack.length; i++) {
+			StackEntry frame = callStack[i];
+
+			result.append(prefix + "| | " + frame);
+			result.append("\n");
+		}
+		return result;
+	}
+
+	@Override
+	public String name() {
+		return "p" + this.identifier;
 	}
 
 	/* ************************ Methods from Object ************************ */
@@ -453,28 +473,6 @@ public class ImmutableProcessState implements ProcessState {
 	public String toString() {
 		return "State of process " + pid + " (call stack length = "
 				+ callStack.length + ")";
-	}
-
-	@Override
-	public StringBuffer toStringBuffer(String prefix) {
-		StringBuffer result = new StringBuffer();
-
-		result.append(prefix + "process p" + identifier + "(id=" + pid + ")\n");
-		if (atomicCount != 0)
-			result.append(prefix + "| atomicCount=" + atomicCount + "\n");
-		result.append(prefix + "| call stack\n");
-		for (int i = 0; i < callStack.length; i++) {
-			StackEntry frame = callStack[i];
-
-			result.append(prefix + "| | " + frame);
-			result.append("\n");
-		}
-		return result;
-	}
-	
-	@Override
-	public String name() {
-		return name;
 	}
 
 }

@@ -70,7 +70,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 
 	/**
 	 * The identifier of the parent of this dynamic scope in the dynamic scope
-	 * tree, or na if this is the root (and therefore has no parent).
+	 * tree, or -1 if this is the root (and therefore has no parent).
 	 */
 	private int parentIdentifier;
 
@@ -93,11 +93,6 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 */
 	private int identifier;
 
-	/**
-	 * This name is not part of the state and it is unique and immutable.
-	 */
-	private String name;
-
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -109,6 +104,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 * @param parent
 	 *            the dyscope ID of the parent of this dynamic scope in the
 	 *            dyscope tree
+	 * @param parentIdentifier
+	 *            the identifier of the parent scope
 	 * @param variableValues
 	 *            the array of values associated to the variables declared in
 	 *            the static scope
@@ -126,7 +123,6 @@ public class ImmutableDynamicScope implements DynamicScope {
 		this.variableValues = variableValues;
 		this.reachers = reachers;
 		this.identifier = identifier;
-		this.name = "d" + identifier;
 	}
 
 	/* ********************** Package-private Methods ********************** */
@@ -148,17 +144,14 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 * 
 	 * @param parent
 	 *            new value for the parent field
+	 * @param parentIdentifer
+	 *            the identifier of the new parent
 	 * @return new instance same as original but with new parent value
 	 */
 	ImmutableDynamicScope setParent(int parent, int parentIdentifer) {
 		return parent == this.parent ? this : new ImmutableDynamicScope(
 				lexicalScope, parent, parentIdentifer, variableValues,
 				reachers, this.identifier);
-	}
-
-	@Override
-	public BitSet getReachers() {
-		return reachers;
 	}
 
 	/**
@@ -190,6 +183,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 * Is this dynamic scope reachable by the process with the given PID?
 	 * 
 	 * @param pid
+	 *            the PID of the process to be checked
 	 * @return true iff this dynamic scope is reachable from the process with
 	 *         pid PID
 	 */
@@ -304,6 +298,25 @@ public class ImmutableDynamicScope implements DynamicScope {
 		out.flush();
 	}
 
+	/**
+	 * Update the current dyscope using the given dyscope map, including
+	 * updating the parent dyscope ID, and any variable that contains a scope
+	 * value.
+	 * 
+	 * @param scopeSubMap
+	 *            The map of new dyscope ID's: from old dyscope ID to new
+	 *            dyscope ID. A value of -1 means the key dyscope has been
+	 *            removed.
+	 * @param universe
+	 *            The symbolic universe to be used to perform the update on
+	 *            variable values.
+	 * @param newParentId
+	 *            The new parent ID of this dyscope.
+	 * @param newParentIdentifier
+	 *            The identifier of the new parent.
+	 * @return A new instance of dyscope with its parent changed and variable
+	 *         values changed according to the given dyscope map.
+	 */
 	ImmutableDynamicScope updateDyscopeIds(
 			Map<SymbolicExpression, SymbolicExpression> scopeSubMap,
 			SymbolicUniverse universe, int newParentId, int newParentIdentifier) {
@@ -332,7 +345,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 						this.identifier);
 	}
 
-	/*************************** Methods from Object *************************/
+	/* ************************* Methods from Object *********************** */
 
 	/**
 	 * Determines if the given object is equal to this one. Returns true iff:
@@ -381,6 +394,11 @@ public class ImmutableDynamicScope implements DynamicScope {
 	/* ********************** Methods from DynamicScope ******************** */
 
 	@Override
+	public BitSet getReachers() {
+		return reachers;
+	}
+
+	@Override
 	public SymbolicExpression getValue(int vid) {
 		return variableValues[vid];
 	}
@@ -425,10 +443,10 @@ public class ImmutableDynamicScope implements DynamicScope {
 	public int getParentIdentifier() {
 		return this.parentIdentifier;
 	}
-	
+
 	@Override
 	public String name() {
-		return this.name;
+		return "d" + identifier;
 	}
 
 	/* ************************ Other Public Methods *********************** */

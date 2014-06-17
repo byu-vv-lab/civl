@@ -48,7 +48,7 @@ public interface DynamicScope {
 	 * @param vid
 	 *            the variable ID
 	 * @param value
-	 *            the value to assigne to that variable
+	 *            the value to assign to that variable
 	 * @return an instance of DynamicScope obtained by modifying this instance
 	 *         to reflect the new assignment
 	 */
@@ -76,6 +76,13 @@ public interface DynamicScope {
 	 */
 	void print(PrintStream out, String prefix);
 
+	/**
+	 * Returns the number of variable values stored in the dynamic scope. The
+	 * number of variable values should be the same as the number of variables
+	 * of the associated lexical scope.
+	 * 
+	 * @return the number of variable values stored in the dynamic scope.
+	 */
 	int numberOfValues();
 
 	/**

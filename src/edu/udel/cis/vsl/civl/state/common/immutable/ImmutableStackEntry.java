@@ -82,6 +82,11 @@ public class ImmutableStackEntry implements StackEntry {
 		return dyscopeId;
 	}
 
+	@Override
+	public int dyscopeIdentifier() {
+		return this.dyscopeIdentifier;
+	}
+
 	/* ************************* Methods from Object ************************* */
 
 	@Override
@@ -120,12 +125,8 @@ public class ImmutableStackEntry implements StackEntry {
 				+ source.getSummary();
 
 		return "Frame[function=" + location.function().name() + ", location="
-				+ location.id() + locationString + ", dyscope=d" + dyscopeIdentifier + "]";
-	}
-
-	@Override
-	public int dyscopeIdentifier() {
-		return this.dyscopeIdentifier;
+				+ location.id() + locationString + ", dyscope=d"
+				+ dyscopeIdentifier + "]";
 	}
 
 }

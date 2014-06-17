@@ -8,12 +8,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
@@ -43,31 +43,68 @@ public class ImmutableStateFactory implements StateFactory {
 
 	/* ************************** Instance Fields ************************** */
 
-	private GMCConfiguration config;
-
+	/**
+	 * True iff each canonic state is to be simplified using its path condition.
+	 */
 	private boolean simplify;
 
+	/**
+	 * The number of instances of states that have been created.
+	 */
 	private long initialNumStateInstances = ImmutableState.instanceCount;
 
+	/**
+	 * The model factory.
+	 */
 	private ModelFactory modelFactory;
 
+	/**
+	 * The map of canonic process states. The key and the corresponding value
+	 * should be the same, in order to allow fast checking of existence and
+	 * returning the value.
+	 */
 	private Map<ImmutableProcessState, ImmutableProcessState> processMap = new HashMap<>(
 			100000);
 
+	/**
+	 * The map of canonic dyscopes. The key and the corresponding value should
+	 * be the same, in order to allow fast checking of existence and returning
+	 * the value.
+	 */
 	private Map<ImmutableDynamicScope, ImmutableDynamicScope> scopeMap = new HashMap<>(
 			100000);
 
+	/**
+	 * The number of canonic states.
+	 */
 	private int stateCount = 0;
 
+	/**
+	 * The number of canonic process states.
+	 */
 	private int processCount = 0;
 
+	/**
+	 * The number of canonic dyscopes.
+	 */
 	private int dyscopeCount = 0;
 
+	/**
+	 * The map of canonic states. The key and the corresponding value should be
+	 * the same, in order to allow fast checking of existence and returning the
+	 * value.
+	 */
 	private Map<ImmutableState, ImmutableState> stateMap = new HashMap<>(
 			1000000);
 
+	/**
+	 * The reasoner for evaluating boolean formulas, provided by SARL.
+	 */
 	private Reasoner trueReasoner;
 
+	/**
+	 * The symbolic universe, provided by SARL.
+	 */
 	private SymbolicUniverse universe;
 
 	/* **************************** Constructors *************************** */
@@ -78,7 +115,6 @@ public class ImmutableStateFactory implements StateFactory {
 	public ImmutableStateFactory(ModelFactory modelFactory,
 			GMCConfiguration config) {
 		this.modelFactory = modelFactory;
-		this.config = config;
 		this.universe = modelFactory.universe();
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
 		this.simplify = config.isTrue(simplifyO);
@@ -86,6 +122,14 @@ public class ImmutableStateFactory implements StateFactory {
 
 	/* *************************** Private Methods ************************* */
 
+	/**
+	 * Returns the canonicalized version of the given state.
+	 * 
+	 * @param state
+	 *            the old state
+	 * @return the state equivalent to the given state and which is
+	 *         canonicalized.
+	 */
 	private ImmutableState flyweight(State state) {
 		ImmutableState theState = (ImmutableState) state;
 
@@ -105,25 +149,31 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	/**
-	 * Creates a dynamic scope in its initial state.
+	 * Creates a dyscope in its initial state.
 	 * 
 	 * @param lexicalScope
-	 *            The lexical scope corresponding to this dynamic scope.
+	 *            The lexical scope corresponding to this dyscope.
 	 * @param parent
-	 *            The parent of this dynamic scope. -1 only for the topmost
-	 *            dynamic scope.
+	 *            The parent of this dyscope. -1 only for the topmost dyscope.
 	 * @return A new dynamic scope.
 	 */
 	private ImmutableDynamicScope initialDynamicScope(Scope lexicalScope,
 			int parent, int parentIdentifier, int dynamicScopeId,
 			BitSet reachers) {
 		return new ImmutableDynamicScope(lexicalScope, parent,
-				parentIdentifier, initialValues(lexicalScope, dynamicScopeId),
-				reachers, this.dyscopeCount++);
+				parentIdentifier, initialValues(lexicalScope), reachers,
+				this.dyscopeCount++);
 	}
 
-	private SymbolicExpression[] initialValues(Scope lexicalScope,
-			int dynamicScopeId) {
+	/**
+	 * Creates the initial value of a given lexical scope.
+	 * 
+	 * @param lexicalScope
+	 *            The lexical scope whose variables are to be initialized.
+	 * @return An array of initial values of variables of the given lexical
+	 *         scope.
+	 */
+	private SymbolicExpression[] initialValues(Scope lexicalScope) {
 		// TODO: special handling for input variables in root scope?
 		SymbolicExpression[] values = new SymbolicExpression[lexicalScope
 				.variables().size()];
@@ -241,11 +291,10 @@ public class ImmutableStateFactory implements StateFactory {
 		int numScopes = state.numScopes();
 		int numProcs = state.numProcs();
 		int[] oldToNew = new int[numScopes];
+		int nextScopeId = 1;
 
 		// the root dyscope is forced to be 0
 		oldToNew[0] = 0;
-
-		int nextScopeId = 1;
 		for (int i = 1; i < numScopes; i++)
 			oldToNew[i] = -1;
 		for (int pid = 0; pid < numProcs; pid++) {
@@ -272,10 +321,27 @@ public class ImmutableStateFactory implements StateFactory {
 		return oldToNew;
 	}
 
-	private boolean nsat(BooleanExpression p) {
-		return trueReasoner.isValid(universe.not(p));
+	/**
+	 * Checks if a given claim is not satisfiable.
+	 * 
+	 * @param claim
+	 *            The given claim.
+	 * @return True iff the given claim is evaluated to be false.
+	 */
+	private boolean nsat(BooleanExpression claim) {
+		return trueReasoner.isValid(universe.not(claim));
 	}
 
+	/**
+	 * Creates a map of process value's according to PID map from old PID to new
+	 * PID.
+	 * 
+	 * @param oldToNewPidMap
+	 *            The map of old PID to new PID, i.e, oldToNewPidMap[old PID] =
+	 *            new PID.
+	 * @return The map of process value's from old process value to new process
+	 *         value.
+	 */
 	private Map<SymbolicExpression, SymbolicExpression> procSubMap(
 			int[] oldToNewPidMap) {
 		int size = oldToNewPidMap.length;
@@ -354,7 +420,7 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 		newScopes = state.copyAndExpandScopes();
 		sid = numScopes;
-		values = initialValues(functionStaticScope, sid);
+		values = initialValues(functionStaticScope);
 		for (int i = 0; i < arguments.length; i++)
 			if (arguments[i] != null)
 				values[i] = arguments[i];
@@ -390,6 +456,15 @@ public class ImmutableStateFactory implements StateFactory {
 		return state;
 	}
 
+	/**
+	 * Creates a map of scope value's according to the given dyscope map from
+	 * old dyscope ID to new dyscope ID.
+	 * 
+	 * @param oldToNewSidMap
+	 *            The map of old dyscope ID to new dyscoep ID, i.e,
+	 *            oldToNewSidMap[old dyscope ID] = new dyscope ID.
+	 * @return The map of scope value's from old scope value to new scope value.
+	 */
 	private Map<SymbolicExpression, SymbolicExpression> scopeSubMap(
 			int[] oldToNewSidMap) {
 		int size = oldToNewSidMap.length;
@@ -705,7 +780,7 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public boolean isDesendantOf(State state, int ancestor, int descendant) {
+	public boolean isDescendantOf(State state, int ancestor, int descendant) {
 		if (ancestor == descendant) {
 			return false;
 		} else {
@@ -730,6 +805,7 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
+	// TOOD: improve the performance: keep track of depth of dyscopes
 	public int lowestCommonAncestor(State state, int one, int another) {
 		if (one == another) {
 			return one;
@@ -738,7 +814,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 			while (parent >= 0) {
 				if (parent == another
-						|| this.isDesendantOf(state, parent, another))
+						|| this.isDescendantOf(state, parent, another))
 					return parent;
 				parent = state.getParentId(parent);
 			}
@@ -934,9 +1010,10 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public State setProcessState(State state, ProcessState p, int pid) {
+	public State setProcessState(State state, ProcessState p) {
 		ImmutableState theState = (ImmutableState) state;
 		ImmutableProcessState[] newProcesses;
+		int pid = p.getPid();
 
 		newProcesses = theState.copyProcessStates();
 		newProcesses[pid] = (ImmutableProcessState) p;
@@ -1029,11 +1106,5 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public SymbolicUniverse symbolicUniverse() {
 		return universe;
-	}
-
-	/* ************************ Other public methods *********************** */
-
-	public GMCConfiguration getConfiguration() {
-		return config;
 	}
 }

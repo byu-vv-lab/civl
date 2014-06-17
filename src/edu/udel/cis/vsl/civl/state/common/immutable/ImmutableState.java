@@ -302,6 +302,18 @@ public class ImmutableState implements State {
 		return canonicProcessState;
 	}
 
+	/**
+	 * Prints a dyscope of a given id of this state to the given print stream.
+	 * 
+	 * @param out
+	 *            The print stream to be used.
+	 * @param dyscope
+	 *            The dyscope to be printed.
+	 * @param id
+	 *            The id of the dyscope to be printed.
+	 * @param prefix
+	 *            The line prefix of the printing result.
+	 */
 	private void printImmutableDynamicScope(PrintStream out,
 			ImmutableDynamicScope dyscope, String id, String prefix) {
 		Scope lexicalScope = dyscope.lexicalScope();
@@ -338,6 +350,14 @@ public class ImmutableState implements State {
 		out.flush();
 	}
 
+	/**
+	 * Obtains the string representation of a pointer value.
+	 * 
+	 * @param pointer
+	 *            The pointer value whose string representation is to be
+	 *            generated.
+	 * @return The string representation of the given pointer value.s
+	 */
 	private String pointerValueToString(SymbolicExpression pointer) {
 		StringBuffer result = new StringBuffer();
 
@@ -345,7 +365,6 @@ public class ImmutableState implements State {
 			return pointer.toString();
 		else {
 			result.append('&');
-
 			return result.toString();
 		}
 	}
@@ -548,10 +567,6 @@ public class ImmutableState implements State {
 	/* ************************ Methods from State ************************* */
 
 	@Override
-	public void commit() {
-	}
-
-	@Override
 	public int getCanonicId() {
 		return canonicId;
 	}
@@ -588,7 +603,6 @@ public class ImmutableState implements State {
 	public ImmutableDynamicScope getScope(int id) {
 		return dyscopes[id];
 	}
-	
 
 	@Override
 	public int getScopeId(int pid, Variable variable) {
@@ -610,6 +624,21 @@ public class ImmutableState implements State {
 		DynamicScope scope = getScope(scopeId);
 
 		return scope.getValue(variableId);
+	}
+
+	@Override
+	public int getDyScope(int pid, Scope scope) {
+		int staticId = scope.id();
+		int dyScopeId = getProcessState(pid).getDyscopeId();
+		DynamicScope dyScope = this.getScope(dyScopeId);
+	
+		while (dyScope.lexicalScope().id() != staticId) {
+			dyScopeId = this.getParentId(dyScopeId);
+			if (dyScopeId < 0)
+				return -1;
+			dyScope = this.getScope(dyScopeId);
+		}
+		return dyScopeId;
 	}
 
 	@Override
@@ -640,7 +669,7 @@ public class ImmutableState implements State {
 		return onStack;
 	}
 
-	// @Override
+	@Override
 	public void print(PrintStream out) {
 		int numScopes = numScopes();
 		int numProcs = numProcs();
@@ -657,7 +686,6 @@ public class ImmutableState implements State {
 				out.println("| | dyscope - (id=" + i + "): null");
 			else
 				this.printImmutableDynamicScope(out, dyscope, "" + i, "| | ");
-			// dyscope.print(out, "" + i, "| | ");
 		}
 		out.println("| Process states");
 		for (int i = 0; i < numProcs; i++) {
@@ -780,21 +808,6 @@ public class ImmutableState implements State {
 	@Override
 	public String toString() {
 		return "State " + identifier();
-	}
-
-	@Override
-	public int getDyScope(int pid, Scope scope) {
-		int staticId = scope.id();
-		int dyScopeId = getProcessState(pid).getDyscopeId();
-		DynamicScope dyScope = this.getScope(dyScopeId);
-
-		while (dyScope.lexicalScope().id() != staticId) {
-			dyScopeId = this.getParentId(dyScopeId);
-			if (dyScopeId < 0)
-				return -1;
-			dyScope = this.getScope(dyScopeId);
-		}
-		return dyScopeId;
 	}
 
 }

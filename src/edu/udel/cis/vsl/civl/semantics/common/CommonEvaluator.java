@@ -1476,11 +1476,11 @@ public class CommonEvaluator implements Evaluator {
 			eval.value = modelFactory.scopeValue(lowestCommonAncestor);
 			break;
 		case LESS_THAN:
-			result = stateFactory.isDesendantOf(state, right, left);
+			result = stateFactory.isDescendantOf(state, right, left);
 			eval.value = universe.bool(result);
 			break;
 		case LESS_THAN_EQUAL:
-			result = (left == right) ? true : stateFactory.isDesendantOf(state,
+			result = (left == right) ? true : stateFactory.isDescendantOf(state,
 					right, left);
 			eval.value = universe.bool(result);
 			break;
