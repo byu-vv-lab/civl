@@ -1796,12 +1796,23 @@ public class CommonModelFactory implements ModelFactory {
 		return this.atomicLockVariableExpression;
 	}
 
-	@Override
-	public void createAtomicLockVariable(Scope scope) {
+	/**
+	 * An atomic lock variable is used to keep track of the process that
+	 * executes an $atomic block which prevents interleaving with other
+	 * processes. This variable is maintained as a global variable
+	 * {@link ComonModelFactory#ATOMIC_LOCK_VARIABLE} of <code>$proc</code> type
+	 * in the root scope in the CIVL model (always with index 0).
+	 * 
+	 * @param scope
+	 *            The scope of the atomic lock variable, and should always be
+	 *            the root scope.
+	 */
+	private void createAtomicLockVariable(Scope scope) {
 		// Since the atomic lock variable is not declared explicitly in the CIVL
 		// model specification, the system source will be used here.
 		Variable variable = this.variable(this.systemSource, processType,
-				this.identifier(this.systemSource, ATOMIC_LOCK_VARIABLE), 0);
+				this.identifier(this.systemSource, ATOMIC_LOCK_VARIABLE),
+				scope.numVariables());
 
 		this.atomicLockVariableExpression = this.variableExpression(
 				this.systemSource, variable);
@@ -1978,12 +1989,12 @@ public class CommonModelFactory implements ModelFactory {
 		int newVid;
 		Variable heapVariable;
 
-		if (newScope.id() == 0)
-			this.createAtomicLockVariable(newScope);
 		newVid = newScope.numVariables();
 		heapVariable = this.variable(source, modelBuilder.heapType,
 				this.identifier(source, HEAP_VAR), newVid);
 		newScope.addVariable(heapVariable);
+		if (newScope.id() == 0)
+			this.createAtomicLockVariable(newScope);
 		if (parent != null) {
 			parent.addChild(newScope);
 		}

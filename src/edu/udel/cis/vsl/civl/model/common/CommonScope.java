@@ -404,7 +404,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 			}
 		} else if (type.isHeapType()) {
 			for (int i = 0; i < ((CIVLHeapType) type).getNumMallocs(); i++) {
-				boolean elementContainsProc = containsScopeType(((CIVLHeapType) type)
+				boolean elementContainsProc = containsProcType(((CIVLHeapType) type)
 						.getMalloc(i).getStaticElementType());
 
 				containsProcType = containsProcType || elementContainsProc;
