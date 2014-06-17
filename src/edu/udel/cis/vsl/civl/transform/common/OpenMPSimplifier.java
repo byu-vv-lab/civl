@@ -72,7 +72,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
 
-		System.out.println("LoopDependenceAnnotator Activated");
+		//System.out.println("LoopDependenceAnnotator Activated");
 		transformOmpParallel(rootNode);
 
 		return astFactory.newAST(rootNode);
@@ -112,8 +112,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			} else {
 				privateIDs = null;
 			}
-			System.out.println("Found OmpParallelNode with private:"
-					+ privateIDs);
+			//System.out.println("Found OmpParallelNode with private:"
+			//		+ privateIDs);
 
 			// Visit the rest of this node
 			Iterable<ASTNode> children = node.children();
@@ -328,8 +328,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			 */
 			ASTNode parent = ompFor.parent();
 			if (parent instanceof OmpParallelNode) {
-				System.out
-						.println("OpenMP Transformer: eliminating parallel and for");
+				//System.out
+				//		.println("OpenMP Transformer: eliminating parallel and for");
 
 				// Remove "for" node from "omp for" node
 				int forIndex = getChildIndex(ompFor, fln);
@@ -342,8 +342,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 				assert parentIndex != -1;
 				grand.setChild(parentIndex, fln);
 			} else {
-				System.out
-						.println("OpenMP Transformer: replacing for with single workshare");
+				//System.out
+				//		.println("OpenMP Transformer: replacing for with single workshare");
 
 				int ompForIndex = getChildIndex(parent, ompFor);
 				assert ompForIndex != -1;
@@ -417,7 +417,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 				writeArrayRefs.add((OperatorNode) lhs);
 
 			} else {
-				System.out.println("DependenceAnnotator found lhs:" + lhs);
+				//System.out.println("DependenceAnnotator found lhs:" + lhs);
 			}
 
 			// The argument at index 1 is the RHS
@@ -472,8 +472,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	private boolean hasArrayRefDependences(Set<OperatorNode> writes,
 			Set<OperatorNode> reads) {
 		for (OperatorNode w : writes) {
-			if (! (w instanceof IdentifierExpressionNode))
-				System.out.println("Write of type:"+w);
+			if (! (w instanceof IdentifierExpressionNode));
+				//System.out.println("Write of type:"+w);
 			IdentifierExpressionNode baseWrite = (IdentifierExpressionNode) w
 					.getArgument(0);
 
