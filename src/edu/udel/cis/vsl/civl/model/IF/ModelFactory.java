@@ -1228,19 +1228,6 @@ public interface ModelFactory {
 	 */
 
 	/**
-	 * An atomic lock variable is used to keep track of the process that
-	 * executes an $atomic block which prevents interleaving with other
-	 * processes. This variable is maintained as a global variable
-	 * {@link ComonModelFactory#ATOMIC_LOCK_VARIABLE} of <code>$proc</code> type
-	 * in the root scope in the CIVL model (always with index 0).
-	 * 
-	 * @param scope
-	 *            The scope of the atomic lock variable, and should always be
-	 *            the root scope.
-	 */
-	void createAtomicLockVariable(Scope scope);
-
-	/**
 	 * This method is used in Enabler when a process resumes from being blocked
 	 * and wants to get the atomic lock
 	 * 
