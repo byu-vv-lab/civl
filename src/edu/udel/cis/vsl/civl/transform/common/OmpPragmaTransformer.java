@@ -46,7 +46,7 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 		return astFactory.newAST(root);
 	}
 
-	void processASTNode(ASTNode ast) throws SyntaxException {
+	private void processASTNode(ASTNode ast) throws SyntaxException {
 		int childNum = ast.numChildren();
 
 		for (int i = childNum - 1; i >= 0; i--) {

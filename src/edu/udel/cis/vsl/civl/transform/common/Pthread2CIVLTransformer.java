@@ -5,12 +5,20 @@ import java.util.Arrays;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
@@ -20,12 +28,23 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 //TODO: add arguments to pthread_exit();
 //TODO: If the start_routine returns, the effect shall be as if there was an 
 //implicit call to pthread_exit() using the return value of start_routine as the exit status.
+// ERROR --> assert
 
 public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 	private final static String PTHREAD_EXIT = "pthread_exit";
 
 	private final static String PTHREAD_EXIT_NEW = "_pthread_exit";
+
+	private final static String ASSERT = "$assert";
+
+	private final static String ERROR = "ERROR";
+
+	private final static String VERIFIER_NONDET_UINT = "__VERIFIER_nondet_uint";
+
+	private final static String VERIFIER_ASSUME = "__VERIFIER_assume";
+
+	private final static String VERIFIER_ASSERT = "__VERIFIER_assert";
 
 	/* ************************** Public Static Fields *********************** */
 	/**
@@ -51,6 +70,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	 */
 	private Source source;
 
+	// private boolean isSvComp = true;
+
 	/* ****************************** Constructor ************************** */
 	/**
 	 * Creates a new instance of MPITransformer.
@@ -69,11 +90,92 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			if (node == null)
 				continue;
 			if (node instanceof FunctionDefinitionNode)
-				processFunctionDefinition((FunctionDefinitionNode) node);
+				process_phread_exits((FunctionDefinitionNode) node);
+			else if (node instanceof FunctionDeclarationNode) {
+				process_VERIFIER_functions((FunctionDeclarationNode) node);
+			}
+		}
+		translateNode(root);
+	}
+
+	private void process_VERIFIER_functions(FunctionDeclarationNode function) {
+		IdentifierNode functionName = function.getIdentifier();
+
+		if (functionName.name().equals(VERIFIER_NONDET_UINT)) {
+			FunctionDeclarationNode abstractNode = nodeFactory
+					.newAbstractFunctionDefinitionNode(function.getSource(),
+							function.getIdentifier().copy(), function
+									.getTypeNode().copy(), null, 0);
+
+			function.parent().setChild(function.childIndex(), abstractNode);
 		}
 	}
 
-	private void processFunctionDefinition(FunctionDefinitionNode function)
+	private void translateNode(ASTNode node) {
+		if (node instanceof LabeledStatementNode) {
+			LabeledStatementNode labelStatement = (LabeledStatementNode) node;
+			LabelNode labelNode = labelStatement.getLabel();
+
+			if (labelNode instanceof OrdinaryLabelNode) {
+				OrdinaryLabelNode label = (OrdinaryLabelNode) labelNode;
+				String name = label.getName();
+				if (name.equals(ERROR))
+					labelStatement.setChild(1, this.assertFalse());
+			}
+		} else if (node instanceof ExpressionStatementNode) {
+			ExpressionNode expression = ((ExpressionStatementNode) node)
+					.getExpression();
+			StatementNode newStatementNode = null;
+
+			if (expression.expressionKind() == ExpressionKind.FUNCTION_CALL) {
+				FunctionCallNode functionCall = (FunctionCallNode) expression;
+				ExpressionNode functionName = functionCall.getFunction();
+
+				if (functionName.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+					String name = ((IdentifierExpressionNode) functionName)
+							.getIdentifier().name();
+
+					switch (name) {
+					case VERIFIER_ASSERT:
+						newStatementNode = this.assertNode(functionCall
+								.getArgument(0).copy());
+						break;
+					case VERIFIER_ASSUME:
+						newStatementNode = this.assumeNode(functionCall
+								.getArgument(0).copy());
+						break;
+					default:
+					}
+				}
+				if (newStatementNode != null)
+					node.parent().setChild(node.childIndex(), newStatementNode);
+			}
+		} else
+			for (ASTNode child : node.children())
+				if (child != null)
+					this.translateNode(child);
+	}
+
+	private StatementNode assumeNode(ExpressionNode expression) {
+		return nodeFactory.newAssumeNode(source, expression);
+	}
+
+	private StatementNode assertNode(ExpressionNode expression) {
+		FunctionCallNode functionCall = nodeFactory.newFunctionCallNode(source,
+				this.identifierExpression(source, ASSERT),
+				Arrays.asList(expression), null);
+
+		return nodeFactory.newExpressionStatementNode(functionCall);
+	}
+
+	private StatementNode assertFalse() {
+		ExpressionNode falseExpression = nodeFactory.newBooleanConstantNode(
+				source, false);
+
+		return assertNode(falseExpression);
+	}
+
+	private void process_phread_exits(FunctionDefinitionNode function)
 			throws SyntaxException {
 		String name = function.getName();
 		TypeNode returnType = function.getTypeNode().getReturnType();

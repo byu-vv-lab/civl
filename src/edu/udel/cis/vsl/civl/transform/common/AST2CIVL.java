@@ -770,13 +770,24 @@ public class AST2CIVL {
 			result.append(arg0);
 			result.append(" + ");
 			result.append(arg1);
+		case PLUSEQ:
+			result.append(arg0);
+			result.append(" += ");
+			result.append(arg1);
 			break;
 		case PREDECREMENT:
 			result.append("--");
 			result.append(arg0);
+		case PREINCREMENT:
+			result.append("++");
+			result.append(arg0);
 		case POSTINCREMENT:
 			result.append(arg0);
 			result.append("++");
+			break;
+		case POSTDECREMENT:
+			result.append(arg0);
+			result.append("--");
 			break;
 		case SHIFTLEFT:
 			result.append(arg0);
