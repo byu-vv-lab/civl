@@ -2731,15 +2731,7 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case DEREFERENCE:
 			DereferenceExpression deferenceExpression = (DereferenceExpression) expression;
-			// SymbolicExpression pointerValue;
-			//
-			// try {
-			// pointerValue = this.evaluate(state, pid,
-			// deferenceExpression.pointer()).value;
-			// } catch (Exception ex) {
-			// return false;
-			// }
-			// this.findPointersInExpression(pointerValue, memoryUnits, state);
+
 			return memoryUnitsOfExpression(state, pid,
 					deferenceExpression.pointer(), memoryUnits);
 		case DOT:
@@ -2759,6 +2751,11 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case PROC_NULL:
 			break;
+		case SCOPEOF:
+			ScopeofExpression scopeofExpression = (ScopeofExpression) expression;
+
+			return memoryUnitsOfExpression(state, pid,
+					scopeofExpression.argument(), memoryUnits);
 		case SIZEOF_TYPE:
 			break;
 		case SIZEOF_EXPRESSION:
