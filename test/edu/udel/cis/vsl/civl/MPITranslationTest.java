@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -42,23 +41,22 @@ public class MPITranslationTest {
 				"-input__NPROCS=2"));
 	}
 
-	@Ignore
 	@Test
 	public void adder_par() {
-		assertTrue(ui.run("verify", filename("adder_par.c"),
-				"-input__NPROCS=2", "-showModel", "-showTransitions"));
+		assertTrue(ui
+				.run("verify", filename("adder_par.c"), "-input__NPROCS=2"));
 	}
 
 	@Test
 	public void mpi_pi_send() {
 		assertTrue(ui.run("parse", filename("mpi_pi_send.c"),
-				"-input__NPROCS=3", "-debug"));
+				"-input__NPROCS=3"));
 	}
 
 	@Test
 	public void mpi_prime() {
-		assertFalse(ui
-				.run("verify", filename("mpi_prime.c"), "-input__NPROCS=4"));
+		assertFalse(ui.run("verify", filename("mpi_prime.c"),
+				"-input__NPROCS=4"));
 		assertFalse(ui.run("replay", filename("mpi_prime.c")));
 	}
 }
