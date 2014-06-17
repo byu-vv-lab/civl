@@ -752,7 +752,11 @@ public class ImmutableStateFactory implements StateFactory {
 
 	@Override
 	public State getAtomicLock(State state, int pid) {
-		return this.setVariable(state, 0, 0, modelFactory.processValue(pid));
+		Variable atomicVar = modelFactory.atomicLockVariableExpression()
+				.variable();
+
+		return this.setVariable(state, 0, atomicVar.vid(),
+				modelFactory.processValue(pid));
 	}
 
 	@Override
@@ -917,7 +921,11 @@ public class ImmutableStateFactory implements StateFactory {
 
 	@Override
 	public State releaseAtomicLock(State state) {
-		return this.setVariable(state, 0, 0, modelFactory.processValue(-1));
+		Variable atomicVar = modelFactory.atomicLockVariableExpression()
+				.variable();
+
+		return this.setVariable(state, 0, atomicVar.vid(),
+				modelFactory.processValue(-1));
 	}
 
 	/**
