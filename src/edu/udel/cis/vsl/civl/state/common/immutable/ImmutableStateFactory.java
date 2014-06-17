@@ -755,7 +755,7 @@ public class ImmutableStateFactory implements StateFactory {
 		Variable atomicVar = modelFactory.atomicLockVariableExpression()
 				.variable();
 
-		return this.setVariable(state, 0, atomicVar.vid(),
+		return this.setVariable(state, atomicVar.vid(), 0,
 				modelFactory.processValue(pid));
 	}
 
@@ -776,10 +776,13 @@ public class ImmutableStateFactory implements StateFactory {
 		CIVLFunction function = model.system();
 		int numArgs = function.parameters().size();
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
+		Variable atomicVar = modelFactory.atomicLockVariableExpression()
+				.variable();
 
 		// TODO: how to initialize the arguments to system function?
 		state = addProcess(state, function, arguments, -1);
-		state = this.setVariable(state, 0, 0, modelFactory.processValue(-1));
+		state = this.setVariable(state, atomicVar.vid(), 0,
+				modelFactory.processValue(-1));
 		return canonic(state);
 	}
 
@@ -842,7 +845,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 	@Override
 	public int processInAtomic(State state) {
-		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0, 0);
+		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0,
+				modelFactory.atomicLockVariableExpression().variable().vid());
 
 		return modelFactory.getProcessId(modelFactory.systemSource(),
 				symbolicAtomicPid);
@@ -924,7 +928,7 @@ public class ImmutableStateFactory implements StateFactory {
 		Variable atomicVar = modelFactory.atomicLockVariableExpression()
 				.variable();
 
-		return this.setVariable(state, 0, atomicVar.vid(),
+		return this.setVariable(state, atomicVar.vid(), 0,
 				modelFactory.processValue(-1));
 	}
 
