@@ -47,7 +47,8 @@ int main()
     
   if (data1==16 && data2==5)
   {
-  ERROR: goto ERROR;
+    ERROR:
+    goto ERROR;
   }
 
   return 0;

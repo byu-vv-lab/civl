@@ -1,3 +1,4 @@
+#include <sched.cvl>
 //Mutex types
 enum{
 PTHREAD_MUTEX_NORMAL,
@@ -11,8 +12,8 @@ PTHREAD_MUTEX_ROBUST
 };
 
 enum{
-PTHREAD_CREATE_DETACHED,
-PTHREAD_CREATE_JOINABLE
+PTHREAD_CREATE_JOINABLE,
+PTHREAD_CREATE_DETACHED
 };
 
 enum{
@@ -37,7 +38,8 @@ ENOTSUP,
 EOWNERDEAD,  //Designates the termination of the owning thread
 EBUSY,        //Mutex is already locked
 EDEADLK,      //If mutex type is errorcheck and already owns the mutex
-EPERM        //If mutex is robust or errorcheck and does not own the mutex
+EPERM,        //If mutex is robust or errorcheck and does not own the mutex
+ERSCH        
 };
 
 /* Struct definitions */
@@ -46,10 +48,7 @@ EPERM        //If mutex is robust or errorcheck and does not own the mutex
   Description: This struct corresponds to the pthread_attr_t which is the attribute of a pthread_t. It's fields
   define the way the pthread_t is able to interact (join/detach), (memory capacity), (scope) etc.
   
-  Fields: void * stackaddr: The address of the attr's stack in memory
-  size_t stacksize: The memory capacity for the attr's stack
-  size_t guardsize: The guardsize attribute controls the size of the guard area for the created thread' stack. The
-                    guardsize attribute provides protection against overflow of the stack pointer.
+  Fields:
   int detachstate: Defines a threads ability to join with two values: PTHREAD_CREATE_DETACHED and PTHREAD_CREATE_JOINABLE
   int inheritsched: The inheritance scheduling policy of the thread
   int contentionscope: Defines the contention scope of the thread
@@ -58,13 +57,11 @@ EPERM        //If mutex is robust or errorcheck and does not own the mutex
 */
 
 typedef struct {
-  void *stackaddr;
-  size_t stacksize;
-  size_t guardsize;
   int detachstate;
   int inheritsched;
   int contentionscope;
   int schedpolicy;
+  sched_param param;
 } pthread_attr_t;
 
 /* pthread_mutexattr_t struct definition
@@ -102,7 +99,7 @@ typedef struct {
   $proc owner;
   int lock;
   int prioceiling;
-  pthread_mutexattr_t *attr;
+  pthread_mutexattr_t attr;
 } pthread_mutex_t;
 
 //Unimplemented
@@ -135,7 +132,8 @@ typedef struct {
 
 typedef struct {
   $proc thr;
-  const pthread_attr_t *attr;
+  const pthread_attr_t attr;
+  _Bool terminated;
 } pthread_t;
 
 typedef struct __pthread_pool_t {

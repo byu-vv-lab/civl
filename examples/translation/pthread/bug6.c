@@ -13,13 +13,10 @@
 #include <stdlib.h>
 
 /* Define global data where everyone can see them */
-<<<<<<< .mine
-#define NUMTHRDS 8
-#define VECLEN 10
-=======
+
 #define NUMTHRDS 3
 #define VECLEN 4
->>>>>>> .r1114
+
 int *a, *b; 
 long sum=0;
 
@@ -38,8 +35,11 @@ void *dotprod(void *arg)
 
 /* Perform my section of the dot product */
    printf("thread: %ld starting. start=%d end=%d\n",tid,start,end-1);
-   for (i=start; i<end ; i++) 
-      sum += (a[i] * b[i]);
+   for (i=start; i<end ; i++){
+       int tmp = sum;
+       tmp += (a[i] * b[i]);
+       sum = tmp;
+   }
    printf("thread: %ld done. Global sum now is=%li\n",tid,sum);
 
    pthread_exit((void*) 0);

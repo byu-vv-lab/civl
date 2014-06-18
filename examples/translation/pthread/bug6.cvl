@@ -39,7 +39,7 @@ void *dotprod(void *arg)
   /* Perform my section of the dot product */
   printf("thread: %d starting. start=%d end=%d\n",tid,start,end-1); // Removed l from %ld, unsupported
   for (i=start; i<end ; i++) 
-    sum += (a[i] * b[i]);
+   { int tmp = sum; tmp += (a[i] * b[i]); sum = tmp;}
   printf("thread: %d done. Global sum now is=%d\n",tid,sum); // Removed l from %ld, unsupported
   pthread_exit(NULL, false, NULL, 0); //Different parameters
 }
