@@ -24,5 +24,9 @@ void _add_thread(__pthread_pool_t* pool, pthread_t* thread);
 
 int pthread_exit(void *value_ptr);
 
+void __VERIFIER_assume(void *p);
+
+void __VERIFIER_assert(_Bool value);
+
 
 #endif
