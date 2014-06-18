@@ -58,4 +58,13 @@ void $barrier_call($barrier barrier) {
   $barrier_enter(barrier);
   $barrier_exit(barrier);
 }
+
+// range consisting of lo, lo+step, lo+2*step, ...
+// the sequence stops just before the first number
+// greater than hi.
+$range $range_regular(int lo, int hi, int step){
+  $range range = {.lo = lo, .hi = hi, .step = step};
+  
+  return range;
+}
 #endif
