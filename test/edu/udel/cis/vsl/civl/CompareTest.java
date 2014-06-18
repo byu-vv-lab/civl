@@ -26,7 +26,14 @@ public class CompareTest {
 
 	@Test
 	public void sumN() {
-		assertTrue(ui.run("compare", "-inputN=10",
-				filename("sumNspec.cvl"), filename("sumNimpl.cvl")));
+		assertTrue(ui.run("compare", "-inputN=10", filename("sumNspec.cvl"),
+				filename("sumNimpl.cvl")));
+	}
+
+	@Test
+	public void adder() {
+		assertTrue(ui.run("compare", "-inputNPROCSB=2", "-inputNB=4",
+				filename("adder/adder_par.cvl"),
+				filename("adder/adder_spec.cvl")));
 	}
 }
