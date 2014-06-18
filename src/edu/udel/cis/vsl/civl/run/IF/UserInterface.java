@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.run.IF;
 
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.bar;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.date;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.deadlockO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.debugO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.echoO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.enablePrintfO;
@@ -26,6 +27,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.svcompO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.sysIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.userIncludePathO;
@@ -54,6 +56,7 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.Combiner;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -115,7 +118,8 @@ public class UserInterface {
 				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO,
 				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
-				showAmpleSetWtStatesO, statelessPrintfO, guiO);
+				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
+				svcompO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -200,7 +204,7 @@ public class UserInterface {
 			}
 
 			applyTransformers(filename, program, preprocessor,
-					verbose || debug, frontEnd, inputVars);
+					new CIVLConfiguration(config), frontEnd, inputVars);
 			hasFscanf = CIVLTransform.hasFunctionCalls(program.getAST(),
 					Arrays.asList("scanf", "fscanf"));
 			if (verbose || debug)
@@ -250,81 +254,98 @@ public class UserInterface {
 	 * @throws SyntaxException
 	 */
 	private void applyTransformers(String fileName, Program program,
-			Preprocessor preprocessor, boolean verboseOrDebug,
+			Preprocessor preprocessor, CIVLConfiguration config,
 			Activator frontEnd, List<String> inputVars) throws SyntaxException {
 		Set<String> headers = preprocessor.headerFiles();
 		boolean isC = fileName.endsWith(".c");
-		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
+		boolean hasCIVLPragma = false, hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
 
+		hasCIVLPragma = CIVLTransform.hasCIVLPragma(program.getAST());
 		if (headers.contains("stdio.h"))
 			hasStdio = true;
 		if (isC && (headers.contains("omp.h") || program.hasOmpPragma()))
 			hasOmp = true;
-		if(isC  && headers.contains("pthread.h"))
+		if (isC && headers.contains("pthread.h"))
 			hasPthread = true;
 		if (isC && headers.contains("mpi.h"))
 			hasMpi = true;
 		// always apply general transformation.
+		if (config.debugOrVerbose())
+			this.out.println("Apply general transformer...");
 		CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL,
-				inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
+				inputVars, frontEnd.getASTBuilder(), config);
+		if (config.debugOrVerbose()) {
+			frontEnd.printProgram(out, program);
+			CIVLTransform.printProgram2CIVL(out, program);
+		}
+		if (hasCIVLPragma) {
+			if (config.debugOrVerbose())
+				this.out.println("Apply CIVL pragma transformer...");
+			CIVLTransform.applyTransformer(program, CIVLTransform.CIVL_PRAGMA,
+					inputVars, frontEnd.getASTBuilder(), config);
+			if (config.debugOrVerbose()) {
+				frontEnd.printProgram(out, program);
+				CIVLTransform.printProgram2CIVL(out, program);
+			}
+		}
 		if (hasStdio) {
-			if (verboseOrDebug)
+			if (config.debugOrVerbose())
 				this.out.println("Apply IO transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.IO,
-					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
-			if (verboseOrDebug) {
+					inputVars, frontEnd.getASTBuilder(), config);
+			if (config.debugOrVerbose()) {
 				frontEnd.printProgram(out, program);
 				CIVLTransform.printProgram2CIVL(out, program);
 			}
 		}
 		if (hasOmp) {
-			if (verboseOrDebug)
+			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP parser...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
-					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
-			if (verboseOrDebug)
+					inputVars, frontEnd.getASTBuilder(), config);
+			if (config.debugOrVerbose())
 				frontEnd.printProgram(out, program);
-			if (verboseOrDebug)
+			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
-			if (verboseOrDebug) {
+					inputVars, frontEnd.getASTBuilder(), config);
+			if (config.debugOrVerbose()) {
 				frontEnd.printProgram(out, program);
 				CIVLTransform.printProgram2CIVL(out, program);
 			}
 		}
 		if (hasPthread) {
-			if (verboseOrDebug)
+			if (config.debugOrVerbose())
 				this.out.println("Apply Pthread transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.PTHREAD,
-					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
-			if (verboseOrDebug) {
+					inputVars, frontEnd.getASTBuilder(), config);
+			if (config.debugOrVerbose()) {
 				frontEnd.printProgram(out, program);
 				CIVLTransform.printProgram2CIVL(out, program);
 			}
 		}
 		if (hasMpi) {
-			if (verboseOrDebug)
+			if (config.debugOrVerbose())
 				this.out.println("Apply MPI transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.MPI,
-					inputVars, frontEnd.getASTBuilder(), verboseOrDebug);
-			if (verboseOrDebug) {
+					inputVars, frontEnd.getASTBuilder(), config);
+			if (config.debugOrVerbose()) {
 				frontEnd.printProgram(out, program);
 				CIVLTransform.printProgram2CIVL(out, program);
 			}
 		}
 		// always apply pruner and side effect remover
-		if (verboseOrDebug)
+		if (config.debugOrVerbose())
 			this.out.println("Apply pruner...");
 		program.applyTransformer("prune");
-		if (verboseOrDebug) {
+		if (config.debugOrVerbose()) {
 			frontEnd.printProgram(out, program);
 			CIVLTransform.printProgram2CIVL(out, program);
 		}
-		if (verboseOrDebug)
+		if (config.debugOrVerbose())
 			this.out.println("Apply side-effect remover...");
 		program.applyTransformer("sef");
-		if (verboseOrDebug) {
+		if (config.debugOrVerbose()) {
 			frontEnd.printProgram(out, program);
 			CIVLTransform.printProgram2CIVL(out, program);
 		}
@@ -730,6 +751,7 @@ public class UserInterface {
 		Preprocessor preprocessor0;
 		Preprocessor preprocessor1;
 		List<String> inputVars = getInputVariables(config);
+		CIVLConfiguration civlConfig = new CIVLConfiguration(config);
 
 		checkFilenames(2, config);
 		filename0 = config.getFreeArg(1);
@@ -746,10 +768,10 @@ public class UserInterface {
 		} else {
 			program0 = frontEnd0.getProgram();
 
-			applyTransformers(filename0, program0, preprocessor0, parse,
+			applyTransformers(filename0, program0, preprocessor0, civlConfig,
 					frontEnd0, inputVars);
 			program1 = frontEnd1.getProgram();
-			applyTransformers(filename1, program1, preprocessor1, parse,
+			applyTransformers(filename1, program1, preprocessor1, civlConfig,
 					frontEnd1, inputVars);
 		}
 		if (verbose || debug)

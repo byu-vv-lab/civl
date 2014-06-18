@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.abc.Activator;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
 
@@ -58,7 +59,9 @@ public class OmpTransformerTest {
 			IOException {
 		Activator frontEnd;
 		Program program;
+		CIVLConfiguration config = new CIVLConfiguration();
 
+		config.setDebug(debug);
 		this.systemIncludes = new File[0];
 		this.userIncludes = new File[0];
 		frontEnd = ABC.activator(new File(root, filenameRoot + ".c"),
@@ -69,14 +72,14 @@ public class OmpTransformerTest {
 			program = frontEnd.getProgram();
 
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
-				new ArrayList<String>(0), frontEnd.getASTBuilder(), debug);
+				new ArrayList<String>(0), frontEnd.getASTBuilder(), config);
 		if (debug) {
 			out.println("======== After applying OpenMP Pragma Transformer ========");
 			frontEnd.printProgram(out, program);
 		}
 
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-				new ArrayList<String>(0), frontEnd.getASTBuilder(), debug);
+				new ArrayList<String>(0), frontEnd.getASTBuilder(), config);
 		if (debug) {
 			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program);

@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 //TODO: add arguments to pthread_exit();
 //TODO: If the start_routine returns, the effect shall be as if there was an 
@@ -79,8 +80,9 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	 * @param astFactory
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
-	public Pthread2CIVLTransformer(ASTFactory astFactory, boolean debug) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, debug);
+	public Pthread2CIVLTransformer(ASTFactory astFactory,
+			CIVLConfiguration config) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, config);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -91,11 +93,12 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 				continue;
 			if (node instanceof FunctionDefinitionNode)
 				process_phread_exits((FunctionDefinitionNode) node);
-			else if (node instanceof FunctionDeclarationNode) {
+			else if (config.svcomp() && node instanceof FunctionDeclarationNode) {
 				process_VERIFIER_functions((FunctionDeclarationNode) node);
 			}
 		}
-		translateNode(root);
+		if (config.svcomp())
+			translateNode(root);
 	}
 
 	private void process_VERIFIER_functions(FunctionDeclarationNode function) {

@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 public class OmpPragmaTransformer extends CIVLBaseTransformer {
 
@@ -31,9 +32,9 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 	private OmpBuilder ompBuilder;
 
 	public OmpPragmaTransformer(ASTFactory astFactory,
-			List<String> inputVariables, ASTBuilder astBuilder, boolean debug) {
+			List<String> inputVariables, ASTBuilder astBuilder, CIVLConfiguration config) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
-				astBuilder, debug);
+				astBuilder, config);
 		this.ompBuilder = Antlr2AST.newOmpBuilder(astFactory, astBuilder);
 	}
 

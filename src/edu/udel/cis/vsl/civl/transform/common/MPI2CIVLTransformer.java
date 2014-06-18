@@ -31,6 +31,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
 //TODO: translate exit(k) to return k;
@@ -204,9 +205,9 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
 	public MPI2CIVLTransformer(ASTFactory astFactory,
-			List<String> inputVariables, boolean debug) {
+			List<String> inputVariables, CIVLConfiguration config) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
-				debug);
+				config);
 	}
 
 	/* *************************** Private Methods ************************* */

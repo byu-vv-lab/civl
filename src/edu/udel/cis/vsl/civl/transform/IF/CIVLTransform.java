@@ -7,13 +7,17 @@ import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.PragmaNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.transform.common.AST2CIVL;
 import edu.udel.cis.vsl.civl.transform.common.CIVLBaseTransformer;
+import edu.udel.cis.vsl.civl.transform.common.CIVLPragmaTransformer;
 import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
 import edu.udel.cis.vsl.civl.transform.common.MPI2CIVLTransformer;
@@ -42,6 +46,7 @@ public class CIVLTransform {
 	public final static String OMP_SIMPLIFY = OpenMPSimplifier.CODE;
 	public final static String MPI = MPI2CIVLTransformer.CODE;
 	public final static String PTHREAD = Pthread2CIVLTransformer.CODE;
+	public final static String CIVL_PRAGMA = CIVLPragmaTransformer.CODE;
 
 	/**
 	 * Applies a transformer to a program.
@@ -71,30 +76,34 @@ public class CIVLTransform {
 	 * @throws SyntaxException
 	 */
 	public static void applyTransformer(Program program, String code,
-			List<String> inputVars, ASTBuilder astBuilder, boolean debug)
-			throws SyntaxException {
+			List<String> inputVars, ASTBuilder astBuilder,
+			CIVLConfiguration config) throws SyntaxException {
 		CIVLBaseTransformer transformer;
 		ASTFactory astFactory = program.getAST().getASTFactory();
 
 		switch (code) {
 		case CIVLTransform.GENERAL:
-			transformer = new GeneralTransformer(astFactory, inputVars, debug);
+			transformer = new GeneralTransformer(astFactory, inputVars, config);
 			break;
 		case CIVLTransform.IO:
-			transformer = new IOTransformer(astFactory, inputVars, debug);
+			transformer = new IOTransformer(astFactory, inputVars, config);
 			break;
 		case CIVLTransform.MPI:
-			transformer = new MPI2CIVLTransformer(astFactory, inputVars, debug);
+			transformer = new MPI2CIVLTransformer(astFactory, inputVars, config);
 			break;
 		case CIVLTransform.OMP_PRAGMA:
 			transformer = new OmpPragmaTransformer(astFactory, inputVars,
-					astBuilder, debug);
+					astBuilder, config);
 			break;
 		case CIVLTransform.OMP_SIMPLIFY:
-			transformer = new OpenMPSimplifier(astFactory, debug);
+			transformer = new OpenMPSimplifier(astFactory, config);
 			break;
 		case CIVLTransform.PTHREAD:
-			transformer = new Pthread2CIVLTransformer(astFactory, debug);
+			transformer = new Pthread2CIVLTransformer(astFactory, config);
+			break;
+		case CIVLTransform.CIVL_PRAGMA:
+			transformer = new CIVLPragmaTransformer(astFactory, astBuilder,
+					config);
 			break;
 		default:
 			// try applying the transformer from ABC, might fail.
@@ -148,6 +157,31 @@ public class CIVLTransform {
 
 				if (functions.contains(functionName))
 					return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean hasCIVLPragma(AST ast) {
+		ASTNode root = ast.getRootNode();
+
+		return checkCIVLPragma(root);
+	}
+
+	private static boolean checkCIVLPragma(ASTNode node) {
+		if (node.nodeKind() == NodeKind.PRAGMA) {
+			PragmaNode pragma = (PragmaNode) node;
+
+			if (pragma.getPragmaIdentifier().name().equals("CIVL"))
+				return true;
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child != null) {
+					boolean childResult = checkCIVLPragma(child);
+
+					if (childResult)
+						return true;
+				}
 			}
 		}
 		return false;

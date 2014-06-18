@@ -29,6 +29,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.util.ExpressionEvaluator;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 /**
  * This transformer analyzes OpenMP constructs and converts them to simpler,
@@ -61,8 +62,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 
 	private List<Entity> privateIDs;
 
-	public OpenMPSimplifier(ASTFactory astFactory, boolean debug) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, debug);
+	public OpenMPSimplifier(ASTFactory astFactory, CIVLConfiguration config) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, config);
 	}
 
 	public AST transform(AST unit) throws SyntaxException {

@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 /**
  * This is the base transformer of CIVL. Any transformer implemented in CIVL
@@ -38,11 +39,7 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 	 */
 	protected ASTBuilder astBuilder;
 
-	/**
-	 * The flag to turn on/off debugging. Useful for printing more information
-	 * in debug mode.
-	 */
-	protected boolean debug;
+	protected CIVLConfiguration config;
 
 	/* ****************************** Constructor ************************** */
 
@@ -61,11 +58,12 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 	 */
 	protected CIVLBaseTransformer(String code, String longName,
 			String shortDescription, ASTFactory astFactory,
-			List<String> inputVariables, ASTBuilder astBuilder, boolean debug) {
+			List<String> inputVariables, ASTBuilder astBuilder,
+			CIVLConfiguration config) {
 		super(code, longName, shortDescription, astFactory);
 		this.inputVariableNames = inputVariables;
 		this.astBuilder = astBuilder;
-		this.debug = debug;
+		this.config = config;
 	}
 
 	/**
@@ -83,10 +81,10 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 	 */
 	protected CIVLBaseTransformer(String code, String longName,
 			String shortDescription, ASTFactory astFactory,
-			List<String> inputVariables, boolean debug) {
+			List<String> inputVariables, CIVLConfiguration config) {
 		super(code, longName, shortDescription, astFactory);
 		this.inputVariableNames = inputVariables;
-		this.debug = debug;
+		this.config = config;
 	}
 
 	/**
@@ -103,9 +101,17 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 	 * 
 	 */
 	protected CIVLBaseTransformer(String code, String longName,
-			String shortDescription, ASTFactory astFactory, boolean debug) {
+			String shortDescription, ASTFactory astFactory,
+			CIVLConfiguration config) {
 		super(code, longName, shortDescription, astFactory);
-		this.debug = debug;
+		this.config = config;
+	}
+
+	public CIVLBaseTransformer(String code, String longName,
+			String shortDescription, ASTFactory astFactory,
+			ASTBuilder astBuilder, CIVLConfiguration config) {
+		this(code, longName, shortDescription, astFactory, config);
+		this.astBuilder = astBuilder;
 	}
 
 	/* ************************** Protected Methods ************************ */

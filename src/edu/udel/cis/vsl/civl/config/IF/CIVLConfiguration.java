@@ -2,11 +2,13 @@ package edu.udel.cis.vsl.civl.config.IF;
 
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
+
 public class CIVLConfiguration {
 	private boolean debug = false;
 	private boolean enablePrintf = true;
 	// private int errorBound = 1;
-//	private boolean needsInputFileLength = false;
+	// private boolean needsInputFileLength = false;
 	private boolean saveStates = true;
 	private boolean showAmpleSet = false;
 	private boolean showAmpleSetWtStates = false;
@@ -16,11 +18,30 @@ public class CIVLConfiguration {
 	private boolean simplify = true;
 	private boolean statelessPrintf = true;
 	private boolean verbose = false;
+	private boolean svcomp = false;
+	private String deadlock;
 	private PrintStream out;
 	private PrintStream err;
 
-	public CIVLConfiguration() {
+	public CIVLConfiguration(GMCConfiguration config) {
+		this.debug = config.isTrue(CIVLConstants.debugO);
+		this.enablePrintf = config.isTrue(CIVLConstants.enablePrintfO);
+		this.saveStates = config.isTrue(CIVLConstants.saveStatesO);
+		this.showAmpleSet = config.isTrue(CIVLConstants.showAmpleSetO);
+		this.showAmpleSetWtStates = config
+				.isTrue(CIVLConstants.showAmpleSetWtStatesO);
+		this.showSavedStates = config.isTrue(CIVLConstants.showSavedStatesO);
+		this.showStates = config.isTrue(CIVLConstants.showStatesO);
+		this.showTransitions = config.isTrue(CIVLConstants.showTransitionsO);
+		this.simplify = config.isTrue(CIVLConstants.simplifyO);
+		this.statelessPrintf = config.isTrue(CIVLConstants.statelessPrintfO);
+		this.verbose = config.isTrue(CIVLConstants.verboseO);
+		this.svcomp = config.isTrue(CIVLConstants.svcompO);
+		this.deadlock = (String) config.getValue(CIVLConstants.deadlockO);
+	}
 
+	public CIVLConfiguration() {
+		// TODO Auto-generated constructor stub
 	}
 
 	public void setOut(PrintStream out) {
@@ -43,9 +64,9 @@ public class CIVLConfiguration {
 	// this.errorBound = bound;
 	// }
 
-//	public void setNeedsInputFileLength(boolean needsInputFileLength) {
-//		this.needsInputFileLength = needsInputFileLength;
-//	}
+	// public void setNeedsInputFileLength(boolean needsInputFileLength) {
+	// this.needsInputFileLength = needsInputFileLength;
+	// }
 
 	public void setSaveStates(boolean saveStates) {
 		this.saveStates = saveStates;
@@ -145,6 +166,22 @@ public class CIVLConfiguration {
 
 	public boolean printStates() {
 		return this.showStates || this.verbose || this.debug;
+	}
+
+	public boolean svcomp() {
+		return svcomp;
+	}
+
+	public void setSvcomp(boolean svcomp) {
+		this.svcomp = svcomp;
+	}
+
+	public String deadlock() {
+		return deadlock;
+	}
+
+	public void setDeadlock(String deadlock) {
+		this.deadlock = deadlock;
 	}
 
 }

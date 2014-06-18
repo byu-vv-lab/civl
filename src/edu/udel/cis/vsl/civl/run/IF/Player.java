@@ -1,22 +1,11 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.debugO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.enablePrintfO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.errorBoundO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guiO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.randomO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.saveStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetWtStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showSavedStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -134,7 +123,7 @@ public abstract class Player {
 
 	protected CIVLErrorLogger errorLogger;
 
-	protected CIVLConfiguration civlConfig = new CIVLConfiguration();
+	protected CIVLConfiguration civlConfig;
 
 	public Player(GMCConfiguration config, Model model, PrintStream out,
 			PrintStream err, Preprocessor preprocessor)
@@ -144,27 +133,9 @@ public abstract class Player {
 		this.preprocessor = preprocessor;
 		this.config = config;
 		this.model = model;
+		civlConfig = new CIVLConfiguration(config);
 		civlConfig.setOut(out);
 		civlConfig.setErr(err);
-		civlConfig.setDebug((Boolean) config.getValueOrDefault(debugO));
-		civlConfig.setEnablePrintf((Boolean) config
-				.getValueOrDefault(enablePrintfO));
-		civlConfig.setSaveStates((Boolean) config
-				.getValueOrDefault(saveStatesO));
-		civlConfig.setShowAmpleSet((Boolean) config
-				.getValueOrDefault(showAmpleSetO));
-		civlConfig.setShowAmpleSetWtStates((Boolean) config
-				.getValueOrDefault(showAmpleSetWtStatesO));
-		civlConfig.setShowSavedStates((Boolean) config
-				.getValueOrDefault(showSavedStatesO));
-		civlConfig.setShowStates((Boolean) config
-				.getValueOrDefault(showStatesO));
-		civlConfig.setShowTransitions((Boolean) config
-				.getValueOrDefault(showTransitionsO));
-		civlConfig.setSimplify((Boolean) config.getValueOrDefault(simplifyO));
-		civlConfig.setStatelessPrintf((Boolean) config
-				.getValueOrDefault(statelessPrintfO));
-		civlConfig.setVerbose((Boolean) config.getValueOrDefault(verboseO));
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();

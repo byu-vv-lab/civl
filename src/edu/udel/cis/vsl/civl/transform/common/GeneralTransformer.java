@@ -1,7 +1,9 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
@@ -29,8 +31,12 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
+import edu.udel.cis.vsl.abc.token.IF.Formation;
+import edu.udel.cis.vsl.abc.token.IF.Macro;
+import edu.udel.cis.vsl.abc.token.IF.MacroExpansion;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 
 public class GeneralTransformer extends CIVLBaseTransformer {
@@ -42,9 +48,9 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 	private final static String MALLOC = "malloc";
 
 	public GeneralTransformer(ASTFactory astFactory,
-			List<String> inputVariables, boolean debug) {
+			List<String> inputVariables, CIVLConfiguration config) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
-				debug);
+				config);
 	}
 
 	@Override
@@ -54,6 +60,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 		AST newAst;
 		List<VariableDeclarationNode> inputVars = new ArrayList<>();
 		List<ASTNode> newExternalList = new ArrayList<>();
+		Map<String, VariableDeclarationNode> macroVars = new HashMap<>();
 
 		unit.release();
 		processMalloc(root);
@@ -66,21 +73,73 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 				if (functionName.name().equals("main")) {
 					inputVars = processMainFunction(functionNode);
 				}
+				if (config.svcomp())
+					recoverMacro(child, macroVars);
 			}
 		}
-		if (inputVars.size() > 0) {
-			for (ASTNode inputVar : inputVars) {
-				newExternalList.add(inputVar);
-			}
-			for (ASTNode child : root) {
-				newExternalList.add(child);
-				child.parent().removeChild(child.childIndex());
-			}
-			root = nodeFactory.newSequenceNode(root.getSource(),
-					"TranslationUnit", newExternalList);
+		for (ASTNode inputVar : macroVars.values())
+			newExternalList.add(inputVar);
+		for (ASTNode inputVar : inputVars)
+			newExternalList.add(inputVar);
+		for (ASTNode child : root) {
+			newExternalList.add(child);
+			child.parent().removeChild(child.childIndex());
 		}
+		root = nodeFactory.newSequenceNode(root.getSource(), "TranslationUnit",
+				newExternalList);
 		newAst = astFactory.newAST(root);
 		return newAst;
+	}
+
+	private void recoverMacro(ASTNode node,
+			Map<String, VariableDeclarationNode> macros) {
+		String sourceFile = node.getSource().getFirstToken().getSourceFile()
+				.getName();
+		Formation formation;
+
+		if (sourceFile.endsWith(".h") || sourceFile.equals("civl-omp.cvl")
+				|| sourceFile.equals("mpi.cvl")
+				|| sourceFile.equals("pthread-c.cvl")
+				|| sourceFile.equals("pthread.cvl")
+				|| sourceFile.equals("stdio-c.cvl")
+				|| sourceFile.equals("stdio.cvl"))
+			return;
+		formation = node.getSource().getFirstToken().getFormation();
+		if (formation instanceof MacroExpansion) {
+			if (node.nodeKind() == NodeKind.EXPRESSION) {
+				Type type = ((ExpressionNode) node).getType();
+
+				if (type instanceof StandardBasicType) {
+					if (((StandardBasicType) type).getBasicTypeKind() == BasicTypeKind.BOOL)
+						return;
+				}
+				MacroExpansion expansion = (MacroExpansion) formation;
+				Macro macro = expansion.getMacro();
+				String name = macro.getName();
+				ExpressionNode idNode;
+				Source source = node.getSource();
+
+				if (!macros.containsKey(name)) {
+					VariableDeclarationNode newInputVar;
+					TypeNode typeNode = typeNode(source, type);
+
+					typeNode.setInputQualified(true);
+					newInputVar = nodeFactory.newVariableDeclarationNode(
+							source,
+							nodeFactory.newIdentifierNode(source, name),
+							typeNode);
+					macros.put(name, newInputVar);
+				}
+				idNode = this.identifierExpression(source, name);
+				node.parent().setChild(node.childIndex(), idNode);
+			}
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child != null) {
+					this.recoverMacro(child, macros);
+				}
+			}
+		}
 	}
 
 	private void processMalloc(ASTNode node) {
