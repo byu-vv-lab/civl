@@ -43,8 +43,8 @@ public class MPITranslationTest {
 
 	@Test
 	public void adder_par() {
-		assertTrue(ui
-				.run("verify", filename("adder_par.c"), "-input__NPROCS=2"));
+		assertTrue(ui.run("verify", filename("adder_par.c"),
+				"-input__NPROCS=2", "-inputNB=4"));
 	}
 
 	@Test

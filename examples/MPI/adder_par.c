@@ -20,11 +20,12 @@
  * 02110-1301 USA.
  */
 
-
+#include<civlc.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include"mpi.h"
 
+#pragma CIVL $input int NB;
 double sum;
 double localSum = 0.0;
 int PID;
@@ -45,6 +46,7 @@ double computeGlobalSum() {
     
 int main(int argc, char *argv[]) {
   int n = atoi(argv[1]);
+  #pragma CIVL $assume 0 < n && n <= NB;
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &NPROCS);
   MPI_Comm_rank(MPI_COMM_WORLD, &PID);
