@@ -1,6 +1,8 @@
 extern void *value = NULL;
 extern __pthread_pool_t _pool={.len = 0};
+extern $gbarrier gbarr;
 
+//Methods to be implemented
 /*void _add_thread(__pthread_pool_t* pool, pthread_t* thread){
   $atomic{
   int len = pool->len;
@@ -25,7 +27,38 @@ _Bool isTerminated($proc thr){
   }
   return false;
 }
+
+int pthread_barrierattr_init(pthread_barrierattr_t *attr){
+  *attr->pshared = 0;
+  return 0;
+}
+
+int pthread_barrierattr_destroy(pthread_barrierattr_t *attr){
+  pthread_barrierattr_t blank;
+  *attr = blank;
+  return 0;
+}
+
+int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t *attr, int count){
+  barrier->attr = *attr;
+  barrier->barr = $gbarrier_create($root, count);
+  barrier->count = 0;
+  return 0;
+}
+
+int pthread_barrier_wait(pthread_barrier_t *barrier){
+  $barrier locbarr = $barrier_create($here, barrier->barr , barrier->count);
+  barrier->count++;
+  $barrier_call(locbarr);
+  return 0;
+}
+
+
+
+int pthread_barrier_destroy(pthread_barrier_t *barrier);
 */
+
+// Working Methods
 /**
   * Initializes an attribute with the default values defined for it by an implementation.
   * Corresponding specification: p. 1532-4
@@ -476,12 +509,14 @@ int pthread_cond_init(pthread_cond_t *cond, void *arg){
   */
 
 int pthread_cond_destroy(pthread_cond_t *cond){
-  if(cond->proccount != 0){
-    $assert($false, "ERROR: Threads still waiting on specified condition variable");
-  }
-  else{
-    pthread_cond_t blank;
-    *cond = blank;
+  pthread_cond_t blank;
+  *cond = blank;
+  return 0;
+}
+
+int pthread_equal(pthread_t t1, pthread_t t2){
+  if(t1.thr == t2.thr){
+    return 1;
   }
   return 0;
 }
@@ -580,13 +615,13 @@ int _pthread_exit(void *value_ptr, _Bool isMain){
   }
   else{
     $atomic{
-    for(int i = 0; i<_pool.len-1; i++){
-      if($proc_defined(_pool.threads[i]->thr)){
-        if(_pool.threads[i]->thr == $self){
-          _pool.threads[i]->terminated = true;
+      for(int i = 0; i<_pool.len-1; i++){
+        if($proc_defined(_pool.threads[i]->thr)){
+          if(_pool.threads[i]->thr == $self){
+            _pool.threads[i]->terminated = true;
+          }
         }
       }
-    }
     }
     value = value_ptr;
     $exit();

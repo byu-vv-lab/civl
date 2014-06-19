@@ -42,7 +42,27 @@ EPERM,        //If mutex is robust or errorcheck and does not own the mutex
 ERSCH        
 };
 
-/* Struct definitions */
+// In process of implementing
+/*
+typedef struct { 
+  int pshared;
+} pthread_barrierattr_t;
+
+typedef struct {
+  pthread_barrierattr_t attr;
+  int count;
+  $gbarrier barr;
+} pthread_barrier_t;
+  
+
+
+typedef struct {
+  int pshared;
+  clockid_t clock_id;
+}pthread_condattr_t;
+*/
+
+/* Implemented struct definitions */
 
 /* pthread_attr_t struct definition
   Description: This struct corresponds to the pthread_attr_t which is the attribute of a pthread_t. It's fields
@@ -102,13 +122,6 @@ typedef struct {
   pthread_mutexattr_t attr;
 } pthread_mutex_t;
 
-//Unimplemented
-/*
-typedef struct {
-  int pshared;
-  clockid_t clock_id;
-}pthread_condattr_t;
-*/
 
 /* pthread_cond_t struct definition
   Description: The pthread_cond_t is another locking mechanism which interacts with the mutex variable. When
