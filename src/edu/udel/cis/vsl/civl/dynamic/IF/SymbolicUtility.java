@@ -1,9 +1,12 @@
 package edu.udel.cis.vsl.civl.dynamic.IF;
 
+import java.util.ArrayList;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -175,6 +178,24 @@ public interface SymbolicUtility {
 	int getArrayIndex(CIVLSource source, SymbolicExpression charPointer);
 
 	/**
+	 * Recursively updates the array references for an multi-dimensional array
+	 * by using a set of indexes and a given reference to an array element. e.g.
+	 * If the arrayReference is a[x][y], then the size of newIndexes should be
+	 * 2. And newIndexes[0] corresponds to update the x, newIndexes[1]
+	 * corresponds to update the y, and so forth.
+	 * 
+	 * @author ziqing
+	 * @param arrayReference
+	 *            An reference to an array
+	 * @param newIndexes
+	 *            indexes for referencing the element
+	 * @return the new arrayElementReference
+	 */
+	public SymbolicExpression updateArrayElementReference(
+			ArrayElementReference arrayReference,
+			ArrayList<NumericExpression> newIndexes);
+
+	/**
 	 * Checks if a heap is null or empty.
 	 * 
 	 * @param heapValue
@@ -182,4 +203,5 @@ public interface SymbolicUtility {
 	 * @return True iff the heap has null value or is empty.
 	 */
 	boolean isEmptyHeap(SymbolicExpression heapValue);
+
 }

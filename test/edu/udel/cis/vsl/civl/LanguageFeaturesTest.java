@@ -247,6 +247,21 @@ public class LanguageFeaturesTest {
 	public void pointerAdd() throws ABCException {
 		assertTrue(ui.run("verify", filename("pointerAdd.cvl")));
 	}
+	
+	@Test
+	public void pointerAdd2() throws ABCException {
+		assertTrue(ui.run("verify", filename("pointerAdd2.cvl")));
+	}
+	
+	@Test
+	public void pointerAddBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("pointerAddBad.cvl")));
+	}
+	
+	@Test
+	public void pointerAddBad2() throws ABCException {
+		assertFalse(ui.run("verify", filename("pointerAddBad2.cvl")));
+	}
 
 	@Test
 	public void quantifiers() {
@@ -280,7 +295,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void sizeOf() throws ABCException {
-		assertTrue(ui.run("verify", filename("sizeOf.cvl")));
+		assertTrue(ui.run("verify", filename("sizeof.cvl")));
 	}
 
 	@Test

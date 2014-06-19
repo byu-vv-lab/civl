@@ -1,34 +1,46 @@
 #include <civlc.h>
 #include <stdio.h>
 
+$input double a1d[10];
+$input double a2d[10][10];
+$input double a3d[10][10][10];
+$input double a4d[5][10][15][20];
 void main(){
   double * p1d;
   double ** p2d;
-  double a1d[10];
-  double a2d[10][10];
+  double *** p3d;
+
 
   p1d = (double *)$malloc($root, sizeof(double) * 10);
   p2d = (double **)$malloc($root, sizeof(double *) * 10);
+  p3d = (double ***)$malloc($root, sizeof(double **) * 10);
   for(int i=0; i<10; i++){
-    a1d[i] = i;
+    p1d[i] = i;
     p2d[i] = (double *)$malloc($root, sizeof(double) * 10);
+    p3d[i] = (double **)$malloc($root, sizeof(double *) * 10);
     for(int j=0; j<10; j++){
-      a2d[i][j] = i * 10 + j;
       p2d[i][j] = i * 10 + j;
+      p3d[i][j] = (double *)$malloc($root, sizeof(double) * 10);
+      for(int k=0; k<10; k++){
+	p3d[i][j][k] = i * 100 + j * 10 + k;
+      }
     }
   }
 
   /* access array */
-  printf("*(a1d + 5) = %.4f\n", *(a1d + 5));
-  printf("*(a1d + 9) = %.4f\n", *(a1d + 9));
-  printf("*(*(a2d + 5) + 5) = %.4f\n", *(*(a2d + 5) + 5));
-  printf("*(&a2d[0][0] + 10) = %.4f\n", *(&a2d[0][0] + 10));
-  printf("*(&a2d[0][0] + 99) = %.4f\n", *(&a2d[0][0] + 99));
+  $assert(*(a1d+5) == a1d[5]);
+  $assert(*(*(a2d + 5) + 5) == a2d[5][5]);
+  $assert(**(a2d + 5) == a2d[5][0]);
+  $assert(*(a2d[0] + 9) == a2d[0][9]);
+  $assert(*(&a2d[0][0] + 9) == a2d[0][9]);
+  $assert(*(&a3d[1][2][3] - 40) == a3d[0][8][3]);
+  $assert(*(&a3d[1][2][3] + 145) == a3d[2][6][8]);
+  $assert(*(&a4d[1][2][3][4] + 145) == a4d[1][2][10][9]);
 
   /* access malloced pointer */
-  printf("*(p1d + 5) = %.4f\n", *(p1d + 5));
-  printf("*(p1d + 9) = %.4f\n", *(p1d + 9));
-  printf("*(*(p2d + 5) + 5) = %.4f\n", *(*(p2d + 5) + 5));
-  printf("*(&p2d[0][0] + 10) = %.4f\n", *(&p2d[0][0] + 10));
-  printf("*(*p2d + 9) = %.4f\n", *(*p2d + 9));
+  $assert(*(p1d + 5) == p1d[5]);
+  $assert(*(*(p2d + 5) + 5) == p2d[5][5]);
+  $assert(*(*(p2d + 9)) == p2d[9][0]);
+  $free(p1d);
+  $free(p2d);
 }

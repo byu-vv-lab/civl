@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.dynamic.common;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -1246,7 +1247,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			SymbolicSequence<?> charArray, int startIndex, boolean forPrint) {
 		StringBuffer result = new StringBuffer();
 		int numChars = charArray.size();// ignoring the '\0' at the
-													// end
+										// end
 		// of the string.
 		// stringChars = new char[numChars -
 		// int_arrayIndex];
@@ -1304,5 +1305,23 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			int_arrayIndex = extractInt(source, arrayIndex);
 		}
 		return int_arrayIndex;
+	}
+
+	@Override
+	public SymbolicExpression updateArrayElementReference(
+			ArrayElementReference arrayReference,
+			ArrayList<NumericExpression> newIndexes) {
+		int dimension = newIndexes.size();
+		ReferenceExpression rootParent = arrayReference;
+		ReferenceExpression newRef;
+
+		for (int i = 0; i < dimension; i++)
+			rootParent = ((ArrayElementReference) rootParent).getParent();
+
+		newRef = rootParent;
+		for (int i = 0; i < dimension; i++) {
+			newRef = universe.arrayElementReference(newRef, newIndexes.get(i));
+		}
+		return newRef;
 	}
 }
