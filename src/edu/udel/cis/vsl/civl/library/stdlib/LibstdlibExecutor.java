@@ -118,7 +118,7 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 					call.getSource());
 			break;
 		case "atoi":
-			state = execute_atoi(state, numArgs, process, lhs, arguments,
+			state = execute_atoi(state, pid, process, lhs, arguments,
 					argumentValues, source);
 			break;
 		default:
