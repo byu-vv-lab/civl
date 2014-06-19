@@ -50,7 +50,7 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -303,14 +303,18 @@ public class CommonExecutor implements Executor {
 				arguments[i] = eval.value;
 			}
 			if (function == null) {
-				Pair<State, CIVLFunction> eval = evaluator
+				Triple<State, CIVLFunction, Integer> eval = evaluator
 						.evaluateFunctionExpression(state, pid,
-								statement.functionExpression());
+								statement.functionExpression(),
+								statement.getSource());
 
-				function = eval.right;
-				state = eval.left;
-			}
-			state = stateFactory.pushCallStack(state, pid, function, arguments);
+				function = eval.second;
+				state = eval.first;
+				state = stateFactory.pushCallStack(state, pid, function,
+						eval.third, arguments);
+			} else
+				state = stateFactory.pushCallStack(state, pid, function,
+						arguments);
 		}
 		return state;
 	}
@@ -687,14 +691,6 @@ public class CommonExecutor implements Executor {
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
 
 		assert !statement.isCall();
-		if (function == null) {
-			Pair<State, CIVLFunction> eval = evaluator
-					.evaluateFunctionExpression(state, pid,
-							statement.functionExpression());
-
-			state = eval.left;
-			function = eval.right;
-		}
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval = evaluator.evaluate(state, pid,
 					argumentExpressions.get(i));
@@ -702,7 +698,18 @@ public class CommonExecutor implements Executor {
 			state = eval.state;
 			arguments[i] = eval.value;
 		}
-		state = stateFactory.addProcess(state, function, arguments, pid);
+		if (function == null) {
+			Triple<State, CIVLFunction, Integer> eval = evaluator
+					.evaluateFunctionExpression(state, pid,
+							statement.functionExpression(),
+							statement.getSource());
+
+			state = eval.first;
+			function = eval.second;
+			state = stateFactory.addProcess(state, function, eval.third,
+					arguments, pid);
+		} else
+			state = stateFactory.addProcess(state, function, arguments, pid);
 		if (statement.lhs() != null)
 			state = assign(state, pid, process, statement.lhs(),
 					modelFactory.processValue(newPid));

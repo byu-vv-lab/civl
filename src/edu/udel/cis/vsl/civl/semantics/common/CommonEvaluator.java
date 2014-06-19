@@ -83,6 +83,7 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
+import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -1480,8 +1481,8 @@ public class CommonEvaluator implements Evaluator {
 			eval.value = universe.bool(result);
 			break;
 		case LESS_THAN_EQUAL:
-			result = (left == right) ? true : stateFactory.isDescendantOf(state,
-					right, left);
+			result = (left == right) ? true : stateFactory.isDescendantOf(
+					state, right, left);
 			eval.value = universe.bool(result);
 			break;
 		case EQUAL:
@@ -2171,12 +2172,13 @@ public class CommonEvaluator implements Evaluator {
 	private Evaluation evaluateFunctionGuard(State state, int pid,
 			String process, FunctionGuardExpression expression)
 			throws UnsatisfiablePathConditionException {
-		Pair<State, CIVLFunction> eval = this.evaluateFunctionExpression(state,
-				pid, expression.functionExpression());
+		Triple<State, CIVLFunction, Integer> eval = this
+				.evaluateFunctionExpression(state, pid,
+						expression.functionExpression(), expression.getSource());
 		CIVLFunction function;
 
-		state = eval.left;
-		function = eval.right;
+		state = eval.first;
+		function = eval.second;
 		if (function == null) {
 			errorLogger.logSimpleError(expression.getSource(), state, process,
 					symbolicUtil.stateToString(state), ErrorKind.OTHER,
@@ -2509,8 +2511,8 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public Pair<State, CIVLFunction> evaluateFunctionExpression(State state,
-			int pid, Expression functionExpression)
+	public Triple<State, CIVLFunction, Integer> evaluateFunctionExpression(
+			State state, int pid, Expression functionExpression, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		if (functionExpression == null)
 			return null;
@@ -2526,13 +2528,25 @@ public class CommonEvaluator implements Evaluator {
 					.argument(0);
 			String funcName = "";
 
+			if(scopeId < 0){
+				ProcessState procState = state.getProcessState(pid);
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE,
+						procState.name() + "(id=" + pid + ")",
+						"Invalid function pointer: "
+								+ functionExpression,
+						symbolicUtil.stateToString(state),
+						source);
+
+				errorLogger.reportError(err);
+			}
 			state = eval.state;
 			for (int j = 0; j < originalArray.size(); j++) {
 				funcName += originalArray.get(j).toString().charAt(1);
 			}
 			function = state.getScope(scopeId).lexicalScope()
 					.getFunction(funcName);
-			return new Pair<>(state, function);
+			return new Triple<>(state, function, scopeId);
 		}
 	}
 

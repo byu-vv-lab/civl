@@ -123,6 +123,25 @@ public class ImmutableStateFactory implements StateFactory {
 	/* *************************** Private Methods ************************* */
 
 	/**
+	 * Adds a new initial process state to the given state.
+	 * 
+	 * @param state
+	 *            The old state.
+	 * @return A new instance of state with only the process states changed.
+	 */
+	private ImmutableState createNewProcess(State state) {
+		ImmutableState theState = (ImmutableState) state;
+		int numProcs = theState.numProcs();
+		ImmutableProcessState[] newProcesses;
+
+		newProcesses = theState.copyAndExpandProcesses();
+		newProcesses[numProcs] = new ImmutableProcessState(numProcs,
+				this.processCount++);
+		theState = theState.setProcessStates(newProcesses);
+		return theState;
+	}
+
+	/**
 	 * Returns the canonicalized version of the given state.
 	 * 
 	 * @param state
@@ -369,6 +388,8 @@ public class ImmutableStateFactory implements StateFactory {
 	 *            stack may be empty
 	 * @param function
 	 *            the called function that will be pushed onto the stack
+	 * @param functionParentDyscope
+	 *            The dyscope ID of the parent of the new function
 	 * @param arguments
 	 *            the arguments to the function
 	 * @param callerPid
@@ -382,7 +403,8 @@ public class ImmutableStateFactory implements StateFactory {
 	 * @return new stack with new frame on call stack of process pid
 	 */
 	private ImmutableState pushCallStack2(ImmutableState state, int pid,
-			CIVLFunction function, SymbolicExpression[] arguments, int callerPid) {
+			CIVLFunction function, int functionParentDyscope,
+			SymbolicExpression[] arguments, int callerPid) {
 		Scope containingStaticScope = function.containingScope();
 		Scope functionStaticScope = function.outerScope();
 		ImmutableProcessState[] newProcesses = state.copyProcessStates();
@@ -390,34 +412,37 @@ public class ImmutableStateFactory implements StateFactory {
 		SymbolicExpression[] values;
 		ImmutableDynamicScope[] newScopes;
 		int sid;
-		int containingDynamicScopeId, containingDynamicScopeIdentifier;
+		int containingDynamicScopeId = functionParentDyscope, containingDynamicScopeIdentifier;
 		BitSet bitSet = new BitSet(newProcesses.length);
 
-		if (callerPid >= 0) {
-			ProcessState caller = state.getProcessState(callerPid);
-			ImmutableDynamicScope containingDynamicScope;
+		if (containingDynamicScopeId < 0)
+			if (callerPid >= 0) {
+				ProcessState caller = state.getProcessState(callerPid);
+				ImmutableDynamicScope containingDynamicScope;
 
-			if (caller.stackSize() == 0)
-				throw new IllegalArgumentException(
-						"Calling process has empty stack: " + callerPid);
-			containingDynamicScopeId = caller.getDyscopeId();
-			while (containingDynamicScopeId >= 0) {
-				containingDynamicScope = (ImmutableDynamicScope) state
-						.getScope(containingDynamicScopeId);
-				if (containingStaticScope == containingDynamicScope
-						.lexicalScope())
-					break;
-				containingDynamicScopeId = state
-						.getParentId(containingDynamicScopeId);
+				if (caller.stackSize() == 0)
+					throw new IllegalArgumentException(
+							"Calling process has empty stack: " + callerPid);
+				containingDynamicScopeId = caller.getDyscopeId();
+				while (containingDynamicScopeId >= 0) {
+					containingDynamicScope = (ImmutableDynamicScope) state
+							.getScope(containingDynamicScopeId);
+					if (containingStaticScope == containingDynamicScope
+							.lexicalScope())
+						break;
+					containingDynamicScopeId = state
+							.getParentId(containingDynamicScopeId);
+				}
+				if (containingDynamicScopeId < 0)
+					throw new IllegalArgumentException(
+							"Called function not visible:\nfunction: "
+									+ function + "\npid: " + pid
+									+ "\ncallerPid:" + callerPid
+									+ "\narguments: "
+									+ Arrays.toString(arguments));
+			} else {
+				containingDynamicScopeId = -1;
 			}
-			if (containingDynamicScopeId < 0)
-				throw new IllegalArgumentException(
-						"Called function not visible:\nfunction: " + function
-								+ "\npid: " + pid + "\ncallerPid:" + callerPid
-								+ "\narguments: " + Arrays.toString(arguments));
-		} else {
-			containingDynamicScopeId = -1;
-		}
 		newScopes = state.copyAndExpandScopes();
 		sid = numScopes;
 		values = initialValues(functionStaticScope);
@@ -649,16 +674,20 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public ImmutableState addProcess(State state, CIVLFunction function,
 			SymbolicExpression[] arguments, int callerPid) {
-		ImmutableState theState = (ImmutableState) state;
-		int numProcs = theState.numProcs();
-		ImmutableProcessState[] newProcesses;
+		ImmutableState theState = createNewProcess(state);
 
-		newProcesses = theState.copyAndExpandProcesses();
-		newProcesses[numProcs] = new ImmutableProcessState(numProcs,
-				this.processCount++);
-		theState = theState.setProcessStates(newProcesses);
-		return pushCallStack2(theState, numProcs, function, arguments,
-				callerPid);
+		return pushCallStack2(theState, state.numProcs(), function, -1,
+				arguments, callerPid);
+	}
+
+	@Override
+	public State addProcess(State state, CIVLFunction function,
+			int functionParentDyscope, SymbolicExpression[] arguments,
+			int callerPid) {
+		ImmutableState theState = createNewProcess(state);
+
+		return pushCallStack2(theState, state.numProcs(), function,
+				functionParentDyscope, arguments, callerPid);
 	}
 
 	/**
@@ -856,8 +885,15 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public ImmutableState pushCallStack(State state, int pid,
 			CIVLFunction function, SymbolicExpression[] arguments) {
-		return pushCallStack2((ImmutableState) state, pid, function, arguments,
-				pid);
+		return pushCallStack2((ImmutableState) state, pid, function, -1,
+				arguments, pid);
+	}
+
+	@Override
+	public State pushCallStack(State state, int pid, CIVLFunction function,
+			int functionParentDyscope, SymbolicExpression[] arguments) {
+		return pushCallStack2((ImmutableState) state, pid, function, functionParentDyscope,
+				arguments, pid);
 	}
 
 	@Override

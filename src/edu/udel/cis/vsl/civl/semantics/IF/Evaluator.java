@@ -16,7 +16,7 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -229,9 +229,19 @@ public interface Evaluator {
 			String process, SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
 
-	Pair<State, CIVLFunction> evaluateFunctionExpression(State state, int pid,
-			Expression functionExpression)
-			throws UnsatisfiablePathConditionException;
+	/**
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param functionExpression
+	 * @param source
+	 *            the source code information for error report
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	Triple<State, CIVLFunction, Integer> evaluateFunctionExpression(
+			State state, int pid, Expression functionExpression,
+			CIVLSource source) throws UnsatisfiablePathConditionException;
 
 	Evaluation pointerAdd(State state, int pid, String process,
 			BinaryExpression expression, SymbolicExpression pointer,

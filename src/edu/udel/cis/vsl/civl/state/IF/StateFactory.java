@@ -152,6 +152,44 @@ public interface StateFactory {
 			SymbolicExpression[] arguments, int callerPid);
 
 	/**
+	 * <p>
+	 * Adds a new process. The new process is created and one entry is pushed
+	 * onto its call stack. That entry will have a dynamic scope whose parent is
+	 * determined by the calling process (the process that is executing the
+	 * spawn command to create this new process) and the given function. The
+	 * parent dynamic scope is computed by starting with the current dynamic
+	 * scope of the caller, and working up the parent chain, stopping at the
+	 * first dynamic scope whose static scope matches the containing scope of
+	 * the function. If no such dynamic scope is found in the chain, an
+	 * IllegalArgumentException is thrown. Hence the calling process must have a
+	 * non-empty call stack.
+	 * </p>
+	 * <p>
+	 * The PID of the new process will be {@link State#numProcs()}, where state
+	 * is the pre-state (the given state), not the new state.
+	 * </p>
+	 * 
+	 * @param state
+	 *            The old state.
+	 * @param function
+	 *            The function in which the new process starts.
+	 * @param functionParentDyscope
+	 *            The dyscope ID of the parent of the new function
+	 * @param arguments
+	 *            The arguments to this function call.
+	 * @param callerPid
+	 *            the PID of the process that is creating the new process
+	 * 
+	 * @return A new state that is the old state modified by adding a process
+	 *         whose location is the start location of the function and with a
+	 *         new dynamic scope corresponding to the outermost lexical scope of
+	 *         the function.
+	 */
+	State addProcess(State state, CIVLFunction function,
+			int functionParentDyscope, SymbolicExpression[] arguments,
+			int callerPid);
+
+	/**
 	 * Sets the process state for the designated process to be the process state
 	 * with the empty stack.
 	 * 
@@ -218,6 +256,27 @@ public interface StateFactory {
 	 */
 	State pushCallStack(State state, int pid, CIVLFunction function,
 			SymbolicExpression[] arguments);
+
+	/**
+	 * Pushes a new entry onto the call stack for a process. Used when a process
+	 * calls a function. The process should already exist and have a non-empty
+	 * call stack.
+	 * 
+	 * @param state
+	 *            The old state
+	 * @param pid
+	 *            The PID of the process making the call
+	 * @param function
+	 *            The function being called
+	 * @param functionParentDyscope
+	 *            The dyscope ID of the parent of the new function
+	 * @param arguments
+	 *            The (actual) arguments to the function being called
+	 * @return A new state that is the same as the old state with the given
+	 *         process having a new entry on its call stack.
+	 */
+	State pushCallStack(State state, int pid, CIVLFunction function,
+			int functionParentDyscope, SymbolicExpression[] arguments);
 
 	/**
 	 * Pops an entry off the call stack for a process. Does not modify or remove
