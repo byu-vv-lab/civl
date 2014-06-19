@@ -133,5 +133,8 @@ public interface CIVLConstants {
 	
 	public final static Option svcompO = Option.newScalarOption("svcomp",
 			BOOLEAN, "translate program for sv-comp?", false);
+	
+	public final static Option showInputVarsO = Option.newScalarOption("showInputs",
+			BOOLEAN, "show input variables of my program?", false);
 
 }

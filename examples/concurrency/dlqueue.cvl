@@ -85,8 +85,6 @@ void test2() {
   result = dequeue(&q, &y);
   assert(result);
   assert ((x==6 && y==7) || (x==7 && y==6));
-  // assert (x==6 && y==7);
-  // assert (x==7 && y==6);
 }
 
 void main() {

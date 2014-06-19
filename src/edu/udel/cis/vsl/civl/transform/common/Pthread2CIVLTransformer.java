@@ -195,6 +195,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			function.getBody().addSequenceChild(this.returnNull());
 		}
 	}
+	
+	
 
 	/**
 	 * In main(), translate pthread_exit(arg) to pthread_exit(arg, true); in

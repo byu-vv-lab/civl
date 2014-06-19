@@ -53,7 +53,7 @@ void run_seq() {
   int nx, nsteps, wstep;
   double k, *u;
 
-  void init() {
+  void init_seq() {
     int i;
     int pos = 0; // file position
 
@@ -71,6 +71,7 @@ void run_seq() {
     u = (double*)$malloc(seq_scope, nx*sizeof(double));
     assert(u);
     for (i = 0; i < nx; i++) u[i] = u_init[pos++];
+    $free(u);
   }
 
   void write_frame(int time) {
@@ -91,7 +92,7 @@ void run_seq() {
   void _main() {
     int iter;
 
-    init();
+    init_seq();
     write_frame(0);
     for (iter = 1; iter <= nsteps; iter++) {
       update();
@@ -187,6 +188,7 @@ void MPI_Process (int _rank) {
 	  buf[j] = u_init[pos++];
 	MPI_Send(buf, count_i, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
       }
+      $free(buf);
     }
     else {
       buf = NULL;

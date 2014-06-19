@@ -73,9 +73,9 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 				if (functionName.name().equals("main")) {
 					inputVars = processMainFunction(functionNode);
 				}
-				if (config.svcomp())
-					recoverMacro(child, macroVars);
 			}
+			if (config.svcomp())
+				recoverMacro(child, macroVars);
 		}
 		for (ASTNode inputVar : macroVars.values())
 			newExternalList.add(inputVar);

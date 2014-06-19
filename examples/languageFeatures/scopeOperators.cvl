@@ -48,4 +48,5 @@ void main(){
   $assert(s < p);// s is strictly a descendant of p 
   $assert(p >= s);// p is equal to s or p is strictly an ancestor of s.
   $assert(p > s);// p is strictly a ancestor of s.
+  $gcomm_destroy(g);
 }

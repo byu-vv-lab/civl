@@ -397,4 +397,9 @@ public class LanguageFeaturesTest {
 	public void assignIntWtReal() {
 		assertTrue(ui.run("verify", filename("assignIntWtReal.cvl")));
 	}
+
+	@Test
+	public void civlPragma() throws ABCException {
+		assertTrue(ui.run("verify", filename("civlPragma.cvl"), "-inputNB=5"));
+	}
 }
