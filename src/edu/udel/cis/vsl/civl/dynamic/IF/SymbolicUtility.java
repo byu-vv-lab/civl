@@ -173,4 +173,13 @@ public interface SymbolicUtility {
 			SymbolicSequence<?> charArray, int startIndex, boolean forPrint);
 
 	int getArrayIndex(CIVLSource source, SymbolicExpression charPointer);
+
+	/**
+	 * Checks if a heap is null or empty.
+	 * 
+	 * @param heapValue
+	 *            The value of the heap to be checked.
+	 * @return True iff the heap has null value or is empty.
+	 */
+	boolean isEmptyHeap(SymbolicExpression heapValue);
 }

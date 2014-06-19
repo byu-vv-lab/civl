@@ -41,6 +41,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject.SymbolicObjectKind;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
@@ -331,6 +332,39 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	@Override
 	public SymbolicExpression initialHeapValue() {
 		return modelFactory.heapType().getInitialValue();
+	}
+	
+	@Override
+	public boolean isEmptyHeap(SymbolicExpression heapValue) {
+		if (heapValue.isNull())
+			return true;
+		else {
+			SymbolicSequence<?> heapFields = (SymbolicSequence<?>) heapValue
+					.argument(0);
+			int count = heapFields.size();
+
+			for (int i = 0; i < count; i++) {
+				SymbolicExpression heapField = heapFields.get(i);
+				SymbolicSequence<?> heapFieldObjets = (SymbolicSequence<?>) heapField
+						.argument(0);
+				int size = heapFieldObjets.size();
+
+				for (int j = 0; j < size; j++) {
+					SymbolicExpression heapFieldObj = heapFieldObjets.get(j);
+					SymbolicObject heapFieldObjValue = heapFieldObj.argument(0);
+
+					if (heapFieldObjValue.symbolicObjectKind() == SymbolicObjectKind.STRING) {
+						String value = ((StringObject) heapFieldObjValue)
+								.getString();
+
+						if (value.equals("UNDEFINED"))
+							continue;
+					}
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	@Override

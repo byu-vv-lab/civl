@@ -617,7 +617,22 @@ public class CommonExecutor implements Executor {
 		functionName = processState.peekStack().location().function().name()
 				.name();
 		if (functionName.equals("_CIVL_system")) {
+			DynamicScope rootDyscope = state.getScope(0);
+			SymbolicExpression heapValue = rootDyscope.getValue(0);
+
 			assert pid == 0;
+			if (!symbolicUtil.isEmptyHeap(heapValue)) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.MEMORY_LEAK,
+						Certainty.CONCRETE,
+						process,
+						"The root dyscope d0 (id=0) has a non-empty heap upon termination of the program: "
+								+ symbolicUtil.symbolicExpressionToString(
+										statement.getSource(), state, heapValue),
+						statement.getSource());
+
+				this.errorLogger.reportError(err);
+			}
 			if (state.numProcs() > 1) {
 				for (ProcessState proc : state.getProcessStates()) {
 					if (proc == null)
@@ -625,7 +640,7 @@ public class CommonExecutor implements Executor {
 					if (proc.getPid() == pid)
 						continue;
 					if (!proc.hasEmptyStack()) {
-						throw new CIVLExecutionException(
+						CIVLExecutionException err = new CIVLExecutionException(
 								ErrorKind.PROCESS_LEAK,
 								Certainty.CONCRETE,
 								process,
@@ -633,9 +648,12 @@ public class CommonExecutor implements Executor {
 										+ proc.identifier() + "(process<"
 										+ proc.getPid() + ">) is still running",
 								statement.getSource());
+
+						this.errorLogger.reportError(err);
 					}
 				}
 			}
+
 		}
 		if (expr == null) {
 			returnValue = null;
