@@ -71,6 +71,16 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 */
 	private static String COMM_WORLD = "MPI_COMM_WORLD";
 
+	private static String PTHREAD_POOL = "_pool";
+
+	private static String PTHREAD_ADD_THREAD = "_add_thread";
+
+	private static String PTHREAD_CREATE = "pthread_create";
+
+	private static String PTHREAD_EXIT = "_pthread_exit";
+
+	private static String PTHREAD_IS_TERMINATED = "_isTerminated";
+
 	/**
 	 * The name of the identifier of the CMPI_Gcomm variable in the final CIVL
 	 * program.
@@ -547,24 +557,46 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 						includedNodes.add(child);
 				} else
 					includedNodes.add(child);
-			} else if (sourceFile.equals("stdio.cvl")) {
+			} else if (sourceFile.equals("stdio.cvl")
+					|| sourceFile.equals("pthread.cvl"))
 				includedNodes.add(child);
+			else if (sourceFile.equals("pthread-c.cvl")) {
+				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
+					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
+					String varName = variableDeclaration.getName();
+
+					if (varName.equals(PTHREAD_POOL))
+						// keep variable declaration nodes for _pool in
+						// pthread.cvl
+						items.add(variableDeclaration);
+					else
+						includedNodes.add(child);
+				} else if (child.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
+					FunctionDefinitionNode functionDef = (FunctionDefinitionNode) child;
+					String name = functionDef.getName();
+
+					if (name.equals(PTHREAD_ADD_THREAD)
+							|| name.equals(PTHREAD_IS_TERMINATED)
+							|| name.equals(PTHREAD_CREATE)
+							|| name.equals(PTHREAD_EXIT))
+						items.add(functionDef);
+					else
+						includedNodes.add(child);
+				} else
+					includedNodes.add(child);
 			} else if (sourceFile.endsWith(".h")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
 
-					if (sourceFile.equals("stdio.h")) {
+					if (sourceFile.equals("stdio.h"))
 						// keep variable declaration nodes from stdio, i.e.,
 						// stdout, stdin, etc.
 						items.add(variableDeclaration);
-					} else if (!variableDeclaration.getName()
-							.equals(COMM_WORLD)) {
+					else if (!variableDeclaration.getName().equals(COMM_WORLD))
 						// ignore the MPI_COMM_WORLD declaration in mpi.h.
 						includedNodes.add(child);
-					}
-				} else {
+				} else
 					includedNodes.add(child);
-				}
 			} else {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 					VariableDeclarationNode variable = (VariableDeclarationNode) child;
@@ -580,9 +612,8 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 					IdentifierNode functionName = (IdentifierNode) functionNode
 							.child(0);
 
-					if (functionName.name().equals("main")) {
+					if (functionName.name().equals("main"))
 						functionName.setName(MPI_MAIN);
-					}
 				}
 				items.add((BlockItemNode) child);
 			}

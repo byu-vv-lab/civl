@@ -229,6 +229,8 @@ public class AST2CIVL {
 		case TYPEDEF:
 			return typedefDeclaration2CIVL(prefix,
 					(TypedefDeclarationNode) block);
+		case ENUMERATOR:
+			return new StringBuffer(prefix + "enum;");
 		default:
 			throw new CIVLUnimplementedFeatureException(
 					"translating block item node of " + kind
@@ -341,9 +343,9 @@ public class AST2CIVL {
 
 	private StringBuffer switch2CIVL(String prefix, SwitchNode swtichNode) {
 		return new StringBuffer("switch");
-//		TODO throw new CIVLUnimplementedFeatureException(
-//				"translating switch node into CIVL code",
-//				swtichNode.getSource());
+		// TODO throw new CIVLUnimplementedFeatureException(
+		// "translating switch node into CIVL code",
+		// swtichNode.getSource());
 	}
 
 	private StringBuffer jump2CIVL(String prefix, JumpNode jump) {

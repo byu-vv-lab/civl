@@ -127,14 +127,19 @@ public interface CIVLConstants {
 
 	public final static Option guiO = Option.newScalarOption("gui", BOOLEAN,
 			"launch GUI? (under development, only works with replay)", false);
-	
-	public final static Option deadlockO = Option.newScalarOption("deadlock", STRING,
-			"deadlock kind? (potential|absolute|none)", "absolute");
-	
+
+	public final static Option deadlockO = Option.newScalarOption("deadlock",
+			STRING, "deadlock kind? (potential|absolute|none)", "absolute");
+
 	public final static Option svcompO = Option.newScalarOption("svcomp",
 			BOOLEAN, "translate program for sv-comp?", false);
-	
-	public final static Option showInputVarsO = Option.newScalarOption("showInputs",
-			BOOLEAN, "show input variables of my program?", false);
+
+	public final static Option showInputVarsO = Option
+			.newScalarOption("showInputs", BOOLEAN,
+					"show input variables of my program?", false);
+
+	public final static Option showProgramO = Option.newScalarOption(
+			"showProgram", BOOLEAN, "show my program after transformations?",
+			false);
 
 }

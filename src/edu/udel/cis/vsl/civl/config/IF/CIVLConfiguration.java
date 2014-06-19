@@ -19,6 +19,7 @@ public class CIVLConfiguration {
 	private boolean statelessPrintf = true;
 	private boolean verbose = false;
 	private boolean svcomp = false;
+	private boolean showProgram = false;
 	private String deadlock;
 	private PrintStream out;
 	private PrintStream err;
@@ -38,6 +39,7 @@ public class CIVLConfiguration {
 		this.verbose = config.isTrue(CIVLConstants.verboseO);
 		this.svcomp = config.isTrue(CIVLConstants.svcompO);
 		this.deadlock = (String) config.getValue(CIVLConstants.deadlockO);
+		this.setShowProgram(config.isTrue(CIVLConstants.showProgramO));
 	}
 
 	public CIVLConfiguration() {
@@ -59,14 +61,6 @@ public class CIVLConfiguration {
 	public void setEnablePrintf(boolean enablePrintf) {
 		this.enablePrintf = enablePrintf;
 	}
-
-	// public void setErrorbound(int bound) {
-	// this.errorBound = bound;
-	// }
-
-	// public void setNeedsInputFileLength(boolean needsInputFileLength) {
-	// this.needsInputFileLength = needsInputFileLength;
-	// }
 
 	public void setSaveStates(boolean saveStates) {
 		this.saveStates = saveStates;
@@ -108,6 +102,10 @@ public class CIVLConfiguration {
 		return debug;
 	}
 
+	public boolean verbose() {
+		return verbose;
+	}
+
 	public boolean debugOrVerbose() {
 		return debug || verbose;
 	}
@@ -115,10 +113,6 @@ public class CIVLConfiguration {
 	public boolean enablePrintf() {
 		return this.enablePrintf;
 	}
-
-	// public boolean needsInputFileLength() {
-	// return this.needsInputFileLength;
-	// }
 
 	public boolean saveStates() {
 		return this.saveStates;
@@ -182,6 +176,14 @@ public class CIVLConfiguration {
 
 	public void setDeadlock(String deadlock) {
 		this.deadlock = deadlock;
+	}
+
+	public boolean showProgram() {
+		return showProgram;
+	}
+
+	public void setShowProgram(boolean showProgram) {
+		this.showProgram = showProgram;
 	}
 
 }

@@ -20,6 +20,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetWtStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showInputVarsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showModelO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showProgramO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showProverQueriesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showQueriesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showSavedStatesO;
@@ -48,6 +49,10 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ABC;
 import edu.udel.cis.vsl.abc.Activator;
+import edu.udel.cis.vsl.abc.ast.IF.AST;
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
@@ -120,7 +125,7 @@ public class UserInterface {
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO,
 				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
-				svcompO, showInputVarsO);
+				svcompO, showInputVarsO, showProgramO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -185,9 +190,10 @@ public class UserInterface {
 	private Pair<Model, Preprocessor> extractModel(PrintStream out,
 			GMCConfiguration config, String filename, ModelBuilder modelBuilder)
 			throws ABCException, IOException, CommandLineException {
+		CIVLConfiguration civlConfig = new CIVLConfiguration(config);
 		boolean parse = "parse".equals(config.getFreeArg(0));
-		boolean debug = config.isTrue(debugO);
-		boolean verbose = config.isTrue(verboseO);
+		boolean debug = civlConfig.debug();
+		boolean verbose = civlConfig.verbose();
 		boolean showModel = config.isTrue(showModelO);
 		Activator frontEnd = getFrontEnd(filename, config);
 		Program program;
@@ -203,11 +209,27 @@ public class UserInterface {
 			} else {
 				program = frontEnd.getProgram();
 			}
-
-			applyTransformers(filename, program, preprocessor,
-					new CIVLConfiguration(config), frontEnd, inputVars);
+			applyTransformers(filename, program, preprocessor, civlConfig,
+					frontEnd, inputVars);
+			if (civlConfig.showProgram() && !civlConfig.debugOrVerbose())
+				CIVLTransform.printProgram2CIVL(out, program);
 			hasFscanf = CIVLTransform.hasFunctionCalls(program.getAST(),
 					Arrays.asList("scanf", "fscanf"));
+			if (config.isTrue(showInputVarsO) || verbose || debug) {
+				List<String> inputVarNames = inputVariableNames(program
+						.getAST());
+
+				if (inputVarNames.size() < 1)
+					out.println("No input variables are declared for this program.");
+				else {
+					out.println("This program has declared "
+							+ inputVarNames.size() + " input variables:");
+					for (String name : inputVarNames) {
+						out.print(name + " ");
+					}
+					out.println();
+				}
+			}
 			if (verbose || debug)
 				out.println("Extracting CIVL model...");
 			model = modelBuilder.buildModel(config, program,
@@ -563,6 +585,22 @@ public class UserInterface {
 		return false;
 	}
 
+	private List<String> inputVariableNames(AST ast) {
+		ASTNode root = ast.getRootNode();
+		List<String> variableNames = new ArrayList<>();
+
+		for (ASTNode child : root.children()) {
+			if (child != null
+					&& child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
+				VariableDeclarationNode variable = (VariableDeclarationNode) child;
+
+				if (variable.getTypeNode().isInputQualified())
+					variableNames.add(variable.getName());
+			}
+		}
+		return variableNames;
+	}
+
 	/* ************************** Public Methods *************************** */
 
 	public boolean runHelp(GMCConfiguration config) {
@@ -743,6 +781,7 @@ public class UserInterface {
 		Model model;
 		Verifier verifier;
 		boolean showShortFileName = showShortFileNameList(config);
+		boolean showProgram = config.isTrue(showProgramO);
 		boolean debug = config.isTrue(debugO);
 		boolean verbose = config.isTrue(verboseO);
 		boolean showModel = config.isTrue(showModelO);
@@ -782,6 +821,23 @@ public class UserInterface {
 		if (verbose || debug) {
 			compositeProgram.print(out);
 			CIVLTransform.printProgram2CIVL(out, compositeProgram);
+		}
+		if (showProgram && !(verbose || debug))
+			CIVLTransform.printProgram2CIVL(out, compositeProgram);
+		if (config.isTrue(showInputVarsO) || verbose || debug) {
+			List<String> inputVarNames = inputVariableNames(compositeProgram
+					.getAST());
+
+			if (inputVarNames.size() < 1)
+				out.println("No input variables are declared for either program.");
+			else {
+				out.println("This composited program has declared "
+						+ inputVarNames.size() + " input variables:");
+				for (String name : inputVarNames) {
+					out.print(name + " ");
+				}
+				out.println();
+			}
 		}
 		if (showShortFileName) {
 			preprocessor0.printShorterFileNameMap(out);
