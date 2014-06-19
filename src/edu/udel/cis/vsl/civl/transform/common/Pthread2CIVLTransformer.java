@@ -43,6 +43,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 	private final static String VERIFIER_NONDET_UINT = "__VERIFIER_nondet_uint";
 
+	private final static String VERIFIER_NONDET_INT = "__VERIFIER_nondet_int";
+
 	private final static String VERIFIER_ASSUME = "__VERIFIER_assume";
 
 	private final static String VERIFIER_ASSERT = "__VERIFIER_assert";
@@ -104,7 +106,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	private void process_VERIFIER_functions(FunctionDeclarationNode function) {
 		IdentifierNode functionName = function.getIdentifier();
 
-		if (functionName.name().equals(VERIFIER_NONDET_UINT)) {
+		if (functionName.name().equals(VERIFIER_NONDET_UINT)
+				|| functionName.name().equals(VERIFIER_NONDET_INT)) {
 			FunctionDeclarationNode abstractNode = nodeFactory
 					.newAbstractFunctionDefinitionNode(function.getSource(),
 							function.getIdentifier().copy(), function
