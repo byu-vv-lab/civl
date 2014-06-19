@@ -1,0 +1,6 @@
+ToDo:
+  Make cl_mem struct
+  implement the init
+  figure out how to get the size to print correctly
+Done:
+    implement method(sorta)

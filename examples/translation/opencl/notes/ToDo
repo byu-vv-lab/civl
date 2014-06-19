@@ -60,6 +60,17 @@ clCreateKernel
 clCreateBuffer
 []
 
+[6/17/14, 2:29:20 PM] Manchun Zheng: you'll need to malloc it every time you increase the size
+[6/17/14, 2:30:12 PM] Manchun Zheng: for example T* buffer = (T*) malloc(sizeof(T));
+[6/17/14, 2:30:33 PM] Manchun Zheng: then when you want to add a new T to buffer
+[6/17/14, 2:30:49 PM] Manchun Zheng: btw, you also need to keep track of the size of buffer.
+[6/17/14, 2:30:55 PM] Manchun Zheng: so initially, size = 1;
+[6/17/14, 2:31:00 PM] Manchun Zheng: when you add a new T
+[6/17/14, 2:31:17 PM] Jean Jacques Rousseau: ah, got it
+[6/17/14, 2:31:44 PM] Manchun Zheng: you malloc by (size+ 1)*sizeof(T)
+[6/17/14, 2:31:52 PM] Manchun Zheng: and then you copy the previous data
+[6/17/14, 2:31:55 PM] Manchun Zheng: and add the new data
+
 clEnqueueWriteBuffer
 []
 
@@ -95,9 +106,26 @@ Kernel code changes
 
 flam naught shy stub
 bash
-Done: clGetDeviceIDs, clCreateKernel
+Done: clGetDeviceIDs, clCreateKernel, clCreateBuffer
 
 ToDo:
 
 Problems:
 Alterations to clGetDeviceIDs, slight problems with structs and pointers combined
+Found a bug with size_t
+
+Possible simplified implementation?
+Instead of buffers just turn them into straight variables
+May lose some power, can't use sizeof(type) * number
+
+CIVL code to consider:
+$proc is like a processid, but not an int
+$proc_null($proc *p);
+
+$self, refers to self
+
+$spawn f(expr,...,exprn);
+or
+$proc p = $spawn f(i);
+
+$gbarrier or $barrier (one is global)

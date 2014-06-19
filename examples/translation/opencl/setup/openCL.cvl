@@ -191,6 +191,11 @@ cl_program clCreateProgramWithSource(cl_context context,
     errcode_ret = &default_errcode_ret;
   }
   
+  if(!lengths)
+  {
+    strings == NULL;
+  }
+  
   *errcode_ret = CL_SUCCESS;
   //*errcode_ret = program->loadSources(count, strings, lengths);
 
@@ -358,7 +363,7 @@ cl_int clBuildProgram(cl_program program,
   return CL_SUCCESS;
   
 }
-/* 
+/* Creates a kernel with the name of the method specified, and the program
   program - program from clCreateProgramWithX
   kernel_name - name of the kernel, should be the same as the method or else
   errcode_ret - Returns proper error code
@@ -381,4 +386,59 @@ cl_kernel clCreateKernel(cl_program program,
   
   return (cl_kernel)kernel;
 }
+
+/*Creates the buffer object
+context - context made from clCreateContext
+flags - see cl.cvl and find the #define, determines what can be done with a buffer
+size - size of the buffer, using sizeof recommended
+host_ptr - pointer to buffer data, must be >= size of bytes, can be null
+errcode_ret - Returns proper error code, can be null
+*/
+//consider for example T* buffer = (T*) malloc(sizeof(T));
+cl_mem clCreateBuffer(cl_context context,
+  cl_mem_flags flags,
+  size_t size,
+  void * host_ptr,
+  cl_int * errcode_ret)
+{
+
+cl_int dummy_errcode;
+  
+  if (!errcode_ret)
+  {
+    errcode_ret = &dummy_errcode;
+  }
+  
+  *errcode_ret = CL_SUCCESS;
+  
+  cl_mem buf = (cl_mem)malloc(sizeof(_cl_mem));
+  
+  if (size == 0)
+  {
+    *errcode_ret = CL_INVALID_BUFFER_SIZE;
+  }
+  
+  buf->context = context;
+  //buf->size = (size_t*)malloc(size); If you use this make it a pointer again in cl.cvl
+  buf->size = size;
+  //size_t * sizes = (size_t*)malloc(size);
+  buf->host_ptr = host_ptr;
+  buf->flags = flags;
+  buf->errcode_ret = errcode_ret;
+  
+  //Have to put in init, which creates a buf for each device
+  //http://people.freedesktop.org/~steckdenis/clover/memobject_8cpp_source.html#l00105
+  
+  //number of devices is from context->num_devices
+  printf("num_devices is %d\n", context->num_devices);
+  cl_device_id * devices = (cl_device_id *) malloc(context->num_devices * sizeof(cl_device_id));
+  
+  
+  return (cl_mem)buf;
+  
+}
+
+
+
+
 

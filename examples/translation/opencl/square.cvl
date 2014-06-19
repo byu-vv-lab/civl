@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "setup/openCL.cvl"
 
+$input int DATA_SIZE;
+
 //this is the kernel that gets loaded into the program
 // Simple compute kernel which computes the square of an input array 
 //CIVL can't turn a string into a function at this time
@@ -22,16 +24,6 @@ const char *KernelSource = "\n" \
 "}                                                                      \n" \
 "\n";
 /*
-void square(float* input, float* output, int count)
-{
-  int i = get_global_id(0);
-  if(i < count)
-  {
-    output[i] = input[i] * input[i];
-  }
-}
-*/
-/*
 void square(float* input, float* output, const unsigned int count)
 {
   int i = get_global_id(0);
@@ -51,7 +43,20 @@ void main()
   cl_command_queue commands; 
   cl_program program;
   cl_kernel kernel;
-
+  
+  cl_mem input;
+  cl_mem output;
+  
+  float data[DATA_SIZE];
+  float results[DATA_SIZE];
+  unsigned int correct;        
+  
+  int i = 0;
+  int count = DATA_SIZE;
+  for(i = 0; i < count; i++)
+  {
+    data[i] = rand() / (float)RAND_MAX;
+  }
   
   //assumes you have hardware that works, does not check that part
   //fills the device_id with device ids, returns CL_SUCCESS if it works
@@ -81,4 +86,11 @@ void main()
   
   kernel = clCreateKernel(program, "square", &err);
   $assert (kernel != NULL || err == CL_SUCCESS);
+  //is sizeof(int), was float before bug
+  input = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * count, NULL, NULL);
+  output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(int) * count, NULL, NULL);
+  $assert (input || output);
+  //printf("\nsizeof of input is %zu ", (size_t)sizeof(input));
+  //a reminder that c can't get sizeof a pointer pointing to something else so easily
+  
 }
