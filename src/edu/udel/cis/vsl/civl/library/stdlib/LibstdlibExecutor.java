@@ -3,20 +3,31 @@
  */
 package edu.udel.cis.vsl.civl.library.stdlib;
 
+import java.util.Arrays;
+
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 
 /**
  * Executor for stdlib function calls.
@@ -27,6 +38,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class LibstdlibExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
+
+	private SymbolicConstant atoiFunction;
 
 	/* **************************** Constructors *************************** */
 
@@ -44,6 +57,14 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
 			CIVLConfiguration civlConfig) {
 		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+
+		SymbolicArrayType stringSymbolicType = (SymbolicArrayType) universe
+				.canonic(universe.arrayType(universe.characterType()));
+
+		atoiFunction = (SymbolicConstant) universe.canonic(universe
+				.symbolicConstant(universe.stringObject("atoi"), universe
+						.functionType(Arrays.asList(stringSymbolicType),
+								universe.integerType())));
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -75,8 +96,9 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		int numArgs;
-		int processIdentifier = state.getProcessState(pid).identifier();
-		String process = "p" + processIdentifier + " (id = " + pid + ")";
+		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+		LHSExpression lhs = call.lhs();
+		CIVLSource source = call.getSource();
 
 		numArgs = call.arguments().size();
 		name = call.function().name();
@@ -95,11 +117,54 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 			state = executeFree(state, pid, process, arguments, argumentValues,
 					call.getSource());
 			break;
+		case "atoi":
+			state = execute_atoi(state, numArgs, process, lhs, arguments,
+					argumentValues, source);
+			break;
 		default:
 			throw new CIVLInternalException("Unknown stdlib function: " + name,
 					call);
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
+
+	private State execute_atoi(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression intValue = null;
+
+		if (argumentValues[0].operator() != SymbolicOperator.CONCRETE) {
+			intValue = universe.apply(atoiFunction,
+					Arrays.asList(argumentValues[0]));
+		} else {
+			Pair<State, StringBuffer> argStringPair = this
+					.getString(arguments[0].getSource(), state, process,
+							argumentValues[0]);
+			String argString;
+
+			state = argStringPair.left;
+			argString = argStringPair.right.toString();
+			try {
+				int integer = Integer.parseInt(argString);
+
+				intValue = universe.integer(integer);
+			} catch (Exception ex) {
+				CIVLExecutionException e = new CIVLExecutionException(
+						ErrorKind.OTHER, Certainty.PROVEABLE, process,
+						"The argument to atoi() should be a valid integer representation.\n"
+								+ "actual argument: " + argString,
+						symbolicUtil.stateToString(state), source);
+
+				errorLogger.reportError(e);
+			}
+		}
+		if (lhs != null) {
+			if (intValue != null)
+				state = primaryExecutor.assign(state, pid, process, lhs,
+						intValue);
+		}
 		return state;
 	}
 

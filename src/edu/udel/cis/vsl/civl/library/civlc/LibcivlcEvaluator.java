@@ -101,6 +101,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		case "$scope_parent":
 		case "$scope_defined":
 		case "$int_iter_destroy":
+		case "$domain_rectangular":
+		case "$domain_get_dim":
 		case "$choose_int":
 			guard = universe.trueExpression();
 			break;
@@ -189,8 +191,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		state = eval.state;
 		gcomm = eval.value;
 		dest = universe.tupleRead(comm, zeroObject);
-		newMessage = this.getMatchedMessageFromGcomm(gcomm, source, dest,
-				tag, civlsource);
+		newMessage = this.getMatchedMessageFromGcomm(gcomm, source, dest, tag,
+				civlsource);
 		if (newMessage != null)
 			enabled = true;
 		return universe.bool(enabled);

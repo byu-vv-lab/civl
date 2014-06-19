@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.AbstractFunctionDefinitionNo
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
@@ -225,11 +226,27 @@ public class AST2CIVL {
 				return functionDeclaration2CIVL(prefix,
 						(FunctionDeclarationNode) block);
 			}
+		case TYPEDEF:
+			return typedefDeclaration2CIVL(prefix,
+					(TypedefDeclarationNode) block);
 		default:
 			throw new CIVLUnimplementedFeatureException(
 					"translating block item node of " + kind
 							+ " kind into CIVL code", block.getSource());
 		}
+	}
+
+	private StringBuffer typedefDeclaration2CIVL(String prefix,
+			TypedefDeclarationNode typedef) {
+		StringBuffer result = new StringBuffer();
+
+		result.append(prefix);
+		result.append("typdef ");
+		result.append(typedef.getIdentifier().name());
+		result.append(" ");
+		result.append(type2CIVL(typedef.getTypeNode()));
+		result.append(";");
+		return result;
 	}
 
 	private StringBuffer statement2CIVL(String prefix, StatementNode statement) {
@@ -323,9 +340,10 @@ public class AST2CIVL {
 	}
 
 	private StringBuffer switch2CIVL(String prefix, SwitchNode swtichNode) {
-		throw new CIVLUnimplementedFeatureException(
-				"translating switch node into CIVL code",
-				swtichNode.getSource());
+		return new StringBuffer("switch");
+//		TODO throw new CIVLUnimplementedFeatureException(
+//				"translating switch node into CIVL code",
+//				swtichNode.getSource());
 	}
 
 	private StringBuffer jump2CIVL(String prefix, JumpNode jump) {
@@ -698,6 +716,13 @@ public class AST2CIVL {
 			result.append(" ^ ");
 			result.append(arg1);
 			break;
+		case CONDITIONAL:
+			result.append(arg0);
+			result.append(" ? ");
+			result.append(arg1);
+			result.append(" : ");
+			result.append(expression2CIVL(operator.getArgument(2)));
+			break;
 		case DEREFERENCE:
 			result.append("*");
 			result.append(arg0);
@@ -848,7 +873,11 @@ public class AST2CIVL {
 		case BASIC:
 			return basicType2CIVL((BasicTypeNode) type);
 		case ENUMERATION:
-			result.append(((EnumerationTypeNode) type).getIdentifier().name());
+			EnumerationTypeNode enumType = (EnumerationTypeNode) type;
+
+			result.append("enum");
+			if (enumType.getIdentifier() != null)
+				result.append(" " + enumType.getIdentifier().name());
 			break;
 		case STRUCTURE_OR_UNION:
 			result.append(((StructureOrUnionTypeNode) type).getName());

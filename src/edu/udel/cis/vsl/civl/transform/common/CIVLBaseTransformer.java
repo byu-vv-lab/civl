@@ -5,8 +5,8 @@ import java.util.List;
 import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.token.IF.Source;
@@ -130,6 +130,26 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 				nodeFactory.newIdentifierNode(source, name));
 	}
 
+	/* *************************** Public Methods ************************* */
+
+	/**
+	 * Updates the list of names of input variables.
+	 * 
+	 * @param inputVars
+	 */
+	public void setInputVars(List<String> inputVars) {
+		this.inputVariableNames = inputVars;
+	}
+
+	/**
+	 * Updates the AST builder.
+	 * 
+	 * @param astBuilder
+	 */
+	public void setASTBuilder(ASTBuilder astBuilder) {
+		this.astBuilder = astBuilder;
+	}
+
 	protected Source getMainSource(ASTNode node) {
 		if (node.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
 			FunctionDefinitionNode functionNode = (FunctionDefinitionNode) node;
@@ -151,26 +171,6 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 			}
 		}
 		return null;
-	}
-
-	/* *************************** Public Methods ************************* */
-
-	/**
-	 * Updates the list of names of input variables.
-	 * 
-	 * @param inputVars
-	 */
-	public void setInputVars(List<String> inputVars) {
-		this.inputVariableNames = inputVars;
-	}
-
-	/**
-	 * Updates the AST builder.
-	 * 
-	 * @param astBuilder
-	 */
-	public void setASTBuilder(ASTBuilder astBuilder) {
-		this.astBuilder = astBuilder;
 	}
 
 }

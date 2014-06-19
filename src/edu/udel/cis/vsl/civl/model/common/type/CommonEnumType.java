@@ -57,6 +57,7 @@ public class CommonEnumType extends CommonType implements CIVLEnumType {
 	@Override
 	public String toString(){
 		String result = "enum ";
+		
 		if(name != null)
 			result += (name + " ");
 		result += "{";

@@ -843,6 +843,7 @@ public class FunctionTranslator {
 	// String x: STRING
 	// boolean x : BOOLEAN
 	// else no can do yet
+	// ["55", "55"]
 	/**
 	 * Translate command line constants into CIVL literal expression
 	 * 
@@ -899,6 +900,16 @@ public class FunctionTranslator {
 			case STRING:
 				throw new CIVLUnimplementedFeatureException("Strings");
 			default:
+			}
+		} else {
+			if (type.isArrayType()) {
+				CIVLArrayType arrayType = (CIVLArrayType) type;
+				CIVLType elementType = arrayType.elementType();
+
+				if (elementType.isCharType()) {
+
+				}
+
 			}
 		}
 		throw new CIVLUnimplementedFeatureException(

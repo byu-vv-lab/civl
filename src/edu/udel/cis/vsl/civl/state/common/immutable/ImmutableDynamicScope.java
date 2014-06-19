@@ -387,8 +387,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 
 	@Override
 	public String toString() {
-		return "DynamicScope[static=" + lexicalScope.id() + ", parent="
-				+ parent + "]";
+		return this.name() + "[static=" + lexicalScope.id() + ", parent=d"
+				+ parentIdentifier + "(ID=" + parent + ")" + "]";
 	}
 
 	/* ********************** Methods from DynamicScope ******************** */

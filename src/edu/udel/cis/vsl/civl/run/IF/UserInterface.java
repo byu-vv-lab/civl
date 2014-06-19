@@ -780,6 +780,7 @@ public class UserInterface {
 				combiner.combine(program0.getAST(), program1.getAST()));
 		if (verbose || debug) {
 			compositeProgram.print(out);
+			CIVLTransform.printProgram2CIVL(out, compositeProgram);
 		}
 		if (showShortFileName) {
 			preprocessor0.printShorterFileNameMap(out);

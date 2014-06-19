@@ -207,35 +207,6 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		}
 
 		switch (function) {
-		// case "$barrier_enter":
-		// try {
-		// SymbolicExpression barrier = evaluator.evaluate(state, pid,
-		// arguments[0]).value;
-		// SymbolicExpression barrierObj = evaluator.dereference(source, state,
-		// barrier).value;
-		// SymbolicExpression gbarrier = universe.tupleRead(barrierObj,
-		// oneObject);
-		// SymbolicExpression gbarrierObj = evaluator.dereference(source, state,
-		// gbarrier).value;
-		// SymbolicExpression procMapArray = universe.tupleRead(gbarrierObj,
-		// oneObject);
-		// SymbolicSequence<?> procMapElements = (SymbolicSequence<?>)
-		// procMapArray.argument(0);
-		// int count = procMapElements.size();
-		//
-		// for(int i = 0; i < count; i++){
-		// SymbolicExpression processValue = procMapElements.get(i);
-		// int otherPid = modelFactory.getProcessId(source, processValue);
-		//
-		// if(pid != otherPid){
-		// ampleSet.add(otherPid);
-		// }
-		// }
-		// } catch (UnsatisfiablePathConditionException e1) {
-		// // TODO Auto-generated catch block
-		// e1.printStackTrace();
-		// }
-		// return ampleSet;
 		case "$comm_dequeue":
 		case "$comm_enqueue":
 			Set<SymbolicExpression> handleObjMemUnits = new HashSet<>();

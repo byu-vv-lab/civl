@@ -1,6 +1,8 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,6 +26,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
@@ -51,6 +54,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
  * Implementation of the execution for system functions declared civlc.h.
@@ -1186,8 +1190,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression[] argumentValues;
 		LHSExpression lhs;
 		int numArgs;
-		int processIdentifier = state.getProcessState(pid).identifier();
-		String process = "p" + processIdentifier + " (id = " + pid + ")";
+		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 
 		numArgs = call.arguments().size();
 		name = call.function().name();
@@ -1267,6 +1270,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		case "$exit":// return immediately since no transitions needed after an
 			// exit, because the process no longer exists.
 			return executeExit(state, pid);
+		case "$domain_rectangular":
+			state = execute_domain_rectangular(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
+			break;
+		case "$domain_get_dim":
+			state = execute_domain_get_dim(state, pid, process, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
 		case "$barrier_destroy":
 		case "$gbarrier_destroy":
 		case "$comm_destroy":
@@ -1316,6 +1327,63 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					call);
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
+
+	private State execute_domain_get_dim(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression domain = argumentValues[0];
+		@SuppressWarnings("rawtypes")
+		SymbolicSequence fields = (SymbolicSequence) domain.argument(0);
+		int dim = fields.size();
+
+		if (lhs != null) {
+			state = primaryExecutor.assign(state, pid, process, lhs,
+					universe.integer(dim));
+		}
+		return state;
+	}
+
+	private State execute_domain_rectangular(State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		int dim = arguments.length;
+		String name = "$domain-" + dim;
+		List<SymbolicType> fieldTypes = new ArrayList<>(dim);
+		SymbolicTupleType domainType;
+		SymbolicExpression domain;
+
+		for (int i = 0; i < dim; i++)
+			fieldTypes.add(argumentValues[i].type());
+		domainType = universe
+				.tupleType(universe.stringObject(name), fieldTypes);
+		domain = universe.tuple(domainType, Arrays.asList(argumentValues));
+
+		if (lhs != null) {
+			CIVLDomainType lhsType = (CIVLDomainType) lhs.getExpressionType();
+
+			if (dim != lhsType.dimension()) {
+				CIVLExecutionException e = new CIVLExecutionException(
+						ErrorKind.OTHER,
+						Certainty.PROVEABLE,
+						process,
+						"The left hand side of $domain_rectangular() doesn't have the same "
+								+ "dimension as the number of arguments for $domain_rectangular():\n "
+								+ "dimension of left hand side: "
+								+ lhsType.dimension()
+								+ "\n"
+								+ "number of arguments of $domain_rectangular(): "
+								+ dim + ".", symbolicUtil.stateToString(state),
+						source);
+
+				errorLogger.reportError(e);
+			} else
+				state = primaryExecutor
+						.assign(state, pid, process, lhs, domain);
+		}
 		return state;
 	}
 

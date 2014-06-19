@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -18,6 +19,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -26,6 +28,9 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
  * This class provides the common data and operations of library executors.
@@ -239,5 +244,45 @@ public abstract class BaseLibraryExecutor extends Library implements
 		int result = fieldPointer.getIndex().getInt();
 
 		return result;
+	}
+	
+	/**
+	 * Given a symbolic expression of type array of char, returns a string
+	 * representation. If it is a concrete array of char consisting of concrete
+	 * characters, this will be the obvious string. Otherwise the result is
+	 * something readable but unspecified.
+	 * 
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	protected Pair<State, StringBuffer> getString(CIVLSource source, State state,
+			String process, SymbolicExpression charPointer)
+			throws UnsatisfiablePathConditionException {
+		if (charPointer.operator() == SymbolicOperator.CONCRETE) {
+			SymbolicSequence<?> originalArray;
+			int int_arrayIndex;
+			StringBuffer result = new StringBuffer();
+
+			if (charPointer.type() instanceof SymbolicArrayType) {
+				originalArray = (SymbolicSequence<?>) charPointer.argument(0);
+				int_arrayIndex = 0;
+			} else {
+				SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
+						source, charPointer);
+				ArrayElementReference arrayRef = (ArrayElementReference) symbolicUtil
+						.getSymRef(charPointer);
+				NumericExpression arrayIndex = arrayRef.getIndex();
+				Evaluation eval = evaluator.dereference(source, state, process,
+						arrayPointer, false);
+
+				state = eval.state;
+				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
+				int_arrayIndex = symbolicUtil.extractInt(source, arrayIndex);
+			}
+			result = symbolicUtil.charArrayToString(source, originalArray,
+					int_arrayIndex, false);
+			return new Pair<>(state, result);
+		} else
+			throw new CIVLUnimplementedFeatureException("non-concrete strings",
+					source);
 	}
 }

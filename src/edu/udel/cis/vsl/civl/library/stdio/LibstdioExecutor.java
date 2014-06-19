@@ -341,46 +341,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	/* *************************** Private Methods ************************* */
 
 	/**
-	 * Given a symbolic expression of type array of char, returns a string
-	 * representation. If it is a concrete array of char consisting of concrete
-	 * characters, this will be the obvious string. Otherwise the result is
-	 * something readable but unspecified.
-	 * 
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Pair<State, StringBuffer> getString(CIVLSource source, State state,
-			String process, SymbolicExpression charPointer)
-			throws UnsatisfiablePathConditionException {
-		if (charPointer.operator() == SymbolicOperator.CONCRETE) {
-			SymbolicSequence<?> originalArray;
-			int int_arrayIndex;
-			StringBuffer result = new StringBuffer();
-
-			if (charPointer.type() instanceof SymbolicArrayType) {
-				originalArray = (SymbolicSequence<?>) charPointer.argument(0);
-				int_arrayIndex = 0;
-			} else {
-				SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
-						source, charPointer);
-				ArrayElementReference arrayRef = (ArrayElementReference) symbolicUtil
-						.getSymRef(charPointer);
-				NumericExpression arrayIndex = arrayRef.getIndex();
-				Evaluation eval = evaluator.dereference(source, state, process,
-						arrayPointer, false);
-
-				state = eval.state;
-				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
-				int_arrayIndex = symbolicUtil.extractInt(source, arrayIndex);
-			}
-			result = symbolicUtil.charArrayToString(source, originalArray,
-					int_arrayIndex, false);
-			return new Pair<>(state, result);
-		} else
-			throw new CIVLUnimplementedFeatureException("non-concrete strings",
-					source);
-	}
-
-	/**
 	 * Returns the symbolic expression representing the initial contents of a
 	 * file named filename. This is the array of length 1 whose sole element is
 	 * the expression "initialContents(filename)", which is the application of
