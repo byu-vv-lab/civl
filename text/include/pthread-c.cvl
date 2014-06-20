@@ -1,6 +1,16 @@
 extern void *value = NULL;
-extern __pthread_pool_t _pool={.len = 0};
-extern $gbarrier _gbarr;//uses _ as the prefix for our helper variables and functions.
+__pthread_pool_t _pool={.len = 0};
+$gbarrier _gbarr;//uses _ as the prefix for our helper variables and functions.
+
+
+void _free_pool(__pthread_pool_t* pool){
+  $atomic{
+    int len = pool->len;
+    
+    if(pool->threads != NULL)
+        free(pool->threads);
+  }
+}
 
 //Methods to be implemented
 void _add_thread(__pthread_pool_t* pool, pthread_t* thread){
@@ -8,11 +18,12 @@ void _add_thread(__pthread_pool_t* pool, pthread_t* thread){
   int len = pool->len;
   pthread_t** newThreads = (pthread_t**) malloc(sizeof(pthread_t*) * (len+1));
   
-  if(pool->threads != NULL)
-    for(int i = 0; i < len - 1; i++) {  
+  if(pool->threads != NULL){
+    for(int i = 0; i < len; i++) {  
        *(newThreads+i) = *(pool->threads+i);
-       free(pool->threads+i);
     }
+    free(pool->threads);
+  }
   *(newThreads+len) = thread;
   pool->threads = newThreads;
   pool->len = len + 1;
@@ -618,17 +629,18 @@ int _pthread_exit(void *value_ptr, _Bool isMain){
         $wait(_pool.threads[i]->thr);
         _pool.threads[i]->terminated = true;
       }
-      free(_pool.threads[i]);
     }
+    free(_pool.threads);
     $exit();
     return 0;
   }
   else{
     $atomic{
-      for(int i = 0; i<_pool.len-1; i++){
+      for(int i = 0; i<_pool.len; i++){
         if($proc_defined(_pool.threads[i]->thr)){
           if(_pool.threads[i]->thr == $self){
             _pool.threads[i]->terminated = true;
+            break;
           }
         }
       }

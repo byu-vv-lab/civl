@@ -13,8 +13,11 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
@@ -36,6 +39,10 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	private final static String PTHREAD_EXIT = "pthread_exit";
 
 	private final static String PTHREAD_EXIT_NEW = "_pthread_exit";
+
+	private final static String PTHREAD_FREE_POOL = "_free_pool";
+
+	private final static String PTHREAD_POOL = "_pool";
 
 	private final static String ASSERT = "$assert";
 
@@ -188,6 +195,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 		if (name.equals("main")) {
 			process_pthread_exit(function, true);
+			freePoolBeforeMainReturn(function);
 			return;
 		}
 		if (this.isVoidPointer(returnType)) {
@@ -195,8 +203,6 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			function.getBody().addSequenceChild(this.returnNull());
 		}
 	}
-	
-	
 
 	/**
 	 * In main(), translate pthread_exit(arg) to pthread_exit(arg, true); in
@@ -259,6 +265,34 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 				return true;
 		}
 		return false;
+	}
+
+	private void freePoolBeforeMainReturn(ASTNode node) {
+		if (node instanceof ReturnNode) {
+			BlockItemNode freePoolCall = freePoolCall();
+			CompoundStatementNode compound;
+			ASTNode parent = node.parent();
+			int index = node.childIndex();
+
+			parent.removeChild(index);
+			compound = nodeFactory.newCompoundStatementNode(source,
+					Arrays.asList(freePoolCall, (ReturnNode) node));
+			parent.setChild(index, compound);
+		} else
+			for (ASTNode child : node.children())
+				if (child != null)
+					freePoolBeforeMainReturn(child);
+	}
+
+	private StatementNode freePoolCall() {
+		ExpressionNode poolArg = nodeFactory.newOperatorNode(source,
+				Operator.ADDRESSOF,
+				Arrays.asList(identifierExpression(source, PTHREAD_POOL)));
+		FunctionCallNode funcCall = nodeFactory.newFunctionCallNode(source,
+				this.identifierExpression(source, PTHREAD_FREE_POOL),
+				Arrays.asList(poolArg), null);
+
+		return nodeFactory.newExpressionStatementNode(funcCall);
 	}
 
 	/* ********************* Methods From BaseTransformer ****************** */

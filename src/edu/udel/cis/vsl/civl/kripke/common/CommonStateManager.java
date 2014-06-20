@@ -36,7 +36,7 @@ import edu.udel.cis.vsl.gmc.TraceStepIF;
  * 
  */
 public class CommonStateManager implements StateManager {
-	
+
 	/* *************************** Instance Fields ************************* */
 
 	/**
@@ -158,7 +158,7 @@ public class CommonStateManager implements StateManager {
 		process = "p" + processIdentifier + " (id = " + pid + ")";
 		traceStep = new CommonTraceStep(processIdentifier);
 		firstTransition = (Transition) transition;
-		if(state.getProcessState(pid).getLocation().enterAtom())
+		if (state.getProcessState(pid).getLocation().enterAtom())
 			atomCount = 1;
 		state = executor.execute(state, pid, firstTransition);
 		if (printTransitions) {
@@ -190,6 +190,8 @@ public class CommonStateManager implements StateManager {
 		if (printTransitions)
 			config.out().print("--> ");
 		if (config.saveStates()) {
+			int newCanonicId;
+
 			try {
 				state = stateFactory.canonic(state);
 			} catch (CIVLStateException stex) {
@@ -202,7 +204,9 @@ public class CommonStateManager implements StateManager {
 				errorLogger.reportError(err);
 			}
 			traceStep.setResult(state);
-			this.maxCanonicId = state.getCanonicId();
+			newCanonicId = state.getCanonicId();
+			if (newCanonicId > this.maxCanonicId)
+				this.maxCanonicId = newCanonicId;
 		} else {
 			state = stateFactory.collectProcesses(state);
 			try {
@@ -283,13 +287,11 @@ public class CommonStateManager implements StateManager {
 			pLocation = procState.getLocation();
 		assert pLocation != null;
 		enabled = enabler.enabledTransitionsOfProcess(state, pid);
-		if (pLocation.enterAtom()){
-			if(atomCount == 0 && !pLocation.isPurelyLocal())
-				return new StateStatus(false, null, 0,
-						EnabledStatus.UNSAFE);
+		if (pLocation.enterAtom()) {
+			if (atomCount == 0 && !pLocation.isPurelyLocal())
+				return new StateStatus(false, null, 0, EnabledStatus.UNSAFE);
 			atomCount++;
-			}
-		else if (pLocation.leaveAtom()) {
+		} else if (pLocation.leaveAtom()) {
 			inAtom = true;
 			atomCount--;
 		}
@@ -358,8 +360,9 @@ public class CommonStateManager implements StateManager {
 	private void printStatement(State currentState, State newState,
 			Transition transition, AtomicKind atomicKind, int atomCount,
 			boolean atomicLockVarChanged) {
-		config.out().print(transition.statement().toStepString(atomicKind, atomCount,
-				atomicLockVarChanged));
+		config.out().print(
+				transition.statement().toStepString(atomicKind, atomCount,
+						atomicLockVarChanged));
 		config.out().println();
 	}
 

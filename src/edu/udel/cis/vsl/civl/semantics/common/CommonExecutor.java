@@ -82,16 +82,6 @@ public class CommonExecutor implements Executor {
 
 	/* *************************** Instance Fields ************************* */
 
-	// /**
-	// * Enable or disable printing. True by default.
-	// */
-	// protected boolean enablePrintf;
-	//
-	// /**
-	// * Prevent printf from modifying the file system. False by default.
-	// */
-	// protected boolean statelessPrintf;
-
 	/** The Evaluator used to evaluate expressions. */
 	private Evaluator evaluator;
 
@@ -629,7 +619,8 @@ public class CommonExecutor implements Executor {
 						"The root dyscope d0 (id=0) has a non-empty heap upon termination of the program: "
 								+ symbolicUtil.symbolicExpressionToString(
 										statement.getSource(), state, heapValue),
-						statement.getSource());
+						symbolicUtil.stateToString(state), statement
+								.getSource());
 
 				this.errorLogger.reportError(err);
 			}
@@ -647,7 +638,8 @@ public class CommonExecutor implements Executor {
 								"Attempt to terminate the main process while process "
 										+ proc.identifier() + "(process<"
 										+ proc.getPid() + ">) is still running",
-								statement.getSource());
+								symbolicUtil.stateToString(state), statement
+										.getSource());
 
 						this.errorLogger.reportError(err);
 					}
