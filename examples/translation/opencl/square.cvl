@@ -67,7 +67,7 @@ void main()
   &device_id,
   NULL);
   //for non arrays, print using device_id[0], otherwise use *device_id[0];
-  printf("devices is %d", device_id[0]);
+  printf("device's id is %d\n", device_id[0]);
   $assert (err == CL_SUCCESS);
   
   //if not using an array, use &device_id
@@ -92,5 +92,7 @@ void main()
   $assert (input || output);
   //printf("\nsizeof of input is %zu ", (size_t)sizeof(input));
   //a reminder that c can't get sizeof a pointer pointing to something else so easily
+  //Run just input, get num_devices is 1 twice, just output, get 1 twice, both is five times?
+  
   
 }

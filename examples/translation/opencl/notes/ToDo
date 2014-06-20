@@ -113,6 +113,7 @@ ToDo:
 Problems:
 Alterations to clGetDeviceIDs, slight problems with structs and pointers combined
 Found a bug with size_t
+Baffled by behavior that turned out to be caused by verify taking multiple paths
 
 Possible simplified implementation?
 Instead of buffers just turn them into straight variables
