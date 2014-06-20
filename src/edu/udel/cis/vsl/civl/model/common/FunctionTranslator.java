@@ -75,6 +75,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ChooseStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.CivlForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
@@ -142,6 +143,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -159,6 +161,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 
 /**
@@ -515,6 +518,9 @@ public class FunctionTranslator {
 			result = translateChooseNode(scope,
 					(ChooseStatementNode) statementNode);
 			break;
+		case CIVL_FOR:
+			result = translateCivlForNode(scope, (CivlForNode) statementNode);
+			break;
 		case COMPOUND:
 			result = translateCompoundStatementNode(scope,
 					(CompoundStatementNode) statementNode);
@@ -552,9 +558,6 @@ public class FunctionTranslator {
 		case SWITCH:
 			result = translateSwitchNode(scope, (SwitchNode) statementNode);
 			break;
-		// case WAIT:
-		// result = translateWaitNode(scope, (WaitNode) statementNode);
-		// break;
 		case WHEN:
 			result = translateWhenNode(scope, (WhenNode) statementNode);
 			break;
@@ -573,6 +576,35 @@ public class FunctionTranslator {
 			modelFactory.resetAnonFragment();
 		}
 		return result;
+	}
+
+	@SuppressWarnings("unused")
+	private Fragment translateCivlForNode(Scope scope, CivlForNode civlForNode) {
+		SequenceNode<ForLoopInitializerNode> loopInits = civlForNode
+				.getVariables();
+		boolean isFirst = true;
+		Fragment initFragment = new CommonFragment(), enterFragment, bodyFragment;
+		int numOfInit = loopInits.numChildren();
+		List<Variable> loopVariables = new ArrayList<>();
+		Expression domain;
+		CivlForEnterStatement civlForEnter;
+
+		for (int i = 0; i < numOfInit; i++) {
+			ForLoopInitializerNode initNode = loopInits.getSequenceChild(i);
+			Triple<Scope, Fragment, List<Variable>> initData = this
+					.translateForLoopInitializerNode(scope, initNode, isFirst,
+							true);
+			Scope newScope = initData.first;
+
+			if (!newScope.equals(scope))
+				isFirst = false;
+			initFragment = initFragment.combineWith(initData.second);
+			loopVariables.addAll(initData.third);
+		}
+		domain = this.translateExpressionNode(civlForNode.getDomain(), scope,
+				true);
+		
+		return null;
 	}
 
 	/**
@@ -1562,6 +1594,13 @@ public class FunctionTranslator {
 			result = translateFunctionCallNode(scope,
 					(FunctionCallNode) expressionNode);
 			break;
+		case IDENTIFIER_EXPRESSION: {
+			Statement noopStatement = modelFactory.noopStatement(
+					modelFactory.sourceOf(expressionNode), location);
+
+			result = new CommonFragment(noopStatement);
+		}
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(
 					"expression statement of this kind",
@@ -1582,50 +1621,71 @@ public class FunctionTranslator {
 	private Fragment translateForLoopNode(Scope scope, ForLoopNode forLoopNode) {
 		ForLoopInitializerNode initNode = forLoopNode.getInitializer();
 		Fragment initFragment = new CommonFragment();
-		Scope newScope = scope;
 		Fragment result;
-		Location location;
 
 		// If the initNode does not have a declaration, don't create a new
 		// scope.
 		if (initNode != null) {
-			switch (initNode.nodeKind()) {
-			case EXPRESSION:
-				location = modelFactory.location(
-						modelFactory.sourceOfBeginning(forLoopNode), newScope);
-				initFragment = translateExpressionStatementNode(newScope,
-						(ExpressionNode) initNode);
-				break;
-			case DECLARATION_LIST:
-				newScope = modelFactory.scope(
-						modelFactory.sourceOf(forLoopNode), scope,
-						new LinkedHashSet<Variable>(), functionInfo.function());
-				for (int i = 0; i < ((DeclarationListNode) initNode)
-						.numChildren(); i++) {
-					VariableDeclarationNode declaration = ((DeclarationListNode) initNode)
-							.getSequenceChild(i);
-					Variable variable = translateVariableDeclarationNode(
-							declaration, newScope);
-					Fragment fragment;
+			Triple<Scope, Fragment, List<Variable>> initData = translateForLoopInitializerNode(
+					scope, initNode, true, false);
 
-					location = modelFactory.location(
-							modelFactory.sourceOfBeginning(forLoopNode),
-							newScope);
-					fragment = translateVariableInitializationNode(declaration,
-							variable, location, newScope);
-					initFragment = initFragment.combineWith(fragment);
-				}
-				break;
-			default:
-				throw new CIVLInternalException(
-						"A for loop initializer must be an expression or a declaration list.",
-						modelFactory.sourceOf(initNode));
-			}
+			scope = initData.first;
+			initFragment = initData.second;
 		}
-		result = composeLoopFragment(newScope, forLoopNode.getCondition(),
+		result = composeLoopFragment(scope, forLoopNode.getCondition(),
 				forLoopNode.getBody(), forLoopNode.getIncrementer(), false);
 		result = initFragment.combineWith(result);
 		return result;
+	}
+
+	private Triple<Scope, Fragment, List<Variable>> translateForLoopInitializerNode(
+			Scope scope, ForLoopInitializerNode initNode, boolean isFirst,
+			boolean isCivlFor) {
+		Location location;
+		Fragment initFragment = new CommonFragment();
+		Scope newScope = scope;
+		List<Variable> variables = new ArrayList<>();
+
+		switch (initNode.nodeKind()) {
+		case EXPRESSION:
+			ExpressionNode initExpression = (ExpressionNode) initNode;
+
+			location = modelFactory.location(
+					modelFactory.sourceOfBeginning(initNode), newScope);
+			initFragment = translateExpressionStatementNode(newScope,
+					initExpression);
+			if (isCivlFor
+					&& initExpression.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION)
+				variables.add(newScope
+						.variable(((IdentifierExpressionNode) initExpression)
+								.getIdentifier().name()));
+			break;
+		case DECLARATION_LIST:
+			if (isFirst)
+				newScope = modelFactory.scope(modelFactory.sourceOf(initNode),
+						newScope, new LinkedHashSet<Variable>(),
+						functionInfo.function());
+			for (int i = 0; i < ((DeclarationListNode) initNode).numChildren(); i++) {
+				VariableDeclarationNode declaration = ((DeclarationListNode) initNode)
+						.getSequenceChild(i);
+				Variable variable = translateVariableDeclarationNode(
+						declaration, newScope);
+				Fragment fragment;
+
+				variables.add(variable);
+				location = modelFactory.location(
+						modelFactory.sourceOfBeginning(initNode), newScope);
+				fragment = translateVariableInitializationNode(declaration,
+						variable, location, newScope);
+				initFragment = initFragment.combineWith(fragment);
+			}
+			break;
+		default:
+			throw new CIVLInternalException(
+					"A for loop initializer must be an expression or a declaration list.",
+					modelFactory.sourceOf(initNode));
+		}
+		return new Triple<>(newScope, initFragment, variables);
 	}
 
 	/**

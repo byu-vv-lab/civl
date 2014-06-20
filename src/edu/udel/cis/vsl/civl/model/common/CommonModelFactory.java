@@ -2531,4 +2531,11 @@ public class CommonModelFactory implements ModelFactory {
 		return false;
 	}
 
+	@Override
+	public boolean CivlForEnterStatement(CIVLSource soure, Location src,
+			Expression guard, Expression dom, List<Variable> variables) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

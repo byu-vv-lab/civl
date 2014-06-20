@@ -1557,4 +1557,7 @@ public interface ModelFactory {
 	 *         constant.
 	 */
 	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
+
+	boolean CivlForEnterStatement(CIVLSource soure, Location src,
+			Expression guard, Expression dom, List<Variable> variables);
 }
