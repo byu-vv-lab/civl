@@ -41,6 +41,16 @@ void main(){
   $assert(*(p1d + 5) == p1d[5]);
   $assert(*(*(p2d + 5) + 5) == p2d[5][5]);
   $assert(*(*(p2d + 9)) == p2d[9][0]);
+  $assert(*(&p3d[0][0][0] + 8) == p3d[0][0][8]);
+
   $free(p1d);
-  $free(p2d);
+  for(int i = 0; i<10; i++){
+    for(int j = 0; j<10; j++){
+      $free(p2d[i]);
+      $free(p3d[i][j]);
+    }
+    $free(p3d[i]);
+  }
+  $free(p2d);  
+  $free(p3d);
 }
