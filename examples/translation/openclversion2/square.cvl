@@ -1,0 +1,141 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/*
+If increase MAX_DATA_SIZE, nothing happens if DATA_SIZE is given a concrete value
+If I increase DATA_SIZE to 2, I get
+Computed '2/2' correct values!
+Computed '1/2' correct values!
+*/
+$input int DATA_SIZE;
+$input int NUM_DEVICES;
+$input int MAX_DATA_SIZE;
+$input int MAX_NUM_DEVICES;
+$assume DATA_SIZE && DATA_SIZE < MAX_DATA_SIZE;
+$assume NUM_DEVICES < MAX_NUM_DEVICES;
+$gbarrier gbarrier = $gbarrier_create($here, NUM_DEVICES);
+//struct goes here
+typedef struct
+{
+  int device_id;
+  //other variables
+  float * input;
+  float * output;
+  int count;
+}process;
+
+//kernel goes here
+void square(float* input, float* output, const unsigned int count)
+{
+  //int i = get_global_id(0);
+  int i = 0;
+  if (i < count)
+  {
+    output[i] = input[i] * input[i];
+  }
+}
+/*
+Note that the original lines were "__kernel void square(                                                       \n" \
+"   __global float* input,                                              \n" \
+"   __global float* output,                                             \n" \
+"   const unsigned int count)                                           \n" \
+
+Any parser must take note of and don't input \n, "", or \ as is
+__global float * input, __global float * output, int count;
+*/
+
+
+int main(int argc, char** argv)
+{
+  //get the number from clGetDeviceIDs 3rd parameter
+  //int num_devices = 1;
+  
+  //variables from __kernel come here
+  float * input;
+  float * output;
+  int count;
+  
+  
+  //from the code before
+  float data[DATA_SIZE];              // original data set given to device
+  float results[DATA_SIZE];           // results returned from device
+  int correct;               // number of correct results returned
+  //handle the definitions being put in different places
+  
+  int i = 0;
+  count = DATA_SIZE;               //count defined here
+  for(i = 0; i < count; i++)
+  {
+    data[i] = rand() / (float)RAND_MAX;
+  }
+  
+  
+  
+  //comes from clCreateBuffer
+  input = (float *) malloc(sizeof(float) * count);
+  output = (float *) malloc(sizeof(float) * count);
+  
+  //Possibly keep a list of variables, with a flag for whether they are init or not
+  //Not init, malloc one from what is found in 
+  //output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, NULL);
+  
+  input = data;               //input defined here
+  //came from clEnqueueWriteBuffer rather than the start of code
+  
+  
+  //Phase after this is the definitions
+  process now[NUM_DEVICES];
+  //put device_ids
+  for(int i = 0; i < NUM_DEVICES; i++)
+  {
+    now[i].device_id = i;
+    //other variables
+    now[i].input = input;
+    now[i].output = output;
+    now[i].count = count;
+  }
+  
+  //spawns processes according to devices, uses the struct for inputs
+  $proc procs[NUM_DEVICES];
+  for(int i = 0; i < NUM_DEVICES; i++)
+  {
+    procs[i] = $spawn square(now[i].input, now[i].output, now[i].count);
+  }
+  
+  for(int i = 0; i < NUM_DEVICES; i++)
+  {
+    $wait(procs[i]);
+  }
+  
+  //$barrier barrier = $barrier_create($here, gbarrier, now[i].device_id);
+  //$barrier_call(barrier);
+  //$barrier_destroy(barrier);
+  
+  
+  
+  $gbarrier_destroy(gbarrier);
+  
+  //use the information from clEnqueueReadBuffer
+  //may have to alter later
+  for(int i = 0; i < count; i++)
+  {
+    results[i] = output[i];
+  }
+  
+  correct = 0;
+  for(i = 0; i < count; i++)
+  {
+    if(results[i] == data[i] * data[i])
+    {
+      correct++;
+    }
+  }
+    
+  // Print a brief summary detailing the results
+  //
+  printf("Computed '%d/%d' correct values!\n", correct, count);
+  
+
+  return 0;
+}

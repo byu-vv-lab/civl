@@ -1,0 +1,25 @@
+After a sudden realization, I find that I need almost none of the openCL stuff
+The programs can be broken into these very simple parts:
+1. Get the number of devices, give them ids
+  Related to clGetDevices
+2. Prepare to make threads threads using device ids as "ranks"
+  based either on array index or their device id
+  Give them variables from __global or __local, remember that local is default
+  global means that each one gets from a pointer to the same variable
+  Use the kernel text for the above
+*
+  
+3. Get the paramater inputs from what would be from clSetKernelArg, possibly clEnqueueWriteBuffer
+  
+4. Spawn processes in the same order as clEnqueueNDRangeKernel
+  Stick data in the arrays
+
+5. Store output somewhere else
+  May come from arrays
+
+6. Possibly free
+
+Considerations:
+  Make a struct for the array that holds:
+  Rank
+  Any variables that go in
