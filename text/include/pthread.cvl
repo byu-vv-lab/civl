@@ -43,7 +43,7 @@ ERSCH
 };
 
 // In process of implementing
-/*
+
 typedef struct { 
   int pshared;
 } pthread_barrierattr_t;
@@ -55,7 +55,7 @@ typedef struct {
 } pthread_barrier_t;
   
 
-
+/*
 typedef struct {
   int pshared;
   clockid_t clock_id;
@@ -150,6 +150,6 @@ typedef struct {
 } pthread_t;
 
 typedef struct __pthread_pool_t {
-  pthread_t* threads[];
+  pthread_t** threads;
   int len;
 } __pthread_pool_t;
