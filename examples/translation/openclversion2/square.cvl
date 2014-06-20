@@ -7,6 +7,20 @@ If increase MAX_DATA_SIZE, nothing happens if DATA_SIZE is given a concrete valu
 If I increase DATA_SIZE to 2, I get
 Computed '2/2' correct values!
 Computed '1/2' correct values!
+
+If I make num_devices >= data_size, I get a num/num correct values, like the default
+data = 3, devices = 1
+Computed '3/3' correct values!
+Computed '2/3' correct values!
+Computed '2/3' correct values!
+Computed '1/3' correct values!
+
+data = 3, devices = 2
+Computed '3/3' correct values!
+Computed '2/3' correct values!
+
+data = 3, devices = 3
+Computed '3/3' correct values!
 */
 $input int DATA_SIZE;
 $input int NUM_DEVICES;
@@ -26,10 +40,10 @@ typedef struct
 }process;
 
 //kernel goes here
-void square(float* input, float* output, const unsigned int count)
+void square(int device_id, float* input, float* output, const unsigned int count)
 {
   //int i = get_global_id(0);
-  int i = 0;
+  int i = device_id;
   if (i < count)
   {
     output[i] = input[i] * input[i];
@@ -50,6 +64,7 @@ int main(int argc, char** argv)
 {
   //get the number from clGetDeviceIDs 3rd parameter
   //int num_devices = 1;
+
   
   //variables from __kernel come here
   float * input;
@@ -100,7 +115,7 @@ int main(int argc, char** argv)
   $proc procs[NUM_DEVICES];
   for(int i = 0; i < NUM_DEVICES; i++)
   {
-    procs[i] = $spawn square(now[i].input, now[i].output, now[i].count);
+    procs[i] = $spawn square(now[i].device_id, now[i].input, now[i].output, now[i].count);
   }
   
   for(int i = 0; i < NUM_DEVICES; i++)

@@ -23,3 +23,20 @@ Considerations:
   Make a struct for the array that holds:
   Rank
   Any variables that go in
+
+Figure out something to do with local variables
+
+How to make sure that none of the numbers are 
+
+Should the user be expected to change variables that end up too big for civl?
+
+Remove mentions of "unsigned" as they are not supported yet
+Same for vector types
+
+Basic idea of conversion program:
+Kernel - After getting input on where the kernel is (or not):
+  Get all of the parameters, they will become variables and part of a struct
+  put all of the rest in, add device_id as a parameter, convert get_global_id(0) to something else
+
+
+

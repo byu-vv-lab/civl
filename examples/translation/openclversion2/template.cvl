@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+$input int NUM_DEVICES;
+$input int MAX_NUM_DEVICES;
+$assume NUM_DEVICES < MAX_NUM_DEVICES;
+$gbarrier gbarrier = $gbarrier_create($here, NUM_DEVICES);
+//struct goes here
+typedef struct
+{
+  int device_id;
+  //other variables
+}process;
+
+//kernel goes here
+
+/*
+Note that the original lines were "__kernel void square(                                                       \n" \
+"   __global float* input,                                              \n" \
+"   __global float* output,                                             \n" \
+"   const unsigned int count)                                           \n" \
+
+Any parser must take note of and don't input \n, "", or \ as is
+__global float * input, __global float * output, int count;
+*/
+
+
+int main(int argc, char** argv)
+{
+  //get the number from clGetDeviceIDs 3rd parameter
+  //int num_devices = 1;
+  
+  //variables from __kernel come here
+  
+  //from the code before
+  
+  //comes from clCreateBuffer
+  
+  //Possibly keep a list of variables, with a flag for whether they are init or not
+  //Not init, malloc one from what is found in 
+  //output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, NULL);
+  
+
+  //came from clEnqueueWriteBuffer rather than the start of code
+  
+  
+  //Phase after this is the definitions
+  //put device_ids
+  for(int i = 0; i < NUM_DEVICES; i++)
+  {
+    now[i].device_id = i;
+    //other variables
+  }
+  
+  //spawns processes according to devices, uses the struct for inputs
+  $proc procs[NUM_DEVICES];
+  for(int i = 0; i < NUM_DEVICES; i++)
+  {
+    procs[i] = $spawn //insert kernel function here
+  }
+  
+  for(int i = 0; i < NUM_DEVICES; i++)
+  {
+    $wait(procs[i]);
+  }
+  
+  //$barrier barrier = $barrier_create($here, gbarrier, now[i].device_id);
+  //$barrier_call(barrier);
+  //$barrier_destroy(barrier);
+  //may use later, but not now
+  
+  
+  
+  $gbarrier_destroy(gbarrier);
+  
+  //use the information from clEnqueueReadBuffer
+  //may have to alter later
+
+
+  return 0;
+}
