@@ -26,8 +26,8 @@ $input int DATA_SIZE;
 $input int NUM_DEVICES;
 $input int MAX_DATA_SIZE;
 $input int MAX_NUM_DEVICES;
-$assume DATA_SIZE && DATA_SIZE < MAX_DATA_SIZE;
-$assume NUM_DEVICES < MAX_NUM_DEVICES;
+$assume 0 < DATA_SIZE && DATA_SIZE < MAX_DATA_SIZE;
+$assume 0 < NUM_DEVICES && NUM_DEVICES < MAX_NUM_DEVICES;
 $gbarrier gbarrier = $gbarrier_create($here, NUM_DEVICES);
 //struct goes here
 typedef struct
