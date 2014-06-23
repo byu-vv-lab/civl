@@ -1,5 +1,7 @@
 /* This header file defines standard types and provides
- * function prototypes used in the CIVL-C language.
+ * functions and function prototypes used in the CIVL-C language.
+ * It includes civlc-common.h, and then completes many of the
+ * declarations in civlc-common.h.
  */
  
 #ifdef __CIVLC__
@@ -7,7 +9,10 @@
 #include<civlc-common.h>
 #define __CIVLC__
 
-/* A message formed by $message_pack
+/* ******************************* Types ******************************* */
+
+/* A message formed by $message_pack.  Completes the declaration
+ * of this structure type in civlc-common.h */
 struct __message__ {
   int source;
   int dest;
@@ -15,8 +20,65 @@ struct __message__ {
   $bundle data;
   int size;
 };
-*/
 
+/* A datatype representing a queue of messages.  All message
+ * data is encapsulated inside this value; no external allocation
+ * is used.  Completes the declaration of this structure type in 
+ * civlc-common.h */ 
+struct __queue__ {
+  int length;
+  $message messages[];
+};
+
+
+/* A global communicator datatype which must be operated by local communicators.
+ * This communicator type has the same meaning as the communicator type
+ * in MPI.  Completes the declaration of this type in civlc-common.h */
+struct __gcomm__ {
+  int nprocs; // number of processes
+  _Bool isInit[]; // if the local comm has been initiated
+  $queue buf[][]; // message buffers
+};
+
+/* A datatype representing a local communicator which is used for 
+ * operating global communicators. The local communicator type has 
+ * a handle of a global communicator. This type represents for 
+ * a set of processes which have ranks in common.
+ * Completes the declaration of this type in civlc-common.h.
+ */
+struct __comm__ {
+  int place;
+  $gcomm gcomm;
+};
+
+/* A datatype representing a global barrier which must be operated by local
+ * barriers.  Completes the declaration of this type in civlc-common.h.
+ */
+struct __gbarrier__ {
+  int nprocs;
+  $proc proc_map[]; // initialized as all $proc_null.
+  _Bool in_barrier[]; // initialized as all false.
+  int num_in_barrier; // initialized as 0.
+};
+
+/* A datatype representing a global barrier which used for 
+ * operating global barriers. The local barrier type has 
+ * a handle of a global barrier.
+ * Completes the declaration of this type in civlc-common.h.
+ */
+struct __barrier__ {
+  int place;
+  $gbarrier gbarrier; // initialized as 0.
+};
+
+/* Completes the declaration of this type in civlc-common.h */
+struct __int_iter__ {
+  int size;
+  int content[];
+  int index; //initialized as 0
+};
+
+/* ***************************** Functions ***************************** */
 
 
 /* creates a new message, copying data from the specified buffer */ 
@@ -71,12 +133,4 @@ void $barrier_call($barrier barrier) {
   $barrier_exit(barrier);
 }
 
-// range consisting of lo, lo+step, lo+2*step, ...
-// the sequence stops just before the first number
-// greater than hi.
-// $range $range_regular(int lo, int hi, int step){
-//  $range range = {.lo = lo, .hi = hi, .step = step};
-//  
-//  return range;
-// }
 #endif
