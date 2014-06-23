@@ -1,63 +1,78 @@
 CIVL=civl
 VERIFY=$(CIVL) verify
 
-all: arrayloops bug1 bug1fix bug3 bug4 bug4fix bug5 bug6 bug6fix\
- condvar detached dotprod_mutex fib_bench_false join mpithreads_threads
+all: fib_bench_false fib_bench_longer_false fib_bench_longer_true fib_bench_longest_false fib_bench_longest_true /
+fib_bench_true lazy01_false queue_false queue_ok_true reorder_5_false sigma_false singleton_false /
+singleton_with-uninit-problems-true stack_false stack_true stateful01_false stateful01_true sync01_true /
+twostage_3_false
 
-arrayloops: arrayloops.cvl
-	$(VERIFY) arrayloops.cvl -inputNTHREADS=4 -inputARRAYSIZE=1000000 
+fib_bench_false: fib_bench_false.c
+	$(VERIFY) fib_bench_false.c
+	$(CIVL) replay fib_bench_false.c
 
-bug1: bug1.cvl
-	$(VERIFY) bug1.cvl -inputNUM_THREADS=6 -inputTCOUNT=10 -inputCOUNT_LIMIT=12
-	$(CIVL) replay bug1.cvl
-	
-bug1fix: bug1fix.cvl
-	$(VERIFY) bug1fix.cvl -inputNUM_THREADS=6 -inputTCOUNT=10 -inputCOUNT_LIMIT=12
-	
-bug3: bug3.cvl
-	$(VERIFY) bug3.cvl -INPUTNUM_THREADS=8
-	$(CIVL) replay bug3.cvl
-	
-bug4: bug4.cvl
-	$(VERIFY) bug4.cvl -inputNUM_THREADS=3 -inputITERATIONS=10 -inputTHRESHOLD=12
-	$(CIVL) replay bug4.cvl
+fib_bench_longer_false: fib_bench_longer_false.c
+	$(VERIFY) fib_bench_longer_false.c
+	$(CIVL) replay fib_bench_longer_false.c
 
-bug4fix: bug4fix.cvl
-	$(VERIFY) bug4fix.cvl -inputNUM_THREADS=3 -inputITERATIONS=10 -inputTHRESHOLD=12
+fib_bench_longer_true: fib_bench_longer_true.c
+	$(VERIFY) fib_bench_longer_true.c
 	
-bug5: bug5.cvl
-	$(VERIFY) bug5fix.cvl -inputNUM_THREADS=5
-	$(CIVL) replay bug5.cvl
-	
-bug6: bug6.cvl
-	$(VERIFY) bug6.cvl -inputNUM_THRDS=5 -inputVECLEN=1000
-	$(CIVL) replay bug6.cvl
+fib_bench_longest_false: fib_bench_longest_false.c
+	$(VERIFY) fib_bench_longest_false.c
+	$(CIVL) replay fib_bench_longest_false.c
 
-bug6fix: bug6fix.cvl
-	$(VERIFY) bug6fix.cvl -inputNUM_THRDS=5 -inputVECLEN=1000
+fib_bench_longest_true: fib_bench_longest_true.c
+	$(VERIFY) fib_bench_longest_true.c
+	
+fib_bench_true: fib_bench_true.c
+	$(VERIFY) fib_bench_true.c
 
-condvar: condvar.cvl
-	$(VERIFY) condvar.cvl -inputNUM_THREADS=3 -inputTCOUNT=10 -inputCOUNT_LIMIT=12
+lazy01_false: lazy01_false.c
+	$(VERIFY) lazy01_false.c
+	$(CIVL) replay lazy01_false.c
 	
-detached: detached.cvl
-	$(VERIFY) detached.cvl -inputNUM_THREADS=4
-	
-dotprod_mutex: dotprod_mutex.cvl
-	$(VERIFY) dotprod_mutex.cvl -inputNUMTHRDS=4 -inputVECLEN=100000
-	
-fib_bench_false: fib_bench_false.cvl
-	$(VERIFY) fib_bench_false.cvl -inputNUM=5
-	$(CIVL) replay fib_bench_false.cvl
-	
-join: join.cvl
-	$(VERIFY) join.cvl -inputNUM_THREADS=4
+queue_false: queue_false.c
+	$(VERIFY) queue_false.c
+	$(CIVL) replay queue_false.c
 
-mpithreads_threads: mpithreads_threads.cvl
-	$(VERIFY) mpithreads_threads.cvl -inputMAXTHRDS=8 -inputVECLEN=100
+queue_ok_true: queue_ok_true.c
+	$(VERIFY) queue_ok_true.c
 
-twostage_3_false: twostage_3_false.cvl
-	$(VERIFY) twostage_3_false.cvl
-	$(CIVL) replay twostate_3_false.cvl
+reorder_5_false: reorder_5_false.c
+	$(VERIFY) reorder_5_false.c
+	$(CIVL) replay reorder_5_false.c
 	
+sigma_false: sigma_false.c
+	$(VERIFY) sigma_false.c
+	$(CIVL) replay sigma_false.c
+
+singleton_false: singleton_false.c
+	$(VERIFY) singleton_false.c
+	$(CIVL) replay singleton_false.c
+	
+singleton_with-uninit-problems-true: singleton_with-uninit-problems-true.c
+	$(VERIFY) singleton_with-uninit-problems-true.c
+	
+stack_false: stack_false.c
+	$(VERIFY) stack_false.c
+	$(CIVL) replay stack_false.c
+	
+stack_true: stack_true.c
+	$(VERIFY) stack_true.c
+
+stateful01_false: stateful01_false.c
+	$(VERIFY) stateful01_false.c
+	$(CIVL) replay stateful01_false.c
+	
+stateful01_true: stateful01_true.c
+	$(VERIFY) stateful01_true.c
+	
+sync01_true: sync01_true.c
+	$(VERIFY) sync01_true.c
+
+twostage_3_false: twostage_3_false.c
+	$(VERIFY) twostage_3_false.c
+	$(CIVL) replay twostage_3_false.c
+
 clean:
 	rm -rf CIVLREP *~
