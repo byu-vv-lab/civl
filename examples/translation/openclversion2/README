@@ -15,7 +15,7 @@ The programs can be broken into these very simple parts:
   Stick data in the arrays
 
 5. Store output somewhere else
-  May come from arrays
+  May come from arrays 
 
 6. Possibly free
 
