@@ -1,15 +1,25 @@
-#ifdef __MPI__
+#ifdef __MPI_CVL__
 #else
-  #include <mpi-common.h>
-  #ifdef __CIVLC__
-  #else
-    #include <civlc.h>
-  #endif
+#define __MPI_CVL__
+#include <mpi-common.h>
+#include <civlc.h>
 #endif
 
 //TODO make a Datatype struct, which has a field "int size;" Define one of these objects for MPI_INT, MPI_DOUBLE, etc. 
 //TODO Then provide methods like MPI provides for creating new ones.
 //TODO then support MPI_Type_contig(datatype, int n).
+
+/* Definition of CMPI_Gcomm and MPI_Comm */
+struct CMPI_Gcomm {
+  $gcomm p2p; // point-to-point communication
+  $gcomm col; // collective communication
+};
+
+struct MPI_Comm {
+  $comm p2p; // point-to-point communication
+  $comm col; // collective communication
+  __MPI_Status__ status;
+};
 
 /****************************** Helper Functions **********************************/
 int sizeofDatatype(MPI_Datatype datatype) {
@@ -498,3 +508,5 @@ int MPI_Allreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype
   }
   return 0;
 }
+
+#endif
