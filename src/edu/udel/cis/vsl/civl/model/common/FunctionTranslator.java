@@ -580,8 +580,7 @@ public class FunctionTranslator {
 
 	@SuppressWarnings("unused")
 	private Fragment translateCivlForNode(Scope scope, CivlForNode civlForNode) {
-		SequenceNode<ForLoopInitializerNode> loopInits = civlForNode
-				.getVariables();
+		DeclarationListNode loopInits = civlForNode.getVariables();
 		boolean isFirst = true;
 		Fragment initFragment = new CommonFragment(), enterFragment, bodyFragment;
 		int numOfInit = loopInits.numChildren();
@@ -589,21 +588,26 @@ public class FunctionTranslator {
 		Expression domain;
 		CivlForEnterStatement civlForEnter;
 
-		for (int i = 0; i < numOfInit; i++) {
-			ForLoopInitializerNode initNode = loopInits.getSequenceChild(i);
-			Triple<Scope, Fragment, List<Variable>> initData = this
-					.translateForLoopInitializerNode(scope, initNode, isFirst,
-							true);
-			Scope newScope = initData.first;
+		// TODO
 
-			if (!newScope.equals(scope))
-				isFirst = false;
-			initFragment = initFragment.combineWith(initData.second);
-			loopVariables.addAll(initData.third);
-		}
+		// need to translateDeclarationListNode (a kind of
+		// ForLoopInitializerNode)
+
+		// for (int i = 0; i < numOfInit; i++) {
+		// VariableDeclarationNode initNode = loopInits.getSequenceChild(i);
+		// Triple<Scope, Fragment, List<Variable>> initData = this
+		// .translateVariableDeclarationNode(scope, initNode, isFirst,
+		// true);
+		// Scope newScope = initData.first;
+		//
+		// if (!newScope.equals(scope))
+		// isFirst = false;
+		// initFragment = initFragment.combineWith(initData.second);
+		// loopVariables.addAll(initData.third);
+		// }
 		domain = this.translateExpressionNode(civlForNode.getDomain(), scope,
 				true);
-		
+
 		return null;
 	}
 
@@ -2966,10 +2970,12 @@ public class FunctionTranslator {
 		case SCOPEOF:
 			result = translateScopeofNode((ScopeOfNode) expressionNode, scope);
 			break;
-		case SELF:
-			result = modelFactory.selfExpression(modelFactory
-					.sourceOf(expressionNode));
-			break;
+		// TODO: check this, but this case does not exist, it is handled
+		// as a constant expression:
+		// case SELF:
+		// result = modelFactory.selfExpression(modelFactory
+		// .sourceOf(expressionNode));
+		// break;
 		case SIZEOF:
 			result = translateSizeofNode((SizeofNode) expressionNode, scope);
 			break;
