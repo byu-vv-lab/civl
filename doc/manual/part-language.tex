@@ -285,6 +285,36 @@ be thought of as a ``dynamic scope ID, '' but it is not an integer and
 cannot be converted to an integer.  Operations defined on scopes are
 discussed in Section \ref{sec:scopeexpr}.
 
+\subsection{The \crange{} and \cdomain{} types}
+
+CIVL-C provides certain abstract datatypes that are useful for
+representing iteration spaces of loops in an abstract way.
+
+First, there is a built-in type $\crange$.  An object of this type
+represents an ordered set of integers.  There are expressions for
+specifying range values; these are described in Section
+\ref{sec:range_expr}.   Ranges are typically used as a step
+in constructing \emph{domains}, described next.
+
+A domain type is used to represent a set of tuples of integer values.
+Every tuple in a domain object has the same arity (i.e., number of
+components).  The arity must be at least 1, and is called the
+\emph{dimension} of the domain object.
+
+For each integer constant expression $n$, there is a type
+\cdomainof{\(n\)}, representing domains of dimension $n$.
+% \texttt{\cdomain{}(}]\(n\)\texttt{)}
+The \emph{universal domain type}, denoted \cdomain{}, represents
+domains of all positive dimensions, i.e., it is the union over all
+$n\geq 1$ of \cdomainof{\(n\)}.  In particular, each \cdomainof{\(n\)}
+is a subtype of \cdomain{}.
+
+There are expressions for specifying domain values; these are
+described in Section \ref{sec:domain_expr}.  There are also certains
+statements that use domains, such as the ``CIVL-\emph{for}'' loop
+\cfor; see Section \ref{sec:cfor}.
+
+
 \section{Expressions}
 
 \subsection{Expressions inherited from C}
@@ -446,7 +476,63 @@ operator.  All of the assertions hold:
 }  
 \end{verbatim}
 
+\subsection{Range and domain expressions}
+
+\subsubsection{Regular range expressions}
+\label{sec:range_expr}
+
+An expression of the form
+\begin{verbatim}
+  lo .. hi
+\end{verbatim}
+where \texttt{lo} and \texttt{hi} are integer expressions, represents
+the range consisting of the integers $\texttt{lo}, \texttt{lo}+1,
+\ldots, \texttt{hi}$ (in that order).
+
+An expression of the form
+\begin{verbatim}
+  lo .. hi # step
+\end{verbatim}
+where \texttt{lo}, \texttt{hi}, and \texttt{step} are integer
+expressions is interpreted as follows.  If \texttt{step} is positive,
+it represents the range consisting of $\texttt{lo},
+\texttt{lo}+\texttt{step}, \texttt{lo}+2*\texttt{step}, \ldots$, up to
+and possibly including \texttt{hi}.  To be precise, the infinite
+sequence is intersected with the set of integers less than or equal to
+\texttt{hi}.
+
+If \texttt{step} is negative, the expression represents the range
+consisting of $\texttt{hi}, \texttt{hi}+\texttt{step},
+\texttt{hi}+2*\texttt{step}, \ldots$, down to and possibly including
+\texttt{lo}.  Precisely, the infinite sequence is intersected with the
+set of integers greater than or equal to \texttt{lo}.
+
+\subsubsection{Cartesian domain expressions}
+\label{sec:domain_expr}
+
+An expression of the form
+\begin{verbatim}
+  ($domain) { r1, ..., rn }
+\end{verbatim}
+where \texttt{r1}, \ldots, \texttt{rn} are $n$ expressions of type
+\crange, is a \emph{Cartesian domain expression}.  It represents the
+domain of dimension $n$ which is the Cartesian product of the $n$
+ranges, i.e., it consists of all $n$-tuples $(x_1,\ldots,x_n)$ where
+$x_1\in\texttt{r1}$, \ldots, $x_n\in\texttt{rn}$.  The order on the
+domain is the dictionary order on tuples.  The type of this expression
+is \cdomainof{\(n\)}.
+
+When a Cartesian domain expression is used to initialize an object of
+domain type, the ``\texttt{(}\cdomain\texttt{)}'' may be omitted.
+For example:
+\begin{verbatim}
+  $domain(3) dom = { 0 .. 3, r2, 10 .. 2 # -2 };
+\end{verbatim}
+
+
 \section{Statements}
+
+\subsection{C Statements}
 
 The usual C statements are supported:
 \begin{itemize}
@@ -466,9 +552,9 @@ The usual C statements are supported:
 \item \verb!return!
 \end{itemize}
 
-\section{Guards and nondeterminism}
+\subsection{Guards and nondeterminism}
 
-\subsection{Guarded commands: \cwhen}
+\subsubsection{Guarded commands: \cwhen}
 
 A guarded command is encoded in CIVL-C using a $\cwhen$ statement:
 \begin{verbatim}
@@ -517,7 +603,7 @@ executes the assignment in that state.  It is equivalent to
   $when (s>0 && t>0) x=y*t;
 \end{verbatim}
 
-\subsection{Nondeterministic selection statement: \cchoose}
+\subsubsection{Nondeterministic selection statement: \cchoose}
 
 A \cchoose{} statement has the form
 \begin{verbatim}
@@ -559,7 +645,7 @@ transition system:
 \end{verbatim}
 
 
-\subsection{Nondeterministic choice of integer:
+\subsubsection{Nondeterministic choice of integer:
   \texorpdfstring{\cchooseint}{\$choose\_int}}
 
 The system function \cchooseint{} has the following signature:
@@ -569,6 +655,26 @@ The system function \cchooseint{} has the following signature:
 This function takes as input a positive integer \texttt{n} and
 nondeterministicaly returns an integer in the range
 $[0,\texttt{n}-1]$.
+
+\subsection{Iteration using domains with \cfor}
+\label{sec:cfor}
+
+A \emph{CIVL-for} statement has the form
+\begin{verbatim}
+  $for (int i1, ..., in : dom) S
+\end{verbatim}
+where \texttt{i1}, \ldots, \texttt{in} are $n$ identifiers,
+\texttt{dom} is an expression of type \cdomainof{\(n\)}, and
+\texttt{S} is a statement.  The identifiers declare $n$ variables of
+integer type.  Control iterates over the values of the domain,
+assigning the integer variables the components of the current tuple in
+the domain at the start of each iteration.  The scope of the variables
+extends to the end of \texttt{S}.  The iterations takes place in the
+order specified by the domain, e.g., dictionary order for a Caretesian
+domain.
+
+There is a also a parallel version of this construct, \cparfor,
+described in \ref{sec:parfor}.
 
 
 \chapter{Concurrency}
@@ -770,6 +876,25 @@ decrements its counter from $1$ to $0$, it releases the atomic lock.
 When a process executing atomically becomes blocked, it releases the
 lock (without changing the value of its atomic counter).
 
+\section{Parallel loops with \cparfor}
+\label{sec:parfor}
+
+A parallel loop statement has the form
+\begin{verbatim}
+  $parfor (int i1, ..., in : dom) S
+\end{verbatim}
+The syntax is exactly the same as that for the sequential loop \cfor
+(Section \ref{sec:cfor}), only with \cparfor{} replacing \cfor.
+
+The semantics are as follows: when control reaches the loop, one
+process in spawned for each element of the domain.  That process has
+local variables corresponding to the iteration variables, and those
+local variables are initialized with the components of the tuple for
+the element of the domain that process is assigned.  Each process
+executes the statement \texttt{S} in this context.  Finally, each of
+these processes is waited on at the end.  In particular, there is an
+effective barrier at the end of the loop, and all the spawned
+processes disappear after this point.
 
 \section{Message-Passing}
 
