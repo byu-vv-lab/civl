@@ -2,7 +2,6 @@
 
 #ifdef __MATH__
 #else
-//#include<math-common.h>
 #define __MATH__
 
 $abstract double sin(double x);

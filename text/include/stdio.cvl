@@ -4,10 +4,9 @@
  * encapsulates the state of the entire file system: all files and their contents.
  *
  */
- 
-
-
-
+ #ifdef __STDIO_CVL__
+ #else
+ #define __STDIO_CVL__
 
 /* ******************************* Types ******************************* */
 
@@ -178,3 +177,5 @@ FILE * $fopen($filesystem fs, const char * restrict filename,
 void $filesystem_copy_output($filesystem fs, $file * output);
 
 int $textFileLength(char* file);
+
+#endif
