@@ -1,3 +1,6 @@
+#ifdef __PTHREAD_C__
+#else
+#define __PTHREAD_C__
 extern void *value = NULL;
 __pthread_pool_t _pool={.len = 0};
 $gbarrier _gbarr;//uses _ as the prefix for our helper variables and functions.
@@ -42,6 +45,34 @@ _Bool _isTerminated($proc thr){
   return false;
 }
 */
+
+int pthread_spin_init(pthread_spinlock_t *slock, int pshared){
+  slock->owner = $proc_null;
+  slock->lock = 1;
+  slock->pshared = 0;
+  return 0;
+}
+
+int pthread_spin_destroy(pthread_spinlock_t *slock){
+  pthread_spinlock_t blank;
+  *slock = blank;
+  return 0;
+}
+
+int pthread_spin_lock(pthread_spinlock_t *slock){
+  $when(!slock->lock && slock->owner == $proc_null){
+    slock->lock = true;
+  }
+  return 0;
+}
+
+int pthread_spin_unlock(pthread_spinlock_t *slock){
+  $atomic{
+    slock->owner = $proc_null;
+    slock->lock = false;
+  }
+  return 0;
+}
 
 int pthread_barrierattr_init(pthread_barrierattr_t *attr){
   attr->pshared = 0;
@@ -901,3 +932,5 @@ int pthread_cond_broadcast(pthread_cond_t *cond){
   }
   return 0;
 }
+
+#endif

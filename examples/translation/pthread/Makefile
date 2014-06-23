@@ -1,9 +1,9 @@
 CIVL=civl
 VERIFY=$(CIVL) verify
 
-all: fib_bench_false fib_bench_longer_false fib_bench_longer_true fib_bench_longest_false fib_bench_longest_true /
-fib_bench_true lazy01_false queue_false queue_ok_true reorder_5_false sigma_false singleton_false /
-singleton_with-uninit-problems-true stack_false stack_true stateful01_false stateful01_true sync01_true /
+all: fib_bench_false fib_bench_longer_false fib_bench_longer_true fib_bench_longest_false fib_bench_longest_true \
+fib_bench_true lazy01_false queue_false queue_ok_true reorder_5_false sigma_false singleton_false \
+singleton_with-uninit-problems-true stack_false stack_true stateful01_false stateful01_true sync01_true \
 twostage_3_false
 
 fib_bench_false: fib_bench_false.c

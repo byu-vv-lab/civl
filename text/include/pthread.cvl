@@ -1,4 +1,9 @@
+#ifdef __PTHREAD_CVL__
+#else
+#define __PTHREAD_CVL__
 #include <sched.cvl>
+
+
 //Mutex types
 enum{
 PTHREAD_MUTEX_NORMAL,
@@ -54,7 +59,11 @@ typedef struct {
   $gbarrier barr;
 } pthread_barrier_t;
   
-
+typedef struct {
+  $proc owner;
+  _Bool lock;
+  int pshared;
+}pthread_spinlock_t;
 /*
 typedef struct {
   int pshared;
@@ -153,3 +162,6 @@ typedef struct __pthread_pool_t {
   pthread_t** threads;
   int len;
 } __pthread_pool_t;
+
+#endif
+
