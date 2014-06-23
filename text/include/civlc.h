@@ -7,6 +7,18 @@
 #include<civlc-common.h>
 #define __CIVLC__
 
+/* A message formed by $message_pack
+struct __message__ {
+  int source;
+  int dest;
+  int tag;
+  $bundle data;
+  int size;
+};
+*/
+
+
+
 /* creates a new message, copying data from the specified buffer */ 
 $message $message_pack(int source, int dest, int tag,
     void *data, int size) {
@@ -62,9 +74,9 @@ void $barrier_call($barrier barrier) {
 // range consisting of lo, lo+step, lo+2*step, ...
 // the sequence stops just before the first number
 // greater than hi.
-$range $range_regular(int lo, int hi, int step){
-  $range range = {.lo = lo, .hi = hi, .step = step};
-  
-  return range;
-}
+// $range $range_regular(int lo, int hi, int step){
+//  $range range = {.lo = lo, .hi = hi, .step = step};
+//  
+//  return range;
+// }
 #endif
