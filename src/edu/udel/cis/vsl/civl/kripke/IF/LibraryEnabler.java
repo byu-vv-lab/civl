@@ -13,13 +13,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
- * A Library Enabler provides computes the enabled transitions of system
- * function calls at certain states. It also provides a method to "evaluate" the
- * guard of each system function call. A new library is implemented in the
- * package named as "edu.udel.cis.vsl.civl.library." (
- * {@link CommonLibraryLoader#CLASS_PREFIX}) + library name. And the class name
- * of the enabler is: "Lib" + library name + "Enabler". For example, the stdio
- * library enabler is implemented as the class
+ * A Library Enabler provides a method to compute the enabled transitions of
+ * system function calls at a certain state for a give process. It also provides
+ * a method to compute the ample set of processes at a given state for a given
+ * process. A new library is implemented in the package named as
+ * "edu.udel.cis.vsl.civl.library." ( {@link CommonLibraryLoader#CLASS_PREFIX})
+ * + library name. And the class name of the enabler is: "Lib" + library name +
+ * "Enabler". For example, the stdio library enabler is implemented as the class
  * edu.udel.cis.vsl.civl.library.stdio.LibstdioEnabler.
  * 
  * @author Manchun Zheng (zmanchun)
@@ -28,7 +28,21 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public interface LibraryEnabler {
 
 	/**
-	 * Computes the ample set process ID's from a system function call.
+	 * <p>
+	 * Computes the ample set process ID's from a system function call at a
+	 * given state for a given process.
+	 * </p>
+	 * 
+	 * <p>
+	 * Precondition: the call statement is enabled at the given state and it is
+	 * one of the outgoing statements of process pid.
+	 * </p>
+	 * 
+	 * <p>
+	 * Contract: nothing dependent on the given statement can occur without one
+	 * of the transitions of the processes in the returned ample set occurring
+	 * first.
+	 * </p>
 	 * 
 	 * @param state
 	 *            The current state.
@@ -63,8 +77,8 @@ public interface LibraryEnabler {
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
 	 */
-	List<Transition> enabledTransitions(State state,
-			CallOrSpawnStatement call, BooleanExpression pathCondition,
-			int pid, int processIdentifier, Statement assignAtomicLock)
+	List<Transition> enabledTransitions(State state, CallOrSpawnStatement call,
+			BooleanExpression pathCondition, int pid, int processIdentifier,
+			Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException;
 }
