@@ -101,15 +101,18 @@ int main(int argc, char** argv)
   
   
   //Phase after this is the definitions
+  int devices[NUM_DEVICES];
   process now[NUM_DEVICES];
   //put device_ids
   for(int i = 0; i < NUM_DEVICES; i++)
   {
     now[i].device_id = i;
-    //other variables
+    /*
+    //other variables, put into a separate place
     now[i].input = input;
     now[i].output = output;
     now[i].count = count;
+    */
   }
   
   //spawns processes according to devices, uses the struct for inputs
