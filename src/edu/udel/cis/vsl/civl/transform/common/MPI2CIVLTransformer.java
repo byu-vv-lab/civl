@@ -108,7 +108,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 * The name of the function to create a new MPI_Comm object in the final
 	 * CIVL-C program.
 	 */
-	private static String COMM_CREATE = "MPI_Comm_create";
+	private static String COMM_CREATE = "CMPI_Comm_create";
 
 	/**
 	 * The name of the function to free a CMPI_Gcomm object in the final CIVL-C
@@ -120,7 +120,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 * The name of the function to free a MPI_Comm object in the final CIVL-C
 	 * program.
 	 */
-	private static String COMM_DESTROY = "MPI_Comm_destroy";
+	private static String COMM_DESTROY = "CMPI_Comm_destroy";
 
 	/**
 	 * The name used for renaming the main function of the original MPI program.
