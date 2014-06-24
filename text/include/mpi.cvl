@@ -3,7 +3,6 @@
 #define __MPI_CVL__
 #include <mpi-common.h>
 #include <civlc.h>
-#endif
 
 //TODO make a Datatype struct, which has a field "int size;" Define one of these objects for MPI_INT, MPI_DOUBLE, etc. 
 //TODO Then provide methods like MPI provides for creating new ones.
