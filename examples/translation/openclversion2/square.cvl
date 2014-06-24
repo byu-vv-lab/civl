@@ -95,7 +95,8 @@ int main(int argc, char** argv)
   //Not init, malloc one from what is found in 
   //output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, NULL);
   
-  input = data;               //input defined here
+  
+  memcpy(input, data, sizeof(float) * count);
   //came from clEnqueueWriteBuffer rather than the start of code
   
   
