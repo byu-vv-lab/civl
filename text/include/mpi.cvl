@@ -1,23 +1,44 @@
-#ifdef __MPI_CVL__
-#else
+#ifndef __MPI_CVL__
 #define __MPI_CVL__
-#include <mpi-common.h>
-#include <civlc.h>
 
 //TODO make a Datatype struct, which has a field "int size;" Define one of these objects for MPI_INT, MPI_DOUBLE, etc. 
 //TODO Then provide methods like MPI provides for creating new ones.
 //TODO then support MPI_Type_contig(datatype, int n).
 
+#define BCAST_TAG   999
+#define REDUCE_TAG  998
+
+/* Completed definition for mpi-common.h */
+struct MPI_Status{
+  int MPI_SOURCE;
+  int MPI_TAG;
+  int MPI_ERROR;
+  int size;
+};
+
+/* Definition of CIVL-MPI */
+typedef enum {
+  __UNINIT,
+  __INIT,
+  __FINALIZED
+}__MPI_Sys_status__;
+
+struct MPI_Request{
+  int id;
+};
+
 /* Definition of CMPI_Gcomm and MPI_Comm */
-struct CMPI_Gcomm {
+typedef struct CMPI_Gcomm {
   $gcomm p2p; // point-to-point communication
   $gcomm col; // collective communication
-};
+  $gbarrier gbarrier;
+} CMPI_Gcomm;
 
 struct MPI_Comm {
   $comm p2p; // point-to-point communication
   $comm col; // collective communication
-  __MPI_Status__ status;
+  $barrier barrier;
+  __MPI_Sys_status__ status;
 };
 
 /****************************** Helper Functions **********************************/
@@ -171,26 +192,30 @@ CMPI_Gcomm CMPI_Gcomm_create($scope scope, int size) {
 
   result.p2p = $gcomm_create(scope, size);
   result.col = $gcomm_create(scope, size);
+  result.gbarrier = $gbarrier_create(scope, size);
   return result;
 }
 
 void CMPI_Gcomm_destroy(CMPI_Gcomm gc) {
   $gcomm_destroy(gc.p2p);
   $gcomm_destroy(gc.col);
+  $gbarrier_destroy(gc.gbarrier);
 }
 
-MPI_Comm MPI_Comm_create($scope scope, CMPI_Gcomm gc, int rank) {
+MPI_Comm CMPI_Comm_create($scope scope, CMPI_Gcomm gc, int rank) {
   MPI_Comm result;
   
   result.p2p = $comm_create(scope, gc.p2p, rank);
   result.col = $comm_create(scope, gc.col, rank);
+  result.barrier = $barrier_create(scope, gc.gbarrier, rank);
   result.status = __UNINIT;
   return result;
 }
 
-void MPI_Comm_destroy(MPI_Comm comm) {
+void CMPI_Comm_destroy(MPI_Comm comm) {
   $comm_destroy(comm.p2p);
   $comm_destroy(comm.col);
+  $barrier_destroy(comm.barrier);
 }
 
 int __MPI_Init(MPI_Comm *comm) {
@@ -408,104 +433,18 @@ int MPI_Allreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype
   $assert(comm.status == __INIT, "MPI_Allreduce() cannot be invoked without MPI_Init() being called before.\n");
   place = $comm_place(comm.col);
   root = 0;
-  //non-root
-  CMPI_Send(sendbuf, count, datatype, root, REDUCE_TAG, comm.col);
-  if(place != root){
-    MPI_Bcast(recvbuf, count, datatype, root,
-	      comm);
-    return 0;
-  }
-  else{
-    //root
-    int nprocs = $comm_size(comm.col);
-    int real_count = -1;               //the real count gotton from MPI_Status
-    //void ** buf;                     //Buffer stores data from other processes
-    void * recv;                       //Buffer used in MPI_Recv()
-    void * results;                    //Array of results
-    $scope here = $root;
-    struct Bundle_buf{
-      int I[nprocs * count];
-      float F[nprocs * count];
-      double D[nprocs * count];
-    } buf;
-
-    switch(datatype){
-    case MPI_INT :
-      recv = (int *)$malloc(here, count * sizeof(int));
-      results = (int *)$malloc(here, count * sizeof(int));
-      break;
-    case MPI_FLOAT :
-      recv = (float *)$malloc(here, count * sizeof(float));
-      results = (float *)$malloc(here, count * sizeof(float));
-      break;
-    case MPI_DOUBLE :
-      recv = (double *)$malloc(here, count * sizeof(double));
-      results = (double *)$malloc(here, count * sizeof(double));
-      break;
-    }
-    //recv = (void *)$malloc(here, count * sizeofDatatype(datatype));
-    //results = (void *)$malloc(here, count * sizeofDatatype(datatype));
-
-    for(int i=0; i<nprocs; i++){
-      CMPI_Recv(recv, count, datatype, i, REDUCE_TAG, comm.col, 
-		&status);
-      MPI_Get_count(&status, datatype, &real_count);
-      $assert(real_count == count);
-
-      switch(datatype){
-      case MPI_INT :
-	for(int j=0; j<real_count; j++)
-	  buf.I[i * real_count + j] = ((int *)recv)[j];
-	break;
-      case MPI_FLOAT : 
-	for(int j=0; j<real_count; j++)
-	  buf.F[i * real_count + j] = ((float *)recv)[j];
-	break;
-      case MPI_DOUBLE : 
-	for(int j=0; j<real_count; j++)
-	  buf.D[i * real_count + j] = ((double *)recv)[j];
-	break;
-      }
-    }
-
-    //operations
-    switch(datatype){
-    case MPI_INT: 
-      if(op == MPI_SUM)
-	sumInt(results, buf.I, real_count, nprocs);
-      if(op == MPI_MAX)
-	maxInt(results, buf.I, real_count, nprocs);
-      if(op == MPI_MIN)
-	minInt(results, buf.I, real_count, nprocs);
-      break;
-    case MPI_FLOAT:
-      if(op == MPI_SUM)
-	sumFloat(results, buf.F, real_count, nprocs);
-      if(op == MPI_MAX)
-	maxFloat(results, buf.F, real_count, nprocs);
-      if(op == MPI_MIN)
-	minFloat(results, buf.F, real_count, nprocs);
-      break;
-    case MPI_DOUBLE:
-      if(op == MPI_SUM)
-	sumDouble(results, buf.D, real_count, nprocs);
-      if(op == MPI_MAX)
-	maxDouble(results, buf.D, real_count, nprocs);
-      if(op == MPI_MIN)
-	minDouble(results, buf.D, real_count, nprocs);
-      break;
-    }
-    MPI_Sendrecv(results, real_count, datatype,
-		     place, 0,
-		     recvbuf, real_count, datatype,
-		     place, 0,
-		     comm, &status);
-    MPI_Bcast(results, real_count, datatype, root,
-	      comm);
-    $free(recv);
-    $free(results);
-  }
+  MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+  if(place == root)
+    MPI_Sendrecv(recvbuf, count, datatype, place, 0,
+		 recvbuf, count, datatype, place, 0,
+		 comm, &status);
+  MPI_Bcast(recvbuf, count, datatype, root, comm);
   return 0;
 }
 
+int MPI_Barrier(MPI_Comm comm){
+
+  $assert(comm.status == __INIT, "MPI_Allreduce() cannot be invoked without MPI_Init() being called before.\n");
+  $barrier_call(comm.barrier);
+}
 #endif
