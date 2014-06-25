@@ -191,4 +191,15 @@ public class CommonStructOrUnionType extends CommonType implements
 	public void setHandleObjectType(boolean value) {
 		this.isHandleObject = value;
 	}
+
+	@Override
+	public int getFieldIndex(String field) {
+		for (int i = 0; i < fields.length; i++) {
+			String name = fields[i].name().name();
+
+			if (name.equals(field))
+				return i;
+		}
+		return -1;
+	}
 }

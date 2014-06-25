@@ -247,17 +247,17 @@ public class LanguageFeaturesTest {
 	public void pointerAdd() throws ABCException {
 		assertTrue(ui.run("verify", filename("pointerAdd.cvl")));
 	}
-	
+
 	@Test
 	public void pointerAdd2() throws ABCException {
 		assertTrue(ui.run("verify", filename("pointerAdd2.cvl")));
 	}
-	
+
 	@Test
 	public void pointerAddBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("pointerAddBad.cvl")));
 	}
-	
+
 	@Test
 	public void pointerAddBad2() throws ABCException {
 		assertFalse(ui.run("verify", filename("pointerAddBad2.cvl")));
@@ -416,5 +416,10 @@ public class LanguageFeaturesTest {
 	@Test
 	public void civlPragma() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlPragma.cvl"), "-inputNB=5"));
+	}
+
+	@Test
+	public void civlFor() throws ABCException {
+		assertTrue(ui.run("verify", filename("civlfor.cvl")));
 	}
 }

@@ -63,6 +63,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.QuantifiedExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.RegularRangeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ScopeOfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeableNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeofNode;
@@ -98,6 +99,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
+import edu.udel.cis.vsl.abc.ast.type.IF.DomainType;
 import edu.udel.cis.vsl.abc.ast.type.IF.EnumerationType;
 import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.ObjectType;
@@ -148,6 +150,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
@@ -581,34 +584,88 @@ public class FunctionTranslator {
 	@SuppressWarnings("unused")
 	private Fragment translateCivlForNode(Scope scope, CivlForNode civlForNode) {
 		DeclarationListNode loopInits = civlForNode.getVariables();
-		boolean isFirst = true;
-		Fragment initFragment = new CommonFragment(), enterFragment, bodyFragment;
+		Fragment initFragment, enterFragment, enterGuardFragment, bodyFragment, exitFragment;
 		int numOfInit = loopInits.numChildren();
-		List<Variable> loopVariables = new ArrayList<>();
+		List<Variable> loopVariables;
 		Expression domain;
 		CivlForEnterStatement civlForEnter;
+		Triple<Scope, Fragment, List<Variable>> initResults = this
+				.translateForLoopInitializerNode(scope, loopInits);
+		Location location;
+		CIVLSource source = modelFactory.sourceOf(civlForNode);
+		int dimension;
+		Pair<Fragment, Fragment> guards;
 
-		// TODO
-
-		// need to translateDeclarationListNode (a kind of
-		// ForLoopInitializerNode)
-
-		// for (int i = 0; i < numOfInit; i++) {
-		// VariableDeclarationNode initNode = loopInits.getSequenceChild(i);
-		// Triple<Scope, Fragment, List<Variable>> initData = this
-		// .translateVariableDeclarationNode(scope, initNode, isFirst,
-		// true);
-		// Scope newScope = initData.first;
-		//
-		// if (!newScope.equals(scope))
-		// isFirst = false;
-		// initFragment = initFragment.combineWith(initData.second);
-		// loopVariables.addAll(initData.third);
-		// }
+		scope = initResults.first;
+		loopVariables = initResults.third;
+		location = modelFactory.location(
+				modelFactory.sourceOfBeginning(civlForNode), scope);
 		domain = this.translateExpressionNode(civlForNode.getDomain(), scope,
 				true);
+		dimension = ((CIVLDomainType) domain.getExpressionType()).dimension();
+		if (dimension != loopVariables.size()) {
+			throw new CIVLSyntaxException(
+					"The number of loop variables for $for does NOT match "
+							+ "the dimension of the domain " + domain + ":\n"
+							+ "number of loop variables: "
+							+ loopVariables.size() + "\n" + "dimension of "
+							+ domain + ": " + dimension, source);
+		}
+		initFragment = this.civlForInitializer(source, scope, loopVariables,
+				domain);
+		civlForEnter = modelFactory.civlForEnterStatement(
+				modelFactory.sourceOf(civlForNode), location, domain,
+				initResults.third);
+		enterFragment = new CommonFragment(civlForEnter);
+		guards = this.civlForGuard(source, scope, loopVariables, domain);
+		enterGuardFragment = guards.left;
+		exitFragment = guards.right;
+		bodyFragment = this
+				.translateStatementNode(scope, civlForNode.getBody());
+		enterFragment = enterFragment.combineWith(enterGuardFragment);
+		enterFragment = enterFragment.combineWith(bodyFragment);
+		enterFragment = enterFragment.combineWith(enterFragment);
+		enterFragment.setLastStatement(enterGuardFragment.lastStatement());
+		return enterFragment;
+	}
 
-		return null;
+	private Pair<Fragment, Fragment> civlForGuard(CIVLSource source,
+			Scope scope, List<Variable> variables, Expression domain) {
+		List<Expression> varExprs = new ArrayList<>(variables.size());
+		Expression guard;
+		Statement noop;
+		Fragment trueBranch, falseBranch;
+		Location location = modelFactory.location(source, scope);
+
+		for (int i = 0; i < variables.size(); i++) {
+			Variable variable = variables.get(i);
+
+			varExprs.add(modelFactory.variableExpression(variable.getSource(),
+					variable));
+		}
+		guard = modelFactory.domainGuard(source, varExprs, domain);
+		noop = modelFactory.loopBranchStatement(source, location, guard, true);
+		trueBranch = new CommonFragment(noop);
+		guard = modelFactory.unaryExpression(source, UNARY_OPERATOR.NOT, guard);
+		noop = modelFactory.loopBranchStatement(source, location, guard, false);
+		falseBranch = new CommonFragment(noop);
+		return new Pair<>(trueBranch, falseBranch);
+	}
+
+	private Fragment civlForInitializer(CIVLSource source, Scope scope,
+			List<Variable> variables, Expression domain) {
+		Fragment init = new CommonFragment();
+		int size = variables.size();
+
+		for (int i = 0; i < size; i++) {
+			Location location = modelFactory.location(source, scope);
+			Statement assign = modelFactory.assignStatement(source, location,
+					modelFactory.variableExpression(source, variables.get(i)),
+					modelFactory.domainInitializer(source, i, domain), true);
+
+			init.addLastStatement(assign);
+		}
+		return init;
 	}
 
 	/**
@@ -1631,7 +1688,7 @@ public class FunctionTranslator {
 		// scope.
 		if (initNode != null) {
 			Triple<Scope, Fragment, List<Variable>> initData = translateForLoopInitializerNode(
-					scope, initNode, true, false);
+					scope, initNode);
 
 			scope = initData.first;
 			initFragment = initData.second;
@@ -1643,8 +1700,7 @@ public class FunctionTranslator {
 	}
 
 	private Triple<Scope, Fragment, List<Variable>> translateForLoopInitializerNode(
-			Scope scope, ForLoopInitializerNode initNode, boolean isFirst,
-			boolean isCivlFor) {
+			Scope scope, ForLoopInitializerNode initNode) {
 		Location location;
 		Fragment initFragment = new CommonFragment();
 		Scope newScope = scope;
@@ -1658,17 +1714,11 @@ public class FunctionTranslator {
 					modelFactory.sourceOfBeginning(initNode), newScope);
 			initFragment = translateExpressionStatementNode(newScope,
 					initExpression);
-			if (isCivlFor
-					&& initExpression.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION)
-				variables.add(newScope
-						.variable(((IdentifierExpressionNode) initExpression)
-								.getIdentifier().name()));
 			break;
 		case DECLARATION_LIST:
-			if (isFirst)
-				newScope = modelFactory.scope(modelFactory.sourceOf(initNode),
-						newScope, new LinkedHashSet<Variable>(),
-						functionInfo.function());
+			newScope = modelFactory.scope(modelFactory.sourceOf(initNode),
+					newScope, new LinkedHashSet<Variable>(),
+					functionInfo.function());
 			for (int i = 0; i < ((DeclarationListNode) initNode).numChildren(); i++) {
 				VariableDeclarationNode declaration = ((DeclarationListNode) initNode)
 						.getSequenceChild(i);
@@ -2488,9 +2538,8 @@ public class FunctionTranslator {
 			} else {
 				CIVLType variableType = variable.type();
 
-				rhs = translateCompoundLiteralObject(
-						((CompoundInitializerNode) init).getLiteralObject(),
-						scope, variableType);
+				rhs = translateCompoundInitializer(
+						((CompoundInitializerNode) init), scope, variableType);
 				if (variableType.isPointerType()) {
 					Variable anonVariable = modelFactory
 							.newAnonymousVariableForArrayLiteral(initSource,
@@ -2533,70 +2582,96 @@ public class FunctionTranslator {
 				modelFactory.sourceOf(compoundNode.getTypeNode()), scope,
 				compoundNode.getType());
 
-		return translateCompoundLiteralObject(compoundNode.getInitializerList()
-				.getLiteralObject(), scope, type);
+		return translateCompoundInitializer(compoundNode.getInitializerList(),
+				scope, type);
 	}
 
-	private Expression translateCompoundLiteralObject(
-			CompoundLiteralObject compoundLiteral, Scope scope, CIVLType type) {
-		ASTNode node = compoundLiteral.getSourceNode();
-		CIVLSource source = modelFactory.sourceOf(node);
-		int compoundLiteralSize = compoundLiteral.size();
+	private Expression translateCompoundInitializer(
+			CompoundInitializerNode compoundInit, Scope scope, CIVLType type) {
+		CIVLSource source = modelFactory.sourceOf(compoundInit);
+		int size = compoundInit.numChildren();
+		List<Expression> expressions = new ArrayList<>(size);
 
-		if (type.isArrayType() || type.isPointerType()) {
-			CIVLArrayType arrayType;
-			ArrayList<Expression> elements = new ArrayList<>();
+		if (!type.isDomainType()) {
+			return this.translateLiteralObject(source, scope,
+					compoundInit.getLiteralObject(), type);
+		} else {
+			CIVLDomainType domainType = (CIVLDomainType) type;
+			int dim = domainType.dimension();
 
-			if (type.isPointerType()) {
-				arrayType = modelFactory.completeArrayType(
-						((CIVLPointerType) type).baseType(),
-						modelFactory.integerLiteralExpression(null,
-								BigInteger.valueOf(compoundLiteralSize)));
+			if (dim < 1)
+				throw new CIVLSyntaxException(
+						"It is illegal to define a $domain literal without the dimension specified.",
+						source);
+		}
+		for (int i = 0; i < size; i++) 
+				expressions.add(translateInitializerNode(compoundInit.getSequenceChild(i).getRight(),
+						scope, modelFactory.rangeType()));
+		return modelFactory.domainLiteralExpression(source, expressions, type);
+	}
+
+	private Expression translateLiteralObject(CIVLSource source, Scope scope,
+			LiteralObject literal, CIVLType type) {
+		if (literal instanceof ScalarLiteralObject) {
+			ScalarLiteralObject scalar = (ScalarLiteralObject) literal;
+
+			return this.translateExpressionNode(scalar.getExpression(), scope,
+					true);
+		} else {
+			CompoundLiteralObject compound = (CompoundLiteralObject) literal;
+			int size = compound.size();
+			List<Expression> expressions = new ArrayList<>(size);
+			List<CIVLType> types = new ArrayList<>(size);
+			int myType; // 0: arrayType, 1: struct or union, -1: other
+			CIVLType finalType = type;
+
+			if (type.isArrayType() || type.isPointerType()) {
+				if (type.isPointerType()) {
+					finalType = modelFactory.completeArrayType(
+							((CIVLPointerType) type).baseType(), modelFactory
+									.integerLiteralExpression(null,
+											BigInteger.valueOf(size)));
+				}
+				for (int i = 0; i < size; i++)
+					types.add(((CIVLArrayType) finalType).elementType());
+				myType = 0;
+			} else if (type.isStructType() || type.isUnionType()) {
+				CIVLStructOrUnionType structType = (CIVLStructOrUnionType) type;
+
+				for (int i = 0; i < size; i++) {
+					types.add(structType.getField(i).type());
+				}
+				myType = 1;
 			} else
-				arrayType = (CIVLArrayType) type;
-			for (int i = 0; i < compoundLiteralSize; i++) {
-				LiteralObject literal = compoundLiteral.get(i);
-				Expression element;
+				throw new CIVLSyntaxException("Compound initializer of " + type
+						+ " type is invalid.", source);
+			for (int i = 0; i < size; i++)
+				expressions.add(this.translateLiteralObject(source, scope,
+						compound.get(i), types.get(i)));
+			if (myType == 0)
+				return modelFactory.arrayLiteralExpression(source, finalType,
+						expressions);
+			else
+				return modelFactory.structOrUnionLiteralExpression(source,
+						finalType, expressions);
+		}
 
-				if (literal instanceof ScalarLiteralObject) {
-					element = translateExpressionNode(
-							((ScalarLiteralObject) literal).getExpression(),
-							scope, true);
-				} else if (literal instanceof CompoundLiteralObject) {
-					element = translateCompoundLiteralObject(
-							((CompoundLiteralObject) literal), scope,
-							arrayType.elementType());
-				} else
-					throw new CIVLInternalException("Unreachable", source);
-				elements.add(element);
-			}
-			return modelFactory.arrayLiteralExpression(source, arrayType,
-					elements);
-		} else if (type.isStructType() || type.isUnionType()) {
-			CIVLStructOrUnionType structType = (CIVLStructOrUnionType) type;
-			ArrayList<Expression> fields = new ArrayList<>();
+	}
 
-			for (int i = 0; i < compoundLiteralSize; i++) {
-				LiteralObject literal = compoundLiteral.get(i);
-				Expression field;
-				CIVLType fieldType = structType.getField(i).type();
+	private Expression translateInitializerNode(
+			InitializerNode initNode, Scope scope, CIVLType type) {
+		Expression initExpr;
 
-				if (literal instanceof ScalarLiteralObject) {
-					field = translateExpressionNode(
-							((ScalarLiteralObject) literal).getExpression(),
-							scope, true);
-				} else if (literal instanceof CompoundLiteralObject) {
-					field = translateCompoundLiteralObject(
-							((CompoundLiteralObject) literal), scope, fieldType);
-				} else
-					throw new CIVLInternalException("Unreachable", source);
-				fields.add(field);
-			}
-			return modelFactory.structOrUnionLiteralExpression(source,
-					structType, fields);
+		if (initNode instanceof ExpressionNode)
+			initExpr = this.translateExpressionNode((ExpressionNode) initNode,
+					scope, true);
+		else if (initNode instanceof CompoundInitializerNode) {
+			initExpr = this.translateCompoundInitializer(
+					(CompoundInitializerNode) initNode, scope, type);
 		} else
-			throw new CIVLInternalException("Compound initializer of " + type
-					+ " type is invalid.", source);
+			throw new CIVLSyntaxException("Invalid initializer node: "
+					+ initNode, initNode.getSource());
+		return  initExpr;
 	}
 
 	/**
@@ -2963,6 +3038,10 @@ public class FunctionTranslator {
 			result = translateQuantifiedExpressionNode(
 					(QuantifiedExpressionNode) expressionNode, scope);
 			break;
+		case REGULAR_RANGE:
+			result = translateRegularRangeNode(
+					(RegularRangeNode) expressionNode, scope);
+			break;
 		case RESULT:
 			result = modelFactory.resultExpression(modelFactory
 					.sourceOf(expressionNode));
@@ -3068,6 +3147,24 @@ public class FunctionTranslator {
 			}
 		}
 		return result;
+	}
+
+	private Expression translateRegularRangeNode(RegularRangeNode rangeNode,
+			Scope scope) {
+		CIVLSource source = modelFactory.sourceOf(rangeNode);
+		Expression low = this.translateExpressionNode(rangeNode.getLow(),
+				scope, true);
+		Expression high = this.translateExpressionNode(rangeNode.getHigh(),
+				scope, true);
+		Expression step;
+		ExpressionNode stepNode = rangeNode.getStep();
+
+		if (stepNode != null)
+			step = this.translateExpressionNode(stepNode, scope, true);
+		else
+			step = modelFactory
+					.integerLiteralExpression(source, BigInteger.ONE);
+		return modelFactory.regularRangeExpression(source, low, high, step);
 	}
 
 	private Expression translateScopeofNode(ScopeOfNode expressionNode,
@@ -3948,6 +4045,11 @@ public class FunctionTranslator {
 			case FUNCTION:
 				return translateABCFunctionType(source, scope,
 						(FunctionType) abcType);
+			case RANGE:
+				return modelFactory.rangeType();
+			case DOMAIN:
+				return translateABCDomainType(source, scope,
+						(DomainType) abcType);
 			case ATOMIC:
 				throw new CIVLUnimplementedFeatureException("Type " + abcType,
 						source);
@@ -3958,6 +4060,11 @@ public class FunctionTranslator {
 			modelBuilder.typeMap.put(abcType, result);
 		}
 		return result;
+	}
+
+	private CIVLType translateABCDomainType(CIVLSource source, Scope scope,
+			DomainType domainType) {
+		return modelFactory.domainType(domainType.getDimension());
 	}
 
 	/**

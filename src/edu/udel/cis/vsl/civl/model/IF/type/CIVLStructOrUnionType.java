@@ -96,9 +96,5 @@ public interface CIVLStructOrUnionType extends CIVLType {
 	 */
 	void setHandleObjectType(boolean value);
 
-	// /**
-	// *
-	// * @return True if this is a struct type, otherwise return false.
-	// */
-	// boolean isStruct();
+	int getFieldIndex(String field);
 }

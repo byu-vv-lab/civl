@@ -42,6 +42,9 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DomainInitializer;
+import edu.udel.cis.vsl.civl.model.IF.expression.DomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -55,6 +58,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
@@ -73,6 +77,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
@@ -82,12 +87,14 @@ import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLRangeType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
@@ -103,6 +110,9 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonCharLiteralExpression
 import edu.udel.cis.vsl.civl.model.common.expression.CommonConditionalExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDereferenceExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDerivativeCallExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonDomainGuardExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonDomainInitializer;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDotExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
@@ -114,6 +124,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpress
 import edu.udel.cis.vsl.civl.model.common.expression.CommonProcnullExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonQuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonRegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonScopeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
@@ -134,6 +145,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonCivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonGotoBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonIfElseBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonLoopBranchStatement;
@@ -147,11 +159,13 @@ import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonBundleType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonDomainType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonEnumType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonFunctionType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonRangeType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructField;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
@@ -426,6 +440,8 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private Scope systemScope;
 
+	private CIVLRangeType rangeType;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -451,6 +467,9 @@ public class CommonModelFactory implements ModelFactory {
 				universe.realType());
 		this.charType = primitiveType(PrimitiveTypeKind.CHAR,
 				universe.characterType());
+		this.rangeType = new CommonRangeType(new CommonIdentifier(
+				this.systemSource, (StringObject) universe.canonic(universe
+						.stringObject("$range"))), universe, integerType);
 		this.identifiers = new HashMap<String, Identifier>();
 		scopeSymbolicType = (SymbolicTupleType) universe.canonic(universe
 				.tupleType(universe.stringObject("scope"), intTypeSingleton));
@@ -2388,7 +2407,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public ArrayLiteralExpression arrayLiteralExpression(CIVLSource source,
-			CIVLType arrayType, ArrayList<Expression> elements) {
+			CIVLType arrayType, List<Expression> elements) {
 		ArrayLiteralExpression arrayLiteral = new CommonArrayLiteralExpression(
 				source, arrayType, elements);
 		Scope expressionScope = null;
@@ -2401,7 +2420,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public StructOrUnionLiteralExpression structOrUnionLiteralExpression(
-			CIVLSource source, CIVLType structType, ArrayList<Expression> fields) {
+			CIVLSource source, CIVLType structType, List<Expression> fields) {
 		StructOrUnionLiteralExpression structLiteral = new CommonStructOrUnionLiteralExpression(
 				source, structType, fields);
 		Scope expressionScope = null;
@@ -2532,10 +2551,54 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public boolean CivlForEnterStatement(CIVLSource soure, Location src,
-			Expression guard, Expression dom, List<Variable> variables) {
-		// TODO Auto-generated method stub
-		return false;
+	public CivlForEnterStatement civlForEnterStatement(CIVLSource soure,
+			Location src, Expression dom, List<Variable> variables) {
+		CivlForEnterStatement statement = new CommonCivlForEnterStatement(dom,
+				variables);
+
+		statement.setSource(src);
+		return statement;
 	}
 
+	@Override
+	public RegularRangeExpression regularRangeExpression(CIVLSource source,
+			Expression low, Expression high, Expression step) {
+		RegularRangeExpression rangeExpr = new CommonRegularRangeExpression(
+				source, this.rangeType, low, high, step);
+
+		return rangeExpr;
+	}
+
+	@Override
+	public CIVLType rangeType() {
+		return this.rangeType;
+	}
+
+	@Override
+	public CIVLDomainType domainType(int dim) {
+		CIVLDomainType domainType = new CommonDomainType(this.rangeType, dim,
+				universe);
+
+		return domainType;
+	}
+
+	@Override
+	public DomainLiteralExpression domainLiteralExpression(CIVLSource source,
+			List<Expression> ranges, CIVLType type) {
+		return new CommonDomainLiteralExpression(source, ranges, type);
+	}
+
+	@Override
+	public DomainInitializer domainInitializer(CIVLSource source, int index,
+			Expression domain) {
+		return new CommonDomainInitializer(source, this.integerType, index,
+				domain);
+	}
+
+	@Override
+	public DomainGuardExpression domainGuard(CIVLSource source,
+			List<Expression> vars, Expression domain) {
+		return new CommonDomainGuardExpression(source, this.booleanType,
+				domain, vars);
+	}
 }

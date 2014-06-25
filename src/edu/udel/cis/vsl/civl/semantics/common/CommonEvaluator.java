@@ -35,6 +35,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -48,6 +49,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
@@ -2430,6 +2432,10 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateDerivativeCall(state, pid,
 					(DerivativeCallExpression) expression);
 			break;
+		case DOMAIN_LITERAL:
+			result = evaluateDomainLiteral(state, pid,
+					(DomainLiteralExpression) expression);
+			break;
 		case DOT:
 			result = evaluateDot(state, pid, process,
 					(DotExpression) expression);
@@ -2462,6 +2468,10 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateRealLiteral(state, pid,
 					(RealLiteralExpression) expression);
 			break;
+		case REGULAR_RANGE:
+			result = evaluateRegularRange(state, pid,
+					(RegularRangeExpression) expression);
+			break;
 		case RESULT:
 			result = evaluateResult(state, pid, (ResultExpression) expression);
 			break;
@@ -2484,10 +2494,6 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateSizeofExpressionExpression(state, pid,
 					(SizeofExpressionExpression) expression);
 			break;
-		// case STRING_LITERAL:
-		// result = evaluateStringLiteral(state, pid,
-		// (StringLiteralExpression) expression);
-		// break;
 		case STRUCT_OR_UNION_LITERAL:
 			result = evaluateStructOrUnionLiteral(state, pid,
 					(StructOrUnionLiteralExpression) expression);
@@ -2523,6 +2529,76 @@ public class CommonEvaluator implements Evaluator {
 					+ kind, expression.getSource());
 		}
 		return result;
+	}
+
+	private Evaluation evaluateDomainLiteral(State state, int pid,
+			DomainLiteralExpression domain)
+			throws UnsatisfiablePathConditionException {
+		int dim = domain.dimension();
+		List<SymbolicExpression> ranges = new ArrayList<>();
+		Evaluation eval;
+		SymbolicExpression domainV;
+
+		for (int i = 0; i < dim; i++) {
+			eval = evaluate(state, pid, domain.rangeAt(i));
+			state = eval.state;
+			ranges.add(eval.value);
+		}
+		domainV = universe.tuple((SymbolicTupleType) domain.getExpressionType()
+				.getDynamicType(universe), ranges);
+		return new Evaluation(state, domainV);
+	}
+
+	private Evaluation evaluateRegularRange(State state, int pid,
+			RegularRangeExpression range)
+			throws UnsatisfiablePathConditionException {
+		SymbolicTupleType type = (SymbolicTupleType) range.getExpressionType()
+				.getDynamicType(universe);
+		Evaluation eval = this.evaluate(state, pid, range.getLow());
+		SymbolicExpression low, high, step, rangeValue;
+		BooleanExpression claim;
+		boolean negativeStep = false;
+		ResultType validity;
+		String process = state.getProcessState(pid).name() + "(id = " + pid
+				+ ")";
+
+		low = eval.value;
+		state = eval.state;
+		eval = evaluate(state, pid, range.getHigh());
+		high = eval.value;
+		state = eval.state;
+		eval = evaluate(state, pid, range.getStep());
+		step = eval.value;
+		state = eval.state;
+		claim = universe.equals(this.zero, step);
+		validity = universe.reasoner(state.getPathCondition()).valid(claim)
+				.getResultType();
+		if (validity == ResultType.YES) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.OTHER, Certainty.PROVEABLE, process,
+					"A regular range expression requires a non-zero step.",
+					symbolicUtil.stateToString(state), range.getSource());
+
+			errorLogger.reportError(err);
+		}
+		claim = universe.lessThan(this.zero, (NumericExpression) step);
+		validity = universe.reasoner(state.getPathCondition()).valid(claim)
+				.getResultType();
+		if (validity == ResultType.NO)
+			negativeStep = true;
+		claim = universe.lessThan((NumericExpression) low,
+				(NumericExpression) high);
+		validity = universe.reasoner(state.getPathCondition()).valid(claim)
+				.getResultType();
+		if ((validity == ResultType.YES && negativeStep)
+				|| (validity == ResultType.NO && !negativeStep)) {
+			SymbolicExpression tmp = low;
+
+			low = high;
+			high = tmp;
+		}
+		rangeValue = universe.tuple(type, Arrays.asList(low, high, step));
+		return new Evaluation(state, rangeValue);
 	}
 
 	@Override
@@ -2630,8 +2706,8 @@ public class CommonEvaluator implements Evaluator {
 
 	@Override
 	public Triple<State, CIVLFunction, Integer> evaluateFunctionExpression(
-			State state, int pid, Expression functionExpression, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
+			State state, int pid, Expression functionExpression,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
 		if (functionExpression == null)
 			return null;
 		else {
@@ -2646,15 +2722,13 @@ public class CommonEvaluator implements Evaluator {
 					.argument(0);
 			String funcName = "";
 
-			if(scopeId < 0){
+			if (scopeId < 0) {
 				ProcessState procState = state.getProcessState(pid);
 				CIVLExecutionException err = new CIVLExecutionException(
 						ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE,
 						procState.name() + "(id=" + pid + ")",
-						"Invalid function pointer: "
-								+ functionExpression,
-						symbolicUtil.stateToString(state),
-						source);
+						"Invalid function pointer: " + functionExpression,
+						symbolicUtil.stateToString(state), source);
 
 				errorLogger.reportError(err);
 			}

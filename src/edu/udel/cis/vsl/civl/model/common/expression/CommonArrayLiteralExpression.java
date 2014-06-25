@@ -1,7 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -19,7 +19,7 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	private Expression[] elements;
 
 	public CommonArrayLiteralExpression(CIVLSource source, CIVLType type,
-			ArrayList<Expression> elements) {
+			List<Expression> elements) {
 		super(source);
 		this.elements = new Expression[elements.size()];
 		elements.toArray(this.elements);

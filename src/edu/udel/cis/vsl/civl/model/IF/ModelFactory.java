@@ -28,6 +28,9 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DomainInitializer;
+import edu.udel.cis.vsl.civl.model.IF.expression.DomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -40,6 +43,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
@@ -55,6 +59,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -62,6 +67,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
@@ -142,7 +148,7 @@ public interface ModelFactory {
 	CIVLPrimitiveType charType();
 
 	/**
-	 * Returns a new compelte array type with specified extent (length
+	 * Returns a new complete array type with specified extent (length
 	 * expression) and element type.
 	 * 
 	 * @param elementType
@@ -397,7 +403,7 @@ public interface ModelFactory {
 	 * @return The new array literal expression created.
 	 */
 	ArrayLiteralExpression arrayLiteralExpression(CIVLSource source,
-			CIVLType arrayType, ArrayList<Expression> elements);
+			CIVLType arrayType, List<Expression> elements);
 
 	/**
 	 * A binary expression. One of {+,-,*,\,<,<=,==,!=,&&,||,%}
@@ -672,18 +678,6 @@ public interface ModelFactory {
 	SizeofExpressionExpression sizeofExpressionExpression(CIVLSource source,
 			Expression argument);
 
-	// /**
-	// * A string literal expression.
-	// *
-	// * @param source
-	// * The CIVL source
-	// * @param value
-	// * The string.
-	// * @return The string literal expression.
-	// */
-	// StringLiteralExpression stringLiteralExpression(CIVLSource source,
-	// String value);
-
 	/**
 	 * Create a new instance of struct or union literal expression
 	 * 
@@ -692,7 +686,7 @@ public interface ModelFactory {
 	 * @return
 	 */
 	StructOrUnionLiteralExpression structOrUnionLiteralExpression(
-			CIVLSource source, CIVLType type, ArrayList<Expression> fields);
+			CIVLSource source, CIVLType type, List<Expression> fields);
 
 	/**
 	 * An expression for an array index operation. e.g. a[i]
@@ -1558,6 +1552,22 @@ public interface ModelFactory {
 	 */
 	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
 
-	boolean CivlForEnterStatement(CIVLSource soure, Location src,
-			Expression guard, Expression dom, List<Variable> variables);
+	CivlForEnterStatement civlForEnterStatement(CIVLSource soure, Location src,
+			Expression dom, List<Variable> variables);
+
+	RegularRangeExpression regularRangeExpression(CIVLSource source,
+			Expression low, Expression high, Expression step);
+
+	CIVLType rangeType();
+
+	CIVLDomainType domainType(int dim);
+
+	DomainLiteralExpression domainLiteralExpression(CIVLSource source,
+			List<Expression> ranges, CIVLType type);
+
+	DomainInitializer domainInitializer(CIVLSource source, int index,
+			Expression domain);
+
+	DomainGuardExpression domainGuard(CIVLSource source, List<Expression> vars,
+			Expression domain);
 }

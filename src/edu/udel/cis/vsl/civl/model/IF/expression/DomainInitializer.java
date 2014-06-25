@@ -1,0 +1,10 @@
+package edu.udel.cis.vsl.civl.model.IF.expression;
+
+public interface DomainInitializer extends Expression {
+
+	int index();
+
+	Expression domain();
+	
+	int dimension();
+}

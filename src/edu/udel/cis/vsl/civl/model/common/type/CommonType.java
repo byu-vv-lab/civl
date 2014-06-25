@@ -105,7 +105,7 @@ public abstract class CommonType implements CIVLType {
 	public boolean isHandleType() {
 		return false;
 	}
-	
+
 	@Override
 	public boolean isHandleObjectType() {
 		return false;
@@ -115,13 +115,19 @@ public abstract class CommonType implements CIVLType {
 		this.dynamicTypeIndex = index;
 	}
 
-	@Override 
-	public boolean isEnumerationType(){
+	@Override
+	public boolean isEnumerationType() {
 		return false;
 	}
-	
-	@Override 
-	public boolean isBoolType(){
+
+	@Override
+	public boolean isBoolType() {
 		return false;
 	}
+
+	@Override
+	public boolean isDomainType() {
+		return false;
+	}
+
 }

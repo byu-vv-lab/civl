@@ -11,7 +11,7 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
  */
 public interface LiteralExpression extends Expression {
 	public enum LiteralKind {
-		ARRAY, BOOLEAN, CHAR, INTEGER, REAL, STRING, STRUCT_OR_UNION
+		ARRAY, BOOLEAN, CHAR, INTEGER, REAL, STRING, STRUCT_OR_UNION, DOMAIN
 	}
 
 	LiteralKind literalKind();

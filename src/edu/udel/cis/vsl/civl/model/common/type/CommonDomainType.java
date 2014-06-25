@@ -1,25 +1,26 @@
 package edu.udel.cis.vsl.civl.model.common.type;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 public class CommonDomainType extends CommonType implements CIVLDomainType {
 
 	private int dimension;
+	private CIVLType rangeType;
+	private SymbolicTupleType dynamicType = null;
 
-	public CommonDomainType(int dim, SymbolicUniverse universe) {
-		// String name = "$domain-" + dim;
-		// List<SymbolicType> types = new ArrayList<>(dim);
-
+	public CommonDomainType(CIVLType rangeType, int dim,
+			SymbolicUniverse universe) {
 		this.dimension = dim;
-		// for (int i = 0; i < dim; i++)
-		// types.add(universe.integerType());
-		// this.dynamicType = (SymbolicType)
-		// universe.canonic(universe.tupleType(
-		// universe.stringObject(name), types));
+		this.rangeType = rangeType;
 	}
 
 	public CommonDomainType(SymbolicUniverse universe) {
@@ -33,8 +34,23 @@ public class CommonDomainType extends CommonType implements CIVLDomainType {
 
 	@Override
 	public SymbolicType getDynamicType(SymbolicUniverse universe) {
-		throw new CIVLInternalException("no dynamic type specified for "
-				+ toString(), (CIVLSource) null);
+		if (dynamicType != null)
+			return this.dynamicType;
+		if (this.dimension < 1)
+			throw new CIVLInternalException(
+					"no dynamic type for non-dimension $domain type: "
+							+ toString(), (CIVLSource) null);
+		else {
+			List<SymbolicType> rangeTypes = new ArrayList<>(this.dimension);
+			SymbolicType symbolicRangeType = rangeType.getDynamicType(universe);
+
+			for (int i = 0; i < dimension; i++) {
+				rangeTypes.add(symbolicRangeType);
+			}
+			dynamicType = universe.tupleType(
+					universe.stringObject(this.toString()), rangeTypes);
+			return dynamicType;
+		}
 	}
 
 	@Override
@@ -46,11 +62,13 @@ public class CommonDomainType extends CommonType implements CIVLDomainType {
 	public String toString() {
 		if (this.dimension == -1)
 			return "$domain";
-		else {
-			String result = "$domain";
+		else
+			return "$domain(" + this.dimension + ")";
+	}
 
-			return result + "(" + this.dimension + ")";
-		}
+	@Override
+	public boolean isDomainType() {
+		return true;
 	}
 
 }

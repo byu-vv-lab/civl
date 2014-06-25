@@ -7,7 +7,6 @@ void main(){
 
   printf("a is %s\n", a);
   printf("b is %d\n", *c);
-  printf("a is %s\n", "not really a.");
 
   int* test=(int[]){[2]=9};
 

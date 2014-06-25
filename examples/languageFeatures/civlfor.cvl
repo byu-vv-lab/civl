@@ -1,0 +1,12 @@
+#include <civlc.h>
+
+void main(){
+  $range r1 = 1 .. 5;
+  $range r2 = 0 .. 4#-2;
+  $domain(2) dom = ($domain){r1, r2};
+  int sum = 0;
+  
+  $for(int i,j : dom){
+    sum += 1;
+  }
+}
