@@ -1,0 +1,13 @@
+Implement the following examples:
+  life
+  reduce
+  vecadd
+  matmult
+
+Other:
+  Work on wiki page
+  Figure out what to put on the wiki page
+  Make it so that local workgroups can be larger than 1
+  
+finished examples:
+  square.cvl

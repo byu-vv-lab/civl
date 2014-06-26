@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+//CIVL DOES NOT SUPPORT FLOATS AS IS, RANDOM IS UNINTERPRETED
 /*
 If increase MAX_DATA_SIZE, nothing happens if DATA_SIZE is given a concrete value
 If I increase DATA_SIZE to 2, I get
@@ -26,37 +27,57 @@ $input int DATA_SIZE;
 $input int NUM_DEVICES;
 $input int MAX_DATA_SIZE;
 $input int MAX_NUM_DEVICES;
+$input int CL_DEVICE_MAX_WORK_GROUP_SIZE;
+$input int LOCAL;
 $assume 0 < DATA_SIZE && DATA_SIZE < MAX_DATA_SIZE;
 $assume 0 < NUM_DEVICES && NUM_DEVICES < MAX_NUM_DEVICES;
 $gbarrier gbarrier = $gbarrier_create($here, NUM_DEVICES);
 //struct goes here
+
+
 typedef struct
 {
   int device_id;
-  //other variables
-  float * input;
-  float * output;
+  int workgroup;
+  int global_id;
+  int local_id;
+  
+  //kernel variables
+  int * input;
+  int * output;
   int count;
-}process;
+}kernel;
 
 //kernel goes here
-void square(int device_id, float* input, float* output, const unsigned int count)
+void square(int workgroup, int global_id, int local_id, int* input, int* output, const unsigned int count)
 {
   //int i = get_global_id(0);
-  int i = device_id;
+  int i = global_id;
   if (i < count)
   {
     output[i] = input[i] * input[i];
+    //printf("output[%d] is %d\n", i, output[i]);
+  }
+}
+
+void worksquare(size_t local, size_t global, kernel param)
+{
+  for(int i = local * param.workgroup; i < local * param.workgroup + local; i++)
+  {
+    param.local_id = i % local;
+    param.global_id = i;
+    //printf("My workgroup id is %d, my global id is %d, my local id is %d\n", param.workgroup, param.global_id, param.local_id);
+    square(param.workgroup, param.global_id, param.local_id, param.input, param.output, param.count);
   }
 }
 /*
 Note that the original lines were "__kernel void square(                                                       \n" \
-"   __global float* input,                                              \n" \
-"   __global float* output,                                             \n" \
+"   __global int* input,                                              \n" \
+"   __global int* output,                                             \n" \
 "   const unsigned int count)                                           \n" \
 
 Any parser must take note of and don't input \n, "", or \ as is
-__global float * input, __global float * output, int count;
+__global int * input, __global int * output, int count;
 */
 
 
@@ -64,17 +85,18 @@ int main(int argc, char** argv)
 {
   //get the number from clGetDeviceIDs 3rd parameter
   //int num_devices = 1;
-
-  
+  $assert (LOCAL < CL_DEVICE_MAX_WORK_GROUP_SIZE);
   //variables from __kernel come here
-  float * input;
-  float * output;
+  int * input;
+  int * output;
   int count;
   
+  size_t global;                      // global domain size for our calculation
+  size_t local;                       // local domain size for our calculation
   
   //from the code before
-  float data[DATA_SIZE];              // original data set given to device
-  float results[DATA_SIZE];           // results returned from device
+  int data[DATA_SIZE];              // original data set given to device
+  int results[DATA_SIZE];           // results returned from device
   int correct;               // number of correct results returned
   //handle the definitions being put in different places
   
@@ -82,47 +104,68 @@ int main(int argc, char** argv)
   count = DATA_SIZE;               //count defined here
   for(i = 0; i < count; i++)
   {
-    data[i] = rand() / (float)RAND_MAX;
+    data[i] = i;
   }
   
   
   
   //comes from clCreateBuffer
-  input = (float *) malloc(sizeof(float) * count);
-  output = (float *) malloc(sizeof(float) * count);
+  input = (int *) malloc(sizeof(int) * count);
+  output = (int *) malloc(sizeof(int) * count);
   
   //Possibly keep a list of variables, with a flag for whether they are init or not
   //Not init, malloc one from what is found in 
-  //output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * count, NULL, NULL);
+  //output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(int) * count, NULL, NULL);
   
   
-  memcpy(input, data, sizeof(float) * count);
+  memcpy(input, data, sizeof(int) * count);
+
   //came from clEnqueueWriteBuffer rather than the start of code
   
   
   //Phase after this is the definitions
-  int devices[NUM_DEVICES];
-  process now[NUM_DEVICES];
+  int device_id[NUM_DEVICES];
   //put device_ids
   for(int i = 0; i < NUM_DEVICES; i++)
   {
-    now[i].device_id = i;
-    /*
-    //other variables, put into a separate place
-    now[i].input = input;
-    now[i].output = output;
-    now[i].count = count;
-    */
+    device_id[i] = i;
   }
   
-  //spawns processes according to devices, uses the struct for inputs
-  $proc procs[NUM_DEVICES];
-  for(int i = 0; i < NUM_DEVICES; i++)
+  //from clCreateContext, uses the device input
+  //but there may be a loop, take it into account in the next example
+  
+  //
+  //"Get" local size from clEnqueueNDRangeKernel, but is really an input
+  local = LOCAL;
+
+
+  global = count;
+  //Creates an array of the struct according to clEnqueueNDRangeKernel
+  //Have to split array into parts using local and global, and those are a workgroup
+  //For now, assume local is 1, or else inputting the arrays will be odd, for now
+  $assert(global%local == 0);
+  kernel param[global/local];
+  for(int i = 0; i < global/local; i++)
   {
-    procs[i] = $spawn square(now[i].device_id, now[i].input, now[i].output, now[i].count);
+  //Also picks the device to be used
+    param[i].device_id = device_id[0];
+    //other parts of the struct
+    param[i].input = input;
+    param[i].output = output;
+    param[i].count = count;
   }
   
-  for(int i = 0; i < NUM_DEVICES; i++)
+
+  //spawns processes according to parameters in clEnqueueNDRangeKernel
+  $proc procs[global/local];
+  for(int i = 0; i < global/local; i++)
+  {
+    param[i].workgroup = i;
+    //procs[i] = $spawn square(param[i].global_id, param[i].input, param[i].output, param[i].count);
+    procs[i] = $spawn worksquare(local, global, param[i]);
+  }
+  
+  for(int i = 0; i < global/local; i++)
   {
     $wait(procs[i]);
   }
@@ -130,8 +173,6 @@ int main(int argc, char** argv)
   //$barrier barrier = $barrier_create($here, gbarrier, now[i].device_id);
   //$barrier_call(barrier);
   //$barrier_destroy(barrier);
-  
-  
   
   $gbarrier_destroy(gbarrier);
   
@@ -142,9 +183,11 @@ int main(int argc, char** argv)
     results[i] = output[i];
   }
   
+  
   correct = 0;
   for(i = 0; i < count; i++)
   {
+    //printf("results at %i is %d, data^2 is %d \n", i, results[i], data[i] * data[i]);
     if(results[i] == data[i] * data[i])
     {
       correct++;
