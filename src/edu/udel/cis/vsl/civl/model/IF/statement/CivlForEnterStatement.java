@@ -3,7 +3,7 @@ package edu.udel.cis.vsl.civl.model.IF.statement;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
 /**
  * <p>
@@ -27,5 +27,5 @@ public interface CivlForEnterStatement extends Statement {
 	 * 
 	 * @return the list of loop variables
 	 */
-	List<Variable> loopVariables();
+	List<VariableExpression> loopVariables();
 }

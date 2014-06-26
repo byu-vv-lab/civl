@@ -1552,8 +1552,8 @@ public interface ModelFactory {
 	 */
 	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
 
-	CivlForEnterStatement civlForEnterStatement(CIVLSource soure, Location src,
-			Expression dom, List<Variable> variables);
+	CivlForEnterStatement civlForEnterStatement(CIVLSource source, Location src,
+			Expression dom, List<VariableExpression> variables);
 
 	RegularRangeExpression regularRangeExpression(CIVLSource source,
 			Expression low, Expression high, Expression step);
@@ -1566,8 +1566,8 @@ public interface ModelFactory {
 			List<Expression> ranges, CIVLType type);
 
 	DomainInitializer domainInitializer(CIVLSource source, int index,
-			Expression domain);
+			Expression domain, boolean isLast);
 
-	DomainGuardExpression domainGuard(CIVLSource source, List<Expression> vars,
-			Expression domain);
+	DomainGuardExpression domainGuard(CIVLSource source,
+			List<VariableExpression> vars, Expression domain);
 }

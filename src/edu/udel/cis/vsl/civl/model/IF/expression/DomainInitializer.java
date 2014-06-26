@@ -7,4 +7,6 @@ public interface DomainInitializer extends Expression {
 	Expression domain();
 	
 	int dimension();
+	
+	boolean isLast();
 }

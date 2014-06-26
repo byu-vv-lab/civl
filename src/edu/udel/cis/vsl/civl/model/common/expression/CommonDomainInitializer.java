@@ -15,13 +15,15 @@ public class CommonDomainInitializer extends CommonExpression implements
 
 	private int index;
 	private Expression domain;
+	private boolean isLast;
 
 	public CommonDomainInitializer(CIVLSource source, CIVLType type, int index,
-			Expression dom) {
+			Expression dom, boolean isLast) {
 		super(source);
 		this.expressionType = type;
 		this.index = index;
 		this.domain = dom;
+		this.isLast = isLast;
 	}
 
 	@Override
@@ -54,4 +56,20 @@ public class CommonDomainInitializer extends CommonExpression implements
 		return ((CIVLDomainType) domain.getExpressionType()).dimension();
 	}
 
+	@Override
+	public String toString() {
+		StringBuffer string = new StringBuffer();
+
+		string.append("domainInit(");
+		string.append(domain);
+		string.append(", ");
+		string.append(index);
+		string.append(")");
+		return string.toString();
+	}
+
+	@Override
+	public boolean isLast() {
+		return this.isLast;
+	}
 }

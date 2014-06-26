@@ -77,5 +77,17 @@ public class CommonRegularRangeExpression extends CommonExpression implements
 	public Expression getStep() {
 		return this.step;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuffer string = new StringBuffer();
+
+		string.append(low);
+		string.append("..");
+		string.append(high);
+		string.append("#");
+		string.append(step);
+		return string.toString();
+	}
 
 }

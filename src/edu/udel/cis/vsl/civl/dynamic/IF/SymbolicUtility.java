@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -204,4 +205,15 @@ public interface SymbolicUtility {
 	 */
 	boolean isEmptyHeap(SymbolicExpression heapValue);
 
+	SymbolicExpression rangeOfDomainAt(SymbolicExpression domain, int index);
+
+	SymbolicExpression initialValueOfRange(SymbolicExpression range, boolean isLast);
+
+	BooleanExpression isInRange(SymbolicExpression value,
+			SymbolicExpression domain, int index);
+
+	SymbolicExpression rangeIncremental(SymbolicExpression value,
+			SymbolicExpression range);
+
+	SymbolicExpression getLowOfDomainAt(SymbolicExpression domain, int index);
 }

@@ -334,7 +334,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	public SymbolicExpression initialHeapValue() {
 		return modelFactory.heapType().getInitialValue();
 	}
-	
+
 	@Override
 	public boolean isEmptyHeap(SymbolicExpression heapValue) {
 		if (heapValue.isNull())
@@ -1222,8 +1222,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			if (varName.equals(ModelFactory.HEAP_VAR) && value.isNull()) {
 				continue;
 			} else if (varName.equals(ModelFactory.ATOMIC_LOCK_VARIABLE)
-					&& (value.isNull() || modelFactory.isProcessDefined(variable.getSource(),
-							value).isFalse())) {
+					&& (value.isNull() || modelFactory.isProcessDefined(
+							variable.getSource(), value).isFalse())) {
 				continue;
 			}
 			result.append(prefix + "| | " + variable.name() + " = ");
@@ -1323,5 +1323,68 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			newRef = universe.arrayElementReference(newRef, newIndexes.get(i));
 		}
 		return newRef;
+	}
+
+	@Override
+	public SymbolicExpression rangeOfDomainAt(SymbolicExpression domain,
+			int index) {
+		return universe.tupleRead(domain, universe.intObject(index));
+	}
+
+	@Override
+	public SymbolicExpression initialValueOfRange(SymbolicExpression range,
+			boolean isLast) {
+		SymbolicExpression low = universe.tupleRead(range, zeroObj);
+		SymbolicExpression step = universe.tupleRead(range, twoObj);
+
+		if (isLast)
+			return universe.subtract((NumericExpression) low,
+					(NumericExpression) step);
+		return low;
+	}
+
+	@Override
+	public BooleanExpression isInRange(SymbolicExpression value,
+			SymbolicExpression domain, int index) {
+		SymbolicExpression range = universe.tupleRead(domain,
+				universe.intObject(index));
+		SymbolicExpression high = universe.tupleRead(range, oneObj);
+		SymbolicExpression step = universe.tupleRead(range, twoObj);
+		BooleanExpression positiveStep = universe.lessThan(zero,
+				(NumericExpression) step);
+		BooleanExpression negativeStep = universe.lessThan(
+				(NumericExpression) step, zero);
+		BooleanExpression positiveStepResult = universe.and(positiveStep,
+				universe.lessThanEquals((NumericExpression) value,
+						(NumericExpression) high));
+		BooleanExpression negativeStepResult = universe.and(negativeStep,
+				universe.lessThanEquals((NumericExpression) high,
+						(NumericExpression) value));
+
+		if (positiveStep.isTrue())
+			return universe.lessThanEquals((NumericExpression) value,
+					(NumericExpression) high);
+		if (negativeStep.isTrue())
+			return universe.lessThanEquals((NumericExpression) high,
+					(NumericExpression) value);
+		return universe.or(positiveStepResult, negativeStepResult);
+	}
+
+	@Override
+	public SymbolicExpression rangeIncremental(SymbolicExpression value,
+			SymbolicExpression range) {
+		NumericExpression step = (NumericExpression) universe.tupleRead(range,
+				twoObj);
+
+		return universe.add((NumericExpression) value, step);
+	}
+
+	@Override
+	public SymbolicExpression getLowOfDomainAt(SymbolicExpression domain,
+			int index) {
+		SymbolicExpression range = universe.tupleRead(domain,
+				universe.intObject(index));
+
+		return universe.tupleRead(range, zeroObj);
 	}
 }

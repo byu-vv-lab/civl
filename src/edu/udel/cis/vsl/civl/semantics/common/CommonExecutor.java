@@ -25,11 +25,13 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -837,9 +839,48 @@ public class CommonExecutor implements Executor {
 					null);
 		case WAIT:
 			return executeWait(state, pid, (WaitStatement) statement);
+		case CIVL_FOR_ENTER:
+			return executeCivlFor(state, pid, (CivlForEnterStatement) statement);
 		default:
 			throw new CIVLInternalException("Unknown statement kind", statement);
 		}
+	}
+
+	private State executeCivlFor(State state, int pid,
+			CivlForEnterStatement forEnter)
+			throws UnsatisfiablePathConditionException {
+		List<VariableExpression> loopVars = forEnter.loopVariables();
+		Expression domain = forEnter.domain();
+		SymbolicExpression domValue;
+		Evaluation eval = evaluator.evaluate(state, pid, domain);
+		int dim = loopVars.size();
+		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+
+		domValue = eval.value;
+		state = eval.state;
+		for (int i = dim - 1; i >= 0; i--) {
+			VariableExpression var = loopVars.get(i);
+			SymbolicExpression varValue, newValue;
+			BooleanExpression inRange;
+
+			eval = evaluator.evaluate(state, pid, var);
+			varValue = eval.value;
+			state = eval.state;
+			newValue = symbolicUtil.rangeIncremental(varValue,
+					symbolicUtil.rangeOfDomainAt(domValue, i));
+			inRange = symbolicUtil.isInRange(newValue, domValue, i);
+			if (!inRange.isFalse()) {
+				state = this.assign(state, pid, process, var, newValue);
+				break;
+			} else if (i == 0) {
+				state = this.assign(state, pid, process, var, newValue);
+			} else {
+				state = this.assign(state, pid, process, var,
+						symbolicUtil.getLowOfDomainAt(domValue, i));
+			}
+		}
+		state = stateFactory.setLocation(state, pid, forEnter.target());
+		return state;
 	}
 
 	/**

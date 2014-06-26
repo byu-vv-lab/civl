@@ -2551,12 +2551,11 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public CivlForEnterStatement civlForEnterStatement(CIVLSource soure,
-			Location src, Expression dom, List<Variable> variables) {
-		CivlForEnterStatement statement = new CommonCivlForEnterStatement(dom,
-				variables);
+	public CivlForEnterStatement civlForEnterStatement(CIVLSource source,
+			Location src, Expression dom, List<VariableExpression> variables) {
+		CivlForEnterStatement statement = new CommonCivlForEnterStatement(
+				source, src, dom, variables);
 
-		statement.setSource(src);
 		return statement;
 	}
 
@@ -2590,14 +2589,14 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public DomainInitializer domainInitializer(CIVLSource source, int index,
-			Expression domain) {
+			Expression domain, boolean isLast) {
 		return new CommonDomainInitializer(source, this.integerType, index,
-				domain);
+				domain, isLast);
 	}
 
 	@Override
 	public DomainGuardExpression domainGuard(CIVLSource source,
-			List<Expression> vars, Expression domain) {
+			List<VariableExpression> vars, Expression domain) {
 		return new CommonDomainGuardExpression(source, this.booleanType,
 				domain, vars);
 	}

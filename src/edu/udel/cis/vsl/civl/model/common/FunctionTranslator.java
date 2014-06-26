@@ -581,15 +581,13 @@ public class FunctionTranslator {
 		return result;
 	}
 
-	@SuppressWarnings("unused")
 	private Fragment translateCivlForNode(Scope scope, CivlForNode civlForNode) {
 		DeclarationListNode loopInits = civlForNode.getVariables();
 		Fragment initFragment, enterFragment, enterGuardFragment, bodyFragment, exitFragment;
-		int numOfInit = loopInits.numChildren();
-		List<Variable> loopVariables;
+		List<VariableExpression> loopVariables;
 		Expression domain;
 		CivlForEnterStatement civlForEnter;
-		Triple<Scope, Fragment, List<Variable>> initResults = this
+		Triple<Scope, Fragment, List<VariableExpression>> initResults = this
 				.translateForLoopInitializerNode(scope, loopInits);
 		Location location;
 		CIVLSource source = modelFactory.sourceOf(civlForNode);
@@ -622,28 +620,22 @@ public class FunctionTranslator {
 		exitFragment = guards.right;
 		bodyFragment = this
 				.translateStatementNode(scope, civlForNode.getBody());
-		enterFragment = enterFragment.combineWith(enterGuardFragment);
+		bodyFragment = enterGuardFragment.combineWith(bodyFragment);
 		enterFragment = enterFragment.combineWith(bodyFragment);
 		enterFragment = enterFragment.combineWith(enterFragment);
-		enterFragment.setLastStatement(enterGuardFragment.lastStatement());
-		return enterFragment;
+		enterFragment.setLastStatement(exitFragment.lastStatement());
+		initFragment = initFragment.combineWith(enterFragment);
+		return initFragment;
 	}
 
 	private Pair<Fragment, Fragment> civlForGuard(CIVLSource source,
-			Scope scope, List<Variable> variables, Expression domain) {
-		List<Expression> varExprs = new ArrayList<>(variables.size());
+			Scope scope, List<VariableExpression> variables, Expression domain) {
 		Expression guard;
 		Statement noop;
 		Fragment trueBranch, falseBranch;
 		Location location = modelFactory.location(source, scope);
 
-		for (int i = 0; i < variables.size(); i++) {
-			Variable variable = variables.get(i);
-
-			varExprs.add(modelFactory.variableExpression(variable.getSource(),
-					variable));
-		}
-		guard = modelFactory.domainGuard(source, varExprs, domain);
+		guard = modelFactory.domainGuard(source, variables, domain);
 		noop = modelFactory.loopBranchStatement(source, location, guard, true);
 		trueBranch = new CommonFragment(noop);
 		guard = modelFactory.unaryExpression(source, UNARY_OPERATOR.NOT, guard);
@@ -653,17 +645,17 @@ public class FunctionTranslator {
 	}
 
 	private Fragment civlForInitializer(CIVLSource source, Scope scope,
-			List<Variable> variables, Expression domain) {
+			List<VariableExpression> variables, Expression domain) {
 		Fragment init = new CommonFragment();
 		int size = variables.size();
 
 		for (int i = 0; i < size; i++) {
 			Location location = modelFactory.location(source, scope);
 			Statement assign = modelFactory.assignStatement(source, location,
-					modelFactory.variableExpression(source, variables.get(i)),
-					modelFactory.domainInitializer(source, i, domain), true);
+					variables.get(i), modelFactory.domainInitializer(source, i,
+							domain, i == size - 1), true);
 
-			init.addLastStatement(assign);
+			init = init.combineWith(new CommonFragment(assign));
 		}
 		return init;
 	}
@@ -1687,7 +1679,7 @@ public class FunctionTranslator {
 		// If the initNode does not have a declaration, don't create a new
 		// scope.
 		if (initNode != null) {
-			Triple<Scope, Fragment, List<Variable>> initData = translateForLoopInitializerNode(
+			Triple<Scope, Fragment, List<VariableExpression>> initData = translateForLoopInitializerNode(
 					scope, initNode);
 
 			scope = initData.first;
@@ -1699,12 +1691,12 @@ public class FunctionTranslator {
 		return result;
 	}
 
-	private Triple<Scope, Fragment, List<Variable>> translateForLoopInitializerNode(
+	private Triple<Scope, Fragment, List<VariableExpression>> translateForLoopInitializerNode(
 			Scope scope, ForLoopInitializerNode initNode) {
 		Location location;
 		Fragment initFragment = new CommonFragment();
 		Scope newScope = scope;
-		List<Variable> variables = new ArrayList<>();
+		List<VariableExpression> variables = new ArrayList<>();
 
 		switch (initNode.nodeKind()) {
 		case EXPRESSION:
@@ -1726,7 +1718,8 @@ public class FunctionTranslator {
 						declaration, newScope);
 				Fragment fragment;
 
-				variables.add(variable);
+				variables.add(modelFactory.variableExpression(
+						variable.getSource(), variable));
 				location = modelFactory.location(
 						modelFactory.sourceOfBeginning(initNode), newScope);
 				fragment = translateVariableInitializationNode(declaration,
@@ -2604,9 +2597,10 @@ public class FunctionTranslator {
 						"It is illegal to define a $domain literal without the dimension specified.",
 						source);
 		}
-		for (int i = 0; i < size; i++) 
-				expressions.add(translateInitializerNode(compoundInit.getSequenceChild(i).getRight(),
-						scope, modelFactory.rangeType()));
+		for (int i = 0; i < size; i++)
+			expressions.add(translateInitializerNode(compoundInit
+					.getSequenceChild(i).getRight(), scope, modelFactory
+					.rangeType()));
 		return modelFactory.domainLiteralExpression(source, expressions, type);
 	}
 
@@ -2658,8 +2652,8 @@ public class FunctionTranslator {
 
 	}
 
-	private Expression translateInitializerNode(
-			InitializerNode initNode, Scope scope, CIVLType type) {
+	private Expression translateInitializerNode(InitializerNode initNode,
+			Scope scope, CIVLType type) {
 		Expression initExpr;
 
 		if (initNode instanceof ExpressionNode)
@@ -2671,7 +2665,7 @@ public class FunctionTranslator {
 		} else
 			throw new CIVLSyntaxException("Invalid initializer node: "
 					+ initNode, initNode.getSource());
-		return  initExpr;
+		return initExpr;
 	}
 
 	/**

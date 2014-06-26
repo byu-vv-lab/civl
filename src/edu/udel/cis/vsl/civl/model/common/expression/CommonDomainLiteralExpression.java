@@ -74,4 +74,21 @@ public class CommonDomainLiteralExpression extends CommonExpression implements
 		return ranges.length;
 	}
 
+	@Override
+	public String toString() {
+		StringBuffer string = new StringBuffer();
+		int dim = this.dimension();
+		boolean first = true;
+
+		string.append("{");
+		for (int i = 0; i < dim; i++) {
+			if (first)
+				first = false;
+			else
+				string.append(", ");
+			string.append(ranges[i]);
+		}
+		string.append("}");
+		return string.toString();
+	}
 }

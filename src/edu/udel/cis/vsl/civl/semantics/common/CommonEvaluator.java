@@ -35,6 +35,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DomainInitializer;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
@@ -2432,6 +2434,14 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateDerivativeCall(state, pid,
 					(DerivativeCallExpression) expression);
 			break;
+		case DOMAIN_GUARD:
+			result = evaluateDomainGuard(state, pid,
+					(DomainGuardExpression) expression);
+			break;
+		case DOMAIN_INIT:
+			result = evaluateDomainInitializer(state, pid,
+					(DomainInitializer) expression);
+			break;
 		case DOMAIN_LITERAL:
 			result = evaluateDomainLiteral(state, pid,
 					(DomainLiteralExpression) expression);
@@ -2529,6 +2539,44 @@ public class CommonEvaluator implements Evaluator {
 					+ kind, expression.getSource());
 		}
 		return result;
+	}
+
+	private Evaluation evaluateDomainGuard(State state, int pid,
+			DomainGuardExpression domainGuard)
+			throws UnsatisfiablePathConditionException {
+		Expression domain = domainGuard.domain();
+		int dimension = domainGuard.dimension();
+		BooleanExpression result = universe.trueExpression();
+		SymbolicExpression domainValue;
+		Evaluation eval = this.evaluate(state, pid, domain);
+
+		domainValue = eval.value;
+		state = eval.state;
+		for (int i = 0; i < dimension; i++) {
+			BooleanExpression part;
+
+			eval = this.evaluate(state, pid, domainGuard.variableAt(i));
+			state = eval.state;
+			part = symbolicUtil.isInRange(eval.value, domainValue, i);
+			if (!part.isTrue())
+				result = universe.and(result, part);
+		}
+		return new Evaluation(state, result);
+	}
+
+	private Evaluation evaluateDomainInitializer(State state, int pid,
+			DomainInitializer domainInit)
+			throws UnsatisfiablePathConditionException {
+		Expression domain = domainInit.domain();
+		int index = domainInit.index();
+		Evaluation eval = this.evaluate(state, pid, domain);
+		SymbolicExpression domainValue = eval.value;
+		SymbolicExpression initValue = symbolicUtil.initialValueOfRange(
+				symbolicUtil.rangeOfDomainAt(domainValue, index),
+				domainInit.isLast());
+
+		state = eval.state;
+		return new Evaluation(state, initValue);
 	}
 
 	private Evaluation evaluateDomainLiteral(State state, int pid,
