@@ -1954,6 +1954,12 @@ public class FunctionTranslator {
 			}
 			if (entity.getDefinition() == null) { // abstract or system function
 				if (node instanceof AbstractFunctionDefinitionNode) {
+					if (parameters.isEmpty())
+						throw new CIVLSyntaxException(
+								"$abstract functions must have at least one input.\n"
+										+ "An abstract function with 0 inputs is a constant.\n"
+										+ "It can be declared as an unconstrained input variable instead, e.g.\n"
+										+ "$input int N;", node.getSource());
 					result = modelFactory.abstractFunction(nodeSource,
 							functionIdentifier, parameters, returnType, scope,
 							((AbstractFunctionDefinitionNode) node)
