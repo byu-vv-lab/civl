@@ -1,0 +1,42 @@
+#include "civlc.h"
+#include "stdio.h"
+
+int main ( void ) {
+	int numThreads = 2;
+	$gbarrier _g = $gbarrier_create($here, numThreads);
+	float cache[numThreads];
+
+	for (int i = 0; i < numThreads; i++)
+		cache[i] = i + 1;
+
+	void f(int tid) {
+		$barrier _b = $barrier_create($here, _g, tid);
+
+		int i = numThreads / 2;
+		int cacheIndex = tid;
+
+		while (i != 0) {
+			if (cacheIndex < i)
+				cache[cacheIndex] += cache[cacheIndex + i];
+			$barrier_call(_b);
+			i /= 2;
+		}
+		$barrier_destroy(_b);
+	}
+
+	$proc thread[numThreads];
+	for (int i = 0; i < numThreads; i++)
+		thread[i] = $spawn f(i);
+	for (int i = 0; i < numThreads; i++)
+		$wait(thread[i]);
+
+	int answer = cache[0];
+	int total = numThreads * (numThreads + 1) / 2;
+	printf("answer = %d, total = %d\n", answer, total);
+
+	$assert(answer == total);
+
+	$gbarrier_destroy(_g);
+
+	return 0;
+}
