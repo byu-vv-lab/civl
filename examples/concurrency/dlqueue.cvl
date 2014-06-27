@@ -65,6 +65,7 @@ void test1() {
   initialize(&queue);
   enqueue(&queue, 99);
   dequeue(&queue, &x);
+  free(queue.Head);
   assert(x==99);
 }
 
@@ -85,6 +86,7 @@ void test2() {
   result = dequeue(&q, &y);
   assert(result);
   assert ((x==6 && y==7) || (x==7 && y==6));
+  free(q.Head);
 }
 
 void main() {
