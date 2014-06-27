@@ -78,6 +78,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
@@ -146,6 +147,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCivlForEnterStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonCivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonGotoBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonIfElseBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonLoopBranchStatement;
@@ -223,11 +225,19 @@ public class CommonModelFactory implements ModelFactory {
 	 * The prefix of the temporal variables for translating conditional
 	 * expressions
 	 */
-	private static final String CONDITIONAL_VARIABLE_PREFIX = "__cond_var_";
+	private static final String CONDITIONAL_VARIABLE_PREFIX = "_cond_var_";
 
-	private static final String ANONYMOUS_VARIABLE_PREFIX = "__anon_";
+	private static final String ANONYMOUS_VARIABLE_PREFIX = "_anon_";
+
+	private static final String DOM_SIZE_PREFIX = "_dom_size";
+
+	private static final String PAR_PROC_PREFIX = "_par_procs";
 
 	/* ************************** Instance Fields ************************** */
+
+	private int domSizeVariableId = 0;
+
+	private int parProcsVariableId = 0;
 
 	/**
 	 * The list of variables created for array literals used to initialize a
@@ -441,6 +451,8 @@ public class CommonModelFactory implements ModelFactory {
 	private Scope systemScope;
 
 	private CIVLRangeType rangeType;
+
+	private FunctionPointerExpression waitallFuncPointer;
 
 	/* **************************** Constructors *************************** */
 
@@ -2599,5 +2611,59 @@ public class CommonModelFactory implements ModelFactory {
 			List<VariableExpression> vars, Expression domain) {
 		return new CommonDomainGuardExpression(source, this.booleanType,
 				domain, vars);
+	}
+
+	@Override
+	public VariableExpression domSizeVariable(CIVLSource source, Scope scope) {
+		Variable variable = this.variable(
+				source,
+				integerType,
+				this.identifier(source, DOM_SIZE_PREFIX
+						+ this.domSizeVariableId++), scope.numVariables());
+
+		scope.addVariable(variable);
+		return this.variableExpression(source, variable);
+	}
+
+	@Override
+	public VariableExpression parProcsVariable(CIVLSource source,
+			CIVLType type, Scope scope) {
+		Variable variable = this.variable(
+				source,
+				type,
+				this.identifier(source, PAR_PROC_PREFIX
+						+ this.parProcsVariableId++), scope.numVariables());
+
+		scope.addVariable(variable);
+		return this.variableExpression(source, variable);
+	}
+
+	@Override
+	public CivlParForEnterStatement civlParForEnterStatement(CIVLSource source,
+			Location location, Expression domain, VariableExpression domSize,
+			VariableExpression procsVar, Expression parProcs,
+			CIVLFunction parProcFunc) {
+		return new CommonCivlParForEnterStatement(source, location, domain,
+				domSize, procsVar, parProcs, parProcFunc);
+	}
+
+	@Override
+	public FunctionPointerExpression waitallFunctionPointer() {
+		if (this.waitallFuncPointer == null) {
+			List<Variable> parameters = new ArrayList<>(2);
+			CIVLFunction function;
+
+			parameters.add(this.variable(systemSource,
+					this.pointerType(this.processType),
+					this.identifier(systemSource, "procs"), 0));
+			parameters.add(this.variable(systemSource, this.integerType,
+					this.identifier(systemSource, "num"), 1));
+			function = this.systemFunction(systemSource,
+					this.identifier(systemSource, "$waitall"), parameters,
+					this.voidType, systemScope, "civlc");
+			this.waitallFuncPointer = this.functionPointerExpression(
+					systemSource, function);
+		}
+		return this.waitallFuncPointer;
 	}
 }

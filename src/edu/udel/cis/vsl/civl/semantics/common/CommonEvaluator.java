@@ -3224,4 +3224,10 @@ public class CommonEvaluator implements Evaluator {
 		result = universe.arrayLambda(arrayType, arrayFunction);
 		return new Evaluation(state, result);
 	}
+
+	@Override
+	public CIVLErrorLogger errorLogger() {
+		return this.errorLogger;
+	}
+
 }

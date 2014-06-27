@@ -4,6 +4,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -146,6 +147,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -209,6 +211,8 @@ public class FunctionTranslator {
 	private static final String REAL_FILE_TYPE = "$file";
 
 	private static final String FILE_STREAM_TYPE = "FILE";
+
+	private static final String PAR_FUNC_NAME = "_par_proc";
 
 	/* ************************** Instance Fields ************************** */
 
@@ -521,9 +525,15 @@ public class FunctionTranslator {
 			result = translateChooseNode(scope,
 					(ChooseStatementNode) statementNode);
 			break;
-		case CIVL_FOR:
-			result = translateCivlForNode(scope, (CivlForNode) statementNode);
+		case CIVL_FOR: {
+			CivlForNode forNode = (CivlForNode) statementNode;
+
+			if (forNode.isParallel())
+				result = translateCivlParForNode(scope, forNode);
+			else
+				result = translateCivlForNode(scope, forNode);
 			break;
+		}
 		case COMPOUND:
 			result = translateCompoundStatementNode(scope,
 					(CompoundStatementNode) statementNode);
@@ -578,6 +588,62 @@ public class FunctionTranslator {
 			result = modelFactory.anonFragment().combineWith(result);
 			modelFactory.resetAnonFragment();
 		}
+		return result;
+	}
+
+	private Fragment translateCivlParForNode(Scope scope,
+			CivlForNode civlForNode) {
+		DeclarationListNode loopInits = civlForNode.getVariables();
+		Triple<Scope, Fragment, List<VariableExpression>> initResults = this
+				.translateForLoopInitializerNode(scope, loopInits);
+		CIVLSource source = modelFactory.sourceOf(civlForNode);
+		CIVLSource parForBeginSource = modelFactory
+				.sourceOfBeginning(civlForNode);
+		CIVLSource parForEndSource = modelFactory.sourceOfEnd(civlForNode);
+		VariableExpression domSizeVar = modelFactory.domSizeVariable(source,
+				scope);
+		CIVLArrayType procsType = modelFactory.completeArrayType(
+				modelFactory.processType(), domSizeVar);
+		VariableExpression parProcs = modelFactory.parProcsVariable(source,
+				procsType, scope);
+		StatementNode bodyNode = civlForNode.getBody();
+		CIVLSource procFuncSource = modelFactory.sourceOf(bodyNode);
+		CIVLSource procFuncStartSource = modelFactory
+				.sourceOfBeginning(bodyNode);
+		List<VariableExpression> loopVars = initResults.third;
+		int numOfLoopVars = loopVars.size();
+		List<Variable> procFuncParameters = new ArrayList<>(numOfLoopVars);
+		CIVLFunction procFunc;
+		CivlParForEnterStatement parForEnter;
+		Fragment result;
+		CallOrSpawnStatement callWaitAll;
+		Location location;
+		Expression domain = this.translateExpressionNode(
+				civlForNode.getDomain(), scope, true);
+
+		for (int i = 0; i < numOfLoopVars; i++) {
+			Variable loopVar = loopVars.get(i).variable();
+			Variable parameter = modelFactory.variable(loopVar.getSource(),
+					loopVar.type(), loopVar.name(), i);
+
+			procFuncParameters.add(parameter);
+		}
+		procFunc = modelFactory.function(procFuncSource,
+				modelFactory.identifier(procFuncStartSource, PAR_FUNC_NAME),
+				procFuncParameters, modelFactory.voidType(), scope, null);
+		scope.addFunction(procFunc);
+		modelBuilder.parProcFunctions.put(procFunc, bodyNode);
+		location = modelFactory.location(parForBeginSource, scope);
+		parForEnter = modelFactory.civlParForEnterStatement(parForBeginSource,
+				location, domain, domSizeVar, parProcs,
+				this.arrayToPointer(parProcs), procFunc);
+		result = new CommonFragment(parForEnter);
+		location = modelFactory.location(parForEndSource, scope);
+		callWaitAll = modelFactory.callOrSpawnStatement(parForEndSource,
+				location, true, modelFactory.waitallFunctionPointer(),
+				Arrays.asList(this.arrayToPointer(parProcs), domSizeVar), null);
+		callWaitAll.setGuard(modelFactory.systemGuardExpression(callWaitAll));
+		result = result.combineWith(new CommonFragment(callWaitAll));
 		return result;
 	}
 

@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.semantics.common;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,8 +23,11 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -32,6 +36,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -66,6 +71,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -123,6 +129,8 @@ public class CommonExecutor implements Executor {
 	private CIVLErrorLogger errorLogger;
 
 	private CIVLConfiguration civlConfig;
+
+	private int parProcId = 0;
 
 	/* ***************************** Constructors ************************** */
 
@@ -841,9 +849,139 @@ public class CommonExecutor implements Executor {
 			return executeWait(state, pid, (WaitStatement) statement);
 		case CIVL_FOR_ENTER:
 			return executeCivlFor(state, pid, (CivlForEnterStatement) statement);
+		case CIVL_PAR_FOR_ENTER:
+			return executeCivlParFor(state, pid,
+					(CivlParForEnterStatement) statement);
 		default:
 			throw new CIVLInternalException("Unknown statement kind", statement);
 		}
+	}
+
+	private State executeCivlParFor(State state, int pid,
+			CivlParForEnterStatement parFor)
+			throws UnsatisfiablePathConditionException {
+		CIVLSource source = parFor.getSource();
+		Expression domain = parFor.domain();
+		VariableExpression domSize = parFor.domSizeVar();
+		Evaluation eval;
+		SymbolicExpression domainV;
+		NumericExpression domSizeV = universe.integer(1);
+		int dim = parFor.dimension();
+		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		IntegerNumber number_domSize;
+		List<NumericExpression> lows = new ArrayList<>(dim);
+		List<NumericExpression> steps = new ArrayList<>(dim);
+		List<NumericExpression> highs = new ArrayList<>(dim);
+		Expression parProcs = parFor.parProcsPointer();
+		VariableExpression parProcsVar = parFor.parProcsVar();
+		SymbolicExpression parProcsPointer;
+
+		eval = evaluator.evaluate(state, pid, domain);
+		domainV = eval.value;
+		state = eval.state;
+		eval = evaluator.evaluate(state, pid, parProcs);
+		state = eval.state;
+		for (int i = 0; i < dim; i++) {
+			SymbolicExpression rangeV = universe.tupleRead(domainV,
+					universe.intObject(i));
+			NumericExpression rangeSize = symbolicUtil.getRangeSize(rangeV);
+
+			domSizeV = universe.multiply(domSizeV, rangeSize);
+			lows.add(symbolicUtil.getLowOfRange(rangeV));
+			steps.add(symbolicUtil.getStepOfRange(rangeV));
+			highs.add(symbolicUtil.getHighOfRange(rangeV));
+		}
+		state = this.assign(state, pid, process, domSize, domSizeV);
+		number_domSize = (IntegerNumber) reasoner.extractNumber(domSizeV);
+		if (number_domSize == null) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.OTHER, Certainty.PROVEABLE, process,
+					"The arguments of the domain for $parfor "
+							+ "must be concrete.",
+					symbolicUtil.stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+		} else {
+			InitialValueExpression initVal = modelFactory
+					.initialValueExpression(parProcs.getSource(),
+							parProcsVar.variable());
+
+			eval = evaluator.evaluate(state, pid, parProcs);
+			parProcsPointer = eval.value;
+			state = eval.state;
+			eval = evaluator.evaluate(state, pid, initVal);
+			state = eval.state;
+			state = this.assign(state, pid, process, parProcsVar, eval.value);
+			this.parProcId = 0;
+			state = this.executeSpawns(state, pid, parProcs, parProcsPointer,
+					parFor.parProcFunction(), 0, dim, lows, steps, highs);
+			this.parProcId = 0;
+		}
+		state = stateFactory.setLocation(state, pid, parFor.target());
+		return state;
+	}
+
+	private State executeSpawns(State state, int pid, Expression parProcs,
+			SymbolicExpression parProcsPointer, CIVLFunction function, int id,
+			int dim, List<NumericExpression> values,
+			List<NumericExpression> steps, List<NumericExpression> highs)
+			throws UnsatisfiablePathConditionException {
+		NumericExpression current = values.get(id);
+		NumericExpression step = steps.get(id), high = highs.get(id);
+		Reasoner reasoner;
+		BooleanExpression claim;
+		ResultType result;
+		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+		List<NumericExpression> myValues = new ArrayList<>(values);
+
+		for (int i = 0;; i++) {
+			if (i != 0)
+				current = universe.add(current, step);
+			reasoner = universe.reasoner(state.getPathCondition());
+			claim = universe.lessThanEquals(current, high);
+			result = reasoner.valid(claim).getResultType();
+
+			if (result == ResultType.YES) {
+				myValues.set(id, current);
+				if (id == dim - 1) {
+					SymbolicExpression[] arguments = new SymbolicExpression[dim];
+					SymbolicExpression procPointer;
+					int myProcId = this.parProcId++;
+					int newPid;
+					CIVLSource source = parProcs.getSource();
+					BinaryExpression pointerAdd = modelFactory
+							.binaryExpression(source,
+									BINARY_OPERATOR.POINTER_ADD, parProcs,
+									modelFactory.integerLiteralExpression(
+											source,
+											BigInteger.valueOf(myProcId)));
+					Evaluation eval;
+
+					myValues.toArray(arguments);
+					newPid = state.numProcs();
+					state = stateFactory.addProcess(state, function, arguments,
+							pid);
+					eval = evaluator.pointerAdd(state, pid, process,
+							pointerAdd, parProcsPointer,
+							universe.integer(myProcId));
+					procPointer = eval.value;
+					state = eval.state;
+					state = this.assign(source, state, process, procPointer,
+							modelFactory.processValue(newPid));
+				} else {
+					state = executeSpawns(state, pid, parProcs,
+							parProcsPointer, function, id + 1, dim, myValues,
+							steps, highs);
+				}
+			} else if (result == ResultType.NO)
+				break;
+			else {
+
+			}
+
+		}
+		return state;
 	}
 
 	private State executeCivlFor(State state, int pid,

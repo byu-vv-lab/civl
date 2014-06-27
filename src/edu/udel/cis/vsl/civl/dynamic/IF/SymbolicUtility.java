@@ -207,7 +207,8 @@ public interface SymbolicUtility {
 
 	SymbolicExpression rangeOfDomainAt(SymbolicExpression domain, int index);
 
-	SymbolicExpression initialValueOfRange(SymbolicExpression range, boolean isLast);
+	SymbolicExpression initialValueOfRange(SymbolicExpression range,
+			boolean isLast);
 
 	BooleanExpression isInRange(SymbolicExpression value,
 			SymbolicExpression domain, int index);
@@ -216,4 +217,13 @@ public interface SymbolicUtility {
 			SymbolicExpression range);
 
 	SymbolicExpression getLowOfDomainAt(SymbolicExpression domain, int index);
+
+	NumericExpression getRangeSize(SymbolicExpression range);
+
+	NumericExpression getLowOfRange(SymbolicExpression range);
+
+	NumericExpression getHighOfRange(SymbolicExpression range);
+
+	NumericExpression getStepOfRange(SymbolicExpression range);
+
 }

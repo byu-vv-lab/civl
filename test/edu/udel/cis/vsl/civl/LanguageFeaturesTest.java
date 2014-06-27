@@ -427,4 +427,9 @@ public class LanguageFeaturesTest {
 	public void civlFor() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlfor.cvl")));
 	}
+	
+	@Test
+	public void civlParfor() throws ABCException {
+		assertTrue(ui.run("verify", filename("civlParfor.cvl")));
+	}
 }

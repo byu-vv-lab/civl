@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.library.IF;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -36,6 +37,7 @@ public abstract class BaseLibraryEvaluator extends Library implements
 	 */
 	protected StateFactory stateFactory;
 
+	protected CIVLErrorLogger errorLogger;
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -54,6 +56,7 @@ public abstract class BaseLibraryEvaluator extends Library implements
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
 		this.modelFactory = modelFactory;
+		this.errorLogger = evaluator.errorLogger();
 	}
 
 	/* ******************** Methods from LibraryEvaluator ****************** */

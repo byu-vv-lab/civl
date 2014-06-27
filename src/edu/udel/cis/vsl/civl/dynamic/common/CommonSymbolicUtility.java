@@ -67,6 +67,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 	private NumericExpression zero;
 
+	private NumericExpression one;
+
 	private CIVLErrorLogger errorLogger;
 
 	private SymbolicExpression sizeofFunction;
@@ -119,6 +121,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		this.oneObj = (IntObject) universe.canonic(universe.intObject(1));
 		this.twoObj = (IntObject) universe.canonic(universe.intObject(2));
 		zero = (NumericExpression) universe.canonic(universe.integer(0));
+		one = (NumericExpression) universe.canonic(universe.integer(1));
 		this.heapType = modelFactory.heapType();
 		this.procType = this.modelFactory.processSymbolicType();
 		this.scopeType = this.modelFactory.scopeSymbolicType();
@@ -1386,5 +1389,37 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				universe.intObject(index));
 
 		return universe.tupleRead(range, zeroObj);
+	}
+
+	@Override
+	public NumericExpression getRangeSize(SymbolicExpression range) {
+		NumericExpression low = (NumericExpression) universe.tupleRead(range,
+				this.zeroObj);
+		NumericExpression high = (NumericExpression) universe.tupleRead(range,
+				oneObj);
+		NumericExpression step = (NumericExpression) universe.tupleRead(range,
+				this.twoObj);
+		NumericExpression size = universe.subtract(high, low);
+		NumericExpression remainder = universe.modulo(size, step);
+
+		size = universe.subtract(size, remainder);
+		size = universe.divide(size, step);
+		size = universe.add(size, this.one);
+		return size;
+	}
+
+	@Override
+	public NumericExpression getLowOfRange(SymbolicExpression range) {
+		return (NumericExpression) universe.tupleRead(range, zeroObj);
+	}
+
+	@Override
+	public NumericExpression getHighOfRange(SymbolicExpression range) {
+		return (NumericExpression) universe.tupleRead(range, oneObj);
+	}
+
+	@Override
+	public NumericExpression getStepOfRange(SymbolicExpression range) {
+		return (NumericExpression) universe.tupleRead(range, twoObj);
 	}
 }

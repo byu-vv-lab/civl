@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
@@ -253,4 +254,6 @@ public interface Evaluator {
 	Evaluation getSubArray(CIVLSource source, State state, String process,
 			SymbolicExpression arrayPointer, int startIndex)
 			throws UnsatisfiablePathConditionException;
+
+	CIVLErrorLogger errorLogger();
 }

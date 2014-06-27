@@ -60,6 +60,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -1552,8 +1553,8 @@ public interface ModelFactory {
 	 */
 	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
 
-	CivlForEnterStatement civlForEnterStatement(CIVLSource source, Location src,
-			Expression dom, List<VariableExpression> variables);
+	CivlForEnterStatement civlForEnterStatement(CIVLSource source,
+			Location src, Expression dom, List<VariableExpression> variables);
 
 	RegularRangeExpression regularRangeExpression(CIVLSource source,
 			Expression low, Expression high, Expression step);
@@ -1570,4 +1571,16 @@ public interface ModelFactory {
 
 	DomainGuardExpression domainGuard(CIVLSource source,
 			List<VariableExpression> vars, Expression domain);
+
+	VariableExpression domSizeVariable(CIVLSource source, Scope scope);
+
+	VariableExpression parProcsVariable(CIVLSource source, CIVLType type,
+			Scope scope);
+
+	CivlParForEnterStatement civlParForEnterStatement(CIVLSource source,
+			Location location, Expression domain, VariableExpression domSize,
+			VariableExpression procsVar, Expression parProcs,
+			CIVLFunction parProcFunc);
+
+	FunctionPointerExpression waitallFunctionPointer();
 }

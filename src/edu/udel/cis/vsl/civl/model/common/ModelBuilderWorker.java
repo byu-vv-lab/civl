@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
@@ -59,6 +60,8 @@ public class ModelBuilderWorker {
 	 * Used to give names to anonymous structs and unions.
 	 */
 	int anonymousStructCounter = 0;
+
+	Map<CIVLFunction, StatementNode> parProcFunctions = new HashMap<>();
 
 	/** Used to shortcut checking whether circular types are bundleable. */
 	private List<CIVLType> bundleableEncountered = new LinkedList<>();
@@ -343,6 +346,19 @@ public class ModelBuilderWorker {
 		functionTranslator.translateFunction();
 	}
 
+	private void translateParProcFunctions() {
+		for (Entry<CIVLFunction, StatementNode> funcPair : this.parProcFunctions
+				.entrySet()) {
+			CIVLFunction function = funcPair.getKey();
+			StatementNode bodyNode = funcPair.getValue();
+			FunctionTranslator translator = new FunctionTranslator(this,
+					factory, bodyNode, function);
+
+			translator.translateFunction();
+
+		}
+	}
+
 	/* *********************************************************************
 	 * Post-translation Methods
 	 * *********************************************************************
@@ -458,6 +474,8 @@ public class ModelBuilderWorker {
 	 *            The system function of the model, i.e. _CIVL_SYSTEM function.
 	 */
 	protected void completeModel(CIVLFunction system) {
+		boolean hasWaitall = false;
+
 		model = factory.model(system.getSource(), system);
 		model.setMessageType(messageType);
 		model.setQueueType(queueType);
@@ -474,8 +492,16 @@ public class ModelBuilderWorker {
 		model.setOmpWsType(this.ompWsType);
 		model.setName(modelName);
 		// add all functions to model except main:
-		for (CIVLFunction f : functionMap.values())
+		for (CIVLFunction f : functionMap.values()) {
 			model.addFunction(f);
+			if (f.name().name().equals("$waitall"))
+				hasWaitall = true;
+		}
+		for (CIVLFunction f : this.parProcFunctions.keySet())
+			model.addFunction(f);
+		if (this.parProcFunctions.size() > 0 && !hasWaitall) {
+			model.addFunction(factory.waitallFunctionPointer().function());
+		}
 		((CommonModel) model).setMallocStatements(mallocStatements);
 		model.complete();
 		// TODO check scope/proc/pointers of variables.
@@ -578,6 +604,7 @@ public class ModelBuilderWorker {
 		// translateFunctionDefinitionNode(mainFunctionNode, system,
 		// initialization);
 		translateUndefinedFunctions();
+		translateParProcFunctions();
 		completeCallOrSpawnStatements();
 		completeBundleType();
 		completeHeapType();

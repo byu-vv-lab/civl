@@ -1322,11 +1322,63 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		case "$wait":// return immediately since target location has been set.
 			return executeWait(state, pid, arguments, argumentValues,
 					call.getSource(), call.target());
+		case "$waitall":
+			return executeWaitAll(state, pid, arguments, argumentValues,
+					call.getSource(), call.target());
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					call);
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
+
+	private State executeWaitAll(State state, int pid, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source,
+			Location target) throws UnsatisfiablePathConditionException {
+		SymbolicExpression procsPointer = argumentValues[0];
+		SymbolicExpression numOfProcs = argumentValues[1];
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		IntegerNumber number_nprocs = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) numOfProcs);
+		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+
+		if (number_nprocs == null) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.OTHER, Certainty.PROVEABLE, process,
+					"The number of processes for $waitall "
+							+ "needs a concrete value.",
+					symbolicUtil.stateToString(state), arguments[1].getSource());
+
+			this.errorLogger.reportError(err);
+		} else {
+			int numOfProcs_int = number_nprocs.intValue();
+			BinaryExpression pointerAdd;
+			CIVLSource procsSource = arguments[0].getSource();
+			Evaluation eval;
+
+			for (int i = 0; i < numOfProcs_int; i++) {
+				Expression offSet = modelFactory.integerLiteralExpression(
+						procsSource, BigInteger.valueOf(i));
+				NumericExpression offSetV = universe.integer(i);
+				SymbolicExpression procPointer, proc;
+				int pidValue;
+
+				pointerAdd = modelFactory.binaryExpression(procsSource,
+						BINARY_OPERATOR.POINTER_ADD, arguments[0], offSet);
+				eval = evaluator.pointerAdd(state, pid, process, pointerAdd,
+						procsPointer, offSetV);
+				procPointer = eval.value;
+				state = eval.state;
+				eval = evaluator.dereference(procsSource, state, process,
+						procPointer, false);
+				proc = eval.value;
+				state = eval.state;
+				pidValue = modelFactory.getProcessId(procsSource, proc);
+				state = stateFactory.removeProcess(state, pidValue);
+			}
+			state = stateFactory.setLocation(state, pid, target);
+		}
 		return state;
 	}
 
