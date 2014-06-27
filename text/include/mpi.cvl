@@ -41,6 +41,11 @@ struct MPI_Comm {
   __MPI_Sys_status__ status;
 };
 
+/********************************** State **************************************/
+
+/* The number of times the MPI_Wtime function has been called */
+int CMPI_time_count = 0;
+
 /****************************** Helper Functions **********************************/
 int sizeofDatatype(MPI_Datatype datatype) {
   switch (datatype) {
@@ -187,6 +192,16 @@ void minDouble(double result[], double buf[], int real_count, int nprocs){
 }
 
 /************************** MPI LIB Implementations *******************************/
+
+$abstract double CMPI_time(int count);
+
+double MPI_Wtime() {
+  double result = CMPI_time(CMPI_time_count);
+  
+  CMPI_time_count++;
+  return result;
+}
+
 CMPI_Gcomm CMPI_Gcomm_create($scope scope, int size) {
   CMPI_Gcomm result;
 

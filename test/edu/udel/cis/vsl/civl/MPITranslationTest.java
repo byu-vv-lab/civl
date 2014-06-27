@@ -53,6 +53,7 @@ public class MPITranslationTest {
 				"-input__NPROCS=3"));
 	}
 
+	// TODO: this says assert false. Why? Is there a bug in the program?
 	@Test
 	public void mpi_prime() {
 		assertFalse(ui.run("verify", filename("mpi_prime.c"),
