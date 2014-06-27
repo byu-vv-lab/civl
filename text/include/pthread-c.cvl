@@ -5,7 +5,7 @@ extern void *value = NULL;
 __pthread_pool_t _pool={.len = 0};
 
 
-
+// Working Methods
 void _free_pool(__pthread_pool_t* pool){
   $atomic{
     int len = pool->len;
@@ -15,7 +15,6 @@ void _free_pool(__pthread_pool_t* pool){
   }
 }
 
-//Methods to be implemented
 void _add_thread(__pthread_pool_t* pool, pthread_t* thread){
   $atomic{
   int len = pool->len;
@@ -32,6 +31,7 @@ void _add_thread(__pthread_pool_t* pool, pthread_t* thread){
   pool->len = len + 1;
   }
 }
+
 /*
 //uses _ as the prefix for our helper variables and functions.
 _Bool _isTerminated($proc thr){
@@ -46,9 +46,21 @@ _Bool _isTerminated($proc thr){
 }
 */
 
+/**
+  * Initializes a spinlock with the default values defined for it by an implementation
+  * Corresponding specification: p. 
+  *
+  * @param *slock
+  *            The spinlock to be initialized.
+  * @param pshared
+  *            The process shared attribute that the spinlock shall take as its field
+  *
+  * @return Returns 0 upon successful completion
+  */
+
 int pthread_spin_init(pthread_spinlock_t *slock, int pshared){
   slock->owner = $proc_null;
-  slock->lock = 1;
+  slock->lock = true;
   slock->pshared = 0;
   return 0;
 }
@@ -60,8 +72,11 @@ int pthread_spin_destroy(pthread_spinlock_t *slock){
 }
 
 int pthread_spin_lock(pthread_spinlock_t *slock){
-  $when(!slock->lock && slock->owner == $proc_null){
-    slock->lock = true;
+  $atomic{
+    $when(!slock->lock && slock->owner == $proc_null){
+      slock->lock = true;
+      slock->owner == $self;
+    }
   }
   return 0;
 }
@@ -85,6 +100,19 @@ int pthread_barrierattr_destroy(pthread_barrierattr_t *attr){
   return 0;
 }
 
+/**
+  * Initializes a barrier with the default values defined for it by an implementation
+  * or with the values defined by the barrier attribute parameter
+  * Corresponding specification: p. 
+  *
+  * @param *barrier
+  *            The barrier to be initialized.
+  * @param *attr
+  *            The mutex attribute which the mutex shall take as it's field. May also
+  *            be null for default values to be initialized.
+  * @return Returns 0 upon successful completion
+  */
+
 int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t *attr, int count){
   if(attr == NULL){
     barrier->attr.pshared = 0;
@@ -93,33 +121,59 @@ int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t
     barrier->attr = *attr;
   }
   barrier->barr = $gbarrier_create($root, count);
-  barrier->count = count-1;
+  barrier->size = count;
+  barrier->numThrds = 0;
   return 0;
 }
 
+/**
+  * Creates local barrier for a thead and places it in the global barrier. It then proceeds to call the
+  * $barrier_call, forcing the thread to wait until the release of the global barrier. The global barrier
+  * and local barrier are then destroyed.
+  *
+  * @param *barrier
+  *            The barrier containing the global barrier to be waited upon
+  *
+  * @return Returns PTHREAD_BARRIER_SERIAL_THREAD from one exiting thread, and 0 from each of the rest
+  */
+
 int pthread_barrier_wait(pthread_barrier_t *barrier){
+  $barrier locbarr;
   $atomic{
-    $barrier locbarr = $barrier_create($here, barrier->barr , barrier->count);
-    barrier->count--;
+    locbarr = $barrier_create($here, barrier->barr, barrier->numThrds);
+    barrier->numThrds++;
     $barrier_call(locbarr);
-    $atom{
-      if(barrier->count == 0){
-        return PTHREAD_BARRIER_SERIAL_THREAD;
-      }
-      else
-        return 0;
+    
+    $barrier_destroy(locbarr);
+    $gbarrier_destroy(barrier->barr);
+    if(barrier->numThrds == barrier->size){
+      barrier->numThrds--;
+      return PTHREAD_BARRIER_SERIAL_THREAD;
+    }
+    else{
+      return 0;
     }
   }
 }
 
+/**
+  * Uninitializes the specified barrier variable.
+  * Corresponding specification: p.
+  *
+  * @param *barrier
+  *            The barrier to be uninitialized.
+  * @return Returns 0 upon successful completion
+  */
+
 int pthread_barrier_destroy(pthread_barrier_t *barrier){
+  $gbarrier_destroy(barrier->barr);
   pthread_barrier_t blank;
   *barrier = blank;
   return 0;
 }
 
 
-// Working Methods
+
 /**
   * Initializes an attribute with the default values defined for it by an implementation.
   * Corresponding specification: p. 1532-4

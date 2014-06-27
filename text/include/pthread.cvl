@@ -64,7 +64,8 @@ typedef struct {
 
 typedef struct {
   pthread_barrierattr_t attr;
-  int count;
+  int numThrds;
+  int size;
   $gbarrier barr;
 } pthread_barrier_t;
   

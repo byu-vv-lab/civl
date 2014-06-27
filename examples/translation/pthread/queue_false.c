@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define SIZE	(20)
+#define SIZE	(5)
 #define EMPTY	(-1)
 #define FULL	(-2)
 #define FALSE	(0)
@@ -16,7 +16,6 @@ typedef struct {
 } QType;
 
 pthread_mutex_t m;
-int __VERIFIER_nondet_int(void);
 int stored_elements[SIZE];
 _Bool enqueue_flag, dequeue_flag;
 QType queue;
@@ -88,7 +87,7 @@ void *t1(void *arg)
   int value, i;
 
   pthread_mutex_lock(&m);
-  value = __VERIFIER_nondet_int();
+  value = 1;
   if (enqueue(&queue,value)) {
     goto ERROR;
   }
@@ -105,7 +104,7 @@ void *t1(void *arg)
     pthread_mutex_lock(&m);
     if (enqueue_flag)
     {
-      value = __VERIFIER_nondet_int();
+        value = 1;
       enqueue(&queue,value);
       stored_elements[i+1]=value;
       enqueue_flag=FALSE;
@@ -117,6 +116,7 @@ void *t1(void *arg)
   return NULL;
 
   ERROR:
+    printf("!");
     goto ERROR;
 }
 
@@ -130,6 +130,7 @@ void *t2(void *arg)
     if (dequeue_flag)
     {
       if (!dequeue(&queue)==stored_elements[i]) {
+          printf("!");
         ERROR:
         goto ERROR;
       }

@@ -17,5 +17,9 @@ int main(void) {
     for(int i=0; i<nthreads; i++) {
         pthread_create(&threads[i], NULL, thread_worker, (void *) i);
     }
+    for(int i=0; i<nthreads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    pthread_barrier_destroy(&barr);
     pthread_exit(NULL);
 }

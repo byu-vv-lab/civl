@@ -29,22 +29,26 @@ public class PthreadTransformerTest {
 
 	@Test
 	public void bigshot_s_false() throws ABCException {
-		assertFalse(ui.run("verify", filename("bigshot_s_false.c")));
+		assertFalse(ui.run("verify", filename("bigshot_s_false.c"),
+				"-enablePrintf=false"));
 	}
 
 	@Test
 	public void bug1() throws ABCException {
-		assertFalse(ui.run("verify", filename("bug1.c")));
+		assertFalse(ui.run("verify", filename("bug1.c"),
+				"-enablePrintf=false"));
 	}
 
 	@Test
 	public void bug3() throws ABCException {
-		assertFalse(ui.run("verify", filename("bug3.c")));
+		assertTrue(ui.run("verify", filename("bug3.c"),
+				"-enablePrintf=false"));
 	}
 
 	@Test
 	public void bug4() throws ABCException {
-		assertFalse(ui.run("verify", filename("bug4.c")));
+		assertFalse(ui.run("verify", filename("bug4.c"),
+				"-enablePrintf=false"));
 	}
 
 	@Ignore

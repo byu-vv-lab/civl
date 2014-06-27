@@ -84,6 +84,7 @@ void *t1(void *arg)
     flag=TRUE;
     pthread_mutex_unlock(&m);
   }
+  pthread_exit(NULL);
 }
 
 void *t2(void *arg) 
@@ -100,6 +101,7 @@ void *t2(void *arg)
     }
     pthread_mutex_unlock(&m);
   }
+  pthread_exit(NULL);
 }
 
 
@@ -114,7 +116,7 @@ int main(void)
 
   pthread_join(id1, NULL);
   pthread_join(id2, NULL);
-
+  pthread_exit(NULL);
   return 0;
 }
 

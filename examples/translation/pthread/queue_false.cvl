@@ -159,7 +159,7 @@ void *t2(void *arg)
 
 void main() 
 {
-  $proc id1, id2;
+  pthread_t id1, id2;
 
   enqueue_flag=TRUE;
   dequeue_flag=FALSE;
