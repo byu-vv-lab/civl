@@ -70,13 +70,14 @@ void run_seq() {
     assert(wstep >= 1 && wstep <=nsteps);
     u = (double*)$malloc(seq_scope, nx*sizeof(double));
     assert(u);
-    for (i = 0; i < nx; i++) u[i] = u_init[pos++];
-    $free(u);
+    for (i = 0; i < nx; i++)
+      u[i] = u_init[pos++];
   }
 
   void write_frame(int time) {
-    for (int i=0; i<nx; i++)
+    for (int i=0; i<nx; i++){
       output_seq[i] = colorOf(u[i]);
+    }
   }
 
   void update() {
