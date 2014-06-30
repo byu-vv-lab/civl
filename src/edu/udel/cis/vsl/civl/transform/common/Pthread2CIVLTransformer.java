@@ -22,9 +22,11 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
@@ -55,6 +57,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	private final static String VERIFIER_ASSUME = "__VERIFIER_assume";
 
 	private final static String VERIFIER_ASSERT = "__VERIFIER_assert";
+	
+	private int numberOfNondetCall = 0;
 
 	/* ************************** Public Static Fields *********************** */
 	/**
@@ -100,9 +104,13 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		for (ASTNode node : root.children()) {
 			if (node == null)
 				continue;
-			if (node instanceof FunctionDefinitionNode)
+			if (node instanceof FunctionDefinitionNode) {
+				if (config.svcomp()) {
+					process_VERIFIER_function_calls((FunctionDefinitionNode) node);
+				}
 				process_phread_exits((FunctionDefinitionNode) node);
-			else if (config.svcomp() && node instanceof FunctionDeclarationNode) {
+			} else if (config.svcomp()
+					&& node instanceof FunctionDeclarationNode) {
 				process_VERIFIER_functions((FunctionDeclarationNode) node);
 			}
 		}
@@ -110,16 +118,53 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			translateNode(root);
 	}
 
+	private void process_VERIFIER_function_calls(FunctionDefinitionNode node) throws SyntaxException {
+		process_VERIFIER_function_call_worker(node);
+	}
+
+	private void process_VERIFIER_function_call_worker(ASTNode node)
+			throws SyntaxException {
+		if (node instanceof FunctionCallNode) {
+			FunctionCallNode funcCall = (FunctionCallNode) node;
+			ExpressionNode function = funcCall.getFunction();
+
+			if (function.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+				IdentifierExpressionNode funcName = (IdentifierExpressionNode) function;
+				String name = funcName.getIdentifier().name();
+				
+				if(name.equals(VERIFIER_NONDET_INT) || name.equals(VERIFIER_NONDET_UINT)){
+					ExpressionNode newArg = nodeFactory.newIntegerConstantNode(funcName.getSource(), String.valueOf(numberOfNondetCall));
+					
+					this.numberOfNondetCall++;
+					funcCall.setArguments(nodeFactory.newSequenceNode(funcName.getSource(), "Actual Arguments", Arrays.asList(newArg)));
+				}
+			}
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child != null)
+					process_VERIFIER_function_call_worker(child);
+			}
+		}
+	}
+
 	private void process_VERIFIER_functions(FunctionDeclarationNode function) {
 		IdentifierNode functionName = function.getIdentifier();
 
 		if (functionName.name().equals(VERIFIER_NONDET_UINT)
 				|| functionName.name().equals(VERIFIER_NONDET_INT)) {
-			FunctionDeclarationNode abstractNode = nodeFactory
-					.newAbstractFunctionDefinitionNode(function.getSource(),
-							function.getIdentifier().copy(), function
-									.getTypeNode().copy(), null, 0);
+			FunctionTypeNode funcTypeNode = function.getTypeNode();
+			FunctionDeclarationNode abstractNode;
 
+			funcTypeNode = nodeFactory.newFunctionTypeNode(funcTypeNode
+					.getSource(), funcTypeNode.getReturnType().copy(),
+					nodeFactory.newSequenceNode(source, "Formal Prameters",
+							Arrays.asList(this.variableDeclaration(source,
+									"seed", nodeFactory.newBasicTypeNode(
+											source, BasicTypeKind.INT)))),
+					false);
+			abstractNode = nodeFactory.newAbstractFunctionDefinitionNode(
+					function.getSource(), function.getIdentifier().copy(),
+					funcTypeNode, null, 0);
 			function.parent().setChild(function.childIndex(), abstractNode);
 		}
 	}

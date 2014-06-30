@@ -5,10 +5,12 @@ import java.util.List;
 import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
@@ -171,6 +173,12 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 			}
 		}
 		return null;
+	}
+
+	protected VariableDeclarationNode variableDeclaration(Source source,
+			String name, TypeNode type) {
+		return nodeFactory.newVariableDeclarationNode(source,
+				nodeFactory.newIdentifierNode(source, name), type);
 	}
 
 }
