@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -794,8 +795,8 @@ public class CommonModelFactory implements ModelFactory {
 						BINARY_OPERATOR.NOT_EQUAL, expression,
 						this.nullPointerExpression(pointerType, source));
 			} else {
-				throw new CIVLInternalException(
-						"Unable to convert expression to boolean type", source);
+				throw new CIVLSyntaxException(
+						"Unable to convert the expression " + expression + " to boolean type", source);
 			}
 		}
 		return expression;

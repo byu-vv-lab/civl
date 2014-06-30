@@ -2819,13 +2819,6 @@ public class FunctionTranslator {
 		modelFactory.setCurrentScope(scope);
 		castExpression = translateExpressionNode(argumentNode, scope, true);
 		castExpression = arrayToPointer(castExpression);
-		// if (castType.isPointerType()
-		// && !castExpression.getExpressionType().isPointerType()
-		// && castExpression instanceof LHSExpression) {
-		// result = modelFactory.castExpression(source, castType,
-		// modelFactory.addressOfExpression(source,
-		// (LHSExpression) castExpression));
-		// } else
 		result = modelFactory.castExpression(source, castType, castExpression);
 		return result;
 	}
@@ -3535,9 +3528,16 @@ public class FunctionTranslator {
 					BINARY_OPERATOR.NOT_EQUAL, arguments.get(0),
 					arguments.get(1));
 			break;
-		case NOT:
+		case NOT: {
+			CIVLType argType = arguments.get(0).getExpressionType();
+
+			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
 			result = modelFactory.unaryExpression(source, UNARY_OPERATOR.NOT,
-					arguments.get(0));
+					booleanArg0);
+			if (!argType.isBoolType()) {
+				result = modelFactory.castExpression(source, argType, result);
+			}
+		}
 			break;
 		case PLUS:
 			result = translatePlusOperation(source, arguments.get(0),
