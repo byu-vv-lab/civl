@@ -23,6 +23,8 @@ Considerations:
   Make a struct for the array that holds:
   Rank
   Any variables that go in
+  Types that aren't handled by CIVL
+  cl_mem variables being ignored?
 
 Figure out something to do with local variables
 

@@ -2,27 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-//CIVL DOES NOT SUPPORT FLOATS AS IS, RANDOM IS UNINTERPRETED
-/*
-If increase MAX_DATA_SIZE, nothing happens if DATA_SIZE is given a concrete value
-If I increase DATA_SIZE to 2, I get
-Computed '2/2' correct values!
-Computed '1/2' correct values!
+//RANDOM IS UNINTERPRETED
+//$scope opencl_scope = $here;
+//$malloc(opencl_scope, ....);
 
-If I make num_devices >= data_size, I get a num/num correct values, like the default
-data = 3, devices = 1
-Computed '3/3' correct values!
-Computed '2/3' correct values!
-Computed '2/3' correct values!
-Computed '1/3' correct values!
-
-data = 3, devices = 2
-Computed '3/3' correct values!
-Computed '2/3' correct values!
-
-data = 3, devices = 3
-Computed '3/3' correct values!
-*/
 $input int DATA_SIZE;
 $input int NUM_DEVICES;
 $input int MAX_DATA_SIZE;
@@ -60,7 +43,7 @@ void square(int workgroup, int global_id, int local_id, int* input, int* output,
   }
 }
 
-void worksquare(size_t local, size_t global, kernel param)
+void workfunc(size_t local, size_t global, kernel param)
 {
   for(int i = local * param.workgroup; i < local * param.workgroup + local; i++)
   {
@@ -106,12 +89,19 @@ int main(int argc, char** argv)
   {
     data[i] = i;
   }
-  
-  
-  
+  /*
+  To do random, define constant global counter, randcount
+  int rand_count = 0;
+  $abstract float rand_abs(int i);
+  rand_abs(0), rand_abs(1), ..
+  float rand() {
+    return rand_abs(rand_count++);
+  }
+  */
   //comes from clCreateBuffer
   input = (int *) malloc(sizeof(int) * count);
   output = (int *) malloc(sizeof(int) * count);
+  //possible heaps
   
   //Possibly keep a list of variables, with a flag for whether they are init or not
   //Not init, malloc one from what is found in 
@@ -162,7 +152,7 @@ int main(int argc, char** argv)
   {
     param[i].workgroup = i;
     //procs[i] = $spawn square(param[i].global_id, param[i].input, param[i].output, param[i].count);
-    procs[i] = $spawn worksquare(local, global, param[i]);
+    procs[i] = $spawn workfunc(local, global, param[i]);
   }
   
   for(int i = 0; i < global/local; i++)
@@ -178,11 +168,8 @@ int main(int argc, char** argv)
   
   //use the information from clEnqueueReadBuffer
   //may have to alter later
-  for(int i = 0; i < count; i++)
-  {
-    results[i] = output[i];
-  }
-  
+
+  memcpy(results, output, sizeof(int) * count);
   
   correct = 0;
   for(i = 0; i < count; i++)

@@ -5,9 +5,24 @@ Implement the following examples:
   matmult
 
 Other:
-  Work on wiki page
-  Figure out what to put on the wiki page
-  Make it so that local workgroups can be larger than 1
+  [x]Work on wiki page
+  [x]Figure out what to put on the wiki page
+  [x]Make it so that local workgroups can be larger than 1
+  clGetDeviceIDs as a regular method
+  Change names of variables so there probably won't be any conflicts
+  figure out how to use the queueCL for clCreateCommandQueue
   
 finished examples:
   square.cvl
+  
+Worked on the wiki page for the transformation into openCL, 
+which goes into detail on what the current equivalent in our code for a method is.
+Square.cvl was "finished" earlier, but did not have a way to accomodate for workgroup sizes greater than one.
+This has been fixed. Planning on a version 2.1, which has a pre-written part for methods that are the same in all translations.
+
+Work on the next example, life.cvl. Plan out what exactly 2.1 entails. Possibly work on another example.
+
+This less literal interpretation uses more abstraction and reduces openCL methods into much smaller pieces.
+However, I had to think about the logistics of what the parser would do about and how it would get the information.
+Somewhat more complicated to think about than having every method of openCL "implemented" in terms of string parsing.
+However, things are much quicker to convert by hand. And some methods aren't even needed anymore, which is nice.

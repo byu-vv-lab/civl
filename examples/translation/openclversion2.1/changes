@@ -1,0 +1,12 @@
+From 2.0 to 2.1:
+  Start using structs with pointers, a simpler version of what was in the first version
+  Make functions for methods that are the same in every iteration
+  
+Done:
+  Take the old cl.cvl
+
+ToDo:
+  Candidates for turning into functions:
+    clGetDeviceIDs
+    clEnqueueNDRangeKernel
+    
