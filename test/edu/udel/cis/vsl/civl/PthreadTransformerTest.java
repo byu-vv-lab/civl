@@ -47,6 +47,21 @@ public class PthreadTransformerTest {
 	public void bug4() throws ABCException {
 		assertFalse(ui.run("verify", filename("bug4.c"), "-enablePrintf=true"));
 	}
+	
+	@Test
+	public void fib_bench_false() throws ABCException {
+		assertFalse(ui.run("verify", filename("fib_bench_false.c"), "-svcomp -inputNUM=5"));
+	}
+	
+	@Test
+	public void fib_bench_longer_false() throws ABCException {
+		assertFalse(ui.run("verify", filename("fib_bench_longer_false.c"), "-svcomp -inputNUM=6"));
+	}
+	
+	@Test
+	public void fib_bench_true() throws ABCException {
+		assertTrue(ui.run("verify", filename("fib_bench_true.c")));
+	}
 
 	@Ignore
 	@Test

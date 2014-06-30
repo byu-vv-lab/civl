@@ -108,7 +108,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 				if (config.svcomp()) {
 					process_VERIFIER_function_calls((FunctionDefinitionNode) node);
 				}
-				process_phread_exits((FunctionDefinitionNode) node);
+				process_pthread_exits((FunctionDefinitionNode) node);
 			} else if (config.svcomp()
 					&& node instanceof FunctionDeclarationNode) {
 				process_VERIFIER_functions((FunctionDeclarationNode) node);
@@ -233,7 +233,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		return assertNode(falseExpression);
 	}
 
-	private void process_phread_exits(FunctionDefinitionNode function)
+	private void process_pthread_exits(FunctionDefinitionNode function)
 			throws SyntaxException {
 		String name = function.getName();
 		TypeNode returnType = function.getTypeNode().getReturnType();

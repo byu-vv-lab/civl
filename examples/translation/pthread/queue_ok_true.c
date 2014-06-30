@@ -113,7 +113,7 @@ void *t2(void *arg)
     for(i=0; i<SIZE; i++)  
     {
       if (empty(&queue)!=EMPTY)
-        if (!dequeue(&queue)==stored_elements[i]) {
+        if (!(dequeue(&queue)==stored_elements[i])) {
           ERROR:
           goto ERROR;
         }
@@ -135,7 +135,7 @@ int main(void)
 
   init(&queue);
 
-  if (!empty(&queue)==EMPTY) {
+  if (!(empty(&queue)==EMPTY)) {
     ERROR:
     goto ERROR;
   }
