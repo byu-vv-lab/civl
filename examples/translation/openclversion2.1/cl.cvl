@@ -1,9 +1,12 @@
-#include "openCL_platform.cvl"
+//#include "openCL_platform.cvl"
 typedef int bool;
 #define true 1
 #define false 0
 
-
+/*
+Note that this is a simplified version, and that the "original" can be gotten from 
+opencl folder
+*/
 
 typedef struct _cl_platform_id *    cl_platform_id;
 //typedef struct _cl_device_id *      cl_device_id;
@@ -86,12 +89,9 @@ typedef cl_uint             cl_profiling_info;
 
 typedef struct
 {
-  cl_context_info param_name;
-  size_t param_value_size;
-  void * param_value;
-  size_t * param_value_size_ret;
-} _cl_device_id;
-typedef struct _cl_device_id *      cl_device_id;
+  int * id;
+} cl_device_id;
+//typedef struct _cl_device_id *      cl_device_id;
 
 typedef struct
 {

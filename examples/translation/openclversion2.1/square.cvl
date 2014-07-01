@@ -1,0 +1,40 @@
+#include "openCLshared.cvl"
+
+
+
+$input int NUM_DEVICES;
+$assume 0 < NUM_DEVICES && NUM_DEVICES < MAX_NUM_DEVICES;
+
+//kernel
+void square(int workgroup, int global_id, int local_id, int* input, int* output, const unsigned int count)
+{
+  //int i = get_global_id(0);
+  int i = global_id;
+  if (i < count)
+  {
+    output[i] = input[i] * input[i];
+    //printf("output[%d] is %d\n", i, output[i]);
+  }
+}
+/*
+void workfunc(size_t local, size_t global, kernel param)
+{
+  for(int i = local * param.workgroup; i < local * param.workgroup + local; i++)
+  {
+    param.local_id = i % local;
+    param.global_id = i;
+    //printf("My workgroup id is %d, my global id is %d, my local id is %d\n", param.workgroup, param.global_id, param.local_id);
+    square(param.workgroup, param.global_id, param.local_id, param.input, param.output, param.count);
+  }
+}
+*/
+int main(int argc, char** argv)
+{
+  cl_device_id devices;
+  int err;
+  
+  err = clGetDeviceIDs(3, devices);
+  
+  return 0;
+}
+

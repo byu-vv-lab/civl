@@ -1,0 +1,30 @@
+#include cl.cvl
+/*
+Defined in cl.cvl: (+ means that it will be used)
++ cl_device_id
+ cl_context
++ cl_command_queue
+ cl_program
+ cl_kernel
+? cl_mem
+
+Methods that will be shared:
+  clGetDeviceIDs
+  clEnqueueNDRangeKernel
+
+workfunc goes into main program, but a method
+  
+Methods that will be replaced with simple parts, see wiki:
+  clCreateBuffer
+  setKernelArgs
+  clGetKernelWorkGroupInfo
+  clEnqueueReadBuffer
+  */
+int clGetDeviceIDs(int numEntries, cl_device_id device_id)
+{
+  device_id.id = malloc(sizeof(int) * numEntries);
+  
+  return CL_SUCCESS;
+}
+  
+  
