@@ -92,7 +92,7 @@ typedef struct
   int * id;
 } cl_device_id;
 //typedef struct _cl_device_id *      cl_device_id;
-
+/*
 typedef struct
 {
   cl_context_properties *properties;
@@ -145,7 +145,7 @@ typedef struct
   cl_int * errcode_ret;
 }_cl_mem;
 typedef _cl_mem* cl_mem;
-
+*/
 /*
 typedef struct _cl_image_format {
     cl_channel_order        image_channel_order;

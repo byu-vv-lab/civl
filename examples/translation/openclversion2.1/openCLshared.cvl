@@ -1,4 +1,8 @@
-#include cl.cvl
+#include "cl.cvl"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 /*
 Defined in cl.cvl: (+ means that it will be used)
 + cl_device_id
@@ -19,12 +23,11 @@ Methods that will be replaced with simple parts, see wiki:
   setKernelArgs
   clGetKernelWorkGroupInfo
   clEnqueueReadBuffer
-  */
-int clGetDeviceIDs(int numEntries, cl_device_id device_id)
+*/
+int clGetDeviceIDs(int numEntries, cl_device_id devices)
 {
-  device_id.id = malloc(sizeof(int) * numEntries);
+  devices.id = malloc(sizeof(int) * numEntries);
   
   return CL_SUCCESS;
 }
-  
-  
+

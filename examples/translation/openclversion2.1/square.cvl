@@ -1,8 +1,10 @@
 #include "openCLshared.cvl"
-
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 $input int NUM_DEVICES;
+$input int MAX_NUM_DEVICES;
 $assume 0 < NUM_DEVICES && NUM_DEVICES < MAX_NUM_DEVICES;
 
 //kernel
@@ -34,6 +36,8 @@ int main(int argc, char** argv)
   int err;
   
   err = clGetDeviceIDs(3, devices);
+  
+  free(devices.id);
   
   return 0;
 }
