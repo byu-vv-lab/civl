@@ -35,9 +35,9 @@ int main(int argc, char** argv)
   cl_device_id devices;
   int err;
   
-  err = clGetDeviceIDs(3, devices);
+  err = clGetDeviceIDs(3, &devices);
   
-  free(devices.id);
+  free(devices);
   
   return 0;
 }

@@ -90,8 +90,8 @@ typedef cl_uint             cl_profiling_info;
 typedef struct
 {
   int * id;
-} cl_device_id;
-//typedef struct _cl_device_id *      cl_device_id;
+} _cl_device_id;
+typedef struct _cl_device_id *      cl_device_id;
 /*
 typedef struct
 {

@@ -24,9 +24,12 @@ Methods that will be replaced with simple parts, see wiki:
   clGetKernelWorkGroupInfo
   clEnqueueReadBuffer
 */
-int clGetDeviceIDs(int numEntries, cl_device_id devices)
+int clGetDeviceIDs(int numEntries, cl_device_id * devices)
 {
-  devices.id = malloc(sizeof(int) * numEntries);
+  devices = (cl_device_id*)malloc(sizeof(cl_device_id));
+  
+  devices.id = (int*)malloc(sizeof(int));
+  devices.id[0] = 1;
   
   return CL_SUCCESS;
 }
