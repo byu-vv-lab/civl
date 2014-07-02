@@ -1,4 +1,4 @@
-//#include "openCL_platform.cvl"
+#include "openCL_platform.cvl"
 typedef int bool;
 #define true 1
 #define false 0
@@ -91,8 +91,8 @@ typedef struct
 {
   int * id;
 } _cl_device_id;
-typedef struct _cl_device_id *      cl_device_id;
-/*
+typedef _cl_device_id *      cl_device_id;
+
 typedef struct
 {
   cl_context_properties *properties;
@@ -101,8 +101,7 @@ typedef struct
   void (CL_CALLBACK *pfn_notify)(const char *, const void *, size_t, void *);
   void *user_data;
   cl_int *errcode_ret;
-}
-_cl_context;
+}_cl_context;
 typedef _cl_context* cl_context;
 
 typedef struct
@@ -145,7 +144,7 @@ typedef struct
   cl_int * errcode_ret;
 }_cl_mem;
 typedef _cl_mem* cl_mem;
-*/
+
 /*
 typedef struct _cl_image_format {
     cl_channel_order        image_channel_order;
