@@ -24,10 +24,12 @@ Methods that will be replaced with simple parts, see wiki:
   clGetKernelWorkGroupInfo
   clEnqueueReadBuffer
 */
-int clGetDeviceIDs(int numEntries, cl_device_id devices)
+int clGetDeviceIDs(int numEntries, cl_device_id * devices)
 {
-  
-  
-  return 1;
+  for (int i=0; i<numEntries; i++) {
+    devices[i].id = i;
+    // exactly equivalent to: (devices+i)->id = i
+  }
+  return CL_SUCCESS;
 }
 
