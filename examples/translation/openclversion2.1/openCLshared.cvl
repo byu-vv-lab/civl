@@ -14,6 +14,7 @@ Defined in cl.cvl: (+ means that it will be used)
 
 Methods that will be shared:
   clGetDeviceIDs
+  clCreateCommandQueue
   clEnqueueNDRangeKernel
 
 workfunc goes into main program, but a method
@@ -32,4 +33,32 @@ int clGetDeviceIDs(int numEntries, cl_device_id * devices)
   }
   return CL_SUCCESS;
 }
+
+cl_command_queue clCreateCommandQueue(cl_device_id devices)
+{
+  cl_command_queue queue;
+  
+  queue.device = devices;
+  
+  return queue;
+}
+/*
+cl_program clCreateProgram(args argument)
+{
+  cl_program program;
+  program.args = argument;
+  
+  return program;
+}
+
+*/
+
+
+
+
+
+
+
+
+
 

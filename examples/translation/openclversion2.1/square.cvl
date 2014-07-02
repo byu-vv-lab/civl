@@ -7,6 +7,21 @@ $input int NUM_DEVICES;
 $input int MAX_NUM_DEVICES;
 $assume 0 < NUM_DEVICES && NUM_DEVICES < MAX_NUM_DEVICES;
 
+$input int DATA_SIZE;
+$input int MAX_DATA_SIZE;
+$assume 0 < DATA_SIZE && DATA_SIZE < MAX_NUM_DEVICES;
+
+typedef struct
+{
+  //which contains device info...
+  cl_context context;
+  
+  //Variables for kernels
+  int * input;
+  int * output;
+  const unsigned int count;
+}args;
+
 //kernel
 void square(int workgroup, int global_id, int local_id, int* input, int* output, const unsigned int count)
 {
@@ -32,6 +47,8 @@ void workfunc(size_t local, size_t global, kernel param)
 */
 int main(int argc, char** argv)
 {
+  args arguments;
+
   float data[DATA_SIZE];              // original data set given to device
   float results[DATA_SIZE];           // results returned from device
   unsigned int correct;               // number of correct results returned
@@ -50,6 +67,15 @@ int main(int argc, char** argv)
 
   
   int err = clGetDeviceIDs(1, &device_id);
+  
+  //ignore clCreateContext for now, until we get an example that uses multiple ones
+  
+  //clCreateCommandQueue, could use context later
+  commands = clCreateCommandQueue(device_id);
+  
+  //clCreateProgram is far different from the real version, this just stores parameters for the kernel
+  //In order to make this clear, it is clCreateProgram and not something like clCreateProgramFromSource, which actually exists in openCL code
+  //program = clCreateProgram(args);
   
   return 0;
 }
