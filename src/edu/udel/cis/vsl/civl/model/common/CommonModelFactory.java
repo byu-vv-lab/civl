@@ -24,7 +24,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -775,7 +774,8 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public Expression booleanExpression(Expression expression) {
+	public Expression booleanExpression(Expression expression)
+			throws ModelFactoryException {
 		CIVLSource source = expression.getSource();
 
 		if (!expression.getExpressionType().equals(booleanType())) {
@@ -795,8 +795,7 @@ public class CommonModelFactory implements ModelFactory {
 						BINARY_OPERATOR.NOT_EQUAL, expression,
 						this.nullPointerExpression(pointerType, source));
 			} else {
-				throw new CIVLSyntaxException(
-						"Unable to convert the expression " + expression + " to boolean type", source);
+				throw new ModelFactoryException();
 			}
 		}
 		return expression;
@@ -1180,14 +1179,8 @@ public class CommonModelFactory implements ModelFactory {
 					.getExpressionType());
 			break;
 		case NOT:
-			if (operand.getExpressionType().equals(booleanType)) {
-				result = new CommonUnaryExpression(source, operator, operand);
-			} else {
-				// Expression castOperand = castExpression(source, booleanType,
-				// operand);
-				result = new CommonUnaryExpression(source, operator,
-						this.booleanExpression(operand));
-			}
+			assert operand.getExpressionType().isBoolType();
+			result = new CommonUnaryExpression(source, operator, operand);
 			((CommonUnaryExpression) result).setExpressionType(booleanType);
 			break;
 		default:
@@ -1620,19 +1613,17 @@ public class CommonModelFactory implements ModelFactory {
 	public Fragment conditionalExpressionToIf(ConditionalExpression expression,
 			Statement statement) {
 		Expression guard = statement.guard();
-		Expression condition = expression.getCondition();
 		Location startLocation = statement.source();
-		Expression ifGuard, elseGuard;
+		Expression ifGuard = expression.getCondition(), elseGuard;
 		Statement ifBranch, elseBranch;
 		Expression ifValue = expression.getTrueBranch(), elseValue = expression
 				.getFalseBranch();
 		Fragment result = new CommonFragment();
 		StatementSet lastStatement = new StatementSet();
 
-		ifGuard = booleanExpression(condition);
-		elseGuard = unaryExpression(condition.getSource(), UNARY_OPERATOR.NOT,
+		assert ifGuard.getExpressionType().isBoolType();
+		elseGuard = unaryExpression(ifGuard.getSource(), UNARY_OPERATOR.NOT,
 				ifGuard);
-
 		if (!isTrue(guard)) {
 			ifGuard = binaryExpression(
 					sourceOfSpan(guard.getSource(), ifGuard.getSource()),
@@ -1649,14 +1640,14 @@ public class CommonModelFactory implements ModelFactory {
 			Scope scope = startLocation.scope();
 
 			ifFragment = new CommonFragment(ifElseBranchStatement(
-					condition.getSource(), startLocation, ifGuard, true));
+					ifGuard.getSource(), startLocation, ifGuard, true));
 			ifLocation = location(ifValue.getSource(), scope);
 			ifBranch = statement.replaceWith(expression, ifValue);
 			ifBranch.setGuard(guard);
 			ifBranch.setSource(ifLocation);
 			ifFragment = ifFragment.combineWith(new CommonFragment(ifBranch));
 			elseFragment = new CommonFragment(ifElseBranchStatement(
-					condition.getSource(), startLocation, elseGuard, false));
+					elseGuard.getSource(), startLocation, elseGuard, false));
 			elseLocation = location(elseValue.getSource(), scope);
 			elseBranch = statement.replaceWith(expression, elseValue);
 			elseBranch.setGuard(guard);
@@ -1690,18 +1681,17 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Fragment conditionalExpressionToIf(Expression guard,
 			VariableExpression variable, ConditionalExpression expression) {
-		Expression condition = expression.getCondition();
-		Location startLocation = location(condition.getSource(), variable
+		Expression ifGuard = expression.getCondition(), elseGuard;
+		Location startLocation = location(ifGuard.getSource(), variable
 				.variable().scope());
-		Expression ifGuard, elseGuard;
 		Statement ifAssign, elseAssign;
 		Expression ifValue = expression.getTrueBranch(), elseValue = expression
 				.getFalseBranch();
 		Fragment result = new CommonFragment();
 		StatementSet lastStatement = new StatementSet();
 
-		ifGuard = booleanExpression(condition);
-		elseGuard = unaryExpression(condition.getSource(), UNARY_OPERATOR.NOT,
+		assert ifGuard.getExpressionType().isBoolType();
+		elseGuard = unaryExpression(ifGuard.getSource(), UNARY_OPERATOR.NOT,
 				ifGuard);
 		if (guard != null) {
 			if (!isTrue(guard)) {

@@ -78,6 +78,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.ModelFactoryException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -432,7 +433,8 @@ public interface ModelFactory {
 	 *            The expression to be translated.
 	 * @return The boolean expression
 	 */
-	Expression booleanExpression(Expression expression);
+	Expression booleanExpression(Expression expression)
+			throws ModelFactoryException;
 
 	/**
 	 * A boolean literal expression.

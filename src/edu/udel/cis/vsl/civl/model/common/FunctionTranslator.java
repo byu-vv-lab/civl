@@ -923,7 +923,17 @@ public class FunctionTranslator {
 				condition, conditionNode);
 		beforeCondition = refineConditional.left;
 		condition = refineConditional.right;
-		condition = modelFactory.booleanExpression(condition);
+		try {
+			condition = modelFactory.booleanExpression(condition);
+		} catch (ModelFactoryException err) {
+			throw new CIVLSyntaxException(
+					"The condition of the loop statement "
+							+ condition
+							+ " is of "
+							+ condition.getExpressionType()
+							+ " type which cannot be converted to boolean type.",
+					condition.getSource());
+		}
 		loopEntranceLocation = modelFactory.location(
 				modelFactory.sourceOf(conditionNode.getSource()), loopScope);
 		loopEntrance = new CommonFragment(loopEntranceLocation,
@@ -1891,25 +1901,41 @@ public class FunctionTranslator {
 			Location location, Scope scope, ArrayList<Expression> arguments) {
 		Statement result;
 
+		int numOfArgs = arguments.size();
+
 		switch (arguments.size()) {
 		case 0:
 			throw new CIVLSyntaxException(
 					"The function $assert should have at least one arguments.",
 					source);
-		case 1:
-			result = modelFactory.assertStatement(source, location,
-					modelFactory.booleanExpression(arguments.get(0)));
-			break;
-		default:
-			ArrayList<Expression> optionalArguments = new ArrayList<>();
-
-			for (int i = 1; i < arguments.size(); i++) {
-				optionalArguments.add(arguments.get(i));
+		default: {
+			Expression firstArgument = arguments.get(0);
+			Expression formula;
+			try {
+				formula = modelFactory.booleanExpression(firstArgument);
+			} catch (ModelFactoryException err) {
+				throw new CIVLSyntaxException(
+						"The first argument of $assert() "
+								+ firstArgument
+								+ " is of "
+								+ firstArgument.getExpressionType()
+								+ " type which cannot be converted to boolean type.",
+						firstArgument.getSource());
 			}
+			if (numOfArgs == 1)
+				result = modelFactory
+						.assertStatement(source, location, formula);
+			else {
+				ArrayList<Expression> optionalArguments = new ArrayList<>(
+						numOfArgs - 1);
 
-			result = modelFactory.assertStatement(source, location,
-					modelFactory.booleanExpression(arguments.get(0)),
-					optionalArguments);
+				for (int i = 1; i < numOfArgs; i++) {
+					optionalArguments.add(arguments.get(i));
+				}
+				result = modelFactory.assertStatement(source, location,
+						formula, optionalArguments);
+			}
+		}
 		}
 		return result;
 	}
@@ -2155,7 +2181,14 @@ public class FunctionTranslator {
 
 		beforeCondition = refineConditional.left;
 		expression = refineConditional.right;
-		expression = modelFactory.booleanExpression(expression);
+		try {
+			expression = modelFactory.booleanExpression(expression);
+		} catch (ModelFactoryException err) {
+			throw new CIVLSyntaxException("The condition of the if statement "
+					+ expression + " is of " + expression.getExpressionType()
+					+ " type which cannot be converted to boolean type.",
+					expression.getSource());
+		}
 		trueBranch = new CommonFragment(modelFactory.ifElseBranchStatement(
 				modelFactory.sourceOfBeginning(ifNode.getTrueBranch()),
 				location, expression, true));
@@ -2284,8 +2317,21 @@ public class FunctionTranslator {
 		if (returnNode.getExpression() != null) {
 			expression = translateExpressionNode(returnNode.getExpression(),
 					scope, true);
-			if (function.returnType().isBoolType())
-				expression = modelFactory.booleanExpression(expression);
+			if (function.returnType().isBoolType()) {
+				try {
+					expression = modelFactory.booleanExpression(expression);
+				} catch (ModelFactoryException err) {
+					throw new CIVLSyntaxException(
+							"The return type of the function "
+									+ function.name().name()
+									+ " is boolean, but the returned expression "
+									+ expression
+									+ " is of "
+									+ expression.getExpressionType()
+									+ " type which cannot be converted to boolean type.",
+							expression.getSource());
+				}
+			}
 		} else
 			expression = null;
 		if (this.atomCount > 0) {
@@ -2758,7 +2804,15 @@ public class FunctionTranslator {
 		Fragment beforeGuardFragment = refineConditional.left, result;
 
 		whenGuard = refineConditional.right;
-		whenGuard = modelFactory.booleanExpression(whenGuard);
+		try {
+			whenGuard = modelFactory.booleanExpression(whenGuard);
+		} catch (ModelFactoryException err) {
+			throw new CIVLSyntaxException(
+					"The condition of the when statement " + whenGuard
+							+ " is of " + whenGuard.getExpressionType()
+							+ "type which cannot be converted to "
+							+ "boolean type.", whenGuard.getSource());
+		}
 		result = translateStatementNode(scope, whenNode.getBody());
 		if (!modelFactory.isTrue(whenGuard)) {
 			// Each outgoing statement from the first location in this
@@ -3373,11 +3427,6 @@ public class FunctionTranslator {
 			VariableExpression varExpression = modelFactory.variableExpression(
 					source, scope.variable(name));
 
-			// if (name.name().equals("CIVL_output_filesystem")) {
-			// } else if (!this.isLHS && varExpression.variable().isOutput()) {
-			// throw new CIVLSyntaxException(
-			// "attempt to read the output variable " + name, source);
-			// }
 			result = varExpression;
 		} else if (scope.getFunction(name) != null) {
 			result = modelFactory.functionPointerExpression(source,
@@ -3463,7 +3512,16 @@ public class FunctionTranslator {
 			result = modelFactory.dereferenceExpression(source, pointer);
 			break;
 		case CONDITIONAL:
-			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			try {
+				booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			} catch (ModelFactoryException err) {
+				throw new CIVLSyntaxException(
+						"The first argument of the conditional expression "
+								+ arguments.get(0) + " is of "
+								+ arguments.get(0).getExpressionType()
+								+ "type which cannot be converted to "
+								+ "boolean type.", arguments.get(0).getSource());
+			}
 			result = modelFactory.conditionalExpression(source, booleanArg0,
 					arguments.get(1), arguments.get(2));
 			modelFactory
@@ -3488,20 +3546,74 @@ public class FunctionTranslator {
 					arguments.get(0));
 			break;
 		case IMPLIES:
-			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
-			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			try {
+				booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			} catch (ModelFactoryException err) {
+				throw new CIVLSyntaxException(
+						"The first argument of the implies expression "
+								+ arguments.get(0) + " is of "
+								+ arguments.get(0).getExpressionType()
+								+ "type which cannot be converted to "
+								+ "boolean type.", arguments.get(0).getSource());
+			}
+			try {
+				booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			} catch (ModelFactoryException err) {
+				throw new CIVLSyntaxException(
+						"The second argument of the implies expression "
+								+ arguments.get(1) + " is of "
+								+ arguments.get(1).getExpressionType()
+								+ "type which cannot be converted to "
+								+ "boolean type.", arguments.get(1).getSource());
+			}
 			result = modelFactory.binaryExpression(source,
 					BINARY_OPERATOR.IMPLIES, booleanArg0, booleanArg1);
 			break;
 		case LAND:
-			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
-			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			try {
+				booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			} catch (ModelFactoryException err) {
+				throw new CIVLSyntaxException(
+						"The first argument of the logical and expression "
+								+ arguments.get(0) + " is of "
+								+ arguments.get(0).getExpressionType()
+								+ "type which cannot be converted to "
+								+ "boolean type.", arguments.get(0).getSource());
+			}
+			try {
+				booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			} catch (ModelFactoryException err) {
+				throw new CIVLSyntaxException(
+						"The first argument of the logical and expression "
+								+ arguments.get(1) + " is of "
+								+ arguments.get(1).getExpressionType()
+								+ "type which cannot be converted to "
+								+ "boolean type.", arguments.get(1).getSource());
+			}
 			result = modelFactory.binaryExpression(source, BINARY_OPERATOR.AND,
 					booleanArg0, booleanArg1);
 			break;
 		case LOR:
-			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
-			booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			try {
+				booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			} catch (ModelFactoryException err) {
+				throw new CIVLSyntaxException(
+						"The first argument of the logical or expression "
+								+ arguments.get(0) + " is of "
+								+ arguments.get(0).getExpressionType()
+								+ "type which cannot be converted to "
+								+ "boolean type.", arguments.get(0).getSource());
+			}
+			try {
+				booleanArg1 = modelFactory.booleanExpression(arguments.get(1));
+			} catch (ModelFactoryException err) {
+				throw new CIVLSyntaxException(
+						"The first argument of the conditional expression "
+								+ arguments.get(1) + " is of "
+								+ arguments.get(1).getExpressionType()
+								+ "type which cannot be converted to "
+								+ "boolean type.", arguments.get(1).getSource());
+			}
 			result = modelFactory.binaryExpression(source, BINARY_OPERATOR.OR,
 					booleanArg0, booleanArg1);
 			break;
@@ -3531,7 +3643,16 @@ public class FunctionTranslator {
 		case NOT: {
 			CIVLType argType = arguments.get(0).getExpressionType();
 
-			booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			try {
+				booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
+			} catch (ModelFactoryException err) {
+				throw new CIVLSyntaxException(
+						"The argument of the logical not expression "
+								+ arguments.get(0) + " is of "
+								+ arguments.get(0).getExpressionType()
+								+ "type which cannot be converted to "
+								+ "boolean type.", arguments.get(0).getSource());
+			}
 			result = modelFactory.unaryExpression(source, UNARY_OPERATOR.NOT,
 					booleanArg0);
 			if (!argType.isBoolType()) {
