@@ -370,6 +370,14 @@ public class CommonExecutor implements Executor {
 		eval = evaluator.evaluate(state, pid, statement.getSizeExpression());
 		state = eval.state;
 		mallocSize = (NumericExpression) eval.value;
+		/* if mallocSize is 0, malloc will return NULL pointer */
+		if(lhs != null && mallocSize.isZero()){
+			SymbolicExpression nullPointer = universe.nullExpression();
+			
+			state = assign(state, pid, process, lhs, nullPointer);
+			return state;
+		}
+		
 		eval = evaluator.evaluateSizeofType(source, state, pid,
 				statement.getStaticElementType());
 		state = eval.state;
