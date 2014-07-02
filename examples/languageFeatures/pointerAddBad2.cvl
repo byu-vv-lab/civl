@@ -13,5 +13,7 @@ void main(){
   }
   
   ret = *(&p[0][0] + 10);
+  for(int i=0; i<10; i++)
+   $free(p[i]);
   $free(p);
 }
