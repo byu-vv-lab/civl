@@ -1802,6 +1802,24 @@ public class CommonEvaluator implements Evaluator {
 					if (expr.operator() == SymbolicOperator.CONCRETE
 							&& symbolicUtil.getScopeId(null, expr) >= 0) {
 						// if (getScopeId(null, expr) >= 0) {
+						/*
+						 * If the expression is an arrayElementReference
+						 * expression, and finally it turns that the array type
+						 * has length 0, return immediately. Because we can not
+						 * dereference it and the dereference exception
+						 * shouldn't report here.
+						 */
+						if (symbolicUtil.getSymRef(expr)
+								.isArrayElementReference()) {
+							SymbolicExpression arrayPointer = symbolicUtil
+									.parentPointer(null, expr);
+
+							eval = this.dereference(null, state, process,
+									arrayPointer, false);
+							/* Check if it's length == 0 */
+							if (universe.length(eval.value).isZero())
+								return;
+						}
 						eval = this.dereference(null, state, process, expr,
 								false);
 						pointerValue = eval.value;
