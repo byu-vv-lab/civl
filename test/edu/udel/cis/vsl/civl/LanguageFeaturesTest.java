@@ -63,7 +63,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void atomChooseBad() throws ABCException {
-		assertFalse(ui.run("verify", "-showStates", "-showModel",
+		assertFalse(ui.run("verify",
 				filename("atomChooseBad.cvl")));
 	}
 
@@ -245,7 +245,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void pointers() throws ABCException {
-		assertTrue(ui.run("verify", filename("pointers.cvl"), "-showStates"));
+		assertTrue(ui.run("verify", filename("pointers.cvl")));
 	}
 
 	@Test
@@ -427,7 +427,7 @@ public class LanguageFeaturesTest {
 	public void civlFor() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlfor.cvl")));
 	}
-	
+
 	@Test
 	public void civlParfor() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlParfor.cvl")));

@@ -230,6 +230,10 @@ public class CommonStateManager implements StateManager {
 			// in -savedStates mode, only print new states.
 			config.out().println();
 			config.out().print(this.symbolicUtil.stateToString(state));
+		}else if(config.showPathConditon()){
+			config.out().print(state.toString());
+			config.out().print(" -- path condition: ");
+			config.out().println(state.getPathCondition());
 		}
 		numProcs = state.numProcs();
 		if (numProcs > maxProcs)

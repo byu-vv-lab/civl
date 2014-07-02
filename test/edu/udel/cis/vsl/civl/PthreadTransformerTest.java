@@ -45,7 +45,7 @@ public class PthreadTransformerTest {
 
 	@Test
 	public void bug4() throws ABCException {
-		assertFalse(ui.run("verify", filename("bug4.c"), "-enablePrintf=true"));
+		assertFalse(ui.run("verify", filename("bug4.c"), "-enablePrintf=false"));
 	}
 	
 	@Test

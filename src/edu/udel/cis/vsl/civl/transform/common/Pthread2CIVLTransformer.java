@@ -181,7 +181,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 				OrdinaryLabelNode label = (OrdinaryLabelNode) labelNode;
 				String name = label.getName();
 				if (name.equals(ERROR))
-					labelStatement.setChild(1, this.assertFalse());
+					labelStatement.setChild(1, this.assertFalse(labelStatement.getSource()));
 			}
 		} else if (node instanceof ExpressionStatementNode) {
 			ExpressionNode expression = ((ExpressionStatementNode) node)
@@ -198,7 +198,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 					switch (name) {
 					case VERIFIER_ASSERT:
-						newStatementNode = this.assertNode(functionCall
+						newStatementNode = this.assertNode(functionCall.getSource(), functionCall
 								.getArgument(0).copy());
 						break;
 					case VERIFIER_ASSUME:
@@ -221,19 +221,19 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		return nodeFactory.newAssumeNode(source, expression);
 	}
 
-	private StatementNode assertNode(ExpressionNode expression) {
+	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
 		FunctionCallNode functionCall = nodeFactory.newFunctionCallNode(source,
-				this.identifierExpression(source, ASSERT),
+				this.identifierExpression(mySource, ASSERT),
 				Arrays.asList(expression), null);
 
 		return nodeFactory.newExpressionStatementNode(functionCall);
 	}
 
-	private StatementNode assertFalse() {
+	private StatementNode assertFalse(Source mySource) {
 		ExpressionNode falseExpression = nodeFactory.newBooleanConstantNode(
 				source, false);
 
-		return assertNode(falseExpression);
+		return assertNode(mySource, falseExpression);
 	}
 
 	private void process_pthread_exits(FunctionDefinitionNode function)

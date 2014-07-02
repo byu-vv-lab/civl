@@ -20,6 +20,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetWtStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showInputVarsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showModelO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showPathConditionO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showProgramO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showProverQueriesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showQueriesO;
@@ -125,7 +126,7 @@ public class UserInterface {
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO,
 				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
-				svcompO, showInputVarsO, showProgramO);
+				svcompO, showInputVarsO, showProgramO, showPathConditionO);
 
 		parser = new CommandLineParser(options);
 	}

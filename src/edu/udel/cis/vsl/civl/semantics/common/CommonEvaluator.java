@@ -255,6 +255,8 @@ public class CommonEvaluator implements Evaluator {
 	private SymbolicConstant shiftLeftFunc;
 	private SymbolicConstant shiftRightFunc;
 
+	private SymbolicExpression zeroOrOne;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -329,6 +331,8 @@ public class CommonEvaluator implements Evaluator {
 				.stringObject("shiftright"), universe.functionType(
 				Arrays.asList(universe.integerType(), universe.integerType()),
 				universe.integerType()));
+		this.zeroOrOne = universe.symbolicConstant(
+				universe.stringObject("ZeroOrOne"), universe.integerType());
 	}
 
 	/* ************************** Private Methods ************************** */
@@ -751,12 +755,19 @@ public class CommonEvaluator implements Evaluator {
 
 		state = typeEval.state;
 		if (argType.isBoolType() && castType.isIntegerType()) {
-			boolean boolv = universe.extractBoolean((BooleanExpression) value);
-
-			if (boolv) {
+			if (value.isTrue())
 				eval.value = universe.integer(1);
-			} else
+			else if (value.isFalse())
 				eval.value = universe.integer(0);
+			else {
+				BooleanExpression assumption = universe.or(universe.equals(this.zeroOrOne, this.zero),
+						universe.equals(this.zeroOrOne, this.one));
+				Reasoner reasoner = universe.reasoner(state.getPathCondition());
+				
+				if(reasoner.valid(assumption).getResultType() != ResultType.YES)
+					eval.state = state.setPathCondition(universe.and(state.getPathCondition(), assumption));
+				eval.value = this.zeroOrOne;
+			}
 			return eval;
 		} else if (argType.isIntegerType() && castType.isPointerType()) {
 			// only good cast is from 0 to null pointer
@@ -1164,7 +1175,7 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicExpression left = eval.value;
 		SymbolicExpression right;
 
-		eval = evaluate(state, pid, expression.right());
+		eval = evaluate(eval.state, pid, expression.right());
 		right = eval.value;
 		switch (expression.operator()) {
 		case PLUS:
@@ -1210,13 +1221,13 @@ public class CommonEvaluator implements Evaluator {
 		// types. If the value of those types is undefined (e.g., process -1,
 		// scope -1, pointer<-1, ..., ...>), an error should be reported.
 		case EQUAL:
-			this.isValueDefined(state, process, expression.left(), left);
-			this.isValueDefined(state, process, expression.right(), right);
+			this.isValueDefined(eval.state, process, expression.left(), left);
+			this.isValueDefined(eval.state, process, expression.right(), right);
 			eval.value = universe.equals(left, right);
 			break;
 		case NOT_EQUAL:
-			this.isValueDefined(state, process, expression.left(), left);
-			this.isValueDefined(state, process, expression.right(), right);
+			this.isValueDefined(eval.state, process, expression.left(), left);
+			this.isValueDefined(eval.state, process, expression.right(), right);
 			eval.value = universe.neq(left, right);
 			break;
 		case MODULO: {
@@ -1240,11 +1251,11 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		}
 		case POINTER_ADD:
-			eval = pointerAdd(state, pid, process, expression, left,
+			eval = pointerAdd(eval.state, pid, process, expression, left,
 					(NumericExpression) right);
 			break;
 		case POINTER_SUBTRACT:
-			eval = pointerAdd(state, pid, process, expression, left,
+			eval = pointerAdd(eval.state, pid, process, expression, left,
 					universe.minus((NumericExpression) right));
 			break;
 		case IMPLIES:

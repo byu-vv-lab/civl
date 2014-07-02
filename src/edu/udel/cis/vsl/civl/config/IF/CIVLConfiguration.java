@@ -23,6 +23,7 @@ public class CIVLConfiguration {
 	private String deadlock;
 	private PrintStream out;
 	private PrintStream err;
+	private boolean showPathConditon = false;
 
 	public CIVLConfiguration(GMCConfiguration config) {
 		this.debug = config.isTrue(CIVLConstants.debugO);
@@ -40,6 +41,7 @@ public class CIVLConfiguration {
 		this.svcomp = config.isTrue(CIVLConstants.svcompO);
 		this.deadlock = (String) config.getValue(CIVLConstants.deadlockO);
 		this.setShowProgram(config.isTrue(CIVLConstants.showProgramO));
+		this.showPathConditon = config.isTrue(CIVLConstants.showPathConditionO);
 	}
 
 	public CIVLConfiguration() {
@@ -184,6 +186,14 @@ public class CIVLConfiguration {
 
 	public void setShowProgram(boolean showProgram) {
 		this.showProgram = showProgram;
+	}
+
+	public boolean showPathConditon() {
+		return showPathConditon;
+	}
+
+	public void setShowPathConditon(boolean showPathConditon) {
+		this.showPathConditon = showPathConditon;
 	}
 
 }

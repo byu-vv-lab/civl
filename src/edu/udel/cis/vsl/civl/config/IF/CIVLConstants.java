@@ -142,4 +142,7 @@ public interface CIVLConstants {
 			"showProgram", BOOLEAN, "show my program after transformations?",
 			false);
 
+	public final static Option showPathConditionO = Option.newScalarOption(
+			"showPathCondition", BOOLEAN,
+			"show the path condition of each state?", false);
 }
