@@ -50,12 +50,12 @@ public class PthreadTransformerTest {
 	
 	@Test
 	public void fib_bench_false() throws ABCException {
-		assertFalse(ui.run("verify", filename("fib_bench_false.c"), "-svcomp -inputNUM=5"));
+		assertFalse(ui.run("verify", filename("fib_bench_false.c"), "-svcomp", "-inputNUM=5"));
 	}
 	
 	@Test
 	public void fib_bench_longer_false() throws ABCException {
-		assertFalse(ui.run("verify", filename("fib_bench_longer_false.c"), "-svcomp -inputNUM=6"));
+		assertFalse(ui.run("verify", filename("fib_bench_longer_false.c"), "-svcomp", "-inputNUM=6"));
 	}
 	
 	@Test
@@ -63,6 +63,10 @@ public class PthreadTransformerTest {
 		assertTrue(ui.run("verify", filename("fib_bench_true.c")));
 	}
 
+	@Test
+	public void lazy01_false() throws ABCException {
+		assertFalse(ui.run("verify", filename("lazy01_false.c"), "-svcomp"));
+	}
 	@Ignore
 	@Test
 	public void mpithreads_threads() throws ABCException {

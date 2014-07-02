@@ -142,7 +142,7 @@ void *t2(void *arg)
   return NULL;
 }
 
-int main(void) 
+int main() 
 {
   pthread_t id1, id2;
 

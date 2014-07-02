@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
+import java.awt.List;
 import java.util.Arrays;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
@@ -34,10 +35,12 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 //TODO: add arguments to pthread_exit();
 //TODO: If the start_routine returns, the effect shall be as if there was an 
 //implicit call to pthread_exit() using the return value of start_routine as the exit status.
-// ERROR --> assert
+
 
 public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
+	private final static String PTHREAD_CREATE = "pthread_create";
+	
 	private final static String PTHREAD_EXIT = "pthread_exit";
 
 	private final static String PTHREAD_EXIT_NEW = "_pthread_exit";
@@ -244,8 +247,17 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			return;
 		}
 		if (this.isVoidPointer(returnType)) {
+			ExpressionNode nullNode = nodeFactory.newCastNode(
+					source,
+					nodeFactory.newPointerTypeNode(source,
+							nodeFactory.newVoidTypeNode(source)),
+					nodeFactory.newIntegerConstantNode(source, "0"));
+			ExpressionNode isMainArg = nodeFactory
+					.newBooleanConstantNode(source, false);
+			FunctionCallNode newPthreadExit = nodeFactory.newFunctionCallNode(source, nodeFactory.newIdentifierExpressionNode(source, nodeFactory.newIdentifierNode(source, PTHREAD_EXIT_NEW)), Arrays.asList(nullNode, isMainArg), null);
+			StatementNode pthreadExit = nodeFactory.newExpressionStatementNode(newPthreadExit);
+			function.getBody().addSequenceChild(pthreadExit);
 			process_pthread_exit(function, false);
-			function.getBody().addSequenceChild(this.returnNull());
 		}
 	}
 
@@ -286,12 +298,52 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 						funcCall.setArguments(newArgs);
 					}
 				}
-			} else {
+			}
+			else if(child instanceof ReturnNode && !isMain){
+				ExpressionNode isMainArg = nodeFactory.newBooleanConstantNode(source, isMain);
+				FunctionCallNode newPthreadExit = nodeFactory.newFunctionCallNode(source, nodeFactory.newIdentifierExpressionNode(source, nodeFactory.newIdentifierNode(source, PTHREAD_EXIT_NEW)), Arrays.asList(((ReturnNode) child).getExpression().copy(), isMainArg), null);
+				StatementNode pthreadExit = nodeFactory.newExpressionStatementNode(newPthreadExit);
+				
+				child.parent().setChild(child.childIndex(), pthreadExit);
+			}
+			else {
 				process_pthread_exit_worker(child, isMain);
 			}
 		}
 	}
 
+	@SuppressWarnings("unused")
+	private List functionList(ASTNode root){
+		List funcList = (List) Arrays.asList();
+		for(ASTNode node: root.children()){
+			if (node == null)
+				continue;
+			if (node instanceof FunctionDefinitionNode){
+				String name = ((FunctionDefinitionNode) node).getName();
+				if (name.equals("main")){
+					for (ASTNode child : node.children()) {
+						if (child == null)
+							continue;
+						if (child instanceof FunctionCallNode) {
+							FunctionCallNode funcCall = (FunctionCallNode) child;
+							ExpressionNode funcName = funcCall.getFunction();
+							if (funcName instanceof IdentifierExpressionNode) {
+								IdentifierExpressionNode named = (IdentifierExpressionNode) funcName;
+								String nameString = named.getIdentifier().name();
+								if (nameString.equals(PTHREAD_CREATE)) {
+									
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return funcList;
+	}
+	
+
+	@SuppressWarnings("unused")
 	private ReturnNode returnNull() throws SyntaxException {
 		ExpressionNode nullNode = nodeFactory.newCastNode(
 				source,
