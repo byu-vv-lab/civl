@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -53,11 +52,9 @@ public class MPITranslationTest {
 				"-input__NPROCS=3"));
 	}
 
-	// TODO: this says assert false. Why? Is there a bug in the program?
 	@Test
 	public void mpi_prime() {
-		assertFalse(ui.run("verify", filename("mpi_prime.c"),
-				"-input__NPROCS=4"));
-		assertFalse(ui.run("replay", filename("mpi_prime.c")));
+		assertTrue(ui.run("verify", filename("mpi_prime.c"),
+				"-input__NPROCS=4", "-enablePrintf=false"));
 	}
 }

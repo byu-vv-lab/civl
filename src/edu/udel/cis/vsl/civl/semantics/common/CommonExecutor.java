@@ -666,10 +666,12 @@ public class CommonExecutor implements Executor {
 			state = eval.state;
 			if (functionName.equals("_CIVL_system")) {
 				if (universe.equals(returnValue, universe.integer(0)).isFalse()) {
-					throw new CIVLExecutionException(ErrorKind.OTHER,
-							Certainty.CONCRETE, process,
+					CIVLExecutionException err = new CIVLExecutionException(
+							ErrorKind.OTHER, Certainty.CONCRETE, process,
 							"Program exits with error code: " + returnValue,
 							statement.getSource());
+
+					this.errorLogger.reportError(err);
 				}
 			}
 		}
@@ -681,8 +683,25 @@ public class CommonExecutor implements Executor {
 			CallOrSpawnStatement call = (CallOrSpawnStatement) returnLocation
 					.getSoleOutgoing();
 
-			if (call.lhs() != null)
+			if (call.lhs() != null) {
+				if (returnValue == null) {
+					CIVLExecutionException err = new CIVLExecutionException(
+							ErrorKind.OTHER,
+							Certainty.PROVEABLE,
+							process,
+							"The lhs "
+									+ call.lhs()
+									+ " cannot be updated because the invocaion of"
+									+ " the function "
+									+ functionName
+									+ " returns without any expression.",
+							symbolicUtil.stateToString(state),
+							call.getSource());
+
+					this.errorLogger.reportError(err);
+				}
 				state = assign(state, pid, process, call.lhs(), returnValue);
+			}
 			state = stateFactory.setLocation(state, pid, call.target());
 		}
 		return state;
