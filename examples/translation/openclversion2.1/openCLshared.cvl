@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 /*
 Defined in cl.cvl: (+ means that it will be used)
 + cl_device_id
@@ -42,18 +43,7 @@ cl_command_queue clCreateCommandQueue(cl_device_id devices)
   
   return queue;
 }
-/*
-cl_program clCreateProgram(args argument)
-{
-  cl_program program;
-  program.args = argument;
-  
-  return program;
-}
-
-*/
-
-
+//would pick the kernel by name, but not currently in place
 
 
 

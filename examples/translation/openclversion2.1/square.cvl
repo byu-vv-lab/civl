@@ -1,3 +1,5 @@
+//Forget the program
+
 #include "openCLshared.cvl"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,19 +13,45 @@ $input int DATA_SIZE;
 $input int MAX_DATA_SIZE;
 $assume 0 < DATA_SIZE && DATA_SIZE < MAX_NUM_DEVICES;
 
+$input int LOCAL;
+
 typedef struct
 {
-  //which contains device info...
-  cl_context context;
-  
   //Variables for kernels
+  
   int * input;
   int * output;
   const unsigned int count;
+  
 }args;
 
+
+cl_kernel clCreateKernel(args * argument)
+{
+  cl_kernel kernel;
+  kernel.arguments = argument;
+  
+  return kernel;
+}
+/*
+int clSetKernelArg(cl_kernel kernel, int index, size_t size, void * value)
+{
+  if (index == 0)
+  {
+    kernel.program.arguments.input = (int *)malloc(size);
+  }
+  
+  return CL_SUCCESS;
+}
+*/
+int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, int global, int local)
+{
+  
+  return CL_SUCCESS;
+}
+
 //kernel
-void square(int workgroup, int global_id, int local_id, int* input, int* output, const unsigned int count)
+void square(int workgroup, int global_id, int local_id, float* input, float* output, const unsigned int count)
 {
   //int i = get_global_id(0);
   int i = global_id;
@@ -47,7 +75,8 @@ void workfunc(size_t local, size_t global, kernel param)
 */
 int main(int argc, char** argv)
 {
-  args arguments;
+  args * arguments;
+  arguments = (args*)malloc(sizeof(args));
 
   float data[DATA_SIZE];              // original data set given to device
   float results[DATA_SIZE];           // results returned from device
@@ -59,12 +88,18 @@ int main(int argc, char** argv)
   cl_device_id device_id;             // compute device id 
   cl_context context;                 // compute context
   cl_command_queue commands;          // compute command queue
-  cl_program program;                 // compute program
+  //cl_program program;                 // compute program
   cl_kernel kernel;                   // compute kernel
-    
-  cl_mem input;                       // device memory used for the input array
-  cl_mem output;                      // device memory used for the output array
+  
+  
+  float * input;                       // device memory used for the input array
+  float * output;                      // device memory used for the output array
 
+  unsigned int count = DATA_SIZE;
+  for(int i = 0; i < count; i++)
+  {
+    data[i] = i;
+  }
   
   int err = clGetDeviceIDs(1, &device_id);
   
@@ -75,8 +110,43 @@ int main(int argc, char** argv)
   
   //clCreateProgram is far different from the real version, this just stores parameters for the kernel
   //In order to make this clear, it is clCreateProgram and not something like clCreateProgramFromSource, which actually exists in openCL code
-  //program = clCreateProgram(args);
+  //program = clCreateProgram(arguments);
   
+  kernel = clCreateKernel(arguments);
+  
+  
+  //comes from clCreateBuffer
+  input = (float *) malloc(sizeof(float) * count);
+  output = (float *) malloc(sizeof(float) * count);
+  
+  
+  
+  memcpy(input, data, sizeof(float) * count);
+  
+  /*
+  err = 0;
+  err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &input);
+  err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &output);
+  err = clSetKernelArg(kernel, 2, sizeof(unsigned int), &count);
+  */
+  
+  
+  //came from clEnqueueWriteBuffer
+  
+  //clGetKernelWorkGroupInfo
+  local = LOCAL;
+  
+  global = count;
+  /*
+    commands holds the "order" of devices
+    kernel holds program, which holds variables
+    offset not implemented
+  */
+  //err = clEnqueueNDRangeKernel(commands, kernel, global, local);
+  
+  free(input);
+  free(output);
+  free(arguments);
   return 0;
 }
 

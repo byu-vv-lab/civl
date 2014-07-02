@@ -1,0 +1,9 @@
+
+//clCreateProgram for each individual one, because the struct args is defined here
+cl_program clCreateProgram(args * argument)
+{
+  cl_program program;
+  program.arguments = argument;
+  
+  return program;
+}
