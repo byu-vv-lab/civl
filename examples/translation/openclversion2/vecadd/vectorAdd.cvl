@@ -1,0 +1,11 @@
+
+void vectorAdd(const float *x, 
+  const float *y, 
+  float *restrict z)
+{
+  // get index of the work item
+  int index = get_global_id(0);
+
+  // add the vector elements
+  z[index] = x[index] + y[index];
+}

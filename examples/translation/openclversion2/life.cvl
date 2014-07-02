@@ -4,7 +4,7 @@
 #include <string.h>
 
 //THIS ASSUMES THE PROGRAMMER HAS ALREADY RAN THE ORIGINAL OPENCL CODE AND IS NOT RESPONSIBLE FOR CHECKING CORRECT USAGE OF METHODS AS OF NOW
-
+//Taking a break from this example, will redo later
 
 $input int NUM_DEVICES;
 $input int MAX_NUM_DEVICES;
