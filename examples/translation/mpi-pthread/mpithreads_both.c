@@ -41,8 +41,8 @@ typedef struct
 
 /* Define globally accessible variables and a mutex */
 
-#define MAXTHRDS 8
-#define VECLEN 100
+#define MAXTHRDS 2
+#define VECLEN 5
 DOTDATA dotstr; 
 pthread_t callThd[MAXTHRDS];
 pthread_mutex_t mutexsum;

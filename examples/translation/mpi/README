@@ -1,2 +1,3 @@
-This folder contains examples of translating MPI programs into CIVL model.
-Running "make" will execute the verification of all CIVL models in this folder.
+These are some MPI programs.  Our goal is to get civl to verify these 
+exactly as they are, translating them automatically to CIVL-C.  
+Right now this doesn't work.

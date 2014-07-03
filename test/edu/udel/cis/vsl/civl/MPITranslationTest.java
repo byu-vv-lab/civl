@@ -12,7 +12,8 @@ public class MPITranslationTest {
 
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"), "MPI");
+	private static File rootDir = new File(new File("examples"),
+			"translation/mpi");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -46,6 +47,7 @@ public class MPITranslationTest {
 				"-input__NPROCS=2", "-inputNB=4"));
 	}
 
+	// not working because MPI_ANY_SOURCE is required.
 	@Test
 	public void mpi_pi_send() {
 		assertTrue(ui.run("verify", filename("mpi_pi_send.c"),
