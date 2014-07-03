@@ -14,7 +14,7 @@ $input int MAX_DATA_SIZE;
 $assume 0 < DATA_SIZE && DATA_SIZE < MAX_NUM_DEVICES;
 
 $input int LOCAL;
-
+//Didn't initialize variables here
 typedef struct
 {
   //Variables for kernels
@@ -33,13 +33,25 @@ cl_kernel clCreateKernel(args * argument)
   
   return kernel;
 }
-
+/*
 int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, int global, int local)
 {
+  $proc procs[global/local];
+  for(int i = 0; i < global/local; i++)
+  {
+    param[i].workgroup = i;
+    //procs[i] = $spawn square(param[i].global_id, param[i].input, param[i].output, param[i].count);
+    procs[i] = $spawn workfunc(local, global, param[i]);
+  }
+  
+  for(int i = 0; i < global/local; i++)
+  {
+    $wait(procs[i]);
+  }
   
   return CL_SUCCESS;
 }
-
+*/
 //kernel
 void square(int workgroup, int global_id, int local_id, float* input, float* output, int count)
 {
@@ -103,7 +115,7 @@ int main(int argc, char** argv)
   //program = clCreateProgram(arguments);
   
   kernel = clCreateKernel(arguments);
-  
+  //printf("%s", kernel);
   
   //comes from clCreateBuffer
   input = (float *) malloc(sizeof(float) * count);
@@ -125,10 +137,10 @@ int main(int argc, char** argv)
   //kernel.arguments->input;
   
   memcpy(((args *)kernel.arguments)->input, input, sizeof(float));
-  memcpy(((args*)kernel.arguments)->output, output, sizeof(float));
-  memcpy(((args*)kernel.arguments)->count, count, sizeof(int));
+  //memcpy(((args*)kernel.arguments)->output, output, sizeof(float));
+  //memcpy(((args*)kernel.arguments)->count, count, sizeof(int));
+  ((args*)kernel.arguments)->count = count;
   
-  //Not anymore, ignore it and use clSetKernelArg
   
   //clGetKernelWorkGroupInfo
   local = LOCAL;
