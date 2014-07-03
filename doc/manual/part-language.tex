@@ -676,6 +676,17 @@ domain.
 There is a also a parallel version of this construct, \cparfor,
 described in \ref{sec:parfor}.
 
+\section{Functions}
+\subsection{Abstract function: \cabstract}
+
+An abstract function declares a function without a body, and it has the form 
+
+\begin{verbatim}
+  $abstract type function(list-of-parameters);
+\end{verbatim}
+
+It is required that the function should have a non-void return type and take at least one parameter.
+The return value of the function is evaluated symbolically using the actual arguments of the function call.
 
 \chapter{Concurrency}
 \label{chap:concurrency}
@@ -747,6 +758,15 @@ The system function $\cwait$ has signature
 When invoked, this function will not return until the process
 referenced by \ct{p} has terminated. Note that $p$ can be any
 expression of type \cproc{}, not just a variable.
+
+\subsection{Waiting for a number of processes to terminate: \cwaitall}
+
+The system function $\cwaitall$ has signature
+\begin{verbatim}
+  void $waitall($proc *procs, int numProcs);
+\end{verbatim}
+When invoked, this function will not return until all the \ct{numProcs} processes
+referenced by the memory specified by \ct{procs} have terminated.
 
 \subsection{Terminating a process immediately: \cexit}
 
