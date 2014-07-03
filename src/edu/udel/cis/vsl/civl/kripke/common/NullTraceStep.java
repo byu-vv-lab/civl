@@ -18,7 +18,7 @@ public class NullTraceStep implements TraceStep {
 	/* *************************** Instance Fields ************************* */
 
 	/**
-	 * The state that results in this null trace.
+	 * The state that results in this null trace step.
 	 */
 	private State state;
 
@@ -36,7 +36,7 @@ public class NullTraceStep implements TraceStep {
 	/* *********************** Methods from TraceStep ********************** */
 
 	@Override
-	public State result() {
+	public State postState() {
 		return state;
 	}
 
@@ -45,12 +45,12 @@ public class NullTraceStep implements TraceStep {
 	}
 
 	@Override
-	public void setResult(State state) {
+	public void setPostState(State state) {
 		this.state = state;
 	}
 
 	@Override
-	public int getNumOfSteps() {
+	public int getNumAtomicSteps() {
 		return 0;
 	}
 
@@ -62,5 +62,11 @@ public class NullTraceStep implements TraceStep {
 	@Override
 	public List<AtomicStep> getAtomicSteps() {
 		return new ArrayList<AtomicStep>();
+	}
+
+	@Override
+	public void complete() {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -9,9 +9,6 @@ import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
@@ -19,7 +16,6 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
@@ -199,7 +195,7 @@ public abstract class CommonEnabler implements Enabler {
 		}
 		if (reasoner.isValid(universe.not(guard)))
 			return this.falseExpression;
-		if(reasoner.isValid(guard))
+		if (reasoner.isValid(guard))
 			return pathCondition;
 		return universe.and(pathCondition, guard);
 	}
@@ -361,61 +357,31 @@ public abstract class CommonEnabler implements Enabler {
 		ArrayList<Transition> localTransitions = new ArrayList<>();
 		Statement transitionStatement = null;
 		int processIdentifier = state.getProcessState(pid).identifier();
-		String process = "p" + processIdentifier + " (id = " + pid + ")";
-
 		try {
-			{
-				if (s instanceof CallOrSpawnStatement) {
-					CallOrSpawnStatement call = (CallOrSpawnStatement) s;
+			if (s instanceof CallOrSpawnStatement) {
+				CallOrSpawnStatement call = (CallOrSpawnStatement) s;
 
-					// TODO think about optimization of system functions
-					if (call.isSystemCall()) {// TODO check function pointer
-						return this.getEnabledTransitionsOfSystemCall(
-								call.getSource(), state, call, pathCondition,
-								pid, processIdentifier, assignAtomicLock);
-					} else {
-						transitionStatement = s;
-					}
-				} else if (s instanceof WaitStatement) {
-					Evaluation eval = evaluator.evaluate(
-							state.setPathCondition(pathCondition), pid,
-							((WaitStatement) s).process());
-					int pidValue = modelFactory.getProcessId(
-							((WaitStatement) s).process().getSource(),
-							eval.value);
-
-					if (pidValue < 0) {
-						CIVLExecutionException e = new CIVLExecutionException(
-								ErrorKind.INVALID_PID,
-								Certainty.PROVEABLE,
-								process,// TODO check message?
-								"Unable to call $wait on a process that has already been the target of a $wait.",
-								this.evaluator.symbolicUtility().stateToString(
-										state), s.getSource());
-						errorLogger.reportError(e);
-						// TODO: recover: add a no-op transition
-						throw e;
-					}
-					if (state.getProcessState(pidValue).hasEmptyStack()) {
-						transitionStatement = s;
-					}
-				} else {
+				// TODO think about optimization of system functions
+				if (call.isSystemCall()) // TODO check function pointer
+					return this.getEnabledTransitionsOfSystemCall(
+							call.getSource(), state, call, pathCondition, pid,
+							processIdentifier, assignAtomicLock);
+				else
 					transitionStatement = s;
-				}
-				if (transitionStatement != null) {
-					if (assignAtomicLock != null) {
-						StatementList statementList = modelFactory
-								.statmentList(assignAtomicLock);
+			} else
+				transitionStatement = s;
+			if (transitionStatement != null) {
+				if (assignAtomicLock != null) {
+					StatementList statementList = modelFactory
+							.statmentList(assignAtomicLock);
 
-						statementList.add(s);
-						transitionStatement = statementList;
-					} else {
-						transitionStatement = s;
-					}
-					localTransitions.add(transitionFactory.newSimpleTransition(
-							pathCondition, pid, processIdentifier,
-							transitionStatement));
-				}
+					statementList.add(s);
+					transitionStatement = statementList;
+				} else
+					transitionStatement = s;
+				localTransitions.add(transitionFactory.newSimpleTransition(
+						pathCondition, pid, processIdentifier,
+						transitionStatement));
 			}
 		} catch (UnsatisfiablePathConditionException e) {
 			// nothing to do: don't add this transition

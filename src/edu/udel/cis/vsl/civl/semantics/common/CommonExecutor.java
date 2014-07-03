@@ -41,7 +41,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -793,31 +792,6 @@ public class CommonExecutor implements Executor {
 	}
 
 	/**
-	 * Execute a join statement. The state will be updated to no longer have the
-	 * joined process.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            The process id of the currently executing process.
-	 * @param statement
-	 *            The join statement to be executed.
-	 * @return The updated state of the program.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State executeWait(State state, int pid, WaitStatement statement)
-			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluator.evaluate(state, pid, statement.process());
-		SymbolicExpression procVal = eval.value;
-		int joinedPid = modelFactory.getProcessId(statement.process()
-				.getSource(), procVal);
-
-		state = stateFactory.setLocation(eval.state, pid, statement.target());
-		state = stateFactory.removeProcess(state, joinedPid);
-		return state;
-	}
-
-	/**
 	 * Execute a generic statement. All statements except a Choose should be
 	 * handled by this method.
 	 * 
@@ -864,8 +838,6 @@ public class CommonExecutor implements Executor {
 		case STATEMENT_LIST:
 			return executeStatementList(state, pid, (StatementList) statement,
 					null);
-		case WAIT:
-			return executeWait(state, pid, (WaitStatement) statement);
 		case CIVL_FOR_ENTER:
 			return executeCivlFor(state, pid, (CivlForEnterStatement) statement);
 		case CIVL_PAR_FOR_ENTER:

@@ -63,7 +63,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.WaitGuardExpression;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
@@ -2953,19 +2952,6 @@ public class CommonEvaluator implements Evaluator {
 			return symbolicUtil.makePointer(dyScopeID, heapVariable.vid(),
 					symRef);
 		}
-	}
-
-	@Override
-	public int joinedIDofWait(State state, ProcessState p, WaitStatement wait) {
-		try {
-			Evaluation eval = evaluate(state, p.getPid(), wait.process());
-			SymbolicExpression procVal = eval.value;
-
-			return modelFactory.getProcessId(wait.process().getSource(),
-					procVal);
-		} catch (UnsatisfiablePathConditionException e) {
-		}
-		return -1;
 	}
 
 	@Override

@@ -21,7 +21,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
@@ -215,7 +214,7 @@ public class AmpleSetWorker {
 		ampleProcessIDs.add(startPid);
 		while (!workingProcessIDs.isEmpty()) {
 			int pid = workingProcessIDs.pop();
-			ProcessState thisProc = state.getProcessState(pid);
+//			ProcessState thisProc = state.getProcessState(pid);
 			Set<SymbolicExpression> impactMemUnits = impactMemUnitsMap.get(pid);
 			Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfThis = reachableMemUnitsMap
 					.get(pid);
@@ -257,24 +256,24 @@ public class AmpleSetWorker {
 					}
 				}
 			}
-			for (Statement s : thisProc.getLocation().outgoing()) {
-				// this process has a wait statement
-				if (s instanceof WaitStatement) {
-					int joinID = evaluator.joinedIDofWait(state, thisProc,
-							(WaitStatement) s);
-
-					if (!ampleProcessIDs.contains(joinID)
-							&& workingProcessIDs.contains(joinID)) {
-						workingProcessIDs.add(joinID);
-						ampleProcessIDs.add(joinID);
-						// early return
-						if (ampleProcessIDs.size() >= minAmpleSize)
-							return ampleProcessIDs;
-						if (ampleProcessIDs.size() == activeProcesses.size())
-							return ampleProcessIDs;
-					}
-				}
-			}
+			// for (Statement s : thisProc.getLocation().outgoing()) {
+			// // this process has a wait statement
+			// if (s instanceof WaitStatement) {
+			// int joinID = evaluator.joinedIDofWait(state, thisProc,
+			// (WaitStatement) s);
+			//
+			// if (!ampleProcessIDs.contains(joinID)
+			// && workingProcessIDs.contains(joinID)) {
+			// workingProcessIDs.add(joinID);
+			// ampleProcessIDs.add(joinID);
+			// // early return
+			// if (ampleProcessIDs.size() >= minAmpleSize)
+			// return ampleProcessIDs;
+			// if (ampleProcessIDs.size() == activeProcesses.size())
+			// return ampleProcessIDs;
+			// }
+			// }
+			// }
 			for (int otherPid : activeProcesses) {
 				Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther;
 
@@ -510,7 +509,7 @@ public class AmpleSetWorker {
 			}
 			break;
 		case ASSIGN:
-		case CHOOSE:
+		case CHOOSE: {
 			AssignStatement assignStatement = (AssignStatement) statement;
 
 			partialResult = memoryUnit(assignStatement.getLhs(), pid);
@@ -527,8 +526,9 @@ public class AmpleSetWorker {
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
+		}
 			break;
-		case ASSUME:
+		case ASSUME: {
 			AssumeStatement assumeStatement = (AssumeStatement) statement;
 			Expression assumeExpression = assumeStatement.getExpression();
 
@@ -539,8 +539,9 @@ public class AmpleSetWorker {
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
+		}
 			break;
-		case CALL_OR_SPAWN:
+		case CALL_OR_SPAWN: {
 			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
 			if (call.isSystemCall()) {
@@ -555,8 +556,9 @@ public class AmpleSetWorker {
 					memUnits.addAll(memUnitsPartial);
 				}
 			}
+		}
 			break;
-		case MALLOC:
+		case MALLOC: {
 			MallocStatement mallocStatement = (MallocStatement) statement;
 
 			partialResult = memoryUnit(mallocStatement.getLHS(), pid);
@@ -581,10 +583,11 @@ public class AmpleSetWorker {
 			if (memUnitsPartial != null) {
 				memUnits.addAll(memUnitsPartial);
 			}
+		}
 			break;
 		case NOOP:
 			break;
-		case RETURN:
+		case RETURN: {
 			ReturnStatement returnStatement = (ReturnStatement) statement;
 
 			if (returnStatement.expression() != null) {
@@ -596,8 +599,9 @@ public class AmpleSetWorker {
 					memUnits.addAll(memUnitsPartial);
 				}
 			}
+		}
 			break;
-		case STATEMENT_LIST:
+		case STATEMENT_LIST: {
 			StatementList statementList = (StatementList) statement;
 
 			for (Statement subStatement : statementList.statements()) {
@@ -606,16 +610,9 @@ public class AmpleSetWorker {
 					return partialResult;
 				memUnits.addAll(memUnitsPartial);
 			}
+		}
 			break;
-		case WAIT:
-			partialResult = memoryUnit(((WaitStatement) statement).process(),
-					pid);
-			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-				return partialResult;
-			memUnitsPartial = partialResult.right;
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
+		case CIVL_FOR_ENTER:
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(

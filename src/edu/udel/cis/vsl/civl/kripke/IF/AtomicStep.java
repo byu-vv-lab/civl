@@ -18,19 +18,19 @@ public interface AtomicStep {
 	 * @param state
 	 *            The state to be used as the resulting state.
 	 */
-	void setResult(State state);
+	void setPostState(State state);
 
 	/**
 	 * Returns the resulting state of this atomic step.
 	 * 
 	 * @return the resulting state of this atomic step.
 	 */
-	State result();
+	State getPostState();
 
 	/**
 	 * Returns the statement associated to this atomic step.
 	 * 
 	 * @return the statement associated to this atomic step.
 	 */
-	Statement statement();
+	Statement getStatement();
 }

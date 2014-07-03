@@ -388,7 +388,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 
 		// For each transition
 		for (int i = 0; i < transitions.length; i++) {
-			if (transitions[i].getNumOfSteps() < 1) {
+			if (transitions[i].getNumAtomicSteps() < 1) {
 				break;
 			}
 
@@ -440,7 +440,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// Add step information to the name of the transition
 		for (AtomicStep s : transition.getAtomicSteps()) {
 			if (transitionName.length() < 50) {
-				transitionName.append(s.statement().toString() + "; ");
+				transitionName.append(s.getStatement().toString() + "; ");
 			} else {
 				transitionName.append("...");
 				break;
@@ -457,7 +457,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * @return StepNode
 	 */
 	private StepNode makeStepNode(AtomicStep step) {
-		Statement stmt = step.statement();
+		Statement stmt = step.getStatement();
 
 		String targetString;
 
@@ -514,7 +514,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					if (split.getRightComponent() != null) {
 						split.remove(split.getRightComponent());
 					}
-					rightView = drawState(t.transition().result());
+					rightView = drawState(t.transition().postState());
 					split.setRightComponent(rightView);
 				} catch (Exception tranEX) {
 					tranEX.printStackTrace();
@@ -544,7 +544,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					if (split.getRightComponent() != null) {
 						split.remove(split.getRightComponent());
 					}
-					rightView = drawState(s.getStep().result());
+					rightView = drawState(s.getStep().getPostState());
 					split.setRightComponent(rightView);
 				} catch (Exception stepEX) {
 					stepEX.printStackTrace();

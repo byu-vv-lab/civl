@@ -904,21 +904,6 @@ public interface ModelFactory {
 			Expression guard, boolean isIf);
 
 	/**
-	 * Create a one-statement fragment that contains the join statement. A join
-	 * statement is used to wait for a process to complete.
-	 * 
-	 * @param civlSource
-	 *            The CIVL source of the join statement
-	 * @param source
-	 *            The source location for this join statement.
-	 * @param process
-	 *            An expression evaluating to a process.
-	 * @return A new fragment.
-	 */
-	Fragment joinFragment(CIVLSource civlSource, Location source,
-			Expression process);
-
-	/**
 	 * An loop branch statement is introduced when translating a loop. It could
 	 * be the branch for the loop condition being either true or false.
 	 * 

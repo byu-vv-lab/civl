@@ -11,9 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -116,20 +114,6 @@ public interface Evaluator {
 	Evaluation getStringExpression(State state, String process,
 			CIVLSource source, SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException;
-
-	/**
-	 * Calculate the ID of the process that a given wait statement is waiting
-	 * for.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param p
-	 *            The process that the wait statement belongs to.
-	 * @param wait
-	 *            The wait statement to be checked.
-	 * @return The ID of the process that the wait statement is waiting for.
-	 */
-	int joinedIDofWait(State state, ProcessState p, WaitStatement wait);
 
 	/**
 	 * Compute the reachable memory units of an expression recursively.

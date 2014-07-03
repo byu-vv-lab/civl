@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 
 /**
  * This represents a trace executing from a certain state for a certain process.
+ * TODO: cleaner way of setPostState();
  * 
  * @author Manchun Zheng
  * 
@@ -26,12 +27,16 @@ public class CommonTraceStep implements TraceStep {
 	 * The identifier of the process that this trace belongs to.
 	 */
 	private int processIdentifier;
+	
+	private State finalState = null;
 
 	/* ***************************** Constructors ************************** */
 
 	/**
 	 * Creates a new instance of trace step for a given process.
-	 * @param processIdentifier The identifier of the process of this trace.
+	 * 
+	 * @param processIdentifier
+	 *            The identifier of the process of this trace.
 	 */
 	public CommonTraceStep(int processIdentifier) {
 		steps = new ArrayList<>();
@@ -41,8 +46,8 @@ public class CommonTraceStep implements TraceStep {
 	/* *********************** Methods from TraceStep ********************* */
 
 	@Override
-	public State result() {
-		return steps.get(steps.size() - 1).result();
+	public State postState() {
+		return steps.get(steps.size() - 1).getPostState();
 	}
 
 	@Override
@@ -51,12 +56,12 @@ public class CommonTraceStep implements TraceStep {
 	}
 
 	@Override
-	public void setResult(State state) {
-		steps.get(steps.size() - 1).setResult(state);
+	public void setPostState(State state) {
+		steps.get(steps.size() - 1).setPostState(state);
 	}
 
 	@Override
-	public int getNumOfSteps() {
+	public int getNumAtomicSteps() {
 		return steps.size();
 	}
 
@@ -87,6 +92,20 @@ public class CommonTraceStep implements TraceStep {
 			result.append(step.toString());
 		}
 		return result.toString();
+	}
+
+	@Override
+	public void complete() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public State getFinalState() {
+		return finalState;
+	}
+
+	public void setFinalState(State finalState) {
+		this.finalState = finalState;
 	}
 
 }

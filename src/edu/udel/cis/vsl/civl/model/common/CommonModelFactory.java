@@ -71,7 +71,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.WaitGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
@@ -84,7 +83,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
-import edu.udel.cis.vsl.civl.model.IF.statement.WaitStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
@@ -138,7 +136,6 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonSystemGuardExpression
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonVariableExpression;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonWaitGuardExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssertStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
@@ -156,7 +153,6 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonStatementList;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonSwitchBranchStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonWaitStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonBundleType;
@@ -1422,19 +1418,6 @@ public class CommonModelFactory implements ModelFactory {
 			result.setStatementScope(guard.expressionScope());
 		}
 		return result;
-	}
-
-	@Override
-	public Fragment joinFragment(CIVLSource civlSource, Location source,
-			Expression process) {
-		WaitStatement result = new CommonWaitStatement(civlSource, source,
-				process);
-		WaitGuardExpression guard = new CommonWaitGuardExpression(civlSource,
-				process, this.booleanType);
-
-		result.setGuard(guard);
-		result.setStatementScope(process.expressionScope());
-		return new CommonFragment(result);
 	}
 
 	@Override
