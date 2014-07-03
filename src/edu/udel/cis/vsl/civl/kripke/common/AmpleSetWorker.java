@@ -34,8 +34,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * This class is responsible for computing the ample processes set at a given
- * state. It is a helper of Enabler. TODO: think about ways to realize the
- * independence between POR algorithm and system function implementations.
+ * state. It is a helper of Enabler.
  * 
  * @author Manchun Zheng (zmanchun)
  * 
@@ -287,6 +286,8 @@ public class AmpleSetWorker {
 						.get(otherPid);
 				for (SymbolicExpression unit : impactMemUnits) {
 					if (reachableMemUnitsMapOfOther.containsKey(unit)) {
+						// either the current process or the other process is to
+						// modify unit now or in the future
 						if ((reachableMemUnitsMapOfThis.get(unit) || reachableMemUnitsMapOfOther
 								.get(unit))) {
 							workingProcessIDs.add(otherPid);
@@ -333,22 +334,22 @@ public class AmpleSetWorker {
 	 * computation could be incomplete when there is atomic/atom block that
 	 * contains function calls.
 	 * 
-	 * @param p
+	 * @param proc
 	 *            The process whose impact memory units are to be computed.
 	 * @return The impact memory units of the process and the status to denote
 	 *         if the computation is complete.
 	 */
 	private Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemoryUnits(
-			ProcessState p) {
+			ProcessState proc) {
 		Set<SymbolicExpression> memUnits = new HashSet<>();
-		int pid = p.getPid();
-		Location pLocation = p.getLocation();
+		int pid = proc.getPid();
+		Location pLocation = proc.getLocation();
 		Set<CallOrSpawnStatement> systemCalls = new HashSet<>();
 		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> partialResult;
 
 		this.enabledSystemCallMap.put(pid, systemCalls);
 		if (pLocation.enterAtom() || pLocation.enterAtomic()
-				|| p.atomicCount() > 0) {
+				|| proc.atomicCount() > 0) {
 			return impactMemoryUnitsOfAtomicBlock(pLocation, pid);
 		} else {
 			for (Statement s : pLocation.outgoing()) {
@@ -581,13 +582,6 @@ public class AmpleSetWorker {
 				memUnits.addAll(memUnitsPartial);
 			}
 			break;
-		// case MPI:
-		// memUnitsPartial = impactMemoryUnitsOfMPIStatement(
-		// (MPIStatement) statement, pid);
-		// if (memUnitsPartial != null) {
-		// memUnits.addAll(memUnitsPartial);
-		// }
-		// break;
 		case NOOP:
 			break;
 		case RETURN:
@@ -631,60 +625,6 @@ public class AmpleSetWorker {
 		return new Pair<>(MemoryUnitsStatus.NORMAL, memUnits);
 	}
 
-	// /**
-	// * Compute the impact memory units of an MPI statement.
-	// *
-	// * @param statement
-	// * The MPI statement whose impact memory units are to be
-	// * computed.
-	// * @param pid
-	// * The ID of the process that executes the MPI statement.
-	// * @return the impact memory units of the given MPI statement
-	// * @throws UnsatisfiablePathConditionException
-	// */
-	// private Set<SymbolicExpression> impactMemoryUnitsOfMPIStatement(
-	// MPIStatement statement, int pid)
-	// throws UnsatisfiablePathConditionException {
-	// Set<SymbolicExpression> memUnits = new HashSet<>();
-	// Set<SymbolicExpression> memUnitsPartial;
-	//
-	// switch (statement.mpiStatementKind()) {
-	// case IBARRIER:
-	// break;
-	// case IRECV:
-	// break;
-	// case ISEND:
-	// break;
-	// case RECV:
-	// MPIRecvStatement mpiRecvStatement = (MPIRecvStatement) statement;
-	//
-	// for (Expression argument : mpiRecvStatement.getArgumentsList()) {
-	// memUnitsPartial = memoryUnit(argument, pid);
-	// if (memUnitsPartial != null) {
-	// memUnits.addAll(memUnitsPartial);
-	// }
-	// }
-	// break;
-	// case SEND:
-	// // TODO: why the program never goes there ?
-	// MPISendStatement mpiSendStatement = (MPISendStatement) statement;
-	//
-	// for (Expression argument : mpiSendStatement.getArgumentsList()) {
-	// memUnitsPartial = memoryUnit(argument, pid);
-	// if (memUnitsPartial != null) {
-	// memUnits.addAll(memUnitsPartial);
-	// }
-	// }
-	// break;
-	// case WAIT:
-	// break;
-	// default:
-	// throw new CIVLUnimplementedFeatureException(
-	// "Impact memory units for statement: ", statement);
-	// }
-	// return memUnits;
-	// }
-	//
 	/**
 	 * Compute the set of memory units accessed by a given expression of a
 	 * certain process at the current state.
@@ -700,16 +640,11 @@ public class AmpleSetWorker {
 			Expression expression, int pid)
 			throws UnsatisfiablePathConditionException {
 		Set<SymbolicExpression> memoryUnits = new HashSet<>();
-		// SymbolicExpression value;
 		boolean result;
 		MemoryUnitsStatus status;
 
 		result = evaluator.memoryUnitsOfExpression(state, pid, expression,
 				memoryUnits);
-		// if (expression.getExpressionType().isPointerType()) {
-		// value = evaluator.evaluate(state, pid, expression).value;
-		// evaluator.findPointersInExpression(value, memoryUnits, state);
-		// }
 		if (result)
 			status = MemoryUnitsStatus.NORMAL;
 		else
@@ -718,7 +653,6 @@ public class AmpleSetWorker {
 		if (debugging) {
 			printMemoryUnitsOfExpression(expression, memoryUnits);
 		}
-		// printMemoryUnitsOfExpression(expression, memoryUnits);
 		return new Pair<>(status, memoryUnits);
 	}
 

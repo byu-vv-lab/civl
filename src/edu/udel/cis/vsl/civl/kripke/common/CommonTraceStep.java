@@ -7,17 +7,38 @@ import edu.udel.cis.vsl.civl.kripke.IF.AtomicStep;
 import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
 import edu.udel.cis.vsl.civl.state.IF.State;
 
+/**
+ * This represents a trace executing from a certain state for a certain process.
+ * 
+ * @author Manchun Zheng
+ * 
+ */
 public class CommonTraceStep implements TraceStep {
 
+	/* *************************** Instance Fields ************************* */
+
+	/**
+	 * The list of atomic steps contained in this trace in sequential order.
+	 */
 	private List<AtomicStep> steps;
 
+	/**
+	 * The identifier of the process that this trace belongs to.
+	 */
 	private int processIdentifier;
 
+	/* ***************************** Constructors ************************** */
+
+	/**
+	 * Creates a new instance of trace step for a given process.
+	 * @param processIdentifier The identifier of the process of this trace.
+	 */
 	public CommonTraceStep(int processIdentifier) {
 		steps = new ArrayList<>();
 		this.processIdentifier = processIdentifier;
 	}
 
+	/* *********************** Methods from TraceStep ********************* */
 
 	@Override
 	public State result() {

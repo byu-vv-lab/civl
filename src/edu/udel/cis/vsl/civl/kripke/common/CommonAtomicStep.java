@@ -7,23 +7,47 @@ import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 
 /**
- * This represents a statement executed from a state to a new state.
+ * This represents an atomic execution step, which represents the execution of
+ * exactly one transition.
  * 
  * @author Manchun Zheng
  * 
  */
 public class CommonAtomicStep implements AtomicStep {
+
+	/* *************************** Instance Fields ************************* */
+
+	/**
+	 * The state after executing the transition
+	 */
 	private State result;
+
+	/**
+	 * The transition executed during this step
+	 */
 	private Transition transition;
 
+	/* ***************************** Constructors ************************** */
+
+	/**
+	 * <p>
+	 * Creates a new instance of an atomic step.
+	 * </p>
+	 * <p>
+	 * Precondition: there exists a state in the state space such that executing
+	 * <code>transition</code> from that state resulting in <code>target</code>
+	 * state.
+	 * </p>
+	 * 
+	 * @param target
+	 * @param transition
+	 */
 	public CommonAtomicStep(State target, Transition transition) {
 		this.result = target;
 		this.transition = transition;
 	}
 
-	public Transition transition() {
-		return transition;
-	}
+	/* *********************** Methods from AtomicStep ********************* */
 
 	@Override
 	public String toString() {

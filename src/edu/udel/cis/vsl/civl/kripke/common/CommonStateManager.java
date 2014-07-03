@@ -436,29 +436,6 @@ public class CommonStateManager implements StateManager {
 		return state.getDepth();
 	}
 
-	// @Override
-	// public State nextState(State state, Transition transition) {
-	// nextStateCalls++;
-	// if (nextStateCalls % 100 == 0) {
-	// synchronized (this) {
-	// if (printUpdate) {
-	// printUpdateWork();
-	// printUpdate = false;
-	// }
-	// }
-	// }
-	// try {
-	// return nextStateWork(state, transition);
-	// } catch (UnsatisfiablePathConditionException e) {
-	// // problem is the interface requires an actual State
-	// // be returned. There is no concept of executing a
-	// // transition and getting null or an exception.
-	// // since the error has been logged, just stutter:
-	// return state;
-	// }
-	//
-	// }
-
 	@Override
 	public TraceStepIF<Transition, State> nextState(State state,
 			Transition transition) {

@@ -13,38 +13,6 @@ import edu.udel.cis.vsl.gmc.StateManagerIF;
  */
 public interface StateManager extends StateManagerIF<State, Transition> {
 
-//	/**
-//	 * Set the field verbose.
-//	 * 
-//	 * @param value
-//	 *            The value to be used.
-//	 */
-//	void setVerbose(boolean value);
-//
-//	/**
-//	 * Set the field showStates.
-//	 * 
-//	 * @param value
-//	 *            The value to be used.
-//	 */
-//	void setShowStates(boolean value);
-//
-//	/**
-//	 * Set the field showSavedStates.
-//	 * 
-//	 * @param value
-//	 *            The value to be used.
-//	 */
-//	void setShowSavedStates(boolean value);
-//
-//	/**
-//	 * Set the field showTransitions.
-//	 * 
-//	 * @param value
-//	 *            The value to be used.
-//	 */
-//	void setShowTransitions(boolean value);
-
 	/**
 	 * Returns the number of objects of type State that have been instantiated
 	 * since this JVM started.
