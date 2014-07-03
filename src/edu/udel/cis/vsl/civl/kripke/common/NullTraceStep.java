@@ -8,13 +8,13 @@ import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
 import edu.udel.cis.vsl.civl.state.IF.State;
 
 /**
- * This represents a null trace, during which nothing is executed.
+ * This represents a null trace step, during which nothing is executed.
  * 
  * @author Manchun Zheng
  * 
  */
 public class NullTraceStep implements TraceStep {
-	
+
 	/* *************************** Instance Fields ************************* */
 
 	/**
@@ -27,7 +27,8 @@ public class NullTraceStep implements TraceStep {
 	/**
 	 * Creates a new instance of a null trace.
 	 * 
-	 * @param state The state that results in this null trace.
+	 * @param state
+	 *            The state that results in this null trace.
 	 */
 	public NullTraceStep(State state) {
 		this.state = state;
@@ -36,17 +37,12 @@ public class NullTraceStep implements TraceStep {
 	/* *********************** Methods from TraceStep ********************** */
 
 	@Override
-	public State postState() {
+	public State getFinalState() {
 		return state;
 	}
 
 	@Override
 	public void addAtomicStep(AtomicStep step) {
-	}
-
-	@Override
-	public void setPostState(State state) {
-		this.state = state;
 	}
 
 	@Override
@@ -65,8 +61,6 @@ public class NullTraceStep implements TraceStep {
 	}
 
 	@Override
-	public void complete() {
-		// TODO Auto-generated method stub
-		
+	public void complete(State finalState) {
 	}
 }

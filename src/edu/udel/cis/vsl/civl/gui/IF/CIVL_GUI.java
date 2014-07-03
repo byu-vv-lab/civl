@@ -514,7 +514,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					if (split.getRightComponent() != null) {
 						split.remove(split.getRightComponent());
 					}
-					rightView = drawState(t.transition().postState());
+					rightView = drawState(t.transition().getFinalState());
 					split.setRightComponent(rightView);
 				} catch (Exception tranEX) {
 					tranEX.printStackTrace();

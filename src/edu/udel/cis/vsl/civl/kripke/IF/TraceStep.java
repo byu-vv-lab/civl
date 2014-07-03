@@ -25,14 +25,6 @@ public interface TraceStep extends TraceStepIF<Transition, State> {
 	void addAtomicStep(AtomicStep step);
 
 	/**
-	 * Updates the resulting state of the trace step.
-	 * 
-	 * @param state
-	 *            The state to be used as the resulting state of the trace step.
-	 */
-	void setPostState(State state);
-
-	/**
 	 * Returns the number of atomic steps contained in this trace step.
 	 * 
 	 * @return the number of atomic steps contained in this trace step.
@@ -52,6 +44,26 @@ public interface TraceStep extends TraceStepIF<Transition, State> {
 	 * @return the list of atomic steps of this trace step.
 	 */
 	Iterable<AtomicStep> getAtomicSteps();
-	
-	void complete();
+
+	/**
+	 * <p>
+	 * Completes the trace step with its final state.
+	 * </p>
+	 * 
+	 * <p>
+	 * Precondition:<code> this.getFinalState() == null</code>, otherwise, an
+	 * exception will be thrown.
+	 * </p>
+	 * 
+	 * @param finalState
+	 *            The state to be used as the final state of the trace step.
+	 */
+	void complete(State finalState);
+
+	/**
+	 * Returns the final state of this trace step.
+	 * 
+	 * @return the final state of this trace step.
+	 */
+	State getFinalState();
 }

@@ -203,7 +203,7 @@ public class CommonStateManager implements StateManager {
 
 				errorLogger.reportError(err);
 			}
-			traceStep.setPostState(state);
+			traceStep.complete(state);
 			newCanonicId = state.getCanonicId();
 			if (newCanonicId > this.maxCanonicId)
 				this.maxCanonicId = newCanonicId;

@@ -5,6 +5,8 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.kripke.IF.AtomicStep;
 import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.state.IF.State;
 
 /**
@@ -27,7 +29,10 @@ public class CommonTraceStep implements TraceStep {
 	 * The identifier of the process that this trace belongs to.
 	 */
 	private int processIdentifier;
-	
+
+	/**
+	 * The final state of this trace step.
+	 */
 	private State finalState = null;
 
 	/* ***************************** Constructors ************************** */
@@ -46,18 +51,8 @@ public class CommonTraceStep implements TraceStep {
 	/* *********************** Methods from TraceStep ********************* */
 
 	@Override
-	public State postState() {
-		return steps.get(steps.size() - 1).getPostState();
-	}
-
-	@Override
 	public void addAtomicStep(AtomicStep step) {
 		this.steps.add(step);
-	}
-
-	@Override
-	public void setPostState(State state) {
-		steps.get(steps.size() - 1).setPostState(state);
 	}
 
 	@Override
@@ -95,17 +90,18 @@ public class CommonTraceStep implements TraceStep {
 	}
 
 	@Override
-	public void complete() {
-		// TODO Auto-generated method stub
-		
+	public void complete(State finalState) {
+		if (this.finalState == null)
+			this.finalState = finalState;
+		else
+			throw new CIVLInternalException(
+					"A completed trace step cannot be completed again.",
+					(CIVLSource) null);
 	}
-
+	
+	@Override
 	public State getFinalState() {
 		return finalState;
-	}
-
-	public void setFinalState(State finalState) {
-		this.finalState = finalState;
 	}
 
 }
