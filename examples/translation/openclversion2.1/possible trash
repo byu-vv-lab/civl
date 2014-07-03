@@ -7,3 +7,15 @@ cl_program clCreateProgram(args * argument)
   
   return program;
 }
+
+/*
+int clSetKernelArg(cl_kernel kernel, int index, size_t size, void * value)
+{
+  if (index == 0)
+  {
+    kernel.program.arguments.input = (int *)malloc(size);
+  }
+  
+  return CL_SUCCESS;
+}
+*/
