@@ -1,5 +1,8 @@
 package edu.udel.cis.vsl.civl.model.IF;
 
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.common.ABC_CIVLSource;
+
 
 /**
  * A CIVL internal exception represents an error that is
@@ -25,5 +28,9 @@ public class CIVLInternalException extends CIVLException {
 
 	public CIVLInternalException(String s, Sourceable sourceable) {
 		this(s, sourceable.getSource());
+	}
+
+	public CIVLInternalException(String s, Source source) {
+		this(s, new ABC_CIVLSource(source));
 	}
 }
