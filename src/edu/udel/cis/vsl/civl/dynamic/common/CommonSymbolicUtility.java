@@ -513,19 +513,23 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			result.append("\"");
 			return result.toString();
 		} else if (type.equals(procType)) {
-			int pid = modelFactory.getProcessId(source, symbolicExpression);
-
-			if (!modelFactory.isPocessIdDefined(pid)) {
-				return "UNDEFINED";
-			}
-			if (pid < 0)
-				return "$proc_null";
+			if (symbolicExpression.operator() != SymbolicOperator.CONCRETE)
+				return symbolicExpression.toString();
 			else {
-				ProcessState procState = state.getProcessState(pid);
+				int pid = modelFactory.getProcessId(source, symbolicExpression);
 
-				if (procState == null)
+				if (!modelFactory.isPocessIdDefined(pid)) {
 					return "UNDEFINED";
-				return procState.name();
+				}
+				if (pid < 0)
+					return "$proc_null";
+				else {
+					ProcessState procState = state.getProcessState(pid);
+
+					if (procState == null)
+						return "UNDEFINED";
+					return procState.name();
+				}
 			}
 		} else if (type.equals(scopeType)) {
 			int scopeId = modelFactory.getScopeId(source, symbolicExpression);

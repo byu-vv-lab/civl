@@ -363,7 +363,7 @@ public class CommonExecutor implements Executor {
 		dyScope = state.getScope(dyScopeID);
 		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
 		heapValue = dyScope.getValue(heapVariableId);
-		if (heapValue.equals(universe.nullExpression())) {
+		if (heapValue.isNull()) {
 			heapValue = symbolicUtil.initialHeapValue();
 		}
 		eval = evaluator.evaluate(state, pid, statement.getSizeExpression());

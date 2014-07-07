@@ -1682,6 +1682,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				procVal);
 
 		state = stateFactory.setLocation(state, pid, target);
+		if (!modelFactory.isPocessIdDefined(joinedPid)
+				|| modelFactory.isProcessIdNull(joinedPid))
+			return state;
 		state = stateFactory.removeProcess(state, joinedPid);
 		return state;
 	}

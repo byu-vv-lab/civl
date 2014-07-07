@@ -384,6 +384,14 @@ public class CommonEvaluator implements Evaluator {
 			Expression operand) throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluate(state, pid, operand);
 
+		if (eval.value.isNull()) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
+					"Attempt to dereference an uninitialized object.",
+					symbolicUtil.stateToString(state), operand.getSource());
+
+			this.errorLogger.reportError(err);
+		}
 		return dereference(operand.getSource(), eval.state, process,
 				eval.value, true);
 	}
@@ -759,12 +767,14 @@ public class CommonEvaluator implements Evaluator {
 			else if (value.isFalse())
 				eval.value = universe.integer(0);
 			else {
-				BooleanExpression assumption = universe.or(universe.equals(this.zeroOrOne, this.zero),
+				BooleanExpression assumption = universe.or(
+						universe.equals(this.zeroOrOne, this.zero),
 						universe.equals(this.zeroOrOne, this.one));
 				Reasoner reasoner = universe.reasoner(state.getPathCondition());
-				
-				if(reasoner.valid(assumption).getResultType() != ResultType.YES)
-					eval.state = state.setPathCondition(universe.and(state.getPathCondition(), assumption));
+
+				if (reasoner.valid(assumption).getResultType() != ResultType.YES)
+					eval.state = state.setPathCondition(universe.and(
+							state.getPathCondition(), assumption));
 				eval.value = this.zeroOrOne;
 			}
 			return eval;

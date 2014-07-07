@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
@@ -36,7 +37,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 
 	@Override
 	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments) throws UnsatisfiablePathConditionException {
+			String function, List<Expression> arguments)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression[] argumentValues;
 		int numArgs;
 		BooleanExpression guard;
@@ -354,13 +356,26 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		int pidValue;
 		Expression joinProcessExpr = arguments.get(0);
 
+		if (joinProcess.operator() != SymbolicOperator.CONCRETE) {
+			String process = state.getProcessState(pid).name() + "(id=" + pid
+					+ ")";
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.OTHER, Certainty.PROVEABLE, process,
+					"The argument of $wait should be concrete, but the actual value is "
+							+ joinProcess + ".",
+					symbolicUtil.stateToString(state),
+					joinProcessExpr.getSource());
+
+			this.errorLogger.reportError(err);
+		}
 		pidValue = modelFactory.getProcessId(joinProcessExpr.getSource(),
 				joinProcess);
-		if (!state.getProcessState(pidValue).hasEmptyStack())
+		if (modelFactory.isPocessIdDefined(pidValue)
+				&& !modelFactory.isProcessIdNull(pidValue)
+				&& !state.getProcessState(pidValue).hasEmptyStack())
 			guard = universe.falseExpression();
 		else
 			guard = universe.trueExpression();
 		return guard;
 	}
-
 }

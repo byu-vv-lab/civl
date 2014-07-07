@@ -76,6 +76,7 @@ public class CIVLException extends RuntimeException {
 		POINTER,
 		QUANTIFIER,
 		SIZEOF,
+		INVALID_WAIT,
 		UNDEFINED_VALUE, UNION, PROCESS_LEAK
 	}
 

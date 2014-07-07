@@ -2531,9 +2531,7 @@ public class CommonModelFactory implements ModelFactory {
 	public boolean isProcNull(CIVLSource source, SymbolicExpression procValue) {
 		int pid = extractIntField(source, procValue, zeroObj);
 
-		if (pid == -2)
-			return true;
-		return false;
+		return this.isProcessIdNull(pid);
 	}
 
 	@Override
@@ -2639,5 +2637,12 @@ public class CommonModelFactory implements ModelFactory {
 					systemSource, function);
 		}
 		return this.waitallFuncPointer;
+	}
+
+	@Override
+	public boolean isProcessIdNull(int pid) {
+		if (pid == -2)
+			return true;
+		return false;
 	}
 }

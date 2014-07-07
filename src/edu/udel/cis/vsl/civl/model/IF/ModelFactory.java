@@ -1509,6 +1509,8 @@ public interface ModelFactory {
 
 	boolean isPocessIdDefined(int pid);
 
+	boolean isProcessIdNull(int pid);
+
 	SymbolicExpression isProcessDefined(CIVLSource source,
 			SymbolicExpression processValue);
 
