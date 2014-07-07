@@ -172,6 +172,8 @@ public class CommonStateManager implements StateManager {
 			assert stateStatus.enabledTransition != null;
 			assert stateStatus.enabledStatus == EnabledStatus.DETERMINISTIC;
 			assert stateStatus.atomCount >= 0;
+			if (this.config.printStates())
+				config.out().print(this.symbolicUtil.stateToString(state));
 			state = executor.execute(state, pid, stateStatus.enabledTransition);
 			if (printTransitions)
 				printStatement(oldState, state, stateStatus.enabledTransition,
@@ -179,8 +181,6 @@ public class CommonStateManager implements StateManager {
 			traceStep.addAtomicStep(new CommonAtomicStep(state,
 					stateStatus.enabledTransition));
 			oldState = state;
-			if (this.config.printStates())
-				config.out().print(this.symbolicUtil.stateToString(state));
 		}
 		assert stateStatus.atomCount == 0;
 		assert stateStatus.enabledStatus != EnabledStatus.DETERMINISTIC;
