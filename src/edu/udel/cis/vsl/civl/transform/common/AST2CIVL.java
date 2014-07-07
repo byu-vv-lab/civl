@@ -52,6 +52,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.JumpNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.JumpNode.JumpKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode.LoopKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode.StatementKind;
@@ -72,6 +74,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 
@@ -275,6 +278,8 @@ public class AST2CIVL {
 			return jump2CIVL(prefix, (JumpNode) statement);
 		case LABELED:
 			return labeled2CIVL(prefix, (LabeledStatementNode) statement);
+		case LOOP:
+			return loop2CIVL(prefix, (LoopNode) statement);
 		case NULL:
 			return new StringBuffer(";");
 		case RETURN:
@@ -288,6 +293,48 @@ public class AST2CIVL {
 					"translating statement node of " + kind
 							+ " kind into CIVL code", statement.getSource());
 		}
+	}
+
+	private StringBuffer loop2CIVL(String prefix, LoopNode loop) {
+		StringBuffer result = new StringBuffer();
+		LoopKind loopKind = loop.getKind();
+		StringBuffer condition = expression2CIVL(loop.getCondition());
+		String myIndent = prefix + indention;
+		StatementNode bodyNode = loop.getBody();
+		StringBuffer body = bodyNode == null ? null : statement2CIVL(myIndent,
+				loop.getBody());
+
+		switch (loopKind) {
+		case WHILE:
+			result.append("while(");
+			result.append(condition);
+			result.append(")");
+			if (body == null)
+				result.append(";");
+			else {
+				result.append("\n");
+				result.append(body);
+			}
+		case DO_WHILE:
+			result.append("do");
+			if (body == null)
+				result.append(";");
+			else {
+				result.append("\n");
+				result.append(body);
+			}
+			result.append("while(");
+			result.append(condition);
+			result.append(");");
+			break;
+		default:
+			throw new CIVLInternalException(
+					"The "
+							+ loopKind
+							+ " loop node is unreachable here because it should already been taken care of priorly.",
+					loop.getSource());
+		}
+		return result;
 	}
 
 	private StringBuffer atomic2CIVL(String prefix, AtomicNode atomicNode) {
