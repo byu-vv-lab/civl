@@ -122,6 +122,9 @@ typedef struct
 typedef struct
 {
   void * arguments;
+  int global_id;
+  int local_id;
+  int workgroup;
 } cl_kernel;
 
 typedef struct

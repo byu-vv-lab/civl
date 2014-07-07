@@ -14,13 +14,15 @@ $input int MAX_DATA_SIZE;
 $assume 0 < DATA_SIZE && DATA_SIZE < MAX_NUM_DEVICES;
 
 $input int LOCAL;
+$input int MAX_LOCAL;
+$assume 0 < LOCAL && LOCAL < MAX_LOCAL;
 //Didn't initialize variables here
 typedef struct
 {
   //Variables for kernels
   
-  int * input;
-  int * output;
+  float * input;
+  float * output;
   int count;
   
 }args;
@@ -33,25 +35,26 @@ cl_kernel clCreateKernel(args * argument)
   
   return kernel;
 }
-/*
+
 int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, int global, int local)
 {
+  cl_kernel param[global/local];
   $proc procs[global/local];
   for(int i = 0; i < global/local; i++)
   {
     param[i].workgroup = i;
-    //procs[i] = $spawn square(param[i].global_id, param[i].input, param[i].output, param[i].count);
-    procs[i] = $spawn workfunc(local, global, param[i]);
+    param[i] = kernel;
+    //procs[i] = $spawn workfunc(local, global, param[i]);
   }
-  
+  /*
   for(int i = 0; i < global/local; i++)
   {
     $wait(procs[i]);
   }
-  
+  */
   return CL_SUCCESS;
 }
-*/
+
 //kernel
 void square(int workgroup, int global_id, int local_id, float* input, float* output, int count)
 {
@@ -136,11 +139,14 @@ int main(int argc, char** argv)
   
   //kernel.arguments->input;
   
-  memcpy(((args *)kernel.arguments)->input, input, sizeof(float));
-  //memcpy(((args*)kernel.arguments)->output, output, sizeof(float));
-  //memcpy(((args*)kernel.arguments)->count, count, sizeof(int));
-  ((args*)kernel.arguments)->count = count;
+  ((args*)kernel.arguments)->input = (float*)malloc(sizeof(float) * count);
+  memcpy(((args *)kernel.arguments)->input, input, sizeof(float) * count);
   
+  ((args*)kernel.arguments)->output = (float*)malloc(sizeof(float) * count);
+  memcpy(((args*)kernel.arguments)->output, output, sizeof(float));
+
+  ((args*)kernel.arguments)->count = count;
+  //no malloc needed for non pointers
   
   //clGetKernelWorkGroupInfo
   local = LOCAL;
@@ -151,7 +157,12 @@ int main(int argc, char** argv)
     kernel holds program, which holds variables
     offset not implemented
   */
-  //err = clEnqueueNDRangeKernel(commands, kernel, global, local);
+  err = clEnqueueNDRangeKernel(commands, kernel, global, local);
+  
+  
+  
+  free(((args*)kernel.arguments)->input);
+  free(((args*)kernel.arguments)->output);
   
   free(input);
   free(output);
