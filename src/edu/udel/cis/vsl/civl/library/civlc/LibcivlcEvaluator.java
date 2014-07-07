@@ -93,6 +93,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		case "$barrier_create":
 		case "$barrier_enter":
 		case "$barrier_destroy":
+		case "$equals":
+		case "$contains":
 		case "$gbarrier_create":
 		case "$gbarrier_destroy":
 		case "$comm_create":

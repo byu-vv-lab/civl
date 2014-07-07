@@ -1230,6 +1230,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		case "$barrier_exit":
 			// does nothing
 			break;
+		case "$contains":
+			state = executeContains(state, pid, process, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
+		case "$equals":
+			state = executeEquals(state, pid, process, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
 		case "$gbarrier_create":
 			state = executeGbarrierCreate(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
@@ -1330,6 +1338,99 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					call);
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
+
+	private State executeContains(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression first, second;
+		Evaluation eval = evaluator.dereference(arguments[0].getSource(),
+				state, process, argumentValues[0], false);
+		int invalidArg = -1;
+
+		state = eval.state;
+		first = eval.value;
+		eval = evaluator.dereference(arguments[1].getSource(), state, process,
+				argumentValues[1], false);
+		state = eval.state;
+		second = eval.value;
+		if (!symbolicUtil.isInitialized(first))
+			invalidArg = 0;
+		else if (!symbolicUtil.isInitialized(second))
+			invalidArg = 1;
+		if (invalidArg != -1) {
+			SymbolicExpression invalidValue = invalidArg == 0 ? first : second;
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
+					"The object that "
+							+ arguments[invalidArg]
+							+ " points to is undefined, which has the value "
+							+ symbolicUtil.symbolicExpressionToString(
+									arguments[invalidArg].getSource(), state,
+									invalidValue),
+					symbolicUtil.stateToString(state),
+					arguments[invalidArg].getSource());
+
+			this.errorLogger.reportError(err);
+		}
+		//TODO: TO BE FINISHED
+		return null;
+	}
+
+	/**
+	 * are the object pointed to equal?
+	 * 
+	 * _Bool $equals(void *x, void *y);
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeEquals(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression first, second;
+		Evaluation eval = evaluator.dereference(arguments[0].getSource(),
+				state, process, argumentValues[0], false);
+		int invalidArg = -1;
+
+		state = eval.state;
+		first = eval.value;
+		eval = evaluator.dereference(arguments[1].getSource(), state, process,
+				argumentValues[1], false);
+		state = eval.state;
+		second = eval.value;
+		if (!symbolicUtil.isInitialized(first))
+			invalidArg = 0;
+		else if (!symbolicUtil.isInitialized(second))
+			invalidArg = 1;
+		if (invalidArg != -1) {
+			SymbolicExpression invalidValue = invalidArg == 0 ? first : second;
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
+					"The object that "
+							+ arguments[invalidArg]
+							+ " points to is undefined, which has the value "
+							+ symbolicUtil.symbolicExpressionToString(
+									arguments[invalidArg].getSource(), state,
+									invalidValue),
+					symbolicUtil.stateToString(state),
+					arguments[invalidArg].getSource());
+
+			this.errorLogger.reportError(err);
+		}
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, process, lhs,
+					universe.equals(first, second));
 		return state;
 	}
 

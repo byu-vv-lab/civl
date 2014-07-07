@@ -1426,4 +1426,11 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	public NumericExpression getStepOfRange(SymbolicExpression range) {
 		return (NumericExpression) universe.tupleRead(range, twoObj);
 	}
+
+	@Override
+	public boolean isInitialized(SymbolicExpression value) {
+		if (value.isNull())
+			return false;
+		return true;
+	}
 }
