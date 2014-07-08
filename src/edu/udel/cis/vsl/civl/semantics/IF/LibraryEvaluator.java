@@ -12,17 +12,32 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
  * function call. A new library is implemented in the package named as
  * "edu.udel.cis.vsl.civl.library." ( {@link CommonLibraryLoader#CLASS_PREFIX})
  * + library name. And the class name of the enabler is: "Lib" + library name +
- * "Evaluator". For example, the stdio library enabler is implemented as the class
- * edu.udel.cis.vsl.civl.library.stdio.LibstdioEnabler.
+ * "Evaluator". For example, the stdio library enabler is implemented as the
+ * class edu.udel.cis.vsl.civl.library.stdio.LibstdioEnabler.
  * 
  * @author zmanchun
  * 
  */
 public interface LibraryEvaluator {
+
 	/**
-	 * Gets a guard for a system function. This is an extra guard relating to
-	 * the particular system function, and needs to be checked in addition to
+	 * Evaluates the guard of a system function. This is an extra guard related
+	 * to the particular system function, and needs to be checked in addition to
 	 * the "regular" guard in the transition system.
+	 * 
+	 * @param source
+	 *            The source code information for error report.
+	 * @param state
+	 *            The state where the evaluation happens.
+	 * @param pid
+	 *            The PID of the process that triggers this evaluation.
+	 * @param function
+	 *            The name of the function.
+	 * @param arguments
+	 *            The arguments of the function.
+	 * @return The result of the guard with a possibly new state caused by side
+	 *         effects.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	Evaluation evaluateGuard(CIVLSource source, State state, int pid,
 			String function, List<Expression> arguments)

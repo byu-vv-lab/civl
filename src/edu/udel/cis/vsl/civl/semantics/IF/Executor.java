@@ -111,5 +111,10 @@ public interface Executor {
 	State execute(State state, int pid, Transition transition)
 			throws UnsatisfiablePathConditionException;
 
+	/**
+	 * Returns the error logger used by this executor.
+	 * 
+	 * @return The error logger used by this executor.
+	 */
 	CIVLErrorLogger errorLogger();
 }

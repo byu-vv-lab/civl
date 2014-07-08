@@ -40,6 +40,8 @@ public class Evaluation {
 		this.value = value;
 	}
 
+	/* ************************ Methods from Object ************************ */
+
 	@Override
 	public String toString() {
 		return "[" + state + ", " + value + "]";

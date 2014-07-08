@@ -50,6 +50,13 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 
 	/**
+	 * Returns the error logger object of this evaluator.
+	 * 
+	 * @return The error logger object of this evaluator.
+	 */
+	CIVLErrorLogger errorLogger();
+
+	/**
 	 * Evaluates the expression and returns the result, which is a symbolic
 	 * expression value.
 	 * 
@@ -113,13 +120,6 @@ public interface Evaluator {
 	 */
 	Evaluation evaluateSizeofType(CIVLSource source, State state, int pid,
 			CIVLType type) throws UnsatisfiablePathConditionException;
-
-	/**
-	 * Returns the error logger object of this evaluator.
-	 * 
-	 * @return The error logger object of this evaluator.
-	 */
-	CIVLErrorLogger errorLogger();
 
 	/**
 	 * Given a pointer to char, returns the symbolic expression of type array of
