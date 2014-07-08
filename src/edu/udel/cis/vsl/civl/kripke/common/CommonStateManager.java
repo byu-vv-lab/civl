@@ -534,27 +534,6 @@ public class CommonStateManager implements StateManager {
 		return maxProcs;
 	}
 
-	//
-	// @Override
-	// public void setShowSavedStates(boolean value) {
-	// this.showSavedStates = value;
-	// }
-	//
-	// @Override
-	// public void setShowStates(boolean value) {
-	// this.showStates = value;
-	// }
-	//
-	// @Override
-	// public void setShowTransitions(boolean value) {
-	// this.showTransitions = value;
-	// }
-	//
-	// @Override
-	// public void setVerbose(boolean value) {
-	// this.verbose = value;
-	// }
-
 	@Override
 	public synchronized void printUpdate() {
 		printUpdate = true;

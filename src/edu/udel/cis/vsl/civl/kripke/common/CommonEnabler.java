@@ -82,12 +82,24 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	protected BooleanExpression falseExpression;
 
+	/**
+	 * The library enabler loader.
+	 */
 	protected LibraryEnablerLoader libraryLoader;
 
+	/**
+	 * Show ample sets with the states?
+	 */
 	protected boolean showAmpleSetWtStates = false;
 
+	/**
+	 * The state factory that provides operations on states.
+	 */
 	protected StateFactory stateFactory;
 
+	/**
+	 * The error logger for reporting errors.
+	 */
 	protected CIVLErrorLogger errorLogger;
 
 	/* ***************************** Constructor *************************** */
@@ -126,89 +138,6 @@ public abstract class CommonEnabler implements Enabler {
 		this.stateFactory = stateFactory;
 	}
 
-	/* **************************** Public Methods ************************* */
-
-	@Override
-	public Evaluation getGuard(Statement statement, int pid, State state) {
-		try {
-			return evaluator.evaluate(state, pid, statement.guard());
-		} catch (UnsatisfiablePathConditionException e) {
-			return new Evaluation(state, this.falseExpression);
-		}
-	}
-
-	/**
-	 * Computes the set of enabled transitions of a system function call.
-	 * 
-	 * @param source
-	 * @param state
-	 * @param call
-	 * @param pathCondition
-	 * @param pid
-	 * @param processIdentifier
-	 * @param assignAtomicLock
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private List<Transition> getEnabledTransitionsOfSystemCall(
-			CIVLSource source, State state, CallOrSpawnStatement call,
-			BooleanExpression pathCondition, int pid, int processIdentifier,
-			Statement assignAtomicLock)
-			throws UnsatisfiablePathConditionException {
-		LibraryEnabler libEnabler = libraryEnabler(source,
-				((SystemFunction) call.function()).getLibrary());
-
-		return libEnabler.enabledTransitions(state, call, pathCondition, pid,
-				processIdentifier, assignAtomicLock);
-	}
-
-	public LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
-		return this.libraryLoader.getLibraryEnabler(library, this, evaluator,
-				this.transitionFactory, this.debugOut,
-				evaluator.modelFactory(), evaluator.symbolicUtility());
-	}
-
-	/**
-	 * Given a state, a process, and a statement, check if the statement's guard
-	 * is satisfiable under the path condition. If it is, return the conjunction
-	 * of the path condition and the guard. This will be the new path condition.
-	 * Otherwise, return false.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param pid
-	 *            The id of the currently executing process.
-	 * @param statement
-	 *            The statement.
-	 * @return The new path condition. False if the guard is not satisfiable
-	 *         under the path condition.
-	 */
-	public BooleanExpression newPathCondition(State state, int pid,
-			Statement statement) {
-		Evaluation eval = getGuard(statement, pid, state);
-		BooleanExpression guard = (BooleanExpression) eval.value;
-		BooleanExpression pathCondition = eval.state.getPathCondition();
-		Reasoner reasoner = universe.reasoner(pathCondition);
-
-		if (guard.isTrue()) {
-			return pathCondition;
-		}
-		if (reasoner.isValid(universe.not(guard)))
-			return this.falseExpression;
-		if (reasoner.isValid(guard))
-			return pathCondition;
-		return universe.and(pathCondition, guard);
-	}
-
-	/**
-	 * Returns the transition factory of this enabler.
-	 * 
-	 * @return
-	 */
-	public TransitionFactory transitionFactory() {
-		return this.transitionFactory;
-	}
-
 	/* ************************ Methods from EnablerIF ********************* */
 
 	@Override
@@ -234,6 +163,17 @@ public abstract class CommonEnabler implements Enabler {
 	@Override
 	public PrintStream getDebugOut() {
 		return debugOut;
+	}
+
+	/* **************************** Public Methods ************************* */
+
+	@Override
+	public Evaluation getGuard(Statement statement, int pid, State state) {
+		try {
+			return evaluator.evaluate(state, pid, statement.guard());
+		} catch (UnsatisfiablePathConditionException e) {
+			return new Evaluation(state, this.falseExpression);
+		}
 	}
 
 	@Override
@@ -291,6 +231,16 @@ public abstract class CommonEnabler implements Enabler {
 	/* ************************ Package-private Methods ******************** */
 
 	/**
+	 * Obtain enabled transitions with partial order reduction. May have
+	 * different implementation of POR algorithms.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @return The enabled transitions computed by a certain POR approach.
+	 */
+	abstract TransitionSequence enabledTransitionsPOR(State state);
+
+	/**
 	 * Get the enabled transitions of a certain process at a given state.
 	 * 
 	 * @param state
@@ -331,75 +281,13 @@ public abstract class CommonEnabler implements Enabler {
 		return transitions;
 	}
 
-	/**
-	 * Get the enabled transitions of a statement at a certain state. An
-	 * assignment to the atomic lock variable might be forced to the returned
-	 * transitions, when the process is going to re-obtain the atomic lock
-	 * variable.
-	 * 
-	 * @param state
-	 *            The state to work with.
-	 * @param s
-	 *            The statement to be used to generate transitions.
-	 * @param pathCondition
-	 *            The current path condition.
-	 * @param pid
-	 *            The process id that the statement belongs to.
-	 * @param assignAtomicLock
-	 *            The assignment statement for the atomic lock variable, should
-	 *            be null except that the process is going to re-obtain the
-	 *            atomic lock variable.
-	 * @return The set of enabled transitions.
-	 */
-	public List<Transition> enabledTransitionsOfStatement(State state,
-			Statement s, BooleanExpression pathCondition, int pid,
-			Statement assignAtomicLock) {
-		ArrayList<Transition> localTransitions = new ArrayList<>();
-		Statement transitionStatement = null;
-		int processIdentifier = state.getProcessState(pid).identifier();
-		try {
-			if (s instanceof CallOrSpawnStatement) {
-				CallOrSpawnStatement call = (CallOrSpawnStatement) s;
-
-				// TODO think about optimization of system functions
-				if (call.isSystemCall()) // TODO check function pointer
-					return this.getEnabledTransitionsOfSystemCall(
-							call.getSource(), state, call, pathCondition, pid,
-							processIdentifier, assignAtomicLock);
-				else
-					transitionStatement = s;
-			} else
-				transitionStatement = s;
-			if (transitionStatement != null) {
-				if (assignAtomicLock != null) {
-					StatementList statementList = modelFactory
-							.statmentList(assignAtomicLock);
-
-					statementList.add(s);
-					transitionStatement = statementList;
-				} else
-					transitionStatement = s;
-				localTransitions.add(transitionFactory.newSimpleTransition(
-						pathCondition, pid, processIdentifier,
-						transitionStatement));
-			}
-		} catch (UnsatisfiablePathConditionException e) {
-			// nothing to do: don't add this transition
-		}
-		return localTransitions;
-	}
-
-	/**
-	 * Obtain enabled transitions with partial order reduction. May have
-	 * different implementation of POR algorithms.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @return The enabled transitions computed by a certain POR approach.
-	 */
-	abstract TransitionSequence enabledTransitionsPOR(State state);
-
 	/* **************************** Private Methods ************************ */
+
+	LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
+		return this.libraryLoader.getLibraryEnabler(library, this, evaluator,
+				this.transitionFactory, this.debugOut,
+				evaluator.modelFactory(), evaluator.symbolicUtility());
+	}
 
 	/**
 	 * Computes transitions from the process owning the atomic lock or triggered
@@ -428,7 +316,118 @@ public abstract class CommonEnabler implements Enabler {
 		return null;
 	}
 
-	public Evaluator evaluator() {
-		return this.evaluator;
+	/**
+	 * Get the enabled transitions of a statement at a certain state. An
+	 * assignment to the atomic lock variable might be forced to the returned
+	 * transitions, when the process is going to re-obtain the atomic lock
+	 * variable.
+	 * 
+	 * @param state
+	 *            The state to work with.
+	 * @param s
+	 *            The statement to be used to generate transitions.
+	 * @param pathCondition
+	 *            The current path condition.
+	 * @param pid
+	 *            The process id that the statement belongs to.
+	 * @param assignAtomicLock
+	 *            The assignment statement for the atomic lock variable, should
+	 *            be null except that the process is going to re-obtain the
+	 *            atomic lock variable.
+	 * @return The set of enabled transitions.
+	 */
+	private List<Transition> enabledTransitionsOfStatement(State state,
+			Statement s, BooleanExpression pathCondition, int pid,
+			Statement assignAtomicLock) {
+		ArrayList<Transition> localTransitions = new ArrayList<>();
+		Statement transitionStatement = null;
+		int processIdentifier = state.getProcessState(pid).identifier();
+		try {
+			if (s instanceof CallOrSpawnStatement) {
+				CallOrSpawnStatement call = (CallOrSpawnStatement) s;
+
+				// TODO think about optimization of system functions
+				if (call.isSystemCall()) // TODO check function pointer
+					return this.getEnabledTransitionsOfSystemCall(
+							call.getSource(), state, call, pathCondition, pid,
+							processIdentifier, assignAtomicLock);
+				else
+					transitionStatement = s;
+			} else
+				transitionStatement = s;
+			if (transitionStatement != null) {
+				if (assignAtomicLock != null) {
+					StatementList statementList = modelFactory
+							.statmentList(assignAtomicLock);
+
+					statementList.add(s);
+					transitionStatement = statementList;
+				} else
+					transitionStatement = s;
+				localTransitions.add(transitionFactory.newTransition(
+						pathCondition, pid, processIdentifier,
+						transitionStatement));
+			}
+		} catch (UnsatisfiablePathConditionException e) {
+			// nothing to do: don't add this transition
+		}
+		return localTransitions;
+	}
+
+	/**
+	 * Computes the set of enabled transitions of a system function call.
+	 * 
+	 * @param source
+	 * @param state
+	 * @param call
+	 * @param pathCondition
+	 * @param pid
+	 * @param processIdentifier
+	 * @param assignAtomicLock
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private List<Transition> getEnabledTransitionsOfSystemCall(
+			CIVLSource source, State state, CallOrSpawnStatement call,
+			BooleanExpression pathCondition, int pid, int processIdentifier,
+			Statement assignAtomicLock)
+			throws UnsatisfiablePathConditionException {
+		LibraryEnabler libEnabler = libraryEnabler(source,
+				((SystemFunction) call.function()).getLibrary());
+
+		return libEnabler.enabledTransitions(state, call, pathCondition, pid,
+				processIdentifier, assignAtomicLock);
+	}
+
+	/**
+	 * Given a state, a process, and a statement, check if the statement's guard
+	 * is satisfiable under the path condition. If it is, return the conjunction
+	 * of the path condition and the guard. This will be the new path condition.
+	 * Otherwise, return false.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The id of the currently executing process.
+	 * @param statement
+	 *            The statement.
+	 * @return The new path condition. False if the guard is not satisfiable
+	 *         under the path condition.
+	 */
+	private BooleanExpression newPathCondition(State state, int pid,
+			Statement statement) {
+		Evaluation eval = getGuard(statement, pid, state);
+		BooleanExpression guard = (BooleanExpression) eval.value;
+		BooleanExpression pathCondition = eval.state.getPathCondition();
+		Reasoner reasoner = universe.reasoner(pathCondition);
+
+		if (guard.isTrue()) {
+			return pathCondition;
+		}
+		if (reasoner.isValid(universe.not(guard)))
+			return this.falseExpression;
+		if (reasoner.isValid(guard))
+			return pathCondition;
+		return universe.and(pathCondition, guard);
 	}
 }

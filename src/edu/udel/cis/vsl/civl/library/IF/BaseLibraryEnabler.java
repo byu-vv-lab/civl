@@ -115,7 +115,7 @@ public abstract class BaseLibraryEnabler extends Library implements
 		} else {
 			transitionStatement = call;
 		}
-		localTransitions.add(transitionFactory.newSimpleTransition(
+		localTransitions.add(transitionFactory.newTransition(
 				pathCondition, pid, processIdentifier, transitionStatement));
 		return localTransitions;
 	}

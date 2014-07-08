@@ -152,7 +152,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 				} else {
 					transitionStatement = callWorker;
 				}
-				localTransitions.add(transitionFactory.newSimpleTransition(
+				localTransitions.add(transitionFactory.newTransition(
 						pathCondition, pid, processIdentifier,
 						transitionStatement));
 			}

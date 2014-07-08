@@ -214,7 +214,6 @@ public class AmpleSetWorker {
 		ampleProcessIDs.add(startPid);
 		while (!workingProcessIDs.isEmpty()) {
 			int pid = workingProcessIDs.pop();
-//			ProcessState thisProc = state.getProcessState(pid);
 			Set<SymbolicExpression> impactMemUnits = impactMemUnitsMap.get(pid);
 			Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfThis = reachableMemUnitsMap
 					.get(pid);
@@ -256,24 +255,6 @@ public class AmpleSetWorker {
 					}
 				}
 			}
-			// for (Statement s : thisProc.getLocation().outgoing()) {
-			// // this process has a wait statement
-			// if (s instanceof WaitStatement) {
-			// int joinID = evaluator.joinedIDofWait(state, thisProc,
-			// (WaitStatement) s);
-			//
-			// if (!ampleProcessIDs.contains(joinID)
-			// && workingProcessIDs.contains(joinID)) {
-			// workingProcessIDs.add(joinID);
-			// ampleProcessIDs.add(joinID);
-			// // early return
-			// if (ampleProcessIDs.size() >= minAmpleSize)
-			// return ampleProcessIDs;
-			// if (ampleProcessIDs.size() == activeProcesses.size())
-			// return ampleProcessIDs;
-			// }
-			// }
-			// }
 			for (int otherPid : activeProcesses) {
 				Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther;
 

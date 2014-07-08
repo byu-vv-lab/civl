@@ -16,33 +16,36 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  */
 public class TransitionFactory {
 
+	/* ***************************** Constructors ************************** */
+
 	/**
 	 * A factory to create transitions and transition sequences.
 	 */
 	public TransitionFactory() {
 	}
+	
+	/* *************************** Public Methods ************************** */
 
 	/**
-	 * Create a new simple transition.
+	 * Create a new CIVL transition.
 	 * 
 	 * @param pathCondition
 	 *            The path condition that should be used when executing the
-	 *            statement
+	 *            statement of the transition
 	 * @param pid
 	 *            The process id of the process executing this transition.
 	 * @param processIdentifier
 	 *            The process identifier of the process executing this
 	 *            transition.
 	 * @param statement
-	 *            The statement corresponding to this transition.
-	 * @return A new simple transition with the given path condition and
-	 *         statement.
+	 *            The statement corresponding to this transition, which should
+	 *            be atomic and deterministic.
+	 * @return A new transition with the given path condition and statement.
 	 */
-	public CommonTransition newSimpleTransition(
-			BooleanExpression pathCondition, int pid, int processIdentifier,
-			Statement statement) {
-		return new CommonTransition(pathCondition, pid,
-				processIdentifier, statement);
+	public CommonTransition newTransition(BooleanExpression pathCondition,
+			int pid, int processIdentifier, Statement statement) {
+		return new CommonTransition(pathCondition, pid, processIdentifier,
+				statement);
 	}
 
 	/**

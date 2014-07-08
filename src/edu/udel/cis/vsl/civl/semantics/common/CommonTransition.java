@@ -9,8 +9,8 @@ import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
- * A simple transition involves a single atomic statement in one process. It is
- * to be contrasted with a synchronous transition, which involves two statements
+ * A CIVL transition involves a single atomic statement in one process. It is to
+ * be contrasted with a synchronous transition, which involves two statements
  * executing together in two different processes.
  * 
  * @author Timothy K. Zirkel (zirkel)
@@ -18,31 +18,46 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  */
 public class CommonTransition implements Transition {
 
-	private BooleanExpression pathCondition;
-
-	// private Model model;
-
-	protected int pid;
-
-	protected int processIdentifier;
-
-	protected Statement statement;
+	/* *************************** Instance Fields ************************* */
 
 	/**
-	 * A simple transition involves a single atomic statement in one process. It
-	 * is to be contrasted with a synchronous transition, which involves two
-	 * statements executing together in two different processes.
+	 * The path condition of the new state after this transition is executed.
+	 */
+	private BooleanExpression pathCondition;
+
+	/**
+	 * The PID of the process that this transition belongs to.
+	 */
+	private int pid;
+
+	/**
+	 * The identifier of the process that this transition belongs to.
+	 */
+	private int processIdentifier;
+
+	/**
+	 * The statement that this transition is to execute, which should be atomic,
+	 * deterministic, and enabled in the context of the path condition.
+	 */
+	private Statement statement;
+
+	/* ***************************** Constructors ************************** */
+
+	/**
+	 * <p>
+	 * Creates a new instance of a CIVL transition.
+	 * </p>
+	 * <p>
+	 * Precondition: the statement is enabled in the context of the given path
+	 * condition. There exists a state in the state space such that the process
+	 * PID with the given identifier has the given atomic, deterministic
+	 * statement enabled.
+	 * </p>
 	 * 
 	 * @param pathCondition
-	 *            The path condition that should be used when executing
-	 *            statement
 	 * @param pid
-	 *            The process id of the process executing this transition.
 	 * @param processIdentifier
-	 *            The process identifier of the process executing this
-	 *            transition.
 	 * @param statement
-	 *            The statement corresponding to this transition.
 	 */
 	public CommonTransition(BooleanExpression pathCondition, int pid,
 			int processIdentifier, Statement statement) {
@@ -52,42 +67,14 @@ public class CommonTransition implements Transition {
 		this.processIdentifier = processIdentifier;
 	}
 
-	/**
-	 * @return The process id of the process executing this transition.
-	 */
+	/* *********************** Methods from Transition ********************* */
+
 	public int pid() {
 		return pid;
 	}
 
-	/**
-	 * @return The statement corresponding to this transition.
-	 */
 	public Statement statement() {
 		return statement;
-	}
-
-	/**
-	 * @param pid
-	 *            The process id of the process executing this transition.
-	 */
-	public void setPid(int pid) {
-		this.pid = pid;
-	}
-
-	/**
-	 * @param statement
-	 *            The statement corresponding to this transition.
-	 */
-	public void setStatement(Statement statement) {
-		this.statement = statement;
-	}
-
-	@Override
-	public String toString() {
-		String result = "p" + processIdentifier + ": ";
-
-		result += statement.toStepString(AtomicKind.NONE, pid, false);
-		return result;
 	}
 
 	public int processIdentifier() {
@@ -99,4 +86,13 @@ public class CommonTransition implements Transition {
 		return this.pathCondition;
 	}
 
+	/* ************************* Methods from Object *********************** */
+
+	@Override
+	public String toString() {
+		String result = "p" + processIdentifier + ": ";
+
+		result += statement.toStepString(AtomicKind.NONE, pid, false);
+		return result;
+	}
 }
