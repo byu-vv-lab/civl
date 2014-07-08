@@ -18,8 +18,8 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -68,11 +68,6 @@ public abstract class CommonEnabler implements Enabler {
 	protected boolean showAmpleSet = false;
 
 	/**
-	 * The unique transition factory used by the system.
-	 */
-	protected TransitionFactory transitionFactory;
-
-	/**
 	 * The unique symbolic universe used by the system.
 	 */
 	protected SymbolicUniverse universe;
@@ -119,11 +114,9 @@ public abstract class CommonEnabler implements Enabler {
 	 * @param showAmpleSet
 	 *            The option to enable or disable the printing of ample sets.
 	 */
-	protected CommonEnabler(TransitionFactory transitionFactory,
-			StateFactory stateFactory, Evaluator evaluator,
+	protected CommonEnabler(StateFactory stateFactory, Evaluator evaluator,
 			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
 			CIVLConfiguration civlConfig) {
-		this.transitionFactory = transitionFactory;
 		this.errorLogger = errorLogger;
 		this.evaluator = evaluator;
 		this.debugOut = civlConfig.out();
@@ -146,7 +139,7 @@ public abstract class CommonEnabler implements Enabler {
 
 		if (state.getPathCondition().isFalse())
 			// return empty set of transitions.
-			return new TransitionSequence(state);
+			return Semantics.newTransitionSequence(state);
 		// return resumable atomic transitions.
 		transitions = enabledAtomicTransitions(state);
 		if (transitions == null)
@@ -285,8 +278,8 @@ public abstract class CommonEnabler implements Enabler {
 
 	LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
 		return this.libraryLoader.getLibraryEnabler(library, this, evaluator,
-				this.transitionFactory, this.debugOut,
-				evaluator.modelFactory(), evaluator.symbolicUtility());
+				this.debugOut, evaluator.modelFactory(),
+				evaluator.symbolicUtility());
 	}
 
 	/**
@@ -305,7 +298,7 @@ public abstract class CommonEnabler implements Enabler {
 		if (pidInAtomic >= 0) {
 			// execute a transition in an atomic block of a certain process
 			// without interleaving with other processes
-			TransitionSequence localTransitions = transitionFactory
+			TransitionSequence localTransitions = Semantics
 					.newTransitionSequence(state);
 
 			localTransitions.addAll(enabledTransitionsOfProcess(state,
@@ -364,9 +357,8 @@ public abstract class CommonEnabler implements Enabler {
 					transitionStatement = statementList;
 				} else
 					transitionStatement = s;
-				localTransitions.add(transitionFactory.newTransition(
-						pathCondition, pid, processIdentifier,
-						transitionStatement));
+				localTransitions.add(Semantics.newTransition(pathCondition,
+						pid, processIdentifier, transitionStatement));
 			}
 		} catch (UnsatisfiablePathConditionException e) {
 			// nothing to do: don't add this transition

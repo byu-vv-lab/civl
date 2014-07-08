@@ -5,7 +5,6 @@ import java.io.PrintStream;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 
 /**
  * This provides the operation to load a certain library enabler dynamically.
@@ -28,7 +27,7 @@ public interface LibraryEnablerLoader {
 	 * @return The library enabler of the given name.
 	 */
 	LibraryEnabler getLibraryEnabler(String name, Enabler primaryEnabler,
-			Evaluator evaluator, TransitionFactory transitionFactory,
+			Evaluator evaluator,
 			PrintStream output, ModelFactory modelFacotry,
 			SymbolicUtility symbolicUtil);
 }

@@ -7,7 +7,6 @@ import edu.udel.cis.vsl.civl.kripke.common.PointeredEnabler;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 
 /**
@@ -20,8 +19,6 @@ public class Kripkes {
 	/**
 	 * Creates a new instance of enabler.
 	 * 
-	 * @param transitionFactory
-	 *            The transition factory to be used.
 	 * @param stateFactory
 	 *            The state factory to be used.
 	 * @param evaluator
@@ -37,12 +34,11 @@ public class Kripkes {
 	 *            The error logger to be used.
 	 * @return The new enabler created.
 	 */
-	public static Enabler newEnabler(TransitionFactory transitionFactory,
-			StateFactory stateFactory, Evaluator evaluator,
-			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
-			CIVLConfiguration civlConfig) {
-		return new PointeredEnabler(transitionFactory, stateFactory, evaluator,
-				libLoader, errorLogger, civlConfig);
+	public static Enabler newEnabler(StateFactory stateFactory,
+			Evaluator evaluator, LibraryEnablerLoader libLoader,
+			CIVLErrorLogger errorLogger, CIVLConfiguration civlConfig) {
+		return new PointeredEnabler(stateFactory, evaluator, libLoader,
+				errorLogger, civlConfig);
 	}
 
 	/**

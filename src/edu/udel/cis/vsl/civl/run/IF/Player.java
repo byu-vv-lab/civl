@@ -28,7 +28,6 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -63,8 +62,6 @@ public abstract class Player {
 
 	protected StateFactory stateFactory;
 
-	protected TransitionFactory transitionFactory;
-
 	protected ErrorLog log;
 
 	protected Evaluator evaluator;
@@ -85,39 +82,17 @@ public abstract class Player {
 
 	protected boolean random;
 
-	// protected boolean verbose;
-
-	// protected boolean debug;
-
-	// protected boolean showStates;
-
-	// protected boolean showSavedStates;
-
-	// protected boolean showTransitions;
-
 	protected String result;
 
 	protected boolean minimize;
 
 	protected int maxdepth;
 
-	// protected boolean showAmpleSetWtStates; // false by default
-
-	// protected boolean showAmpleSet; // false by default
-
-	// protected boolean saveStates; // true by default
-
-	// protected boolean simplify; // true by default
-
 	protected boolean solve; // false by default
-
-	// protected boolean enablePrintf; // true by default
 
 	protected boolean gui; // false by default, only works with Replay mode.
 
 	protected Preprocessor preprocessor;
-
-	// protected boolean statelessPrintf;
 
 	protected SymbolicUtility symbolicUtil;
 
@@ -160,9 +135,8 @@ public abstract class Player {
 		this.minimize = config.isTrue(minO);
 		this.maxdepth = (int) config.getValueOrDefault(maxdepthO);
 
-		this.transitionFactory = new TransitionFactory();
 		this.libraryEnablerLoader = Kripkes.newLibraryEnablerLoader();
-		enabler = Kripkes.newEnabler(transitionFactory, stateFactory,
+		enabler = Kripkes.newEnabler(stateFactory,
 				evaluator, this.libraryEnablerLoader, errorLogger, civlConfig);
 		// enabler.setDebugOut(out);
 		// enabler.setDebugging(debug);

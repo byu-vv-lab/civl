@@ -14,7 +14,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 
 public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 
@@ -29,8 +28,7 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 
 	@Override
 	public LibraryEnabler getLibraryEnabler(String name,
-			Enabler primaryEnabler, Evaluator evaluator,
-			TransitionFactory transitionFactory, PrintStream output,
+			Enabler primaryEnabler, Evaluator evaluator, PrintStream output,
 			ModelFactory modelFacotry, SymbolicUtility symbolicUtil) {
 		LibraryEnabler result = libraryEnablerCache.get(name);
 
@@ -42,12 +40,12 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 				Class<? extends LibraryEnabler> aClass = (Class<? extends LibraryEnabler>) Class
 						.forName(aClassName);
 				Constructor<? extends LibraryEnabler> constructor = aClass
-						.getConstructor(String.class, Enabler.class, Evaluator.class,
-								TransitionFactory.class, PrintStream.class,
+						.getConstructor(String.class, Enabler.class,
+								Evaluator.class, PrintStream.class,
 								ModelFactory.class, SymbolicUtility.class);
 
-				result = constructor.newInstance(name, primaryEnabler, evaluator,
-						transitionFactory, output, modelFacotry, symbolicUtil);
+				result = constructor.newInstance(name, primaryEnabler,
+						evaluator, output, modelFacotry, symbolicUtil);
 			} catch (Exception e) {
 				throw new CIVLInternalException("Unable to load library: "
 						+ name + "\n" + e.getMessage(), (CIVLSource) null);

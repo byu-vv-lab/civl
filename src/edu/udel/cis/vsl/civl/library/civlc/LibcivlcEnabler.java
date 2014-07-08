@@ -27,8 +27,8 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -61,11 +61,10 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	 *            The model factory of the system.
 	 */
 	public LibcivlcEnabler(String name, Enabler primaryEnabler,
-			Evaluator evaluator, TransitionFactory transitionFactory,
-			PrintStream output, ModelFactory modelFactory,
+			Evaluator evaluator, PrintStream output, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil) {
-		super(name, primaryEnabler, evaluator, transitionFactory, output,
-				modelFactory, symbolicUtil);
+		super(name, primaryEnabler, evaluator, output, modelFactory,
+				symbolicUtil);
 
 		CIVLSource source = modelFactory.model().getSource();
 		SystemFunction chooseIntWorkFunction = modelFactory.systemFunction(
@@ -141,8 +140,8 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 						arguments.get(0).getSource(), BigInteger.valueOf(i));
 
 				callWorker = modelFactory.callOrSpawnStatement(
-						call.getSource(), null, true,
-						Arrays.asList(workerArg), null);
+						call.getSource(), null, true, Arrays.asList(workerArg),
+						null);
 				callWorker.setTargetTemp(call.target());
 				callWorker.setFunction(chooseIntWorkPointer);
 				callWorker.setLhs(call.lhs());
@@ -152,9 +151,8 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 				} else {
 					transitionStatement = callWorker;
 				}
-				localTransitions.add(transitionFactory.newTransition(
-						pathCondition, pid, processIdentifier,
-						transitionStatement));
+				localTransitions.add(Semantics.newTransition(pathCondition,
+						pid, processIdentifier, transitionStatement));
 			}
 			break;
 		default:

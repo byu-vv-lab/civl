@@ -8,7 +8,6 @@ import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 
 /**
  * Implementation of the enabler-related logics for system functions declared
@@ -32,10 +31,10 @@ public class LibstringEnabler extends BaseLibraryEnabler implements
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
-	public LibstringEnabler(String name, Enabler primaryEnabler, Evaluator evaluator,
-			TransitionFactory transitionFactory, PrintStream output,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(name, primaryEnabler, evaluator, transitionFactory, output,
-				modelFactory, symbolicUtil);
+	public LibstringEnabler(String name, Enabler primaryEnabler,
+			Evaluator evaluator, PrintStream output, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
+		super(name, primaryEnabler, evaluator, output, modelFactory,
+				symbolicUtil);
 	}
 }

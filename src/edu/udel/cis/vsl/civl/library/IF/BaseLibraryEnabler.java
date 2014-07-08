@@ -15,8 +15,8 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -59,11 +59,6 @@ public abstract class BaseLibraryEnabler extends Library implements
 	 */
 	protected StateFactory stateFactory;
 
-	/**
-	 * The unique transition factory used by the system.
-	 */
-	protected TransitionFactory transitionFactory;
-
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -77,12 +72,10 @@ public abstract class BaseLibraryEnabler extends Library implements
 	 *            The model factory of the system.
 	 */
 	public BaseLibraryEnabler(String name, Enabler primaryEnabler,
-			Evaluator evaluator, TransitionFactory transitionFactory,
-			PrintStream output, ModelFactory modelFactory,
+			Evaluator evaluator, PrintStream output, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil) {
 		super(name, evaluator.universe(), symbolicUtil);
 		this.primaryEnabler = primaryEnabler;
-		this.transitionFactory = transitionFactory;
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
 		this.output = output;
@@ -115,8 +108,8 @@ public abstract class BaseLibraryEnabler extends Library implements
 		} else {
 			transitionStatement = call;
 		}
-		localTransitions.add(transitionFactory.newTransition(
-				pathCondition, pid, processIdentifier, transitionStatement));
+		localTransitions.add(Semantics.newTransition(pathCondition, pid,
+				processIdentifier, transitionStatement));
 		return localTransitions;
 	}
 

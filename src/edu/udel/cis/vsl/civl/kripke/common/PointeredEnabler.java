@@ -7,7 +7,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.TransitionFactory;
+import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -42,12 +42,10 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	 *            The option to enable/disable the printing of ample sets at
 	 *            each state.
 	 */
-	public PointeredEnabler(TransitionFactory transitionFactory,
-			StateFactory stateFactory, Evaluator evaluator,
+	public PointeredEnabler(StateFactory stateFactory, Evaluator evaluator,
 			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
 			CIVLConfiguration civlConfig) {
-		super(transitionFactory, stateFactory, evaluator, libLoader,
-				errorLogger, civlConfig);
+		super(stateFactory, evaluator, libLoader, errorLogger, civlConfig);
 	}
 
 	/* ************************* Methods from Enabler ********************** */
@@ -62,8 +60,7 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	 */
 	@Override
 	protected TransitionSequence enabledTransitionsPOR(State state) {
-		TransitionSequence transitions = transitionFactory
-				.newTransitionSequence(state);
+		TransitionSequence transitions = Semantics.newTransitionSequence(state);
 		AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this, evaluator,
 				debugging, debugOut);
 		ArrayList<ProcessState> processStates = new ArrayList<>(
