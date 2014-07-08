@@ -1,0 +1,41 @@
+
+#include "openCLshared.cvl"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+$input int ITERATIONS;
+$input int WIDTH;
+$input int HEIGHT;
+
+// The board
+static const size_t board_size = WIDTH * HEIGHT;
+static bool board[board_size];
+// Storage for the board.
+static cl_mem input;
+static cl_mem output;
+// OpenCL state
+static cl_command_queue queue;
+static cl_kernel kernel;
+static cl_device_id device_id;
+static cl_context context;
+
+//CIVL models scanf() differently, uses symbolic expressions and loops forever here
+//Always possible for iterations > 0 
+int main(int argc, char** argv)
+{
+
+  for(unsigned int i=0 ; i<board_size; i++)
+  {
+    board[i] = (random() % 2);
+  }
+
+  
+  for(int i = 0; i < ITERATIONS; i++)
+  {
+    printf("Running for how %d iterations\n", ITERATIONS);
+  }
+
+  
+  return 0;
+}

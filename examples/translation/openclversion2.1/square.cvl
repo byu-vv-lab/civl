@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <civlc.h>
 
 $input int NUM_DEVICES;
 $input int MAX_NUM_DEVICES;
@@ -36,25 +37,6 @@ cl_kernel clCreateKernel(args * argument)
   return kernel;
 }
 
-int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, int global, int local)
-{
-  cl_kernel param[global/local];
-  $proc procs[global/local];
-  for(int i = 0; i < global/local; i++)
-  {
-    param[i].workgroup = i;
-    param[i] = kernel;
-    //procs[i] = $spawn workfunc(local, global, param[i]);
-  }
-  /*
-  for(int i = 0; i < global/local; i++)
-  {
-    $wait(procs[i]);
-  }
-  */
-  return CL_SUCCESS;
-}
-
 //kernel
 void square(int workgroup, int global_id, int local_id, float* input, float* output, int count)
 {
@@ -66,18 +48,43 @@ void square(int workgroup, int global_id, int local_id, float* input, float* out
     //printf("output[%d] is %d\n", i, output[i]);
   }
 }
-/*
-void workfunc(size_t local, size_t global, kernel param)
+
+//using a type that doesn't exist causes an odd explanation
+//edu.udel.cis.vsl.abc.parse.IF.ParseException: /Users/fuufusuu/Documents/workspace/CIVL/examples/translation/openclversion2.1/square.cvl line 71:43 required (...)+ loop did not match anything at input 'ckernel'
+//At "ckernel" in square.cvl 71.43
+void workfunc(size_t local, size_t global, cl_kernel param)
 {
   for(int i = local * param.workgroup; i < local * param.workgroup + local; i++)
   {
     param.local_id = i % local;
     param.global_id = i;
-    //printf("My workgroup id is %d, my global id is %d, my local id is %d\n", param.workgroup, param.global_id, param.local_id);
-    square(param.workgroup, param.global_id, param.local_id, param.input, param.output, param.count);
+    printf("My workgroup id is %d, my global id is %d, my local id is %d\n", param.workgroup, param.global_id, param.local_id);
+    square(param.workgroup, param.global_id, param.local_id, ((args*)param.arguments)->input, ((args*)param.arguments)->output, ((args*)param.arguments)->count);
   }
 }
-*/
+
+int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, int global, int local)
+{
+  $assert(global % local == 0);
+  cl_kernel param[global/local];
+  $proc procs[global/local];
+  for(int i = 0; i < global/local; i++)
+  {
+    param[i] = kernel;
+    param[i].workgroup = i;
+    procs[i] = $spawn workfunc(local, global, param[i]);
+  }
+  
+  //this part here is the new clFinish(commands);
+  for(int i = 0; i < global/local; i++)
+  {
+    $wait(procs[i]);
+  }
+  
+  return CL_SUCCESS;
+}
+
+
 int main(int argc, char** argv)
 {
   args * arguments;
@@ -139,11 +146,14 @@ int main(int argc, char** argv)
   
   //kernel.arguments->input;
   
-  ((args*)kernel.arguments)->input = (float*)malloc(sizeof(float) * count);
-  memcpy(((args *)kernel.arguments)->input, input, sizeof(float) * count);
+  //use pointer instead of malloc + memcpy for global variables
+  //((args*)kernel.arguments)->input = (float*)malloc(sizeof(float) * count);
+  //memcpy(((args *)kernel.arguments)->input, input, sizeof(float) * count);
+  ((args*)kernel.arguments)->input = input;
   
-  ((args*)kernel.arguments)->output = (float*)malloc(sizeof(float) * count);
-  memcpy(((args*)kernel.arguments)->output, output, sizeof(float));
+  //((args*)kernel.arguments)->output = (float*)malloc(sizeof(float) * count);
+  //memcpy(((args*)kernel.arguments)->output, output, sizeof(float));
+  ((args*)kernel.arguments)->output = output;
 
   ((args*)kernel.arguments)->count = count;
   //no malloc needed for non pointers
@@ -159,7 +169,17 @@ int main(int argc, char** argv)
   */
   err = clEnqueueNDRangeKernel(commands, kernel, global, local);
   
+  memcpy(results, output, sizeof(float) * count);
   
+  correct = 0;
+  for(int i = 0; i < count; i++)
+  {
+    if(results[i] == data[i] * data[i])
+    {
+      correct++;
+    }
+  }
+  printf("Computed '%d/%d' correct values!\n", correct, count);
   
   free(((args*)kernel.arguments)->input);
   free(((args*)kernel.arguments)->output);
@@ -167,6 +187,7 @@ int main(int argc, char** argv)
   free(input);
   free(output);
   free(arguments);
+  
   return 0;
 }
 
