@@ -38,6 +38,8 @@ main(int argc, char **argv)
     
   pthread_join(id1, 0);
   pthread_join(id2, 0);
+    printf("%d", i);
+    printf("%d", j);
 
   if (i > 46368 || j > 46368) {
     ERROR:

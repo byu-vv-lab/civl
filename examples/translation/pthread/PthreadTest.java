@@ -11,7 +11,7 @@ import org.junit.Test;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
-public class PthreadTest {
+public class PthreadTransformerTest {
 	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"),
@@ -37,7 +37,6 @@ public class PthreadTest {
 		assertFalse(ui.run("verify", filename("bigshot_s_false.c"),	"-enablePrintf=false", "-svcomp"));
 	}
 	
-	@Ignore
 	@Test
 	public void bigshot_s_true() throws ABCException {
 		assertTrue(ui.run("verify", filename("bigshot_s_true.c"), "-enablePrintf=false", "-svcomp"));
@@ -58,16 +57,14 @@ public class PthreadTest {
 		assertTrue(ui.run("verify", filename("fib_bench_longer_true.c"), "-svcomp", "-inputNUM=6"));
 	}
 	
-	@Ignore
 	@Test
 	public void fib_bench_longest_false() throws ABCException {
 		assertFalse(ui.run("verify", filename("fib_bench_longest_false.c"), "-svcomp", "-inputNUM=11"));
 	}
 	
-	@Ignore
 	@Test
 	public void fib_bench_longest_true() throws ABCException {
-		assertTrue(ui.run("verify", filename("fib_bench_longest_true.c"), "-svcomp", "-inputNUM=11"));
+		assertTrue(ui.run("verify", filename("fib_bench_longer_true.c"), "-svcomp", "-inputNUM=11"));
 	}
 
 	@Test
@@ -77,7 +74,7 @@ public class PthreadTest {
 	
 	@Test
 	public void indexer_true() throws ABCException {
-		assertTrue(ui.run("verify", filename("indexer_true.c"), "-svcomp", "-inputSIZE=2", "-inputMAX=2", "-inputNUM_THREADS=2", "-showProgram"));
+		assertTrue(ui.run("verify", filename("indexer_true.c"), "-svcomp", "-inputSIZE=128", "-inputMAX=4", "-inputNUM_THREADS=13"));
 	}
 
 	@Test
@@ -87,28 +84,24 @@ public class PthreadTest {
 	
 	@Test
 	public void queue_false() throws ABCException {
-		assertFalse(ui.run("verify", filename("queue_false.c"), "-svcomp", "-inputSIZE=5", "-inputEMPTY=-1", "-inputFULL=-2"));
+		assertFalse(ui.run("verify", filename("queue_false.c"), "-svcomp", "inputSIZE=5", "inputEMPTY=-1", "inputFULL=-2"));
 	}
 	
-	@Ignore
 	@Test
 	public void queue_ok_true() throws ABCException {
-		assertTrue(ui.run("verify", filename("queue_ok_true.c"), "-svcomp", "-inputSIZE=5", "-inputEMPTY=-1", "-inputFULL=-2"));
+		assertTrue(ui.run("verify", filename("queue_ok_true.c"), "-svcomp", "inputSIZE=5", "inputEMPTY=-1", "inputFULL=-2"));
 	}
-	
-	@Ignore
+	/*
 	@Test
 	public void reorder_2_false() throws ABCException {
 		assertFalse(ui.run("verify", filename("reorder_2_false.c"), "-svcomp"));
 	}
 	
-	@Ignore
 	@Test
 	public void reorder_5_false() throws ABCException {
 		assertFalse(ui.run("verify", filename("reorder_5_false.c"), "-svcomp"));
 	}
-	
-	@Ignore
+	*/
 	@Test
 	public void sigma_false() throws ABCException {
 		assertFalse(ui.run("verify", filename("sigma_false.c"), "-svcomp"));
@@ -119,7 +112,6 @@ public class PthreadTest {
 		assertFalse(ui.run("verify", filename("singleton_false.c"), "-svcomp"));
 	}
 	
-	@Ignore
 	@Test
 	public void singleton_with_uninit_problems_true() throws ABCException {
 		assertTrue(ui.run("verify", filename("singleton_with-uninit-problems-true.c"), "-enablePrintf=false", "-svcomp"));

@@ -12,7 +12,6 @@ void * thread1(void * arg)
   pthread_mutex_lock(&ma);
   data2++;
   pthread_mutex_unlock(&ma);
-  pthread_exit(NULL);
 }
 
 
@@ -25,9 +24,7 @@ void * thread2(void * arg)
   pthread_mutex_lock(&ma);
   data2-=6;
   pthread_mutex_unlock(&ma);
-  pthread_exit(NULL);
 }
-
 
 int main()
 {

@@ -38,7 +38,7 @@ void *thread0(void *arg)
   pthread_join(t3, 0);
   pthread_join(t4, 0);
   pthread_join(t5, 0);
-
+    free(v);
   return 0;
 }
 

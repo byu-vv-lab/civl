@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
-import java.awt.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
@@ -33,8 +33,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 //TODO: add arguments to pthread_exit();
-//TODO: If the start_routine returns, the effect shall be as if there was an 
-//implicit call to pthread_exit() using the return value of start_routine as the exit status.
+
 
 
 public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
@@ -86,6 +85,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	 * some source file. All new nodes share the same source.
 	 */
 	private Source source;
+	private ArrayList<String> funcList = new ArrayList<String>();
 
 	// private boolean isSvComp = true;
 
@@ -104,6 +104,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	/* *************************** Private Methods ************************* */
 
 	private void processRoot(ASTNode root) throws SyntaxException {
+		functionList(root);
 		for (ASTNode node : root.children()) {
 			if (node == null)
 				continue;
@@ -111,7 +112,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 				if (config.svcomp()) {
 					process_VERIFIER_function_calls((FunctionDefinitionNode) node);
 				}
-				process_pthread_exits((FunctionDefinitionNode) node);
+				process_pthread_exits((FunctionDefinitionNode) node, funcList);
 			} else if (config.svcomp()
 					&& node instanceof FunctionDeclarationNode) {
 				process_VERIFIER_functions((FunctionDeclarationNode) node);
@@ -160,7 +161,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 			funcTypeNode = nodeFactory.newFunctionTypeNode(funcTypeNode
 					.getSource(), funcTypeNode.getReturnType().copy(),
-					nodeFactory.newSequenceNode(source, "Formal Prameters",
+					nodeFactory.newSequenceNode(source, "Formal Parameters",
 							Arrays.asList(this.variableDeclaration(source,
 									"seed", nodeFactory.newBasicTypeNode(
 											source, BasicTypeKind.INT)))),
@@ -236,17 +237,20 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		return assertNode(mySource, falseExpression);
 	}
 
-	private void process_pthread_exits(FunctionDefinitionNode function)
+	private void process_pthread_exits(FunctionDefinitionNode function, ArrayList<String> threadList)
 			throws SyntaxException {
 		String name = function.getName();
 		TypeNode returnType = function.getTypeNode().getReturnType();
 
 		if (name.equals("main")) {
 			process_pthread_exit(function, true);
+			ExpressionNode ZERO = nodeFactory.newIntegerConstantNode(source, "0");
+			function.getBody().addSequenceChild(nodeFactory.newReturnNode(source, ZERO));
 			freePoolBeforeMainReturn(function);
 			return;
+			
 		}
-		if (this.isVoidPointer(returnType)) {
+		if (this.isVoidPointer(returnType) && threadList.contains(name)) {
 			ExpressionNode nullNode = nodeFactory.newCastNode(
 					source,
 					nodeFactory.newPointerTypeNode(source,
@@ -312,34 +316,26 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private List functionList(ASTNode root){
-		List funcList = (List) Arrays.asList();
+	private void functionList(ASTNode root){
 		for(ASTNode node: root.children()){
 			if (node == null)
 				continue;
-			if (node instanceof FunctionDefinitionNode){
-				String name = ((FunctionDefinitionNode) node).getName();
-				if (name.equals("main")){
-					for (ASTNode child : node.children()) {
-						if (child == null)
-							continue;
-						if (child instanceof FunctionCallNode) {
-							FunctionCallNode funcCall = (FunctionCallNode) child;
-							ExpressionNode funcName = funcCall.getFunction();
-							if (funcName instanceof IdentifierExpressionNode) {
-								IdentifierExpressionNode named = (IdentifierExpressionNode) funcName;
-								String nameString = named.getIdentifier().name();
-								if (nameString.equals(PTHREAD_CREATE)) {
-									
-								}
-							}
-						}
+			if (node instanceof FunctionCallNode){
+				FunctionCallNode funcCall = (FunctionCallNode) node;
+				ExpressionNode funcName = funcCall.getFunction();
+				if (funcName instanceof IdentifierExpressionNode) {
+					IdentifierExpressionNode named = (IdentifierExpressionNode) funcName;
+					String nameString = named.getIdentifier().name();
+					if (nameString.equals(PTHREAD_CREATE)){
+						IdentifierExpressionNode threadName = (IdentifierExpressionNode)funcCall.getArgument(2);
+						funcList.add(threadName.getIdentifier().name());
 					}
 				}
 			}
+			else{
+				functionList(node);
+			}	
 		}
-		return funcList;
 	}
 	
 

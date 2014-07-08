@@ -39,10 +39,11 @@ main(int argc, char **argv)
   pthread_join(id1, 0);
   pthread_join(id2, 0);
 
+    printf(" %d \n", i);
+    printf(" %d \n", j);
   if (i >= 46368 || j >= 46368) {
-    $assert(false);
-    //ERROR:
-    //goto ERROR;
+    ERROR:
+    goto ERROR;
   }
 
   return 0;

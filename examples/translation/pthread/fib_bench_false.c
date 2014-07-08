@@ -1,3 +1,4 @@
+//Race condition: fixed with pthread_join's at bottom
 #include <pthread.h>
 
 int i=1, j=1;
@@ -33,7 +34,9 @@ main(int argc, char **argv)
 
   pthread_create(&id1, NULL, t1, NULL);
   pthread_create(&id2, NULL, t2, NULL);
-
+    
+  pthread_join(id1, NULL);
+  pthread_join(id2, NULL);
   if (i >= 144 || j >= 144) {
     ERROR:
     goto ERROR;

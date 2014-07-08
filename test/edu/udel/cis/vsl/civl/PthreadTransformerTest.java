@@ -60,7 +60,7 @@ public class PthreadTransformerTest {
 	
 	@Test
 	public void fib_bench_true() throws ABCException {
-		assertTrue(ui.run("verify", filename("fib_bench_true.c")));
+		assertTrue(ui.run("verify", filename("fib_bench_true.c"), "-svcomp", "-inputNUM=5"));
 	}
 
 	@Test
