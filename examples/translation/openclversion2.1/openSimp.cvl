@@ -1,118 +1,32 @@
-
 #include <civlc.h>
-#include <stdlib.h>
-
-typedef struct
+void square(int global_id, float input[], float output[], int count)
 {
-  void * arguments;
-  int global_id;
-  int local_id;
-  int workgroup;
-} cl_kernel;
-
-typedef struct
-{
-  //Variables for kernels
-  
-  float * input;
-  float * output;
-  int count;
-  
-}args;
-
-cl_kernel clCreateKernel(args * argument)
-{
-  cl_kernel kernel;
-  kernel.arguments = argument;
-  
-  return kernel;
-}
-
-//kernel
-void square(int workgroup, int global_id, int local_id, float* input, float* output, int count)
-{
-  //int i = get_global_id(0);
   int i = global_id;
   if (i < count)
   {
     output[i] = input[i] * input[i];
-    //printf("output[%d] is %d\n", i, output[i]);
   }
 }
-
-void workfunc(size_t local, size_t global, cl_kernel param)
+int main(int argc, char** argv)
 {
-  for(int i = local * param.workgroup; i < local * param.workgroup + local; i++)
+  int global = 4;
+  
+  float input[global];
+  float output[global];
+  
+  for(int i = 0; i < global; i++)
   {
-    param.local_id = i % local;
-    param.global_id = i;
-    square(param.workgroup, param.global_id, param.local_id, ((args*)param.arguments)->input, ((args*)param.arguments)->output, ((args*)param.arguments)->count);
-  }
-}
-
-int clEnqueueNDRangeKernel(cl_kernel kernel, int global, int local)
-{
-  $assert(global % local == 0);
-  cl_kernel param[global/local];
-  $proc procs[global/local];
-  for(int i = 0; i < global/local; i++)
-  {
-    param[i] = kernel;
-    param[i].workgroup = i;
-    procs[i] = $spawn workfunc(local, global, param[i]);
+    input[i] = i;
   }
   
-  //this part here is the new clFinish(commands);
-  for(int i = 0; i < global/local; i++)
+  $proc procs[global];
+  for(int i = 0; i < global; i++)
+  {
+    procs[i] = $spawn square(i, input, output, global);
+  }
+  
+  for(int i = 0; i < global; i++)
   {
     $wait(procs[i]);
   }
-  
-  return 1;
-}
-
-int main(int argc, char** argv)
-{
-  args * arguments;
-  arguments = (args*)malloc(sizeof(args));
-  
-  int global = 8;
-  int local = 2;
-  
-  float data[global];              // original data set given to device
-  
-  cl_kernel kernel;
-  int err;
-  
-  float * input;                       // device memory used for the input array
-  float * output;                      // device memory used for the output array
-  
-  unsigned int count = global;
-  for(int i = 0; i < count; i++)
-  {
-    data[i] = i;
-  }
-  
-  input = (float *) malloc(sizeof(float) * count);
-  output = (float *) malloc(sizeof(float) * count);
-  
-  //memcpy(input, data, sizeof(float) * count);
-  
-  kernel = clCreateKernel(arguments);
-  
-  ((args*)kernel.arguments)->input = data;
-  
-  ((args*)kernel.arguments)->output = output;
-
-  ((args*)kernel.arguments)->count = count;
-  
-  err = clEnqueueNDRangeKernel(kernel, global, local);
-  
-  free(((args*)kernel.arguments)->input);
-  free(((args*)kernel.arguments)->output);
-  
-  free(input);
-  free(output);
-  free(arguments);
-  
 }
