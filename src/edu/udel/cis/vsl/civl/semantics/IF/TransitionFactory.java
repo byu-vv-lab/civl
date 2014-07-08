@@ -11,6 +11,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 /**
  * A factory to create transitions and transition sequences.
  * 
+ * TODO: move to Semantics, and make all methods static.
+ * 
  * @author Timothy K. Zirkel (zirkel)
  * 
  */

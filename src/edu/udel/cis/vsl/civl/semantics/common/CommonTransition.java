@@ -55,9 +55,14 @@ public class CommonTransition implements Transition {
 	 * </p>
 	 * 
 	 * @param pathCondition
+	 *            The path condition of the new state after the transition being
+	 *            executed.
 	 * @param pid
+	 *            The PID of the process that the transition belongs to.
 	 * @param processIdentifier
+	 *            The identifier of the process that the transition belongs to.
 	 * @param statement
+	 *            The statement of the transition.
 	 */
 	public CommonTransition(BooleanExpression pathCondition, int pid,
 			int processIdentifier, Statement statement) {

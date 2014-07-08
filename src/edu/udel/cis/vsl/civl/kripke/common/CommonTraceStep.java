@@ -11,7 +11,6 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 
 /**
  * This represents a trace executing from a certain state for a certain process.
- * TODO: cleaner way of setPostState();
  * 
  * @author Manchun Zheng
  * 
@@ -98,7 +97,7 @@ public class CommonTraceStep implements TraceStep {
 					"A completed trace step cannot be completed again.",
 					(CIVLSource) null);
 	}
-	
+
 	@Override
 	public State getFinalState() {
 		return finalState;
