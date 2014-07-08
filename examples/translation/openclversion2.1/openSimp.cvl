@@ -1,5 +1,5 @@
 #include <civlc.h>
-void square(int global_id, float input[], float output[], int count)
+void square(int global_id, int input[], int output[], int count)
 {
   int i = global_id;
   if (i < count)
@@ -11,22 +11,17 @@ int main(int argc, char** argv)
 {
   int global = 4;
   
-  float input[global];
-  float output[global];
+  int input[global];
+  int output[global];
   
   for(int i = 0; i < global; i++)
   {
     input[i] = i;
   }
-  
-  $proc procs[global];
+
   for(int i = 0; i < global; i++)
   {
-    procs[i] = $spawn square(i, input, output, global);
+    square(i, input, output, global);
   }
-  
-  for(int i = 0; i < global; i++)
-  {
-    $wait(procs[i]);
-  }
+  return 0;
 }
