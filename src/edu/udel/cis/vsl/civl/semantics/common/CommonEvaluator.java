@@ -79,6 +79,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -126,6 +127,9 @@ public class CommonEvaluator implements Evaluator {
 
 	/* *************************** Instance Fields ************************* */
 
+	/**
+	 * The library evaluator loader.
+	 */
 	private LibraryEvaluatorLoader libLoader;
 
 	/**
@@ -146,17 +150,23 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private SymbolicUnionType bundleType;
 
+	/**
+	 * The dynamic gcomm object type.
+	 */
 	private SymbolicType gcommType;
 
+	/**
+	 * The dynamic comm object type.
+	 */
 	private SymbolicType commType;
 
 	/**
-	 * The symbolic heap type.
+	 * The dynamic heap type.
 	 */
 	private SymbolicTupleType heapType;
 
 	/**
-	 * TODO ????
+	 * The identity reference expression.
 	 */
 	private ReferenceExpression identityReference;
 
@@ -200,6 +210,13 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private SymbolicTupleType pointerType;
 
+	/**
+	 * The function pointer value is a pair <s,n> where s identifies the dynamic
+	 * scope, n identifies the name of the function that the pointer points to.
+	 * The type of s is scopeType, which is just a tuple wrapping a single
+	 * integer which is the dynamic scope ID number. The type of n is array of
+	 * characters.
+	 */
 	private SymbolicTupleType functionPointerType;
 
 	/**
@@ -225,12 +242,13 @@ public class CommonEvaluator implements Evaluator {
 	private IntObject zeroObj;
 
 	/**
-	 * The symbolic numeric expression of 0.
+	 * The symbolic numeric expression of 0 of integer type.
 	 */
 	private NumericExpression zero;
 
 	/**
-	 * The symbolic numeric expression of ? TODO
+	 * The symbolic numeric expression of 0 of real type. TODO: why do we need
+	 * zero and zeroR?
 	 */
 	private NumericExpression zeroR;
 
@@ -243,18 +261,50 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private SymbolicExpression nullCharExpr;
 
+	/**
+	 * The symbolic utility for manipulations of symbolic expressions.
+	 */
 	private SymbolicUtility symbolicUtil;
 
+	/**
+	 * The error logger to report errors.
+	 */
 	private CIVLErrorLogger errorLogger;
 
+	/**
+	 * The abstract function for bitwise and.
+	 */
 	private SymbolicConstant bitAndFunc;
+
+	/**
+	 * The abstract function for bitwise complement.
+	 */
 	private SymbolicConstant bitComplementFunc;
+
+	/**
+	 * The abstract function for bitwise or.
+	 */
 	private SymbolicConstant bitOrFunc;
+
+	/**
+	 * The abstract function for bitwise xor.
+	 */
 	private SymbolicConstant bitXorFunc;
+
+	/**
+	 * The abstract function for bitwise left shift.
+	 */
 	private SymbolicConstant shiftLeftFunc;
+
+	/**
+	 * The abstract function for bitwise right shift.
+	 */
 	private SymbolicConstant shiftRightFunc;
 
-	private SymbolicExpression zeroOrOne;
+	/**
+	 * The symbolic numeric expression that has the value of either zero or one.
+	 */
+	private NumericExpression zeroOrOne;
 
 	/* ***************************** Constructors ************************** */
 
@@ -330,7 +380,7 @@ public class CommonEvaluator implements Evaluator {
 				.stringObject("shiftright"), universe.functionType(
 				Arrays.asList(universe.integerType(), universe.integerType()),
 				universe.integerType()));
-		this.zeroOrOne = universe.symbolicConstant(
+		this.zeroOrOne = (NumericExpression) universe.symbolicConstant(
 				universe.stringObject("ZeroOrOne"), universe.integerType());
 	}
 
@@ -1791,11 +1841,26 @@ public class CommonEvaluator implements Evaluator {
 	private Evaluation getSystemGuard(CIVLSource source, State state, int pid,
 			String library, String function, List<Expression> arguments)
 			throws UnsatisfiablePathConditionException {
-		LibraryEvaluator libEvaluator = this.libLoader.getLibraryEvaluator(
-				library, this, this.modelFactory, symbolicUtil);
+		LibraryEvaluator libEvaluator;
 
-		return libEvaluator.evaluateGuard(source, state, pid, function,
-				arguments);
+		try {
+			libEvaluator = this.libLoader.getLibraryEvaluator(library, this,
+					this.modelFactory, symbolicUtil);
+
+			return libEvaluator.evaluateGuard(source, state, pid, function,
+					arguments);
+		} catch (LibraryLoaderException exception) {
+			String process = state.getProcessState(pid).name() + "(id=" + pid
+					+ ")";
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
+					"An error is encountered when loading the library evaluator for "
+							+ library + ": " + exception.getMessage(),
+					this.symbolicUtil.stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+		}
+		return new Evaluation(state, universe.falseExpression());
 	}
 
 	/**
@@ -1986,23 +2051,6 @@ public class CommonEvaluator implements Evaluator {
 		return (SymbolicType) universe.objectWithId(id);
 	}
 
-	/**
-	 * Evaluates pointer addition. Pointer addition involves the addition of a
-	 * pointer expression and an integer.
-	 * 
-	 * @param state
-	 *            the pre-state
-	 * @param pid
-	 *            the PID of the process evaluating the pointer addition
-	 * @param expression
-	 *            the pointer addition expression
-	 * @param pointer
-	 *            the result of evaluating argument 0 of expression
-	 * @param offset
-	 *            the result of evaluating argument 1 of expression
-	 * @return the result of evaluating the sum of the pointer and the integer
-	 * @throws UnsatisfiablePathConditionException
-	 */
 	@Override
 	public Evaluation pointerAdd(State state, int pid, String process,
 			BinaryExpression expression, SymbolicExpression pointer,
@@ -2225,92 +2273,6 @@ public class CommonEvaluator implements Evaluator {
 		return result;
 	}
 
-	// /**
-	// * Evaluates pointer subtraction.
-	// *
-	// * @param state
-	// * the pre-state
-	// * @param pid
-	// * the PID of the process performing this evaluation
-	// * @param expression
-	// * the pointer subtraction expression
-	// * @param pointer
-	// * the result of evaluating argument 0 of expression; should be a
-	// * pointer
-	// * @param offset
-	// * the result of evaluating argument 1 of expression
-	// * @return the integer symbolic expression resulting from subtracting the
-	// * two pointers together with the post-state if side-effects
-	// * occurred
-	// * @throws UnsatisfiablePathConditionException
-	// */
-	// private Evaluation pointerSubtract(State state, int pid, String process,
-	// BinaryExpression expression, SymbolicExpression pointer,
-	// NumericExpression offset)
-	// throws UnsatisfiablePathConditionException {
-	// ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
-	//
-	// if (symRef.isArrayElementReference()) {
-	// SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
-	// expression.getSource(), pointer);
-	// Evaluation eval = dereference(expression.getSource(), state,
-	// process, arrayPointer, false);
-	// // eval.value is now a symbolic expression of array type.
-	// SymbolicArrayType arrayType = (SymbolicArrayType) eval.value.type();
-	// ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
-	// NumericExpression oldIndex = arrayElementRef.getIndex();
-	// NumericExpression newIndex = universe.subtract(oldIndex, offset);
-	//
-	// if (arrayType.isComplete()) { // check bounds
-	// NumericExpression length = universe.length(eval.value);
-	// BooleanExpression claim = universe.and(
-	// universe.lessThanEquals(zero, newIndex),
-	// universe.lessThanEquals(newIndex, length));
-	// BooleanExpression assumption = eval.state.getPathCondition();
-	// ResultType resultType = universe.reasoner(assumption)
-	// .valid(claim).getResultType();
-	//
-	// if (resultType != ResultType.YES) {
-	// eval.state = errorLogger.logError(expression.getSource(),
-	// eval.state, process,
-	// symbolicUtil.stateToString(eval.state), claim,
-	// resultType, ErrorKind.OUT_OF_BOUNDS,
-	// "Pointer subtraction resulted in out of bounds array index:\nindex = "
-	// + newIndex + "\nlength = " + length);
-	// }
-	// }
-	// eval.value = symbolicUtil.setSymRef(pointer, universe
-	// .arrayElementReference(arrayElementRef.getParent(),
-	// newIndex));
-	// return eval;
-	// } else if (symRef.isOffsetReference()) {
-	// OffsetReference offsetRef = (OffsetReference) symRef;
-	// NumericExpression oldOffset = offsetRef.getOffset();
-	// NumericExpression newOffset = universe.subtract(oldOffset, offset);
-	// BooleanExpression claim = universe.and(
-	// universe.lessThanEquals(zero, newOffset),
-	// universe.lessThanEquals(newOffset, one));
-	// BooleanExpression assumption = state.getPathCondition();
-	// ResultType resultType = universe.reasoner(assumption).valid(claim)
-	// .getResultType();
-	// Evaluation eval;
-	//
-	// if (resultType != ResultType.YES) {
-	// state = errorLogger.logError(expression.getSource(), state,
-	// process, symbolicUtil.stateToString(state), claim,
-	// resultType, ErrorKind.OUT_OF_BOUNDS,
-	// "Pointer subtraction resulted in out of bounds object pointer:\noffset = "
-	// + newOffset);
-	// }
-	// eval = new Evaluation(state, symbolicUtil.setSymRef(pointer,
-	// universe.offsetReference(offsetRef.getParent(), newOffset)));
-	// return eval;
-	// } else
-	// throw new CIVLUnimplementedFeatureException(
-	// "Pointer subtraction for anything other than array elements or variables",
-	// expression);
-	// }
-
 	/**
 	 * zero
 	 * 
@@ -2333,7 +2295,7 @@ public class CommonEvaluator implements Evaluator {
 			String process, FunctionGuardExpression expression)
 			throws UnsatisfiablePathConditionException {
 		Triple<State, CIVLFunction, Integer> eval = this
-				.evaluateFunctionExpression(state, pid,
+				.evaluateFunctionPointer(state, pid,
 						expression.functionExpression(), expression.getSource());
 		CIVLFunction function;
 
@@ -2791,41 +2753,35 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public Triple<State, CIVLFunction, Integer> evaluateFunctionExpression(
-			State state, int pid, Expression functionExpression,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
-		if (functionExpression == null)
-			return null;
-		else {
-			CIVLFunction function;
-			Evaluation eval = this.evaluate(state, pid, functionExpression);
-			int scopeId = modelFactory.getScopeId(
-					functionExpression.getSource(),
-					universe.tupleRead(eval.value, this.zeroObj));
-			SymbolicExpression symFuncName = universe.tupleRead(eval.value,
-					this.oneObj);
-			SymbolicSequence<?> originalArray = (SymbolicSequence<?>) symFuncName
-					.argument(0);
-			String funcName = "";
+	public Triple<State, CIVLFunction, Integer> evaluateFunctionPointer(
+			State state, int pid, Expression functionPointer, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		CIVLFunction function;
+		Evaluation eval = this.evaluate(state, pid, functionPointer);
+		int scopeId = modelFactory.getScopeId(functionPointer.getSource(),
+				universe.tupleRead(eval.value, this.zeroObj));
+		SymbolicExpression symFuncName = universe.tupleRead(eval.value,
+				this.oneObj);
+		SymbolicSequence<?> originalArray = (SymbolicSequence<?>) symFuncName
+				.argument(0);
+		String funcName = "";
 
-			if (scopeId < 0) {
-				ProcessState procState = state.getProcessState(pid);
-				CIVLExecutionException err = new CIVLExecutionException(
-						ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE,
-						procState.name() + "(id=" + pid + ")",
-						"Invalid function pointer: " + functionExpression,
-						symbolicUtil.stateToString(state), source);
+		if (scopeId < 0) {
+			ProcessState procState = state.getProcessState(pid);
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE,
+					procState.name() + "(id=" + pid + ")",
+					"Invalid function pointer: " + functionPointer,
+					symbolicUtil.stateToString(state), source);
 
-				errorLogger.reportError(err);
-			}
-			state = eval.state;
-			for (int j = 0; j < originalArray.size(); j++) {
-				funcName += originalArray.get(j).toString().charAt(1);
-			}
-			function = state.getScope(scopeId).lexicalScope()
-					.getFunction(funcName);
-			return new Triple<>(state, function, scopeId);
+			errorLogger.reportError(err);
 		}
+		state = eval.state;
+		for (int j = 0; j < originalArray.size(); j++) {
+			funcName += originalArray.get(j).toString().charAt(1);
+		}
+		function = state.getScope(scopeId).lexicalScope().getFunction(funcName);
+		return new Triple<>(state, function, scopeId);
 	}
 
 	@Override
@@ -2903,33 +2859,41 @@ public class CommonEvaluator implements Evaluator {
 	public SymbolicExpression heapValue(CIVLSource source, State state,
 			String process, SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException {
-		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
-
-		if (dyScopeID < 0) {
-			errorLogger
-					.logSimpleError(source, state, process,
-							symbolicUtil.stateToString(state),
-							ErrorKind.DEREFERENCE,
-							"Attempt to dereference pointer into scope which has been removed from state");
+		if (scopeValue.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
+			errorLogger.logSimpleError(source, state, process,
+					symbolicUtil.stateToString(state), ErrorKind.OTHER,
+					"Attempt to get the heap " + "pointer of a symbolic scope");
 			throw new UnsatisfiablePathConditionException();
 		} else {
-			DynamicScope dyScope = state.getScope(dyScopeID);
-			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
-			SymbolicExpression heapValue;
+			int dyScopeID = modelFactory.getScopeId(source, scopeValue);
 
-			if (heapVariable == null) {
-				errorLogger
-						.logSimpleError(source, state, process,
-								symbolicUtil.stateToString(state),
-								ErrorKind.MEMORY_LEAK,
-								"Attempt to dereference pointer into a heap that never exists");
+			if (dyScopeID < 0) {
+				errorLogger.logSimpleError(source, state, process,
+						symbolicUtil.stateToString(state),
+						ErrorKind.DEREFERENCE,
+						"Attempt to dereference pointer into scope which "
+								+ "has been removed from state");
 				throw new UnsatisfiablePathConditionException();
-			}
+			} else {
+				DynamicScope dyScope = state.getScope(dyScopeID);
+				Variable heapVariable = dyScope.lexicalScope().variable(
+						"__heap");
+				SymbolicExpression heapValue;
 
-			heapValue = dyScope.getValue(heapVariable.vid());
-			if (heapValue.equals(universe.nullExpression()))
-				heapValue = symbolicUtil.initialHeapValue();
-			return heapValue;
+				if (heapVariable == null) {
+					errorLogger.logSimpleError(source, state, process,
+							symbolicUtil.stateToString(state),
+							ErrorKind.MEMORY_LEAK,
+							"Attempt to dereference pointer into a "
+									+ "heap that never exists");
+					throw new UnsatisfiablePathConditionException();
+				}
+
+				heapValue = dyScope.getValue(heapVariable.vid());
+				if (heapValue.equals(universe.nullExpression()))
+					heapValue = symbolicUtil.initialHeapValue();
+				return heapValue;
+			}
 		}
 	}
 
@@ -2937,30 +2901,38 @@ public class CommonEvaluator implements Evaluator {
 	public SymbolicExpression heapPointer(CIVLSource source, State state,
 			String process, SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException {
-		ReferenceExpression symRef = (ReferenceExpression) universe
-				.canonic(universe.identityReference());
-		int dyScopeID = modelFactory.getScopeId(source, scopeValue);
-
-		if (dyScopeID < 0) {
-			errorLogger
-					.logSimpleError(source, state, process,
-							symbolicUtil.stateToString(state),
-							ErrorKind.MEMORY_LEAK,
-							"Attempt to access the heap of the scope that has been removed from state");
+		if (scopeValue.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
+			errorLogger.logSimpleError(source, state, process,
+					symbolicUtil.stateToString(state), ErrorKind.OTHER,
+					"Attempt to get the heap pointer of a symbolic scope");
 			throw new UnsatisfiablePathConditionException();
 		} else {
-			DynamicScope dyScope = state.getScope(dyScopeID);
-			Variable heapVariable = dyScope.lexicalScope().variable("__heap");
+			int dyScopeID = modelFactory.getScopeId(source, scopeValue);
+			ReferenceExpression symRef = (ReferenceExpression) universe
+					.canonic(universe.identityReference());
 
-			if (heapVariable == null) {
+			if (dyScopeID < 0) {
 				errorLogger.logSimpleError(source, state, process,
 						symbolicUtil.stateToString(state),
 						ErrorKind.MEMORY_LEAK,
-						"Attempt to access a heap that never exists");
+						"Attempt to access the heap of the scope that has been "
+								+ "removed from state");
 				throw new UnsatisfiablePathConditionException();
+			} else {
+				DynamicScope dyScope = state.getScope(dyScopeID);
+				Variable heapVariable = dyScope.lexicalScope().variable(
+						"__heap");
+
+				if (heapVariable == null) {
+					errorLogger.logSimpleError(source, state, process,
+							symbolicUtil.stateToString(state),
+							ErrorKind.MEMORY_LEAK,
+							"Attempt to access a heap that never exists");
+					throw new UnsatisfiablePathConditionException();
+				}
+				return symbolicUtil.makePointer(dyScopeID, heapVariable.vid(),
+						symRef);
 			}
-			return symbolicUtil.makePointer(dyScopeID, heapVariable.vid(),
-					symRef);
 		}
 	}
 
@@ -3217,37 +3189,6 @@ public class CommonEvaluator implements Evaluator {
 	@Override
 	public SymbolicUtility symbolicUtility() {
 		return symbolicUtil;
-	}
-
-	@Override
-	public Evaluation getSubArray(CIVLSource source, State state,
-			String process, SymbolicExpression arrayPointer, int startIndex)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression oldArray;
-		NumericExpression offSet;
-		SymbolicCompleteArrayType arrayType;
-		NumericSymbolicConstant index;
-		SymbolicExpression arrayFunction;
-		SymbolicExpression result;
-
-		if (arrayPointer.type() instanceof SymbolicArrayType)
-			oldArray = arrayPointer;
-		else {
-			Evaluation eval;
-
-			arrayPointer = symbolicUtil.parentPointer(source, arrayPointer);
-			eval = dereference(source, state, process, arrayPointer, false);
-			state = eval.state;
-			oldArray = eval.value;
-		}
-		offSet = universe.integer(startIndex);
-		arrayType = (SymbolicCompleteArrayType) oldArray.type();
-		index = (NumericSymbolicConstant) universe.symbolicConstant(
-				universe.stringObject("i"), universe.integerType());
-		arrayFunction = universe.lambda(index,
-				universe.arrayRead(oldArray, universe.add(index, offSet)));
-		result = universe.arrayLambda(arrayType, arrayFunction);
-		return new Evaluation(state, result);
 	}
 
 	@Override

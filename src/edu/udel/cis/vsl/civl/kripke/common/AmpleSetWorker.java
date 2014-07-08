@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -23,6 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
@@ -231,11 +233,21 @@ public class AmpleSetWorker {
 				for (CallOrSpawnStatement call : systemCalls) {
 					SystemFunction systemFunction = (SystemFunction) call
 							.function();
-					LibraryEnabler lib = enabler.libraryEnabler(
-							call.getSource(), systemFunction.getLibrary());
-					Set<Integer> ampleSubSet = lib.ampleSet(state, pid, call,
-							reachableMemUnitsMap);
+					Set<Integer> ampleSubSet = null;
 
+					try {
+						LibraryEnabler lib = enabler.libraryEnabler(
+								call.getSource(), systemFunction.getLibrary());
+
+						ampleSubSet = lib.ampleSet(state, pid, call,
+								reachableMemUnitsMap);
+					} catch (LibraryLoaderException e) {
+						throw new CIVLInternalException(
+								"This is unreachable because the earlier execution "
+										+ "has already checked that the library enabler "
+										+ "gets loaded successfully otherwise an error should have been reported there",
+								call.getSource());
+					}
 					if (ampleSubSet != null && !ampleSubSet.isEmpty()) {
 						for (int amplePid : ampleSubSet) {
 							if (amplePid != pid

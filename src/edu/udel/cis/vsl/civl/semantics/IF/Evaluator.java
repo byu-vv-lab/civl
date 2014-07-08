@@ -21,6 +21,16 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
+/**
+ * This is the CIVL main evaluator. First, it is responsible for evaluating all
+ * expressions. Second, it also provides some utility methods to be used by
+ * library executor/evaluator/enabler, like the methods related to heap. Third,
+ * it implements helper methods for the partial order reduction in pointer
+ * reachability analysis.
+ * 
+ * @author Manchun Zheng (zmanchun)
+ * 
+ */
 public interface Evaluator {
 
 	/**
@@ -65,6 +75,26 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 
 	/**
+	 * Evaluates a function pointer expression.
+	 * 
+	 * @param state
+	 *            The state where the evaluation happens.
+	 * @param pid
+	 *            The PID of the process that triggers this evaluation.
+	 * @param functionPointer
+	 *            The function pointer expression to be evaluated.
+	 * @param source
+	 *            The source code information for error report
+	 * @return The new state after the evaluation with possible side effect, the
+	 *         function that the function pointer points to, and the dyscope ID
+	 *         of the function that the given function pointer refers to.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	Triple<State, CIVLFunction, Integer> evaluateFunctionPointer(State state,
+			int pid, Expression functionPointer, CIVLSource source)
+			throws UnsatisfiablePathConditionException;
+
+	/**
 	 * Evaluate the size of a CIVL type.
 	 * 
 	 * TODO is this necessarily public?
@@ -83,6 +113,13 @@ public interface Evaluator {
 	 */
 	Evaluation evaluateSizeofType(CIVLSource source, State state, int pid,
 			CIVLType type) throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Returns the error logger object of this evaluator.
+	 * 
+	 * @return The error logger object of this evaluator.
+	 */
+	CIVLErrorLogger errorLogger();
 
 	/**
 	 * Given a pointer to char, returns the symbolic expression of type array of
@@ -113,6 +150,46 @@ public interface Evaluator {
 	 */
 	Evaluation getStringExpression(State state, String process,
 			CIVLSource source, SymbolicExpression charPointer)
+			throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Gets the pointer to the heap of the given scope.
+	 * 
+	 * @param source
+	 *            The source code information for error report.
+	 * @param state
+	 *            The state where this operation happens.
+	 * @param process
+	 *            The information of the process that triggers this operation,
+	 *            for the purpose of error report.
+	 * @param scopeValue
+	 *            The scope value
+	 * @return The pointer to the heap of the given scope.
+	 * @throws UnsatisfiablePathConditionException
+	 *             if the given scope is not concrete or not a valid scope.
+	 */
+	SymbolicExpression heapPointer(CIVLSource source, State state,
+			String process, SymbolicExpression scopeValue)
+			throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Gets the value of the heap of the given scope.
+	 * 
+	 * @param source
+	 *            The source code information for error report.
+	 * @param state
+	 *            The state where this operation happens.
+	 * @param process
+	 *            The information of the process that triggers this operation,
+	 *            for the purpose of error report.
+	 * @param scopeValue
+	 *            The scope value
+	 * @return The pointer to the heap of the given scope.
+	 * @throws UnsatisfiablePathConditionException
+	 *             if the given scope is not concrete or not a valid scope.
+	 */
+	SymbolicExpression heapValue(CIVLSource source, State state,
+			String process, SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
 
 	/**
@@ -159,6 +236,28 @@ public interface Evaluator {
 	ModelFactory modelFactory();
 
 	/**
+	 * Evaluates pointer addition. Pointer addition involves the addition of a
+	 * pointer expression and an integer.
+	 * 
+	 * @param state
+	 *            the pre-state
+	 * @param pid
+	 *            the PID of the process evaluating the pointer addition
+	 * @param expression
+	 *            the pointer addition expression
+	 * @param pointer
+	 *            the result of evaluating argument 0 of expression
+	 * @param offset
+	 *            the result of evaluating argument 1 of expression
+	 * @return the result of evaluating the sum of the pointer and the integer
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	Evaluation pointerAdd(State state, int pid, String process,
+			BinaryExpression expression, SymbolicExpression pointer,
+			NumericExpression offset)
+			throws UnsatisfiablePathConditionException;
+
+	/**
 	 * Creates a pointer value by evaluating a left-hand-side expression in the
 	 * given state.
 	 * 
@@ -200,44 +299,16 @@ public interface Evaluator {
 	StateFactory stateFactory();
 
 	/**
+	 * Returns the symbolic utility object of this evaluator.
+	 * 
+	 * @return The symbolic utility object of this evaluator.
+	 */
+	SymbolicUtility symbolicUtility();
+
+	/**
 	 * The symbolic universe should be the unique one used in the system.
 	 * 
 	 * @return The symbolic universe of the evaluator.
 	 */
 	SymbolicUniverse universe();
-
-	SymbolicExpression heapPointer(CIVLSource source, State state,
-			String process, SymbolicExpression scopeValue)
-			throws UnsatisfiablePathConditionException;
-
-	SymbolicExpression heapValue(CIVLSource source, State state,
-			String process, SymbolicExpression scopeValue)
-			throws UnsatisfiablePathConditionException;
-
-	/**
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param functionExpression
-	 * @param source
-	 *            the source code information for error report
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	Triple<State, CIVLFunction, Integer> evaluateFunctionExpression(
-			State state, int pid, Expression functionExpression,
-			CIVLSource source) throws UnsatisfiablePathConditionException;
-
-	Evaluation pointerAdd(State state, int pid, String process,
-			BinaryExpression expression, SymbolicExpression pointer,
-			NumericExpression offset)
-			throws UnsatisfiablePathConditionException;
-
-	SymbolicUtility symbolicUtility();
-
-	Evaluation getSubArray(CIVLSource source, State state, String process,
-			SymbolicExpression arrayPointer, int startIndex)
-			throws UnsatisfiablePathConditionException;
-
-	CIVLErrorLogger errorLogger();
 }

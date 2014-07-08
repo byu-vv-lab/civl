@@ -2,9 +2,9 @@ package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.io.PrintStream;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -113,7 +113,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		String functionName = call.function().name().name();
 		CallOrSpawnStatement callWorker;
 		List<Expression> arguments = call.arguments();
-		List<Transition> localTransitions = new ArrayList<>();
+		List<Transition> localTransitions = new LinkedList<>();
 		Statement transitionStatement;
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
 

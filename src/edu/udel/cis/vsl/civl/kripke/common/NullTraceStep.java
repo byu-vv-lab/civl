@@ -57,7 +57,7 @@ public class NullTraceStep implements TraceStep {
 
 	@Override
 	public List<AtomicStep> getAtomicSteps() {
-		return new ArrayList<AtomicStep>();
+		return new ArrayList<AtomicStep>(0);
 	}
 
 	@Override

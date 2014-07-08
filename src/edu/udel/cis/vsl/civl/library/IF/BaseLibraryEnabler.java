@@ -1,8 +1,8 @@
 package edu.udel.cis.vsl.civl.library.IF;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,7 +97,7 @@ public abstract class BaseLibraryEnabler extends Library implements
 			int pid, int processIdentifier, Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException {
 		Statement transitionStatement;
-		ArrayList<Transition> localTransitions = new ArrayList<>();
+		List<Transition> localTransitions = new LinkedList<>();
 
 		if (assignAtomicLock != null) {
 			StatementList statementList = modelFactory

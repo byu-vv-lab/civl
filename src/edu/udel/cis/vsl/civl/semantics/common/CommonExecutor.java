@@ -49,6 +49,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -109,13 +110,6 @@ public class CommonExecutor implements Executor {
 	 * {@link #executeWork(State, int, Statement)}.
 	 */
 	private long numSteps = 0;
-
-	// /**
-	// * The printing stream to be used.
-	// */
-	// protected PrintStream output;
-	//
-	// protected PrintStream err;
 
 	/** The factory used to produce and manipulate model states. */
 	private StateFactory stateFactory;
@@ -284,11 +278,27 @@ public class CommonExecutor implements Executor {
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		if (statement.function() instanceof SystemFunction) {
-			LibraryExecutor executor = loader.getLibraryExecutor(
-					((SystemFunction) statement.function()).getLibrary(), this,
-					this.modelFactory, this.symbolicUtil, this.civlConfig);
+			String libraryName = ((SystemFunction) statement.function())
+					.getLibrary();
 
-			state = executor.execute(state, pid, statement);
+			try {
+				LibraryExecutor executor = loader.getLibraryExecutor(
+						libraryName, this, this.modelFactory,
+						this.symbolicUtil, this.civlConfig);
+
+				state = executor.execute(state, pid, statement);
+			} catch (LibraryLoaderException exception) {
+				String process = state.getProcessState(pid).name() + "(id="
+						+ pid + ")";
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
+						"An error is encountered when loading the library executor for "
+								+ libraryName + ": " + exception.getMessage(),
+						this.symbolicUtil.stateToString(state),
+						statement.getSource());
+
+				this.errorLogger.reportError(err);
+			}
 		} else {
 			CIVLFunction function = statement.function();
 			SymbolicExpression[] arguments;
@@ -303,7 +313,7 @@ public class CommonExecutor implements Executor {
 			}
 			if (function == null) {
 				Triple<State, CIVLFunction, Integer> eval = evaluator
-						.evaluateFunctionExpression(state, pid,
+						.evaluateFunctionPointer(state, pid,
 								statement.functionExpression(),
 								statement.getSource());
 
@@ -691,11 +701,9 @@ public class CommonExecutor implements Executor {
 							"The lhs "
 									+ call.lhs()
 									+ " cannot be updated because the invocaion of"
-									+ " the function "
-									+ functionName
+									+ " the function " + functionName
 									+ " returns without any expression.",
-							symbolicUtil.stateToString(state),
-							call.getSource());
+							symbolicUtil.stateToString(state), call.getSource());
 
 					this.errorLogger.reportError(err);
 				}
@@ -738,7 +746,7 @@ public class CommonExecutor implements Executor {
 		}
 		if (function == null) {
 			Triple<State, CIVLFunction, Integer> eval = evaluator
-					.evaluateFunctionExpression(state, pid,
+					.evaluateFunctionPointer(state, pid,
 							statement.functionExpression(),
 							statement.getSource());
 

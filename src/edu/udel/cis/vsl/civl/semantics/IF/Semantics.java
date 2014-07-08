@@ -25,14 +25,45 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  */
 public class Semantics {
 
+	/**
+	 * Creates a new instance of library executor loader.
+	 * 
+	 * @return The new library executor loader.
+	 */
 	public static LibraryExecutorLoader newLibraryExecutorLoader() {
 		return new CommonLibraryExecutorLoader();
 	}
 
+	/**
+	 * Creates a new instance of library evaluator loader.
+	 * 
+	 * @return The new library evaluator loader.
+	 */
 	public static LibraryEvaluatorLoader newLibraryEvaluatorLoader() {
 		return new CommonLibraryEvaluatorLoader();
 	}
 
+	/**
+	 * Creates a new instance of CIVL executor.
+	 * 
+	 * @param config
+	 *            The command line configuration of this run.
+	 * @param modelFactory
+	 *            The model factory of the system.
+	 * @param stateFactory
+	 *            The state factory of the system.
+	 * @param log
+	 *            The error logger of the system.
+	 * @param loader
+	 *            The library executor loader for executing system functions.
+	 * @param evaluator
+	 *            The CIVL evaluator for evaluating expressions.
+	 * @param errLogger
+	 *            The error logger for reporting execution errors.
+	 * @param civlConfig
+	 *            The CIVL configuration.
+	 * @return The new CIVL executor.
+	 */
 	public static Executor newExecutor(GMCConfiguration config,
 			ModelFactory modelFactory, StateFactory stateFactory, ErrorLog log,
 			LibraryExecutorLoader loader, Evaluator evaluator,
@@ -41,6 +72,23 @@ public class Semantics {
 				loader, evaluator, errLogger, civlConfig);
 	}
 
+	/**
+	 * Creates a new instance of CIVL evaluator.
+	 * 
+	 * @param modelFactory
+	 *            The model factory of the system.
+	 * @param stateFactory
+	 *            The state factory of the system.
+	 * @param loader
+	 *            The library evaluator loader for evaluating the guards of
+	 *            system functions.
+	 * @param symbolicUtil
+	 *            The symbolic utility for manipulations of symbolic
+	 *            expressions.
+	 * @param errLogger
+	 *            The error logger for reporting execution errors.
+	 * @return The new CIVL evaluator.
+	 */
 	public static Evaluator newEvaluator(ModelFactory modelFactory,
 			StateFactory stateFactory, LibraryEvaluatorLoader loader,
 			SymbolicUtility symbolicUtil, CIVLErrorLogger errLogger) {

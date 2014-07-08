@@ -5,7 +5,6 @@ package edu.udel.cis.vsl.civl.model.IF;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -1437,7 +1436,7 @@ public interface ModelFactory {
 	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
 
 	AssertStatement assertStatement(CIVLSource sourceOf, Location location,
-			Expression expression, ArrayList<Expression> arguments);
+			Expression expression, List<Expression> arguments);
 
 	CharLiteralExpression charLiteralExpression(CIVLSource sourceOf, char value);
 

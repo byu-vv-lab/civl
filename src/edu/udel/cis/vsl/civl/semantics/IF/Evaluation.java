@@ -13,10 +13,28 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class Evaluation {
 
+	/* *************************** Instance Fields ************************* */
+	/**
+	 * The (possibly) new state resulting from side-effects arising from a
+	 * certain evaluation.
+	 */
 	public State state;
 
+	/**
+	 * The value resulting from a certain evaluation.
+	 */
 	public SymbolicExpression value;
 
+	/* ***************************** Constructors ************************** */
+
+	/**
+	 * Creates a new instance of evaluation.
+	 * 
+	 * @param state
+	 *            The new state resulting from the evaluation.
+	 * @param value
+	 *            The value resulting from the evaluation.
+	 */
 	public Evaluation(State state, SymbolicExpression value) {
 		this.state = state;
 		this.value = value;

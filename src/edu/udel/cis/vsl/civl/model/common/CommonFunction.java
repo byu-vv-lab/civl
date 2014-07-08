@@ -372,12 +372,11 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 	@Override
 	public void simplify() {
-		ArrayList<Location> oldLocations = new ArrayList<Location>(
-				this.locations);
+		List<Location> oldLocations = new ArrayList<Location>(this.locations);
 		int count = oldLocations.size();
 		Set<Location> newLocations;
 		// The index of locations that can be removed
-		ArrayList<Integer> toRemove = new ArrayList<Integer>();
+		Set<Integer> toRemove = new HashSet<Integer>();
 
 		for (int i = 0; i < count; i++) {
 			Location loc = oldLocations.get(i);

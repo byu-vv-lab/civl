@@ -3,8 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.common.statement;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -49,7 +49,7 @@ public class CommonAssertStatement extends CommonStatement implements
 	 *            The expression being checked.
 	 */
 	public CommonAssertStatement(CIVLSource civlSource, Location source,
-			Expression expression, ArrayList<Expression> arguments) {
+			Expression expression, List<Expression> arguments) {
 		super(civlSource, source);
 		this.expression = expression;
 		this.printfArguments = new Expression[arguments.size()];

@@ -1,7 +1,7 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
@@ -9,6 +9,9 @@ import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
+import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
@@ -18,6 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
@@ -247,10 +251,10 @@ public abstract class CommonEnabler implements Enabler {
 	 * @return the list of enabled transitions of the given process at the
 	 *         specified state
 	 */
-	ArrayList<Transition> enabledTransitionsOfProcess(State state, int pid) {
+	List<Transition> enabledTransitionsOfProcess(State state, int pid) {
 		ProcessState p = state.getProcessState(pid);
 		Location pLocation = p.getLocation();
-		ArrayList<Transition> transitions = new ArrayList<>();
+		LinkedList<Transition> transitions = new LinkedList<>();
 		Statement assignAtomicLock = null;
 		int numOutgoing;
 
@@ -274,13 +278,14 @@ public abstract class CommonEnabler implements Enabler {
 		return transitions;
 	}
 
-	/* **************************** Private Methods ************************ */
-
-	LibraryEnabler libraryEnabler(CIVLSource civlSource, String library) {
+	LibraryEnabler libraryEnabler(CIVLSource civlSource, String library)
+			throws LibraryLoaderException {
 		return this.libraryLoader.getLibraryEnabler(library, this, evaluator,
 				this.debugOut, evaluator.modelFactory(),
 				evaluator.symbolicUtility());
 	}
+
+	/* **************************** Private Methods ************************ */
 
 	/**
 	 * Computes transitions from the process owning the atomic lock or triggered
@@ -332,9 +337,10 @@ public abstract class CommonEnabler implements Enabler {
 	private List<Transition> enabledTransitionsOfStatement(State state,
 			Statement s, BooleanExpression pathCondition, int pid,
 			Statement assignAtomicLock) {
-		ArrayList<Transition> localTransitions = new ArrayList<>();
+		List<Transition> localTransitions = new LinkedList<>();
 		Statement transitionStatement = null;
 		int processIdentifier = state.getProcessState(pid).identifier();
+
 		try {
 			if (s instanceof CallOrSpawnStatement) {
 				CallOrSpawnStatement call = (CallOrSpawnStatement) s;
@@ -384,11 +390,25 @@ public abstract class CommonEnabler implements Enabler {
 			BooleanExpression pathCondition, int pid, int processIdentifier,
 			Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException {
-		LibraryEnabler libEnabler = libraryEnabler(source,
-				((SystemFunction) call.function()).getLibrary());
+		String libraryName = ((SystemFunction) call.function()).getLibrary();
 
-		return libEnabler.enabledTransitions(state, call, pathCondition, pid,
-				processIdentifier, assignAtomicLock);
+		try {
+			LibraryEnabler libEnabler = libraryEnabler(source, libraryName);
+
+			return libEnabler.enabledTransitions(state, call, pathCondition,
+					pid, processIdentifier, assignAtomicLock);
+		} catch (LibraryLoaderException exception) {
+			String process = state.getProcessState(pid).name() + "(id=" + pid
+					+ ")";
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
+					"An error is encountered when loading the library evaluator for "
+							+ libraryName + ": " + exception.getMessage(),
+					evaluator.symbolicUtility().stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+		}
+		return new LinkedList<Transition>();
 	}
 
 	/**

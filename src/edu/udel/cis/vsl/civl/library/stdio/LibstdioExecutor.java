@@ -920,8 +920,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		String fileNameString;
 		StringBuffer stringOfSymbolicExpression;
 		StringBuffer formatBuffer;
-		ArrayList<StringBuffer> printedContents = new ArrayList<>();
-		ArrayList<Integer> sIndexes = new ArrayList<>();
+		List<StringBuffer> printedContents = new ArrayList<>();
+		List<Integer> sIndexes = new LinkedList<>();
 		int sCount = 2;
 		Pair<State, StringBuffer> concreteString;
 		List<Format> formats;
@@ -1040,8 +1040,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		StringBuffer stringOfSymbolicExpression;
 		StringBuffer formatBuffer;
-		ArrayList<StringBuffer> printedContents = new ArrayList<>();
-		ArrayList<Integer> sIndexes = new ArrayList<>();
+		List<StringBuffer> printedContents = new ArrayList<>();
+		List<Integer> sIndexes = new LinkedList<>();
 		int sCount = 1;
 		Pair<State, StringBuffer> concreteString;
 		List<Format> formats;
@@ -1302,7 +1302,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 *            The list of arguments to be printed according to the format.
 	 */
 	private void printf(PrintStream printStream, CIVLSource source,
-			List<Format> formats, ArrayList<StringBuffer> arguments) {
+			List<Format> formats, List<StringBuffer> arguments) {
 		if (this.civlConfig.enablePrintf()) {
 			int argIndex = 0;
 

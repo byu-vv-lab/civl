@@ -792,9 +792,9 @@ public class FunctionTranslator {
 	 *            spawn node
 	 * @return the CallOrSpawnStatement
 	 */
-	protected CallOrSpawnStatement callOrSpawnStatement(Scope scope,
+	private CallOrSpawnStatement callOrSpawnStatement(Scope scope,
 			Location location, FunctionCallNode callNode, LHSExpression lhs,
-			ArrayList<Expression> arguments, boolean isCall) {
+			List<Expression> arguments, boolean isCall) {
 		ExpressionNode functionExpression = ((FunctionCallNode) callNode)
 				.getFunction();
 		CallOrSpawnStatement result;
@@ -1852,7 +1852,7 @@ public class FunctionTranslator {
 	 *         call.
 	 */
 	private Statement translateAssertFunctionCall(CIVLSource source,
-			Location location, Scope scope, ArrayList<Expression> arguments) {
+			Location location, Scope scope, List<Expression> arguments) {
 		Statement result;
 
 		int numOfArgs = arguments.size();

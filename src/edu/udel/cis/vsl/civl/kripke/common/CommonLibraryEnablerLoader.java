@@ -10,10 +10,9 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
-import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 
 public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 
@@ -29,7 +28,7 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 	@Override
 	public LibraryEnabler getLibraryEnabler(String name,
 			Enabler primaryEnabler, Evaluator evaluator, PrintStream output,
-			ModelFactory modelFacotry, SymbolicUtility symbolicUtil) {
+			ModelFactory modelFacotry, SymbolicUtility symbolicUtil) throws LibraryLoaderException {
 		LibraryEnabler result = libraryEnablerCache.get(name);
 
 		if (result == null) {
@@ -47,8 +46,7 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 				result = constructor.newInstance(name, primaryEnabler,
 						evaluator, output, modelFacotry, symbolicUtil);
 			} catch (Exception e) {
-				throw new CIVLInternalException("Unable to load library: "
-						+ name + "\n" + e.getMessage(), (CIVLSource) null);
+				throw new LibraryLoaderException(e.getMessage());
 			}
 			libraryEnablerCache.put(name, result);
 		}

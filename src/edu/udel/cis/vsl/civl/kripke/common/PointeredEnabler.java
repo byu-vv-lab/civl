@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -63,7 +64,7 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 		TransitionSequence transitions = Semantics.newTransitionSequence(state);
 		AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this, evaluator,
 				debugging, debugOut);
-		ArrayList<ProcessState> processStates = new ArrayList<>(
+		List<ProcessState> processStates = new LinkedList<>(
 				ampleWorker.ampleProcesses());// compute ample processes
 
 		if (debugging || showAmpleSet) {

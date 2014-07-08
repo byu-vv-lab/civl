@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.dynamic.IF;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -194,7 +194,7 @@ public interface SymbolicUtility {
 	 */
 	public SymbolicExpression updateArrayElementReference(
 			ArrayElementReference arrayReference,
-			ArrayList<NumericExpression> newIndexes);
+			List<NumericExpression> newIndexes);
 
 	/**
 	 * Checks if a heap is null or empty.
@@ -225,7 +225,7 @@ public interface SymbolicUtility {
 	NumericExpression getHighOfRange(SymbolicExpression range);
 
 	NumericExpression getStepOfRange(SymbolicExpression range);
-	
+
 	boolean isInitialized(SymbolicExpression value);
 
 }

@@ -353,7 +353,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * used in Executor, Evaluator and State factory to obtain symbolic process
 	 * ID's.
 	 */
-	private ArrayList<SymbolicExpression> processValues = new ArrayList<SymbolicExpression>();
+	private List<SymbolicExpression> processValues = new ArrayList<SymbolicExpression>();
 
 	/**
 	 * The unique real type used in the system.
@@ -377,7 +377,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * The list of canonicalized symbolic expressions of scope IDs, will be used
 	 * in Executor, Evaluator and State factory to obtain symbolic scope ID's.
 	 */
-	private ArrayList<SymbolicExpression> scopeValues = new ArrayList<SymbolicExpression>();
+	private List<SymbolicExpression> scopeValues = new ArrayList<SymbolicExpression>();
 
 	/**
 	 * The unique symbolic string type used in the system.
@@ -1244,8 +1244,7 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	@Override
 	public AssertStatement assertStatement(CIVLSource civlSource,
-			Location source, Expression expression,
-			ArrayList<Expression> arguments) {
+			Location source, Expression expression, List<Expression> arguments) {
 		AssertStatement result = new CommonAssertStatement(civlSource, source,
 				expression, arguments);
 		Scope scope = expression.expressionScope();
@@ -2225,7 +2224,7 @@ public class CommonModelFactory implements ModelFactory {
 	 *         and s1 are null, returns the non-null scope.
 	 */
 	protected Scope join(Scope s0, Scope s1) {
-		List<Scope> s0Ancestors = new ArrayList<Scope>();
+		Set<Scope> s0Ancestors = new HashSet<Scope>();
 		Scope s0Ancestor = s0;
 		Scope s1Ancestor = s1;
 

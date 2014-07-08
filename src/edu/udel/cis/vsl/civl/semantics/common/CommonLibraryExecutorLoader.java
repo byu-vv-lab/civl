@@ -7,12 +7,11 @@ import java.util.Map;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 
 public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 
@@ -28,7 +27,8 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 	@Override
 	public LibraryExecutor getLibraryExecutor(String name,
 			Executor primaryExecutor, ModelFactory modelFacotry,
-			SymbolicUtility symbolicUtil, CIVLConfiguration civlConfig) {
+			SymbolicUtility symbolicUtil, CIVLConfiguration civlConfig)
+			throws LibraryLoaderException {
 		LibraryExecutor result = libraryExecutorCache.get(name);
 
 		if (result == null) {
@@ -46,8 +46,7 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 				result = constructor.newInstance(name, primaryExecutor,
 						modelFacotry, symbolicUtil, civlConfig);
 			} catch (Exception e) {
-				throw new CIVLInternalException("Unable to load library: "
-						+ name + "\n" + e.getMessage(), (CIVLSource) null);
+				throw new LibraryLoaderException(e.getMessage());
 			}
 			libraryExecutorCache.put(name, result);
 		}

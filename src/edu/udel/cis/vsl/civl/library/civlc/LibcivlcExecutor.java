@@ -1514,7 +1514,6 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		domainType = universe
 				.tupleType(universe.stringObject(name), fieldTypes);
 		domain = universe.tuple(domainType, Arrays.asList(argumentValues));
-
 		if (lhs != null) {
 			CIVLDomainType lhsType = (CIVLDomainType) lhs.getExpressionType();
 

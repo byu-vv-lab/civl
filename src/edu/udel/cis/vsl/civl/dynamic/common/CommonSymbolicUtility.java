@@ -1,9 +1,9 @@
 package edu.udel.cis.vsl.civl.dynamic.common;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -1317,14 +1317,13 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	@Override
 	public SymbolicExpression updateArrayElementReference(
 			ArrayElementReference arrayReference,
-			ArrayList<NumericExpression> newIndexes) {
+			List<NumericExpression> newIndexes) {
 		int dimension = newIndexes.size();
 		ReferenceExpression rootParent = arrayReference;
 		ReferenceExpression newRef;
 
 		for (int i = 0; i < dimension; i++)
 			rootParent = ((ArrayElementReference) rootParent).getParent();
-
 		newRef = rootParent;
 		for (int i = 0; i < dimension; i++) {
 			newRef = universe.arrayElementReference(newRef, newIndexes.get(i));

@@ -85,4 +85,18 @@ public class CommonTransitionSequence implements TransitionSequence {
 	public Transition peek() {
 		return this.transitions.peek();
 	}
+
+	/* ************************* Methods from Object *********************** */
+
+	@Override
+	public String toString() {
+		StringBuffer result = new StringBuffer();
+
+		result.append(state.toString());
+		for (Transition transition : this.transitions) {
+			result.append(":\n");
+			result.append(transition.toString());
+		}
+		return result.toString();
+	}
 }

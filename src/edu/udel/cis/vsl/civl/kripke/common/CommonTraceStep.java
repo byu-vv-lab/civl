@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.kripke.IF.AtomicStep;
@@ -43,7 +43,7 @@ public class CommonTraceStep implements TraceStep {
 	 *            The identifier of the process of this trace.
 	 */
 	public CommonTraceStep(int processIdentifier) {
-		steps = new ArrayList<>();
+		steps = new LinkedList<>();
 		this.processIdentifier = processIdentifier;
 	}
 
@@ -65,7 +65,7 @@ public class CommonTraceStep implements TraceStep {
 	}
 
 	@Override
-	public List<AtomicStep> getAtomicSteps() {
+	public Iterable<AtomicStep> getAtomicSteps() {
 		return this.steps;
 	}
 

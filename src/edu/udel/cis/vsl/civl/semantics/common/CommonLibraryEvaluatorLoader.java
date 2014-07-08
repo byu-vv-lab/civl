@@ -6,12 +6,11 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 
 public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 
@@ -25,7 +24,7 @@ public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 	@Override
 	public LibraryEvaluator getLibraryEvaluator(String name,
 			Evaluator primaryEvaluator, ModelFactory modelFacotry,
-			SymbolicUtility symbolicUtil) {
+			SymbolicUtility symbolicUtil) throws LibraryLoaderException {
 		LibraryEvaluator result = libraryEvaluatorCache.get(name);
 
 		if (result == null) {
@@ -36,14 +35,13 @@ public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 				Class<? extends LibraryEvaluator> aClass = (Class<? extends LibraryEvaluator>) Class
 						.forName(aClassName);
 				Constructor<? extends LibraryEvaluator> constructor = aClass
-						.getConstructor(String.class, Evaluator.class, ModelFactory.class,
-								SymbolicUtility.class);
+						.getConstructor(String.class, Evaluator.class,
+								ModelFactory.class, SymbolicUtility.class);
 
 				result = constructor.newInstance(name, primaryEvaluator,
 						modelFacotry, symbolicUtil);
 			} catch (Exception e) {
-				throw new CIVLInternalException("Unable to load library evaluator for "
-						+ name + ".h.\n" + e.getMessage(), (CIVLSource) null);
+				throw new LibraryLoaderException(e.getMessage());
 			}
 			libraryEvaluatorCache.put(name, result);
 		}
