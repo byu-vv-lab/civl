@@ -688,6 +688,18 @@ An abstract function declares a function without a body, and it has the form
 It is required that the function should have a non-void return type and take at least one parameter.
 The return value of the function is evaluated symbolically using the actual arguments of the function call.
 
+\subsection{Utility functions}
+
+\subsubsection{Equality checking of any two objects:  \texorpdfstring{\cequals}{\$equals}}
+
+The system function \cequals has the form
+\begin{verbatim}
+  _Bool $equals(void *x, void *y);
+\end{verbatim}
+
+This function takes two non-null pointers as input. If  the two objects that the pointers refer to have the same value, then the
+function returns \ctrue. Otherwise, it returns \cfalse.
+
 \chapter{Concurrency}
 \label{chap:concurrency}
 
