@@ -164,17 +164,20 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			break;
 		case "$comm_dequeue":
 
-			// Clauses for path condition
+			//
+			// Since both source and tag may be wild card, there are at most 4
+			// situations that will cause different results.
+
 			BooleanExpression isAnySource = null;
 			BooleanExpression sourceGTEzero = null;
-//			BooleanExpression isAnyTag = null;
-//			BooleanExpression tagGTEzero = null;
+			BooleanExpression isAnyTag = null;
+			BooleanExpression tagGTEzero = null;
 			// The reasoner used to prove if clauses above are valid
 			Reasoner reasoner = universe.reasoner(pathCondition);
 			// Flag indicates if we need to add clauses to original path
 			// condition.
 			NumericExpression minusOne = universe.integer(-1);
-			//NumericExpression minusTwo = universe.integer(-2);
+			NumericExpression minusTwo = universe.integer(-2);
 			IntegerNumber argSourceNumber,
 			argTagNumber;
 			NumericExpression argSource,
@@ -220,19 +223,19 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 				// clause: source == 0
 				isAnySource = universe.equals(minusOne, argSource);
 				if (!reasoner.isValid(isAnySource)) {
-//					tagGTEzero = universe.lessThanEquals(zero, argTag);
-//					if (!reasoner.isValid(tagGTEzero)) {
-//						isAnyTag = universe.equals(minusTwo, argTag);
-//						if (!reasoner.isValid(isAnyTag)) {
-//							newClauses.add(universe.and(isAnySource, isAnyTag));
-//							newClauses.add(universe
-//									.and(isAnySource, tagGTEzero));
-//							newClauses.add(universe
-//									.and(sourceGTEzero, isAnyTag));
-//							newClauses.add(universe.and(sourceGTEzero,
-//									tagGTEzero));
-//						}
-//					}
+					isAnyTag = universe.equals(minusTwo, argTag);
+					if (!reasoner.isValid(isAnyTag)) {
+						tagGTEzero = universe.lessThanEquals(zero, argTag);
+						if (!reasoner.isValid(isAnyTag)) {
+							newClauses.add(universe.and(isAnySource, isAnyTag));
+							newClauses.add(universe
+									.and(isAnySource, tagGTEzero));
+							newClauses.add(universe
+									.and(sourceGTEzero, isAnyTag));
+							newClauses.add(universe.and(sourceGTEzero,
+									tagGTEzero));
+						}
+					}
 					if (newClauses.isEmpty()) {
 						newClauses.add(isAnySource);
 						newClauses.add(sourceGTEzero);
@@ -328,17 +331,15 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		switch (function) {
 		case "$comm_dequeue":
 			NumericExpression argSrc = (NumericExpression) argumentValues[1];
-			NumericExpression minusOne = universe.integer(-1);
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
-			/* IF it's a wildcard $comm_dequeue ? */
-			if (reasoner.isValid(universe.equals(argSrc, minusOne)))
+			if (reasoner.isValid(universe.lessThanEquals(zero, argSrc))) {
+				ampleSet.addAll(this.computeAmpleSetByHandleObject(state, pid,
+						arguments[0], argumentValues[0], reachableMemUnitsMap));
+			} else {
 				for (int p : reachableMemUnitsMap.keySet()) {
 					ampleSet.add(p);
 				}
-			else {
-				ampleSet.addAll(this.computeAmpleSetByHandleObject(state, pid,
-						arguments[0], argumentValues[0], reachableMemUnitsMap));
 			}
 			return ampleSet;
 		case "$comm_enqueue":
