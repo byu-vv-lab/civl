@@ -877,12 +877,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression comm;
 		SymbolicExpression gcommHandle;
 		SymbolicExpression gcomm;
-		SymbolicExpression source = argumentValues[1];
+		NumericExpression source = (NumericExpression) argumentValues[1];
 		SymbolicExpression tag = argumentValues[2];
-		SymbolicExpression dest;
-		SymbolicExpression message;
+		NumericExpression dest;
+		SymbolicExpression queue, queueLength, messages;
+		int msgIdx = -1;
 		boolean isFind = false;
-		CIVLSource civlsource = arguments[0].getSource();
+		CIVLSource civlsource = state.getProcessState(pid).getLocation()
+				.getSource();
 		Evaluation eval;
 
 		eval = evaluator.dereference(civlsource, state, process, commHandle,
@@ -894,10 +896,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				false);
 		state = eval.state;
 		gcomm = eval.value;
-		dest = universe.tupleRead(comm, zeroObject);
-		message = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
-				tag, civlsource);
-		if (message != null)
+		dest = (NumericExpression) universe.tupleRead(comm, zeroObject);
+		queue = universe.arrayRead(universe.arrayRead(
+				universe.tupleRead(gcomm, twoObject), source), dest);
+		queueLength = universe.tupleRead(queue, zeroObject);
+		messages = universe.tupleRead(queue, oneObject);
+		msgIdx = this.getMatchedMsgIdx(state, pid, messages, queueLength, tag,
+				civlsource);
+		if (msgIdx >= 0)
 			isFind = true;
 		if (lhs != null) {
 			state = this.stateFactory.setVariable(state,
@@ -939,12 +945,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression comm;
 		SymbolicExpression gcommHandle;
 		SymbolicExpression gcomm;
-		SymbolicExpression source = argumentValues[1];
-		SymbolicExpression dest;
+		NumericExpression source = (NumericExpression) argumentValues[1];
+		NumericExpression dest;
 		SymbolicExpression tag = argumentValues[2];
-		SymbolicExpression message;
-		CIVLSource civlsource = arguments[0].getSource();
+		SymbolicExpression message, messages, queue, queueLength;
+		CIVLSource civlsource = state.getProcessState(pid).getLocation()
+				.getSource();
 		Evaluation eval;
+		int msgIdx = -1;
 
 		eval = evaluator.dereference(civlsource, state, process, commHandle,
 				false);
@@ -955,12 +963,17 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				false);
 		state = eval.state;
 		gcomm = eval.value;
-		dest = universe.tupleRead(comm, zeroObject);
-		message = this.getMatchedMessageFromGcomm(pid, gcomm, source, dest,
-				tag, civlsource);
-		if (message == null) {
+		dest = (NumericExpression) universe.tupleRead(comm, zeroObject);
+		queue = universe.arrayRead(universe.arrayRead(
+				universe.tupleRead(gcomm, twoObject), source), dest);
+		queueLength = universe.tupleRead(queue, zeroObject);
+		messages = universe.tupleRead(queue, oneObject);
+		msgIdx = this.getMatchedMsgIdx(state, pid, messages, queueLength, tag,
+				civlsource);
+		if (msgIdx == -1)
 			message = this.getEmptyMessage(state);
-		}
+		else
+			message = universe.arrayRead(messages, universe.integer(msgIdx));
 		if (lhs != null) {
 			// state = this.stateFactory.setVariable(state,
 			// ((VariableExpression) lhs).variable(), pid, message);
@@ -996,25 +1009,23 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		CIVLSource civlsource = arguments[0].getSource();
+		CIVLSource civlsource = state.getProcessState(pid).getLocation()
+				.getSource();
+		SymbolicExpression message = null;
 		SymbolicExpression commHandle = argumentValues[0];
-		SymbolicExpression newMessage = null;
 		SymbolicExpression comm;
 		SymbolicExpression gcommHandle;
 		SymbolicExpression gcomm;
-		SymbolicExpression source = argumentValues[1];
-		SymbolicExpression tag = argumentValues[2];
-		SymbolicExpression dest;
+		NumericExpression source = (NumericExpression) argumentValues[1];
+		NumericExpression tag = (NumericExpression) argumentValues[2];
+		NumericExpression dest;
 		SymbolicExpression buf;
 		SymbolicExpression bufRow = null;
 		SymbolicExpression queue = null;
-		SymbolicExpression queueLength = null;
+		NumericExpression queueLength = null;
 		SymbolicExpression messages = null;
 		Evaluation eval;
-		int int_queueLength = -1;
-		int int_source;
-		int int_tag;
-		int MessageIndexInMessagesArray = -1;
+		int msgIdx;
 
 		eval = evaluator.dereference(civlsource, state, process, commHandle,
 				false);
@@ -1026,57 +1037,30 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		state = eval.state;
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
-		dest = universe.tupleRead(comm, zeroObject);
-		int_source = symbolicUtil.extractInt(civlsource,
-				(NumericExpression) source);
-		int_tag = symbolicUtil.extractInt(civlsource, (NumericExpression) tag);
-		buf = universe.tupleRead(gcomm, universe.intObject(2));
-		// specific source and tag
-		if (int_source >= 0 && int_tag >= 0) {
-			bufRow = universe.arrayRead(buf, (NumericExpression) source);
-			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-			messages = universe.tupleRead(queue, oneObject);
-			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = symbolicUtil.extractInt(civlsource,
-					(NumericExpression) queueLength);
-			for (int i = 0; i < int_queueLength; i++) {
-				newMessage = universe.arrayRead(messages, universe.integer(i));
-				if (universe.tupleRead(newMessage, universe.intObject(2))
-						.equals(tag)) {
-					MessageIndexInMessagesArray = i;
-					break;
-				} else
-					newMessage = null;
-			}
-		} else if (int_source >= 0 && int_tag == -2) {
-			bufRow = universe.arrayRead(buf, (NumericExpression) source);
-			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-			messages = universe.tupleRead(queue, oneObject);
-			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = symbolicUtil.extractInt(civlsource,
-					(NumericExpression) queueLength);
-			if (int_queueLength > 0) {
-				newMessage = universe.arrayRead(messages, zero);
-				MessageIndexInMessagesArray = 0;
-			}
-		}
-		// remove the new message in the messages array
-		assert int_queueLength >= 0;
-		assert MessageIndexInMessagesArray >= 0;
-		messages = universe.removeElementAt(messages,
-				MessageIndexInMessagesArray);
-		int_queueLength--;
-		queueLength = universe.integer(int_queueLength);
+		dest = (NumericExpression) universe.tupleRead(comm, zeroObject);
+		bufRow = universe.arrayRead(buf, source);
+		queue = universe.arrayRead(bufRow, dest);
+		queueLength = (NumericExpression) universe.tupleRead(queue, zeroObject);
+		messages = universe.tupleRead(queue, oneObject);
+		msgIdx = this.getMatchedMsgIdx(state, pid, messages, queueLength, tag,
+				civlsource);
+		if (msgIdx == -1)
+			throw new CIVLExecutionException(ErrorKind.INTERNAL,
+					Certainty.CONCRETE, state.getProcessState(pid).name(),
+					"Message dequeue fails", civlsource);
+		message = universe.arrayRead(messages, universe.integer(msgIdx));
+		messages = universe.removeElementAt(messages, msgIdx);
+		queueLength = universe.subtract(queueLength, one);
 		queue = universe.tupleWrite(queue, zeroObject, queueLength);
 		queue = universe.tupleWrite(queue, oneObject, messages);
-		bufRow = universe.arrayWrite(bufRow, (NumericExpression) dest, queue);
-		buf = universe.arrayWrite(buf, (NumericExpression) source, bufRow);
+		bufRow = universe.arrayWrite(bufRow, dest, queue);
+		buf = universe.arrayWrite(buf, source, bufRow);
 		gcomm = universe.tupleWrite(gcomm, universe.intObject(2), buf);
 		state = this.primaryExecutor.assign(civlsource, state, process,
 				gcommHandle, gcomm);
 		if (lhs != null) {
 			state = this.primaryExecutor.assign(state, pid, process, lhs,
-					newMessage);
+					message);
 		}
 		return state;
 	}
@@ -1256,6 +1240,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					arguments, argumentValues);
 			break;
 		case "$comm_dequeue":
+			state = executeCommDequeue(state, pid, process, lhs, arguments,
+					argumentValues);
+			break;
+		case "$comm_dequeue_work":
 			state = executeCommDequeue(state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
@@ -1925,71 +1913,79 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/**
-	 * Computes matched message in the communicator.
+	 * Read matched message index from the given messages array. Here
+	 * "matched message" means if the given tag is wild card tag, then read the
+	 * first message inside the messages array, otherwise the tag should be a
+	 * specific tag then read the first message has the same tag inside the
+	 * messages array.
 	 * 
+	 * Other cases like failure of finding a matched message or the tag is
+	 * neither a wild card tag nor a valid specific tag will be an execution
+	 * exception.
+	 * 
+	 * @param state
+	 *            The current state which emanating the transition being
+	 *            executed right now
 	 * @param pid
-	 *            The process ID.
-	 * @param gcomm
-	 *            The dynamic representation of the communicator.
-	 * @param source
-	 *            The expected source.
-	 * @param dest
-	 *            The expected destination.
+	 *            The pid of the process
+	 * @param messagesArray
+	 *            The given messages array
 	 * @param tag
-	 *            The expected tag.
+	 *            The given message tag
 	 * @param civlsource
-	 *            The source code element for error report.
-	 * @return The matched message, NULL if no matched message found.
+	 * @return The index of a matched message in the given array
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private SymbolicExpression getMatchedMessageFromGcomm(int pid,
-			SymbolicExpression gcomm, SymbolicExpression source,
-			SymbolicExpression dest, SymbolicExpression tag,
-			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
-		SymbolicExpression buf;
-		SymbolicExpression bufRow;
-		SymbolicExpression queue;
-		SymbolicExpression queueLength;
-		SymbolicExpression messages = null;
+	private int getMatchedMsgIdx(State state, int pid,
+			SymbolicExpression messagesArray, SymbolicExpression queueLength,
+			SymbolicExpression tag, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression message = null;
-		int int_source = symbolicUtil.extractInt(civlsource,
-				(NumericExpression) source);
-		int int_tag = symbolicUtil.extractInt(civlsource,
+		NumericExpression numericQueueLength = (NumericExpression) queueLength;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		BooleanExpression isAnyTag = universe.equals(universe.integer(-2), tag);
+		BooleanExpression isSpecTag = universe.lessThanEquals(zero,
 				(NumericExpression) tag);
-		int int_queueLength;
+		int msgIndex = -1;
 
-		buf = universe.tupleRead(gcomm, universe.intObject(2));
-		// specific source and tag
-		if (int_source >= 0 && int_tag >= 0) {
-			bufRow = universe.arrayRead(buf, (NumericExpression) source);
-			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-			messages = universe.tupleRead(queue, oneObject);
-			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = symbolicUtil.extractInt(civlsource,
+		// specific tag
+		if (reasoner.isValid(isSpecTag)) {
+			NumericExpression iter = zero;
+			BooleanExpression iterQueueLengthClaim = universe.lessThan(iter,
 					(NumericExpression) queueLength);
-			for (int i = 0; i < int_queueLength; i++) {
-				message = universe.arrayRead(messages, universe.integer(i));
-				if (universe.tupleRead(message, universe.intObject(2)).equals(
-						tag))
+
+			while (reasoner.isValid(iterQueueLengthClaim)) {
+				BooleanExpression isTagMatched;
+
+				message = universe.arrayRead(messagesArray, iter);
+				isTagMatched = universe
+						.equals(universe.tupleRead(message,
+								universe.intObject(2)), tag);
+				if (reasoner.isValid(isTagMatched)) {
+					msgIndex = symbolicUtil.extractInt(null, iter);
 					break;
-				else
-					message = null;
+				}
+				iter = universe.add(iter, one);
+				iterQueueLengthClaim = universe.lessThan(iter,
+						numericQueueLength);
 			}
-		} else if (int_source >= 0 && int_tag == -2) {
-			bufRow = universe.arrayRead(buf, (NumericExpression) source);
-			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-			messages = universe.tupleRead(queue, oneObject);
-			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = symbolicUtil.extractInt(civlsource,
-					(NumericExpression) queueLength);
-			if (int_queueLength > 0)
-				message = universe.arrayRead(messages, zero);
-			else
-				message = null;
-		} else {
-			throw new CIVLUnimplementedFeatureException("$COMM_ANY_SOURCE");
 		}
-		return message;
+		// wild card tag
+		else if (reasoner.isValid(isAnyTag)) {
+			BooleanExpression queueGTzeroClaim = universe.lessThan(zero,
+					numericQueueLength);
+
+			if (reasoner.isValid(queueGTzeroClaim))
+				msgIndex = 0;
+
+		}
+		// Exception
+		else {
+			throw new CIVLExecutionException(ErrorKind.INTERNAL,
+					Certainty.CONCRETE, state.getProcessState(pid).name(),
+					"Unexpected arguments", civlsource);
+		}
+		return msgIndex;
 	}
 
 	private SymbolicExpression getEmptyMessage(State state) {

@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,17 +21,23 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -115,13 +122,13 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		List<Expression> arguments = call.arguments();
 		List<Transition> localTransitions = new LinkedList<>();
 		Statement transitionStatement;
+		Evaluation eval;
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		switch (functionName) {
 		case "$choose_int":
-			Evaluation eval = evaluator.evaluate(
-					state.setPathCondition(pathCondition), pid,
-					arguments.get(0));
+			eval = evaluator.evaluate(state.setPathCondition(pathCondition),
+					pid, arguments.get(0));
 			IntegerNumber upperNumber = (IntegerNumber) universe.reasoner(
 					eval.state.getPathCondition()).extractNumber(
 					(NumericExpression) eval.value);
@@ -153,6 +160,120 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 				}
 				localTransitions.add(Semantics.newTransition(pathCondition,
 						pid, processIdentifier, transitionStatement));
+			}
+			break;
+		case "$comm_dequeue":
+
+			// Clauses for path condition
+			BooleanExpression isAnySource = null;
+			BooleanExpression sourceGTEzero = null;
+//			BooleanExpression isAnyTag = null;
+//			BooleanExpression tagGTEzero = null;
+			// The reasoner used to prove if clauses above are valid
+			Reasoner reasoner = universe.reasoner(pathCondition);
+			// Flag indicates if we need to add clauses to original path
+			// condition.
+			NumericExpression minusOne = universe.integer(-1);
+			//NumericExpression minusTwo = universe.integer(-2);
+			IntegerNumber argSourceNumber,
+			argTagNumber;
+			NumericExpression argSource,
+			argTag;
+			LibcivlcEvaluator libEvaluator;
+			List<SymbolicExpression> possibleSources;
+			Expression commHandleExpr,
+			sourceExpr,
+			tagExpr;
+			SymbolicExpression gcommHandle,
+			gcomm,
+			comm,
+			commHandle,
+			source,
+			dest,
+			tag;
+			BooleanExpression T = universe.trueExpression();
+			BooleanExpression newPathCondition = universe.and(T, pathCondition);
+			// Set of transition statements
+			List<Statement> callWorkers = new LinkedList<>();
+			// Set of new clauses
+			List<BooleanExpression> newClauses = new LinkedList<>();
+
+			eval = this.evaluator.evaluate(
+					state.setPathCondition(pathCondition), pid,
+					arguments.get(1));
+			argSourceNumber = (IntegerNumber) reasoner
+					.extractNumber((NumericExpression) eval.value);
+			if (argSourceNumber == null)
+				argSource = (NumericExpression) eval.value;
+			else
+				argSource = universe.integer(argSourceNumber.intValue());
+			eval = this.evaluator.evaluate(eval.state, pid, arguments.get(2));
+			argTagNumber = (IntegerNumber) reasoner
+					.extractNumber((NumericExpression) eval.value);
+			if (argTagNumber == null)
+				argTag = (NumericExpression) eval.value;
+			else
+				argTag = universe.integer(argTagNumber.intValue());
+			// clause: source >= 0
+			sourceGTEzero = universe.lessThanEquals(zero, argSource);
+			if (!reasoner.isValid(sourceGTEzero)) {
+				// clause: source == 0
+				isAnySource = universe.equals(minusOne, argSource);
+				if (!reasoner.isValid(isAnySource)) {
+//					tagGTEzero = universe.lessThanEquals(zero, argTag);
+//					if (!reasoner.isValid(tagGTEzero)) {
+//						isAnyTag = universe.equals(minusTwo, argTag);
+//						if (!reasoner.isValid(isAnyTag)) {
+//							newClauses.add(universe.and(isAnySource, isAnyTag));
+//							newClauses.add(universe
+//									.and(isAnySource, tagGTEzero));
+//							newClauses.add(universe
+//									.and(sourceGTEzero, isAnyTag));
+//							newClauses.add(universe.and(sourceGTEzero,
+//									tagGTEzero));
+//						}
+//					}
+					if (newClauses.isEmpty()) {
+						newClauses.add(isAnySource);
+						newClauses.add(sourceGTEzero);
+					}
+				}
+			}
+			if (newClauses.isEmpty())
+				newClauses.add(universe.trueExpression());
+			// Initialize arguments
+			libEvaluator = new LibcivlcEvaluator(functionName, evaluator,
+					modelFactory, symbolicUtil);
+			possibleSources = new LinkedList<>();
+			commHandleExpr = arguments.get(0);
+			sourceExpr = arguments.get(1);
+			tagExpr = arguments.get(2);
+			commHandle = evaluator.evaluate(state, pid, commHandleExpr).value;
+			comm = evaluator.dereference(commHandleExpr.getSource(), state,
+					process, commHandle, false).value;
+			source = argSource;
+			dest = this.universe.tupleRead(comm, zeroObject);
+			tag = argTag;
+			gcommHandle = this.universe.tupleRead(comm, oneObject);
+			gcomm = evaluator.dereference(commHandleExpr.getSource(), state,
+					process, gcommHandle, false).value;
+			for (int i = 0; i < newClauses.size(); i++) {
+				BooleanExpression newClause = newClauses.get(i);
+
+				newPathCondition = universe.and(pathCondition, newClause);
+				possibleSources = libEvaluator.getAllPossibleSources(
+						eval.state, newClause, gcomm, source, dest, tag,
+						call.getSource());
+				callWorkers = (List<Statement>) this.dequeueStatementGenerator(
+						sourceExpr, tagExpr, possibleSources, newPathCondition,
+						call.getSource(), call.function().parameters(),
+						arguments, call.function().returnType(),
+						call.statementScope(), call.guard(), call.target(),
+						call.lhs(), assignAtomicLock);
+				for (int j = 0; j < callWorkers.size(); j++)
+					localTransitions.add(Semantics.newTransition(
+							newPathCondition, pid, processIdentifier,
+							callWorkers.get(j)));
 			}
 			break;
 		default:
@@ -206,29 +327,120 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 
 		switch (function) {
 		case "$comm_dequeue":
-		case "$comm_enqueue":
-			Set<SymbolicExpression> handleObjMemUnits = new HashSet<>();
+			NumericExpression argSrc = (NumericExpression) argumentValues[1];
+			NumericExpression minusOne = universe.integer(-1);
+			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
-			try {
-				evaluator.memoryUnitsOfExpression(state, pid, arguments[0],
-						handleObjMemUnits);
-			} catch (UnsatisfiablePathConditionException e) {
-				handleObjMemUnits.add(argumentValues[0]);
-			}
-			for (SymbolicExpression memUnit : handleObjMemUnits) {
-				for (int otherPid : reachableMemUnitsMap.keySet()) {
-					if (otherPid == pid || ampleSet.contains(otherPid))
-						continue;
-					else if (reachableMemUnitsMap.get(otherPid).containsKey(
-							memUnit)) {
-						ampleSet.add(otherPid);
-					}
+			/* IF it's a wildcard $comm_dequeue ? */
+			if (reasoner.isValid(universe.equals(argSrc, minusOne)))
+				for (int p : reachableMemUnitsMap.keySet()) {
+					ampleSet.add(p);
 				}
+			else {
+				ampleSet.addAll(this.computeAmpleSetByHandleObject(state, pid,
+						arguments[0], argumentValues[0], reachableMemUnitsMap));
 			}
+			return ampleSet;
+		case "$comm_enqueue":
+			ampleSet.addAll(this.computeAmpleSetByHandleObject(state, pid,
+					arguments[0], argumentValues[0], reachableMemUnitsMap));
 			return ampleSet;
 		default:
 			throw new CIVLInternalException("Unreachable" + function, source);
 		}
 	}
 
+	/**
+	 * Computes the ample set by analyzing the given handle object for the
+	 * statement.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The pid of the process
+	 * @param handleObj
+	 *            The expression of the given handle object
+	 * @param handleObjValue
+	 *            The symbolic expression of the given handle object
+	 * @param reachableMemUnitsMap
+	 *            The map contains all reachable memory units of all processes
+	 * @return
+	 */
+	private Set<Integer> computeAmpleSetByHandleObject(State state, int pid,
+			Expression handleObj, SymbolicExpression handleObjValue,
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
+		Set<SymbolicExpression> handleObjMemUnits = new HashSet<>();
+		Set<Integer> ampleSet = new HashSet<Integer>();
+
+		try {
+			evaluator.memoryUnitsOfExpression(state, pid, handleObj,
+					handleObjMemUnits);
+		} catch (UnsatisfiablePathConditionException e) {
+			handleObjMemUnits.add(handleObjValue);
+		}
+		for (SymbolicExpression memUnit : handleObjMemUnits) {
+			for (int otherPid : reachableMemUnitsMap.keySet()) {
+				if (otherPid == pid || ampleSet.contains(otherPid))
+					continue;
+				else if (reachableMemUnitsMap.get(otherPid)
+						.containsKey(memUnit)) {
+					ampleSet.add(otherPid);
+				}
+			}
+		}
+		return ampleSet;
+	}
+
+	private Iterable<Statement> dequeueStatementGenerator(
+			Expression sourceExpr, Expression tagExpr,
+			List<SymbolicExpression> possibleSources,
+			BooleanExpression pathCondition, CIVLSource civlsource,
+			List<Variable> parameters, List<Expression> arguments,
+			CIVLType returnType, Scope containingScope, Expression callGuard,
+			Location callTarget, LHSExpression lhs, Statement assignAtomicLock)
+			throws UnsatisfiablePathConditionException {
+		CallOrSpawnStatement callWorker;
+		Statement transitionStatement;
+		List<Statement> transitionStatements = new LinkedList<>();
+		List<Expression> newArgs;
+		SystemFunction dequeueWorkFunction;
+		FunctionPointerExpression dequeueWorkPointer;
+		Location newLocation = null;
+		String dequeueWork = "$comm_dequeue_work";
+		Iterator<SymbolicExpression> sourceIter;
+
+		Reasoner reasoner = universe.reasoner(pathCondition);
+
+		sourceIter = possibleSources.iterator();
+		while (sourceIter.hasNext()) {
+			SymbolicExpression newSource = sourceIter.next();
+			int int_newSource = ((IntegerNumber) reasoner
+					.extractNumber((NumericExpression) newSource)).intValue();
+
+			dequeueWorkFunction = modelFactory.systemFunction(civlsource,
+					modelFactory.identifier(civlsource, dequeueWork),
+					parameters, returnType, containingScope, "civlc");
+			dequeueWorkPointer = modelFactory.functionPointerExpression(
+					civlsource, dequeueWorkFunction);
+			newArgs = new LinkedList<Expression>(arguments);
+			newArgs.set(1, modelFactory.integerLiteralExpression(
+					arguments.get(1).getSource(),
+					BigInteger.valueOf(int_newSource)));
+			newLocation = modelFactory.location(civlsource, containingScope);
+			callWorker = modelFactory.callOrSpawnStatement(civlsource,
+					newLocation, true, newArgs, callGuard);
+			callWorker.setTargetTemp(callTarget);
+			callWorker.setFunction(dequeueWorkPointer);
+			callWorker.setLhs(lhs);
+			if (assignAtomicLock != null) {
+				transitionStatement = modelFactory.statmentList(
+						assignAtomicLock, callWorker);
+			} else {
+				transitionStatement = callWorker;
+			}
+			transitionStatements.add(transitionStatement);
+		}
+
+		return transitionStatements;
+	}
 }

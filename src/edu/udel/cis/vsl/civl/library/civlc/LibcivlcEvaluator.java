@@ -1,6 +1,8 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.math.BigInteger;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -10,7 +12,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -26,9 +27,14 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
+import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 
 public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
+
+	private IntObject twoObject = universe.intObject(2);
+	private NumericExpression minusOne = universe.integer(-1);
+	private NumericExpression minusTwo = universe.integer(-2);
 
 	public LibcivlcEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
@@ -231,14 +237,32 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	}
 
 	/**
-	 * Computes the guard of $comm_dequeue().
+	 * <p>
+	 * Generate the a predicate stands for the guard of $comm_dequeue(). To
+	 * evaluate if there is any message available, we add 4 predicates which
+	 * will cover all valid situations together and each individual predicate
+	 * may cause different results. The 4 predicates are: <br>
+	 * 1. (source == -1 && tag == -2) <br>
+	 * 2. (source >= 0 && tag == -2) <br>
+	 * 3. (source == -1 && tag >= 0 ) <br>
+	 * 4. (source >= 0 && tag >= 0 )
 	 * 
+	 * The returned predicate will be in a form as: (predicate1 &&
+	 * (evaluate(predicate1)) ||...|| predicate4 && (evaluate(predicate4)))
+	 * </p>
+	 * 
+	 * @author Ziqing Luo
 	 * @param state
+	 *            The current state
 	 * @param pid
+	 *            The process id
 	 * @param arguments
-	 *            $comm, source, tag
+	 *            Expressions of arguments of the "$comm_dequeue()"function:
+	 *            $comm, source, tag.
 	 * @param argumentValues
-	 * @return
+	 *            Symbolic Expressions of arguments of the
+	 *            "$comm_dequeue()"function.
+	 * @return A predicate which is the guard of the function $comm_dequeue().
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression getDequeueGuard(State state, int pid,
@@ -252,9 +276,10 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		SymbolicExpression gcommHandle;
 		SymbolicExpression gcomm;
 		SymbolicExpression dest;
-		SymbolicExpression newMessage;
+		BooleanExpression sourceGTEzero, isAnySource, isAnyTag, tagGTEzero;
+		BooleanExpression guard;
+		List<BooleanExpression> predicates = new LinkedList<>();
 		CIVLSource civlsource = arguments.get(0).getSource();
-		boolean enabled = false;
 		Evaluation eval;
 
 		eval = evaluator.dereference(civlsource, state, process, commHandle,
@@ -267,79 +292,174 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		state = eval.state;
 		gcomm = eval.value;
 		dest = universe.tupleRead(comm, zeroObject);
-		newMessage = this.getMatchedMessageFromGcomm(gcomm, source, dest, tag,
-				civlsource);
-		if (newMessage != null)
-			enabled = true;
-		return universe.bool(enabled);
+		sourceGTEzero = universe.lessThanEquals(zero,
+				(NumericExpression) source);
+		tagGTEzero = universe.lessThanEquals(zero, (NumericExpression) tag);
+		isAnySource = universe.equals(source, minusOne);
+		isAnyTag = universe.equals(tag, minusTwo);
+		predicates = new LinkedList<>();
+		predicates.add(universe.and(isAnySource, isAnyTag));
+		predicates.add(universe.and(isAnySource, tagGTEzero));
+		predicates.add(universe.and(sourceGTEzero, isAnyTag));
+		predicates.add(universe.and(sourceGTEzero, tagGTEzero));
+		guard = dequeueGuardGenerator(civlsource, state, predicates, gcomm,
+				source, dest, tag);
+		return guard;
 	}
 
 	/**
-	 * Computes matched message in the communicator.
+	 * <p>
+	 * This function checks all message channels (messages receiving buffers) to
+	 * seek for available sources. If there are at least one message specified
+	 * by "tag" argument in the channel specified by the "source" argument(and
+	 * other arguments of course, but here only "source" will make any
+	 * difference), the "source" is available.
+	 * </p>
+	 * <p>
+	 * Precondition: The "predicate" argument shall be able to determine weather
+	 * the "source" or "tag" is wild card or valid specific symbolic expression.
+	 * </p>
 	 * 
-	 * @param pid
-	 *            The process ID.
+	 * @author Ziqing Luo
+	 * @param predicate
+	 *            Context conditions which helps determining weather the source
+	 *            or tag is a wild card. This argument shall be able to
+	 *            certainly prove: if the "source" belongs to [0, infinity) or
+	 *            {-1} and if the "tag" belongs to [0, infinity) or {-2}.
 	 * @param gcomm
-	 *            The dynamic representation of the communicator.
+	 *            The global communicator
 	 * @param source
-	 *            The expected source.
+	 *            The argument "source" which indicates some message
+	 *            channels(message queue in our implementation).
 	 * @param dest
-	 *            The expected destination.
+	 *            The argument "dest" which indicates the receiving process
+	 *            itself.
 	 * @param tag
-	 *            The expected tag.
+	 *            The argument "tag" which indicates some messages have the same
+	 *            tag.
 	 * @param civlsource
-	 *            The source code element for error report.
-	 * @return The matched message, NULL if no matched message found.
+	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private SymbolicExpression getMatchedMessageFromGcomm(
-			SymbolicExpression gcomm, SymbolicExpression source,
-			SymbolicExpression dest, SymbolicExpression tag,
-			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
+	List<SymbolicExpression> getAllPossibleSources(State state,
+			BooleanExpression predicate, SymbolicExpression gcomm,
+			SymbolicExpression source, SymbolicExpression dest,
+			SymbolicExpression tag, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression buf;
 		SymbolicExpression bufRow;
 		SymbolicExpression queue;
 		SymbolicExpression queueLength;
 		SymbolicExpression messages = null;
 		SymbolicExpression message = null;
-		int int_source = symbolicUtil.extractInt(civlsource,
-				(NumericExpression) source);
-		int int_tag = symbolicUtil.extractInt(civlsource,
-				(NumericExpression) tag);
-		int int_queueLength;
+		BooleanExpression newPathConditions = universe.and(predicate,
+				state.getPathCondition());
+		Reasoner reasoner = universe.reasoner(newPathConditions);
+		IntegerNumber sourceNumber = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) source);
+		IntegerNumber tagNumber = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) tag);
+		List<SymbolicExpression> results = new LinkedList<>();
+		boolean isWildcardSource = false, isWildcardTag = false;
+
+		if (newPathConditions.equals(universe.falseExpression()))
+			return results;
+
+		if (sourceNumber != null && sourceNumber.intValue() == -1)
+			isWildcardSource = true;
+		if (tagNumber != null && tagNumber.intValue() == -2)
+			isWildcardTag = true;
 
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
-		// specific source and tag
-		if (int_source >= 0 && int_tag >= 0) {
+		// non-wild card source and tag
+		if (!isWildcardSource && !isWildcardTag) {
+			BooleanExpression iterLTQueueLengthClaim;
+			NumericExpression iter = universe.integer(0);
+
 			bufRow = universe.arrayRead(buf, (NumericExpression) source);
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = symbolicUtil.extractInt(civlsource,
+			iterLTQueueLengthClaim = universe.lessThan(iter,
 					(NumericExpression) queueLength);
-			for (int i = 0; i < int_queueLength; i++) {
-				message = universe.arrayRead(messages, universe.integer(i));
-				if (universe.tupleRead(message, universe.intObject(2)).equals(
-						tag))
+			while (reasoner.isValid(iterLTQueueLengthClaim)) {
+				BooleanExpression tagMatchClaim;
+
+				message = universe.arrayRead(messages, iter);
+				tagMatchClaim = universe.equals(
+						universe.tupleRead(message, twoObject), tag);
+				if (reasoner.isValid(tagMatchClaim)) {
+					results.add(source);
 					break;
-				else
-					message = null;
+				}
+				iter = universe.add(iter, one);
+				iterLTQueueLengthClaim = universe.lessThan(iter,
+						(NumericExpression) queueLength);
 			}
-		} else if (int_source >= 0 && int_tag == -2) {
+		}// non-wild card source and any_tag
+		else if (!isWildcardSource && isWildcardTag) {
 			bufRow = universe.arrayRead(buf, (NumericExpression) source);
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 			messages = universe.tupleRead(queue, oneObject);
 			queueLength = universe.tupleRead(queue, zeroObject);
-			int_queueLength = symbolicUtil.extractInt(civlsource,
-					(NumericExpression) queueLength);
-			if (int_queueLength > 0)
-				message = universe.arrayRead(messages, zero);
-			else
-				message = null;
-		} else {
-			throw new CIVLUnimplementedFeatureException("$COMM_ANY_SOURCE");
+			if (reasoner.isValid(universe.lessThan(zero,
+					(NumericExpression) queueLength)))
+				results.add(source);
+		} // any source and non-wild card tag
+		else if (isWildcardSource && !isWildcardTag) {
+			NumericExpression nprocs = (NumericExpression) universe.tupleRead(
+					gcomm, zeroObject);
+			NumericExpression iter = universe.zeroInt();
+			NumericExpression queueIter = universe.zeroInt();
+			BooleanExpression queueIterLTlengthClaim;
+			BooleanExpression iterLTnprocsClaim = universe.lessThan(iter,
+					nprocs);
+
+			while (reasoner.isValid(iterLTnprocsClaim)) {
+				bufRow = universe.arrayRead(buf, iter);
+				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+				messages = universe.tupleRead(queue, oneObject);
+				queueLength = universe.tupleRead(queue, zeroObject);
+				queueIterLTlengthClaim = universe.lessThan(queueIter,
+						(NumericExpression) queueLength);
+				while (reasoner.isValid(queueIterLTlengthClaim)) {
+					BooleanExpression tagMatchClaim;
+
+					message = universe.arrayRead(messages, queueIter);
+					tagMatchClaim = universe.equals(
+							universe.tupleRead(message, twoObject), tag);
+					if (reasoner.isValid(tagMatchClaim)) {
+						results.add(iter);
+						break;
+					}
+					queueIter = universe.add(queueIter, one);
+					queueIterLTlengthClaim = universe.lessThan(queueIter,
+							(NumericExpression) queueLength);
+				}
+				iter = universe.add(iter, one);
+				iterLTnprocsClaim = universe.lessThan(iter, nprocs);
+			}
+		} else if (isWildcardSource && isWildcardTag) {
+			NumericExpression nprocs = (NumericExpression) universe.tupleRead(
+					gcomm, zeroObject);
+			NumericExpression iter = universe.zeroInt();
+			BooleanExpression iterLTnprocsClaim = universe.lessThan(iter,
+					nprocs);
+
+			while (reasoner.isValid(iterLTnprocsClaim)) {
+				bufRow = universe.arrayRead(buf, iter);
+				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+				messages = universe.tupleRead(queue, oneObject);
+				queueLength = universe.tupleRead(queue, zeroObject);
+				if (reasoner.isValid(universe.lessThan(zero,
+						(NumericExpression) queueLength))) {
+					results.add(iter);
+				}
+				iter = universe.add(iter, one);
+				iterLTnprocsClaim = universe.lessThan(iter, nprocs);
+			}
 		}
-		return message;
+		return results;
 	}
 
 	/**
@@ -378,6 +498,51 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 			guard = universe.falseExpression();
 		else
 			guard = universe.trueExpression();
+		return guard;
+	}
+	/**
+	 * <p>
+	 * Combining the given predicates and the results of evaluation on those
+	 * predicates for the <code>$comm_dequeue()</code>.
+	 * </p>
+	 * 
+	 * @author Ziqing Luo
+	 * @param civlsource
+	 *            The CIVL program source of the statement.
+	 * @param state
+	 *            Current state
+	 * @param predicates
+	 *            The set of predicates
+	 * @param gcomm
+	 *            The global communicator
+	 * @param source
+	 *            The source from where "$comm_dequeue" receives messages.
+	 * @param dest
+	 *            The destination which is the receiver itself
+	 * @param tag
+	 *            The message tag
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private BooleanExpression dequeueGuardGenerator(CIVLSource civlsource,
+			State state, Iterable<BooleanExpression> predicates,
+			SymbolicExpression gcomm, SymbolicExpression source,
+			SymbolicExpression dest, SymbolicExpression tag)
+			throws UnsatisfiablePathConditionException {
+		Iterator<BooleanExpression> predIter = predicates.iterator();
+		BooleanExpression predicate;
+		BooleanExpression guardComponent;
+		BooleanExpression guard = universe.falseExpression();
+		BooleanExpression hasMsg;
+
+		do {
+			predicate = predIter.next();
+			hasMsg = universe.bool(!getAllPossibleSources(state, predicate,
+					gcomm, source, dest, tag, civlsource).isEmpty());
+			guardComponent = universe.and(predicate, hasMsg);
+			guard = universe.or(guard, guardComponent);
+		} while (predIter.hasNext());
+
 		return guard;
 	}
 }
