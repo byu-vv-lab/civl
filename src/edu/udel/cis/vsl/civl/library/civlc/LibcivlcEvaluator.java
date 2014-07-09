@@ -374,12 +374,13 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 			NumericExpression nprocs = (NumericExpression) universe.tupleRead(
 					gcomm, zeroObject);
 			NumericExpression iter = universe.zeroInt();
-			NumericExpression queueIter = universe.zeroInt();
-			BooleanExpression queueIterLTlengthClaim;
 			BooleanExpression iterLTnprocsClaim = universe.lessThan(iter,
 					nprocs);
 
 			while (reasoner.isValid(iterLTnprocsClaim)) {
+				NumericExpression queueIter = universe.zeroInt();
+				BooleanExpression queueIterLTlengthClaim;
+				
 				bufRow = universe.arrayRead(buf, iter);
 				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 				messages = universe.tupleRead(queue, oneObject);
