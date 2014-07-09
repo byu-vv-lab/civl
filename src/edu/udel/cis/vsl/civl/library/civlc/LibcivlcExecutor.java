@@ -1333,38 +1333,43 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression first, second;
-		Evaluation eval = evaluator.dereference(arguments[0].getSource(),
-				state, process, argumentValues[0], false);
-		int invalidArg = -1;
+		SymbolicExpression first = argumentValues[0], second = argumentValues[1];
 
-		state = eval.state;
-		first = eval.value;
-		eval = evaluator.dereference(arguments[1].getSource(), state, process,
-				argumentValues[1], false);
-		state = eval.state;
-		second = eval.value;
-		if (!symbolicUtil.isInitialized(first))
-			invalidArg = 0;
-		else if (!symbolicUtil.isInitialized(second))
-			invalidArg = 1;
-		if (invalidArg != -1) {
-			SymbolicExpression invalidValue = invalidArg == 0 ? first : second;
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
-					"The object that "
-							+ arguments[invalidArg]
-							+ " points to is undefined, which has the value "
-							+ symbolicUtil.symbolicExpressionToString(
-									arguments[invalidArg].getSource(), state,
-									invalidValue),
-					symbolicUtil.stateToString(state),
-					arguments[invalidArg].getSource());
-
-			this.errorLogger.reportError(err);
-		}
-		//TODO: TO BE FINISHED
-		return null;
+		if (lhs != null)
+			state = primaryExecutor.assign(state, pid, process, lhs,
+					symbolicUtil.contains(first, second));
+		// Evaluation eval = evaluator.dereference(arguments[0].getSource(),
+		// state, process, argumentValues[0], false);
+		// int invalidArg = -1;
+		//
+		// state = eval.state;
+		// first = eval.value;
+		// eval = evaluator.dereference(arguments[1].getSource(), state,
+		// process,
+		// argumentValues[1], false);
+		// state = eval.state;
+		// second = eval.value;
+		// if (!symbolicUtil.isInitialized(first))
+		// invalidArg = 0;
+		// else if (!symbolicUtil.isInitialized(second))
+		// invalidArg = 1;
+		// if (invalidArg != -1) {
+		// SymbolicExpression invalidValue = invalidArg == 0 ? first : second;
+		// CIVLExecutionException err = new CIVLExecutionException(
+		// ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
+		// "The object that "
+		// + arguments[invalidArg]
+		// + " points to is undefined, which has the value "
+		// + symbolicUtil.symbolicExpressionToString(
+		// arguments[invalidArg].getSource(), state,
+		// invalidValue),
+		// symbolicUtil.stateToString(state),
+		// arguments[invalidArg].getSource());
+		//
+		// this.errorLogger.reportError(err);
+		// }
+		// TODO: TO BE FINISHED
+		return state;
 	}
 
 	/**

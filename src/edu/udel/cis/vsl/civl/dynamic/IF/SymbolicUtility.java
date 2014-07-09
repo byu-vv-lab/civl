@@ -227,5 +227,7 @@ public interface SymbolicUtility {
 	NumericExpression getStepOfRange(SymbolicExpression range);
 
 	boolean isInitialized(SymbolicExpression value);
+	
+	SymbolicExpression contains(SymbolicExpression first, SymbolicExpression second);
 
 }

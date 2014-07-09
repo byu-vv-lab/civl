@@ -1,0 +1,13 @@
+#include<civlc.h>
+
+void main(){
+  int* data;
+  _Bool r;
+  
+  data = (int*) $malloc($root, sizeof(int)*2);
+  *data = 1;
+  *(data + 1) = 2;
+  r = $equals(data, data+1); 
+  $assert(!r);
+  $free(data);
+}

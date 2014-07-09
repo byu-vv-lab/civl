@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.dynamic.common;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -37,9 +38,11 @@ import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression.ReferenceKind;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
+import edu.udel.cis.vsl.sarl.IF.expr.UnionMemberReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
@@ -103,6 +106,9 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 	private SymbolicTupleType functionPointerType;
 
+	private BooleanExpression falseValue;
+	private BooleanExpression trueValue;
+
 	public CommonSymbolicUtility(SymbolicUniverse universe,
 			ModelFactory modelFactory, CIVLErrorLogger errLogger) {
 		SymbolicType dynamicToIntType;
@@ -126,6 +132,10 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		this.procType = this.modelFactory.processSymbolicType();
 		this.scopeType = this.modelFactory.scopeSymbolicType();
 		this.functionPointerType = modelFactory.functionPointerSymbolicType();
+		this.falseValue = (BooleanExpression) universe.canonic(universe
+				.falseExpression());
+		this.trueValue = (BooleanExpression) universe.canonic(universe
+				.trueExpression());
 	}
 
 	@Override
@@ -1013,6 +1023,9 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				result.append(field.name());
 				return new Triple<>(-1, field.type(), result.toString());
 			}
+		} else if (reference.isUnionMemberReference()) {
+			// TODO: finish this
+			return null;
 		} else {
 			throw new CIVLInternalException("Unreachable", source);
 		}
@@ -1431,5 +1444,77 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		if (value.isNull())
 			return false;
 		return true;
+	}
+
+	/**
+	 * A pointer can be only concrete for the current implementation of CIVL,
+	 * because the only way to make one is through <code>$malloc</code> or
+	 * <code>&</code>.
+	 */
+	@Override
+	public SymbolicExpression contains(SymbolicExpression pointer1,
+			SymbolicExpression pointer2) {		ReferenceExpression ref1 = (ReferenceExpression) universe.tupleRead(
+				pointer1, twoObj);
+		ReferenceExpression ref2 = (ReferenceExpression) universe.tupleRead(
+				pointer2, twoObj);
+		SymbolicExpression scope1 = universe.tupleRead(pointer1, zeroObj);
+		SymbolicExpression scope2 = universe.tupleRead(pointer2, zeroObj);
+		SymbolicExpression vid1 = universe.tupleRead(pointer1, oneObj);
+		SymbolicExpression vid2 = universe.tupleRead(pointer2, oneObj);
+		List<ReferenceExpression> refComps1 = new ArrayList<>();
+		List<ReferenceExpression> refComps2 = new ArrayList<>();
+		int numRefs1, numRefs2, offset;
+		BooleanExpression result = this.trueValue;
+
+		if (ref1.isIdentityReference() && ref2.isIdentityReference()) {
+			return universe.canonic(universe.equals(ref1, ref2));
+		}
+		if (ref2.isIdentityReference() // second contains first
+				|| universe.equals(scope1, scope2).isFalse() // different scope
+																// id
+				|| universe.equals(vid1, vid2).isFalse()) // different vid
+			return this.falseValue;
+		if (ref1.isIdentityReference() && !ref2.isIdentityReference())
+			return this.trueValue;
+		numberRefs(ref1, refComps1);
+		numberRefs(ref2, refComps2);
+		numRefs1 = refComps1.size();
+		numRefs2 = refComps2.size();
+		if (numRefs1 > numRefs2)
+			return this.falseValue;
+		offset = numRefs2 - numRefs1;
+		for (int i = offset; i < numRefs1; i++) {
+			result = universe.and(result, universe.equals(refComps1.get(i),
+					refComps2.get(i + offset)));
+		}
+		return result;
+	}
+
+	private void numberRefs(ReferenceExpression ref,
+			List<ReferenceExpression> components) {
+		ReferenceKind kind = ref.referenceKind();
+
+		switch (kind) {
+		case ARRAY_ELEMENT:
+			ArrayElementReference arrayRef = (ArrayElementReference) ref;
+
+			components.add(arrayRef);
+			numberRefs(arrayRef.getParent(), components);
+			break;
+		case TUPLE_COMPONENT:
+			TupleComponentReference tupleRef = (TupleComponentReference) ref;
+
+			components.add(tupleRef);
+			numberRefs(tupleRef.getParent(), components);
+			break;
+		case UNION_MEMBER:
+			UnionMemberReference unionRef = (UnionMemberReference) ref;
+
+			components.add(unionRef);
+			numberRefs(unionRef.getParent(), components);
+			break;
+		default:
+			return;
+		}
 	}
 }

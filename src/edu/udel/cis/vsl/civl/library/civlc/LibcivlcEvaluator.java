@@ -10,7 +10,6 @@ import edu.udel.cis.vsl.civl.library.IF.BaseLibraryEvaluator;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
-import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
@@ -93,43 +92,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 				return new Evaluation(state, universe.falseExpression());
 			}
 			break;
-		case "$bundle_pack":
-		case "$bundle_size":
-		case "$bundle_unpack":
-		case "$barrier_create":
-		case "$barrier_enter":
-		case "$barrier_destroy":
-		case "$equals":
-		case "$contains":
-		case "$gbarrier_create":
-		case "$gbarrier_destroy":
-		case "$comm_create":
-		case "$comm_defined":
-		case "$comm_enqueue":
-		case "$comm_probe":
-		case "$comm_seek":
-		case "$comm_size":
-		case "$exit":
-		case "$comm_destroy":
-		case "$gcomm_destroy":
-		case "$free":
-		case "$gcomm_create":
-		case "$gcomm_defined":
-		case "$int_iter_create":
-		case "$int_iter_hasNext":
-		case "$int_iter_next":
-		case "$proc_defined":
-		case "$scope_parent":
-		case "$scope_defined":
-		case "$int_iter_destroy":
-		case "$domain_rectangular":
-		case "$domain_get_dim":
-		case "$choose_int":
-			guard = universe.trueExpression();
-			break;
 		default:
-			throw new CIVLInternalException("Unknown civlc function: "
-					+ function, source);
+			guard = universe.trueExpression();
 		}
 		return new Evaluation(state, guard);
 	}
