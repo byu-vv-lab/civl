@@ -1,27 +1,16 @@
-#include <civlc.h>
-void square(int global_id, int input[], int output[], int count)
+int func()
 {
-  int i = global_id;
-  if (i < count)
-  {
-    output[i] = input[i] * input[i];
-  }
+  return 4;
 }
+
 int main(int argc, char** argv)
 {
-  int global = 4;
-  
+  int global = func();
   int input[global];
-  int output[global];
   
   for(int i = 0; i < global; i++)
   {
     input[i] = i;
-  }
-
-  for(int i = 0; i < global; i++)
-  {
-    square(i, input, output, global);
   }
   return 0;
 }
