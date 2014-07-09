@@ -17,9 +17,9 @@
 #include <stdlib.h>
 
 double dboard (int darts);
-#define DARTS 5     /* number of throws at dartboard */
-#define ROUNDS 5      /* number of times "darts" is iterated */
-#define MASTER 0        /* task ID of master task */
+#define DARTS 1       /* number of throws at dartboard */
+#define ROUNDS 1      /* number of times "darts" is iterated */
+#define MASTER 0      /* task ID of master task */
 
 int main (int argc, char *argv[])
 {
