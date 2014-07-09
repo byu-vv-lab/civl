@@ -3,15 +3,20 @@ package edu.udel.cis.vsl.civl.config.IF;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.BOOLEAN;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
+
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
 import edu.udel.cis.vsl.gmc.Option;
 
 /**
- * This interface manages all constant configurations of the system.
+ * This class manages all constant configurations of the system.
  * 
  * @author Manchun Zheng
  * 
  */
-public interface CIVLConstants {
+public class CIVLConstants {
 	/** The version of this release of CIVL. */
 	public final static String version = "0.11";
 
@@ -145,4 +150,43 @@ public interface CIVLConstants {
 	public final static Option showPathConditionO = Option.newScalarOption(
 			"showPathCondition", BOOLEAN,
 			"show the path condition of each state?", false);
+	
+	public static Option[] getAllOptions(){
+		int numOpts = 33;
+		List<Option> outputs = new LinkedList<Option>();
+		outputs.add(CIVLConstants.deadlockO);
+		outputs.add(CIVLConstants.debugO);
+		outputs.add(CIVLConstants.echoO);
+		outputs.add(CIVLConstants.enablePrintfO);
+		outputs.add(CIVLConstants.errorBoundO);
+		outputs.add(CIVLConstants.guidedO);
+		outputs.add(CIVLConstants.guiO);
+		outputs.add(CIVLConstants.idO);
+		outputs.add(CIVLConstants.inputO);
+		outputs.add(CIVLConstants.maxdepthO);
+		outputs.add(CIVLConstants.minO);
+		outputs.add(CIVLConstants.randomO);
+		outputs.add(CIVLConstants.saveStatesO);
+		outputs.add(CIVLConstants.seedO);
+		outputs.add(CIVLConstants.showAmpleSetO);
+		outputs.add(CIVLConstants.showAmpleSetWtStatesO);
+		outputs.add(CIVLConstants.showInputVarsO);
+		outputs.add(CIVLConstants.showModelO);
+		outputs.add(CIVLConstants.showPathConditionO);
+		outputs.add(CIVLConstants.showProgramO);
+		outputs.add(CIVLConstants.showProverQueriesO);
+		outputs.add(CIVLConstants.showQueriesO);
+		outputs.add(CIVLConstants.showSavedStatesO);
+		outputs.add(CIVLConstants.showStatesO);
+		outputs.add(CIVLConstants.showTransitionsO);
+		outputs.add(CIVLConstants.simplifyO);
+		outputs.add(CIVLConstants.solveO);
+		outputs.add(CIVLConstants.statelessPrintfO);
+		outputs.add(CIVLConstants.svcompO);
+		outputs.add(CIVLConstants.sysIncludePathO);
+		outputs.add(CIVLConstants.traceO);
+		outputs.add(CIVLConstants.userIncludePathO);
+		outputs.add(CIVLConstants.verboseO);			
+		return outputs.toArray(new Option[numOpts]);
+	}
 }
