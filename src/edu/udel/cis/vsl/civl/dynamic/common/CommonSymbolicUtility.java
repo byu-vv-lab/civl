@@ -151,7 +151,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public int getScopeId(CIVLSource source, SymbolicExpression pointer) {
+	public int getDyscopeId(CIVLSource source, SymbolicExpression pointer) {
 		return modelFactory.getScopeId(source,
 				universe.tupleRead(pointer, zeroObj));
 	}
@@ -420,7 +420,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		else if (pointer.operator() != SymbolicOperator.CONCRETE)
 			return pointer.toString();
 		else {
-			int dyscopeId = getScopeId(source, pointer);
+			int dyscopeId = getDyscopeId(source, pointer);
 			if (dyscopeId < 0)
 				return "UNDEFINED";
 			else {
@@ -898,7 +898,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				return pointer.toString();
 			}
 
-			dyscopeId = getScopeId(source, pointer);
+			dyscopeId = getDyscopeId(source, pointer);
 			vid = getVariableId(source, pointer);
 			if (dyscopeId == -1 && vid == -1)
 				return "NULL";

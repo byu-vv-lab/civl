@@ -219,9 +219,11 @@ public interface State {
 	DynamicScope getScope(int id);
 
 	/**
-	 * Given a process ID and a static scope, returns the ID of the first
-	 * dynamic scope corresponding to the static scope and reachable from the
-	 * given process.
+	 * Given a PID and a static scope, returns the ID of the first dyscope
+	 * corresponding to the static scope and reachable from the given process.
+	 * The search starts at the dyscope referenced by the top frame of the
+	 * process's call stack, and walks its way up in the dyscope tree until it
+	 * finds a dyscope whose lexical scope is the specified one.
 	 * 
 	 * @param pid
 	 *            The ID of the process whose current dynamic scope is the
@@ -231,12 +233,13 @@ public interface State {
 	 * @return the ID of the first dynamic scope corresponding to the static
 	 *         scope and reachable from the given process.
 	 */
-	int getDyScope(int pid, Scope scope);
+	int getDyscope(int pid, Scope scope);
 
 	/**
-	 * Returns the set of process states as an Iterable. This should not be
-	 * modified. It is convenient when you want to iterate over the states,
-	 * e.g., <code>for (ProcessState p : state.getProcessStates())</code>.
+	 * Returns the set of process states as an <code>Iterable</code>. This
+	 * should not be modified. It is convenient when you want to iterate over
+	 * the states, e.g.,
+	 * <code>for (ProcessState p : state.getProcessStates())</code>.
 	 * Alternatively, you can invoke the <code>iterator()</code> method to get
 	 * an <code>Iterator</code>.
 	 * 

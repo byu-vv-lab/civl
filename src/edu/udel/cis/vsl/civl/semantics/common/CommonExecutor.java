@@ -1036,7 +1036,7 @@ public class CommonExecutor implements Executor {
 			boolean isInitialization)
 			throws UnsatisfiablePathConditionException {
 		int vid = symbolicUtil.getVariableId(source, pointer);
-		int sid = symbolicUtil.getScopeId(source, pointer);
+		int sid = symbolicUtil.getDyscopeId(source, pointer);
 		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
 		State result;
 		Variable variable;

@@ -47,11 +47,10 @@ public class MPITranslationTest {
 				"-input__NPROCS=2", "-inputNB=4"));
 	}
 
-	// not working because MPI_ANY_SOURCE is required.
 	@Test
 	public void mpi_pi_send() {
 		assertTrue(ui.run("verify", filename("mpi_pi_send.c"),
-				"-input__NPROCS=3"));
+				"-input__NPROCS=3", "-enablePrintf=false"));
 	}
 
 	@Test

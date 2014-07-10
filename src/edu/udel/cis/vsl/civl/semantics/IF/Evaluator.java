@@ -37,11 +37,18 @@ public interface Evaluator {
 	 * Given a pointer value, dereferences it in the given state to yield the
 	 * symbolic expression value stored at the referenced location.
 	 * 
+	 * @param source
+	 *            Source code information for error report.
 	 * @param state
-	 *            a CIVL model state
+	 *            The state where the operation happens.
+	 * @param process
+	 *            The process information (name, PID) for error report.
 	 * @param pointer
-	 *            a pointer value which refers to some sub-structure in the
-	 *            state
+	 *            A pointer value which refers to some sub-structure in the
+	 *            state, and is to dereferenced.
+	 * @param checkedOutput
+	 *            If this dereference operation is to read the variable (opposed
+	 *            to write).
 	 * @return the value pointed to
 	 * @throws UnsatisfiablePathConditionException
 	 */
@@ -82,7 +89,10 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 
 	/**
-	 * Evaluates a function pointer expression.
+	 * Evaluates a function pointer expression. TODO: add ID for functions in
+	 * the model. TODO: get rid of this function by adding a helper function to
+	 * extract a function from a function pointer value. No need to have special
+	 * handling for function pointer: can treat it like ordinary pointers.
 	 * 
 	 * @param state
 	 *            The state where the evaluation happens.
@@ -130,10 +140,11 @@ public interface Evaluator {
 	 * that the string is the whole array. (2) the pointer points to element i
 	 * of an array of char, where i is a concrete positive integer and the array
 	 * length is also concrete. In that case, the elements of the array are
-	 * scanned starting from position i until the first null charcter is
-	 * reached, or the end of the array is reached, and the string is construted
-	 * from those scanned characters (including the null character). In other
-	 * situations, this method may fail, in which case it throws an exception.
+	 * scanned starting from position i until the first null character is
+	 * reached, or the end of the array is reached, and the string is
+	 * constructed from those scanned characters (including the null character).
+	 * In other situations, this method may fail, in which case it throws an
+	 * exception.
 	 * 
 	 * @param state
 	 *            the state in which this evaluation is taking place
@@ -141,12 +152,12 @@ public interface Evaluator {
 	 *            the source information used to report errors
 	 * @param charPointer
 	 *            a symbolic expression which is a pointer to a char
-	 * @throws CIVLUnimplementedFeatureException
-	 *             if it is not possible to extract the string expression.
 	 * @return the symbolic expression which is an array of type char
 	 *         representing the string pointed to
 	 * @throws UnsatisfiablePathConditionException
 	 *             of something goes wrong evaluating the string
+	 * @throws CIVLUnimplementedFeatureException
+	 *             if it is not possible to extract the string expression.
 	 */
 	Evaluation getStringExpression(State state, String process,
 			CIVLSource source, SymbolicExpression charPointer)
@@ -193,7 +204,8 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 
 	/**
-	 * Compute the reachable memory units of an expression recursively.
+	 * Computes the reachable memory units of an expression recursively and adds
+	 * those memory units to the given set.
 	 * 
 	 * @param state
 	 *            The state where the computation happens.
@@ -205,14 +217,19 @@ public interface Evaluator {
 	 *            The set of memory units reachable by the expression.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	boolean memoryUnitsOfExpression(State state, int pid,
-			Expression expression, Set<SymbolicExpression> memoryUnits)
+	void memoryUnitsOfExpression(State state, int pid, Expression expression,
+			Set<SymbolicExpression> memoryUnits)
 			throws UnsatisfiablePathConditionException;
 
 	/**
+	 * <p>
 	 * Compute reachable memory units by referencing a variable at a certain
 	 * state. For example, given int x = 9; int* y = &x; int *z = y; Then the
-	 * reachable memory units from z is {&z, &y, &x}.
+	 * reachable memory units from z is {&z, &x}.
+	 * </p>
+	 * TODO: check if we can get rid of variableValue; add precondition if it is
+	 * necessary for some reason.
+	 * 
 	 * 
 	 * @param variableValue
 	 *            The value of the variable.
@@ -223,13 +240,15 @@ public interface Evaluator {
 	 * @param state
 	 *            The state where the computation happens.
 	 * @return The set of memory units that reachable from the given variable.
+	 *         Every member of the set is a pointer value, and is a pointer to a
+	 *         memory unit.
 	 */
-	Set<SymbolicExpression> memoryUnitsOfVariable(
+	Set<SymbolicExpression> memoryUnitsReachableFromVariable(
 			SymbolicExpression variableValue, int dyScopeID, int vid,
 			State state, String process);
 
 	/**
-	 * The model factory should be the unqiue one used in the system.
+	 * The model factory should be the unique one used in the system.
 	 * 
 	 * @return The model factory of the evaluator.
 	 */
@@ -237,7 +256,8 @@ public interface Evaluator {
 
 	/**
 	 * Evaluates pointer addition. Pointer addition involves the addition of a
-	 * pointer expression and an integer.
+	 * pointer expression and an integer. TODO: check if BinaryExpression
+	 * expression is necessary.
 	 * 
 	 * @param state
 	 *            the pre-state
@@ -257,6 +277,7 @@ public interface Evaluator {
 			NumericExpression offset)
 			throws UnsatisfiablePathConditionException;
 
+	// TODO next code review
 	/**
 	 * Creates a pointer value by evaluating a left-hand-side expression in the
 	 * given state.

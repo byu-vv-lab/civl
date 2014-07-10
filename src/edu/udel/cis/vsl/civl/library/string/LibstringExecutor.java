@@ -130,7 +130,7 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		SymbolicSequence<?> originalArray;
 		int numChars;
 		int vid = symbolicUtil.getVariableId(source, lhsPointer);
-		int scopeId = symbolicUtil.getScopeId(source, lhsPointer);
+		int scopeId = symbolicUtil.getDyscopeId(source, lhsPointer);
 		ReferenceExpression symRef = symbolicUtil.getSymRef(lhsPointer);
 
 		if (charPointer.operator() == SymbolicOperator.CONCRETE)

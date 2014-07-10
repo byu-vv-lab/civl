@@ -80,7 +80,7 @@ public interface SymbolicUtility {
 	 *            a pointer value
 	 * @return the dynamic scope ID component of that pointer value
 	 */
-	int getScopeId(CIVLSource source, SymbolicExpression pointer);
+	int getDyscopeId(CIVLSource source, SymbolicExpression pointer);
 
 	/**
 	 * Given a pointer value, returns the variable ID component of that value.

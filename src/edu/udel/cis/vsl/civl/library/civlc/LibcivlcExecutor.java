@@ -158,7 +158,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			array = universe.emptyArray(elementType);
 			bundle = universe.unionInject(symbolicBundleType, indexObj, array);
 		} else if (!size.isZero()
-				&& symbolicUtil.getScopeId(source, pointer) == -1
+				&& symbolicUtil.getDyscopeId(source, pointer) == -1
 				&& symbolicUtil.getVariableId(source, pointer) == -1) {
 			throw new CIVLSyntaxException(
 					"Packing a NULL message with size larger than 0", source);
@@ -1700,7 +1700,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * @return
 	 */
 	private SymbolicExpression isValidPointer(SymbolicExpression pointer) {
-		int scopeId = symbolicUtil.getScopeId(null, pointer);
+		int scopeId = symbolicUtil.getDyscopeId(null, pointer);
 
 		if (scopeId >= 0)
 			return universe.bool(true);

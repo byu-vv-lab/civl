@@ -418,7 +418,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression theFile;
 		NumericExpression pos0 = zero, pos1 = zero;
 		boolean isInputFile = false;
-		int scopeId = symbolicUtil.getScopeId(expressions[0].getSource(),
+		int scopeId = symbolicUtil.getDyscopeId(expressions[0].getSource(),
 				filesystemPointer);
 		int filesystemVid = symbolicUtil.getVariableId(
 				expressions[0].getSource(), filesystemPointer);

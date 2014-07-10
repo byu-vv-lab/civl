@@ -630,16 +630,11 @@ public class AmpleSetWorker {
 			Expression expression, int pid)
 			throws UnsatisfiablePathConditionException {
 		Set<SymbolicExpression> memoryUnits = new HashSet<>();
-		boolean result;
 		MemoryUnitsStatus status;
 
-		result = evaluator.memoryUnitsOfExpression(state, pid, expression,
-				memoryUnits);
-		if (result)
-			status = MemoryUnitsStatus.NORMAL;
-		else
-			status = MemoryUnitsStatus.INCOMPLETE;
-
+		evaluator.memoryUnitsOfExpression(state, pid, expression, memoryUnits);
+		// TODO get rid of status.
+		status = MemoryUnitsStatus.NORMAL;
 		if (debugging) {
 			printMemoryUnitsOfExpression(expression, memoryUnits);
 		}
@@ -713,7 +708,7 @@ public class AmpleSetWorker {
 				for (int vid = 0; vid < size; vid++) {
 					Variable variable = dyScope.lexicalScope().variable(vid);
 					Set<SymbolicExpression> varMemUnits = evaluator
-							.memoryUnitsOfVariable(dyScope.getValue(vid),
+							.memoryUnitsReachableFromVariable(dyScope.getValue(vid),
 									dyScopeID, vid, state, process);
 					boolean permission = writableVariables.contains(variable) ? true
 							: false;
