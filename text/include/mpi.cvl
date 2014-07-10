@@ -277,7 +277,8 @@ int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
 
 int CMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
 	      int tag, $comm comm, MPI_Status *status) {
-  if (source >= 0) {
+
+  if (source >= 0 || source == -1) {
     $message in = $comm_dequeue(comm, source, tag);
     int size = count*sizeofDatatype(datatype);
 
