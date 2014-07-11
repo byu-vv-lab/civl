@@ -27,10 +27,10 @@ import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
+import edu.udel.cis.vsl.sarl.type.common.CommonSymbolicCompleteArrayType;
 
 /**
  * This class provides the common data and operations of library executors.
@@ -245,38 +245,79 @@ public abstract class BaseLibraryExecutor extends Library implements
 
 		return result;
 	}
-	
+
 	/**
-	 * Given a symbolic expression of type array of char, returns a string
-	 * representation. If it is a concrete array of char consisting of concrete
-	 * characters, this will be the obvious string. Otherwise the result is
-	 * something readable but unspecified.
+	 * * Only three types (represented differently in CIVL) of the symbolic
+	 * expression "charPointer" is acceptable:<br>
+	 * A pointer to char <br>
+	 * A pointer to an element of array of char. (e.g. char a[N][M]; a[x] or
+	 * &a[x][0] are acceptable. Address of an element of array of char or
+	 * pointer to an array of char are same as this situation.)<br>
+	 * A complete char array
 	 * 
+	 * @param source
+	 *            The CIVL source of the pointer to char expression
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The identifier of the process
+	 * @param charPointer
+	 *            The pointer to char
+	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	protected Pair<State, StringBuffer> getString(CIVLSource source, State state,
-			String process, SymbolicExpression charPointer)
+	protected Pair<State, StringBuffer> getString(CIVLSource source,
+			State state, String process, SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException {
 		if (charPointer.operator() == SymbolicOperator.CONCRETE) {
-			SymbolicSequence<?> originalArray;
-			int int_arrayIndex;
+			SymbolicSequence<?> originalArray = null;
+			int int_arrayIndex = -1;
 			StringBuffer result = new StringBuffer();
+			ReferenceExpression ref = null;
+			Evaluation eval;
 
-			if (charPointer.type() instanceof SymbolicArrayType) {
+			if (charPointer.type() instanceof CommonSymbolicCompleteArrayType) {
 				originalArray = (SymbolicSequence<?>) charPointer.argument(0);
 				int_arrayIndex = 0;
 			} else {
-				SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
-						source, charPointer);
-				ArrayElementReference arrayRef = (ArrayElementReference) symbolicUtil
-						.getSymRef(charPointer);
-				NumericExpression arrayIndex = arrayRef.getIndex();
-				Evaluation eval = evaluator.dereference(source, state, process,
-						arrayPointer, false);
+				ref = symbolicUtil.getSymRef(charPointer);
+				if (ref instanceof ArrayElementReference) {
+					SymbolicExpression pointerCharArray = symbolicUtil
+							.parentPointer(source, charPointer);
+					SymbolicExpression charArray;
 
-				state = eval.state;
-				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
-				int_arrayIndex = symbolicUtil.extractInt(source, arrayIndex);
+					eval = evaluator.dereference(source, state, process,
+							pointerCharArray, false);
+					state = eval.state;
+					charArray = eval.value;
+					try {
+						originalArray = (SymbolicSequence<?>) charArray
+								.argument(0);
+					} catch (ClassCastException e) {
+						throw new CIVLUnimplementedFeatureException(
+								"non-concrete strings", source);
+					}
+					int_arrayIndex = symbolicUtil.extractInt(source,
+							((ArrayElementReference) ref).getIndex());
+
+				} else {
+					eval = evaluator.dereference(source, state, process,
+							charPointer, false);
+					state = eval.state;
+					// A single character is not acceptable.
+					if (eval.value.arguments().length <= 1)
+						throw new CIVLExecutionException(
+								ErrorKind.OTHER,
+								Certainty.PROVEABLE,
+								process,
+								"Try to obtain a string from a sequence of char has length less than or equal to one",
+								source);
+					else {
+						originalArray = (SymbolicSequence<?>) eval.value
+								.argument(0);
+						int_arrayIndex = 0;
+					}
+				}
 			}
 			result = symbolicUtil.charArrayToString(source, originalArray,
 					int_arrayIndex, false);

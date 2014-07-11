@@ -4,6 +4,8 @@
 package edu.udel.cis.vsl.civl.library.stdlib;
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -13,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -139,25 +142,35 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 			intValue = universe.apply(atoiFunction,
 					Arrays.asList(argumentValues[0]));
 		} else {
-			Pair<State, StringBuffer> argStringPair = this
-					.getString(arguments[0].getSource(), state, process,
-							argumentValues[0]);
+			Pair<State, StringBuffer> argStringPair = null;
 			String argString;
 
-			state = argStringPair.left;
-			argString = argStringPair.right.toString();
 			try {
-				int integer = Integer.parseInt(argString);
+				argStringPair = this.getString(arguments[0].getSource(), state,
+						process, argumentValues[0]);
+			} catch (CIVLUnimplementedFeatureException e) {
+				List<SymbolicExpression> charPointer = new LinkedList<>();
 
-				intValue = universe.integer(integer);
-			} catch (Exception ex) {
-				CIVLExecutionException e = new CIVLExecutionException(
-						ErrorKind.OTHER, Certainty.PROVEABLE, process,
-						"The argument to atoi() should be a valid integer representation.\n"
-								+ "actual argument: " + argString,
-						symbolicUtil.stateToString(state), source);
+				charPointer.add(argumentValues[0]);
+				intValue = universe.apply(atoiFunction, charPointer);
 
-				errorLogger.reportError(e);
+			}
+			if (argStringPair != null) {
+				state = argStringPair.left;
+				argString = argStringPair.right.toString();
+				try {
+					int integer = Integer.parseInt(argString);
+
+					intValue = universe.integer(integer);
+				} catch (Exception ex) {
+					CIVLExecutionException e = new CIVLExecutionException(
+							ErrorKind.OTHER, Certainty.PROVEABLE, process,
+							"The argument to atoi() should be a valid integer representation.\n"
+									+ "actual argument: " + argString,
+							symbolicUtil.stateToString(state), source);
+
+					errorLogger.reportError(e);
+				}
 			}
 		}
 		if (lhs != null) {
