@@ -143,9 +143,8 @@ void printBoard(void)
 	      }
 	      i++;
         }
-      printf("");
+      printf("\n");
     }
-  printf("\n");
 }
 
 void createQueue(void)
@@ -158,8 +157,8 @@ void createQueue(void)
 
 void prepareKernel(void)
 {
-  input = (bool*)malloc(sizeof(bool));
-  output = (bool*)malloc(sizeof(bool));
+  input = (bool*)malloc(sizeof(board));
+  output = (bool*)malloc(sizeof(board));
 
   ((args*)kernel.arguments)->input = input;
   ((args*)kernel.arguments)->output = output;
@@ -195,11 +194,19 @@ int main(int argc, char** argv)
   args * arguments;
   arguments = (args*)malloc(sizeof(args));
 
+/*
   for(unsigned int i=0 ; i<board_size; i++)
   {
-    board[i] = (random() % 2);
+    board[i] = (i % 2);
+    //done this way because you can't see what numbers come from random, and it seems that it just does ******* anyhow
+    //printf("board[%d] is %d\n", i, board[i]);
   }
-  
+  */
+  for(unsigned int i=0 ; i<board_size; i = i + 2)
+  {
+    board[i] = 1;
+  }
+  //proves that the kernel "works", although it runs through multiple times
   createQueue();
   
   kernel = clCreateKernel(arguments);
@@ -208,9 +215,10 @@ int main(int argc, char** argv)
   
 
   printBoard();
+  printf("Running for how %d iterations\n", ITERATIONS);
   for(int i = 0; i < ITERATIONS; i++)
   {
-    //printf("Running for how %d iterations\n", ITERATIONS);
+    printf("Running iteration %d\n", i);
     runGame(ITERATIONS);
     printBoard();
   }

@@ -49,9 +49,7 @@ void square(int workgroup, int global_id, int local_id, float* input, float* out
   }
 }
 
-//using a type that doesn't exist causes an odd explanation
-//edu.udel.cis.vsl.abc.parse.IF.ParseException: /Users/fuufusuu/Documents/workspace/CIVL/examples/translation/openclversion2.1/square.cvl line 71:43 required (...)+ loop did not match anything at input 'ckernel'
-//At "ckernel" in square.cvl 71.43
+
 void workfunc(size_t local, size_t global, cl_kernel param)
 {
   for(int i = local * param.workgroup; i < local * param.workgroup + local; i++)
@@ -190,4 +188,6 @@ int main(int argc, char** argv)
   
   return 0;
 }
+
+
 
