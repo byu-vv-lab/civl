@@ -844,6 +844,7 @@ public class AST2CIVL {
 			result.append(arg0);
 			result.append(" + ");
 			result.append(arg1);
+			break;
 		case PLUSEQ:
 			result.append(arg0);
 			result.append(" += ");
@@ -909,7 +910,9 @@ public class AST2CIVL {
 			ArrayTypeNode arrayType = (ArrayTypeNode) type;
 			ExpressionNode extent = arrayType.getExtent();
 
+			result.append("(");
 			result.append(type2CIVL(arrayType.getElementType()));
+			result.append(")");
 			result.append("[");
 			if (extent != null)
 				result.append(expression2CIVL(extent));

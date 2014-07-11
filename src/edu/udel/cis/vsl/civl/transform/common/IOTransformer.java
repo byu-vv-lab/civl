@@ -176,6 +176,16 @@ public class IOTransformer extends CIVLBaseTransformer {
 
 	/* ****************************** Constructor ************************** */
 
+	/**
+	 * Creates a new instance of IO transformer.
+	 * 
+	 * @param astFactory
+	 *            The AST factory to be used.
+	 * @param inputVariables
+	 *            The input variables specified from command line.
+	 * @param config
+	 *            The CIVL configuration.
+	 */
 	public IOTransformer(ASTFactory astFactory, List<String> inputVariables,
 			CIVLConfiguration config) {
 		super(IOTransformer.CODE, IOTransformer.LONG_NAME,
@@ -185,11 +195,20 @@ public class IOTransformer extends CIVLBaseTransformer {
 
 	/* *************************** Private Methods ************************* */
 
-	private void processFreeCall(ASTNode node) throws SyntaxException {
-		int numChildren = node.numChildren();
+	/**
+	 * Adds function calls at the end of the program to deallocate the memory
+	 * space created previously for file system and files, otherwise, there will
+	 * be memory leak problem.
+	 * 
+	 * @param rootNode
+	 *            The root node of the AST.
+	 * @throws SyntaxException
+	 */
+	private void processFreeCall(ASTNode rootNode) throws SyntaxException {
+		int numChildren = rootNode.numChildren();
 
 		for (int i = 0; i < numChildren; i++) {
-			ASTNode child = node.child(i);
+			ASTNode child = rootNode.child(i);
 
 			if (child instanceof FunctionDefinitionNode) {
 				FunctionDefinitionNode function = (FunctionDefinitionNode) child;
@@ -197,9 +216,9 @@ public class IOTransformer extends CIVLBaseTransformer {
 
 				if (functionName.equals("main")) {
 					List<BlockItemNode> finalCalls = new ArrayList<>();
-					Source source = node.getSource();
-					List<StatementNode> freeStatements = this.freeCalls(node
-							.getSource());
+					Source source = rootNode.getSource();
+					List<StatementNode> freeStatements = this
+							.freeCalls(rootNode.getSource());
 					CompoundStatementNode body = function.getBody();
 					BlockItemNode lastStatement = body.getSequenceChild(body
 							.numChildren() - 1);
@@ -218,6 +237,16 @@ public class IOTransformer extends CIVLBaseTransformer {
 		}
 	}
 
+	/**
+	 * Creates the statement to copy the file system to the corresponding output
+	 * array of files, which is a function call to the system function
+	 * <code>$filesystem_copy_output</code>.
+	 * 
+	 * @param source
+	 *            The source to be used for creating new nodes.
+	 * @return The statement to copy the file system to the corresponding output
+	 *         variable.
+	 */
 	private StatementNode copyFilesToOutput(Source source) {
 		ExpressionNode civlFileSystem = nodeFactory
 				.newIdentifierExpressionNode(source,
@@ -233,6 +262,25 @@ public class IOTransformer extends CIVLBaseTransformer {
 		return nodeFactory.newExpressionStatementNode(copyCall);
 	}
 
+	/**
+	 * Creates all necessary function calls of deallocating memory space,
+	 * including:
+	 * 
+	 * <pre>
+	 * $filesystem_destroy(CIVL_filesystem);
+	 * if (stdout != null)
+	 * 	$free(stdout);
+	 * if (stdin != null)
+	 * 	$free(stdin);
+	 * if (stderr != null)
+	 * 	$free(stderr);
+	 * </pre>
+	 * 
+	 * @param source
+	 *            The source to be used for creating new nodes.
+	 * @return A list of necessary function calls for deallocating memory space.
+	 * @throws SyntaxException
+	 */
 	private List<StatementNode> freeCalls(Source source) throws SyntaxException {
 		ExpressionStatementNode freeFilesystemStatement, freeStdoutStatement, freeStdinStatement, freeStderrStatement;
 		StatementNode ifStdoutStatement, ifStdinStatement, ifStderrStatement;
@@ -296,7 +344,9 @@ public class IOTransformer extends CIVLBaseTransformer {
 	}
 
 	/**
-	 * Processes an AST node.
+	 * Translates all function call nodes of <code>printf</code>/
+	 * <code>scanf</code>/<code>fopen</code> into <code>fprintf</code>/
+	 * <code>fscanf</code>/<code>$fopen</code>.
 	 * 
 	 * @param node
 	 * @throws SyntaxException
@@ -417,7 +467,6 @@ public class IOTransformer extends CIVLBaseTransformer {
 
 	private String processFopenMode(String mode, Source source)
 			throws SyntaxException {
-
 		if (mode.equals(FOPEN_R))
 			return CIVL_FILE_MODE_R;
 		if (mode.equals(FOPEN_W))
@@ -487,24 +536,132 @@ public class IOTransformer extends CIVLBaseTransformer {
 		}
 	}
 
+	/**
+	 * Checks if IO transformation is necessary. It is necessary if one of the
+	 * following is satisfied:
+	 * 
+	 * <ul>
+	 * <li>there is at least one function call of <code>scanf</code>/
+	 * <code>fscanf</code>;
+	 * <li>the reference to <code>stderr</code> is present;
+	 * <li>there is at least one functioin call to <code>fprintf</code> whose
+	 * first argument is NOT <code>stdout</code>.
+	 * </ul>
+	 * 
+	 * @param unit
+	 * @return
+	 */
+	private boolean isTransformationNeeded(AST unit) {
+		boolean hasScanf = CIVLTransform.hasFunctionCalls(unit,
+				Arrays.asList(SCANF, FSCANF));
+		boolean hasStderr;
+
+		if (hasScanf)
+			return true;
+		hasStderr = hasStderr(unit.getRootNode());
+		if (hasStderr)
+			return true;
+		return has_nt_fprintf(unit.getRootNode());
+	}
+
+	private boolean has_nt_fprintf(ASTNode node) {
+		if (node instanceof FunctionCallNode) {
+			FunctionCallNode funcCall = (FunctionCallNode) node;
+			ExpressionNode funcName = funcCall.getFunction();
+
+			if (funcName.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+				String name = ((IdentifierExpressionNode) funcName)
+						.getIdentifier().name();
+
+				if (name.equals(FPRINTF)) {
+					IdentifierExpressionNode arg0 = (IdentifierExpressionNode) funcCall
+							.getArgument(0);
+
+					if (!arg0.getIdentifier().name().equals(STDOUT))
+						return true;
+				}
+			}
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child != null) {
+					boolean result = has_nt_fprintf(child);
+
+					if (result)
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean hasStderr(ASTNode node) {
+		if (node instanceof IdentifierExpressionNode) {
+			IdentifierExpressionNode idExpr = (IdentifierExpressionNode) node;
+			String name = idExpr.getIdentifier().name();
+
+			if (name.equals(STDERR))
+				return true;
+		} else {
+			for (ASTNode child : node.children())
+				if (child != null) {
+					boolean childResult = hasStderr(child);
+
+					if (childResult)
+						return true;
+				}
+		}
+		return false;
+	}
+
+	private void processFprintf(ASTNode node) {
+		if (node instanceof FunctionCallNode) {
+			FunctionCallNode funcCall = (FunctionCallNode) node;
+			ExpressionNode funcName = funcCall.getFunction();
+
+			if (funcName.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+				String name = ((IdentifierExpressionNode) funcName)
+						.getIdentifier().name();
+
+				if (name.equals(FPRINTF)) {
+					Source source = node.getSource();
+					List<ExpressionNode> arguments = new ArrayList<>(
+							funcCall.getNumberOfArguments() - 1);
+					FunctionCallNode printfCall;
+
+					for (int i = 1; i < funcCall.getNumberOfArguments(); i++)
+						arguments.add(funcCall.getArgument(i).copy());
+					printfCall = nodeFactory.newFunctionCallNode(source,
+							this.identifierExpression(funcName.getSource(),
+									PRINTF), arguments, null);
+					node.parent().setChild(node.childIndex(), printfCall);
+				}
+			}
+		} else {
+			for (ASTNode child : node.children())
+				if (child != null)
+					processFprintf(child);
+		}
+	}
+
 	/* ********************* Methods From BaseTransformer ****************** */
 
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
-		boolean hasScanf = CIVLTransform.hasFunctionCalls(unit,
-				Arrays.asList(SCANF, FSCANF));
+		boolean transformationNeeded = this.isTransformationNeeded(unit);
 		ASTNode rootNode = unit.getRootNode();
 
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
-		if (hasScanf) {
+		if (transformationNeeded) {
 			this.renameFunctionCalls(rootNode);
 			this.processFreeCall(rootNode);
 		} else {
 			// remove nodes from stdio-c.cvl
 			removeNodes(rootNode);
+			processFprintf(rootNode);
 		}
 		return astFactory.newAST(rootNode);
 	}
+
 }
