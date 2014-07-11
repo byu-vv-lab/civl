@@ -251,6 +251,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			
 		}
 		if (this.isVoidPointer(returnType) && threadList.contains(name)) {
+			//function.getTypeNode().setParameters(nodeFactory.newSequenceNode(source, "parameters", Arrays.asList(nodeFactory.newVariableDeclarationNode(source, nodeFactory.newIdentifierNode(source, "arg"), nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source))))));
 			ExpressionNode nullNode = nodeFactory.newCastNode(
 					source,
 					nodeFactory.newPointerTypeNode(source,
@@ -327,7 +328,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 					IdentifierExpressionNode named = (IdentifierExpressionNode) funcName;
 					String nameString = named.getIdentifier().name();
 					if (nameString.equals(PTHREAD_CREATE)){
-						IdentifierExpressionNode threadName = (IdentifierExpressionNode)funcCall.getArgument(2);
+						IdentifierExpressionNode threadName = (IdentifierExpressionNode) funcCall.getArgument(2);
 						funcList.add(threadName.getIdentifier().name());
 					}
 				}

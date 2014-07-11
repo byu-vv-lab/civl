@@ -37,7 +37,6 @@ public class PthreadTest {
 		assertFalse(ui.run("verify", filename("bigshot_s_false.c"),	"-enablePrintf=false", "-svcomp"));
 	}
 	
-	@Ignore
 	@Test
 	public void bigshot_s_true() throws ABCException {
 		assertTrue(ui.run("verify", filename("bigshot_s_true.c"), "-enablePrintf=false", "-svcomp"));
@@ -108,7 +107,6 @@ public class PthreadTest {
 		assertFalse(ui.run("verify", filename("reorder_5_false.c"), "-svcomp"));
 	}
 	
-	@Ignore
 	@Test
 	public void sigma_false() throws ABCException {
 		assertFalse(ui.run("verify", filename("sigma_false.c"), "-svcomp"));
@@ -119,7 +117,6 @@ public class PthreadTest {
 		assertFalse(ui.run("verify", filename("singleton_false.c"), "-svcomp"));
 	}
 	
-	@Ignore
 	@Test
 	public void singleton_with_uninit_problems_true() throws ABCException {
 		assertTrue(ui.run("verify", filename("singleton_with-uninit-problems-true.c"), "-enablePrintf=false", "-svcomp"));

@@ -106,7 +106,8 @@ int main(int argc, char *argv[]) {
             exit(-1);
         }
     }
-
+    free(data1Lock);
+    free(data2Lock);
     return 0;
 }
 

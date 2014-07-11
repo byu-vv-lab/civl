@@ -1,0 +1,15 @@
+#include <civlc.h>
+
+void * funcA(void *arg){
+  return NULL;
+}
+
+void spawner(void *(start_routine)(void * arg)){
+  $proc t = $spawn start_routine(NULL);
+  $wait(t);
+}
+  
+int main(void){
+  spawner(funcA);
+  return 0;
+}

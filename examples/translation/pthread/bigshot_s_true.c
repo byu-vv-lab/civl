@@ -28,6 +28,7 @@ int main()
     pthread_join(t2, 0);
     
     __VERIFIER_assert(!v || v[0] == 'B');
+    free(v);
     
     return 0;
 }
