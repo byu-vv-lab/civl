@@ -17,7 +17,7 @@ $assume 0 < DATA_SIZE && DATA_SIZE < MAX_NUM_DEVICES;
 $input int LOCAL;
 $input int MAX_LOCAL;
 $assume 0 < LOCAL && LOCAL < MAX_LOCAL;
-//Didn't initialize variables here
+//this args struct will hold all the parameters of for the kernel function
 typedef struct
 {
   //Variables for kernels
@@ -28,7 +28,9 @@ typedef struct
   
 }args;
 
-
+/*
+  args * argument	- Takes in the struct, which is changed for every program using a different kernel
+*/
 cl_kernel clCreateKernel(args * argument)
 {
   cl_kernel kernel;
@@ -37,7 +39,15 @@ cl_kernel clCreateKernel(args * argument)
   return kernel;
 }
 
-//kernel
+/*
+  This is the kernel that processes compute with
+  int workgroup		- Gives the workgroup that a particular process came from, made by clEnqueueNDRangeKernel
+  int global_id		- Gives the global_id that a particular process has, given by workfunc
+  int local_id		- Gives the local_id that a particular process has, given by workfunc
+  float* input		- Kernel argument
+  float* output		- Kernel argument
+  int count			- Kernel argument
+*/
 void square(int workgroup, int global_id, int local_id, float* input, float* output, int count)
 {
   //int i = get_global_id(0);
@@ -48,8 +58,14 @@ void square(int workgroup, int global_id, int local_id, float* input, float* out
     //printf("output[%d] is %d\n", i, output[i]);
   }
 }
-
-
+/*
+  workfunc assigns local and global ids, before calling the kernel. 
+  Note: The function should be identical in all transformations except the calling of the kernel, which means that it cannot be in openCLshared.cvl
+  size_t local		- The size of the workgroups, used to calculate blocks
+  size_t global		- The total amount of work to be done
+  cl_kernel param	- Holds the data for local_id, global_id, and the workgroup
+  Use the print statement to get a better idea of what it means to split workgroups, local_ids, and global_ids
+*/
 void workfunc(size_t local, size_t global, cl_kernel param)
 {
   for(int i = local * param.workgroup; i < local * param.workgroup + local; i++)
@@ -61,7 +77,15 @@ void workfunc(size_t local, size_t global, cl_kernel param)
   }
 }
 
-int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, int global, int local)
+/*
+  Splits up and spawns processes based on global and local, using block
+  TODO: remove cl_command_queue completely and put into a "just in case" file, currently not needed
+  cl_command_queue commands	- Holds a queue of the order that devices are to be executed
+  cl_kernel kernel			- Holds all the arguments for the kernel, as well as local_id, global_id, and the workgroup
+  size_t global				- The total amount of work to be done
+  size_t local				- Number to split into workgroups by
+*/
+int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, size_t global, size_t local)
 {
   $assert(global % local == 0);
   cl_kernel param[global/local];
@@ -105,6 +129,7 @@ int main(int argc, char** argv)
   float * input;                       // device memory used for the input array
   float * output;                      // device memory used for the output array
 
+  //Puts in data for input
   unsigned int count = DATA_SIZE;
   for(int i = 0; i < count; i++)
   {
@@ -123,16 +148,14 @@ int main(int argc, char** argv)
   //program = clCreateProgram(arguments);
   
   kernel = clCreateKernel(arguments);
-  //printf("%s", kernel);
   
-  //comes from clCreateBuffer
+  //replaces clCreateBuffer
   input = (float *) malloc(sizeof(float) * count);
   output = (float *) malloc(sizeof(float) * count);
   
   
-  
+  //replaces clEnqueueWriteBuffer, puts data into the input to be put into the kernel arguments
   memcpy(input, data, sizeof(float) * count);
-  //clEnqueueWriteBuffer
   
   /*
   err = 0;
@@ -140,9 +163,6 @@ int main(int argc, char** argv)
   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &output);
   err = clSetKernelArg(kernel, 2, sizeof(unsigned int), &count);
   */
-  //kernel.arguments.input = input;
-  
-  //kernel.arguments->input;
   
   //use pointer instead of malloc + memcpy for global variables
   //((args*)kernel.arguments)->input = (float*)malloc(sizeof(float) * count);
@@ -156,7 +176,7 @@ int main(int argc, char** argv)
   ((args*)kernel.arguments)->count = count;
   //no malloc needed for non pointers
   
-  //clGetKernelWorkGroupInfo
+  //clGetKernelWorkGroupInfo would get a local size optimal for a device, but is not needed here
   local = LOCAL;
   
   global = count;
@@ -167,8 +187,10 @@ int main(int argc, char** argv)
   */
   err = clEnqueueNDRangeKernel(commands, kernel, global, local);
   
+  //Replaces clEnqueueReadBuffer, which takes one of the saved variables and puts it out to another one
   memcpy(results, output, sizeof(float) * count);
   
+  //verifies that all values in results are actually squared
   correct = 0;
   for(int i = 0; i < count; i++)
   {
@@ -179,6 +201,7 @@ int main(int argc, char** argv)
   }
   printf("Computed '%d/%d' correct values!\n", correct, count);
   
+  //TODO: Think of using void * array instead of regular arguments to make freeing easier
   free(((args*)kernel.arguments)->input);
   free(((args*)kernel.arguments)->output);
   
