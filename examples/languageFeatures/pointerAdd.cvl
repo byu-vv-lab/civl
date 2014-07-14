@@ -45,8 +45,8 @@ void main(){
 
   $free(p1d);
   for(int i = 0; i<10; i++){
+    $free(p2d[i]);
     for(int j = 0; j<10; j++){
-      $free(p2d[i]);
       $free(p3d[i][j]);
     }
     $free(p3d[i]);
