@@ -323,7 +323,7 @@ public class ImmutableState implements State {
 		boolean first = true;
 
 		out.println(prefix + "dyscope " + dyscope.name() + " (id=" + id
-				+ ", parent=d" + dyscope.getParentIdentifier() + ", static="
+				+ ", parent ID=" + dyscope.getParent() + ", static="
 				+ lexicalScope.id() + ")");
 		out.print(prefix + "| reachers = {");
 		for (int j = 0; j < bitSetLength; j++) {

@@ -65,6 +65,7 @@ import edu.udel.cis.vsl.abc.transform.IF.Combiner;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
+import edu.udel.cis.vsl.civl.gui.IF.GUIs;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -556,6 +557,7 @@ public class UserInterface {
 		out.println("  replay : replay trace for program filename");
 		out.println("  parse : show result of preprocessing and parsing filename");
 		out.println("  preprocess : show result of preprocessing filename");
+		out.println("  gui : launch civl in gui mode (beta)");
 		out.println("Options:");
 		parser.printUsage(out);
 		out.flush();
@@ -922,6 +924,8 @@ public class UserInterface {
 				return runParse(config);
 			case "preprocess":
 				return runPreprocess(config);
+			case "gui":
+				return runGui();
 			default:
 				throw new CommandLineException("Unknown command: " + command);
 			}
@@ -940,10 +944,14 @@ public class UserInterface {
 			throw e;
 		} catch (CIVLException e) {
 			err.println(e);
-
 		}
 		err.flush();
 		return false;
+	}
+
+	private boolean runGui() {
+		GUIs.newStartFrame();
+		return true;
 	}
 
 	/**

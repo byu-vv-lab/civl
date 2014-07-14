@@ -256,4 +256,10 @@ public interface SymbolicUtility {
 	
 	SymbolicExpression contains(SymbolicExpression first, SymbolicExpression second);
 
+	SymbolicExpression nullPointer();
+	
+	boolean isNullPointer(SymbolicExpression pointer);
+	
+	boolean isHeapObjectDefined(SymbolicExpression heapObj);
+
 }

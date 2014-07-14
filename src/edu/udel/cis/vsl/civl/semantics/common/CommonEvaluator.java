@@ -180,10 +180,10 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private SymbolicExpression nullExpression;
 
-	/**
-	 * The symbolic expression of NULL pointer.
-	 */
-	private SymbolicExpression nullPointer;
+	// /**
+	// * The symbolic expression of NULL pointer.
+	// */
+	// private SymbolicExpression nullPointer;
 
 	/**
 	 * The unique real number factory used in the system.
@@ -340,8 +340,6 @@ public class CommonEvaluator implements Evaluator {
 		zero = (NumericExpression) universe.canonic(universe.integer(0));
 		zeroR = (NumericExpression) universe.canonic(universe.zeroReal());
 		one = (NumericExpression) universe.canonic(universe.integer(1));
-		nullPointer = universe.canonic(symbolicUtil.makePointer(-1, -1,
-				universe.nullReference()));
 		nullExpression = universe.nullExpression();
 		sizeofFunction = symbolicUtil.sizeofFunction();
 		bigOFunction = universe.symbolicConstant(
@@ -846,10 +844,10 @@ public class CommonEvaluator implements Evaluator {
 					eval.state = state;
 				}
 			} else
-				eval.value = nullPointer;
+				eval.value = this.symbolicUtil.nullPointer();
 			return eval;
 		} else if (argType.isPointerType() && castType.isIntegerType()) {
-			if (universe.equals(nullPointer, value).isTrue())
+			if (this.symbolicUtil.isNullPointer(value))
 				eval.value = universe.integer(0);
 			else
 				eval.value = value;
@@ -1364,7 +1362,7 @@ public class CommonEvaluator implements Evaluator {
 				throw new UnsatisfiablePathConditionException();
 			}
 		} else if (expressionValue.type().equals(this.pointerType)) {
-			if (expressionValue.equals(nullPointer))
+			if (this.symbolicUtil.isNullPointer(expressionValue))
 				return;
 			try {
 				int scopeID = symbolicUtil
@@ -1901,13 +1899,13 @@ public class CommonEvaluator implements Evaluator {
 									.parentPointer(null, expr);
 
 							eval = this.dereference(null, state, process,
-									arrayPointer, false);
+									arrayPointer, false, true);
 							/* Check if it's length == 0 */
 							if (universe.length(eval.value).isZero())
 								return;
 						}
 						eval = this.dereference(null, state, process, expr,
-								false);
+								false, true);
 						pointerValue = eval.value;
 						state = eval.state;
 						if (pointerValue.type() != null
@@ -2696,6 +2694,12 @@ public class CommonEvaluator implements Evaluator {
 	public Evaluation dereference(CIVLSource source, State state,
 			String process, SymbolicExpression pointer, boolean checkOutput)
 			throws UnsatisfiablePathConditionException {
+		return dereference(source, state, process, pointer, checkOutput, false);
+	}
+
+	private Evaluation dereference(CIVLSource source, State state,
+			String process, SymbolicExpression pointer, boolean checkOutput,
+			boolean analysisOnly) throws UnsatisfiablePathConditionException {
 		// how to figure out if pointer is null pointer?
 		try {
 			int sid = symbolicUtil.getDyscopeId(source, pointer);
@@ -2710,11 +2714,10 @@ public class CommonEvaluator implements Evaluator {
 			} else {
 				int vid = symbolicUtil.getVariableId(source, pointer);
 				ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
-
 				SymbolicExpression variableValue;
 				SymbolicExpression deref;
 
-				if (checkOutput) {
+				if (!analysisOnly && checkOutput) {
 					Variable variable = state.getScope(sid).lexicalScope()
 							.variable(vid);
 

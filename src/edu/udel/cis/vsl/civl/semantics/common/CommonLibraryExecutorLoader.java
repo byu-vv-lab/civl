@@ -29,8 +29,11 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 			Executor primaryExecutor, ModelFactory modelFacotry,
 			SymbolicUtility symbolicUtil, CIVLConfiguration civlConfig)
 			throws LibraryLoaderException {
-		LibraryExecutor result = libraryExecutorCache.get(name);
+		LibraryExecutor result;
 
+		if (name.equals("assert"))
+			name = "asserts";
+		result = libraryExecutorCache.get(name);
 		if (result == null) {
 			String aClassName = className(name, "Executor");
 

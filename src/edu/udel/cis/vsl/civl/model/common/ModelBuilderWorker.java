@@ -459,7 +459,6 @@ public class ModelBuilderWorker {
 				call.setGuard(factory.systemGuardExpression(call));
 			}
 		}
-
 		for (SystemFunctionCallExpression callExpression : this.systemCallExpressions) {
 			callExpression.setExpressionType(callExpression.callStatement()
 					.function().returnType());

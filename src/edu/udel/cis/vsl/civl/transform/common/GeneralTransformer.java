@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,13 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
@@ -46,6 +51,11 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 	public final static String SHORT_DESCRIPTION = "transforms general features of C programs to CIVL-C";
 
 	private final static String MALLOC = "malloc";
+	private final static String MAX_ARGC = "10";
+
+	private String argvName;
+	private String newArgvName;
+	private AssumeNode argcAssumption = null;
 
 	public GeneralTransformer(ASTFactory astFactory,
 			List<String> inputVariables, CIVLConfiguration config) {
@@ -72,6 +82,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 
 				if (functionName.name().equals("main")) {
 					inputVars = processMainFunction(functionNode);
+					processArgvRefs(functionNode.getBody());
 				}
 			}
 			if (config.svcomp())
@@ -81,6 +92,8 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			newExternalList.add(inputVar);
 		for (ASTNode inputVar : inputVars)
 			newExternalList.add(inputVar);
+		if (this.argcAssumption != null)
+			newExternalList.add(argcAssumption);
 		for (ASTNode child : root) {
 			newExternalList.add(child);
 			child.parent().removeChild(child.childIndex());
@@ -89,6 +102,46 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 				newExternalList);
 		newAst = astFactory.newAST(root);
 		return newAst;
+	}
+
+	private void processArgvRefs(ASTNode node) throws SyntaxException {
+		if (node instanceof OperatorNode
+				&& ((OperatorNode) node).getOperator() == Operator.SUBSCRIPT) {
+			ASTNode parent = node.parent();
+
+			if (!(parent instanceof OperatorNode && (((OperatorNode) parent)
+					.getOperator() == Operator.ADDRESSOF))
+					&& !(parent instanceof CastNode)) {
+				OperatorNode subscript = (OperatorNode) node;
+				ExpressionNode arg0 = subscript.getArgument(0);
+
+				if (arg0.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+					IdentifierExpressionNode idExpr = (IdentifierExpressionNode) arg0;
+
+					if (idExpr.getIdentifier().name().equals(this.argvName)) {
+						OperatorNode newSubscript = subscript.copy();
+						IdentifierExpressionNode newIdExpr = idExpr.copy();
+						Source source = subscript.getSource();
+						ExpressionNode addreessOf;
+
+						newIdExpr.getIdentifier().setName(newArgvName);
+						newSubscript.setChild(0, newIdExpr);
+						newSubscript = nodeFactory.newOperatorNode(source,
+								Operator.SUBSCRIPT, Arrays.asList(newSubscript,
+										nodeFactory.newIntegerConstantNode(
+												source, "0")));
+						addreessOf = nodeFactory.newOperatorNode(source,
+								Operator.ADDRESSOF,
+								Arrays.asList((ExpressionNode) newSubscript));
+						node.parent().setChild(node.childIndex(), addreessOf);
+					}
+				}
+			}
+		} else {
+			for (ASTNode child : node.children())
+				if (child != null)
+					processArgvRefs(child);
+		}
 	}
 
 	private void recoverMacro(ASTNode node,
@@ -178,9 +231,8 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			}
 		} else {
 			for (ASTNode child : node.children()) {
-				if (child != null) {
+				if (child != null)
 					processMalloc(child);
-				}
 			}
 		}
 
@@ -249,60 +301,124 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			VariableDeclarationNode argvVar = parameters.getSequenceChild(1);
 			VariableDeclarationNode __argcVar = argcVar.copy();
 			VariableDeclarationNode __argvVar;
-			CompoundStatementNode functionBody = mainFunction.getBody();
 			String argcName = argcVar.getIdentifier().name();
 			String argvName = argvVar.getIdentifier().name();
-			String __argcName = "__" + argcName;
-			String __argvName = "__" + argvName;
-			TypeNode argvType = argvVar.getTypeNode();
-			ArgvTypeKind argvTypeKind = analyzeArgvType(argvType);
-			Source source = argvVar.getSource();
-			TypeNode pointerOfPointerOfChar = nodeFactory.newPointerTypeNode(
-					source, nodeFactory.newPointerTypeNode(source, nodeFactory
-							.newBasicTypeNode(source, BasicTypeKind.CHAR)));
+			String newArgcName = "CIVL_" + argcName;
+			this.argvName = argvName;
+			this.newArgvName = "CIVL_" + argvName;
+			// TypeNode pointerOfPointerOfChar = nodeFactory.newPointerTypeNode(
+			// source, nodeFactory.newPointerTypeNode(source, nodeFactory
+			// .newBasicTypeNode(source, BasicTypeKind.CHAR)));
+			CompoundStatementNode functionBody = mainFunction.getBody();
+			Source source = argvVar.getTypeNode().getSource();
+			TypeNode arrayOfCharPointer = nodeFactory.newArrayTypeNode(source,
+					nodeFactory.newPointerTypeNode(source, nodeFactory
+							.newBasicTypeNode(source, BasicTypeKind.CHAR)),
+					nodeFactory.newIntegerConstantNode(source, MAX_ARGC));
+//			LoopNode forLoop;
+//			ForLoopInitializerNode loopInit;
+//			ExpressionNode condition, increment;
+//			StatementNode loopBody;
+//			ExpressionNode lhs, rhs;
 
 			parameters.removeChild(0);
 			parameters.removeChild(1);
 			__argcVar.getTypeNode().setInputQualified(true);
-			__argcVar.getIdentifier().setName(__argcName);
+			__argcVar.getIdentifier().setName(newArgcName);
 			inputVars.add(__argcVar);
-			__argvVar = inputArgvDeclaration(argvVar, __argvName);
+			__argvVar = inputArgvDeclaration(argvVar, newArgvName);
 			inputVars.add(__argvVar);
-			argcVar.setInitializer(identifierExpression(__argcVar.getSource(),
-					__argcName));
-			if (argvTypeKind != ArgvTypeKind.POINTER_POINTER_CHAR) {
-
-				argvVar.setTypeNode(pointerOfPointerOfChar.copy());
-			}
-			argvVar.setInitializer(nodeFactory.newCastNode(
-					source,
-					pointerOfPointerOfChar.copy(),
-					nodeFactory.newIdentifierExpressionNode(source,
-							nodeFactory.newIdentifierNode(source, __argvName))));
-			functionBody = addNodeToBeginning(functionBody, argvVar);
-			functionBody = addNodeToBeginning(functionBody, argcVar);
-			mainFunction.setBody(functionBody);
 			functionType.setParameters(nodeFactory.newSequenceNode(
 					parameters.getSource(), "FormalParameterDeclarations",
 					new ArrayList<VariableDeclarationNode>(0)));
+			this.argcAssumption = this.argcAssumption(argcVar.getSource(),
+					newArgcName);
+			argcVar.setInitializer(this.identifierExpression(
+					argcVar.getSource(), newArgcName));
+			argvVar.setTypeNode(arrayOfCharPointer);
+			source = argvVar.getSource();
+//			loopInit = nodeFactory.newForLoopInitializerNode(source, Arrays
+//					.asList(this.variableDeclaration(source, "i", nodeFactory
+//							.newBasicTypeNode(source, BasicTypeKind.INT),
+//							nodeFactory.newIntegerConstantNode(source, "0"))));
+//			condition = nodeFactory.newOperatorNode(source, Operator.LT, Arrays
+//					.asList(this.identifierExpression(source, "i"), nodeFactory
+//							.newIntegerConstantNode(source, MAX_ARGC)));
+//			increment = nodeFactory.newOperatorNode(source,
+//					Operator.POSTINCREMENT,
+//					Arrays.asList(this.identifierExpression(source, "i")));
+//			// argv[i]
+//			lhs = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
+//					Arrays.asList(this.identifierExpression(source, argvName),
+//							this.identifierExpression(source, "i")));
+//			// CIVL_argv[i]
+//			rhs = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
+//					Arrays.asList(
+//							this.identifierExpression(source, newArgvName),
+//							this.identifierExpression(source, "i")));
+//			// CIVL_argv[i][0]
+//			rhs = nodeFactory.newOperatorNode(
+//					source,
+//					Operator.SUBSCRIPT,
+//					Arrays.asList(rhs,
+//							nodeFactory.newIntegerConstantNode(source, "0")));
+//			// &CIVL_argv[i][0]
+//			rhs = nodeFactory.newOperatorNode(source, Operator.ADDRESSOF,
+//					Arrays.asList(rhs));
+//			loopBody = nodeFactory.newExpressionStatementNode(nodeFactory
+//					.newOperatorNode(source, Operator.ASSIGN,
+//							Arrays.asList(lhs, rhs)));
+//			forLoop = nodeFactory.newForLoopNode(source, loopInit, condition,
+//					increment, loopBody, null);
+//			functionBody = this.addNodeToBeginning(functionBody, forLoop);
+			functionBody = this.addNodeToBeginning(functionBody, argvVar);
+			functionBody = this.addNodeToBeginning(functionBody, argcVar);
+			mainFunction.setBody(functionBody);
 		}
 		return inputVars;
 	}
 
 	/**
-	 * Declares <code>$input char __argv[][];</code>.
+	 * $assume 0 < argc && argc < MAX_ARGC;
+	 * 
+	 * @param source
+	 * @param argcName
+	 * @return
+	 * @throws SyntaxException
+	 */
+	private AssumeNode argcAssumption(Source source, String argcName)
+			throws SyntaxException {
+		ExpressionNode lowerBound = nodeFactory.newOperatorNode(source,
+				Operator.LT, Arrays.asList(
+						nodeFactory.newIntegerConstantNode(source, "0"),
+						this.identifierExpression(source, argcName)));
+		ExpressionNode upperBound = nodeFactory.newOperatorNode(source,
+				Operator.LT, Arrays.asList(
+						this.identifierExpression(source, argcName),
+						nodeFactory.newIntegerConstantNode(source, MAX_ARGC)));
+
+		return nodeFactory.newAssumeNode(
+				source,
+				nodeFactory.newOperatorNode(source, Operator.LAND,
+						Arrays.asList(lowerBound, upperBound)));
+	}
+
+	/**
+	 * Declares <code>$input char CIVL_argv[MAX_ARGC][];</code>.
 	 * 
 	 * @param oldArgv
 	 * @return
+	 * @throws SyntaxException
 	 */
 	private VariableDeclarationNode inputArgvDeclaration(
-			VariableDeclarationNode oldArgv, String argvNewName) {
+			VariableDeclarationNode oldArgv, String argvNewName)
+			throws SyntaxException {
 		VariableDeclarationNode __argv = oldArgv.copy();
 		Source source = oldArgv.getSource();
 		TypeNode arrayOfString = nodeFactory.newArrayTypeNode(source,
-				nodeFactory.newArrayTypeNode(source, nodeFactory
+				nodeFactory.newArrayTypeNode(oldArgv.getSource(), nodeFactory
 						.newBasicTypeNode(source, BasicTypeKind.CHAR), null),
-				null);
+				nodeFactory.newIntegerConstantNode(source, MAX_ARGC));
 
 		__argv.getIdentifier().setName(argvNewName);
 		arrayOfString.setInputQualified(true);
@@ -314,26 +430,27 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 		POINTER_POINTER_CHAR, ARRAY_POINTER_CHAR, ARRAY_ARRAY_CAHR
 	};
 
-	private ArgvTypeKind analyzeArgvType(TypeNode type) throws SyntaxException {
-		TypeNodeKind typeKind = type.typeNodeKind();
-
-		switch (typeKind) {
-		case POINTER:
-			return ArgvTypeKind.POINTER_POINTER_CHAR;
-		case ARRAY:
-			ArrayTypeNode arrayType = (ArrayTypeNode) type;
-			TypeNode arrayEleType = arrayType.getElementType();
-			TypeKind arrayEleTypeKind = arrayEleType.getType().kind();
-
-			if (arrayEleTypeKind == TypeKind.POINTER)
-				return ArgvTypeKind.ARRAY_POINTER_CHAR;
-			else if (arrayEleTypeKind == TypeKind.ARRAY)
-				return ArgvTypeKind.ARRAY_ARRAY_CAHR;
-		default:
-			throw new SyntaxException("Invalid type " + type.getType()
-					+ " for argv of main.", null);
-		}
-	}
+	// private ArgvTypeKind analyzeArgvType(TypeNode type) throws
+	// SyntaxException {
+	// TypeNodeKind typeKind = type.typeNodeKind();
+	//
+	// switch (typeKind) {
+	// case POINTER:
+	// return ArgvTypeKind.POINTER_POINTER_CHAR;
+	// case ARRAY:
+	// ArrayTypeNode arrayType = (ArrayTypeNode) type;
+	// TypeNode arrayEleType = arrayType.getElementType();
+	// TypeKind arrayEleTypeKind = arrayEleType.getType().kind();
+	//
+	// if (arrayEleTypeKind == TypeKind.POINTER)
+	// return ArgvTypeKind.ARRAY_POINTER_CHAR;
+	// else if (arrayEleTypeKind == TypeKind.ARRAY)
+	// return ArgvTypeKind.ARRAY_ARRAY_CAHR;
+	// default:
+	// throw new SyntaxException("Invalid type " + type.getType()
+	// + " for argv of main.", null);
+	// }
+	// }
 
 	private CompoundStatementNode addNodeToBeginning(
 			CompoundStatementNode compoundNode, BlockItemNode node) {

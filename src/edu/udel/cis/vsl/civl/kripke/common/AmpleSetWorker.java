@@ -14,7 +14,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -477,30 +476,6 @@ public class AmpleSetWorker {
 			memUnits.addAll(memUnitsPartial);
 		}
 		switch (statement.statementKind()) {
-		case ASSERT:
-			AssertStatement assertStatement = (AssertStatement) statement;
-			Expression assertExpression = assertStatement.getExpression();
-			Expression[] printfArgs = assertStatement.printfArguments();
-
-			partialResult = memoryUnit(assertExpression, pid);
-			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-				return partialResult;
-			memUnitsPartial = partialResult.right;
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-			if (printfArgs != null) {
-				for (Expression argument : printfArgs) {
-					partialResult = memoryUnit(argument, pid);
-					if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-						return partialResult;
-					memUnitsPartial = partialResult.right;
-					if (memUnitsPartial != null) {
-						memUnits.addAll(memUnitsPartial);
-					}
-				}
-			}
-			break;
 		case ASSIGN:
 		case CHOOSE: {
 			AssignStatement assignStatement = (AssignStatement) statement;
@@ -708,8 +683,9 @@ public class AmpleSetWorker {
 				for (int vid = 0; vid < size; vid++) {
 					Variable variable = dyScope.lexicalScope().variable(vid);
 					Set<SymbolicExpression> varMemUnits = evaluator
-							.memoryUnitsReachableFromVariable(dyScope.getValue(vid),
-									dyScopeID, vid, state, process);
+							.memoryUnitsReachableFromVariable(
+									dyScope.getValue(vid), dyScopeID, vid,
+									state, process);
 					boolean permission = writableVariables.contains(variable) ? true
 							: false;
 

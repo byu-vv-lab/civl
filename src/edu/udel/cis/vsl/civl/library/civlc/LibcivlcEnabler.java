@@ -72,7 +72,6 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			SymbolicUtility symbolicUtil) {
 		super(name, primaryEnabler, evaluator, output, modelFactory,
 				symbolicUtil);
-
 		CIVLSource source = modelFactory.model().getSource();
 		SystemFunction chooseIntWorkFunction = modelFactory.systemFunction(
 				source,

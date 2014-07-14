@@ -123,20 +123,10 @@ public class ImmutableDynamicScope implements DynamicScope {
 		this.variableValues = variableValues;
 		this.reachers = reachers;
 		this.identifier = identifier;
+		this.parentIdentifier = parentIdentifier;
 	}
 
 	/* ********************** Package-private Methods ********************** */
-
-	/**
-	 * Returns the dyscope ID of the parent of this dynamic scope in the dyscope
-	 * tree. If this is the root dyscope (i.e., the lexicalScope is the root
-	 * static scope), returns -1.
-	 * 
-	 * @return The dyscope ID of the parent of this dyscope or -1
-	 */
-	int getParent() {
-		return parent;
-	}
 
 	/**
 	 * Returns a new immutable dynamic scope which is equivalent to this one,
@@ -394,6 +384,11 @@ public class ImmutableDynamicScope implements DynamicScope {
 	/* ********************** Methods from DynamicScope ******************** */
 
 	@Override
+	public int getParent() {
+		return parent;
+	}
+
+	@Override
 	public BitSet getReachers() {
 		return reachers;
 	}
@@ -439,10 +434,10 @@ public class ImmutableDynamicScope implements DynamicScope {
 		return this.variableValues.length;
 	}
 
-	@Override
-	public int getParentIdentifier() {
-		return this.parentIdentifier;
-	}
+	// @Override
+	// public int getParentIdentifier() {
+	// return this.parentIdentifier;
+	// }
 
 	@Override
 	public String name() {

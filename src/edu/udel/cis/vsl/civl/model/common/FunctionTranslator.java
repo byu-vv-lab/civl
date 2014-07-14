@@ -134,6 +134,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
@@ -819,14 +820,16 @@ public class FunctionTranslator {
 				Expression function = this.translateExpressionNode(
 						functionExpression, scope, true);
 				callee = null;
-
 				result = modelFactory.callOrSpawnStatement(
 						modelFactory.sourceOf(callNode), location, isCall,
 						function, arguments, null);
 				// added function guard expression since the function could be a
-				// system function which has an outstanding guard
-				result.setGuard(modelFactory.functionGuardExpression(
-						modelFactory.sourceOf(callNode), function, arguments));
+				// system function which has an outstanding guard, only when it
+				// is a call statement
+				if (isCall)
+					result.setGuard(modelFactory.functionGuardExpression(
+							modelFactory.sourceOf(callNode), function,
+							arguments));
 				break;
 			default:
 				throw new CIVLUnimplementedFeatureException(
@@ -1778,8 +1781,6 @@ public class FunctionTranslator {
 	protected Statement translateFunctionCall(Scope scope, LHSExpression lhs,
 			FunctionCallNode functionCallNode, boolean isCall) {
 		CIVLSource source = modelFactory.sourceOfBeginning(functionCallNode);
-		String functionName = ((IdentifierExpressionNode) functionCallNode
-				.getFunction()).getIdentifier().name();
 		ArrayList<Expression> arguments = new ArrayList<Expression>();
 		Location location;
 		CIVLFunction abstractFunction;
@@ -1819,79 +1820,19 @@ public class FunctionTranslator {
 			return modelFactory.assignStatement(source, location, lhs,
 					abstractFunctionCall, false);
 		}
-		switch (functionName) {
-		// special translation for some system functions like $assert,
-		// $choose_int, etc.
-		case "assert":
-		case "$assert":
-			return translateAssertFunctionCall(source, location, scope,
-					arguments);
-			// case "$choose_int":
-			// return translateChooseIntFunctionCall(source, location, scope,
-			// lhs,
-			// arguments);
-		default:
-			return callOrSpawnStatement(scope, location, functionCallNode, lhs,
-					arguments, isCall);
-		}
-	}
-
-	/**
-	 * Translate the function call $assert() (from civlc.h) or assert() (from
-	 * assert.h) into an Assert Statement.
-	 * 
-	 * @param source
-	 *            The source code element for error report.
-	 * @param location
-	 *            The source location of the function call.
-	 * @param scope
-	 *            The scope where the function call happens.
-	 * @param arguments
-	 *            The arguments of the function call.
-	 * @return A new assert statement representing the $assert/assert function
-	 *         call.
-	 */
-	private Statement translateAssertFunctionCall(CIVLSource source,
-			Location location, Scope scope, List<Expression> arguments) {
-		Statement result;
-
-		int numOfArgs = arguments.size();
-
-		switch (arguments.size()) {
-		case 0:
-			throw new CIVLSyntaxException(
-					"The function $assert should have at least one arguments.",
-					source);
-		default: {
-			Expression firstArgument = arguments.get(0);
-			Expression formula;
-			try {
-				formula = modelFactory.booleanExpression(firstArgument);
-			} catch (ModelFactoryException err) {
-				throw new CIVLSyntaxException(
-						"The first argument of $assert() "
-								+ firstArgument
-								+ " is of "
-								+ firstArgument.getExpressionType()
-								+ " type which cannot be converted to boolean type.",
-						firstArgument.getSource());
-			}
-			if (numOfArgs == 1)
-				result = modelFactory
-						.assertStatement(source, location, formula);
-			else {
-				ArrayList<Expression> optionalArguments = new ArrayList<>(
-						numOfArgs - 1);
-
-				for (int i = 1; i < numOfArgs; i++) {
-					optionalArguments.add(arguments.get(i));
-				}
-				result = modelFactory.assertStatement(source, location,
-						formula, optionalArguments);
-			}
-		}
-		}
-		return result;
+		// switch (functionName) {
+		// // // special translation for some system functions like $assert,
+		// assert
+		// // case "assert":
+		// // case "$assert":
+		// // return translateAssertFunctionCall(source, location, scope,
+		// // arguments);
+		// default:
+		// return callOrSpawnStatement(scope, location, functionCallNode, lhs,
+		// arguments, isCall);
+		// }
+		return callOrSpawnStatement(scope, location, functionCallNode, lhs,
+				arguments, isCall);
 	}
 
 	/**
@@ -2014,18 +1955,18 @@ public class FunctionTranslator {
 					Source declSource = node.getIdentifier().getSource();
 					CToken token = declSource.getFirstToken();
 					File file = token.getSourceFile();
-					String fileName = file.getName(); // fileName will be
-														// something
-														// like "stdlib.h" or
-														// "civlc.h"
+					// fileName will be something like "stdlib.h" or "civlc.h"
+					String fileName = file.getName();
 					String libName;
 
 					if (!fileName.contains("."))
 						throw new CIVLInternalException("Malformed file name "
 								+ fileName + " containing system function "
 								+ functionName, nodeSource);
-
-					libName = fileNameWithoutExtension(fileName);
+					if (functionIdentifier.name().equals("$assert"))
+						libName = "civlc";
+					else
+						libName = fileNameWithoutExtension(fileName);
 					result = modelFactory.systemFunction(nodeSource,
 							functionIdentifier, parameters, returnType, scope,
 							libName);
@@ -3423,8 +3364,11 @@ public class FunctionTranslator {
 		}
 		switch (operatorNode.getOperator()) {
 		case ADDRESSOF:
-			result = modelFactory.addressOfExpression(source,
-					(LHSExpression) arguments.get(0));
+			if (arguments.get(0) instanceof FunctionPointerExpression)
+				result = arguments.get(0);
+			else
+				result = modelFactory.addressOfExpression(source,
+						(LHSExpression) arguments.get(0));
 			break;
 		case BIG_O:
 			result = modelFactory.unaryExpression(source, UNARY_OPERATOR.BIG_O,

@@ -28,9 +28,13 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 	@Override
 	public LibraryEnabler getLibraryEnabler(String name,
 			Enabler primaryEnabler, Evaluator evaluator, PrintStream output,
-			ModelFactory modelFacotry, SymbolicUtility symbolicUtil) throws LibraryLoaderException {
-		LibraryEnabler result = libraryEnablerCache.get(name);
+			ModelFactory modelFacotry, SymbolicUtility symbolicUtil)
+			throws LibraryLoaderException {
+		LibraryEnabler result;
 
+		if (name.equals("assert"))
+			name = "asserts";
+		result = libraryEnablerCache.get(name);
 		if (result == null) {
 			String aClassName = this.className(name, "Enabler");
 

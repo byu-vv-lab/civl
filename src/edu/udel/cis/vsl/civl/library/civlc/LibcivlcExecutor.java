@@ -617,8 +617,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression gbarrierObj;
 		SymbolicExpression barrierObj;
 		SymbolicExpression procMapArray;
-		LinkedList<SymbolicExpression> barrierComponents = new LinkedList<SymbolicExpression>();
-		CIVLSource civlsource = arguments[0].getSource();
+		LinkedList<SymbolicExpression> barrierComponents = new LinkedList<>();
+		CIVLSource civlsource = arguments[1].getSource();
 		CIVLType barrierType = model.barrierType();
 		Evaluation eval;
 		int place_num = ((IntegerNumber) universe
@@ -634,11 +634,19 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				false);
 		state = eval.state;
 		gbarrierObj = eval.value;
+		if (!symbolicUtil.isHeapObjectDefined(gbarrierObj)) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
+					"The gbarrier object of " + arguments[1] + " is undefined",
+					source);
+
+			this.errorLogger.reportError(err);
+		}
 		totalPlaces = ((IntegerNumber) universe
 				.extractNumber((NumericExpression) universe.tupleRead(
 						gbarrierObj, zeroObject))).intValue();
 		if (place_num >= totalPlaces) {
-			throw new CIVLExecutionException(
+			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.OTHER,
 					Certainty.CONCRETE,
 					process,
@@ -646,6 +654,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 							+ place_num
 							+ " used in $barrier_create() exceeds the size of the $gbarrier.",
 					source);
+
+			this.errorLogger.reportError(err);
 		}
 		procMapArray = universe.tupleRead(gbarrierObj, oneObject);
 		if (!universe.arrayRead(procMapArray, (NumericExpression) place)
@@ -1223,6 +1233,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = eval.state;
 		}
 		switch (name.name()) {
+		case "$assert":
+			state = this.executeAssert(state, pid, process, arguments,
+					argumentValues, call.getSource(), call);
+			break;
 		case "$bundle_pack":
 			state = executeBundlePack(state, pid, process,
 					(CIVLBundleType) call.function().returnType(), lhs,

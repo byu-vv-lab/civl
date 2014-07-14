@@ -660,7 +660,7 @@ public class ImmutableStateFactory implements StateFactory {
 				else
 					newScopes[i] = new ImmutableDynamicScope(staticScope,
 							dynamicScope.getParent(),
-							dynamicScope.getParentIdentifier(), newValues,
+							0, newValues,//TODO
 							newBitSet, dynamicScope.identifier());
 			} else if (newScopes != null) {
 				newScopes[i] = dynamicScope;
@@ -1083,7 +1083,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 		newValues[vid] = value;
 		newScope = new ImmutableDynamicScope(oldScope.lexicalScope(),
-				oldScope.getParent(), oldScope.getParentIdentifier(),
+				oldScope.getParent(),0,// TODO oldScope.getParentIdentifier()
 				newValues, oldScope.getReachers(), oldScope.identifier());
 		newScopes[scopeId] = newScope;
 		theState = theState.setScopes(newScopes);

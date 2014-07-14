@@ -180,5 +180,11 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 		return nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, name), type);
 	}
+	
+	protected VariableDeclarationNode variableDeclaration(Source source,
+			String name, TypeNode type, ExpressionNode init) {
+		return nodeFactory.newVariableDeclarationNode(source,
+				nodeFactory.newIdentifierNode(source, name), type, init);
+	}
 
 }

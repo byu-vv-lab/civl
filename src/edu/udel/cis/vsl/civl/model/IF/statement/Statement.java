@@ -32,7 +32,7 @@ public interface Statement extends Sourceable {
 	 * 
 	 */
 	public enum StatementKind {
-		ASSERT, ASSIGN, ASSUME, CALL_OR_SPAWN, CHOOSE, MALLOC, MPI, NOOP, RETURN, OTHERS, STATEMENT_LIST, CIVL_FOR_ENTER, CIVL_PAR_FOR_ENTER
+		ASSIGN, ASSUME, CALL_OR_SPAWN, CHOOSE, MALLOC, MPI, NOOP, RETURN, OTHERS, STATEMENT_LIST, CIVL_FOR_ENTER, CIVL_PAR_FOR_ENTER
 	}
 
 	/* **************************** Public Methods ************************* */

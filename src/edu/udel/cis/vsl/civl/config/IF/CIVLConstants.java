@@ -4,7 +4,6 @@ import static edu.udel.cis.vsl.gmc.Option.OptionType.BOOLEAN;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -150,10 +149,11 @@ public class CIVLConstants {
 	public final static Option showPathConditionO = Option.newScalarOption(
 			"showPathCondition", BOOLEAN,
 			"show the path condition of each state?", false);
-	
-	public static Option[] getAllOptions(){
+
+	public static Option[] getAllOptions() {
 		int numOpts = 33;
 		List<Option> outputs = new LinkedList<Option>();
+
 		outputs.add(CIVLConstants.deadlockO);
 		outputs.add(CIVLConstants.debugO);
 		outputs.add(CIVLConstants.echoO);
@@ -186,7 +186,7 @@ public class CIVLConstants {
 		outputs.add(CIVLConstants.sysIncludePathO);
 		outputs.add(CIVLConstants.traceO);
 		outputs.add(CIVLConstants.userIncludePathO);
-		outputs.add(CIVLConstants.verboseO);			
+		outputs.add(CIVLConstants.verboseO);
 		return outputs.toArray(new Option[numOpts]);
 	}
 }

@@ -40,6 +40,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression.ReferenceKind;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
@@ -110,6 +111,11 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	private BooleanExpression falseValue;
 	private BooleanExpression trueValue;
 
+	/**
+	 * The symbolic expression of NULL pointer.
+	 */
+	private SymbolicExpression nullPointer;
+
 	public CommonSymbolicUtility(SymbolicUniverse universe,
 			ModelFactory modelFactory, CIVLErrorLogger errLogger) {
 		SymbolicType dynamicToIntType;
@@ -137,6 +143,13 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				.falseExpression());
 		this.trueValue = (BooleanExpression) universe.canonic(universe
 				.trueExpression());
+		this.nullPointer = universe.canonic(this.makePointer(-1, -1,
+				universe.nullReference()));
+	}
+
+	@Override
+	public SymbolicExpression nullPointer() {
+		return this.nullPointer;
 	}
 
 	@Override
@@ -913,7 +926,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 				if (variable.type().equals(this.heapType)) {
 					String resultString = heapObjectReferenceToString(source,
-							dyscopeId, this.heapType, reference).third;
+							state.getScope(dyscopeId).identifier(),
+							this.heapType, reference).third;
 
 					return resultString;
 				} else {
@@ -1219,21 +1233,17 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		// int bitSetLength = reachers.length();
 		// boolean first = true;
 		StringBuffer result = new StringBuffer();
+		String parentString;
+		DynamicScope parent = dyscope.getParent() < 0 ? null : state
+				.getScope(dyscope.getParent());
 
+		if (parent == null)
+			parentString = "NULL";
+		else
+			parentString = parent.name();
 		result.append(prefix + "dyscope " + dyscope.name() + " (id=" + id
-				+ ", parent=d" + dyscope.getParentIdentifier() + ", static="
-				+ lexicalScope.id() + ")\n");
-		// result.append(prefix + "| reachers = {");
-		// for (int j = 0; j < bitSetLength; j++) {
-		// if (reachers.get(j)) {
-		// if (first)
-		// first = false;
-		// else
-		// result.append(",");
-		// result.append(j);
-		// }
-		// }
-		// result.append("}\n");
+				+ ", parent=" + parentString + ", static=" + lexicalScope.id()
+				+ ")\n");
 		result.append(prefix + "| variables\n");
 		for (int i = 0; i < numVars; i++) {
 			Variable variable = lexicalScope.variable(i);
@@ -1515,7 +1525,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	 */
 	@Override
 	public SymbolicExpression contains(SymbolicExpression pointer1,
-			SymbolicExpression pointer2) {		ReferenceExpression ref1 = (ReferenceExpression) universe.tupleRead(
+			SymbolicExpression pointer2) {
+		ReferenceExpression ref1 = (ReferenceExpression) universe.tupleRead(
 				pointer1, twoObj);
 		ReferenceExpression ref2 = (ReferenceExpression) universe.tupleRead(
 				pointer2, twoObj);
@@ -1578,5 +1589,27 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		default:
 			return;
 		}
+	}
+
+	@Override
+	public boolean isNullPointer(SymbolicExpression pointer) {
+		return universe.equals(this.nullPointer, pointer).isTrue();
+	}
+
+	@Override
+	public boolean isHeapObjectDefined(SymbolicExpression heapObj) {
+		if (heapObj.numArguments() > 0
+				&& heapObj.argument(0) instanceof SymbolicConstant) {
+			SymbolicConstant value = (SymbolicConstant) heapObj.argument(0);
+
+			if (value.name().getString().equals("UNDEFINED"))
+				return false;
+		} else if (heapObj instanceof SymbolicConstant) {
+			SymbolicConstant value = (SymbolicConstant) heapObj;
+
+			if (value.name().getString().equals("UNDEFINED"))
+				return false;
+		}
+		return true;
 	}
 }

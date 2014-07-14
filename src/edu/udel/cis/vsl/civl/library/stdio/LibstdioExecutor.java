@@ -1,12 +1,9 @@
 package edu.udel.cis.vsl.civl.library.stdio;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -213,12 +210,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 
 	private SymbolicExpression EOF;
 
-	/**
-	 * The set of characters that are used to construct a number in a format
-	 * string.
-	 */
-	private Set<Character> numbers;
-
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -264,10 +255,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			this.fileSymbolicType = (SymbolicTupleType) this.fileType
 					.getDynamicType(universe);
 		this.FILEtype = model.FILEtype();
-		numbers = new HashSet<Character>(10);
-		for (int i = 0; i < 10; i++) {
-			numbers.add(Character.forDigit(i, 10));
-		}
 	}
 
 	/* ************************** Private Methods ************************** */
@@ -1034,292 +1021,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
-	private State execute_printf(CIVLSource source, State state, int pid,
-			String process, LHSExpression lhs, Expression[] arguments,
-			SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		StringBuffer stringOfSymbolicExpression;
-		StringBuffer formatBuffer;
-		List<StringBuffer> printedContents = new ArrayList<>();
-		List<Integer> sIndexes = new LinkedList<>();
-		int sCount = 1;
-		Pair<State, StringBuffer> concreteString;
-		List<Format> formats;
-
-		concreteString = this.getString(arguments[0].getSource(), state,
-				process, argumentValues[0]);
-		formatBuffer = concreteString.right;
-		state = concreteString.left;
-		formats = this.splitFormat(arguments[0].getSource(), formatBuffer);
-		for (Format format : formats) {
-			if (format.type == ConversionType.STRING)
-				sIndexes.add(sCount++);
-			else if (format.type != ConversionType.VOID)
-				sCount++;
-		}
-		for (int i = 1; i < argumentValues.length; i++) {
-			SymbolicExpression argumentValue = argumentValues[i];
-			CIVLType argumentType = arguments[i].getExpressionType();
-
-			if (argumentType instanceof CIVLPointerType
-					&& ((CIVLPointerType) argumentType).baseType().isCharType()
-					&& argumentValue.operator() == SymbolicOperator.CONCRETE) {
-				// also check format code is %s before doing this
-				if (!sIndexes.contains(i)) {
-					throw new CIVLSyntaxException("Array pointer unaccepted",
-							arguments[i].getSource());
-				}
-				concreteString = this.getString(arguments[i].getSource(),
-						state, process, argumentValue);
-				stringOfSymbolicExpression = concreteString.right;
-				state = concreteString.left;
-				printedContents.add(stringOfSymbolicExpression);
-			} else
-				printedContents.add(new StringBuffer(this.symbolicUtil
-						.symbolicExpressionToString(arguments[i].getSource(),
-								state, argumentValue)));
-		}
-		this.printf(civlConfig.out(), arguments[0].getSource(), formats,
-				printedContents);
-		return state;
-	}
-
-	/**
-	 * Parses the format string, according to C11 standards. For example,
-	 * <code>"This is process %d.\n"</code> will be parsed into a list of
-	 * strings: <code>"This is process "</code>, <code>"%d"</code>,
-	 * <code>".\n"</code>.<br>
-	 * 
-	 * In Paragraph 4, Section 7.21.6.1, C11 Standards:<br>
-	 * Each conversion specification is introduced by the character %. After the
-	 * %, the following appear in sequence:
-	 * <ul>
-	 * <li>Zero or more flags (in any order) that modify the meaning of the
-	 * conversion specification.</li>
-	 * <li>An optional minimum field width. If the converted value has fewer
-	 * characters than the field width, it is padded with spaces (by default) on
-	 * the left (or right, if the left adjustment flag, described later, has
-	 * been given) to the field width. The field width takes the form of an
-	 * asterisk * (described later) or a nonnegative decimal integer.</li>
-	 * <li>An optional precision that gives the minimum number of digits to
-	 * appear for the d, i, o, u, x, and X conversions, the number of digits to
-	 * appear after the decimal-point character for a, A, e, E, f, and F
-	 * conversions, the maximum number of significant digits for the g and G
-	 * conversions, or the maximum number of bytes to be written for s
-	 * conversions. The precision takes the form of a period (.) followed either
-	 * by an asterisk * (described later) or by an optional decimal integer; if
-	 * only the period is specified, the precision is taken as zero. If a
-	 * precision appears with any other conversion specifier, the behavior is
-	 * undefined.</li>
-	 * <li>An optional length modifier that specifies the size of the argument.</li>
-	 * <li>A conversion specifier character that specifies the type of
-	 * conversion to be applied.</li>
-	 * </ul>
-	 * 
-	 * @param source
-	 *            The source code element of the format argument.
-	 * @param formatBuffer
-	 *            The string buffer containing the content of the format string.
-	 * @return A list of string buffers by splitting the format by conversion
-	 *         specifiers.
-	 */
-	private List<Format> splitFormat(CIVLSource source,
-			StringBuffer formatBuffer) {
-		int count = formatBuffer.length();
-		List<Format> result = new ArrayList<>();
-		StringBuffer stringBuffer = new StringBuffer();
-		boolean inConversion = false;
-		boolean hasFieldWidth = false;
-		boolean hasPrecision = false;
-
-		for (int i = 0; i < count; i++) {
-			Character current = formatBuffer.charAt(i);
-			Character code;
-			ConversionType type = ConversionType.VOID;
-
-			if (current.equals('%')) {
-				code = formatBuffer.charAt(i + 1);
-
-				if (code.equals('%')) {
-					stringBuffer.append("%%");
-					i = i + 1;
-					continue;
-				}
-				if (stringBuffer.length() > 0) {
-					if (stringBuffer.charAt(0) == '%'
-							&& stringBuffer.charAt(1) != '%') {
-						throw new CIVLSyntaxException("The format %"
-								+ stringBuffer + " is not allowed in fprintf",
-								source);
-					}
-					result.add(new Format(stringBuffer, type));
-					stringBuffer = new StringBuffer();
-				}
-				inConversion = true;
-				stringBuffer.append('%');
-				current = formatBuffer.charAt(++i);
-			}
-			if (inConversion) {
-				// field width
-				if (current.equals('*')) {
-					stringBuffer.append('*');
-					current = formatBuffer.charAt(++i);
-				} else if (numbers.contains(current)) {
-					Character next = current;
-
-					if (hasFieldWidth) {
-						stringBuffer.append(next);
-						throw new CIVLSyntaxException(
-								"Duplicate field width in \"" + stringBuffer
-										+ "\"...", source);
-					}
-					hasFieldWidth = true;
-					while (numbers.contains(next)) {
-						stringBuffer.append(next);
-						next = formatBuffer.charAt(++i);
-					}
-					current = next;
-				}
-				// precision
-				if (current.equals('.')) {
-					Character next;
-
-					next = formatBuffer.charAt(++i);
-					stringBuffer.append('.');
-					if (hasPrecision) {
-						throw new CIVLSyntaxException(
-								"Duplicate precision detected in \""
-										+ stringBuffer + "\"...", source);
-					}
-					hasPrecision = true;
-					if (next.equals('*')) {
-						stringBuffer.append(next);
-						next = formatBuffer.charAt(++i);
-					} else {
-						while (numbers.contains(next)) {
-							stringBuffer.append(next);
-							next = formatBuffer.charAt(++i);
-						}
-					}
-					current = next;
-				}
-				// length modifier
-				switch (current) {
-				case 'h':
-				case 'l':
-					stringBuffer.append(current);
-					if (i + 1 >= count)
-						throw new CIVLSyntaxException("The format "
-								+ stringBuffer + " is not allowed.", source);
-					else {
-						Character next = formatBuffer.charAt(i + 1);
-
-						if (next.equals(current)) {
-							i++;
-							stringBuffer.append(next);
-						}
-						current = formatBuffer.charAt(++i);
-					}
-					break;
-				case 'j':
-				case 'z':
-				case 't':
-				case 'L':
-					stringBuffer.append(current);
-					current = formatBuffer.charAt(++i);
-					break;
-				default:
-				}
-				// conversion specifier
-				switch (current) {
-				case 'c':
-				case 'p':
-				case 'n':
-					if (hasFieldWidth || hasPrecision) {
-						throw new CIVLSyntaxException(
-								"Invalid precision for the format \"%"
-										+ current + "\"...", source);
-					}
-				default:
-				}
-				switch (current) {
-				case 'c':
-					type = ConversionType.CHAR;
-					break;
-				case 'p':
-				case 'n':
-					type = ConversionType.POINTER;
-					break;
-				case 'd':
-				case 'i':
-				case 'o':
-				case 'u':
-				case 'x':
-				case 'X':
-					type = ConversionType.INT;
-					break;
-				case 'a':
-				case 'A':
-				case 'e':
-				case 'E':
-				case 'f':
-				case 'F':
-				case 'g':
-				case 'G':
-					type = ConversionType.DOUBLE;
-					break;
-				case 's':
-					type = ConversionType.STRING;
-					break;
-				default:
-					stringBuffer.append(current);
-					throw new CIVLSyntaxException("The format %" + stringBuffer
-							+ " is not allowed in fprintf", source);
-				}
-				stringBuffer.append(current);
-				result.add(new Format(stringBuffer, type));
-				inConversion = false;
-				hasFieldWidth = false;
-				hasPrecision = false;
-				stringBuffer = new StringBuffer();
-			} else {
-				stringBuffer.append(current);
-			}
-		}
-		if (stringBuffer.length() > 0)
-			result.add(new Format(stringBuffer, ConversionType.VOID));
-		return result;
-	}
-
-	/**
-	 * Prints to the standard output stream.
-	 * 
-	 * @param source
-	 *            The source code information of the format argument.
-	 * @param formatBuffer
-	 *            The format string buffer.
-	 * @param arguments
-	 *            The list of arguments to be printed according to the format.
-	 */
-	private void printf(PrintStream printStream, CIVLSource source,
-			List<Format> formats, List<StringBuffer> arguments) {
-		if (this.civlConfig.enablePrintf()) {
-			int argIndex = 0;
-
-			for (Format format : formats) {
-				String formatString = format.toString();
-
-				switch (format.type) {
-				case VOID:
-					printStream.print(formatString);
-					break;
-				default:
-					printStream.printf("%s", arguments.get(argIndex++));
-				}
-			}
-		}
-	}
-
 	/* ******************** Methods from LibraryExecutor ******************* */
 
 	@Override
@@ -1328,22 +1029,4 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		return executeWork(state, pid, (CallOrSpawnStatement) statement);
 	}
 
-	private enum ConversionType {
-		INT, DOUBLE, CHAR, STRING, POINTER, VOID
-	};
-
-	private class Format {
-		ConversionType type;
-		StringBuffer string;
-
-		Format(StringBuffer content, ConversionType conversion) {
-			this.string = content;
-			this.type = conversion;
-		}
-
-		@Override
-		public String toString() {
-			return this.string.toString();
-		}
-	}
 }

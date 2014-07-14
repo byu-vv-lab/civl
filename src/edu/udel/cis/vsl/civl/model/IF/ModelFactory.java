@@ -55,7 +55,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
@@ -780,20 +779,6 @@ public interface ModelFactory {
 	 */
 
 	/**
-	 * Create a one-statement fragment that contains the assert statement.
-	 * 
-	 * @param civlSource
-	 *            The CIVL source of the assert statement
-	 * @param source
-	 *            The source location for this statement.
-	 * @param expression
-	 *            The expression being asserted.
-	 * @return A new fragment.
-	 */
-	AssertStatement assertStatement(CIVLSource civlSource, Location source,
-			Expression expression);
-
-	/**
 	 * An assignment statement.
 	 * 
 	 * @param civlSource
@@ -1434,9 +1419,6 @@ public interface ModelFactory {
 	 * @return The variable
 	 */
 	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
-
-	AssertStatement assertStatement(CIVLSource sourceOf, Location location,
-			Expression expression, List<Expression> arguments);
 
 	CharLiteralExpression charLiteralExpression(CIVLSource sourceOf, char value);
 

@@ -56,5 +56,10 @@ public class CommonFunctionGuardExpression extends CommonExpression implements
 	public List<Expression> arguments() {
 		return this.arguments;
 	}
+	
+	@Override
+	public String toString(){
+		return "guard[" + this.functionExpression + "()]";
+	}
 
 }

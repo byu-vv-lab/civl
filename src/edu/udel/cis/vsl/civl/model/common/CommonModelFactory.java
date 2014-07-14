@@ -72,7 +72,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -137,7 +136,6 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonVariableExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonAssertStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
@@ -1212,50 +1210,6 @@ public class CommonModelFactory implements ModelFactory {
 	 * Fragments and Statements
 	 * *********************************************************************
 	 */
-
-	/**
-	 * An assert statement.
-	 * 
-	 * @param source
-	 *            The source location for this statement.
-	 * @param expression
-	 *            The expression being asserted.
-	 * @return A new assert statement.
-	 */
-	@Override
-	public AssertStatement assertStatement(CIVLSource civlSource,
-			Location source, Expression expression) {
-		AssertStatement result = new CommonAssertStatement(civlSource, source,
-				expression);
-
-		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		result.setStatementScope(expression.expressionScope());
-		return result;
-	}
-
-	/**
-	 * An assert statement.
-	 * 
-	 * @param source
-	 *            The source location for this statement.
-	 * @param expression
-	 *            The expression being asserted.
-	 * @return A new assert statement.
-	 */
-	@Override
-	public AssertStatement assertStatement(CIVLSource civlSource,
-			Location source, Expression expression, List<Expression> arguments) {
-		AssertStatement result = new CommonAssertStatement(civlSource, source,
-				expression, arguments);
-		Scope scope = expression.expressionScope();
-
-		((CommonExpression) result.guard()).setExpressionType(booleanType);
-		for (Expression arg : arguments) {
-			scope = join(scope, arg.expressionScope());
-		}
-		result.setStatementScope(scope);
-		return result;
-	}
 
 	@Override
 	public AssignStatement assignStatement(CIVLSource civlSource,

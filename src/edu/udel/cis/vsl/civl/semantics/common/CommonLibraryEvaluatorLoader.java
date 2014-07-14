@@ -25,8 +25,11 @@ public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 	public LibraryEvaluator getLibraryEvaluator(String name,
 			Evaluator primaryEvaluator, ModelFactory modelFacotry,
 			SymbolicUtility symbolicUtil) throws LibraryLoaderException {
-		LibraryEvaluator result = libraryEvaluatorCache.get(name);
+		LibraryEvaluator result;
 
+		if (name.equals("assert"))
+			name = "asserts";
+		result = libraryEvaluatorCache.get(name);
 		if (result == null) {
 			String aClassName = className(name, "Evaluator");
 
