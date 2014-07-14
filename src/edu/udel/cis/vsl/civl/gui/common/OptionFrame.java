@@ -463,6 +463,7 @@ public class OptionFrame extends JFrame {
 						((DefaultTableModel) table.getModel())
 								.removeRow(modelRow);
 						chosenOptions.remove(toAdd);
+						additionalOptions.clearSelection();
 						if (!chosenOptions.contains(toAdd))
 							optSelect.setEnabled(true);
 						else
