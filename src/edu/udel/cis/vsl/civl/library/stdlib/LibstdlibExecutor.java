@@ -4,8 +4,6 @@
 package edu.udel.cis.vsl.civl.library.stdlib;
 
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -30,7 +28,7 @@ import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * Executor for stdlib function calls.
@@ -61,9 +59,9 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 			CIVLConfiguration civlConfig) {
 		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
 
-		SymbolicArrayType stringSymbolicType = (SymbolicArrayType) universe
-				.canonic(universe.arrayType(universe.characterType()));
-
+		SymbolicType stringSymbolicType;
+		stringSymbolicType = modelFactory.pointerType(modelFactory.charType())
+				.getDynamicType(universe);
 		atoiFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("atoi"), universe
 						.functionType(Arrays.asList(stringSymbolicType),
@@ -149,11 +147,8 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 				argStringPair = this.getString(arguments[0].getSource(), state,
 						process, argumentValues[0]);
 			} catch (CIVLUnimplementedFeatureException e) {
-				List<SymbolicExpression> charPointer = new LinkedList<>();
-
-				charPointer.add(argumentValues[0]);
-				intValue = universe.apply(atoiFunction, charPointer);
-
+				intValue = universe.apply(atoiFunction,
+						Arrays.asList(argumentValues[0]));
 			}
 			if (argStringPair != null) {
 				state = argStringPair.left;
