@@ -18,6 +18,7 @@ import javax.swing.JMenuItem;
  * @author noyes
  * 
  */
+@SuppressWarnings("serial")
 public class StartFrame extends JFrame {
 	/**
 	 * This boolean is a flag that tells the Launch class to switch frames from the <code>StartFrame</code> to the <code>OptionFrame</code>.
@@ -56,6 +57,7 @@ public class StartFrame extends JFrame {
 				// parser for open file and adding to source code window
 				chooser.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						@SuppressWarnings("unused")
 						File selected = chooser.getSelectedFile();
 					}
 				});
@@ -78,6 +80,7 @@ public class StartFrame extends JFrame {
 	}
 
 	public static void main(String[] args) {
+		@SuppressWarnings("unused")
 		StartFrame start = new StartFrame(true);
 
 	}

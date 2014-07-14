@@ -2,9 +2,7 @@ package edu.udel.cis.vsl.civl.gui.common;
 import javax.swing.JFrame;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.border.LineBorder;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,6 +19,7 @@ import javax.swing.JButton;
  * @author noyes
  * 
  */
+@SuppressWarnings("serial")
 public class InputFrame extends JFrame {
 	private JTable table_1;
 	public boolean done;

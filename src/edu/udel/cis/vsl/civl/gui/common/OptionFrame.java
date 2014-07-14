@@ -1,40 +1,27 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
 import javax.swing.JFrame;
-import javax.swing.JFrame;
 import javax.swing.JScrollPane;
-
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultListModel;
-import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JList;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.JButton;
 import javax.swing.JTable;
-import javax.swing.ListModel;
-import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.text.Element;
-import javax.swing.text.TableView.TableRow;
+
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.gmc.Option;
@@ -48,11 +35,12 @@ import edu.udel.cis.vsl.gmc.Option;
  * 
  */
 
+@SuppressWarnings("serial")
 public class OptionFrame extends JFrame {
 
 	/**
 	 * This local class is used to ensure that the first column of the
-	 * CIVLTable(JTable) is not editable, as we do not want users to be able to
+	 * <code>CIVLTable</code>(JTable) is not editable, as we do not want users to be able to
 	 * change the option names in the table where selected options are
 	 * displayed. 
 	 * 
@@ -70,6 +58,7 @@ public class OptionFrame extends JFrame {
 			case 0:
 			case 1:
 				return false;
+			case 2:
 			default:
 				return true;
 			}
@@ -328,7 +317,6 @@ public class OptionFrame extends JFrame {
 	 * This function initializes all of the JLists and corresponding
 	 * JScrollPanes in the frame.
 	 */
-	@SuppressWarnings("unchecked")
 	public void initJLists() {
 		String[] com = { "Help", "Run", "Verify", "Replay", "Parse",
 				"Preprocess" };
