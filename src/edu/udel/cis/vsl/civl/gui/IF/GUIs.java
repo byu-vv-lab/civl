@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.gui.IF;
 
-import edu.udel.cis.vsl.civl.gui.common.StartFrame;
+import edu.udel.cis.vsl.civl.gui.common.Launch;
 
 /**
  * This is the entry point of the gui module.
@@ -10,7 +10,7 @@ import edu.udel.cis.vsl.civl.gui.common.StartFrame;
  */
 public class GUIs {
 	// TODO: add methods for creating a new instance of CIVL GUI.
-	public static StartFrame newStartFrame() {
-		return new StartFrame(true);
+	public static void startGUI() {
+		new Launch().start();
 	}
 }

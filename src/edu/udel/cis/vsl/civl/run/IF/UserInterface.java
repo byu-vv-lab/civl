@@ -950,7 +950,7 @@ public class UserInterface {
 	}
 
 	private boolean runGui() {
-		GUIs.newStartFrame();
+		GUIs.startGUI();
 		return true;
 	}
 
