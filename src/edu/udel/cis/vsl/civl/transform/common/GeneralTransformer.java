@@ -53,6 +53,8 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 	private final static String MALLOC = "malloc";
 	private final static String MAX_ARGC = "10";
 
+	private final static String INPUT_PREFIX = "CIVL_";
+
 	private String argvName;
 	private String newArgvName;
 	private AssumeNode argcAssumption = null;
@@ -297,82 +299,102 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 								+ count, mainFunction.getSource());
 		}
 		if (count == 2) {
-			VariableDeclarationNode argcVar = parameters.getSequenceChild(0);
-			VariableDeclarationNode argvVar = parameters.getSequenceChild(1);
-			VariableDeclarationNode __argcVar = argcVar.copy();
-			VariableDeclarationNode __argvVar;
-			String argcName = argcVar.getIdentifier().name();
-			String argvName = argvVar.getIdentifier().name();
-			String newArgcName = "CIVL_" + argcName;
-			this.argvName = argvName;
-			this.newArgvName = "CIVL_" + argvName;
-			// TypeNode pointerOfPointerOfChar = nodeFactory.newPointerTypeNode(
-			// source, nodeFactory.newPointerTypeNode(source, nodeFactory
-			// .newBasicTypeNode(source, BasicTypeKind.CHAR)));
+			VariableDeclarationNode argc = parameters.getSequenceChild(0);
+			VariableDeclarationNode argv = parameters.getSequenceChild(1);
+			VariableDeclarationNode CIVL_argc = argc.copy();
+			VariableDeclarationNode CIVL_argv, _argv;
+			String argcName = argc.getIdentifier().name();
+			String argvName = argv.getIdentifier().name();
+			String _argvName = "_" + argvName;
+			String newArgcName = INPUT_PREFIX + argcName;
+			Source source = argv.getTypeNode().getSource();
+			TypeNode pointerOfPointerOfChar = nodeFactory.newPointerTypeNode(
+					source, nodeFactory.newPointerTypeNode(source, nodeFactory
+							.newBasicTypeNode(source, BasicTypeKind.CHAR)));
 			CompoundStatementNode functionBody = mainFunction.getBody();
-			Source source = argvVar.getTypeNode().getSource();
 			TypeNode arrayOfCharPointer = nodeFactory.newArrayTypeNode(source,
 					nodeFactory.newPointerTypeNode(source, nodeFactory
 							.newBasicTypeNode(source, BasicTypeKind.CHAR)),
 					nodeFactory.newIntegerConstantNode(source, MAX_ARGC));
-//			LoopNode forLoop;
-//			ForLoopInitializerNode loopInit;
-//			ExpressionNode condition, increment;
-//			StatementNode loopBody;
-//			ExpressionNode lhs, rhs;
+			LoopNode forLoop;
+			ForLoopInitializerNode loopInit;
+			ExpressionNode condition, increment;
+			StatementNode loopBody;
+			ExpressionNode lhs, rhs;
+			ExpressionNode assignArgv;
 
+			this.argvName = argvName;
+			this.newArgvName = INPUT_PREFIX + argvName;
 			parameters.removeChild(0);
 			parameters.removeChild(1);
-			__argcVar.getTypeNode().setInputQualified(true);
-			__argcVar.getIdentifier().setName(newArgcName);
-			inputVars.add(__argcVar);
-			__argvVar = inputArgvDeclaration(argvVar, newArgvName);
-			inputVars.add(__argvVar);
+			CIVL_argc.getTypeNode().setInputQualified(true);
+			CIVL_argc.getIdentifier().setName(newArgcName);
+			inputVars.add(CIVL_argc);
+			CIVL_argv = inputArgvDeclaration(argv, newArgvName);
+			inputVars.add(CIVL_argv);
 			functionType.setParameters(nodeFactory.newSequenceNode(
 					parameters.getSource(), "FormalParameterDeclarations",
 					new ArrayList<VariableDeclarationNode>(0)));
-			this.argcAssumption = this.argcAssumption(argcVar.getSource(),
+			this.argcAssumption = this.argcAssumption(argc.getSource(),
 					newArgcName);
-			argcVar.setInitializer(this.identifierExpression(
-					argcVar.getSource(), newArgcName));
-			argvVar.setTypeNode(arrayOfCharPointer);
-			source = argvVar.getSource();
-//			loopInit = nodeFactory.newForLoopInitializerNode(source, Arrays
-//					.asList(this.variableDeclaration(source, "i", nodeFactory
-//							.newBasicTypeNode(source, BasicTypeKind.INT),
-//							nodeFactory.newIntegerConstantNode(source, "0"))));
-//			condition = nodeFactory.newOperatorNode(source, Operator.LT, Arrays
-//					.asList(this.identifierExpression(source, "i"), nodeFactory
-//							.newIntegerConstantNode(source, MAX_ARGC)));
-//			increment = nodeFactory.newOperatorNode(source,
-//					Operator.POSTINCREMENT,
-//					Arrays.asList(this.identifierExpression(source, "i")));
-//			// argv[i]
-//			lhs = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
-//					Arrays.asList(this.identifierExpression(source, argvName),
-//							this.identifierExpression(source, "i")));
-//			// CIVL_argv[i]
-//			rhs = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
-//					Arrays.asList(
-//							this.identifierExpression(source, newArgvName),
-//							this.identifierExpression(source, "i")));
-//			// CIVL_argv[i][0]
-//			rhs = nodeFactory.newOperatorNode(
-//					source,
-//					Operator.SUBSCRIPT,
-//					Arrays.asList(rhs,
-//							nodeFactory.newIntegerConstantNode(source, "0")));
-//			// &CIVL_argv[i][0]
-//			rhs = nodeFactory.newOperatorNode(source, Operator.ADDRESSOF,
-//					Arrays.asList(rhs));
-//			loopBody = nodeFactory.newExpressionStatementNode(nodeFactory
-//					.newOperatorNode(source, Operator.ASSIGN,
-//							Arrays.asList(lhs, rhs)));
-//			forLoop = nodeFactory.newForLoopNode(source, loopInit, condition,
-//					increment, loopBody, null);
-//			functionBody = this.addNodeToBeginning(functionBody, forLoop);
-			functionBody = this.addNodeToBeginning(functionBody, argvVar);
-			functionBody = this.addNodeToBeginning(functionBody, argcVar);
+			argc.setInitializer(this.identifierExpression(argc.getSource(),
+					newArgcName));
+			argv.setTypeNode(pointerOfPointerOfChar);
+			_argv = argv.copy();
+			_argv.getIdentifier().setName(_argvName);
+			_argv.setTypeNode(arrayOfCharPointer);
+			source = argv.getSource();
+			loopInit = nodeFactory.newForLoopInitializerNode(source, Arrays
+					.asList(this.variableDeclaration(source, "i", nodeFactory
+							.newBasicTypeNode(source, BasicTypeKind.INT),
+							nodeFactory.newIntegerConstantNode(source, "0"))));
+			condition = nodeFactory.newOperatorNode(source, Operator.LT, Arrays
+					.asList(this.identifierExpression(source, "i"), nodeFactory
+							.newIntegerConstantNode(source, MAX_ARGC)));
+			increment = nodeFactory.newOperatorNode(source,
+					Operator.POSTINCREMENT,
+					Arrays.asList(this.identifierExpression(source, "i")));
+			// _argv[i]
+			lhs = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
+					Arrays.asList(this.identifierExpression(source, _argvName),
+							this.identifierExpression(source, "i")));
+			// CIVL_argv[i]
+			rhs = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
+					Arrays.asList(
+							this.identifierExpression(source, newArgvName),
+							this.identifierExpression(source, "i")));
+			// CIVL_argv[i][0]
+			rhs = nodeFactory.newOperatorNode(
+					source,
+					Operator.SUBSCRIPT,
+					Arrays.asList(rhs,
+							nodeFactory.newIntegerConstantNode(source, "0")));
+			// &CIVL_argv[i][0]
+			rhs = nodeFactory.newOperatorNode(source, Operator.ADDRESSOF,
+					Arrays.asList(rhs));
+			loopBody = nodeFactory.newExpressionStatementNode(nodeFactory
+					.newOperatorNode(source, Operator.ASSIGN,
+							Arrays.asList(lhs, rhs)));
+			forLoop = nodeFactory.newForLoopNode(source, loopInit, condition,
+					increment, loopBody, null);
+			// _argv[0];
+			assignArgv = nodeFactory.newOperatorNode(source,
+					Operator.SUBSCRIPT, Arrays.asList(
+							this.identifierExpression(source, _argvName),
+							nodeFactory.newIntegerConstantNode(source, "0")));
+			// &_argv[0];
+			assignArgv = nodeFactory.newOperatorNode(source,
+					Operator.ADDRESSOF, Arrays.asList(assignArgv));
+			// argv = &_argv[0];
+			assignArgv = nodeFactory.newOperatorNode(source, Operator.ASSIGN,
+					Arrays.asList(this.identifierExpression(source, argvName),
+							assignArgv));
+			functionBody = this.addNodeToBeginning(functionBody,
+					nodeFactory.newExpressionStatementNode(assignArgv));
+			functionBody = this.addNodeToBeginning(functionBody, forLoop);
+			functionBody = this.addNodeToBeginning(functionBody, argv);
+			functionBody = this.addNodeToBeginning(functionBody, _argv);
+			functionBody = this.addNodeToBeginning(functionBody, argc);
 			mainFunction.setBody(functionBody);
 		}
 		return inputVars;
