@@ -185,7 +185,7 @@ public interface SymbolicUtility {
 	 * 2. And newIndexes[0] corresponds to update the x, newIndexes[1]
 	 * corresponds to update the y, and so forth.
 	 * 
-	 * @author ziqing
+	 * @author Ziqing Luo
 	 * @param arrayReference
 	 *            An reference to an array
 	 * @param newIndexes
@@ -195,6 +195,32 @@ public interface SymbolicUtility {
 	public SymbolicExpression updateArrayElementReference(
 			ArrayElementReference arrayReference,
 			List<NumericExpression> newIndexes);
+
+	/**
+	 * Computes the output argument "buf" for the CIVL-C function:
+	 * <code>$bundle_unpack($bundle bundle, void * buf)</code>.<br>
+	 * 
+	 * @param bundle
+	 *            The symbolic expression of "bundle" argument in the CIVL-C
+	 *            function.
+	 * @param array
+	 *            If the argument "buf" is a pointer to an element of
+	 *            an array or allocated memory space, this parameter represents
+	 *            the array pointed by the pointer "buf". Else, it shoule be
+	 *            null.
+	 * @param arrayIdx
+	 *            If the argument "buf" is a pointer to an element of
+	 *            an array or allocated memory space, this parameter represents
+	 *            the index of the object pointed by "buf" in an array. Else, it
+	 *            should be zero.
+	 * @param pathCondition
+	 *            The path condition of current state.
+	 * @return The symbolic expression final result of the object pointed by
+	 *         "buf".
+	 */
+	public SymbolicExpression bundleUnpack(SymbolicExpression bundle,
+			SymbolicExpression array, NumericExpression arrayIdx,
+			BooleanExpression pathCondition);
 
 	/**
 	 * Checks if a heap is null or empty.

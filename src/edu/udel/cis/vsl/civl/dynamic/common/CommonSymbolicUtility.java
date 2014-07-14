@@ -30,6 +30,7 @@ import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
@@ -1342,6 +1343,67 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			newRef = universe.arrayElementReference(newRef, newIndexes.get(i));
 		}
 		return newRef;
+	}
+
+	@Override
+	public SymbolicExpression bundleUnpack(SymbolicExpression bundle,
+			SymbolicExpression array, NumericExpression arrayIdx,
+			BooleanExpression pathCondition) {
+		// A boolean expression used for checking conditions
+		BooleanExpression claim;
+		SymbolicExpression data = (SymbolicExpression) bundle.argument(1);
+		NumericExpression dataSize = universe.length(data);
+		Reasoner reasoner = universe.reasoner(pathCondition);
+
+		// If the data size is zero, do nothing, return null.
+		claim = universe.equals(zero, dataSize);
+		if (reasoner.isValid(claim))
+			return null;
+
+		// If array is non-null and the index of start position in the target
+		// array is zero and the target array has enough size to holds data,
+		// return the data directly. Else, copy elements one by one.
+		// Note: array is non-null implies this function should return an array.
+		if (array != null) {
+			NumericExpression targetSize;
+			NumericExpression targetArrayIdx = arrayIdx;
+			NumericExpression i = universe.zeroInt(); // loop inc
+
+			targetSize = universe.length(array);
+			claim = universe.and(universe.equals(zero, targetArrayIdx),
+					universe.equals(targetSize, dataSize));
+
+			if (reasoner.isValid(claim)) {
+				return data; // return array
+			} else {
+				SymbolicExpression dataElement;
+
+				claim = universe.lessThan(i, dataSize);
+				while (reasoner.isValid(claim)) {
+					dataElement = universe.arrayRead(data, i);
+					try {
+						array = universe.arrayWrite(array, targetArrayIdx,
+								dataElement);
+					} catch (SARLException e) {
+						throw new SARLException("Array: " + array
+								+ "written on position index: "
+								+ targetArrayIdx + "\n");
+					}
+					// update
+					i = universe.add(one, i);
+					targetArrayIdx = universe.add(one, targetArrayIdx);
+					claim = universe.lessThan(i, dataSize);
+				}
+			}
+			return array; // return array
+		} else {
+			claim = universe.lessThan(one, dataSize);
+			if (reasoner.isValid(claim))
+				throw new SARLException(
+						"Size of bundle data is larger than one\n");
+			// return an object
+			return universe.arrayRead(data, zero);
+		}
 	}
 
 	@Override

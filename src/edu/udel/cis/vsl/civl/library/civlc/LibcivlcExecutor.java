@@ -243,95 +243,128 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression bundle = argumentValues[0];
 		SymbolicExpression pointer = argumentValues[1];
-		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
-		ReferenceKind kind = symRef.referenceKind();
-		SymbolicExpression array = (SymbolicExpression) bundle.argument(1);
-		NumericExpression length = universe.length(array);
-		BooleanExpression pathCondition = state.getPathCondition();
-		BooleanExpression zeroLengthClaim = universe.equals(length, zero);
-		Reasoner reasoner = universe.reasoner(pathCondition);
-		ResultType zeroLengthValid = reasoner.valid(zeroLengthClaim)
-				.getResultType();
+		SymbolicExpression targetObject = null;
+		SymbolicExpression array = null;
+		SymbolicExpression arrayPointer = null;
+		NumericExpression arrayIdx = universe.zeroInt();
+		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
+		Evaluation eval;
 
-		assert bundle.operator() == SymbolicOperator.UNION_INJECT;
-		if (zeroLengthValid == ResultType.YES) {
-			return state;
-		} else {
-			BooleanExpression oneLengthClaim = universe.equals(length, one);
-			ResultType oneLengthValid = reasoner.valid(oneLengthClaim)
-					.getResultType();
-
-			if (oneLengthValid == ResultType.YES) {
-				SymbolicExpression element = universe.arrayRead(array, zero);
-
-				state = primaryExecutor.assign(source, state, process, pointer,
-						element);
-				return state;
-			} else {
-				// if pointer is to element 0 of an array and lengths are equal,
-				// just assign the whole array
-				// else try to get concrete length, and iterate making
-				// assignment
-				if (kind == ReferenceKind.ARRAY_ELEMENT) {
-					NumericExpression pointerIndex = ((ArrayElementReference) symRef)
-							.getIndex();
-					SymbolicExpression parentPointer = symbolicUtil
-							.parentPointer(source, pointer);
-					Evaluation eval = evaluator.dereference(source, state,
-							process, parentPointer, false);
-					SymbolicExpression targetArray = eval.value;
-					BooleanExpression claim;
-
-					state = eval.state;
-					pathCondition = state.getPathCondition();
-					claim = universe.and(
-							universe.equals(pointerIndex, zero),
-							universe.equals(length,
-									universe.length(targetArray)));
-					if (reasoner.isValid(claim)) {
-						state = primaryExecutor.assign(source, state, process,
-								parentPointer, array);
-
-						return state;
-					} else {
-						IntegerNumber concreteLength = (IntegerNumber) reasoner
-								.extractNumber(length);
-
-						if (concreteLength != null) {
-							int lengthInt = concreteLength.intValue();
-
-							for (int i = 0; i < lengthInt; i++) {
-								NumericExpression sourceIndex = universe
-										.integer(i);
-								NumericExpression targetIndex = universe.add(
-										pointerIndex, sourceIndex);
-
-								try {
-									SymbolicExpression element = universe
-											.arrayRead(array,
-													universe.integer(i));
-
-									targetArray = universe.arrayWrite(
-											targetArray, targetIndex, element);
-								} catch (SARLException e) {
-									throw new CIVLExecutionException(
-											ErrorKind.OUT_OF_BOUNDS,
-											Certainty.CONCRETE, process,
-											"Attempt to write beyond array bound: index="
-													+ targetIndex,
-											symbolicUtil.stateToString(state),
-											source);
-								}
-							}
-							state = primaryExecutor.assign(source, state,
-									process, parentPointer, targetArray);
-							return state;
-						}
-					}
-				}
-			}
+		// If the given pointer points to an array element or
+		// allocated memory space, the target object is an array of objects of
+		// the given type, so the final result should be assigned to the parent
+		// pointer which points to the array instead of an element of the array.
+		//
+		// Else, the target object can only hold one element in bundle and the
+		// target object should be assigned directly to the given pointer.
+		if (ref.isArrayElementReference()) {
+			arrayPointer = symbolicUtil.parentPointer(source, pointer);
+			eval = evaluator.dereference(source, state, process, arrayPointer,
+					false);
+			state = eval.state;
+			array = eval.value;
+			arrayIdx = ((ArrayElementReference) ref).getIndex();
 		}
-		throw new CIVLInternalException("Cannot complete unpack", source);
+		try {
+			targetObject = symbolicUtil.bundleUnpack(bundle, array, arrayIdx,
+					state.getPathCondition());
+		} catch (SARLException e) {
+			throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
+					Certainty.PROVEABLE, process,
+					"Attempt to write beyond array bound: index=" + arrayIdx,
+					symbolicUtil.stateToString(state), source);
+		} catch (Exception e) {
+			throw new CIVLInternalException("Cannot complete unpack", source);
+		}
+		// If it's assigned to an array or an object
+		if (arrayPointer != null && targetObject != null)
+			state = primaryExecutor.assign(source, state, process,
+					arrayPointer, targetObject);
+		else if (targetObject != null)
+			state = primaryExecutor.assign(source, state, process, pointer,
+					targetObject);
+		return state;
+
+		/* Older Version */
+		// assert bundle.operator() == SymbolicOperator.UNION_INJECT;
+		// if (zeroLengthValid == ResultType.YES) {
+		// return state;
+		// } else {
+		// BooleanExpression oneLengthClaim = universe.equals(length, one);
+		// ResultType oneLengthValid = reasoner.valid(oneLengthClaim)
+		// .getResultType();
+		//
+		// if (oneLengthValid == ResultType.YES) {
+		// SymbolicExpression element = universe.arrayRead(array, zero);
+		//
+		// state = primaryExecutor.assign(source, state, process, pointer,
+		// element);
+		// return state;
+		// } else {
+		// // if pointer is to element 0 of an array and lengths are equal,
+		// // just assign the whole array
+		// // else try to get concrete length, and iterate making
+		// // assignment
+		// if (kind == ReferenceKind.ARRAY_ELEMENT) {
+		// NumericExpression pointerIndex = ((ArrayElementReference) symRef)
+		// .getIndex();
+		// SymbolicExpression parentPointer = symbolicUtil
+		// .parentPointer(source, pointer);
+		// Evaluation eval = evaluator.dereference(source, state,
+		// process, parentPointer, false);
+		// SymbolicExpression targetArray = eval.value;
+		// BooleanExpression claim;
+		//
+		// state = eval.state;
+		// pathCondition = state.getPathCondition();
+		// claim = universe.and(
+		// universe.equals(pointerIndex, zero),
+		// universe.equals(length,
+		// universe.length(targetArray)));
+		// if (reasoner.isValid(claim)) {
+		// state = primaryExecutor.assign(source, state, process,
+		// parentPointer, array);
+		//
+		// return state;
+		// } else {
+		// IntegerNumber concreteLength = (IntegerNumber) reasoner
+		// .extractNumber(length);
+		//
+		// if (concreteLength != null) {
+		// int lengthInt = concreteLength.intValue();
+		//
+		// for (int i = 0; i < lengthInt; i++) {
+		// NumericExpression sourceIndex = universe
+		// .integer(i);
+		// NumericExpression targetIndex = universe.add(
+		// pointerIndex, sourceIndex);
+		//
+		// try {
+		// SymbolicExpression element = universe
+		// .arrayRead(array,
+		// universe.integer(i));
+		//
+		// targetArray = universe.arrayWrite(
+		// targetArray, targetIndex, element);
+		// } catch (SARLException e) {
+		// throw new CIVLExecutionException(
+		// ErrorKind.OUT_OF_BOUNDS,
+		// Certainty.CONCRETE, process,
+		// "Attempt to write beyond array bound: index="
+		// + targetIndex,
+		// symbolicUtil.stateToString(state),
+		// source);
+		// }
+		// }
+		// state = primaryExecutor.assign(source, state,
+		// process, parentPointer, targetArray);
+		// return state;
+		// }
+		// }
+		// }
+		// }
+		// }
+		// throw new CIVLInternalException("Cannot complete unpack", source);
 	}
 
 	/**
