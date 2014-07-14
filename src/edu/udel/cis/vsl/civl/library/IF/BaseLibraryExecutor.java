@@ -39,7 +39,6 @@ import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -56,6 +55,27 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public abstract class BaseLibraryExecutor extends Library implements
 		LibraryExecutor {
+	
+	/* ************************** Protected Types ************************** */
+	
+	protected enum ConversionType {
+		INT, DOUBLE, CHAR, STRING, POINTER, VOID
+	};
+
+	protected class Format {
+		public ConversionType type;
+		public StringBuffer string;
+
+		public Format(StringBuffer content, ConversionType conversion) {
+			this.string = content;
+			this.type = conversion;
+		}
+
+		@Override
+		public String toString() {
+			return this.string.toString();
+		}
+	}
 
 	/* ************************** Instance Fields ************************** */
 
@@ -471,28 +491,34 @@ public abstract class BaseLibraryExecutor extends Library implements
 	protected State executeFree(State state, int pid, String process,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
-		Expression pointerExpression = arguments[0];
 		SymbolicExpression firstElementPointer = argumentValues[0];
 
 		if (this.symbolicUtil.isNullPointer(firstElementPointer))
 			// does nothing for null pointer.
 			return state;
-		else {
+		else if (!this.symbolicUtil.isHeapPointer(firstElementPointer)
+				|| !this.symbolicUtil.isHeapObjectPointer(source,
+						firstElementPointer)) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
+					"The argument of free "
+							+ symbolicUtil.symbolicExpressionToString(source,
+									state, firstElementPointer)
+							+ " is not a pointer returned by a memory "
+							+ "management method",
+					symbolicUtil.stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+			throw new UnsatisfiablePathConditionException();
+		} else {
 			CIVLHeapType heapType = modelFactory.heapType();
-			SymbolicExpression heapScopeID = universe.tupleRead(
-					firstElementPointer, universe.intObject(0));
 			SymbolicExpression heapObjectPointer;
 			Evaluation eval;
 			int index;
 			SymbolicExpression undef;
-			SymbolicExpression heapPointer = evaluator.heapPointer(source,
-					state, process, heapScopeID);
 
-			eval = getAndCheckHeapObjectPointer(heapPointer,
-					firstElementPointer, pointerExpression.getSource(), state,
-					process);
-			state = eval.state;
-			heapObjectPointer = eval.value;
+			heapObjectPointer = this.symbolicUtil
+					.heapCellPointer(firstElementPointer);
 			eval = evaluator.dereference(source, state, process,
 					heapObjectPointer, false);
 			state = eval.state;
@@ -601,79 +627,6 @@ public abstract class BaseLibraryExecutor extends Library implements
 	/* ************************** Private Methods ************************** */
 
 	/**
-	 * Obtain a heap object via a certain heap object pointer.
-	 * 
-	 * @param heapPointer
-	 *            The heap pointer.
-	 * @param pointer
-	 *            The heap object pointer.
-	 * @param pointerSource
-	 *            The source code element of the pointer.
-	 * @param state
-	 *            The current state
-	 * @return The heap object pointer and the new state if any side effect.
-	 */
-	private Evaluation getAndCheckHeapObjectPointer(
-			SymbolicExpression heapPointer, SymbolicExpression pointer,
-			CIVLSource pointerSource, State state, String process) {
-		SymbolicExpression objectPointer = symbolicUtil.parentPointer(
-				pointerSource, pointer);
-
-		if (objectPointer != null) {
-			SymbolicExpression fieldPointer = symbolicUtil.parentPointer(
-					pointerSource, objectPointer);
-
-			if (fieldPointer != null) {
-				SymbolicExpression actualHeapPointer = symbolicUtil
-						.parentPointer(pointerSource, fieldPointer);
-
-				if (actualHeapPointer != null) {
-					BooleanExpression pathCondition = state.getPathCondition();
-					BooleanExpression claim = universe.equals(
-							actualHeapPointer, heapPointer);
-					ResultType valid = universe.reasoner(pathCondition)
-							.valid(claim).getResultType();
-					ReferenceExpression symRef;
-
-					if (valid != ResultType.YES) {
-						Certainty certainty = valid == ResultType.NO ? Certainty.PROVEABLE
-								: Certainty.MAYBE;
-						CIVLExecutionException e = new CIVLExecutionException(
-								ErrorKind.MALLOC, certainty, process,
-								"Invalid pointer for heap",
-								symbolicUtil.stateToString(state),
-								pointerSource);
-
-						errorLogger.reportError(e);
-						state = state.setPathCondition(universe.and(
-								pathCondition, claim));
-					}
-					symRef = symbolicUtil.getSymRef(pointer);
-					if (symRef instanceof ArrayElementReference) {
-						NumericExpression index = ((ArrayElementReference) symRef)
-								.getIndex();
-
-						if (index.isZero()) {
-							return new Evaluation(state, objectPointer);
-						}
-					}
-
-				}
-			}
-		}
-		{
-			CIVLExecutionException e = new CIVLExecutionException(
-					ErrorKind.MALLOC, Certainty.PROVEABLE, process,
-					"Invalid pointer for heap",
-					symbolicUtil.stateToString(state), pointerSource);
-
-			errorLogger.reportError(e);
-			state = state.setPathCondition(universe.falseExpression());
-			return new Evaluation(state, objectPointer);
-		}
-	}
-
-	/**
 	 * Obtains the field ID in the heap type via a heap-object pointer.
 	 * 
 	 * @param pointer
@@ -696,22 +649,4 @@ public abstract class BaseLibraryExecutor extends Library implements
 		return result;
 	}
 
-	protected enum ConversionType {
-		INT, DOUBLE, CHAR, STRING, POINTER, VOID
-	};
-
-	protected class Format {
-		public ConversionType type;
-		public StringBuffer string;
-
-		public Format(StringBuffer content, ConversionType conversion) {
-			this.string = content;
-			this.type = conversion;
-		}
-
-		@Override
-		public String toString() {
-			return this.string.toString();
-		}
-	}
 }

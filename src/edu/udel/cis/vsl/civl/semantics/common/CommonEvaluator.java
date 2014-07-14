@@ -2903,45 +2903,6 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public SymbolicExpression heapPointer(CIVLSource source, State state,
-			String process, SymbolicExpression scopeValue)
-			throws UnsatisfiablePathConditionException {
-		if (scopeValue.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
-			errorLogger.logSimpleError(source, state, process,
-					symbolicUtil.stateToString(state), ErrorKind.OTHER,
-					"Attempt to get the heap pointer of a symbolic scope");
-			throw new UnsatisfiablePathConditionException();
-		} else {
-			int dyScopeID = modelFactory.getScopeId(source, scopeValue);
-			ReferenceExpression symRef = (ReferenceExpression) universe
-					.canonic(universe.identityReference());
-
-			if (dyScopeID < 0) {
-				errorLogger.logSimpleError(source, state, process,
-						symbolicUtil.stateToString(state),
-						ErrorKind.MEMORY_LEAK,
-						"Attempt to access the heap of the scope that has been "
-								+ "removed from state");
-				throw new UnsatisfiablePathConditionException();
-			} else {
-				DynamicScope dyScope = state.getScope(dyScopeID);
-				Variable heapVariable = dyScope.lexicalScope().variable(
-						"__heap");
-
-				if (heapVariable == null) {
-					errorLogger.logSimpleError(source, state, process,
-							symbolicUtil.stateToString(state),
-							ErrorKind.MEMORY_LEAK,
-							"Attempt to access a heap that never exists");
-					throw new UnsatisfiablePathConditionException();
-				}
-				return symbolicUtil.makePointer(dyScopeID, heapVariable.vid(),
-						symRef);
-			}
-		}
-	}
-
-	@Override
 	public void memoryUnitsOfExpression(State state, int pid,
 			Expression expression, Set<SymbolicExpression> memoryUnits)
 			throws UnsatisfiablePathConditionException {

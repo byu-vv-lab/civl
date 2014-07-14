@@ -137,6 +137,11 @@ public interface SymbolicUtility {
 	 */
 	NumericExpression sizeof(CIVLSource source, SymbolicType type);
 
+	/**
+	 * Returns the abstract function <code>sizeof()</code>.
+	 * 
+	 * @return The abstract function <code>sizeof()</code>.
+	 */
 	SymbolicExpression sizeofFunction();
 
 	/**
@@ -151,6 +156,11 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression expressionOfType(SymbolicType type);
 
+	/**
+	 * Returns the initial value of a(n) (empty) heap.
+	 * 
+	 * @return The initial value of a(n) (empty) heap.
+	 */
 	SymbolicExpression initialHeapValue();
 
 	/**
@@ -168,11 +178,83 @@ public interface SymbolicUtility {
 	SymbolicExpression makePointer(int scopeId, int varId,
 			ReferenceExpression symRef);
 
+	/**
+	 * Computes the user-friendly string representation of a state.
+	 * 
+	 * @param state
+	 *            The state whose string representation is to be computed.
+	 * @return The user-friendly string representation of a state.
+	 */
 	StringBuffer stateToString(State state);
 
+	/**
+	 * <p>
+	 * Computes the user-friendly string representation of a symbolic
+	 * expression.
+	 * </p>
+	 * 
+	 * <p>
+	 * If the given expression is a pointer, then its string representation is
+	 * computed according to the object that it refers to:
+	 * <ul>
+	 * <li>a variable: <code>& variable &lt;dyscope name></code>; <br>
+	 * e.g.,
+	 * 
+	 * <pre>
+	 * int a = 9; int * p = &a;
+	 * </pre>
+	 * 
+	 * The representation of <code>p</code> would be <code>&a&lt;d0></code>
+	 * assuming that the name of the dynamic scope of <code>a</code> is
+	 * <code>d0</code>.</li>
+	 * <li>an element of an array: <code>&array&lt;dyscope name>[index]</code>;<br>
+	 * e.g.,
+	 * 
+	 * <pre>
+	 * int a[5]; int *p = &a[1];
+	 * </pre>
+	 * 
+	 * The representation of <code>p</code> would be <code>&a&lt;d0>[1]</code>
+	 * assuming that the name of the dynamic scope of <code>a</code> is
+	 * <code>d0</code>.</li>
+	 * <li>a field of a struct: <code>&struct&lt;dyscope name>.field</code>;<br>
+	 * e.g.,
+	 * 
+	 * <pre>
+	 * typedef struct {int x; int y;} A; A s; int*p = &s.y;
+	 * </pre>
+	 * 
+	 * The representation of p would be <code>&a&lt;d0>.y</code> assuming that
+	 * the name of the dynamic scope of <code>a</code> is <code>d0</code>.</li>
+	 * 
+	 * <li>a heap cell:
+	 * <code>heapObject&lt;dyscope name, malloc ID, number of malloc call></code>
+	 * .</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param source
+	 *            The source code information related to the symbolic expression
+	 *            for error erport if any.
+	 * @param state
+	 *            The state that the symbolic expression belongs to.
+	 * @param symbolicExpression
+	 *            The symbolic expression whose string representation is to be
+	 *            computed.
+	 * @return The user-friendly string representation of a state.
+	 */
 	String symbolicExpressionToString(CIVLSource source, State state,
 			SymbolicExpression symbolicExpression);
 
+	/**
+	 * Constructs the string representation of an array of characters.
+	 * 
+	 * @param source
+	 * @param charArray
+	 * @param startIndex
+	 * @param forPrint
+	 * @return
+	 */
 	StringBuffer charArrayToString(CIVLSource source,
 			SymbolicSequence<?> charArray, int startIndex, boolean forPrint);
 
@@ -204,15 +286,14 @@ public interface SymbolicUtility {
 	 *            The symbolic expression of "bundle" argument in the CIVL-C
 	 *            function.
 	 * @param array
-	 *            If the argument "buf" is a pointer to an element of
-	 *            an array or allocated memory space, this parameter represents
-	 *            the array pointed by the pointer "buf". Else, it shoule be
-	 *            null.
+	 *            If the argument "buf" is a pointer to an element of an array
+	 *            or allocated memory space, this parameter represents the array
+	 *            pointed by the pointer "buf". Else, it shoule be null.
 	 * @param arrayIdx
-	 *            If the argument "buf" is a pointer to an element of
-	 *            an array or allocated memory space, this parameter represents
-	 *            the index of the object pointed by "buf" in an array. Else, it
-	 *            should be zero.
+	 *            If the argument "buf" is a pointer to an element of an array
+	 *            or allocated memory space, this parameter represents the index
+	 *            of the object pointed by "buf" in an array. Else, it should be
+	 *            zero.
 	 * @param pathCondition
 	 *            The path condition of current state.
 	 * @return The symbolic expression final result of the object pointed by
@@ -253,13 +334,40 @@ public interface SymbolicUtility {
 	NumericExpression getStepOfRange(SymbolicExpression range);
 
 	boolean isInitialized(SymbolicExpression value);
-	
-	SymbolicExpression contains(SymbolicExpression first, SymbolicExpression second);
+
+	SymbolicExpression contains(SymbolicExpression first,
+			SymbolicExpression second);
 
 	SymbolicExpression nullPointer();
-	
+
 	boolean isNullPointer(SymbolicExpression pointer);
-	
+
 	boolean isHeapObjectDefined(SymbolicExpression heapObj);
+
+	boolean isHeapPointer(SymbolicExpression pointer);
+
+	/**
+	 * Gets the pointer to the heap of the given scope.
+	 * 
+	 * @param source
+	 *            The source code information for error report.
+	 * @param state
+	 *            The state where this operation happens.
+	 * @param process
+	 *            The information of the process that triggers this operation,
+	 *            for the purpose of error report.
+	 * @param scopeValue
+	 *            The scope value
+	 * @return The pointer to the heap of the given scope.
+	 * @throws UnsatisfiablePathConditionException
+	 *             if the given scope is not concrete or not a valid scope.
+	 */
+	SymbolicExpression heapPointer(CIVLSource source, State state,
+			String process, SymbolicExpression scopeValue)
+			throws UnsatisfiablePathConditionException;
+
+	boolean isHeapObjectPointer(CIVLSource source, SymbolicExpression pointer);
+
+	SymbolicExpression heapCellPointer(SymbolicExpression heapObjectPointer);
 
 }

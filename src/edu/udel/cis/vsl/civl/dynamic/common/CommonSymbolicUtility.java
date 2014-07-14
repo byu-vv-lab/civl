@@ -1612,4 +1612,91 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		}
 		return true;
 	}
+
+	@Override
+	public boolean isHeapPointer(SymbolicExpression pointer) {
+		int dyscopeID = this.getDyscopeId(null, pointer);
+		int vid = this.getVariableId(null, pointer);
+
+		if (dyscopeID < 0)
+			return false;
+		return vid == 0;
+	}
+
+	@Override
+	public SymbolicExpression heapPointer(CIVLSource source, State state,
+			String process, SymbolicExpression scopeValue)
+			throws UnsatisfiablePathConditionException {
+		if (scopeValue.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
+			errorLogger.logSimpleError(source, state, process,
+					stateToString(state), ErrorKind.OTHER,
+					"Attempt to get the heap pointer of a symbolic scope");
+			throw new UnsatisfiablePathConditionException();
+		} else {
+			int dyScopeID = modelFactory.getScopeId(source, scopeValue);
+			ReferenceExpression symRef = (ReferenceExpression) universe
+					.canonic(universe.identityReference());
+
+			if (dyScopeID < 0) {
+				errorLogger.logSimpleError(source, state, process,
+						stateToString(state), ErrorKind.MEMORY_LEAK,
+						"Attempt to access the heap of the scope that has been "
+								+ "removed from state");
+				throw new UnsatisfiablePathConditionException();
+			} else {
+				DynamicScope dyScope = state.getScope(dyScopeID);
+				Variable heapVariable = dyScope.lexicalScope().variable(
+						"__heap");
+
+				if (heapVariable == null) {
+					errorLogger.logSimpleError(source, state, process,
+							stateToString(state), ErrorKind.MEMORY_LEAK,
+							"Attempt to access a heap that never exists");
+					throw new UnsatisfiablePathConditionException();
+				}
+				return makePointer(dyScopeID, heapVariable.vid(), symRef);
+			}
+		}
+	}
+
+	/**
+	 * A heap object pointer shall have the form of: <code>&<dn,i,j>[0]</code>
+	 */
+	@Override
+	public boolean isHeapObjectPointer(CIVLSource source,
+			SymbolicExpression pointer) {
+		ReferenceExpression ref = this.getSymRef(pointer);
+		ArrayElementReference arrayEleRef;
+
+		if (!ref.isArrayElementReference())
+			return false;
+		arrayEleRef = (ArrayElementReference) ref;
+		if (!arrayEleRef.getIndex().isZero())
+			return false;
+		ref = arrayEleRef.getParent();
+		if (!ref.isArrayElementReference())
+			return false;
+		ref = ((ArrayElementReference) ref).getParent();
+		if (!ref.isTupleComponentReference())
+			return false;
+		ref = ((TupleComponentReference) ref).getParent();
+		if (ref.isIdentityReference())
+			return true;
+		return false;
+	}
+
+	@Override
+	public SymbolicExpression heapCellPointer(
+			SymbolicExpression heapObjectPointer) {
+		ArrayElementReference arrayEleRef = (ArrayElementReference) universe.tupleRead(
+				heapObjectPointer, twoObj);
+		ReferenceExpression ref = arrayEleRef.getParent();
+		
+		return universe.tuple(
+				pointerType,
+				Arrays.asList(new SymbolicExpression[] { universe.tupleRead(
+						heapObjectPointer, zeroObj), universe.tupleRead(
+								heapObjectPointer, oneObj),
+						ref }));
+	}
 }
