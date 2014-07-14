@@ -1,4 +1,5 @@
 package edu.udel.cis.vsl.civl.gui.common;
+
 import javax.swing.JFrame;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -48,6 +49,32 @@ import edu.udel.cis.vsl.gmc.Option;
  */
 
 public class OptionFrame extends JFrame {
+
+	/**
+	 * This local class is used to ensure that the first column of the
+	 * CIVLTable(JTable) is not editable, as we do not want users to be able to
+	 * change the option names in the table where selected options are
+	 * displayed. 
+	 * 
+	 * @author noyes
+	 * 
+	 */
+	private class CIVLTable extends JTable {
+		public CIVLTable() {
+			super();
+		}
+
+		@Override
+		public boolean isCellEditable(int row, int col) {
+			switch (col) {
+			case 0:
+			case 1:
+				return false;
+			default:
+				return true;
+			}
+		}
+	}
 
 	/**
 	 * This button chooses the file that the user specifies, it launches a file
@@ -159,33 +186,33 @@ public class OptionFrame extends JFrame {
 	 * run configuration.
 	 */
 	public boolean finalized;
-	
+
 	/**
 	 * This boolean is a flag that will tell the launcher when it should change
 	 * the frame to the <code>StartFrame</code>.
 	 */
 	public boolean cancelled;
-	
+
 	/**
 	 * The currently selected option(String).
 	 */
 	public String selectedOption;
-	
+
 	/**
 	 * The currently selected option(Option).
 	 */
 	public Option selectedOp;
-	
+
 	/**
 	 * The currently selected command.
 	 */
 	private String selectedCommand;
-	
+
 	/**
 	 * The currently selected file.
 	 */
 	private File selectedFile;
-	
+
 	/**
 	 * All of the options that have been chosen and added to the option table.
 	 */
@@ -282,8 +309,7 @@ public class OptionFrame extends JFrame {
 		chosenOptions.clear();
 	}
 
-	// TODO: Make the first column of the table not editable
-	// Add option values for each option as necessary
+	// TODO: Add option values for each option as necessary
 
 	/**
 	 * This function initializes all of the JTables in the frame.
@@ -292,18 +318,15 @@ public class OptionFrame extends JFrame {
 		scrollPaneTable = new JScrollPane();
 		scrollPaneTable.setBounds(50, 541, 385, 100);
 		getContentPane().add(scrollPaneTable);
-
-		optTable = new JTable();
+		optTable = new CIVLTable();
 		scrollPaneTable.setViewportView(optTable);
 		optTable.setModel(new DefaultTableModel(null, new String[] { "Option",
 				"Value", "Remove?" }));
-		// optTable.getColumn(0).
-
 	}
 
-	
 	/**
-	 * This function initializes all of the JLists and corresponding JScrollPanes in the frame.
+	 * This function initializes all of the JLists and corresponding
+	 * JScrollPanes in the frame.
 	 */
 	@SuppressWarnings("unchecked")
 	public void initJLists() {

@@ -29,14 +29,14 @@ public class Launch {
 	 */
 	private static InputFrame inf;
 	
-	public Launch(){
+	public Launch(){		
 		stf = new StartFrame(true);
 		inf = new InputFrame(false);
 		opf = new OptionFrame(false);
 	}
 	
-	public static void main(String[] args){
-		Launch init = new Launch();
+	public static void main(String[] args){	
+		Launch init = new Launch();		
 		while(true){
 			if(stf.gotoOptions){
 				stf.setVisible(false);
