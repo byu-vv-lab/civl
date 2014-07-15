@@ -88,20 +88,31 @@ void workfunc(size_t local, size_t global, cl_kernel param)
 int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, size_t global, size_t local)
 {
   $assert(global % local == 0);
-  cl_kernel param[global/local];
-  $proc procs[global/local];
+  int numworkgroups = global/local;
+  cl_kernel param[numworkgroups];
+  $proc procs[numworkgroups];
+  //consider $parfor
+  $domain(1) dom = {0 .. numworkgroups - 1};
+  
+  $for(int i: dom)
+  {
+    param[i] = kernel;
+    param[i].workgroup = i;
+  }
+  $parfor(int i: dom)
+  {
+    workfunc(local, global, param[i]);
+  }
+       /*
   for(int i = 0; i < global/local; i++)
   {
     param[i] = kernel;
     param[i].workgroup = i;
     procs[i] = $spawn workfunc(local, global, param[i]);
   }
-  
+       */
   //this part here is the new clFinish(commands);
-  for(int i = 0; i < global/local; i++)
-  {
-    $wait(procs[i]);
-  }
+
   
   return CL_SUCCESS;
 }
