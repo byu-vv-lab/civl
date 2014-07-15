@@ -1972,6 +1972,8 @@ public class CommonModelFactory implements ModelFactory {
 			Scope containingScope, String libraryName) {
 		if (libraryName.endsWith("-common")) {
 			libraryName = libraryName.substring(0, libraryName.length() - 7);
+		} else if (libraryName.startsWith("civlc-")) {
+			libraryName = "civlc";
 		}
 		return new CommonSystemFunction(source, name, parameters, returnType,
 				containingScope, (Location) null, this, libraryName);

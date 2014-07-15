@@ -111,14 +111,19 @@ public class LibraryTest {
 	public void intIter() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlc/intIter.cvl"), "-inputB=5"));
 	}
-	
+
 	@Test
 	public void contains() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlc/contains.cvl")));
 	}
-	
+
 	@Test
 	public void equals() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlc/equals.cvl")));
+	}
+
+	@Test
+	public void translatePointer() throws ABCException {
+		assertTrue(ui.run("verify", filename("civlc/translate_ptr.cvl")));
 	}
 }

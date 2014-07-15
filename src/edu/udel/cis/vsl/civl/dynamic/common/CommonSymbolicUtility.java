@@ -1688,15 +1688,104 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	@Override
 	public SymbolicExpression heapCellPointer(
 			SymbolicExpression heapObjectPointer) {
-		ArrayElementReference arrayEleRef = (ArrayElementReference) universe.tupleRead(
-				heapObjectPointer, twoObj);
+		ArrayElementReference arrayEleRef = (ArrayElementReference) universe
+				.tupleRead(heapObjectPointer, twoObj);
 		ReferenceExpression ref = arrayEleRef.getParent();
-		
+
 		return universe.tuple(
 				pointerType,
-				Arrays.asList(new SymbolicExpression[] { universe.tupleRead(
-						heapObjectPointer, zeroObj), universe.tupleRead(
-								heapObjectPointer, oneObj),
-						ref }));
+				Arrays.asList(new SymbolicExpression[] {
+						universe.tupleRead(heapObjectPointer, zeroObj),
+						universe.tupleRead(heapObjectPointer, oneObj), ref }));
+	}
+
+	@Override
+	public ReferenceExpression referenceOfPointer(SymbolicExpression pointer) {
+		ReferenceExpression ref = (ReferenceExpression) universe.tupleRead(
+				pointer, twoObj);
+
+		if (this.isHeapPointer(pointer)) {
+			return heapReference(ref).left;
+		} else
+			return ref;
+	}
+
+	private Pair<ReferenceExpression, Integer> heapReference(
+			ReferenceExpression ref) {
+		if (ref.isIdentityReference())
+			return new Pair<>(ref, 0);
+		else {
+			ReferenceExpression parentRef;
+			Pair<ReferenceExpression, Integer> parent;
+
+			if (ref.isArrayElementReference())
+				parentRef = ((ArrayElementReference) ref).getParent();
+			else if (ref.isTupleComponentReference())
+				parentRef = ((TupleComponentReference) ref).getParent();
+			else
+				parentRef = ((UnionMemberReference) ref).getParent();
+			parent = heapReference(parentRef);
+			if (parent.right < 3)
+				return new Pair<>(ref, parent.right + 1);
+			else {
+				ReferenceExpression newRef;
+
+				if (parent.right == 3)
+					parentRef = universe.identityReference();
+				else
+					parentRef = parent.left;
+				if (ref.isArrayElementReference()) {
+					newRef = universe.arrayElementReference(parentRef,
+							((ArrayElementReference) ref).getIndex());
+				} else if (ref.isTupleComponentReference())
+					newRef = universe.tupleComponentReference(parentRef,
+							((TupleComponentReference) ref).getIndex());
+				else
+					newRef = universe.unionMemberReference(parentRef,
+							((UnionMemberReference) ref).getIndex());
+				return new Pair<>(newRef, 4);
+			}
+		}
+	}
+
+	@Override
+	public SymbolicExpression makePointer(SymbolicExpression objectPointer,
+			ReferenceExpression reference) {
+		ReferenceExpression objRef = (ReferenceExpression) universe.tupleRead(
+				objectPointer, twoObj);
+		SymbolicExpression scope = universe.tupleRead(objectPointer, zeroObj);
+		SymbolicExpression vid = universe.tupleRead(objectPointer, oneObj);
+
+		if (!objRef.isIdentityReference())
+			reference = makeParentOf(objRef, reference);
+		return universe
+				.tuple(pointerType, Arrays.asList(scope, vid, reference));
+	}
+
+	private ReferenceExpression makeParentOf(ReferenceExpression parent,
+			ReferenceExpression ref) {
+		if (ref.isIdentityReference())
+			return parent;
+		else if (ref.isArrayElementReference()) {
+			ArrayElementReference arrayEle = (ArrayElementReference) ref;
+			ReferenceExpression myParent = makeParentOf(parent,
+					arrayEle.getParent());
+
+			return universe
+					.arrayElementReference(myParent, arrayEle.getIndex());
+		} else if (ref.isTupleComponentReference()) {
+			TupleComponentReference arrayEle = (TupleComponentReference) ref;
+			ReferenceExpression myParent = makeParentOf(parent,
+					arrayEle.getParent());
+
+			return universe.tupleComponentReference(myParent,
+					arrayEle.getIndex());
+		} else {
+			UnionMemberReference arrayEle = (UnionMemberReference) ref;
+			ReferenceExpression myParent = makeParentOf(parent,
+					arrayEle.getParent());
+
+			return universe.unionMemberReference(myParent, arrayEle.getIndex());
+		}
 	}
 }

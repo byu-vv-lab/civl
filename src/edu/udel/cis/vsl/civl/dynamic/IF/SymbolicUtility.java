@@ -344,6 +344,12 @@ public interface SymbolicUtility {
 
 	boolean isHeapObjectDefined(SymbolicExpression heapObj);
 
+	/**
+	 * Is the given pointer pointing to a memory space that is part of a heap?
+	 * 
+	 * @param pointer
+	 * @return
+	 */
 	boolean isHeapPointer(SymbolicExpression pointer);
 
 	/**
@@ -366,8 +372,26 @@ public interface SymbolicUtility {
 			String process, SymbolicExpression scopeValue)
 			throws UnsatisfiablePathConditionException;
 
+	/**
+	 * Is the given pointer pointing to the first element of a heap cell?
+	 * 
+	 * @param source
+	 * @param pointer
+	 * @return
+	 */
 	boolean isHeapObjectPointer(CIVLSource source, SymbolicExpression pointer);
 
+	/**
+	 * Gets the heap cell pointer of a heap object pointer.
+	 * 
+	 * @param heapObjectPointer
+	 * @return
+	 */
 	SymbolicExpression heapCellPointer(SymbolicExpression heapObjectPointer);
+
+	ReferenceExpression referenceOfPointer(SymbolicExpression pointer);
+
+	SymbolicExpression makePointer(SymbolicExpression objectPointer,
+			ReferenceExpression reference);
 
 }

@@ -1362,6 +1362,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = this.executeScopeParent(state, pid, process, lhs,
 					arguments, argumentValues);
 			break;
+		case "$translate_ptr":
+			state = executeTranslatePointer(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
+			break;
 		case "$wait":// return immediately since target location has been set.
 			return executeWait(state, pid, arguments, argumentValues,
 					call.getSource(), call.target());
@@ -1373,6 +1377,45 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					call);
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
+
+	/**
+	 * Translates a pointer into one object to a pointer into a different object
+	 * with similar structure.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeTranslatePointer(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression pointer = argumentValues[0];
+		SymbolicExpression objPtr = argumentValues[1];
+
+		if (symbolicUtil.isNullPointer(pointer)
+				|| symbolicUtil.isNullPointer(objPtr)) {
+			if (lhs != null)
+				state = this.primaryExecutor.assign(state, pid, process, lhs,
+						symbolicUtil.nullPointer());
+		} else {
+			ReferenceExpression reference = this.symbolicUtil
+					.referenceOfPointer(pointer);
+			SymbolicExpression newPointer = symbolicUtil.makePointer(objPtr,
+					reference);
+
+			if (lhs != null)
+				state = this.primaryExecutor.assign(state, pid, process, lhs,
+						newPointer);
+		}
 		return state;
 	}
 

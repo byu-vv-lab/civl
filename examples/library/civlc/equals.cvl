@@ -2,12 +2,15 @@
 
 void main(){
   int* data;
-  _Bool r;
+  _Bool result;
+  int a = 1;
   
   data = (int*) $malloc($root, sizeof(int)*2);
   *data = 1;
   *(data + 1) = 2;
-  r = $equals(data, data+1); 
-  $assert(!r);
+  result = $equals(data, data+1); 
+  $assert(!result);
+  result = $equals(data, &a); 
+  $assert(result);
   $free(data);
 }
