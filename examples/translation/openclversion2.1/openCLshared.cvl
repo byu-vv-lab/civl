@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+  Inserts devices based on the number of entries, and unlike the openCL version, is the exact number not the maximum
+  int numEntries		- Number of devices to be inputted
+  cl_device_id * devices- pointer to devices
+*/
 int clGetDeviceIDs(int numEntries, cl_device_id * devices)
 {
   for (int i=0; i<numEntries; i++) {
@@ -12,6 +17,10 @@ int clGetDeviceIDs(int numEntries, cl_device_id * devices)
   return CL_SUCCESS;
 }
 
+/* 
+  Creates a command queue based off of the device inputted, must be called as many times as needed
+  cl_device_id devices - the device to be put into the queue
+*/
 cl_command_queue clCreateCommandQueue(cl_device_id devices)
 {
   cl_command_queue queue;
