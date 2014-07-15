@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
@@ -328,8 +329,16 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 					IdentifierExpressionNode named = (IdentifierExpressionNode) funcName;
 					String nameString = named.getIdentifier().name();
 					if (nameString.equals(PTHREAD_CREATE)){
-						IdentifierExpressionNode threadName = (IdentifierExpressionNode) funcCall.getArgument(2);
-						funcList.add(threadName.getIdentifier().name());
+						ExpressionNode arg = funcCall.getArgument(2);
+						if(arg instanceof OperatorNode){
+							OperatorNode argOp = (OperatorNode) arg;
+							IdentifierExpressionNode threadName = (IdentifierExpressionNode) argOp.getArgument(0);
+							funcList.add(threadName.getIdentifier().name());
+						}
+						else{
+							IdentifierExpressionNode threadName = (IdentifierExpressionNode) funcCall.getArgument(2);
+							funcList.add(threadName.getIdentifier().name());
+						}
 					}
 				}
 			}

@@ -69,8 +69,8 @@ void main()
   thread1 = $spawn do_one_thing(&r1);
   thread2 = $spawn do_another_thing(&r2);
 
-  $wait thread1;
-  $wait thread2;
+  $wait(thread1);
+  $wait(thread2);
 
   do_wrap_up(r1, r2);
 

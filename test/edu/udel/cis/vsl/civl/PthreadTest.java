@@ -95,16 +95,14 @@ public class PthreadTest {
 		assertTrue(ui.run("verify", filename("queue_ok_true.c"), "-svcomp", "-inputSIZE=5", "-inputEMPTY=-1", "-inputFULL=-2"));
 	}
 	
-	@Ignore
 	@Test
 	public void reorder_2_false() throws ABCException {
-		assertFalse(ui.run("verify", filename("reorder_2_false.c"), "-svcomp"));
+		assertFalse(ui.run("verify", filename("reorder_2_false.c"), "-svcomp", "-inputCIVL_argc=1"));
 	}
 	
-	@Ignore
 	@Test
 	public void reorder_5_false() throws ABCException {
-		assertFalse(ui.run("verify", filename("reorder_5_false.c"), "-svcomp"));
+		assertFalse(ui.run("verify", filename("reorder_5_false.c"), "-svcomp", "-inputCIVL_argc=1"));
 	}
 	
 	@Test
@@ -146,10 +144,10 @@ public class PthreadTest {
 	public void sync01_true() throws ABCException {
 		assertTrue(ui.run("verify", filename("sync01_true.c"), "-svcomp"));
 	}
-	/*
+	
 	@Test
 	public void twostage_3_false() throws ABCException {
-		assertFalse(ui.run("verify", filename("twostage_3_false.c"), "-svcomp"));
+		assertFalse(ui.run("verify", filename("twostage_3_false.c"), "-svcomp", "-inputCIVL_argc=1"));
 	}
-	*/
+	
 }

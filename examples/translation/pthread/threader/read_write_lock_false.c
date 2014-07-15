@@ -1,4 +1,4 @@
-/* Testcase from Threader's distribution. For details see:
+ /* Testcase from Threader's distribution. For details see:
    http://www.model.in.tum.de/~popeea/research/threader
 
    This file is adapted from the example introduced in the paper:
