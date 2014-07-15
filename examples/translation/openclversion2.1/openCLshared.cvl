@@ -34,7 +34,3 @@ cl_command_queue clCreateCommandQueue(cl_device_id devices)
 
 
 
-
-
-
-

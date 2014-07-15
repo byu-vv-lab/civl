@@ -103,17 +103,21 @@ int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, size_t g
   {
     workfunc(local, global, param[i]);
   }
-       /*
+  
+  /*
   for(int i = 0; i < global/local; i++)
   {
     param[i] = kernel;
     param[i].workgroup = i;
     procs[i] = $spawn workfunc(local, global, param[i]);
   }
-       */
+       
   //this part here is the new clFinish(commands);
-
-  
+  for(int i = 0; i < global/local; i++)
+  {
+    $wait(procs[i]);
+  }
+  */
   return CL_SUCCESS;
 }
 
@@ -213,11 +217,13 @@ int main(int argc, char** argv)
   printf("Computed '%d/%d' correct values!\n", correct, count);
   
   //TODO: Think of using void * array instead of regular arguments to make freeing easier
+  
   free(((args*)kernel.arguments)->input);
   free(((args*)kernel.arguments)->output);
-  
+  /*
   free(input);
   free(output);
+  */
   free(arguments);
   
   return 0;
