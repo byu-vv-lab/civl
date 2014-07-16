@@ -1,9 +1,0 @@
-
-#include<stdlib.h>
-#include <stdio.h>
-
-void main()
-{
-  size_t size = sizeof(int);
-  size_t * sizes = (size_t*)malloc(size);
-}

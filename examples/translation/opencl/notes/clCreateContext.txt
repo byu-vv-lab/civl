@@ -1,6 +1,0 @@
-ToDo:
-  Implementation of "delete ctx"
-  Possible fix later down the line
-Done:
-  Everything else
-  

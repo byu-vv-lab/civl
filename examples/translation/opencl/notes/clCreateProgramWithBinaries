@@ -1,5 +1,0 @@
-ToDo:
-  How to turn those binaries into code to use?
-Done:
-  This one uses more variables for loadBinaries, do something about the struct
-  Differentiated from clCreateProgramWithSource
