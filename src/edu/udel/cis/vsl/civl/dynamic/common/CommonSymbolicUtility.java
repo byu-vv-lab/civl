@@ -1361,19 +1361,21 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			BooleanExpression pathCondition) {
 		// A boolean expression used for checking conditions
 		BooleanExpression claim;
-		SymbolicExpression data = (SymbolicExpression) bundle.argument(1);
-		NumericExpression dataSize = universe.length(data);
+		SymbolicExpression data;
+		NumericExpression dataSize;
 		Reasoner reasoner = universe.reasoner(pathCondition);
+		List<SymbolicExpression> unrolledDataList = this.arrayUnrolling(
+				(SymbolicExpression) bundle.argument(1), pathCondition);
 
-		// If the data size is zero, do nothing, return null.
-		claim = universe.equals(zero, dataSize);
-		if (reasoner.isValid(claim))
+		// ------If the data size is zero, do nothing, return null.
+		if (unrolledDataList.size() == 0)
 			return null;
 
-		// If array is non-null and the index of start position in the target
-		// array is zero and the target array has enough size to holds data,
-		// return the data directly. Else, copy elements one by one.
-		// Note: array is non-null implies this function should return an array.
+		data = universe.array(unrolledDataList.get(0).type(), unrolledDataList);
+		dataSize = universe.length(data);
+		// ------If array is non-null and the index of start position in the
+		// target array is zero and the target array has enough size to holds
+		// data, return the data directly. Else, copy elements one by one.
 		if (array != null) {
 			NumericExpression targetSize;
 			NumericExpression targetArrayIdx = arrayIdx;
@@ -1405,15 +1407,61 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 					claim = universe.lessThan(i, dataSize);
 				}
 			}
-			return array; // return array
+			return array;
 		} else {
-			claim = universe.lessThan(one, dataSize);
+			// ------If the data size of data in bundle is one, return that
+			// object.
+			// Else, return an array. (Note: This could be a situation that the
+			// buf is a pointer to an array. e.g.:
+			// int a[10]; int * buf = &a;)
+			claim = universe.equals(one, dataSize);
 			if (reasoner.isValid(claim))
-				throw new SARLException(
-						"Size of bundle data is larger than one\n");
-			// return an object
-			return universe.arrayRead(data, zero);
+				return universe.arrayRead(data, zero);
+			else
+				return universe.array(unrolledDataList.get(0).type(),
+						unrolledDataList);
 		}
+	}
+
+	@Override
+	public List<SymbolicExpression> arrayUnrolling(SymbolicExpression array,
+			BooleanExpression pathCondition) {
+		List<SymbolicExpression> list = new LinkedList<>();
+
+		if (array.isNull() || array == null)
+			return list;
+
+		if (array.type() instanceof SymbolicArrayType) {
+			BooleanExpression claim;
+			NumericExpression i = universe.zeroInt();
+			NumericExpression length = universe.length(array);
+			Reasoner reasoner = universe.reasoner(pathCondition);
+
+			claim = universe.lessThan(i, length);
+			if (((SymbolicArrayType) array.type()).elementType() instanceof SymbolicArrayType) {
+				while (reasoner.isValid(claim)) {
+					SymbolicExpression element = universe.arrayRead(array, i);
+
+					list.addAll(arrayUnrolling(element, pathCondition));
+					// update
+					i = universe.add(i, one);
+					claim = universe.lessThan(i, length);
+				}
+			} else {
+				while (reasoner.isValid(claim)) {
+					SymbolicExpression element = universe.arrayRead(array, i);
+
+					list.add(element);
+					// update
+					i = universe.add(i, one);
+					claim = universe.lessThan(i, length);
+				}
+			}
+		} else {
+			list.add(array);
+			return list;
+		}
+		return list;
 	}
 
 	@Override

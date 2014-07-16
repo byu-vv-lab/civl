@@ -282,13 +282,19 @@ public interface SymbolicUtility {
 	 * Computes the output argument "buf" for the CIVL-C function:
 	 * <code>$bundle_unpack($bundle bundle, void * buf)</code>.<br>
 	 * 
+	 * @author Ziqing Luo
 	 * @param bundle
 	 *            The symbolic expression of "bundle" argument in the CIVL-C
 	 *            function.
 	 * @param array
 	 *            If the argument "buf" is a pointer to an element of an array
 	 *            or allocated memory space, this parameter represents the array
-	 *            pointed by the pointer "buf". Else, it shoule be null.
+	 *            pointed by the pointer "buf". Else, it shoule be null.<br>
+	 *            This parameter also can be understand as a container, if "buf"
+	 *            point to a array, the array is the container responsible for
+	 *            storing data in bundle. If set this paramet be null, it means
+	 *            that the container is unspecified because the pointer "buf" is
+	 *            just a regular pointer.
 	 * @param arrayIdx
 	 *            If the argument "buf" is a pointer to an element of an array
 	 *            or allocated memory space, this parameter represents the index
@@ -301,6 +307,28 @@ public interface SymbolicUtility {
 	 */
 	public SymbolicExpression bundleUnpack(SymbolicExpression bundle,
 			SymbolicExpression array, NumericExpression arrayIdx,
+			BooleanExpression pathCondition);
+
+	/**
+	 * Unrolling a set of data( can be in form of multi-dimensional array or a
+	 * single object), then make it be in the form of a one dimensional array. <br>
+	 * <br>
+	 * e.g. 1. Given an array <code>a[2][3] = {1,2,3,4,5,6};</code>, this
+	 * function will give you <code>a[6] = {1,2,3,4,5,6};</code> back.<br>
+	 * 
+	 * e.g. 2. Given a variable <code> a = 1;</code>, this function will give
+	 * you back <code>a[1] = {1}</code>.
+	 * 
+	 * @author Ziqing Luo
+	 * 
+	 * @param array
+	 *            The given array.(Or can be a single object, but by intention,
+	 *            this function is mainly for multi-dimensional arrays)
+	 * @param pathCondition
+	 *            The current path condition
+	 * @return
+	 */
+	public List<SymbolicExpression> arrayUnrolling(SymbolicExpression array,
 			BooleanExpression pathCondition);
 
 	/**
