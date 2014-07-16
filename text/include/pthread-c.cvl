@@ -1,7 +1,7 @@
 #ifdef __PTHREAD_C__
 #else
 #define __PTHREAD_C__
-extern void *value = NULL;
+extern void *value_ptr_value = NULL;
 __pthread_pool_t _pool={.len = 0};
 
 
@@ -694,7 +694,7 @@ int pthread_join(pthread_t thread, void **value_ptr){
   }
   $wait(thread.thr);
   if(value_ptr!=NULL)
-    value_ptr = &value;
+    value_ptr = &value_ptr_value;
   return 0;
 }
 
@@ -738,7 +738,7 @@ int _pthread_exit(void *value_ptr, _Bool isMain){
         }
       }
     }
-    value = value_ptr;
+    value_ptr_value = value_ptr;
     $exit();
     return 0;
   }
