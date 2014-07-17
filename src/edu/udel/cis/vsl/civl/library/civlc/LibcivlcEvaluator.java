@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -34,6 +35,26 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	private IntObject twoObject = universe.intObject(2);
 	private NumericExpression minusOne = universe.integer(-1);
 	private NumericExpression minusTwo = universe.integer(-2);
+
+	// Package private enumerator.
+	// The order of these operations should be consistent with the civl-common.h
+	// file.
+	enum CIVLOperation {
+		CIVL_NO_OP, // no operation
+		CIVL_MAX, // maxinum
+		CIVL_MIN, // minimun
+		CIVL_SUM, // sum
+		CIVL_PROD, // product
+		CIVL_LAND, // logical and
+		CIVL_BAND, // bit-wise and
+		CIVL_LOR, // logical or
+		CIVL_BOR, // bit-wise or
+		CIVL_LXOR, // logical exclusive or
+		CIVL_BXOR, // bit-wise exclusive or
+		CIVL_MINLOC, // min value and location
+		CIVL_MAXLOC, // max value and location
+		CIVL_REPLACE // replace ? TODO: Find definition for this operation
+	}
 
 	public LibcivlcEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
@@ -380,7 +401,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 			while (reasoner.isValid(iterLTnprocsClaim)) {
 				NumericExpression queueIter = universe.zeroInt();
 				BooleanExpression queueIterLTlengthClaim;
-				
+
 				bufRow = universe.arrayRead(buf, iter);
 				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
 				messages = universe.tupleRead(queue, oneObject);
@@ -465,6 +486,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 			guard = universe.trueExpression();
 		return guard;
 	}
+
 	/**
 	 * <p>
 	 * Combining the given predicates and the results of evaluation on those
@@ -509,5 +531,75 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		} while (predIter.hasNext());
 
 		return guard;
+	}
+
+	/**
+	 * Completing an operation (which is included in CIVLOperation enumerator).
+	 * 
+	 * @param newData
+	 *            The new data got from the bundle
+	 * @param otherData
+	 *            The data has already been received previously
+	 * @param op
+	 *            The CIVL Operation
+	 * @return
+	 */
+	SymbolicExpression civlOperation(State state, String process,
+			SymbolicExpression newData, SymbolicExpression otherData,
+			CIVLOperation op, CIVLSource civlsource) {
+		BooleanExpression claim;
+
+		/*
+		 * For MAX and MIN operation, if CIVL cannot figure out a concrete
+		 * result, make a abstract function for it.
+		 */
+		try {
+			switch (op) {
+			case CIVL_MAX:
+				claim = universe.lessThan((NumericExpression) otherData,
+						(NumericExpression) newData);
+				return universe.cond(claim, newData, otherData);
+			case CIVL_MIN:
+				claim = universe.lessThan((NumericExpression) newData,
+						(NumericExpression) otherData);
+				return universe.cond(claim, newData, otherData);
+			case CIVL_SUM:
+				return universe.add((NumericExpression) newData,
+						(NumericExpression) otherData);
+			case CIVL_PROD:
+				return universe.multiply((NumericExpression) newData,
+						(NumericExpression) otherData);
+			case CIVL_LAND:
+				return universe.and((BooleanExpression) newData,
+						(BooleanExpression) otherData);
+			case CIVL_LOR:
+				return universe.or((BooleanExpression) newData,
+						(BooleanExpression) otherData);
+			case CIVL_LXOR:
+				BooleanExpression notNewData = universe
+						.not((BooleanExpression) newData);
+				BooleanExpression notPrevData = universe
+						.not((BooleanExpression) otherData);
+
+				return universe
+						.or(universe.and(notNewData,
+								(BooleanExpression) otherData), universe.and(
+								(BooleanExpression) newData, notPrevData));
+			case CIVL_BAND:
+			case CIVL_BOR:
+			case CIVL_BXOR:
+			case CIVL_MINLOC:
+			case CIVL_MAXLOC:
+			case CIVL_REPLACE:
+			default:
+			}
+		} catch (ClassCastException e) {
+			throw new CIVLExecutionException(ErrorKind.OTHER,
+					Certainty.PROVEABLE, process,
+					"Invalid operands type for CIVL Operation: " + op.name(),
+					civlsource);
+		}
+		throw new CIVLUnimplementedFeatureException("CIVLOperation: "
+				+ op.name());
 	}
 }

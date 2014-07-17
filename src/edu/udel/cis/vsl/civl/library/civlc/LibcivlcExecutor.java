@@ -9,6 +9,7 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.library.civlc.LibcivlcEvaluator.CIVLOperation;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -49,6 +50,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -65,6 +67,8 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
+	/* *************************** Private fields ************************** */
+	LibcivlcEvaluator libevaluator;
 
 	/* **************************** Constructors *************************** */
 
@@ -84,6 +88,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
 			CIVLConfiguration civlConfig) {
 		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+		this.libevaluator = new LibcivlcEvaluator(name, evaluator,
+				modelFactory, symbolicUtil);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -221,7 +227,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	/**
 	 * Copies the data out of the bundle into the region specified:
 	 * 
-	 * void $bundle_unpack($bundle bundle, void *ptr, int size);
+	 * void $bundle_unpack($bundle bundle, void *ptr, int size); <br>
+	 * 
+	 * modified by @author Ziqing Luo
 	 * 
 	 * @param state
 	 *            The current state.
@@ -1250,6 +1258,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = executeBundleUnpack(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$bundle_unpack_apply":
+			state = executeBundleUnpackApply(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
+			break;
 		case "$barrier_create":
 			state = executeBarrierCreate(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
@@ -2264,6 +2276,136 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		iterObj = universe.tupleWrite(iterObj, twoObject, index);
 		state = primaryExecutor.assign(source, state, process, iterHandle,
 				iterObj);
+		return state;
+	}
+
+	/**
+	 * bundle unpack then do an operation. This method corresponding to the
+	 * CIVL-C function:
+	 * <code>$bundle_unpack_apply($bundle bundle, void * buf, int count, $operation op);</code>
+	 * Bundle contains the first operand which is going to be used in the
+	 * operation. The pointer "buf" points to the object stores the second
+	 * operand which is going to be used in the operation.
+	 * 
+	 * @author Ziqing Luo
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The pid of the process
+	 * @param process
+	 *            The identifier of the process
+	 * @param arguments
+	 *            The expression of arguments of the CIVL-C function
+	 *            <code>$bundle_unpack_apply($bundle bundle, void * buf, int count, $operation op);</code>
+	 * @param argumentValues
+	 *            The symbolic expression of arguments of the CIVL-C function
+	 *            <code>$bundle_unpack_apply($bundle bundle, void * buf, int count, $operation op);</code>
+	 * @param source
+	 *            The civl source of this statement
+	 * @return the state after execution.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeBundleUnpackApply(State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression bundle = argumentValues[0];
+		SymbolicExpression pointer = argumentValues[1];
+		SymbolicExpression bufPointer = null;
+		// otherData: The data inside the object pointed by "buf".
+		SymbolicExpression otherData = null;
+		// data: the data inside the bundle.
+		SymbolicExpression data = null;
+		SymbolicExpression dataElement = null;
+		SymbolicExpression preDataElement = null;
+		SymbolicExpression opRet = null; // result after applying one operation
+		// the final array will be assigned to the pointer "buf". Since the
+		// assigned pointer could be the parent pointer of the given one, so
+		// there may have some cells stay unchanged in the array. That's the
+		// reason we need this variable: writeBackArray.
+		SymbolicExpression writeBackArray = null;
+		NumericExpression i;
+		NumericExpression count = (NumericExpression) argumentValues[2];
+		NumericExpression operation = (NumericExpression) argumentValues[3];
+		BooleanExpression pathCondition = state.getPathCondition();
+		BooleanExpression claim;
+		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
+		Reasoner reasoner = universe.reasoner(pathCondition);
+		CIVLOperation CIVL_Op;
+		Evaluation eval;
+		int bufIndex = 0;
+
+		// In executor, operation must be concrete.
+		// ------Translate operation
+		CIVL_Op = CIVLOperation.values()[((IntegerNumber) reasoner
+				.extractNumber(operation)).intValue()];
+		// ------Obtain otherData
+		if (ref.isArrayElementReference()) {
+			bufPointer = symbolicUtil.parentPointer(source, pointer);
+			bufIndex = symbolicUtil.getArrayIndex(source, pointer);
+			eval = evaluator.dereference(source, state, process, bufPointer,
+					false);
+			state = eval.state;
+			writeBackArray = eval.value;
+			// dereferencing otherData
+			otherData = symbolicUtil.getSubArray(writeBackArray,
+					universe.integer(bufIndex),
+					universe.length(writeBackArray), state, process, source);
+		} else {
+			bufPointer = pointer;
+			eval = evaluator.dereference(source, state, process, bufPointer,
+					false);
+			otherData = eval.value;
+			writeBackArray = eval.value;
+			state = eval.state;
+		}
+		// ------checking if otherData is null
+		if (otherData.isNull() || otherData == null) {
+			data = symbolicUtil.bundleUnpack(bundle, writeBackArray,
+					universe.integer(bufIndex), pathCondition);
+			return primaryExecutor.assign(source, state, process, bufPointer,
+					data);
+		}
+		// ------Obtain data form bundle
+		data = symbolicUtil.bundleUnpack(bundle, null, zero, pathCondition);
+		// ------checking if data is null
+		if (data.isNull() || data == null)
+			return state;
+		// ------checking if otherData or data is in the form of array.
+		if (!(data.type() instanceof SymbolicArrayType))
+			data = universe.array(data.type(), Arrays.asList(data));
+		if (!(otherData.type() instanceof SymbolicArrayType))
+			otherData = universe.array(otherData.type(),
+					Arrays.asList(otherData));
+		// ------checking if writeBackData is in the form of array.
+		if (!(writeBackArray.type() instanceof SymbolicArrayType))
+			writeBackArray = universe.array(writeBackArray.type(),
+					Arrays.asList(writeBackArray));
+		// ------execute operation
+		i = universe.zeroInt();
+		claim = universe.lessThan(i, count);
+		try {
+			while (reasoner.isValid(claim)) {
+				dataElement = universe.arrayRead(data, i);
+				preDataElement = universe.arrayRead(otherData, i);
+				opRet = libevaluator.civlOperation(state, process, dataElement,
+						preDataElement, CIVL_Op, source);
+				writeBackArray = universe.arrayWrite(writeBackArray,
+						universe.integer(bufIndex), opRet);
+				// update
+				i = universe.add(i, one);
+				bufIndex++;
+				claim = universe.lessThan(i, count);
+			}
+		} catch (SARLException e) {
+			throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
+					Certainty.PROVEABLE, process,
+					"Attempt to write beyond array bound: index=" + i,
+					symbolicUtil.stateToString(state), source);
+		}
+
+		state = primaryExecutor.assign(source, state, process, bufPointer,
+				writeBackArray);
 		return state;
 	}
 }
