@@ -1638,14 +1638,33 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(expressionNode), scope);
 
 		switch (expressionNode.expressionKind()) {
-		case OPERATOR:
+
+		case CAST: {
+			CastNode castNode = (CastNode) expressionNode;
+			CIVLType castType = translateABCType(
+					modelFactory.sourceOf(castNode.getCastType()), scope,
+					castNode.getCastType().getType());
+
+			if (castType.isVoidType()) {
+				Statement noopStatement = modelFactory.noopStatement(
+						modelFactory.sourceOf(castNode), location);
+
+				result = new CommonFragment(noopStatement);
+			} else
+				throw new CIVLUnimplementedFeatureException(
+						"expression statement of a cast expression with the cast type "
+								+ castType,
+						modelFactory.sourceOf(expressionNode));
+			break;
+		}
+		case OPERATOR: {
 			OperatorNode operatorNode = (OperatorNode) expressionNode;
 
 			switch (operatorNode.getOperator()) {
 			case ASSIGN:
 				result = translateAssignNode(scope, operatorNode);
 				break;
-			case COMMA:
+			case COMMA: {
 				int number = operatorNode.getNumberOfArguments();
 				result = new CommonFragment();
 
@@ -1657,22 +1676,24 @@ public class FunctionTranslator {
 					result = result.combineWith(current);
 				}
 				break;
+			}
 			case POSTINCREMENT:
 			case PREINCREMENT:
 			case POSTDECREMENT:
 			case PREDECREMENT:
 				throw new CIVLInternalException("Side-effect not removed: ",
 						modelFactory.sourceOf(operatorNode));
-			default:
-				// since side-effects have been removed,
-				// the only expressions remaining with side-effects
-				// are assignments. all others are equivalent to no-op
+			default: {// since side-effects have been removed,
+						// the only expressions remaining with side-effects
+						// are assignments. all others are equivalent to no-op
 				Statement noopStatement = modelFactory.noopStatement(
 						modelFactory.sourceOf(operatorNode), location);
 
 				result = new CommonFragment(noopStatement);
 			}
+			}
 			break;
+		}
 		case SPAWN:
 			result = translateSpawnNode(scope, (SpawnNode) expressionNode);
 			break;
@@ -1689,7 +1710,8 @@ public class FunctionTranslator {
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(
-					"expression statement of this kind",
+					"expression statement of this kind "
+							+ expressionNode.expressionKind(),
 					modelFactory.sourceOf(expressionNode));
 		}
 		return result;
