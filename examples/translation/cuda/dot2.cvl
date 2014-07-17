@@ -16,7 +16,7 @@
  */
 
 #include "civlc.h"
-#include "civlc-cuda.cvl"
+#include "cuda.cvh"
 #include "stdio.h"
 
 #define imin(a,b) (a<b?a:b)

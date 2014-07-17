@@ -1,9 +1,9 @@
 /* This header file contains useful helper functions for manipulating
  * the CIVL versions of various Cuda objects.
  */
-#ifdef __CIVLC__
+#ifdef __CUDA_HELPER__
 #else
-#define __CIVLC__
+#define __CUDA_HELPER__
 
 #include "civlc.h"
 #include "cuda-types.cvh"
@@ -294,3 +294,4 @@ void _kernelFinish(_kernelInstance *k) {
   k->status = _kernelStatusFinished;
 }
 
+#endif

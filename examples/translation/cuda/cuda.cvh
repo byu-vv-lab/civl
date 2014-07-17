@@ -170,3 +170,5 @@ cudaError_t cudaFree(void *devPtr) {
 cudaError_t cudaSetDevice(int device_id) {
   return cudaSuccess;
 }
+
+#endif
