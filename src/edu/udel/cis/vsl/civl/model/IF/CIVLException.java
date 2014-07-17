@@ -77,7 +77,8 @@ public class CIVLException extends RuntimeException {
 		QUANTIFIER,
 		SIZEOF,
 		INVALID_WAIT,
-		UNDEFINED_VALUE, UNION, PROCESS_LEAK
+		UNDEFINED_VALUE, UNION, PROCESS_LEAK,
+		SEQUENCE
 	}
 
 	/**

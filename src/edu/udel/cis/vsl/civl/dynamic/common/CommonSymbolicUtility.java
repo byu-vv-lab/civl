@@ -55,6 +55,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicCollection;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
@@ -393,6 +394,27 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isUndefinedConstant(SymbolicExpression value) {
+		if (!value.isNull()) {
+			SymbolicObject valueObj = value.argument(0);
+
+			if (valueObj.symbolicObjectKind() == SymbolicObjectKind.EXPRESSION) {
+				value = (SymbolicExpression) valueObj;
+				if (value.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
+					valueObj = value.argument(0);
+
+					if (valueObj.symbolicObjectKind() == SymbolicObjectKind.STRING) {
+						String valueStr = ((StringObject) valueObj).getString();
+
+						return valueStr.equals("UNDEFINED");
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -1836,4 +1858,109 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return universe.unionMemberReference(myParent, arrayEle.getIndex());
 		}
 	}
+
+	@Override
+	public boolean isValidRefOf(ReferenceExpression ref,
+			SymbolicExpression value) {
+		return isValidRefOfValue(ref, value).right;
+	}
+
+	private Pair<SymbolicExpression, Boolean> isValidRefOfValue(
+			ReferenceExpression ref, SymbolicExpression value) {
+		if (ref.isIdentityReference())
+			return new Pair<>(value, true);
+		else if (ref.isArrayElementReference()) {
+			ArrayElementReference arrayEleRef = (ArrayElementReference) ref;
+			SymbolicExpression targetValue;
+			Pair<SymbolicExpression, Boolean> parentTest = isValidRefOfValue(
+					arrayEleRef.getParent(), value);
+
+			if (!parentTest.right)
+				return new Pair<>(value, false);
+			targetValue = parentTest.left;
+			if (!(targetValue.type() instanceof SymbolicArrayType))
+				return new Pair<>(targetValue, false);
+			return new Pair<>(universe.arrayRead(targetValue,
+					arrayEleRef.getIndex()), true);
+		} else if (ref.isTupleComponentReference()) {
+			TupleComponentReference tupleCompRef = (TupleComponentReference) ref;
+			SymbolicExpression targetValue;
+			Pair<SymbolicExpression, Boolean> parentTest = isValidRefOfValue(
+					tupleCompRef.getParent(), value);
+
+			if (!parentTest.right)
+				return new Pair<>(value, false);
+			targetValue = parentTest.left;
+			if (!(targetValue.type() instanceof SymbolicTupleType))
+				return new Pair<>(targetValue, false);
+			return new Pair<>(universe.tupleRead(targetValue,
+					tupleCompRef.getIndex()), true);
+		} else {// UnionMemberReference
+			UnionMemberReference unionMemRef = (UnionMemberReference) ref;
+			SymbolicExpression targetValue;
+			Pair<SymbolicExpression, Boolean> parentTest = isValidRefOfValue(
+					unionMemRef.getParent(), value);
+
+			if (!parentTest.right)
+				return new Pair<>(value, false);
+			targetValue = parentTest.left;
+			if (!(targetValue.type() instanceof SymbolicUnionType))
+				return new Pair<>(targetValue, false);
+			return new Pair<>(universe.unionExtract(unionMemRef.getIndex(),
+					targetValue), true);
+		}
+	}
+
+	@Override
+	public CIVLType typeOfObjByPointer(CIVLSource soruce, State state,
+			SymbolicExpression pointer) {
+		ReferenceExpression reference = this.getSymRef(pointer);
+		int dyscopeId = getDyscopeId(soruce, pointer);
+		int vid = getVariableId(soruce, pointer);
+		CIVLType varType = state.getScope(dyscopeId).lexicalScope()
+				.variable(vid).type();
+
+		return typeOfObjByRef(varType, reference);
+	}
+
+	private CIVLType typeOfObjByRef(CIVLType type, ReferenceExpression ref) {
+		if (ref.isIdentityReference())
+			return type;
+		else if (ref.isArrayElementReference()) {
+			ArrayElementReference arrayEleRef = (ArrayElementReference) ref;
+			CIVLType parentType = typeOfObjByRef(type, arrayEleRef.getParent());
+
+			if (parentType.isDomainType())
+				return modelFactory.rangeType();
+			return ((CIVLArrayType) parentType).elementType();
+		} else {
+			int index;
+			CIVLType parentType;
+			ReferenceExpression parent;
+
+			if (ref.isTupleComponentReference()) {
+				TupleComponentReference tupleCompRef = (TupleComponentReference) ref;
+
+				index = tupleCompRef.getIndex().getInt();
+				parent = tupleCompRef.getParent();
+			} else {
+				// UnionMemberReference
+				UnionMemberReference unionMemRef = (UnionMemberReference) ref;
+
+				index = unionMemRef.getIndex().getInt();
+				parent = unionMemRef.getParent();
+			}
+			parentType = typeOfObjByRef(type, parent);
+			if (parentType.isHeapType()) {
+				CIVLArrayType heapTupleType = modelFactory
+						.incompleteArrayType(((CIVLHeapType) parentType)
+								.getMalloc(index).getStaticElementType());
+
+				heapTupleType = modelFactory.incompleteArrayType(heapTupleType);
+				return heapTupleType;
+			}
+			return ((CIVLStructOrUnionType) parentType).getField(index).type();
+		}
+	}
+
 }

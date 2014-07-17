@@ -26,6 +26,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -1322,6 +1323,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = this.executeCommSize(state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
+		case "$copy":
+			state = executeCopy(state, pid, process, arguments, argumentValues,
+					call.getSource());
+			break;
 		case "$exit":// return immediately since no transitions needed after an
 			// exit, because the process no longer exists.
 			return executeExit(state, pid);
@@ -1374,6 +1379,18 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = this.executeScopeParent(state, pid, process, lhs,
 					arguments, argumentValues);
 			break;
+		case "$seq_init":
+			state = executeSeqInit(state, pid, process, arguments,
+					argumentValues, call.getSource());
+			break;
+		case "$seq_insert":
+			state = executeSeqInsert(state, pid, process, arguments,
+					argumentValues, call.getSource());
+			break;
+		case "$seq_length":
+			state = executeSeqLength(state, pid, process, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
 		case "$translate_ptr":
 			state = executeTranslatePointer(state, pid, process, lhs,
 					arguments, argumentValues, call.getSource());
@@ -1389,6 +1406,279 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					call);
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
+
+	// assume count is concrete
+	private State executeSeqInsert(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression arrayPtr = argumentValues[0];
+		NumericExpression index = (NumericExpression) argumentValues[1];
+		SymbolicExpression valuesPtr = argumentValues[2];
+		NumericExpression count = (NumericExpression) argumentValues[3];
+		CIVLSource arrayPtrSource = arguments[0].getSource();
+		CIVLType arrayType;
+		Evaluation eval;
+		SymbolicExpression arrayValue;
+		int countInt, indexInt;
+
+		if (symbolicUtil.isNullPointer(arrayPtr)) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
+					"The first argument of $seq_insert() "
+							+ "must be a non-null pointer.\n"
+							+ "actual value of first argument: "
+							+ symbolicUtil.symbolicExpressionToString(
+									arrayPtrSource, state, arrayPtr),
+					symbolicUtil.stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+			return state;
+		}
+		if (count.isZero())// no op
+			return state;
+		arrayType = symbolicUtil.typeOfObjByPointer(arrayPtrSource, state,
+				arrayPtr);
+		if (!arrayType.isIncompleteArrayType()) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.SEQUENCE,
+					Certainty.PROVEABLE,
+					process,
+					"The first argument of $seq_insert() "
+							+ "must be of a pointer to incomplete array of type T.\n"
+							+ "actual value of first argument: pointer to "
+							+ arrayType, symbolicUtil.stateToString(state),
+					source);
+
+			this.errorLogger.reportError(err);
+			return state;
+		}
+		eval = evaluator.dereference(arrayPtrSource, state, process, arrayPtr,
+				false);
+		state = eval.state;
+		arrayValue = eval.value;
+		countInt = ((IntegerNumber) universe.extractNumber(count)).intValue();
+		indexInt = ((IntegerNumber) universe.extractNumber(index)).intValue();
+		for (int i = 0; i < countInt; i++) {
+			SymbolicExpression value, valuePtr;
+			BinaryExpression pointerAdd = modelFactory.binaryExpression(
+					source,
+					BINARY_OPERATOR.POINTER_ADD,
+					arguments[2],
+					modelFactory.integerLiteralExpression(source,
+							BigInteger.valueOf(i)));
+
+			eval = evaluator.pointerAdd(state, pid, process, pointerAdd,
+					valuesPtr, universe.integer(i));
+			state = eval.state;
+			valuePtr = eval.value;
+			eval = evaluator.dereference(source, state, process, valuePtr,
+					false);
+			state = eval.state;
+			value = eval.value;
+			arrayValue = universe.insertElementAt(arrayValue, indexInt + i,
+					value);
+		}
+		state = primaryExecutor.assign(source, state, process, arrayPtr,
+				arrayValue);
+		return state;
+	}
+
+	private State executeSeqInit(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression arrayPtr = argumentValues[0];
+		NumericExpression count = (NumericExpression) argumentValues[1];
+		SymbolicExpression elePointer = argumentValues[2];
+		CIVLSource arrayPtrSource = arguments[0].getSource();
+		CIVLSource elePtrSource = arguments[2].getSource();
+
+		if (symbolicUtil.isNullPointer(arrayPtr)
+				|| symbolicUtil.isNullPointer(elePointer)) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
+					"Both the first and the third argument of $seq_init() "
+							+ "must be non-null pointers.\n"
+							+ "actual value of first argument: "
+							+ symbolicUtil.symbolicExpressionToString(
+									arrayPtrSource, state, arrayPtr)
+							+ "\n"
+							+ "actual value of third argument: "
+							+ symbolicUtil.symbolicExpressionToString(
+									elePtrSource, state, elePointer),
+					symbolicUtil.stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+			return state;
+		} else {
+			CIVLType arrayType = symbolicUtil.typeOfObjByPointer(
+					arrayPtrSource, state, arrayPtr);
+
+			if (!arrayType.isIncompleteArrayType()) {
+				String arrayPtrString = symbolicUtil
+						.symbolicExpressionToString(arrayPtrSource, state,
+								arrayPtr);
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.SEQUENCE, Certainty.PROVEABLE, process,
+						"The first argument of $seq_init() must be "
+								+ "a pointer to an incomplete array.\n"
+								+ "actual first argument: " + arrayPtrString
+								+ "\n" + "actual type of " + arrayPtrString
+								+ ": pointer to " + arrayType,
+						symbolicUtil.stateToString(state), source);
+
+				this.errorLogger.reportError(err);
+				return state;
+			} else {
+				CIVLType eleType = symbolicUtil.typeOfObjByPointer(
+						elePtrSource, state, elePointer);
+				CIVLType arrayEleType = ((CIVLArrayType) arrayType)
+						.elementType();
+
+				if (!arrayEleType.equals(eleType)) {
+					CIVLExecutionException err = new CIVLExecutionException(
+							ErrorKind.DEREFERENCE,
+							Certainty.PROVEABLE,
+							process,
+							"The element type of the array that the first argument "
+									+ "points to of $seq_init() must be the same as "
+									+ "the type of the object that the third argument points to.\n"
+									+ "actual element type of the given array: "
+									+ arrayEleType
+									+ "\n"
+									+ "actual type of object pointed to by the third argument: "
+									+ eleType,
+							symbolicUtil.stateToString(state), source);
+
+					this.errorLogger.reportError(err);
+					return state;
+				} else {
+					Evaluation eval = evaluator.dereference(elePtrSource,
+							state, process, elePointer, false);
+					SymbolicExpression eleValue, arrayValue;
+					SymbolicCompleteArrayType arrayValueType;
+					NumericSymbolicConstant index;
+					SymbolicExpression arrayEleFunction;
+
+					state = eval.state;
+					eleValue = eval.value;
+					arrayValueType = universe.arrayType(eleValue.type(), count);
+					index = (NumericSymbolicConstant) universe
+							.symbolicConstant(universe.stringObject("i"),
+									universe.integerType());
+					arrayEleFunction = universe.lambda(index, eleValue);
+					arrayValue = universe.arrayLambda(arrayValueType,
+							arrayEleFunction);
+					state = primaryExecutor.assign(source, state, process,
+							arrayPtr, arrayValue);
+				}
+			}
+		}
+		return state;
+	}
+
+	private State executeSeqLength(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression seqPtr = argumentValues[0];
+		CIVLSource seqSource = arguments[0].getSource();
+
+		if (symbolicUtil.isNullPointer(seqPtr)) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
+					"The argument of $seq_length() must be a non-null pointer.\n"
+							+ "actual argument: "
+							+ symbolicUtil.symbolicExpressionToString(
+									seqSource, state, seqPtr),
+					symbolicUtil.stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+			return state;
+		} else {
+			Evaluation eval = evaluator.dereference(seqSource, state, process,
+					seqPtr, false);
+			SymbolicExpression seq;
+
+			state = eval.state;
+			seq = eval.value;
+			if (!(seq.type() instanceof SymbolicArrayType)) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.SEQUENCE,
+						Certainty.PROVEABLE,
+						process,
+						"The argument of $seq_length() must be a sequence of objects of the same type.\n"
+								+ "actual argument: "
+								+ symbolicUtil.symbolicExpressionToString(
+										seqSource, state, seq),
+						symbolicUtil.stateToString(state), source);
+
+				this.errorLogger.reportError(err);
+				return state;
+			} else if (lhs != null)
+				state = primaryExecutor.assign(state, pid, process, lhs,
+						universe.length(seq));
+		}
+		return state;
+	}
+
+	private State executeCopy(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression left = argumentValues[0];
+		SymbolicExpression right = argumentValues[1];
+		Evaluation eval;
+		CIVLSource sourceLeft = arguments[0].getSource();
+		CIVLSource sourceRight = arguments[1].getSource();
+
+		if (symbolicUtil.isNullPointer(left)
+				|| symbolicUtil.isNullPointer(right)) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
+					"The arguments of $copy() must both be non-null pointers.\n"
+							+ "actual value of first argument: "
+							+ symbolicUtil.symbolicExpressionToString(
+									sourceLeft, state, left)
+							+ "\n"
+							+ "actual value of second argument: "
+							+ symbolicUtil.symbolicExpressionToString(
+									sourceRight, state, right),
+					symbolicUtil.stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+			return state;
+		} else {
+			SymbolicExpression rightValue;
+			CIVLType objTypeLeft = symbolicUtil.typeOfObjByPointer(sourceLeft,
+					state, left);
+			CIVLType objTypeRight = symbolicUtil.typeOfObjByPointer(
+					sourceRight, state, right);
+
+			if (!objTypeLeft.equals(objTypeRight)) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.DEREFERENCE,
+						Certainty.PROVEABLE,
+						process,
+						"The objects pointed to by the two given pointers of $copy() "
+								+ "must have the same type.\n"
+								+ "actual type of the object of the first argument: "
+								+ objTypeLeft
+								+ "\n"
+								+ "actual type of the object of the second argument: "
+								+ objTypeRight,
+						symbolicUtil.stateToString(state), source);
+
+				this.errorLogger.reportError(err);
+				return state;
+			}
+			eval = evaluator.dereference(sourceRight, state, process, right,
+					false);
+			state = eval.state;
+			rightValue = eval.value;
+			state = primaryExecutor.assign(source, state, process, left,
+					rightValue);
+		}
 		return state;
 	}
 
@@ -1423,7 +1713,31 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					.referenceOfPointer(pointer);
 			SymbolicExpression newPointer = symbolicUtil.makePointer(objPtr,
 					reference);
+			CIVLSource objSource = arguments[1].getSource();
+			int dyscopeId = symbolicUtil.getDyscopeId(objSource, newPointer);
+			int vid = symbolicUtil.getVariableId(objSource, newPointer);
+			SymbolicExpression objValue = state
+					.getVariableValue(dyscopeId, vid);
 
+			reference = (ReferenceExpression) symbolicUtil
+					.getSymRef(newPointer);
+			if (!symbolicUtil.isValidRefOf(reference, objValue)) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.OTHER,
+						Certainty.PROVEABLE,
+						process,
+						"The second argument of $translate_ptr() "
+								+ symbolicUtil.symbolicExpressionToString(
+										objSource, state, objPtr)
+								+ " doesn't have a compatible type hierarchy as the first argument "
+								+ symbolicUtil.symbolicExpressionToString(
+										arguments[0].getSource(), state,
+										pointer),
+						symbolicUtil.stateToString(state), source);
+
+				this.errorLogger.reportError(err);
+				return state;
+			}
 			if (lhs != null)
 				state = this.primaryExecutor.assign(state, pid, process, lhs,
 						newPointer);

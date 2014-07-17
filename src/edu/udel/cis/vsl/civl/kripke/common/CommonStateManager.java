@@ -20,7 +20,6 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
-import edu.udel.cis.vsl.civl.semantics.common.CommonTransition;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -74,12 +73,12 @@ public class CommonStateManager implements StateManager {
 	 * is typically set by a separate thread. Access to this thread is protected
 	 * by the lock on this StateManager.
 	 */
-	private boolean printUpdate = false;
+	// private boolean printUpdate = false;
 
-	/**
-	 * Number of calls to method {@link #nextState(State, CommonTransition)}
-	 */
-	private int nextStateCalls = 0;
+//	/**
+//	 * Number of calls to method {@link #nextState(State, CommonTransition)}
+//	 */
+//	private int nextStateCalls = 0;
 
 	/**
 	 * Keep track of the maximal canonic ID of states. Since
@@ -230,7 +229,7 @@ public class CommonStateManager implements StateManager {
 			// in -savedStates mode, only print new states.
 			config.out().println();
 			config.out().print(this.symbolicUtil.stateToString(state));
-		}else if(config.showPathConditon()){
+		} else if (config.showPathConditon()) {
 			config.out().print(state.toString());
 			config.out().print(" -- path condition: ");
 			config.out().println(state.getPathCondition());
@@ -441,15 +440,7 @@ public class CommonStateManager implements StateManager {
 			Transition transition) {
 		TraceStepIF<Transition, State> result;
 
-		nextStateCalls++;
-		if (nextStateCalls % 100 == 0) {
-			synchronized (this) {
-				if (printUpdate) {
-					printUpdateWork();
-					printUpdate = false;
-				}
-			}
-		}
+		// nextStateCalls++;
 		try {
 			result = nextStateWork(state, transition);
 		} catch (UnsatisfiablePathConditionException e) {
@@ -535,8 +526,8 @@ public class CommonStateManager implements StateManager {
 	}
 
 	@Override
-	public synchronized void printUpdate() {
-		printUpdate = true;
+	public void printUpdate() {
+		printUpdateWork();
 	}
 
 	@Override

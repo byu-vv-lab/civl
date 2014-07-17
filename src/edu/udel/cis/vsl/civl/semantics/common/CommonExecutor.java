@@ -806,8 +806,17 @@ public class CommonExecutor implements Executor {
 		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
 		State result;
 		Variable variable;
-		// Evaluation eval;
+		Evaluation eval;
 
+		eval = evaluator.dereference(source, state, process, pointer, false);
+		state = eval.state;
+		if (symbolicUtil.isUndefinedConstant(eval.value)) {
+			errorLogger.logSimpleError(source, state, process,
+					symbolicUtil.stateToString(state), ErrorKind.DEREFERENCE,
+					"Attempt to dereference a pointer that refers to a "
+							+ "memory space that is already deallocated");
+			throw new UnsatisfiablePathConditionException();
+		}
 		if (sid < 0) {
 			errorLogger
 					.logSimpleError(source, state, process,

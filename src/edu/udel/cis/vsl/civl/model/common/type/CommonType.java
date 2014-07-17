@@ -130,4 +130,9 @@ public abstract class CommonType implements CIVLType {
 		return false;
 	}
 
+	@Override
+	public boolean isIncompleteArrayType() {
+		return false;
+	}
+
 }

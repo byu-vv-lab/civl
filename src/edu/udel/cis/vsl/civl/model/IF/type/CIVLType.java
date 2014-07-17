@@ -131,6 +131,8 @@ public interface CIVLType {
 	 */
 	boolean isArrayType();
 
+	boolean isIncompleteArrayType();
+
 	/**
 	 * 
 	 * @return true iff this type is char type
@@ -161,7 +163,7 @@ public interface CIVLType {
 	 * @return true iff this type is a boolean type.
 	 */
 	boolean isBoolType();
-	
+
 	boolean isDomainType();
 
 }

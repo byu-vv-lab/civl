@@ -64,4 +64,9 @@ public class CommonArrayType extends CommonType implements CIVLArrayType {
 		return dynamicType;
 	}
 
+	@Override
+	public boolean isIncompleteArrayType() {
+		return true;
+	}
+
 }

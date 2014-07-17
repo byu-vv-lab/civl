@@ -23,7 +23,12 @@ void main(){
   node *list;
   point set[5];
   point t;
+  double a[3][3][3];
+  int b[3][3];
+  double (*p1)[] = &a[1][2]; // p has type pointer-to-array-of-double
   
+  q = (int*)$translate_ptr(p1, &b);
+  $assert(q == &b[1][2]);
   list = (node*)$malloc($here, sizeof(node)*5);
   q = & (list+2)->y;
   p = (double*)$translate_ptr(q, &t);

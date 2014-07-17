@@ -13,12 +13,6 @@ public interface CIVLArrayType extends CIVLType {
 	 */
 	CIVLType elementType();
 
-	// /**
-	// * @param baseType
-	// * The type of elements in this array.
-	// */
-	// void setBaseType(CIVLType baseType);
-
 	/**
 	 * 
 	 * @return Is this a complete array type? (i.e. is the length specified?)

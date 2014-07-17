@@ -126,4 +126,24 @@ public class LibraryTest {
 	public void translatePointer() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlc/translate_ptr.cvl")));
 	}
+
+	@Test
+	public void copy() throws ABCException {
+		assertTrue(ui.run("verify", filename("civlc/copy.cvl")));
+	}
+
+	@Test
+	public void seqInit() throws ABCException {
+		assertTrue(ui.run("verify", filename("civlc/seq_init.cvl")));
+	}
+
+	@Test
+	public void freeBad1() throws ABCException {
+		assertFalse(ui.run("verify", filename("civlc/freeBad1.cvl")));
+	}
+
+	@Test
+	public void freeBad2() throws ABCException {
+		assertFalse(ui.run("verify", filename("civlc/freeBad2.cvl")));
+	}
 }

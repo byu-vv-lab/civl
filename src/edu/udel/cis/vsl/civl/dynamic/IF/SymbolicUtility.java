@@ -4,6 +4,7 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
@@ -421,5 +422,12 @@ public interface SymbolicUtility {
 
 	SymbolicExpression makePointer(SymbolicExpression objectPointer,
 			ReferenceExpression reference);
+
+	boolean isValidRefOf(ReferenceExpression ref, SymbolicExpression value);
+
+	CIVLType typeOfObjByPointer(CIVLSource soruce, State state,
+			SymbolicExpression pointer);
+
+	boolean isUndefinedConstant(SymbolicExpression value);
 
 }
