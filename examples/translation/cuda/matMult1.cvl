@@ -26,85 +26,108 @@
 #include "civlc.h" 
 #include "civlc-cuda.cvl" 
 #include <stdio.h>
+#include <stdlib.h>
 
-#define N 1024               /* size of square matrix                   */
-#define TILE_WIDTH 16
+$input int N;               /* size of square matrix                   */
+$input int TILE_WIDTH;
 
 
 /* MM kernel using global (not shared) memory.                          */
-void _kernel_myMM_global (dim3 gridDim, dim3 blockDim, const double * const A, const double * const B, double *C, int width) {
+void _kernel_myMM_global (dim3 gridDim, dim3 blockDim, cudaStream_t s, const double * const A, const double * const B, double *C, int width) {
 
-	void _block(uint3 blockIdx) {
+    void _kernel (_kernelInstance *this, cudaEvent_t e) {
+ 
+        _waitInQueue(this, e);
 
-		void _thread(uint3 threadIdx) {
+        void _block(uint3 blockIdx) {
+            int _numThreads = blockDim.x * blockDim.y * blockDim.z;
+            $gbarrier _block_barrier = $gbarrier_create($here, _numThreads);
 
-			/* Get row and column from block and thread IDs                     */
-			int row = (blockDim.y*blockIdx.y) + threadIdx.y;
-			int col = (blockDim.x*blockIdx.x) + threadIdx.x;
+            void _thread(uint3 threadIdx) {
 
-			/* Initialize result of one element which one thread computes.      */
-			double result=0.0;
+                int _tid = _index(blockDim, threadIdx);
+                $barrier _b = $barrier_create($here, _block_barrier, _tid);
 
-			/* Compute one element of the matrix product.                       */
-			for (int i = 0; i < width; ++i)
-				result += A[row*width + i] * B[i*width + col];
+                /* Get row and column from block and thread IDs                     */
+                int row = (blockDim.y*blockIdx.y) + threadIdx.y;
+                int col = (blockDim.x*blockIdx.x) + threadIdx.x;
 
-			/* Store the result of one matrix element in matrix C.              */
-			C[row * width + col] = result;
-		}
-		$gbarrier_destroy(_block_barrier);
-	}
-	_createProcs(gridDim, _block);
+                /* Initialize result of one element which one thread computes.      */
+                double result=0.0;
+
+                /* Compute one element of the matrix product.                       */
+                for (int i = 0; i < width; ++i)
+                    result += A[row*width + i] * B[i*width + col];
+
+                /* Store the result of one matrix element in matrix C.              */
+                C[row * width + col] = result;
+                $barrier_destroy(_b);
+            }
+            _runProcs(blockDim, _thread);
+            $gbarrier_destroy(_block_barrier);
+        }
+        _runProcs(gridDim, _block);
+        _kernelFinish(this);
+    }
+    _enqueueKernel(s, _kernel);
 }
 
 
 /* MM kernel using shared memory.                                       */
-void _kernel_myMM_shared (dim3 gridDim, dim3 blockDim, const double * const A, const double * const B, double* C, int width) {
+void _kernel_myMM_shared (dim3 gridDim, dim3 blockDim, cudaStream_t s, const double * const A, const double * const B, double* C, int width) {
 
-	void _block(uint3 blockIdx) {
-		int _numThreads = blockDim.x * blockDim.y * blockDim.z;
-		$gbarrier _block_barrier = $gbarrier_create($here, _numThreads);
+    void _kernel (_kernelInstance *this, cudaEvent_t e) {
+ 
+        _waitInQueue(this, e);
 
-		double A_shared[TILE_WIDTH][TILE_WIDTH];
-		double B_shared[TILE_WIDTH][TILE_WIDTH];
+        void _block(uint3 blockIdx) {
+            int _numThreads = blockDim.x * blockDim.y * blockDim.z;
+            $gbarrier _block_barrier = $gbarrier_create($here, _numThreads);
 
-		void _thread(uint3 threadIdx) {
+            double A_shared[TILE_WIDTH][TILE_WIDTH];
+            double B_shared[TILE_WIDTH][TILE_WIDTH];
 
-			int _tid = _index(blockDim, threadIdx);
-			$barrier _b = $barrier_create($here, _block_barrier, _tid);
+            void _thread(uint3 threadIdx) {
 
-			int bx = blockIdx.x;  int by = blockIdx.y;
-			int tx = threadIdx.x; int ty = threadIdx.y;
+                int _tid = _index(blockDim, threadIdx);
+                $barrier _b = $barrier_create($here, _block_barrier, _tid);
 
-			/* Identify the row and column of the C element to work on.         */
-			int row = by * TILE_WIDTH + ty;
-			int col = bx * TILE_WIDTH + tx;
+                int bx = blockIdx.x;  int by = blockIdx.y;
+                int tx = threadIdx.x; int ty = threadIdx.y;
 
-			double result = 0.0;
+                /* Identify the row and column of the C element to work on.         */
+                int row = by * TILE_WIDTH + ty;
+                int col = bx * TILE_WIDTH + tx;
 
-			/* Loop over the A and B tiles required to compute the C element.   */
-			for (int phase = 0; phase < width/TILE_WIDTH; ++phase) {
-				/* Shared effort: loading of A and B tiles into shared memory.  */
+                double result = 0.0;
 
-				A_shared[ty][tx] = A[row*width + (phase*TILE_WIDTH + tx)];
+                /* Loop over the A and B tiles required to compute the C element.   */
+                for (int phase = 0; phase < width/TILE_WIDTH; ++phase) {
+                    /* Shared effort: loading of A and B tiles into shared memory.  */
 
-				B_shared[ty][tx] = B[col + (phase*TILE_WIDTH + ty)*width]; 
+                    A_shared[ty][tx] = A[row*width + (phase*TILE_WIDTH + tx)];
 
-				$barrier_call(_b); 
+                    B_shared[ty][tx] = B[col + (phase*TILE_WIDTH + ty)*width]; 
 
-				for (int k = 0; k < TILE_WIDTH; ++k) {
-					result += A_shared[ty][k] * B_shared[k][tx];
-				}
+                    $barrier_call(_b); 
 
-				$barrier_call(_b); 
+                    for (int k = 0; k < TILE_WIDTH; ++k) {
+                        result += A_shared[ty][k] * B_shared[k][tx];
+                    }
 
-			}
-			C[row*width+col] = result;
-		}
-		_createProcs(blockDim, _thread);
-		$gbarrier_destroy(_block_barrier);
-	}
-	_createProcs(gridDim, _block);
+                    $barrier_call(_b); 
+
+                }
+                C[row*width+col] = result;
+                $barrier_destroy(_b);
+            }
+            _runProcs(blockDim, _thread);
+            $gbarrier_destroy(_block_barrier);
+        }
+        _runProcs(gridDim, _block);
+        _kernelFinish(this);
+    }
+    _enqueueKernel(s, _kernel);
 }
 
 
@@ -114,11 +137,11 @@ void _kernel_myMM_shared (dim3 gridDim, dim3 blockDim, const double * const A, c
  
 
 int main (int argc, char** argv) {
-	_host_scope = $here;
 
 	int _main ( void ) {
 
 		/* Set device based on input from command line            */
+        /*
 		if (argc > 1) {
 			if (cudaSetDevice(atoi(argv[1])) != cudaSuccess) {
 				int num_devices;
@@ -131,9 +154,11 @@ int main (int argc, char** argv) {
 			fprintf(stderr, "Usage: %s gpu_device\n", argv[0]);
 			return 0;
 		}
+        */
 
 		/* Declare CPU arrays.                                              */
 		double A[N*N],B[N*N],C[N*N];       /* linearized CPU double arrays  */ 
+        double cpuResult[N*N], gpuGlobalResult[N*N], gpuSharedResult[N*N];
 		int r,c;
 
 		/* Declare GPU arrays.                                              */
@@ -155,6 +180,7 @@ int main (int argc, char** argv) {
 		for (c=0;c<N;++c) {
 			A[r*N+c] = 1.0;
 			B[r*N+c] = 1.0;
+			C[r*N+c] = 0.0;
 		}
 
 
@@ -169,6 +195,7 @@ int main (int argc, char** argv) {
 		cudaEventRecord(stop,0);
 		cudaEventSynchronize(stop);
 		cudaEventElapsedTime(&CPU_elapsedtime,start,stop);
+        memcpy(cpuResult, C, size_c*sizeof(double));
 		printf("                                                            speedup\n");
 		printf("                                                            -------\n");
 		printf("Elapsed time in CPU:                   %7.1f milliseconds\n", CPU_elapsedtime); 
@@ -178,17 +205,20 @@ int main (int argc, char** argv) {
 		cudaEventRecord(start,0);
 
 		/* 2)  Copy operands from CPU memory to GPGPU memory.                */
-		cudaMalloc((void**)&G_A,size_a*sizeof(double));  /* alloc A in GPGPU */
-		cudaMalloc((void**)&G_B,size_b*sizeof(double));  /* alloc B in GPGPU */
-		cudaMalloc((void**)&G_C,size_c*sizeof(double));  /* alloc C in GPGPU */
+		//cudaMalloc((void**)&G_A,size_a*sizeof(double));  /* alloc A in GPGPU */
+        G_A = (double*)$malloc($root, size_a*sizeof(double));
+		//cudaMalloc((void**)&G_B,size_b*sizeof(double));  /* alloc B in GPGPU */
+        G_B = (double*)$malloc($root, size_b*sizeof(double));
+		//cudaMalloc((void**)&G_C,size_c*sizeof(double));  /* alloc C in GPGPU */
+        G_C = (double*)$malloc($root, size_c*sizeof(double));
 		cudaMemcpy(G_A,A,size_a*sizeof(double),cudaMemcpyHostToDevice);
 		cudaMemcpy(G_B,B,size_b*sizeof(double),cudaMemcpyHostToDevice);
 
 		/* 3)  Apply matrix operation to operands on GPGPU                   */
 		/*     There is no partial final block in this example.              */
-		dim3 block(TILE_WIDTH,TILE_WIDTH);      /* using a 2D block: 16,16,1 */
-		dim3 grid(N/TILE_WIDTH,N/TILE_WIDTH);   /* as many 16x16-thread blocks as needed: */
-		myMM_global<<< grid,block >>>(G_A,G_B,G_C,N);  /* grid(16,16,1)  */ 
+		dim3 block = { TILE_WIDTH, TILE_WIDTH, 1 };      /* using a 2D block: 16,16,1 */
+		dim3 grid = { N/TILE_WIDTH, N/TILE_WIDTH, 1 };   /* as many 16x16-thread blocks as needed: */
+		_kernel_myMM_global(grid, block, 0, G_A, G_B, G_C, N);  /* grid(16,16,1)  */ 
 
 		/* 4)  Copy result from GPGPU memory to CPU memory.                  */
 		cudaMemcpy(C,G_C,size_c*sizeof(double),cudaMemcpyDeviceToHost);
@@ -201,6 +231,7 @@ int main (int argc, char** argv) {
 		cudaEventRecord(stop,0);
 		cudaEventSynchronize(stop);
 		cudaEventElapsedTime(&GPU_global_elapsedtime,start,stop);
+        memcpy(gpuGlobalResult, C, size_c*sizeof(double));
 		printf("Elapsed time in GPU (global memory):   %7.1f milliseconds  %5.1f\n",
 			   GPU_global_elapsedtime,CPU_elapsedtime/GPU_global_elapsedtime);
 	/*
@@ -216,16 +247,18 @@ int main (int argc, char** argv) {
 		cudaEventRecord(start,0);
 
 		/* 2)  Copy operands from CPU memory to GPGPU memory.                */
-		cudaMalloc((void**)&G_A,size_a*sizeof(double));  /* alloc A in GPGPU */
-		cudaMalloc((void**)&G_B,size_b*sizeof(double));  /* alloc B in GPGPU */
-		cudaMalloc((void**)&G_C,size_c*sizeof(double));  /* alloc C in GPGPU */
+        G_A = (double*)$malloc($root, size_a*sizeof(double));
+        G_B = (double*)$malloc($root, size_b*sizeof(double));
+        G_C = (double*)$malloc($root, size_c*sizeof(double));
 		cudaMemcpy(G_A,A,size_a*sizeof(double),cudaMemcpyHostToDevice);
 		cudaMemcpy(G_B,B,size_b*sizeof(double),cudaMemcpyHostToDevice);
 
 		/* 3)  Apply matrix operation to operands on GPGPU                   */
 		/*     There is not partial final block in this example.             */
 		/*     Use the same grid and block from the previous case.           */
-		myMM_shared<<< grid,block >>>(G_A,G_B,G_C,N);
+        printf("a\n");
+		_kernel_myMM_shared(grid, block, 0, G_A, G_B, G_C, N);
+        printf("b\n");
 
 		/* 4)  Copy result from GPGPU memory to CPU memory.                  */
 		cudaMemcpy(C,G_C,size_c*sizeof(double),cudaMemcpyDeviceToHost);
@@ -238,6 +271,7 @@ int main (int argc, char** argv) {
 		cudaEventRecord(stop,0);
 		cudaEventSynchronize(stop);
 		cudaEventElapsedTime(&GPU_shared_elapsedtime,start,stop);
+        memcpy(gpuSharedResult, C, size_c*sizeof(double));
 		printf("Elapsed time in GPU (shared memory):   %7.1f milliseconds  %5.1f\n",
 			   GPU_shared_elapsedtime,CPU_elapsedtime/GPU_shared_elapsedtime);
 	/*
@@ -251,10 +285,24 @@ int main (int argc, char** argv) {
 
 		/* Deallocate the clock.                                             */
 		cudaEventDestroy(start);
-		cudaEventDestroy(stop); 
+		cudaEventDestroy(stop);
+        //$assert($forall {int i | i >= 0 && i < N*N} cpuResult[i] == gpuGlobalResult[i] && cpuResult[i] == gpuSharedResult[i]);
+        for (int i = 0; i < N*N; i ++) {
+            printf("i = %d\n", i);
+            printf("cpu = %f, gpuGlobal = %f, gpuShared = %f\n", cpuResult[i], gpuGlobalResult[i], gpuSharedResult[i]);
+            $assert(cpuResult[i] == gpuGlobalResult[i]);
+            $assert(cpuResult[i] == gpuSharedResult[i]);
+        }
 
 		return 0; 
 	}
 
-	_main();
+    printf("1\n");
+    _cudaInit();
+    printf("2\n");
+    _main();
+    printf("3\n");
+    _cudaFinalize();
+    printf("4\n");
+    return 0;
 }
