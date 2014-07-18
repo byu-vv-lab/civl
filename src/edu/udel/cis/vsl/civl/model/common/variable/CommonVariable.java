@@ -29,6 +29,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	private Scope scope;
 	private int hashCode;
 	private boolean purelyLocal = true;
+	private boolean isStatic = false;
 
 	/**
 	 * A variable.
@@ -158,7 +159,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		if (isInput) {
 			result += "$input ";
 		}
-		if(isOutput){
+		if (isOutput) {
 			result += "$output ";
 		}
 		result += name + " : " + type;
@@ -244,6 +245,16 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		} else if (!type.equals(other.type()))
 			return false;
 		return true;
+	}
+
+	@Override
+	public boolean isStatic() {
+		return this.isStatic;
+	}
+
+	@Override
+	public void setStatic(boolean value) {
+		this.isStatic = value;
 	}
 
 }

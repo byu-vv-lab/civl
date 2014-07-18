@@ -66,6 +66,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.WaitGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
@@ -73,6 +74,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType.TypeKind;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
@@ -394,14 +396,18 @@ public class CommonEvaluator implements Evaluator {
 	 * @param dyscopeId
 	 *            The dynamic scope ID of the current state.
 	 * @return The symbolic initial value of the given variable
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	private SymbolicExpression computeInitialValue(Variable variable,
-			SymbolicType dynamicType, int dyscopeId) {
+	private Evaluation computeInitialValue(State state, int pid,
+			Variable variable, SymbolicType dynamicType, int dyscopeId)
+			throws UnsatisfiablePathConditionException {
 		CIVLType type = variable.type();
 		int vid = variable.vid();
 		SymbolicExpression result;
 
-		if (!variable.isInput()
+		if (!variable.isInput() && variable.isStatic()) {
+			return initialValueOfType(state, pid, type);
+		} else if (!variable.isInput()
 				&& !variable.isBound()
 				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
 			result = nullExpression;
@@ -411,7 +417,105 @@ public class CommonEvaluator implements Evaluator {
 
 			result = universe.symbolicConstant(name, dynamicType);
 		}
-		return result;
+		return new Evaluation(state, result);
+	}
+
+	private Evaluation initialValueOfType(State state, int pid, CIVLType type)
+			throws UnsatisfiablePathConditionException {
+		TypeKind kind = type.typeKind();
+		Evaluation eval = null;
+
+		switch (kind) {
+		case ARRAY: {
+			CIVLArrayType arrayType = (CIVLArrayType) type;
+			CIVLType elementType = arrayType.elementType();
+
+			eval = new Evaluation(state, universe.emptyArray(elementType
+					.getDynamicType(universe)));
+			break;
+		}
+		case COMPLETE_ARRAY: {
+			CIVLCompleteArrayType arrayType = (CIVLCompleteArrayType) type;
+			CIVLType elementType = arrayType.elementType();
+			SymbolicExpression elementValue;
+			NumericExpression extent;
+			SymbolicCompleteArrayType arrayValueType;
+			NumericSymbolicConstant index;
+			SymbolicExpression arrayEleFunction;
+
+			eval = initialValueOfType(state, pid, elementType);
+			state = eval.state;
+			elementValue = eval.value;
+			eval = this.evaluate(state, pid, arrayType.extent());
+			state = eval.state;
+			extent = (NumericExpression) eval.value;
+			arrayValueType = universe.arrayType(elementValue.type(), extent);
+			index = (NumericSymbolicConstant) universe.symbolicConstant(
+					universe.stringObject("i"), universe.integerType());
+			arrayEleFunction = universe.lambda(index, elementValue);
+			eval.value = universe.arrayLambda(arrayValueType, arrayEleFunction);
+			break;
+		}
+		case BUNDLE:
+			break;
+		case DOMAIN: {
+			CIVLDomainType domainType = (CIVLDomainType) type;
+			int dim = domainType.dimension();
+			List<SymbolicExpression> ranges = new ArrayList<>(dim);
+
+			eval = this.initialValueOfType(state, pid, domainType.rangeType());
+			for (int i = 0; i < dim; i++) {
+				ranges.add(eval.value);
+			}
+			eval.value = universe.tuple(
+					(SymbolicTupleType) domainType.getDynamicType(universe),
+					ranges);
+			break;
+		}
+		case ENUM: {
+			CIVLEnumType enumType = (CIVLEnumType) type;
+
+			eval = new Evaluation(state,
+					universe.integer(enumType.firstValue()));
+			break;
+		}
+		case POINTER:
+			eval = new Evaluation(state, symbolicUtil.nullPointer());
+			break;
+		case PRIMITIVE: {
+			CIVLPrimitiveType primitiveType = (CIVLPrimitiveType) type;
+
+			eval = new Evaluation(state, primitiveType.initialValue(universe));
+			break;
+		}
+		default:// STRUCT_OR_UNION{
+		{
+			CIVLStructOrUnionType strOrUnion = (CIVLStructOrUnionType) type;
+
+			if (strOrUnion.isUnionType()) {
+				eval = this.initialValueOfType(state, pid,
+						strOrUnion.getField(0).type());
+				eval.value = universe
+						.unionInject((SymbolicUnionType) strOrUnion
+								.getDynamicType(universe), this.zeroObj,
+								eval.value);
+			} else {
+				int size = strOrUnion.numFields();
+				List<SymbolicExpression> components = new ArrayList<>(size);
+
+				for (int i = 0; i < size; i++) {
+					eval = this.initialValueOfType(state, pid, strOrUnion
+							.getField(i).type());
+					state = eval.state;
+					components.add(eval.value);
+				}
+				eval = new Evaluation(state,
+						universe.tuple((SymbolicTupleType) strOrUnion
+								.getDynamicType(universe), components));
+			}
+		}
+		}
+		return eval;
 	}
 
 	/**
@@ -1197,15 +1301,12 @@ public class CommonEvaluator implements Evaluator {
 			throws UnsatisfiablePathConditionException {
 		Variable variable = expression.variable();
 		CIVLType type = variable.type();
-		Evaluation result;
 		TypeEvaluation typeEval = getDynamicType(state, pid, type,
 				expression.getSource(), false);
-		int sid = state.getScopeId(pid, variable);
-		SymbolicExpression value = computeInitialValue(variable, typeEval.type,
-				sid);
+		int sid = typeEval.state.getScopeId(pid, variable);
 
-		result = new Evaluation(typeEval.state, value);
-		return result;
+		return computeInitialValue(typeEval.state, pid, variable,
+				typeEval.type, sid);
 	}
 
 	/**

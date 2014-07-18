@@ -1015,8 +1015,6 @@ public class FunctionTranslator {
 					throw new CommandLineException(
 							"Expected real value for variable " + variable
 									+ " but saw " + constant);
-			case STRING:
-				throw new CIVLUnimplementedFeatureException("Strings");
 			default:
 			}
 		} else {
@@ -2495,6 +2493,9 @@ public class FunctionTranslator {
 		}
 		if (node.getTypeNode().isOutputQualified()) {
 			variable.setIsOutput(true);
+		}
+		if (node.getInitializer() == null && scope.id() == 0) {
+			variable.setStatic(true);
 		}
 		return variable;
 	}

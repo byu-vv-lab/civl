@@ -24,4 +24,6 @@ public interface CIVLEnumType extends CIVLType {
 	 * @return The value of the enumerator.
 	 */
 	BigInteger valueOf(String member);
+	
+	BigInteger firstValue();
 }

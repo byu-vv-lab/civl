@@ -120,4 +120,8 @@ public interface Variable extends Sourceable {
 
 	void setPurelyLocal(boolean pl);
 
+	boolean isStatic();
+	
+	void setStatic(boolean value);
+
 }

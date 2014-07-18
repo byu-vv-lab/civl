@@ -55,17 +55,30 @@ public class CommonEnumType extends CommonType implements CIVLEnumType {
 	}
 
 	@Override
-	public String toString(){
+	public String toString() {
 		String result = "enum ";
-		
-		if(name != null)
+
+		if (name != null)
 			result += (name + " ");
 		result += "{";
-		for(String member : valueMap.keySet()){
+		for (String member : valueMap.keySet()) {
 			result += (member + "=" + valueMap.get(member) + ", ");
 		}
-		result = result.substring(0, result.length()-2);
+		result = result.substring(0, result.length() - 2);
 		result += "}";
 		return result;
+	}
+
+	@Override
+	public TypeKind typeKind() {
+		return TypeKind.ENUM;
+	}
+
+	@Override
+	public BigInteger firstValue() {
+		for (String key : this.valueMap.keySet()) {
+			return this.valueMap.get(key);
+		}
+		return BigInteger.ZERO;
 	}
 }

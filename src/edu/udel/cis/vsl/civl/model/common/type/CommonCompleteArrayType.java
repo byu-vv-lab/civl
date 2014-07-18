@@ -46,4 +46,8 @@ public class CommonCompleteArrayType extends CommonArrayType implements
 		return elementType() + "[" + extent() + "]";
 	}
 
+	@Override
+	public TypeKind typeKind() {
+		return TypeKind.COMPLETE_ARRAY;
+	}
 }

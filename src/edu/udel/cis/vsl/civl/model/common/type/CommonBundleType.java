@@ -101,4 +101,8 @@ public class CommonBundleType extends CommonType implements CIVLBundleType {
 		return this.containsPointerRefs;
 	}
 
+	@Override
+	public TypeKind typeKind() {
+		return TypeKind.BUNDLE;
+	}
 }

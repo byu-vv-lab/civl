@@ -3,9 +3,12 @@ package edu.udel.cis.vsl.civl.model.common.type;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
@@ -74,8 +77,6 @@ public class CommonPrimitiveType extends CommonType implements
 			return "$bool";
 		case REAL:
 			return "$real";
-		case STRING:
-			return "$string";
 		case SCOPE:
 			return "$scope";
 		case PROCESS:
@@ -158,5 +159,36 @@ public class CommonPrimitiveType extends CommonType implements
 	@Override
 	public boolean isCharType() {
 		return kind == PrimitiveTypeKind.CHAR;
+	}
+
+	@Override
+	public SymbolicExpression initialValue(SymbolicUniverse universe) {
+		switch (this.kind) {
+		case BOOL:
+			return universe.bool(false);
+		case DYNAMIC:
+			return null;
+		case INT:
+			return universe.integer(0);
+		case PROCESS:
+			return universe.canonic(universe.tuple(
+					(SymbolicTupleType) this.dynamicType,
+					new Singleton<SymbolicExpression>(universe.integer(-2))));
+		case REAL:
+			return universe.rational(0);
+		case SCOPE:
+			return universe.canonic(universe.tuple(
+					(SymbolicTupleType) this.dynamicType,
+					new Singleton<SymbolicExpression>(universe.integer(-2))));
+		case CHAR:
+			return universe.character('\0');
+		default:
+		}
+		return null;
+	}
+
+	@Override
+	public TypeKind typeKind() {
+		return TypeKind.PRIMITIVE;
 	}
 }

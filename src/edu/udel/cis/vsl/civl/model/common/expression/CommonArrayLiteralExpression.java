@@ -18,12 +18,12 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 
 	private Expression[] elements;
 
-	public CommonArrayLiteralExpression(CIVLSource source, CIVLType type,
+	public CommonArrayLiteralExpression(CIVLSource source, CIVLType arrayType,
 			List<Expression> elements) {
 		super(source);
 		this.elements = new Expression[elements.size()];
 		elements.toArray(this.elements);
-		this.setExpressionType(type);
+		this.setExpressionType(arrayType);
 	}
 
 	@Override

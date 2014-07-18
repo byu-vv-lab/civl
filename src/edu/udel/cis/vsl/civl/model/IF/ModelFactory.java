@@ -80,7 +80,6 @@ import edu.udel.cis.vsl.civl.model.common.ModelFactoryException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
@@ -286,13 +285,6 @@ public interface ModelFactory {
 	CIVLPrimitiveType scopeType();
 
 	/**
-	 * Get the string primitive type.
-	 * 
-	 * @return The string primitive type.
-	 */
-	CIVLPrimitiveType stringType();
-
-	/**
 	 * Returns new incomplete struct or union type with given name. Type can be
 	 * completed later using one of the "complete" methods in
 	 * CIVLStructOrUnionType.
@@ -306,20 +298,6 @@ public interface ModelFactory {
 	 * @return a new incomplete struct or union type with given name
 	 */
 	CIVLStructOrUnionType structOrUnionType(Identifier name, boolean isStruct);
-
-	// /**
-	// * Returns new incomplete union type with given name. Type can be
-	// completed
-	// * later using one of the "complete" methods in CIVLStructType.
-	// *
-	// * The union returned is a new instance of union type that will never be
-	// * equal to another union type, regardless of identifier or fields.
-	// *
-	// * @param name
-	// * identifier, usually the "tag" for this union type
-	// * @return a new incomplete union type with given name
-	// */
-	// CIVLStructOrUnionType unionType(Identifier name);
 
 	/**
 	 * Returns the void type. Used in places where a type is required
@@ -364,13 +342,6 @@ public interface ModelFactory {
 	 * @return the symbolic type used to represent scope values
 	 */
 	SymbolicTupleType scopeSymbolicType();
-
-	/**
-	 * Returns the symbolic type used to represent strings
-	 * 
-	 * @return the symbolic type "array of char"
-	 */
-	SymbolicArrayType stringSymbolicType();
 
 	/* *********************************************************************
 	 * CIVL Expressions

@@ -60,23 +60,6 @@ public class CommonStructOrUnionType extends CommonType implements
 			return "struct " + name.toString();
 		else
 			return "union " + name.toString();
-
-		// if (isComplete()) {
-		// result += "{";
-		// boolean first = true;
-		//
-		// for (StructField f : fields) {
-		// if (first)
-		// first = false;
-		// else
-		// result += ", ";
-		// if (f.type() instanceof CIVLStructType)
-		// result += ((CIVLStructType) f.type()).name();
-		// else
-		// result += f.toString();
-		// }
-		// result += "}";
-		// }
 	}
 
 	@Override
@@ -201,5 +184,10 @@ public class CommonStructOrUnionType extends CommonType implements
 				return i;
 		}
 		return -1;
+	}
+
+	@Override
+	public TypeKind typeKind() {
+		return TypeKind.STRUCT_OR_UNION;
 	}
 }

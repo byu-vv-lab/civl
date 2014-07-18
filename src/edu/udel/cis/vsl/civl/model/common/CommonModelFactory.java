@@ -377,15 +377,15 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private List<SymbolicExpression> scopeValues = new ArrayList<SymbolicExpression>();
 
-	/**
-	 * The unique symbolic string type used in the system.
-	 */
-	private SymbolicArrayType stringSymbolicType;
+	// /**
+	// * The unique symbolic string type used in the system.
+	// */
+	// private SymbolicArrayType stringSymbolicType;
 
-	/**
-	 * The unique string type used in the system.
-	 */
-	private CIVLPrimitiveType stringType;
+	// /**
+	// * The unique string type used in the system.
+	// */
+	// private CIVLPrimitiveType stringType;
 
 	/**
 	 * The system source, used to create the identifier of the system function
@@ -500,9 +500,6 @@ public class CommonModelFactory implements ModelFactory {
 		functionPointerSymbolicType = (SymbolicTupleType) universe
 				.canonic(universe.tupleType(universe.stringObject("fpointer"),
 						fpointerComponents));
-		stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
-				.arrayType(universe.characterType()));
-		stringType = primitiveType(PrimitiveTypeKind.STRING, stringSymbolicType);
 		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
 		for (int i = 0; i < CACHE_INCREMENT; i++)
 			nullList.add(null);
@@ -628,11 +625,6 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public CIVLPrimitiveType stringType() {
-		return stringType;
-	}
-
-	@Override
 	public CIVLStructOrUnionType structOrUnionType(Identifier name,
 			boolean isStruct) {
 		return new CommonStructOrUnionType(name, isStruct);
@@ -671,11 +663,6 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public SymbolicTupleType scopeSymbolicType() {
 		return scopeSymbolicType;
-	}
-
-	@Override
-	public SymbolicArrayType stringSymbolicType() {
-		return stringSymbolicType;
 	}
 
 	/* *********************************************************************

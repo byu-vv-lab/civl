@@ -84,9 +84,14 @@ public class CommonHeapType extends CommonType implements CIVLHeapType {
 	public String getName() {
 		return name;
 	}
-	
+
 	@Override
-	public boolean isHandleObjectType(){
+	public boolean isHandleObjectType() {
 		return true;
+	}
+
+	@Override
+	public TypeKind typeKind() {
+		return TypeKind.HEAP;
 	}
 }

@@ -13,6 +13,12 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  */
 public interface CIVLType {
 
+	public enum TypeKind {
+		ARRAY, COMPLETE_ARRAY, BUNDLE, DOMAIN, ENUM, POINTER, PRIMITIVE, STRUCT_OR_UNION, FUNCTION, HEAP
+	}
+
+	TypeKind typeKind();
+
 	/**
 	 * If this type contains any array with non-constant extent, it "has state"
 	 * in the sense that the dynamic type may depend on the state.

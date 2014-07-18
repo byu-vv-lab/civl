@@ -106,4 +106,9 @@ public class CommonFunctionType extends CommonType implements CIVLFunctionType {
 		this.parameterTypes = types;
 	}
 
+	@Override
+	public TypeKind typeKind() {
+		return TypeKind.FUNCTION;
+	}
+
 }

@@ -61,4 +61,9 @@ public class CommonPointerType extends CommonType implements CIVLPointerType {
 	public boolean isHandleType() {
 		return this.isHandle;
 	}
+
+	@Override
+	public TypeKind typeKind() {
+		return TypeKind.POINTER;
+	}
 }
