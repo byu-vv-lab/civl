@@ -2631,7 +2631,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		// data: the data inside the bundle.
 		SymbolicExpression data = null;
 		SymbolicExpression dataElement = null;
-		SymbolicExpression preDataElement = null;
+		SymbolicExpression otherDataElement = null;
 		SymbolicExpression opRet = null; // result after applying one operation
 		// the final array will be assigned to the pointer "buf". Since the
 		// assigned pointer could be the parent pointer of the given one, so
@@ -2675,8 +2675,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		}
 		// ------checking if otherData is null
 		if (otherData.isNull() || otherData == null) {
-			data = symbolicUtil.bundleUnpack(bundle, writeBackArray,
-					universe.integer(bufIndex), pathCondition);
+			data = symbolicUtil.bundleUnpack(bundle, null, zero, pathCondition);
 			return primaryExecutor.assign(source, state, process, bufPointer,
 					data);
 		}
@@ -2685,37 +2684,35 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		// ------checking if data is null
 		if (data.isNull() || data == null)
 			return state;
-		// ------checking if otherData or data is in the form of array.
-		if (!(data.type() instanceof SymbolicArrayType))
-			data = universe.array(data.type(), Arrays.asList(data));
-		if (!(otherData.type() instanceof SymbolicArrayType))
-			otherData = universe.array(otherData.type(),
-					Arrays.asList(otherData));
-		// ------checking if writeBackData is in the form of array.
-		if (!(writeBackArray.type() instanceof SymbolicArrayType))
-			writeBackArray = universe.array(writeBackArray.type(),
-					Arrays.asList(writeBackArray));
-		// ------execute operation
-		i = universe.zeroInt();
-		claim = universe.lessThan(i, count);
-		try {
-			while (reasoner.isValid(claim)) {
-				dataElement = universe.arrayRead(data, i);
-				preDataElement = universe.arrayRead(otherData, i);
-				opRet = libevaluator.civlOperation(state, process, dataElement,
-						preDataElement, CIVL_Op, source);
-				writeBackArray = universe.arrayWrite(writeBackArray,
-						universe.integer(bufIndex), opRet);
-				// update
-				i = universe.add(i, one);
-				bufIndex++;
-				claim = universe.lessThan(i, count);
+		// ------If count is one, directly do operation on otherData and data
+		claim = universe.equals(count, one);
+		if (reasoner.isValid(claim)) {
+			opRet = libevaluator.civlOperation(state, process, data, otherData,
+					CIVL_Op, source);
+			writeBackArray = opRet;
+		} else {
+			// ------execute operation
+			i = universe.zeroInt();
+			claim = universe.lessThan(i, count);
+			try {
+				while (reasoner.isValid(claim)) {
+					dataElement = universe.arrayRead(data, i);
+					otherDataElement = universe.arrayRead(otherData, i);
+					opRet = libevaluator.civlOperation(state, process,
+							dataElement, otherDataElement, CIVL_Op, source);
+					writeBackArray = universe.arrayWrite(writeBackArray,
+							universe.integer(bufIndex), opRet);
+					// update
+					i = universe.add(i, one);
+					bufIndex++;
+					claim = universe.lessThan(i, count);
+				}
+			} catch (SARLException e) {
+				throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
+						Certainty.PROVEABLE, process,
+						"Attempt to write beyond array bound: index=" + i,
+						symbolicUtil.stateToString(state), source);
 			}
-		} catch (SARLException e) {
-			throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
-					Certainty.PROVEABLE, process,
-					"Attempt to write beyond array bound: index=" + i,
-					symbolicUtil.stateToString(state), source);
 		}
 
 		state = primaryExecutor.assign(source, state, process, bufPointer,
