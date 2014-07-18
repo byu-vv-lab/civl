@@ -1,6 +1,5 @@
 #ifndef __MPI_CVL__
 #define __MPI_CVL__
-
 //TODO make a Datatype struct, which has a field "int size;" Define one of these objects for MPI_INT, MPI_DOUBLE, etc. 
 //TODO Then provide methods like MPI provides for creating new ones.
 //TODO then support MPI_Type_contig(datatype, int n).
@@ -59,135 +58,6 @@ int sizeofDatatype(MPI_Datatype datatype) {
     return sizeof(char);
   default:
     $assert(0, "Unreachable");
-  }
-}
-
-/* Helpers for MPI_Reduce and MPI_Allreduce */
-void sumInt(int result[], int buf[], int real_count, int nprocs){
-  //init result array
-  $atomic{    
-    for(int i=0; i<real_count; i++){
-      result[i] = 0;
-    }
-    //sum up
-    for(int i=0; i<nprocs; i++)
-      for(int j=0; j<real_count; j++)
-	result[j] = result[j] + buf[i * real_count + j];
-  }
-}
-
-void sumFloat(float result[], float buf[], int real_count, int nprocs){
-  $atomic{    
-    for(int i=0; i<real_count; i++){
-      result[i] = 0;
-    }
-    //sum up
-    for(int i=0; i<nprocs; i++)
-      for(int j=0; j<real_count; j++)
-	result[j] = result[j] + buf[i * real_count + j];
-  }
-}
-
-void sumDouble(double result[], double buf[], int real_count, int nprocs){
-  $atomic{    
-    for(int i=0; i<real_count; i++){
-      result[i] = 0;
-    }
-    //sum up
-    for(int i=0; i<nprocs; i++)
-      for(int j=0; j<real_count; j++)
-	result[j] = result[j] + buf[i * real_count + j];
-  }
-}
-
-
-void maxInt(int result[], int buf[], int real_count, int nprocs){
-  //init result arra
-  $atomic{
-    for(int i=0; i<real_count; i++){
-      result[i] = buf[i * real_count];
-    }
-    
-    for(int i=0; i<nprocs; i++)
-      for(int j=0; j<real_count; j++){
-	if(buf[i * real_count + j] > result[j])
-	  result[j] = buf[i * real_count + j];
-      }
-  }
-}
-
-void maxFloat(float result[], float buf[], int real_count, int nprocs){
-  //init result array
-  $atom{
-    for(int i=0; i<real_count; i++){
-      result[i] = buf[i * real_count];
-  }
-
-    for(int i=0; i<nprocs; i++)
-      for(int j=0; j<real_count; j++){
-	if(buf[i * real_count + j] > result[j])
-	  result[j] = buf[i * real_count + j];
-      }
-  }
-}
-
-void maxDouble(double result[], double buf[], int real_count, int nprocs){
-  //init result array
-  $atom{
-    for(int i=0; i<real_count; i++){
-      result[i] = buf[i * real_count];
-    }
-    
-    for(int i=0; i<nprocs; i++)
-      for(int j=0; j<real_count; j++){
-	if(buf[i * real_count + j] > result[j])
-	  result[j] = buf[i * real_count + j];
-      }
-  }
-}
-
-void minInt(int result[], int buf[], int real_count, int nprocs){
-  //init result array
-  $atom{
-    for(int i=0; i<real_count; i++){
-    result[i] = buf[i * real_count];
-  }
-
-    for(int i=0; i<nprocs; i++)
-      for(int j=0; j<real_count; j++){
-	if(buf[i * real_count + j] < result[j])
-	  result[j] = buf[i * real_count + j];
-      }
-  }
-}
-  
-void minFloat(float result[], float buf[], int real_count, int nprocs){
-  //init result array
-  $atom{
-    for(int i=0; i<real_count; i++){
-      result[i] = buf[i * real_count];
-    }
-
-    for(int i=0; i<nprocs; i++)
-      for(int j=0; j<real_count; j++){
-	if(buf[i * real_count + j] < result[j])
-	  result[j] = buf[i * real_count + j];
-      }
-  }
-}
-
-void minDouble(double result[], double buf[], int real_count, int nprocs){
-  //init result array
-  $atom{
-    for(int i=0; i<real_count; i++){
-      result[i] = buf[i * real_count];
-    }
-
-    for(int i=0; i<nprocs; i++)
-      for(int j=0; j<real_count; j++){
-	if(buf[i * real_count + j] < result[j])
-	  result[j] = buf[i * real_count + j];
-      }
   }
 }
 
@@ -341,99 +211,27 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
 /* Reduces values on all processes to a single value */
 int MPI_Reduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
                MPI_Op op, int root, MPI_Comm comm){
-  int place;
+  int place, nprocs;
   MPI_Status status;
-  
+
   $assert(comm.status == __INIT, "MPI_Reduce() cannot be invoked without MPI_Init() being called before.\n");
   place = $comm_place(comm.col);
-  //non-root
   CMPI_Send(sendbuf, count, datatype, root, REDUCE_TAG, comm.col);
-  if(place != root)
-    return 0;
-  else{
-    //root
-    int nprocs = $comm_size(comm.col);
-    int real_count = -1;               //the real count gotton from MPI_Status
-    //void ** buf;                     //Buffer stores data from other processes
-    void * recv;                       //Buffer used in MPI_Recv()
-    void * results;                    //Array of results
-    $scope here = $root;
-    struct Bundle_buf{
-      int I[nprocs * count];
-      float F[nprocs * count];
-      double D[nprocs * count];
-    } buf;
+  //------Only root do following:
+  if(place == root){
+    int size;
 
-    switch(datatype){
-    case MPI_INT :
-      recv = (int *)$malloc(here, count * sizeof(int));
-      results = (int *)$malloc(here, count * sizeof(int));
-      break;
-    case MPI_FLOAT :
-      recv = (float *)$malloc(here, count * sizeof(float));
-      results = (float *)$malloc(here, count * sizeof(float));
-      break;
-    case MPI_DOUBLE :
-      recv = (double *)$malloc(here, count * sizeof(double));
-      results = (double *)$malloc(here, count * sizeof(double));
-      break;
-    }
-    for(int i=0; i<nprocs; i++){
-      CMPI_Recv(recv, count, datatype, i, REDUCE_TAG, comm.col, 
-		&status);
-      MPI_Get_count(&status, datatype, &real_count);
-      $assert(real_count == count);
+    $message in;
+    nprocs = $comm_size(comm.col);
 
-      switch(datatype){
-      case MPI_INT :
-	for(int j=0; j<real_count; j++)
-	  buf.I[i * real_count + j] = ((int *)recv)[j];
-	break;
-      case MPI_FLOAT : 
-	for(int j=0; j<real_count; j++)
-	  buf.F[i * real_count + j] = ((float *)recv)[j];
-	break;
-      case MPI_DOUBLE : 
-	for(int j=0; j<real_count; j++)
-	  buf.D[i * real_count + j] = ((double *)recv)[j];
-	break;
-      }
+    for(int i = 0; i<nprocs; i++){
+      in = $comm_dequeue(comm.col, i, REDUCE_TAG);
+      size = count * sizeofDatatype(datatype);
+
+      $bundle_unpack_apply(in.data, recvbuf, count, CIVL_SUM);
+      $assert(in.size <= size, 
+	      "Message of size %d exceeds the specified size %d.", in.size, size);
     }
-    
-    //operations
-    switch(datatype){
-    case MPI_INT: 
-      if(op == MPI_SUM)
-	sumInt(results, buf.I, real_count, nprocs);
-      if(op == MPI_MAX)
-	maxInt(results, buf.I, real_count, nprocs);
-      if(op == MPI_MIN)
-	minInt(results, buf.I, real_count, nprocs);
-      break;
-    case MPI_FLOAT:
-      if(op == MPI_SUM)
-	sumFloat(results, buf.F, real_count, nprocs);
-      if(op == MPI_MAX)
-	maxFloat(results, buf.F, real_count, nprocs);
-      if(op == MPI_MIN)
-	minFloat(results, buf.F, real_count, nprocs);
-      break;
-    case MPI_DOUBLE:
-      if(op == MPI_SUM)
-	sumDouble(results, buf.D, real_count, nprocs);
-      if(op == MPI_MAX)
-	maxDouble(results, buf.D, real_count, nprocs);
-      if(op == MPI_MIN)
-	minDouble(results, buf.D, real_count, nprocs);
-      break;
-    } 
-    MPI_Sendrecv(results, real_count, datatype,
-		     place, 0,
-		     recvbuf, real_count, datatype,
-		     place, 0,
-		     comm, &status);
-    $free(recv);
-    $free(results);
   }
   return 0;
 }
@@ -450,10 +248,6 @@ int MPI_Allreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype
   place = $comm_place(comm.col);
   root = 0;
   MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
-  if(place == root)
-    MPI_Sendrecv(recvbuf, count, datatype, place, 0,
-		 recvbuf, count, datatype, place, 0,
-		 comm, &status);
   MPI_Bcast(recvbuf, count, datatype, root, comm);
   return 0;
 }
