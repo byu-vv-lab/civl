@@ -89,10 +89,9 @@ public class PthreadTest {
 		assertFalse(ui.run("verify", filename("queue_false.c"), "-svcomp", "-inputSIZE=5", "-inputEMPTY=-1", "-inputFULL=-2"));
 	}
 	
-	@Ignore
 	@Test
 	public void queue_ok_true() throws ABCException {
-		assertTrue(ui.run("verify", filename("queue_ok_true.c"), "-svcomp", "-inputSIZE=5", "-inputEMPTY=-1", "-inputFULL=-2"));
+		assertTrue(ui.run("verify", filename("queue_ok_true.c"), "-svcomp", "-inputSIZE=5", "-inputEMPTY=-1", "-inputFULL=-2", "-showProgram"));
 	}
 	
 	@Test

@@ -61,6 +61,9 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 	private final static String VERIFIER_ASSERT = "__VERIFIER_assert";
 	
+	@SuppressWarnings("unused")
+	private final static String VERIFIER_ATOMIC = "__VERIFIER_atomic";
+	
 	private int numberOfNondetCall = 0;
 
 	/* ************************** Public Static Fields *********************** */

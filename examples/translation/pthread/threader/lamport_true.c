@@ -5,11 +5,11 @@
 #include <pthread.h>
 #define assert(e) if (!(e)) ERROR: goto ERROR;
 
-int x, y;
-int b1, b2; // boolean flags
+int x=0, y=0;
+int b1=0, b2=0; // boolean flags
 int X; // boolean variable to test mutual exclusion
 
-void *thr1() {
+void *thr1(void * arg) {
   while (1) {
     b1 = 1;
     x = 1;
@@ -37,7 +37,7 @@ void *thr1() {
   b1 = 0;
 }
 
-void *thr2() {
+void *thr2(void * arg) {
   while (1) {
     b2 = 1;
     x = 2;

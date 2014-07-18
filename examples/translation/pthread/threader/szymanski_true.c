@@ -8,7 +8,7 @@
 int flag1 = 0, flag2 = 0; // integer flags 
 int x; // boolean variable to test mutual exclusion
 
-void *thr1() {
+void *thr1(void * arg) {
   flag1 = 1;
   while (flag2 >= 3); 
   flag1 = 3;
@@ -26,7 +26,7 @@ void *thr1() {
   flag1 = 0;
 }
 
-void *thr2() {
+void *thr2(void * arg) {
   flag2 = 1;
   while (flag1 >= 3);
   flag2 = 3;

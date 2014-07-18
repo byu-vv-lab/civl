@@ -9,7 +9,7 @@
 #include <pthread.h>
 #define assert(e) if (!(e)) ERROR: goto ERROR;
 
-int w=0, r=0, x, y;
+int w=0, r=0, x=0, y=0;
 
 void __VERIFIER_atomic_take_write_lock() {
   __VERIFIER_assume(w==0 && r==0);
@@ -21,13 +21,13 @@ void __VERIFIER_atomic_take_read_lock() {
   r = r+1;
 }
 
-void *writer() { //writer
+void *writer(void * arg) { //writer
   __VERIFIER_atomic_take_write_lock();  
   x = 3;
   w = 0;
 }
 
-void *reader() { //reader
+void *reader(void * arg) { //reader
   int l;
   __VERIFIER_atomic_take_read_lock();
   l = x;

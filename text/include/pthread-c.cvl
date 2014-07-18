@@ -15,6 +15,13 @@ void _free_pool(__pthread_pool_t* pool){
   }
 }
 
+void __VERIFIER_assume(int expression) { 
+  if (!expression) 
+  { 
+    LOOP: 
+      goto LOOP; 
+  }
+}
 void _add_thread(__pthread_pool_t* pool, pthread_t* thread){
   $atomic{
   int len = pool->len;
@@ -31,20 +38,6 @@ void _add_thread(__pthread_pool_t* pool, pthread_t* thread){
   pool->len = len + 1;
   }
 }
-
-/*
-//uses _ as the prefix for our helper variables and functions.
-_Bool _isTerminated($proc thr){
-  for(int i = 0; i < _pool.len - 1; i++){ 
-    if(_pool.threads[i]->thr == thr){
-      if(_pool.threads[i]->terminated == true){
-        return true;
-      }
-    }
-  }
-  return false;
-}
-*/
 
 /**
   * Initializes a spinlock with the default values defined for it by an implementation
@@ -656,7 +649,6 @@ int pthread_equal(pthread_t t1, pthread_t t2){
 int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void*), void *arg){
   $atomic{
     thread->thr = $spawn start_routine(arg);
-    thread->terminated = false;
     if(attr == NULL){
       thread->attr.detachstate = PTHREAD_CREATE_JOINABLE;
       thread->attr.inheritsched = 0;
@@ -666,6 +658,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
     else{
       thread->attr = *attr;
     }
+    thread->pid = _pool.len;
     _add_thread(&_pool, thread);
   }
   return 0;
@@ -720,7 +713,6 @@ int _pthread_exit(void *value_ptr, _Bool isMain){
     for(int i = 0; i<_pool.len; i++){
       if($proc_defined(_pool.threads[i]->thr)){
         $wait(_pool.threads[i]->thr);
-        _pool.threads[i]->terminated = true;
       }
     }
     free(_pool.threads);
@@ -732,7 +724,6 @@ int _pthread_exit(void *value_ptr, _Bool isMain){
       for(int i = 0; i<_pool.len; i++){
         if($proc_defined(_pool.threads[i]->thr)){
           if(_pool.threads[i]->thr == $self){
-            _pool.threads[i]->terminated = true;
             break;
           }
         }

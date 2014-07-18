@@ -10,12 +10,12 @@
 #define assert(e) if (!(e)) ERROR: goto ERROR;
 
 int block;
-int busy; // boolean flag indicating whether the block has been allocated to an inode
-int inode;
+int busy = 0; // boolean flag indicating whether the block has been allocated to an inode
+int inode = 0;
 pthread_mutex_t m_inode; // protects the inode
 pthread_mutex_t m_busy; // protects the busy flag
 
-void *allocator(){
+void *allocator(void * arg){
   pthread_mutex_lock(&m_inode);
   if(inode == 0){
     pthread_mutex_lock(&m_busy);
@@ -29,7 +29,7 @@ void *allocator(){
   return NULL;
 }
 
-void *de_allocator(){
+void *de_allocator(void * arg){
   pthread_mutex_lock(&m_busy);
   if(busy == 0){
     block = 0;

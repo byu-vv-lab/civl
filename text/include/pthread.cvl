@@ -165,7 +165,7 @@ typedef struct {
 typedef struct {
   $proc thr;
   const pthread_attr_t attr;
-  _Bool terminated;
+  int pid;
 } pthread_t;
 
 typedef struct __pthread_pool_t {

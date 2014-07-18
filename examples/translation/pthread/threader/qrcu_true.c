@@ -1,4 +1,4 @@
-extern int __VERIFIER_nondet_int();
+extern int __VERIFIER_nondet_int(void);
 /* Testcase from Threader's distribution. For details see:
    http://www.model.in.tum.de/~popeea/research/threader
 
@@ -68,7 +68,7 @@ void __VERIFIER_atomic_check_progress2(int readerstart2) {
   return;
 }
 
-void *qrcu_reader1() {
+void *qrcu_reader1(void * arg) {
   int myidx;
   /* rcu_read_lock */
   while (1) {
@@ -90,7 +90,7 @@ void *qrcu_reader1() {
   return 0;
 }
 
-void *qrcu_reader2() {
+void *qrcu_reader2(void * arg) {
   int myidx;
   /* rcu_read_lock */
   while (1) {
@@ -112,7 +112,7 @@ void *qrcu_reader2() {
   return 0;
 }
 
-void* qrcu_updater() {
+void* qrcu_updater(void * arg) {
   int i;
   int readerstart1, readerstart2;
   int sum;

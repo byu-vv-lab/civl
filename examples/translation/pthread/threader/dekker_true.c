@@ -6,10 +6,10 @@
 #define assert(e) if (!(e)) ERROR: goto ERROR;
 
 int flag1 = 0, flag2 = 0; // boolean flags
-int turn; // integer variable to hold the ID of the thread whose turn is it
+int turn = 0; // integer variable to hold the ID of the thread whose turn is it
 int x; // boolean variable to test mutual exclusion
 
-void *thr1() {
+void *thr1(void * arg) {
   flag1 = 1;
   while (flag2 >= 1) {
     if (turn != 0) {
@@ -26,7 +26,7 @@ void *thr1() {
   flag1 = 0;
 }
 
-void *thr2() {
+void *thr2(void * arg) {
   flag2 = 1;
   while (flag1 >= 1) {
     if (turn != 1) {
