@@ -228,7 +228,7 @@ int MPI_Reduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
       in = $comm_dequeue(comm.col, i, REDUCE_TAG);
       size = count * sizeofDatatype(datatype);
 
-      $bundle_unpack_apply(in.data, recvbuf, count, CIVL_SUM);
+      $bundle_unpack_apply(in.data, recvbuf, count, op);
       $assert(in.size <= size, 
 	      "Message of size %d exceeds the specified size %d.", in.size, size);
     }
