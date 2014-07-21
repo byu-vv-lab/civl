@@ -223,7 +223,7 @@ public interface Evaluator {
 	 *         Every member of the set is a pointer value, and is a pointer to a
 	 *         memory unit.
 	 */
-	Set<SymbolicExpression> memoryUnitsReachableFromVariable(
+	Set<SymbolicExpression> memoryUnitsReachableFromVariable(CIVLType variableType,
 			SymbolicExpression variableValue, int dyScopeID, int vid,
 			State state, String process);
 

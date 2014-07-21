@@ -3160,12 +3160,35 @@ public class CommonEvaluator implements Evaluator {
 
 	@Override
 	public Set<SymbolicExpression> memoryUnitsReachableFromVariable(
-			SymbolicExpression variableValue, int dyScopeID, int vid,
-			State state, String process) {
-		Evaluation eval = new Evaluation(state, symbolicUtil.makePointer(
-				dyScopeID, vid, identityReference));
+			CIVLType variableType, SymbolicExpression variableValue,
+			int dyScopeID, int vid, State state, String process) {
+		if (variableType.isHeapType())
+			return heapCells(state, dyScopeID);
+		return pointersInExpression(
+				symbolicUtil.makePointer(dyScopeID, vid, identityReference),
+				state, process);
+	}
 
-		return pointersInExpression(eval.value, state, process);
+	private Set<SymbolicExpression> heapCells(State state, int dyscopeId) {
+		SymbolicExpression heapValue = state.getVariableValue(dyscopeId, 0);
+
+		if (heapValue.isNull())
+			return new HashSet<>();
+		else {
+			CIVLHeapType heapType = modelFactory.heapType();
+			int numMallocs = heapType.getNumMallocs();
+			Set<SymbolicExpression> result = new HashSet<>();
+
+			for (int i = 0; i < numMallocs; i++) {
+				ReferenceExpression ref = universe.tupleComponentReference(
+						identityReference, universe.intObject(i));
+				SymbolicExpression heapCell = symbolicUtil.makePointer(
+						dyscopeId, i, ref);
+
+				result.add(heapCell);
+			}
+			return result;
+		}
 	}
 
 	@Override

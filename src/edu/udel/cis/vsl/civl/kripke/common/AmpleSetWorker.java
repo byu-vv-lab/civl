@@ -4,6 +4,8 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -122,6 +124,8 @@ public class AmpleSetWorker {
 	 * The current state at which the ample set is to be computed.
 	 */
 	private State state;
+
+	Map<String, List<Pair<SymbolicExpression, SymbolicExpression>>> sharedMemoryUnitsMap = new HashMap<>();
 
 	/* ***************************** Constructors ************************** */
 
@@ -268,6 +272,7 @@ public class AmpleSetWorker {
 			}
 			for (int otherPid : activeProcesses) {
 				Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther;
+				List<Pair<SymbolicExpression, SymbolicExpression>> sharedMemUnitPairs;
 
 				// add new ample id earlier
 				if (otherPid == pid || ampleProcessIDs.contains(otherPid)
@@ -275,18 +280,29 @@ public class AmpleSetWorker {
 					continue;
 				reachableMemUnitsMapOfOther = reachableMemUnitsMap
 						.get(otherPid);
-				for (SymbolicExpression unit : impactMemUnits) {
-					if (reachableMemUnitsMapOfOther.containsKey(unit)) {
-						// either the current process or the other process is to
-						// modify unit now or in the future
-						if ((reachableMemUnitsMapOfThis.get(unit) || reachableMemUnitsMapOfOther
-								.get(unit))) {
-							workingProcessIDs.add(otherPid);
-							ampleProcessIDs.add(otherPid);
-							break;
-						}
+				sharedMemUnitPairs = this.memUnitPairs(impactMemUnits,
+						reachableMemUnitsMapOfOther.keySet());
+				for (Pair<SymbolicExpression, SymbolicExpression> memPair : sharedMemUnitPairs) {
+					if ((reachableMemUnitsMapOfThis.get(memPair.left) || reachableMemUnitsMapOfOther
+							.get(memPair.right))) {
+						workingProcessIDs.add(otherPid);
+						ampleProcessIDs.add(otherPid);
+						break;
 					}
 				}
+				// for (SymbolicExpression unit : impactMemUnits) {
+				// if (reachableMemUnitsMapOfOther.containsKey(unit)) {
+				// // either the current process or the other process is to
+				// // modify unit now or in the future
+				// if ((reachableMemUnitsMapOfThis.get(unit) ||
+				// reachableMemUnitsMapOfOther
+				// .get(unit))) {
+				// workingProcessIDs.add(otherPid);
+				// ampleProcessIDs.add(otherPid);
+				// break;
+				// }
+				// }
+				// }
 				// early return
 				if (ampleProcessIDs.size() >= minAmpleSize)
 					return ampleProcessIDs;
@@ -295,6 +311,20 @@ public class AmpleSetWorker {
 			}
 		}
 		return ampleProcessIDs;
+	}
+
+	private List<Pair<SymbolicExpression, SymbolicExpression>> memUnitPairs(
+			Iterable<SymbolicExpression> list1,
+			Iterable<SymbolicExpression> list2) {
+		List<Pair<SymbolicExpression, SymbolicExpression>> result = new LinkedList<>();
+
+		for (SymbolicExpression unit1 : list1) {
+			for (SymbolicExpression unit2 : list2) {
+				if (!evaluator.symbolicUtility().isDisjointWith(unit1, unit2))
+					result.add(new Pair<>(unit1, unit2));
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -635,6 +665,19 @@ public class AmpleSetWorker {
 			}
 			reachableMemUnitsMap.put(pid, reachableMemoryUnits(p));
 		}
+		for (int pid1 : activeProcesses) {
+			for (int pid2 : activeProcesses) {
+				if (pid1 >= pid2)
+					continue;
+				else {
+					String key = pid1 + "-" + pid2;
+
+					sharedMemoryUnitsMap.put(key, this.memUnitPairs(
+							reachableMemUnitsMap.get(pid1).keySet(),
+							reachableMemUnitsMap.get(pid2).keySet()));
+				}
+			}
+		}
 	}
 
 	/**
@@ -683,7 +726,7 @@ public class AmpleSetWorker {
 				for (int vid = 0; vid < size; vid++) {
 					Variable variable = dyScope.lexicalScope().variable(vid);
 					Set<SymbolicExpression> varMemUnits = evaluator
-							.memoryUnitsReachableFromVariable(
+							.memoryUnitsReachableFromVariable(variable.type(),
 									dyScope.getValue(vid), dyScopeID, vid,
 									state, process);
 					boolean permission = writableVariables.contains(variable) ? true

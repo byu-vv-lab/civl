@@ -1963,4 +1963,135 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		}
 	}
 
+	@Override
+	public boolean isDisjointWith(SymbolicExpression pointer1,
+			SymbolicExpression pointer2) {
+		if (pointer1.equals(pointer2))
+			return false;
+		{
+			SymbolicExpression scope1 = universe.tupleRead(pointer1, zeroObj), var1 = universe
+					.tupleRead(pointer1, oneObj);
+			SymbolicExpression scope2 = universe.tupleRead(pointer2, zeroObj), var2 = universe
+					.tupleRead(pointer2, oneObj);
+			ReferenceExpression ref1 = (ReferenceExpression) universe
+					.tupleRead(pointer1, twoObj);
+			ReferenceExpression ref2 = (ReferenceExpression) universe
+					.tupleRead(pointer2, twoObj);
+
+			if (!scope1.equals(scope2))
+				return true;
+			if (!var1.equals(var2))
+				return true;
+			if (ref1.equals(ref2))
+				return false;
+			return isDisjoint(ref1, ref2);
+		}
+	}
+
+	private boolean isDisjoint(ReferenceExpression ref1,
+			ReferenceExpression ref2) {
+		List<ReferenceExpression> ancestors1, ancestors2;
+		int numAncestors1, numAncestors2, minNum;
+
+		ancestors1 = this.ancestorsOfRef(ref1);
+		ancestors2 = this.ancestorsOfRef(ref2);
+		numAncestors1 = ancestors1.size();
+		numAncestors2 = ancestors2.size();
+		minNum = numAncestors1 <= numAncestors2 ? numAncestors1 : numAncestors2;
+		for(int i = 0; i < minNum; i++){
+			ReferenceExpression ancestor1 = ancestors1.get(i), ancestor2 = ancestors2.get(i);
+			
+			if(!ancestor1.equals(ancestor2))
+				return true;
+		}
+		return false;
+	}
+
+	// private Triple<Boolean, List<ReferenceExpression>,
+	// List<ReferenceExpression>> isDisjoint( ReferenceExpression re1,
+	// ReferenceExpression ref2
+	// List<ReferenceExpression> refs1, List<ReferenceExpression> refs2) {
+	// if (ref1.isIdentityReference() && ref2.isIdentityReference())
+	// return new Triple<>(false, ref1, ref2);
+	// else {
+	// ReferenceExpression parent1, parent2;
+	// ReferenceKind kind1 = ref1.referenceKind(), kind2 = ref2
+	// .referenceKind();
+	// Triple<Boolean, ReferenceExpression, ReferenceExpression> parentResult;
+	//
+	// if (kind1 == ReferenceKind.IDENTITY)
+	// parent1 = ref1;
+	// else if (kind1 == ReferenceKind.ARRAY_ELEMENT)
+	// parent1 = ((ArrayElementReference) ref1).getParent();
+	// else if (kind1 == ReferenceKind.TUPLE_COMPONENT)
+	// parent1 = ((TupleComponentReference) ref1).getParent();
+	// else
+	// parent1 = ((UnionMemberReference) ref1).getParent();
+	// if (kind2 == ReferenceKind.IDENTITY)
+	// parent2 = ref2;
+	// else if (kind2 == ReferenceKind.ARRAY_ELEMENT)
+	// parent2 = ((ArrayElementReference) ref2).getParent();
+	// else if (kind2 == ReferenceKind.TUPLE_COMPONENT)
+	// parent2 = ((TupleComponentReference) ref2).getParent();
+	// else
+	// parent2 = ((UnionMemberReference) ref2).getParent();
+	// parentResult = isDisjoint(parent1, parent2);
+	// if (parentResult.first || kind1 != kind2)
+	// return new Triple<>(true, null, null);
+	// if (kind1 == ReferenceKind.ARRAY_ELEMENT) {
+	// NumericExpression index1 = ((ArrayElementReference) ref1)
+	// .getIndex(), index2 = ((ArrayElementReference) ref2)
+	// .getIndex();
+	//
+	// if (!index1.equals(index2))
+	// return new Triple<>(true, null, null);
+	// else return new Triple<>(false, )
+	// }
+	//
+	// }
+	//
+	// // if (ref1.isIdentityReference()) {
+	// // return new Triple<>(false, ref1, ref1);
+	// // } else if (ref2.isIdentityReference())
+	// // return new Triple<>(false, ref2, ref2);
+	// // else {
+	// //
+	// // if (!kind1.equals(kind2))
+	// // return new Triple<>(true, null, null);
+	// // else {
+	// // if(kind1 == ReferenceKind.ARRAY_ELEMENT){
+	// // NumericExpression index1 = ((ArrayElementReference) ref1).getIndex(),
+	// // index2 = ((ArrayElementReference) ref2).getIndex();
+	// //
+	// // if(kind1 )
+	// // }
+	// // }
+	// // }
+	// return null;
+	// }
+
+	private List<ReferenceExpression> ancestorsOfRef(ReferenceExpression ref) {
+		if (ref.isIdentityReference())
+			return new ArrayList<>();
+		else {
+			ReferenceKind kind = ref.referenceKind();
+			ReferenceExpression parent;
+			List<ReferenceExpression> result;
+
+			switch (kind) {
+			case ARRAY_ELEMENT:
+				parent = ((ArrayElementReference) ref).getParent();
+				break;
+			case TUPLE_COMPONENT:
+				parent = ((TupleComponentReference) ref).getParent();
+				break;
+			default:// UnionMember
+				parent = ((UnionMemberReference) ref).getParent();
+			}
+			result = ancestorsOfRef(parent);
+			result.add(ref);
+			return result;
+		}
+	}
+
 }

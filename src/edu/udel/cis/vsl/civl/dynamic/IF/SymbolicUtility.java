@@ -429,6 +429,7 @@ public interface SymbolicUtility {
 			SymbolicExpression pointer);
 
 	boolean isUndefinedConstant(SymbolicExpression value);
-	
-	
+
+	boolean isDisjointWith(SymbolicExpression pointer1,
+			SymbolicExpression pointer2);
 }

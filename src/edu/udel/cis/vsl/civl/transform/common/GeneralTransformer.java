@@ -51,6 +51,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 	public final static String SHORT_DESCRIPTION = "transforms general features of C programs to CIVL-C";
 
 	private final static String MALLOC = "malloc";
+	private final static String MY_ROOT_SCOPE = "CIVL_root";
 	private final static String MAX_ARGC = "10";
 
 	private final static String INPUT_PREFIX = "CIVL_";
@@ -58,6 +59,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 	private String argvName;
 	private String newArgvName;
 	private AssumeNode argcAssumption = null;
+	private Source mainSource;
 
 	public GeneralTransformer(ASTFactory astFactory,
 			List<String> inputVariables, CIVLConfiguration config) {
@@ -83,6 +85,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 						.child(0);
 
 				if (functionName.name().equals("main")) {
+					this.mainSource = functionNode.getSource();
 					inputVars = processMainFunction(functionNode);
 					processArgvRefs(functionNode.getBody());
 				}
@@ -96,6 +99,8 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			newExternalList.add(inputVar);
 		if (this.argcAssumption != null)
 			newExternalList.add(argcAssumption);
+		// add my root
+		newExternalList.add(this.myRootNode());
 		for (ASTNode child : root) {
 			newExternalList.add(child);
 			child.parent().removeChild(child.childIndex());
@@ -104,6 +109,13 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 				newExternalList);
 		newAst = astFactory.newAST(root);
 		return newAst;
+	}
+
+	private VariableDeclarationNode myRootNode() {
+		return nodeFactory.newVariableDeclarationNode(mainSource,
+				nodeFactory.newIdentifierNode(mainSource, MY_ROOT_SCOPE),
+				nodeFactory.newScopeTypeNode(mainSource),
+				nodeFactory.newHereNode(mainSource));
 	}
 
 	private void processArgvRefs(ASTNode node) throws SyntaxException {
@@ -209,7 +221,15 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 				if (functionName.equals(MALLOC)) {
 					ASTNode parent = funcCall.parent();
 					int callIndex = funcCall.childIndex();
+					ExpressionNode myRootScope = this.identifierExpression(
+							funcCall.getSource(), MY_ROOT_SCOPE);
+					ExpressionNode argument = funcCall.getArgument(0);
 
+					functionExpression.getIdentifier().setName("$" + MALLOC);
+					argument.parent().removeChild(argument.childIndex());
+					funcCall.setArguments(nodeFactory.newSequenceNode(
+							argument.getSource(), "Actual Parameters",
+							Arrays.asList(myRootScope, argument)));
 					if (!(parent instanceof CastNode)) {
 						if (parent instanceof OperatorNode) {
 							ExpressionNode lhs = ((OperatorNode) parent)
