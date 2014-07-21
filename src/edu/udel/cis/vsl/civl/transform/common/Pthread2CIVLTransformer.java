@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
@@ -61,7 +62,6 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 	private final static String VERIFIER_ASSERT = "__VERIFIER_assert";
 	
-	@SuppressWarnings("unused")
 	private final static String VERIFIER_ATOMIC = "__VERIFIER_atomic";
 	
 	private int numberOfNondetCall = 0;
@@ -147,7 +147,21 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 					funcCall.setArguments(nodeFactory.newSequenceNode(funcName.getSource(), "Actual Arguments", Arrays.asList(newArg)));
 				}
 			}
-		} else {
+		}
+		else if(node instanceof FunctionDefinitionNode){
+			IdentifierNode functionName = ((FunctionDefinitionNode) node).getIdentifier();
+			if(functionName.name().startsWith(VERIFIER_ATOMIC)){
+				CompoundStatementNode tmp = ((FunctionDefinitionNode) node).getBody().copy();
+				AtomicNode newAtomicBlock = nodeFactory.newAtomicStatementNode(source, false, tmp);
+				CompoundStatementNode block = nodeFactory.newCompoundStatementNode(source, Arrays.asList((BlockItemNode)newAtomicBlock));
+				((FunctionDefinitionNode) node).setBody(block);
+			}
+			for (ASTNode child : node.children()) {
+				if (child != null)
+					process_VERIFIER_function_call_worker(child);
+			}
+		}
+		else {
 			for (ASTNode child : node.children()) {
 				if (child != null)
 					process_VERIFIER_function_call_worker(child);
@@ -255,7 +269,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			
 		}
 		if (this.isVoidPointer(returnType) && threadList.contains(name)) {
-			//function.getTypeNode().setParameters(nodeFactory.newSequenceNode(source, "parameters", Arrays.asList(nodeFactory.newVariableDeclarationNode(source, nodeFactory.newIdentifierNode(source, "arg"), nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source))))));
+			function.getTypeNode().setParameters(nodeFactory.newSequenceNode(source, "parameters", Arrays.asList(nodeFactory.newVariableDeclarationNode(source, nodeFactory.newIdentifierNode(source, "arg"), nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source))))));
 			ExpressionNode nullNode = nodeFactory.newCastNode(
 					source,
 					nodeFactory.newPointerTypeNode(source,

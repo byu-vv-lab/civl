@@ -22,6 +22,7 @@ void __VERIFIER_assume(int expression) {
       goto LOOP; 
   }
 }
+
 void _add_thread(__pthread_pool_t* pool, pthread_t* thread){
   $atomic{
   int len = pool->len;

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -61,6 +62,7 @@ public class PthreadThreaderTest {
 		assertTrue(ui.run("verify", filename("read_write_lock_true.c"), "-svcomp"));
 	}
 	
+	@Ignore
 	@Test
 	public void scull_true() throws ABCException {
 		assertTrue(ui.run("verify", filename("scull_true.c"), "-svcomp"));

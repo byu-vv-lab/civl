@@ -8,8 +8,6 @@
 
 volatile unsigned value, m = 0;
 
-void __VERIFIER_assume(int expression) { if (!expression) { LOOP: goto LOOP; }; return; }
-
 void __VERIFIER_atomic_acquire()
 {
 	assume(m==0);

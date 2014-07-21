@@ -11,6 +11,7 @@ import org.junit.Test;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
+@SuppressWarnings("unused")
 public class PthreadCProverTest {
 	/* *************************** Static Fields *************************** */
 
