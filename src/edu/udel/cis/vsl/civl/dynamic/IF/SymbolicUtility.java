@@ -429,5 +429,6 @@ public interface SymbolicUtility {
 			SymbolicExpression pointer);
 
 	boolean isUndefinedConstant(SymbolicExpression value);
-
+	
+	
 }

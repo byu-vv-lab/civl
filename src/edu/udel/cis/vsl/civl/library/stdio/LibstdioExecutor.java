@@ -31,7 +31,6 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
-import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
@@ -709,14 +708,13 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression fileArray;
 		Evaluation eval;
 		NumericExpression length;
-		ArrayElementReference fileArrayEleRef = (ArrayElementReference) universe
-				.tupleRead(arrayPointer, twoObject);
-		NumericExpression startIndex = fileArrayEleRef.getIndex();
 		int length_int;
 		SymbolicExpression scopeField = universe.tupleRead(arrayPointer,
 				zeroObject), varField = universe.tupleRead(arrayPointer,
 				oneObject);
 		CIVLSource arraySource = arguments[1].getSource();
+		List<SymbolicExpression> files;
+		SymbolicExpression outputArray;
 
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
 				civlFileSystemPointer, false);
@@ -724,20 +722,19 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		fileArray = universe.tupleRead(eval.value, oneObject);
 		length = universe.length(fileArray);
 		length_int = symbolicUtil.extractInt(arguments[0].getSource(), length);
+		files = new ArrayList<>(length_int);
 		for (int i = 0; i < length_int; i++) {
 			NumericExpression fileArrayIndex = universe.integer(i);
-			NumericExpression index = universe.add(startIndex, fileArrayIndex);
-			ArrayElementReference arrayEleRef = universe.arrayElementReference(
-					universe.identityReference(), index);
-			SymbolicExpression currentPointer = universe.tuple(
-					modelFactory.pointerSymbolicType(),
-					Arrays.asList(new SymbolicExpression[] { scopeField,
-							varField, arrayEleRef }));
 
-			state = primaryExecutor.assign(arraySource, state, process,
-					currentPointer,
-					universe.arrayRead(fileArray, fileArrayIndex));
+			files.add(universe.arrayRead(fileArray, fileArrayIndex));
 		}
+		outputArray = universe.array(this.fileSymbolicType, files);
+		arrayPointer = universe.tuple(
+				modelFactory.pointerSymbolicType(),
+				Arrays.asList(scopeField, varField,
+						universe.identityReference()));
+		state = primaryExecutor.assign(arraySource, state, process,
+				arrayPointer, outputArray);
 		return state;
 	}
 

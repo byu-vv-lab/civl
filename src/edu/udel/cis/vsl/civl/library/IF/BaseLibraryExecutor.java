@@ -4,7 +4,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -55,9 +54,9 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public abstract class BaseLibraryExecutor extends Library implements
 		LibraryExecutor {
-	
+
 	/* ************************** Protected Types ************************** */
-	
+
 	protected enum ConversionType {
 		INT, DOUBLE, CHAR, STRING, POINTER, VOID
 	};
@@ -190,10 +189,9 @@ public abstract class BaseLibraryExecutor extends Library implements
 		StringBuffer stringOfSymbolicExpression;
 		StringBuffer formatBuffer;
 		List<StringBuffer> printedContents = new ArrayList<>();
-		List<Integer> sIndexes = new LinkedList<>();
-		int sCount = 1;
 		Pair<State, StringBuffer> concreteString;
 		List<Format> formats;
+		List<Format> nonVoidFormats = new ArrayList<>();
 
 		concreteString = this.getString(arguments[0].getSource(), state,
 				process, argumentValues[0]);
@@ -201,11 +199,10 @@ public abstract class BaseLibraryExecutor extends Library implements
 		state = concreteString.left;
 		formats = this.splitFormat(arguments[0].getSource(), formatBuffer);
 		for (Format format : formats) {
-			if (format.type == ConversionType.STRING)
-				sIndexes.add(sCount++);
-			else if (format.type != ConversionType.VOID)
-				sCount++;
+			if (format.type != ConversionType.VOID)
+				nonVoidFormats.add(format);
 		}
+		assert nonVoidFormats.size() == argumentValues.length - 1;
 		for (int i = 1; i < argumentValues.length; i++) {
 			SymbolicExpression argumentValue = argumentValues[i];
 			CIVLType argumentType = arguments[i].getExpressionType();
@@ -213,16 +210,24 @@ public abstract class BaseLibraryExecutor extends Library implements
 			if (argumentType instanceof CIVLPointerType
 					&& ((CIVLPointerType) argumentType).baseType().isCharType()
 					&& argumentValue.operator() == SymbolicOperator.CONCRETE) {
-				// also check format code is %s before doing this
-				if (!sIndexes.contains(i)) {
+				Format myFormat = nonVoidFormats.get(i - 1);
+
+				if (myFormat.type == ConversionType.STRING) {
+					concreteString = this.getString(arguments[i].getSource(),
+							state, process, argumentValue);
+					stringOfSymbolicExpression = concreteString.right;
+					state = concreteString.left;
+					printedContents.add(stringOfSymbolicExpression);
+				} else if (myFormat.type == ConversionType.POINTER) {
+					printedContents.add(new StringBuffer(symbolicUtil
+							.symbolicExpressionToString(
+									arguments[i].getSource(), state,
+									argumentValue)));
+				} else {
 					throw new CIVLSyntaxException("Array pointer unaccepted",
 							arguments[i].getSource());
 				}
-				concreteString = this.getString(arguments[i].getSource(),
-						state, process, argumentValue);
-				stringOfSymbolicExpression = concreteString.right;
-				state = concreteString.left;
-				printedContents.add(stringOfSymbolicExpression);
+
 			} else
 				printedContents.add(new StringBuffer(this.symbolicUtil
 						.symbolicExpressionToString(arguments[i].getSource(),
