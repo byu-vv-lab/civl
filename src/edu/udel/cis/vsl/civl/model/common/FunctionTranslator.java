@@ -2429,7 +2429,8 @@ public class FunctionTranslator {
 		IdentifierNode identifier = node.getIdentifier();
 		CIVLSource source = modelFactory.sourceOf(node);
 
-		if (variable.isInput() || type instanceof CIVLArrayType
+		if (variable.isInput() || variable.isStatic()
+				|| type instanceof CIVLArrayType
 				|| type instanceof CIVLStructOrUnionType || type.isHeapType()) {
 			Expression rhs = null;
 
