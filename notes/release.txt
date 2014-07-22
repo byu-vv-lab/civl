@@ -3,8 +3,8 @@
 
 1. Working with your local copy of trunk, make sure all tests pass.
 
-2. Edit the fields named "version" and "date" in class
-edu.udel.cis.vsl.civl.CIVL to use the new version and today's date.
+2. Edit the fields named "version" and "date" in interface
+edu.udel.cis.vsl.civl.config.CIVLConstants to use the new version and today's date.
 Also, edit README to change the version number and the changes of 
 the new version.
 
