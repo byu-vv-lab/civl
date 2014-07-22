@@ -61,6 +61,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.BasicTypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.DomainTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.EnumerationTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
@@ -919,6 +920,18 @@ public class AST2CIVL {
 			result.append("]");
 		}
 			break;
+		case DOMAIN: {
+			DomainTypeNode domainType = (DomainTypeNode) type;
+			ExpressionNode dim = domainType.getDimension();
+
+			result.append("$domain");
+			if (dim != null) {
+				result.append("(");
+				result.append(this.expression2CIVL(dim));
+				result.append(")");
+			}
+			break;
+		}
 		case VOID:
 			result.append("void");
 			break;

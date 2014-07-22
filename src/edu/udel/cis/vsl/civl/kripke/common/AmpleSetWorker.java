@@ -12,6 +12,7 @@ import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -124,8 +125,6 @@ public class AmpleSetWorker {
 	 * The current state at which the ample set is to be computed.
 	 */
 	private State state;
-
-	Map<String, List<Pair<SymbolicExpression, SymbolicExpression>>> sharedMemoryUnitsMap = new HashMap<>();
 
 	/* ***************************** Constructors ************************** */
 
@@ -365,26 +364,46 @@ public class AmpleSetWorker {
 		Set<SymbolicExpression> memUnits = new HashSet<>();
 		int pid = proc.getPid();
 		Location pLocation = proc.getLocation();
-		Set<CallOrSpawnStatement> systemCalls = new HashSet<>();
 		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> partialResult;
+		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> result = null;
 
-		this.enabledSystemCallMap.put(pid, systemCalls);
+		this.enabledSystemCallMap.put(pid, new HashSet<CallOrSpawnStatement>());
+		if (debugging)
+			debugOut.println("impact memory units of " + proc.name() + "(id="
+					+ proc.getPid() + "):");
 		if (pLocation.enterAtom() || pLocation.enterAtomic()
 				|| proc.atomicCount() > 0) {
-			return impactMemoryUnitsOfAtomicBlock(pLocation, pid);
+			result = impactMemoryUnitsOfAtomicBlock(pLocation, pid);
 		} else {
 			for (Statement s : pLocation.outgoing()) {
 				try {
 					partialResult = impactMemoryUnitsOfStatement(s, pid);
-					if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-						return partialResult;
+					if (partialResult.left == MemoryUnitsStatus.INCOMPLETE) {
+						result = partialResult;
+						break;
+					}
 					memUnits.addAll(partialResult.right);
 				} catch (UnsatisfiablePathConditionException e) {
 					continue;
 				}
 			}
 		}
-		return new Pair<>(MemoryUnitsStatus.NORMAL, memUnits);
+		if (result == null)
+			result = new Pair<>(MemoryUnitsStatus.NORMAL, memUnits);
+		if (debugging)
+			if (result.left == MemoryUnitsStatus.INCOMPLETE)
+				debugOut.println("INCOMPLETE");
+			else {
+				CIVLSource source = pLocation.getSource();
+
+				for (SymbolicExpression memUnit : result.right) {
+					debugOut.print(evaluator.symbolicUtility()
+							.symbolicExpressionToString(source, state, memUnit)
+							+ "\t");
+				}
+				debugOut.println();
+			}
+		return result;
 	}
 
 	/**
@@ -640,9 +659,9 @@ public class AmpleSetWorker {
 		evaluator.memoryUnitsOfExpression(state, pid, expression, memoryUnits);
 		// TODO get rid of status.
 		status = MemoryUnitsStatus.NORMAL;
-		if (debugging) {
-			printMemoryUnitsOfExpression(expression, memoryUnits);
-		}
+		// if (debugging) {
+		// printMemoryUnitsOfExpression(expression, memoryUnits);
+		// }
 		return new Pair<>(status, memoryUnits);
 	}
 
@@ -665,36 +684,6 @@ public class AmpleSetWorker {
 			}
 			reachableMemUnitsMap.put(pid, reachableMemoryUnits(p));
 		}
-		for (int pid1 : activeProcesses) {
-			for (int pid2 : activeProcesses) {
-				if (pid1 >= pid2)
-					continue;
-				else {
-					String key = pid1 + "-" + pid2;
-
-					sharedMemoryUnitsMap.put(key, this.memUnitPairs(
-							reachableMemUnitsMap.get(pid1).keySet(),
-							reachableMemUnitsMap.get(pid2).keySet()));
-				}
-			}
-		}
-	}
-
-	/**
-	 * Print the impact memory units of a expression. Used for debugging.
-	 * 
-	 * @param expression
-	 *            The expression to be printed.
-	 * @param memUnits
-	 *            The memory units of the expression.
-	 */
-	private void printMemoryUnitsOfExpression(Expression expression,
-			Set<SymbolicExpression> memUnits) {
-		debugOut.println(expression.toString() + "\t mem units:");
-		for (SymbolicExpression memUnit : memUnits) {
-			debugOut.print(memUnit + "\t");
-		}
-		debugOut.println();
 	}
 
 	/**
@@ -702,20 +691,26 @@ public class AmpleSetWorker {
 	 * memory unit could be modified at the current location or any future
 	 * location.
 	 * 
-	 * @param p
+	 * @param proc
 	 *            The process whose reachable memory units are to be computed.
 	 * @return A map of reachable memory units and if they could be modified by
 	 *         the process.
 	 */
-	private Map<SymbolicExpression, Boolean> reachableMemoryUnits(ProcessState p) {
+	private Map<SymbolicExpression, Boolean> reachableMemoryUnits(
+			ProcessState proc) {
 		Set<Integer> checkedDyScopes = new HashSet<>();
 		Map<SymbolicExpression, Boolean> memUnitPermissionMap = new HashMap<>();
-		Set<Variable> writableVariables = p.getLocation().writableVariables();
+		Set<Variable> writableVariables = proc.getLocation()
+				.writableVariables();
 		// only look at the top stack is sufficient
-		StackEntry callStack = p.peekStack();
+		StackEntry callStack = proc.peekStack();
 		int dyScopeID = callStack.scope();
-		String process = "p" + p.identifier() + " (id = " + p.getPid() + ")";
+		String process = "p" + proc.identifier() + " (id = " + proc.getPid()
+				+ ")";
 
+		if (debugging)
+			debugOut.println("reachable memory units of " + proc.name()
+					+ "(id=" + proc.getPid() + "):");
 		while (dyScopeID >= 0) {
 			if (checkedDyScopes.contains(dyScopeID))
 				break;
@@ -725,13 +720,16 @@ public class AmpleSetWorker {
 
 				for (int vid = 0; vid < size; vid++) {
 					Variable variable = dyScope.lexicalScope().variable(vid);
-					Set<SymbolicExpression> varMemUnits = evaluator
-							.memoryUnitsReachableFromVariable(variable.type(),
-									dyScope.getValue(vid), dyScopeID, vid,
-									state, process);
-					boolean permission = writableVariables.contains(variable) ? true
-							: false;
+					Set<SymbolicExpression> varMemUnits;
+					boolean permission;
 
+					if (variable.type().isHeapType() && vid != 0)
+						continue;
+					varMemUnits = evaluator.memoryUnitsReachableFromVariable(
+							variable.type(), dyScope.getValue(vid), dyScopeID,
+							vid, state, process);
+					permission = writableVariables.contains(variable) ? true
+							: false;
 					for (SymbolicExpression unit : varMemUnits) {
 						if (!memUnitPermissionMap.containsKey(unit)) {
 							memUnitPermissionMap.put(unit, permission);
@@ -741,6 +739,21 @@ public class AmpleSetWorker {
 				checkedDyScopes.add(dyScopeID);
 				dyScopeID = state.getParentId(dyScopeID);
 			}
+		}
+		if (debugging) {
+			CIVLSource source = proc.getLocation().getSource();
+
+			for (SymbolicExpression memUnit : memUnitPermissionMap.keySet()) {
+				debugOut.print(evaluator.symbolicUtility()
+						.symbolicExpressionToString(source, state, memUnit));
+				debugOut.print("(");
+				if (memUnitPermissionMap.get(memUnit))
+					debugOut.print("W");
+				else
+					debugOut.print("R");
+				debugOut.print(")\t");
+			}
+			debugOut.println();
 		}
 		return memUnitPermissionMap;
 	}

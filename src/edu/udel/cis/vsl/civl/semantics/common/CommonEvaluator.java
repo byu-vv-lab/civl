@@ -2235,7 +2235,7 @@ public class CommonEvaluator implements Evaluator {
 				ReferenceExpression ref = universe.tupleComponentReference(
 						identityReference, universe.intObject(i));
 				SymbolicExpression heapCell = symbolicUtil.makePointer(
-						dyscopeId, i, ref);
+						dyscopeId, 0, ref);
 
 				result.add(heapCell);
 			}
