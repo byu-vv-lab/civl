@@ -690,7 +690,7 @@ The return value of the function is evaluated symbolically using the actual argu
 
 \subsection{Utility functions}
 
-\subsubsection{Equality checking of any two objects:  \texorpdfstring{\cequals}{\$equals}}
+\subsubsection{Equality checking:  \texorpdfstring{\cequals}{\$equals}}
 
 The system function \cequals has the form
 \begin{verbatim}
@@ -699,6 +699,44 @@ The system function \cequals has the form
 
 This function takes two non-null pointers as input. If  the two objects that the pointers refer to have the same value, then the
 function returns \ctrue. Otherwise, it returns \cfalse.
+
+\subsubsection{Membership testing:  \texorpdfstring{\ccontains}{\$contains}}
+
+The system function \ccontains has the form
+\begin{verbatim}
+  _Bool $contains(void *ptr1, void *ptr2);
+\end{verbatim}
+
+This function takes two non-null pointers as input. If  the object that the pointer \texttt{ptr1} points to contains the object pointed to by \texttt{ptr2},  then the
+function returns \ctrue. Otherwise, it returns \cfalse. For example:
+
+\begin{verbatim}
+ int a[10];
+ struct foo {int x; double y} f;
+ struct foo b[10];
+
+ // ... initialize a, f and b
+\end{verbatim}
+
+Here are the results of several invocations of  \ccontains:
+
+\begin{itemize}
+\item \texttt{\ccontains(\&a, \&a[3])} returns  \ctrue, since  the array \texttt{a} contains the cell \texttt{a[3]};
+\item \texttt{\ccontains(\&a[2], \&a[3])} returns \cfalse;
+\item \texttt{\ccontains(\&a[2], \&a[2])} returns \ctrue, because the relation is relexive;
+\item  \texttt{\ccontains(\&f, \&f.y)} returns \ctrue, since the struct \texttt{f} contains its field \texttt{f.y};
+\item \texttt{\ccontains(\&b, \&b[2].x)} returns \ctrue.
+\end{itemize}
+
+
+\subsubsection{Copying an array:  \texorpdfstring{\carrayinit}{\$array\_init}}
+
+The system function \carrayinit has the form
+\begin{verbatim}
+  void $array_init(void *array, int length, void *elementValue);
+\end{verbatim}
+
+This function will initialize an array by assigning it an array value of given length and correct element type where every element has the given element value. 
 
 \chapter{Concurrency}
 \label{chap:concurrency}
