@@ -32,7 +32,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
@@ -383,6 +382,10 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * Computes the symbolic initial value of a variable.
 	 * 
+	 * @param state
+	 *            The state where the computation happens.
+	 * @param pid
+	 *            The PID of the process that triggers the computation.
 	 * @param variable
 	 *            The variable to be evaluated.
 	 * @param dynamicType
@@ -415,7 +418,8 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Dereference a pointer.
+	 * Dereferences a pointer. Logs error when the dereference fails, like when
+	 * the pointer is null.
 	 * 
 	 * @param source
 	 *            Source code information for error report.
@@ -429,66 +433,77 @@ public class CommonEvaluator implements Evaluator {
 	 *            Is reading of output variable to be checked?
 	 * @param analysisOnly
 	 *            Is this called from pointer reachability analysis?
-	 * @return
+	 * @return A possibly new state and the value of memory space pointed by the
+	 *         pointer.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation dereference(CIVLSource source, State state,
 			String process, SymbolicExpression pointer, boolean checkOutput,
 			boolean analysisOnly) throws UnsatisfiablePathConditionException {
-		// how to figure out if pointer is null pointer?
-		try {
-			int sid = symbolicUtil.getDyscopeId(source, pointer);
-
-			if (sid < 0) {
-				errorLogger.logSimpleError(source, state, process,
-						symbolicUtil.stateToString(state),
-						ErrorKind.DEREFERENCE,
-						"Attempt to dereference pointer into scope"
-								+ " which has been removed from state");
-				throw new UnsatisfiablePathConditionException();
-			} else {
-				int vid = symbolicUtil.getVariableId(source, pointer);
-				ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
-				SymbolicExpression variableValue;
-				SymbolicExpression deref;
-
-				if (!analysisOnly && checkOutput) {
-					Variable variable = state.getScope(sid).lexicalScope()
-							.variable(vid);
-
-					if (variable.isOutput()) {
-						errorLogger.logSimpleError(source, state, process,
-								symbolicUtil.stateToString(state),
-								ErrorKind.OUTPUT_READ,
-								"Attempt to read output variable "
-										+ variable.name().name());
-						throw new UnsatisfiablePathConditionException();
-					}
-				}
-				variableValue = state.getScope(sid).getValue(vid);
-				try {
-					deref = universe.dereference(variableValue, symRef);
-				} catch (SARLException e) {
-					errorLogger.logSimpleError(
-							source,
-							state,
-							process,
-							symbolicUtil.stateToString(state),
-							ErrorKind.DEREFERENCE,
-							"Illegal pointer dereference "
-									+ source.getSummary());
-					throw new UnsatisfiablePathConditionException();
-				}
-				return new Evaluation(state, deref);
-			}
-		} catch (CIVLInternalException e) {
+		if (symbolicUtil.isNullPointer(pointer)) {
 			CIVLExecutionException se = new CIVLExecutionException(
-					ErrorKind.DEREFERENCE, Certainty.MAYBE, process,
-					"Undefined pointer value?",
+					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
+					"Attempt to deference a null pointer",
 					this.symbolicUtil.stateToString(state), source);
 
 			errorLogger.reportError(se);
 			throw new UnsatisfiablePathConditionException();
+		} else {
+			try {
+				int sid = symbolicUtil.getDyscopeId(source, pointer);
+
+				if (sid < 0) {
+					errorLogger.logSimpleError(source, state, process,
+							symbolicUtil.stateToString(state),
+							ErrorKind.DEREFERENCE,
+							"Attempt to dereference pointer into scope"
+									+ " which has been removed from state");
+					throw new UnsatisfiablePathConditionException();
+				} else {
+					int vid = symbolicUtil.getVariableId(source, pointer);
+					ReferenceExpression symRef = symbolicUtil
+							.getSymRef(pointer);
+					SymbolicExpression variableValue;
+					SymbolicExpression deref;
+
+					if (!analysisOnly && checkOutput) {
+						Variable variable = state.getScope(sid).lexicalScope()
+								.variable(vid);
+
+						if (variable.isOutput()) {
+							errorLogger.logSimpleError(source, state, process,
+									symbolicUtil.stateToString(state),
+									ErrorKind.OUTPUT_READ,
+									"Attempt to read output variable "
+											+ variable.name().name());
+							throw new UnsatisfiablePathConditionException();
+						}
+					}
+					variableValue = state.getScope(sid).getValue(vid);
+					try {
+						deref = universe.dereference(variableValue, symRef);
+					} catch (SARLException e) {
+						errorLogger.logSimpleError(
+								source,
+								state,
+								process,
+								symbolicUtil.stateToString(state),
+								ErrorKind.DEREFERENCE,
+								"Illegal pointer dereference "
+										+ source.getSummary());
+						throw new UnsatisfiablePathConditionException();
+					}
+					return new Evaluation(state, deref);
+				}
+			} catch (CIVLInternalException e) {
+				CIVLExecutionException se = new CIVLExecutionException(
+						ErrorKind.DEREFERENCE, Certainty.MAYBE, process,
+						"Undefined pointer value?",
+						this.symbolicUtil.stateToString(state), source);
+
+				errorLogger.reportError(se);
+				throw new UnsatisfiablePathConditionException();
+			}
 		}
 	}
 
@@ -501,6 +516,8 @@ public class CommonEvaluator implements Evaluator {
 	 *            a CIVL model state
 	 * @param pid
 	 *            PID of the process in which this evaluation occurs
+	 * @param process
+	 *            The name of the process for error report.
 	 * @param operand
 	 *            an expression of pointer type
 	 * @return the referenced value
@@ -513,10 +530,11 @@ public class CommonEvaluator implements Evaluator {
 		if (eval.value.isNull()) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
-					"Attempt to dereference an uninitialized object.",
+					"Attempt to dereference an uninitialized pointer.",
 					symbolicUtil.stateToString(state), operand.getSource());
 
 			this.errorLogger.reportError(err);
+			// TODO: throw UnsatisfiablePathConditionException?
 		}
 		return dereference(operand.getSource(), eval.state, process,
 				eval.value, true);
@@ -592,7 +610,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluates an address-of expression "&e".
+	 * Evaluates an address-of expression <code>&e</code>.
 	 * 
 	 * @param state
 	 *            the pre-state
@@ -602,7 +620,7 @@ public class CommonEvaluator implements Evaluator {
 	 *            the address-of expression
 	 * @return the symbolic expression of pointer type resulting from evaluating
 	 *         the address of the argument and a new state (if there is
-	 *         side-effect, otherwise just return the orginal state)
+	 *         side-effect, otherwise just return the original state)
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateAddressOf(State state, int pid,
@@ -612,7 +630,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluates a short-circuit "and" expression "p&&q".
+	 * Evaluates a short-circuit "and" expression <code>p && q</code>.
 	 * 
 	 * @param state
 	 *            the pre-state
@@ -665,7 +683,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluate an array literal expression.
+	 * Evaluates an array literal expression.
 	 * 
 	 * @param state
 	 *            The state of the program.
@@ -696,12 +714,14 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluate a binary expression.
+	 * Evaluates a binary expression.
 	 * 
 	 * @param state
 	 *            The state of the program.
 	 * @param pid
-	 *            The pid of the currently executing process.
+	 *            The PID of the currently executing process.
+	 * @param process
+	 *            The name of the process for error report.
 	 * @param expression
 	 *            The binary expression.
 	 * @return A symbolic expression for the binary operation and a new state if
@@ -747,10 +767,14 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * Evaluates a bit and expression.
 	 * 
-	 * @param state The state where the evaluation happens.
-	 * @param pid The PID of the process that triggers the evaluation.
-	 * @param expression The bit and expression to be evaluated.
-	 * @return
+	 * @param state
+	 *            The state where the evaluation happens.
+	 * @param pid
+	 *            The PID of the process that triggers the evaluation.
+	 * @param expression
+	 *            The bit and expression to be evaluated.
+	 * @return A possibly new state resulted from side effects during the
+	 *         evaluation and the value of the bit and expression.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateBitand(State state, int pid,
@@ -766,6 +790,19 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, result);
 	}
 
+	/**
+	 * Evaluates a bit complement expression.
+	 * 
+	 * @param state
+	 *            The state where the evaluation happens.
+	 * @param pid
+	 *            The PID of the process that triggers the evaluation.
+	 * @param expression
+	 *            The bit complement expression to be evaluated.
+	 * @return A possibly new state resulted from side effects during the
+	 *         evaluation and the value of the bit complement expression.
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Evaluation evaluateBitcomplement(State state, int pid,
 			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -780,6 +817,19 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, result);
 	}
 
+	/**
+	 * Evaluates a bit or expression.
+	 * 
+	 * @param state
+	 *            The state where the evaluation happens.
+	 * @param pid
+	 *            The PID of the process that triggers the evaluation.
+	 * @param expression
+	 *            The bit or expression to be evaluated.
+	 * @return A possibly new state resulted from side effects during the
+	 *         evaluation and the value of the bit or expression.
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Evaluation evaluateBitor(State state, int pid,
 			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -793,6 +843,19 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, result);
 	}
 
+	/**
+	 * Evaluates a bit xor expression.
+	 * 
+	 * @param state
+	 *            The state where the evaluation happens.
+	 * @param pid
+	 *            The PID of the process that triggers the evaluation.
+	 * @param expression
+	 *            The bit xor expression to be evaluated.
+	 * @return A possibly new state resulted from side effects during the
+	 *         evaluation and the value of the bit xor expression.
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Evaluation evaluateBitxor(State state, int pid,
 			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -823,6 +886,19 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, universe.bool(expression.value()));
 	}
 
+	/**
+	 * Evaluates a bound variable expression.
+	 * 
+	 * @param state
+	 *            The state where the evaluation happens.
+	 * @param pid
+	 *            The PID of the process that triggers the evaluation.
+	 * @param expression
+	 *            The bound variable expression to be evaluated.
+	 * @return A possibly new state resulted from side effects during the
+	 *         evaluation and the value of the bound variable expression.
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Evaluation evaluateBoundVariable(State state, int pid,
 			BoundVariableExpression expression) {
 		Iterator<SymbolicConstant> boundVariableIterator = boundVariables
@@ -846,14 +922,18 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
+	 * Evaluates a cast expression.
 	 * 
 	 * @param state
 	 *            The state of the program.
 	 * @param pid
 	 *            The pid of the currently executing process.
+	 * @param process
+	 *            The process name for error report.
 	 * @param expression
 	 *            The cast expression.
-	 * @return The symbolic representation of the cast expression.
+	 * @return A possibly new state resulted from side effects during the
+	 *         evaluation and the value of the cast expression.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateCast(State state, int pid, String process,
@@ -942,7 +1022,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluate a char literal expression.
+	 * Evaluates a char literal expression.
 	 * 
 	 * @param state
 	 *            The state of the program.
@@ -950,7 +1030,8 @@ public class CommonEvaluator implements Evaluator {
 	 *            The pid of the currently executing process.
 	 * @param expression
 	 *            The char literal expression.
-	 * @return The symbolic representation of the char literal expression.
+	 * @return A possibly new state resulted from side effects during the
+	 *         evaluation and the value of the char literal expression.
 	 */
 	private Evaluation evaluateCharLiteral(State state, int pid,
 			CharLiteralExpression expression) {
@@ -958,128 +1039,18 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluates a conditional expression.
-	 * 
-	 * @param state
-	 *            The state of the program.
-	 * @param pid
-	 *            the pid of the currently executing process.
-	 * @param expression
-	 *            The conditional expression.
-	 * @return A symbolic expression for the result of the conditional.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation evaluateCond(State state, int pid,
-			ConditionalExpression expression)
-			throws UnsatisfiablePathConditionException {
-		return evaluateConditional(state, pid, expression.getCondition(),
-				expression.getTrueBranch(), expression.getFalseBranch());
-	}
-
-	/**
-	 * <p>
-	 * General method for evaluating "short-circuited" conditional expressions
-	 * that may involve logged side-effects on the path condition. These include
-	 * expressions of the form <code>c?t:f</code>, <code>p&&q</code>, and
-	 * <code>p||q</code>. The latter two are a special case of the first:
-	 * <ul>
-	 * <li><code>p&&q</code> is equivalent to <code>p?q:false</code></li>
-	 * <li><code>p||q</code> is equivalent to <code>p?true:q</code></li>
-	 * </ul>
-	 * </p>
-	 * 
-	 * <p>
-	 * Say the path condition is <code>p</code> and the expression is
-	 * <code>(c?t:f)</code>.
-	 * </p>
-	 * 
-	 * <p>
-	 * If <code>c</code> is valid (assuming <code>p</code>), the result is just
-	 * the result of evaluating <code>t</code>. If <code>!c</code> is valid, the
-	 * result is just the result of evaluating <code>f</code>. The subtle case
-	 * is where neither of those is valid, in which case, proceed as follows:
-	 * </p>
-	 * 
-	 * <p>
-	 * When evaluating <code>t</code>, assume <code>c</code> holds. When
-	 * evaluating <code>f</code>, assume <code>!c</code> holds. Say
-	 * <code>eval(p&&c, t)</code> results in <code>(p1,v1)</code> and
-	 * <code>eval(p&&!c,f)</code> results in <code>(p2,v2)</code>. Then return
-	 * <code>(p1||p2, (c?v1:v2))</code>.
-	 * </p>
-	 * 
-	 * <p>
-	 * Example: <code>x==0 ? 1/w + y/(1-x) : 1/z + y/x</code>, <code>p</code>=
-	 * <code>true</code>. <code>eval(p&&c, t)</code> yields
-	 * <code>(x==0 && w!=0, 1/w+y/(1-x))</code> together with a logged warning
-	 * that <code>w!=0</code> has been assumed. <code>eval(p&&!c,f)</code>
-	 * yields <code>(x!=0 && z!=0, 1/z+y/x)</code> together with a logged
-	 * warning that <code>z!=0</code> has been assumed. The resulting path
-	 * condition is <code>(x==0 && w!=0) || (x!=0 && z!=0)</code>.
-	 * </p>
-	 * 
-	 * @param state
-	 *            the pre-state
-	 * @param pid
-	 *            PID of process evaluating this expression
-	 * @param condition
-	 *            the boolean conditional expression <code>c</code>
-	 * @param trueBranch
-	 *            the sub-expression which becomes the value if <code>c</code>
-	 *            evaluates to <code>true</code>
-	 * @param falseBranch
-	 *            the sub-expression which becomes the value if <code>c</code>
-	 *            evaluates to <code>false</code>
-	 * @return the evaluation with the properly updated state and the
-	 *         conditional value
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation evaluateConditional(State state, int pid,
-			Expression condition, Expression trueBranch, Expression falseBranch)
-			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluate(state, pid, condition);
-		BooleanExpression c = (BooleanExpression) eval.value;
-		BooleanExpression assumption = eval.state.getPathCondition();
-		Reasoner reasoner = universe.reasoner(assumption);
-
-		if (reasoner.isValid(c))
-			return evaluate(eval.state, pid, trueBranch);
-		if (reasoner.isValid(universe.not(c)))
-			return evaluate(eval.state, pid, falseBranch);
-		else {
-			BooleanExpression pc1 = universe.and(assumption, c);
-			State s1 = eval.state.setPathCondition(pc1);
-			BooleanExpression pc2 = universe.and(assumption, universe.not(c));
-			State s2 = eval.state.setPathCondition(pc2);
-			Evaluation eval1 = evaluate(s1, pid, trueBranch);
-			Evaluation eval2 = evaluate(s2, pid, falseBranch);
-			BooleanExpression newpc1 = eval1.state.getPathCondition();
-			BooleanExpression newpc2 = eval2.state.getPathCondition();
-
-			if (pc1 == newpc1 && pc2 == newpc2) {
-				// no side effects from evaluating either branch
-				// eval.state.pathCondition is assumption
-			} else {
-				eval.state = eval.state.setPathCondition(universe.or(
-						eval1.state.getPathCondition(),
-						eval2.state.getPathCondition()));
-			}
-			eval.value = universe.cond(c, eval1.value, eval2.value);
-			return eval;
-		}
-	}
-
-	/**
-	 * Evaluates a dereference expression "*e".
+	 * Evaluates a dereference expression <code>*e</code>.
 	 * 
 	 * @param state
 	 *            the pre-state
 	 * @param pid
 	 *            PID of the process performing the evaluation
+	 * @param process
+	 *            The process name for error report.
 	 * @param expression
 	 *            the dereference expression
-	 * @return the symbolic expression value that result from dereferencing the
-	 *         pointer value argument
+	 * @return the evaluation with the properly updated state and the value
+	 *         after the dereference.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateDereference(State state, int pid,
@@ -2514,9 +2485,9 @@ public class CommonEvaluator implements Evaluator {
 					(CharLiteralExpression) expression);
 			break;
 		case COND:
-			result = evaluateCond(state, pid,
-					(ConditionalExpression) expression);
-			break;
+			throw new CIVLInternalException("Conditional expressions should "
+					+ "be translated away by CIVL model builder ",
+					expression.getSource());
 		case DEREFERENCE:
 			result = evaluateDereference(state, pid, process,
 					(DereferenceExpression) expression);
