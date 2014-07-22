@@ -14,8 +14,10 @@ import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CivlForNode;
@@ -25,23 +27,17 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.BasicTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.common.CommonIdentifierNode;
-import edu.udel.cis.vsl.abc.ast.node.common.expression.CommonOperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.common.omp.CommonOmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.common.omp.CommonOmpParallelNode;
-import edu.udel.cis.vsl.abc.ast.node.common.statement.CommonExpressionStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.common.omp.CommonOmpWorkshareNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
-import edu.udel.cis.vsl.abc.ast.type.IF.StandardSignedIntegerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
-import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
-import edu.udel.cis.vsl.abc.ast.type.IF.TypeFactory;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
@@ -284,28 +280,30 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 						.identifierExpression(source, object)), null));
 	}
 	
-	private ExpressionStatementNode write(String variable) {
+	private ExpressionStatementNode write(String variable, String sharedName) {
 		ExpressionNode function = this.identifierExpression(source, "$omp_write");
-		ExpressionNode insidefFunction = this.identifierExpression(source, "$omp_identity_ref");
-		ExpressionNode addressOf = nodeFactory.newOperatorNode(source,
+		ExpressionNode addressOfVar = nodeFactory.newOperatorNode(source,
 				Operator.ADDRESSOF, Arrays.asList(this
 						.identifierExpression(source, variable)));
+		ExpressionNode addressOfTmp = nodeFactory.newOperatorNode(source,
+				Operator.ADDRESSOF, Arrays.asList(this
+						.identifierExpression(source, "tmp")));
 		return nodeFactory.newExpressionStatementNode(nodeFactory
-				.newFunctionCallNode(source, function, Arrays.asList(nodeFactory
-						.newFunctionCallNode(source, insidefFunction, Arrays.asList(this
-								.identifierExpression(source, variable + "_shared")), null), addressOf), null));
+				.newFunctionCallNode(source, function, Arrays.asList(this
+						.identifierExpression(source, sharedName + "_shared"), addressOfVar, addressOfTmp), null));
 	}
 	
-	private ExpressionStatementNode read(String variable) {
+	private ExpressionStatementNode read(String variable, String sharedName) {
 		ExpressionNode function = this.identifierExpression(source, "$omp_read");
-		ExpressionNode insidefFunction = this.identifierExpression(source, "$omp_identity_ref");
-		ExpressionNode addressOf = nodeFactory.newOperatorNode(source,
+		ExpressionNode addressOfVar = nodeFactory.newOperatorNode(source,
 				Operator.ADDRESSOF, Arrays.asList(this
 						.identifierExpression(source, variable)));
+		ExpressionNode addressOfTmp = nodeFactory.newOperatorNode(source,
+				Operator.ADDRESSOF, Arrays.asList(this
+						.identifierExpression(source, "tmp")));
 		return nodeFactory.newExpressionStatementNode(nodeFactory
-				.newFunctionCallNode(source, function, Arrays.asList(addressOf, nodeFactory
-						.newFunctionCallNode(source, insidefFunction, Arrays.asList(this
-								.identifierExpression(source, variable + "_shared")), null)), null));
+				.newFunctionCallNode(source, function, Arrays.asList(this
+						.identifierExpression(source, sharedName + "_shared"), addressOfVar, addressOfTmp), null));
 	}
 
 	/* ********************* Methods From BaseTransformer ****************** */
@@ -393,6 +391,12 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 					nodeFactory.newIdentifierNode(source, "_nthreads"), nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT),
 					add);
 			items.add(nthreads);
+			
+			VariableDeclarationNode loopDomain;
+			loopDomain = nodeFactory.newVariableDeclarationNode(source,
+					nodeFactory.newIdentifierNode(source, "loop_domain"), 
+					nodeFactory.newDomainTypeNode(source));
+			items.add(loopDomain);
 
 			//Declaring $omp_gteam gteam = $omp_gteam_create($here, nthreads);
 			gteamVar = this.gteamDeclaration();
@@ -433,26 +437,30 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			
 			//Declare $omp_shared x_shared = $omp_shared_create(team, x_gshared)
 			//for each shared variable "x"
-			for(ASTNode child : sharedList.children()){
-				VariableDeclarationNode sharedVar;
-				IdentifierNode c = ((IdentifierExpressionNode) child).getIdentifier();
+			if(sharedList != null){
+				for(ASTNode child : sharedList.children()){
+					VariableDeclarationNode sharedVar;
+					IdentifierNode c = ((IdentifierExpressionNode) child).getIdentifier();
 
-				sharedVar = this.sharedDeclaration(c.name());
-				parForItems.add(sharedVar);
+					sharedVar = this.sharedDeclaration(c.name());
+					parForItems.add(sharedVar);
+				}
 			}
 			
 			//Declare local copies of the private variables
-			for(ASTNode child : privateList.children()){
-				VariableDeclarationNode localPrivate;
+			if(privateList != null){
+				for(ASTNode child : privateList.children()){
+					VariableDeclarationNode localPrivate;
 
-				IdentifierNode c = ((IdentifierExpressionNode) child).getIdentifier();
-				TypeNode privateType = ((VariableDeclarationNode) c.getEntity().getFirstDeclaration()).getTypeNode().copy();
-				IdentifierNode privateIdentifer = nodeFactory.newIdentifierNode(source, "_" + c.name());
-				localPrivate = nodeFactory.newVariableDeclarationNode(source,
-						privateIdentifer, privateType);
-				parForItems.add(localPrivate);
+					IdentifierNode c = ((IdentifierExpressionNode) child).getIdentifier();
+					TypeNode privateType = ((VariableDeclarationNode) c.getEntity().getFirstDeclaration()).getTypeNode().copy();
+					IdentifierNode privateIdentifer = nodeFactory.newIdentifierNode(source, "_" + c.name());
+					localPrivate = nodeFactory.newVariableDeclarationNode(source,
+							privateIdentifer, privateType);
+					parForItems.add(localPrivate);
+				}
 			}
-			
+
 			int i = 0;
 			for(ASTNode child : children) {
 				node.removeChild(i);
@@ -470,18 +478,19 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 
 				parForItems.add(destroy("shared", c.name() + "_shared"));
 			}
-			
-		    //$omp_team_destroy(team);
+
+			//$omp_team_destroy(team);
 			parForItems.add(destroy(TEAM, TEAM));
-			
+
 			StatementNode parForBody;
 			parForBody = nodeFactory.newCompoundStatementNode(source, parForItems);
-			//DeclarationListNode dln = null;
-			//nodeFactory.newForLoopInitializerNode(source, declarations);
 
-			cfn = nodeFactory.newCivlForNode(source, true, (DeclarationListNode) initializerNode, nodeFactory.newRegularRangeNode(source, nodeFactory.newIntegerConstantNode(source, "0"), nodeFactory.newIdentifierExpressionNode(source, 
-					nodeFactory.newIdentifierNode(source, NTHREADS))), parForBody, null);
+			cfn = nodeFactory.newCivlForNode(source, true, (DeclarationListNode) initializerNode, 
+					nodeFactory.newIdentifierExpressionNode(source, 
+							nodeFactory.newIdentifierNode(source, "loop_domain")), parForBody, null);
+
 			items.add(cfn);
+			//nodeFactory.new
 			
 			// $omp_shared_destroy(x_gshared);
 			//for each shared variable "x"
@@ -518,12 +527,17 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 					nodeFactory.newIdentifierNode(source, "loop_domain"), 
 					nodeFactory.newDomainTypeNode(source));
 			items.add(loopDomain);
+			ExpressionNode ompArriveLoop = nodeFactory.newCastNode(source, nodeFactory.newDomainTypeNode(source, 
+					nodeFactory.newIntegerConstantNode(source, "0")), 			nodeFactory.newFunctionCallNode(source, this.identifierExpression(source, 
+							"$omp_arrive_loop"), Arrays.asList(this.identifierExpression(source, TEAM), 
+									this.identifierExpression(source, "loop_domain")), null));
+
 			
 			VariableDeclarationNode myIters;
 			myIters = nodeFactory.newVariableDeclarationNode(source,
 					nodeFactory.newIdentifierNode(source, "my_iters"), 
 					nodeFactory.newDomainTypeNode(source, 
-							nodeFactory.newIntegerConstantNode(source, "1")));
+							nodeFactory.newIntegerConstantNode(source, "1")), ompArriveLoop);
 			items.add(myIters);
 			
 			CivlForNode cfn;
@@ -555,7 +569,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			items.add(barrierAndFlush(TEAM));
 			
 			pragmaBody = nodeFactory.newCompoundStatementNode(source, items);
-			
+			children = pragmaBody.children();
 			int index = node.childIndex();
 			ASTNode parent = node.parent();
 			parent.setChild(index, pragmaBody);
@@ -590,24 +604,155 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				ASTNode parent = node.parent();
 				parent.setChild(index, barrierAndFlush);
 			}
-		} else if(node instanceof IdentifierNode && privateIDs != null){
-			for(ASTNode child : privateIDs.children()){
-				IdentifierNode c = ((IdentifierExpressionNode) child).getIdentifier();
-				if(c.name().equals(((IdentifierNode) node).name())){
-					((IdentifierNode) node).setName("_" + ((IdentifierNode) node).name());
+		} else if (node instanceof CommonOmpWorkshareNode){ 
+			Iterable<ASTNode> children = node.children();
+			String workshareKind = ((CommonOmpWorkshareNode) node).ompWorkshareNodeKind().toString();
+			CompoundStatementNode body;
+			LinkedList<BlockItemNode> items = new LinkedList<>();
+			if(workshareKind.equals("SECTIONS")){
+				int numberSections = 0;
+				CompoundStatementNode pragmaBody = (CompoundStatementNode) node.child(7);
+				ArrayList<LinkedList<BlockItemNode>> sectionsChildren = new ArrayList<LinkedList<BlockItemNode>>(); 
+				for(ASTNode child : pragmaBody.children()){
+					if(child instanceof CommonOmpWorkshareNode){
+						if(((CommonOmpWorkshareNode) child).ompWorkshareNodeKind().toString().equals("SECTION")){
+							LinkedList<BlockItemNode> sectionItems = new LinkedList<>();
+							int i = 0;
+							for(ASTNode sectionChild : child.children()) {
+								child.removeChild(i);
+								sectionItems.add((BlockItemNode) sectionChild);
+								i++;
+							}
+							sectionsChildren.add(sectionItems);
+							numberSections++;
+						}
+					}
+				}
+				
+				ExpressionNode ompArriveSections = nodeFactory.newFunctionCallNode(source, this.identifierExpression(source, 
+								"$omp_arrive_sections"), Arrays.asList(this.identifierExpression(source, TEAM), 
+										this.identifierExpression(source, String.valueOf(numberSections))), null);
+				
+				VariableDeclarationNode my_secs;
+				my_secs = nodeFactory.newVariableDeclarationNode(source,
+						nodeFactory.newIdentifierNode(source, "my_secs"), 
+						nodeFactory.newDomainTypeNode(source, 
+								nodeFactory.newIntegerConstantNode(source, "1")), ompArriveSections);
+				items.add(my_secs);
+				
+				CivlForNode cfn;
+				
+				List<BlockItemNode> forItems = new LinkedList<>();
+				
+				// for loop;
+				ForLoopInitializerNode initializerNode = nodeFactory
+						.newForLoopInitializerNode(source,
+								Arrays.asList(nodeFactory.newVariableDeclarationNode(
+										source, nodeFactory.newIdentifierNode(source,
+												"i"), nodeFactory.newBasicTypeNode(
+														source, BasicTypeKind.INT))));
+				
+				StatementNode forBody;
+				StatementNode switchBody;
+				List<BlockItemNode> switchItems = new LinkedList<>();
+				int caseNumber = 0;
+				for(LinkedList<BlockItemNode> tempChildren : sectionsChildren){
+					StatementNode caseBody;
+					List<BlockItemNode> caseItems = tempChildren;
+					caseItems.add(nodeFactory.newBreakNode(source));
+					caseBody = nodeFactory.newCompoundStatementNode(source, caseItems);
+					SwitchLabelNode labelDecl = nodeFactory.newCaseLabelDeclarationNode(source, nodeFactory.newIntegerConstantNode(source, String.valueOf(caseNumber)), caseBody);
+					switchItems.add(nodeFactory.newLabeledStatementNode(source, labelDecl, caseBody));
+					System.out.println("HERE");
+				}
+				switchBody = nodeFactory.newCompoundStatementNode(source, switchItems);
+				forItems.add(nodeFactory.newSwitchNode(source, this.identifierExpression(source, "i"), switchBody));
+				forBody = nodeFactory.newCompoundStatementNode(source, forItems);
+				
+				cfn = nodeFactory.newCivlForNode(source, true, (DeclarationListNode) initializerNode, nodeFactory.newIdentifierExpressionNode(source, 
+								nodeFactory.newIdentifierNode(source, "my_secs")), forBody, null);
+				items.add(cfn);
+				
+				items.add(barrierAndFlush(TEAM));
+				
+				CompoundStatementNode sectionBody = nodeFactory.newCompoundStatementNode(source, items);
+				
+				int index = node.childIndex();
+				ASTNode parent = node.parent();
+				parent.setChild(index, sectionBody);
+
+				for (ASTNode child : children) {
+					replaceOMPPragmas(child, privateIDs, sharedIDs);
+				}
+				
+				
+			}
+			if(workshareKind.equals("SINGLE")){
+				
+				ExpressionNode arriveSingle = nodeFactory.newFunctionCallNode(
+						source,
+						this.identifierExpression(source, "$omp_arrive_single"),
+						Arrays.asList(this.identifierExpression(source, TEAM)), null);
+				 items.add(nodeFactory.newVariableDeclarationNode(source,
+						nodeFactory.newIdentifierNode(source, "owner"), 
+						nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT),
+						arriveSingle));
+				 
+					List<ExpressionNode> operands = new ArrayList<ExpressionNode>();
+					operands.add(this.identifierExpression(source, "owner"));
+					operands.add(this.identifierExpression(source, "_tid"));
+					int i = 0;
+					CompoundStatementNode ifBody;
+					LinkedList<BlockItemNode> ifItems = new LinkedList<>();
+					for(ASTNode child : node.children()) {
+						node.removeChild(i);
+						ifItems.add((BlockItemNode) child);
+						i++;
+					}
+					ifBody = nodeFactory.newCompoundStatementNode(source, ifItems);
+					
+					IfNode ifStatement = nodeFactory.newIfNode(source, 
+							nodeFactory.newOperatorNode(source, Operator.EQUALS, operands), ifBody);
+					items.add(ifStatement);
+					items.add(barrierAndFlush(TEAM));
+					body = nodeFactory.newCompoundStatementNode(source, items);
+				 
+					int index = node.childIndex();
+					ASTNode parent = node.parent();
+					parent.setChild(index, body);
+
+					for (ASTNode child : children) {
+						replaceOMPPragmas(child, privateIDs, sharedIDs);
+					}
+				
+				
+			}
+		} else if(node instanceof IdentifierNode){
+			if(privateIDs != null){
+				for(ASTNode child : privateIDs.children()){
+					IdentifierNode c = ((IdentifierExpressionNode) child).getIdentifier();
+					if(c.name().equals(((IdentifierNode) node).name())){
+						((IdentifierNode) node).setName("_" + ((IdentifierNode) node).name());
+					}
 				}
 			}
-			Iterable<ASTNode> children = node.children();
-			for (ASTNode child : children) {
-				replaceOMPPragmas(child, privateIDs, sharedIDs);
+			if(sharedIDs != null && ((IdentifierNode) node).getEntity() != null){
+				for(ASTNode child : sharedIDs.children()){
+					IdentifierNode c = ((IdentifierExpressionNode) child).getIdentifier();
+					if(c.name().equals(((IdentifierNode) node).name())){
+						ASTNode parent = getParentOfID((IdentifierNode) node);
+						CompoundStatementNode readBody = sharedRead((IdentifierNode) node, (StatementNode) parent);
+						int index = parent.childIndex();
+						ASTNode parentNode = parent.parent();
+						parentNode.setChild(index, readBody);
+					}
+				}
 			}
-		} else if(node instanceof ExpressionStatementNode && sharedIDs != null && node.child(0) instanceof OperatorNode && ((OperatorNode)node.child(0)).getOperator().toString().equals("ASSIGN")){			
-			containsSharedWrite((OperatorNode) node.child(0), sharedIDs, 0);
 			
-			Iterable<ASTNode> children = node.children();
-			for (ASTNode child : children) {
-				replaceOMPPragmas(child, privateIDs, sharedIDs);
-			}
+		} else if(node instanceof ExpressionStatementNode && sharedIDs != null && node.child(0) instanceof OperatorNode && ((OperatorNode)node.child(0)).getOperator().toString().equals("ASSIGN")){			
+			containsSharedWrite((OperatorNode) node.child(0), sharedIDs, 0, new ArrayList<String>());
+			replaceOMPPragmas(node.child(0).child(1), privateIDs, sharedIDs);
+
 		} else if(node != null){
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
@@ -617,7 +762,60 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 
 	}
 	
-	private void containsSharedWrite(OperatorNode node, SequenceNode<IdentifierExpressionNode> sharedIDs, int nodesDeep){
+	private ASTNode getParentOfID(IdentifierNode node){
+		ASTNode parent = node.parent();
+		while(!(parent instanceof StatementNode)){
+			parent = parent.parent();
+		}
+		return parent;
+	}
+	
+	private CompoundStatementNode sharedRead(IdentifierNode node, StatementNode parentStatement){
+		List<BlockItemNode> items = new LinkedList<>();
+		CompoundStatementNode bodyRead;
+		
+		VariableDeclarationNode temp;
+		Type currentType = node.getEntity().getType();
+		int nodesDeep = 0;
+		while(currentType instanceof ArrayType){
+			currentType = ((ArrayType) currentType).getElementType();
+			nodesDeep++;
+		}
+		
+		TypeNode tempType = ((VariableDeclarationNode) node.getEntity().getFirstDeclaration()).getTypeNode().copy();
+		IdentifierNode tempID = nodeFactory.newIdentifierNode(source, "tmp");
+		temp = nodeFactory.newVariableDeclarationNode(source, tempID, tempType);
+		
+		items.add(temp);
+		if(nodesDeep == 0){
+			items.add(read(node.name(), node.name()));
+		} else {
+			ASTNode parent = node.parent();
+			StringBuilder k = new StringBuilder();
+			k.append(node.name());
+			while(nodesDeep > 0){
+				parent = parent.parent();
+				if(parent instanceof OperatorNode){
+					OperatorNode on = (OperatorNode)parent;
+					k.append("[" + ((IntegerConstantNode) on.child(1)).getStringRepresentation() + "]");
+				}
+				nodesDeep--;
+			}
+			items.add(read(k.toString(), node.name()));
+		}
+		node.setName("tmp");
+		
+		StatementNode copy = parentStatement.copy();
+		items.add(copy);
+		
+		bodyRead = nodeFactory.newCompoundStatementNode(source, items);
+		return bodyRead;
+	}
+	
+	
+	
+	
+	private void containsSharedWrite(OperatorNode node, SequenceNode<IdentifierExpressionNode> sharedIDs, int nodesDeep, ArrayList<String> arrayIndices){
 		IdentifierExpressionNode origNode = null;
 		if(node.child(0) instanceof IdentifierExpressionNode){
 			origNode = (IdentifierExpressionNode) node.child(0);
@@ -631,7 +829,6 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 					Type currentType = in.getEntity().getType();
 					while(currentType instanceof ArrayType){
 						currentType = ((ArrayType) currentType).getElementType();
-
 					}
 					BasicTypeKind baseTypeKind = ((StandardBasicType) currentType).getBasicTypeKind();
 					
@@ -647,7 +844,20 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 					List<BlockItemNode> items = new LinkedList<>();;
 					CompoundStatementNode bodyWrite;
 					items.add(temp);
-					items.add(write(c.name()));
+
+					if(nodesDeep == 0){
+						items.add(write(c.name(), c.name()));
+					} else {
+						StringBuilder k = new StringBuilder();
+						k.append(c.name());
+						int j = 0;
+						while(j < (nodesDeep - 1)){
+							k.append("[" + arrayIndices.get(j) + "]");
+							j++;
+						}
+						items.add(write(k.toString(), c.name()));
+					}
+					
 					bodyWrite = nodeFactory.newCompoundStatementNode(source, items);
 					ASTNode expNode = node.parent();
 					for(int i=0; i < nodesDeep; i++){
@@ -659,7 +869,11 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				}
 			}
 		} else if(node.child(0) instanceof OperatorNode) {
-			containsSharedWrite((OperatorNode) node.child(0), sharedIDs, nodesDeep + 1);
+			if(((OperatorNode)node.child(0)).getOperator().toString().equals("SUBSCRIPT")){
+				OperatorNode array = (OperatorNode) node.child(0);
+				arrayIndices.add(((IntegerConstantNode) array.child(1)).getStringRepresentation());
+			}
+			containsSharedWrite((OperatorNode) node.child(0), sharedIDs, nodesDeep + 1, arrayIndices);
 		}
 	}
 
