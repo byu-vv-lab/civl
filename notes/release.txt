@@ -52,19 +52,7 @@ manually by executing from vsl, in ~/scripts/autotest:
 
 where 121 is whatever the revision number was for the release.
 
-10. Edit svn://vsl.cis.udel.edu/vsl/web/civl/index.html:
-    
-    - use the new release in the latest stable release of Download section:
-    <li><a href="test/0.2/latest/release">Latest stable release</a></li>
-    
-    - use the new released manual in the Documentation section:
-    <li>The CIVL Manual: <a href="test/0.8/latest/release/civl-manual-0.8_711.pdf">
-        latest stable version </a> </li>
-        
-   Commit the change, and then on vsl, cd /home/www/vsl/civl and svn update to 
-   update index.html to the latest version.
-
-11. If there are any problems, you can continue to modify the branch.
+10. If there are any problems, you can continue to modify the branch.
 For example, to incorporate changes from the trunk, update or check
 out a fresh local copy of the whole project, change into the branch
 directory, and type svn merge svn://vsl.cis.udel.edu/civl/trunk See
@@ -72,15 +60,15 @@ the Subversion Book for details on merging changes. Then commit these
 changes as usual. After each commit, autotest should run automatically
 and produce the new release.
 
-12. Test the release: download it from the web page, move the
+11. Test the release: download it from the web page, move the
 executable file "civl" somewhere in your path (e.g., /tools/bin)
 and execute it on an example, e.g., "civl verify examples/barrier.cvl".
 
-13. Update Trac milestones: go to https://vsl.cis.udel.edu/trac/civl/,
+12. Update Trac milestones: go to https://vsl.cis.udel.edu/trac/civl/,
 log in, click on Roadmap, click on the milestone name (v0.2, for
 example), and edit it to indicate completed. You can also indicate
 that open tickets for that milestone be pushed to the next milestone.
 Update other milestones (for example, pushing the dates forward) as
 desired.
 
-14. Send an email to civl-users announcing the new release.
+13. Send an email to civl-users announcing the new release.
