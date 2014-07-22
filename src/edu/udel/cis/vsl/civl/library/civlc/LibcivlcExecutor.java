@@ -143,6 +143,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression pointer = argumentValues[0];
 		NumericExpression size = (NumericExpression) argumentValues[1];
+		NumericExpression count = null; //count = size / sizeof(datatype)
 		SymbolicType elementType;
 		SymbolicUnionType symbolicBundleType;
 		SymbolicExpression array;
@@ -175,7 +176,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			throw new CIVLSyntaxException(
 					"Packing a NULL message with size larger than 0", source);
 		} else {
-			// elementType = evaluator.referencedType(source, state, pointer);
+			//elementType = evaluator.referencedType(source, state, pointer);
 			// pureElementType = universe.pureType(elementType);
 			// array = getArrayFromPointer(state, process, pointerExpr, pointer,
 			// size, source);
@@ -197,13 +198,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			}
 			array = symbolicUtil.arrayUnrolling(state, process, array, source);
 			arrayLength = universe.length(array);
+			elementType = universe.arrayRead(array, zero).type();
+			count = universe.divide(size, symbolicUtil.sizeof(arguments[1].getSource(), elementType));
 			arrayIndex = libevaluator.getIndexInUnrolledArray(state, process,
 					pointer, arrayLength, source);
-			array = symbolicUtil.getSubArray(array, arrayIndex, arrayLength,
+			array = symbolicUtil.getSubArray(array, arrayIndex, universe.add(arrayIndex, count),
 					state, process, source);
 			symbolicBundleType = bundleType.getDynamicType(universe);
-			index = bundleType.getIndexOf(universe.arrayRead(array, zero)
-					.type());
+			index = bundleType.getIndexOf(elementType);
 			indexObj = universe.intObject(index);
 			bundle = universe.unionInject(symbolicBundleType, indexObj, array);
 		}

@@ -1392,7 +1392,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 					return array;
 			}
 		} else
-			universe.array(array.type(), Arrays.asList(array));
+			return universe.array(array.type(), Arrays.asList(array));
 
 		unrolledElementList = this.arrayUnrollingWorker(state, array,
 				civlsource);
@@ -1474,6 +1474,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			if (reasoner
 					.isValid(universe.equals(universe.length(oldArray), one))) {
 				return universe.arrayRead(oldArray, zero);
+			} else {
+				return oldArray;
 			}
 		} else {
 			SymbolicType elementType = ((SymbolicArrayType) type).elementType();
@@ -1516,7 +1518,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			}
 			return universe.array(newElements.get(0).type(), newElements);
 		}
-		throw new CIVLInternalException("Array casting failed", civlsource);
+		//throw new CIVLInternalException("Array casting failed", civlsource);
 	}
 
 	@Override
@@ -2127,5 +2129,4 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return result;
 		}
 	}
-
 }
