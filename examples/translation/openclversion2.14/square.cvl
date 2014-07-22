@@ -92,6 +92,7 @@ void workfunc(size_t local, size_t global, cl_kernel param)
 */
 int clEnqueueNDRangeKernel(cl_kernel kernel, size_t global, size_t local)
 {
+
   $assert(global % local == 0);
   int numworkgroups = global/local;
   cl_kernel param[numworkgroups];
@@ -126,6 +127,7 @@ int clEnqueueNDRangeKernel(cl_kernel kernel, size_t global, size_t local)
   }
   
   return CL_SUCCESS;
+  
 }
 
 
