@@ -2009,7 +2009,8 @@ public class CommonEvaluator implements Evaluator {
 								false, true);
 						pointerValue = eval.value;
 						state = eval.state;
-						if (pointerValue.type() != null
+						if (pointerValue.operator() == SymbolicOperator.CONCRETE
+								&& pointerValue.type() != null
 								&& pointerValue.type().equals(pointerType))
 							findPointersInExpression(pointerValue, set, state,
 									process);
