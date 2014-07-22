@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v 0.11
+                               v 0.12
 
 ------------------------------ Overview -------------------------------
 
@@ -37,17 +37,39 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.10 -------------------------
-1. Fix several bugs: a bug in side effect remover for malloc calls; 
-   a bug in implicit conversion when assigning an integer variable with a
-   real value; issue with NULL pointer in bundle_pack(); etc.
-2. New system functions for barrier: $gbarrier_create($scope, int), 
-   $barrier_create($scope, $gbarrier, int), $barrier_call($barrier), etc.
-   See Section 7.3.3 of CIVL manual and examples/languageFeatures/civlBarrier.cvl
-   for more details.
-3. New printing of dynamic scope, processes and pointers. See Section 14.2 of 
-   CIVL manual for more details.
-.
+-------------------------- Updates from v 0.11 -------------------------
+
+1. Bugs fixed:
+   better handling for the return value of the main function;
+   error handling for $malloc statements that are casted to void*;
+   correct translation of pointer subtraction;
+   better handling for implicit array-to-pointer conversion;
+   various bugs of the side-effect remover;
+   supporting boolean/int conversion and comparison;
+   supporting the implicit initialization of static variables;
+   improvement of the clarity of error messages for various circumstances;
+   improvement of the format analysis of printf/fprintf;
+   improvement of the $bundle_pack function to allow non-concrete indexes;
+   etc.
+
+2. New types and language constructs: $range, $domain, $for, $parfor, etc.
+   Refer to CIVL manual for details: Section 6.1.4 for $range and $domain,
+   Section 6.3.3 for $for, and Section 7.3 for $parfor.
+   
+3. Enhancement:
+   supports $gcomm/$gbarrier objects with a non-concrete number of processes;
+   improves pointer addition to support multi-dimension arrays;
+   considers special situations for $free/free and reports error when there is
+   undefined behavior;
+   
+4. New system functions:
+   _Bool $equals(void *x, void *y);
+   _Bool $contains(void *ptr1, void *ptr2);
+   void $array_init(void *array, int length, void *elementValue);
+   Refer to Section 6.4.2 of CIVL manual for details.
+  
+5. New features:
+   GUI mode for replay a trace. Just type "civl replay *.cvl -gui" and hit enter.
 
 ------------------------- Binary Installation -------------------------
 
@@ -100,7 +122,16 @@ We recommend using the Eclipse IDE for Java/EE developers.
    Make sure that the three projects are put in the workspace
    directory where CIVL will be put. 
 
-	a. Install the C front-end ABC. In Eclipse, 
+    a. Install the symbolic algebra and reasoning library SARL.
+	   In Eclipse, select New Project...from SVN, use the archive 
+	   svn://vsl.cis.udel.edu/sarl. After entering that, open it 
+	   up and select the "trunk". After checking out trunk, name 
+	   the project "SARL". Then follow the instructions in the INSTALL 
+	   file for Eclipse installation. Build the sarl.jar from within 
+	   Eclipse by right-clicking (or ctrl-clicking) on the build.xml 
+	   file and selecting Run As->Ant Build.
+	   
+    b. Install the C front-end ABC. In Eclipse, 
 	   select New Project...from SVN, use the archive 
 	   svn://vsl.cis.udel.edu/abc. After entering that, open it 
 	   up and select the "trunk". After checking out trunk, name 
@@ -109,16 +140,7 @@ We recommend using the Eclipse IDE for Java/EE developers.
 	   Eclipse by right-clicking (or ctrl-clicking on OS X) on the
 	   build.xml file and selecting Run As->Ant Build.
 	
-	b. Install the symbolic algebra and reasoning library SARL.
-	   In Eclipse, select New Project...from SVN, use the archive 
-	   svn://vsl.cis.udel.edu/sarl. After entering that, open it 
-	   up and select the "trunk". After checking out trunk, name 
-	   the project "SARL". Then follow the instructions in the INSTALL 
-	   file for Eclipse installation. Build the sarl.jar from within 
-	   Eclipse by right-clicking (or ctrl-clicking) on the build.xml 
-	   file and selecting Run As->Ant Build.
-
-	c. Install the generic model checking utilities package GMC.
+    c. Install the generic model checking utilities package GMC.
 	   In Eclipse, select New Project...from SVN, use the archive 
 	   svn://vsl.cis.udel.edu/gmc. After entering that, open it 
 	   up and select the "trunk". After checking out trunk, name 
