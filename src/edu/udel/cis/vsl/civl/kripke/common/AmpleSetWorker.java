@@ -63,6 +63,8 @@ public class AmpleSetWorker {
 
 	/* *************************** Instance Fields ************************* */
 
+	Set<Integer> allProcesses = new LinkedHashSet<>();
+
 	/**
 	 * The map of active processes (i.e., non-null processes with non-empty
 	 * stack that have at least one enabled statement)
@@ -155,7 +157,7 @@ public class AmpleSetWorker {
 	/* *********************** Package-private Methods ********************* */
 
 	/**
-	 * Obtain the set of ample processes for the current state.
+	 * Obtains the set of ample processes for the current state.
 	 * 
 	 * @return
 	 */
@@ -213,6 +215,7 @@ public class AmpleSetWorker {
 	private Set<Integer> ampleSetOfProcess(int startPid, int minAmpleSize) {
 		Set<Integer> ampleProcessIDs = new LinkedHashSet<>();
 		Stack<Integer> workingProcessIDs = new Stack<>();
+		int myAmpleSetActiveSize = 1;
 
 		workingProcessIDs.add(startPid);
 		ampleProcessIDs.add(startPid);
@@ -253,23 +256,27 @@ public class AmpleSetWorker {
 					if (ampleSubSet != null && !ampleSubSet.isEmpty()) {
 						for (int amplePid : ampleSubSet) {
 							if (amplePid != pid
-									&& activeProcesses.contains(amplePid)
+									// && activeProcesses.contains(amplePid)
 									&& !ampleProcessIDs.contains(amplePid)
 									&& !workingProcessIDs.contains(amplePid)) {
+
 								workingProcessIDs.add(amplePid);
 								ampleProcessIDs.add(amplePid);
+								if (this.activeProcesses.contains(amplePid))
+									myAmpleSetActiveSize++;
 								// early return
-								if (ampleProcessIDs.size() >= minAmpleSize)
+								if (myAmpleSetActiveSize >= minAmpleSize
+										|| myAmpleSetActiveSize == activeProcesses
+												.size()) {
+									ampleProcessIDs.retainAll(activeProcesses);
 									return ampleProcessIDs;
-								if (ampleProcessIDs.size() == activeProcesses
-										.size())
-									return ampleProcessIDs;
+								}
 							}
 						}
 					}
 				}
 			}
-			for (int otherPid : activeProcesses) {
+			for (int otherPid : this.allProcesses) {
 				Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther;
 				List<Pair<SymbolicExpression, SymbolicExpression>> sharedMemUnitPairs;
 
@@ -286,29 +293,20 @@ public class AmpleSetWorker {
 							.get(memPair.right))) {
 						workingProcessIDs.add(otherPid);
 						ampleProcessIDs.add(otherPid);
+						if (this.activeProcesses.contains(otherPid))
+							myAmpleSetActiveSize++;
 						break;
 					}
 				}
-				// for (SymbolicExpression unit : impactMemUnits) {
-				// if (reachableMemUnitsMapOfOther.containsKey(unit)) {
-				// // either the current process or the other process is to
-				// // modify unit now or in the future
-				// if ((reachableMemUnitsMapOfThis.get(unit) ||
-				// reachableMemUnitsMapOfOther
-				// .get(unit))) {
-				// workingProcessIDs.add(otherPid);
-				// ampleProcessIDs.add(otherPid);
-				// break;
-				// }
-				// }
-				// }
 				// early return
-				if (ampleProcessIDs.size() >= minAmpleSize)
+				if (myAmpleSetActiveSize >= minAmpleSize
+						|| myAmpleSetActiveSize == activeProcesses.size()) {
+					ampleProcessIDs.retainAll(activeProcesses);
 					return ampleProcessIDs;
-				if (ampleProcessIDs.size() == activeProcesses.size())
-					return ampleProcessIDs;
+				}
 			}
 		}
+		ampleProcessIDs.retainAll(activeProcesses);
 		return ampleProcessIDs;
 	}
 
@@ -339,6 +337,7 @@ public class AmpleSetWorker {
 			if (p == null || p.hasEmptyStack())
 				continue;
 			pid = p.getPid();
+			this.allProcesses.add(pid);
 			for (Statement s : p.getLocation().outgoing()) {
 				if (!enabler.getGuard(s, pid, state).value.isFalse()) {
 					active = true;
@@ -673,8 +672,9 @@ public class AmpleSetWorker {
 	 * </ul>
 	 */
 	private void preprocessing() {
-		for (int pid : activeProcesses) {
+		for (int pid : allProcesses) {
 			ProcessState p = state.getProcessState(pid);
+
 			Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemUnitsPair = impactMemoryUnits(p);
 
 			if (impactMemUnitsPair.left == MemoryUnitsStatus.INCOMPLETE) {

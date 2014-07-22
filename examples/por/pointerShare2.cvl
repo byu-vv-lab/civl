@@ -20,4 +20,5 @@ void main() {
   fp = $spawn f(); 
   $assert(*p==0);
   $wait(fp);
+  $free(x);
 }
