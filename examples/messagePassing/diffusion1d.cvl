@@ -189,7 +189,7 @@ void MPI_Process (int _rank) {
 	  buf[j] = u_init[pos++];
 	MPI_Send(buf, count_i, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
       }
-      $free(buf);
+      // $free(buf);
     }
     else {
       buf = NULL;
