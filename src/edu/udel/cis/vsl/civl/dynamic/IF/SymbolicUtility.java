@@ -303,7 +303,7 @@ public interface SymbolicUtility {
 	 *            The CIVL source of the given array.
 	 * @return
 	 */
-	public List<SymbolicExpression> arrayUnrolling(State state, String process,
+	public SymbolicExpression arrayUnrolling(State state, String process,
 			SymbolicExpression array, CIVLSource civlsource);
 
 	/**

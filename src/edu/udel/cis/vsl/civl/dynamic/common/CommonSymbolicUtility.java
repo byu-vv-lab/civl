@@ -1377,27 +1377,67 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public List<SymbolicExpression> arrayUnrolling(State state, String process,
+	public SymbolicExpression arrayUnrolling(State state, String process,
 			SymbolicExpression array, CIVLSource civlsource) {
-		BooleanExpression pathCondition = state.getPathCondition();
-		List<SymbolicExpression> list = new LinkedList<>();
+		List<SymbolicExpression> unrolledElementList;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
 		if (array.isNull() || array == null)
-			return list;
+			throw new CIVLInternalException("parameter array is null.",
+					civlsource);
+
+		if (array.type() instanceof SymbolicArrayType) {
+			if (array.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
+				if (reasoner.extractNumber(universe.length(array)) == null)
+					return array;
+			}
+		} else
+			universe.array(array.type(), Arrays.asList(array));
+
+		unrolledElementList = this.arrayUnrollingWorker(state, array,
+				civlsource);
+		if (unrolledElementList.size() > 0)
+			return universe.array(unrolledElementList.get(0).type(),
+					unrolledElementList);
+		else if (array instanceof SymbolicArrayType)
+			return universe.emptyArray(((SymbolicArrayType) array)
+					.elementType());
+		else
+			return universe.emptyArray(array.type());
+	}
+
+	// TODO: Too much functions about operation on arrays, do we need a sub
+	// class for it?
+	// Recursive helper function for arrayUnrolling, must be private.
+	private List<SymbolicExpression> arrayUnrollingWorker(State state,
+			SymbolicExpression array, CIVLSource civlsource) {
+		BooleanExpression pathCondition = state.getPathCondition();
+		List<SymbolicExpression> unrolledElementList = new LinkedList<>();
+		Reasoner reasoner = universe.reasoner(pathCondition);
+
+		if (array.isNull() || array == null)
+			throw new CIVLInternalException("parameter array is null.",
+					civlsource);
+
+		if (array.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
+			if (reasoner.extractNumber(universe.length(array)) == null) {
+				unrolledElementList.add(array);
+				return unrolledElementList;
+			}
+		}
 
 		if (array.type() instanceof SymbolicArrayType) {
 			BooleanExpression claim;
 			NumericExpression i = universe.zeroInt();
 			NumericExpression length = universe.length(array);
-			Reasoner reasoner = universe.reasoner(pathCondition);
 
 			claim = universe.lessThan(i, length);
 			if (((SymbolicArrayType) array.type()).elementType() instanceof SymbolicArrayType) {
 				while (reasoner.isValid(claim)) {
 					SymbolicExpression element = universe.arrayRead(array, i);
 
-					list.addAll(arrayUnrolling(state, process, element,
-							civlsource));
+					unrolledElementList.addAll(arrayUnrollingWorker(state,
+							element, civlsource));
 					// update
 					i = universe.add(i, one);
 					claim = universe.lessThan(i, length);
@@ -1406,17 +1446,16 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				while (reasoner.isValid(claim)) {
 					SymbolicExpression element = universe.arrayRead(array, i);
 
-					list.add(element);
+					unrolledElementList.add(element);
 					// update
 					i = universe.add(i, one);
 					claim = universe.lessThan(i, length);
 				}
 			}
 		} else {
-			list.add(array);
-			return list;
+			unrolledElementList.add(array);
 		}
-		return list;
+		return unrolledElementList;
 	}
 
 	@Override
@@ -1443,7 +1482,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			NumericExpression chunkLength; // (the unrolled old array length) /
 											// (dimensionLength)
 			NumericExpression subEndIndex, subStartIndex;
-			List<SymbolicExpression> elements;
 			List<SymbolicExpression> newElements = new LinkedList<>();
 			SymbolicExpression unrolledArray;
 			SymbolicExpression subArray;
@@ -1454,24 +1492,18 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				// ------For incomplete array type, only 1-d array type is
 				// allowed.
 				// ------Unrolling old array
-				elements = this.arrayUnrolling(state, process, oldArray,
-						civlsource);
-				if (elements.size() < 1)
-					throw new CIVLInternalException(
-							"Trying to cast incomplete array", civlsource);
-				else
-					return universe.array(elements.get(0).type(), elements);
+				return this
+						.arrayUnrolling(state, process, oldArray, civlsource);
 			}
 			// ------For complete array, we have to compute recursively.
 			dimensionLength = ((SymbolicCompleteArrayType) type).extent();
 			claim = universe.lessThan(i, dimensionLength);
-			elements = this
-					.arrayUnrolling(state, process, oldArray, civlsource);
-			chunkLength = universe.divide(universe.integer(elements.size()),
+			unrolledArray = this.arrayUnrolling(state, process, oldArray,
+					civlsource);
+			chunkLength = universe.divide(universe.length(unrolledArray),
 					dimensionLength);
 			subStartIndex = i;
 			subEndIndex = chunkLength;
-			unrolledArray = universe.array(elements.get(0).type(), elements);
 			while (reasoner.isValid(claim)) {
 				subArray = this.getSubArray(unrolledArray, subStartIndex,
 						subEndIndex, state, process, civlsource);
@@ -1963,6 +1995,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return ((CIVLStructOrUnionType) parentType).getField(index).type();
 		}
 	}
+
 	@Override
 	public boolean isDisjointWith(SymbolicExpression pointer1,
 			SymbolicExpression pointer2) {
@@ -1998,10 +2031,11 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		numAncestors1 = ancestors1.size();
 		numAncestors2 = ancestors2.size();
 		minNum = numAncestors1 <= numAncestors2 ? numAncestors1 : numAncestors2;
-		for(int i = 0; i < minNum; i++){
-			ReferenceExpression ancestor1 = ancestors1.get(i), ancestor2 = ancestors2.get(i);
-			
-			if(!ancestor1.equals(ancestor2))
+		for (int i = 0; i < minNum; i++) {
+			ReferenceExpression ancestor1 = ancestors1.get(i), ancestor2 = ancestors2
+					.get(i);
+
+			if (!ancestor1.equals(ancestor2))
 				return true;
 		}
 		return false;

@@ -149,7 +149,6 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression bundle = null;
 		int index;
 		IntObject indexObj;
-		List<SymbolicExpression> arrayElements; // unrolled array element list
 		NumericExpression arrayIndex = universe.zeroInt();
 		NumericExpression arrayLength; // unrolled array length
 		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
@@ -196,17 +195,15 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				state = eval.state;
 				array = eval.value;
 			}
-			arrayElements = symbolicUtil.arrayUnrolling(state, process, array,
-					source);
-			arrayLength = universe.integer(arrayElements.size());
+			array = symbolicUtil.arrayUnrolling(state, process, array, source);
+			arrayLength = universe.length(array);
 			arrayIndex = libevaluator.getIndexInUnrolledArray(state, process,
 					pointer, arrayLength, source);
-			assert (arrayElements.size() > 0);
-			array = universe.array(arrayElements.get(0).type(), arrayElements);
 			array = symbolicUtil.getSubArray(array, arrayIndex, arrayLength,
 					state, process, source);
 			symbolicBundleType = bundleType.getDynamicType(universe);
-			index = bundleType.getIndexOf(arrayElements.get(0).type());
+			index = bundleType.getIndexOf(universe.arrayRead(array, zero)
+					.type());
 			indexObj = universe.intObject(index);
 			bundle = universe.unionInject(symbolicBundleType, indexObj, array);
 		}
@@ -2245,6 +2242,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 *         points to.
 	 * @throws UnsatisfiablePathConditionException
 	 */
+	@SuppressWarnings("unused")
 	private SymbolicExpression getArrayFromPointer(State state, String process,
 			Expression pointerExpr, SymbolicExpression pointer,
 			NumericExpression size, CIVLSource source)
@@ -2662,7 +2660,6 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression data = null;
 		SymbolicExpression dataElement = null;
 		SymbolicExpression secOperandElement = null;
-		List<SymbolicExpression> secOperandElements = null;
 		SymbolicExpression opRet = null; // result after applying one operation
 		//
 		// the final array will be assigned to the pointer "buf". Since the
@@ -2709,13 +2706,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			return primaryExecutor.assign(source, state, process, bufPointer,
 					data);
 		}
-		secOperandElements = symbolicUtil.arrayUnrolling(state, process,
-				secOperand, arguments[1].getSource());
-		secOperand = universe.array(secOperandElements.get(0).type(),
-				secOperandElements);
-		bufIndex = libevaluator.getIndexInUnrolledArray(state, process,
-				pointer, universe.integer(secOperandElements.size()),
+		secOperand = symbolicUtil.arrayUnrolling(state, process, secOperand,
 				arguments[1].getSource());
+		bufIndex = libevaluator.getIndexInUnrolledArray(state, process,
+				pointer, universe.length(secOperand), arguments[1].getSource());
 		// ------Obtain data form bundle
 		data = (SymbolicExpression) bundle.argument(1);
 		// ------checking if data is null

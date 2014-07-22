@@ -551,8 +551,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * @return
 	 */
 	SymbolicExpression civlOperation(State state, String process,
-			SymbolicExpression arg0, SymbolicExpression arg1,
-			CIVLOperation op, CIVLSource civlsource) {
+			SymbolicExpression arg0, SymbolicExpression arg1, CIVLOperation op,
+			CIVLSource civlsource) {
 		BooleanExpression claim;
 
 		/*
@@ -589,10 +589,9 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 				BooleanExpression notPrevData = universe
 						.not((BooleanExpression) arg1);
 
-				return universe
-						.or(universe.and(notNewData,
-								(BooleanExpression) arg1), universe.and(
-								(BooleanExpression) arg0, notPrevData));
+				return universe.or(
+						universe.and(notNewData, (BooleanExpression) arg1),
+						universe.and((BooleanExpression) arg0, notPrevData));
 			case CIVL_BAND:
 			case CIVL_BOR:
 			case CIVL_BXOR:
@@ -662,23 +661,22 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		NumericExpression dataSize;
 		BooleanExpression claim;
 		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
-		List<SymbolicExpression> unrolledDataList = symbolicUtil
-				.arrayUnrolling(state, process, data, civlsource);
+		SymbolicExpression unrolledDataArray = symbolicUtil.arrayUnrolling(
+				state, process, data, civlsource);
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		Evaluation eval = new Evaluation(state, null);
 
+		dataSize = universe.length(unrolledDataArray);
 		// ------If data size is zero, do nothing
-		if (unrolledDataList.size() == 0)
+		if (reasoner.isValid(universe.equals(dataSize, zero)))
 			return eval;
 
-		dataSize = universe.integer(unrolledDataList.size());
 		// ------If pointer is an array element reference, the array is pointed
 		// by the parent pointer.
 		if (ref.isArrayElementReference()) {
 			SymbolicExpression parentPtr = symbolicUtil.parentPointer(
 					civlsource, pointer);
 			SymbolicExpression unrolledArray;
-			List<SymbolicExpression> unrolledElementsList;
 			NumericExpression indexInUnrolledArray, unrolledArraySize;
 
 			eval = evaluator.dereference(civlsource, state, process, parentPtr,
@@ -688,15 +686,11 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 			// ------Unrolling the array pointed by the parent pointer.
 			// Note: Since data in bundle is guaranteed to be in the form of a
 			// 1-d array, unrolling the receiver array can make things easier.
-			unrolledElementsList = symbolicUtil.arrayUnrolling(state, process,
-					array, civlsource);
-			assert (unrolledElementsList.size() > 0);
-			unrolledArraySize = universe.integer(unrolledElementsList.size());
+			unrolledArray = symbolicUtil.arrayUnrolling(state, process, array,
+					civlsource);
+			unrolledArraySize = universe.length(unrolledArray);
 			indexInUnrolledArray = this.getIndexInUnrolledArray(state, process,
 					pointer, unrolledArraySize, civlsource);
-			// ------Unrolling the receiver array.
-			unrolledArray = universe.array(unrolledElementsList.get(0).type(),
-					unrolledElementsList);
 			unrolledArray = this.oneDimenAssign(state, process, unrolledArray,
 					indexInUnrolledArray, data, civlsource);
 			eval.state = state;
@@ -711,11 +705,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 			state = eval.state;
 			obj = eval.value;
 			if (obj.type() instanceof SymbolicArrayType) {
-				List<SymbolicExpression> unrolledObjList = symbolicUtil
-						.arrayUnrolling(state, process, obj, civlsource);
-				assert (unrolledObjList.size() > 0);
-				SymbolicExpression objArray = universe.array(unrolledObjList
-						.get(0).type(), unrolledObjList);
+				SymbolicExpression objArray = symbolicUtil.arrayUnrolling(
+						state, process, obj, civlsource);
 
 				objArray = this.oneDimenAssign(state, process, objArray, zero,
 						data, civlsource);
