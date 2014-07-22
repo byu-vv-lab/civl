@@ -59,4 +59,13 @@ public class PORTest {
 		assertFalse(ui.run("verify", filename("trade4.cvl")));
 	}
 	
+	@Test
+	public void guard1() {
+		assertFalse(ui.run("verify", filename("guard1.cvl")));
+	}
+	
+	@Test
+	public void guard2() {
+		assertFalse(ui.run("verify", filename("guard2.cvl")));
+	}
 }

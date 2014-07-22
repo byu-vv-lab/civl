@@ -42,6 +42,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode.BlockItemKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.CivlForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
@@ -269,6 +270,8 @@ public class AST2CIVL {
 		case EXPRESSION:
 			return expressionStatement2CIVL(prefix,
 					(ExpressionStatementNode) statement);
+		case CIVL_FOR:
+			return civlForStatement2CIVL(prefix, (CivlForNode) statement);
 		case FOR:
 			return for2CIVL(prefix, (ForLoopNode) statement);
 		case GOTO:
@@ -290,10 +293,20 @@ public class AST2CIVL {
 		case WHEN:
 			return when2CIVL(prefix, (WhenNode) statement);
 		default:
-			throw new CIVLUnimplementedFeatureException(
-					"translating statement node of " + kind
-							+ " kind into CIVL code", statement.getSource());
+			// throw new CIVLUnimplementedFeatureException(
+			// "translating statement node of " + kind
+			// + " kind into CIVL code", statement.getSource());
+			return new StringBuffer(kind.toString());
 		}
+	}
+
+	private StringBuffer civlForStatement2CIVL(String prefix,
+			CivlForNode civlFor) {
+		civlFor.getDomain();
+		// civlFor.
+
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private StringBuffer loop2CIVL(String prefix, LoopNode loop) {

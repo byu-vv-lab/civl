@@ -75,7 +75,7 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 					debugOut.print(p.getPid() + "\t");
 				}
 				debugOut.println();
-				if (debugging || showAmpleSetWtStates)
+				if (!debugging && showAmpleSetWtStates)
 					// state.print(debugOut);
 					// this.stateFactory.printState(debugOut, state);
 					debugOut.print(evaluator.symbolicUtility().stateToString(
