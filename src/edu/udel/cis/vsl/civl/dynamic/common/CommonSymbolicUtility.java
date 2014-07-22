@@ -30,7 +30,6 @@ import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
-import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
@@ -1378,76 +1377,9 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public SymbolicExpression bundleUnpack(SymbolicExpression bundle,
-			SymbolicExpression array, NumericExpression arrayIdx,
-			BooleanExpression pathCondition) {
-		// A boolean expression used for checking conditions
-		BooleanExpression claim;
-		SymbolicExpression data;
-		NumericExpression dataSize;
-		Reasoner reasoner = universe.reasoner(pathCondition);
-		List<SymbolicExpression> unrolledDataList = this.arrayUnrolling(
-				(SymbolicExpression) bundle.argument(1), pathCondition);
-
-		// ------If the data size is zero, do nothing, return null.
-		if (unrolledDataList.size() == 0)
-			return null;
-
-		data = universe.array(unrolledDataList.get(0).type(), unrolledDataList);
-		dataSize = universe.length(data);
-		// ------If array is non-null and the index of start position in the
-		// target array is zero and the target array has enough size to holds
-		// data, return the data directly. Else, copy elements one by one.
-		if (array != null) {
-			NumericExpression targetSize;
-			NumericExpression targetArrayIdx = arrayIdx;
-			NumericExpression i = universe.zeroInt(); // loop inc
-
-			targetSize = universe.length(array);
-			claim = universe.and(universe.equals(zero, targetArrayIdx),
-					universe.equals(targetSize, dataSize));
-
-			if (reasoner.isValid(claim)) {
-				return data; // return array
-			} else {
-				SymbolicExpression dataElement;
-
-				claim = universe.lessThan(i, dataSize);
-				while (reasoner.isValid(claim)) {
-					dataElement = universe.arrayRead(data, i);
-					try {
-						array = universe.arrayWrite(array, targetArrayIdx,
-								dataElement);
-					} catch (SARLException e) {
-						throw new SARLException("Array: " + array
-								+ "written on position index: "
-								+ targetArrayIdx + "\n");
-					}
-					// update
-					i = universe.add(one, i);
-					targetArrayIdx = universe.add(one, targetArrayIdx);
-					claim = universe.lessThan(i, dataSize);
-				}
-			}
-			return array;
-		} else {
-			// ------If the data size of data in bundle is one, return that
-			// object.
-			// Else, return an array. (Note: This could be a situation that the
-			// buf is a pointer to an array. e.g.:
-			// int a[10]; int * buf = &a;)
-			claim = universe.equals(one, dataSize);
-			if (reasoner.isValid(claim))
-				return universe.arrayRead(data, zero);
-			else
-				return universe.array(unrolledDataList.get(0).type(),
-						unrolledDataList);
-		}
-	}
-
-	@Override
-	public List<SymbolicExpression> arrayUnrolling(SymbolicExpression array,
-			BooleanExpression pathCondition) {
+	public List<SymbolicExpression> arrayUnrolling(State state, String process,
+			SymbolicExpression array, CIVLSource civlsource) {
+		BooleanExpression pathCondition = state.getPathCondition();
 		List<SymbolicExpression> list = new LinkedList<>();
 
 		if (array.isNull() || array == null)
@@ -1464,7 +1396,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				while (reasoner.isValid(claim)) {
 					SymbolicExpression element = universe.arrayRead(array, i);
 
-					list.addAll(arrayUnrolling(element, pathCondition));
+					list.addAll(arrayUnrolling(state, process, element,
+							civlsource));
 					// update
 					i = universe.add(i, one);
 					claim = universe.lessThan(i, length);
@@ -1484,6 +1417,74 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return list;
 		}
 		return list;
+	}
+
+	@Override
+	public SymbolicExpression arrayCasting(State state, String process,
+			SymbolicExpression oldArray, SymbolicType type,
+			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
+		BooleanExpression pathCondition = state.getPathCondition();
+		Reasoner reasoner = universe.reasoner(pathCondition);
+
+		if (oldArray.type().equals(type))
+			return oldArray;
+		if (!(oldArray.type() instanceof SymbolicArrayType)
+				&& !(type instanceof SymbolicArrayType))
+			return oldArray;
+		else if (!(type instanceof SymbolicArrayType)) {
+			if (reasoner
+					.isValid(universe.equals(universe.length(oldArray), one))) {
+				return universe.arrayRead(oldArray, zero);
+			}
+		} else {
+			SymbolicType elementType = ((SymbolicArrayType) type).elementType();
+			NumericExpression i = universe.zeroInt();
+			NumericExpression dimensionLength; // length of current dimension
+			NumericExpression chunkLength; // (the unrolled old array length) /
+											// (dimensionLength)
+			NumericExpression subEndIndex, subStartIndex;
+			List<SymbolicExpression> elements;
+			List<SymbolicExpression> newElements = new LinkedList<>();
+			SymbolicExpression unrolledArray;
+			SymbolicExpression subArray;
+			BooleanExpression claim;
+
+			// ------Cast the oldArray to an array of the compatible new type
+			if (!((SymbolicArrayType) type).isComplete()) {
+				// ------For incomplete array type, only 1-d array type is
+				// allowed.
+				// ------Unrolling old array
+				elements = this.arrayUnrolling(state, process, oldArray,
+						civlsource);
+				if (elements.size() < 1)
+					throw new CIVLInternalException(
+							"Trying to cast incomplete array", civlsource);
+				else
+					return universe.array(elements.get(0).type(), elements);
+			}
+			// ------For complete array, we have to compute recursively.
+			dimensionLength = ((SymbolicCompleteArrayType) type).extent();
+			claim = universe.lessThan(i, dimensionLength);
+			elements = this
+					.arrayUnrolling(state, process, oldArray, civlsource);
+			chunkLength = universe.divide(universe.integer(elements.size()),
+					dimensionLength);
+			subStartIndex = i;
+			subEndIndex = chunkLength;
+			unrolledArray = universe.array(elements.get(0).type(), elements);
+			while (reasoner.isValid(claim)) {
+				subArray = this.getSubArray(unrolledArray, subStartIndex,
+						subEndIndex, state, process, civlsource);
+				newElements.add(this.arrayCasting(state, process, subArray,
+						elementType, civlsource));
+				i = universe.add(i, one);
+				subStartIndex = subEndIndex;
+				subEndIndex = universe.add(chunkLength, chunkLength);
+				claim = universe.lessThan(i, dimensionLength);
+			}
+			return universe.array(newElements.get(0).type(), newElements);
+		}
+		throw new CIVLInternalException("Array casting failed", civlsource);
 	}
 
 	@Override
@@ -1962,7 +1963,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return ((CIVLStructOrUnionType) parentType).getField(index).type();
 		}
 	}
-
 	@Override
 	public boolean isDisjointWith(SymbolicExpression pointer1,
 			SymbolicExpression pointer2) {

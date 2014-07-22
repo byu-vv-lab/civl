@@ -261,6 +261,7 @@ public interface SymbolicUtility {
 
 	int getArrayIndex(CIVLSource source, SymbolicExpression charPointer);
 
+	/* ***************** Arrays Operations Utilities ******************** */
 	/**
 	 * Recursively updates the array references for an multi-dimensional array
 	 * by using a set of indexes and a given reference to an array element. e.g.
@@ -280,58 +281,66 @@ public interface SymbolicUtility {
 			List<NumericExpression> newIndexes);
 
 	/**
-	 * Computes the output argument "buf" for the CIVL-C function:
-	 * <code>$bundle_unpack($bundle bundle, void * buf)</code>.<br>
+	 * Unrolling a given array to a ordered list of elements of that array(Here
+	 * element should never be array type any more). <br>
 	 * 
-	 * @author Ziqing Luo
-	 * @param bundle
-	 *            The symbolic expression of "bundle" argument in the CIVL-C
-	 *            function.
-	 * @param array
-	 *            If the argument "buf" is a pointer to an element of an array
-	 *            or allocated memory space, this parameter represents the array
-	 *            pointed by the pointer "buf". Else, it shoule be null.<br>
-	 *            This parameter also can be understand as a container, if "buf"
-	 *            point to a array, the array is the container responsible for
-	 *            storing data in bundle. If set this paramet be null, it means
-	 *            that the container is unspecified because the pointer "buf" is
-	 *            just a regular pointer.
-	 * @param arrayIdx
-	 *            If the argument "buf" is a pointer to an element of an array
-	 *            or allocated memory space, this parameter represents the index
-	 *            of the object pointed by "buf" in an array. Else, it should be
-	 *            zero.
-	 * @param pathCondition
-	 *            The path condition of current state.
-	 * @return The symbolic expression final result of the object pointed by
-	 *         "buf".
-	 */
-	public SymbolicExpression bundleUnpack(SymbolicExpression bundle,
-			SymbolicExpression array, NumericExpression arrayIdx,
-			BooleanExpression pathCondition);
-
-	/**
-	 * Unrolling a set of data( can be in form of multi-dimensional array or a
-	 * single object), then make it be in the form of a one dimensional array. <br>
-	 * <br>
-	 * e.g. 1. Given an array <code>a[2][3] = {1,2,3,4,5,6};</code>, this
-	 * function will give you <code>a[6] = {1,2,3,4,5,6};</code> back.<br>
+	 * e.g. 1 For an array <code>int a[2][2] = {1,2,3,4}</code>, the unrolled
+	 * list will be <code>{1,2,3,4}</code>
 	 * 
-	 * e.g. 2. Given a variable <code> a = 1;</code>, this function will give
-	 * you back <code>a[1] = {1}</code>.
+	 * e.g. 2. Given a variable <code> int a = 1;</code>, this function will
+	 * give you an unrolled list <code>{1}</code>.
 	 * 
 	 * @author Ziqing Luo
 	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The identifier of the process
 	 * @param array
 	 *            The given array.(Or can be a single object, but by intention,
 	 *            this function is mainly for multi-dimensional arrays)
-	 * @param pathCondition
-	 *            The current path condition
+	 * @param civlsource
+	 *            The CIVL source of the given array.
 	 * @return
 	 */
-	public List<SymbolicExpression> arrayUnrolling(SymbolicExpression array,
-			BooleanExpression pathCondition);
+	public List<SymbolicExpression> arrayUnrolling(State state, String process,
+			SymbolicExpression array, CIVLSource civlsource);
 
+	/**
+	 * Casting an array to a new array with the given array type.<br>
+	 * 
+	 * Pre-Condition: <br>
+	 * 1. The old array should be a complete array (or a object is allowed).<br>
+	 * 
+	 * 2. The cast should be a legal cast. <br>
+	 * 
+	 * 
+	 * Special cases:<br>
+	 * If the array(the "oldArray") is not an array type, return the object (the
+	 * "oldArray") immediately.<br>
+	 * If the given type is not an array type( but the "oldArray" is an array
+	 * type), the length of the "oldArray" must be one, then return the first
+	 * element of the "oldArray". Else, return null<br>
+	 * 
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The identifier of the process
+	 * @param oldArray
+	 *            The array needs being casted.
+	 * @param type
+	 *            The given type that the "oldArray" will try to cast to.
+	 * @param civlsource
+	 *            The CIVL source of the given array.
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public SymbolicExpression arrayCasting(State state, String process,
+			SymbolicExpression array, SymbolicType type, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException;
+
+	/* ********************************************************************* */
 	/**
 	 * Checks if a heap is null or empty.
 	 * 
