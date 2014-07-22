@@ -113,6 +113,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * 
 	 * void $bundle_unpack($bundle bundle, void *ptr, int size);
 	 * 
+	 * Post-Condition: The data in bundle is in the form of an unrolled one
+	 * dimensional array.
+	 * 
 	 * @param state
 	 *            The current state.
 	 * @param pid
@@ -138,16 +141,19 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			CIVLBundleType bundleType, LHSExpression lhs,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
-		Expression pointerExpr = arguments[0];
 		SymbolicExpression pointer = argumentValues[0];
 		NumericExpression size = (NumericExpression) argumentValues[1];
 		SymbolicType elementType;
-		SymbolicType pureElementType;
 		SymbolicUnionType symbolicBundleType;
-		int index;
-		IntObject indexObj;
 		SymbolicExpression array;
 		SymbolicExpression bundle = null;
+		int index;
+		IntObject indexObj;
+		List<SymbolicExpression> arrayElements; // unrolled array element list
+		NumericExpression arrayIndex = universe.zeroInt();
+		NumericExpression arrayLength; // unrolled array length
+		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
+		Evaluation eval;
 
 		if (pointer.type().typeKind() != SymbolicTypeKind.TUPLE) {
 			throw new CIVLUnimplementedFeatureException(
@@ -170,13 +176,38 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			throw new CIVLSyntaxException(
 					"Packing a NULL message with size larger than 0", source);
 		} else {
-			elementType = evaluator.referencedType(source, state, pointer);
-			pureElementType = universe.pureType(elementType);
+			// elementType = evaluator.referencedType(source, state, pointer);
+			// pureElementType = universe.pureType(elementType);
+			// array = getArrayFromPointer(state, process, pointerExpr, pointer,
+			// size, source);
+			if (ref.isArrayElementReference()) {
+				SymbolicExpression parent = symbolicUtil.parentPointer(source,
+						pointer);
+
+				arrayIndex = universe.integer(symbolicUtil.getArrayIndex(
+						source, pointer));
+				eval = evaluator.dereference(source, state, process, parent,
+						false);
+				state = eval.state;
+				array = eval.value;
+			} else {
+				eval = evaluator.dereference(source, state, process, pointer,
+						false);
+				state = eval.state;
+				array = eval.value;
+			}
+			arrayElements = symbolicUtil.arrayUnrolling(state, process, array,
+					source);
+			arrayLength = universe.integer(arrayElements.size());
+			arrayIndex = libevaluator.getIndexInUnrolledArray(state, process,
+					pointer, arrayLength, source);
+			assert (arrayElements.size() > 0);
+			array = universe.array(arrayElements.get(0).type(), arrayElements);
+			array = symbolicUtil.getSubArray(array, arrayIndex, arrayLength,
+					state, process, source);
 			symbolicBundleType = bundleType.getDynamicType(universe);
-			index = bundleType.getIndexOf(pureElementType);
+			index = bundleType.getIndexOf(arrayElements.get(0).type());
 			indexObj = universe.intObject(index);
-			array = getArrayFromPointer(state, process, pointerExpr, pointer,
-					size, source);
 			bundle = universe.unionInject(symbolicBundleType, indexObj, array);
 		}
 		if (lhs != null)
@@ -230,7 +261,13 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 * 
 	 * void $bundle_unpack($bundle bundle, void *ptr, int size); <br>
 	 * 
-	 * modified by @author Ziqing Luo
+	 * Pre-Condition : The data in bundle is in the form of an unrolled one
+	 * dimensional array.<br>
+	 * 
+	 * @see{executeBunldePack :post-condition.<br>
+	 * 
+	 * 
+	 * @author Ziqing Luo
 	 * 
 	 * @param state
 	 *            The current state.
@@ -253,30 +290,19 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression bundle = argumentValues[0];
 		SymbolicExpression pointer = argumentValues[1];
 		SymbolicExpression targetObject = null;
-		SymbolicExpression array = null;
 		SymbolicExpression arrayPointer = null;
 		NumericExpression arrayIdx = universe.zeroInt();
 		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
 		Evaluation eval;
 
-		// If the given pointer points to an array element or
-		// allocated memory space, the target object is an array of objects of
-		// the given type, so the final result should be assigned to the parent
-		// pointer which points to the array instead of an element of the array.
-		//
-		// Else, the target object can only hold one element in bundle and the
-		// target object should be assigned directly to the given pointer.
 		if (ref.isArrayElementReference()) {
 			arrayPointer = symbolicUtil.parentPointer(source, pointer);
-			eval = evaluator.dereference(source, state, process, arrayPointer,
-					false);
-			state = eval.state;
-			array = eval.value;
-			arrayIdx = ((ArrayElementReference) ref).getIndex();
 		}
 		try {
-			targetObject = symbolicUtil.bundleUnpack(bundle, array, arrayIdx,
-					state.getPathCondition());
+			eval = libevaluator.bundleUnpack(state, process, bundle, pointer,
+					source);
+			state = eval.state;
+			targetObject = eval.value;
 		} catch (SARLException e) {
 			throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
 					Certainty.PROVEABLE, process,
@@ -2627,18 +2653,21 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression pointer = argumentValues[1];
 		SymbolicExpression bufPointer = null;
 		// otherData: The data inside the object pointed by "buf".
-		SymbolicExpression otherData = null;
+		SymbolicExpression secOperand = null;
 		// data: the data inside the bundle.
 		SymbolicExpression data = null;
 		SymbolicExpression dataElement = null;
-		SymbolicExpression otherDataElement = null;
+		SymbolicExpression secOperandElement = null;
+		List<SymbolicExpression> secOperandElements = null;
 		SymbolicExpression opRet = null; // result after applying one operation
+		//
 		// the final array will be assigned to the pointer "buf". Since the
 		// assigned pointer could be the parent pointer of the given one, so
 		// there may have some cells stay unchanged in the array. That's the
 		// reason we need this variable: writeBackArray.
-		SymbolicExpression writeBackArray = null;
+		// SymbolicExpression writeBackArray = null;
 		NumericExpression i;
+		NumericExpression bufIndex;
 		NumericExpression count = (NumericExpression) argumentValues[2];
 		NumericExpression operation = (NumericExpression) argumentValues[3];
 		BooleanExpression pathCondition = state.getPathCondition();
@@ -2647,7 +2676,6 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		Reasoner reasoner = universe.reasoner(pathCondition);
 		CIVLOperation CIVL_Op;
 		Evaluation eval;
-		int bufIndex = 0;
 
 		// In executor, operation must be concrete.
 		// ------Translate operation
@@ -2656,67 +2684,66 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		// ------Obtain otherData
 		if (ref.isArrayElementReference()) {
 			bufPointer = symbolicUtil.parentPointer(source, pointer);
-			bufIndex = symbolicUtil.getArrayIndex(source, pointer);
+			// bufIndex = symbolicUtil.getArrayIndex(source, pointer);
 			eval = evaluator.dereference(source, state, process, bufPointer,
 					false);
 			state = eval.state;
-			writeBackArray = eval.value;
-			// dereferencing otherData
-			otherData = symbolicUtil.getSubArray(writeBackArray,
-					universe.integer(bufIndex),
-					universe.length(writeBackArray), state, process, source);
+			secOperand = eval.value;
 		} else {
 			bufPointer = pointer;
 			eval = evaluator.dereference(source, state, process, bufPointer,
 					false);
-			otherData = eval.value;
-			writeBackArray = eval.value;
 			state = eval.state;
+			secOperand = eval.value;
 		}
-		// ------checking if otherData is null
-		if (otherData.isNull() || otherData == null) {
-			data = symbolicUtil.bundleUnpack(bundle, null, zero, pathCondition);
+		// ------checking if secOperand is null
+		if (secOperand.isNull() || secOperand == null) {
+			eval = libevaluator.bundleUnpack(state, process, bundle, pointer,
+					source);
+			state = eval.state;
+			data = eval.value;
 			return primaryExecutor.assign(source, state, process, bufPointer,
 					data);
 		}
+		secOperandElements = symbolicUtil.arrayUnrolling(state, process,
+				secOperand, arguments[1].getSource());
+		secOperand = universe.array(secOperandElements.get(0).type(),
+				secOperandElements);
+		bufIndex = libevaluator.getIndexInUnrolledArray(state, process,
+				pointer, universe.integer(secOperandElements.size()),
+				arguments[1].getSource());
 		// ------Obtain data form bundle
-		data = symbolicUtil.bundleUnpack(bundle, null, zero, pathCondition);
+		data = (SymbolicExpression) bundle.argument(1);
 		// ------checking if data is null
 		if (data.isNull() || data == null)
 			return state;
-		// ------If count is one, directly do operation on otherData and data
-		claim = universe.equals(count, one);
-		if (reasoner.isValid(claim)) {
-			opRet = libevaluator.civlOperation(state, process, data, otherData,
-					CIVL_Op, source);
-			writeBackArray = opRet;
-		} else {
-			// ------execute operation
-			i = universe.zeroInt();
-			claim = universe.lessThan(i, count);
-			try {
-				while (reasoner.isValid(claim)) {
-					dataElement = universe.arrayRead(data, i);
-					otherDataElement = universe.arrayRead(otherData, i);
-					opRet = libevaluator.civlOperation(state, process,
-							dataElement, otherDataElement, CIVL_Op, source);
-					writeBackArray = universe.arrayWrite(writeBackArray,
-							universe.integer(bufIndex), opRet);
-					// update
-					i = universe.add(i, one);
-					bufIndex++;
-					claim = universe.lessThan(i, count);
-				}
-			} catch (SARLException e) {
-				throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
-						Certainty.PROVEABLE, process,
-						"Attempt to write beyond array bound: index=" + i,
-						symbolicUtil.stateToString(state), source);
+
+		// ------execute operation
+		i = universe.zeroInt();
+		claim = universe.lessThan(i, count);
+		try {
+			while (reasoner.isValid(claim)) {
+				dataElement = universe.arrayRead(data, i);
+				secOperandElement = universe.arrayRead(secOperand, bufIndex);
+				opRet = libevaluator.civlOperation(state, process, dataElement,
+						secOperandElement, CIVL_Op, source);
+				secOperand = universe.arrayWrite(secOperand, bufIndex, opRet);
+				// update
+				i = universe.add(i, one);
+				bufIndex = universe.add(bufIndex, one);
+				claim = universe.lessThan(i, count);
 			}
+		} catch (SARLException e) {
+			throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
+					Certainty.PROVEABLE, process,
+					"Attempt to write beyond array bound: index=" + i,
+					symbolicUtil.stateToString(state), source);
 		}
 
+		secOperand = symbolicUtil.arrayCasting(state, process, secOperand,
+				pointer.type(), arguments[1].getSource());
 		state = primaryExecutor.assign(source, state, process, bufPointer,
-				writeBackArray);
+				secOperand);
 		return state;
 	}
 }
