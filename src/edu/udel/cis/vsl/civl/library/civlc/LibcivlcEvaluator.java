@@ -542,16 +542,16 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * Completing an operation (which is included in CIVLOperation enumerator).
 	 * 
 	 * @author Ziqing Luo
-	 * @param newData
+	 * @param arg0
 	 *            The new data got from the bundle
-	 * @param otherData
+	 * @param arg1
 	 *            The data has already been received previously
 	 * @param op
 	 *            The CIVL Operation
 	 * @return
 	 */
 	SymbolicExpression civlOperation(State state, String process,
-			SymbolicExpression newData, SymbolicExpression otherData,
+			SymbolicExpression arg0, SymbolicExpression arg1,
 			CIVLOperation op, CIVLSource civlsource) {
 		BooleanExpression claim;
 
@@ -561,36 +561,38 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		 */
 		try {
 			switch (op) {
+			// TODO: consider using heuristic to switch to abstract
+			// functions if these expressions get too big (max,min):
 			case CIVL_MAX:
-				claim = universe.lessThan((NumericExpression) otherData,
-						(NumericExpression) newData);
-				return universe.cond(claim, newData, otherData);
+				claim = universe.lessThan((NumericExpression) arg1,
+						(NumericExpression) arg0);
+				return universe.cond(claim, arg0, arg1);
 			case CIVL_MIN:
-				claim = universe.lessThan((NumericExpression) newData,
-						(NumericExpression) otherData);
-				return universe.cond(claim, newData, otherData);
+				claim = universe.lessThan((NumericExpression) arg0,
+						(NumericExpression) arg1);
+				return universe.cond(claim, arg0, arg1);
 			case CIVL_SUM:
-				return universe.add((NumericExpression) newData,
-						(NumericExpression) otherData);
+				return universe.add((NumericExpression) arg0,
+						(NumericExpression) arg1);
 			case CIVL_PROD:
-				return universe.multiply((NumericExpression) newData,
-						(NumericExpression) otherData);
+				return universe.multiply((NumericExpression) arg0,
+						(NumericExpression) arg1);
 			case CIVL_LAND:
-				return universe.and((BooleanExpression) newData,
-						(BooleanExpression) otherData);
+				return universe.and((BooleanExpression) arg0,
+						(BooleanExpression) arg1);
 			case CIVL_LOR:
-				return universe.or((BooleanExpression) newData,
-						(BooleanExpression) otherData);
+				return universe.or((BooleanExpression) arg0,
+						(BooleanExpression) arg1);
 			case CIVL_LXOR:
 				BooleanExpression notNewData = universe
-						.not((BooleanExpression) newData);
+						.not((BooleanExpression) arg0);
 				BooleanExpression notPrevData = universe
-						.not((BooleanExpression) otherData);
+						.not((BooleanExpression) arg1);
 
 				return universe
 						.or(universe.and(notNewData,
-								(BooleanExpression) otherData), universe.and(
-								(BooleanExpression) newData, notPrevData));
+								(BooleanExpression) arg1), universe.and(
+								(BooleanExpression) arg0, notPrevData));
 			case CIVL_BAND:
 			case CIVL_BOR:
 			case CIVL_BXOR:
@@ -598,6 +600,8 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 			case CIVL_MAXLOC:
 			case CIVL_REPLACE:
 			default:
+				throw new CIVLUnimplementedFeatureException("CIVLOperation: "
+						+ op.name());
 			}
 		} catch (ClassCastException e) {
 			throw new CIVLExecutionException(ErrorKind.OTHER,
@@ -605,8 +609,6 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 					"Invalid operands type for CIVL Operation: " + op.name(),
 					civlsource);
 		}
-		throw new CIVLUnimplementedFeatureException("CIVLOperation: "
-				+ op.name());
 	}
 
 	/* ************** Bundle unpacking and array operations **************** */

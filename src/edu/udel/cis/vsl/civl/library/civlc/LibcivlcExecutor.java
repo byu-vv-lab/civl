@@ -299,11 +299,15 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			arrayPointer = symbolicUtil.parentPointer(source, pointer);
 		}
 		try {
+			// TODO: this method being called should not throw a SARLException:
+
 			eval = libevaluator.bundleUnpack(state, process, bundle, pointer,
 					source);
 			state = eval.state;
 			targetObject = eval.value;
 		} catch (SARLException e) {
+			// TODO: FIX arrayIdx!!
+
 			throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
 					Certainty.PROVEABLE, process,
 					"Attempt to write beyond array bound: index=" + arrayIdx,
