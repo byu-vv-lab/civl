@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.ABC;
@@ -100,6 +101,7 @@ public class OmpTransformerTest {
 
 	/* **************************** Test Methods *************************** */
 
+	@Ignore
 	@Test
 	public void dotProduct_critical1() throws ABCException, IOException {
 		assertTrue(ui.run("parse", filename("dotProduct_critical.c")));
@@ -155,6 +157,7 @@ public class OmpTransformerTest {
 		check("vecAdd_fix", false);
 	}
 
+	@Ignore
 	@Test
 	public void fig310_mxv_omp() throws ABCException, IOException {
 		check("fig3.10-mxv-omp", false);
