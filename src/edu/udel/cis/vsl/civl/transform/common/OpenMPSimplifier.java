@@ -185,6 +185,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 		 * collect this expression - call it "endBound" record the direction
 		 * of the test (i.e., less/greater)
 		 */
+		@SuppressWarnings("unused")
 		boolean lessThanComparison = true;
 		IdentifierNode loopVariable = null;
 		ExpressionNode condition = fln.getCondition();
@@ -228,6 +229,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 		 * loop form (section 2.6 of the manual), but this would be easy to
 		 * assert for checking at runtime.
 		 */
+		@SuppressWarnings("unused")
 		ExpressionNode incrementer = fln.getIncrementer();
 
 		/*
@@ -243,6 +245,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 		if (initializer instanceof OperatorNode) {
 		} else if (initializer instanceof DeclarationListNode) {
 			if (initializer instanceof SequenceNode<?>) {
+				@SuppressWarnings("unchecked")
 				SequenceNode<VariableDeclarationNode> decls = (SequenceNode<VariableDeclarationNode>) initializer;
 				Iterator<VariableDeclarationNode> it = (Iterator<VariableDeclarationNode>) decls
 						.iterator();
