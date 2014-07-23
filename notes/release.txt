@@ -6,7 +6,8 @@
 2. Edit the fields named "version" and "date" in interface
 edu.udel.cis.vsl.civl.config.CIVLConstants to use the new version and today's date.
 Also, edit README to change the version number and the changes of 
-the new version. Manual.
+the new version. Updates CIVL manual accordingly (there is also version number and
+date referenced in the manual, and they need to be consistent with the release).
 
 3. Commit your trunk or make sure there are no uncommitted
 modifications.
@@ -80,4 +81,8 @@ that open tickets for that milestone be pushed to the next milestone.
 Update other milestones (for example, pushing the dates forward) as
 desired.
 
-13. Send an email to civl-users announcing the new release.
+13. Update default milestone/version: go to https://vsl.cis.udel.edu/trac/civl/,
+log in, click on Admin, click on Milestones, choose a new milestone as the default,
+click Apply changes. Ditto for setting the default version.
+
+14. Send an email to civl-dev and civl-users announcing the new release.
