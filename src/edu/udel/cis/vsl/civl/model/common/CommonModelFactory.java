@@ -49,7 +49,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionGuardExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -115,7 +115,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonDotExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonFunctionGuardExpression;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonFunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonFunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonHereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonInitialValueExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
@@ -446,7 +446,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	private CIVLRangeType rangeType;
 
-	private FunctionPointerExpression waitallFuncPointer;
+	private FunctionIdentifierExpression waitallFuncPointer;
 
 	/* **************************** Constructors *************************** */
 
@@ -904,9 +904,9 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public FunctionPointerExpression functionPointerExpression(
+	public FunctionIdentifierExpression functionPointerExpression(
 			CIVLSource source, CIVLFunction function) {
-		FunctionPointerExpression expression = new CommonFunctionPointerExpression(
+		FunctionIdentifierExpression expression = new CommonFunctionIdentifierExpression(
 				source, function, pointerSymbolicType);
 
 		return expression;
@@ -2562,7 +2562,7 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public FunctionPointerExpression waitallFunctionPointer() {
+	public FunctionIdentifierExpression waitallFunctionPointer() {
 		if (this.waitallFuncPointer == null) {
 			List<Variable> parameters = new ArrayList<>(2);
 			CIVLFunction function;

@@ -17,8 +17,12 @@ public interface Executor {
 	 * which is equivalent to the old state except that the memory specified by
 	 * the given pointer value is assigned the given value.
 	 * 
+	 * @param source
+	 *            the source code information for error report
 	 * @param state
 	 *            a CIVL model state
+	 * @param process
+	 *            the process information (process name + PID) for error report
 	 * @param pointer
 	 *            a pointer value
 	 * @param value
@@ -38,6 +42,8 @@ public interface Executor {
 	 *            a CIVL model state
 	 * @param pid
 	 *            the PID of the process executing the assignment
+	 * @param process
+	 *            the process information (process name + PID) for error report
 	 * @param lhs
 	 *            a left-hand-side expression
 	 * @param value
@@ -104,9 +110,12 @@ public interface Executor {
 	 * path condition becomes unsatisfiable.
 	 * 
 	 * @param state
+	 *            the state that the transition emanates from
 	 * @param pid
+	 *            the PID of the process that the transition
 	 * @param transition
-	 * @return
+	 *            a deterministic transition to be executed
+	 * @return The state after the transition is executed.
 	 */
 	State execute(State state, int pid, Transition transition)
 			throws UnsatisfiablePathConditionException;

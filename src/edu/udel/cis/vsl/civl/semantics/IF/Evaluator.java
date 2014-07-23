@@ -26,7 +26,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  * expressions. Second, it also provides some utility methods to be used by
  * library executor/evaluator/enabler, like the methods related to heap. Third,
  * it implements helper methods for the partial order reduction in pointer
- * reachability analysis.
+ * reachability analysis. TODO: does it have state?
  * 
  * @author Manchun Zheng (zmanchun)
  * 
@@ -257,7 +257,6 @@ public interface Evaluator {
 			NumericExpression offset)
 			throws UnsatisfiablePathConditionException;
 
-	// TODO next code review
 	/**
 	 * Creates a pointer value by evaluating a left-hand-side expression in the
 	 * given state.

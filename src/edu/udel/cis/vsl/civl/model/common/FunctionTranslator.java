@@ -134,7 +134,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
@@ -3388,7 +3388,7 @@ public class FunctionTranslator {
 		}
 		switch (operatorNode.getOperator()) {
 		case ADDRESSOF:
-			if (arguments.get(0) instanceof FunctionPointerExpression)
+			if (arguments.get(0) instanceof FunctionIdentifierExpression)
 				result = arguments.get(0);
 			else
 				result = modelFactory.addressOfExpression(source,

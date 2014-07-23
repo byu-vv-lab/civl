@@ -33,7 +33,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -503,7 +503,7 @@ public interface ModelFactory {
 	DynamicTypeOfExpression dynamicTypeOfExpression(CIVLSource source,
 			CIVLType type);
 
-	FunctionPointerExpression functionPointerExpression(CIVLSource source,
+	FunctionIdentifierExpression functionPointerExpression(CIVLSource source,
 			CIVLFunction function);
 
 	HereOrRootExpression hereOrRootExpression(CIVLSource source, boolean isRoot);
@@ -1523,5 +1523,5 @@ public interface ModelFactory {
 			VariableExpression procsVar, Expression parProcs,
 			CIVLFunction parProcFunc);
 
-	FunctionPointerExpression waitallFunctionPointer();
+	FunctionIdentifierExpression waitallFunctionPointer();
 }

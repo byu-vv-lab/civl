@@ -7,11 +7,13 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 
 /**
- * A function call or spawn. Either of the form f(x) or else v=f(x).
+ * A function call or spawn. Either of the form f(x) or else v=f(x). The
+ * function expression is set only once if the function called is known
+ * statically.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
@@ -38,6 +40,8 @@ public interface CallOrSpawnStatement extends Statement {
 	LHSExpression lhs();
 
 	/**
+	 * TODO: get rid of it
+	 * 
 	 * @return The function being called.
 	 */
 	CIVLFunction function();
@@ -54,10 +58,12 @@ public interface CallOrSpawnStatement extends Statement {
 	void setLhs(LHSExpression lhs);
 
 	/**
+	 * TODO: get rid of this, but updates the function expression instead.
+	 * 
 	 * @param function
 	 *            The function being called.
 	 */
-	void setFunction(FunctionPointerExpression function);
+	void setFunction(FunctionIdentifierExpression function);
 
 	/**
 	 * @param arguments

@@ -42,7 +42,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionGuardExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -139,6 +139,8 @@ public class CommonEvaluator implements Evaluator {
 	private SymbolicExpression bigOFunction;
 
 	/**
+	 * TODO: clean up boundVariables, which becomes a "state" of the evaluator
+	 * but it is not necessary. Possible solution: creates an evaluator worker<br>
 	 * LinkedList used to store a stack of bound variables during evaluation of
 	 * (possibly nested) quantified expressions. LinkedList is used instead of
 	 * Stack because of its more intuitive iteration order.
@@ -1229,7 +1231,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	private Evaluation evaluateFunctionPointer(State state, int pid,
-			FunctionPointerExpression expression) {
+			FunctionIdentifierExpression expression) {
 		Scope scope = expression.scope();
 		String function = expression.function().name().name();
 		SymbolicExpression dyScopeId = modelFactory.scopeValue(state
@@ -2518,7 +2520,7 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case FUNCTION_POINTER:
 			result = evaluateFunctionPointer(state, pid,
-					(FunctionPointerExpression) expression);
+					(FunctionIdentifierExpression) expression);
 			break;
 		case FUNCTION_GUARD:
 			result = evaluateFunctionGuard(state, pid, process,

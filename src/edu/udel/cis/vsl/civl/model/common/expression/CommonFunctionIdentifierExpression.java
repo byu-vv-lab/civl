@@ -5,22 +5,22 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
-public class CommonFunctionPointerExpression extends CommonExpression implements
-		FunctionPointerExpression {
+public class CommonFunctionIdentifierExpression extends CommonExpression
+		implements FunctionIdentifierExpression {
 
 	private CIVLFunction function;
 
-	public CommonFunctionPointerExpression(CIVLSource source,
-			CIVLFunction function, SymbolicType pointerType) {
+	public CommonFunctionIdentifierExpression(CIVLSource source,
+			CIVLFunction function, SymbolicType functionPointerType) {
 		super(source);
 		this.function = function;
 		this.expressionType = new CommonPointerType(function.functionType(),
-				pointerType);
+				functionPointerType);
 		this.setExpressionScope(function.containingScope());
 	}
 

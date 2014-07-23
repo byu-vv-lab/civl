@@ -21,7 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -345,7 +345,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		List<Statement> transitionStatements = new LinkedList<>();
 		List<Expression> newArgs;
 		SystemFunction dequeueWorkFunction;
-		FunctionPointerExpression dequeueWorkPointer;
+		FunctionIdentifierExpression dequeueWorkPointer;
 		Location newLocation = null;
 		String dequeueWork = "$comm_dequeue_work";
 		Iterator<SymbolicExpression> sourceIter;

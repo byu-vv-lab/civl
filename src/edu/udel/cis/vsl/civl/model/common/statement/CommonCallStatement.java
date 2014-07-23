@@ -11,7 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
-import edu.udel.cis.vsl.civl.model.IF.expression.FunctionPointerExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -73,7 +73,7 @@ public class CommonCallStatement extends CommonStatement implements
 	@Override
 	public CIVLFunction function() {
 		if (this.functionExpression.expressionKind() == ExpressionKind.FUNCTION_POINTER)
-			return ((FunctionPointerExpression) functionExpression).function();
+			return ((FunctionIdentifierExpression) functionExpression).function();
 		return null;
 	}
 
@@ -349,7 +349,7 @@ public class CommonCallStatement extends CommonStatement implements
 	}
 
 	@Override
-	public void setFunction(FunctionPointerExpression function) {
+	public void setFunction(FunctionIdentifierExpression function) {
 		this.functionExpression = function;
 	}
 
