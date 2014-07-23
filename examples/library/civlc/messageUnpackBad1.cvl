@@ -1,4 +1,5 @@
-#include <civlc.h>
+#include <civlc.cvh>
+#include <comm.cvh>
 
 void main(){
   int x[2] = {1,2}, *y;

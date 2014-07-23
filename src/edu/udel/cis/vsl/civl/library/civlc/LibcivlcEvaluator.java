@@ -30,21 +30,19 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
 
-	private IntObject twoObject = universe.intObject(2);
 	private NumericExpression minusOne = universe.integer(-1);
 	private NumericExpression minusTwo = universe.integer(-2);
 
 	// Package private enumerator.
 	// The order of these operations should be consistent with the civl-common.h
 	// file.
-	enum CIVLOperation {
+	public enum CIVLOperation {
 		CIVL_NO_OP, // no operation
 		CIVL_MAX, // maxinum
 		CIVL_MIN, // minimun
@@ -178,8 +176,10 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 				proc = eval.value;
 				state = eval.state;
 				pidValue = modelFactory.getProcessId(procsSource, proc);
-				if (!state.getProcessState(pidValue).hasEmptyStack())
-					return this.falseValue;
+				if (!modelFactory.isProcessIdNull(pidValue)
+						&& modelFactory.isPocessIdDefined(pidValue))
+					if (!state.getProcessState(pidValue).hasEmptyStack())
+						return this.falseValue;
 			}
 		}
 		return this.trueValue;
@@ -331,7 +331,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	List<SymbolicExpression> getAllPossibleSources(State state,
+	public List<SymbolicExpression> getAllPossibleSources(State state,
 			BooleanExpression predicate, SymbolicExpression gcomm,
 			SymbolicExpression source, SymbolicExpression dest,
 			SymbolicExpression tag, CIVLSource civlsource)
@@ -550,7 +550,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 *            The CIVL Operation
 	 * @return
 	 */
-	SymbolicExpression civlOperation(State state, String process,
+	public SymbolicExpression civlOperation(State state, String process,
 			SymbolicExpression arg0, SymbolicExpression arg1, CIVLOperation op,
 			CIVLSource civlsource) {
 		BooleanExpression claim;
@@ -649,7 +649,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	Evaluation bundleUnpack(State state, String process,
+	public Evaluation bundleUnpack(State state, String process,
 			SymbolicExpression bundle, SymbolicExpression pointer,
 			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
 		if (!(bundle.type() instanceof SymbolicUnionType))

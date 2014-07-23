@@ -432,6 +432,15 @@ public interface SymbolicUtility {
 	SymbolicExpression makePointer(SymbolicExpression objectPointer,
 			ReferenceExpression reference);
 
+	/**
+	 * Checks if a pointer is defined, i.e., it doesn't point to a memory unit
+	 * of an invalid scope.
+	 * 
+	 * @param pointer
+	 * @return
+	 */
+	boolean isValidPointer(SymbolicExpression pointer);
+	
 	boolean isValidRefOf(ReferenceExpression ref, SymbolicExpression value);
 
 	CIVLType typeOfObjByPointer(CIVLSource soruce, State state,

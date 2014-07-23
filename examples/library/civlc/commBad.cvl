@@ -1,7 +1,8 @@
 /* Deadlocking use of communicator. Commandline execution:
  *		civl verify commBad.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
+#include <comm.cvh>
 #define TAG 0
 
 $gcomm gcomm = $gcomm_create($root, 2);

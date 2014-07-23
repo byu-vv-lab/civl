@@ -2,7 +2,8 @@
  * This example demonstrates the features of CIVL's system function for implementing barriers.
  */
  
-#include<civlc.h>
+#include<civlc.cvh>
+#include<concurrency.cvh>
  
 $input int N;
 $input int B;

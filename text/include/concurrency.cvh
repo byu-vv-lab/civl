@@ -1,0 +1,10 @@
+/* This header file contains the function prototypes for concurrency. */
+
+#ifdef __CONCURRENCY__
+#else
+#define __CONCURRENCY__
+
+#include <concurrency-common.cvh>
+#include <concurrency.cvl>
+
+#endif

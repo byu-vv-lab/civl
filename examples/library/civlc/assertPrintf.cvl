@@ -2,7 +2,7 @@
  * Commandline example:
  *     civl verify assertPrintf.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
 
 void main(){
   int a = 10;

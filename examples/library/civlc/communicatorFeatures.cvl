@@ -2,7 +2,8 @@
  * Command line execution:
  *     civl verify -inputNPROCS_BOUND=10 -inputN_BOUND=5 ring.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
+#include<comm.cvh>
 #include<stdio.h>
 #define TAG 0
 

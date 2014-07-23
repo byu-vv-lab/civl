@@ -2,7 +2,7 @@
  * Commandline example:
  *     civl verify assertNullPointer.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
 
 void main(){
   double *p = NULL; 

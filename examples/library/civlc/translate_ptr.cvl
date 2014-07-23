@@ -5,7 +5,8 @@
 * civl verify translate_ptr.cvl
 */
 
-#include<civlc.h>
+#include<civlc.cvh>
+#include<pointer.cvh>
 
 typedef struct node{
   int x;

@@ -2129,4 +2129,12 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return result;
 		}
 	}
+
+	@Override
+	public boolean isValidPointer(SymbolicExpression pointer) {
+		int scopeId = this.getDyscopeId(null, pointer);
+
+		return scopeId >= 0;
+	}
+
 }

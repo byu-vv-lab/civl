@@ -1,0 +1,10 @@
+/* This header file contains the data types and function prototypes for communication. */
+
+#ifdef __COMM__
+#else
+#define __COMM__
+
+#include <comm-common.cvh>
+#include <comm.cvl>
+
+#endif

@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify chooseInt.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 int sum(int n){
 	int sum = 0;
