@@ -15,6 +15,25 @@ import edu.udel.cis.vsl.sarl.IF.object.IntObject;
  */
 public abstract class Library {
 
+	// The order of these operations should be consistent with civlc.cvh
+	// file.
+	protected enum CIVLOperation {
+		CIVL_NO_OP, // no operation
+		CIVL_MAX, // maxinum
+		CIVL_MIN, // minimun
+		CIVL_SUM, // sum
+		CIVL_PROD, // product
+		CIVL_LAND, // logical and
+		CIVL_BAND, // bit-wise and
+		CIVL_LOR, // logical or
+		CIVL_BOR, // bit-wise or
+		CIVL_LXOR, // logical exclusive or
+		CIVL_BXOR, // bit-wise exclusive or
+		CIVL_MINLOC, // min value and location
+		CIVL_MAXLOC, // max value and location
+		CIVL_REPLACE // replace ? TODO: Find definition for this operation
+	}
+
 	/**
 	 * The symbolic expression of one.
 	 */

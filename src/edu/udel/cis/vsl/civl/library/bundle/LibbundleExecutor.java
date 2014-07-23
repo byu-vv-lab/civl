@@ -3,8 +3,6 @@ package edu.udel.cis.vsl.civl.library.bundle;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
-import edu.udel.cis.vsl.civl.library.civlc.LibcivlcEvaluator;
-import edu.udel.cis.vsl.civl.library.civlc.LibcivlcEvaluator.CIVLOperation;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -33,6 +31,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
@@ -40,18 +39,12 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 public class LibbundleExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
 
-	/* ************************** Instance fields ************************** */
-
-	private LibcivlcEvaluator libevaluator;
-
 	/* **************************** Constructors *************************** */
 
 	public LibbundleExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
 			CIVLConfiguration civlConfig) {
 		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
-		this.libevaluator = new LibcivlcEvaluator(name, evaluator,
-				modelFactory, symbolicUtil);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -257,8 +250,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			elementType = universe.arrayRead(array, zero).type();
 			count = universe.divide(size,
 					symbolicUtil.sizeof(arguments[1].getSource(), elementType));
-			arrayIndex = libevaluator.getIndexInUnrolledArray(state, process,
-					pointer, arrayLength, source);
+			arrayIndex = getIndexInUnrolledArray(state, process, pointer,
+					arrayLength, source);
 			array = symbolicUtil.getSubArray(array, arrayIndex,
 					universe.add(arrayIndex, count), state, process, source);
 			symbolicBundleType = bundleType.getDynamicType(universe);
@@ -315,8 +308,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		}
 		try {
 			// TODO: this method being called should not throw a SARLException:
-			eval = libevaluator.bundleUnpack(state, process, bundle, pointer,
-					source);
+			eval = bundleUnpack(state, process, bundle, pointer, source);
 			state = eval.state;
 			targetObject = eval.value;
 		} catch (SARLException e) {
@@ -416,8 +408,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		}
 		// ------checking if secOperand is null
 		if (secOperand.isNull() || secOperand == null) {
-			eval = libevaluator.bundleUnpack(state, process, bundle, pointer,
-					source);
+			eval = bundleUnpack(state, process, bundle, pointer, source);
 			state = eval.state;
 			data = eval.value;
 			return primaryExecutor.assign(source, state, process, bufPointer,
@@ -425,8 +416,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		}
 		secOperand = symbolicUtil.arrayUnrolling(state, process, secOperand,
 				arguments[1].getSource());
-		bufIndex = libevaluator.getIndexInUnrolledArray(state, process,
-				pointer, universe.length(secOperand), arguments[1].getSource());
+		bufIndex = getIndexInUnrolledArray(state, process, pointer,
+				universe.length(secOperand), arguments[1].getSource());
 		// ------Obtain data form bundle
 		data = (SymbolicExpression) bundle.argument(1);
 		// ------checking if data is null
@@ -440,7 +431,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			while (reasoner.isValid(claim)) {
 				dataElement = universe.arrayRead(data, i);
 				secOperandElement = universe.arrayRead(secOperand, bufIndex);
-				opRet = libevaluator.civlOperation(state, process, dataElement,
+				opRet = civlOperation(state, process, dataElement,
 						secOperandElement, CIVL_Op, source);
 				secOperand = universe.arrayWrite(secOperand, bufIndex, opRet);
 				// update
@@ -462,4 +453,305 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
+	/**
+	 * Unpacking the given bundle, assigning the data in bundle to the object
+	 * pointed by the given pointer.
+	 * 
+	 * Pre-Condition : Data in bundle is in the form of a unrolled one
+	 * dimensional array.
+	 * 
+	 * Implementation details: First, it's guaranteed that the data in bundle is
+	 * always in the form of a one dimensional array(also can be understood as a
+	 * unrolled array or a sequence of data).<br>
+	 * Second, inside this function, it contains a cast from the one dimensional
+	 * array mentioned above to another type specified by the parameter
+	 * "pointer". A correct CIVL program or C program should make sure that cast
+	 * is legal, otherwise an error will be reported.<br>
+	 * Third, the object used to store the data in bundle can have a larger size
+	 * than the data itself.
+	 * 
+	 * @link 
+	 *       {edu.udel.cis.vsl.civl.dynamic.common.CommonSymbolicUtility.arrayCasting
+	 *       }
+	 * @link {edu.udel.cis.vsl.civl.dynamic.common.CommonSymbolicUtility.
+	 *       arrayUnrolling}
+	 * 
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The identifier of the process
+	 * @param bundle
+	 *            The bundle type object
+	 * @param pointer
+	 *            The pointer to the address of the object which will be
+	 *            assigned by bundle data
+	 * @param civlsource
+	 *            The CIVL Source of the bundle_unpack statement
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation bundleUnpack(State state, String process,
+			SymbolicExpression bundle, SymbolicExpression pointer,
+			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
+		if (!(bundle.type() instanceof SymbolicUnionType))
+			throw new CIVLInternalException(
+					"Bundle doesn't have a SymbolicUnionType", civlsource);
+		SymbolicExpression data = (SymbolicExpression) bundle.argument(1);
+		SymbolicExpression obj;
+		SymbolicExpression array;
+		NumericExpression dataSize;
+		BooleanExpression claim;
+		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
+		SymbolicExpression unrolledDataArray = symbolicUtil.arrayUnrolling(
+				state, process, data, civlsource);
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		Evaluation eval = new Evaluation(state, null);
+
+		dataSize = universe.length(unrolledDataArray);
+		// ------If data size is zero, do nothing
+		if (reasoner.isValid(universe.equals(dataSize, zero)))
+			return eval;
+
+		// ------If pointer is an array element reference, the array is pointed
+		// by the parent pointer.
+		if (ref.isArrayElementReference()) {
+			SymbolicExpression parentPtr = symbolicUtil.parentPointer(
+					civlsource, pointer);
+			SymbolicExpression unrolledArray;
+			NumericExpression indexInUnrolledArray, unrolledArraySize;
+
+			eval = evaluator.dereference(civlsource, state, process, parentPtr,
+					false);
+			state = eval.state;
+			array = eval.value;
+			// ------Unrolling the array pointed by the parent pointer.
+			// Note: Since data in bundle is guaranteed to be in the form of a
+			// 1-d array, unrolling the receiver array can make things easier.
+			unrolledArray = symbolicUtil.arrayUnrolling(state, process, array,
+					civlsource);
+			unrolledArraySize = universe.length(unrolledArray);
+			indexInUnrolledArray = getIndexInUnrolledArray(state, process,
+					pointer, unrolledArraySize, civlsource);
+			unrolledArray = this.oneDimenAssign(state, process, unrolledArray,
+					indexInUnrolledArray, data, civlsource);
+			eval.state = state;
+			eval.value = symbolicUtil.arrayCasting(state, process,
+					unrolledArray, array.type(), civlsource);
+			return eval;
+
+		} else {
+			// ------If the pointer points to a memory space or an array.
+			eval = evaluator.dereference(civlsource, state, process, pointer,
+					false);
+			state = eval.state;
+			obj = eval.value;
+			if (obj.type() instanceof SymbolicArrayType) {
+				SymbolicExpression objArray = symbolicUtil.arrayUnrolling(
+						state, process, obj, civlsource);
+
+				objArray = this.oneDimenAssign(state, process, objArray, zero,
+						data, civlsource);
+				eval.state = state;
+				eval.value = symbolicUtil.arrayCasting(state, process,
+						objArray, obj.type(), civlsource);
+				return eval;
+			} else {
+				claim = universe.equals(dataSize, one);
+				if (reasoner.isValid(claim)) {
+					eval.state = state;
+					eval.value = universe.arrayRead(data, zero);
+					return eval;
+				} else {
+					throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
+							Certainty.PROVEABLE, "Bundle Unpack", process,
+							civlsource);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Assigns a sequence of data (in the form of a one dimensional array, not
+	 * the same "sequence" as a type of CIVL-C language) to an one dimensional
+	 * array.
+	 * 
+	 * Pre-Condition: Parameters "array" and "data" are both one dimensional
+	 * array.
+	 * 
+	 * Note: This function can be public if any other module want use it.
+	 * 
+	 * Implementation details: Since multiple dimensional arrays are represented
+	 * in CIVL as nested one dimensional arrays, the one dimensional assignment
+	 * is an operation only on the most outer array in those nested arrays.
+	 * Note: So it's recommended to passing one dimensional arrays as parameters
+	 * for "array" and "data".
+	 * 
+	 * e.g. For an array "a"<code>int a[2][2];</code> assigned by data
+	 * <code>int b = [2][4];</code>, it finally will return a[2][4];
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The identifier of the process
+	 * @param array
+	 *            The array is going to be assigned by a set of data.
+	 * @param data
+	 *            The data is going to be assigned to an array
+	 * @param civlsource
+	 * @return The array after assignment.
+	 */
+	private SymbolicExpression oneDimenAssign(State state, String process,
+			SymbolicExpression array, NumericExpression arrayIndex,
+			SymbolicExpression data, CIVLSource civlsource) {
+		NumericExpression arrayLength, dataLength, arrayFreeSpace;
+		BooleanExpression claim;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+
+		arrayLength = universe.length(array);
+		dataLength = universe.length(data);
+		if ((array.type() instanceof SymbolicArrayType)
+				&& (data.type() instanceof SymbolicArrayType)) {
+			arrayFreeSpace = universe.subtract(arrayLength, arrayIndex);
+
+			claim = universe.and(universe.equals(zero, arrayIndex),
+					universe.equals(arrayFreeSpace, dataLength));
+			if (reasoner.isValid(claim)) {
+				return data;
+			} else {
+				NumericExpression i = universe.zeroInt();
+
+				claim = universe.lessThan(i, dataLength);
+				while (reasoner.isValid(claim)) {
+					SymbolicExpression element = universe.arrayRead(data, i);
+
+					try {
+						array = universe.arrayWrite(array, arrayIndex, element);
+					} catch (SARLException e) {
+						throw new SARLException("Array assignment out of bound");
+					}
+					// update
+					i = universe.add(i, one);
+					arrayIndex = universe.add(arrayIndex, one);
+					claim = universe.lessThan(i, dataLength);
+				}
+				return array;
+			}
+		} else
+			throw new CIVLInternalException("arguments: " + array + " and "
+					+ data + "must be an one dimensional array.\n", civlsource);
+	}
+
+	/**
+	 * Computes the new index for an array element reference after the
+	 * referenced array being unrolled.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The identifier of the process
+	 * @param oriPointer
+	 *            The pointer to the original array(before unrolling) or array
+	 *            element.
+	 * @param unrolledArraySize
+	 *            The size of the unrolled array.
+	 * @param civlsource
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private NumericExpression getIndexInUnrolledArray(State state,
+			String process, SymbolicExpression oriPointer,
+			NumericExpression unrolledArraySize, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
+		ReferenceExpression ref = symbolicUtil.getSymRef(oriPointer);
+
+		if (ref.isArrayElementReference()) {
+			SymbolicExpression parentPtr = symbolicUtil.parentPointer(
+					civlsource, oriPointer);
+			SymbolicExpression array = evaluator.dereference(civlsource, state,
+					process, parentPtr, false).value;
+			NumericExpression arrayLength = universe.length(array);
+			NumericExpression chunkLength;
+			NumericExpression newIndex;
+			NumericExpression arrayIdx = universe.integer(symbolicUtil
+					.getArrayIndex(civlsource, oriPointer));
+
+			chunkLength = universe.divide(unrolledArraySize, arrayLength);
+			newIndex = universe.multiply(arrayIdx, chunkLength);
+			return newIndex;
+		} else
+			return zero;
+	}
+
+	/**
+	 * Completing an operation (which is included in CIVLOperation enumerator).
+	 * 
+	 * @author Ziqing Luo
+	 * @param arg0
+	 *            The new data got from the bundle
+	 * @param arg1
+	 *            The data has already been received previously
+	 * @param op
+	 *            The CIVL Operation
+	 * @return
+	 */
+	private SymbolicExpression civlOperation(State state, String process,
+			SymbolicExpression arg0, SymbolicExpression arg1, CIVLOperation op,
+			CIVLSource civlsource) {
+		BooleanExpression claim;
+
+		/*
+		 * For MAX and MIN operation, if CIVL cannot figure out a concrete
+		 * result, make a abstract function for it.
+		 */
+		try {
+			switch (op) {
+			// TODO: consider using heuristic to switch to abstract
+			// functions if these expressions get too big (max,min):
+			case CIVL_MAX:
+				claim = universe.lessThan((NumericExpression) arg1,
+						(NumericExpression) arg0);
+				return universe.cond(claim, arg0, arg1);
+			case CIVL_MIN:
+				claim = universe.lessThan((NumericExpression) arg0,
+						(NumericExpression) arg1);
+				return universe.cond(claim, arg0, arg1);
+			case CIVL_SUM:
+				return universe.add((NumericExpression) arg0,
+						(NumericExpression) arg1);
+			case CIVL_PROD:
+				return universe.multiply((NumericExpression) arg0,
+						(NumericExpression) arg1);
+			case CIVL_LAND:
+				return universe.and((BooleanExpression) arg0,
+						(BooleanExpression) arg1);
+			case CIVL_LOR:
+				return universe.or((BooleanExpression) arg0,
+						(BooleanExpression) arg1);
+			case CIVL_LXOR:
+				BooleanExpression notNewData = universe
+						.not((BooleanExpression) arg0);
+				BooleanExpression notPrevData = universe
+						.not((BooleanExpression) arg1);
+
+				return universe.or(
+						universe.and(notNewData, (BooleanExpression) arg1),
+						universe.and((BooleanExpression) arg0, notPrevData));
+			case CIVL_BAND:
+			case CIVL_BOR:
+			case CIVL_BXOR:
+			case CIVL_MINLOC:
+			case CIVL_MAXLOC:
+			case CIVL_REPLACE:
+			default:
+				throw new CIVLUnimplementedFeatureException("CIVLOperation: "
+						+ op.name());
+			}
+		} catch (ClassCastException e) {
+			throw new CIVLExecutionException(ErrorKind.OTHER,
+					Certainty.PROVEABLE, process,
+					"Invalid operands type for CIVL Operation: " + op.name(),
+					civlsource);
+		}
+	}
 }

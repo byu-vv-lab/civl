@@ -252,6 +252,9 @@ public class AmpleSetWorker {
 										+ "has already checked that the library enabler "
 										+ "gets loaded successfully otherwise an error should have been reported there",
 								call.getSource());
+					} catch (UnsatisfiablePathConditionException e) {
+						ampleProcessIDs = activeProcesses;
+						return ampleProcessIDs;
 					}
 					if (ampleSubSet != null && !ampleSubSet.isEmpty()) {
 						for (int amplePid : ampleSubSet) {

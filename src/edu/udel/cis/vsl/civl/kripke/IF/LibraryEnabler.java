@@ -56,7 +56,8 @@ public interface LibraryEnabler {
 	 * @return
 	 */
 	Set<Integer> ampleSet(State state, int pid, CallOrSpawnStatement statement,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap);
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap)
+			throws UnsatisfiablePathConditionException;
 
 	/**
 	 * Computes the enabled transitions of a given function call. This is to

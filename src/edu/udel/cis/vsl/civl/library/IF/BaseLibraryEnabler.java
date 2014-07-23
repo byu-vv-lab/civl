@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
@@ -78,7 +79,8 @@ public abstract class BaseLibraryEnabler extends Library implements
 	@Override
 	public Set<Integer> ampleSet(State state, int pid,
 			CallOrSpawnStatement statement,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap)
+			throws UnsatisfiablePathConditionException {
 		return new HashSet<>();
 	}
 
@@ -104,4 +106,44 @@ public abstract class BaseLibraryEnabler extends Library implements
 		return localTransitions;
 	}
 
+	/**
+	 * Computes the ample set by analyzing the given handle object for the
+	 * statement.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The pid of the process
+	 * @param handleObj
+	 *            The expression of the given handle object
+	 * @param handleObjValue
+	 *            The symbolic expression of the given handle object
+	 * @param reachableMemUnitsMap
+	 *            The map contains all reachable memory units of all processes
+	 * @return
+	 */
+	protected Set<Integer> computeAmpleSetByHandleObject(State state, int pid,
+			Expression handleObj, SymbolicExpression handleObjValue,
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
+		Set<SymbolicExpression> handleObjMemUnits = new HashSet<>();
+		Set<Integer> ampleSet = new HashSet<Integer>();
+
+		try {
+			evaluator.memoryUnitsOfExpression(state, pid, handleObj,
+					handleObjMemUnits);
+		} catch (UnsatisfiablePathConditionException e) {
+			handleObjMemUnits.add(handleObjValue);
+		}
+		for (SymbolicExpression memUnit : handleObjMemUnits) {
+			for (int otherPid : reachableMemUnitsMap.keySet()) {
+				if (otherPid == pid || ampleSet.contains(otherPid))
+					continue;
+				else if (reachableMemUnitsMap.get(otherPid)
+						.containsKey(memUnit)) {
+					ampleSet.add(otherPid);
+				}
+			}
+		}
+		return ampleSet;
+	}
 }

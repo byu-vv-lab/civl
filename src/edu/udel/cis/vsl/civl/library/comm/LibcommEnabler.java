@@ -12,7 +12,6 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.IF.BaseLibraryEnabler;
-import edu.udel.cis.vsl.civl.library.civlc.LibcivlcEvaluator;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -42,16 +41,12 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 public class LibcommEnabler extends BaseLibraryEnabler implements
 		LibraryEnabler {
 
-	private LibcivlcEvaluator libEvaluator;
-
 	/* **************************** Constructors *************************** */
 
 	public LibcommEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil) {
 		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil);
-		this.libEvaluator = new LibcivlcEvaluator(name, evaluator,
-				modelFactory, symbolicUtil);
 	}
 
 	/* ********************* Methods from LibraryEnabler ******************* */
@@ -59,7 +54,8 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 	@Override
 	public Set<Integer> ampleSet(State state, int pid,
 			CallOrSpawnStatement statement,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap)
+			throws UnsatisfiablePathConditionException {
 		Identifier name;
 		CallOrSpawnStatement call;
 
@@ -162,47 +158,6 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		default:
 			throw new CIVLInternalException("Unreachable" + function, source);
 		}
-	}
-
-	/**
-	 * Computes the ample set by analyzing the given handle object for the
-	 * statement.
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param pid
-	 *            The pid of the process
-	 * @param handleObj
-	 *            The expression of the given handle object
-	 * @param handleObjValue
-	 *            The symbolic expression of the given handle object
-	 * @param reachableMemUnitsMap
-	 *            The map contains all reachable memory units of all processes
-	 * @return
-	 */
-	private Set<Integer> computeAmpleSetByHandleObject(State state, int pid,
-			Expression handleObj, SymbolicExpression handleObjValue,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
-		Set<SymbolicExpression> handleObjMemUnits = new HashSet<>();
-		Set<Integer> ampleSet = new HashSet<Integer>();
-
-		try {
-			evaluator.memoryUnitsOfExpression(state, pid, handleObj,
-					handleObjMemUnits);
-		} catch (UnsatisfiablePathConditionException e) {
-			handleObjMemUnits.add(handleObjValue);
-		}
-		for (SymbolicExpression memUnit : handleObjMemUnits) {
-			for (int otherPid : reachableMemUnitsMap.keySet()) {
-				if (otherPid == pid || ampleSet.contains(otherPid))
-					continue;
-				else if (reachableMemUnitsMap.get(otherPid)
-						.containsKey(memUnit)) {
-					ampleSet.add(otherPid);
-				}
-			}
-		}
-		return ampleSet;
 	}
 
 	/**
@@ -316,8 +271,8 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			BooleanExpression newClause = newClauses.get(i);
 
 			newPathCondition = universe.and(pathCondition, newClause);
-			possibleSources = libEvaluator.getAllPossibleSources(eval.state,
-					newClause, gcomm, source, dest, tag, call.getSource());
+			possibleSources = getAllPossibleSources(eval.state, newClause,
+					gcomm, source, dest, tag, call.getSource());
 			callWorkers = (List<Statement>) this.dequeueStatementGenerator(
 					sourceExpr, tagExpr, possibleSources, newPathCondition,
 					call.getSource(), call.function().parameters(), arguments,
@@ -381,5 +336,161 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		}
 
 		return transitionStatements;
+	}
+
+	/**
+	 * <p>
+	 * This function checks all message channels (messages receiving buffers) to
+	 * seek for available sources. If there are at least one message specified
+	 * by "tag" argument in the channel specified by the "source" argument(and
+	 * other arguments of course, but here only "source" will make any
+	 * difference), the "source" is available.
+	 * </p>
+	 * <p>
+	 * Precondition: The "predicate" argument shall be able to determine weather
+	 * the "source" or "tag" is wild card or valid specific symbolic expression.
+	 * </p>
+	 * 
+	 * @author Ziqing Luo
+	 * @param predicate
+	 *            Context conditions which helps determining weather the source
+	 *            or tag is a wild card. This argument shall be able to
+	 *            certainly prove: if the "source" belongs to [0, infinity) or
+	 *            {-1} and if the "tag" belongs to [0, infinity) or {-2}.
+	 * @param gcomm
+	 *            The global communicator
+	 * @param source
+	 *            The argument "source" which indicates some message
+	 *            channels(message queue in our implementation).
+	 * @param dest
+	 *            The argument "dest" which indicates the receiving process
+	 *            itself.
+	 * @param tag
+	 *            The argument "tag" which indicates some messages have the same
+	 *            tag.
+	 * @param civlsource
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private List<SymbolicExpression> getAllPossibleSources(State state,
+			BooleanExpression predicate, SymbolicExpression gcomm,
+			SymbolicExpression source, SymbolicExpression dest,
+			SymbolicExpression tag, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression buf;
+		SymbolicExpression bufRow;
+		SymbolicExpression queue;
+		SymbolicExpression queueLength;
+		SymbolicExpression messages = null;
+		SymbolicExpression message = null;
+		BooleanExpression newPathConditions = universe.and(predicate,
+				state.getPathCondition());
+		Reasoner reasoner = universe.reasoner(newPathConditions);
+		IntegerNumber sourceNumber = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) source);
+		IntegerNumber tagNumber = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) tag);
+		List<SymbolicExpression> results = new LinkedList<>();
+		boolean isWildcardSource = false, isWildcardTag = false;
+
+		if (newPathConditions.equals(universe.falseExpression()))
+			return results;
+
+		if (sourceNumber != null && sourceNumber.intValue() == -1)
+			isWildcardSource = true;
+		if (tagNumber != null && tagNumber.intValue() == -2)
+			isWildcardTag = true;
+
+		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		// non-wild card source and tag
+		if (!isWildcardSource && !isWildcardTag) {
+			BooleanExpression iterLTQueueLengthClaim;
+			NumericExpression iter = universe.integer(0);
+
+			bufRow = universe.arrayRead(buf, (NumericExpression) source);
+			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+			messages = universe.tupleRead(queue, oneObject);
+			queueLength = universe.tupleRead(queue, zeroObject);
+			iterLTQueueLengthClaim = universe.lessThan(iter,
+					(NumericExpression) queueLength);
+			while (reasoner.isValid(iterLTQueueLengthClaim)) {
+				BooleanExpression tagMatchClaim;
+
+				message = universe.arrayRead(messages, iter);
+				tagMatchClaim = universe.equals(
+						universe.tupleRead(message, twoObject), tag);
+				if (reasoner.isValid(tagMatchClaim)) {
+					results.add(source);
+					break;
+				}
+				iter = universe.add(iter, one);
+				iterLTQueueLengthClaim = universe.lessThan(iter,
+						(NumericExpression) queueLength);
+			}
+		}// non-wild card source and any_tag
+		else if (!isWildcardSource && isWildcardTag) {
+			bufRow = universe.arrayRead(buf, (NumericExpression) source);
+			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+			messages = universe.tupleRead(queue, oneObject);
+			queueLength = universe.tupleRead(queue, zeroObject);
+			if (reasoner.isValid(universe.lessThan(zero,
+					(NumericExpression) queueLength)))
+				results.add(source);
+		} // any source and non-wild card tag
+		else if (isWildcardSource && !isWildcardTag) {
+			NumericExpression nprocs = (NumericExpression) universe.tupleRead(
+					gcomm, zeroObject);
+			NumericExpression iter = universe.zeroInt();
+			BooleanExpression iterLTnprocsClaim = universe.lessThan(iter,
+					nprocs);
+
+			while (reasoner.isValid(iterLTnprocsClaim)) {
+				NumericExpression queueIter = universe.zeroInt();
+				BooleanExpression queueIterLTlengthClaim;
+
+				bufRow = universe.arrayRead(buf, iter);
+				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+				messages = universe.tupleRead(queue, oneObject);
+				queueLength = universe.tupleRead(queue, zeroObject);
+				queueIterLTlengthClaim = universe.lessThan(queueIter,
+						(NumericExpression) queueLength);
+				while (reasoner.isValid(queueIterLTlengthClaim)) {
+					BooleanExpression tagMatchClaim;
+
+					message = universe.arrayRead(messages, queueIter);
+					tagMatchClaim = universe.equals(
+							universe.tupleRead(message, twoObject), tag);
+					if (reasoner.isValid(tagMatchClaim)) {
+						results.add(iter);
+						break;
+					}
+					queueIter = universe.add(queueIter, one);
+					queueIterLTlengthClaim = universe.lessThan(queueIter,
+							(NumericExpression) queueLength);
+				}
+				iter = universe.add(iter, one);
+				iterLTnprocsClaim = universe.lessThan(iter, nprocs);
+			}
+		} else if (isWildcardSource && isWildcardTag) {
+			NumericExpression nprocs = (NumericExpression) universe.tupleRead(
+					gcomm, zeroObject);
+			NumericExpression iter = universe.zeroInt();
+			BooleanExpression iterLTnprocsClaim = universe.lessThan(iter,
+					nprocs);
+
+			while (reasoner.isValid(iterLTnprocsClaim)) {
+				bufRow = universe.arrayRead(buf, iter);
+				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+				messages = universe.tupleRead(queue, oneObject);
+				queueLength = universe.tupleRead(queue, zeroObject);
+				if (reasoner.isValid(universe.lessThan(zero,
+						(NumericExpression) queueLength))) {
+					results.add(iter);
+				}
+				iter = universe.add(iter, one);
+				iterLTnprocsClaim = universe.lessThan(iter, nprocs);
+			}
+		}
+		return results;
 	}
 }
