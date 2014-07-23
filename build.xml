@@ -154,7 +154,7 @@
 
 	<target name="bench-compile" depends="jar" description="Compile benchmark java source files.">
 		<mkdir dir="${bin.dir}" />
-		<javac debug="true" srcdir="${bench.src.dir}" destdir="${bin.dir}" includes="edu/udel/cis/vsl/civl/**" classpathref="src.compile.classpath" encoding="UTF-8" includeantruntime="false">
+		<javac debug="true" srcdir="${bench.src.dir}" destdir="${bin.dir}" includes="edu/udel/cis/vsl/civl/**/*Benchmark.java" classpathref="src.compile.classpath" encoding="UTF-8" includeantruntime="false">
 		</javac>
 	</target>
 
