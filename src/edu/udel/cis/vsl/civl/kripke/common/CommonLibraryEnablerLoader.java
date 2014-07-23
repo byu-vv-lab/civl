@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
-import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,7 +26,7 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 
 	@Override
 	public LibraryEnabler getLibraryEnabler(String name,
-			Enabler primaryEnabler, Evaluator evaluator, PrintStream output,
+			Enabler primaryEnabler, Evaluator evaluator,
 			ModelFactory modelFacotry, SymbolicUtility symbolicUtil)
 			throws LibraryLoaderException {
 		LibraryEnabler result;
@@ -44,11 +43,11 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 						.forName(aClassName);
 				Constructor<? extends LibraryEnabler> constructor = aClass
 						.getConstructor(String.class, Enabler.class,
-								Evaluator.class, PrintStream.class,
-								ModelFactory.class, SymbolicUtility.class);
+								Evaluator.class, ModelFactory.class,
+								SymbolicUtility.class);
 
 				result = constructor.newInstance(name, primaryEnabler,
-						evaluator, output, modelFacotry, symbolicUtil);
+						evaluator, modelFacotry, symbolicUtil);
 			} catch (Exception e) {
 				throw new LibraryLoaderException(e.getMessage());
 			}

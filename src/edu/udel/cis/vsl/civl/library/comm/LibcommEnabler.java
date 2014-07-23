@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.library.comm;
 
-import java.io.PrintStream;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -48,10 +47,9 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 	/* **************************** Constructors *************************** */
 
 	public LibcommEnabler(String name, Enabler primaryEnabler,
-			Evaluator evaluator, PrintStream output, ModelFactory modelFactory,
+			Evaluator evaluator, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil) {
-		super(name, primaryEnabler, evaluator, output, modelFactory,
-				symbolicUtil);
+		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil);
 		this.libEvaluator = new LibcivlcEvaluator(name, evaluator,
 				modelFactory, symbolicUtil);
 	}
@@ -360,7 +358,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 
 			dequeueWorkFunction = modelFactory.systemFunction(civlsource,
 					modelFactory.identifier(civlsource, dequeueWork),
-					parameters, returnType, containingScope, "civlc");
+					parameters, returnType, containingScope, this.name);
 			dequeueWorkPointer = modelFactory.functionPointerExpression(
 					civlsource, dequeueWorkFunction);
 			newArgs = new LinkedList<Expression>(arguments);

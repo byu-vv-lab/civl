@@ -4,7 +4,7 @@
 #else
 #define __STRING__
 #include<string-common.h>
-#include<civlc.h>
+#include<bundle.cvh>
 
 /* Copies a region of memory */
 void* memcpy(void *p, void *q, const size_t size) {

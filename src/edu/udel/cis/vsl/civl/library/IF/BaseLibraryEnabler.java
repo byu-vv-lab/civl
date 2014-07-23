@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.library.IF;
 
-import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,11 +44,6 @@ public abstract class BaseLibraryEnabler extends Library implements
 	protected ModelFactory modelFactory;
 
 	/**
-	 * The output stream to be used for printing.
-	 */
-	protected PrintStream output = System.out;
-
-	/**
 	 * The enabler for normal CIVL execution.
 	 */
 	protected Enabler primaryEnabler;
@@ -66,19 +60,16 @@ public abstract class BaseLibraryEnabler extends Library implements
 	 * 
 	 * @param primaryEnabler
 	 *            The enabler for normal CIVL execution.
-	 * @param output
-	 *            The output stream to be used in the enabler.
 	 * @param modelFactory
 	 *            The model factory of the system.
 	 */
 	public BaseLibraryEnabler(String name, Enabler primaryEnabler,
-			Evaluator evaluator, PrintStream output, ModelFactory modelFactory,
+			Evaluator evaluator, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil) {
 		super(name, evaluator.universe(), symbolicUtil);
 		this.primaryEnabler = primaryEnabler;
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
-		this.output = output;
 		this.modelFactory = modelFactory;
 	}
 

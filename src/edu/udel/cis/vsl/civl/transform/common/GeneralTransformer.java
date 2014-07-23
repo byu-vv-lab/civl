@@ -164,7 +164,8 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 				.getName();
 		Formation formation;
 
-		if (sourceFile.endsWith(".h") || sourceFile.equals("civl-omp.cvl")
+		if (sourceFile.endsWith(".h") || sourceFile.endsWith(".cvh")
+				|| sourceFile.equals("civl-omp.cvl")
 				|| sourceFile.equals("mpi.cvl")
 				|| sourceFile.equals("pthread-c.cvl")
 				|| sourceFile.equals("pthread.cvl")

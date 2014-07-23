@@ -281,8 +281,7 @@ public abstract class CommonEnabler implements Enabler {
 	LibraryEnabler libraryEnabler(CIVLSource civlSource, String library)
 			throws LibraryLoaderException {
 		return this.libraryLoader.getLibraryEnabler(library, this, evaluator,
-				this.debugOut, evaluator.modelFactory(),
-				evaluator.symbolicUtility());
+				evaluator.modelFactory(), evaluator.symbolicUtility());
 	}
 
 	/* **************************** Private Methods ************************ */

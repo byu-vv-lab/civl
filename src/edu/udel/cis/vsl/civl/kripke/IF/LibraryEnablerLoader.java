@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.kripke.IF;
 
-import java.io.PrintStream;
-
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
@@ -24,8 +22,6 @@ public interface LibraryEnablerLoader {
 	 *            The CIVL enabler for normal CIVL statements.
 	 * @param evaluator
 	 *            The CIVL evaluator of the system.
-	 * @param output
-	 *            The print stream to be used in the library enabler.
 	 * @param modelFacotry
 	 *            The model factory to be used in the library enabler.
 	 * @param symbolicUtil
@@ -34,6 +30,6 @@ public interface LibraryEnablerLoader {
 	 * @return The library enabler of the given name.
 	 */
 	LibraryEnabler getLibraryEnabler(String name, Enabler primaryEnabler,
-			Evaluator evaluator, PrintStream output, ModelFactory modelFacotry,
+			Evaluator evaluator, ModelFactory modelFacotry,
 			SymbolicUtility symbolicUtil) throws LibraryLoaderException;
 }

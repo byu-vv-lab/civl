@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
-import java.io.PrintStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -69,10 +68,9 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	 *            The model factory of the system.
 	 */
 	public LibcivlcEnabler(String name, Enabler primaryEnabler,
-			Evaluator evaluator, PrintStream output, ModelFactory modelFactory,
+			Evaluator evaluator, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil) {
-		super(name, primaryEnabler, evaluator, output, modelFactory,
-				symbolicUtil);
+		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil);
 		CIVLSource source = modelFactory.model().getSource();
 		SystemFunction chooseIntWorkFunction = modelFactory.systemFunction(
 				source,
