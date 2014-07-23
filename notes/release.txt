@@ -6,7 +6,7 @@
 2. Edit the fields named "version" and "date" in interface
 edu.udel.cis.vsl.civl.config.CIVLConstants to use the new version and today's date.
 Also, edit README to change the version number and the changes of 
-the new version.
+the new version. Manual.
 
 3. Commit your trunk or make sure there are no uncommitted
 modifications.
@@ -60,12 +60,14 @@ the Subversion Book for details on merging changes. Then commit these
 changes as usual. After each commit, autotest should run automatically
 and produce the new release. Here is an example:
 
-First check out the tagged branch somewhere:
+First, check out the tagged branch somewhere:
   svn co svn://vsl.cis.udel.edu/civl/tags/0.4
-Then, merge changes from the trunk:
-svn merge svn://vsl.cis.udel.edu/civl/trunk
-Then commit:
-svn ci -m"Merged updated README from trunk."
+Second, go to the directory you download:
+  cd 0.4
+Third, merge changes from the trunk:
+  svn merge svn://vsl.cis.udel.edu/civl/trunk
+Forth, commit:
+  svn ci -m"Merged updated README from trunk."
 
 11. Test the release: download it from the web page, move the
 executable file "civl" somewhere in your path (e.g., /tools/bin)
