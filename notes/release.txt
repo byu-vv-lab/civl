@@ -58,7 +58,14 @@ out a fresh local copy of the whole project, change into the branch
 directory, and type svn merge svn://vsl.cis.udel.edu/civl/trunk See
 the Subversion Book for details on merging changes. Then commit these
 changes as usual. After each commit, autotest should run automatically
-and produce the new release.
+and produce the new release. Here is an example:
+
+First check out the tagged branch somewhere:
+  svn co svn://vsl.cis.udel.edu/civl/tags/0.4
+Then, merge changes from the trunk:
+svn merge svn://vsl.cis.udel.edu/civl/trunk
+Then commit:
+svn ci -m"Merged updated README from trunk."
 
 11. Test the release: download it from the web page, move the
 executable file "civl" somewhere in your path (e.g., /tools/bin)
