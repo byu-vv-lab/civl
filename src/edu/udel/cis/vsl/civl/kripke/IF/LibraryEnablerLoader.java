@@ -14,7 +14,8 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
  */
 public interface LibraryEnablerLoader {
 	/**
-	 * Obtains the library executor of the given name.
+	 * Obtains the library executor of the given name. Given the same name, it
+	 * will always return the same instance of the library enabler of that name.
 	 * 
 	 * @param name
 	 *            The name of the library whose enabler is to be obtained.

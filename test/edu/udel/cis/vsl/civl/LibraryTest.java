@@ -48,7 +48,7 @@ public class LibraryTest {
 	@Test
 	public void communicatorFeatures() {
 		assertTrue(ui.run("verify", filename("civlc/communicatorFeatures.cvl"),
-				"-inputNPROCS_BOUND=5", "-inputN_BOUND=3",
+				"-inputNPROCS_BOUND=2", "-inputN_BOUND=2",
 				"-enablePrintf=false"));
 	}
 
@@ -119,7 +119,8 @@ public class LibraryTest {
 
 	@Test
 	public void equals() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/equals.cvl")));
+		assertTrue(ui.run("verify", filename("civlc/equals.cvl"),
+				"-showTransitions"));
 	}
 
 	@Test
@@ -133,8 +134,8 @@ public class LibraryTest {
 	}
 
 	@Test
-	public void seqInit() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/seq_init.cvl")));
+	public void seq() throws ABCException {
+		assertTrue(ui.run("verify", filename("civlc/seq.cvl")));
 	}
 
 	@Test

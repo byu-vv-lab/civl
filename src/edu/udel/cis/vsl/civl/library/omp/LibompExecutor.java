@@ -2,11 +2,10 @@ package edu.udel.cis.vsl.civl.library.omp;
 
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -19,12 +18,8 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -204,13 +199,9 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 		// the CIVL expression of the first argument of the function call
 		Expression scopeExpression = arguments[0];
 		// the value of the second argument, which is nthread.
-		SymbolicExpression nthreads = argumentValues[1];
+		NumericExpression nthreads = (NumericExpression) argumentValues[1];
 		// the second field isInit of the __omp_gws__ object to be created
 		SymbolicExpression isInit;
-		// the representation of false in SARL
-		SymbolicExpression falseValue = universe.canonic(universe.bool(false));
-		// the list of components of the array isInit
-		List<SymbolicExpression> isInitComponents = new LinkedList<>();
 		// the third field loops of the __omp_gws__ object to be created
 		SymbolicExpression loops = universe.array(this.dynamicOmpLoopInfoType,
 				new LinkedList<SymbolicExpression>());
@@ -218,36 +209,9 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression sections = universe.array(
 				this.dynamicOmpSectionsInfoType,
 				new LinkedList<SymbolicExpression>());
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-		// try to infer the concrete value of nthreads
-		IntegerNumber number_nthreads = (IntegerNumber) reasoner
-				.extractNumber((NumericExpression) nthreads);
 
-		if (number_nthreads != null) {
-			// nthreads is concrete
-			int int_nthreads = number_nthreads.intValue();
-
-			// isInit component
-			for (int i = 0; i < int_nthreads; i++) {
-				isInitComponents.add(falseValue);
-			}
-			isInit = universe.array(universe.booleanType(), isInitComponents);
-		} else {
-			// nthreads is symbolic, use array lambda to initialize isInit.
-			SymbolicCompleteArrayType arrayType;
-			NumericSymbolicConstant index;
-			SymbolicExpression initFunction;
-			SymbolicType integerType = modelFactory.integerType()
-					.getDynamicType(universe);
-
-			arrayType = universe.arrayType(universe.booleanType(),
-					(NumericExpression) nthreads);
-			index = (NumericSymbolicConstant) universe.symbolicConstant(
-					universe.stringObject("i"), integerType);
-			// initFunction(i): isInit[i] = false;
-			initFunction = universe.lambda(index, falseValue);
-			isInit = universe.arrayLambda(arrayType, initFunction);
-		}
+		isInit = symbolicUtil.newArray(state.getPathCondition(), nthreads,
+				this.falseValue);
 		// creates the __omp_gws__ object as a tuple using the four elements in
 		// order specified above: nthreads, isInit, loops, sections.
 		gwsObj = universe.tuple((SymbolicTupleType) dynamicGwsType,

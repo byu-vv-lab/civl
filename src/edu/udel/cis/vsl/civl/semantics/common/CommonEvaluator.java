@@ -2264,9 +2264,6 @@ public class CommonEvaluator implements Evaluator {
 			CIVLType elementType = arrayType.elementType();
 			SymbolicExpression elementValue;
 			NumericExpression extent;
-			SymbolicCompleteArrayType arrayValueType;
-			NumericSymbolicConstant index;
-			SymbolicExpression arrayEleFunction;
 
 			eval = initialValueOfType(state, pid, elementType);
 			state = eval.state;
@@ -2274,11 +2271,8 @@ public class CommonEvaluator implements Evaluator {
 			eval = this.evaluate(state, pid, arrayType.extent());
 			state = eval.state;
 			extent = (NumericExpression) eval.value;
-			arrayValueType = universe.arrayType(elementValue.type(), extent);
-			index = (NumericSymbolicConstant) universe.symbolicConstant(
-					universe.stringObject("i"), universe.integerType());
-			arrayEleFunction = universe.lambda(index, elementValue);
-			eval.value = universe.arrayLambda(arrayValueType, arrayEleFunction);
+			eval.value = symbolicUtil.newArray(state.getPathCondition(),
+					extent, elementValue);
 			break;
 		}
 		case BUNDLE:

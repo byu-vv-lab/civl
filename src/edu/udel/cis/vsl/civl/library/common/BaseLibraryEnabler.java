@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.IF;
+package edu.udel.cis.vsl.civl.library.common;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -29,7 +29,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public abstract class BaseLibraryEnabler extends Library implements
+public abstract class BaseLibraryEnabler extends LibraryComponent implements
 		LibraryEnabler {
 
 	/* *************************** Instance Fields ************************* */

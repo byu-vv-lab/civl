@@ -12,7 +12,9 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
  */
 public interface LibraryEvaluatorLoader {
 	/**
-	 * Obtains the library evaluator of the given name.
+	 * Obtains the library evaluator of the given name. Given the same name, it
+	 * will always return the same instance of the library evaluator of that
+	 * name.
 	 * 
 	 * @param name
 	 *            The name of the library whose evaluator is to be obtained.

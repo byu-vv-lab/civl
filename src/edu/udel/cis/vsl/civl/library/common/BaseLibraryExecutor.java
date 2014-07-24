@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.IF;
+package edu.udel.cis.vsl.civl.library.common;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public abstract class BaseLibraryExecutor extends Library implements
+public abstract class BaseLibraryExecutor extends LibraryComponent implements
 		LibraryExecutor {
 
 	/* ************************** Protected Types ************************** */

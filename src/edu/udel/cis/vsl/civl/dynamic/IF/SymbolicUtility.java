@@ -440,7 +440,7 @@ public interface SymbolicUtility {
 	 * @return
 	 */
 	boolean isValidPointer(SymbolicExpression pointer);
-	
+
 	boolean isValidRefOf(ReferenceExpression ref, SymbolicExpression value);
 
 	CIVLType typeOfObjByPointer(CIVLSource soruce, State state,
@@ -450,4 +450,21 @@ public interface SymbolicUtility {
 
 	boolean isDisjointWith(SymbolicExpression pointer1,
 			SymbolicExpression pointer2);
+
+	/**
+	 * Creates an array of the given length, with each element being the given
+	 * value.
+	 * 
+	 * @param context
+	 *            The context, usually the path condition, of the state where
+	 *            this function is called.
+	 * @param length
+	 *            The length of the array, could be non-concrete.
+	 * @param eleValue
+	 *            The value of the element of the array.
+	 * @return A new array of the given length, which has each element being the
+	 *         given value.
+	 */
+	SymbolicExpression newArray(BooleanExpression context,
+			NumericExpression length, SymbolicExpression eleValue);
 }

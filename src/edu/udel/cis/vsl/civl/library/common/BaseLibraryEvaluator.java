@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.IF;
+package edu.udel.cis.vsl.civl.library.common;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
  * @author Manchun Zheng
  * 
  */
-public abstract class BaseLibraryEvaluator extends Library implements
+public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		LibraryEvaluator {
 	/**
 	 * The evaluator for evaluating expressions.

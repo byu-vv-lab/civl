@@ -1,11 +1,11 @@
 package edu.udel.cis.vsl.civl.library.comm;
 
+import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -26,11 +26,8 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -54,7 +51,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
-	
+
 	/**
 	 * Executes a system function call, updating the left hand side expression
 	 * with the returned value if any.
@@ -618,7 +615,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression gcomm;
-		SymbolicExpression nprocs = argumentValues[1];
+		NumericExpression nprocs = (NumericExpression) argumentValues[1];
 		SymbolicExpression scope = argumentValues[0];
 		Expression scopeExpression = arguments[0];
 		SymbolicExpression isInit;
@@ -628,75 +625,25 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression queueLength = universe.integer(0);
 		SymbolicExpression emptyQueue;
 		SymbolicExpression emptyMessages;
-		List<SymbolicExpression> emptyMessagesComponents = new LinkedList<>();
-		List<SymbolicExpression> isInitComponents = new LinkedList<>();
-		List<SymbolicExpression> queueComponents = new LinkedList<>();
-		List<SymbolicExpression> bufRowComponents = new LinkedList<>();
-		List<SymbolicExpression> bufComponents = new LinkedList<>();
-		List<SymbolicExpression> gcommComponents = new LinkedList<>();
-		int int_nprocs;
 		CIVLType queueType = model.queueType();
 		CIVLType messageType = model.mesageType();
 		CIVLType gcommType = model.gcommType();
 		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
 		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-		IntegerNumber number_nprocs = (IntegerNumber) reasoner
-				.extractNumber((NumericExpression) nprocs);
+		BooleanExpression context = state.getPathCondition();
 
 		isInit = universe.bool(false);
 		emptyMessages = universe.array(dynamicMessageType,
-				emptyMessagesComponents);
-		queueComponents.add(queueLength);
-		queueComponents.add(emptyMessages);
+				new LinkedList<SymbolicExpression>());
 		assert dynamicQueueType instanceof SymbolicTupleType;
 		emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
-				queueComponents);
-		if (number_nprocs != null) {
-			int_nprocs = number_nprocs.intValue();
-			// isInit component
-			for (int i = 0; i < int_nprocs; i++) {
-				isInitComponents.add(isInit);
-				bufRowComponents.add(emptyQueue);
-			}
-			isInitArray = universe.array(isInit.type(), isInitComponents);
-			bufRow = universe.array(dynamicQueueType, bufRowComponents);
-			for (int i = 0; i < int_nprocs; i++) {
-				bufComponents.add(bufRow);
-			}
-			buf = universe.array(bufRow.type(), bufComponents);
-		} else {
-			SymbolicCompleteArrayType arrayType;
-			NumericSymbolicConstant index;
-			SymbolicExpression initFunction;
-			SymbolicExpression bufRowFunction;
-			SymbolicExpression bufFunction;
-			SymbolicType integerType = modelFactory.integerType()
-					.getDynamicType(universe);
-
-			arrayType = universe.arrayType(isInit.type(),
-					(NumericExpression) nprocs);
-			index = (NumericSymbolicConstant) universe.symbolicConstant(
-					universe.stringObject("i"), integerType);
-			initFunction = universe.lambda(index, isInit);
-			isInitArray = universe.arrayLambda(arrayType, initFunction);
-			index = (NumericSymbolicConstant) universe.symbolicConstant(
-					universe.stringObject("i"), integerType);
-			bufRowFunction = universe.lambda(index, emptyQueue);
-			arrayType = universe.arrayType(dynamicQueueType,
-					(NumericExpression) nprocs);
-			bufRow = universe.arrayLambda(arrayType, bufRowFunction);
-			bufFunction = universe.lambda(index, bufRow);
-			arrayType = universe.arrayType(bufRow.type(),
-					(NumericExpression) nprocs);
-			buf = universe.arrayLambda(arrayType, bufFunction);
-		}
-		gcommComponents.add(nprocs);
-		gcommComponents.add(isInitArray);
-		gcommComponents.add(buf);
+				Arrays.asList(queueLength, emptyMessages));
+		isInitArray = symbolicUtil.newArray(context, nprocs, isInit);
+		bufRow = symbolicUtil.newArray(context, nprocs, emptyQueue);
+		buf = symbolicUtil.newArray(context, nprocs, bufRow);
 		gcomm = universe.tuple(
 				(SymbolicTupleType) gcommType.getDynamicType(universe),
-				gcommComponents);
+				Arrays.asList(nprocs, isInitArray, buf));
 		state = primaryExecutor.malloc(source, state, pid, process, lhs,
 				scopeExpression, scope, gcommType, gcomm);
 		return state;

@@ -1,11 +1,11 @@
 package edu.udel.cis.vsl.civl.library.concurrency;
 
+import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.library.IF.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -21,12 +21,10 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 
 public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
@@ -347,59 +345,22 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression gbarrierObj;
-		SymbolicExpression nprocs = argumentValues[1];
+		NumericExpression nprocs = (NumericExpression) argumentValues[1];
 		SymbolicExpression numInBarrier = universe.integer(0);
 		SymbolicExpression scope = argumentValues[0];
 		Expression scopeExpression = arguments[0];
 		SymbolicExpression procMapArray;
 		SymbolicExpression inBarrierArray;
-		List<SymbolicExpression> gbarrierComponents = new LinkedList<>();
-		int int_nprocs;
 		CIVLType gbarrierType = model.gbarrierType();
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-		IntegerNumber number_nprocs = (IntegerNumber) reasoner
-				.extractNumber((NumericExpression) nprocs);
+		BooleanExpression context = state.getPathCondition();
 
-		if (number_nprocs != null) {
-			LinkedList<SymbolicExpression> procMapComponents = new LinkedList<>();
-			LinkedList<SymbolicExpression> inBarrierComponents = new LinkedList<>();
-
-			int_nprocs = number_nprocs.intValue();
-			for (int i = 0; i < int_nprocs; i++) {
-				inBarrierComponents.add(universe.bool(false));
-				procMapComponents.add(modelFactory.nullProcessValue());
-			}
-			inBarrierArray = universe.array(universe.booleanType(),
-					inBarrierComponents);
-			procMapArray = universe.array(modelFactory.processSymbolicType(),
-					procMapComponents);
-		} else {
-			SymbolicCompleteArrayType arrayType;
-			NumericSymbolicConstant index;
-			SymbolicExpression procMapFunction;
-			SymbolicExpression inBarrierFunction;
-
-			arrayType = universe.arrayType(modelFactory.processSymbolicType(),
-					(NumericExpression) nprocs);
-			index = (NumericSymbolicConstant) universe.symbolicConstant(
-					universe.stringObject("i"), universe.integerType());
-			procMapFunction = universe.lambda(index,
-					modelFactory.nullProcessValue());
-			procMapArray = universe.arrayLambda(arrayType, procMapFunction);
-			index = (NumericSymbolicConstant) universe.symbolicConstant(
-					universe.stringObject("i"), universe.integerType());
-			inBarrierFunction = universe.lambda(index, universe.bool(false));
-			arrayType = universe.arrayType(universe.booleanType(),
-					(NumericExpression) nprocs);
-			inBarrierArray = universe.arrayLambda(arrayType, inBarrierFunction);
-		}
-		gbarrierComponents.add(nprocs);
-		gbarrierComponents.add(procMapArray);
-		gbarrierComponents.add(inBarrierArray);
-		gbarrierComponents.add(numInBarrier);
-		gbarrierObj = universe.tuple(
-				(SymbolicTupleType) gbarrierType.getDynamicType(universe),
-				gbarrierComponents);
+		inBarrierArray = symbolicUtil.newArray(context, nprocs,
+				this.falseValue);
+		procMapArray = symbolicUtil.newArray(context, nprocs,
+				modelFactory.nullProcessValue());
+		gbarrierObj = universe.tuple((SymbolicTupleType) gbarrierType
+				.getDynamicType(universe), Arrays.asList(nprocs, procMapArray,
+				inBarrierArray, numInBarrier));
 		state = primaryExecutor.malloc(source, state, pid, process, lhs,
 				scopeExpression, scope, gbarrierType, gbarrierObj);
 		return state;

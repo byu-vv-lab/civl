@@ -13,7 +13,9 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
  */
 public interface LibraryExecutorLoader {
 	/**
-	 * Obtains the library executor of the given name.
+	 * Obtains the library executor of the given name. Given the same name, it
+	 * will always return the same instance of the library executor of that
+	 * name.
 	 * 
 	 * @param name
 	 *            The name of the library whose executor is to be obtained.

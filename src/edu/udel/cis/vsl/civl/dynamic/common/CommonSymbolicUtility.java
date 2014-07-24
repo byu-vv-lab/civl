@@ -1518,7 +1518,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			}
 			return universe.array(newElements.get(0).type(), newElements);
 		}
-		//throw new CIVLInternalException("Array casting failed", civlsource);
+		// throw new CIVLInternalException("Array casting failed", civlsource);
 	}
 
 	@Override
@@ -2043,69 +2043,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		return false;
 	}
 
-	// private Triple<Boolean, List<ReferenceExpression>,
-	// List<ReferenceExpression>> isDisjoint( ReferenceExpression re1,
-	// ReferenceExpression ref2
-	// List<ReferenceExpression> refs1, List<ReferenceExpression> refs2) {
-	// if (ref1.isIdentityReference() && ref2.isIdentityReference())
-	// return new Triple<>(false, ref1, ref2);
-	// else {
-	// ReferenceExpression parent1, parent2;
-	// ReferenceKind kind1 = ref1.referenceKind(), kind2 = ref2
-	// .referenceKind();
-	// Triple<Boolean, ReferenceExpression, ReferenceExpression> parentResult;
-	//
-	// if (kind1 == ReferenceKind.IDENTITY)
-	// parent1 = ref1;
-	// else if (kind1 == ReferenceKind.ARRAY_ELEMENT)
-	// parent1 = ((ArrayElementReference) ref1).getParent();
-	// else if (kind1 == ReferenceKind.TUPLE_COMPONENT)
-	// parent1 = ((TupleComponentReference) ref1).getParent();
-	// else
-	// parent1 = ((UnionMemberReference) ref1).getParent();
-	// if (kind2 == ReferenceKind.IDENTITY)
-	// parent2 = ref2;
-	// else if (kind2 == ReferenceKind.ARRAY_ELEMENT)
-	// parent2 = ((ArrayElementReference) ref2).getParent();
-	// else if (kind2 == ReferenceKind.TUPLE_COMPONENT)
-	// parent2 = ((TupleComponentReference) ref2).getParent();
-	// else
-	// parent2 = ((UnionMemberReference) ref2).getParent();
-	// parentResult = isDisjoint(parent1, parent2);
-	// if (parentResult.first || kind1 != kind2)
-	// return new Triple<>(true, null, null);
-	// if (kind1 == ReferenceKind.ARRAY_ELEMENT) {
-	// NumericExpression index1 = ((ArrayElementReference) ref1)
-	// .getIndex(), index2 = ((ArrayElementReference) ref2)
-	// .getIndex();
-	//
-	// if (!index1.equals(index2))
-	// return new Triple<>(true, null, null);
-	// else return new Triple<>(false, )
-	// }
-	//
-	// }
-	//
-	// // if (ref1.isIdentityReference()) {
-	// // return new Triple<>(false, ref1, ref1);
-	// // } else if (ref2.isIdentityReference())
-	// // return new Triple<>(false, ref2, ref2);
-	// // else {
-	// //
-	// // if (!kind1.equals(kind2))
-	// // return new Triple<>(true, null, null);
-	// // else {
-	// // if(kind1 == ReferenceKind.ARRAY_ELEMENT){
-	// // NumericExpression index1 = ((ArrayElementReference) ref1).getIndex(),
-	// // index2 = ((ArrayElementReference) ref2).getIndex();
-	// //
-	// // if(kind1 )
-	// // }
-	// // }
-	// // }
-	// return null;
-	// }
-
 	private List<ReferenceExpression> ancestorsOfRef(ReferenceExpression ref) {
 		if (ref.isIdentityReference())
 			return new ArrayList<>();
@@ -2135,6 +2072,32 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		int scopeId = this.getDyscopeId(null, pointer);
 
 		return scopeId >= 0;
+	}
+
+	@Override
+	public SymbolicExpression newArray(BooleanExpression context,
+			NumericExpression length, SymbolicExpression value) {
+		Reasoner reasoner = universe.reasoner(context);
+		IntegerNumber length_number = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) length);
+
+		if (length_number != null) {
+			int length_int = length_number.intValue();
+			List<SymbolicExpression> values = new ArrayList<>(length_int);
+
+			for (int i = 0; i < length_int; i++)
+				values.add(value);
+			return universe.array(value.type(), values);
+		} else {
+			NumericSymbolicConstant index = (NumericSymbolicConstant) universe
+					.symbolicConstant(universe.stringObject("i"),
+							universe.integerType());
+			SymbolicExpression arrayEleFunction = universe.lambda(index, value);
+			SymbolicCompleteArrayType arrayValueType = universe.arrayType(
+					value.type(), length);
+
+			return universe.arrayLambda(arrayValueType, arrayEleFunction);
+		}
 	}
 
 }

@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.library.IF;
+package edu.udel.cis.vsl.civl.library.common;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -7,13 +7,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 
 /**
- * The Library class provides the common data and operations of library
+ * The LibraryComponent class provides the common data and operations of library
  * evaluator, enabler, and executor.
  * 
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public abstract class Library {
+public abstract class LibraryComponent {
 
 	// The order of these operations should be consistent with civlc.cvh
 	// file.
@@ -97,7 +97,7 @@ public abstract class Library {
 	 * @param symbolicUtil
 	 *            The symbolic utility to be used.
 	 */
-	protected Library(String name, SymbolicUniverse universe,
+	protected LibraryComponent(String name, SymbolicUniverse universe,
 			SymbolicUtility symbolicUtil) {
 		this.name = name;
 		this.universe = universe;
