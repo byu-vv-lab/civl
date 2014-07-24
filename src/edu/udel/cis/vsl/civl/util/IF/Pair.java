@@ -7,8 +7,8 @@ public class Pair<S, T> {
 	public T right;
 
 	public Pair(S left, T right) {
-		assert left != null;
-		assert right != null;
+		//assert left != null;
+		//assert right != null;
 		this.left = left;
 		this.right = right;
 	}
