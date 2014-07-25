@@ -30,8 +30,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
-import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
-import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
@@ -261,26 +259,6 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 
 	}
 
-	private TypeNode typeNode(Source source, Type type) {
-		switch (type.kind()) {
-		case VOID:
-			return nodeFactory.newVoidTypeNode(source);
-		case BASIC:
-			return nodeFactory.newBasicTypeNode(source,
-					((StandardBasicType) type).getBasicTypeKind());
-		case OTHER_INTEGER:
-			return nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT);
-		case ARRAY:
-			return nodeFactory.newArrayTypeNode(source,
-					this.typeNode(source, ((ArrayType) type).getElementType()),
-					((ArrayType) type).getVariableSize().copy());
-		case POINTER:
-			return nodeFactory.newPointerTypeNode(source, this.typeNode(source,
-					((PointerType) type).referencedType()));
-		default:
-		}
-		return null;
-	}
 
 	/**
 	 * Processes the original main function, including:

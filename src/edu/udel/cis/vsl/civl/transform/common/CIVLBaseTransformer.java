@@ -11,6 +11,11 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
+import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
+import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
@@ -185,6 +190,26 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 			String name, TypeNode type, ExpressionNode init) {
 		return nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, name), type, init);
+	}
+	protected TypeNode typeNode(Source source, Type type) {
+		switch (type.kind()) {
+		case VOID:
+			return nodeFactory.newVoidTypeNode(source);
+		case BASIC:
+			return nodeFactory.newBasicTypeNode(source,
+					((StandardBasicType) type).getBasicTypeKind());
+		case OTHER_INTEGER:
+			return nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT);
+		case ARRAY:
+			return nodeFactory.newArrayTypeNode(source,
+					this.typeNode(source, ((ArrayType) type).getElementType()),
+					((ArrayType) type).getVariableSize().copy());
+		case POINTER:
+			return nodeFactory.newPointerTypeNode(source, this.typeNode(source,
+					((PointerType) type).referencedType()));
+		default:
+		}
+		return null;
 	}
 
 }
