@@ -11,24 +11,32 @@ import java.util.Map;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
+import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject.SymbolicObjectKind;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
@@ -165,6 +173,28 @@ public class ImmutableStateFactory implements StateFactory {
 			}
 			return result;
 		}
+	}
+
+	/**
+	 * Constructs a pointer to a heap object.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param dyscopeID
+	 *            The dyscope ID of that the heap belongs to.
+	 * @param ref
+	 *            The reference expression of the pointer to the heap object.
+	 * @return The pointer to a heap object, e.g.,
+	 *         <code>&&lt;d1>heap&lt;0,1>[0]</code>.
+	 */
+	private SymbolicExpression heapObjetPointer(State state, int dyscopeID,
+			ReferenceExpression ref) {
+		assert dyscopeID >= 0 && dyscopeID < state.numDyscopes();
+		return universe.tuple(
+				modelFactory.pointerSymbolicType(),
+				Arrays.asList(new SymbolicExpression[] {
+						modelFactory.scopeValue(dyscopeID), universe.zeroInt(),
+						ref }));
 	}
 
 	/**
@@ -307,7 +337,7 @@ public class ImmutableStateFactory implements StateFactory {
 	 * @return an array mapping old scope IDs to new.
 	 */
 	private int[] numberScopes(ImmutableState state) {
-		int numScopes = state.numScopes();
+		int numScopes = state.numDyscopes();
 		int numProcs = state.numProcs();
 		int[] oldToNew = new int[numScopes];
 		int nextScopeId = 1;
@@ -408,7 +438,7 @@ public class ImmutableStateFactory implements StateFactory {
 		Scope containingStaticScope = function.containingScope();
 		Scope functionStaticScope = function.outerScope();
 		ImmutableProcessState[] newProcesses = state.copyProcessStates();
-		int numScopes = state.numScopes();
+		int numScopes = state.numDyscopes();
 		SymbolicExpression[] values;
 		ImmutableDynamicScope[] newScopes;
 		int sid;
@@ -426,7 +456,7 @@ public class ImmutableStateFactory implements StateFactory {
 				containingDynamicScopeId = caller.getDyscopeId();
 				while (containingDynamicScopeId >= 0) {
 					containingDynamicScope = (ImmutableDynamicScope) state
-							.getScope(containingDynamicScopeId);
+							.getDyscope(containingDynamicScopeId);
 					if (containingStaticScope == containingDynamicScope
 							.lexicalScope())
 						break;
@@ -626,10 +656,10 @@ public class ImmutableStateFactory implements StateFactory {
 			ImmutableState state, int[] oldToNewPidMap) {
 		Map<SymbolicExpression, SymbolicExpression> procSubMap = procSubMap(oldToNewPidMap);
 		ImmutableDynamicScope[] newScopes = null;
-		int numScopes = state.numScopes();
+		int numScopes = state.numDyscopes();
 
 		for (int i = 0; i < numScopes; i++) {
-			ImmutableDynamicScope dynamicScope = state.getScope(i);
+			ImmutableDynamicScope dynamicScope = state.getDyscope(i);
 			Scope staticScope = dynamicScope.lexicalScope();
 			Collection<Variable> procrefVariableIter = staticScope
 					.variablesWithProcrefs();
@@ -653,14 +683,13 @@ public class ImmutableStateFactory implements StateFactory {
 				if (newScopes == null) {
 					newScopes = new ImmutableDynamicScope[numScopes];
 					for (int j = 0; j < i; j++)
-						newScopes[j] = state.getScope(j);
+						newScopes[j] = state.getDyscope(j);
 				}
 				if (newValues == null)
 					newScopes[i] = dynamicScope.setReachers(newBitSet);
 				else
 					newScopes[i] = new ImmutableDynamicScope(staticScope,
-							dynamicScope.getParent(),
-							0, newValues,//TODO
+							dynamicScope.getParent(), 0, newValues,// TODO
 							newBitSet, dynamicScope.identifier());
 			} else if (newScopes != null) {
 				newScopes[i] = dynamicScope;
@@ -722,7 +751,7 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public ImmutableState collectScopes(State state) throws CIVLStateException {
 		ImmutableState theState = (ImmutableState) state;
-		int oldNumScopes = theState.numScopes();
+		int oldNumScopes = theState.numDyscopes();
 		int[] oldToNew = numberScopes(theState);
 		boolean change = false;
 		int newNumScopes = 0;
@@ -735,7 +764,7 @@ public class ImmutableStateFactory implements StateFactory {
 			if (!change && id != i)
 				change = true;
 			if (id < 0) {
-				ImmutableDynamicScope scopeToBeRemoved = theState.getScope(i);
+				ImmutableDynamicScope scopeToBeRemoved = theState.getDyscope(i);
 				Variable heapVariable = scopeToBeRemoved.lexicalScope()
 						.variable("__heap");
 				SymbolicExpression heapValue = scopeToBeRemoved
@@ -761,7 +790,7 @@ public class ImmutableStateFactory implements StateFactory {
 				int newId = oldToNew[i];
 
 				if (newId >= 0) {
-					ImmutableDynamicScope oldScope = theState.getScope(i);
+					ImmutableDynamicScope oldScope = theState.getDyscope(i);
 					int oldParent = oldScope.getParent();
 					int oldParentIdentifier = oldScope.identifier();
 
@@ -778,6 +807,13 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 		return theState;
 	}
+
+//	private void collectHeap(DynamicScope dyscope, ReferenceExpression removedRef) {
+//		SymbolicExpression heap = dyscope.getValue(0);
+//		
+//		
+//		
+//	}
 
 	@Override
 	public State getAtomicLock(State state, int pid) {
@@ -856,7 +892,7 @@ public class ImmutableStateFactory implements StateFactory {
 				parent = state.getParentId(parent);
 			}
 		}
-		return state.rootScopeID();
+		return state.rootDyscopeID();
 	}
 
 	@Override
@@ -892,8 +928,8 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public State pushCallStack(State state, int pid, CIVLFunction function,
 			int functionParentDyscope, SymbolicExpression[] arguments) {
-		return pushCallStack2((ImmutableState) state, pid, function, functionParentDyscope,
-				arguments, pid);
+		return pushCallStack2((ImmutableState) state, pid, function,
+				functionParentDyscope, arguments, pid);
 	}
 
 	@Override
@@ -997,7 +1033,8 @@ public class ImmutableStateFactory implements StateFactory {
 		ImmutableState theState = (ImmutableState) state;
 		ImmutableProcessState[] processArray = theState.copyProcessStates();
 		int dynamicScopeId = theState.getProcessState(pid).getDyscopeId();
-		ImmutableDynamicScope dynamicScope = theState.getScope(dynamicScopeId);
+		ImmutableDynamicScope dynamicScope = theState
+				.getDyscope(dynamicScopeId);
 		int dynamicScopeIdentifier = dynamicScope.identifier();
 		Scope ss0 = dynamicScope.lexicalScope();
 		Scope ss1 = location.scope();
@@ -1017,7 +1054,7 @@ public class ImmutableStateFactory implements StateFactory {
 				dynamicScopeId = theState.getParentId(dynamicScopeId);
 				if (dynamicScopeId < 0)
 					throw new RuntimeException("State is inconsistent");
-				dynamicScope = theState.getScope(dynamicScopeId);
+				dynamicScope = theState.getDyscope(dynamicScopeId);
 				dynamicScopeIdentifier = dynamicScope.identifier();
 			}
 			if (joinSequence.length == 1) {
@@ -1027,14 +1064,14 @@ public class ImmutableStateFactory implements StateFactory {
 				theState = theState.setProcessStates(processArray);
 			} else {
 				// iterate DOWN, adding new dynamic scopes...
-				int oldNumScopes = theState.numScopes();
+				int oldNumScopes = theState.numDyscopes();
 				int newNumScopes = oldNumScopes + joinSequence.length - 1;
 				int index = 0;
 				ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[newNumScopes];
 				ImmutableProcessState process = processArray[pid];
 
 				for (; index < oldNumScopes; index++)
-					newScopes[index] = theState.getScope(index);
+					newScopes[index] = theState.getDyscope(index);
 				for (int i = 1; i < joinSequence.length; i++) {
 					// only this process can reach the new dyscope
 					BitSet reachers = new BitSet(processArray.length);
@@ -1076,14 +1113,14 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression value) {
 		ImmutableState theState = (ImmutableState) state;
 		ImmutableDynamicScope oldScope = (ImmutableDynamicScope) theState
-				.getScope(scopeId);
+				.getDyscope(scopeId);
 		ImmutableDynamicScope[] newScopes = theState.copyScopes();
 		SymbolicExpression[] newValues = oldScope.copyValues();
 		ImmutableDynamicScope newScope;
 
 		newValues[vid] = value;
 		newScope = new ImmutableDynamicScope(oldScope.lexicalScope(),
-				oldScope.getParent(),0,// TODO oldScope.getParentIdentifier()
+				oldScope.getParent(), 0,// TODO oldScope.getParentIdentifier()
 				newValues, oldScope.getReachers(), oldScope.identifier());
 		newScopes[scopeId] = newScope;
 		theState = theState.setScopes(newScopes);
@@ -1093,7 +1130,7 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public ImmutableState setVariable(State state, Variable variable, int pid,
 			SymbolicExpression value) {
-		int scopeId = state.getScopeId(pid, variable);
+		int scopeId = state.getDyscopeID(pid, variable);
 
 		return setVariable(state, variable.vid(), scopeId, value);
 	}
@@ -1105,14 +1142,14 @@ public class ImmutableStateFactory implements StateFactory {
 		if (theState.simplifiedState != null)
 			return theState.simplifiedState;
 		else {
-			int numScopes = theState.numScopes();
+			int numScopes = theState.numDyscopes();
 			BooleanExpression pathCondition = theState.getPathCondition();
 			ImmutableDynamicScope[] newDynamicScopes = null;
 			Reasoner reasoner = universe.reasoner(pathCondition);
 			BooleanExpression newPathCondition;
 
 			for (int i = 0; i < numScopes; i++) {
-				ImmutableDynamicScope oldScope = theState.getScope(i);
+				ImmutableDynamicScope oldScope = theState.getDyscope(i);
 				int numVars = oldScope.numberOfVariables();
 				SymbolicExpression[] newVariableValues = null;
 
@@ -1131,7 +1168,7 @@ public class ImmutableStateFactory implements StateFactory {
 				if (newVariableValues != null && newDynamicScopes == null) {
 					newDynamicScopes = new ImmutableDynamicScope[numScopes];
 					for (int i2 = 0; i2 < i; i2++)
-						newDynamicScopes[i2] = theState.getScope(i2);
+						newDynamicScopes[i2] = theState.getDyscope(i2);
 				}
 				if (newDynamicScopes != null)
 					newDynamicScopes[i] = newVariableValues != null ? oldScope
@@ -1156,4 +1193,54 @@ public class ImmutableStateFactory implements StateFactory {
 	public SymbolicUniverse symbolicUniverse() {
 		return universe;
 	}
+
+	@Override
+	public Pair<State, SymbolicExpression> malloc(CIVLSource source,
+			State state, int dyscopeId, int mallocId,
+			SymbolicExpression heapObject) {
+		DynamicScope dyscope = state.getDyscope(dyscopeId);
+		IntObject indexObj = universe.intObject(mallocId);
+		SymbolicExpression heapValue = dyscope.getValue(0);
+		SymbolicExpression heapField;
+		SymbolicExpression heapObjectPointer;
+		ReferenceExpression symRef;
+		NumericExpression heapLength;
+
+		if (heapValue.isNull())
+			heapValue = modelFactory.heapType().getInitialValue();
+		heapField = universe.tupleRead(heapValue, indexObj);
+		heapLength = universe.length(heapField);
+		heapField = universe.append(heapField, heapObject);
+		heapValue = universe.tupleWrite(heapValue, indexObj, heapField);
+		state = setVariable(state, 0, dyscopeId, heapValue);
+		symRef = (ReferenceExpression) universe.canonic(universe
+				.identityReference());
+		symRef = universe.tupleComponentReference(symRef, indexObj);
+		symRef = universe.arrayElementReference(symRef, heapLength);
+		symRef = universe.arrayElementReference(symRef, universe.zeroInt());
+		heapObjectPointer = this.heapObjetPointer(state, dyscopeId, symRef);
+		return new Pair<>(state, heapObjectPointer);
+	}
+
+	@Override
+	public Pair<State, SymbolicExpression> malloc(CIVLSource source,
+			State state, int dyscopeId, int mallocId, SymbolicType elementType,
+			NumericExpression elementCount) {
+		DynamicScope dyscope = state.getDyscope(dyscopeId);
+		SymbolicExpression heapValue = dyscope.getValue(0).isNull() ? modelFactory
+				.heapType().getInitialValue() : dyscope.getValue(0);
+		IntObject index = universe.intObject(mallocId);
+		SymbolicExpression heapField = universe.tupleRead(heapValue, index);
+		int length = ((IntegerNumber) universe.extractNumber(universe
+				.length(heapField))).intValue();
+		StringObject heapObjectName = universe.stringObject("Ho" + mallocId
+				+ "i" + length);
+		SymbolicType heapObjectType = universe.arrayType(elementType,
+				elementCount);
+		SymbolicExpression heapObject = universe.symbolicConstant(
+				heapObjectName, heapObjectType);
+
+		return this.malloc(source, state, dyscopeId, mallocId, heapObject);
+	}
+
 }

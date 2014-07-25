@@ -164,26 +164,6 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 
 	/**
-	 * Gets the value of the heap of the given scope.
-	 * 
-	 * @param source
-	 *            The source code information for error report.
-	 * @param state
-	 *            The state where this operation happens.
-	 * @param process
-	 *            The information of the process that triggers this operation,
-	 *            for the purpose of error report.
-	 * @param scopeValue
-	 *            The scope value
-	 * @return The pointer to the heap of the given scope.
-	 * @throws UnsatisfiablePathConditionException
-	 *             if the given scope is not concrete or not a valid scope.
-	 */
-	SymbolicExpression heapValue(CIVLSource source, State state,
-			String process, SymbolicExpression scopeValue)
-			throws UnsatisfiablePathConditionException;
-
-	/**
 	 * Computes the reachable memory units of an expression recursively and adds
 	 * those memory units to the given set.
 	 * 

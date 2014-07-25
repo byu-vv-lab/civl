@@ -51,6 +51,7 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -63,9 +64,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.object.IntObject;
-import edu.udel.cis.vsl.sarl.IF.object.StringObject;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 /**
@@ -277,41 +275,21 @@ public class CommonExecutor implements Executor {
 			MallocStatement statement)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource source = statement.getSource();
-		int sid = state.getProcessState(pid).getDyscopeId();
-		int index = statement.getMallocId();
-		IntObject indexObj = universe.intObject(index);
 		LHSExpression lhs = statement.getLHS();
 		Evaluation eval;
 		SymbolicExpression scopeValue;
 		int dyScopeID;
-		DynamicScope dyScope;
-		int heapVariableId;
-		ReferenceExpression symRef;
-		SymbolicExpression heapValue;
-		SymbolicExpression heapPointer;
 		NumericExpression mallocSize, elementSize;
 		BooleanExpression pathCondition, claim;
 		ResultType validity;
 		NumericExpression elementCount;
-		SymbolicExpression heapField;
-		NumericExpression lengthExpression;
-		int length; // num allocated objects in index component of heap
-		StringObject newObjectName;
-		SymbolicType newObjectType;
-		SymbolicExpression newObject;
-		SymbolicExpression firstElementPointer; // returned value
+		Pair<State, SymbolicExpression> mallocResult;
 
 		eval = evaluator.evaluate(state, pid, statement.getScopeExpression());
 		state = eval.state;
 		scopeValue = eval.value;
 		dyScopeID = modelFactory.getScopeId(statement.getScopeExpression()
 				.getSource(), scopeValue);
-		dyScope = state.getScope(dyScopeID);
-		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
-		heapValue = dyScope.getValue(heapVariableId);
-		if (heapValue.isNull()) {
-			heapValue = symbolicUtil.initialHeapValue();
-		}
 		eval = evaluator.evaluate(state, pid, statement.getSizeExpression());
 		state = eval.state;
 		mallocSize = (NumericExpression) eval.value;
@@ -341,32 +319,12 @@ public class CommonExecutor implements Executor {
 			state = state.setPathCondition(universe.and(pathCondition, claim));
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
-		heapField = universe.tupleRead(heapValue, indexObj);
-		lengthExpression = universe.length(heapField);
-		length = symbolicUtil.extractInt(source, lengthExpression);
-		newObjectName = universe.stringObject("H_p" + pid + "s" + sid + "v"
-				+ heapVariableId + "i" + index + "l" + length);
-		newObjectType = universe.arrayType(statement.getDynamicElementType(),
+		mallocResult = stateFactory.malloc(source, state, dyScopeID,
+				statement.getMallocId(), statement.getDynamicElementType(),
 				elementCount);
-		newObject = universe.symbolicConstant(newObjectName, newObjectType);
-		heapField = universe.append(heapField, newObject);
-		heapValue = universe.tupleWrite(heapValue, indexObj, heapField);
-		state = stateFactory.setVariable(state, heapVariableId, dyScopeID,
-				heapValue);
-		if (lhs != null) {
-			symRef = (ReferenceExpression) universe.canonic(universe
-					.identityReference());
-			heapPointer = universe.tuple(
-					modelFactory.pointerSymbolicType(),
-					Arrays.asList(new SymbolicExpression[] {
-							modelFactory.scopeValue(dyScopeID),
-							universe.integer(heapVariableId), symRef }));
-			symRef = universe.tupleComponentReference(symRef, indexObj);
-			symRef = universe.arrayElementReference(symRef, lengthExpression);
-			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
-			firstElementPointer = symbolicUtil.setSymRef(heapPointer, symRef);
-			state = assign(state, pid, process, lhs, firstElementPointer);
-		}
+		state = mallocResult.left;
+		if (lhs != null)
+			state = assign(state, pid, process, lhs, mallocResult.right);
 		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
@@ -395,7 +353,7 @@ public class CommonExecutor implements Executor {
 		functionName = processState.peekStack().location().function().name()
 				.name();
 		if (functionName.equals("_CIVL_system")) {
-			DynamicScope rootDyscope = state.getScope(0);
+			DynamicScope rootDyscope = state.getDyscope(0);
 			SymbolicExpression heapValue = rootDyscope.getValue(0);
 
 			assert pid == 0;
@@ -825,7 +783,7 @@ public class CommonExecutor implements Executor {
 							"Attempt to dereference pointer into scope which has been removed from state");
 			throw new UnsatisfiablePathConditionException();
 		}
-		variable = state.getScope(sid).lexicalScope().variable(vid);
+		variable = state.getDyscope(sid).lexicalScope().variable(vid);
 		if (!isInitialization) {
 			if (variable.isInput()) {
 				errorLogger
@@ -939,49 +897,21 @@ public class CommonExecutor implements Executor {
 			SymbolicExpression scopeValue, CIVLType objectType,
 			SymbolicExpression objectValue)
 			throws UnsatisfiablePathConditionException {
-		int index = modelFactory.getHeapFieldId(objectType);
-		IntObject indexObj = universe.intObject(index);
-		int dyScopeID;
-		DynamicScope dyScope;
-		int heapVariableId;
-		ReferenceExpression symRef;
-		SymbolicExpression heapValue;
-		SymbolicExpression heapPointer;
-		SymbolicExpression heapField;
-		SymbolicExpression newObject;
-		NumericExpression fieldLength;
-		SymbolicExpression firstElementPointer; // returned value
-		ArrayList<SymbolicExpression> elements = new ArrayList<>();
-		CIVLSource scopeSource = scopeExpression == null ? null
+		int mallocId = modelFactory.getHeapFieldId(objectType);
+		int dyscopeID;
+		SymbolicExpression heapObject;
+		CIVLSource scopeSource = scopeExpression == null ? source
 				: scopeExpression.getSource();
+		Pair<State, SymbolicExpression> mallocResult;
 
-		elements.add(objectValue);
-		heapValue = evaluator.heapValue(source, state, process, scopeValue);
-		dyScopeID = modelFactory.getScopeId(scopeSource, scopeValue);
-		dyScope = state.getScope(dyScopeID);
-		heapVariableId = dyScope.lexicalScope().variable("__heap").vid();
-		heapField = universe.tupleRead(heapValue, indexObj);
-		fieldLength = universe.length(heapField);
-		newObject = universe.array(objectType.getDynamicType(universe),
-				elements);
-		heapField = universe.append(heapField, newObject);
-		heapValue = universe.tupleWrite(heapValue, indexObj, heapField);
-		state = stateFactory.setVariable(state, heapVariableId, dyScopeID,
-				heapValue);
-		if (lhs != null) {
-			symRef = (ReferenceExpression) universe.canonic(universe
-					.identityReference());
-			heapPointer = universe.tuple(
-					modelFactory.pointerSymbolicType(),
-					Arrays.asList(new SymbolicExpression[] {
-							modelFactory.scopeValue(dyScopeID),
-							universe.integer(heapVariableId), symRef }));
-			symRef = universe.tupleComponentReference(symRef, indexObj);
-			symRef = universe.arrayElementReference(symRef, fieldLength);
-			symRef = universe.arrayElementReference(symRef, universe.zeroInt());
-			firstElementPointer = symbolicUtil.setSymRef(heapPointer, symRef);
-			state = assign(state, pid, process, lhs, firstElementPointer);
-		}
+		dyscopeID = modelFactory.getScopeId(scopeSource, scopeValue);
+		heapObject = universe.array(objectType.getDynamicType(universe),
+				Arrays.asList(objectValue));
+		mallocResult = stateFactory.malloc(scopeSource, state, dyscopeID,
+				mallocId, heapObject);
+		state = mallocResult.left;
+		if (lhs != null)
+			state = assign(state, pid, process, lhs, mallocResult.right);
 		return state;
 	}
 

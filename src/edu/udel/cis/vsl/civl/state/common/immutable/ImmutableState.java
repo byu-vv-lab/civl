@@ -301,7 +301,7 @@ public class ImmutableState implements State {
 		}
 		return canonicProcessState;
 	}
-/// code review 
+
 	/**
 	 * Prints a dyscope of a given id of this state to the given print stream.
 	 * 
@@ -482,7 +482,7 @@ public class ImmutableState implements State {
 		ImmutableDynamicScope scope;
 
 		while (scopeId >= 0) {
-			scope = getScope(scopeId);
+			scope = getDyscope(scopeId);
 			if (scope.lexicalScope() == variableScope)
 				return scope;
 			scopeId = getParentId(scopeId);
@@ -578,7 +578,7 @@ public class ImmutableState implements State {
 
 	@Override
 	public int getParentId(int scopeId) {
-		return getScope(scopeId).getParent();
+		return getDyscope(scopeId).getParent();
 	}
 
 	@Override
@@ -600,18 +600,18 @@ public class ImmutableState implements State {
 	}
 
 	@Override
-	public ImmutableDynamicScope getScope(int id) {
+	public ImmutableDynamicScope getDyscope(int id) {
 		return dyscopes[id];
 	}
 
 	@Override
-	public int getScopeId(int pid, Variable variable) {
+	public int getDyscopeID(int pid, Variable variable) {
 		int scopeId = getProcessState(pid).getDyscopeId();
 		Scope variableScope = variable.scope();
 		DynamicScope scope;
 
 		while (scopeId >= 0) {
-			scope = getScope(scopeId);
+			scope = getDyscope(scopeId);
 			if (scope.lexicalScope() == variableScope)
 				return scopeId;
 			scopeId = getParentId(scopeId);
@@ -621,7 +621,7 @@ public class ImmutableState implements State {
 
 	@Override
 	public SymbolicExpression getVariableValue(int scopeId, int variableId) {
-		DynamicScope scope = getScope(scopeId);
+		DynamicScope scope = getDyscope(scopeId);
 
 		return scope.getValue(variableId);
 	}
@@ -630,13 +630,13 @@ public class ImmutableState implements State {
 	public int getDyscope(int pid, Scope scope) {
 		int staticId = scope.id();
 		int dyScopeId = getProcessState(pid).getDyscopeId();
-		DynamicScope dyScope = this.getScope(dyScopeId);
+		DynamicScope dyScope = this.getDyscope(dyScopeId);
 	
 		while (dyScope.lexicalScope().id() != staticId) {
 			dyScopeId = this.getParentId(dyScopeId);
 			if (dyScopeId < 0)
 				return -1;
-			dyScope = this.getScope(dyScopeId);
+			dyScope = this.getDyscope(dyScopeId);
 		}
 		return dyScopeId;
 	}
@@ -648,10 +648,10 @@ public class ImmutableState implements State {
 		else
 			return canonicId + ":" + instanceId;
 	}
-
+	
 	@Override
 	public int numberOfReachers(int sid) {
-		return getScope(sid).numberOfReachers();
+		return getDyscope(sid).numberOfReachers();
 	}
 
 	@Override
@@ -660,7 +660,7 @@ public class ImmutableState implements State {
 	}
 
 	@Override
-	public int numScopes() {
+	public int numDyscopes() {
 		return dyscopes.length;
 	}
 
@@ -671,7 +671,7 @@ public class ImmutableState implements State {
 
 	@Override
 	public void print(PrintStream out) {
-		int numScopes = numScopes();
+		int numScopes = numDyscopes();
 		int numProcs = numProcs();
 
 		out.print("State " + identifier());
@@ -701,11 +701,11 @@ public class ImmutableState implements State {
 
 	@Override
 	public boolean reachableByProcess(int sid, int pid) {
-		return getScope(sid).reachableByProcess(pid);
+		return getDyscope(sid).reachableByProcess(pid);
 	}
 
 	@Override
-	public int rootScopeID() {
+	public int rootDyscopeID() {
 		return 0;
 	}
 

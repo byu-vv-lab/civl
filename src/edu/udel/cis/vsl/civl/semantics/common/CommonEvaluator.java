@@ -81,7 +81,6 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
-import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -469,8 +468,8 @@ public class CommonEvaluator implements Evaluator {
 					SymbolicExpression deref;
 
 					if (!analysisOnly && checkOutput) {
-						Variable variable = state.getScope(sid).lexicalScope()
-								.variable(vid);
+						Variable variable = state.getDyscope(sid)
+								.lexicalScope().variable(vid);
 
 						if (variable.isOutput()) {
 							errorLogger.logSimpleError(source, state, process,
@@ -481,7 +480,7 @@ public class CommonEvaluator implements Evaluator {
 							throw new UnsatisfiablePathConditionException();
 						}
 					}
-					variableValue = state.getScope(sid).getValue(vid);
+					variableValue = state.getDyscope(sid).getValue(vid);
 					try {
 						deref = universe.dereference(variableValue, symRef);
 					} catch (SARLException e) {
@@ -1246,7 +1245,7 @@ public class CommonEvaluator implements Evaluator {
 
 	private Evaluation evaluateHereOrRootScope(State state, int pid,
 			HereOrRootExpression expression) {
-		int dyScopeID = expression.isRoot() ? state.rootScopeID() : state
+		int dyScopeID = expression.isRoot() ? state.rootDyscopeID() : state
 				.getProcessState(pid).getDyscopeId();
 
 		return new Evaluation(state, modelFactory.scopeValue(dyScopeID));
@@ -1306,7 +1305,7 @@ public class CommonEvaluator implements Evaluator {
 		CIVLType type = variable.type();
 		TypeEvaluation typeEval = getDynamicType(state, pid, type,
 				expression.getSource(), false);
-		int sid = typeEval.state.getScopeId(pid, variable);
+		int sid = typeEval.state.getDyscopeID(pid, variable);
 
 		return computeInitialValue(typeEval.state, pid, variable,
 				typeEval.type, sid);
@@ -1809,7 +1808,7 @@ public class CommonEvaluator implements Evaluator {
 					(LHSExpression) (((SubscriptExpression) expression).array()));
 
 		default:// VARIABLE
-			int scopeId = state.getScopeId(pid,
+			int scopeId = state.getDyscopeID(pid,
 					((VariableExpression) expression).variable());
 
 			return new Evaluation(state, modelFactory.scopeValue(scopeId));
@@ -2668,7 +2667,8 @@ public class CommonEvaluator implements Evaluator {
 		for (int j = 0; j < originalArray.size(); j++) {
 			funcName += originalArray.get(j).toString().charAt(1);
 		}
-		function = state.getScope(scopeId).lexicalScope().getFunction(funcName);
+		function = state.getDyscope(scopeId).lexicalScope()
+				.getFunction(funcName);
 		return new Triple<>(state, function, scopeId);
 	}
 
@@ -2753,48 +2753,6 @@ public class CommonEvaluator implements Evaluator {
 		}
 		throw new CIVLUnimplementedFeatureException(
 				"pointer to char is not into an array of char", source);
-	}
-
-	@Override
-	public SymbolicExpression heapValue(CIVLSource source, State state,
-			String process, SymbolicExpression scopeValue)
-			throws UnsatisfiablePathConditionException {
-		if (scopeValue.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
-			errorLogger.logSimpleError(source, state, process,
-					symbolicUtil.stateToString(state), ErrorKind.OTHER,
-					"Attempt to get the heap " + "pointer of a symbolic scope");
-			throw new UnsatisfiablePathConditionException();
-		} else {
-			int dyScopeID = modelFactory.getScopeId(source, scopeValue);
-
-			if (dyScopeID < 0) {
-				errorLogger.logSimpleError(source, state, process,
-						symbolicUtil.stateToString(state),
-						ErrorKind.DEREFERENCE,
-						"Attempt to dereference pointer into scope which "
-								+ "has been removed from state");
-				throw new UnsatisfiablePathConditionException();
-			} else {
-				DynamicScope dyScope = state.getScope(dyScopeID);
-				Variable heapVariable = dyScope.lexicalScope().variable(
-						"__heap");
-				SymbolicExpression heapValue;
-
-				if (heapVariable == null) {
-					errorLogger.logSimpleError(source, state, process,
-							symbolicUtil.stateToString(state),
-							ErrorKind.MEMORY_LEAK,
-							"Attempt to dereference pointer into a "
-									+ "heap that never exists");
-					throw new UnsatisfiablePathConditionException();
-				}
-
-				heapValue = dyScope.getValue(heapVariable.vid());
-				if (heapValue.equals(universe.nullExpression()))
-					heapValue = symbolicUtil.initialHeapValue();
-				return heapValue;
-			}
-		}
 	}
 
 	@Override
@@ -2908,7 +2866,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLType type;
 
 			try {
-				sid = state.getScopeId(pid, variable);
+				sid = state.getDyscopeID(pid, variable);
 				vid = variable.vid();
 				type = variable.type();
 			} catch (IllegalArgumentException ex) {
@@ -3175,7 +3133,7 @@ public class CommonEvaluator implements Evaluator {
 
 		if (operand instanceof VariableExpression) {
 			Variable variable = ((VariableExpression) operand).variable();
-			int sid = state.getScopeId(pid, variable);
+			int sid = state.getDyscopeID(pid, variable);
 			int vid = variable.vid();
 
 			result = new Evaluation(state, symbolicUtil.makePointer(sid, vid,
@@ -3229,7 +3187,7 @@ public class CommonEvaluator implements Evaluator {
 		int sid = symbolicUtil.getDyscopeId(source, pointer);
 		int vid = symbolicUtil.getVariableId(source, pointer);
 		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
-		SymbolicExpression variableValue = state.getScope(sid).getValue(vid);
+		SymbolicExpression variableValue = state.getDyscope(sid).getValue(vid);
 		SymbolicType variableType = variableValue.type();
 		SymbolicType result = universe.referencedType(variableType, symRef);
 

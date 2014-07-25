@@ -718,7 +718,7 @@ public class AmpleSetWorker {
 			if (checkedDyScopes.contains(dyScopeID))
 				break;
 			else {
-				DynamicScope dyScope = state.getScope(dyScopeID);
+				DynamicScope dyScope = state.getDyscope(dyScopeID);
 				int size = dyScope.numberOfValues();
 
 				for (int vid = 0; vid < size; vid++) {

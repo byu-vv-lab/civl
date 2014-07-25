@@ -157,7 +157,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		IntegerNumber result = (IntegerNumber) universe
 				.extractNumber(expression);
 
-		// TODO make expression
 		if (result == null)
 			throw new CIVLInternalException(
 					"Unable to extract concrete int from " + expression, source);
@@ -358,11 +357,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public SymbolicExpression initialHeapValue() {
-		return modelFactory.heapType().getInitialValue();
-	}
-
-	@Override
 	public boolean isEmptyHeap(SymbolicExpression heapValue) {
 		if (heapValue.isNull())
 			return true;
@@ -459,7 +453,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			if (dyscopeId < 0)
 				return "UNDEFINED";
 			else {
-				DynamicScope dyScope = state.getScope(dyscopeId);
+				DynamicScope dyScope = state.getDyscope(dyscopeId);
 				SymbolicExpression funcNameExpression = universe.tupleRead(
 						pointer, oneObj);
 				StringBuffer funcName = this.charArrayToString(source,
@@ -584,7 +578,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			if (scopeId < 0)
 				return "$scope_null";
 			else
-				return state.getScope(scopeId).name();
+				return state.getDyscope(scopeId).name();
 		} else {
 			SymbolicOperator operator = symbolicExpression.operator();
 			SymbolicObject[] arguments = symbolicExpression.arguments();
@@ -940,14 +934,14 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			if (dyscopeId < 0)
 				return "UNDEFINED";
 			else {
-				DynamicScope dyscope = state.getScope(dyscopeId);
+				DynamicScope dyscope = state.getDyscope(dyscopeId);
 				Variable variable = dyscope.lexicalScope().variable(vid);
 				ReferenceExpression reference = (ReferenceExpression) universe
 						.tupleRead(pointer, this.twoObj);
 
 				if (variable.type().equals(this.heapType)) {
 					String resultString = heapObjectReferenceToString(source,
-							state.getScope(dyscopeId).identifier(),
+							state.getDyscope(dyscopeId).identifier(),
 							this.heapType, reference).third;
 
 					return resultString;
@@ -1200,7 +1194,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	public StringBuffer stateToString(State state) {
-		int numScopes = state.numScopes();
+		int numScopes = state.numDyscopes();
 		int numProcs = state.numProcs();
 		StringBuffer result = new StringBuffer();
 
@@ -1212,7 +1206,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		result.append("| Dynamic scopes\n");
 		for (int i = 0; i < numScopes; i++) {
 			ImmutableDynamicScope dyscope = (ImmutableDynamicScope) state
-					.getScope(i);
+					.getDyscope(i);
 
 			if (dyscope == null)
 				result.append("| | dyscope - (id=" + i + "): null\n");
@@ -1256,7 +1250,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		StringBuffer result = new StringBuffer();
 		String parentString;
 		DynamicScope parent = dyscope.getParent() < 0 ? null : state
-				.getScope(dyscope.getParent());
+				.getDyscope(dyscope.getParent());
 
 		if (parent == null)
 			parentString = "NULL";
@@ -1749,7 +1743,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 								+ "removed from state");
 				throw new UnsatisfiablePathConditionException();
 			} else {
-				DynamicScope dyScope = state.getScope(dyScopeID);
+				DynamicScope dyScope = state.getDyscope(dyScopeID);
 				Variable heapVariable = dyScope.lexicalScope().variable(
 						"__heap");
 
@@ -1952,7 +1946,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		ReferenceExpression reference = this.getSymRef(pointer);
 		int dyscopeId = getDyscopeId(soruce, pointer);
 		int vid = getVariableId(soruce, pointer);
-		CIVLType varType = state.getScope(dyscopeId).lexicalScope()
+		CIVLType varType = state.getDyscope(dyscopeId).lexicalScope()
 				.variable(vid).type();
 
 		return typeOfObjByRef(varType, reference);

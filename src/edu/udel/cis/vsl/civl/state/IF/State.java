@@ -61,7 +61,7 @@ public interface State {
 	 * 
 	 * @return the number of dynamic scopes in this state
 	 */
-	int numScopes();
+	int numDyscopes();
 
 	/**
 	 * Returns the number of process states in this state.
@@ -75,7 +75,7 @@ public interface State {
 	 * 
 	 * @return the root dynamic scope ID
 	 */
-	int rootScopeID();
+	int rootDyscopeID();
 
 	/**
 	 * Returns the path condition.
@@ -121,12 +121,12 @@ public interface State {
 	 * with the given dyscope ID. If the dynamic scope with the given ID is the
 	 * root scope (which has no parent), the result is -1.
 	 * 
-	 * @param scopeId
+	 * @param dyscopeId
 	 *            a dynamic scope ID in the range [0,numScopes-1]
 	 * @return dynamic scope ID of the parent of the dynamic scope specified by
 	 *         scopeId
 	 */
-	int getParentId(int scopeId);
+	int getParentId(int dyscopeId);
 
 	/**
 	 * Given a process ID and a variable, returns the first dynamic scope ID
@@ -137,22 +137,22 @@ public interface State {
 	 *            starting point of the searching.
 	 * @param variable
 	 *            The variable to be searched for.
-	 * @return The dynamic scope reachable from the process whose static scope
-	 *         is the scope of the given variable.
+	 * @return The ID of the dyscope reachable from the process whose static
+	 *         scope is the scope of the given variable.
 	 */
-	int getScopeId(int pid, Variable variable);
+	int getDyscopeID(int pid, Variable variable);
 
 	/**
-	 * Given a dynamic scope ID and a variable ID, returns the value of the
-	 * first corresponding variable.
+	 * Given a dyscope ID and a variable ID, returns the value of the first
+	 * corresponding variable.
 	 * 
-	 * @param scopeId
+	 * @param dyscopeID
 	 *            The dynamic scope ID.
-	 * @param variableId
+	 * @param variableID
 	 *            The variable ID
 	 * @return The value of the corresponding variable.
 	 */
-	SymbolicExpression getVariableValue(int scopeId, int variableId);
+	SymbolicExpression getVariableValue(int dyscopeID, int variableID);
 
 	/**
 	 * Given a process ID and a variable, returns the value of the variable.
@@ -216,7 +216,7 @@ public interface State {
 	 *            the dyscope ID, an integer in the range [0,numScopes-1]
 	 * @return the dynamic scope with that ID
 	 */
-	DynamicScope getScope(int id);
+	DynamicScope getDyscope(int id);
 
 	/**
 	 * Given a PID and a static scope, returns the ID of the first dyscope
@@ -312,4 +312,5 @@ public interface State {
 	 *            The print stream to be used.
 	 */
 	void print(PrintStream out);
+
 }

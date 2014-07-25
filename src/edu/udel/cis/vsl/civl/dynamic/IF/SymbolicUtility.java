@@ -157,12 +157,12 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression expressionOfType(SymbolicType type);
 
-	/**
-	 * Returns the initial value of a(n) (empty) heap.
-	 * 
-	 * @return The initial value of a(n) (empty) heap.
-	 */
-	SymbolicExpression initialHeapValue();
+//	/**
+//	 * Returns the initial value of a(n) (empty) heap.
+//	 * 
+//	 * @return The initial value of a(n) (empty) heap.
+//	 */
+//	SymbolicExpression initialHeapValue();
 
 	/**
 	 * Makes a pointer value from the given dynamic scope ID, variable ID, and

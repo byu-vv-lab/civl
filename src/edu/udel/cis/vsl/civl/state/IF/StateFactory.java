@@ -4,11 +4,15 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * The state factory is used to create all state objects.
@@ -444,4 +448,52 @@ public interface StateFactory {
 	 *         dyscopes.
 	 */
 	int lowestCommonAncestor(State state, int one, int another);
+
+	/**
+	 * Allocates an object, of the given value, for the given malloc ID in the
+	 * heap of the given dyscope. For handle objects that are allocated by
+	 * system functions instead of malloc statement, they all have a
+	 * corresponding fake malloc ID assigned by the model builder.
+	 * 
+	 * @param source
+	 *            The source information for error report.
+	 * @param state
+	 *            The pre-state.
+	 * @param dyscopeID
+	 *            The dyscope ID.
+	 * @param mallocID
+	 *            The ID the malloc statement.
+	 * @param heapObject
+	 *            The value of the new heap object.
+	 * @return The new state after the new heap object
+	 */
+	Pair<State, SymbolicExpression> malloc(CIVLSource source, State state,
+			int dyscopeID, int mallocID, SymbolicExpression heapObject);
+
+	/**
+	 * Allocates an object for the given malloc ID in the heap of the given
+	 * dyscope. For handle objects that are allocated by system functions
+	 * instead of malloc statement, they all have a corresponding fake malloc ID
+	 * assigned by the model builder. Since no value of the heap object is
+	 * provided, the method will create a symbolic constant representing the
+	 * heap object.
+	 * 
+	 * @param source
+	 *            The source information for error report.
+	 * @param state
+	 *            The pre-state.
+	 * @param dyscopeID
+	 *            The dyscope ID.
+	 * @param mallocID
+	 *            The ID the malloc statement.
+	 * @param elementType
+	 *            The symbolic type of the element to be contained in the new
+	 *            heap object.
+	 * @param elementCount
+	 *            The number of elements contained by the new heap object.
+	 * @return The new state after the new heap object is added.
+	 */
+	Pair<State, SymbolicExpression> malloc(CIVLSource source, State state,
+			int dyscopeID, int mallocID, SymbolicType elementType,
+			NumericExpression elementCount);
 }

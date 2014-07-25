@@ -134,12 +134,12 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 */
 	private JScrollPane drawState(State state) {
 		JTree oldTree = stateTree;
-		int numDyscopes = state.numScopes();
+		int numDyscopes = state.numDyscopes();
 		DynamicScope[] dyscopes = new DynamicScope[numDyscopes];
 
 		// Create an array of dyscopes
 		for (int i = 0; i < numDyscopes; i++) {
-			dyscopes[i] = (DynamicScope) state.getScope(i);
+			dyscopes[i] = (DynamicScope) state.getDyscope(i);
 		}
 
 		// Make an array of nodes corresponding to the dyscopes of the state
