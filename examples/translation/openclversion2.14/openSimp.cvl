@@ -6,6 +6,7 @@ int func()
 int main(int argc, char** argv)
 {
   int global = func();
+  //int input[global];
   int input[global];
   
   for(int i = 0; i < global; i++)

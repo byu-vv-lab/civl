@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 
   $proc procs[count];
   
-  int choose = 1;
+  int choose = 0;
   
   if (choose == 1)
   {
@@ -51,6 +51,3 @@ int main(int argc, char** argv)
   
   return 0;
 }
-
-
- 

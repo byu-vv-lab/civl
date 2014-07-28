@@ -21,9 +21,12 @@ $assume 0 < LOCAL && LOCAL < MAX_LOCAL;
 typedef struct
 {
   //Variables for kernels
-  
+  /*
   float * input;
   float * output;
+  */
+  void * input;
+  void * output;
   int count;
   
 }args;
@@ -31,10 +34,11 @@ typedef struct
 /*
   args * argument	- Takes in the struct, which is changed for every program using a different kernel
 */
-cl_kernel clCreateKernel(args * argument)
+cl_kernel clCreateKernel(args * argument, char function[])
 {
   cl_kernel kernel;
   kernel.arguments = argument;
+  kernel.method = function;
   
   return kernel;
 }
@@ -133,6 +137,10 @@ int clEnqueueNDRangeKernel(cl_kernel kernel, size_t global, size_t local)
 
 int main(int argc, char** argv)
 {
+  //Make function pointers for every method
+  void (*squarePtr) (int, int, int, float *, float *, int);
+  squarePtr = &square;
+  
   args * arguments;
   arguments = (args*)malloc(sizeof(args));
 
@@ -165,7 +173,7 @@ int main(int argc, char** argv)
   //In order to make this clear, it is clCreateProgram and not something like clCreateProgramFromSource, which actually exists in openCL code
   //program = clCreateProgram(arguments);
   
-  kernel = clCreateKernel(arguments);
+  kernel = clCreateKernel(arguments, "square");
   
   //replaces clCreateBuffer
   input = (float *) malloc(sizeof(float) * count);
@@ -231,6 +239,11 @@ int main(int argc, char** argv)
   
   return 0;
 }
-
+	Completed ABC example. Worked on 
+	
+	Think of ways to implement multiple kernel methods using square.cvl without breaking it.
+	
+	
+	Exact implementations for multiple kernel methods not clear yet. Next example with multiple methods uses files with the same method
 
 

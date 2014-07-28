@@ -122,6 +122,7 @@ typedef struct
 typedef struct
 {
   void * arguments;
+  char method[];
   int global_id;
   int local_id;
   int workgroup;
