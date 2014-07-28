@@ -62,6 +62,7 @@
 			<fileset dir="${bin.dir}" />
 			<zipfileset includes="**/*.class" src="${abc.jar}" />
 			<zipfileset includes="**/*.h" src="${abc.jar}" />
+			<zipfileset includes="**/*.cvh" src="${abc.jar}" />
 			<zipfileset includes="**/*.class" src="${gmc.jar}" />
 			<zipfileset includes="**/*.class" src="${sarl.jar}" />
 			<fileset dir="${basedir}/text/include" />
