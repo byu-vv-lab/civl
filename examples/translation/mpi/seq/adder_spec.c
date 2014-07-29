@@ -24,9 +24,13 @@
 #include<stdio.h>
 #include<stdlib.h>
 
+#pragma CIVL $input int NB;
+#pragma CIVL $output int __sum;
+
 int main(int argc, char *argv[]) {
   double result = 0.0;
   int n = atoi(argv[1]);
+  #pragma CIVL $assume 0 < n && n <= NB;
   int i;
   double a[n];
   FILE *fp = fopen("data","r");
@@ -34,6 +38,7 @@ int main(int argc, char *argv[]) {
   for (i=0; i<n; i++) fscanf(fp, "%lf", &a[i]);
   for (i=0; i<n; i++) result += a[i];
   printf("%lf",result);
+  #pragma CIVL __sum = result;
   fclose(fp);
   return 0;
 }

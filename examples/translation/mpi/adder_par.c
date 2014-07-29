@@ -26,6 +26,7 @@
 #include"mpi.h"
 
 #pragma CIVL $input int NB;
+#pragma CIVL $output int __sum;
 double sum;
 double localSum = 0.0;
 int PID;
@@ -61,6 +62,7 @@ int main(int argc, char *argv[]) {
   if (PID == 0) {
     sum = computeGlobalSum(); 
     printf("%lf", sum);
+     #pragma CIVL __sum = sum;
   } else {
     MPI_Send(&localSum, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
   }
