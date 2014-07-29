@@ -133,7 +133,9 @@ public class CommonEvaluator implements Evaluator {
 
 	/**
 	 * An uninterpreted function used to evaluate "BigO" of an expression. It
-	 * takes as input one expression of real type and return a real type.
+	 * takes as input one expression of real type and return a real type,
+	 * <code>real
+	 * $O(real x)</code>.
 	 */
 	private SymbolicExpression bigOFunction;
 
@@ -207,6 +209,8 @@ public class CommonEvaluator implements Evaluator {
 	private SymbolicTupleType pointerType;
 
 	/**
+	 * TODO make function pointer type normal pointer type.
+	 * 
 	 * The function pointer value is a pair <s,n> where s identifies the dynamic
 	 * scope, n identifies the name of the function that the pointer points to.
 	 * The type of s is scopeType, which is just a tuple wrapping a single
@@ -243,8 +247,7 @@ public class CommonEvaluator implements Evaluator {
 	private NumericExpression zero;
 
 	/**
-	 * The symbolic numeric expression of 0 of real type. TODO: why do we need
-	 * zero and zeroR?
+	 * The symbolic numeric expression of 0 of real type.
 	 */
 	private NumericExpression zeroR;
 
@@ -307,14 +310,16 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * Create a new instance of evaluator for evaluating expressions.
 	 * 
-	 * @param config
-	 *            The GMC configuration.
 	 * @param modelFactory
-	 *            The model factory to be used.
+	 *            The model factory of the system.
 	 * @param stateFactory
-	 *            The state factory to be used.
-	 * @param log
-	 *            The error logging facility.
+	 *            The state factory of the system.
+	 * @param loader
+	 *            The loader for library evaluators.
+	 * @param symbolicUtil
+	 *            The symbolic utility.
+	 * @param errorLogger
+	 *            The error logger for logging errors.
 	 */
 	public CommonEvaluator(ModelFactory modelFactory,
 			StateFactory stateFactory, LibraryEvaluatorLoader loader,
@@ -409,7 +414,8 @@ public class CommonEvaluator implements Evaluator {
 				&& !variable.isBound()
 				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
 			result = nullExpression;
-		} else {
+		} else {// the case of an input variable or a variable of
+				// array/struct/union type.
 			StringObject name = universe.stringObject("X_s" + dyscopeId + "v"
 					+ vid);
 
@@ -441,7 +447,7 @@ public class CommonEvaluator implements Evaluator {
 	private Evaluation dereference(CIVLSource source, State state,
 			String process, SymbolicExpression pointer, boolean checkOutput,
 			boolean analysisOnly) throws UnsatisfiablePathConditionException {
-		if (symbolicUtil.isNullPointer(pointer)) {
+		if (symbolicUtil.isNullPointer(pointer)) {// null pointer dereference
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
 					"Attempt to deference a null pointer",
@@ -509,39 +515,6 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Given an expression of pointer type, evaluates that expression in the
-	 * given state to get a pointer value, and then dereferences that to yield
-	 * the value pointed to.
-	 * 
-	 * @param state
-	 *            a CIVL model state
-	 * @param pid
-	 *            PID of the process in which this evaluation occurs
-	 * @param process
-	 *            The name of the process for error report.
-	 * @param operand
-	 *            an expression of pointer type
-	 * @return the referenced value
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation dereference(State state, int pid, String process,
-			Expression operand) throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluate(state, pid, operand);
-
-		if (eval.value.isNull()) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
-					"Attempt to dereference an uninitialized pointer.",
-					symbolicUtil.stateToString(state), operand.getSource());
-
-			this.errorLogger.reportError(err);
-			// TODO: throw UnsatisfiablePathConditionException?
-		}
-		return dereference(operand.getSource(), eval.state, process,
-				eval.value, true);
-	}
-
-	/**
 	 * Evaluates the dynamic type of a given CIVL type at a certain state. When
 	 * the CIVL type has some state, e.g., an array type with a variable as the
 	 * extent, the type needs to be evaluated.
@@ -554,16 +527,17 @@ public class CommonEvaluator implements Evaluator {
 	 *            The CIVL type to be evaluated for the dynamic type.
 	 * @param source
 	 *            The source code element for error report.
-	 * @param isDefinition
-	 *            The flag denoting if the type is a definition.
+	 * @param isDeclaration
+	 *            The flag denoting if the type is part of a variable/function
+	 *            declaration.
 	 * @return The dynamic type of the given type.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation dynamicTypeOf(State state, int pid, CIVLType type,
-			CIVLSource source, boolean isDefinition)
+			CIVLSource source, boolean isDeclaration)
 			throws UnsatisfiablePathConditionException {
 		TypeEvaluation typeEval = getDynamicType(state, pid, type, source,
-				isDefinition);
+				isDeclaration);
 		SymbolicExpression expr = symbolicUtil.expressionOfType(typeEval.type);
 		Evaluation result = new Evaluation(typeEval.state, expr);
 
@@ -652,9 +626,11 @@ public class CommonEvaluator implements Evaluator {
 		BooleanExpression assumption = eval.state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(assumption);
 
+		// true && x = x;
 		if (reasoner.isValid(p))
 			return evaluate(eval.state, pid, expression.right());
 		if (reasoner.isValid(universe.not(p))) {
+			// false && x = false;
 			eval.value = universe.falseExpression();
 			return eval;
 		} else {
@@ -674,7 +650,7 @@ public class CommonEvaluator implements Evaluator {
 			// (assumption && p) || (assumption && !p),
 			// which does not get simplified to just "assumption",
 			// as one would like. So it is handled as a special case:
-			// check whether pcTemp equals assumption && p
+			// check whether pcTemp equals (assumption && p)
 			// (i.e., the evaluation of expression.right() did not
 			// add any side-effects). If this holds, then pc is just
 			// assumption.
@@ -684,7 +660,8 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluates an array literal expression.
+	 * Evaluates an array literal expression, like
+	 * <code>{[1] = a, [2] = 3, [6]=9}</code>;
 	 * 
 	 * @param state
 	 *            The state of the program.
@@ -739,6 +716,7 @@ public class CommonEvaluator implements Evaluator {
 			return evaluateAnd(state, pid, expression);
 		case OR:
 			return evaluateOr(state, pid, expression);
+			// TODO code review
 		case IMPLIES:
 			return evaluateImplies(state, pid, expression);
 		case BITAND:
@@ -753,7 +731,7 @@ public class CommonEvaluator implements Evaluator {
 			return evaluateShiftleft(state, pid, expression);
 		case SHIFTRIGHT:
 			return evaluateShiftright(state, pid, expression);
-		default:
+		default:// numeric expression like +,-,*,/,%,etc
 			if (expression.left().getExpressionType() != null
 					&& expression.left().getExpressionType()
 							.equals(modelFactory.scopeType())) {
@@ -1057,7 +1035,20 @@ public class CommonEvaluator implements Evaluator {
 	private Evaluation evaluateDereference(State state, int pid,
 			String process, DereferenceExpression expression)
 			throws UnsatisfiablePathConditionException {
-		return dereference(state, pid, process, expression.pointer());
+		Evaluation eval = evaluate(state, pid, expression.pointer());
+
+		if (eval.value.isNull()) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
+					"Attempt to dereference an uninitialized pointer.",
+					symbolicUtil.stateToString(state), expression.pointer()
+							.getSource());
+
+			this.errorLogger.reportError(err);
+			// TODO: throw UnsatisfiablePathConditionException?
+		}
+		return dereference(expression.pointer().getSource(), eval.state,
+				process, eval.value, true);
 	}
 
 	private Evaluation evaluateDerivativeCall(State state, int pid,
@@ -3153,6 +3144,7 @@ public class CommonEvaluator implements Evaluator {
 			newSymRef = universe.arrayElementReference(oldSymRef, index);
 			result.value = symbolicUtil.setSymRef(arrayPointer, newSymRef);
 		} else if (operand instanceof DereferenceExpression) {
+			// &(*p) = p, so just evaluate the pointer and return.
 			result = evaluate(state, pid,
 					((DereferenceExpression) operand).pointer());
 		} else if (operand instanceof DotExpression) {
@@ -3172,6 +3164,7 @@ public class CommonEvaluator implements Evaluator {
 				eval.value = symbolicUtil.setSymRef(structPointer, newSymRef);
 				result = eval;
 			} else {
+				// when u is a union type, then &(u.x) = &u.
 				return reference(state, pid,
 						(LHSExpression) dot.structOrUnion());
 			}
