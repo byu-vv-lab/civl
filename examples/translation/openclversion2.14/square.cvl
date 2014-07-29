@@ -24,17 +24,18 @@ typedef struct
   /*
   float * input;
   float * output;
+  int count;
   */
   void * input;
   void * output;
-  int count;
+  void * count;
   
 }args;
 
 /*
   args * argument	- Takes in the struct, which is changed for every program using a different kernel
 */
-cl_kernel clCreateKernel(args * argument, char function[])
+cl_kernel clCreateKernel(args * argument, char * function)
 {
   cl_kernel kernel;
   kernel.arguments = argument;
@@ -70,6 +71,10 @@ void square(int workgroup, int global_id, int local_id, float* input, float* out
   cl_kernel param	- Holds the data for local_id, global_id, and the workgroup
   Use the print statement to get a better idea of what it means to split workgroups, local_ids, and global_ids
 */
+void empty()
+{
+}
+
 void workfunc(size_t local, size_t global, cl_kernel param)
 {
   $proc procs[local];
@@ -77,8 +82,10 @@ void workfunc(size_t local, size_t global, cl_kernel param)
   {
     param.local_id = i % local;
     param.global_id = i;
-    printf("My workgroup id is %d, my global id is %d, my local id is %d\n", param.workgroup, param.global_id, param.local_id);
-    procs[param.local_id] = $spawn square(param.workgroup, param.global_id, param.local_id, ((args*)param.arguments)->input, ((args*)param.arguments)->output, ((args*)param.arguments)->count);
+    printf("My workgroup id is %d, my global id is %d, my local id is %d, and my method is %s\n", param.workgroup, param.global_id, param.local_id, param.method);
+
+    procs[param.local_id] = $spawn square(param.workgroup, param.global_id, param.local_id, ((args*)param.arguments)->input, ((args*)param.arguments)->output, (int*)(((args*)param.arguments)->count));
+
   }
   for(int j = 0; j < local; j++)
   {
@@ -199,7 +206,8 @@ int main(int argc, char** argv)
   //memcpy(((args*)kernel.arguments)->output, output, sizeof(float));
   ((args*)kernel.arguments)->output = output;
 
-  ((args*)kernel.arguments)->count = count;
+  ((args*)kernel.arguments)->count = (int *)malloc(sizeof(int));
+  memcpy(((args*)kernel.arguments)->count, &count, sizeof(int));
   //no malloc needed for non pointers
   
   //clGetKernelWorkGroupInfo would get a local size optimal for a device, but is not needed here
@@ -239,11 +247,18 @@ int main(int argc, char** argv)
   
   return 0;
 }
-	Completed ABC example. Worked on 
-	
-	Think of ways to implement multiple kernel methods using square.cvl without breaking it.
-	
-	
-	Exact implementations for multiple kernel methods not clear yet. Next example with multiple methods uses files with the same method
+/*Note, pointers to global memory cannot be stored in local memory
+support for global, local, constant and group, local being the default
+private (local) - variable assignment, or malloc + memcpy
+
+global - pointer with memory location. For regular non pointer variables, make a pointer and assign it to it, then use the pointer
+Global variables can be declared in program source but they must use the "constant" address space qualifier and need to be initialized. 
+You cannot have global variables that can be modified by kernels and where the modified values are persistent across work-groups and kernel executions. 
+For this, you should use memory objects instead.
+
+Constant is just like global, but read only
+
+group - ???
+*/
 
 
