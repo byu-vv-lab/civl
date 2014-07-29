@@ -11,11 +11,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void srandom (unsigned seed);  
+//void srandom (unsigned seed);  
 double dboard (int darts);
 
-#define DARTS 10000   	/* number of throws at dartboard */
-#define ROUNDS 100    	/* number of times "darts" is iterated */
+#pragma CIVL $output double __pi;
+
+#define DARTS 1   	/* number of throws at dartboard */
+#define ROUNDS 1    	/* number of times "darts" is iterated */
 
 int main(int argc, char *argv[])
 {

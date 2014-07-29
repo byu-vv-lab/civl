@@ -20,6 +20,7 @@ double dboard (int darts);
 #define DARTS 1       /* number of throws at dartboard */
 #define ROUNDS 1      /* number of times "darts" is iterated */
 #define MASTER 0      /* task ID of master task */
+#pragma CIVL $output double __pi;
 
 int main (int argc, char *argv[])
 {
@@ -86,12 +87,12 @@ int main (int argc, char *argv[])
 	avepi = ((avepi * i) + pi)/(i + 1); 
 	printf("   After %8d throws, average value of pi = %10.8f\n",
                (DARTS * (i + 1)),avepi);
-      }    
+      }
+      __pi = avepi;
   } 
 
   if (taskid == MASTER)
     printf ("\nReal value of PI: 3.1415926535897 \n");
-
   MPI_Finalize();
   return 0;
 }
