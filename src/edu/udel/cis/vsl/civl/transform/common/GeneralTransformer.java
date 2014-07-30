@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
@@ -67,11 +68,10 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
-		@SuppressWarnings("unchecked")
-		SequenceNode<ASTNode> root = (SequenceNode<ASTNode>) unit.getRootNode();
+		SequenceNode<ExternalDefinitionNode> root = unit.getRootNode();
 		AST newAst;
 		List<VariableDeclarationNode> inputVars = new ArrayList<>();
-		List<ASTNode> newExternalList = new ArrayList<>();
+		List<ExternalDefinitionNode> newExternalList = new ArrayList<>();
 		Map<String, VariableDeclarationNode> macroVars = new HashMap<>();
 
 		unit.release();
@@ -91,15 +91,15 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 			if (config.svcomp())
 				recoverMacro(child, macroVars);
 		}
-		for (ASTNode inputVar : macroVars.values())
+		for (ExternalDefinitionNode inputVar : macroVars.values())
 			newExternalList.add(inputVar);
-		for (ASTNode inputVar : inputVars)
+		for (ExternalDefinitionNode inputVar : inputVars)
 			newExternalList.add(inputVar);
 		if (this.argcAssumption != null)
 			newExternalList.add(argcAssumption);
 		// add my root
 		newExternalList.add(this.myRootNode());
-		for (ASTNode child : root) {
+		for (ExternalDefinitionNode child : root) {
 			newExternalList.add(child);
 			child.parent().removeChild(child.childIndex());
 		}
@@ -258,7 +258,6 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 		}
 
 	}
-
 
 	/**
 	 * Processes the original main function, including:

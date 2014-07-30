@@ -10,7 +10,9 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.PragmaNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpStatementNode;
@@ -32,7 +34,8 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 	private OmpBuilder ompBuilder;
 
 	public OmpPragmaTransformer(ASTFactory astFactory,
-			List<String> inputVariables, ASTBuilder astBuilder, CIVLConfiguration config) {
+			List<String> inputVariables, ASTBuilder astBuilder,
+			CIVLConfiguration config) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
 				astBuilder, config);
 		this.ompBuilder = Antlr2AST.newOmpBuilder(astFactory, astBuilder);
@@ -40,7 +43,7 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
-		ASTNode root = unit.getRootNode();
+		SequenceNode<ExternalDefinitionNode> root = unit.getRootNode();
 
 		unit.release();
 		this.processASTNode(root);

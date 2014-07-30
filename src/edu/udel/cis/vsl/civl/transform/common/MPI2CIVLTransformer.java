@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
@@ -513,9 +514,9 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 *         (i.e., the file scope of the final AST) and become $input
 	 *         variables of the final AST.
 	 */
-	private Triple<FunctionDefinitionNode, List<ASTNode>, List<VariableDeclarationNode>> mpiProcess(
-			SequenceNode<ASTNode> root) {
-		List<ASTNode> includedNodes = new ArrayList<>();
+	private Triple<FunctionDefinitionNode, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> mpiProcess(
+			SequenceNode<ExternalDefinitionNode> root) {
+		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> vars = new ArrayList<>();
 		List<BlockItemNode> items;
 		int number;
@@ -537,7 +538,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		number = root.numChildren();
 		items.add(commVar);
 		for (int i = 0; i < number; i++) {
-			ASTNode child = root.child(i);
+			ExternalDefinitionNode child = root.getSequenceChild(i);
 			String sourceFile;
 
 			if (child == null)
@@ -822,22 +823,21 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 * @return An AST of CIVL-C program equivalent to the original MPI program.
 	 * @throws SyntaxException
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
-		ASTNode root = ast.getRootNode();
+		SequenceNode<ExternalDefinitionNode> root = ast.getRootNode();
 		AST newAst;
 		FunctionDefinitionNode mpiProcess, mainFunction;
 		VariableDeclarationNode gcommWorld;
-		List<ASTNode> externalList;
+		List<ExternalDefinitionNode> externalList;
 		VariableDeclarationNode nprocsVar;
 		VariableDeclarationNode nprocsUpperBoundVar = null, nprocsLowerBoundVar = null;
-		SequenceNode<ASTNode> newRootNode;
-		List<ASTNode> includedNodes = new ArrayList<ASTNode>();
+		SequenceNode<ExternalDefinitionNode> newRootNode;
+		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> mainParameters = new ArrayList<>();
 		int count;
 		AssumeNode nprocsAssumption = null;
-		Triple<FunctionDefinitionNode, List<ASTNode>, List<VariableDeclarationNode>> result;
+		Triple<FunctionDefinitionNode, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> result;
 
 		this.source = getMainSource(root);// TODO needs a good source
 		assert this.astFactory == ast.getASTFactory();
@@ -872,7 +872,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		nprocsAssumption = this.nprocsAssumption();
 		// declaring $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);
 		gcommWorld = this.gcommDeclaration();
-		result = this.mpiProcess((SequenceNode<ASTNode>) root);
+		result = this.mpiProcess(root);
 		mpiProcess = result.first;
 		includedNodes = result.second;
 		mainParameters = result.third;

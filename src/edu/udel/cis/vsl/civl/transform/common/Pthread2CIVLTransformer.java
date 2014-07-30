@@ -6,6 +6,7 @@ import java.util.Arrays;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
@@ -36,12 +37,10 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 //TODO: add arguments to pthread_exit();
 
-
-
 public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 	private final static String PTHREAD_CREATE = "pthread_create";
-	
+
 	private final static String PTHREAD_EXIT = "pthread_exit";
 
 	private final static String PTHREAD_EXIT_NEW = "_pthread_exit";
@@ -61,9 +60,9 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	private final static String VERIFIER_ASSUME = "__VERIFIER_assume";
 
 	private final static String VERIFIER_ASSERT = "__VERIFIER_assert";
-	
+
 	private final static String VERIFIER_ATOMIC = "__VERIFIER_atomic";
-	
+
 	private int numberOfNondetCall = 0;
 
 	/* ************************** Public Static Fields *********************** */
@@ -126,7 +125,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			translateNode(root);
 	}
 
-	private void process_VERIFIER_function_calls(FunctionDefinitionNode node) throws SyntaxException {
+	private void process_VERIFIER_function_calls(FunctionDefinitionNode node)
+			throws SyntaxException {
 		process_VERIFIER_function_call_worker(node);
 	}
 
@@ -139,29 +139,37 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			if (function.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
 				IdentifierExpressionNode funcName = (IdentifierExpressionNode) function;
 				String name = funcName.getIdentifier().name();
-				
-				if(name.equals(VERIFIER_NONDET_INT) || name.equals(VERIFIER_NONDET_UINT)){
-					ExpressionNode newArg = nodeFactory.newIntegerConstantNode(funcName.getSource(), String.valueOf(numberOfNondetCall));
-					
+
+				if (name.equals(VERIFIER_NONDET_INT)
+						|| name.equals(VERIFIER_NONDET_UINT)) {
+					ExpressionNode newArg = nodeFactory.newIntegerConstantNode(
+							funcName.getSource(),
+							String.valueOf(numberOfNondetCall));
+
 					this.numberOfNondetCall++;
-					funcCall.setArguments(nodeFactory.newSequenceNode(funcName.getSource(), "Actual Arguments", Arrays.asList(newArg)));
+					funcCall.setArguments(nodeFactory.newSequenceNode(
+							funcName.getSource(), "Actual Arguments",
+							Arrays.asList(newArg)));
 				}
 			}
-		}
-		else if(node instanceof FunctionDefinitionNode){
-			IdentifierNode functionName = ((FunctionDefinitionNode) node).getIdentifier();
-			if(functionName.name().startsWith(VERIFIER_ATOMIC)){
-				CompoundStatementNode tmp = ((FunctionDefinitionNode) node).getBody().copy();
-				AtomicNode newAtomicBlock = nodeFactory.newAtomicStatementNode(source, false, tmp);
-				CompoundStatementNode block = nodeFactory.newCompoundStatementNode(source, Arrays.asList((BlockItemNode)newAtomicBlock));
+		} else if (node instanceof FunctionDefinitionNode) {
+			IdentifierNode functionName = ((FunctionDefinitionNode) node)
+					.getIdentifier();
+			if (functionName.name().startsWith(VERIFIER_ATOMIC)) {
+				CompoundStatementNode tmp = ((FunctionDefinitionNode) node)
+						.getBody().copy();
+				AtomicNode newAtomicBlock = nodeFactory.newAtomicStatementNode(
+						source, false, tmp);
+				CompoundStatementNode block = nodeFactory
+						.newCompoundStatementNode(source,
+								Arrays.asList((BlockItemNode) newAtomicBlock));
 				((FunctionDefinitionNode) node).setBody(block);
 			}
 			for (ASTNode child : node.children()) {
 				if (child != null)
 					process_VERIFIER_function_call_worker(child);
 			}
-		}
-		else {
+		} else {
 			for (ASTNode child : node.children()) {
 				if (child != null)
 					process_VERIFIER_function_call_worker(child);
@@ -200,7 +208,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 				OrdinaryLabelNode label = (OrdinaryLabelNode) labelNode;
 				String name = label.getName();
 				if (name.equals(ERROR))
-					labelStatement.setChild(1, this.assertFalse(labelStatement.getSource()));
+					labelStatement.setChild(1,
+							this.assertFalse(labelStatement.getSource()));
 			}
 		} else if (node instanceof ExpressionStatementNode) {
 			ExpressionNode expression = ((ExpressionStatementNode) node)
@@ -217,8 +226,9 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 					switch (name) {
 					case VERIFIER_ASSERT:
-						newStatementNode = this.assertNode(functionCall.getSource(), functionCall
-								.getArgument(0).copy());
+						newStatementNode = this.assertNode(functionCall
+								.getSource(), functionCall.getArgument(0)
+								.copy());
 						break;
 					case VERIFIER_ASSUME:
 						newStatementNode = this.assumeNode(functionCall
@@ -255,30 +265,54 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		return assertNode(mySource, falseExpression);
 	}
 
-	private void process_pthread_exits(FunctionDefinitionNode function, ArrayList<String> threadList)
-			throws SyntaxException {
+	private void process_pthread_exits(FunctionDefinitionNode function,
+			ArrayList<String> threadList) throws SyntaxException {
 		String name = function.getName();
 		TypeNode returnType = function.getTypeNode().getReturnType();
 
 		if (name.equals("main")) {
 			process_pthread_exit(function, true);
-			ExpressionNode ZERO = nodeFactory.newIntegerConstantNode(source, "0");
-			function.getBody().addSequenceChild(nodeFactory.newReturnNode(source, ZERO));
+			ExpressionNode ZERO = nodeFactory.newIntegerConstantNode(source,
+					"0");
+			function.getBody().addSequenceChild(
+					nodeFactory.newReturnNode(source, ZERO));
 			freePoolBeforeMainReturn(function);
 			return;
-			
+
 		}
 		if (this.isVoidPointer(returnType) && threadList.contains(name)) {
-			function.getTypeNode().setParameters(nodeFactory.newSequenceNode(source, "parameters", Arrays.asList(nodeFactory.newVariableDeclarationNode(source, nodeFactory.newIdentifierNode(source, "arg"), nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source))))));
+			function.getTypeNode()
+					.setParameters(
+							nodeFactory
+									.newSequenceNode(
+											source,
+											"parameters",
+											Arrays.asList(nodeFactory
+													.newVariableDeclarationNode(
+															source,
+															nodeFactory
+																	.newIdentifierNode(
+																			source,
+																			"arg"),
+															nodeFactory
+																	.newPointerTypeNode(
+																			source,
+																			nodeFactory
+																					.newVoidTypeNode(source))))));
 			ExpressionNode nullNode = nodeFactory.newCastNode(
 					source,
 					nodeFactory.newPointerTypeNode(source,
 							nodeFactory.newVoidTypeNode(source)),
 					nodeFactory.newIntegerConstantNode(source, "0"));
-			ExpressionNode isMainArg = nodeFactory
-					.newBooleanConstantNode(source, false);
-			FunctionCallNode newPthreadExit = nodeFactory.newFunctionCallNode(source, nodeFactory.newIdentifierExpressionNode(source, nodeFactory.newIdentifierNode(source, PTHREAD_EXIT_NEW)), Arrays.asList(nullNode, isMainArg), null);
-			StatementNode pthreadExit = nodeFactory.newExpressionStatementNode(newPthreadExit);
+			ExpressionNode isMainArg = nodeFactory.newBooleanConstantNode(
+					source, false);
+			FunctionCallNode newPthreadExit = nodeFactory.newFunctionCallNode(
+					source, nodeFactory.newIdentifierExpressionNode(source,
+							nodeFactory.newIdentifierNode(source,
+									PTHREAD_EXIT_NEW)), Arrays.asList(nullNode,
+							isMainArg), null);
+			StatementNode pthreadExit = nodeFactory
+					.newExpressionStatementNode(newPthreadExit);
 			function.getBody().addSequenceChild(pthreadExit);
 			process_pthread_exit(function, false);
 		}
@@ -321,50 +355,55 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 						funcCall.setArguments(newArgs);
 					}
 				}
-			}
-			else if(child instanceof ReturnNode && !isMain){
-				ExpressionNode isMainArg = nodeFactory.newBooleanConstantNode(source, isMain);
-				FunctionCallNode newPthreadExit = nodeFactory.newFunctionCallNode(source, nodeFactory.newIdentifierExpressionNode(source, nodeFactory.newIdentifierNode(source, PTHREAD_EXIT_NEW)), Arrays.asList(((ReturnNode) child).getExpression().copy(), isMainArg), null);
-				StatementNode pthreadExit = nodeFactory.newExpressionStatementNode(newPthreadExit);
-				
+			} else if (child instanceof ReturnNode && !isMain) {
+				ExpressionNode isMainArg = nodeFactory.newBooleanConstantNode(
+						source, isMain);
+				FunctionCallNode newPthreadExit = nodeFactory
+						.newFunctionCallNode(source, nodeFactory
+								.newIdentifierExpressionNode(source,
+										nodeFactory.newIdentifierNode(source,
+												PTHREAD_EXIT_NEW)), Arrays
+								.asList(((ReturnNode) child).getExpression()
+										.copy(), isMainArg), null);
+				StatementNode pthreadExit = nodeFactory
+						.newExpressionStatementNode(newPthreadExit);
+
 				child.parent().setChild(child.childIndex(), pthreadExit);
-			}
-			else {
+			} else {
 				process_pthread_exit_worker(child, isMain);
 			}
 		}
 	}
 
-	private void functionList(ASTNode root){
-		for(ASTNode node: root.children()){
+	private void functionList(ASTNode root) {
+		for (ASTNode node : root.children()) {
 			if (node == null)
 				continue;
-			if (node instanceof FunctionCallNode){
+			if (node instanceof FunctionCallNode) {
 				FunctionCallNode funcCall = (FunctionCallNode) node;
 				ExpressionNode funcName = funcCall.getFunction();
 				if (funcName instanceof IdentifierExpressionNode) {
 					IdentifierExpressionNode named = (IdentifierExpressionNode) funcName;
 					String nameString = named.getIdentifier().name();
-					if (nameString.equals(PTHREAD_CREATE)){
+					if (nameString.equals(PTHREAD_CREATE)) {
 						ExpressionNode arg = funcCall.getArgument(2);
-						if(arg instanceof OperatorNode){
+						if (arg instanceof OperatorNode) {
 							OperatorNode argOp = (OperatorNode) arg;
-							IdentifierExpressionNode threadName = (IdentifierExpressionNode) argOp.getArgument(0);
+							IdentifierExpressionNode threadName = (IdentifierExpressionNode) argOp
+									.getArgument(0);
 							funcList.add(threadName.getIdentifier().name());
-						}
-						else{
-							IdentifierExpressionNode threadName = (IdentifierExpressionNode) funcCall.getArgument(2);
+						} else {
+							IdentifierExpressionNode threadName = (IdentifierExpressionNode) funcCall
+									.getArgument(2);
 							funcList.add(threadName.getIdentifier().name());
 						}
 					}
 				}
-			}
-			else{
+			} else {
 				functionList(node);
-			}	
+			}
 		}
 	}
-	
 
 	@SuppressWarnings("unused")
 	private ReturnNode returnNull() throws SyntaxException {
@@ -419,7 +458,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
-		ASTNode root = ast.getRootNode();
+		SequenceNode<ExternalDefinitionNode> root = ast.getRootNode();
 
 		this.source = getMainSource(root);
 		assert this.astFactory == ast.getASTFactory();
