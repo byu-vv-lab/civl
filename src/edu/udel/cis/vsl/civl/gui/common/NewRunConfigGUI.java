@@ -41,7 +41,7 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.gui.common.ButtonColumn;
 import edu.udel.cis.vsl.gmc.Option;
 
-public class NewRunConfig extends JFrame {
+public class NewRunConfigGUI extends JFrame {
 
 	private static final long serialVersionUID = 5152675076717228871L;
 	// ***TEMPORARY********************
@@ -206,7 +206,7 @@ public class NewRunConfig extends JFrame {
 	private JPanel tab_setInputs_ru;
 	private JPanel tab_setInputs_vf;
 
-	public NewRunConfig() {
+	public NewRunConfigGUI() {
 		this.setSize(1200, 700);
 		this.setVisible(true);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -853,17 +853,5 @@ public class NewRunConfig extends JFrame {
 		});
 		revalidate();
 		repaint();
-	}
-
-	public static void main(String[] args) {
-	    // Secound possibility
-	    SwingUtilities.invokeLater(new Runnable() {
-
-	        @Override
-	        public void run() {
-	        	@SuppressWarnings("unused")
-				NewRunConfig nrc = new NewRunConfig();
-	        }
-	    });
 	}
 }
