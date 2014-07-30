@@ -1,4 +1,5 @@
 package edu.udel.cis.vsl.civl.gui.common;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -18,10 +19,10 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-@SuppressWarnings("serial")
 public class ButtonColumn extends AbstractCellEditor
 	implements TableCellRenderer, TableCellEditor, ActionListener, MouseListener
 {
+	private static final long serialVersionUID = 8484258447889489997L;
 	private JTable table;
 	private Action action;
 	private int mnemonic;
