@@ -151,7 +151,7 @@ public class CIVLConstants {
 			"show the path condition of each state?", false);
 
 	public static Option[] getAllOptions() {
-		int numOpts = 33;
+		int numOpts = 32;
 		List<Option> outputs = new LinkedList<Option>();
 
 		outputs.add(CIVLConstants.deadlockO);
@@ -162,7 +162,6 @@ public class CIVLConstants {
 		outputs.add(CIVLConstants.guidedO);
 		outputs.add(CIVLConstants.guiO);
 		outputs.add(CIVLConstants.idO);
-		outputs.add(CIVLConstants.inputO);
 		outputs.add(CIVLConstants.maxdepthO);
 		outputs.add(CIVLConstants.minO);
 		outputs.add(CIVLConstants.randomO);
