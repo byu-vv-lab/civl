@@ -88,7 +88,7 @@ int main (int argc, char *argv[])
 	printf("   After %8d throws, average value of pi = %10.8f\n",
                (DARTS * (i + 1)),avepi);
       }
-      __pi = avepi;
+      #pragma CIVL __pi = avepi;
   } 
 
   if (taskid == MASTER)
