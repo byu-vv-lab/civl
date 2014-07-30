@@ -65,6 +65,7 @@
 			<zipfileset includes="**/*.cvh" src="${abc.jar}" />
 			<zipfileset includes="**/*.class" src="${gmc.jar}" />
 			<zipfileset includes="**/*.class" src="${sarl.jar}" />
+			<fileset dir="${basedir}/images" />
 			<fileset dir="${basedir}/text/include" />
 			<fileset dir="${basedir}/lib" />
 			<manifest>
