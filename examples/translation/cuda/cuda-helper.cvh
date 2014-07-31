@@ -5,7 +5,7 @@
 #else
 #define __CUDA_HELPER__
 
-#include "civlc.h"
+#include "civlc.cvh"
 #include "cuda-types.cvh"
 #include <string.h>
 #include <stdio.h>
@@ -31,12 +31,21 @@ dim3 _toDim3(int x) {
  * The location of the cell is passed to the spawning function.
  */
 void _runProcs(dim3 dim, void spawningFunction(uint3)) {
+/*/
+	$range rx = 0 .. dim.x;
+	$range ry = 0 .. dim.y;
+	$range rz = 0 .. dim.z;
+	$domain(3) dom = ($domain){rx, ry, rz};
+	$parfor(int x,y,z : dom){
+		uint3 id = { x, y, z };
+		spawningFunction(id);
+	}
+/*/
   $proc procs[dim.x][dim.y][dim.z];
   for (int x = 0; x < dim.x; x++) {
 		for (int y = 0; y < dim.y; y++) {
 			for (int z = 0; z < dim.z; z++) {
 				uint3 id = { x, y, z };
-
 				procs[x][y][z] = $spawn spawningFunction(id);
 			}
 
@@ -49,6 +58,7 @@ void _runProcs(dim3 dim, void spawningFunction(uint3)) {
 			}
 		}
   }
+//*/
 }
 
 // ------------------------------------------------
