@@ -336,6 +336,15 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
+	public SymbolicType getArrayElementType(SymbolicExpression array) {
+		SymbolicType elementType = array.type();
+
+		while (elementType instanceof SymbolicArrayType)
+			elementType = ((SymbolicArrayType) elementType).elementType();
+		return elementType;
+	}
+
+	@Override
 	public SymbolicExpression expressionOfType(SymbolicType type) {
 		SymbolicExpression result;
 
@@ -1354,7 +1363,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public SymbolicExpression updateArrayElementReference(
+	public ReferenceExpression updateArrayElementReference(
 			ArrayElementReference arrayReference,
 			List<NumericExpression> newIndexes) {
 		int dimension = newIndexes.size();
@@ -1371,15 +1380,16 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public SymbolicExpression arrayUnrolling(State state, String process,
+	public SymbolicExpression arrayFlatten(State state, String process,
 			SymbolicExpression array, CIVLSource civlsource) {
-		List<SymbolicExpression> unrolledElementList;
+		List<SymbolicExpression> flattenElementList;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
-		if (array.isNull() || array == null)
+		if (array == null)
 			throw new CIVLInternalException("parameter array is null.",
 					civlsource);
-
+		if (array.isNull())
+			return array;
 		if (array.type() instanceof SymbolicArrayType) {
 			if (array.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
 				if (reasoner.extractNumber(universe.length(array)) == null)
@@ -1388,11 +1398,10 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		} else
 			return universe.array(array.type(), Arrays.asList(array));
 
-		unrolledElementList = this.arrayUnrollingWorker(state, array,
-				civlsource);
-		if (unrolledElementList.size() > 0)
-			return universe.array(unrolledElementList.get(0).type(),
-					unrolledElementList);
+		flattenElementList = this.arrayFlattenWorker(state, array, civlsource);
+		if (flattenElementList.size() > 0)
+			return universe.array(flattenElementList.get(0).type(),
+					flattenElementList);
 		else if (array instanceof SymbolicArrayType)
 			return universe.emptyArray(((SymbolicArrayType) array)
 					.elementType());
@@ -1400,10 +1409,35 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return universe.emptyArray(array.type());
 	}
 
-	// TODO: Too much functions about operation on arrays, do we need a sub
-	// class for it?
+	@Override
+	public List<SymbolicExpression> arrayFlattenList(State state,
+			String process, SymbolicExpression array, CIVLSource civlsource) {
+		List<SymbolicExpression> flattenElementList = new LinkedList<>();
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+
+		if (array == null)
+			throw new CIVLInternalException("parameter array is null.",
+					civlsource);
+		if (array.isNull())
+			return flattenElementList;
+		if (array.type() instanceof SymbolicArrayType) {
+			if (array.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
+				if (reasoner.extractNumber(universe.length(array)) == null) {
+					flattenElementList.add(array);
+					return flattenElementList;
+				}
+			}
+		} else {
+			flattenElementList.add(array);
+			return flattenElementList;
+		}
+
+		flattenElementList = this.arrayFlattenWorker(state, array, civlsource);
+		return flattenElementList;
+	}
+
 	// Recursive helper function for arrayUnrolling, must be private.
-	private List<SymbolicExpression> arrayUnrollingWorker(State state,
+	private List<SymbolicExpression> arrayFlattenWorker(State state,
 			SymbolicExpression array, CIVLSource civlsource) {
 		BooleanExpression pathCondition = state.getPathCondition();
 		List<SymbolicExpression> unrolledElementList = new LinkedList<>();
@@ -1413,6 +1447,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			throw new CIVLInternalException("parameter array is null.",
 					civlsource);
 
+		// If the array object is a symbolic value without provable concrete
+		// length, leave it as symbolic.
 		if (array.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
 			if (reasoner.extractNumber(universe.length(array)) == null) {
 				unrolledElementList.add(array);
@@ -1430,7 +1466,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				while (reasoner.isValid(claim)) {
 					SymbolicExpression element = universe.arrayRead(array, i);
 
-					unrolledElementList.addAll(arrayUnrollingWorker(state,
+					unrolledElementList.addAll(arrayFlattenWorker(state,
 							element, civlsource));
 					// update
 					i = universe.add(i, one);
@@ -1479,35 +1515,35 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 											// (dimensionLength)
 			NumericExpression subEndIndex, subStartIndex;
 			List<SymbolicExpression> newElements = new LinkedList<>();
-			SymbolicExpression unrolledArray;
+			SymbolicExpression flattenArray;
 			SymbolicExpression subArray;
 			BooleanExpression claim;
+			NumericExpression flattenExtent;
 
 			// ------Cast the oldArray to an array of the compatible new type
 			if (!((SymbolicArrayType) type).isComplete()) {
 				// ------For incomplete array type, only 1-d array type is
 				// allowed.
 				// ------Unrolling old array
-				return this
-						.arrayUnrolling(state, process, oldArray, civlsource);
+				return this.arrayFlatten(state, process, oldArray, civlsource);
 			}
 			// ------For complete array, we have to compute recursively.
 			dimensionLength = ((SymbolicCompleteArrayType) type).extent();
 			claim = universe.lessThan(i, dimensionLength);
-			unrolledArray = this.arrayUnrolling(state, process, oldArray,
+			flattenArray = this.arrayFlatten(state, process, oldArray,
 					civlsource);
-			chunkLength = universe.divide(universe.length(unrolledArray),
-					dimensionLength);
+			flattenExtent = universe.length(flattenArray);
+			chunkLength = universe.divide(flattenExtent, dimensionLength);
 			subStartIndex = i;
 			subEndIndex = chunkLength;
 			while (reasoner.isValid(claim)) {
-				subArray = this.getSubArray(unrolledArray, subStartIndex,
+				subArray = this.getSubArray(flattenArray, subStartIndex,
 						subEndIndex, state, process, civlsource);
 				newElements.add(this.arrayCasting(state, process, subArray,
 						elementType, civlsource));
 				i = universe.add(i, one);
 				subStartIndex = subEndIndex;
-				subEndIndex = universe.add(chunkLength, chunkLength);
+				subEndIndex = universe.add(subEndIndex, chunkLength);
 				claim = universe.lessThan(i, dimensionLength);
 			}
 			return universe.array(newElements.get(0).type(), newElements);

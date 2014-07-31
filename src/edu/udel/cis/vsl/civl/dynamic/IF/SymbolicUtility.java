@@ -276,12 +276,12 @@ public interface SymbolicUtility {
 	 *            indexes for referencing the element
 	 * @return the new arrayElementReference
 	 */
-	public SymbolicExpression updateArrayElementReference(
+	public ReferenceExpression updateArrayElementReference(
 			ArrayElementReference arrayReference,
 			List<NumericExpression> newIndexes);
 
 	/**
-	 * Unrolling a given array to a ordered list of elements of that array(Here
+	 * Flatten a given array to a ordered list of elements of that array(Here
 	 * element should never be array type any more). <br>
 	 * 
 	 * e.g. 1 For an array <code>int a[2][2] = {1,2,3,4}</code>, the unrolled
@@ -303,8 +303,26 @@ public interface SymbolicUtility {
 	 *            The CIVL source of the given array.
 	 * @return
 	 */
-	public SymbolicExpression arrayUnrolling(State state, String process,
+	public SymbolicExpression arrayFlatten(State state, String process,
 			SymbolicExpression array, CIVLSource civlsource);
+
+	/**
+	 * Similar function to @link{arrayFlatten} with the @link{java.util.List} as
+	 * the form of return type.
+	 * 
+	 * @author Ziqing Luo
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The information of the process
+	 * @param array
+	 *            THe array needs being flattened
+	 * @param civlsource
+	 *            The CIVL source of the array
+	 * @return a list of flatten elements of the given array.
+	 */
+	public List<SymbolicExpression> arrayFlattenList(State state,
+			String process, SymbolicExpression array, CIVLSource civlsource);
 
 	/**
 	 * Casting an array to a new array with the given array type.<br>
@@ -339,6 +357,15 @@ public interface SymbolicUtility {
 	public SymbolicExpression arrayCasting(State state, String process,
 			SymbolicExpression array, SymbolicType type, CIVLSource civlsource)
 			throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Returns the type of the first non-array type element of an array.
+	 * 
+	 * @param array
+	 *            The array contains the elements
+	 * @return The type of the first non-array type element of an array
+	 */
+	public SymbolicType getArrayElementType(SymbolicExpression array);
 
 	/* ********************************************************************* */
 	/**
