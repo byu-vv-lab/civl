@@ -25,11 +25,12 @@ typedef struct
   float * input;
   float * output;
   int count;
-  */
+  
   void * input;
   void * output;
   void * count;
-
+  */
+  void * param[3];
   
 }args;
 
@@ -43,6 +44,14 @@ cl_kernel clCreateKernel(args * argument, char * function)
   kernel.method = function;
   
   return kernel;
+}
+
+void clReleaseKernel(cl_kernel kernel)
+{
+  for (int i = 0; i < 3; i++)
+  {
+    free(((args*)kernel.arguments)->param[i]);
+  }
 }
 
 /*
@@ -81,12 +90,12 @@ void workfunc(size_t local, size_t global, cl_kernel param)
   $proc procs[local];
   for(int i = local * param.workgroup; i < local * param.workgroup + local; i++)
   {
-    int count = *(int*)(((args*)param.arguments)->count);
+    int count = *(int*)(((args*)param.arguments)->param[2]);
     param.local_id = i % local;
     param.global_id = i;
     printf("My workgroup id is %d, my global id is %d, my local id is %d, and my method is %s\n", param.workgroup, param.global_id, param.local_id, param.method);
 
-    procs[param.local_id] = $spawn square(param.workgroup, param.global_id, param.local_id, ((args*)param.arguments)->input, ((args*)param.arguments)->output, count);
+    procs[param.local_id] = $spawn square(param.workgroup, param.global_id, param.local_id, ((args*)param.arguments)->param[0], ((args*)param.arguments)->param[1], count);
 
   }
   for(int j = 0; j < local; j++)
@@ -198,19 +207,30 @@ int main(int argc, char** argv)
   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &output);
   err = clSetKernelArg(kernel, 2, sizeof(unsigned int), &count);
   */
+  /*
+  Possible current implementation:
+  clSetKernelArg(cl_kernel, index, sizeof(...), data to put in, int (picks global 0, local 1 , group 2), bool (for if it was already a pointer));
+  Example:
+  clSetKernelArg(kernel, 0, sizeof(float) * count, 0, true);
+  
+  This raises a question, how does OpenCL know how to do this without using the last two parameters?
+  */
   
   //use pointer instead of malloc + memcpy for global variables
   //((args*)kernel.arguments)->input = (float*)malloc(sizeof(float) * count);
   //memcpy(((args *)kernel.arguments)->input, input, sizeof(float) * count);
-  ((args*)kernel.arguments)->input = input;
+  
+  ((args*)kernel.arguments)->param[0] = input;
   
   //((args*)kernel.arguments)->output = (float*)malloc(sizeof(float) * count);
   //memcpy(((args*)kernel.arguments)->output, output, sizeof(float));
-  ((args*)kernel.arguments)->output = output;
+  
+  ((args*)kernel.arguments)->param[1] = output;
 
-  ((args*)kernel.arguments)->count = (int *)malloc(sizeof(int));
-  memcpy(((args*)kernel.arguments)->count, &count, sizeof(int));
+  ((args*)kernel.arguments)->param[2] = (int *)malloc(sizeof(int));
+  memcpy(((args*)kernel.arguments)->param[2], &count, sizeof(int));
   //no malloc needed for non pointers
+  //if this were global then there would be a pointer of count instead of a malloc
   
   //clGetKernelWorkGroupInfo would get a local size optimal for a device, but is not needed here
   local = LOCAL;
@@ -238,14 +258,7 @@ int main(int argc, char** argv)
   printf("Computed '%d/%d' correct values!\n", correct, count);
   
   //TODO: Think of using void * array instead of regular arguments to make freeing easier
-  
-  free(((args*)kernel.arguments)->input);
-  free(((args*)kernel.arguments)->output);
-  free(((args*)kernel.arguments)->count);
-  /*
-  free(input);
-  free(output);
-  */
+  clReleaseKernel(kernel);
   free(arguments);
   
   return 0;
