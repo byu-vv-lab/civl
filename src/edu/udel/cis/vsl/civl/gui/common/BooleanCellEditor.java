@@ -35,7 +35,7 @@ public class BooleanCellEditor extends AbstractCellEditor implements TableCellEd
             @Override
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                    fireEditingStopped();
+                    fireEditingStopped(); //rare index out of range issue here!!!!
                 }
             }
         });

@@ -41,6 +41,12 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.gui.common.ButtonColumn;
 import edu.udel.cis.vsl.gmc.Option;
 
+/**
+ * This class is the main frame for the CIVL GUI.
+ * 
+ * @author Steven Noyes (noyes)
+ *
+ */
 public class NewRunConfigGUI extends JFrame {
 
 	private static final long serialVersionUID = 5152675076717228871L;
@@ -114,6 +120,11 @@ public class NewRunConfigGUI extends JFrame {
 	private JTextField tf_chosenFile_rp;
 	private JTextField tf_chosenFile_ru;
 	private JTextField tf_chosenFile_vf;
+
+	/**
+	 * The JTextField in which the user names their run configuration.
+	 */
+	private JTextField tf_name;
 
 	/**
 	 * Reverts all options in tbl_optTable to their default values.
@@ -206,6 +217,8 @@ public class NewRunConfigGUI extends JFrame {
 	private JPanel tab_setInputs_ru;
 	private JPanel tab_setInputs_vf;
 
+	private static LinkedList<RunConfigData> savedConfigs = new LinkedList<RunConfigData>();;
+
 	public NewRunConfigGUI() {
 		this.setSize(1200, 700);
 		this.setVisible(true);
@@ -217,6 +230,28 @@ public class NewRunConfigGUI extends JFrame {
 		initJTextArea();
 		initJButton();
 		initJPanel();
+	}
+
+	/**
+	 * Saves the run configuration as an instance of <code>RunConfigData</code>,
+	 * which is later saved to a directory specified by CIVL.
+	 * 
+	 * @param name
+	 *            The name of the run configuration.
+	 * @param command
+	 *            The <code>CIVL_Command</code> the user has chosen.
+	 * @param optionValues
+	 *            The values for the options.
+	 * @param selectedFile
+	 *            The selected file.
+	 */
+	public void save(String name, CIVL_Command command, Object[] optionValues,
+			File selectedFile) {
+		// TODO: this function should pull previously saved configs from some
+		// kind of directory on the user's system. Much like an eclipse
+		// workspace
+		RunConfigData rcd = new RunConfigData(name, command, selectedFile);
+		savedConfigs.add(rcd);
 	}
 
 	/**
@@ -279,7 +314,8 @@ public class NewRunConfigGUI extends JFrame {
 		for (int i = 0; i < inputs.size(); i++) {
 			CIVL_Input currInput = inputs.get(i);
 			System.out.println(currInput.getName() + " " + currInput.getType());
-			if (currInput.getType().equals("Boolean"))
+			if (currInput.getType().equals("Boolean")
+					|| currInput.getType().equals("boolean"))
 				inputModel.addRow(new Object[] { currInput.getName(),
 						currInput.getType(), true });
 			else {
@@ -406,7 +442,7 @@ public class NewRunConfigGUI extends JFrame {
 		JTabbedPane runView = new JTabbedPane();
 		JPanel tab_chooseFile = new JPanel();
 		tab_setOptions_ru = new JPanel();
-		tab_setInputs_ru = new JPanel();		
+		tab_setInputs_ru = new JPanel();
 		tab_setOptions_ru.setLayout(null);
 		tab_setInputs_ru.setLayout(null);
 		tab_chooseFile.setLayout(null);
@@ -417,8 +453,9 @@ public class NewRunConfigGUI extends JFrame {
 		tab_chooseFile.add(bt_browse_ru);
 
 		// tab_setOptions.add(sp_optTable);
-		tab_setOptions_ru.add(bt_revert);
-		tab_setOptions_ru.add(bt_apply);
+		// TODO: do I really need need bt_revert & bt_apply???
+		// tab_setOptions_ru.add(bt_revert);
+		// tab_setOptions_ru.add(bt_apply);
 
 		runView.addTab("Choose File", null, tab_chooseFile, null);
 		runView.addTab("Options", null, tab_setOptions_ru, null);
@@ -489,7 +526,7 @@ public class NewRunConfigGUI extends JFrame {
 				options, true, runView);
 		CIVL_Command verify = new CIVL_Command("verify",
 				"verify program filename", options, true, verifyView);
-				
+
 		commands[0] = help;
 		commands[1] = parse;
 		commands[2] = preprocess;
@@ -504,15 +541,16 @@ public class NewRunConfigGUI extends JFrame {
 
 		viewCards.setBorder(new TitledBorder(null, null, TitledBorder.LEADING,
 				TitledBorder.TOP, null, null));
-		viewCards.setBounds(227, 65, 967, 568);
+		// viewCards.setBounds(227, 65, 967, 568);
+		viewCards.setBounds(227, 99, 967, 534);
 		viewCards.setLayout(viewCardsLayout);
 
-		viewCards.add(commands[0].getView(), "help"); // help
-		viewCards.add(commands[1].getView(), "parse"); // parse
-		viewCards.add(commands[2].getView(), "preprocess"); // preprocess
-		viewCards.add(commands[3].getView(), "replay"); // replay
-		viewCards.add(commands[4].getView(), "run"); // run
-		viewCards.add(commands[5].getView(), "verify"); // verify
+		viewCards.add(commands[0].getView(), "help");
+		viewCards.add(commands[1].getView(), "parse");
+		viewCards.add(commands[2].getView(), "preprocess");
+		viewCards.add(commands[3].getView(), "replay");
+		viewCards.add(commands[4].getView(), "run");
+		viewCards.add(commands[5].getView(), "verify");
 	}
 
 	/**
@@ -563,9 +601,10 @@ public class NewRunConfigGUI extends JFrame {
 		bt_browse_vf = new JButton("Browse...");
 		bt_revert = new JButton("Reset");
 		bt_apply = new JButton("Apply");
-		bt_apply.setBounds(694, 487, 117, 29);
 
-		bt_revert.setBounds(823, 487, 117, 29);
+		bt_apply.setBounds(694, 453, 117, 29);
+		bt_revert.setBounds(823, 453, 117, 29);
+
 		bt_revert1.setBounds(823, 487, 117, 29);
 		bt_revert2.setBounds(823, 487, 117, 29);
 		bt_apply1.setBounds(694, 487, 117, 29);
@@ -626,22 +665,22 @@ public class NewRunConfigGUI extends JFrame {
 	public void initJTable() {
 		sp_optTable_ru = new JScrollPane();
 		sp_optTable_vf = new JScrollPane();
-		sp_inputTable_ru = new JScrollPane();		
+		sp_inputTable_ru = new JScrollPane();
 		sp_inputTable_vf = new JScrollPane();
-		
+
 		sp_optTable_ru.setBounds(6, 6, 967 - 36, 450);
 		sp_optTable_vf.setBounds(6, 6, 967 - 36, 450);
-		sp_inputTable_ru.setBounds(6, 6, 967 - 36, 450);		
+		sp_inputTable_ru.setBounds(6, 6, 967 - 36, 450);
 		sp_inputTable_vf.setBounds(6, 6, 967 - 36, 450);
 
 		tbl_optTable_ru = new CIVLTable(new int[] { 1, 2 });
 		tbl_optTable_vf = new CIVLTable(new int[] { 1, 2 });
-		tbl_inputTable_ru = new CIVLTable(new int[] { 2 });		
+		tbl_inputTable_ru = new CIVLTable(new int[] { 2 });
 		tbl_inputTable_vf = new CIVLTable(new int[] { 2 });
 
 		sp_optTable_ru.setViewportView(tbl_optTable_ru);
 		sp_optTable_vf.setViewportView(tbl_optTable_vf);
-		sp_inputTable_ru.setViewportView(tbl_inputTable_ru);		
+		sp_inputTable_ru.setViewportView(tbl_inputTable_ru);
 		sp_inputTable_vf.setViewportView(tbl_inputTable_vf);
 
 		tbl_optTable_ru.setModel(new DefaultTableModel(null, new String[] {
@@ -649,15 +688,15 @@ public class NewRunConfigGUI extends JFrame {
 		tbl_optTable_vf.setModel(new DefaultTableModel(null, new String[] {
 				"Option", "Value", "Default" }));
 		tbl_inputTable_ru.setModel(new DefaultTableModel(null, new String[] {
-				"Variable", "Type", "Value" }));		
+				"Variable", "Type", "Value" }));
 		tbl_inputTable_vf.setModel(new DefaultTableModel(null, new String[] {
 				"Variable", "Type", "Value" }));
-		
+
 		tbl_optTable_ru.setCellSelectionEnabled(true);
 		tbl_optTable_vf.setCellSelectionEnabled(true);
 		tbl_inputTable_ru.setCellSelectionEnabled(true);
 		tbl_inputTable_vf.setCellSelectionEnabled(true);
-		
+
 		final DefaultTableModel optModel_ru = (DefaultTableModel) tbl_optTable_ru
 				.getModel();
 		final DefaultTableModel optModel_vf = (DefaultTableModel) tbl_optTable_vf
@@ -665,8 +704,7 @@ public class NewRunConfigGUI extends JFrame {
 		@SuppressWarnings("unused")
 		final DefaultTableModel inputModel = (DefaultTableModel) tbl_inputTable_ru
 				.getModel();
-		
-		
+
 		// TODO: Value is reset to default for combo boxes but is not shown.
 		// ISSUE: null ptr exp when trying to get editor component
 		// FIX: Delete the row and copy it back to the same location in the
@@ -676,17 +714,16 @@ public class NewRunConfigGUI extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				int modelRow = Integer.valueOf(e.getActionCommand());
 				DefaultTableModel currOptModel = null;
-				
-				if(selectedCom.getName()=="run"){
+
+				if (selectedCom.getName() == "run") {
 					currOptModel = optModel_ru;
-				}
-				else if(selectedCom.getName()=="verify"){
+				} else if (selectedCom.getName() == "verify") {
 					currOptModel = optModel_vf;
 				}
 
 				Object valToDefault = currOptModel.getValueAt(modelRow, 1);
-				Option optToDefault = getOption((String) currOptModel.getValueAt(
-						modelRow, 0));
+				Option optToDefault = getOption((String) currOptModel
+						.getValueAt(modelRow, 0));
 
 				if (valToDefault instanceof Boolean) {
 					// System.out.println(((JComboBox<?>)tbl_optTable_ru.getCellEditor().getTableCellEditorComponent(tbl_optTable,
@@ -705,8 +742,8 @@ public class NewRunConfigGUI extends JFrame {
 				}
 
 				else
-					currOptModel.setValueAt(optToDefault.defaultValue(), modelRow,
-							1);
+					currOptModel.setValueAt(optToDefault.defaultValue(),
+							modelRow, 1);
 				repaint();
 			}
 		};
@@ -720,7 +757,7 @@ public class NewRunConfigGUI extends JFrame {
 			ButtonColumn buttonColumn_ru = new ButtonColumn(tbl_optTable_ru,
 					defaultize, 2);
 		}
-		
+
 		// options for VERIFY
 		for (int i = 0; i < (getCommand("verify").getAllowedOptions().length); i++) {
 			optModel_vf.addRow(new Object[] { options[i].name(),
@@ -733,9 +770,9 @@ public class NewRunConfigGUI extends JFrame {
 
 		tab_setOptions_ru.add(sp_optTable_ru);
 		tab_setOptions_vf.add(sp_optTable_vf);
-		tab_setInputs_ru.add(sp_inputTable_ru);		
+		tab_setInputs_ru.add(sp_inputTable_ru);
 		tab_setInputs_vf.add(sp_inputTable_vf);
-		
+
 		validate();
 		repaint();
 	}
@@ -750,15 +787,18 @@ public class NewRunConfigGUI extends JFrame {
 		lb_chosenFile_rp = new JLabel("Chosen File:");
 		lb_chosenFile_ru = new JLabel("Chosen File:");
 		lb_chosenFile_vf = new JLabel("Chosen File:");
+		JLabel lb_Name = new JLabel("Name:");
 
-		lb_icon.setBounds(1040, 3, 207, 47);
-		lb_icon.setIcon(new ImageIcon("Images/logo.png"));
-
+		lb_Name.setBounds(240, 71, 61, 16);
 		lb_chosenFile_pa.setBounds(6, 6, 100, 16);
 		lb_chosenFile_pp.setBounds(6, 6, 100, 16);
 		lb_chosenFile_rp.setBounds(6, 6, 100, 16);
 		lb_chosenFile_ru.setBounds(6, 6, 100, 16);
 		lb_chosenFile_vf.setBounds(6, 6, 100, 16);
+		lb_icon.setBounds(1040, 3, 207, 47);
+		lb_icon.setIcon(new ImageIcon("Images/logo.png"));
+
+		getContentPane().add(lb_Name);
 	}
 
 	/**
@@ -789,13 +829,16 @@ public class NewRunConfigGUI extends JFrame {
 		tf_chosenFile_rp = new JTextField();
 		tf_chosenFile_ru = new JTextField();
 		tf_chosenFile_vf = new JTextField();
+		tf_name = new JTextField();
 
 		tf_chosenFile_pa.setBounds(6, 21, 805, 28);
 		tf_chosenFile_pp.setBounds(6, 21, 805, 28);
 		tf_chosenFile_rp.setBounds(6, 21, 805, 28);
 		tf_chosenFile_ru.setBounds(6, 21, 805, 28);
 		tf_chosenFile_vf.setBounds(6, 21, 805, 28);
+		tf_name.setBounds(289, 65, 905, 28);
 
+		getContentPane().add(tf_name);
 	}
 
 	/**
@@ -817,6 +860,25 @@ public class NewRunConfigGUI extends JFrame {
 		replayNode = new DefaultMutableTreeNode("replay");
 		runNode = new DefaultMutableTreeNode("run");
 		verifyNode = new DefaultMutableTreeNode("verify");
+
+		for (int i = 0; i < savedConfigs.size(); i++) {
+			RunConfigData currConfig = savedConfigs.get(i);
+			String currCommandName = currConfig.getCommand().getName();
+			if (currCommandName == "parse")
+				parseNode.add(new DefaultMutableTreeNode(currConfig.getName()));
+			else if (currCommandName == "preprocess")
+				preprocessNode.add(new DefaultMutableTreeNode(currConfig
+						.getName()));
+			else if (currCommandName == "replay")
+				replayNode
+						.add(new DefaultMutableTreeNode(currConfig.getName()));
+			else if (currCommandName == "run")
+				runNode.add(new DefaultMutableTreeNode(currConfig.getName()));
+			else if (currCommandName == "verify")
+				verifyNode
+						.add(new DefaultMutableTreeNode(currConfig.getName()));
+
+		}
 
 		top.add(helpNode);
 		top.add(parseNode);
