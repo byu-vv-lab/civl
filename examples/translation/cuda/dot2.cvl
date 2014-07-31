@@ -15,11 +15,20 @@
  * 
  */
 
-#include "civlc.h"
+#include "civlc.cvh"
 #include "cuda.cvh"
-#include "stdio.h"
+#include <stdio.h>
 
 #define imin(a,b) (a<b?a:b)
+
+_Bool isPowerOfTwo(int x) {
+	if (x == 1) {
+		return $true;
+	} else {
+		return x % 2 == 0 && isPowerOfTwo(x / 2);
+	}
+}
+
 
 // the length of the vectors to dot product
 $input int N;
@@ -27,6 +36,9 @@ $input int N;
 $input int B;
 $assume(0 <= N && N <= B);
 $input int THREADS_PER_BLOCK; // thread number per block: must be a power of 2, due to the while loop at the end of gpuThread();
+$input int THREADS_B; 
+$assume(1 <= THREADS_PER_BLOCK && THREADS_PER_BLOCK <= THREADS_B);
+
 const int threadsPerBlock = THREADS_PER_BLOCK;
 // the number of blocks to create
 const int blocksPerGrid =
@@ -153,6 +165,9 @@ int main ( void ) {
     $free( partial_c );
     return 0;
   }
+
+	_Bool valid = isPowerOfTwo(THREADS_PER_BLOCK);
+	$assume(valid);
 
   _cudaInit();
   _main();
