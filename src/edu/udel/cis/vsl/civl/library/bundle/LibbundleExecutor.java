@@ -245,7 +245,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 				state = eval.state;
 				array = eval.value;
 			}
-			array = symbolicUtil.arrayUnrolling(state, process, array, source);
+			array = symbolicUtil.arrayFlatten(state, process, array, source);
 			arrayLength = universe.length(array);
 			elementType = universe.arrayRead(array, zero).type();
 			count = universe.divide(size,
@@ -414,7 +414,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			return primaryExecutor.assign(source, state, process, bufPointer,
 					data);
 		}
-		secOperand = symbolicUtil.arrayUnrolling(state, process, secOperand,
+		secOperand = symbolicUtil.arrayFlatten(state, process, secOperand,
 				arguments[1].getSource());
 		bufIndex = getIndexInUnrolledArray(state, process, pointer,
 				universe.length(secOperand), arguments[1].getSource());
@@ -503,8 +503,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		NumericExpression dataSize;
 		BooleanExpression claim;
 		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
-		SymbolicExpression unrolledDataArray = symbolicUtil.arrayUnrolling(
-				state, process, data, civlsource);
+		SymbolicExpression unrolledDataArray = symbolicUtil.arrayFlatten(state,
+				process, data, civlsource);
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		Evaluation eval = new Evaluation(state, null);
 
@@ -528,7 +528,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			// ------Unrolling the array pointed by the parent pointer.
 			// Note: Since data in bundle is guaranteed to be in the form of a
 			// 1-d array, unrolling the receiver array can make things easier.
-			unrolledArray = symbolicUtil.arrayUnrolling(state, process, array,
+			unrolledArray = symbolicUtil.arrayFlatten(state, process, array,
 					civlsource);
 			unrolledArraySize = universe.length(unrolledArray);
 			indexInUnrolledArray = getIndexInUnrolledArray(state, process,
@@ -547,8 +547,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			state = eval.state;
 			obj = eval.value;
 			if (obj.type() instanceof SymbolicArrayType) {
-				SymbolicExpression objArray = symbolicUtil.arrayUnrolling(
-						state, process, obj, civlsource);
+				SymbolicExpression objArray = symbolicUtil.arrayFlatten(state,
+						process, obj, civlsource);
 
 				objArray = this.oneDimenAssign(state, process, objArray, zero,
 						data, civlsource);
