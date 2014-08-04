@@ -52,9 +52,14 @@ public class BooleanCellEditor extends AbstractCellEditor implements
 	}
 
 	// TODO: FIX STOP EDITING ISSUE!!!!!
+	// If you drag the mouse off of a radio button and out of the cell, editing
+	// wont stop and the user cannot do anything else with the table until
+	// editing ceases
+
 	// TODO: FIX BUTTON ENTANGLEMENT
-	// buttons from different cells are acting in a group if focus switches into
-	// a new cell into the radio button directly
+	// radio buttons from different cells are acting in a group if focus
+	// switches into a different cell's radio button directly
+	
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value,
 			boolean isSelected, int row, int column) {

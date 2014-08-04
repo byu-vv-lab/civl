@@ -47,7 +47,7 @@ import edu.udel.cis.vsl.gmc.Option;
  * This class is the main frame for the CIVL GUI.
  * 
  * @author Steven Noyes (noyes)
- *
+ * 
  */
 // TODO: CHANGE DROP DOWNS TO RADIO BUTTONS!!!!!!!
 public class NewRunConfigGUI extends JFrame {
@@ -69,11 +69,11 @@ public class NewRunConfigGUI extends JFrame {
 	 */
 	private JPanel p_header;
 
-	/** 
+	/**
 	 * The panel that contains the JTree of commands.
 	 */
 	private JPanel p_commands;
-	
+
 	/**
 	 * A simple container for GUI organization.
 	 */
@@ -93,7 +93,7 @@ public class NewRunConfigGUI extends JFrame {
 	 * The CIVL logo.
 	 */
 	private JLabel lb_icon;
-	
+
 	/**
 	 * A simple label. (Name: )
 	 */
@@ -152,17 +152,17 @@ public class NewRunConfigGUI extends JFrame {
 	 * Runs the selected configuration.
 	 */
 	private JButton bt_run;
-	
+
 	/**
 	 * Creates a new run configuration.
 	 */
 	private JButton bt_new;
-	
+
 	/**
 	 * Duplicates the currently selected run configuration.
 	 */
 	private JButton bt_duplicate;
-	
+
 	/**
 	 * Deletes the currently selected run configuration.
 	 */
@@ -583,30 +583,30 @@ public class NewRunConfigGUI extends JFrame {
 		p_commands = new JPanel();
 		p_header = new JPanel();
 		p_container = new JPanel();
-		p_container.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
+		p_container
+				.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		p_commands.setBorder(new TitledBorder(null, "Commands",
 				TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		
+
 		p_commands.setLayout(null);
 		p_container.setLayout(null);
 		p_header.setLayout(null);
-		
+
 		p_container.setBounds(227, 65, 967, 566);
 		p_commands.setBounds(10, 99, 205, 573);
 		p_header.setBounds(0, 0, 1200, 53);
-		
-		
+
 		initCommands();
 		initJTable();
 		initCards();
 		initJTree();
-				
+
 		getContentPane().add(p_container);
 		getContentPane().add(p_header);
 		getContentPane().add(p_commands);
-		
+
 		getContentPane().add(bt_cancel);
-		getContentPane().add(bt_run);		
+		getContentPane().add(bt_run);
 		getContentPane().add(bt_new);
 		getContentPane().add(bt_duplicate);
 		getContentPane().add(bt_deleteConfig);
@@ -647,11 +647,11 @@ public class NewRunConfigGUI extends JFrame {
 		bt_browse_pp.setBounds(823, 22, 117, 29);
 		bt_browse_rp.setBounds(823, 22, 117, 29);
 		bt_browse_ru.setBounds(823, 22, 117, 29);
-		bt_browse_vf.setBounds(823, 22, 117, 29);		
-		bt_new.setBounds(10, 65, 53, 29);		
-		bt_duplicate.setBounds(59, 65, 89, 29);		
+		bt_browse_vf.setBounds(823, 22, 117, 29);
+		bt_new.setBounds(10, 65, 53, 29);
+		bt_duplicate.setBounds(59, 65, 89, 29);
 		bt_deleteConfig.setBounds(142, 65, 61, 29);
-		
+
 		ActionListener browse = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String examplesPath = "/Users/noyes/Documents/workspace/CIVL/examples";
@@ -732,7 +732,7 @@ public class NewRunConfigGUI extends JFrame {
 		tbl_optTable_vf.setCellSelectionEnabled(true);
 		tbl_inputTable_ru.setCellSelectionEnabled(true);
 		tbl_inputTable_vf.setCellSelectionEnabled(true);
-		
+
 		tbl_optTable_ru.setRowHeight(30);
 		tbl_optTable_vf.setRowHeight(30);
 		tbl_inputTable_ru.setRowHeight(30);
@@ -746,43 +746,45 @@ public class NewRunConfigGUI extends JFrame {
 		final DefaultTableModel inputModel = (DefaultTableModel) tbl_inputTable_ru
 				.getModel();
 
-		// TODO: Value is reset to default for combo boxes but is not shown.
-		// ISSUE: null ptr exp when trying to get editor component
-		// FIX: Delete the row and copy it back to the same location in the
-		// table, just with the default value
+		// TODO: FIX BUTTON ENTANGLEMENT, change focus to current row not last
+		// selected row
 		@SuppressWarnings("serial")
 		Action defaultize = new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
 				int modelRow = Integer.valueOf(e.getActionCommand());
 				DefaultTableModel currOptModel = null;
+				JTable currTable = null;
 
 				if (selectedCom.getName() == "run") {
 					currOptModel = optModel_ru;
+					currTable = tbl_optTable_ru;
+
 				} else if (selectedCom.getName() == "verify") {
 					currOptModel = optModel_vf;
+					currTable = tbl_optTable_vf;
 				}
-
 				Object valToDefault = currOptModel.getValueAt(modelRow, 1);
 				Option optToDefault = getOption((String) currOptModel
 						.getValueAt(modelRow, 0));
-
 				if (valToDefault instanceof Boolean) {
-					JPanel cellRadioPanel = ((JPanel) tbl_optTable_ru
-							.getCellRenderer(modelRow, 1)
-							.getTableCellRendererComponent(tbl_optTable_ru,
-									valToDefault, true, true, modelRow, 1));
-					JRadioButton cellRadioTrue = ((JRadioButton) cellRadioPanel.getComponent(0));
-					JRadioButton cellRadioFalse = ((JRadioButton) cellRadioPanel.getComponent(1));
-					
-					if((boolean) valToDefault){
+
+					JPanel cellRadioPanelEdit = ((JPanel) currTable
+							.getCellEditor(modelRow, 1)
+							.getTableCellEditorComponent(currTable,
+									valToDefault, true, modelRow, 1));
+
+					JRadioButton cellRadioTrue = ((JRadioButton) cellRadioPanelEdit
+							.getComponent(0));
+					JRadioButton cellRadioFalse = ((JRadioButton) cellRadioPanelEdit
+							.getComponent(1));
+
+					if ((boolean) valToDefault) {
 						cellRadioTrue.setSelected(true);
 						cellRadioFalse.setSelected(false);
-					}
-					else if(!(boolean)valToDefault){
+					} else if (!(boolean) valToDefault) {
 						cellRadioTrue.setSelected(false);
 						cellRadioFalse.setSelected(true);
 					}
-					
 					repaint();
 				}
 
@@ -881,7 +883,6 @@ public class NewRunConfigGUI extends JFrame {
 		tf_chosenFile_vf.setBounds(6, 21, 805, 28);
 		tf_name.setBounds(52, 4, 905, 28);
 
-		
 	}
 
 	/**
