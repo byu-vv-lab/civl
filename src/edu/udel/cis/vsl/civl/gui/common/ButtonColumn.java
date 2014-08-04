@@ -153,7 +153,6 @@ public class ButtonColumn extends AbstractCellEditor
 			renderButton.setBorder( originalBorder );
 		}
 
-//		renderButton.setText( (value == null) ? "" : value.toString() );
 		if (value == null)
 		{
 			renderButton.setText( "" );

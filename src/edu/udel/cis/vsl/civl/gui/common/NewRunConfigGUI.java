@@ -7,6 +7,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -48,6 +49,7 @@ import edu.udel.cis.vsl.gmc.Option;
  * @author Steven Noyes (noyes)
  *
  */
+// TODO: CHANGE DROP DOWNS TO RADIO BUTTONS!!!!!!!
 public class NewRunConfigGUI extends JFrame {
 
 	private static final long serialVersionUID = 5152675076717228871L;
@@ -67,7 +69,7 @@ public class NewRunConfigGUI extends JFrame {
 	 */
 	private JPanel p_header;
 
-	/**
+	/** 
 	 * The panel that contains the JTree of commands.
 	 */
 	private JPanel p_commands;
@@ -280,6 +282,7 @@ public class NewRunConfigGUI extends JFrame {
 	 * 
 	 * @return The <code>LinkedList</code> containing all of the inputs.
 	 */
+	// TODO: fix some minor parsing issues i.e arrays etc
 	public LinkedList<CIVL_Input> parseInputs() {
 		BufferedReader bReader = null;
 		LinkedList<CIVL_Input> inputs = new LinkedList<CIVL_Input>();
@@ -729,6 +732,11 @@ public class NewRunConfigGUI extends JFrame {
 		tbl_optTable_vf.setCellSelectionEnabled(true);
 		tbl_inputTable_ru.setCellSelectionEnabled(true);
 		tbl_inputTable_vf.setCellSelectionEnabled(true);
+		
+		tbl_optTable_ru.setRowHeight(30);
+		tbl_optTable_vf.setRowHeight(30);
+		tbl_inputTable_ru.setRowHeight(30);
+		tbl_inputTable_vf.setRowHeight(30);
 
 		final DefaultTableModel optModel_ru = (DefaultTableModel) tbl_optTable_ru
 				.getModel();
@@ -759,19 +767,23 @@ public class NewRunConfigGUI extends JFrame {
 						.getValueAt(modelRow, 0));
 
 				if (valToDefault instanceof Boolean) {
-					// System.out.println(((JComboBox<?>)tbl_optTable_ru.getCellEditor().getTableCellEditorComponent(tbl_optTable,
-					// valToDefault, rootPaneCheckingEnabled, modelRow,
-					// 1)).getClass());
-					@SuppressWarnings("unchecked")
-					JComboBox<Boolean> cellComboBox = ((JComboBox<Boolean>) tbl_optTable_ru
+					JPanel cellRadioPanel = ((JPanel) tbl_optTable_ru
 							.getCellRenderer(modelRow, 1)
 							.getTableCellRendererComponent(tbl_optTable_ru,
 									valToDefault, true, true, modelRow, 1));
-					cellComboBox.setSelectedItem(optToDefault);
+					JRadioButton cellRadioTrue = ((JRadioButton) cellRadioPanel.getComponent(0));
+					JRadioButton cellRadioFalse = ((JRadioButton) cellRadioPanel.getComponent(1));
+					
+					if((boolean) valToDefault){
+						cellRadioTrue.setSelected(true);
+						cellRadioFalse.setSelected(false);
+					}
+					else if(!(boolean)valToDefault){
+						cellRadioTrue.setSelected(false);
+						cellRadioFalse.setSelected(true);
+					}
+					
 					repaint();
-					// System.out.println(tbl_optTable.getCellEditor().getClass());
-
-					// System.out.println(optModel.getValueAt(modelRow, 1));
 				}
 
 				else
@@ -785,7 +797,6 @@ public class NewRunConfigGUI extends JFrame {
 		for (int i = 0; i < (getCommand("run").getAllowedOptions().length); i++) {
 			optModel_ru.addRow(new Object[] { options[i].name(),
 					options[i].defaultValue(), "Default" });
-
 			@SuppressWarnings("unused")
 			ButtonColumn buttonColumn_ru = new ButtonColumn(tbl_optTable_ru,
 					defaultize, 2);
