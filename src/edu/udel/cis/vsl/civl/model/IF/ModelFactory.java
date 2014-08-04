@@ -1524,4 +1524,12 @@ public interface ModelFactory {
 			CIVLFunction parProcFunc);
 
 	FunctionIdentifierExpression waitallFunctionPointer();
+
+	/**
+	 * generate undefined value of a certain type
+	 * 
+	 * @param type
+	 * @return
+	 */
+	SymbolicExpression undefinedValue(SymbolicType type);
 }

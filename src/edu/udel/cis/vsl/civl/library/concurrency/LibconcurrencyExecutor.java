@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -48,8 +49,9 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 	 */
 	public LibconcurrencyExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil,
+				symbolicAnalyzer, civlConfig);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -354,8 +356,8 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		CIVLType gbarrierType = model.gbarrierType();
 		BooleanExpression context = state.getPathCondition();
 
-		inBarrierArray = symbolicUtil.newArray(context, nprocs,
-				this.falseValue);
+		inBarrierArray = symbolicUtil
+				.newArray(context, nprocs, this.falseValue);
 		procMapArray = symbolicUtil.newArray(context, nprocs,
 				modelFactory.nullProcessValue());
 		gbarrierObj = universe.tuple((SymbolicTupleType) gbarrierType

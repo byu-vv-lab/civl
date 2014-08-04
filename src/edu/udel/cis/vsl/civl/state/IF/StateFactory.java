@@ -4,7 +4,6 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -325,6 +324,21 @@ public interface StateFactory {
 	int getNumStatesSaved();
 
 	/**
+	 * Performs a garbage collection and canonicalization of heaps.
+	 * 
+	 * Computes the set of reachable heap objects, and removes all unreachable
+	 * heap objects. Renumbers heap objects in a canonic way. Updates all
+	 * pointers in the state accordingly. This operation should be completely
+	 * invisible to the user.
+	 * 
+	 * @param state
+	 *            a state
+	 * @return the state after canonicalizing heaps, which may be this state or
+	 *         a new one
+	 */
+	State collectHeaps(State state) throws CIVLStateException;
+
+	/**
 	 * Performs a garbage collection and canonicalization of dynamic scopes.
 	 * 
 	 * Compute the set of reachable dynamic scopes, and removes any which are
@@ -455,8 +469,6 @@ public interface StateFactory {
 	 * system functions instead of malloc statement, they all have a
 	 * corresponding fake malloc ID assigned by the model builder.
 	 * 
-	 * @param source
-	 *            The source information for error report.
 	 * @param state
 	 *            The pre-state.
 	 * @param dyscopeID
@@ -467,8 +479,8 @@ public interface StateFactory {
 	 *            The value of the new heap object.
 	 * @return The new state after the new heap object
 	 */
-	Pair<State, SymbolicExpression> malloc(CIVLSource source, State state,
-			int dyscopeID, int mallocID, SymbolicExpression heapObject);
+	Pair<State, SymbolicExpression> malloc(State state, int dyscopeID,
+			int mallocID, SymbolicExpression heapObject);
 
 	/**
 	 * Allocates an object for the given malloc ID in the heap of the given
@@ -478,10 +490,10 @@ public interface StateFactory {
 	 * provided, the method will create a symbolic constant representing the
 	 * heap object.
 	 * 
-	 * @param source
-	 *            The source information for error report.
 	 * @param state
 	 *            The pre-state.
+	 * @param pid
+	 *            The PID of the process that triggers this execution.
 	 * @param dyscopeID
 	 *            The dyscope ID.
 	 * @param mallocID
@@ -493,7 +505,33 @@ public interface StateFactory {
 	 *            The number of elements contained by the new heap object.
 	 * @return The new state after the new heap object is added.
 	 */
-	Pair<State, SymbolicExpression> malloc(CIVLSource source, State state,
-			int dyscopeID, int mallocID, SymbolicType elementType,
+	Pair<State, SymbolicExpression> malloc(State state, int pid, int dyscopeID,
+			int mallocID, SymbolicType elementType,
 			NumericExpression elementCount);
+
+	/**
+	 * Deallocates a heap object from the heap of a given dyscope. It marks the
+	 * heap object as INVALID instead of removing it, updates any pointer to
+	 * that removed object to be an UNDEFINED pointer, which is defined by the
+	 * symbolic utility. The removal of the heap object happens later when the
+	 * heap gets collected during state canonicalization.
+	 * 
+	 * @see malloc
+	 * 
+	 * @param state
+	 *            The pre-state.
+	 * @param heapObjectPointer
+	 *            The pointer which points to the heap object to be removed.
+	 * @param dyscopeId
+	 *            The ID of the dyscope where the pointer points to.
+	 * @param mallocId
+	 *            The malloc ID of the heap object to be removed, i.e., the
+	 *            index of the heap field in the heap.
+	 * @param index
+	 *            The index of the heap object in the heap field.
+	 * @return A new state after the heap object is removed from the heap, and
+	 *         corresponding pointers updated.
+	 */
+	State deallocate(State state, SymbolicExpression heapObjectPointer,
+			int dyscopeId, int mallocId, int index);
 }

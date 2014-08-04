@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
@@ -44,8 +45,8 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
-import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -54,7 +55,6 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.gmc.ErrorLog;
-import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -113,29 +113,40 @@ public class CommonExecutor implements Executor {
 
 	private int parProcId = 0;
 
+	private SymbolicAnalyzer symbolicAnalyzer;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
-	 * Create a new executor.
+	 * Create a new instance of executor.
 	 * 
-	 * @param model
-	 *            The model being executed.
-	 * @param universe
-	 *            A symbolic universe for creating new values.
+	 * @param modelFactory
+	 *            The model factory of the system.
 	 * @param stateFactory
-	 *            A state factory. Used by the Executor to create new processes.
-	 * @param prover
-	 *            A theorem prover for checking assertions.
+	 *            The state factory of the system.
+	 * @param log
+	 *            The error logger of the system.
+	 * @param loader
+	 *            The library executor loader for executing system functions.
+	 * @param evaluator
+	 *            The CIVL evaluator for evaluating expressions.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
+	 * @param errLogger
+	 *            The error logger for reporting execution errors.
+	 * @param civlConfig
+	 *            The CIVL configuration.
 	 */
-	public CommonExecutor(GMCConfiguration config, ModelFactory modelFactory,
-			StateFactory stateFactory, ErrorLog log,
-			LibraryExecutorLoader loader, Evaluator evaluator,
-			CIVLErrorLogger errorLogger, CIVLConfiguration civlConfig) {
+	public CommonExecutor(ModelFactory modelFactory, StateFactory stateFactory,
+			ErrorLog log, LibraryExecutorLoader loader, Evaluator evaluator,
+			SymbolicAnalyzer symbolicAnalyzer, CIVLErrorLogger errorLogger,
+			CIVLConfiguration civlConfig) {
 		this.civlConfig = civlConfig;
 		this.universe = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
 		this.evaluator = evaluator;
+		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.loader = loader;
 		this.symbolicUtil = evaluator.symbolicUtility();
 		this.errorLogger = errorLogger;
@@ -218,7 +229,7 @@ public class CommonExecutor implements Executor {
 			try {
 				LibraryExecutor executor = loader.getLibraryExecutor(
 						libraryName, this, this.modelFactory,
-						this.symbolicUtil, this.civlConfig);
+						this.symbolicUtil, symbolicAnalyzer, this.civlConfig);
 
 				state = executor.execute(state, pid, statement);
 			} catch (LibraryLoaderException exception) {
@@ -228,7 +239,7 @@ public class CommonExecutor implements Executor {
 						ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
 						"An error is encountered when loading the library executor for "
 								+ libraryName + ": " + exception.getMessage(),
-						this.symbolicUtil.stateToString(state),
+						this.symbolicAnalyzer.stateToString(state),
 						statement.getSource());
 
 				this.errorLogger.reportError(err);
@@ -313,13 +324,13 @@ public class CommonExecutor implements Executor {
 					+ elementSize.toString();
 			CIVLExecutionException e = new CIVLExecutionException(
 					ErrorKind.MALLOC, certainty, process, message,
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			errorLogger.reportError(e);
 			state = state.setPathCondition(universe.and(pathCondition, claim));
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
-		mallocResult = stateFactory.malloc(source, state, dyScopeID,
+		mallocResult = stateFactory.malloc(state, pid, dyScopeID,
 				statement.getMallocId(), statement.getDynamicElementType(),
 				elementCount);
 		state = mallocResult.left;
@@ -352,24 +363,8 @@ public class CommonExecutor implements Executor {
 		processState = state.getProcessState(pid);
 		functionName = processState.peekStack().location().function().name()
 				.name();
-		if (functionName.equals("_CIVL_system")) {
-			DynamicScope rootDyscope = state.getDyscope(0);
-			SymbolicExpression heapValue = rootDyscope.getValue(0);
-
+		if (functionName.equals(CIVLConstants.civlSystemFunction)) {
 			assert pid == 0;
-			if (!symbolicUtil.isEmptyHeap(heapValue)) {
-				CIVLExecutionException err = new CIVLExecutionException(
-						ErrorKind.MEMORY_LEAK,
-						Certainty.CONCRETE,
-						process,
-						"The root dyscope d0 (id=0) has a non-empty heap upon termination of the program: "
-								+ symbolicUtil.symbolicExpressionToString(
-										statement.getSource(), state, heapValue),
-						symbolicUtil.stateToString(state), statement
-								.getSource());
-
-				this.errorLogger.reportError(err);
-			}
 			if (state.numProcs() > 1) {
 				for (ProcessState proc : state.getProcessStates()) {
 					if (proc == null)
@@ -384,8 +379,8 @@ public class CommonExecutor implements Executor {
 								"Attempt to terminate the main process while process "
 										+ proc.identifier() + "(process<"
 										+ proc.getPid() + ">) is still running",
-								symbolicUtil.stateToString(state), statement
-										.getSource());
+								symbolicAnalyzer.stateToString(state),
+								statement.getSource());
 
 						this.errorLogger.reportError(err);
 					}
@@ -393,9 +388,9 @@ public class CommonExecutor implements Executor {
 			}
 
 		}
-		if (expr == null) {
+		if (expr == null)
 			returnValue = null;
-		} else {
+		else {
 			Evaluation eval = evaluator.evaluate(state, pid, expr);
 
 			returnValue = eval.value;
@@ -430,7 +425,8 @@ public class CommonExecutor implements Executor {
 									+ " cannot be updated because the invocaion of"
 									+ " the function " + functionName
 									+ " returns without any expression.",
-							symbolicUtil.stateToString(state), call.getSource());
+							symbolicAnalyzer.stateToString(state),
+							call.getSource());
 
 					this.errorLogger.reportError(err);
 				}
@@ -622,7 +618,7 @@ public class CommonExecutor implements Executor {
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The arguments of the domain for $parfor "
 							+ "must be concrete.",
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 		} else {
@@ -759,86 +755,85 @@ public class CommonExecutor implements Executor {
 			SymbolicExpression pointer, SymbolicExpression value,
 			boolean isInitialization)
 			throws UnsatisfiablePathConditionException {
-		int vid = symbolicUtil.getVariableId(source, pointer);
-		int sid = symbolicUtil.getDyscopeId(source, pointer);
-		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
-		State result;
-		Variable variable;
-		Evaluation eval;
-
-		eval = evaluator.dereference(source, state, process, pointer, false);
-		state = eval.state;
-		if (symbolicUtil.isUndefinedConstant(eval.value)) {
+		if (symbolicUtil.isUndefinedPointer(pointer)) {
 			errorLogger.logSimpleError(source, state, process,
-					symbolicUtil.stateToString(state), ErrorKind.DEREFERENCE,
+					symbolicAnalyzer.stateToString(state),
+					ErrorKind.DEREFERENCE,
 					"Attempt to dereference a pointer that refers to a "
 							+ "memory space that is already deallocated");
 			throw new UnsatisfiablePathConditionException();
-		}
-		if (sid < 0) {
-			errorLogger
-					.logSimpleError(source, state, process,
-							symbolicUtil.stateToString(state),
-							ErrorKind.DEREFERENCE,
-							"Attempt to dereference pointer into scope which has been removed from state");
-			throw new UnsatisfiablePathConditionException();
-		}
-		variable = state.getDyscope(sid).lexicalScope().variable(vid);
-		if (!isInitialization) {
-			if (variable.isInput()) {
+		} else {
+			int vid = symbolicUtil.getVariableId(source, pointer);
+			int sid = symbolicUtil.getDyscopeId(source, pointer);
+			ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
+			State result;
+			Variable variable;
+			Evaluation eval;
+
+			eval = evaluator
+					.dereference(source, state, process, pointer, false);
+			state = eval.state;
+
+			if (sid < 0) {
 				errorLogger
 						.logSimpleError(source, state, process,
-								symbolicUtil.stateToString(state),
-								ErrorKind.INPUT_WRITE,
-								"Attempt to write to input variable "
-										+ variable.name());
-				throw new UnsatisfiablePathConditionException();
-			} else if (variable.isConst()) {
-				errorLogger.logSimpleError(
-						source,
-						state,
-						process,
-						symbolicUtil.stateToString(state),
-						ErrorKind.CONSTANT_WRITE,
-						"Attempt to write to constant variable "
-								+ variable.name());
+								symbolicAnalyzer.stateToString(state),
+								ErrorKind.DEREFERENCE,
+								"Attempt to dereference pointer into scope which has been removed from state");
 				throw new UnsatisfiablePathConditionException();
 			}
-		}
-		// eval = evaluator.dereference(source, state, process, pointer, false);
-		// state = eval.state;
-		// if (!symbolicUtil.isHeapObjectDefined(eval.value)) {
-		// errorLogger.logSimpleError(source, state, process,
-		// symbolicUtil.stateToString(state), ErrorKind.MEMORY_LEAK,
-		// "Attempt to write to an undefined memory space");
-		// throw new UnsatisfiablePathConditionException();
-		// }
-		if (symRef.isIdentityReference()) {
-			result = stateFactory.setVariable(state, vid, sid, value);
-		} else {
-			SymbolicExpression oldVariableValue = state.getVariableValue(sid,
-					vid);
-
-			try {
-				SymbolicExpression newVariableValue = universe.assign(
-						oldVariableValue, symRef, value);
-
-				result = stateFactory.setVariable(state, vid, sid,
-						newVariableValue);
-			} catch (SARLException e) {
-				errorLogger.logSimpleError(
-						source,
-						state,
-						process,
-						symbolicUtil.stateToString(state),
-						ErrorKind.DEREFERENCE,
-						"Invalid pointer dereference: "
-								+ symbolicUtil.symbolicExpressionToString(
-										source, state, pointer));
-				throw new UnsatisfiablePathConditionException();
+			variable = state.getDyscope(sid).lexicalScope().variable(vid);
+			if (!isInitialization) {
+				if (variable.isInput()) {
+					errorLogger.logSimpleError(
+							source,
+							state,
+							process,
+							symbolicAnalyzer.stateToString(state),
+							ErrorKind.INPUT_WRITE,
+							"Attempt to write to input variable "
+									+ variable.name());
+					throw new UnsatisfiablePathConditionException();
+				} else if (variable.isConst()) {
+					errorLogger.logSimpleError(
+							source,
+							state,
+							process,
+							symbolicAnalyzer.stateToString(state),
+							ErrorKind.CONSTANT_WRITE,
+							"Attempt to write to constant variable "
+									+ variable.name());
+					throw new UnsatisfiablePathConditionException();
+				}
 			}
+			if (symRef.isIdentityReference()) {
+				result = stateFactory.setVariable(state, vid, sid, value);
+			} else {
+				SymbolicExpression oldVariableValue = state.getVariableValue(
+						sid, vid);
+
+				try {
+					SymbolicExpression newVariableValue = universe.assign(
+							oldVariableValue, symRef, value);
+
+					result = stateFactory.setVariable(state, vid, sid,
+							newVariableValue);
+				} catch (SARLException e) {
+					errorLogger.logSimpleError(
+							source,
+							state,
+							process,
+							symbolicAnalyzer.stateToString(state),
+							ErrorKind.DEREFERENCE,
+							"Invalid pointer dereference: "
+									+ symbolicAnalyzer
+											.symbolicExpressionToString(source,
+													state, pointer));
+					throw new UnsatisfiablePathConditionException();
+				}
+			}
+			return result;
 		}
-		return result;
 	}
 
 	private State assign(State state, int pid, String process,
@@ -907,8 +902,8 @@ public class CommonExecutor implements Executor {
 		dyscopeID = modelFactory.getScopeId(scopeSource, scopeValue);
 		heapObject = universe.array(objectType.getDynamicType(universe),
 				Arrays.asList(objectValue));
-		mallocResult = stateFactory.malloc(scopeSource, state, dyscopeID,
-				mallocId, heapObject);
+		mallocResult = stateFactory.malloc(state, dyscopeID, mallocId,
+				heapObject);
 		state = mallocResult.left;
 		if (lhs != null)
 			state = assign(state, pid, process, lhs, mallocResult.right);

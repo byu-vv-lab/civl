@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
@@ -56,8 +57,9 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 	 */
 	public LibstdlibExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil,
+				symbolicAnalyzer, civlConfig);
 
 		SymbolicType stringSymbolicType;
 		stringSymbolicType = modelFactory.pointerType(modelFactory.charType())
@@ -162,17 +164,15 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 							ErrorKind.OTHER, Certainty.PROVEABLE, process,
 							"The argument to atoi() should be a valid integer representation.\n"
 									+ "actual argument: " + argString,
-							symbolicUtil.stateToString(state), source);
+							symbolicAnalyzer.stateToString(state), source);
 
 					errorLogger.reportError(e);
 				}
 			}
 		}
-		if (lhs != null) {
-			if (intValue != null)
+		if (lhs != null && intValue != null) 
 				state = primaryExecutor.assign(state, pid, process, lhs,
 						intValue);
-		}
 		return state;
 	}
 

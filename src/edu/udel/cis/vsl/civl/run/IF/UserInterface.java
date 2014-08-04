@@ -680,7 +680,7 @@ public class UserInterface {
 		result = trace.result();
 		if (guiMode) {
 			@SuppressWarnings("unused")
-			CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicUtil);
+			CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
 		}
 		printStats(out, universe);
 		replayer.printStats();

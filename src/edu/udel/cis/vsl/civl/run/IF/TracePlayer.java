@@ -138,7 +138,7 @@ public class TracePlayer extends Player {
 			throw new CIVLExecutionException(stateException.kind(),
 					stateException.certainty(), "",
 					stateException.getMessage(),
-					symbolicUtil.stateToString(stateException.state()),
+					symbolicAnalyzer.stateToString(stateException.state()),
 					stateException.source());
 		}
 	}

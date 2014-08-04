@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 
 public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 
@@ -27,8 +28,8 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 	@Override
 	public LibraryExecutor getLibraryExecutor(String name,
 			Executor primaryExecutor, ModelFactory modelFacotry,
-			SymbolicUtility symbolicUtil, CIVLConfiguration civlConfig)
-			throws LibraryLoaderException {
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
+			CIVLConfiguration civlConfig) throws LibraryLoaderException {
 		LibraryExecutor result;
 
 		if (name.equals("assert"))
@@ -44,10 +45,11 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 				Constructor<? extends LibraryExecutor> constructor = aClass
 						.getConstructor(String.class, Executor.class,
 								ModelFactory.class, SymbolicUtility.class,
-								CIVLConfiguration.class);
+								SymbolicAnalyzer.class, CIVLConfiguration.class);
 
 				result = constructor.newInstance(name, primaryExecutor,
-						modelFacotry, symbolicUtil, civlConfig);
+						modelFacotry, symbolicUtil, symbolicAnalyzer,
+						civlConfig);
 			} catch (Exception e) {
 				throw new LibraryLoaderException(e.getMessage());
 			}

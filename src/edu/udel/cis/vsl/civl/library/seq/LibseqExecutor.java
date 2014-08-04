@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -34,8 +35,9 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 
 	public LibseqExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil,
+				symbolicAnalyzer, civlConfig);
 	}
 
 	@Override
@@ -117,22 +119,22 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 					"Both the first and the third argument of $seq_init() "
 							+ "must be non-null pointers.\n"
 							+ "actual value of first argument: "
-							+ symbolicUtil.symbolicExpressionToString(
+							+ symbolicAnalyzer.symbolicExpressionToString(
 									arrayPtrSource, state, arrayPtr)
 							+ "\n"
 							+ "actual value of third argument: "
-							+ symbolicUtil.symbolicExpressionToString(
+							+ symbolicAnalyzer.symbolicExpressionToString(
 									elePtrSource, state, elePointer),
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
 		} else {
-			CIVLType arrayType = symbolicUtil.typeOfObjByPointer(
+			CIVLType arrayType = symbolicAnalyzer.typeOfObjByPointer(
 					arrayPtrSource, state, arrayPtr);
 
 			if (!arrayType.isIncompleteArrayType()) {
-				String arrayPtrString = symbolicUtil
+				String arrayPtrString = symbolicAnalyzer
 						.symbolicExpressionToString(arrayPtrSource, state,
 								arrayPtr);
 				CIVLExecutionException err = new CIVLExecutionException(
@@ -142,12 +144,12 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 								+ "actual first argument: " + arrayPtrString
 								+ "\n" + "actual type of " + arrayPtrString
 								+ ": pointer to " + arrayType,
-						symbolicUtil.stateToString(state), source);
+						symbolicAnalyzer.stateToString(state), source);
 
 				this.errorLogger.reportError(err);
 				return state;
 			} else {
-				CIVLType eleType = symbolicUtil.typeOfObjByPointer(
+				CIVLType eleType = symbolicAnalyzer.typeOfObjByPointer(
 						elePtrSource, state, elePointer);
 				CIVLType arrayEleType = ((CIVLArrayType) arrayType)
 						.elementType();
@@ -165,7 +167,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 									+ "\n"
 									+ "actual type of object pointed to by the third argument: "
 									+ eleType,
-							symbolicUtil.stateToString(state), source);
+							symbolicAnalyzer.stateToString(state), source);
 
 					this.errorLogger.reportError(err);
 					return state;
@@ -255,9 +257,9 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 					ErrorKind.SEQUENCE, Certainty.PROVEABLE, process,
 					"The argument of $seq_length() must be a non-null pointer.\n"
 							+ "actual argument: "
-							+ symbolicUtil.symbolicExpressionToString(
+							+ symbolicAnalyzer.symbolicExpressionToString(
 									seqSource, state, seqPtr),
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -274,9 +276,9 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 						"The argument of $seq_length() must be a sequence of "
 								+ "objects of the same type.\n"
 								+ "actual argument: "
-								+ symbolicUtil.symbolicExpressionToString(
+								+ symbolicAnalyzer.symbolicExpressionToString(
 										seqSource, state, seq),
-						symbolicUtil.stateToString(state), source);
+						symbolicAnalyzer.stateToString(state), source);
 
 				this.errorLogger.reportError(err);
 				return state;
@@ -317,9 +319,9 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ functionName
 							+ " must be a non-null pointer.\n"
 							+ "actual value of first argument: "
-							+ symbolicUtil.symbolicExpressionToString(
+							+ symbolicAnalyzer.symbolicExpressionToString(
 									arrayPtrSource, state, arrayPtr),
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -334,14 +336,14 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ " must be a non-null pointer when the forth "
 							+ "argument is greater than zero.\n"
 							+ "actual value of third argument: "
-							+ symbolicUtil.symbolicExpressionToString(
+							+ symbolicAnalyzer.symbolicExpressionToString(
 									valuesPtrSource, state, valuesPtr),
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
 		}
-		arrayType = symbolicUtil.typeOfObjByPointer(arrayPtrSource, state,
+		arrayType = symbolicAnalyzer.typeOfObjByPointer(arrayPtrSource, state,
 				arrayPtr);
 		if (!arrayType.isIncompleteArrayType()) {
 			CIVLExecutionException err = new CIVLExecutionException(
@@ -352,14 +354,14 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ functionName
 							+ " must be of a pointer to incomplete array of type T.\n"
 							+ "actual type of the first argument: pointer to "
-							+ arrayType, symbolicUtil.stateToString(state),
+							+ arrayType, symbolicAnalyzer.stateToString(state),
 					source);
 
 			this.errorLogger.reportError(err);
 			return state;
 		}
 		arrayEleType = ((CIVLArrayType) arrayType).elementType();
-		valueType = symbolicUtil.typeOfObjByPointer(valuesPtrSource, state,
+		valueType = symbolicAnalyzer.typeOfObjByPointer(valuesPtrSource, state,
 				valuesPtr);
 		if (!arrayEleType.equals(valueType)) {
 			CIVLExecutionException err = new CIVLExecutionException(
@@ -373,7 +375,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "actual type of the first argument: pointer to "
 							+ arrayEleType + "\n"
 							+ "actual type of the third argument: pointer to "
-							+ valueType, symbolicUtil.stateToString(state),
+							+ valueType, symbolicAnalyzer.stateToString(state),
 					source);
 
 			this.errorLogger.reportError(err);
@@ -392,9 +394,9 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ functionName
 							+ "must be a pointer to a concrete array.\n"
 							+ "actual value of the array pointed to by the first argument: "
-							+ symbolicUtil.symbolicExpressionToString(
+							+ symbolicAnalyzer.symbolicExpressionToString(
 									arrayPtrSource, state, arrayValue),
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -409,7 +411,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 					ErrorKind.SEQUENCE, Certainty.PROVEABLE, process,
 					"The index for $seq_insert() is out of the range of the array index.\n"
 							+ "array length: " + lengthInt + "\n" + "index: "
-							+ indexInt, symbolicUtil.stateToString(state),
+							+ indexInt, symbolicAnalyzer.stateToString(state),
 					source);
 
 			this.errorLogger.reportError(err);
@@ -421,7 +423,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "array length: " + lengthInt + "\n"
 							+ "start index: " + indexInt + "\n"
 							+ "number of elements to be removed: " + countInt,
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;

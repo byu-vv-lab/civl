@@ -4,6 +4,7 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 
 /**
  * The library enabler loader provides the mechanism for loading the library
@@ -28,9 +29,12 @@ public interface LibraryEnablerLoader {
 	 * @param symbolicUtil
 	 *            The symbolic utility for manipulations of symbolic
 	 *            expressions.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 * @return The library enabler of the given name.
 	 */
 	LibraryEnabler getLibraryEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFacotry,
-			SymbolicUtility symbolicUtil) throws LibraryLoaderException;
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer)
+			throws LibraryLoaderException;
 }

@@ -288,4 +288,9 @@ public interface Location extends Sourceable {
 	 * @return
 	 */
 	boolean hasDerefs();
+	
+	void setAsStart(boolean value);
+	
+	boolean isStart();
+	
 }

@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 
 public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 
@@ -27,8 +28,8 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 	@Override
 	public LibraryEnabler getLibraryEnabler(String name,
 			Enabler primaryEnabler, Evaluator evaluator,
-			ModelFactory modelFacotry, SymbolicUtility symbolicUtil)
-			throws LibraryLoaderException {
+			ModelFactory modelFacotry, SymbolicUtility symbolicUtil,
+			SymbolicAnalyzer symbolicAnalyzer) throws LibraryLoaderException {
 		LibraryEnabler result;
 
 		if (name.equals("assert"))
@@ -44,10 +45,11 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 				Constructor<? extends LibraryEnabler> constructor = aClass
 						.getConstructor(String.class, Enabler.class,
 								Evaluator.class, ModelFactory.class,
-								SymbolicUtility.class);
+								SymbolicUtility.class, SymbolicAnalyzer.class);
 
-				result = constructor.newInstance(name, primaryEnabler,
-						evaluator, modelFacotry, symbolicUtil);
+				result = constructor
+						.newInstance(name, primaryEnabler, evaluator,
+								modelFacotry, symbolicUtil, symbolicAnalyzer);
 			} catch (Exception e) {
 				throw new LibraryLoaderException(e.getMessage());
 			}

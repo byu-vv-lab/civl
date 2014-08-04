@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -63,11 +64,15 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 	 *            The enabler for normal CIVL execution.
 	 * @param modelFactory
 	 *            The model factory of the system.
+	 * @param symbolicUtil
+	 *            The symbolic utility used in the system.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 */
 	public BaseLibraryEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
-		super(name, evaluator.universe(), symbolicUtil);
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer) {
+		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer);
 		this.primaryEnabler = primaryEnabler;
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();

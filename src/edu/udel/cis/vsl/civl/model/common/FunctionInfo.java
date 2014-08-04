@@ -159,6 +159,7 @@ public class FunctionInfo {
 		}
 		// start from the start location of the fragment
 		location = functionBody.startLocation();
+		location.setAsStart(true);
 		working.add(location);
 		while (!working.isEmpty()) {
 			Location current = working.pop();

@@ -7,7 +7,6 @@ import java.io.PrintStream;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
-import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
@@ -19,6 +18,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -73,12 +73,6 @@ public class CommonStateManager implements StateManager {
 	 * is typically set by a separate thread. Access to this thread is protected
 	 * by the lock on this StateManager.
 	 */
-	// private boolean printUpdate = false;
-
-//	/**
-//	 * Number of calls to method {@link #nextState(State, CommonTransition)}
-//	 */
-//	private int nextStateCalls = 0;
 
 	/**
 	 * Keep track of the maximal canonic ID of states. Since
@@ -89,38 +83,38 @@ public class CommonStateManager implements StateManager {
 	 */
 	private int maxCanonicId = -1;
 
-	/**
-	 * True iff gui mode is enabled.
-	 */
-	// private boolean guiMode = false;
-
-	/**
-	 * The compound transition established by the current nextStep call. TODO:
-	 * get rid of being an instance field, creating a new class NextStateWorker.
-	 */
-	// private CompoundTransition compoundTransition;
-
-	// private TransitionFactory transitionFactory;
-
 	private CIVLErrorLogger errorLogger;
 
-	private SymbolicUtility symbolicUtil;
+	/**
+	 *  The symbolic analyzer to be used.
+	 */
+	private SymbolicAnalyzer symbolicAnalyzer;
 
 	/* ***************************** Constructor *************************** */
 
 	/**
+	 * Creates a new instance of state manager.
 	 * 
+	 * @param enabler
+	 *            The enabler to be used.
 	 * @param executor
 	 *            The unique executor to by used in the system.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer to be used.
+	 * @param errorLogger
+	 *            The error logger to be used.
+	 * @param config
+	 *            The configuration of the civl model.
 	 */
 	public CommonStateManager(Enabler enabler, Executor executor,
-			CIVLErrorLogger errorLogger, CIVLConfiguration config) {
+			SymbolicAnalyzer symbolicAnalyzer, CIVLErrorLogger errorLogger,
+			CIVLConfiguration config) {
 		this.executor = executor;
 		this.enabler = (CommonEnabler) enabler;
 		this.stateFactory = executor.stateFactory();
 		this.config = config;
 		this.errorLogger = errorLogger;
-		this.symbolicUtil = executor.evaluator().symbolicUtility();
+		this.symbolicAnalyzer = symbolicAnalyzer;
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -172,7 +166,7 @@ public class CommonStateManager implements StateManager {
 			assert stateStatus.enabledStatus == EnabledStatus.DETERMINISTIC;
 			assert stateStatus.atomCount >= 0;
 			if (this.config.printStates())
-				config.out().print(this.symbolicUtil.stateToString(state));
+				config.out().print(this.symbolicAnalyzer.stateToString(state));
 			state = executor.execute(state, pid, stateStatus.enabledTransition);
 			if (printTransitions)
 				printStatement(oldState, state, stateStatus.enabledTransition,
@@ -198,7 +192,7 @@ public class CommonStateManager implements StateManager {
 				// out if it has been seen before.
 				CIVLExecutionException err = new CIVLExecutionException(
 						stex.kind(), stex.certainty(), process, stex.message(),
-						symbolicUtil.stateToString(state), stex.source());
+						symbolicAnalyzer.stateToString(state), stex.source());
 
 				errorLogger.reportError(err);
 			}
@@ -209,11 +203,12 @@ public class CommonStateManager implements StateManager {
 		} else {
 			state = stateFactory.collectProcesses(state);
 			try {
+				state = stateFactory.collectHeaps(oldState);
 				state = stateFactory.collectScopes(state);
 			} catch (CIVLStateException stex) {
 				CIVLExecutionException err = new CIVLExecutionException(
 						stex.kind(), stex.certainty(), process, stex.message(),
-						symbolicUtil.stateToString(state), stex.source());
+						symbolicAnalyzer.stateToString(state), stex.source());
 
 				errorLogger.reportError(err);
 			}
@@ -228,7 +223,7 @@ public class CommonStateManager implements StateManager {
 				|| (config.saveStates() && config.showSavedStates() && this.maxCanonicId > oldMaxCanonicId)) {
 			// in -savedStates mode, only print new states.
 			config.out().println();
-			config.out().print(this.symbolicUtil.stateToString(state));
+			config.out().print(this.symbolicAnalyzer.stateToString(state));
 		} else if (config.showPathConditon()) {
 			config.out().print(state.toString());
 			config.out().print(" -- path condition: ");
@@ -319,7 +314,8 @@ public class CommonStateManager implements StateManager {
 			if (pidInAtomic != -1) {
 				// the process is in atomic execution
 				assert pidInAtomic == pid;
-				if (pLocation.getNumIncoming() > 1)
+				if (pLocation.getNumIncoming() > 1
+						|| (pLocation.isStart() && pLocation.getNumIncoming() > 0))
 					// possible loop, save state
 					return new StateStatus(false, null, atomCount,
 							EnabledStatus.LOOP_POSSIBLE);
@@ -411,18 +407,20 @@ public class CommonStateManager implements StateManager {
 			Location location, String process) {
 		switch (enabled) {
 		case NONDETERMINISTIC:
-			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE, process,
-					"Non-determinism is encountered in $atom block.",
-					this.executor.evaluator().symbolicUtility()
-							.stateToString(state), location.getSource()));
+			errorLogger
+					.reportError(new CIVLExecutionException(ErrorKind.OTHER,
+							Certainty.CONCRETE, process,
+							"Non-determinism is encountered in $atom block.",
+							symbolicAnalyzer.stateToString(state), location
+									.getSource()));
 			break;
 		case BLOCKED:
-			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE, process,
-					"Blocked location is encountered in $atom block.",
-					this.executor.evaluator().symbolicUtility()
-							.stateToString(state), location.getSource()));
+			errorLogger
+					.reportError(new CIVLExecutionException(ErrorKind.OTHER,
+							Certainty.CONCRETE, process,
+							"Blocked location is encountered in $atom block.",
+							symbolicAnalyzer.stateToString(state), location
+									.getSource()));
 			break;
 		default:
 		}
@@ -470,7 +468,7 @@ public class CommonStateManager implements StateManager {
 
 	@Override
 	public void printStateLong(PrintStream out, State state) {
-		out.print(this.symbolicUtil.stateToString(state));
+		out.print(this.symbolicAnalyzer.stateToString(state));
 	}
 
 	@Override

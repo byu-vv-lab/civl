@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -25,14 +26,15 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 
 	private NumericExpression minusOne = universe.integer(-1);
 	private NumericExpression minusTwo = universe.integer(-2);
-	
+
 	/* **************************** Constructors *************************** */
 
 	public LibcommEvaluator(String name, Evaluator evaluator,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(name, evaluator, modelFactory, symbolicUtil);
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
+			SymbolicAnalyzer symbolicAnalyzer) {
+		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer);
 	}
-	
+
 	/* ********************* Methods from LibraryEvaluator ******************* */
 
 	@Override
@@ -76,7 +78,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 		}
 		return new Evaluation(state, guard);
 	}
-	
+
 	/* *************************** Private Methods ************************* */
 
 	/**

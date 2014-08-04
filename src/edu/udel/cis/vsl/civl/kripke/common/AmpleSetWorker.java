@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
@@ -128,6 +129,8 @@ public class AmpleSetWorker {
 	 */
 	private State state;
 
+	private SymbolicAnalyzer symbolicAnalyzer;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -139,6 +142,8 @@ public class AmpleSetWorker {
 	 *            The enabler used in the system.
 	 * @param evaluator
 	 *            The evaluator used in the system.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 * @param debug
 	 *            The option to turn on/off the printing of debugging
 	 *            information.
@@ -146,10 +151,12 @@ public class AmpleSetWorker {
 	 *            The print stream for debugging information.
 	 */
 	AmpleSetWorker(State state, CommonEnabler enabler, Evaluator evaluator,
-			boolean debug, PrintStream debugOut) {
+			SymbolicAnalyzer symbolicAnalyzer, boolean debug,
+			PrintStream debugOut) {
 		this.state = state;
 		this.enabler = enabler;
 		this.evaluator = evaluator;
+		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.debugging = debug;
 		this.debugOut = debugOut;
 	}
@@ -399,9 +406,8 @@ public class AmpleSetWorker {
 				CIVLSource source = pLocation.getSource();
 
 				for (SymbolicExpression memUnit : result.right) {
-					debugOut.print(evaluator.symbolicUtility()
-							.symbolicExpressionToString(source, state, memUnit)
-							+ "\t");
+					debugOut.print(symbolicAnalyzer.symbolicExpressionToString(
+							source, state, memUnit) + "\t");
 				}
 				debugOut.println();
 			}
@@ -747,8 +753,8 @@ public class AmpleSetWorker {
 			CIVLSource source = proc.getLocation().getSource();
 
 			for (SymbolicExpression memUnit : memUnitPermissionMap.keySet()) {
-				debugOut.print(evaluator.symbolicUtility()
-						.symbolicExpressionToString(source, state, memUnit));
+				debugOut.print(symbolicAnalyzer.symbolicExpressionToString(
+						source, state, memUnit));
 				debugOut.print("(");
 				if (memUnitPermissionMap.get(memUnit))
 					debugOut.print("W");

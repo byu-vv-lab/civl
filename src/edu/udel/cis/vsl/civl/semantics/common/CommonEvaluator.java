@@ -81,6 +81,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -305,6 +306,11 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private NumericExpression zeroOrOne;
 
+	/**
+	 * The symbolic analyzer to be used.
+	 */
+	private SymbolicAnalyzer symbolicAnalyzer;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -318,15 +324,19 @@ public class CommonEvaluator implements Evaluator {
 	 *            The loader for library evaluators.
 	 * @param symbolicUtil
 	 *            The symbolic utility.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 * @param errorLogger
 	 *            The error logger for logging errors.
 	 */
 	public CommonEvaluator(ModelFactory modelFactory,
 			StateFactory stateFactory, LibraryEvaluatorLoader loader,
-			SymbolicUtility symbolicUtil, CIVLErrorLogger errorLogger) {
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
+			CIVLErrorLogger errorLogger) {
 		this.libLoader = loader;
 		this.errorLogger = errorLogger;
 		this.symbolicUtil = symbolicUtil;
+		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
 		this.universe = stateFactory.symbolicUniverse();
@@ -451,7 +461,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
 					"Attempt to deference a null pointer",
-					this.symbolicUtil.stateToString(state), source);
+					this.symbolicAnalyzer.stateToString(state), source);
 
 			errorLogger.reportError(se);
 			throw new UnsatisfiablePathConditionException();
@@ -461,7 +471,7 @@ public class CommonEvaluator implements Evaluator {
 
 				if (sid < 0) {
 					errorLogger.logSimpleError(source, state, process,
-							symbolicUtil.stateToString(state),
+							symbolicAnalyzer.stateToString(state),
 							ErrorKind.DEREFERENCE,
 							"Attempt to dereference pointer into scope"
 									+ " which has been removed from state");
@@ -479,7 +489,7 @@ public class CommonEvaluator implements Evaluator {
 
 						if (variable.isOutput()) {
 							errorLogger.logSimpleError(source, state, process,
-									symbolicUtil.stateToString(state),
+									symbolicAnalyzer.stateToString(state),
 									ErrorKind.OUTPUT_READ,
 									"Attempt to read output variable "
 											+ variable.name().name());
@@ -494,7 +504,7 @@ public class CommonEvaluator implements Evaluator {
 								source,
 								state,
 								process,
-								symbolicUtil.stateToString(state),
+								symbolicAnalyzer.stateToString(state),
 								ErrorKind.DEREFERENCE,
 								"Illegal pointer dereference "
 										+ source.getSummary());
@@ -506,7 +516,7 @@ public class CommonEvaluator implements Evaluator {
 				CIVLExecutionException se = new CIVLExecutionException(
 						ErrorKind.DEREFERENCE, Certainty.MAYBE, process,
 						"Undefined pointer value?",
-						this.symbolicUtil.stateToString(state), source);
+						this.symbolicAnalyzer.stateToString(state), source);
 
 				errorLogger.reportError(se);
 				throw new UnsatisfiablePathConditionException();
@@ -957,8 +967,9 @@ public class CommonEvaluator implements Evaluator {
 					eval.value = value;
 				else {
 					state = errorLogger.logError(expression.getSource(), state,
-							process, this.symbolicUtil.stateToString(state),
-							claim, resultType, ErrorKind.INVALID_CAST,
+							process,
+							this.symbolicAnalyzer.stateToString(state), claim,
+							resultType, ErrorKind.INVALID_CAST,
 							"Cast from non-zero integer to pointer");
 					eval.state = state;
 				}
@@ -991,7 +1002,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException error = new CIVLExecutionException(
 					ErrorKind.INVALID_CAST, Certainty.NONE, process,
 					"SARL could not cast: " + e,
-					this.symbolicUtil.stateToString(state),
+					this.symbolicAnalyzer.stateToString(state),
 					expression.getSource());
 
 			errorLogger.reportError(error);
@@ -1041,7 +1052,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
 					"Attempt to dereference an uninitialized pointer.",
-					symbolicUtil.stateToString(state), expression.pointer()
+					symbolicAnalyzer.stateToString(state), expression.pointer()
 							.getSource());
 
 			this.errorLogger.reportError(err);
@@ -1176,7 +1187,7 @@ public class CommonEvaluator implements Evaluator {
 
 			if (test.isFalse()) {
 				errorLogger.logSimpleError(expression.getSource(), eval.state,
-						process, this.symbolicUtil.stateToString(state),
+						process, this.symbolicAnalyzer.stateToString(state),
 						ErrorKind.UNION,
 						"Attempt to access an invalid union member");
 				throw new UnsatisfiablePathConditionException();
@@ -1206,7 +1217,7 @@ public class CommonEvaluator implements Evaluator {
 		function = eval.second;
 		if (function == null) {
 			errorLogger.logSimpleError(expression.getSource(), state, process,
-					symbolicUtil.stateToString(state), ErrorKind.OTHER,
+					symbolicAnalyzer.stateToString(state), ErrorKind.OTHER,
 					"function body cann't be found");
 			throw new UnsatisfiablePathConditionException();
 		}
@@ -1353,7 +1364,7 @@ public class CommonEvaluator implements Evaluator {
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
 						eval.state, process,
-						this.symbolicUtil.stateToString(eval.state), claim,
+						this.symbolicAnalyzer.stateToString(eval.state), claim,
 						resultType, ErrorKind.DIVISION_BY_ZERO,
 						"Division by zero");
 			}
@@ -1394,7 +1405,7 @@ public class CommonEvaluator implements Evaluator {
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
 						eval.state, process,
-						this.symbolicUtil.stateToString(eval.state), claim,
+						this.symbolicAnalyzer.stateToString(eval.state), claim,
 						resultType, ErrorKind.DIVISION_BY_ZERO,
 						"Modulus denominator is zero");
 			}
@@ -1590,7 +1601,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"A regular range expression requires a non-zero step.",
-					symbolicUtil.stateToString(state), range.getSource());
+					symbolicAnalyzer.stateToString(state), range.getSource());
 
 			errorLogger.reportError(err);
 		}
@@ -1705,7 +1716,7 @@ public class CommonEvaluator implements Evaluator {
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
 						eval.state, process,
-						symbolicUtil.stateToString(eval.state), claim,
+						symbolicAnalyzer.stateToString(eval.state), claim,
 						resultType, ErrorKind.OUT_OF_BOUNDS,
 						"Out of bounds array index:\nindex = " + index
 								+ "\nlength = " + length);
@@ -1781,7 +1792,7 @@ public class CommonEvaluator implements Evaluator {
 			if (sid < 0) {
 				errorLogger
 						.logSimpleError(pointer.getSource(), state, process,
-								symbolicUtil.stateToString(state),
+								symbolicAnalyzer.stateToString(state),
 								ErrorKind.DEREFERENCE,
 								"Attempt to dereference pointer into scope which has been removed from state");
 				throw new UnsatisfiablePathConditionException();
@@ -1933,7 +1944,7 @@ public class CommonEvaluator implements Evaluator {
 					ErrorKind.OUTPUT_READ, Certainty.CONCRETE, process,
 					"Attempt to read the output variable "
 							+ expression.variable().name(),
-					this.symbolicUtil.stateToString(state),
+					this.symbolicAnalyzer.stateToString(state),
 					expression.getSource());
 
 			errorLogger.reportError(e);
@@ -1946,7 +1957,7 @@ public class CommonEvaluator implements Evaluator {
 				CIVLExecutionException e = new CIVLExecutionException(
 						ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
 						process, "Attempt to read uninitialized variable",
-						this.symbolicUtil.stateToString(state),
+						this.symbolicAnalyzer.stateToString(state),
 						expression.getSource());
 
 				errorLogger.reportError(e);
@@ -2178,7 +2189,7 @@ public class CommonEvaluator implements Evaluator {
 
 		try {
 			libEvaluator = this.libLoader.getLibraryEvaluator(library, this,
-					this.modelFactory, symbolicUtil);
+					this.modelFactory, symbolicUtil, symbolicAnalyzer);
 
 			return libEvaluator.evaluateGuard(source, state, pid, function,
 					arguments);
@@ -2189,7 +2200,7 @@ public class CommonEvaluator implements Evaluator {
 					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
 					"An error is encountered when loading the library evaluator for "
 							+ library + ": " + exception.getMessage(),
-					this.symbolicUtil.stateToString(state), source);
+					this.symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 		}
@@ -2349,7 +2360,7 @@ public class CommonEvaluator implements Evaluator {
 		if (expressionType.equals(modelFactory.scopeType())) {
 			if (expressionValue.equals(modelFactory.undefinedScopeValue())) {
 				errorLogger.logSimpleError(source, state, process,
-						symbolicUtil.stateToString(state),
+						symbolicAnalyzer.stateToString(state),
 						ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid scope reference");
 				throw new UnsatisfiablePathConditionException();
@@ -2357,7 +2368,7 @@ public class CommonEvaluator implements Evaluator {
 		} else if (expressionType.equals(modelFactory.processType())) {
 			if (expressionValue.equals(modelFactory.undefinedProcessValue())) {
 				errorLogger.logSimpleError(source, state, process,
-						symbolicUtil.stateToString(state),
+						symbolicAnalyzer.stateToString(state),
 						ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid process reference");
 				throw new UnsatisfiablePathConditionException();
@@ -2372,14 +2383,14 @@ public class CommonEvaluator implements Evaluator {
 				if (scopeID < 0) {
 					errorLogger
 							.logSimpleError(source, state, process,
-									symbolicUtil.stateToString(state),
+									symbolicAnalyzer.stateToString(state),
 									ErrorKind.MEMORY_LEAK,
 									"Attempt to evaluate a pointer refererring to memory of an invalid scope");
 					throw new UnsatisfiablePathConditionException();
 				}
 			} catch (Exception e) {
 				errorLogger.logSimpleError(source, state, process,
-						symbolicUtil.stateToString(state),
+						symbolicAnalyzer.stateToString(state),
 						ErrorKind.UNDEFINED_VALUE,
 						"Attempt to use undefined pointer");
 				throw new UnsatisfiablePathConditionException();
@@ -2650,7 +2661,7 @@ public class CommonEvaluator implements Evaluator {
 					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE,
 					procState.name() + "(id=" + pid + ")",
 					"Invalid function pointer: " + functionPointer,
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			errorLogger.reportError(err);
 		}
@@ -2922,199 +2933,225 @@ public class CommonEvaluator implements Evaluator {
 			BinaryExpression expression, SymbolicExpression pointer,
 			NumericExpression offset)
 			throws UnsatisfiablePathConditionException {
-		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
-		Expression pointerExpr = expression.left();
+		if (symbolicUtil.isUndefinedPointer(pointer)) {
+			errorLogger.logSimpleError(expression.getSource(), state, process,
+					symbolicAnalyzer.stateToString(state),
+					ErrorKind.DEREFERENCE,
+					"Attempt to dereference a pointer that refers to a "
+							+ "memory space that is already deallocated");
+			throw new UnsatisfiablePathConditionException();
+		} else {
+			ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
+			Expression pointerExpr = expression.left();
 
-		if (symRef.isArrayElementReference()) {
-			SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
-					expression.getSource(), pointer);
-			Evaluation eval = dereference(expression.getSource(), state,
-					process, arrayPointer, false);
-			// eval.value is now a symbolic expression of array type.
-			SymbolicArrayType arrayType = (SymbolicArrayType) eval.value.type();
-			ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
-			NumericExpression oldIndex = arrayElementRef.getIndex();
-			NumericExpression newIndex = universe.add(oldIndex, offset);
+			if (symRef.isArrayElementReference()) {
+				SymbolicExpression arrayPointer = symbolicUtil.parentPointer(
+						expression.getSource(), pointer);
+				Evaluation eval = dereference(expression.getSource(), state,
+						process, arrayPointer, false);
+				// eval.value is now a symbolic expression of array type.
+				SymbolicArrayType arrayType = (SymbolicArrayType) eval.value
+						.type();
+				ArrayElementReference arrayElementRef = (ArrayElementReference) symRef;
+				NumericExpression oldIndex = arrayElementRef.getIndex();
+				NumericExpression newIndex = universe.add(oldIndex, offset);
 
-			if (arrayType.isComplete()) { // check bounds
-				NumericExpression length = universe.length(eval.value);
+				if (arrayType.isComplete()) { // check bounds
+					NumericExpression length = universe.length(eval.value);
+					BooleanExpression claim = universe.and(
+							universe.lessThanEquals(zero, newIndex),
+							universe.lessThan(newIndex, length));
+					BooleanExpression assumption = eval.state
+							.getPathCondition();
+					ResultType resultType = universe.reasoner(assumption)
+							.valid(claim).getResultType();
+					/*
+					 * If out of bound, check if it's mul-d array and computes
+					 * the new index for it
+					 */
+					if (resultType != ResultType.YES)
+						if (pointerExpr.getExpressionType() instanceof CIVLPointerType) {
+							// distinguish from array and pointer
+							if (symbolicUtil.getVariableId(
+									expression.getSource(), pointer) == 0) {
+								eval.value = symbolicUtil.setSymRef(pointer,
+										universe.arrayElementReference(
+												arrayElementRef.getParent(),
+												newIndex));
+								return eval;
+							}
+
+							ReferenceExpression tmpSymRef = symbolicUtil
+									.getSymRef(pointer);
+							SymbolicExpression tmpPointer = pointer;
+							SymbolicExpression retPointer = pointer;
+							/*
+							 * The order of indexes in oldIndexes is:
+							 * a[0][1][2]...[n-1] oldIndexes = {n-1, ..., 2, 1,
+							 * 0} Same as the list: lengthes. The newIndexes has
+							 * a inverse order.
+							 */
+							int dimension = 0;
+							int j;
+							ArrayList<NumericExpression> oldIndexes = new ArrayList<NumericExpression>();
+							ArrayList<NumericExpression> newIndexes = new ArrayList<NumericExpression>();
+							ArrayList<NumericExpression> lengthes = new ArrayList<NumericExpression>();
+							NumericExpression boundIndex, finalRealIndex, numerator, denominator, realIndex = universe
+									.zeroInt();
+							NumericExpression dec = universe.zeroInt();
+							NumericExpression inc = universe.zeroInt();
+
+							boundIndex = universe.oneInt();
+							/* computes dimension of the array */
+							while (tmpSymRef.isArrayElementReference()) {
+								oldIndexes
+										.add(((ArrayElementReference) tmpSymRef)
+												.getIndex());
+								tmpPointer = symbolicUtil.parentPointer(
+										expression.getSource(), tmpPointer);
+								eval = this.dereference(expression.getSource(),
+										state, process, tmpPointer, true);
+								lengthes.add(universe.length(eval.value));
+								if (dimension != 0) {
+									inc = oldIndexes.get(dimension);
+									for (int i = 0; i < dimension; i++)
+										inc = universe
+												.multiply(
+														inc,
+														lengthes.get(dimension
+																- 1 - i));
+								} else
+									inc = universe.add(inc,
+											oldIndexes.get(dimension));
+								realIndex = universe.add(realIndex, inc);
+								boundIndex = universe.multiply(boundIndex,
+										lengthes.get(dimension));
+								tmpSymRef = symbolicUtil.getSymRef(tmpPointer);
+								dimension++;
+							}
+							finalRealIndex = universe.add(realIndex, offset);
+							claim = universe.and(universe.lessThanEquals(zero,
+									finalRealIndex), universe.lessThanEquals(
+									finalRealIndex, boundIndex));
+							assumption = eval.state.getPathCondition();
+							resultType = universe.reasoner(assumption)
+									.valid(claim).getResultType();
+							/* Still out of bound */
+							if (resultType != ResultType.YES) {
+								eval.state = errorLogger.logError(expression
+										.getSource(), eval.state, process,
+										symbolicAnalyzer
+												.stateToString(eval.state),
+										claim, resultType,
+										ErrorKind.OUT_OF_BOUNDS,
+										"Pointer addition resulted in out of bounds array index:\nindex = "
+												+ finalRealIndex
+												+ "\nlength = " + boundIndex);
+							}
+							/* computes new indexes */
+							/*
+							 * The formula of computing new indexes is posted as
+							 * a comment of CIVL TRAC ticket "pointer addition"
+							 */
+							numerator = universe.oneInt();
+							denominator = universe.add(finalRealIndex,
+									universe.zeroInt());
+							j = 0;
+							while (dimension > 0) {
+								numerator = universe.oneInt();
+								for (int i = 0; i < dimension - 1; i++)
+									numerator = universe.multiply(numerator,
+											lengthes.get(i));
+								newIndexes.add(universe.divide(denominator,
+										numerator));
+								/*
+								 * Since already checked bound, we don't need
+								 * check remainder
+								 */
+								/* Update denominator */
+								dec = universe
+										.add(universe.zeroInt(), universe
+												.multiply(newIndexes.get(j),
+														numerator));
+								denominator = universe.subtract(denominator,
+										dec);
+								j++;
+								dimension--;
+							}
+							dimension = j; // j equals the real dimension before
+											// decreasing
+							/* build result pointer */
+							arrayElementRef = (ArrayElementReference) symbolicUtil
+									.updateArrayElementReference(
+											arrayElementRef, newIndexes);
+							retPointer = symbolicUtil.setSymRef(retPointer,
+									arrayElementRef);
+							eval.value = retPointer;
+							return eval;
+						} else if (resultType != ResultType.YES) { /*
+																	 * pointer
+																	 * out of
+																	 * bounds
+																	 */
+							eval.state = errorLogger
+									.logError(expression.getSource(),
+											eval.state, process,
+											symbolicAnalyzer
+													.stateToString(eval.state),
+											claim, resultType,
+											ErrorKind.OUT_OF_BOUNDS,
+											"Pointer addition resulted in out of bounds array index:\nindex = "
+													+ newIndex + "\nlength = "
+													+ length);
+						}
+				}
+				eval.value = symbolicUtil.setSymRef(
+						pointer,
+						universe.arrayElementReference(
+								arrayElementRef.getParent(), newIndex));
+				return eval;
+			} else if (symRef.isOffsetReference()) {
+				OffsetReference offsetRef = (OffsetReference) symRef;
+				NumericExpression oldOffset = offsetRef.getOffset();
+				NumericExpression newOffset = universe.add(oldOffset, offset);
 				BooleanExpression claim = universe.and(
-						universe.lessThanEquals(zero, newIndex),
-						universe.lessThan(newIndex, length));
-				BooleanExpression assumption = eval.state.getPathCondition();
+						universe.lessThanEquals(zero, newOffset),
+						universe.lessThanEquals(newOffset, one));
+				BooleanExpression assumption = state.getPathCondition();
 				ResultType resultType = universe.reasoner(assumption)
 						.valid(claim).getResultType();
-				/*
-				 * If out of bound, check if it's mul-d array and computes the
-				 * new index for it
-				 */
-				if (resultType != ResultType.YES)
-					if (pointerExpr.getExpressionType() instanceof CIVLPointerType) {
-						// distinguish from array and pointer
-						if (symbolicUtil.getVariableId(expression.getSource(),
-								pointer) == 0) {
-							eval.value = symbolicUtil.setSymRef(pointer,
-									universe.arrayElementReference(
-											arrayElementRef.getParent(),
-											newIndex));
-							return eval;
-						}
+				Evaluation eval;
 
-						ReferenceExpression tmpSymRef = symbolicUtil
-								.getSymRef(pointer);
-						SymbolicExpression tmpPointer = pointer;
-						SymbolicExpression retPointer = pointer;
-						/*
-						 * The order of indexes in oldIndexes is:
-						 * a[0][1][2]...[n-1] oldIndexes = {n-1, ..., 2, 1, 0}
-						 * Same as the list: lengthes. The newIndexes has a
-						 * inverse order.
-						 */
-						int dimension = 0;
-						int j;
-						ArrayList<NumericExpression> oldIndexes = new ArrayList<NumericExpression>();
-						ArrayList<NumericExpression> newIndexes = new ArrayList<NumericExpression>();
-						ArrayList<NumericExpression> lengthes = new ArrayList<NumericExpression>();
-						NumericExpression boundIndex, finalRealIndex, numerator, denominator, realIndex = universe
-								.zeroInt();
-						NumericExpression dec = universe.zeroInt();
-						NumericExpression inc = universe.zeroInt();
+				if (resultType != ResultType.YES) {
+					state = errorLogger.logError(expression.getSource(), state,
+							process, symbolicAnalyzer.stateToString(state),
+							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
+							"Pointer addition resulted in out of bounds object pointer:\noffset = "
+									+ newOffset);
+				}
+				eval = new Evaluation(state, symbolicUtil.setSymRef(pointer,
+						universe.offsetReference(offsetRef.getParent(),
+								newOffset)));
+				return eval;
+			} else if (symRef.isIdentityReference()) {
+				BooleanExpression claim = universe.equals(zero, offset);
+				BooleanExpression assumption = state.getPathCondition();
+				ResultType resultType = universe.reasoner(assumption)
+						.valid(claim).getResultType();
 
-						boundIndex = universe.oneInt();
-						/* computes dimension of the array */
-						while (tmpSymRef.isArrayElementReference()) {
-							oldIndexes.add(((ArrayElementReference) tmpSymRef)
-									.getIndex());
-							tmpPointer = symbolicUtil.parentPointer(
-									expression.getSource(), tmpPointer);
-							eval = this.dereference(expression.getSource(),
-									state, process, tmpPointer, true);
-							lengthes.add(universe.length(eval.value));
-							if (dimension != 0) {
-								inc = oldIndexes.get(dimension);
-								for (int i = 0; i < dimension; i++)
-									inc = universe.multiply(inc,
-											lengthes.get(dimension - 1 - i));
-							} else
-								inc = universe.add(inc,
-										oldIndexes.get(dimension));
-							realIndex = universe.add(realIndex, inc);
-							boundIndex = universe.multiply(boundIndex,
-									lengthes.get(dimension));
-							tmpSymRef = symbolicUtil.getSymRef(tmpPointer);
-							dimension++;
-						}
-						finalRealIndex = universe.add(realIndex, offset);
-						claim = universe.and(universe.lessThanEquals(zero,
-								finalRealIndex), universe.lessThanEquals(
-								finalRealIndex, boundIndex));
-						assumption = eval.state.getPathCondition();
-						resultType = universe.reasoner(assumption).valid(claim)
-								.getResultType();
-						/* Still out of bound */
-						if (resultType != ResultType.YES) {
-							eval.state = errorLogger.logError(
-									expression.getSource(), eval.state,
-									process,
-									symbolicUtil.stateToString(eval.state),
-									claim, resultType, ErrorKind.OUT_OF_BOUNDS,
-									"Pointer addition resulted in out of bounds array index:\nindex = "
-											+ finalRealIndex + "\nlength = "
-											+ boundIndex);
-						}
-						/* computes new indexes */
-						/*
-						 * The formula of computing new indexes is posted as a
-						 * comment of CIVL TRAC ticket "pointer addition"
-						 */
-						numerator = universe.oneInt();
-						denominator = universe.add(finalRealIndex,
-								universe.zeroInt());
-						j = 0;
-						while (dimension > 0) {
-							numerator = universe.oneInt();
-							for (int i = 0; i < dimension - 1; i++)
-								numerator = universe.multiply(numerator,
-										lengthes.get(i));
-							newIndexes.add(universe.divide(denominator,
-									numerator));
-							/*
-							 * Since already checked bound, we don't need check
-							 * remainder
-							 */
-							/* Update denominator */
-							dec = universe.add(universe.zeroInt(), universe
-									.multiply(newIndexes.get(j), numerator));
-							denominator = universe.subtract(denominator, dec);
-							j++;
-							dimension--;
-						}
-						dimension = j; // j equals the real dimension before
-										// decreasing
-						/* build result pointer */
-						arrayElementRef = (ArrayElementReference) symbolicUtil
-								.updateArrayElementReference(arrayElementRef,
-										newIndexes);
-						retPointer = symbolicUtil.setSymRef(retPointer,
-								arrayElementRef);
-						eval.value = retPointer;
-						return eval;
-					} else if (resultType != ResultType.YES) { /*
-																 * pointer out
-																 * of bounds
-																 */
-						eval.state = errorLogger.logError(
-								expression.getSource(), eval.state, process,
-								symbolicUtil.stateToString(eval.state), claim,
-								resultType, ErrorKind.OUT_OF_BOUNDS,
-								"Pointer addition resulted in out of bounds array index:\nindex = "
-										+ newIndex + "\nlength = " + length);
-					}
-			}
-			eval.value = symbolicUtil.setSymRef(pointer, universe
-					.arrayElementReference(arrayElementRef.getParent(),
-							newIndex));
-			return eval;
-		} else if (symRef.isOffsetReference()) {
-			OffsetReference offsetRef = (OffsetReference) symRef;
-			NumericExpression oldOffset = offsetRef.getOffset();
-			NumericExpression newOffset = universe.add(oldOffset, offset);
-			BooleanExpression claim = universe.and(
-					universe.lessThanEquals(zero, newOffset),
-					universe.lessThanEquals(newOffset, one));
-			BooleanExpression assumption = state.getPathCondition();
-			ResultType resultType = universe.reasoner(assumption).valid(claim)
-					.getResultType();
-			Evaluation eval;
-
-			if (resultType != ResultType.YES) {
-				state = errorLogger.logError(expression.getSource(), state,
-						process, symbolicUtil.stateToString(state), claim,
-						resultType, ErrorKind.OUT_OF_BOUNDS,
-						"Pointer addition resulted in out of bounds object pointer:\noffset = "
-								+ newOffset);
-			}
-			eval = new Evaluation(state, symbolicUtil.setSymRef(pointer,
-					universe.offsetReference(offsetRef.getParent(), newOffset)));
-			return eval;
-		} else if (symRef.isIdentityReference()) {
-			BooleanExpression claim = universe.equals(zero, offset);
-			BooleanExpression assumption = state.getPathCondition();
-			ResultType resultType = universe.reasoner(assumption).valid(claim)
-					.getResultType();
-
-			if (resultType != ResultType.YES) {
-				state = errorLogger.logError(expression.getSource(), state,
-						process, symbolicUtil.stateToString(state), claim,
-						resultType, ErrorKind.OUT_OF_BOUNDS,
-						"Pointer addition resulted in out of bounds object pointer:\noffset = "
-								+ offset);
-			}
-			return new Evaluation(state, pointer);
-		} else
-			throw new CIVLUnimplementedFeatureException(
-					"Pointer addition for anything other than array elements or variables",
-					expression);
+				if (resultType != ResultType.YES) {
+					state = errorLogger.logError(expression.getSource(), state,
+							process, symbolicAnalyzer.stateToString(state),
+							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
+							"Pointer addition resulted in out of bounds object pointer:\noffset = "
+									+ offset);
+				}
+				return new Evaluation(state, pointer);
+			} else
+				throw new CIVLUnimplementedFeatureException(
+						"Pointer addition for anything other than array elements or variables",
+						expression);
+		}
 	}
 
 	@Override

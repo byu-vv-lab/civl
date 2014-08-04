@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -101,6 +102,11 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	protected CIVLErrorLogger errorLogger;
 
+	/**
+	 *  The symbolic analyzer to be used.
+	 */
+	protected SymbolicAnalyzer symbolicAnalyzer;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -115,14 +121,17 @@ public abstract class CommonEnabler implements Enabler {
 	 * @param executor
 	 *            The executor to be used for computing the guard of system
 	 *            functions.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 * @param showAmpleSet
 	 *            The option to enable or disable the printing of ample sets.
 	 */
 	protected CommonEnabler(StateFactory stateFactory, Evaluator evaluator,
-			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
-			CIVLConfiguration civlConfig) {
+			SymbolicAnalyzer symbolicAnalyzer, LibraryEnablerLoader libLoader,
+			CIVLErrorLogger errorLogger, CIVLConfiguration civlConfig) {
 		this.errorLogger = errorLogger;
 		this.evaluator = evaluator;
+		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.debugOut = civlConfig.out();
 		this.debugging = civlConfig.debug();
 		this.showAmpleSet = civlConfig.showAmpleSet()
@@ -281,7 +290,8 @@ public abstract class CommonEnabler implements Enabler {
 	LibraryEnabler libraryEnabler(CIVLSource civlSource, String library)
 			throws LibraryLoaderException {
 		return this.libraryLoader.getLibraryEnabler(library, this, evaluator,
-				evaluator.modelFactory(), evaluator.symbolicUtility());
+				evaluator.modelFactory(), evaluator.symbolicUtility(),
+				this.symbolicAnalyzer);
 	}
 
 	/* **************************** Private Methods ************************ */
@@ -401,9 +411,9 @@ public abstract class CommonEnabler implements Enabler {
 					+ ")";
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
-					"An error is encountered when loading the library evaluator for "
+					"An error is encountered when loading the library enabler for "
 							+ libraryName + ": " + exception.getMessage(),
-					evaluator.symbolicUtility().stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 		}

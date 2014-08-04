@@ -29,6 +29,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -45,8 +46,9 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 
 	public LibcommEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
-		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil);
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer) {
+		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil,
+				symbolicAnalyzer);
 	}
 
 	/* ********************* Methods from LibraryEnabler ******************* */

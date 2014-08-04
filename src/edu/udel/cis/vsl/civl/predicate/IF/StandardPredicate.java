@@ -5,7 +5,7 @@ package edu.udel.cis.vsl.civl.predicate.IF;
 
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.StatePredicateIF;
@@ -31,10 +31,14 @@ public class StandardPredicate implements StatePredicateIF<State> {
 	 *            The error log.
 	 * @param universe
 	 *            The symbolic universe.
+	 * @param enabler
+	 *            The enabler of the system.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 */
 	public StandardPredicate(ErrorLog log, SymbolicUniverse universe,
-			Enabler enabler, Executor executor) {
-		deadlockPredicate = new Deadlock(universe, enabler, executor);
+			Enabler enabler, SymbolicAnalyzer symbolicAnalyzer) {
+		deadlockPredicate = new Deadlock(universe, enabler, symbolicAnalyzer);
 	}
 
 	@Override

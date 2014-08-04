@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -60,8 +61,9 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	 */
 	public LibcivlcExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil,
+				symbolicAnalyzer, civlConfig);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -497,7 +499,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The number of processes for $waitall "
 							+ "needs a concrete value.",
-					symbolicUtil.stateToString(state), arguments[1].getSource());
+							symbolicAnalyzer.stateToString(state), arguments[1].getSource());
 
 			this.errorLogger.reportError(err);
 		} else {

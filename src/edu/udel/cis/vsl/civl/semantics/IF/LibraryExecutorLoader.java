@@ -26,6 +26,8 @@ public interface LibraryExecutorLoader {
 	 * @param symbolicUtil
 	 *            The symbolic utility for manipulations of symbolic
 	 *            expressions.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 * @param civlConfig
 	 *            The CIVL configuration.
 	 * @return The library executor of the given name.
@@ -34,6 +36,7 @@ public interface LibraryExecutorLoader {
 	 */
 	LibraryExecutor getLibraryExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFacotry, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) throws LibraryLoaderException;
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig)
+			throws LibraryLoaderException;
 
 }

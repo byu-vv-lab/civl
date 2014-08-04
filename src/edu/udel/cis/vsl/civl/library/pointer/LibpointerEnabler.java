@@ -6,14 +6,16 @@ import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 
 public class LibpointerEnabler extends BaseLibraryEnabler implements
 		LibraryEnabler {
 
 	public LibpointerEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
-		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil);
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer) {
+		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil,
+				symbolicAnalyzer);
 	}
 
 }

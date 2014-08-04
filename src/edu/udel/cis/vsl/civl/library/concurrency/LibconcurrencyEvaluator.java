@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -20,9 +21,9 @@ public class LibconcurrencyEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
 
 	public LibconcurrencyEvaluator(String name, Evaluator evaluator,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(name, evaluator, modelFactory, symbolicUtil);
-		// TODO Auto-generated constructor stub
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
+			SymbolicAnalyzer symbolicAnalyzer) {
+		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer);
 	}
 
 	@Override

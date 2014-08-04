@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.civl.kripke.common.PointeredEnabler;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 
 /**
@@ -16,6 +17,7 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
  * 
  */
 public class Kripkes {
+	
 	/**
 	 * Creates a new instance of enabler.
 	 * 
@@ -23,22 +25,22 @@ public class Kripkes {
 	 *            The state factory to be used.
 	 * @param evaluator
 	 *            The evaluator to be used.
-	 * @param showAmpleSet
-	 *            The flag of turning on or off the option to show ample set.
-	 * @param showAmpleSetWtStates
-	 *            The flag of turning on or off the option to show ample set
-	 *            with the state.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 * @param libLoader
 	 *            The library enabler loader to be used.
 	 * @param errorLogger
 	 *            The error logger to be used.
+	 * @param civlConfig
+	 *            The configuration of the CIVL model.
 	 * @return The new enabler created.
 	 */
 	public static Enabler newEnabler(StateFactory stateFactory,
-			Evaluator evaluator, LibraryEnablerLoader libLoader,
-			CIVLErrorLogger errorLogger, CIVLConfiguration civlConfig) {
-		return new PointeredEnabler(stateFactory, evaluator, libLoader,
-				errorLogger, civlConfig);
+			Evaluator evaluator, SymbolicAnalyzer symbolicAnalyzer,
+			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
+			CIVLConfiguration civlConfig) {
+		return new PointeredEnabler(stateFactory, evaluator, symbolicAnalyzer,
+				libLoader, errorLogger, civlConfig);
 	}
 
 	/**
@@ -57,30 +59,18 @@ public class Kripkes {
 	 *            The enabler to be used.
 	 * @param executor
 	 *            The executor to be used.
-	 * @param out
-	 *            The printing stream to be used.
-	 * @param verbose
-	 *            The flag to turn on or off verbose output.
-	 * @param debug
-	 *            The flag to turn on or off debugging output.
-	 * @param showStates
-	 *            The flag to turn on or off the option of showing all states.
-	 * @param showSavedStates
-	 *            The flag to turn on or off the option of showing only saved
-	 *            states.
-	 * @param showTransitions
-	 *            The flag to turn on or off the option of showing transitions.
-	 * @param saveStates
-	 *            The flag to enable or disable saving states.
-	 * @param simplify
-	 *            The flag to enable or disable simplifying states.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer to be used.
 	 * @param errorLogger
 	 *            The error logger to be used.
-	 * @return
+	 * @param config
+	 *            The configuration of the CIVL model.
+	 * @return The new state manager created.
 	 */
 	public static StateManager newStateManager(Enabler enabler,
-			Executor executor, CIVLErrorLogger errorLogger,
-			CIVLConfiguration config) {
-		return new CommonStateManager(enabler, executor, errorLogger, config);
+			Executor executor, SymbolicAnalyzer symbolicAnalyzer,
+			CIVLErrorLogger errorLogger, CIVLConfiguration config) {
+		return new CommonStateManager(enabler, executor, symbolicAnalyzer,
+				errorLogger, config);
 	}
 }

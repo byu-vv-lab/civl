@@ -1895,7 +1895,7 @@ public class CommonModelFactory implements ModelFactory {
 			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, Location startLocation) {
 		for (Variable v : parameters) {
-			if (v.type() instanceof CIVLArrayType) {
+			if (v.type().isArrayType()) {
 				throw new CIVLInternalException("Parameter of array type.", v);
 			}
 		}
@@ -1930,21 +1930,21 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Scope scope(CIVLSource source, Scope parent,
 			Set<Variable> variables, CIVLFunction function) {
-		Scope newScope = new CommonScope(source, parent, variables, scopeID++);
-		int newVid;
+		Scope newScope;
 		Variable heapVariable;
+		Set<Variable> myVariables = new HashSet<Variable>();
 
-		newVid = newScope.numVariables();
 		heapVariable = this.variable(source, modelBuilder.heapType,
-				this.identifier(source, HEAP_VAR), newVid);
-		newScope.addVariable(heapVariable);
+				this.identifier(source, HEAP_VAR), 0);
+		myVariables.add(heapVariable);
+		myVariables.addAll(variables);
+		newScope = new CommonScope(source, parent, myVariables, scopeID++);
 		if (newScope.id() == 0)
 			this.createAtomicLockVariable(newScope);
 		if (parent != null) {
 			parent.addChild(newScope);
 		}
 		newScope.setFunction(function);
-		// this.currentScope = newScope;
 		return newScope;
 	}
 
@@ -2319,13 +2319,8 @@ public class CommonModelFactory implements ModelFactory {
 		return result;
 	}
 
-	/**
-	 * generate undefined value of a certain type
-	 * 
-	 * @param type
-	 * @return
-	 */
-	private SymbolicExpression undefinedValue(SymbolicType type) {
+	@Override
+	public SymbolicExpression undefinedValue(SymbolicType type) {
 		SymbolicExpression result = universe.symbolicConstant(
 				universe.stringObject("UNDEFINED"), type);
 
@@ -2569,9 +2564,9 @@ public class CommonModelFactory implements ModelFactory {
 
 			parameters.add(this.variable(systemSource,
 					this.pointerType(this.processType),
-					this.identifier(systemSource, "procs"), 0));
+					this.identifier(systemSource, "procs"), 1));
 			parameters.add(this.variable(systemSource, this.integerType,
-					this.identifier(systemSource, "num"), 1));
+					this.identifier(systemSource, "num"), 2));
 			function = this.systemFunction(systemSource,
 					this.identifier(systemSource, "$waitall"), parameters,
 					this.voidType, systemScope, "civlc");

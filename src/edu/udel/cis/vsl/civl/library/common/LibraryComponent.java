@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.library.common;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -84,6 +85,11 @@ public abstract class LibraryComponent {
 	 */
 	protected SymbolicUtility symbolicUtil;
 
+	/**
+	 * The symbolic analyzer for operations on symbolic expressions and states.
+	 */
+	protected SymbolicAnalyzer symbolicAnalyzer;
+
 	protected String name;
 
 	protected BooleanExpression trueValue;
@@ -96,9 +102,11 @@ public abstract class LibraryComponent {
 	 *            The symbolic universe to be used.
 	 * @param symbolicUtil
 	 *            The symbolic utility to be used.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer to be used.
 	 */
 	protected LibraryComponent(String name, SymbolicUniverse universe,
-			SymbolicUtility symbolicUtil) {
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer) {
 		this.name = name;
 		this.universe = universe;
 		this.zero = universe.zeroInt();
@@ -110,6 +118,7 @@ public abstract class LibraryComponent {
 		this.twoObject = universe.intObject(2);
 		this.threeObject = universe.intObject(3);
 		this.symbolicUtil = symbolicUtil;
+		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.trueValue = universe.trueExpression();
 		this.falseValue = universe.falseExpression();
 	}

@@ -4,13 +4,11 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -108,25 +106,6 @@ public interface SymbolicUtility {
 			IntObject fieldIndex);
 
 	/**
-	 * Given an array, a start index, and end index, returns the array which is
-	 * the subsequence of the given array consisting of the elements in
-	 * positions start index through end index minus one. The length of the new
-	 * array is endIndex - startIndex. TODO move to libcivlc?
-	 * 
-	 * @param array
-	 * @param startIndex
-	 * @param endIndex
-	 * @param assumption
-	 * @param source
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	SymbolicExpression getSubArray(SymbolicExpression array,
-			NumericExpression startIndex, NumericExpression endIndex,
-			State state, String process, CIVLSource source)
-			throws UnsatisfiablePathConditionException;
-
-	/**
 	 * Compute the symbolic representation of the size of a given symbolic type.
 	 * 
 	 * @param source
@@ -157,12 +136,12 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression expressionOfType(SymbolicType type);
 
-//	/**
-//	 * Returns the initial value of a(n) (empty) heap.
-//	 * 
-//	 * @return The initial value of a(n) (empty) heap.
-//	 */
-//	SymbolicExpression initialHeapValue();
+	// /**
+	// * Returns the initial value of a(n) (empty) heap.
+	// *
+	// * @return The initial value of a(n) (empty) heap.
+	// */
+	// SymbolicExpression initialHeapValue();
 
 	/**
 	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
@@ -178,74 +157,6 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression makePointer(int scopeId, int varId,
 			ReferenceExpression symRef);
-
-	/**
-	 * Computes the user-friendly string representation of a state.
-	 * 
-	 * @param state
-	 *            The state whose string representation is to be computed.
-	 * @return The user-friendly string representation of a state.
-	 */
-	StringBuffer stateToString(State state);
-
-	/**
-	 * <p>
-	 * Computes the user-friendly string representation of a symbolic
-	 * expression.
-	 * </p>
-	 * 
-	 * <p>
-	 * If the given expression is a pointer, then its string representation is
-	 * computed according to the object that it refers to:
-	 * <ul>
-	 * <li>a variable: <code>& variable &lt;dyscope name></code>; <br>
-	 * e.g.,
-	 * 
-	 * <pre>
-	 * int a = 9; int * p = &a;
-	 * </pre>
-	 * 
-	 * The representation of <code>p</code> would be <code>&a&lt;d0></code>
-	 * assuming that the name of the dynamic scope of <code>a</code> is
-	 * <code>d0</code>.</li>
-	 * <li>an element of an array: <code>&array&lt;dyscope name>[index]</code>;<br>
-	 * e.g.,
-	 * 
-	 * <pre>
-	 * int a[5]; int *p = &a[1];
-	 * </pre>
-	 * 
-	 * The representation of <code>p</code> would be <code>&a&lt;d0>[1]</code>
-	 * assuming that the name of the dynamic scope of <code>a</code> is
-	 * <code>d0</code>.</li>
-	 * <li>a field of a struct: <code>&struct&lt;dyscope name>.field</code>;<br>
-	 * e.g.,
-	 * 
-	 * <pre>
-	 * typedef struct {int x; int y;} A; A s; int*p = &s.y;
-	 * </pre>
-	 * 
-	 * The representation of p would be <code>&a&lt;d0>.y</code> assuming that
-	 * the name of the dynamic scope of <code>a</code> is <code>d0</code>.</li>
-	 * 
-	 * <li>a heap cell:
-	 * <code>heapObject&lt;dyscope name, malloc ID, number of malloc call></code>
-	 * .</li>
-	 * </ul>
-	 * </p>
-	 * 
-	 * @param source
-	 *            The source code information related to the symbolic expression
-	 *            for error erport if any.
-	 * @param state
-	 *            The state that the symbolic expression belongs to.
-	 * @param symbolicExpression
-	 *            The symbolic expression whose string representation is to be
-	 *            computed.
-	 * @return The user-friendly string representation of a state.
-	 */
-	String symbolicExpressionToString(CIVLSource source, State state,
-			SymbolicExpression symbolicExpression);
 
 	/**
 	 * Constructs the string representation of an array of characters.
@@ -276,100 +187,14 @@ public interface SymbolicUtility {
 	 *            indexes for referencing the element
 	 * @return the new arrayElementReference
 	 */
-	public ReferenceExpression updateArrayElementReference(
+	ReferenceExpression updateArrayElementReference(
 			ArrayElementReference arrayReference,
 			List<NumericExpression> newIndexes);
 
+	/* *************************** Heap Operations ************************* */
 	/**
-	 * Flatten a given array to a ordered list of elements of that array(Here
-	 * element should never be array type any more). <br>
-	 * 
-	 * e.g. 1 For an array <code>int a[2][2] = {1,2,3,4}</code>, the unrolled
-	 * list will be <code>{1,2,3,4}</code>
-	 * 
-	 * e.g. 2. Given a variable <code> int a = 1;</code>, this function will
-	 * give you an unrolled list <code>{1}</code>.
-	 * 
-	 * @author Ziqing Luo
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The identifier of the process
-	 * @param array
-	 *            The given array.(Or can be a single object, but by intention,
-	 *            this function is mainly for multi-dimensional arrays)
-	 * @param civlsource
-	 *            The CIVL source of the given array.
-	 * @return
-	 */
-	public SymbolicExpression arrayFlatten(State state, String process,
-			SymbolicExpression array, CIVLSource civlsource);
-
-	/**
-	 * Similar function to @link{arrayFlatten} with the @link{java.util.List} as
-	 * the form of return type.
-	 * 
-	 * @author Ziqing Luo
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The information of the process
-	 * @param array
-	 *            THe array needs being flattened
-	 * @param civlsource
-	 *            The CIVL source of the array
-	 * @return a list of flatten elements of the given array.
-	 */
-	public List<SymbolicExpression> arrayFlattenList(State state,
-			String process, SymbolicExpression array, CIVLSource civlsource);
-
-	/**
-	 * Casting an array to a new array with the given array type.<br>
-	 * 
-	 * Pre-Condition: <br>
-	 * 1. The old array should be a complete array (or a object is allowed).<br>
-	 * 
-	 * 2. The cast should be a legal cast. <br>
-	 * 
-	 * 
-	 * Special cases:<br>
-	 * If the array(the "oldArray") is not an array type, return the object (the
-	 * "oldArray") immediately.<br>
-	 * If the given type is not an array type( but the "oldArray" is an array
-	 * type), the length of the "oldArray" must be one, then return the first
-	 * element of the "oldArray". Else, return null<br>
-	 * 
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The identifier of the process
-	 * @param oldArray
-	 *            The array needs being casted.
-	 * @param type
-	 *            The given type that the "oldArray" will try to cast to.
-	 * @param civlsource
-	 *            The CIVL source of the given array.
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	public SymbolicExpression arrayCasting(State state, String process,
-			SymbolicExpression array, SymbolicType type, CIVLSource civlsource)
-			throws UnsatisfiablePathConditionException;
-
-	/**
-	 * Returns the type of the first non-array type element of an array.
-	 * 
-	 * @param array
-	 *            The array contains the elements
-	 * @return The type of the first non-array type element of an array
-	 */
-	public SymbolicType getArrayElementType(SymbolicExpression array);
-
-	/* ********************************************************************* */
-	/**
-	 * Checks if a heap is null or empty.
+	 * Checks if a heap is empty, i.e., either it is the SARL null expression or
+	 * all heap objects it holds are marked as INVALID (already deallocated).
 	 * 
 	 * @param heapValue
 	 *            The value of the heap to be checked.
@@ -415,27 +240,39 @@ public interface SymbolicUtility {
 	 * @param pointer
 	 * @return
 	 */
-	boolean isHeapPointer(SymbolicExpression pointer);
+	boolean isPointerToHeap(SymbolicExpression pointer);
+
+	// /**
+	// * Gets the pointer to the heap of the given scope.
+	// *
+	// * @param source
+	// * The source code information for error report.
+	// * @param state
+	// * The state where this operation happens.
+	// * @param process
+	// * The information of the process that triggers this operation,
+	// * for the purpose of error report.
+	// * @param scopeValue
+	// * The scope value
+	// * @return The pointer to the heap of the given scope.
+	// * @throws UnsatisfiablePathConditionException
+	// * if the given scope is not concrete or not a valid scope.
+	// */
+	// SymbolicExpression heapPointer(CIVLSource source, State state,
+	// String process, SymbolicExpression scopeValue)
+	// throws UnsatisfiablePathConditionException;
 
 	/**
-	 * Gets the pointer to the heap of the given scope.
+	 * <p>
+	 * Returns a pointer to a heap object which is involved by the given
+	 * pointer.
+	 * </p>
 	 * 
-	 * @param source
-	 *            The source code information for error report.
-	 * @param state
-	 *            The state where this operation happens.
-	 * @param process
-	 *            The information of the process that triggers this operation,
-	 *            for the purpose of error report.
-	 * @param scopeValue
-	 *            The scope value
-	 * @return The pointer to the heap of the given scope.
-	 * @throws UnsatisfiablePathConditionException
-	 *             if the given scope is not concrete or not a valid scope.
+	 * @param pointer
+	 *            A valid pointer that points to some part of a heap.
+	 * @return A pointer to a heap object that is involved by the given pointer.
 	 */
-	SymbolicExpression heapPointer(CIVLSource source, State state,
-			String process, SymbolicExpression scopeValue)
-			throws UnsatisfiablePathConditionException;
+	SymbolicExpression heapObjectPointer(SymbolicExpression pointer);
 
 	/**
 	 * Is the given pointer pointing to the first element of a heap cell?
@@ -445,14 +282,6 @@ public interface SymbolicUtility {
 	 * @return
 	 */
 	boolean isHeapObjectPointer(CIVLSource source, SymbolicExpression pointer);
-
-	/**
-	 * Gets the heap cell pointer of a heap object pointer.
-	 * 
-	 * @param heapObjectPointer
-	 * @return
-	 */
-	SymbolicExpression heapCellPointer(SymbolicExpression heapObjectPointer);
 
 	ReferenceExpression referenceOfPointer(SymbolicExpression pointer);
 
@@ -470,10 +299,18 @@ public interface SymbolicUtility {
 
 	boolean isValidRefOf(ReferenceExpression ref, SymbolicExpression value);
 
-	CIVLType typeOfObjByPointer(CIVLSource soruce, State state,
-			SymbolicExpression pointer);
+	/**
+	 * Returns the undefined pointer of CIVL, which is a tuple <-2, -2, NULL>
+	 * 
+	 * @return The undefined pointer.
+	 */
+	SymbolicExpression undefinedPointer();
 
-	boolean isUndefinedConstant(SymbolicExpression value);
+	SymbolicConstant invalidHeapObject(SymbolicType heapObjectType);
+
+	boolean isInvalidHeapObject(SymbolicExpression heapObject);
+
+	boolean isUndefinedPointer(SymbolicExpression value);
 
 	boolean isDisjointWith(SymbolicExpression pointer1,
 			SymbolicExpression pointer2);
@@ -494,4 +331,6 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression newArray(BooleanExpression context,
 			NumericExpression length, SymbolicExpression eleValue);
+
+	ReferenceExpression referenceOfHeapObjectPointer(SymbolicExpression pointer);
 }

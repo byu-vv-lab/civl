@@ -1,25 +1,16 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.ButtonGroup;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTable;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
 
 public class BooleanCellEditor extends AbstractCellEditor implements
@@ -59,7 +50,7 @@ public class BooleanCellEditor extends AbstractCellEditor implements
 	// TODO: FIX BUTTON ENTANGLEMENT
 	// radio buttons from different cells are acting in a group if focus
 	// switches into a different cell's radio button directly
-	
+
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value,
 			boolean isSelected, int row, int column) {

@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.gui.common;
 import java.awt.Component;
 
 import javax.swing.ButtonGroup;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTable;

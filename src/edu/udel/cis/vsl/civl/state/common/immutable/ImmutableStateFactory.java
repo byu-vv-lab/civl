@@ -6,12 +6,15 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -26,18 +29,21 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject.SymbolicObjectKind;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
-import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicCollection;
 
 /**
  * An implementation of StateFactory based on the Immutable Pattern.
@@ -115,587 +121,20 @@ public class ImmutableStateFactory implements StateFactory {
 	 */
 	private SymbolicUniverse universe;
 
+	private SymbolicUtility symbolicUtil;
+
 	/* **************************** Constructors *************************** */
 
 	/**
 	 * Factory to create all state objects.
 	 */
 	public ImmutableStateFactory(ModelFactory modelFactory,
-			GMCConfiguration config) {
+			SymbolicUtility symbolicUtil, GMCConfiguration config) {
 		this.modelFactory = modelFactory;
+		this.symbolicUtil = symbolicUtil;
 		this.universe = modelFactory.universe();
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
 		this.simplify = config.isTrue(simplifyO);
-	}
-
-	/* *************************** Private Methods ************************* */
-
-	/**
-	 * Adds a new initial process state to the given state.
-	 * 
-	 * @param state
-	 *            The old state.
-	 * @return A new instance of state with only the process states changed.
-	 */
-	private ImmutableState createNewProcess(State state) {
-		ImmutableState theState = (ImmutableState) state;
-		int numProcs = theState.numProcs();
-		ImmutableProcessState[] newProcesses;
-
-		newProcesses = theState.copyAndExpandProcesses();
-		newProcesses[numProcs] = new ImmutableProcessState(numProcs,
-				this.processCount++);
-		theState = theState.setProcessStates(newProcesses);
-		return theState;
-	}
-
-	/**
-	 * Returns the canonicalized version of the given state.
-	 * 
-	 * @param state
-	 *            the old state
-	 * @return the state equivalent to the given state and which is
-	 *         canonicalized.
-	 */
-	private ImmutableState flyweight(State state) {
-		ImmutableState theState = (ImmutableState) state;
-
-		if (theState.isCanonic())
-			return theState;
-		else {
-			ImmutableState result = stateMap.get(theState);
-
-			if (result == null) {
-				result = theState;
-				result.makeCanonic(stateCount, universe, scopeMap, processMap);
-				stateCount++;
-				stateMap.put(result, result);
-			}
-			return result;
-		}
-	}
-
-	/**
-	 * Constructs a pointer to a heap object.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param dyscopeID
-	 *            The dyscope ID of that the heap belongs to.
-	 * @param ref
-	 *            The reference expression of the pointer to the heap object.
-	 * @return The pointer to a heap object, e.g.,
-	 *         <code>&&lt;d1>heap&lt;0,1>[0]</code>.
-	 */
-	private SymbolicExpression heapObjetPointer(State state, int dyscopeID,
-			ReferenceExpression ref) {
-		assert dyscopeID >= 0 && dyscopeID < state.numDyscopes();
-		return universe.tuple(
-				modelFactory.pointerSymbolicType(),
-				Arrays.asList(new SymbolicExpression[] {
-						modelFactory.scopeValue(dyscopeID), universe.zeroInt(),
-						ref }));
-	}
-
-	/**
-	 * Creates a dyscope in its initial state.
-	 * 
-	 * @param lexicalScope
-	 *            The lexical scope corresponding to this dyscope.
-	 * @param parent
-	 *            The parent of this dyscope. -1 only for the topmost dyscope.
-	 * @return A new dynamic scope.
-	 */
-	private ImmutableDynamicScope initialDynamicScope(Scope lexicalScope,
-			int parent, int parentIdentifier, int dynamicScopeId,
-			BitSet reachers) {
-		return new ImmutableDynamicScope(lexicalScope, parent,
-				parentIdentifier, initialValues(lexicalScope), reachers,
-				this.dyscopeCount++);
-	}
-
-	/**
-	 * Creates the initial value of a given lexical scope.
-	 * 
-	 * @param lexicalScope
-	 *            The lexical scope whose variables are to be initialized.
-	 * @return An array of initial values of variables of the given lexical
-	 *         scope.
-	 */
-	private SymbolicExpression[] initialValues(Scope lexicalScope) {
-		// TODO: special handling for input variables in root scope?
-		SymbolicExpression[] values = new SymbolicExpression[lexicalScope
-				.variables().size()];
-
-		for (int i = 0; i < values.length; i++) {
-			values[i] = universe.nullExpression();
-		}
-		return values;
-	}
-
-	/**
-	 * Checks if a heap is null or empty.
-	 * 
-	 * @param heapValue
-	 *            The value of the heap to be checked.
-	 * @return True iff the heap has null value or is empty.
-	 */
-	private boolean isEmptyHeap(SymbolicExpression heapValue) {
-		if (heapValue.isNull())
-			return true;
-		else {
-			SymbolicSequence<?> heapFields = (SymbolicSequence<?>) heapValue
-					.argument(0);
-			int count = heapFields.size();
-
-			for (int i = 0; i < count; i++) {
-				SymbolicExpression heapField = heapFields.get(i);
-				SymbolicSequence<?> heapFieldObjets = (SymbolicSequence<?>) heapField
-						.argument(0);
-				int size = heapFieldObjets.size();
-
-				for (int j = 0; j < size; j++) {
-					SymbolicExpression heapFieldObj = heapFieldObjets.get(j);
-					SymbolicObject heapFieldObjValue = heapFieldObj.argument(0);
-
-					if (heapFieldObjValue.symbolicObjectKind() == SymbolicObjectKind.STRING) {
-						String value = ((StringObject) heapFieldObjValue)
-								.getString();
-
-						if (value.equals("UNDEFINED"))
-							continue;
-					}
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Given two static scopes, this method computes a non-empty sequence of
-	 * scopes with the following properties:
-	 * <ul>
-	 * <li>The first (0-th) element of the sequence is the join of scope1 and
-	 * scope2.</li>
-	 * <li>The last element is scope2.</li>
-	 * <li>For each i (0<=i<length-1), the i-th element is the parent of the
-	 * (i+1)-th element.</li>
-	 * </ul>
-	 * 
-	 * @param scope1
-	 *            a static scope
-	 * @param scope2
-	 *            a static scope
-	 * @return join sequence as described above
-	 * 
-	 * @exception IllegalArgumentException
-	 *                if the scopes do not have a common ancestor
-	 */
-	private Scope[] joinSequence(Scope scope1, Scope scope2) {
-		if (scope1 == scope2)
-			return new Scope[] { scope2 };
-		for (Scope scope1a = scope1; scope1a != null; scope1a = scope1a
-				.parent())
-			for (Scope scope2a = scope2; scope2a != null; scope2a = scope2a
-					.parent())
-				if (scope1a.equals(scope2a)) {
-					Scope join = scope2a;
-					int length = 1;
-					Scope[] result;
-					Scope s;
-
-					for (s = scope2; s != join; s = s.parent())
-						length++;
-					result = new Scope[length];
-					s = scope2;
-					for (int i = length - 1; i >= 0; i--) {
-						result[i] = s;
-						s = s.parent();
-					}
-					return result;
-				}
-		throw new IllegalArgumentException("No common scope:\n" + scope1 + "\n"
-				+ scope2);
-	}
-
-	/**
-	 * Numbers the reachable dynamic scopes in a state in a canonical way.
-	 * Scopes are numbered from 0 up, in the order in which they are encountered
-	 * by iterating over the processes by increasing ID, iterating over the
-	 * process' call stack frames from index 0 up, iterating over the parent
-	 * scopes from the scope referenced by the frame.
-	 * 
-	 * Unreachable scopes are assigned the number -1.
-	 * 
-	 * Returns an array which of length numScopes in which the element at
-	 * position i is the new ID number for the scope whose old ID number is i.
-	 * Does not modify anything.
-	 * 
-	 * @param state
-	 *            a state
-	 * @return an array mapping old scope IDs to new.
-	 */
-	private int[] numberScopes(ImmutableState state) {
-		int numScopes = state.numDyscopes();
-		int numProcs = state.numProcs();
-		int[] oldToNew = new int[numScopes];
-		int nextScopeId = 1;
-
-		// the root dyscope is forced to be 0
-		oldToNew[0] = 0;
-		for (int i = 1; i < numScopes; i++)
-			oldToNew[i] = -1;
-		for (int pid = 0; pid < numProcs; pid++) {
-			ImmutableProcessState process = state.getProcessState(pid);
-			int stackSize;
-
-			if (process == null)
-				continue;
-			stackSize = process.stackSize();
-			// start at bottom of stack so system scope in proc 0
-			// is reached first
-			for (int i = stackSize - 1; i >= 0; i--) {
-				int dynamicScopeId = process.getStackEntry(i).scope();
-
-				while (oldToNew[dynamicScopeId] < 0) {
-					oldToNew[dynamicScopeId] = nextScopeId;
-					nextScopeId++;
-					dynamicScopeId = state.getParentId(dynamicScopeId);
-					if (dynamicScopeId < 0)
-						break;
-				}
-			}
-		}
-		return oldToNew;
-	}
-
-	/**
-	 * Checks if a given claim is not satisfiable.
-	 * 
-	 * @param claim
-	 *            The given claim.
-	 * @return True iff the given claim is evaluated to be false.
-	 */
-	private boolean nsat(BooleanExpression claim) {
-		return trueReasoner.isValid(universe.not(claim));
-	}
-
-	/**
-	 * Creates a map of process value's according to PID map from old PID to new
-	 * PID.
-	 * 
-	 * @param oldToNewPidMap
-	 *            The map of old PID to new PID, i.e, oldToNewPidMap[old PID] =
-	 *            new PID.
-	 * @return The map of process value's from old process value to new process
-	 *         value.
-	 */
-	private Map<SymbolicExpression, SymbolicExpression> procSubMap(
-			int[] oldToNewPidMap) {
-		int size = oldToNewPidMap.length;
-		Map<SymbolicExpression, SymbolicExpression> result = new HashMap<SymbolicExpression, SymbolicExpression>(
-				size);
-
-		for (int i = 0; i < size; i++) {
-			SymbolicExpression oldVal = modelFactory.processValue(i);
-			SymbolicExpression newVal = modelFactory
-					.processValue(oldToNewPidMap[i]);
-
-			result.put(oldVal, newVal);
-		}
-		return result;
-	}
-
-	/**
-	 * General method for pushing a frame onto a call stack, whether or not the
-	 * call stack is for a new process (and therefore empty).
-	 * 
-	 * @param state
-	 *            the initial state
-	 * @param pid
-	 *            the PID of the process whose stack is to be modified; this
-	 *            stack may be empty
-	 * @param function
-	 *            the called function that will be pushed onto the stack
-	 * @param functionParentDyscope
-	 *            The dyscope ID of the parent of the new function
-	 * @param arguments
-	 *            the arguments to the function
-	 * @param callerPid
-	 *            the PID of the process that is creating the new frame. For an
-	 *            ordinary function call, this will be the same as pid. For a
-	 *            "spawn" command, callerPid will be different from pid and
-	 *            process pid will be new and have an empty stack. Exception: if
-	 *            callerPid is -1 then the new dynamic scope will have no
-	 *            parent; this is used for pushing the original system function,
-	 *            which has no caller
-	 * @return new stack with new frame on call stack of process pid
-	 */
-	private ImmutableState pushCallStack2(ImmutableState state, int pid,
-			CIVLFunction function, int functionParentDyscope,
-			SymbolicExpression[] arguments, int callerPid) {
-		Scope containingStaticScope = function.containingScope();
-		Scope functionStaticScope = function.outerScope();
-		ImmutableProcessState[] newProcesses = state.copyProcessStates();
-		int numScopes = state.numDyscopes();
-		SymbolicExpression[] values;
-		ImmutableDynamicScope[] newScopes;
-		int sid;
-		int containingDynamicScopeId = functionParentDyscope, containingDynamicScopeIdentifier;
-		BitSet bitSet = new BitSet(newProcesses.length);
-
-		if (containingDynamicScopeId < 0)
-			if (callerPid >= 0) {
-				ProcessState caller = state.getProcessState(callerPid);
-				ImmutableDynamicScope containingDynamicScope;
-
-				if (caller.stackSize() == 0)
-					throw new IllegalArgumentException(
-							"Calling process has empty stack: " + callerPid);
-				containingDynamicScopeId = caller.getDyscopeId();
-				while (containingDynamicScopeId >= 0) {
-					containingDynamicScope = (ImmutableDynamicScope) state
-							.getDyscope(containingDynamicScopeId);
-					if (containingStaticScope == containingDynamicScope
-							.lexicalScope())
-						break;
-					containingDynamicScopeId = state
-							.getParentId(containingDynamicScopeId);
-				}
-				if (containingDynamicScopeId < 0)
-					throw new IllegalArgumentException(
-							"Called function not visible:\nfunction: "
-									+ function + "\npid: " + pid
-									+ "\ncallerPid:" + callerPid
-									+ "\narguments: "
-									+ Arrays.toString(arguments));
-			} else {
-				containingDynamicScopeId = -1;
-			}
-		newScopes = state.copyAndExpandScopes();
-		sid = numScopes;
-		values = initialValues(functionStaticScope);
-		for (int i = 0; i < arguments.length; i++)
-			if (arguments[i] != null)
-				values[i] = arguments[i];
-		bitSet.set(pid);
-		if (containingDynamicScopeId < 0)
-			containingDynamicScopeIdentifier = -1;
-		else
-			containingDynamicScopeIdentifier = newScopes[containingDynamicScopeId]
-					.identifier();
-		newScopes[sid] = new ImmutableDynamicScope(functionStaticScope,
-				containingDynamicScopeId, containingDynamicScopeIdentifier,
-				values, bitSet, this.dyscopeCount++);
-		{
-			int id = containingDynamicScopeId;
-			ImmutableDynamicScope scope;
-
-			while (id >= 0) {
-				scope = newScopes[id];
-				bitSet = newScopes[id].getReachers();
-				if (bitSet.get(pid))
-					break;
-				bitSet = (BitSet) bitSet.clone();
-				bitSet.set(pid);
-				newScopes[id] = scope.setReachers(bitSet);
-				id = scope.getParent();
-			}
-		}
-		newProcesses[pid] = state.getProcessState(pid).push(
-				stackEntry(null, sid, newScopes[sid].identifier()));
-		state = new ImmutableState(newProcesses, newScopes,
-				state.getPathCondition());
-		state = setLocation(state, pid, function.startLocation());
-		return state;
-	}
-
-	/**
-	 * Creates a map of scope value's according to the given dyscope map from
-	 * old dyscope ID to new dyscope ID.
-	 * 
-	 * @param oldToNewSidMap
-	 *            The map of old dyscope ID to new dyscoep ID, i.e,
-	 *            oldToNewSidMap[old dyscope ID] = new dyscope ID.
-	 * @return The map of scope value's from old scope value to new scope value.
-	 */
-	private Map<SymbolicExpression, SymbolicExpression> scopeSubMap(
-			int[] oldToNewSidMap) {
-		int size = oldToNewSidMap.length;
-		Map<SymbolicExpression, SymbolicExpression> result = new HashMap<SymbolicExpression, SymbolicExpression>(
-				size);
-
-		for (int i = 0; i < size; i++) {
-			SymbolicExpression oldVal = modelFactory.scopeValue(i);
-			SymbolicExpression newVal = modelFactory
-					.scopeValue(oldToNewSidMap[i]);
-
-			result.put(oldVal, newVal);
-		}
-		return result;
-	}
-
-	/**
-	 * Given an array of dynamic scopes and a process state, computes the actual
-	 * dynamic scopes reachable from that process and modifies the array as
-	 * necessary by replacing a dynamic scope with a scope that is equivalent
-	 * except for the corrected bit set.
-	 * 
-	 * @param dynamicScopes
-	 *            an array of dynamic scopes, to be modified
-	 * @param process
-	 *            a process state
-	 */
-	private void setReachablesForProc(ImmutableDynamicScope[] dynamicScopes,
-			ImmutableProcessState process) {
-		int stackSize = process.stackSize();
-		int numScopes = dynamicScopes.length;
-		boolean reached[] = new boolean[numScopes];
-		int pid = process.getPid();
-
-		for (int i = 0; i < stackSize; i++) {
-			StackEntry frame = process.getStackEntry(i);
-			int id = frame.scope();
-
-			while (id >= 0) {
-				if (reached[id])
-					break;
-				reached[id] = true;
-				id = dynamicScopes[id].getParent();
-			}
-		}
-		for (int j = 0; j < numScopes; j++) {
-			ImmutableDynamicScope scope = dynamicScopes[j];
-			BitSet bitSet = scope.getReachers();
-
-			if (bitSet.get(pid) != reached[j]) {
-				BitSet newBitSet = (BitSet) bitSet.clone();
-
-				newBitSet.flip(pid);
-				dynamicScopes[j] = dynamicScopes[j].setReachers(newBitSet);
-			}
-		}
-	}
-
-	/**
-	 * Create a new call stack entry.
-	 * 
-	 * @param location
-	 *            The location to go to after returning from this call.
-	 * @param scope
-	 *            The dynamic scope the process is in before the call.
-	 * @param dyscopeIdentifier
-	 *            The identifier of the dynamic scope that the process is in
-	 *            before the call.
-	 */
-	private ImmutableStackEntry stackEntry(Location location, int scope,
-			int dyscopeIdentifier) {
-		return new ImmutableStackEntry(location, scope, dyscopeIdentifier);
-	}
-
-	/**
-	 * Given a BitSet indexed by process IDs, and a map of old PIDs to new PIDs,
-	 * returns a BitSet equivalent to original but indexed using the new PIDs.
-	 * 
-	 * If no changes are made, the original BitSet (oldBitSet) is returned.
-	 * 
-	 * @param oldBitSet
-	 * @param oldToNewPidMap
-	 *            array of length state.numProcs in which element at index i is
-	 *            the new PID of the process whose old PID is i. A negative
-	 *            value indicates that the process of (old) PID i is to be
-	 *            removed.
-	 * @return
-	 */
-	private BitSet updateBitSet(BitSet oldBitSet, int[] oldToNewPidMap) {
-		BitSet newBitSet = null;
-		int length = oldBitSet.length();
-
-		for (int i = 0; i < length; i++) {
-			boolean flag = oldBitSet.get(i);
-
-			if (flag) {
-				int newIndex = oldToNewPidMap[i];
-
-				if (newIndex >= 0) {
-					if (newBitSet == null)
-						newBitSet = new BitSet(length);
-					newBitSet.set(newIndex);
-				}
-			}
-		}
-		if (newBitSet == null)
-			return oldBitSet;
-		return newBitSet;
-	}
-
-	/**
-	 * Searches the dynamic scopes in the given state for any process reference
-	 * value, and returns a new array of scopes equivalent to the old except
-	 * that those process reference values have been replaced with new specified
-	 * values. Used for garbage collection and canonicalization of PIDs.
-	 * 
-	 * Also updates the reachable BitSet in each DynamicScope: create a new
-	 * BitSet called newReachable. iterate over all entries in old BitSet
-	 * (reachable). If old entry is position i is true, set oldToNewPidMap[i] to
-	 * true in newReachable (assuming oldToNewPidMap[i]>=0).
-	 * 
-	 * The method returns null if no changes were made.
-	 * 
-	 * @param state
-	 *            a state
-	 * @param oldToNewPidMap
-	 *            array of length state.numProcs in which element at index i is
-	 *            the new PID of the process whose old PID is i. A negative
-	 *            value indicates that the process of (old) PID i is to be
-	 *            removed.
-	 * @return new dyanmic scopes or null
-	 */
-	private ImmutableDynamicScope[] updateProcessReferencesInScopes(
-			ImmutableState state, int[] oldToNewPidMap) {
-		Map<SymbolicExpression, SymbolicExpression> procSubMap = procSubMap(oldToNewPidMap);
-		ImmutableDynamicScope[] newScopes = null;
-		int numScopes = state.numDyscopes();
-
-		for (int i = 0; i < numScopes; i++) {
-			ImmutableDynamicScope dynamicScope = state.getDyscope(i);
-			Scope staticScope = dynamicScope.lexicalScope();
-			Collection<Variable> procrefVariableIter = staticScope
-					.variablesWithProcrefs();
-			SymbolicExpression[] newValues = null;
-			BitSet oldBitSet = dynamicScope.getReachers();
-			BitSet newBitSet = updateBitSet(oldBitSet, oldToNewPidMap);
-
-			for (Variable variable : procrefVariableIter) {
-				int vid = variable.vid();
-				SymbolicExpression oldValue = dynamicScope.getValue(vid);
-				SymbolicExpression newValue = universe.substitute(oldValue,
-						procSubMap);
-
-				if (oldValue != newValue) {
-					if (newValues == null)
-						newValues = dynamicScope.copyValues();
-					newValues[vid] = newValue;
-				}
-			}
-			if (newValues != null || newBitSet != oldBitSet) {
-				if (newScopes == null) {
-					newScopes = new ImmutableDynamicScope[numScopes];
-					for (int j = 0; j < i; j++)
-						newScopes[j] = state.getDyscope(j);
-				}
-				if (newValues == null)
-					newScopes[i] = dynamicScope.setReachers(newBitSet);
-				else
-					newScopes[i] = new ImmutableDynamicScope(staticScope,
-							dynamicScope.getParent(), 0, newValues,// TODO
-							newBitSet, dynamicScope.identifier());
-			} else if (newScopes != null) {
-				newScopes[i] = dynamicScope;
-			}
-		}
-		return newScopes;
 	}
 
 	/* ********************** Methods from StateFactory ******************** */
@@ -720,10 +159,13 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	/**
-	 * In this implementation of canonic: process states are collected, dynamic
-	 * scopes are collected, the flyweight representative is taken, simplify is
-	 * called if that option is selected, then the flyweight representative is
-	 * taken again.
+	 * <p>
+	 * In this implementation of canonic: process states are collected, heaps
+	 * are collected, dynamic scopes are collected, the flyweight representative
+	 * is taken, simplify is called if that option is selected, then the
+	 * flyweight representative is taken again.
+	 * </p>
+	 * 
 	 * 
 	 * @throws CIVLStateException
 	 */
@@ -733,6 +175,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 		theState = collectProcesses(theState);
 		theState = collectScopes(theState);
+		theState = collectHeaps(theState);
 		theState = flyweight(theState);
 		if (simplify) {
 			ImmutableState simplifiedState = theState.simplifiedState;
@@ -770,7 +213,7 @@ public class ImmutableStateFactory implements StateFactory {
 				SymbolicExpression heapValue = scopeToBeRemoved
 						.getValue(heapVariable.vid());
 
-				if (!this.isEmptyHeap(heapValue)) {
+				if (!(heapValue.isNull() || symbolicUtil.isEmptyHeap(heapValue))) {
 					throw new CIVLStateException(ErrorKind.MEMORY_LEAK,
 							Certainty.CONCRETE, "The unreachable dyscope "
 									+ scopeToBeRemoved.name() + "(id=" + i
@@ -805,15 +248,23 @@ public class ImmutableStateFactory implements StateFactory {
 			theState = ImmutableState.newState(theState, newProcesses,
 					newScopes, null);
 		}
+		if (theState.numDyscopes() == 0
+				&& theState.getProcessState(0).hasEmptyStack()) {
+			// checks the memory leak for the final state
+			DynamicScope dyscope = state.getDyscope(0);
+			SymbolicExpression heap = dyscope.getValue(0);
+
+			if (!symbolicUtil.isEmptyHeap(heap))
+				throw new CIVLStateException(ErrorKind.MEMORY_LEAK,
+						Certainty.CONCRETE,
+						"The root dyscope d0 (id=0) has a non-empty heap "
+								+ heap.toString()
+								+ " upon termination of the program.", state,
+						dyscope.lexicalScope().getSource());
+
+		}
 		return theState;
 	}
-
-//	private void collectHeap(DynamicScope dyscope, ReferenceExpression removedRef) {
-//		SymbolicExpression heap = dyscope.getValue(0);
-//		
-//		
-//		
-//	}
 
 	@Override
 	public State getAtomicLock(State state, int pid) {
@@ -1195,9 +646,8 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public Pair<State, SymbolicExpression> malloc(CIVLSource source,
-			State state, int dyscopeId, int mallocId,
-			SymbolicExpression heapObject) {
+	public Pair<State, SymbolicExpression> malloc(State state, int dyscopeId,
+			int mallocId, SymbolicExpression heapObject) {
 		DynamicScope dyscope = state.getDyscope(dyscopeId);
 		IntObject indexObj = universe.intObject(mallocId);
 		SymbolicExpression heapValue = dyscope.getValue(0);
@@ -1223,8 +673,8 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public Pair<State, SymbolicExpression> malloc(CIVLSource source,
-			State state, int dyscopeId, int mallocId, SymbolicType elementType,
+	public Pair<State, SymbolicExpression> malloc(State state, int pid,
+			int dyscopeId, int mallocId, SymbolicType elementType,
 			NumericExpression elementCount) {
 		DynamicScope dyscope = state.getDyscope(dyscopeId);
 		SymbolicExpression heapValue = dyscope.getValue(0).isNull() ? modelFactory
@@ -1233,14 +683,954 @@ public class ImmutableStateFactory implements StateFactory {
 		SymbolicExpression heapField = universe.tupleRead(heapValue, index);
 		int length = ((IntegerNumber) universe.extractNumber(universe
 				.length(heapField))).intValue();
-		StringObject heapObjectName = universe.stringObject("Ho" + mallocId
-				+ "i" + length);
+		StringObject heapObjectName = universe.stringObject("Hp" + pid + "s"
+				+ dyscopeId + "o" + mallocId + "i" + length);
 		SymbolicType heapObjectType = universe.arrayType(elementType,
 				elementCount);
 		SymbolicExpression heapObject = universe.symbolicConstant(
 				heapObjectName, heapObjectType);
 
-		return this.malloc(source, state, dyscopeId, mallocId, heapObject);
+		return this.malloc(state, dyscopeId, mallocId, heapObject);
+	}
+
+	@Override
+	public State deallocate(State state, SymbolicExpression heapObjectPointer,
+			int dyscopeId, int mallocId, int index) {
+		SymbolicExpression heapValue = state.getDyscope(dyscopeId).getValue(0);
+		IntObject mallocIndex = universe.intObject(mallocId);
+		SymbolicExpression heapField = universe.tupleRead(heapValue,
+				mallocIndex);
+		int heapFieldLength = ((IntegerNumber) universe.extractNumber(universe
+				.length(heapField))).intValue();
+		Map<SymbolicExpression, SymbolicExpression> oldToNewPointers = new HashMap<>(
+				heapFieldLength - index);
+		int numDyscopes = state.numDyscopes();
+		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
+		ImmutableState theState = (ImmutableState) state;
+
+		oldToNewPointers.put(symbolicUtil.heapObjectPointer(heapObjectPointer),
+				this.symbolicUtil.undefinedPointer());
+		heapField = universe.arrayWrite(heapField, universe.integer(index),
+				symbolicUtil.invalidHeapObject(((SymbolicArrayType) heapField
+						.type()).elementType()));
+		heapValue = universe.tupleWrite(heapValue, mallocIndex, heapField);
+		theState = this.setVariable(theState, 0, dyscopeId, heapValue);
+		// computes all affected pointers' oldToNew map
+		oldToNewPointers = this.computePointerMap(theState, oldToNewPointers);
+		for (int i = 0; i < numDyscopes; i++)
+			newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
+					oldToNewPointers, universe);
+		theState = theState.setScopes(newScopes);
+		return theState;
+	}
+
+	/* *************************** Private Methods ************************* */
+
+	/**
+	 * Adds a new initial process state to the given state.
+	 * 
+	 * @param state
+	 *            The old state.
+	 * @return A new instance of state with only the process states changed.
+	 */
+	private ImmutableState createNewProcess(State state) {
+		ImmutableState theState = (ImmutableState) state;
+		int numProcs = theState.numProcs();
+		ImmutableProcessState[] newProcesses;
+
+		newProcesses = theState.copyAndExpandProcesses();
+		newProcesses[numProcs] = new ImmutableProcessState(numProcs,
+				this.processCount++);
+		theState = theState.setProcessStates(newProcesses);
+		return theState;
+	}
+
+	/**
+	 * Returns the canonicalized version of the given state.
+	 * 
+	 * @param state
+	 *            the old state
+	 * @return the state equivalent to the given state and which is
+	 *         canonicalized.
+	 */
+	private ImmutableState flyweight(State state) {
+		ImmutableState theState = (ImmutableState) state;
+
+		if (theState.isCanonic())
+			return theState;
+		else {
+			ImmutableState result = stateMap.get(theState);
+
+			if (result == null) {
+				result = theState;
+				result.makeCanonic(stateCount, universe, scopeMap, processMap);
+				stateCount++;
+				stateMap.put(result, result);
+			}
+			return result;
+		}
+	}
+
+	/**
+	 * Constructs a pointer to a heap object.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param dyscopeID
+	 *            The dyscope ID of that the heap belongs to.
+	 * @param ref
+	 *            The reference expression of the pointer to the heap object.
+	 * @return The pointer to a heap object, e.g.,
+	 *         <code>&&lt;d1>heap&lt;0,1>[0]</code>.
+	 */
+	private SymbolicExpression heapObjetPointer(State state, int dyscopeID,
+			ReferenceExpression ref) {
+		assert dyscopeID >= 0 && dyscopeID < state.numDyscopes();
+		return universe.tuple(
+				modelFactory.pointerSymbolicType(),
+				Arrays.asList(new SymbolicExpression[] {
+						modelFactory.scopeValue(dyscopeID), universe.zeroInt(),
+						ref }));
+	}
+
+	/**
+	 * Creates a dyscope in its initial state.
+	 * 
+	 * @param lexicalScope
+	 *            The lexical scope corresponding to this dyscope.
+	 * @param parent
+	 *            The parent of this dyscope. -1 only for the topmost dyscope.
+	 * @return A new dynamic scope.
+	 */
+	private ImmutableDynamicScope initialDynamicScope(Scope lexicalScope,
+			int parent, int parentIdentifier, int dynamicScopeId,
+			BitSet reachers) {
+		return new ImmutableDynamicScope(lexicalScope, parent,
+				parentIdentifier, initialValues(lexicalScope), reachers,
+				this.dyscopeCount++);
+	}
+
+	/**
+	 * Creates the initial value of a given lexical scope.
+	 * 
+	 * @param lexicalScope
+	 *            The lexical scope whose variables are to be initialized.
+	 * @return An array of initial values of variables of the given lexical
+	 *         scope.
+	 */
+	private SymbolicExpression[] initialValues(Scope lexicalScope) {
+		// TODO: special handling for input variables in root scope?
+		SymbolicExpression[] values = new SymbolicExpression[lexicalScope
+				.variables().size()];
+
+		for (int i = 0; i < values.length; i++) {
+			values[i] = universe.nullExpression();
+		}
+		return values;
+	}
+
+	// /**
+	// * Checks if a heap is null or empty.
+	// *
+	// * @param heapValue
+	// * The value of the heap to be checked.
+	// * @return True iff the heap has null value or is empty.
+	// */
+	// private boolean isEmptyHeap(SymbolicExpression heapValue) {
+	// if (heapValue.isNull())
+	// return true;
+	// else {
+	// SymbolicSequence<?> heapFields = (SymbolicSequence<?>) heapValue
+	// .argument(0);
+	// int count = heapFields.size();
+	//
+	// for (int i = 0; i < count; i++) {
+	// SymbolicExpression heapField = heapFields.get(i);
+	// SymbolicSequence<?> heapFieldObjets = (SymbolicSequence<?>) heapField
+	// .argument(0);
+	// int size = heapFieldObjets.size();
+	//
+	// for (int j = 0; j < size; j++) {
+	// SymbolicExpression heapFieldObj = heapFieldObjets.get(j);
+	// SymbolicObject heapFieldObjValue = heapFieldObj.argument(0);
+	//
+	// if (heapFieldObjValue.symbolicObjectKind() == SymbolicObjectKind.STRING)
+	// {
+	// String value = ((StringObject) heapFieldObjValue)
+	// .getString();
+	//
+	// if (value.equals("UNDEFINED"))
+	// continue;
+	// }
+	// return false;
+	// }
+	// }
+	// }
+	// return true;
+	// }
+
+	/**
+	 * Given two static scopes, this method computes a non-empty sequence of
+	 * scopes with the following properties:
+	 * <ul>
+	 * <li>The first (0-th) element of the sequence is the join of scope1 and
+	 * scope2.</li>
+	 * <li>The last element is scope2.</li>
+	 * <li>For each i (0<=i<length-1), the i-th element is the parent of the
+	 * (i+1)-th element.</li>
+	 * </ul>
+	 * 
+	 * @param scope1
+	 *            a static scope
+	 * @param scope2
+	 *            a static scope
+	 * @return join sequence as described above
+	 * 
+	 * @exception IllegalArgumentException
+	 *                if the scopes do not have a common ancestor
+	 */
+	private Scope[] joinSequence(Scope scope1, Scope scope2) {
+		if (scope1 == scope2)
+			return new Scope[] { scope2 };
+		for (Scope scope1a = scope1; scope1a != null; scope1a = scope1a
+				.parent())
+			for (Scope scope2a = scope2; scope2a != null; scope2a = scope2a
+					.parent())
+				if (scope1a.equals(scope2a)) {
+					Scope join = scope2a;
+					int length = 1;
+					Scope[] result;
+					Scope s;
+
+					for (s = scope2; s != join; s = s.parent())
+						length++;
+					result = new Scope[length];
+					s = scope2;
+					for (int i = length - 1; i >= 0; i--) {
+						result[i] = s;
+						s = s.parent();
+					}
+					return result;
+				}
+		throw new IllegalArgumentException("No common scope:\n" + scope1 + "\n"
+				+ scope2);
+	}
+
+	/**
+	 * Numbers the reachable dynamic scopes in a state in a canonical way.
+	 * Scopes are numbered from 0 up, in the order in which they are encountered
+	 * by iterating over the processes by increasing ID, iterating over the
+	 * process' call stack frames from index 0 up, iterating over the parent
+	 * scopes from the scope referenced by the frame.
+	 * 
+	 * Unreachable scopes are assigned the number -1.
+	 * 
+	 * Returns an array which of length numScopes in which the element at
+	 * position i is the new ID number for the scope whose old ID number is i.
+	 * Does not modify anything.
+	 * 
+	 * @param state
+	 *            a state
+	 * @return an array mapping old scope IDs to new.
+	 */
+	private int[] numberScopes(ImmutableState state) {
+		int numScopes = state.numDyscopes();
+		int numProcs = state.numProcs();
+		int[] oldToNew = new int[numScopes];
+		int nextScopeId = 1;
+
+		// the root dyscope is forced to be 0
+		oldToNew[0] = 0;
+		for (int i = 1; i < numScopes; i++)
+			oldToNew[i] = -1;
+		for (int pid = 0; pid < numProcs; pid++) {
+			ImmutableProcessState process = state.getProcessState(pid);
+			int stackSize;
+
+			if (process == null)
+				continue;
+			stackSize = process.stackSize();
+			// start at bottom of stack so system scope in proc 0
+			// is reached first
+			for (int i = stackSize - 1; i >= 0; i--) {
+				int dynamicScopeId = process.getStackEntry(i).scope();
+
+				while (oldToNew[dynamicScopeId] < 0) {
+					oldToNew[dynamicScopeId] = nextScopeId;
+					nextScopeId++;
+					dynamicScopeId = state.getParentId(dynamicScopeId);
+					if (dynamicScopeId < 0)
+						break;
+				}
+			}
+		}
+		return oldToNew;
+	}
+
+	/**
+	 * Checks if a given claim is not satisfiable.
+	 * 
+	 * @param claim
+	 *            The given claim.
+	 * @return True iff the given claim is evaluated to be false.
+	 */
+	private boolean nsat(BooleanExpression claim) {
+		return trueReasoner.isValid(universe.not(claim));
+	}
+
+	/**
+	 * Creates a map of process value's according to PID map from old PID to new
+	 * PID.
+	 * 
+	 * @param oldToNewPidMap
+	 *            The map of old PID to new PID, i.e, oldToNewPidMap[old PID] =
+	 *            new PID.
+	 * @return The map of process value's from old process value to new process
+	 *         value.
+	 */
+	private Map<SymbolicExpression, SymbolicExpression> procSubMap(
+			int[] oldToNewPidMap) {
+		int size = oldToNewPidMap.length;
+		Map<SymbolicExpression, SymbolicExpression> result = new HashMap<SymbolicExpression, SymbolicExpression>(
+				size);
+
+		for (int i = 0; i < size; i++) {
+			SymbolicExpression oldVal = modelFactory.processValue(i);
+			SymbolicExpression newVal = modelFactory
+					.processValue(oldToNewPidMap[i]);
+
+			result.put(oldVal, newVal);
+		}
+		return result;
+	}
+
+	/**
+	 * General method for pushing a frame onto a call stack, whether or not the
+	 * call stack is for a new process (and therefore empty).
+	 * 
+	 * @param state
+	 *            the initial state
+	 * @param pid
+	 *            the PID of the process whose stack is to be modified; this
+	 *            stack may be empty
+	 * @param function
+	 *            the called function that will be pushed onto the stack
+	 * @param functionParentDyscope
+	 *            The dyscope ID of the parent of the new function
+	 * @param arguments
+	 *            the arguments to the function
+	 * @param callerPid
+	 *            the PID of the process that is creating the new frame. For an
+	 *            ordinary function call, this will be the same as pid. For a
+	 *            "spawn" command, callerPid will be different from pid and
+	 *            process pid will be new and have an empty stack. Exception: if
+	 *            callerPid is -1 then the new dynamic scope will have no
+	 *            parent; this is used for pushing the original system function,
+	 *            which has no caller
+	 * @return new stack with new frame on call stack of process pid
+	 */
+	private ImmutableState pushCallStack2(ImmutableState state, int pid,
+			CIVLFunction function, int functionParentDyscope,
+			SymbolicExpression[] arguments, int callerPid) {
+		Scope containingStaticScope = function.containingScope();
+		Scope functionStaticScope = function.outerScope();
+		ImmutableProcessState[] newProcesses = state.copyProcessStates();
+		int numScopes = state.numDyscopes();
+		SymbolicExpression[] values;
+		ImmutableDynamicScope[] newScopes;
+		int sid;
+		int containingDynamicScopeId = functionParentDyscope, containingDynamicScopeIdentifier;
+		BitSet bitSet = new BitSet(newProcesses.length);
+
+		if (containingDynamicScopeId < 0)
+			if (callerPid >= 0) {
+				ProcessState caller = state.getProcessState(callerPid);
+				ImmutableDynamicScope containingDynamicScope;
+
+				if (caller.stackSize() == 0)
+					throw new IllegalArgumentException(
+							"Calling process has empty stack: " + callerPid);
+				containingDynamicScopeId = caller.getDyscopeId();
+				while (containingDynamicScopeId >= 0) {
+					containingDynamicScope = (ImmutableDynamicScope) state
+							.getDyscope(containingDynamicScopeId);
+					if (containingStaticScope == containingDynamicScope
+							.lexicalScope())
+						break;
+					containingDynamicScopeId = state
+							.getParentId(containingDynamicScopeId);
+				}
+				if (containingDynamicScopeId < 0)
+					throw new IllegalArgumentException(
+							"Called function not visible:\nfunction: "
+									+ function + "\npid: " + pid
+									+ "\ncallerPid:" + callerPid
+									+ "\narguments: "
+									+ Arrays.toString(arguments));
+			} else {
+				containingDynamicScopeId = -1;
+			}
+		newScopes = state.copyAndExpandScopes();
+		sid = numScopes;
+		values = initialValues(functionStaticScope);
+		for (int i = 0; i < arguments.length; i++)
+			if (arguments[i] != null)
+				values[i + 1] = arguments[i];
+		bitSet.set(pid);
+		if (containingDynamicScopeId < 0)
+			containingDynamicScopeIdentifier = -1;
+		else
+			containingDynamicScopeIdentifier = newScopes[containingDynamicScopeId]
+					.identifier();
+		newScopes[sid] = new ImmutableDynamicScope(functionStaticScope,
+				containingDynamicScopeId, containingDynamicScopeIdentifier,
+				values, bitSet, this.dyscopeCount++);
+		{
+			int id = containingDynamicScopeId;
+			ImmutableDynamicScope scope;
+
+			while (id >= 0) {
+				scope = newScopes[id];
+				bitSet = newScopes[id].getReachers();
+				if (bitSet.get(pid))
+					break;
+				bitSet = (BitSet) bitSet.clone();
+				bitSet.set(pid);
+				newScopes[id] = scope.setReachers(bitSet);
+				id = scope.getParent();
+			}
+		}
+		newProcesses[pid] = state.getProcessState(pid).push(
+				stackEntry(null, sid, newScopes[sid].identifier()));
+		state = new ImmutableState(newProcesses, newScopes,
+				state.getPathCondition());
+		state = setLocation(state, pid, function.startLocation());
+		return state;
+	}
+
+	/**
+	 * Creates a map of scope value's according to the given dyscope map from
+	 * old dyscope ID to new dyscope ID.
+	 * 
+	 * @param oldToNewSidMap
+	 *            The map of old dyscope ID to new dyscoep ID, i.e,
+	 *            oldToNewSidMap[old dyscope ID] = new dyscope ID.
+	 * @return The map of scope value's from old scope value to new scope value.
+	 */
+	private Map<SymbolicExpression, SymbolicExpression> scopeSubMap(
+			int[] oldToNewSidMap) {
+		int size = oldToNewSidMap.length;
+		Map<SymbolicExpression, SymbolicExpression> result = new HashMap<SymbolicExpression, SymbolicExpression>(
+				size);
+
+		for (int i = 0; i < size; i++) {
+			SymbolicExpression oldVal = modelFactory.scopeValue(i);
+			SymbolicExpression newVal = modelFactory
+					.scopeValue(oldToNewSidMap[i]);
+
+			result.put(oldVal, newVal);
+		}
+		return result;
+	}
+
+	/**
+	 * Given an array of dynamic scopes and a process state, computes the actual
+	 * dynamic scopes reachable from that process and modifies the array as
+	 * necessary by replacing a dynamic scope with a scope that is equivalent
+	 * except for the corrected bit set.
+	 * 
+	 * @param dynamicScopes
+	 *            an array of dynamic scopes, to be modified
+	 * @param process
+	 *            a process state
+	 */
+	private void setReachablesForProc(ImmutableDynamicScope[] dynamicScopes,
+			ImmutableProcessState process) {
+		int stackSize = process.stackSize();
+		int numScopes = dynamicScopes.length;
+		boolean reached[] = new boolean[numScopes];
+		int pid = process.getPid();
+
+		for (int i = 0; i < stackSize; i++) {
+			StackEntry frame = process.getStackEntry(i);
+			int id = frame.scope();
+
+			while (id >= 0) {
+				if (reached[id])
+					break;
+				reached[id] = true;
+				id = dynamicScopes[id].getParent();
+			}
+		}
+		for (int j = 0; j < numScopes; j++) {
+			ImmutableDynamicScope scope = dynamicScopes[j];
+			BitSet bitSet = scope.getReachers();
+
+			if (bitSet.get(pid) != reached[j]) {
+				BitSet newBitSet = (BitSet) bitSet.clone();
+
+				newBitSet.flip(pid);
+				dynamicScopes[j] = dynamicScopes[j].setReachers(newBitSet);
+			}
+		}
+	}
+
+	/**
+	 * Create a new call stack entry.
+	 * 
+	 * @param location
+	 *            The location to go to after returning from this call.
+	 * @param scope
+	 *            The dynamic scope the process is in before the call.
+	 * @param dyscopeIdentifier
+	 *            The identifier of the dynamic scope that the process is in
+	 *            before the call.
+	 */
+	private ImmutableStackEntry stackEntry(Location location, int scope,
+			int dyscopeIdentifier) {
+		return new ImmutableStackEntry(location, scope, dyscopeIdentifier);
+	}
+
+	/**
+	 * Given a BitSet indexed by process IDs, and a map of old PIDs to new PIDs,
+	 * returns a BitSet equivalent to original but indexed using the new PIDs.
+	 * 
+	 * If no changes are made, the original BitSet (oldBitSet) is returned.
+	 * 
+	 * @param oldBitSet
+	 * @param oldToNewPidMap
+	 *            array of length state.numProcs in which element at index i is
+	 *            the new PID of the process whose old PID is i. A negative
+	 *            value indicates that the process of (old) PID i is to be
+	 *            removed.
+	 * @return
+	 */
+	private BitSet updateBitSet(BitSet oldBitSet, int[] oldToNewPidMap) {
+		BitSet newBitSet = null;
+		int length = oldBitSet.length();
+
+		for (int i = 0; i < length; i++) {
+			boolean flag = oldBitSet.get(i);
+
+			if (flag) {
+				int newIndex = oldToNewPidMap[i];
+
+				if (newIndex >= 0) {
+					if (newBitSet == null)
+						newBitSet = new BitSet(length);
+					newBitSet.set(newIndex);
+				}
+			}
+		}
+		if (newBitSet == null)
+			return oldBitSet;
+		return newBitSet;
+	}
+
+	/**
+	 * Searches the dynamic scopes in the given state for any process reference
+	 * value, and returns a new array of scopes equivalent to the old except
+	 * that those process reference values have been replaced with new specified
+	 * values. Used for garbage collection and canonicalization of PIDs.
+	 * 
+	 * Also updates the reachable BitSet in each DynamicScope: create a new
+	 * BitSet called newReachable. iterate over all entries in old BitSet
+	 * (reachable). If old entry is position i is true, set oldToNewPidMap[i] to
+	 * true in newReachable (assuming oldToNewPidMap[i]>=0).
+	 * 
+	 * The method returns null if no changes were made.
+	 * 
+	 * @param state
+	 *            a state
+	 * @param oldToNewPidMap
+	 *            array of length state.numProcs in which element at index i is
+	 *            the new PID of the process whose old PID is i. A negative
+	 *            value indicates that the process of (old) PID i is to be
+	 *            removed.
+	 * @return new dyanmic scopes or null
+	 */
+	private ImmutableDynamicScope[] updateProcessReferencesInScopes(
+			ImmutableState state, int[] oldToNewPidMap) {
+		Map<SymbolicExpression, SymbolicExpression> procSubMap = procSubMap(oldToNewPidMap);
+		ImmutableDynamicScope[] newScopes = null;
+		int numScopes = state.numDyscopes();
+
+		for (int i = 0; i < numScopes; i++) {
+			ImmutableDynamicScope dynamicScope = state.getDyscope(i);
+			Scope staticScope = dynamicScope.lexicalScope();
+			Collection<Variable> procrefVariableIter = staticScope
+					.variablesWithProcrefs();
+			SymbolicExpression[] newValues = null;
+			BitSet oldBitSet = dynamicScope.getReachers();
+			BitSet newBitSet = updateBitSet(oldBitSet, oldToNewPidMap);
+
+			for (Variable variable : procrefVariableIter) {
+				int vid = variable.vid();
+				SymbolicExpression oldValue = dynamicScope.getValue(vid);
+				SymbolicExpression newValue = universe.substitute(oldValue,
+						procSubMap);
+
+				if (oldValue != newValue) {
+					if (newValues == null)
+						newValues = dynamicScope.copyValues();
+					newValues[vid] = newValue;
+				}
+			}
+			if (newValues != null || newBitSet != oldBitSet) {
+				if (newScopes == null) {
+					newScopes = new ImmutableDynamicScope[numScopes];
+					for (int j = 0; j < i; j++)
+						newScopes[j] = state.getDyscope(j);
+				}
+				if (newValues == null)
+					newScopes[i] = dynamicScope.setReachers(newBitSet);
+				else
+					newScopes[i] = new ImmutableDynamicScope(staticScope,
+							dynamicScope.getParent(), 0, newValues,// TODO
+							newBitSet, dynamicScope.identifier());
+			} else if (newScopes != null) {
+				newScopes[i] = dynamicScope;
+			}
+		}
+		return newScopes;
+	}
+
+	private Set<SymbolicExpression> reachableHeapObjectsOfState(State state) {
+		Set<SymbolicExpression> reachable = new LinkedHashSet<>();
+		int numDyscopes = state.numDyscopes();
+
+		for (int i = 0; i < numDyscopes; i++) {
+			DynamicScope dyscope = state.getDyscope(i);
+			int numVars = dyscope.numberOfValues();
+
+			for (int vid = 0; vid < numVars; vid++) {
+				SymbolicExpression value = dyscope.getValue(vid);
+
+				reachableHeapObjectsOfValue(state, value, reachable);
+			}
+		}
+		return reachable;
+	}
+
+	@SuppressWarnings("incomplete-switch")
+	private void reachableHeapObjectsOfValue(State state,
+			SymbolicExpression value, Set<SymbolicExpression> reachable) {
+		if (value.isNull())
+			return;
+		else if (!this.isPointer(value)) {
+			int numArgs = value.numArguments();
+
+			for (int i = 0; i < numArgs; i++) {
+				SymbolicObject arg = value.argument(i);
+				SymbolicObjectKind kind = arg.symbolicObjectKind();
+
+				switch (kind) {
+				case BOOLEAN:
+				case INT:
+				case NUMBER:
+				case STRING:
+				case CHAR:
+				case TYPE:
+				case TYPE_SEQUENCE:
+					break;
+				default:
+					switch (kind) {
+					case EXPRESSION:
+						reachableHeapObjectsOfValue(state,
+								(SymbolicExpression) arg, reachable);
+						break;
+					case EXPRESSION_COLLECTION: {
+						Iterator<? extends SymbolicExpression> iter = ((SymbolicCollection<?>) arg)
+								.iterator();
+
+						while (iter.hasNext()) {
+							SymbolicExpression expr = iter.next();
+
+							reachableHeapObjectsOfValue(state, expr, reachable);
+						}
+					}
+					}
+				}
+			}
+		} else if (this.isHeapPointer(value)) {
+			SymbolicExpression heapObjPtr = this.symbolicUtil
+					.heapObjectPointer(value);
+
+			if (!reachable.contains(heapObjPtr))
+				reachable.add(heapObjPtr);
+		} else if (this.symbolicUtil.isValidPointer(value)) {
+			// other pointers
+			int dyscopeId = this.symbolicUtil.getDyscopeId(null, value);
+			int vid = this.symbolicUtil.getVariableId(null, value);
+			ReferenceExpression reference = this.symbolicUtil.getSymRef(value);
+			SymbolicExpression varValue = state
+					.getVariableValue(dyscopeId, vid);
+			SymbolicExpression objectValue;
+
+			try {
+				objectValue = this.universe.dereference(varValue, reference);
+			} catch (SARLException e) {
+				return;
+			}
+			reachableHeapObjectsOfValue(state, objectValue, reachable);
+		}
+	}
+
+	private boolean isHeapPointer(SymbolicExpression pointer) {
+		int vid = this.symbolicUtil.getVariableId(null, pointer);
+
+		return vid == 0;
+	}
+
+	private boolean isPointer(SymbolicExpression value) {
+		if (value.type().equals(modelFactory.pointerSymbolicType()))
+			return true;
+		return false;
+	}
+
+	private boolean hasNonEmptyHeaps(State state) {
+		int numDyscopes = state.numDyscopes();
+
+		for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
+			DynamicScope dyscope = state.getDyscope(dyscopeId);
+			SymbolicExpression heap = dyscope.getValue(0);
+
+			if (!heap.isNull())
+				return true;
+		}
+		return false;
+	}
+
+	@Override
+	public ImmutableState collectHeaps(State state) throws CIVLStateException {
+		ImmutableState theState = (ImmutableState) state;
+
+		// only collect heaps when necessary.
+		if (!this.hasNonEmptyHeaps(theState))
+			return theState;
+		else {
+			Set<SymbolicExpression> reachable = this
+					.reachableHeapObjectsOfState(theState);
+			int numDyscopes = theState.numDyscopes();
+			int numHeapFields = modelFactory.heapType().getNumMallocs();
+			Map<SymbolicExpression, SymbolicExpression> oldToNewMap = new HashMap<>();
+			int nameId = 0;
+			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
+
+			for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
+				DynamicScope dyscope = theState.getDyscope(dyscopeId);
+				SymbolicExpression heap = dyscope.getValue(0);
+
+				if (heap.isNull())
+					continue;
+				else {
+					SymbolicExpression newHeap = heap;
+					SymbolicExpression heapPointer = this.symbolicUtil
+							.makePointer(dyscopeId, 0,
+									universe.identityReference());
+
+					for (int mallocId = 0; mallocId < numHeapFields; mallocId++) {
+						SymbolicExpression heapField = universe.tupleRead(heap,
+								universe.intObject(mallocId));
+						int length = this.symbolicUtil.extractInt(null,
+								(NumericExpression) universe.length(heapField));
+						ReferenceExpression fieldRef = universe
+								.tupleComponentReference(
+										universe.identityReference(),
+										universe.intObject(mallocId));
+						Map<Integer, Integer> oldID2NewID = new HashMap<>();
+						int numRemoved = 0;
+						SymbolicExpression newHeapField = heapField;
+						boolean hasNew = false;
+
+						for (int objectId = 0; objectId < length; objectId++) {
+							ReferenceExpression objectRef = universe
+									.arrayElementReference(fieldRef,
+											universe.integer(objectId));
+							SymbolicExpression objectPtr = this.symbolicUtil
+									.setSymRef(heapPointer, objectRef);
+
+							if (!reachable.contains(objectPtr)) {
+								SymbolicExpression heapObj = universe
+										.arrayRead(heapField,
+												universe.integer(objectId));
+
+								if (!symbolicUtil.isInvalidHeapObject(heapObj)) {
+									throw new CIVLStateException(
+											ErrorKind.MEMORY_LEAK,
+											Certainty.CONCRETE,
+											"An unreachable object is dected in the heap of  dyscope "
+													+ dyscope.name() + "(id="
+													+ dyscopeId + ")"
+													+ ".\n  malloc ID: "
+													+ mallocId
+													+ "\n  called ID: "
+													+ objectId, state, dyscope
+													.lexicalScope().getSource());
+								}
+								// unreachable heap object
+								// updates refeferences
+								for (int nextId = objectId + 1; nextId < length; nextId++) {
+									if (oldID2NewID.containsKey(nextId))
+										oldID2NewID.put(nextId,
+												oldID2NewID.get(nextId) - 1);
+									else
+										oldID2NewID.put(nextId, nextId - 1);
+								}
+								// remove object
+								hasNew = true;
+								newHeapField = universe.removeElementAt(
+										newHeapField, objectId - numRemoved);
+								numRemoved++;
+							} else {// rename remaining heap objects
+								SymbolicExpression heapObject = universe
+										.arrayRead(heapField,
+												universe.integer(objectId));
+
+								nameId = addRenamedMap(heapObject, nameId,
+										oldToNewMap);
+							}
+						}
+						if (oldID2NewID.size() > 0)
+							addPointerMap(oldID2NewID, heapPointer, fieldRef,
+									oldToNewMap);
+						if (hasNew)
+							newHeap = universe.tupleWrite(newHeap,
+									universe.intObject(mallocId), newHeapField);
+					}
+					if (symbolicUtil.isEmptyHeap(newHeap))
+						newHeap = universe.nullExpression();
+					theState = this
+							.setVariable(theState, 0, dyscopeId, newHeap);
+				}
+			}
+			oldToNewMap = computePointerMap(theState, oldToNewMap);
+			for (int i = 0; i < numDyscopes; i++)
+				newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
+						oldToNewMap, universe);
+			theState = theState.setScopes(newScopes);
+			return theState;
+		}
+	}
+
+	private Map<SymbolicExpression, SymbolicExpression> computePointerMap(
+			State state, Map<SymbolicExpression, SymbolicExpression> oldToNewMap) {
+		Map<SymbolicExpression, SymbolicExpression> newMap = new HashMap<>();
+		int numDyscopes = state.numDyscopes();
+
+		for (int dyscopeID = 0; dyscopeID < numDyscopes; dyscopeID++) {
+			DynamicScope dyscope = state.getDyscope(dyscopeID);
+			int numVars = dyscope.numberOfValues();
+
+			for (int vid = 0; vid < numVars; vid++) {
+				computeNewPointer(dyscope.getValue(vid), oldToNewMap, newMap);
+			}
+		}
+		return newMap;
+	}
+
+	@SuppressWarnings("incomplete-switch")
+	private void computeNewPointer(SymbolicExpression value,
+			Map<SymbolicExpression, SymbolicExpression> heapObjectPointerMap,
+			Map<SymbolicExpression, SymbolicExpression> oldToNewPointerMap) {
+		if (value.isNull())
+			return;
+		else if (!this.isPointer(value)) {
+			int numArgs = value.numArguments();
+
+			for (int i = 0; i < numArgs; i++) {
+				SymbolicObject arg = value.argument(i);
+				SymbolicObjectKind kind = arg.symbolicObjectKind();
+
+				switch (kind) {
+				case BOOLEAN:
+				case INT:
+				case NUMBER:
+				case STRING:
+				case CHAR:
+				case TYPE:
+				case TYPE_SEQUENCE:
+					break;
+				default:
+					switch (kind) {
+					case EXPRESSION:
+						computeNewPointer((SymbolicExpression) arg,
+								heapObjectPointerMap, oldToNewPointerMap);
+						break;
+					case EXPRESSION_COLLECTION: {
+						Iterator<? extends SymbolicExpression> iter = ((SymbolicCollection<?>) arg)
+								.iterator();
+
+						while (iter.hasNext()) {
+							SymbolicExpression expr = iter.next();
+
+							computeNewPointer(expr, heapObjectPointerMap,
+									oldToNewPointerMap);
+						}
+					}
+					}
+				}
+			}
+		} else if (this.isHeapPointer(value)) {
+			SymbolicExpression heapObjPtr = this.symbolicUtil
+					.heapObjectPointer(value);
+			SymbolicExpression newHeapObjPtr = heapObjectPointerMap
+					.get(heapObjPtr);
+
+			if (newHeapObjPtr != null && !oldToNewPointerMap.containsKey(value)) {
+				if (symbolicUtil.isUndefinedPointer(newHeapObjPtr))
+					oldToNewPointerMap.put(value, newHeapObjPtr);
+				else {
+					ReferenceExpression ref = symbolicUtil
+							.referenceOfHeapObjectPointer(value);
+					SymbolicExpression newPointer = symbolicUtil.makePointer(
+							newHeapObjPtr, ref);
+
+					oldToNewPointerMap.put(value, newPointer);
+				}
+			}
+		}
+	}
+
+	private void addPointerMap(Map<Integer, Integer> oldID2NewID,
+			SymbolicExpression heapPointer, ReferenceExpression fieldRef,
+			Map<SymbolicExpression, SymbolicExpression> oldToNewMap) {
+		for (Map.Entry<Integer, Integer> entry : oldID2NewID.entrySet()) {
+			ReferenceExpression oldRef = universe.arrayElementReference(
+					fieldRef, universe.integer(entry.getKey()));
+			SymbolicExpression oldPtr = this.symbolicUtil.setSymRef(
+					heapPointer, oldRef);
+			ReferenceExpression newRef = universe.arrayElementReference(
+					fieldRef, universe.integer(entry.getValue()));
+			SymbolicExpression newPtr = this.symbolicUtil.setSymRef(
+					heapPointer, newRef);
+
+			oldToNewMap.put(oldPtr, newPtr);
+		}
+	}
+
+	private int addRenamedMap(SymbolicExpression heapObject, int nameId,
+			Map<SymbolicExpression, SymbolicExpression> oldToNewMap) {
+		SymbolicConstant oldConstant = null;
+		String prefix = "H";
+
+		if (heapObject instanceof SymbolicConstant)
+			oldConstant = (SymbolicConstant) heapObject;
+		else {
+			SymbolicObject arg0 = heapObject.argument(0);
+
+			if (arg0 instanceof SymbolicConstant)
+				oldConstant = (SymbolicConstant) arg0;
+		}
+		if (oldConstant != null) {
+			StringObject newNameString = universe.stringObject(prefix + nameId);
+			SymbolicConstant newName = universe.symbolicConstant(newNameString,
+					oldConstant.type());
+
+			oldToNewMap.put(oldConstant, newName);
+			return nameId + 1;
+		}
+		return nameId;
 	}
 
 }

@@ -7,8 +7,8 @@ public class Pair<S, T> {
 	public T right;
 
 	public Pair(S left, T right) {
-		//assert left != null;
-		//assert right != null;
+		// assert left != null;
+		// assert right != null;
 		this.left = left;
 		this.right = right;
 	}
@@ -24,6 +24,18 @@ public class Pair<S, T> {
 		} else {
 			return false;
 		}
+	}
+
+	@Override
+	public String toString() {
+		StringBuffer result = new StringBuffer();
+
+		result.append("(");
+		result.append(left.toString());
+		result.append(", ");
+		result.append(right.toString());
+		result.append(")");
+		return result.toString();
 	}
 
 }

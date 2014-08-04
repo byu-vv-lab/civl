@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -36,8 +37,9 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 
 	public LibompExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil,
+				symbolicAnalyzer, civlConfig);
 		ompLoopInfoType = model.function("$omp_ws_arrive_loop").functionType()
 				.returnType();
 		dynamicOmpLoopInfoType = ompLoopInfoType.getDynamicType(universe);

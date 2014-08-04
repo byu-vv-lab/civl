@@ -579,7 +579,7 @@ public class FunctionTranslator {
 		for (int i = 0; i < numOfLoopVars; i++) {
 			Variable loopVar = loopVars.get(i).variable();
 			Variable parameter = modelFactory.variable(loopVar.getSource(),
-					loopVar.type(), loopVar.name(), i);
+					loopVar.type(), loopVar.name(), i + 1);
 
 			procFuncParameters.add(parameter);
 		}
@@ -1952,7 +1952,7 @@ public class FunctionTranslator {
 					Identifier variableName = modelFactory.identifier(source,
 							decl.getName());
 					Variable parameter = modelFactory.variable(source, type,
-							variableName, parameters.size());
+							variableName, parameters.size() + 1);
 
 					if (decl.getTypeNode().isConstQualified())
 						parameter.setConst(true);

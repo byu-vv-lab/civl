@@ -334,6 +334,35 @@ public class ImmutableDynamicScope implements DynamicScope {
 						newParentIdentifier, newValues, reachers,
 						this.identifier);
 	}
+	
+	ImmutableDynamicScope updateHeapAndPointers(
+			Map<SymbolicExpression, SymbolicExpression> oldToNewPointers,
+			SymbolicUniverse universe) {
+		Collection<Variable> pointerVariableIter = lexicalScope.variablesWithPointers();
+		SymbolicExpression[] newValues = null;
+		
+		//add heap
+		pointerVariableIter.add(lexicalScope.variable(0));
+		for (Variable variable : pointerVariableIter) {
+			int vid = variable.vid();
+			SymbolicExpression oldValue = variableValues[vid];
+
+			if (oldValue != null && !oldValue.isNull()) {
+				SymbolicExpression newValue = universe.substitute(oldValue,
+						oldToNewPointers);
+
+				if (oldValue != newValue) {
+					if (newValues == null)
+						newValues = copyValues();
+					newValues[vid] = newValue;
+				}
+			}
+		}
+		return newValues == null ? this
+				: new ImmutableDynamicScope(lexicalScope, this.parent,
+						this.parentIdentifier, newValues, reachers,
+						this.identifier);
+	}
 
 	/* ************************* Methods from Object *********************** */
 
@@ -433,11 +462,6 @@ public class ImmutableDynamicScope implements DynamicScope {
 	public int numberOfValues() {
 		return this.variableValues.length;
 	}
-
-	// @Override
-	// public int getParentIdentifier() {
-	// return this.parentIdentifier;
-	// }
 
 	@Override
 	public String name() {

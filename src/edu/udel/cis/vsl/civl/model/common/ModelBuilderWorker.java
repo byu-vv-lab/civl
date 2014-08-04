@@ -567,7 +567,7 @@ public class ModelBuilderWorker {
 	 */
 	public void buildModel() throws CommandLineException {
 		Identifier systemID = factory.identifier(factory.systemSource(),
-				"_CIVL_system");
+				CIVLConstants.civlSystemFunction);
 		CIVLFunction system = factory.function(
 				factory.sourceOf(program.getAST().getRootNode()), systemID,
 				new ArrayList<Variable>(), null, null, null);

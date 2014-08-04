@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -43,8 +44,9 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 
 	public LibbundleExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
+			SymbolicAnalyzer symbolicAnalyzer,
 			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+		super(name, primaryExecutor, modelFactory, symbolicUtil, symbolicAnalyzer, civlConfig);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -245,14 +247,14 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 				state = eval.state;
 				array = eval.value;
 			}
-			array = symbolicUtil.arrayFlatten(state, process, array, source);
+			array = symbolicAnalyzer.arrayFlatten(state, process, array, source);
 			arrayLength = universe.length(array);
 			elementType = universe.arrayRead(array, zero).type();
 			count = universe.divide(size,
 					symbolicUtil.sizeof(arguments[1].getSource(), elementType));
 			arrayIndex = getIndexInUnrolledArray(state, process, pointer,
 					arrayLength, source);
-			array = symbolicUtil.getSubArray(array, arrayIndex,
+			array = symbolicAnalyzer.getSubArray(array, arrayIndex,
 					universe.add(arrayIndex, count), state, process, source);
 			symbolicBundleType = bundleType.getDynamicType(universe);
 			index = bundleType.getIndexOf(elementType);
@@ -316,7 +318,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
 					Certainty.PROVEABLE, process,
 					"Attempt to write beyond array bound: index=" + arrayIdx,
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 		} catch (Exception e) {
 			throw new CIVLInternalException("Cannot complete unpack", source);
 		}
@@ -414,7 +416,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			return primaryExecutor.assign(source, state, process, bufPointer,
 					data);
 		}
-		secOperand = symbolicUtil.arrayFlatten(state, process, secOperand,
+		secOperand = symbolicAnalyzer.arrayFlatten(state, process, secOperand,
 				arguments[1].getSource());
 		bufIndex = getIndexInUnrolledArray(state, process, pointer,
 				universe.length(secOperand), arguments[1].getSource());
@@ -443,10 +445,10 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
 					Certainty.PROVEABLE, process,
 					"Attempt to write beyond array bound: index=" + i,
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 		}
 
-		secOperand = symbolicUtil.arrayCasting(state, process, secOperand,
+		secOperand = symbolicAnalyzer.arrayCasting(state, process, secOperand,
 				pointer.type(), arguments[1].getSource());
 		state = primaryExecutor.assign(source, state, process, bufPointer,
 				secOperand);
@@ -503,7 +505,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		NumericExpression dataSize;
 		BooleanExpression claim;
 		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
-		SymbolicExpression unrolledDataArray = symbolicUtil.arrayFlatten(state,
+		SymbolicExpression unrolledDataArray = symbolicAnalyzer.arrayFlatten(state,
 				process, data, civlsource);
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		Evaluation eval = new Evaluation(state, null);
@@ -528,7 +530,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			// ------Unrolling the array pointed by the parent pointer.
 			// Note: Since data in bundle is guaranteed to be in the form of a
 			// 1-d array, unrolling the receiver array can make things easier.
-			unrolledArray = symbolicUtil.arrayFlatten(state, process, array,
+			unrolledArray = symbolicAnalyzer.arrayFlatten(state, process, array,
 					civlsource);
 			unrolledArraySize = universe.length(unrolledArray);
 			indexInUnrolledArray = getIndexInUnrolledArray(state, process,
@@ -536,7 +538,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			unrolledArray = this.oneDimenAssign(state, process, unrolledArray,
 					indexInUnrolledArray, data, civlsource);
 			eval.state = state;
-			eval.value = symbolicUtil.arrayCasting(state, process,
+			eval.value = symbolicAnalyzer.arrayCasting(state, process,
 					unrolledArray, array.type(), civlsource);
 			return eval;
 
@@ -547,13 +549,13 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			state = eval.state;
 			obj = eval.value;
 			if (obj.type() instanceof SymbolicArrayType) {
-				SymbolicExpression objArray = symbolicUtil.arrayFlatten(state,
+				SymbolicExpression objArray = symbolicAnalyzer.arrayFlatten(state,
 						process, obj, civlsource);
 
 				objArray = this.oneDimenAssign(state, process, objArray, zero,
 						data, civlsource);
 				eval.state = state;
-				eval.value = symbolicUtil.arrayCasting(state, process,
+				eval.value = symbolicAnalyzer.arrayCasting(state, process,
 						objArray, obj.type(), civlsource);
 				return eval;
 			} else {

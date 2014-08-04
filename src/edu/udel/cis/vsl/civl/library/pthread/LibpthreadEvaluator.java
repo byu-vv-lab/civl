@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -23,8 +24,9 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 	private IntObject fourObject;
 
 	public LibpthreadEvaluator(String name, Evaluator evaluator,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(name, evaluator, modelFactory, symbolicUtil);
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
+			SymbolicAnalyzer symbolicAnalyzer) {
+		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer);
 		this.fourObject = universe.intObject(4);
 	}
 
@@ -98,7 +100,7 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 		mutex_lock = (NumericExpression) universe.tupleRead(mutex, twoObject);
 		mutex_owner = universe.tupleRead(mutex, oneObject);
 		owner_id = modelFactory.getProcessId(mutexSource, mutex_owner);
-		
+
 		mutex_attr_pointer = universe.tupleRead(mutex, fourObject);
 		eval = evaluator.dereference(mutexSource, state, process,
 				mutex_attr_pointer, false);
@@ -106,33 +108,27 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 		mutex_attr = eval.value;
 		mutex_type = (NumericExpression) universe.tupleRead(mutex_attr,
 				threeObject);
-		mutex_robust = (NumericExpression) universe.tupleRead(mutex_attr, zeroObject);
+		mutex_robust = (NumericExpression) universe.tupleRead(mutex_attr,
+				zeroObject);
 		if (mutex_type.isZero() || mutex_type == two)// PTHREAD_MUTEX_NORMAL
 		{// TODO
-			if(!mutex_lock.isZero())
-			{
-				if(modelFactory.isProcNull(mutexSource, mutex_owner))// TODO proc_null checking 
+			if (!mutex_lock.isZero()) {
+				if (modelFactory.isProcNull(mutexSource, mutex_owner))// TODO
+																		// proc_null
+																		// checking
 				{
-					if(!mutex_robust.isOne())
-					{
+					if (!mutex_robust.isOne()) {
 						return new Evaluation(state, this.trueValue);
 					}
-				}	
-				else
-				{
-					if(owner_id == pid)
-					{
+				} else {
+					if (owner_id == pid) {
 						return new Evaluation(state, this.trueValue);
 					}
 				}
-			}
-			else
-			{
+			} else {
 				return new Evaluation(state, this.trueValue);
 			}
-		} 
-		else
-		{
+		} else {
 			return new Evaluation(state, this.trueValue);
 		}
 		return new Evaluation(state, this.falseValue);

@@ -21,13 +21,13 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -39,10 +39,10 @@ import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
@@ -128,11 +128,16 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	 *            If printing is enabled for the printf function.
 	 * @param modelFactory
 	 *            The model factory of the system.
+	 * @param symbolicUtil
+	 *            The symbolic utility used in the system.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 */
 	public BaseLibraryExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor.evaluator().universe(), symbolicUtil);
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor.evaluator().universe(), symbolicUtil,
+				symbolicAnalyzer);
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.stateFactory = evaluator.stateFactory();
@@ -173,8 +178,8 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 				}
 			}
 			state = errorLogger.logError(source, state, process,
-					symbolicUtil.stateToString(state), assertValue, resultType,
-					ErrorKind.ASSERTION_VIOLATION,
+					symbolicAnalyzer.stateToString(state), assertValue,
+					resultType, ErrorKind.ASSERTION_VIOLATION,
 					"Cannot prove assertion holds: " + statement.toString()
 							+ "\n  Path condition: " + state.getPathCondition()
 							+ "\n  Assertion: " + assertValue + "\n");
@@ -219,7 +224,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 					state = concreteString.left;
 					printedContents.add(stringOfSymbolicExpression);
 				} else if (myFormat.type == ConversionType.POINTER) {
-					printedContents.add(new StringBuffer(symbolicUtil
+					printedContents.add(new StringBuffer(symbolicAnalyzer
 							.symbolicExpressionToString(
 									arguments[i].getSource(), state,
 									argumentValue)));
@@ -229,7 +234,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 				}
 
 			} else
-				printedContents.add(new StringBuffer(this.symbolicUtil
+				printedContents.add(new StringBuffer(this.symbolicAnalyzer
 						.symbolicExpressionToString(arguments[i].getSource(),
 								state, argumentValue)));
 		}
@@ -498,54 +503,40 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression firstElementPointer = argumentValues[0];
 
-		if (this.symbolicUtil.isNullPointer(firstElementPointer))
+		if (symbolicUtil.isUndefinedPointer(firstElementPointer)) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
+					"Attempt to free a memory space that is already freed",
+					symbolicAnalyzer.stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+			throw new UnsatisfiablePathConditionException();
+		} else if (this.symbolicUtil.isNullPointer(firstElementPointer))
 			// does nothing for null pointer.
 			return state;
-		else if (!this.symbolicUtil.isHeapPointer(firstElementPointer)
+		else if (!this.symbolicUtil.isPointerToHeap(firstElementPointer)
 				|| !this.symbolicUtil.isHeapObjectPointer(source,
 						firstElementPointer)) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
 					"The argument of free "
-							+ symbolicUtil.symbolicExpressionToString(source,
-									state, firstElementPointer)
+							+ symbolicAnalyzer.symbolicExpressionToString(
+									source, state, firstElementPointer)
 							+ " is not a pointer returned by a memory "
 							+ "management method",
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 			throw new UnsatisfiablePathConditionException();
 		} else {
-			CIVLHeapType heapType = modelFactory.heapType();
-			SymbolicExpression heapObjectPointer;
-			Evaluation eval;
-			int index;
-			SymbolicExpression undef;
+			Pair<Integer, Integer> indexes;
 
-			heapObjectPointer = this.symbolicUtil
-					.heapCellPointer(firstElementPointer);
-			eval = evaluator.dereference(source, state, process,
-					heapObjectPointer, false);
-			state = eval.state;
-			if (eval.value instanceof SymbolicConstant) {
-				SymbolicConstant value = (SymbolicConstant) eval.value;
-
-				if (value.name().getString().equals("UNDEFINED")) {
-					CIVLExecutionException err = new CIVLExecutionException(
-							ErrorKind.MEMORY_LEAK,
-							Certainty.PROVEABLE,
-							process,
-							"Attempt to free a memory space that is already freed or never allocated ",
-							symbolicUtil.stateToString(state), source);
-
-					this.errorLogger.reportError(err);
-					throw new UnsatisfiablePathConditionException();
-				}
-			}
-			index = getMallocIndex(firstElementPointer);
-			undef = heapType.getMalloc(index).getUndefinedObject();
-			state = primaryExecutor.assign(source, state, process,
-					heapObjectPointer, undef);
+			indexes = getMallocIndex(firstElementPointer);
+			state = stateFactory
+					.deallocate(state, firstElementPointer, modelFactory
+							.getScopeId(source, universe.tupleRead(
+									firstElementPointer, zeroObject)),
+							indexes.left, indexes.right);
 			return state;
 		}
 	}
@@ -639,19 +630,21 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	 * @return The field ID in the heap type of the heap-object that the given
 	 *         pointer refers to.
 	 */
-	private int getMallocIndex(SymbolicExpression pointer) {
+	private Pair<Integer, Integer> getMallocIndex(SymbolicExpression pointer) {
 		// ref points to element 0 of an array:
 		NTReferenceExpression ref = (NTReferenceExpression) symbolicUtil
 				.getSymRef(pointer);
 		// objectPointer points to array:
-		NTReferenceExpression objectPointer = (NTReferenceExpression) ref
+		ArrayElementReference objectPointer = (ArrayElementReference) ref
 				.getParent();
+		int mallocIndex = ((IntegerNumber) universe.extractNumber(objectPointer
+				.getIndex())).intValue();
 		// fieldPointer points to the field:
 		TupleComponentReference fieldPointer = (TupleComponentReference) objectPointer
 				.getParent();
-		int result = fieldPointer.getIndex().getInt();
+		int mallocId = fieldPointer.getIndex().getInt();
 
-		return result;
+		return new Pair<>(mallocId, mallocIndex);
 	}
 
 }

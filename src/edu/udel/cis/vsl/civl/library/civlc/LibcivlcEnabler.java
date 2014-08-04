@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -62,15 +63,16 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	 */
 	public LibcivlcEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
-		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil);
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer) {
+		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil,
+				symbolicAnalyzer);
 		CIVLSource source = modelFactory.model().getSource();
 		SystemFunction chooseIntWorkFunction = modelFactory.systemFunction(
 				source,
 				modelFactory.identifier(source, chooseIntWork),
 				Arrays.asList(modelFactory.variable(source,
 						modelFactory.integerType(),
-						modelFactory.identifier(source, "n"), 0)),
+						modelFactory.identifier(source, "n"), 1)),
 				modelFactory.integerType(), modelFactory.model().system()
 						.containingScope(), this.name);
 
@@ -114,7 +116,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 				throw new CIVLExecutionException(ErrorKind.INTERNAL,
 						Certainty.NONE, process,
 						"Argument to $choose_int not concrete: " + eval.value,
-						symbolicUtil.stateToString(state), arguments.get(0)
+						symbolicAnalyzer.stateToString(state), arguments.get(0)
 								.getSource());
 			}
 			upper = upperNumber.intValue();
@@ -160,11 +162,12 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	 * @param reachableMemUnitsMap
 	 *            The map of reachable memory units of all active processes.
 	 * @return
-	 * @throws UnsatisfiablePathConditionException 
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Set<Integer> ampleSetWork(State state, int pid,
 			CallOrSpawnStatement call,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) throws UnsatisfiablePathConditionException {
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap)
+			throws UnsatisfiablePathConditionException {
 		int numArgs;
 		numArgs = call.arguments().size();
 		Expression[] arguments;
@@ -211,7 +214,8 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	}
 
 	private Set<Integer> ampleSetOfWaitall(State state, int pid,
-			Expression[] arguments, SymbolicExpression[] argumentValues) throws UnsatisfiablePathConditionException {
+			Expression[] arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression procsPointer = argumentValues[0];
 		SymbolicExpression numOfProcs = argumentValues[1];
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
@@ -225,7 +229,8 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The number of processes for $waitall "
 							+ "needs a concrete value.",
-					symbolicUtil.stateToString(state), arguments[1].getSource());
+					symbolicAnalyzer.stateToString(state),
+					arguments[1].getSource());
 
 			this.evaluator.errorLogger().reportError(err);
 			return ampleSet;

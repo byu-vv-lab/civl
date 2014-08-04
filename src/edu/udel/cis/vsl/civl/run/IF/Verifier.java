@@ -169,7 +169,8 @@ public class Verifier extends Player {
 			if (civlConfig.debugOrVerbose() || civlConfig.showStates()) {
 				civlConfig.out().println();
 				// stateFactory.printState(out, initialState);
-				civlConfig.out().print(symbolicUtil.stateToString(initialState));
+				civlConfig.out().print(
+						symbolicAnalyzer.stateToString(initialState));
 				// initialState.print(out);
 			}
 			try {
@@ -194,7 +195,8 @@ public class Verifier extends Player {
 					preprocessor.printShorterFileNameMap(civlConfig.out());
 					civlConfig.out().println();
 				}
-				civlConfig.out().println("Error bound exceeded: search terminated");
+				civlConfig.out().println(
+						"Error bound exceeded: search terminated");
 			}
 			terminateUpdater();
 			if (violationFound || log.numEntries() > 0) {
@@ -214,7 +216,7 @@ public class Verifier extends Player {
 			throw new CIVLExecutionException(stateException.kind(),
 					stateException.certainty(), "",
 					stateException.getMessage(),
-					symbolicUtil.stateToString(stateException.state()),
+					symbolicAnalyzer.stateToString(stateException.state()),
 					stateException.source());
 		}
 	}

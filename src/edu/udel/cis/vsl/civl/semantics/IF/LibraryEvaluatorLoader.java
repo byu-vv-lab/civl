@@ -25,11 +25,14 @@ public interface LibraryEvaluatorLoader {
 	 * @param symbolicUtil
 	 *            The symbolic utility for manipulations of symbolic
 	 *            expressions.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 * @return The library evaluator of the given name.
 	 * @throws LibraryLoaderException
 	 *             If the library evaluator of the given name cannot be found.
 	 */
 	LibraryEvaluator getLibraryEvaluator(String name,
 			Evaluator primaryEvaluator, ModelFactory modelFacotry,
-			SymbolicUtility symbolicUtil) throws LibraryLoaderException;
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer)
+			throws LibraryLoaderException;
 }

@@ -150,6 +150,8 @@ public class CIVLConstants {
 			"showPathCondition", BOOLEAN,
 			"show the path condition of each state?", false);
 
+	public final static String civlSystemFunction = "_CIVL_system";
+
 	public static Option[] getAllOptions() {
 		int numOpts = 32;
 		List<Option> outputs = new LinkedList<Option>();

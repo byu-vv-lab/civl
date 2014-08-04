@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -29,8 +30,9 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
 
 	public LibcivlcEvaluator(String name, Evaluator evaluator,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		super(name, evaluator, modelFactory, symbolicUtil);
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
+			SymbolicAnalyzer symbolicAnalyzer) {
+		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer);
 	}
 
 	@Override
@@ -84,7 +86,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		BooleanExpression guard;
 		int pidValue;
 		Expression joinProcessExpr = arguments.get(0);
-	
+
 		if (joinProcess.operator() != SymbolicOperator.CONCRETE) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
 					+ ")";
@@ -92,9 +94,9 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The argument of $wait should be concrete, but the actual value is "
 							+ joinProcess + ".",
-					symbolicUtil.stateToString(state),
+							symbolicAnalyzer.stateToString(state),
 					joinProcessExpr.getSource());
-	
+
 			this.errorLogger.reportError(err);
 		}
 		pidValue = modelFactory.getProcessId(joinProcessExpr.getSource(),
@@ -133,7 +135,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The number of processes for $waitall "
 							+ "needs a concrete value.",
-					symbolicUtil.stateToString(state), arguments.get(1)
+							symbolicAnalyzer.stateToString(state), arguments.get(1)
 							.getSource());
 
 			this.errorLogger.reportError(err);

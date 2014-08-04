@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
@@ -26,8 +27,9 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 
 	public LibpointerExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil,
+				symbolicAnalyzer, civlConfig);
 	}
 
 	@Override
@@ -120,21 +122,21 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
 					"The arguments of $copy() must both be non-null pointers.\n"
 							+ "actual value of first argument: "
-							+ symbolicUtil.symbolicExpressionToString(
+							+ symbolicAnalyzer.symbolicExpressionToString(
 									sourceLeft, state, left)
 							+ "\n"
 							+ "actual value of second argument: "
-							+ symbolicUtil.symbolicExpressionToString(
+							+ symbolicAnalyzer.symbolicExpressionToString(
 									sourceRight, state, right),
-					symbolicUtil.stateToString(state), source);
+					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
 		} else {
 			SymbolicExpression rightValue;
-			CIVLType objTypeLeft = symbolicUtil.typeOfObjByPointer(sourceLeft,
-					state, left);
-			CIVLType objTypeRight = symbolicUtil.typeOfObjByPointer(
+			CIVLType objTypeLeft = symbolicAnalyzer.typeOfObjByPointer(
+					sourceLeft, state, left);
+			CIVLType objTypeRight = symbolicAnalyzer.typeOfObjByPointer(
 					sourceRight, state, right);
 
 			if (!objTypeLeft.equals(objTypeRight)) {
@@ -149,7 +151,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 								+ "\n"
 								+ "actual type of the object of the second argument: "
 								+ objTypeRight,
-						symbolicUtil.stateToString(state), source);
+						symbolicAnalyzer.stateToString(state), source);
 
 				this.errorLogger.reportError(err);
 				return state;
@@ -205,10 +207,10 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					"The object that "
 							+ arguments[invalidArg]
 							+ " points to is undefined, which has the value "
-							+ symbolicUtil.symbolicExpressionToString(
+							+ symbolicAnalyzer.symbolicExpressionToString(
 									arguments[invalidArg].getSource(), state,
 									invalidValue),
-					symbolicUtil.stateToString(state),
+					symbolicAnalyzer.stateToString(state),
 					arguments[invalidArg].getSource());
 
 			this.errorLogger.reportError(err);
@@ -264,13 +266,13 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 						Certainty.PROVEABLE,
 						process,
 						"The second argument of $translate_ptr() "
-								+ symbolicUtil.symbolicExpressionToString(
+								+ symbolicAnalyzer.symbolicExpressionToString(
 										objSource, state, objPtr)
 								+ " doesn't have a compatible type hierarchy as the first argument "
-								+ symbolicUtil.symbolicExpressionToString(
+								+ symbolicAnalyzer.symbolicExpressionToString(
 										arguments[0].getSource(), state,
 										pointer),
-						symbolicUtil.stateToString(state), source);
+						symbolicAnalyzer.stateToString(state), source);
 
 				this.errorLogger.reportError(err);
 				return state;

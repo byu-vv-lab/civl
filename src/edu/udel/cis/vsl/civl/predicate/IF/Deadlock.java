@@ -12,7 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -47,14 +47,18 @@ public class Deadlock implements StatePredicateIF<State> {
 
 	private Enabler enabler;
 
-	private Executor executor;
-
 	/**
 	 * If violation is found it is cached here.
 	 */
 	private CIVLExecutionException violation = null;
 
 	private BooleanExpression falseExpr;
+
+	/**
+	 * The symbolic analyzer for operations on symbolic expressions and states,
+	 * used in this class for printing states.
+	 */
+	private SymbolicAnalyzer symbolicAnalyzer;
 
 	/**
 	 * An absolute deadlock occurs if all of the following hold:
@@ -74,21 +78,17 @@ public class Deadlock implements StatePredicateIF<State> {
 	 * 
 	 * @param symbolicUniverse
 	 *            The symbolic universe for creating symbolic expressions.
-	 * @param evaluator
-	 *            The evaluator to get symbolic expressions for values in a
-	 *            given state.
-	 * @param prover
-	 *            The theorem prover to check validity of statement guards under
-	 *            the path condition.
+	 * @param enabler
+	 *            The enabler of the system.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer used in the system.
 	 */
 	public Deadlock(SymbolicUniverse symbolicUniverse, Enabler enabler,
-			Executor executor) {
+			SymbolicAnalyzer symbolicAnalyzer) {
 		this.universe = symbolicUniverse;
-		// this.evaluator = evaluator;
-		// this.modelFactory = evaluator.modelFactory();
 		this.falseExpr = symbolicUniverse.falseExpression();
 		this.enabler = enabler;
-		this.executor = executor;
+		this.symbolicAnalyzer = symbolicAnalyzer;
 	}
 
 	public CIVLExecutionException getViolation() {
@@ -235,8 +235,8 @@ public class Deadlock implements StatePredicateIF<State> {
 					+ "\n  Enabling predicate: " + predicate + "\n";
 			message += explanationWork(state);
 			violation = new CIVLExecutionException(ErrorKind.DEADLOCK,
-					certainty, "", message, this.executor.evaluator()
-							.symbolicUtility().stateToString(state), source);
+					certainty, "", message,
+					symbolicAnalyzer.stateToString(state), source);
 			return true;
 		}
 	}

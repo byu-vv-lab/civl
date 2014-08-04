@@ -9,7 +9,6 @@ import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
@@ -140,7 +139,7 @@ public class Cuda2CIVLTransformer extends CIVLBaseTransformer {
 	protected List<BlockItemNode> extractSharedVariableDeclarations(
 			CompoundStatementNode statements) {
 		List<BlockItemNode> declarations = new ArrayList<BlockItemNode>();
-		for (BlockItemNode item : statements) {
+		for (@SuppressWarnings("unused") BlockItemNode item : statements) {
 			// TODO: if item is a VariableDeclarationNode and is qualified as a
 			// shared variable, add it to declarations, and remove from
 			// statements (remove())

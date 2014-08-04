@@ -11,7 +11,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
-import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.gui.common.DyscopeNode;
 import edu.udel.cis.vsl.civl.gui.common.GUINODE;
 import edu.udel.cis.vsl.civl.gui.common.GUINODE.GUINodeKind;
@@ -23,6 +22,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.AtomicStep;
 import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -87,9 +87,9 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	private State initState;
 
 	/**
-	 * The SymbolicUtility of the current state
+	 * The SymbolicAnalyzer of the system
 	 */
-	private SymbolicUtility symbolicUtil;
+	private SymbolicAnalyzer symbolicAnalyzer;
 
 	/* **************************** Constructor **************************** */
 
@@ -99,11 +99,12 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * @param transitions
 	 *            the array of transitions of the execution
 	 */
-	public CIVL_GUI(Trace<Transition, State> trace, SymbolicUtility symbolicUtil) {
+	public CIVL_GUI(Trace<Transition, State> trace,
+			SymbolicAnalyzer symbolicAnalyzer) {
 		this.initState = trace.init();
 		this.transitions = new TraceStep[trace.traceSteps().size()];
 		trace.traceSteps().toArray(this.transitions);
-		this.symbolicUtil = symbolicUtil;
+		this.symbolicAnalyzer = symbolicAnalyzer;
 		initComponents();
 		setPreferredSize(new Dimension(1500, 1000));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -256,7 +257,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				DefaultMutableTreeNode variableNode = new DefaultMutableTreeNode(
 						variableName
 								+ " = "
-								+ symbolicUtil.symbolicExpressionToString(
+								+ symbolicAnalyzer.symbolicExpressionToString(
 										var.getSource(), state, s));
 				if (!(variableName == "__heap" && s.isNull())) {
 					variables.add(variableNode);

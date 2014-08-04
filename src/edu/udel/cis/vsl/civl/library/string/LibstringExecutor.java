@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
@@ -51,8 +52,9 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 	 */
 	public LibstringExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil,
+				symbolicAnalyzer, civlConfig);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */
@@ -207,21 +209,22 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			int numOfArgs;
 
 			state = eval.state;
-			numOfArgs  = eval.value.numArguments();
-			
-			for(int i = 0; i < numOfArgs; i++){
-				if( eval.value.argument(i) instanceof SymbolicSequence<?>){
-					originalArray = (SymbolicSequence<?>) eval.value.argument(i);
+			numOfArgs = eval.value.numArguments();
+
+			for (int i = 0; i < numOfArgs; i++) {
+				if (eval.value.argument(i) instanceof SymbolicSequence<?>) {
+					originalArray = (SymbolicSequence<?>) eval.value
+							.argument(i);
 					break;
 				}
 			}
 			startIndex = symbolicUtil.extractInt(source, arrayIndex);
 		}
 		numChars = originalArray.size();
-		for (int i = 0; i < numChars-startIndex; i++) {
+		for (int i = 0; i < numChars - startIndex; i++) {
 			SymbolicExpression charExpr = originalArray.get(i + startIndex);
 			Character theChar = universe.extractCharacter(charExpr);
-			
+
 			if (theChar == '\0')
 				break;
 			length++;

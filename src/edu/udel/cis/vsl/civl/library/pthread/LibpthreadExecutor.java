@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -28,8 +29,9 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 
 	public LibpthreadExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			CIVLConfiguration civlConfig) {
-		super(name, primaryExecutor, modelFactory, symbolicUtil, civlConfig);
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+		super(name, primaryExecutor, modelFactory, symbolicUtil,
+				symbolicAnalyzer, civlConfig);
 		this.fourObject = universe.intObject(4);
 	}
 
@@ -215,7 +217,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		}
 		return state;
 	}
-	
+
 	/**
 	 * * typedef struct { int count; $proc owner; int lock; int prioceiling;
 	 * pthread_mutexattr_t *attr; } pthread_mutex_t;
@@ -245,7 +247,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		NumericExpression mutex_type;
 		NumericExpression mutex_count;
 		int owner_id;
-		
+
 		eval = evaluator.dereference(mutexSource, state, process,
 				mutex_pointer, false);
 		state = eval.state;
@@ -256,39 +258,41 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		owner_id = modelFactory.getProcessId(mutexSource, mutex_owner);
 		mutex_attr_pointer = universe.tupleRead(mutex, fourObject);
 		mutexSource = arguments[0].getSource();
-		eval = evaluator.dereference(mutexSource, state, process, mutex_attr_pointer, false);
+		eval = evaluator.dereference(mutexSource, state, process,
+				mutex_attr_pointer, false);
 		state = eval.state;
 		mutex_attr = eval.value;
-		mutex_type = (NumericExpression) universe.tupleRead(mutex_attr, threeObject);
-		if(mutex_type.isZero()|| mutex_type == two){
-			if(mutex_lock.isZero()){
+		mutex_type = (NumericExpression) universe.tupleRead(mutex_attr,
+				threeObject);
+		if (mutex_type.isZero() || mutex_type == two) {
+			if (mutex_lock.isZero()) {
 				throw new CIVLExecutionException(ErrorKind.OTHER,
-						Certainty.CONCRETE, process, "Attempted to unlock already unlocked lock", source);
-			}
-			else{
+						Certainty.CONCRETE, process,
+						"Attempted to unlock already unlocked lock", source);
+			} else {
 				mutex = universe.tupleWrite(mutex, twoObject, zero);
-				//TODO add proc_null assignment to owner
+				// TODO add proc_null assignment to owner
 			}
-		}
-		else{
-			if(owner_id==pid){
+		} else {
+			if (owner_id == pid) {
 				universe.subtract(mutex_count, one);
 				mutex = universe.tupleWrite(mutex, zeroObject, mutex_count);
-				if(mutex_count.isZero()){
+				if (mutex_count.isZero()) {
 					mutex = universe.tupleWrite(mutex, twoObject, one);
-					//TODO add proc_null assignment to owner
+					// TODO add proc_null assignment to owner
 				}
-			}
-			else{
+			} else {
 				throw new CIVLExecutionException(ErrorKind.OTHER,
-						Certainty.CONCRETE, process, "Recursive mutex attempts unlock without being owner", source);
+						Certainty.CONCRETE, process,
+						"Recursive mutex attempts unlock without being owner",
+						source);
 			}
-			
+
 		}
 		state = primaryExecutor.assign(mutexSource, state, process,
 				mutex_pointer, mutex);
 		if (lhs != null) {
-			
+
 			state = primaryExecutor.assign(state, pid, process, lhs, zero);
 		}
 		return state;

@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 
 public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 
@@ -24,7 +25,8 @@ public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 	@Override
 	public LibraryEvaluator getLibraryEvaluator(String name,
 			Evaluator primaryEvaluator, ModelFactory modelFacotry,
-			SymbolicUtility symbolicUtil) throws LibraryLoaderException {
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer)
+			throws LibraryLoaderException {
 		LibraryEvaluator result;
 
 		if (name.equals("assert"))
@@ -39,10 +41,11 @@ public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 						.forName(aClassName);
 				Constructor<? extends LibraryEvaluator> constructor = aClass
 						.getConstructor(String.class, Evaluator.class,
-								ModelFactory.class, SymbolicUtility.class);
+								ModelFactory.class, SymbolicUtility.class,
+								SymbolicAnalyzer.class);
 
 				result = constructor.newInstance(name, primaryEvaluator,
-						modelFacotry, symbolicUtil);
+						modelFacotry, symbolicUtil, symbolicAnalyzer);
 			} catch (Exception e) {
 				throw new LibraryLoaderException(e.getMessage());
 			}

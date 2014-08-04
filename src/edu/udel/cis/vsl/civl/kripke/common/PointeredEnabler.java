@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -39,14 +40,20 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	 * @param executor
 	 *            The unique executor used in the system to execute statements
 	 *            at a certain state.
-	 * @param showAmpleSet
-	 *            The option to enable/disable the printing of ample sets at
-	 *            each state.
+	 * @param symbolicAnalyzer
+	 *            The symbolic analyzer to be used.
+	 * @param libLoader
+	 *            The library enabler loader.
+	 * @param errorLogger
+	 *            The error logger
+	 * @param civlConfig
+	 *            The configuration of the CIVL model.
 	 */
 	public PointeredEnabler(StateFactory stateFactory, Evaluator evaluator,
-			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
-			CIVLConfiguration civlConfig) {
-		super(stateFactory, evaluator, libLoader, errorLogger, civlConfig);
+			SymbolicAnalyzer symbolicAnalyzer, LibraryEnablerLoader libLoader,
+			CIVLErrorLogger errorLogger, CIVLConfiguration civlConfig) {
+		super(stateFactory, evaluator, symbolicAnalyzer, libLoader,
+				errorLogger, civlConfig);
 	}
 
 	/* ************************* Methods from Enabler ********************** */
@@ -63,7 +70,7 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	protected TransitionSequence enabledTransitionsPOR(State state) {
 		TransitionSequence transitions = Semantics.newTransitionSequence(state);
 		AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this, evaluator,
-				debugging, debugOut);
+				this.symbolicAnalyzer, debugging, debugOut);
 		List<ProcessState> processStates = new LinkedList<>(
 				ampleWorker.ampleProcesses());// compute ample processes
 
@@ -76,10 +83,7 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 				}
 				debugOut.println();
 				if (!debugging && showAmpleSetWtStates)
-					// state.print(debugOut);
-					// this.stateFactory.printState(debugOut, state);
-					debugOut.print(evaluator.symbolicUtility().stateToString(
-							state));
+					debugOut.print(symbolicAnalyzer.stateToString(state));
 			}
 		}
 		// Compute the ample set (of transitions)
@@ -88,5 +92,4 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 		}
 		return transitions;
 	}
-
 }

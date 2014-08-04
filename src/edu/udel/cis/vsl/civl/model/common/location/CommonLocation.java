@@ -105,6 +105,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 */
 	private Scope scope;
 
+	/**
+	 * Is this the started location of a function?
+	 */
+	private boolean isStart = false;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -310,7 +315,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 	public void purelyLocalAnalysis() {
 		// Usually, a location is purely local if it has exactly one outgoing
 		// statement that is purely local
-		if (incoming.size() != 1) {
+		if ((this.isStart && incoming.size() > 0) || incoming.size() != 1) {
 			this.purelyLocal = false;
 			return;
 		}
@@ -575,6 +580,16 @@ public class CommonLocation extends CommonSourceable implements Location {
 	@Override
 	public boolean hasDerefs() {
 		return this.hasDeref;
+	}
+
+	@Override
+	public void setAsStart(boolean value) {
+		this.isStart = value;
+	}
+
+	@Override
+	public boolean isStart() {
+		return isStart;
 	}
 
 }
