@@ -1,0 +1,17 @@
+Done:
+  
+  
+ToDo:
+  Actually start using cl_mem OR use $bundle
+  make the args struct
+  implement clCreateKernel
+  
+ToDo: Long term:
+  Possible implementation of clGetKernelWorkGroupInfo, if an example that needs it is used
+  Possible implementation of clGetDeviceInfo
+  Re-arrange code so that the group designation is actually possible
+
+Problems:
+  This example does not neatly into work already done.
+  No memset();  
+  Program crash when using array index of kernel

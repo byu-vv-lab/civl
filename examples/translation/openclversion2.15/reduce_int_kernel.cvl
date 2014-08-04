@@ -10,40 +10,43 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define LOAD_GLOBAL_I1(s, i) \
-    ((__global const int*)(s))[(size_t)(i)]
+    ((  const int*)(s))[(size_t)(i)]
 
 #define STORE_GLOBAL_I1(s, i, v) \
-    ((__global int*)(s))[(size_t)(i)] = (v)
+    ((  int*)(s))[(size_t)(i)] = (v)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define LOAD_LOCAL_I1(s, i) \
-    ((__local int*)(s))[(size_t)(i)]
+    ((  int*)(s))[(size_t)(i)]
 
 #define STORE_LOCAL_I1(s, i, v) \
-    ((__local int*)(s))[(size_t)(i)] = (v)
+    ((  int*)(s))[(size_t)(i)] = (v)
 
 #define ACCUM_LOCAL_I1(s, i, j) \
 { \
-    int x = ((__local int*)(s))[(size_t)(i)]; \
-    int y = ((__local int*)(s))[(size_t)(j)]; \
-    ((__local int*)(s))[(size_t)(i)] = (x + y); \
+    int x = ((  int*)(s))[(size_t)(i)]; \
+    int y = ((  int*)(s))[(size_t)(j)]; \
+    ((  int*)(s))[(size_t)(i)] = (x + y); \
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
     __global int *output, 
     __global const int *input, 
     __local int *shared,
-    const unsigned int n)
+    const unsigned int n
 */
 void reduce(
+  int workgroup, 
+  int cl_global_id, 
+  int cl_local_id,
   int *output, 
   const int *input, 
   int *shared,
   const unsigned int n)
 {
   const int zero = 0.0f;
-  const unsigned int group_id = get_global_id(0) / get_local_size(0);
+  const unsigned int group_id = workgroup;
   const unsigned int group_size = GROUP_SIZE;
   const unsigned int group_stride = 2 * group_size;
   const size_t local_stride = group_stride * group_size; 
@@ -53,7 +56,7 @@ void reduce(
   for(op = 0; op < OPERATIONS; op++)
   {
     const unsigned int offset = (last - op);
-    const size_t local_id = get_local_id(0) + offset;
+    const size_t local_id = local_id + offset;
 
     STORE_LOCAL_I1(shared, local_id, zero);
         
@@ -74,7 +77,7 @@ void reduce(
 
         
         
-  if (get_local_id(0) == 0)
+  if (cl_local_id == 0)
   {
     int v = LOAD_LOCAL_I1(shared, 0);
     STORE_GLOBAL_I1(output, group_id, v);

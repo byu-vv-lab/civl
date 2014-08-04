@@ -261,6 +261,7 @@ int main(int argc, char** argv)
   clReleaseKernel(kernel);
   free(arguments);
   
+  
   return 0;
 }
 /*Note, pointers to global memory cannot be stored in local memory
