@@ -82,19 +82,15 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			int pid, int processIdentifier, Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException {
 		String functionName = call.function().name().name();
-		List<Transition> localTransitions = new LinkedList<>();
 
 		switch (functionName) {
 		case "$comm_dequeue":
-			localTransitions.addAll(this.enabledCommDequeueTransitions(state,
-					call, pathCondition, pid, processIdentifier,
-					assignAtomicLock));
-			break;
+			return this.enabledCommDequeueTransitions(state, call,
+					pathCondition, pid, processIdentifier, assignAtomicLock);
 		default:
 			return super.enabledTransitions(state, call, pathCondition, pid,
 					processIdentifier, assignAtomicLock);
 		}
-		return localTransitions;
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -144,9 +140,11 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			NumericExpression argSrc = (NumericExpression) argumentValues[1];
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
+			// If it's a wild card source comm_dequeue, all processes in
+			// the same communicator will be added into ample set.
 			if (reasoner.isValid(universe.lessThanEquals(zero, argSrc))) {
-				ampleSet.addAll(this.computeAmpleSetByHandleObject(state, pid,
-						arguments[0], argumentValues[0], reachableMemUnitsMap));
+				return this.computeAmpleSetByHandleObject(state, pid,
+						arguments[0], argumentValues[0], reachableMemUnitsMap);
 			} else {
 				for (int p : reachableMemUnitsMap.keySet()) {
 					ampleSet.add(p);
@@ -154,9 +152,10 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			}
 			return ampleSet;
 		case "$comm_enqueue":
-			ampleSet.addAll(this.computeAmpleSetByHandleObject(state, pid,
-					arguments[0], argumentValues[0], reachableMemUnitsMap));
-			return ampleSet;
+			// Because we don't know if other processes will call an wild card
+			// receive(dequeue), we have to put all processes into ample set.
+			return this.computeAmpleSetByHandleObject(state, pid, arguments[0],
+					argumentValues[0], reachableMemUnitsMap);
 		default:
 			throw new CIVLInternalException("Unreachable" + function, source);
 		}
@@ -235,6 +234,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		sourceGTEzero = universe.lessThanEquals(zero, argSource);
 		if (!reasoner.isValid(sourceGTEzero)) {
 			// clause: source == 0
+			//TODO: can source be non-concrete
 			isAnySource = universe.equals(minusOne, argSource);
 			if (!reasoner.isValid(isAnySource)) {
 				isAnyTag = universe.equals(minusTwo, argTag);
@@ -272,6 +272,8 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		for (int i = 0; i < newClauses.size(); i++) {
 			BooleanExpression newClause = newClauses.get(i);
 
+			// TODO: changing call.guard to T or null because it will never be
+			// used in the future.
 			newPathCondition = universe.and(pathCondition, newClause);
 			possibleSources = getAllPossibleSources(eval.state, newClause,
 					gcomm, source, dest, tag, call.getSource());
@@ -287,6 +289,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		return localTransitions;
 	}
 
+	// TODO: doc
 	private Iterable<Statement> dequeueStatementGenerator(
 			Expression sourceExpr, Expression tagExpr,
 			List<SymbolicExpression> possibleSources,
@@ -304,7 +307,6 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		Location newLocation = null;
 		String dequeueWork = "$comm_dequeue_work";
 		Iterator<SymbolicExpression> sourceIter;
-
 		Reasoner reasoner = universe.reasoner(pathCondition);
 
 		sourceIter = possibleSources.iterator();
@@ -313,6 +315,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			int int_newSource = ((IntegerNumber) reasoner
 					.extractNumber((NumericExpression) newSource)).intValue();
 
+			// TODO: can these be a parameter ?
 			dequeueWorkFunction = modelFactory.systemFunction(civlsource,
 					modelFactory.identifier(civlsource, dequeueWork),
 					parameters, returnType, containingScope, this.name);

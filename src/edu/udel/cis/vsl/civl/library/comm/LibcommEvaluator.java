@@ -93,7 +93,8 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 	 * 4. (source >= 0 && tag >= 0 )
 	 * 
 	 * The returned predicate will be in a form as: (predicate1 &&
-	 * (evaluate(predicate1)) ||...|| predicate4 && (evaluate(predicate4)))
+	 * (message(predicate1)) ||...|| predicate4 && (message(predicate4))) TODO:
+	 * explain message(...)
 	 * </p>
 	 * 
 	 * @author Ziqing Luo
@@ -147,6 +148,8 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 		predicates.add(universe.and(isAnySource, tagGTEzero));
 		predicates.add(universe.and(sourceGTEzero, isAnyTag));
 		predicates.add(universe.and(sourceGTEzero, tagGTEzero));
+		// TODO: if source and tag is concrete, we just need to call
+		// getAllMatchingSources() once.
 		guard = dequeueGuardGenerator(civlsource, state, predicates, gcomm,
 				source, dest, tag);
 		return guard;
@@ -189,9 +192,11 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 
 		do {
 			predicate = predIter.next();
-			hasMsg = universe.bool(!getAllPossibleSources(state, predicate,
+			hasMsg = universe.bool(!getAllMatchingSources(state, predicate,
 					gcomm, source, dest, tag, civlsource).isEmpty());
 			guardComponent = universe.and(predicate, hasMsg);
+			if (guardComponent.isTrue())
+				return universe.trueExpression();
 			guard = universe.or(guard, guardComponent);
 		} while (predIter.hasNext());
 
@@ -232,7 +237,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	List<SymbolicExpression> getAllPossibleSources(State state,
+	List<SymbolicExpression> getAllMatchingSources(State state,
 			BooleanExpression predicate, SymbolicExpression gcomm,
 			SymbolicExpression source, SymbolicExpression dest,
 			SymbolicExpression tag, CIVLSource civlsource)
@@ -255,17 +260,16 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 
 		if (newPathConditions.equals(universe.falseExpression()))
 			return results;
-
+		// TODO: explain me!!!
 		if (sourceNumber != null && sourceNumber.intValue() == -1)
 			isWildcardSource = true;
 		if (tagNumber != null && tagNumber.intValue() == -2)
 			isWildcardTag = true;
-
 		buf = universe.tupleRead(gcomm, universe.intObject(2));
 		// non-wild card source and tag
 		if (!isWildcardSource && !isWildcardTag) {
 			BooleanExpression iterLTQueueLengthClaim;
-			NumericExpression iter = universe.integer(0);
+			NumericExpression iter = zero;
 
 			bufRow = universe.arrayRead(buf, (NumericExpression) source);
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
@@ -287,7 +291,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 				iterLTQueueLengthClaim = universe.lessThan(iter,
 						(NumericExpression) queueLength);
 			}
-		}// non-wild card source and any_tag
+		}// non-wild card source and wild card tag
 		else if (!isWildcardSource && isWildcardTag) {
 			bufRow = universe.arrayRead(buf, (NumericExpression) source);
 			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
@@ -296,7 +300,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 			if (reasoner.isValid(universe.lessThan(zero,
 					(NumericExpression) queueLength)))
 				results.add(source);
-		} // any source and non-wild card tag
+		} // wild card source and non-wild card tag
 		else if (isWildcardSource && !isWildcardTag) {
 			NumericExpression nprocs = (NumericExpression) universe.tupleRead(
 					gcomm, zeroObject);
@@ -304,6 +308,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 			BooleanExpression iterLTnprocsClaim = universe.lessThan(iter,
 					nprocs);
 
+			// TODO: non-concrete nprocs
 			while (reasoner.isValid(iterLTnprocsClaim)) {
 				NumericExpression queueIter = universe.zeroInt();
 				BooleanExpression queueIterLTlengthClaim;
@@ -338,6 +343,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 			BooleanExpression iterLTnprocsClaim = universe.lessThan(iter,
 					nprocs);
 
+			// TODO: non-concrete nprocs
 			while (reasoner.isValid(iterLTnprocsClaim)) {
 				bufRow = universe.arrayRead(buf, iter);
 				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
