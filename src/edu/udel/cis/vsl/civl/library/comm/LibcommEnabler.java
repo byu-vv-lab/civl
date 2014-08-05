@@ -140,12 +140,15 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			NumericExpression argSrc = (NumericExpression) argumentValues[1];
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
+			// TODO: fix me.
 			// If it's a wild card source comm_dequeue, all processes in
 			// the same communicator will be added into ample set.
 			if (reasoner.isValid(universe.lessThanEquals(zero, argSrc))) {
 				return this.computeAmpleSetByHandleObject(state, pid,
 						arguments[0], argumentValues[0], reachableMemUnitsMap);
 			} else {
+				// TODO: find out processes in the gcomm, instead of all
+				// processes of the system.
 				for (int p : reachableMemUnitsMap.keySet()) {
 					ampleSet.add(p);
 				}
@@ -234,7 +237,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		sourceGTEzero = universe.lessThanEquals(zero, argSource);
 		if (!reasoner.isValid(sourceGTEzero)) {
 			// clause: source == 0
-			//TODO: can source be non-concrete
+			// TODO: can source be non-concrete
 			isAnySource = universe.equals(minusOne, argSource);
 			if (!reasoner.isValid(isAnySource)) {
 				isAnyTag = universe.equals(minusTwo, argTag);
