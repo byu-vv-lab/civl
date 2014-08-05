@@ -1,0 +1,76 @@
+
+#include "cl.cvl"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <civlc.h>
+
+typedef struct
+{
+  void * param[2];
+}args;
+
+cl_kernel clCreateKernel(args * argument, char * function)
+{
+  cl_kernel kernel;
+  kernel.arguments = argument;
+  kernel.method = function;
+  
+  return kernel;
+}
+
+void clReleaseKernel(cl_kernel kernel)
+{
+  for (int i = 0; i < 2; i++)
+  {
+    free(((args*)kernel.arguments)->param[i]);
+  }
+}
+
+int main(int argc, char** argv)
+{
+  args * arguments;
+  arguments = (args*)malloc(sizeof(args));
+  
+  int star = 1;
+  
+  int * one = (int*)malloc(sizeof(int));
+  memcpy(one, &star, sizeof(int));
+  
+  cl_kernel kernel;
+  kernel = clCreateKernel(arguments, "nothing");
+  
+  ((args*)kernel.arguments)->param[0] = (int*)malloc(sizeof(int));
+  memcpy(((args*)kernel.arguments)->param[0], &star, sizeof(int));
+  
+  ((args*)kernel.arguments)->param[1] = one;
+  
+  clReleaseKernel(kernel);
+  
+  printf("single kernel works\n");
+  
+  //cl_kernel *kernels = (cl_kernel*)malloc(3 * sizeof(cl_kernel));
+  //cl_kernel kernels[3];
+  
+  //memcpy(one, &star, sizeof(int));
+  //printf("%d, %d", star, *one);
+  
+  //((args*)(kernels[0].arguments))->param[0] = (int*)malloc(sizeof(int));
+  //memcpy(((args*)(kernels[0].arguments))->param[0], &star, sizeof(int));
+  
+  /*
+  for (int i = 0; i < 3; i++)
+  {
+    ((args*)kernels[i].arguments)->param[0] = (int*)malloc(sizeof(int));
+    memcpy(((args*)kernels[i].arguments)->param[0], &star, sizeof(int));
+  
+    ((args*)kernels[i].arguments)->param[1] = one;
+  }
+  */
+  
+  
+  free(arguments);
+  return 0;
+}
+
+
