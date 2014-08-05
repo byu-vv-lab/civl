@@ -248,7 +248,7 @@ public class ImmutableStateFactory implements StateFactory {
 			theState = ImmutableState.newState(theState, newProcesses,
 					newScopes, null);
 		}
-		if (theState.numDyscopes() == 0
+		if (theState.numDyscopes() == 1
 				&& theState.getProcessState(0).hasEmptyStack()) {
 			// checks the memory leak for the final state
 			DynamicScope dyscope = state.getDyscope(0);
@@ -1462,14 +1462,14 @@ public class ImmutableStateFactory implements StateFactory {
 									throw new CIVLStateException(
 											ErrorKind.MEMORY_LEAK,
 											Certainty.CONCRETE,
-											"An unreachable object is dected in the heap of  dyscope "
+											"An unreachable object is dected in the heap of dyscope "
 													+ dyscope.name() + "(id="
 													+ dyscopeId + ")"
 													+ ".\n  malloc ID: "
 													+ mallocId
 													+ "\n  called ID: "
-													+ objectId, state, dyscope
-													.lexicalScope().getSource());
+													+ objectId, theState,
+											dyscope.lexicalScope().getSource());
 								}
 								// unreachable heap object
 								// updates refeferences

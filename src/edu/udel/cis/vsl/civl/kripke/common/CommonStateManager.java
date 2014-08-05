@@ -192,7 +192,7 @@ public class CommonStateManager implements StateManager {
 				// out if it has been seen before.
 				CIVLExecutionException err = new CIVLExecutionException(
 						stex.kind(), stex.certainty(), process, stex.message(),
-						symbolicAnalyzer.stateToString(state), stex.source());
+						symbolicAnalyzer.stateToString(stex.state()), stex.source());
 
 				errorLogger.reportError(err);
 			}
@@ -208,7 +208,7 @@ public class CommonStateManager implements StateManager {
 			} catch (CIVLStateException stex) {
 				CIVLExecutionException err = new CIVLExecutionException(
 						stex.kind(), stex.certainty(), process, stex.message(),
-						symbolicAnalyzer.stateToString(state), stex.source());
+						symbolicAnalyzer.stateToString(stex.state()), stex.source());
 
 				errorLogger.reportError(err);
 			}
