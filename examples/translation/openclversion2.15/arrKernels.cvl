@@ -50,15 +50,13 @@ int main(int argc, char** argv)
   printf("single kernel works\n");
   
   //cl_kernel *kernels = (cl_kernel*)malloc(3 * sizeof(cl_kernel));
-  //cl_kernel kernels[3];
+  cl_kernel kernels[3];
   
-  //memcpy(one, &star, sizeof(int));
-  //printf("%d, %d", star, *one);
+  memcpy(one, &star, sizeof(int));
+  printf("%d, %d", star, *one);
+
   
-  //((args*)(kernels[0].arguments))->param[0] = (int*)malloc(sizeof(int));
-  //memcpy(((args*)(kernels[0].arguments))->param[0], &star, sizeof(int));
   
-  /*
   for (int i = 0; i < 3; i++)
   {
     ((args*)kernels[i].arguments)->param[0] = (int*)malloc(sizeof(int));
@@ -66,7 +64,13 @@ int main(int argc, char** argv)
   
     ((args*)kernels[i].arguments)->param[1] = one;
   }
-  */
+  
+  printf("assigned properly\n");
+  
+  for (int i = 0; i < 3; i++)
+  {
+    clReleaseKernel(kernels[i]);
+  }
   
   
   free(arguments);
