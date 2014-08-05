@@ -1,10 +1,9 @@
 Done:
-  
-  
-ToDo:
-  Actually start using cl_mem OR use $bundle
   make the args struct
   implement clCreateKernel
+  
+ToDo:
+  Somehow tell the program what variables are global so they don't try to free the same space
   
 ToDo: Long term:
   Possible implementation of clGetKernelWorkGroupInfo, if an example that needs it is used
@@ -15,3 +14,4 @@ Problems:
   This example does not neatly into work already done.
   No memset();  
   Program crash when using array index of kernel
+  Bug in memory leak detection

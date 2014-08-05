@@ -1,3 +1,17 @@
+  /*
+  cl_kernel kernel;
+  kernel = clCreateKernel(arguments, "nothing");
+  
+  ((args*)kernel.arguments)->param[0] = (int*)malloc(sizeof(int));
+  memcpy(((args*)kernel.arguments)->param[0], &star, sizeof(int));
+  
+  ((args*)kernel.arguments)->param[1] = one;
+  
+  clReleaseKernel(kernel);
+  
+  printf("single kernel works\n");
+  */
+
 
 #include "cl.cvl"
 #include <stdio.h>
@@ -36,43 +50,53 @@ int main(int argc, char** argv)
   
   int * one = (int*)malloc(sizeof(int));
   memcpy(one, &star, sizeof(int));
-  
-  cl_kernel kernel;
-  kernel = clCreateKernel(arguments, "nothing");
-  
-  ((args*)kernel.arguments)->param[0] = (int*)malloc(sizeof(int));
-  memcpy(((args*)kernel.arguments)->param[0], &star, sizeof(int));
-  
-  ((args*)kernel.arguments)->param[1] = one;
-  
-  clReleaseKernel(kernel);
-  
-  printf("single kernel works\n");
-  
+
   //cl_kernel *kernels = (cl_kernel*)malloc(3 * sizeof(cl_kernel));
   cl_kernel kernels[3];
   
-  memcpy(one, &star, sizeof(int));
-  printf("%d, %d", star, *one);
+  printf("%d, %d\n", star, *one);
 
-  
+  for (int i = 0; i < 3; i++)
+  {
+    kernels[i] = clCreateKernel(arguments, "eh");
+  }
   
   for (int i = 0; i < 3; i++)
   {
-    ((args*)kernels[i].arguments)->param[0] = (int*)malloc(sizeof(int));
-    memcpy(((args*)kernels[i].arguments)->param[0], &star, sizeof(int));
+    //((args*)kernels[i].arguments)->param[0] = (int*)malloc(sizeof(int));
+    //memcpy(((args*)kernels[i].arguments)->param[0], &star, sizeof(int));
   
-    ((args*)kernels[i].arguments)->param[1] = one;
+    //((args*)kernels[i].arguments)->param[1] = one;
   }
   
   printf("assigned properly\n");
-  
+  /*
   for (int i = 0; i < 3; i++)
   {
     clReleaseKernel(kernels[i]);
   }
+  */
+  //((args*)kernels[0].arguments)->param[1] = one;
+  //free(((args*)kernels[0].arguments)->param[1]);
+  
+  ((args*)kernels[0].arguments)->param[0] = (int*)malloc(sizeof(int));
+  memcpy(((args*)kernels[0].arguments)->param[0], &star, sizeof(int));
+  free(((args*)kernels[0].arguments)->param[0]);
+  
+//
+  
+  ((args*)kernels[1].arguments)->param[0] = (int*)malloc(sizeof(int));
+  memcpy(((args*)kernels[1].arguments)->param[0], &star, sizeof(int));
+  
+
+  free(((args*)kernels[1].arguments)->param[0]);
+  //free(((args*)kernels[1].arguments)->param[1]);
+  
+  //free(((args*)kernels[2].arguments)->param[0]);
+  //free(((args*)kernels[2].arguments)->param[1]);
   
   
+  free(one);
   free(arguments);
   return 0;
 }
