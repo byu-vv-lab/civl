@@ -101,6 +101,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression first = argumentValues[0], second = argumentValues[1];
 
+		// TODO checks errors: when first pointer is null; when either pointer
+		// is invalid pointer.
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs,
 					symbolicUtil.contains(first, second));

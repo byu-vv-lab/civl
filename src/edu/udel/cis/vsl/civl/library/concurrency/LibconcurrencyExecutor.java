@@ -184,14 +184,14 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 				false);
 		state = eval.state;
 		gbarrierObj = eval.value;
-		if (!symbolicUtil.isHeapObjectDefined(gbarrierObj)) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
-					"The gbarrier object of " + arguments[1] + " is undefined",
-					source);
-
-			this.errorLogger.reportError(err);
-		}
+		// if (symbolicUtil.isInvalidHeapObject(gbarrierObj)) {
+		// CIVLExecutionException err = new CIVLExecutionException(
+		// ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
+		// "The gbarrier object of " + arguments[1] + " is invalid",
+		// source);
+		//
+		// this.errorLogger.reportError(err);
+		// }
 		totalPlaces = ((IntegerNumber) universe
 				.extractNumber((NumericExpression) universe.tupleRead(
 						gbarrierObj, zeroObject))).intValue();

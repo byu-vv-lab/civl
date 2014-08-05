@@ -719,7 +719,9 @@ public class ImmutableStateFactory implements StateFactory {
 		oldToNewPointers = this.computePointerMap(theState, oldToNewPointers);
 		for (int i = 0; i < numDyscopes; i++)
 			newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
-					oldToNewPointers, universe);
+					oldToNewPointers,
+					new HashMap<SymbolicExpression, SymbolicExpression>(),
+					universe);
 		theState = theState.setScopes(newScopes);
 		return theState;
 	}
@@ -1413,7 +1415,8 @@ public class ImmutableStateFactory implements StateFactory {
 					.reachableHeapObjectsOfState(theState);
 			int numDyscopes = theState.numDyscopes();
 			int numHeapFields = modelFactory.heapType().getNumMallocs();
-			Map<SymbolicExpression, SymbolicExpression> oldToNewMap = new HashMap<>();
+			Map<SymbolicExpression, SymbolicExpression> oldToNewPointersMap = new HashMap<>();
+			Map<SymbolicExpression, SymbolicExpression> oldToNewNameMap = new HashMap<>();
 			int nameId = 0;
 			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
 
@@ -1488,12 +1491,12 @@ public class ImmutableStateFactory implements StateFactory {
 												universe.integer(objectId));
 
 								nameId = addRenamedMap(heapObject, nameId,
-										oldToNewMap);
+										oldToNewNameMap);
 							}
 						}
 						if (oldID2NewID.size() > 0)
 							addPointerMap(oldID2NewID, heapPointer, fieldRef,
-									oldToNewMap);
+									oldToNewPointersMap);
 						if (hasNew)
 							newHeap = universe.tupleWrite(newHeap,
 									universe.intObject(mallocId), newHeapField);
@@ -1504,10 +1507,11 @@ public class ImmutableStateFactory implements StateFactory {
 							.setVariable(theState, 0, dyscopeId, newHeap);
 				}
 			}
-			oldToNewMap = computePointerMap(theState, oldToNewMap);
+			oldToNewPointersMap = computePointerMap(theState,
+					oldToNewPointersMap);
 			for (int i = 0; i < numDyscopes; i++)
 				newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
-						oldToNewMap, universe);
+						oldToNewPointersMap, oldToNewNameMap, universe);
 			theState = theState.setScopes(newScopes);
 			return theState;
 		}
@@ -1515,18 +1519,23 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private Map<SymbolicExpression, SymbolicExpression> computePointerMap(
 			State state, Map<SymbolicExpression, SymbolicExpression> oldToNewMap) {
-		Map<SymbolicExpression, SymbolicExpression> newMap = new HashMap<>();
-		int numDyscopes = state.numDyscopes();
+		if (oldToNewMap.size() < 1)
+			return oldToNewMap;
+		else {
+			Map<SymbolicExpression, SymbolicExpression> newMap = new HashMap<>();
+			int numDyscopes = state.numDyscopes();
 
-		for (int dyscopeID = 0; dyscopeID < numDyscopes; dyscopeID++) {
-			DynamicScope dyscope = state.getDyscope(dyscopeID);
-			int numVars = dyscope.numberOfValues();
+			for (int dyscopeID = 0; dyscopeID < numDyscopes; dyscopeID++) {
+				DynamicScope dyscope = state.getDyscope(dyscopeID);
+				int numVars = dyscope.numberOfValues();
 
-			for (int vid = 0; vid < numVars; vid++) {
-				computeNewPointer(dyscope.getValue(vid), oldToNewMap, newMap);
+				for (int vid = 0; vid < numVars; vid++) {
+					computeNewPointer(dyscope.getValue(vid), oldToNewMap,
+							newMap);
+				}
 			}
+			return newMap;
 		}
-		return newMap;
 	}
 
 	@SuppressWarnings("incomplete-switch")
@@ -1582,7 +1591,7 @@ public class ImmutableStateFactory implements StateFactory {
 					oldToNewPointerMap.put(value, newHeapObjPtr);
 				else {
 					ReferenceExpression ref = symbolicUtil
-							.referenceOfHeapObjectPointer(value);
+							.referenceToHeapMemUnit(value);
 					SymbolicExpression newPointer = symbolicUtil.makePointer(
 							newHeapObjPtr, ref);
 

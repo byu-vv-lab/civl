@@ -1508,7 +1508,7 @@ public interface ModelFactory {
 			List<Expression> ranges, CIVLType type);
 
 	DomainInitializer domainInitializer(CIVLSource source, int index,
-			Expression domain, boolean isLast);
+			Expression domain);
 
 	DomainGuardExpression domainGuard(CIVLSource source,
 			List<VariableExpression> vars, Expression domain);

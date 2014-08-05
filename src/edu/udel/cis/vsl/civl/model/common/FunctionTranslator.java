@@ -673,8 +673,8 @@ public class FunctionTranslator {
 		for (int i = 0; i < size; i++) {
 			Location location = modelFactory.location(source, scope);
 			Statement assign = modelFactory.assignStatement(source, location,
-					variables.get(i), modelFactory.domainInitializer(source, i,
-							domain, i == size - 1), true);
+					variables.get(i),
+					modelFactory.domainInitializer(source, i, domain), true);
 
 			init = init.combineWith(new CommonFragment(assign));
 		}

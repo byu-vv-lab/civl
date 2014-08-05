@@ -45,7 +45,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	private Set<Scope> children = new LinkedHashSet<Scope>();
 	private Collection<Variable> procRefs = new HashSet<Variable>();
 	private Collection<Variable> scopeRefs = new HashSet<Variable>();
-	private Collection<Variable> pointers = new HashSet<Variable>();
+	private Collection<Variable> pointerRefs = new HashSet<Variable>();
 	private int id;
 	private CIVLFunction function;
 
@@ -269,7 +269,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	 *         types.
 	 */
 	public Collection<Variable> variablesWithPointers() {
-		return pointers;
+		return pointerRefs;
 	}
 
 	/**
@@ -315,7 +315,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 		boolean pointerType = containsPointerType(variable.type());
 
 		if (pointerType) {
-			pointers.add(variable);
+			pointerRefs.add(variable);
 		}
 	}
 

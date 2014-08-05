@@ -136,13 +136,6 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression expressionOfType(SymbolicType type);
 
-	// /**
-	// * Returns the initial value of a(n) (empty) heap.
-	// *
-	// * @return The initial value of a(n) (empty) heap.
-	// */
-	// SymbolicExpression initialHeapValue();
-
 	/**
 	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
 	 * symbolic reference value.
@@ -170,9 +163,24 @@ public interface SymbolicUtility {
 	StringBuffer charArrayToString(CIVLSource source,
 			SymbolicSequence<?> charArray, int startIndex, boolean forPrint);
 
-	int getArrayIndex(CIVLSource source, SymbolicExpression charPointer);
+	/**
+	 * <p>
+	 * Given a pointer to a certain element of some array, returns the index of
+	 * the element that the pointer points to.
+	 * </p>
+	 * 
+	 * <p>
+	 * Precondition: pointer must point to an element of some array.
+	 * </p>
+	 * 
+	 * @param source
+	 *            The source code information for error report.
+	 * @param pointer
+	 *            The pointer checks.
+	 * @return The index of the element that the pointer points to.
+	 */
+	int getArrayIndex(CIVLSource source, SymbolicExpression pointer);
 
-	/* ***************** Arrays Operations Utilities ******************** */
 	/**
 	 * Recursively updates the array references for an multi-dimensional array
 	 * by using a set of indexes and a given reference to an array element. e.g.
@@ -191,7 +199,6 @@ public interface SymbolicUtility {
 			ArrayElementReference arrayReference,
 			List<NumericExpression> newIndexes);
 
-	/* *************************** Heap Operations ************************* */
 	/**
 	 * Checks if a heap is empty, i.e., either it is the SARL null expression or
 	 * all heap objects it holds are marked as INVALID (already deallocated).
@@ -202,37 +209,155 @@ public interface SymbolicUtility {
 	 */
 	boolean isEmptyHeap(SymbolicExpression heapValue);
 
+	/**
+	 * <p>
+	 * Computes the range of the i-th element of a given domain. For example, if
+	 * domain is {(1, 4, 1), (9, 4, -2)} and index is 1, then the returned value
+	 * should be (9, 4, -2).
+	 * </p>
+	 * 
+	 * <p>
+	 * Precondition: domain must be a valid domain value, and index must be
+	 * greater or equal to 0 and less than the size of domain.
+	 * </p>
+	 * 
+	 * @param domain
+	 *            The domain whose index-th range is to be computed.
+	 * @param index
+	 *            The index of the range to be computed in the domain.
+	 * @return The index-th range of the domain, which has the form (low, high,
+	 *         step).
+	 */
 	SymbolicExpression rangeOfDomainAt(SymbolicExpression domain, int index);
 
-	SymbolicExpression initialValueOfRange(SymbolicExpression range,
-			boolean isLast);
+	/**
+	 * Computes the initial value of the index-th range of a given domain. *
+	 * 
+	 * @param range
+	 *            The range value.
+	 * @param index
+	 *            The index of the range.
+	 * @param dimension
+	 *            The number of ranges that the domain contains.
+	 * @return The initial value of the index-th range of a given domain.
+	 */
+	SymbolicExpression initialValueOfRange(SymbolicExpression range, int index,
+			int dimension);
 
+	/**
+	 * Checks if the given value is within the index-th range of a certain
+	 * domain.
+	 * 
+	 * @param value
+	 *            The value to be tested if it is in range.
+	 * @param domain
+	 *            The domain that the value wants to test with.
+	 * @param index
+	 *            The index of the range that the test bases on.
+	 * @return True iff the given value is within the index-th range of a
+	 *         certain domain.
+	 */
 	BooleanExpression isInRange(SymbolicExpression value,
 			SymbolicExpression domain, int index);
 
+	/**
+	 * Increments a certain value based on the step of a given range.
+	 * 
+	 * @param value
+	 *            The value to be incremented.
+	 * @param range
+	 *            The range whose step is to be used.
+	 * @return The result of incremental.
+	 */
 	SymbolicExpression rangeIncremental(SymbolicExpression value,
 			SymbolicExpression range);
 
+	/**
+	 * Computes the lower bound of the index-th range of a domain.
+	 * 
+	 * @param domain
+	 *            The given domain.
+	 * @param index
+	 *            The index of the range.
+	 * @return The lower bound of the index-th range of the domain.
+	 */
 	SymbolicExpression getLowOfDomainAt(SymbolicExpression domain, int index);
 
+	/**
+	 * Computes the size of a range, that is the number of values covered by the
+	 * range.
+	 * 
+	 * @param range
+	 *            The range.
+	 * @return The number of values covered by the range
+	 */
 	NumericExpression getRangeSize(SymbolicExpression range);
 
+	/**
+	 * Computes the lower bound of a certain range.
+	 * 
+	 * @param range
+	 *            The range.
+	 * @return The lower bound of the range.
+	 */
 	NumericExpression getLowOfRange(SymbolicExpression range);
 
+	/**
+	 * Computes the upper bound of a certain range.
+	 * 
+	 * @param range
+	 *            The range.
+	 * @return The upper bound of the range.
+	 */
 	NumericExpression getHighOfRange(SymbolicExpression range);
 
+	/**
+	 * Computes the step of a range.
+	 * 
+	 * @param range
+	 *            The range.
+	 * @return The step of the range.
+	 */
 	NumericExpression getStepOfRange(SymbolicExpression range);
 
+	/**
+	 * Checks if a given value is initialized.
+	 * 
+	 * @param value
+	 *            The value to be checked.
+	 * @return True iff the value is already initialized.
+	 */
 	boolean isInitialized(SymbolicExpression value);
 
+	/**
+	 * Checks if the object that the first pointer points to contains that of
+	 * the send pointer.
+	 * 
+	 * @param first
+	 *            The first pointer.
+	 * @param second
+	 *            The second pointer.
+	 * @return True iff the object that the first pointer points to contains
+	 *         that of the send pointer.
+	 */
 	SymbolicExpression contains(SymbolicExpression first,
 			SymbolicExpression second);
 
+	/**
+	 * Returns the NULL pointer of CIVL.
+	 * 
+	 * @return The NULL pointer of CIVL.
+	 */
 	SymbolicExpression nullPointer();
 
+	/**
+	 * Checks if a given pointer is a NULL pointer.
+	 * 
+	 * @param pointer
+	 *            The pointer to be checked.
+	 * @return True iff the given pointer is NULL.
+	 */
 	boolean isNullPointer(SymbolicExpression pointer);
-
-	boolean isHeapObjectDefined(SymbolicExpression heapObj);
 
 	/**
 	 * Is the given pointer pointing to a memory space that is part of a heap?
@@ -241,26 +366,6 @@ public interface SymbolicUtility {
 	 * @return
 	 */
 	boolean isPointerToHeap(SymbolicExpression pointer);
-
-	// /**
-	// * Gets the pointer to the heap of the given scope.
-	// *
-	// * @param source
-	// * The source code information for error report.
-	// * @param state
-	// * The state where this operation happens.
-	// * @param process
-	// * The information of the process that triggers this operation,
-	// * for the purpose of error report.
-	// * @param scopeValue
-	// * The scope value
-	// * @return The pointer to the heap of the given scope.
-	// * @throws UnsatisfiablePathConditionException
-	// * if the given scope is not concrete or not a valid scope.
-	// */
-	// SymbolicExpression heapPointer(CIVLSource source, State state,
-	// String process, SymbolicExpression scopeValue)
-	// throws UnsatisfiablePathConditionException;
 
 	/**
 	 * <p>
@@ -275,43 +380,114 @@ public interface SymbolicUtility {
 	SymbolicExpression heapObjectPointer(SymbolicExpression pointer);
 
 	/**
-	 * Is the given pointer pointing to the first element of a heap cell?
+	 * Is the given pointer pointing to the first element of a heap object?
 	 * 
 	 * @param source
+	 *            The source code information for error report.
 	 * @param pointer
-	 * @return
+	 *            The pointer to be checked.
+	 * @return True iff the given pointer is pointing to the first element of a
+	 *         heap object.
 	 */
-	boolean isHeapObjectPointer(CIVLSource source, SymbolicExpression pointer);
+	boolean isHeapAtomicObjectPointer(CIVLSource source,
+			SymbolicExpression pointer);
 
+	/**
+	 * Computes the reference expression of a pointer. If the pointer is
+	 * pointing to some part of the heap, then the reference expression is the
+	 * reference expression w.r.t to the corresponding heap atomic object;
+	 * otherwise, it is the original reference expression of the pointer.
+	 * 
+	 * @param pointer
+	 *            The pointer to whose reference is to be computed.
+	 * @return The reference expression of the pointer w.r.t to the object it
+	 *         points to.
+	 */
 	ReferenceExpression referenceOfPointer(SymbolicExpression pointer);
 
+	/**
+	 * Constructs a pointer by combining a pointer to an object, either a heap
+	 * atomic object or a normal object, and a reference expression w.r.t that
+	 * object.
+	 * 
+	 * @param objectPointer
+	 * @param reference
+	 * @return
+	 */
 	SymbolicExpression makePointer(SymbolicExpression objectPointer,
 			ReferenceExpression reference);
 
 	/**
-	 * Checks if a pointer is defined, i.e., it doesn't point to a memory unit
-	 * of an invalid scope.
+	 * Checks if a pointer is valid for dereference, i.e., it isn't NULL, nor it
+	 * isn't pointing to a deallocated memory space, nor it doesn't point to a
+	 * memory unit of an invalid scope.
 	 * 
 	 * @param pointer
-	 * @return
+	 *            The pointer to be checked.
+	 * @return True iff the pointer is valid, i.e., can be dereferenced.
 	 */
 	boolean isValidPointer(SymbolicExpression pointer);
 
-	boolean isValidRefOf(ReferenceExpression ref, SymbolicExpression value);
+	/**
+	 * Checks if the given reference is valid for a certain object.
+	 * 
+	 * @param ref
+	 *            The reference.
+	 * @param object
+	 *            The object.
+	 * @return True iff the given reference expression is applicable for the
+	 *         given object.
+	 */
+	boolean isValidRefOf(ReferenceExpression ref, SymbolicExpression object);
 
 	/**
-	 * Returns the undefined pointer of CIVL, which is a tuple <-2, -2, NULL>
+	 * Returns the undefined pointer of CIVL, which is a tuple <-2, -2, NULL>.
+	 * In CIVL, a pointer becomes undefined when the memory space it points to
+	 * get deallocated.
 	 * 
 	 * @return The undefined pointer.
 	 */
 	SymbolicExpression undefinedPointer();
 
+	/**
+	 * Constructs an invalid heap object of a certain type. A heap object
+	 * becomes invalid when it gets deallocated.
+	 * 
+	 * @param heapObjectType
+	 *            The type of the heap object.
+	 * @return The invalid heap object of the given type.
+	 */
 	SymbolicConstant invalidHeapObject(SymbolicType heapObjectType);
 
+	/**
+	 * Is this heap object invalid?
+	 * 
+	 * @param heapObject
+	 *            The heap object.
+	 * @return True iff the given heap object is invalid.
+	 */
 	boolean isInvalidHeapObject(SymbolicExpression heapObject);
 
-	boolean isUndefinedPointer(SymbolicExpression value);
+	/**
+	 * Is this an undefined pointer?
+	 * 
+	 * @param pointer
+	 *            The pointer.
+	 * @return True iff the given pointer is undefined.
+	 */
+	boolean isUndefinedPointer(SymbolicExpression pointer);
 
+	/**
+	 * Checks if the objects that the two pointers point to have any
+	 * intersection.
+	 * 
+	 * @param pointer1
+	 *            The first pointer.
+	 * @param pointer2
+	 *            The second pointer.
+	 * @return True iff there is no intersection between the objects that the
+	 *         given two pointers point to.
+	 */
 	boolean isDisjointWith(SymbolicExpression pointer1,
 			SymbolicExpression pointer2);
 
@@ -332,5 +508,14 @@ public interface SymbolicUtility {
 	SymbolicExpression newArray(BooleanExpression context,
 			NumericExpression length, SymbolicExpression eleValue);
 
-	ReferenceExpression referenceOfHeapObjectPointer(SymbolicExpression pointer);
+	/**
+	 * Computes the reference expression of a given heap pointer w.r.t the
+	 * corresponding heap memory unit.
+	 * 
+	 * @param heapPointer
+	 *            The heap pointer.
+	 * @return The reference expression of a given pointer w.r.t the
+	 *         corresponding heap memory unit.
+	 */
+	ReferenceExpression referenceToHeapMemUnit(SymbolicExpression heapPointer);
 }

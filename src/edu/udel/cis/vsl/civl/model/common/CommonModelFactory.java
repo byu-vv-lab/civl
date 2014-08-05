@@ -2510,9 +2510,9 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public DomainInitializer domainInitializer(CIVLSource source, int index,
-			Expression domain, boolean isLast) {
+			Expression domain) {
 		return new CommonDomainInitializer(source, this.integerType, index,
-				domain, isLast);
+				domain);
 	}
 
 	@Override

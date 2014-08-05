@@ -1132,7 +1132,7 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicExpression domainValue = eval.value;
 		SymbolicExpression initValue = symbolicUtil.initialValueOfRange(
 				symbolicUtil.rangeOfDomainAt(domainValue, index),
-				domainInit.isLast());
+				index, domainInit.dimension());
 
 		state = eval.state;
 		return new Evaluation(state, initValue);

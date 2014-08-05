@@ -515,7 +515,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			// does nothing for null pointer.
 			return state;
 		else if (!this.symbolicUtil.isPointerToHeap(firstElementPointer)
-				|| !this.symbolicUtil.isHeapObjectPointer(source,
+				|| !this.symbolicUtil.isHeapAtomicObjectPointer(source,
 						firstElementPointer)) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,

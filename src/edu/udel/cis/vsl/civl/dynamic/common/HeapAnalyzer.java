@@ -20,12 +20,14 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * <li>a heap object has the type array of type T, which is
  * allocated/deallocated by malloc(handle create)/deallocate(handle destroy)
  * methods;</li>
- * <li>a heap object pointer is a pointer to a heap object, which has type
- * pointer to array of type T, and has the form <code>&di$heap&lt;j,k></code>,
- * where <code>i</code> is the dyscope ID of the heap, <code>j</code> is the
- * index of the heap field that the heap object belongs to, and <code>k</code>
- * is the index of the heap object in the heap field.</li>
- * <li></li>
+ * <li>a heap atomic object has the type T, and is an element of a certain heap
+ * object;</li>
+ * <li>a heap memory unit is a pointer to a heap object, which has type pointer
+ * to array of type T, and has the form <code>&di$heap&lt;j,k></code>, where
+ * <code>i</code> is the dyscope ID of the heap, <code>j</code> is the index of
+ * the heap field that the heap object belongs to, and <code>k</code> is the
+ * index of the heap object in the heap field.</li>
+ * <li>a heap pointer is any pointer pointing to some part of the heap.</li>
  * </ul>
  * This class is part of the symbolic utility, the purpose of which is to factor
  * out the code related to heap.

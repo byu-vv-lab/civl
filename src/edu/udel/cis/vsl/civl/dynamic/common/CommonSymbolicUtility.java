@@ -349,14 +349,15 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public int getArrayIndex(CIVLSource source, SymbolicExpression charPointer) {
+	public int getArrayIndex(CIVLSource source, SymbolicExpression pointer) {
 		int int_arrayIndex;
 
-		if (charPointer.type() instanceof SymbolicArrayType) {
+		if (pointer.type() instanceof SymbolicArrayType) {
 			int_arrayIndex = 0;
-		} else {
-			ArrayElementReference arrayRef = (ArrayElementReference) getSymRef(charPointer);
+		} else {// TODO what if pointer is pointing to the heap?
+			ArrayElementReference arrayRef = (ArrayElementReference) getSymRef(pointer);
 			NumericExpression arrayIndex = arrayRef.getIndex();
+
 			int_arrayIndex = extractInt(source, arrayIndex);
 		}
 		return int_arrayIndex;
@@ -387,11 +388,13 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 	@Override
 	public SymbolicExpression initialValueOfRange(SymbolicExpression range,
-			boolean isLast) {
+			int index, int dimension) {
 		SymbolicExpression low = universe.tupleRead(range, zeroObj);
 		SymbolicExpression step = universe.tupleRead(range, twoObj);
 
-		if (isLast)
+		// The last range of the dimension, i.e., the first range to be
+		// incremented, will have the initial value of (low - step).
+		if (index == dimension - 1)
 			return universe.subtract((NumericExpression) low,
 					(NumericExpression) step);
 		return low;
@@ -489,6 +492,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	@Override
 	public SymbolicExpression contains(SymbolicExpression pointer1,
 			SymbolicExpression pointer2) {
+		// TODO checks null pointer
 		ReferenceExpression ref1 = (ReferenceExpression) universe.tupleRead(
 				pointer1, twoObj);
 		ReferenceExpression ref2 = (ReferenceExpression) universe.tupleRead(
@@ -560,23 +564,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public boolean isHeapObjectDefined(SymbolicExpression heapObj) {
-		if (heapObj.numArguments() > 0
-				&& heapObj.argument(0) instanceof SymbolicConstant) {
-			SymbolicConstant value = (SymbolicConstant) heapObj.argument(0);
-
-			if (value.name().getString().equals("UNDEFINED"))
-				return false;
-		} else if (heapObj instanceof SymbolicConstant) {
-			SymbolicConstant value = (SymbolicConstant) heapObj;
-
-			if (value.name().getString().equals("UNDEFINED"))
-				return false;
-		}
-		return true;
-	}
-
-	@Override
 	public boolean isPointerToHeap(SymbolicExpression pointer) {
 		int dyscopeID = this.getDyscopeId(null, pointer);
 		int vid = this.getVariableId(null, pointer);
@@ -586,47 +573,11 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		return vid == 0;
 	}
 
-	// @Override
-	// public SymbolicExpression heapPointer(CIVLSource source, State state,
-	// String process, SymbolicExpression scopeValue)
-	// throws UnsatisfiablePathConditionException {
-	// if (scopeValue.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
-	// errorLogger.logSimpleError(source, state, process,
-	// stateToString(state), ErrorKind.OTHER,
-	// "Attempt to get the heap pointer of a symbolic scope");
-	// throw new UnsatisfiablePathConditionException();
-	// } else {
-	// int dyScopeID = modelFactory.getScopeId(source, scopeValue);
-	// ReferenceExpression symRef = (ReferenceExpression) universe
-	// .canonic(universe.identityReference());
-	//
-	// if (dyScopeID < 0) {
-	// errorLogger.logSimpleError(source, state, process,
-	// stateToString(state), ErrorKind.MEMORY_LEAK,
-	// "Attempt to access the heap of the scope that has been "
-	// + "removed from state");
-	// throw new UnsatisfiablePathConditionException();
-	// } else {
-	// DynamicScope dyScope = state.getDyscope(dyScopeID);
-	// Variable heapVariable = dyScope.lexicalScope().variable(
-	// "__heap");
-	//
-	// if (heapVariable == null) {
-	// errorLogger.logSimpleError(source, state, process,
-	// stateToString(state), ErrorKind.MEMORY_LEAK,
-	// "Attempt to access a heap that never exists");
-	// throw new UnsatisfiablePathConditionException();
-	// }
-	// return makePointer(dyScopeID, heapVariable.vid(), symRef);
-	// }
-	// }
-	// }
-
 	/**
 	 * A heap object pointer shall have the form of: <code>&<dn,i,j>[0]</code>
 	 */
 	@Override
-	public boolean isHeapObjectPointer(CIVLSource source,
+	public boolean isHeapAtomicObjectPointer(CIVLSource source,
 			SymbolicExpression pointer) {
 		ReferenceExpression ref = this.getSymRef(pointer);
 		ArrayElementReference arrayEleRef;
@@ -666,7 +617,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public ReferenceExpression referenceOfHeapObjectPointer(
+	public ReferenceExpression referenceToHeapMemUnit(
 			SymbolicExpression pointer) {
 		ReferenceExpression ref = (ReferenceExpression) universe.tupleRead(
 				pointer, twoObj);

@@ -334,34 +334,51 @@ public class ImmutableDynamicScope implements DynamicScope {
 						newParentIdentifier, newValues, reachers,
 						this.identifier);
 	}
-	
+
 	ImmutableDynamicScope updateHeapAndPointers(
 			Map<SymbolicExpression, SymbolicExpression> oldToNewPointers,
+			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapObjectNames,
 			SymbolicUniverse universe) {
-		Collection<Variable> pointerVariableIter = lexicalScope.variablesWithPointers();
+		Collection<Variable> pointerVariableIter = lexicalScope
+				.variablesWithPointers();
 		SymbolicExpression[] newValues = null;
-		
-		//add heap
-		pointerVariableIter.add(lexicalScope.variable(0));
-		for (Variable variable : pointerVariableIter) {
-			int vid = variable.vid();
-			SymbolicExpression oldValue = variableValues[vid];
 
-			if (oldValue != null && !oldValue.isNull()) {
-				SymbolicExpression newValue = universe.substitute(oldValue,
-						oldToNewPointers);
+		// update pointers
+		if (oldToNewPointers.size() > 0)
+			for (Variable variable : pointerVariableIter) {
+				int vid = variable.vid();
+				SymbolicExpression oldValue = variableValues[vid];
 
-				if (oldValue != newValue) {
+				if (oldValue != null && !oldValue.isNull()) {
+					SymbolicExpression newValue = universe.substitute(oldValue,
+							oldToNewPointers);
+
+					if (oldValue != newValue) {
+						if (newValues == null)
+							newValues = copyValues();
+						newValues[vid] = newValue;
+					}
+				}
+			}
+		// rename heap objects
+		if (oldToNewHeapObjectNames.size() > 0) {
+			SymbolicExpression oldHeap = newValues == null ? variableValues[0]
+					: newValues[0];
+
+			if (!oldHeap.isNull()) {
+				SymbolicExpression newHeap = universe.substitute(oldHeap,
+						oldToNewHeapObjectNames);
+
+				if (oldHeap != newHeap) {
 					if (newValues == null)
 						newValues = copyValues();
-					newValues[vid] = newValue;
+					newValues[0] = newHeap;
 				}
 			}
 		}
-		return newValues == null ? this
-				: new ImmutableDynamicScope(lexicalScope, this.parent,
-						this.parentIdentifier, newValues, reachers,
-						this.identifier);
+		return newValues == null ? this : new ImmutableDynamicScope(
+				lexicalScope, this.parent, this.parentIdentifier, newValues,
+				reachers, this.identifier);
 	}
 
 	/* ************************* Methods from Object *********************** */
