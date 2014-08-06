@@ -127,8 +127,7 @@ public class ConcurrencyTest {
 
 	@Test
 	public void dlqueue() {
-		assertTrue(ui.run("verify", filename("dlqueue.cvl"),
-				"-showTransitions", "-showSavedStates"));
+		assertTrue(ui.run("verify", filename("dlqueue.cvl")));
 	}
 
 }

@@ -67,7 +67,7 @@ public class ArithmeticTest {
 	@Test
 	public void matmat() {
 		assertTrue(ui.run("verify", "-inputBOUND=3", "-simplify=false",
-				filename("matmat.cvl"), "-showTransitions"));
+				filename("matmat.cvl")));
 	}
 
 	@Test

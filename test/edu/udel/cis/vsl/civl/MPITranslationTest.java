@@ -39,7 +39,7 @@ public class MPITranslationTest {
 	@Test
 	public void mpithreads_mpi() {
 		assertTrue(ui.run("verify", filename("mpithreads_mpi.c"),
-				"-input__NPROCS=2", "-showAmpleSetWtStates"));
+				"-input__NPROCS=2"));
 	}
 
 	@Test

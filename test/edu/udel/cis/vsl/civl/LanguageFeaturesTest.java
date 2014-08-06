@@ -43,7 +43,8 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void arrayLiteral() throws ABCException {
-		assertTrue(ui.run("verify", filename("arrayLiteral.cvl"), "-enablePrintf=false"));
+		assertTrue(ui.run("verify", filename("arrayLiteral.cvl"),
+				"-enablePrintf=false"));
 	}
 
 	@Test
@@ -274,7 +275,8 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void scopeOperators() throws ABCException {
-		assertTrue(ui.run("verify", filename("scopeOperators.cvl"), "-enablePrintf=false"));
+		assertTrue(ui.run("verify", filename("scopeOperators.cvl"),
+				"-enablePrintf=false"));
 	}
 
 	@Test
@@ -430,7 +432,6 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void heapTest() throws ABCException {
-		assertTrue(ui.run("verify", filename("heapTest.cvl"),
-				"-showSavedStates"));
+		assertTrue(ui.run("verify", filename("heapTest.cvl")));
 	}
 }
