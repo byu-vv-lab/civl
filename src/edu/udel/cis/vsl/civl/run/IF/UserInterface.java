@@ -855,8 +855,8 @@ public class UserInterface {
 				this.getUserIncludes(config));
 		CTokenSource tokens = preprocessor0.outputTokenSource(file0);
 		CParser parser = frontEnd.getParser(tokens);
-		ASTBuilder builder = frontEnd.getASTBuilder(parser);
-		AST ast0 = builder.getTranslationUnit();
+		ASTBuilder builder0 = frontEnd.getASTBuilder(parser), builder1;
+		AST ast0 = builder0.getTranslationUnit();
 		Analyzer analyzer = frontEnd.getStandardAnalyzer(Language.CIVL_C);
 		ProgramFactory programFactory = frontEnd.getProgramFactory(analyzer);
 
@@ -864,8 +864,8 @@ public class UserInterface {
 				this.getUserIncludes(config));
 		tokens = preprocessor1.outputTokenSource(file1);
 		parser = frontEnd.getParser(tokens);
-		builder = frontEnd.getASTBuilder(parser);
-		AST ast1 = builder.getTranslationUnit();
+		builder1 = frontEnd.getASTBuilder(parser);
+		AST ast1 = builder1.getTranslationUnit();
 
 		// analyzer.analyze(ast0);
 		// analyzer.analyze(ast1);
@@ -881,9 +881,9 @@ public class UserInterface {
 			program0.print(out);
 			program1.print(out);
 		}
-		applyTransformers(filename0, preprocessor0, builder, program0,
+		applyTransformers(filename0, preprocessor0, builder0, program0,
 				civlConfig, inputVars);
-		applyTransformers(filename1, preprocessor1, builder, program1,
+		applyTransformers(filename1, preprocessor1, builder1, program1,
 				civlConfig, inputVars);
 		if (verbose || debug)
 			out.println("Generating composite program...");
