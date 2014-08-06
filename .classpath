@@ -11,5 +11,6 @@
 	<classpathentry kind="var" path="VSL/lib/pcollections-2.1.2.jar" sourcepath="/VSL/src/pcollections-2.1.2-sources.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ABC"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/GMC"/>
+	<classpathentry kind="var" path="VSL/lib/antlr-complete.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
