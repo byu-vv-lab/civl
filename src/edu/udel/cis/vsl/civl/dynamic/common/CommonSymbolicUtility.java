@@ -90,7 +90,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	private Map<SymbolicType, SymbolicExpression> typeExpressionMap = new HashMap<>();
 
 	/**
-	 * TODO ???
+	 * The map of symbolic types and their ID's.
 	 */
 	private Map<SymbolicType, NumericExpression> sizeofDynamicMap = new HashMap<>();
 
