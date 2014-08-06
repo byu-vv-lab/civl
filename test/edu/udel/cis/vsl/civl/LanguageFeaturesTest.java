@@ -429,9 +429,4 @@ public class LanguageFeaturesTest {
 	public void civlParfor() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlParfor.cvl")));
 	}
-
-	@Test
-	public void heapTest() throws ABCException {
-		assertTrue(ui.run("verify", filename("heapTest.cvl")));
-	}
 }
