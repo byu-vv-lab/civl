@@ -5,7 +5,7 @@
  *
  * Command line execution: civl verify memoryLeak.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
 
 void process(){
   int * p = (int *) $malloc($here, sizeof(int));

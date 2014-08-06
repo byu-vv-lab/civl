@@ -5,7 +5,7 @@
 #else
 #define __STDIO__
 
-#include<civlc.h>
+#include<civlc.cvh>
 #include<stdio.cvl>
 #include<stdio-common.h>
 #include<stdio-c.cvl>

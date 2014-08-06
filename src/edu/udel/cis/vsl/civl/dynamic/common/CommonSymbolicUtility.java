@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.dynamic.common;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -23,14 +22,12 @@ import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression.ReferenceKind;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.expr.UnionMemberReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
-import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
@@ -40,24 +37,51 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 public class CommonSymbolicUtility implements SymbolicUtility {
 
-	private final String INVALID = "INVALID";
+	/* *************************** Instance Fields ************************* */
 
+	/**
+	 * Symbolic universe for operations on symbolic expressions.
+	 */
 	private SymbolicUniverse universe;
 
+	/**
+	 * The model factory of the CIVL model.
+	 */
 	private ModelFactory modelFactory;
 
+	/**
+	 * Integer object 0.
+	 */
 	private IntObject zeroObj;
 
+	/**
+	 * Integer object 1.
+	 */
 	private IntObject oneObj;
 
+	/**
+	 * Integer object 2.
+	 */
 	private IntObject twoObj;
 
+	/**
+	 * Integer 0.
+	 */
 	private NumericExpression zero;
 
+	/**
+	 * Integer 1.
+	 */
 	private NumericExpression one;
 
+	/**
+	 * The uninterpreted function sizeof.
+	 */
 	private SymbolicExpression sizeofFunction;
 
+	/**
+	 * Symbolic dynamic type.
+	 */
 	private SymbolicTupleType dynamicType;
 
 	/**
@@ -70,7 +94,14 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	 */
 	private Map<SymbolicType, NumericExpression> sizeofDynamicMap = new HashMap<>();
 
+	/**
+	 * The symbolic expression of boolean false.
+	 */
 	private BooleanExpression falseValue;
+
+	/**
+	 * The symbolic expression of boolean true.
+	 */
 	private BooleanExpression trueValue;
 
 	/**
@@ -84,9 +115,17 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	 */
 	private SymbolicExpression undefinedPointer;
 
+	/**
+	 * The heap analyzer for heap related semantics.
+	 */
 	private HeapAnalyzer heapAnalyzer;
 
+	/**
+	 * The symbolic pointer type.
+	 */
 	private SymbolicTupleType pointerType;
+
+	/* ***************************** Constructor *************************** */
 
 	public CommonSymbolicUtility(SymbolicUniverse universe,
 			ModelFactory modelFactory) {
@@ -94,7 +133,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 		this.universe = universe;
 		this.modelFactory = modelFactory;
-		this.heapAnalyzer = new HeapAnalyzer(this);
+		this.heapAnalyzer = new HeapAnalyzer(universe, this);
 		dynamicType = modelFactory.dynamicSymbolicType();
 		dynamicToIntType = universe.functionType(new Singleton<SymbolicType>(
 				dynamicType), universe.integerType());
@@ -117,177 +156,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				universe.nullReference()));
 	}
 
-	@Override
-	public SymbolicExpression nullPointer() {
-		return this.nullPointer;
-	}
-
-	@Override
-	public int extractInt(CIVLSource source, NumericExpression expression) {
-		IntegerNumber result = (IntegerNumber) universe
-				.extractNumber(expression);
-
-		if (result == null)
-			throw new CIVLInternalException(
-					"Unable to extract concrete int from " + expression, source);
-		return result.intValue();
-	}
-
-	@Override
-	public int getDyscopeId(CIVLSource source, SymbolicExpression pointer) {
-		return modelFactory.getScopeId(source,
-				universe.tupleRead(pointer, zeroObj));
-	}
-
-	@Override
-	public SymbolicExpression parentPointer(CIVLSource source,
-			SymbolicExpression pointer) {
-		ReferenceExpression symRef = getSymRef(pointer);
-
-		if (symRef instanceof NTReferenceExpression)
-			return setSymRef(pointer,
-					((NTReferenceExpression) symRef).getParent());
-		throw new CIVLInternalException("Expected non-trivial pointer: "
-				+ pointer, source);
-	}
-
-	@Override
-	public ReferenceExpression getSymRef(SymbolicExpression pointer) {
-		SymbolicExpression result = universe.tupleRead(pointer, twoObj);
-
-		assert result instanceof ReferenceExpression;
-		return (ReferenceExpression) result;
-	}
-
-	@Override
-	public SymbolicExpression setSymRef(SymbolicExpression pointer,
-			ReferenceExpression symRef) {
-		return universe.tupleWrite(pointer, twoObj, symRef);
-	}
-
-	@Override
-	public int getVariableId(CIVLSource source, SymbolicExpression pointer) {
-		return extractIntField(source, pointer, oneObj);
-	}
-
-	@Override
-	public int extractIntField(CIVLSource source, SymbolicExpression tuple,
-			IntObject fieldIndex) {
-		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
-				fieldIndex);
-
-		return this.extractInt(source, field);
-	}
-
-	@Override
-	public NumericExpression sizeof(CIVLSource source, SymbolicType type) {
-		NumericExpression result = sizeofDynamicMap.get(type);
-
-		if (result == null) {
-
-			if (type.isBoolean())
-				result = modelFactory.booleanType().getSizeof();
-			else if (type == modelFactory.dynamicSymbolicType())
-				result = modelFactory.dynamicType().getSizeof();
-			else if (type.isInteger())
-				result = modelFactory.integerType().getSizeof();
-			else if (type == modelFactory.processSymbolicType())
-				result = modelFactory.processType().getSizeof();
-			else if (type.isReal())
-				result = modelFactory.realType().getSizeof();
-			else if (type == modelFactory.scopeSymbolicType())
-				result = modelFactory.scopeType().getSizeof();
-			else if (type instanceof SymbolicCompleteArrayType) {
-				SymbolicCompleteArrayType arrayType = (SymbolicCompleteArrayType) type;
-
-				result = sizeof(source, arrayType.elementType());
-				result = universe.multiply(arrayType.extent(),
-						(NumericExpression) result);
-			} else if (type instanceof SymbolicArrayType) {
-				throw new CIVLInternalException(
-						"sizeof applied to incomplete array type", source);
-			} else {
-				// wrap the type in an expression of type dynamicTYpe
-				SymbolicExpression typeExpr = expressionOfType(type);
-
-				result = (NumericExpression) universe.apply(sizeofFunction,
-						new Singleton<SymbolicExpression>(typeExpr));
-			}
-			sizeofDynamicMap.put(type, result);
-		}
-		return result;
-	}
-
-	@Override
-	public SymbolicExpression expressionOfType(SymbolicType type) {
-		SymbolicExpression result;
-
-		type = (SymbolicType) universe.canonic(type);
-		result = typeExpressionMap.get(type);
-		if (result == null) {
-			SymbolicExpression id = universe.integer(type.id());
-
-			result = universe.canonic(universe.tuple(dynamicType,
-					new Singleton<SymbolicExpression>(id)));
-			typeExpressionMap.put(type, result);
-		}
-		return result;
-	}
-
-	@Override
-	public SymbolicExpression sizeofFunction() {
-		return this.sizeofFunction;
-	}
-
-	@Override
-	public boolean isEmptyHeap(SymbolicExpression heapValue) {
-		if (heapValue.isNull())
-			return true;
-		else {
-			SymbolicSequence<?> heapFields = (SymbolicSequence<?>) heapValue
-					.argument(0);
-			int count = heapFields.size();
-
-			for (int i = 0; i < count; i++) {
-				SymbolicExpression heapField = heapFields.get(i);
-				SymbolicSequence<?> objectsOfHeapField = (SymbolicSequence<?>) heapField
-						.argument(0);
-				Iterator<? extends SymbolicExpression> iter = objectsOfHeapField
-						.iterator();
-
-				while (iter.hasNext()) {
-					SymbolicExpression expr = iter.next();
-
-					if (!this.isInvalidHeapObject(expr))
-						return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	@Override
-	public boolean isUndefinedPointer(SymbolicExpression pointer) {
-		if (!pointer.isNull()) {
-			int dyscopeId = this.getDyscopeId(null, pointer);
-
-			return dyscopeId == -2;
-		}
-		return false;
-	}
-
-	@Override
-	public SymbolicExpression makePointer(int scopeId, int varId,
-			ReferenceExpression symRef) {
-		SymbolicExpression scopeField = modelFactory.scopeValue(scopeId);
-		SymbolicExpression varField = universe.integer(varId);
-		SymbolicExpression result = universe.tuple(
-				this.pointerType,
-				Arrays.asList(new SymbolicExpression[] { scopeField, varField,
-						symRef }));
-
-		return result;
-	}
+	/* ********************* Methods from SymbolicUtility ******************* */
 
 	/**
 	 * Given a symbolic expression of type array of char, returns a string
@@ -301,11 +170,9 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	public StringBuffer charArrayToString(CIVLSource source,
 			SymbolicSequence<?> charArray, int startIndex, boolean forPrint) {
 		StringBuffer result = new StringBuffer();
-		int numChars = charArray.size();// ignoring the '\0' at the
-										// end
-		// of the string.
-		// stringChars = new char[numChars -
-		// int_arrayIndex];
+		int numChars = charArray.size();
+
+		// ignoring the '\0' at the end of the string.
 		for (int j = startIndex; j < numChars; j++) {
 			SymbolicExpression charExpr = charArray.get(j);
 			Character theChar = universe.extractCharacter(charExpr);
@@ -348,142 +215,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		return result;
 	}
 
-	@Override
-	public int getArrayIndex(CIVLSource source, SymbolicExpression pointer) {
-		int int_arrayIndex;
-
-		if (pointer.type() instanceof SymbolicArrayType) {
-			int_arrayIndex = 0;
-		} else {// TODO what if pointer is pointing to the heap?
-			ArrayElementReference arrayRef = (ArrayElementReference) getSymRef(pointer);
-			NumericExpression arrayIndex = arrayRef.getIndex();
-
-			int_arrayIndex = extractInt(source, arrayIndex);
-		}
-		return int_arrayIndex;
-	}
-
-	@Override
-	public ReferenceExpression updateArrayElementReference(
-			ArrayElementReference arrayReference,
-			List<NumericExpression> newIndexes) {
-		int dimension = newIndexes.size();
-		ReferenceExpression rootParent = arrayReference;
-		ReferenceExpression newRef;
-
-		for (int i = 0; i < dimension; i++)
-			rootParent = ((ArrayElementReference) rootParent).getParent();
-		newRef = rootParent;
-		for (int i = 0; i < dimension; i++) {
-			newRef = universe.arrayElementReference(newRef, newIndexes.get(i));
-		}
-		return newRef;
-	}
-
-	@Override
-	public SymbolicExpression rangeOfDomainAt(SymbolicExpression domain,
-			int index) {
-		return universe.tupleRead(domain, universe.intObject(index));
-	}
-
-	@Override
-	public SymbolicExpression initialValueOfRange(SymbolicExpression range,
-			int index, int dimension) {
-		SymbolicExpression low = universe.tupleRead(range, zeroObj);
-		SymbolicExpression step = universe.tupleRead(range, twoObj);
-
-		// The last range of the dimension, i.e., the first range to be
-		// incremented, will have the initial value of (low - step).
-		if (index == dimension - 1)
-			return universe.subtract((NumericExpression) low,
-					(NumericExpression) step);
-		return low;
-	}
-
-	@Override
-	public BooleanExpression isInRange(SymbolicExpression value,
-			SymbolicExpression domain, int index) {
-		SymbolicExpression range = universe.tupleRead(domain,
-				universe.intObject(index));
-		SymbolicExpression high = universe.tupleRead(range, oneObj);
-		SymbolicExpression step = universe.tupleRead(range, twoObj);
-		BooleanExpression positiveStep = universe.lessThan(zero,
-				(NumericExpression) step);
-		BooleanExpression negativeStep = universe.lessThan(
-				(NumericExpression) step, zero);
-		BooleanExpression positiveStepResult = universe.and(positiveStep,
-				universe.lessThanEquals((NumericExpression) value,
-						(NumericExpression) high));
-		BooleanExpression negativeStepResult = universe.and(negativeStep,
-				universe.lessThanEquals((NumericExpression) high,
-						(NumericExpression) value));
-
-		if (positiveStep.isTrue())
-			return universe.lessThanEquals((NumericExpression) value,
-					(NumericExpression) high);
-		if (negativeStep.isTrue())
-			return universe.lessThanEquals((NumericExpression) high,
-					(NumericExpression) value);
-		return universe.or(positiveStepResult, negativeStepResult);
-	}
-
-	@Override
-	public SymbolicExpression rangeIncremental(SymbolicExpression value,
-			SymbolicExpression range) {
-		NumericExpression step = (NumericExpression) universe.tupleRead(range,
-				twoObj);
-
-		return universe.add((NumericExpression) value, step);
-	}
-
-	@Override
-	public SymbolicExpression getLowOfDomainAt(SymbolicExpression domain,
-			int index) {
-		SymbolicExpression range = universe.tupleRead(domain,
-				universe.intObject(index));
-
-		return universe.tupleRead(range, zeroObj);
-	}
-
-	@Override
-	public NumericExpression getRangeSize(SymbolicExpression range) {
-		NumericExpression low = (NumericExpression) universe.tupleRead(range,
-				this.zeroObj);
-		NumericExpression high = (NumericExpression) universe.tupleRead(range,
-				oneObj);
-		NumericExpression step = (NumericExpression) universe.tupleRead(range,
-				this.twoObj);
-		NumericExpression size = universe.subtract(high, low);
-		NumericExpression remainder = universe.modulo(size, step);
-
-		size = universe.subtract(size, remainder);
-		size = universe.divide(size, step);
-		size = universe.add(size, this.one);
-		return size;
-	}
-
-	@Override
-	public NumericExpression getLowOfRange(SymbolicExpression range) {
-		return (NumericExpression) universe.tupleRead(range, zeroObj);
-	}
-
-	@Override
-	public NumericExpression getHighOfRange(SymbolicExpression range) {
-		return (NumericExpression) universe.tupleRead(range, oneObj);
-	}
-
-	@Override
-	public NumericExpression getStepOfRange(SymbolicExpression range) {
-		return (NumericExpression) universe.tupleRead(range, twoObj);
-	}
-
-	@Override
-	public boolean isInitialized(SymbolicExpression value) {
-		if (value.isNull())
-			return false;
-		return true;
-	}
-
 	/**
 	 * A pointer can be only concrete for the current implementation of CIVL,
 	 * because the only way to make one is through <code>$malloc</code> or
@@ -516,8 +247,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return this.falseValue;
 		if (ref1.isIdentityReference() && !ref2.isIdentityReference())
 			return this.trueValue;
-		numberRefs(ref1, refComps1);
-		numberRefs(ref2, refComps2);
+		refComps1 = referenceComponents(ref1);
+		refComps2 = referenceComponents(ref2);
 		numRefs1 = refComps1.size();
 		numRefs2 = refComps2.size();
 		if (numRefs1 > numRefs2)
@@ -530,255 +261,145 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		return result;
 	}
 
-	private void numberRefs(ReferenceExpression ref,
-			List<ReferenceExpression> components) {
-		ReferenceKind kind = ref.referenceKind();
+	@Override
+	public int extractInt(CIVLSource source, NumericExpression expression) {
+		IntegerNumber result = (IntegerNumber) universe
+				.extractNumber(expression);
 
-		switch (kind) {
-		case ARRAY_ELEMENT:
-			ArrayElementReference arrayRef = (ArrayElementReference) ref;
+		if (result == null)
+			throw new CIVLInternalException(
+					"Unable to extract concrete int from " + expression, source);
+		return result.intValue();
+	}
 
-			components.add(arrayRef);
-			numberRefs(arrayRef.getParent(), components);
-			break;
-		case TUPLE_COMPONENT:
-			TupleComponentReference tupleRef = (TupleComponentReference) ref;
+	@Override
+	public int extractIntField(CIVLSource source, SymbolicExpression tuple,
+			IntObject fieldIndex) {
+		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
+				fieldIndex);
 
-			components.add(tupleRef);
-			numberRefs(tupleRef.getParent(), components);
-			break;
-		case UNION_MEMBER:
-			UnionMemberReference unionRef = (UnionMemberReference) ref;
+		return this.extractInt(source, field);
+	}
 
-			components.add(unionRef);
-			numberRefs(unionRef.getParent(), components);
-			break;
-		default:
-			return;
+	@Override
+	public SymbolicExpression expressionOfType(SymbolicType type) {
+		SymbolicExpression result;
+
+		type = (SymbolicType) universe.canonic(type);
+		result = typeExpressionMap.get(type);
+		if (result == null) {
+			SymbolicExpression id = universe.integer(type.id());
+
+			result = universe.canonic(universe.tuple(dynamicType,
+					new Singleton<SymbolicExpression>(id)));
+			typeExpressionMap.put(type, result);
 		}
+		return result;
 	}
 
 	@Override
-	public boolean isNullPointer(SymbolicExpression pointer) {
-		return universe.equals(this.nullPointer, pointer).isTrue();
-	}
+	public int getArrayIndex(CIVLSource source, SymbolicExpression pointer) {
+		int int_arrayIndex;
 
-	@Override
-	public boolean isPointerToHeap(SymbolicExpression pointer) {
-		int dyscopeID = this.getDyscopeId(null, pointer);
-		int vid = this.getVariableId(null, pointer);
+		if (pointer.type() instanceof SymbolicArrayType) {
+			int_arrayIndex = 0;
+		} else {// TODO what if pointer is pointing to the heap?
+			ArrayElementReference arrayRef = (ArrayElementReference) getSymRef(pointer);
+			NumericExpression arrayIndex = arrayRef.getIndex();
 
-		if (dyscopeID < 0)
-			return false;
-		return vid == 0;
-	}
-
-	/**
-	 * A heap object pointer shall have the form of: <code>&<dn,i,j>[0]</code>
-	 */
-	@Override
-	public boolean isHeapAtomicObjectPointer(CIVLSource source,
-			SymbolicExpression pointer) {
-		ReferenceExpression ref = this.getSymRef(pointer);
-		ArrayElementReference arrayEleRef;
-
-		if (!ref.isArrayElementReference())
-			return false;
-		arrayEleRef = (ArrayElementReference) ref;
-		if (!arrayEleRef.getIndex().isZero())
-			return false;
-		ref = arrayEleRef.getParent();
-		if (!ref.isArrayElementReference())
-			return false;
-		ref = ((ArrayElementReference) ref).getParent();
-		if (!ref.isTupleComponentReference())
-			return false;
-		ref = ((TupleComponentReference) ref).getParent();
-		if (ref.isIdentityReference())
-			return true;
-		return false;
-	}
-
-	@Override
-	public ReferenceExpression referenceOfPointer(SymbolicExpression pointer) {
-		ReferenceExpression ref = (ReferenceExpression) universe.tupleRead(
-				pointer, twoObj);
-
-		if (this.isPointerToHeap(pointer)) {
-			Pair<ReferenceExpression, Integer> refResult = heapReference(ref,
-					false);
-
-			if (refResult.right == 3)
-				return universe.identityReference();
-			else
-				return refResult.left;
-		} else
-			return ref;
-	}
-
-	@Override
-	public ReferenceExpression referenceToHeapMemUnit(
-			SymbolicExpression pointer) {
-		ReferenceExpression ref = (ReferenceExpression) universe.tupleRead(
-				pointer, twoObj);
-		Pair<ReferenceExpression, Integer> refResult;
-
-		assert this.isPointerToHeap(pointer);
-		refResult = heapReference(ref, true);
-		if (refResult.right == 2)
-			return universe.identityReference();
-		else
-			return refResult.left;
-	}
-
-	private Pair<ReferenceExpression, Integer> heapReference(
-			ReferenceExpression ref, boolean heapObjectOnly) {
-		if (ref.isIdentityReference())
-			return new Pair<>(ref, 0);
-		else {
-			ReferenceExpression parentRef = ((NTReferenceExpression) ref)
-					.getParent();
-			Pair<ReferenceExpression, Integer> parentResult;
-
-			parentResult = heapReference(parentRef, heapObjectOnly);
-
-			if (heapObjectOnly) {
-				if (parentResult.right < 2)
-					return new Pair<>(ref, parentResult.right + 1);
-				else {
-					ReferenceExpression newRef;
-
-					if (parentResult.right == 2)
-						parentRef = universe.identityReference();
-					else
-						parentRef = parentResult.left;
-					if (ref.isArrayElementReference()) {
-						newRef = universe.arrayElementReference(parentRef,
-								((ArrayElementReference) ref).getIndex());
-					} else if (ref.isTupleComponentReference())
-						newRef = universe.tupleComponentReference(parentRef,
-								((TupleComponentReference) ref).getIndex());
-					else
-						newRef = universe.unionMemberReference(parentRef,
-								((UnionMemberReference) ref).getIndex());
-					return new Pair<>(newRef, 3);
-				}
-			} else {
-				if (parentResult.right < 3)
-					return new Pair<>(ref, parentResult.right + 1);
-				else {
-					ReferenceExpression newRef;
-
-					if (parentResult.right == 3)
-						parentRef = universe.identityReference();
-					else
-						parentRef = parentResult.left;
-					if (ref.isArrayElementReference()) {
-						newRef = universe.arrayElementReference(parentRef,
-								((ArrayElementReference) ref).getIndex());
-					} else if (ref.isTupleComponentReference())
-						newRef = universe.tupleComponentReference(parentRef,
-								((TupleComponentReference) ref).getIndex());
-					else
-						newRef = universe.unionMemberReference(parentRef,
-								((UnionMemberReference) ref).getIndex());
-					return new Pair<>(newRef, 4);
-				}
-			}
+			int_arrayIndex = extractInt(source, arrayIndex);
 		}
+		return int_arrayIndex;
 	}
 
 	@Override
-	public SymbolicExpression makePointer(SymbolicExpression objectPointer,
-			ReferenceExpression reference) {
-		ReferenceExpression objRef = (ReferenceExpression) universe.tupleRead(
-				objectPointer, twoObj);
-		SymbolicExpression scope = universe.tupleRead(objectPointer, zeroObj);
-		SymbolicExpression vid = universe.tupleRead(objectPointer, oneObj);
-
-		if (!objRef.isIdentityReference())
-			reference = makeParentOf(objRef, reference);
-		return universe
-				.tuple(pointerType, Arrays.asList(scope, vid, reference));
-	}
-
-	private ReferenceExpression makeParentOf(ReferenceExpression parent,
-			ReferenceExpression ref) {
-		if (ref.isIdentityReference())
-			return parent;
-		else if (ref.isArrayElementReference()) {
-			ArrayElementReference arrayEle = (ArrayElementReference) ref;
-			ReferenceExpression myParent = makeParentOf(parent,
-					arrayEle.getParent());
-
-			return universe
-					.arrayElementReference(myParent, arrayEle.getIndex());
-		} else if (ref.isTupleComponentReference()) {
-			TupleComponentReference arrayEle = (TupleComponentReference) ref;
-			ReferenceExpression myParent = makeParentOf(parent,
-					arrayEle.getParent());
-
-			return universe.tupleComponentReference(myParent,
-					arrayEle.getIndex());
-		} else {
-			UnionMemberReference arrayEle = (UnionMemberReference) ref;
-			ReferenceExpression myParent = makeParentOf(parent,
-					arrayEle.getParent());
-
-			return universe.unionMemberReference(myParent, arrayEle.getIndex());
-		}
+	public int getDyscopeId(CIVLSource source, SymbolicExpression pointer) {
+		return modelFactory.getScopeId(source,
+				universe.tupleRead(pointer, zeroObj));
 	}
 
 	@Override
-	public boolean isValidRefOf(ReferenceExpression ref,
-			SymbolicExpression value) {
-		return isValidRefOfValue(ref, value).right;
+	public NumericExpression getHighOfRange(SymbolicExpression range) {
+		return (NumericExpression) universe.tupleRead(range, oneObj);
 	}
 
-	private Pair<SymbolicExpression, Boolean> isValidRefOfValue(
-			ReferenceExpression ref, SymbolicExpression value) {
-		if (ref.isIdentityReference())
-			return new Pair<>(value, true);
-		else if (ref.isArrayElementReference()) {
-			ArrayElementReference arrayEleRef = (ArrayElementReference) ref;
-			SymbolicExpression targetValue;
-			Pair<SymbolicExpression, Boolean> parentTest = isValidRefOfValue(
-					arrayEleRef.getParent(), value);
+	@Override
+	public SymbolicExpression getLowOfDomainAt(SymbolicExpression domain,
+			int index) {
+		SymbolicExpression range = universe.tupleRead(domain,
+				universe.intObject(index));
 
-			if (!parentTest.right)
-				return new Pair<>(value, false);
-			targetValue = parentTest.left;
-			if (!(targetValue.type() instanceof SymbolicArrayType))
-				return new Pair<>(targetValue, false);
-			return new Pair<>(universe.arrayRead(targetValue,
-					arrayEleRef.getIndex()), true);
-		} else if (ref.isTupleComponentReference()) {
-			TupleComponentReference tupleCompRef = (TupleComponentReference) ref;
-			SymbolicExpression targetValue;
-			Pair<SymbolicExpression, Boolean> parentTest = isValidRefOfValue(
-					tupleCompRef.getParent(), value);
+		return universe.tupleRead(range, zeroObj);
+	}
 
-			if (!parentTest.right)
-				return new Pair<>(value, false);
-			targetValue = parentTest.left;
-			if (!(targetValue.type() instanceof SymbolicTupleType))
-				return new Pair<>(targetValue, false);
-			return new Pair<>(universe.tupleRead(targetValue,
-					tupleCompRef.getIndex()), true);
-		} else {// UnionMemberReference
-			UnionMemberReference unionMemRef = (UnionMemberReference) ref;
-			SymbolicExpression targetValue;
-			Pair<SymbolicExpression, Boolean> parentTest = isValidRefOfValue(
-					unionMemRef.getParent(), value);
+	@Override
+	public NumericExpression getLowOfRange(SymbolicExpression range) {
+		return (NumericExpression) universe.tupleRead(range, zeroObj);
+	}
 
-			if (!parentTest.right)
-				return new Pair<>(value, false);
-			targetValue = parentTest.left;
-			if (!(targetValue.type() instanceof SymbolicUnionType))
-				return new Pair<>(targetValue, false);
-			return new Pair<>(universe.unionExtract(unionMemRef.getIndex(),
-					targetValue), true);
-		}
+	@Override
+	public NumericExpression getRangeSize(SymbolicExpression range) {
+		NumericExpression low = (NumericExpression) universe.tupleRead(range,
+				this.zeroObj);
+		NumericExpression high = (NumericExpression) universe.tupleRead(range,
+				oneObj);
+		NumericExpression step = (NumericExpression) universe.tupleRead(range,
+				this.twoObj);
+		NumericExpression size = universe.subtract(high, low);
+		NumericExpression remainder = universe.modulo(size, step);
+
+		size = universe.subtract(size, remainder);
+		size = universe.divide(size, step);
+		size = universe.add(size, this.one);
+		return size;
+	}
+
+	@Override
+	public NumericExpression getStepOfRange(SymbolicExpression range) {
+		return (NumericExpression) universe.tupleRead(range, twoObj);
+	}
+
+	@Override
+	public ReferenceExpression getSymRef(SymbolicExpression pointer) {
+		SymbolicExpression result = universe.tupleRead(pointer, twoObj);
+
+		assert result instanceof ReferenceExpression;
+		return (ReferenceExpression) result;
+	}
+
+	@Override
+	public SymbolicExpression setSymRef(SymbolicExpression pointer,
+			ReferenceExpression symRef) {
+		return universe.tupleWrite(pointer, twoObj, symRef);
+	}
+
+	@Override
+	public int getVariableId(CIVLSource source, SymbolicExpression pointer) {
+		return extractIntField(source, pointer, oneObj);
+	}
+
+	@Override
+	public SymbolicExpression heapMemUnit(SymbolicExpression pointer) {
+		return this.heapAnalyzer.heapMemUnit(pointer);
+	}
+
+	@Override
+	public SymbolicExpression initialValueOfRange(SymbolicExpression range,
+			int index, int dimension) {
+		SymbolicExpression low = universe.tupleRead(range, zeroObj);
+		SymbolicExpression step = universe.tupleRead(range, twoObj);
+
+		// The last range of the dimension, i.e., the first range to be
+		// incremented, will have the initial value of (low - step).
+		if (index == dimension - 1)
+			return universe.subtract((NumericExpression) low,
+					(NumericExpression) step);
+		return low;
+	}
+
+	@Override
+	public SymbolicConstant invalidHeapObject(SymbolicType heapObjectType) {
+		return heapAnalyzer.invalidHeapObject(heapObjectType);
 	}
 
 	@Override
@@ -806,36 +427,80 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		}
 	}
 
-	private boolean isDisjoint(ReferenceExpression ref1,
-			ReferenceExpression ref2) {
-		List<ReferenceExpression> ancestors1, ancestors2;
-		int numAncestors1, numAncestors2, minNum;
+	@Override
+	public boolean isEmptyHeap(SymbolicExpression heapValue) {
+		return heapAnalyzer.isEmptyHeap(heapValue);
+	}
 
-		ancestors1 = this.ancestorsOfRef(ref1);
-		ancestors2 = this.ancestorsOfRef(ref2);
-		numAncestors1 = ancestors1.size();
-		numAncestors2 = ancestors2.size();
-		minNum = numAncestors1 <= numAncestors2 ? numAncestors1 : numAncestors2;
-		for (int i = 0; i < minNum; i++) {
-			ReferenceExpression ancestor1 = ancestors1.get(i), ancestor2 = ancestors2
-					.get(i);
+	@Override
+	public boolean isHeapAtomicObjectPointer(CIVLSource source,
+			SymbolicExpression pointer) {
+		return heapAnalyzer.isHeapAtomicObjectPointer(source, pointer);
+	}
 
-			if (!ancestor1.equals(ancestor2))
-				return true;
+	@Override
+	public boolean isInitialized(SymbolicExpression value) {
+		if (value.isNull())
+			return false;
+		return true;
+	}
+
+	@Override
+	public BooleanExpression isInRange(SymbolicExpression value,
+			SymbolicExpression domain, int index) {
+		SymbolicExpression range = universe.tupleRead(domain,
+				universe.intObject(index));
+		SymbolicExpression high = universe.tupleRead(range, oneObj);
+		SymbolicExpression step = universe.tupleRead(range, twoObj);
+		BooleanExpression positiveStep = universe.lessThan(zero,
+				(NumericExpression) step);
+		BooleanExpression negativeStep = universe.lessThan(
+				(NumericExpression) step, zero);
+		BooleanExpression positiveStepResult = universe.and(positiveStep,
+				universe.lessThanEquals((NumericExpression) value,
+						(NumericExpression) high));
+		BooleanExpression negativeStepResult = universe.and(negativeStep,
+				universe.lessThanEquals((NumericExpression) high,
+						(NumericExpression) value));
+
+		if (positiveStep.isTrue())
+			return universe.lessThanEquals((NumericExpression) value,
+					(NumericExpression) high);
+		if (negativeStep.isTrue())
+			return universe.lessThanEquals((NumericExpression) high,
+					(NumericExpression) value);
+		return universe.or(positiveStepResult, negativeStepResult);
+	}
+
+	@Override
+	public boolean isInvalidHeapObject(SymbolicExpression heapObject) {
+		return heapAnalyzer.isInvalidHeapObject(heapObject);
+	}
+
+	@Override
+	public boolean isNullPointer(SymbolicExpression pointer) {
+		return universe.equals(this.nullPointer, pointer).isTrue();
+	}
+
+	@Override
+	public boolean isPointerToHeap(SymbolicExpression pointer) {
+		return heapAnalyzer.isPointerToHeap(pointer);
+	}
+
+	@Override
+	public boolean isUndefinedPointer(SymbolicExpression pointer) {
+		if (!pointer.isNull()) {
+			int dyscopeId = this.getDyscopeId(null, pointer);
+
+			return dyscopeId == -2;
 		}
 		return false;
 	}
 
-	List<ReferenceExpression> ancestorsOfRef(ReferenceExpression ref) {
-		if (ref.isIdentityReference())
-			return new ArrayList<>();
-		else {
-			List<ReferenceExpression> result;
-
-			result = ancestorsOfRef(((NTReferenceExpression) ref).getParent());
-			result.add(ref);
-			return result;
-		}
+	@Override
+	public boolean isValidRefOf(ReferenceExpression ref,
+			SymbolicExpression value) {
+		return isValidRefOfValue(ref, value).right;
 	}
 
 	@Override
@@ -843,6 +508,33 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		int scopeId = this.getDyscopeId(null, pointer);
 
 		return scopeId >= 0;
+	}
+
+	@Override
+	public SymbolicExpression makePointer(int scopeId, int varId,
+			ReferenceExpression symRef) {
+		SymbolicExpression scopeField = modelFactory.scopeValue(scopeId);
+		SymbolicExpression varField = universe.integer(varId);
+		SymbolicExpression result = universe.tuple(
+				this.pointerType,
+				Arrays.asList(new SymbolicExpression[] { scopeField, varField,
+						symRef }));
+
+		return result;
+	}
+
+	@Override
+	public SymbolicExpression makePointer(SymbolicExpression objectPointer,
+			ReferenceExpression reference) {
+		ReferenceExpression objRef = (ReferenceExpression) universe.tupleRead(
+				objectPointer, twoObj);
+		SymbolicExpression scope = universe.tupleRead(objectPointer, zeroObj);
+		SymbolicExpression vid = universe.tupleRead(objectPointer, oneObj);
+
+		if (!objRef.isIdentityReference())
+			reference = makeParentOf(objRef, reference);
+		return universe
+				.tuple(pointerType, Arrays.asList(scope, vid, reference));
 	}
 
 	@Override
@@ -872,32 +564,266 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
+	public SymbolicExpression nullPointer() {
+		return this.nullPointer;
+	}
+
+	@Override
+	public SymbolicExpression parentPointer(CIVLSource source,
+			SymbolicExpression pointer) {
+		ReferenceExpression symRef = getSymRef(pointer);
+
+		if (symRef instanceof NTReferenceExpression)
+			return setSymRef(pointer,
+					((NTReferenceExpression) symRef).getParent());
+		throw new CIVLInternalException("Expected non-trivial pointer: "
+				+ pointer, source);
+	}
+
+	@Override
+	public SymbolicExpression rangeIncremental(SymbolicExpression value,
+			SymbolicExpression range) {
+		NumericExpression step = (NumericExpression) universe.tupleRead(range,
+				twoObj);
+
+		return universe.add((NumericExpression) value, step);
+	}
+
+	@Override
+	public SymbolicExpression rangeOfDomainAt(SymbolicExpression domain,
+			int index) {
+		return universe.tupleRead(domain, universe.intObject(index));
+	}
+
+	@Override
+	public ReferenceExpression referenceOfPointer(SymbolicExpression pointer) {
+		ReferenceExpression ref = (ReferenceExpression) universe.tupleRead(
+				pointer, twoObj);
+
+		if (this.isPointerToHeap(pointer)) {
+			Pair<ReferenceExpression, Integer> refResult = heapAnalyzer
+					.heapReference(ref, true);
+
+			if (refResult.right == 3)
+				return universe.identityReference();
+			else
+				return refResult.left;
+		} else
+			return ref;
+	}
+
+	@Override
+	public ReferenceExpression referenceToHeapMemUnit(SymbolicExpression pointer) {
+		return this.heapAnalyzer.referenceToHeapMemUnit(pointer);
+	}
+
+	@Override
+	public NumericExpression sizeof(CIVLSource source, SymbolicType type) {
+		NumericExpression result = sizeofDynamicMap.get(type);
+
+		if (result == null) {
+
+			if (type.isBoolean())
+				result = modelFactory.booleanType().getSizeof();
+			else if (type == modelFactory.dynamicSymbolicType())
+				result = modelFactory.dynamicType().getSizeof();
+			else if (type.isInteger())
+				result = modelFactory.integerType().getSizeof();
+			else if (type == modelFactory.processSymbolicType())
+				result = modelFactory.processType().getSizeof();
+			else if (type.isReal())
+				result = modelFactory.realType().getSizeof();
+			else if (type == modelFactory.scopeSymbolicType())
+				result = modelFactory.scopeType().getSizeof();
+			else if (type instanceof SymbolicCompleteArrayType) {
+				SymbolicCompleteArrayType arrayType = (SymbolicCompleteArrayType) type;
+
+				result = sizeof(source, arrayType.elementType());
+				result = universe.multiply(arrayType.extent(),
+						(NumericExpression) result);
+			} else if (type instanceof SymbolicArrayType) {
+				throw new CIVLInternalException(
+						"sizeof applied to incomplete array type", source);
+			} else {
+				// wrap the type in an expression of type dynamicTYpe
+				SymbolicExpression typeExpr = expressionOfType(type);
+
+				result = (NumericExpression) universe.apply(sizeofFunction,
+						new Singleton<SymbolicExpression>(typeExpr));
+			}
+			sizeofDynamicMap.put(type, result);
+		}
+		return result;
+	}
+
+	@Override
+	public SymbolicExpression sizeofFunction() {
+		return this.sizeofFunction;
+	}
+
+	@Override
 	public SymbolicExpression undefinedPointer() {
 		return this.undefinedPointer;
 	}
 
 	@Override
-	public SymbolicExpression heapObjectPointer(SymbolicExpression pointer) {
-		return this.heapAnalyzer.heapObjectPointer(pointer);
+	public ReferenceExpression updateArrayElementReference(
+			ArrayElementReference arrayReference,
+			List<NumericExpression> newIndexes) {
+		int dimension = newIndexes.size();
+		ReferenceExpression rootParent = arrayReference;
+		ReferenceExpression newRef;
+
+		for (int i = 0; i < dimension; i++)
+			rootParent = ((ArrayElementReference) rootParent).getParent();
+		newRef = rootParent;
+		for (int i = 0; i < dimension; i++) {
+			newRef = universe.arrayElementReference(newRef, newIndexes.get(i));
+		}
+		return newRef;
 	}
 
-	@Override
-	public SymbolicConstant invalidHeapObject(SymbolicType heapObjectType) {
-		StringObject name = universe.stringObject(INVALID);
+	/* *********************** Package-Private Methods ********************* */
 
-		return universe.symbolicConstant(name, heapObjectType);
+	List<ReferenceExpression> ancestorsOfRef(ReferenceExpression ref) {
+		if (ref.isIdentityReference())
+			return new ArrayList<>();
+		else {
+			List<ReferenceExpression> result;
+
+			result = ancestorsOfRef(((NTReferenceExpression) ref).getParent());
+			result.add(ref);
+			return result;
+		}
 	}
 
-	@Override
-	public boolean isInvalidHeapObject(SymbolicExpression heapObject) {
-		if (heapObject instanceof SymbolicConstant) {
-			SymbolicConstant constant = (SymbolicConstant) heapObject;
-			StringObject name = constant.name();
+	/* *************************** Private Methods ************************* */
 
-			if (name.getString().equals(INVALID))
+	/**
+	 * Are the two given references disjoint?
+	 * 
+	 * @param ref1
+	 *            The first reference expression.
+	 * @param ref2
+	 *            The second reference expression.
+	 * @return True iff the two given references do NOT have any intersection.
+	 */
+	private boolean isDisjoint(ReferenceExpression ref1,
+			ReferenceExpression ref2) {
+		List<ReferenceExpression> ancestors1, ancestors2;
+		int numAncestors1, numAncestors2, minNum;
+
+		ancestors1 = this.ancestorsOfRef(ref1);
+		ancestors2 = this.ancestorsOfRef(ref2);
+		numAncestors1 = ancestors1.size();
+		numAncestors2 = ancestors2.size();
+		minNum = numAncestors1 <= numAncestors2 ? numAncestors1 : numAncestors2;
+		for (int i = 0; i < minNum; i++) {
+			ReferenceExpression ancestor1 = ancestors1.get(i), ancestor2 = ancestors2
+					.get(i);
+
+			if (!ancestor1.equals(ancestor2))
 				return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Is the given reference applicable to the specified symbolic expression?
+	 * 
+	 * @param ref
+	 *            The reference expression to be checked.
+	 * @param value
+	 *            The symbolic expression specified.
+	 * @return True iff the given reference is applicable to the specified
+	 *         symbolic expression
+	 */
+	private Pair<SymbolicExpression, Boolean> isValidRefOfValue(
+			ReferenceExpression ref, SymbolicExpression value) {
+		if (ref.isIdentityReference())
+			return new Pair<>(value, true);
+		else {
+			ReferenceExpression parent = ((NTReferenceExpression) ref)
+					.getParent();
+			Pair<SymbolicExpression, Boolean> parentTest = isValidRefOfValue(
+					parent, value);
+			SymbolicExpression targetValue;
+
+			if (!parentTest.right)
+				return new Pair<>(value, false);
+			targetValue = parentTest.left;
+			if (ref.isArrayElementReference()) {
+				ArrayElementReference arrayEleRef = (ArrayElementReference) ref;
+
+				if (!(targetValue.type() instanceof SymbolicArrayType))
+					return new Pair<>(targetValue, false);
+				return new Pair<>(universe.arrayRead(targetValue,
+						arrayEleRef.getIndex()), true);
+			} else if (ref.isTupleComponentReference()) {
+				TupleComponentReference tupleCompRef = (TupleComponentReference) ref;
+
+				if (!(targetValue.type() instanceof SymbolicTupleType))
+					return new Pair<>(targetValue, false);
+				return new Pair<>(universe.tupleRead(targetValue,
+						tupleCompRef.getIndex()), true);
+			} else {
+				UnionMemberReference unionMemRef = (UnionMemberReference) ref;
+
+				if (!(targetValue.type() instanceof SymbolicUnionType))
+					return new Pair<>(targetValue, false);
+				return new Pair<>(universe.unionExtract(unionMemRef.getIndex(),
+						targetValue), true);
+			}
+		}
+	}
+
+	/**
+	 * Combines two references by using one as the parent of the other.
+	 * 
+	 * @param parent
+	 *            The reference to be used as the parent.
+	 * @param ref
+	 *            The reference to be used as the base.
+	 * @return A new reference which is the combination of the given two
+	 *         references.
+	 */
+	private ReferenceExpression makeParentOf(ReferenceExpression parent,
+			ReferenceExpression ref) {
+		if (ref.isIdentityReference())
+			return parent;
+		else {
+			ReferenceExpression myParent = makeParentOf(parent,
+					((NTReferenceExpression) ref).getParent());
+
+			if (ref.isArrayElementReference())
+				return universe.arrayElementReference(myParent,
+						((ArrayElementReference) ref).getIndex());
+			else if (ref.isTupleComponentReference())
+				return universe.tupleComponentReference(myParent,
+						((TupleComponentReference) ref).getIndex());
+			else
+				return universe.unionMemberReference(myParent,
+						((UnionMemberReference) ref).getIndex());
+		}
+	}
+
+	/**
+	 * Computes the components contained by a given reference expression.
+	 * 
+	 * @param ref
+	 *            The reference expression whose components are to be computed.
+	 * @return The components of the reference.
+	 */
+	private List<ReferenceExpression> referenceComponents(
+			ReferenceExpression ref) {
+		List<ReferenceExpression> components = new ArrayList<>();
+
+		if (!ref.isIdentityReference()) {
+			components.add(ref);
+			components.addAll(referenceComponents(((NTReferenceExpression) ref)
+					.getParent()));
+		}
+		return components;
 	}
 
 }

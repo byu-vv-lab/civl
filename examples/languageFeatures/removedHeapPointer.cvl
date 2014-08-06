@@ -4,7 +4,7 @@
  * Command line execution: 
  * civl verify removedHeapPointer.cvl
  */
-#include <civlc.h>
+#include <civlc.cvh>
 
 int *gp;
 _Bool gStart = $false;

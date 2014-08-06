@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify duffs.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 $input int a[8];
 

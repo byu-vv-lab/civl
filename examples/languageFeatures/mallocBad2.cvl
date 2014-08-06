@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify mallocBad2.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 void main() {
   $scope s=$root;
   double *p;

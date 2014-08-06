@@ -1,7 +1,8 @@
 /* Commandline execution:
  *		civl verify bundleSize.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
+#include<bundle.cvh>
 
 int N=5;
 $input double a[N];

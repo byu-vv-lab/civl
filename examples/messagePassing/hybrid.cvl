@@ -1,7 +1,7 @@
 /* CIVL model of simple hybrid MPI+threads program.
  * The program has a defect.
  */
-#include<civlc.h>
+#include<comm.cvh>
 #include<stdio.h>
 #include "mp_root2.cvh"
 #define TAG 0

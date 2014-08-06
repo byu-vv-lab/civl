@@ -3,7 +3,7 @@
  * or (if you want to find the minimal counterexample)
  * 		civl verify -inputB=5 adderBad.cvl -min
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 $input int B; // upper bound on array length
 $input int N; // length of array

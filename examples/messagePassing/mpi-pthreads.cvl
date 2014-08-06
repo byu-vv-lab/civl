@@ -3,7 +3,7 @@
  * Commnad line execution:
  *     civl verify -min mpi-pthreads.cvl
  */
-#include<civlc.h>
+#include<comm.cvh>
 #define TAG 0
 #define NPROCS 2
 #define NTHREADS 2

@@ -192,7 +192,7 @@ public class Verifier extends Player {
 			} catch (ExcessiveErrorException e) {
 				violationFound = true;
 				if (!shortFileNamesShown) {
-					preprocessor.printShorterFileNameMap(civlConfig.out());
+//					preprocessor.printShorterFileNameMap(civlConfig.out()); TODO
 					civlConfig.out().println();
 				}
 				civlConfig.out().println(

@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify arrays.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 void main() {
   int a[1][1];

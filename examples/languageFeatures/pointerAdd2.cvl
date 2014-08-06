@@ -10,7 +10,7 @@
    to iterate all possible values for every input variable.
 */
 /*************************************************/
-#include <civlc.h>
+#include <civlc.cvh>
 #include <stdio.h>
 
 $input int N;

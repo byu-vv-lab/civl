@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify sizeof.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 void main() {
   int n = 5;

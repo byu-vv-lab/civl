@@ -3,7 +3,7 @@
  *
  *       civl verify -inputBOUND=4 dining.cvl
  */
-#include <civlc.h>
+#include <civlc.cvh>
 
 $input int BOUND; // upper bound on number of philosophers
 $input int n; // number of philosophers

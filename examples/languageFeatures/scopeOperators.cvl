@@ -1,4 +1,6 @@
-#include <civlc.h>
+#include <civlc.cvh>
+#include <comm.cvh>
+#include <scope.cvh>
 #include <stdio.h>
 
 void main(){

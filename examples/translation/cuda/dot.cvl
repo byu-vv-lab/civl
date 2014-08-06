@@ -2,7 +2,8 @@
  *  Command line execution:
  *  civl verify dot.cvl -inputN_BOUND=8 -inputTHREADS_PER_BLOCK=4 
  */
-#include <civlc.h>
+#include <civlc.cvh>
+#include <concurrency.cvh>
 #include <stdio.h>
 
 #define imin(a,b) (a<b?a:b)

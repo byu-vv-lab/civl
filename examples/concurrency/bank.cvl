@@ -2,7 +2,7 @@
  * Commandline execution:
  * 		civl verify -inputNUM_ACCOUNTS=5 bank.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 $input int NUM_ACCOUNTS;
 

@@ -120,16 +120,15 @@ public class ConcurrencyTest {
 		assertFalse(ui.run("verify", "-inputN=10", filename("spawnBad.cvl")));
 	}
 
-	
-
 	@Test
 	public void waitSelf() {
 		assertFalse(ui.run("verify", filename("waitSelf.cvl")));
 	}
-	
+
 	@Test
 	public void dlqueue() {
-		assertTrue(ui.run("verify", filename("dlqueue.cvl")));
+		assertTrue(ui.run("verify", filename("dlqueue.cvl"),
+				"-showTransitions", "-showSavedStates"));
 	}
 
 }

@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify pointers.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 typedef struct Node {
   int id;

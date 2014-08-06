@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify struct.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 typedef struct Interval {
   int left;

@@ -11,7 +11,7 @@
 
 #define NPROCS 3
 
-#include <civlc.h>
+#include <civlc.cvh>
 #include <stdio.h>
 $proc procs[NPROCS];
 $scope scopes[NPROCS];

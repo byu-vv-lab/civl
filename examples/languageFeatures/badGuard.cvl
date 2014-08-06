@@ -4,7 +4,7 @@
 * command line execution:
 * civl verify badGuard.cvl -errorBound = 10
 */
-#include<civlc.h>
+#include<civlc.cvh>
 
 $input int x;
 $input int y;

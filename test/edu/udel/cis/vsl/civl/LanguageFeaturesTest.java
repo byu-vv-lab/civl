@@ -43,7 +43,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void arrayLiteral() throws ABCException {
-		assertTrue(ui.run("verify", filename("arrayLiteral.cvl")));
+		assertTrue(ui.run("verify", filename("arrayLiteral.cvl"), "-enablePrintf=false"));
 	}
 
 	@Test
@@ -63,8 +63,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void atomChooseBad() throws ABCException {
-		assertFalse(ui.run("verify",
-				filename("atomChooseBad.cvl")));
+		assertFalse(ui.run("verify", filename("atomChooseBad.cvl")));
 	}
 
 	@Test
@@ -213,11 +212,6 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void malloc1() throws ABCException {
-		assertTrue(ui.run("verify", filename("malloc1.cvl")));
-	}
-
-	@Test
 	public void mallocBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("mallocBad.cvl")));
 	}
@@ -280,7 +274,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void scopeOperators() throws ABCException {
-		assertTrue(ui.run("verify", filename("scopeOperators.cvl")));
+		assertTrue(ui.run("verify", filename("scopeOperators.cvl"), "-enablePrintf=false"));
 	}
 
 	@Test
@@ -345,7 +339,8 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void functionPointer() throws ABCException {
-		assertTrue(ui.run("verify", filename("functionPointer.cvl")));
+		assertTrue(ui.run("verify", filename("functionPointer.cvl"),
+				"-enablePrintf=false"));
 	}
 
 	@Test
@@ -431,5 +426,11 @@ public class LanguageFeaturesTest {
 	@Test
 	public void civlParfor() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlParfor.cvl")));
+	}
+
+	@Test
+	public void heapTest() throws ABCException {
+		assertTrue(ui.run("verify", filename("heapTest.cvl"),
+				"-showSavedStates"));
 	}
 }

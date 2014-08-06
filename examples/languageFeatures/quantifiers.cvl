@@ -1,7 +1,8 @@
 /* Commandline execution:
  *		civl verify quantifiers.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
+
 $input double b[10];
 
 void main() {

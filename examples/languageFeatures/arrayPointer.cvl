@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify arrayPointer.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 void foo(int* array) {
   array[0] = 2;

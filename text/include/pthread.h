@@ -12,7 +12,7 @@ appropriate definitions are changed to input variables
 #else
 #define __PTHREAD__
 
-#include <civlc.h>
+#include <civlc.cvh>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

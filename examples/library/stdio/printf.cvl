@@ -1,8 +1,9 @@
-#include<civlc.h>
+#include<civlc.cvh>
 #include<stdio.h>
 $input int x;
 $input double y;
-$input char * z;
+
+char z[5];
 
 int main(int argc, char * argv[]){
   int i = 58;

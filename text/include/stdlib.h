@@ -5,7 +5,7 @@
 #define __STDLIB__
 
 #include<stdlib-common.h>
-#include<civlc.h>
+#include<civlc.cvh>
 
 #define DEFAULT_SEED  99
 

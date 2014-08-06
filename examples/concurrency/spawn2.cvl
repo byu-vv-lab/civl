@@ -3,7 +3,7 @@
  * both are accessing variables in the same scope.
  *      civl verify -inputN=10 spawn2.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
 
 $input int N;
 int s1, s2;

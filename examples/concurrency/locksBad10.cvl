@@ -1,7 +1,7 @@
 /* Commandline execution:
  * 		civl verify locksBad10.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 int x;
 int y;

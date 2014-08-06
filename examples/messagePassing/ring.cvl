@@ -2,7 +2,7 @@
  * Command line verification example:
  *     civl verify -inputNPROCS_BOUND=10 -inputN_BOUND=5 ring.cvl
  */
-#include<civlc.h>
+#include<comm.cvh>
 #define TAG 0
 
 $input int NPROCS_BOUND; // upper bound of the number of MPI processes

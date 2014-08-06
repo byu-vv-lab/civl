@@ -1,7 +1,8 @@
 /* Commandline execution:
  *		civl verify bundleArray.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
+#include<bundle.cvh>
 
 $input int N;
 $assume(N>=2);

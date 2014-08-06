@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify continue.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 void main() {
   for (int i = 0; i < 5; i++) {

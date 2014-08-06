@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify atomicBlockResume.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 int x = 1;
 int y = 0;

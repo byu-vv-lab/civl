@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify memcpy.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 #include<string.h>
 
 typedef struct foo {

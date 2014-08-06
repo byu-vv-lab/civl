@@ -5,7 +5,8 @@
  *
  * Command line execution: civl verify memoryLeak.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
+
 $proc mainP=$proc_null;
 
 void process(){

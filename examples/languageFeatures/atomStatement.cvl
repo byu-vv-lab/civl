@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify atomStatement.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 int n = 3;
 void foo(){
   int k = n;

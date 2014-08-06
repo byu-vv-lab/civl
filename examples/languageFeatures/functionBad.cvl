@@ -2,7 +2,7 @@
  * This example is to demonstrate the error checking for a function declared with
  * non-void return type but has no return statement in its execution.
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 #include<stdio.h>
 
 int f(){

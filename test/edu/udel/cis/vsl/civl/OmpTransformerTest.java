@@ -10,11 +10,15 @@ import java.util.ArrayList;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import edu.udel.cis.vsl.abc.ABC;
-import edu.udel.cis.vsl.abc.Activator;
+import edu.udel.cis.vsl.abc.FrontEnd;
+import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
+import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
+import edu.udel.cis.vsl.abc.parse.IF.CParser;
+import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
@@ -32,6 +36,8 @@ public class OmpTransformerTest {
 	private PrintStream out = System.out;
 
 	private File root = new File(new File("examples"), "omp");
+
+	// private static List<String> codes = Arrays.asList("prune", "sef");
 
 	/* *************************** Helper Methods ************************** */
 
@@ -58,40 +64,45 @@ public class OmpTransformerTest {
 	 */
 	private void check(String filenameRoot, boolean debug) throws ABCException,
 			IOException {
-		Activator frontEnd;
+		FrontEnd frontEnd = new FrontEnd();
 		Program program;
 		CIVLConfiguration config = new CIVLConfiguration();
+		File file = new File(root, filenameRoot + ".c");
+		Preprocessor preprocessor;
+		CTokenSource tokens;
+		CParser parser;
+		ASTBuilder builder;
+		AST ast;
 
 		config.setDebug(debug);
 		this.systemIncludes = new File[0];
 		this.userIncludes = new File[0];
-		frontEnd = ABC.activator(new File(root, filenameRoot + ".c"),
-				systemIncludes, userIncludes, Language.CIVL_C);
+		preprocessor = frontEnd.getPreprocessor(systemIncludes, userIncludes);
+		tokens = preprocessor.outputTokenSource(file);
+		parser = frontEnd.getParser(tokens);
+		builder = frontEnd.getASTBuilder(parser, parser.getTree());
+		ast = builder.getTranslationUnit();
+		program = frontEnd.getProgramFactory(
+				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(ast);
 		if (debug)
-			program = frontEnd.showTranslation(out);
-		else
-			program = frontEnd.getProgram();
-
+			frontEnd.printProgram(out, program);
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
-				new ArrayList<String>(0), frontEnd.getASTBuilder(), config);
+				new ArrayList<String>(0), builder, config);
 		if (debug) {
 			out.println("======== After applying OpenMP Pragma Transformer ========");
 			frontEnd.printProgram(out, program);
 		}
-
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-				new ArrayList<String>(0), frontEnd.getASTBuilder(), config);
+				new ArrayList<String>(0), builder, config);
 		if (debug) {
 			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program);
 		}
-
 		program.applyTransformer("prune");
 		if (debug) {
 			out.println("======== After applying Pruner ========");
 			frontEnd.printProgram(out, program);
 		}
-
 		program.applyTransformer("sef");
 		if (debug) {
 			out.println("======== After applying Side Effect Remover ========");

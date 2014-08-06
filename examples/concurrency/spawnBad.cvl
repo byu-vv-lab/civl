@@ -1,7 +1,7 @@
 /* Commandline execution:
  * 		civl verify -inputN=10 spawnBad.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 $input int N;
 int s1, s2;

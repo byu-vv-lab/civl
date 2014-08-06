@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify malloc.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 void main() {
   $scope s = $here;

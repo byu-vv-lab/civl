@@ -3,7 +3,7 @@
  * Commandline execution:
  * 		civl verify -inputB=4 barrier2.cvl
  */
-#include <civlc.h>
+#include <civlc.cvh>
 
 $input int B; // upper bound on number of threads
 $input int N; // number of threads

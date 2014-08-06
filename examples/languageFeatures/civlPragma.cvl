@@ -1,4 +1,4 @@
-#include <civlc.h>
+#include <civlc.cvh>
 
 #pragma CIVL $input int NB;
 $input int N;

@@ -2,7 +2,7 @@
  * Commandline example:
  *     civl verify -input_NP=3 ring2.cvl -simplify=false
  */
-#include<civlc.h>
+#include<comm.h>
 #include<stdio.h>
 #include "mp_root2.cvh"
 

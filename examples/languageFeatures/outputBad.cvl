@@ -1,4 +1,4 @@
-#include <civlc.h>
+#include <civlc.cvh>
 
 typedef struct A{
   int a;
@@ -8,7 +8,6 @@ typedef struct A{
 $output A k;
 
 void main(){
-  //int ka = (k.a);
   int *p = &k.a;
   int ka;
   

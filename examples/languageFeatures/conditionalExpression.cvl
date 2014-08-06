@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify conditionalExpression.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 int n = 2;
 $assume n > (5 > 7 ? 1 : 0);
 

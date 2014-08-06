@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify atomWaitBad.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 void foo() {
   void koo() {
     int o = 0;

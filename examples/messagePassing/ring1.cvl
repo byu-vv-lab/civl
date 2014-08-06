@@ -2,7 +2,7 @@
  * Commandline example:
  *     civl verify -inputNPROCS=3 ring.cvl -simplify=false
  */
-#include<civlc.h>
+#include<comm.cvh>
 #include "mp_root.cvh"
 
 void MPI_Process (int rank) {

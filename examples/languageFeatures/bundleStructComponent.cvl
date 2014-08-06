@@ -1,7 +1,8 @@
 /* Commandline execution:
  *		civl verify bundleStructComponent.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
+#include<bundle.cvh>
 
 typedef struct foo {
   int a[5];

@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify nonbooleanCondition.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 void main() {
   int i = 1;

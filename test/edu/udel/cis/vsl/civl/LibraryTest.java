@@ -37,7 +37,7 @@ public class LibraryTest {
 
 	@Test
 	public void printf() throws ABCException {
-		assertTrue(ui.run("verify", filename("stdio/printf.cvl")));
+		assertTrue(ui.run("verify", filename("stdio/printf.cvl"), "-enablePrintf=false"));
 	}
 
 	@Test
@@ -70,6 +70,11 @@ public class LibraryTest {
 	@Test
 	public void assertPrintf() throws ABCException {
 		assertFalse(ui.run("verify", filename("civlc/assertPrintf.cvl")));
+	}
+	
+	@Test
+	public void malloc1() throws ABCException {
+		assertTrue(ui.run("verify", filename("malloc.cvl")));
 	}
 
 	@Test
@@ -109,7 +114,7 @@ public class LibraryTest {
 
 	@Test
 	public void intIter() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/intIter.cvl"), "-inputB=5"));
+		assertTrue(ui.run("verify", filename("civlc/intIter.cvl"), "-inputB=5", "-enablePrintf=false"));
 	}
 
 	@Test
@@ -119,8 +124,7 @@ public class LibraryTest {
 
 	@Test
 	public void equals() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/equals.cvl"),
-				"-showTransitions"));
+		assertTrue(ui.run("verify", filename("civlc/equals.cvl")));
 	}
 
 	@Test

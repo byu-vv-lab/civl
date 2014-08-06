@@ -10,7 +10,7 @@
  *  civl verify -inputNPROCSB=3 -inputNSTEPSB=3  \
  -inputNXB=6 diffusion1d_good.cvl
  */ 
-#include <civlc.h>
+#include <comm.cvh>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

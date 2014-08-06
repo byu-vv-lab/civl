@@ -32,7 +32,7 @@ public class IOTransformerTest {
 	public void scanf() {
 		assertTrue(ui.run("verify", filename("fscanf.cvl")));
 	}
-	
+
 	@Test
 	public void defaultLength() {
 		assertTrue(ui.run("verify", filename("defaultLength.cvl")));

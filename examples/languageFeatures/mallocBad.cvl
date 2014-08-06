@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify mallocBad.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 void main() {
   double *p = (double *) $malloc($here, 5*sizeof(double));
   

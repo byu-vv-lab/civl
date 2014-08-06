@@ -1,6 +1,6 @@
 // https://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html
 
-#include <civlc.h>
+#include <civlc.cvh>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>

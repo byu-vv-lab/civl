@@ -48,8 +48,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import edu.udel.cis.vsl.abc.ABC;
-import edu.udel.cis.vsl.abc.Activator;
+import edu.udel.cis.vsl.abc.FrontEnd;
+import edu.udel.cis.vsl.abc.analysis.IF.Analyzer;
+import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
@@ -57,9 +58,13 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
+import edu.udel.cis.vsl.abc.parse.IF.CParser;
+import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.abc.program.IF.ProgramFactory;
+import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.Combiner;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
@@ -116,6 +121,8 @@ public class UserInterface {
 	 * The time at which this instance of UserInterface was created.
 	 */
 	private final double startTime = System.currentTimeMillis();
+
+	private FrontEnd frontEnd = new FrontEnd();
 
 	/* ************************** Constructors ***************************** */
 
@@ -197,22 +204,50 @@ public class UserInterface {
 		boolean debug = civlConfig.debug();
 		boolean verbose = civlConfig.verbose();
 		boolean showModel = config.isTrue(showModelO);
-		Activator frontEnd = getFrontEnd(filename, config);
-		Program program;
+		// Program program = this.getProgram(filename, config);
+		File file = new File(filename);
+		Preprocessor preprocessor = frontEnd.getPreprocessor(
+				this.getSysIncludes(config), this.getUserIncludes(config));
+		CTokenSource tokens = preprocessor.outputTokenSource(file);
+		CParser parser = frontEnd.getParser(tokens);
+		ASTBuilder builder = frontEnd.getASTBuilder(parser, parser.getTree());
+		AST userAST = builder.getTranslationUnit();
+		// Analyzer analyzer = frontEnd.getStandardAnalyzer(Language.CIVL_C);
 		Model model;
-		Preprocessor preprocessor = frontEnd.getPreprocessor();
 		List<String> inputVars = getInputVariables(config);
 		boolean hasFscanf = false;
+		Set<String> headerFiles = preprocessor.headerFiles();
+		Program program;
+		ArrayList<AST> asts = new ArrayList<>();
+		AST[] TUs;
+
+		// userAST =
+		asts.add(userAST);
+		if (headerFiles.contains("concurrency.cvh")) {
+			file = new File("text/include/concurrency.cvh");
+			Preprocessor preprocessorH = frontEnd.getPreprocessor(
+					this.getSysIncludes(config), this.getUserIncludes(config));
+			CTokenSource tokensH = preprocessorH.outputTokenSource(file);
+			CParser parserH = frontEnd.getParser(tokensH);
+			ASTBuilder builderH = frontEnd.getASTBuilder(parserH,
+					parserH.getTree());
+			AST astH = builderH.getTranslationUnit();
+
+			asts.add(astH);
+
+		}
+		TUs = new AST[asts.size()];
+		asts.toArray(TUs);
+
+		program = frontEnd.link(TUs, Language.CIVL_C);
+		// TODO link header files
 
 		try {
-			if (verbose || debug) {
+			if (verbose || debug)
 				// shows absolutely everything
-				program = frontEnd.showTranslation(out);
-			} else {
-				program = frontEnd.getProgram();
-			}
-			applyTransformers(filename, program, preprocessor, civlConfig,
-					frontEnd, inputVars);
+				program.print(out);
+			applyTransformers(filename, preprocessor, builder, program,
+					civlConfig, inputVars);
 			if (civlConfig.showProgram() && !civlConfig.debugOrVerbose())
 				CIVLTransform.printProgram2CIVL(out, program);
 			hasFscanf = CIVLTransform.hasFunctionCalls(program.getAST(),
@@ -278,9 +313,9 @@ public class UserInterface {
 	 * @param program
 	 * @throws SyntaxException
 	 */
-	private void applyTransformers(String fileName, Program program,
-			Preprocessor preprocessor, CIVLConfiguration config,
-			Activator frontEnd, List<String> inputVars) throws SyntaxException {
+	private void applyTransformers(String fileName, Preprocessor preprocessor,
+			ASTBuilder astBuilder, Program program, CIVLConfiguration config,
+			List<String> inputVars) throws SyntaxException {
 		Set<String> headers = preprocessor.headerFiles();
 		boolean isC = fileName.endsWith(".c");
 		boolean hasCIVLPragma = false, hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
@@ -298,18 +333,18 @@ public class UserInterface {
 		if (config.debugOrVerbose())
 			this.out.println("Apply general transformer...");
 		CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL,
-				inputVars, frontEnd.getASTBuilder(), config);
+				inputVars, astBuilder, config);
 		if (config.debugOrVerbose()) {
-			frontEnd.printProgram(out, program);
+			program.print(out);
 			CIVLTransform.printProgram2CIVL(out, program);
 		}
 		if (hasCIVLPragma) {
 			if (config.debugOrVerbose())
 				this.out.println("Apply CIVL pragma transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.CIVL_PRAGMA,
-					inputVars, frontEnd.getASTBuilder(), config);
+					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
-				frontEnd.printProgram(out, program);
+				program.print(out);
 				CIVLTransform.printProgram2CIVL(out, program);
 			}
 		}
@@ -317,9 +352,9 @@ public class UserInterface {
 			if (config.debugOrVerbose())
 				this.out.println("Apply IO transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.IO,
-					inputVars, frontEnd.getASTBuilder(), config);
+					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
-				frontEnd.printProgram(out, program);
+				program.print(out);
 				CIVLTransform.printProgram2CIVL(out, program);
 			}
 		}
@@ -327,15 +362,15 @@ public class UserInterface {
 			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP parser...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
-					inputVars, frontEnd.getASTBuilder(), config);
+					inputVars, astBuilder, config);
 			if (config.debugOrVerbose())
-				frontEnd.printProgram(out, program);
+				program.print(out);
 			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-					inputVars, frontEnd.getASTBuilder(), config);
+					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
-				frontEnd.printProgram(out, program);
+				program.print(out);
 				CIVLTransform.printProgram2CIVL(out, program);
 			}
 		}
@@ -343,9 +378,9 @@ public class UserInterface {
 			if (config.debugOrVerbose())
 				this.out.println("Apply Pthread transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.PTHREAD,
-					inputVars, frontEnd.getASTBuilder(), config);
+					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
-				frontEnd.printProgram(out, program);
+				program.print(out);
 				CIVLTransform.printProgram2CIVL(out, program);
 			}
 		}
@@ -353,9 +388,9 @@ public class UserInterface {
 			if (config.debugOrVerbose())
 				this.out.println("Apply MPI transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.MPI,
-					inputVars, frontEnd.getASTBuilder(), config);
+					inputVars, null, config);
 			if (config.debugOrVerbose()) {
-				frontEnd.printProgram(out, program);
+				program.print(out);
 				CIVLTransform.printProgram2CIVL(out, program);
 			}
 		}
@@ -364,16 +399,73 @@ public class UserInterface {
 			this.out.println("Apply pruner...");
 		program.applyTransformer("prune");
 		if (config.debugOrVerbose()) {
-			frontEnd.printProgram(out, program);
+			program.print(out);
 			CIVLTransform.printProgram2CIVL(out, program);
 		}
 		if (config.debugOrVerbose())
 			this.out.println("Apply side-effect remover...");
 		program.applyTransformer("sef");
 		if (config.debugOrVerbose()) {
-			frontEnd.printProgram(out, program);
+			program.print(out);
 			CIVLTransform.printProgram2CIVL(out, program);
 		}
+	}
+
+	/**
+	 * Instantiates, initializes, and returns a new compiler front end (an
+	 * instance of ABC's Activator class) from the ABC compiler. The user and
+	 * system include paths, if specified in the config, are used to instantiate
+	 * the front end. The front end can then be used preprocess, parse, and
+	 * transform the input file.
+	 * 
+	 * @param filename
+	 *            the name of the file to be parsed
+	 * @param config
+	 *            the configuration parameters for this session
+	 * @return the ABC Activator that can be used to parse and process the file
+	 * @throws ParseException
+	 * @throws SyntaxException
+	 * @throws PreprocessorException
+	 */
+	// private Program compileAndLink(String filename, GMCConfiguration config)
+	// throws PreprocessorException, SyntaxException, ParseException {
+	// File file = new File(filename);
+	// File[] userIncludes = extractPaths((String) config
+	// .getValue(userIncludePathO));
+	// File[] sysIncludes = this.getSysIncludes(config);
+	//
+	// return frontEnd.compileAndLink(new File[] { file }, Language.CIVL_C,
+	// sysIncludes, userIncludes);
+	// }
+
+	private File[] getUserIncludes(GMCConfiguration config) {
+		return extractPaths((String) config.getValue(userIncludePathO));
+	}
+
+	private File[] getSysIncludes(GMCConfiguration config) {
+		File[] sysIncludes = extractPaths((String) config
+				.getValue(sysIncludePathO));
+		File civlDefaultInclude = new File(new File(".").getAbsoluteFile(),
+				"text/include");
+		boolean hasCIVLDefaultSet = false;
+		String civlDefaultIncludePath = civlDefaultInclude.getAbsolutePath();
+
+		for (File sysInclude : sysIncludes) {
+			if (sysInclude.getAbsolutePath().equals(civlDefaultIncludePath))
+				hasCIVLDefaultSet = true;
+		}
+		if (!hasCIVLDefaultSet) {
+			int length = sysIncludes.length;
+			List<File> newSysIncludes = new ArrayList<>(length + 1);
+
+			for (int i = 0; i < length; i++) {
+				newSysIncludes.add(sysIncludes[i]);
+			}
+			newSysIncludes.add(civlDefaultInclude);
+			sysIncludes = new File[length + 1];
+			newSysIncludes.toArray(sysIncludes);
+		}
+		return sysIncludes;
 	}
 
 	/**
@@ -399,52 +491,6 @@ public class UserInterface {
 	}
 
 	/**
-	 * Instantiates, initializes, and returns a new compiler front end (an
-	 * instance of ABC's Activator class) from the ABC compiler. The user and
-	 * system include paths, if specified in the config, are used to instantiate
-	 * the front end. The front end can then be used preprocess, parse, and
-	 * transform the input file.
-	 * 
-	 * @param filename
-	 *            the name of the file to be parsed
-	 * @param config
-	 *            the configuration parameters for this session
-	 * @return the ABC Activator that can be used to parse and process the file
-	 */
-	private Activator getFrontEnd(String filename, GMCConfiguration config) {
-		File file = new File(filename);
-		File[] userIncludes = extractPaths((String) config
-				.getValue(userIncludePathO));
-		File[] sysIncludes = extractPaths((String) config
-				.getValue(sysIncludePathO));
-		File civlDefaultInclude = new File(new File(".").getAbsoluteFile(),
-				"text/include");
-		boolean hasCIVLDefaultSet = false;
-		String civlDefaultIncludePath = civlDefaultInclude.getAbsolutePath();
-		Activator frontEnd;
-
-		for (File sysInclude : sysIncludes) {
-			if (sysInclude.getAbsolutePath().equals(civlDefaultIncludePath))
-				hasCIVLDefaultSet = true;
-		}
-		if (!hasCIVLDefaultSet) {
-			int length = sysIncludes.length;
-			List<File> newSysIncludes = new ArrayList<>(length + 1);
-
-			for (int i = 0; i < length; i++) {
-				newSysIncludes.add(sysIncludes[i]);
-			}
-			newSysIncludes.add(civlDefaultInclude);
-			sysIncludes = new File[length + 1];
-			newSysIncludes.toArray(sysIncludes);
-		}
-		frontEnd = ABC.activator(file, sysIncludes, userIncludes,
-				Language.CIVL_C);
-
-		return frontEnd;
-	}
-
-	/**
 	 * Applies the ABC preprocessor to the specified file, printing the result
 	 * of preprocessing to the given stream.
 	 * 
@@ -460,7 +506,10 @@ public class UserInterface {
 	 */
 	private void preprocess(PrintStream out, GMCConfiguration config,
 			String filename) throws PreprocessorException {
-		getFrontEnd(filename, config).preprocess(out);
+		Preprocessor preprocessor = frontEnd.getPreprocessor(
+				this.getSysIncludes(config), this.getUserIncludes(config));
+
+		preprocessor.printOutput(out, new File(filename));
 	}
 
 	/**
@@ -614,16 +663,14 @@ public class UserInterface {
 	public boolean runParse(GMCConfiguration config)
 			throws CommandLineException, ABCException, IOException {
 		SymbolicUniverse universe = SARL.newStandardUniverse();
-		Preprocessor preprocessor;
-		Pair<Model, Preprocessor> result;
+		Pair<Model, Preprocessor> modelResult;
 
 		checkFilenames(1, config);
-		result = extractModel(out, config, config.getFreeArg(1), universe);
-		if (result == null)
+		modelResult = extractModel(out, config, config.getFreeArg(1), universe);
+		if (modelResult == null)
 			return false;
-		preprocessor = result.right;
 		if (showShortFileNameList(config))
-			preprocessor.printShorterFileNameMap(out);
+			modelResult.right.printShorterFileNameMap(out);
 		return true;
 	}
 
@@ -642,10 +689,10 @@ public class UserInterface {
 		String sourceFilename, traceFilename;
 		File traceFile;
 		GMCConfiguration newConfig;
+		Pair<Model, Preprocessor> modelResult;
 		Model model;
 		TracePlayer replayer;
 		boolean guiMode = config.isTrue(guiO);
-		Pair<Model, Preprocessor> modelAndPreprocessor;
 		Preprocessor preprocessor;
 		Trace<Transition, State> trace;
 
@@ -670,10 +717,11 @@ public class UserInterface {
 			universe.setShowProverQueries(true);
 		if (newConfig.isTrue(showQueriesO))
 			universe.setShowQueries(true);
-		modelAndPreprocessor = extractModel(out, newConfig, sourceFilename,
-				universe);
-		model = modelAndPreprocessor.left;
-		preprocessor = modelAndPreprocessor.right;
+		modelResult = extractModel(out, newConfig, sourceFilename, universe);
+		if (modelResult == null)
+			return false;
+		model = modelResult.left;
+		preprocessor = modelResult.right;
 		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out,
 				err, preprocessor);
 		trace = replayer.run();
@@ -788,39 +836,61 @@ public class UserInterface {
 		boolean debug = config.isTrue(debugO);
 		boolean verbose = config.isTrue(verboseO);
 		boolean showModel = config.isTrue(showModelO);
-		Activator frontEnd0, frontEnd1;
+		// Activator frontEnd0, frontEnd1;
 		boolean parse = "parse".equals(config.getFreeArg(0));
 		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
 		Preprocessor preprocessor0;
 		Preprocessor preprocessor1;
 		List<String> inputVars = getInputVariables(config);
 		CIVLConfiguration civlConfig = new CIVLConfiguration(config);
+		AST combinedAST;
+		File file0, file1;
 
 		checkFilenames(2, config);
 		filename0 = config.getFreeArg(1);
 		filename1 = config.getFreeArg(2);
-		frontEnd0 = getFrontEnd(filename0, config);
-		frontEnd1 = getFrontEnd(filename1, config);
-		preprocessor0 = frontEnd0.getPreprocessor();
-		preprocessor1 = frontEnd1.getPreprocessor();
+		file0 = new File(filename0);
+		file1 = new File(filename1);
+		preprocessor0 = frontEnd.getPreprocessor(this.getSysIncludes(config),
+				this.getUserIncludes(config));
+		CTokenSource tokens = preprocessor0.outputTokenSource(file0);
+		CParser parser = frontEnd.getParser(tokens);
+		ASTBuilder builder = frontEnd.getASTBuilder(parser, parser.getTree());
+		AST ast0 = builder.getTranslationUnit();
+		Analyzer analyzer = frontEnd.getStandardAnalyzer(Language.CIVL_C);
+		ProgramFactory programFactory = frontEnd.getProgramFactory(analyzer);
 
+		preprocessor1 = frontEnd.getPreprocessor(this.getSysIncludes(config),
+				this.getUserIncludes(config));
+		tokens = preprocessor1.outputTokenSource(file1);
+		parser = frontEnd.getParser(tokens);
+		builder = frontEnd.getASTBuilder(parser, parser.getTree());
+		AST ast1 = builder.getTranslationUnit();
+
+		// analyzer.analyze(ast0);
+		// analyzer.analyze(ast1);
+
+		// frontEnd0 = getFrontEnd(filename0, config);
+		// frontEnd1 = getFrontEnd(filename1, config);
+		// preprocessor0 = frontEnd0.getPreprocessor();
+		// preprocessor1 = frontEnd1.getPreprocessor();
+		program0 = programFactory.newProgram(ast0);
+		program1 = programFactory.newProgram(ast1);
 		if (verbose || debug) {
 			// shows absolutely everything
-			program0 = frontEnd0.showTranslation(out);
-			program1 = frontEnd1.showTranslation(out);
-		} else {
-			program0 = frontEnd0.getProgram();
-
-			applyTransformers(filename0, program0, preprocessor0, civlConfig,
-					frontEnd0, inputVars);
-			program1 = frontEnd1.getProgram();
-			applyTransformers(filename1, program1, preprocessor1, civlConfig,
-					frontEnd1, inputVars);
+			program0.print(out);
+			program1.print(out);
 		}
+		applyTransformers(filename0, preprocessor0, builder, program0,
+				civlConfig, inputVars);
+		applyTransformers(filename1, preprocessor1, builder, program1,
+				civlConfig, inputVars);
 		if (verbose || debug)
 			out.println("Generating composite program...");
-		compositeProgram = frontEnd0.getProgramFactory().newProgram(
-				combiner.combine(program0.getAST(), program1.getAST()));
+		combinedAST = combiner.combine(program0.getAST(), program1.getAST());
+		compositeProgram = frontEnd.getProgramFactory(
+				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
+				combinedAST);
 		if (verbose || debug) {
 			compositeProgram.print(out);
 			CIVLTransform.printProgram2CIVL(out, compositeProgram);
@@ -846,7 +916,6 @@ public class UserInterface {
 			preprocessor0.printShorterFileNameMap(out);
 			preprocessor1.printShorterFileNameMap(out);
 		}
-
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(config, compositeProgram,
@@ -858,7 +927,7 @@ public class UserInterface {
 			model.print(out, verbose || debug);
 		}
 		verifier = new Verifier(config, model, out, err, startTime,
-				showShortFileName, preprocessor0);
+				showShortFileName, preprocessor1);
 		try {
 			result = verifier.run();
 		} catch (CIVLUnimplementedFeatureException unimplemented) {
@@ -995,4 +1064,24 @@ public class UserInterface {
 
 		return run(args);
 	}
+
+//	private Set<String> getHeaderFiles(AST ast) {
+//		Set<String> headerFiles = new HashSet<>();
+//
+//		getHeaderFiles(ast.getRootNode(), headerFiles);
+//		return headerFiles;
+//	}
+//
+//	private void getHeaderFiles(ASTNode node, Set<String> result) {
+//		String mySource = node.getSource().getFirstToken().getSourceFile()
+//				.getName();
+//
+//		if (!result.contains(mySource))
+//			result.add(mySource);
+//		for (ASTNode child : node.children()) {
+//			if (child != null)
+//				getHeaderFiles(child, result);
+//		}
+//	}
+
 }

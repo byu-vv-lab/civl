@@ -1,7 +1,7 @@
 /* Basic shared-variable flag barrier.   Run as follows:
  *      civl verify -inputB=4 barrier.cvl
  */
-#include <civlc.h>
+#include <civlc.cvh>
 
 $input int B; // upper bound on number of threads
 $input int N; // number of threads

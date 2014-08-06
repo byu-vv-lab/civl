@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify implies.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 $input int k;
 
 void main() {

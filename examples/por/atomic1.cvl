@@ -1,8 +1,11 @@
-#include<civlc.h>
+#include<civlc.cvh>
+
 int x=0;
+
 void f() {
   x=1;
 }
+
 void main() {
   $spawn f();
   $atomic {

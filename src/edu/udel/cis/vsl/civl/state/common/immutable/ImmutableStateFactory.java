@@ -192,6 +192,122 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
+	public ImmutableState collectHeaps(State state) throws CIVLStateException {
+		ImmutableState theState = (ImmutableState) state;
+
+		// only collect heaps when necessary.
+		if (!this.hasNonEmptyHeaps(theState))
+			return theState;
+		else {
+			Set<SymbolicExpression> reachable = this
+					.reachableHeapObjectsOfState(theState);
+			int numDyscopes = theState.numDyscopes();
+			int numHeapFields = modelFactory.heapType().getNumMallocs();
+			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapMemUnits = new HashMap<>();
+			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapPointers = new HashMap<>();
+			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapObjectNames = new HashMap<>();
+			int nameId = 0;
+			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
+
+			for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
+				DynamicScope dyscope = theState.getDyscope(dyscopeId);
+				SymbolicExpression heap = dyscope.getValue(0);
+
+				if (heap.isNull())
+					continue;
+				else {
+					SymbolicExpression newHeap = heap;
+					SymbolicExpression heapPointer = this.symbolicUtil
+							.makePointer(dyscopeId, 0,
+									universe.identityReference());
+
+					for (int mallocId = 0; mallocId < numHeapFields; mallocId++) {
+						SymbolicExpression heapField = universe.tupleRead(heap,
+								universe.intObject(mallocId));
+						int length = this.symbolicUtil.extractInt(null,
+								(NumericExpression) universe.length(heapField));
+						ReferenceExpression fieldRef = universe
+								.tupleComponentReference(
+										universe.identityReference(),
+										universe.intObject(mallocId));
+						Map<Integer, Integer> oldID2NewID = new HashMap<>();
+						int numRemoved = 0;
+						SymbolicExpression newHeapField = heapField;
+						boolean hasNew = false;
+
+						for (int objectId = 0; objectId < length; objectId++) {
+							ReferenceExpression objectRef = universe
+									.arrayElementReference(fieldRef,
+											universe.integer(objectId));
+							SymbolicExpression objectPtr = this.symbolicUtil
+									.setSymRef(heapPointer, objectRef);
+
+							if (!reachable.contains(objectPtr)) {
+								SymbolicExpression heapObj = universe
+										.arrayRead(heapField,
+												universe.integer(objectId));
+
+								if (!symbolicUtil.isInvalidHeapObject(heapObj)) {
+									throw new CIVLStateException(
+											ErrorKind.MEMORY_LEAK,
+											Certainty.CONCRETE,
+											"An unreachable object is dected in the heap of dyscope "
+													+ dyscope.name() + "(id="
+													+ dyscopeId + ")"
+													+ ".\n  malloc ID: "
+													+ mallocId
+													+ "\n  called ID: "
+													+ objectId, theState,
+											dyscope.lexicalScope().getSource());
+								}
+								// unreachable heap object
+								// updates refeferences
+								for (int nextId = objectId + 1; nextId < length; nextId++) {
+									if (oldID2NewID.containsKey(nextId))
+										oldID2NewID.put(nextId,
+												oldID2NewID.get(nextId) - 1);
+									else
+										oldID2NewID.put(nextId, nextId - 1);
+								}
+								// remove object
+								hasNew = true;
+								newHeapField = universe.removeElementAt(
+										newHeapField, objectId - numRemoved);
+								numRemoved++;
+							} else {// rename remaining heap objects
+								SymbolicExpression heapObject = universe
+										.arrayRead(heapField,
+												universe.integer(objectId));
+
+								nameId = addOldToNewName(heapObject, nameId,
+										oldToNewHeapObjectNames);
+							}
+						}
+						if (oldID2NewID.size() > 0)
+							addOldToNewHeapMemUnits(oldID2NewID, heapPointer,
+									fieldRef, oldToNewHeapMemUnits);
+						if (hasNew)
+							newHeap = universe.tupleWrite(newHeap,
+									universe.intObject(mallocId), newHeapField);
+					}
+					if (symbolicUtil.isEmptyHeap(newHeap))
+						newHeap = universe.nullExpression();
+					theState = this
+							.setVariable(theState, 0, dyscopeId, newHeap);
+				}
+			}
+			oldToNewHeapPointers = computeOldToNewHeapPointers(theState,
+					oldToNewHeapMemUnits);
+			for (int i = 0; i < numDyscopes; i++)
+				newScopes[i] = theState.getDyscope(i)
+						.updateHeapAndPointers(oldToNewHeapPointers,
+								oldToNewHeapObjectNames, universe);
+			theState = theState.setScopes(newScopes);
+			return theState;
+		}
+	}
+
+	@Override
 	public ImmutableState collectScopes(State state) throws CIVLStateException {
 		ImmutableState theState = (ImmutableState) state;
 		int oldNumScopes = theState.numDyscopes();
@@ -652,7 +768,7 @@ public class ImmutableStateFactory implements StateFactory {
 		IntObject indexObj = universe.intObject(mallocId);
 		SymbolicExpression heapValue = dyscope.getValue(0);
 		SymbolicExpression heapField;
-		SymbolicExpression heapObjectPointer;
+		SymbolicExpression heapAtomicObjectPtr;
 		ReferenceExpression symRef;
 		NumericExpression heapLength;
 
@@ -668,8 +784,8 @@ public class ImmutableStateFactory implements StateFactory {
 		symRef = universe.tupleComponentReference(symRef, indexObj);
 		symRef = universe.arrayElementReference(symRef, heapLength);
 		symRef = universe.arrayElementReference(symRef, universe.zeroInt());
-		heapObjectPointer = this.heapObjetPointer(state, dyscopeId, symRef);
-		return new Pair<>(state, heapObjectPointer);
+		heapAtomicObjectPtr = symbolicUtil.makePointer(dyscopeId, 0, symRef);
+		return new Pair<>(state, heapAtomicObjectPtr);
 	}
 
 	@Override
@@ -683,7 +799,7 @@ public class ImmutableStateFactory implements StateFactory {
 		SymbolicExpression heapField = universe.tupleRead(heapValue, index);
 		int length = ((IntegerNumber) universe.extractNumber(universe
 				.length(heapField))).intValue();
-		StringObject heapObjectName = universe.stringObject("Hp" + pid + "s"
+		StringObject heapObjectName = universe.stringObject("Hop" + pid + "s"
 				+ dyscopeId + "o" + mallocId + "i" + length);
 		SymbolicType heapObjectType = universe.arrayType(elementType,
 				elementCount);
@@ -702,13 +818,13 @@ public class ImmutableStateFactory implements StateFactory {
 				mallocIndex);
 		int heapFieldLength = ((IntegerNumber) universe.extractNumber(universe
 				.length(heapField))).intValue();
-		Map<SymbolicExpression, SymbolicExpression> oldToNewPointers = new HashMap<>(
+		Map<SymbolicExpression, SymbolicExpression> oldToNewHeapPointers = new HashMap<>(
 				heapFieldLength - index);
 		int numDyscopes = state.numDyscopes();
 		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
 		ImmutableState theState = (ImmutableState) state;
 
-		oldToNewPointers.put(symbolicUtil.heapObjectPointer(heapObjectPointer),
+		oldToNewHeapPointers.put(symbolicUtil.heapMemUnit(heapObjectPointer),
 				this.symbolicUtil.undefinedPointer());
 		heapField = universe.arrayWrite(heapField, universe.integer(index),
 				symbolicUtil.invalidHeapObject(((SymbolicArrayType) heapField
@@ -716,10 +832,11 @@ public class ImmutableStateFactory implements StateFactory {
 		heapValue = universe.tupleWrite(heapValue, mallocIndex, heapField);
 		theState = this.setVariable(theState, 0, dyscopeId, heapValue);
 		// computes all affected pointers' oldToNew map
-		oldToNewPointers = this.computePointerMap(theState, oldToNewPointers);
+		oldToNewHeapPointers = this.computeOldToNewHeapPointers(theState,
+				oldToNewHeapPointers);
 		for (int i = 0; i < numDyscopes; i++)
 			newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
-					oldToNewPointers,
+					oldToNewHeapPointers,
 					new HashMap<SymbolicExpression, SymbolicExpression>(),
 					universe);
 		theState = theState.setScopes(newScopes);
@@ -771,28 +888,6 @@ public class ImmutableStateFactory implements StateFactory {
 			}
 			return result;
 		}
-	}
-
-	/**
-	 * Constructs a pointer to a heap object.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param dyscopeID
-	 *            The dyscope ID of that the heap belongs to.
-	 * @param ref
-	 *            The reference expression of the pointer to the heap object.
-	 * @return The pointer to a heap object, e.g.,
-	 *         <code>&&lt;d1>heap&lt;0,1>[0]</code>.
-	 */
-	private SymbolicExpression heapObjetPointer(State state, int dyscopeID,
-			ReferenceExpression ref) {
-		assert dyscopeID >= 0 && dyscopeID < state.numDyscopes();
-		return universe.tuple(
-				modelFactory.pointerSymbolicType(),
-				Arrays.asList(new SymbolicExpression[] {
-						modelFactory.scopeValue(dyscopeID), universe.zeroInt(),
-						ref }));
 	}
 
 	/**
@@ -1354,9 +1449,9 @@ public class ImmutableStateFactory implements StateFactory {
 					}
 				}
 			}
-		} else if (this.isHeapPointer(value)) {
+		} else if (symbolicUtil.isPointerToHeap(value)) {
 			SymbolicExpression heapObjPtr = this.symbolicUtil
-					.heapObjectPointer(value);
+					.heapMemUnit(value);
 
 			if (!reachable.contains(heapObjPtr))
 				reachable.add(heapObjPtr);
@@ -1378,12 +1473,6 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 	}
 
-	private boolean isHeapPointer(SymbolicExpression pointer) {
-		int vid = this.symbolicUtil.getVariableId(null, pointer);
-
-		return vid == 0;
-	}
-
 	private boolean isPointer(SymbolicExpression value) {
 		if (value.type().equals(modelFactory.pointerSymbolicType()))
 			return true;
@@ -1403,126 +1492,13 @@ public class ImmutableStateFactory implements StateFactory {
 		return false;
 	}
 
-	@Override
-	public ImmutableState collectHeaps(State state) throws CIVLStateException {
-		ImmutableState theState = (ImmutableState) state;
-
-		// only collect heaps when necessary.
-		if (!this.hasNonEmptyHeaps(theState))
-			return theState;
+	private Map<SymbolicExpression, SymbolicExpression> computeOldToNewHeapPointers(
+			State state,
+			Map<SymbolicExpression, SymbolicExpression> heapMemUnitsMap) {
+		if (heapMemUnitsMap.size() < 1)
+			return heapMemUnitsMap;
 		else {
-			Set<SymbolicExpression> reachable = this
-					.reachableHeapObjectsOfState(theState);
-			int numDyscopes = theState.numDyscopes();
-			int numHeapFields = modelFactory.heapType().getNumMallocs();
-			Map<SymbolicExpression, SymbolicExpression> oldToNewPointersMap = new HashMap<>();
-			Map<SymbolicExpression, SymbolicExpression> oldToNewNameMap = new HashMap<>();
-			int nameId = 0;
-			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
-
-			for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
-				DynamicScope dyscope = theState.getDyscope(dyscopeId);
-				SymbolicExpression heap = dyscope.getValue(0);
-
-				if (heap.isNull())
-					continue;
-				else {
-					SymbolicExpression newHeap = heap;
-					SymbolicExpression heapPointer = this.symbolicUtil
-							.makePointer(dyscopeId, 0,
-									universe.identityReference());
-
-					for (int mallocId = 0; mallocId < numHeapFields; mallocId++) {
-						SymbolicExpression heapField = universe.tupleRead(heap,
-								universe.intObject(mallocId));
-						int length = this.symbolicUtil.extractInt(null,
-								(NumericExpression) universe.length(heapField));
-						ReferenceExpression fieldRef = universe
-								.tupleComponentReference(
-										universe.identityReference(),
-										universe.intObject(mallocId));
-						Map<Integer, Integer> oldID2NewID = new HashMap<>();
-						int numRemoved = 0;
-						SymbolicExpression newHeapField = heapField;
-						boolean hasNew = false;
-
-						for (int objectId = 0; objectId < length; objectId++) {
-							ReferenceExpression objectRef = universe
-									.arrayElementReference(fieldRef,
-											universe.integer(objectId));
-							SymbolicExpression objectPtr = this.symbolicUtil
-									.setSymRef(heapPointer, objectRef);
-
-							if (!reachable.contains(objectPtr)) {
-								SymbolicExpression heapObj = universe
-										.arrayRead(heapField,
-												universe.integer(objectId));
-
-								if (!symbolicUtil.isInvalidHeapObject(heapObj)) {
-									throw new CIVLStateException(
-											ErrorKind.MEMORY_LEAK,
-											Certainty.CONCRETE,
-											"An unreachable object is dected in the heap of dyscope "
-													+ dyscope.name() + "(id="
-													+ dyscopeId + ")"
-													+ ".\n  malloc ID: "
-													+ mallocId
-													+ "\n  called ID: "
-													+ objectId, theState,
-											dyscope.lexicalScope().getSource());
-								}
-								// unreachable heap object
-								// updates refeferences
-								for (int nextId = objectId + 1; nextId < length; nextId++) {
-									if (oldID2NewID.containsKey(nextId))
-										oldID2NewID.put(nextId,
-												oldID2NewID.get(nextId) - 1);
-									else
-										oldID2NewID.put(nextId, nextId - 1);
-								}
-								// remove object
-								hasNew = true;
-								newHeapField = universe.removeElementAt(
-										newHeapField, objectId - numRemoved);
-								numRemoved++;
-							} else {// rename remaining heap objects
-								SymbolicExpression heapObject = universe
-										.arrayRead(heapField,
-												universe.integer(objectId));
-
-								nameId = addRenamedMap(heapObject, nameId,
-										oldToNewNameMap);
-							}
-						}
-						if (oldID2NewID.size() > 0)
-							addPointerMap(oldID2NewID, heapPointer, fieldRef,
-									oldToNewPointersMap);
-						if (hasNew)
-							newHeap = universe.tupleWrite(newHeap,
-									universe.intObject(mallocId), newHeapField);
-					}
-					if (symbolicUtil.isEmptyHeap(newHeap))
-						newHeap = universe.nullExpression();
-					theState = this
-							.setVariable(theState, 0, dyscopeId, newHeap);
-				}
-			}
-			oldToNewPointersMap = computePointerMap(theState,
-					oldToNewPointersMap);
-			for (int i = 0; i < numDyscopes; i++)
-				newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
-						oldToNewPointersMap, oldToNewNameMap, universe);
-			theState = theState.setScopes(newScopes);
-			return theState;
-		}
-	}
-
-	private Map<SymbolicExpression, SymbolicExpression> computePointerMap(
-			State state, Map<SymbolicExpression, SymbolicExpression> oldToNewMap) {
-		if (oldToNewMap.size() < 1)
-			return oldToNewMap;
-		else {
-			Map<SymbolicExpression, SymbolicExpression> newMap = new HashMap<>();
+			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapPointers = new HashMap<>();
 			int numDyscopes = state.numDyscopes();
 
 			for (int dyscopeID = 0; dyscopeID < numDyscopes; dyscopeID++) {
@@ -1530,18 +1506,18 @@ public class ImmutableStateFactory implements StateFactory {
 				int numVars = dyscope.numberOfValues();
 
 				for (int vid = 0; vid < numVars; vid++) {
-					computeNewPointer(dyscope.getValue(vid), oldToNewMap,
-							newMap);
+					computeNewHeapPointer(dyscope.getValue(vid),
+							heapMemUnitsMap, oldToNewHeapPointers);
 				}
 			}
-			return newMap;
+			return oldToNewHeapPointers;
 		}
 	}
 
 	@SuppressWarnings("incomplete-switch")
-	private void computeNewPointer(SymbolicExpression value,
-			Map<SymbolicExpression, SymbolicExpression> heapObjectPointerMap,
-			Map<SymbolicExpression, SymbolicExpression> oldToNewPointerMap) {
+	private void computeNewHeapPointer(SymbolicExpression value,
+			Map<SymbolicExpression, SymbolicExpression> heapMemUnitsMap,
+			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapPointers) {
 		if (value.isNull())
 			return;
 		else if (!this.isPointer(value)) {
@@ -1563,8 +1539,8 @@ public class ImmutableStateFactory implements StateFactory {
 				default:
 					switch (kind) {
 					case EXPRESSION:
-						computeNewPointer((SymbolicExpression) arg,
-								heapObjectPointerMap, oldToNewPointerMap);
+						computeNewHeapPointer((SymbolicExpression) arg,
+								heapMemUnitsMap, oldToNewHeapPointers);
 						break;
 					case EXPRESSION_COLLECTION: {
 						Iterator<? extends SymbolicExpression> iter = ((SymbolicCollection<?>) arg)
@@ -1573,35 +1549,35 @@ public class ImmutableStateFactory implements StateFactory {
 						while (iter.hasNext()) {
 							SymbolicExpression expr = iter.next();
 
-							computeNewPointer(expr, heapObjectPointerMap,
-									oldToNewPointerMap);
+							computeNewHeapPointer(expr, heapMemUnitsMap,
+									oldToNewHeapPointers);
 						}
 					}
 					}
 				}
 			}
-		} else if (this.isHeapPointer(value)) {
+		} else if (symbolicUtil.isPointerToHeap(value)) {
 			SymbolicExpression heapObjPtr = this.symbolicUtil
-					.heapObjectPointer(value);
-			SymbolicExpression newHeapObjPtr = heapObjectPointerMap
-					.get(heapObjPtr);
+					.heapMemUnit(value);
+			SymbolicExpression newHeapObjPtr = heapMemUnitsMap.get(heapObjPtr);
 
-			if (newHeapObjPtr != null && !oldToNewPointerMap.containsKey(value)) {
+			if (newHeapObjPtr != null
+					&& !oldToNewHeapPointers.containsKey(value)) {
 				if (symbolicUtil.isUndefinedPointer(newHeapObjPtr))
-					oldToNewPointerMap.put(value, newHeapObjPtr);
+					oldToNewHeapPointers.put(value, newHeapObjPtr);
 				else {
 					ReferenceExpression ref = symbolicUtil
 							.referenceToHeapMemUnit(value);
 					SymbolicExpression newPointer = symbolicUtil.makePointer(
 							newHeapObjPtr, ref);
 
-					oldToNewPointerMap.put(value, newPointer);
+					oldToNewHeapPointers.put(value, newPointer);
 				}
 			}
 		}
 	}
 
-	private void addPointerMap(Map<Integer, Integer> oldID2NewID,
+	private void addOldToNewHeapMemUnits(Map<Integer, Integer> oldID2NewID,
 			SymbolicExpression heapPointer, ReferenceExpression fieldRef,
 			Map<SymbolicExpression, SymbolicExpression> oldToNewMap) {
 		for (Map.Entry<Integer, Integer> entry : oldID2NewID.entrySet()) {
@@ -1618,10 +1594,10 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 	}
 
-	private int addRenamedMap(SymbolicExpression heapObject, int nameId,
-			Map<SymbolicExpression, SymbolicExpression> oldToNewMap) {
+	private int addOldToNewName(SymbolicExpression heapObject, int nameId,
+			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapObjectNames) {
 		SymbolicConstant oldConstant = null;
-		String prefix = "H";
+		String prefix = "Ho";
 
 		if (heapObject instanceof SymbolicConstant)
 			oldConstant = (SymbolicConstant) heapObject;
@@ -1636,7 +1612,7 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicConstant newName = universe.symbolicConstant(newNameString,
 					oldConstant.type());
 
-			oldToNewMap.put(oldConstant, newName);
+			oldToNewHeapObjectNames.put(oldConstant, newName);
 			return nameId + 1;
 		}
 		return nameId;

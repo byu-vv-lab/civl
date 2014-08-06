@@ -4,7 +4,7 @@
  * or (if you want to find the minimal counterexample)
  *		civl verify -inputB=4 diningBad.cvl -min
  */
-#include <civlc.h>
+#include <civlc.cvh>
 
 $input int B; // upper bound on number of philosophers
 $input int n; // number of philosophers

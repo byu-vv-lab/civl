@@ -1,5 +1,6 @@
-#include<civlc.h>
+#include<civlc.cvh>
 #include<stdio.h>
+
 int x;
 int *p = &x;
 

@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify scoping.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 void main() {
   int *p, *q;

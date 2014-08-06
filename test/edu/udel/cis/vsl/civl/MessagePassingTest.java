@@ -69,16 +69,19 @@ public class MessagePassingTest {
 	@Test
 	public void diffusion1d() {
 		assertTrue(ui.run("verify", filename("diffusion1d.cvl"),
-				"-inputNPROCSB=3", "-inputNSTEPSB=3", "-inputNXB=6", "-enablePrintf=false"));
+				"-inputNPROCSB=3", "-inputNSTEPSB=3", "-inputNXB=6",
+				"-enablePrintf=false"));
 	}
-	
+
 	@Test
 	public void wildcard() {
-		assertTrue(ui.run("verify", filename("wildcard.cvl"), "-inputNPROCS=5", "-enablePrintf=false"));
+		assertTrue(ui.run("verify", filename("wildcard.cvl"), "-inputNPROCS=5",
+				"-enablePrintf=false"));
 	}
 
 	@Test
 	public void wildcardBad() {
-		assertFalse(ui.run("verify", filename("wildcardBad.cvl"), "-enablePrintf=false"));
+		assertFalse(ui.run("verify", filename("wildcardBad.cvl"),
+				"-enablePrintf=false"));
 	}
 }

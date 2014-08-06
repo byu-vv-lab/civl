@@ -1,7 +1,8 @@
 /* Commandline execution:
  *		civl verify bundleStruct.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
+#include<bundle.cvh>
 
 typedef struct Interval {
   int left;

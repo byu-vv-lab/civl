@@ -1,4 +1,4 @@
-#include<civlc.h>
+#include<civlc.cvh>
 
 /* A deadlock should be possible in this program as follows:
  * p1: x=1, then blocks at $when(x==2), losing atomic lock.

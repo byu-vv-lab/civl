@@ -2,7 +2,7 @@
  * Example run:
  *      civl verify -inputB=6 -inputW=3 blockAdder.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
 
 $input int B; // upper bound on array length
 $input int W; // upper bound on number of workers

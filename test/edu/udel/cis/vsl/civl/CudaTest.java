@@ -29,7 +29,7 @@ public class CudaTest {
 
 	@Test
 	public void dot() {
-		assertTrue(ui.run("verify", filename("dot.cvl"), "-inputN_BOUND=8",
-				"-inputTHREADS_PER_BLOCK=4"));
+		assertTrue(ui.run("verify", filename("dot.cvl"), "-inputN_BOUND=2",
+				"-inputTHREADS_PER_BLOCK=2"));
 	}
 }

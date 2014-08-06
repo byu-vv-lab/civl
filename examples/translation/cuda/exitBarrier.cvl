@@ -30,7 +30,8 @@
 // a "return" statement. Anyway for that to actually
 // kill the thread?
 
-#include <civlc.h>
+#include <civlc.cvh>
+#include <concurrency.cvh>
 
 struct _CIVL_Barrier {
   int numProcs;   //how many are enrolled to begin with, cannot change

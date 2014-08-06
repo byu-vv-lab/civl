@@ -34,7 +34,8 @@ for (i = 0; i < ROUNDS; i++) {
    avepi = ((avepi * i) + pi)/(i + 1); 
    printf("   After %3d throws, average value of pi = %10.8f\n",
          (DARTS * (i + 1)),avepi);
-   }    
+   }
+#pragma CIVL __pi = avepi;    
 printf("\nReal value of PI: 3.1415926535897 \n");
 }
 
@@ -58,13 +59,13 @@ double dboard(int darts)
  * The cconst variable must be 4 bytes. We check this and bail if it is
  * not the right size
  ************************************************************************/
-   if (sizeof(cconst) != 4) {
+   /*if (sizeof(cconst) != 4) {
       printf("Wrong data size for cconst variable in dboard routine!\n");
       printf("See comments in source file. Quitting.\n");
       exit(1);
-      }
+      }*/
    /* 2 bit shifted to MAX_RAND later used to scale random number between 0 and 1 */
-   cconst = 2 << (31 - 1);
+   cconst = 9;
    score = 0;
 
 /***********************************************************************

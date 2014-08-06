@@ -1,7 +1,7 @@
 /* Commandline execution:
- *		civl verify -por=new -inputB=5 adder.cvl
+ *		civl verify -inputB=5 adder.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 $input int B; // upper bound on array length
 $input int N; // length of array

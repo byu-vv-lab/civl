@@ -2,7 +2,7 @@
  *		civl verify assume.cvl
  * */
 
-#include <civlc.h>
+#include <civlc.cvh>
 $input int a[];
 
 void main() {  

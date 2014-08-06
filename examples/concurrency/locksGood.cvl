@@ -1,7 +1,7 @@
 /* Commandline execution:
  * 		civl verify locksGood.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 _Bool lock0 = 0;
 _Bool lock1 = 0;
 

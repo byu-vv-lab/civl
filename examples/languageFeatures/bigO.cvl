@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify bigO.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 $input double y;
 
 void main() {

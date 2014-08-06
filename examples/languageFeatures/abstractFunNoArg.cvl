@@ -1,4 +1,4 @@
-#include <civlc.h>
+#include <civlc.cvh>
 #include <assert.h>
 
 $abstract int random(void); // ERROR: abstract functions requires >= 1 input
