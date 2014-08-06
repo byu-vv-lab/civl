@@ -13,6 +13,7 @@ appropriate definitions are changed to input variables
 #define __PTHREAD__
 
 #include <civlc.cvh>
+#include <concurrency.cvh>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
