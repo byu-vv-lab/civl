@@ -1,11 +1,10 @@
-#ifdef __PTHREAD_C__
+#ifdef __PTHREAD_FUNCTIONS__
 #else
-#define __PTHREAD_C__
+#define __PTHREAD_FUNCTIONS__
 extern void *value_ptr_value = NULL;
 __pthread_pool_t _pool={.len = 0};
 
 
-// Working Methods
 void _free_pool(__pthread_pool_t* pool){
   $atomic{
     int len = pool->len;
@@ -15,28 +14,20 @@ void _free_pool(__pthread_pool_t* pool){
   }
 }
 
-void __VERIFIER_assume(int expression) { 
-  if (!expression) 
-  { 
-    LOOP: 
-      goto LOOP; 
-  }
-}
-
 void _add_thread(__pthread_pool_t* pool, pthread_t* thread){
   $atomic{
-  int len = pool->len;
-  pthread_t** newThreads = (pthread_t**) malloc(sizeof(pthread_t*) * (len+1));
+    int len = pool->len;
+    pthread_t** newThreads = (pthread_t**) malloc(sizeof(pthread_t*) * (len+1));
   
-  if(pool->threads != NULL){
-    for(int i = 0; i < len; i++) {  
-       *(newThreads+i) = *(pool->threads+i);
+    if(pool->threads != NULL){
+      for(int i = 0; i < len; i++) {  
+         *(newThreads+i) = *(pool->threads+i);
+      }
+      free(pool->threads);
     }
-    free(pool->threads);
-  }
-  *(newThreads+len) = thread;
-  pool->threads = newThreads;
-  pool->len = len + 1;
+    *(newThreads+len) = thread;
+    pool->threads = newThreads;
+    pool->len = len + 1;
   }
 }
 
@@ -83,6 +74,91 @@ int pthread_spin_unlock(pthread_spinlock_t *slock){
   return 0;
 }
 
+int pthread_rwlock_init(pthread_rwlock_t *rwlock, const pthread_rwlockattr_t * attr){
+  if(attr==NULL){
+    rwlock->attr.pshared = PTHREAD_PROCESS_PRIVATE;
+  }
+  else{
+    rwlock->attr = *attr;
+  }
+  rwlock->wrowner = $proc_null;
+  rwlock->wrlock = false;
+  rwlock->empty = true;
+  return 0;
+}
+
+int pthread_rwlock_destroy(pthread_rwlock_t *rwlock){
+  pthread_rwlock_t blank;
+
+  *rwlock = blank;
+  return 0;
+}
+
+int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock){
+  $when(!rwlock->wrlock){
+    $atomic{
+      int len = $seq_length(&(rwlock->rdowners));
+      int one = 1;
+      _Bool found = false;
+
+      for(int x = 0; x < len; x++){
+        if(rwlock->rdowners[x] == $self){
+          found = true;
+          rwlock->rdlocks[x]++;
+          break;
+        }
+      }
+
+      if(!found){
+        $proc s = $self;
+        $seq_insert(&(rwlock->rdowners), len, &s, 1);
+        $seq_insert(&(rwlock->rdlocks), len, &one, 1);
+      }
+      rwlock->empty = false;
+    }
+  }
+  return 0;
+}
+
+int pthread_rwlock_unlock(pthread_rwlock_t *rwlock){
+  $atomic{
+    _Bool found = false;
+    int len = $seq_length(&(rwlock->rdowners));
+    for(int x = 0; x < len; x++){
+      if(rwlock->rdowners[x] == $self){
+        found = true;
+        rwlock->rdlocks[x]--;
+        if(rwlock->rdlocks[x] == 0){
+          $seq_remove(&(rwlock->rdowners), x, NULL, 1);
+          $seq_remove(&(rwlock->rdlocks), x, NULL, 1);
+          break;
+        }
+      }
+    }
+    if(!found){
+      if(rwlock->wrowner == $self){
+        rwlock->wrowner = $proc_null;
+        rwlock->wrlock = false;
+      }
+    }
+    if($seq_length(&(rwlock->rdowners)) == 0){
+      rwlock->empty = true;
+    }
+    return 0;
+  }
+}
+
+int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock){
+  $when(rwlock->empty && !(rwlock->wrlock)){
+    $atomic{
+      rwlock->wrlock = true;
+      rwlock->wrowner = $self;
+    }
+  }
+  return 0;
+}
+
+
 int pthread_barrierattr_init(pthread_barrierattr_t *attr){
   attr->pshared = 0;
   return 0;
@@ -121,6 +197,22 @@ int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t
 }
 
 /**
+  * Uninitializes the specified barrier variable.
+  * Corresponding specification: p.
+  *
+  * @param *barrier
+  *            The barrier to be uninitialized.
+  * @return Returns 0 upon successful completion
+  */
+
+int pthread_barrier_destroy(pthread_barrier_t *barrier){
+  $gbarrier_destroy(barrier->barr);
+  pthread_barrier_t blank;
+  *barrier = blank;
+  return 0;
+}
+
+/**
   * Creates local barrier for a thead and places it in the global barrier. It then proceeds to call the
   * $barrier_call, forcing the thread to wait until the release of the global barrier. The global barrier
   * and local barrier are then destroyed.
@@ -149,23 +241,6 @@ int pthread_barrier_wait(pthread_barrier_t *barrier){
     }
   }
 }
-
-/**
-  * Uninitializes the specified barrier variable.
-  * Corresponding specification: p.
-  *
-  * @param *barrier
-  *            The barrier to be uninitialized.
-  * @return Returns 0 upon successful completion
-  */
-
-int pthread_barrier_destroy(pthread_barrier_t *barrier){
-  $gbarrier_destroy(barrier->barr);
-  pthread_barrier_t blank;
-  *barrier = blank;
-  return 0;
-}
-
 
 
 /**
@@ -709,7 +784,7 @@ int pthread_join(pthread_t thread, void **value_ptr){
   * @return Returns 0 upon successful completion
   */
 
-int _pthread_exit(void *value_ptr, _Bool isMain){
+void _pthread_exit(void *value_ptr, _Bool isMain){
   if(isMain){
     for(int i = 0; i<_pool.len; i++){
       if($proc_defined(_pool.threads[i]->thr)){
@@ -718,7 +793,6 @@ int _pthread_exit(void *value_ptr, _Bool isMain){
     }
     free(_pool.threads);
     $exit();
-    return 0;
   }
   else{
     $atomic{
@@ -732,12 +806,8 @@ int _pthread_exit(void *value_ptr, _Bool isMain){
     }
     value_ptr_value = value_ptr;
     $exit();
-    return 0;
   }
 }
-
-//Unimplemented
-int pthread_detach(pthread_t thread);
 
 /**
   * Takes in a mutex variable and acts accordingly to its current state and type

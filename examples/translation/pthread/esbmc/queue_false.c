@@ -1,24 +1,8 @@
-/*****************************************************************************
-* SOURCE: This is a translation of a Pthread program from 
-* the Pthread benchmarks of SV-COMP 2014.
-* https://svn.sosy-lab.org/software/sv-benchmarks/tags/svcomp14/
-* FILE: fib_bench_false.cvl
-* DESCRIPTION: 
-*   Simple program of threads interacting which causes an error when
-*   their total reaches a certain value. The fix simply involves changing the output
-*   for which an error will be caused; specifically, here error is caused when i or j
-*   >=144, the fix has i or j > 144.
-* Command line execution:
-* civl verify -inputSIZE=5 queue_false.cvl
-******************************************************************************/
-
-#include "pthread.h"
+#include <pthread.h>
 #include <stdio.h>
 #include <assert.h>
-#include <civlc.h>
-#include <stdlib.h>
 
-$input int SIZE;
+#define SIZE	(5)
 #define EMPTY	(-1)
 #define FULL	(-2)
 #define FALSE	(0)
@@ -31,9 +15,10 @@ typedef struct {
     int amount;
 } QType;
 
+pthread_mutex_t m;
+int __VERIFIER_nondet_int(void);
 int stored_elements[SIZE];
 _Bool enqueue_flag, dequeue_flag;
-pthread_mutex_t mutex;
 QType queue;
 
 int init(QType *q) 
@@ -41,10 +26,10 @@ int init(QType *q)
   q->head=0;
   q->tail=0;
   q->amount=0;
-  return 0;
+    return 0;
 }
 
-int empty(QType *q) 
+int empty(QType * q) 
 {
   if (q->head == q->tail) 
   { 
@@ -55,12 +40,12 @@ int empty(QType *q)
     return 0;
 }
 
-int full(QType *q) 
+int full(QType * q) 
 {
   if (q->amount == SIZE) 
   {  
-    printf("queue is full\n");
-    return FULL;
+	printf("queue is full\n");
+	return FULL;
   } 
   else
     return 0;
@@ -102,37 +87,37 @@ void *t1(void *arg)
 {
   int value, i;
 
-  pthread_mutex_lock(&mutex);
-  value = 0;
-  int tmp = enqueue(&queue,value);
-  printf("0");
-  if (tmp) {
-    $assert($false);
+  pthread_mutex_lock(&m);
+  value = __VERIFIER_nondet_int();
+  if (enqueue(&queue,value)) {
+    goto ERROR;
   }
 
   stored_elements[0]=value;
-  int tmp1 = empty(&queue); 
-  if (tmp1) {
-    $assert($false);
+  if (empty(&queue)) {
+    goto ERROR;
   }
 
-  pthread_mutex_unlock(&mutex);
+  pthread_mutex_unlock(&m);
 
   for(i=0; i<(SIZE-1); i++)  
   {
-    pthread_mutex_lock(&mutex);
-    printf("1");
+    pthread_mutex_lock(&m);
     if (enqueue_flag)
     {
-      value = 1;
+      value = __VERIFIER_nondet_int();
       enqueue(&queue,value);
       stored_elements[i+1]=value;
       enqueue_flag=FALSE;
       dequeue_flag=TRUE;
     }
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&m);
   }	
+
   return NULL;
+
+  ERROR:
+    goto ERROR;
 }
 
 void *t2(void *arg) 
@@ -141,39 +126,47 @@ void *t2(void *arg)
 
   for(i=0; i<SIZE; i++)  
   {
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&m);
     if (dequeue_flag)
-    printf("2");
     {
-      int tmp = dequeue(&queue);
-      if (!tmp==stored_elements[i]) {
-        $assert($false);
+      if (!dequeue(&queue)==stored_elements[i]) {
+        ERROR:
+        goto ERROR;
       }
       dequeue_flag=FALSE;
       enqueue_flag=TRUE;
     }
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&m);
   }
+
   return NULL;
 }
 
-void main() 
+int main() 
 {
   pthread_t id1, id2;
 
   enqueue_flag=TRUE;
   dequeue_flag=FALSE;
-  
-  pthread_mutex_init(&mutex, 0);
+
   init(&queue);
-  int tmp = empty(&queue);
-  if (!tmp==EMPTY) {
-     $assert($false);
+
+  if (!empty(&queue)==EMPTY) {
+    ERROR:
+    goto ERROR;
   }
+
+
+  pthread_mutex_init(&m, 0);
 
   pthread_create(&id1, NULL, t1, &queue);
   pthread_create(&id2, NULL, t2, &queue);
 
   pthread_join(id1, NULL);
   pthread_join(id2, NULL);
+
+  return 0;
 }
+
+
+

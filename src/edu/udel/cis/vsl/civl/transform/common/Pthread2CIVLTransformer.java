@@ -257,6 +257,12 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 		return nodeFactory.newExpressionStatementNode(functionCall);
 	}
+	
+	/*
+	private StatementNode whenNode(Source mySource, ExpressionNode expression) {
+		return nodeFactory.newWhenNode(mySource, expression, nodeFactory.newNullStatementNode(mySource));
+	}
+	*/
 
 	private StatementNode assertFalse(Source mySource) {
 		ExpressionNode falseExpression = nodeFactory.newBooleanConstantNode(

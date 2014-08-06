@@ -14,12 +14,14 @@ appropriate definitions are changed to input variables
 
 #include <civlc.cvh>
 #include <concurrency.cvh>
+#include <seq.cvh>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <stdbool.h>
-#include <pthread.cvl>
-#include <pthread-c.cvl>
+#include <pthread-types.cvl>
+#include <pthread-functions.cvl>
+#include <svcomp.cvl>
 
 int pthread_exit(void *value_ptr);
 

@@ -1,7 +1,6 @@
-#ifdef __PTHREAD_CVL__
+#ifdef __PTHREAD_TYPES__
 #else
-#define __PTHREAD_CVL__
-#include <sched.cvl>
+#define __PTHREAD_TYPES__
 
 
 //Mutex types
@@ -12,7 +11,7 @@ PTHREAD_MUTEX_ERRORCHECK
 };
 
 enum{
-PTHREAD_MUTEX_STALLED,
+PTHREAD_MUTEX_STALLED, 
 PTHREAD_MUTEX_ROBUST
 };
 
@@ -22,7 +21,7 @@ PTHREAD_CREATE_DETACHED
 };
 
 enum{
-PTHREAD_SCOPE_SYSTEM,
+PTHREAD_SCOPE_SYSTEM, 
 PTHREAD_SCOPE_PROCESS
 };
 
@@ -74,6 +73,7 @@ typedef struct {
   _Bool lock;
   int pshared;
 }pthread_spinlock_t;
+
 /*
 typedef struct {
   int pshared;
@@ -140,6 +140,19 @@ typedef struct {
   int prioceiling;
   pthread_mutexattr_t attr;
 } pthread_mutex_t;
+
+typedef struct {
+  int pshared;
+} pthread_rwlockattr_t;
+
+typedef struct {
+  $proc rdowners[];
+  int rdlocks[];
+  _Bool empty;
+  $proc wrowner;
+  _Bool wrlock;
+  pthread_rwlockattr_t attr;
+} pthread_rwlock_t;
 
 
 /* pthread_cond_t struct definition

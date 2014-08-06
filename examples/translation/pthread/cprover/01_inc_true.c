@@ -22,7 +22,6 @@ void __VERIFIER_atomic_release()
 
 void * thr1(void* arg) {
 	unsigned v = 0;
-
 	__VERIFIER_atomic_acquire();
 	if(value == 0u-1) {
 		__VERIFIER_atomic_release();
@@ -33,7 +32,6 @@ void * thr1(void* arg) {
 		v = value;
 		value = v + 1;
 		__VERIFIER_atomic_release();
-
 		assert(value > v);
 
 		return 0;
@@ -43,6 +41,8 @@ void * thr1(void* arg) {
 int main(){
   pthread_t t;
 
-	while(1) { pthread_create(&t, 0, thr1, 0); }
+	while(1) { 
+	  pthread_create(&t, 0, thr1, 0); 
+	}
 }
 
