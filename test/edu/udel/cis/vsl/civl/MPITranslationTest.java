@@ -33,7 +33,8 @@ public class MPITranslationTest {
 
 	@Test
 	public void reduce() {
-		assertTrue(ui.run("verify", filename("reduce.c"), "-input__NPROCS=2"));
+		assertTrue(ui.run("verify", filename("reduce.c"), "-input__NPROCS=2",
+				"-enablePrintf=false"));
 	}
 
 	@Test

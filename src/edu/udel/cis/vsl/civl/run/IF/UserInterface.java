@@ -210,7 +210,7 @@ public class UserInterface {
 				this.getSysIncludes(config), this.getUserIncludes(config));
 		CTokenSource tokens = preprocessor.outputTokenSource(file);
 		CParser parser = frontEnd.getParser(tokens);
-		ASTBuilder builder = frontEnd.getASTBuilder(parser, parser.getTree());
+		ASTBuilder builder = frontEnd.getASTBuilder(parser);
 		AST userAST = builder.getTranslationUnit();
 		// Analyzer analyzer = frontEnd.getStandardAnalyzer(Language.CIVL_C);
 		Model model;
@@ -855,7 +855,7 @@ public class UserInterface {
 				this.getUserIncludes(config));
 		CTokenSource tokens = preprocessor0.outputTokenSource(file0);
 		CParser parser = frontEnd.getParser(tokens);
-		ASTBuilder builder = frontEnd.getASTBuilder(parser, parser.getTree());
+		ASTBuilder builder = frontEnd.getASTBuilder(parser);
 		AST ast0 = builder.getTranslationUnit();
 		Analyzer analyzer = frontEnd.getStandardAnalyzer(Language.CIVL_C);
 		ProgramFactory programFactory = frontEnd.getProgramFactory(analyzer);
@@ -864,7 +864,7 @@ public class UserInterface {
 				this.getUserIncludes(config));
 		tokens = preprocessor1.outputTokenSource(file1);
 		parser = frontEnd.getParser(tokens);
-		builder = frontEnd.getASTBuilder(parser, parser.getTree());
+		builder = frontEnd.getASTBuilder(parser);
 		AST ast1 = builder.getTranslationUnit();
 
 		// analyzer.analyze(ast0);

@@ -80,7 +80,7 @@ public class OmpTransformerTest {
 		preprocessor = frontEnd.getPreprocessor(systemIncludes, userIncludes);
 		tokens = preprocessor.outputTokenSource(file);
 		parser = frontEnd.getParser(tokens);
-		builder = frontEnd.getASTBuilder(parser, parser.getTree());
+		builder = frontEnd.getASTBuilder(parser);
 		ast = builder.getTranslationUnit();
 		program = frontEnd.getProgramFactory(
 				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(ast);

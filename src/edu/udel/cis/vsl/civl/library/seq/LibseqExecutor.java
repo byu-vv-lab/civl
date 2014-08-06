@@ -1,6 +1,8 @@
 package edu.udel.cis.vsl.civl.library.seq;
 
 import java.math.BigInteger;
+import java.util.LinkedList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -111,7 +113,16 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression elePointer = argumentValues[2];
 		CIVLSource arrayPtrSource = arguments[0].getSource();
 		CIVLSource elePtrSource = arguments[2].getSource();
+		CIVLArrayType arrayType = (CIVLArrayType) symbolicAnalyzer
+				.typeOfObjByPointer(arrayPtrSource, state, arrayPtr);
 
+		if (count.isZero()) {
+			state = primaryExecutor.assign(source, state, process, arrayPtr,
+					universe.array(
+							arrayType.elementType().getDynamicType(universe),
+							new LinkedList<SymbolicExpression>()));
+			return state;
+		}
 		if (symbolicUtil.isNullPointer(arrayPtr)
 				|| symbolicUtil.isNullPointer(elePointer)) {
 			CIVLExecutionException err = new CIVLExecutionException(
@@ -130,9 +141,6 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			this.errorLogger.reportError(err);
 			return state;
 		} else {
-			CIVLType arrayType = symbolicAnalyzer.typeOfObjByPointer(
-					arrayPtrSource, state, arrayPtr);
-
 			if (!arrayType.isIncompleteArrayType()) {
 				String arrayPtrString = symbolicAnalyzer
 						.symbolicExpressionToString(arrayPtrSource, state,
@@ -311,6 +319,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression arrayValue;
 		int countInt, indexInt, lengthInt;
 		String functionName = isInsert ? "$seq_insert()" : "$seq_remove()";
+		boolean isOldArrayEmpty = false;
+		List<SymbolicExpression> elements = new LinkedList<>();
 
 		if (symbolicUtil.isNullPointer(arrayPtr)) {
 			CIVLExecutionException err = new CIVLExecutionException(
@@ -405,8 +415,9 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 		indexInt = ((IntegerNumber) universe.extractNumber(index)).intValue();
 		lengthInt = ((IntegerNumber) universe.extractNumber(universe
 				.length(arrayValue))).intValue();
-
-		if (isInsert && (indexInt < 0 || indexInt >= lengthInt)) {
+		isOldArrayEmpty = indexInt == 0 && lengthInt == 0;
+		if (isInsert && !isOldArrayEmpty
+				&& (indexInt < 0 || indexInt >= lengthInt)) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.SEQUENCE, Certainty.PROVEABLE, process,
 					"The index for $seq_insert() is out of the range of the array index.\n"
@@ -449,8 +460,13 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 						false);
 				state = eval.state;
 				value = eval.value;
-				arrayValue = universe.insertElementAt(arrayValue, indexInt + i,
-						value);
+
+				if (isOldArrayEmpty) {
+					elements.add(value);
+				} else {
+					arrayValue = universe.insertElementAt(arrayValue, indexInt
+							+ i, value);
+				}
 			} else {
 				value = universe.arrayRead(arrayValue, index);
 				state = primaryExecutor.assign(valuesPtrSource, state, process,
@@ -458,6 +474,10 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 				arrayValue = universe.removeElementAt(arrayValue, indexInt);
 			}
 		}
+		if (isOldArrayEmpty)
+			arrayValue = universe.array(
+					((SymbolicArrayType) arrayValue.type()).elementType(),
+					elements);
 		state = primaryExecutor.assign(source, state, process, arrayPtr,
 				arrayValue);
 		return state;
