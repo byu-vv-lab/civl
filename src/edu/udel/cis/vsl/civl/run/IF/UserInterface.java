@@ -216,26 +216,26 @@ public class UserInterface {
 		Model model;
 		List<String> inputVars = getInputVariables(config);
 		boolean hasFscanf = false;
-		Set<String> headerFiles = preprocessor.headerFiles();
+		// Set<String> headerFiles = preprocessor.headerFiles();
 		Program program;
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
 
 		// userAST =
 		asts.add(userAST);
-		if (headerFiles.contains("concurrency.cvh")) {
-			file = new File("text/include/concurrency.cvh");
-			Preprocessor preprocessorH = frontEnd.getPreprocessor(
-					this.getSysIncludes(config), this.getUserIncludes(config));
-			CTokenSource tokensH = preprocessorH.outputTokenSource(file);
-			CParser parserH = frontEnd.getParser(tokensH);
-			ASTBuilder builderH = frontEnd.getASTBuilder(parserH,
-					parserH.getTree());
-			AST astH = builderH.getTranslationUnit();
-
-			asts.add(astH);
-
-		}
+		// if (headerFiles.contains("concurrency.cvh")) {
+		// file = new File("text/include/concurrency.cvh");
+		// Preprocessor preprocessorH = frontEnd.getPreprocessor(
+		// this.getSysIncludes(config), this.getUserIncludes(config));
+		// CTokenSource tokensH = preprocessorH.outputTokenSource(file);
+		// CParser parserH = frontEnd.getParser(tokensH);
+		// ASTBuilder builderH = frontEnd.getASTBuilder(parserH,
+		// parserH.getTree());
+		// AST astH = builderH.getTranslationUnit();
+		//
+		// asts.add(astH);
+		//
+		// }
 		TUs = new AST[asts.size()];
 		asts.toArray(TUs);
 
@@ -1065,23 +1065,23 @@ public class UserInterface {
 		return run(args);
 	}
 
-//	private Set<String> getHeaderFiles(AST ast) {
-//		Set<String> headerFiles = new HashSet<>();
-//
-//		getHeaderFiles(ast.getRootNode(), headerFiles);
-//		return headerFiles;
-//	}
-//
-//	private void getHeaderFiles(ASTNode node, Set<String> result) {
-//		String mySource = node.getSource().getFirstToken().getSourceFile()
-//				.getName();
-//
-//		if (!result.contains(mySource))
-//			result.add(mySource);
-//		for (ASTNode child : node.children()) {
-//			if (child != null)
-//				getHeaderFiles(child, result);
-//		}
-//	}
+	// private Set<String> getHeaderFiles(AST ast) {
+	// Set<String> headerFiles = new HashSet<>();
+	//
+	// getHeaderFiles(ast.getRootNode(), headerFiles);
+	// return headerFiles;
+	// }
+	//
+	// private void getHeaderFiles(ASTNode node, Set<String> result) {
+	// String mySource = node.getSource().getFirstToken().getSourceFile()
+	// .getName();
+	//
+	// if (!result.contains(mySource))
+	// result.add(mySource);
+	// for (ASTNode child : node.children()) {
+	// if (child != null)
+	// getHeaderFiles(child, result);
+	// }
+	// }
 
 }
