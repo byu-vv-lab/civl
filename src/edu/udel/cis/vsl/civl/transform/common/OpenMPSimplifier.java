@@ -3,13 +3,13 @@ package edu.udel.cis.vsl.civl.transform.common;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
-import edu.udel.cis.vsl.abc.ast.entity.IF.Variable;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.AttributeKey;
 import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpReductionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode.OmpWorksharingNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
@@ -40,8 +41,9 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
  * 
  * 1) Analyze OpenMP workshares to determine those that are provably
  * thread-independent, i.e., execution of workshares in parallel is guaranteed
- * to compute the same result. 2) Transform OpenMP constructs based on the
- * analysis results.
+ * to compute the same result. 
+ * 
+ * 2) Transform OpenMP constructs based on the analysis results.
  * 
  * @author dwyer
  * 
@@ -62,6 +64,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	private Set<OperatorNode> readArrayRefs;
 
 	private List<Entity> privateIDs;
+	private List<Entity> loopPrivateIDs;
 
 	public OpenMPSimplifier(ASTFactory astFactory, CIVLConfiguration config) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, config);
@@ -83,6 +86,16 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	AttributeKey getAttributeKey() {
 		return this.dependenceKey;
 	}
+	
+	private void addEntities(List<Entity> entityList, SequenceNode<IdentifierExpressionNode> clauseList) {
+		if (clauseList != null) {
+			for (IdentifierExpressionNode idExpression : clauseList) {
+				Entity idEnt = idExpression.getIdentifier().getEntity();
+
+				entityList.add(idEnt);
+			}
+		}
+	}
 
 	/*
 	 * Generically traverse the AST. When an OmpParallel node is encountered
@@ -99,23 +112,18 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 
 			/*
 			 * Determine the private variables since they cannot generate
-			 * dependences. Look at default clauses, private clauses,
-			 * threadprivate directives (global somewhere?)
+			 * dependences. 
 			 */
-			SequenceNode<IdentifierExpressionNode> privateList = ((OmpParallelNode) node)
-					.privateList();
-			if (privateList != null) {
-				privateIDs = new ArrayList<Entity>();
-				for (IdentifierExpressionNode idExpression : privateList) {
-					Entity idEnt = idExpression.getIdentifier().getEntity();
+			privateIDs = new ArrayList<Entity>();
 
-					privateIDs.add(idEnt);
-				}
-			} else {
-				privateIDs = null;
+			addEntities(privateIDs, ((OmpParallelNode) node).privateList());
+			addEntities(privateIDs, ((OmpParallelNode) node).copyinList());
+			addEntities(privateIDs, ((OmpParallelNode) node).copyprivateList());
+			addEntities(privateIDs, ((OmpParallelNode) node).firstprivateList());
+			addEntities(privateIDs, ((OmpParallelNode) node).lastprivateList());
+			for (OmpReductionNode r : ((OmpParallelNode) node).reductionList()) {
+				addEntities(loopPrivateIDs, r.variables());
 			}
-			// System.out.println("Found OmpParallelNode with private:"
-			// + privateIDs);
 
 			// Visit the rest of this node
 			Iterable<ASTNode> children = node.children();
@@ -140,7 +148,22 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	private void transformOmpWorkshare(ASTNode node) {
 		if (node instanceof OmpForNode) {
 			OmpForNode ompFor = (OmpForNode) node;
+			
+			/*
+			 * Determine the private variables since they cannot generate
+			 * dependences. 
+			 */
+			loopPrivateIDs = new ArrayList<Entity>();
 
+			addEntities(loopPrivateIDs, ompFor.privateList());
+			addEntities(loopPrivateIDs, ompFor.copyinList());
+			addEntities(loopPrivateIDs, ompFor.copyprivateList());
+			addEntities(loopPrivateIDs, ompFor.firstprivateList());
+			addEntities(loopPrivateIDs, ompFor.lastprivateList());
+			for (OmpReductionNode r : ompFor.reductionList()) {
+				addEntities(loopPrivateIDs, r.variables());
+			}
+			
 			processFor(ompFor);
 
 		} else if (node instanceof OmpWorksharingNode) {
@@ -172,117 +195,114 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	// analysis. this should be done in the high-level pass above.
 
 	private void processSections(OmpWorksharingNode ompSections) {
-	}
+	}			
 
+	/*
+	 */
 	private void processFor(OmpForNode ompFor) {
-		/*
-		 * We do not currently check for issues with canonical form. Compilers
-		 * are not required to check those constraints, so thee is some value in
-		 * doing so.
-		 */
 		ForLoopNode fln = (ForLoopNode) ompFor.statementNode();
-
+		
 		/*
-		 * Condition must be of the form: var relop expr or expr relop var
-		 * collect this expression - call it "endBound" record the direction of
-		 * the test (i.e., less/greater)
+		 * Need to handle collapse through the use of a sequence of iteration variables and
+		 * associated constraints on them.
 		 */
-		@SuppressWarnings("unused")
-		boolean lessThanComparison = true;
+		
+		/* The following block computes the loop appropriate constraints that bound the
+		 * loop variable's range.  
+		 * 
+		 * This code handles non-normalized loops, e.g., starting at non-zero indices, iterating down or up, etc.
+		 * 
+		 * TBD: record the increment to be used for more precise dependence constraints.
+		 * 
+		 * It does not check whether those bounding expressions are loop invariant, which is
+		 * required by the OpenMP standard, but it does enforce a number of other canonical loop
+		 * form constraints.
+		 */
 		IdentifierNode loopVariable = null;
-		ExpressionNode condition = fln.getCondition();
+		ExpressionNode initBound = null;
 
-		if (condition instanceof OperatorNode) {
-			OperatorNode relop = (OperatorNode) condition;
-			Operator op = relop.getOperator();
-			if (op == Operator.LT || op == Operator.LTE) {
-				lessThanComparison = true;
-			} else if (op == Operator.GT || op == Operator.GTE) {
-				lessThanComparison = false;
+		List<ExpressionNode> boundingConditions = new LinkedList<ExpressionNode>();
+		
+		{
+			ForLoopInitializerNode initializer = fln.getInitializer();
+			if (initializer instanceof OperatorNode) {
+			} else if (initializer instanceof DeclarationListNode) {
+				if (initializer instanceof SequenceNode<?>) {
+					@SuppressWarnings("unchecked")
+					SequenceNode<VariableDeclarationNode> decls = (SequenceNode<VariableDeclarationNode>) initializer;
+					Iterator<VariableDeclarationNode> it = (Iterator<VariableDeclarationNode>) decls
+							.iterator();
+					VariableDeclarationNode vdn = it.next();
+					if (it.hasNext()) {
+						assert false : "OpenMP Canonical Loop Form violated (single initializer only) :"
+								+ initializer;
+					}
+
+					loopVariable = vdn.getEntity().getDefinition().getIdentifier();
+					
+					assert vdn.getInitializer() instanceof ExpressionNode : "OpenMP Canonical Loop Form violated (initializer must be simple expression)";
+					
+					// Record the initializer expression to build up the initCondition below
+					initBound = (ExpressionNode)vdn.getInitializer();
+				} else {
+					assert false : "Expected SequenceNode<VariableDeclarationNode>: " + initializer;
+				}
+
 			} else {
-				assert false : "OpenMP Canonical Loop Form violated (condition must be one of >, >=, <, or <=) :"
-						+ relop;
+				assert false : "Expected OperatorNode or DeclarationListNode: " + initializer;
 			}
+		
+			ExpressionNode condition = fln.getCondition();
 
-			ExpressionNode left = relop.getArgument(0);
-			ExpressionNode right = relop.getArgument(1);
+			if (condition instanceof OperatorNode) {
+				OperatorNode relop = (OperatorNode) condition;
+				
+				List<ExpressionNode> arguments = new LinkedList<ExpressionNode>();
+				ExpressionNode lvNode = nodeFactory.newIdentifierExpressionNode(ompFor.getSource(), loopVariable);
+				arguments.add(lvNode);
+				arguments.add(initBound);
+				
+				Operator op = relop.getOperator();
+				if (op == Operator.LT || op == Operator.LTE) {
+					boundingConditions.add(nodeFactory.newOperatorNode(ompFor.getSource(), Operator.GTE, arguments));
+				} else if (op == Operator.GT || op == Operator.GTE) {
+					boundingConditions.add(nodeFactory.newOperatorNode(ompFor.getSource(), Operator.LTE, arguments));
+				} else {
+					assert false : "OpenMP Canonical Loop Form violated (condition must be one of >, >=, <, or <=) :"
+							+ relop;
+				}
 
-			// variable may be either left or right.
-			if (left instanceof IdentifierExpressionNode) {
-				loopVariable = ((IdentifierExpressionNode) left)
-						.getIdentifier();
-			} else if (right instanceof IdentifierExpressionNode) {
-				loopVariable = ((IdentifierExpressionNode) right)
-						.getIdentifier();
+				ExpressionNode left = relop.getArgument(0);
+				ExpressionNode right = relop.getArgument(1);
+
+				// variable must be either left or right, but not both
+				int loopVariableCount = 0;
+				if (left instanceof IdentifierExpressionNode) {
+					IdentifierNode id = ((IdentifierExpressionNode) left).getIdentifier();
+					if (id.getEntity() == loopVariable.getEntity()) {
+						loopVariableCount++;
+					}
+				}
+					
+				if (right instanceof IdentifierExpressionNode) {
+					IdentifierNode id = ((IdentifierExpressionNode) right).getIdentifier();
+					if (id.getEntity() == loopVariable.getEntity()) {
+						loopVariableCount++;
+					}
+				}
+					
+				if (loopVariableCount == 1) {
+					boundingConditions.add(condition);
+				} else {
+					assert false : "OpenMP Canonical Loop Form violated (requires variable condition operand) :"
+							+ condition;
+				}
 			} else {
-				assert false : "OpenMP Canonical Loop Form violated (requires variable condition operand) :"
+				assert false : "OpenMP Canonical Loop Form violated (condition malformed) :"
 						+ condition;
 			}
-		} else {
-			assert false : "OpenMP Canonical Loop Form violated (condition malformed) :"
-					+ condition;
 		}
-
-		/*
-		 * Could check here to ensure that the increment matches the ordering,
-		 * i.e., increment positively for "less" and negatively for "greater",
-		 * and magnitude constraints of OpenMP. This may require knowing the
-		 * sign of the "incr" in the OpenMP canonical loop form (section 2.6 of
-		 * the manual), but this would be easy to assert for checking at
-		 * runtime.
-		 */
-		@SuppressWarnings("unused")
-		ExpressionNode incrementer = fln.getIncrementer();
-
-		/*
-		 * Initializer must be of the form: (type?) var = expr which appears as
-		 * either a DeclarationList or OperatorExpression
-		 * 
-		 * Need to compute collect name of var and expression construct an
-		 * expression that honors the ordering of the test e.g., if less then
-		 * create "var >= expression" call the resulting expression "beginBound"
-		 */
-		ForLoopInitializerNode initializer = fln.getInitializer();
-		if (initializer instanceof OperatorNode) {
-		} else if (initializer instanceof DeclarationListNode) {
-			if (initializer instanceof SequenceNode<?>) {
-				@SuppressWarnings("unchecked")
-				SequenceNode<VariableDeclarationNode> decls = (SequenceNode<VariableDeclarationNode>) initializer;
-				Iterator<VariableDeclarationNode> it = (Iterator<VariableDeclarationNode>) decls
-						.iterator();
-				VariableDeclarationNode vdn = it.next();
-				if (it.hasNext()) {
-					assert false : "OpenMP Canonical Loop Form violated (single initializer only) :"
-							+ initializer;
-				}
-
-				Variable v = vdn.getEntity();
-				if (v != loopVariable.getEntity()) {
-					assert false : "OpenMP Canonical Loop Form violated (initializer/condition variable mismatch) :"
-							+ initializer;
-
-				}
-
-			} else {
-				assert false : "Expected SequenceNode<VariableDeclarationNode>: "
-						+ initializer;
-			}
-
-		} else {
-			assert false : "Expected OperatorNode or DeclarationListNode: "
-					+ initializer;
-		}
-
-		/*
-		 * A challenge that we do not consider here is ensuring that certain
-		 * expressions in the increment and test are loop invariant.
-		 * 
-		 * Note that we set up "beginBound" and "endBound" to be used to
-		 * constraint the range of the index expression in case it is needed in
-		 * determining the equivalence of loop index expressions. These bounds
-		 * are currently not used in formulating the SARL queries.
-		 */
-
+		
 		/*
 		 * Accumulate the set of memory-referencing expressions, i.e., variable
 		 * references, array index expressions, on the LHS and the RHS.
@@ -302,39 +322,25 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 
 		collectAssignRefExprs(body);
 
-		// System.out.println("Loop Dependence Analysis Info:");
-		// System.out.println("   writeVars:" + writeVars);
-		// System.out.println("   readVars:" + readVars);
-		// System.out.println("   writeArrayRefs:" + writeArrayRefs);
-		// System.out.println("   readArrayRefs:" + readArrayRefs);
-
 		/*
 		 * Check for name-based dependences
 		 */
 		writeVars.retainAll(readVars);
 		boolean hasDeps = !writeVars.isEmpty();
-		// System.out.println("OMP For has scalar "
-		// + (writeVars.isEmpty() ? "in" : "")
-		// + "dependent loop iterations");
 
 		/*
-		 * Check for array-based dependences
+		 * Check for array-based dependences.
 		 */
-		hasDeps |= hasArrayRefDependences(writeArrayRefs, readArrayRefs);
-		// System.out.println("OMP For has array " + (hasDeps ? "" : "in")
-		// + "dependent loop iterations");
+		hasDeps |= hasArrayRefDependences(boundingConditions, writeArrayRefs, readArrayRefs);
 
 		if (!hasDeps) {
 			/*
-			 * Transform this OpenMP "for" into either: 1) a plain loop if
-			 * parent is an OpenMP "parallel" statement 2) otherwise a "single"
-			 * workshare
+			 * Transform this OpenMP "for" into either: 
+			 * 1) a plain loop if parent is an OpenMP "parallel" statement 
+			 * 2) otherwise a "single" workshare
 			 */
 			ASTNode parent = ompFor.parent();
 			if (parent instanceof OmpParallelNode) {
-				// System.out
-				// .println("OpenMP Transformer: eliminating parallel and for");
-
 				// Remove "for" node from "omp for" node
 				int forIndex = getChildIndex(ompFor, fln);
 				assert forIndex != -1;
@@ -345,34 +351,15 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 				int parentIndex = getChildIndex(grand, parent);
 				assert parentIndex != -1;
 				grand.setChild(parentIndex, fln);
+				
 			} else {
-				// System.out
-				// .println("OpenMP Transformer: replacing for with single workshare");
-
 				int ompForIndex = getChildIndex(parent, ompFor);
 				assert ompForIndex != -1;
 				parent.removeChild(ompForIndex);
 
-				// OmpNodeFactory ompFactory = new CommonOmpNodeFactory(new
-				// CommonValueFactory(new CommonTypeFactory()));
-				// List<CToken> singleBody = new ArrayList<CToken>();
-				// Iterator<CToken> tokIt = ompFor.getTokens();
-				// while (tokIt.hasNext()) {
-				// singleBody.add(tokIt.next());
-				//
-				// }
-
-				// OmpWorkshareNode single =
-				// ompFactory.newWorkshareNode(ompFor.getSource(),
-				// ompFor.getPragmaIdentifier(),
-				// singleBody, ompFor.getToken(ompFor.getNumTokens()-1),
-				// OmpWorkshareNodeKind.SINGLE);
 				fln.parent().removeChild(fln.childIndex());
 				OmpWorksharingNode single = nodeFactory.newOmpSingleNode(
 						ompFor.getSource(), fln);
-
-				// fln.parent().removeChild(fln.childIndex());
-				// single.setStatementNode(fln);
 
 				// Transfer private, firstprivate, copyprivate, and nowait
 				// clauses to single
@@ -413,7 +400,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			if (lhs instanceof IdentifierExpressionNode) {
 				Entity idEnt = ((IdentifierExpressionNode) lhs).getIdentifier()
 						.getEntity();
-				if (privateIDs == null || !privateIDs.contains(idEnt)) {
+				if (!privateIDs.contains(idEnt) && !loopPrivateIDs.contains(idEnt)) {
 					writeVars.add(idEnt);
 				}
 			} else if (lhs instanceof OperatorNode
@@ -448,7 +435,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 		if (node instanceof IdentifierExpressionNode) {
 			Entity idEnt = ((IdentifierExpressionNode) node).getIdentifier()
 					.getEntity();
-			if (privateIDs == null || !privateIDs.contains(idEnt)) {
+			if (!privateIDs.contains(idEnt) && !loopPrivateIDs.contains(idEnt)) {
 				readVars.add(idEnt);
 			}
 
@@ -472,13 +459,24 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 
 	/*
 	 * Check array read/write sets for dependences
+	 * 
+	 * This code formulates a logical constraint for each pair of array refs on the LHS and RHS of the loop.
+	 * 
+	 * If there exists in the loop, statements of the form:
+	 *      a[e1] = ...
+	 * and
+	 *      ... = ... a[e2] ...
+	 * where e1 and e2 are expressions written in terms of the loop index variable, then it must be the
+	 * case that for all values of the index variable that satisfy initCondition and exitCondition that
+	 * e1 == e2.   
+	 * 
+	 * TBD: Currently this analysis does not 
 	 */
-	private boolean hasArrayRefDependences(Set<OperatorNode> writes,
-			Set<OperatorNode> reads) {
+	private boolean hasArrayRefDependences(List<ExpressionNode> boundingConditions,
+			Set<OperatorNode> writes, Set<OperatorNode> reads) {
 		for (OperatorNode w : writes) {
 			if (!(w instanceof IdentifierExpressionNode))
 				;
-			// System.out.println("Write of type:"+w);
 			IdentifierExpressionNode baseWrite = (IdentifierExpressionNode) w
 					.getArgument(0);
 
@@ -486,11 +484,11 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 				IdentifierExpressionNode baseRead = (IdentifierExpressionNode) r
 						.getArgument(0);
 
-				if (baseWrite.getIdentifier().getEntity() == baseRead
-						.getIdentifier().getEntity()) {
+				if (baseWrite.getIdentifier().getEntity() == 
+					baseRead.getIdentifier().getEntity()) {
 					// Need to check logical equality of these expressions
-					if (!ExpressionEvaluator.isEqualIntExpr(w.getArgument(1),
-							r.getArgument(1))) {
+					if (!ExpressionEvaluator.checkEqualityWithConditions(w.getArgument(1),
+							r.getArgument(1), boundingConditions)) {
 						return true;
 					}
 				}
