@@ -1,9 +1,11 @@
 Done:
   make the args struct
   implement clCreateKernel
+  Array with flags in, tells the program what variables are malloc'd or not so they don't try to free the same space
+  
   
 ToDo:
-  Somehow tell the program what variables are global so they don't try to free the same space
+
   
 ToDo: Long term:
   Possible implementation of clGetKernelWorkGroupInfo, if an example that needs it is used
@@ -15,3 +17,4 @@ Problems:
   No memset();  
   Program crash when using array index of kernel
   Bug in memory leak detection
+  Forgot to notice that there need to be multiple args

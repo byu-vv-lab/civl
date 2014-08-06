@@ -19,9 +19,12 @@
 #include <string.h>
 #include <civlc.h>
 
+int numArgs = 2;
+
 typedef struct
 {
-  void * param[2];
+  void * param[numArgs];
+  int mallocflag[numArgs];
 }args;
 
 cl_kernel clCreateKernel(args * argument, char * function)
@@ -30,21 +33,32 @@ cl_kernel clCreateKernel(args * argument, char * function)
   kernel.arguments = argument;
   kernel.method = function;
   
+  for(int j = 0; j < numArgs; j++)
+  {
+    ((args*)kernel.arguments)->mallocflag[j] = 0;
+  }
+  
   return kernel;
 }
 
 void clReleaseKernel(cl_kernel kernel)
 {
-  for (int i = 0; i < 2; i++)
+  for (int i = 0; i < numArgs; i++)
   {
-    free(((args*)kernel.arguments)->param[i]);
+    printf("I am argument %d with value %d\n", i, ((args*)kernel.arguments)->mallocflag[i]);
+    if (((args*)kernel.arguments)->mallocflag[i] == 1)
+    {
+      printf("and I pass the flag check\n");
+      free(((args*)kernel.arguments)->param[i]);
+    }
   }
 }
 
 int main(int argc, char** argv)
 {
   args * arguments;
-  arguments = (args*)malloc(sizeof(args));
+  arguments = (args*)malloc(sizeof(args) * 3);
+  
   
   int star = 1;
   
@@ -58,51 +72,32 @@ int main(int argc, char** argv)
 
   for (int i = 0; i < 3; i++)
   {
-    kernels[i] = clCreateKernel(arguments, "eh");
+    kernels[i] = clCreateKernel(arguments+i, "eh");
   }
-  
-  for (int i = 0; i < 3; i++)
+  for (int j = 0; j < 3; j++)
   {
-    printf("starts here\n");
-    ((args*)kernels[i].arguments)->param[0] = (int*)malloc(sizeof(int));
-    printf("malloc works\n");
-    memcpy(((args*)kernels[i].arguments)->param[0], &star, sizeof(int));
+    //printf("starts here\n");
+    ((args*)kernels[j].arguments)->param[0] = (int*)malloc(sizeof(int));
+    ((args*)kernels[j].arguments)->mallocflag[0] = 1;
+    //printf("malloc works\n");
+    memcpy(((args*)kernels[j].arguments)->param[0], &star, sizeof(int));
     
-    printf("I am kernel of index %d, with a value of %d\n", i, ((args*)kernels[i].arguments)->param[0]);
+    //printf("I am kernel of index %d, with a value of %d\n", j, ((args*)kernels[j].arguments)->param[0]);
     
-    //((args*)kernels[i].arguments)->param[1] = one;
+    ((args*)kernels[j].arguments)->param[1] = one;
   }
   
-  printf("assigned properly\n");
-  /*
-  for (int i = 0; i < 3; i++)
+  //printf("assigned properly\n");
+  
+  for (int k = 0; k < 3; k++)
   {
-    //clReleaseKernel(kernels[i]);
+    clReleaseKernel(kernels[k]);
   }
-  */
   
-  for (int i = 0; i < 3; i++)
+  for (int k = 0; k < 3; k++)
   {
-    free(((args*)kernels[i].arguments)->param[0]);
+    //free(((args*)kernels[k].arguments)->param[0]);
   }
-  //((args*)kernels[0].arguments)->param[1] = one;
-  //free(((args*)kernels[0].arguments)->param[1]);
-  
-  //((args*)kernels[0].arguments)->param[0] = (int*)malloc(sizeof(int));
-  //memcpy(((args*)kernels[0].arguments)->param[0], &star, sizeof(int));
-  //free(((args*)kernels[0].arguments)->param[0]);
-  
-//
-  
-  //((args*)kernels[1].arguments)->param[0] = (int*)malloc(sizeof(int));
-  //memcpy(((args*)kernels[1].arguments)->param[0], &star, sizeof(int));
-  
-
-  //free(((args*)kernels[1].arguments)->param[0]);
-  //free(((args*)kernels[1].arguments)->param[1]);
-  
-  //free(((args*)kernels[2].arguments)->param[0]);
-  //free(((args*)kernels[2].arguments)->param[1]);
   
   
   free(one);
