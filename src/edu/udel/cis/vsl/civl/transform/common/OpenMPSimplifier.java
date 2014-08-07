@@ -121,8 +121,11 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			addEntities(privateIDs, ((OmpParallelNode) node).copyprivateList());
 			addEntities(privateIDs, ((OmpParallelNode) node).firstprivateList());
 			addEntities(privateIDs, ((OmpParallelNode) node).lastprivateList());
-			for (OmpReductionNode r : ((OmpParallelNode) node).reductionList()) {
-				addEntities(loopPrivateIDs, r.variables());
+			SequenceNode<OmpReductionNode> reductionList = ((OmpParallelNode) node).reductionList();
+			if (reductionList != null) {
+				for (OmpReductionNode r : reductionList) {
+					addEntities(privateIDs, r.variables());
+				}
 			}
 
 			// Visit the rest of this node
@@ -160,8 +163,11 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			addEntities(loopPrivateIDs, ompFor.copyprivateList());
 			addEntities(loopPrivateIDs, ompFor.firstprivateList());
 			addEntities(loopPrivateIDs, ompFor.lastprivateList());
-			for (OmpReductionNode r : ompFor.reductionList()) {
-				addEntities(loopPrivateIDs, r.variables());
+			SequenceNode<OmpReductionNode> reductionList = ompFor.reductionList();
+			if (reductionList != null) {
+				for (OmpReductionNode r : reductionList) {
+					addEntities(loopPrivateIDs, r.variables());
+				}
 			}
 			
 			processFor(ompFor);
@@ -226,6 +232,18 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 		{
 			ForLoopInitializerNode initializer = fln.getInitializer();
 			if (initializer instanceof OperatorNode) {
+				OperatorNode assign = (OperatorNode)initializer;
+				Operator op = assign.getOperator();
+				if (op == Operator.ASSIGN) {
+					ExpressionNode left = assign.getArgument(0);
+					assert left instanceof IdentifierExpressionNode : "OpenMP Canonical Loop Form violated (identifier required on LHS of initializer)";
+					loopVariable = ((IdentifierExpressionNode) left).getIdentifier().copy();
+					initBound = assign.getArgument(1).copy();
+				} else {
+					assert false : "OpenMP Canonical Loop Form violated (initializer must be an assignment) :"
+							+ assign;
+				}
+				
 			} else if (initializer instanceof DeclarationListNode) {
 				if (initializer instanceof SequenceNode<?>) {
 					@SuppressWarnings("unchecked")
@@ -238,12 +256,12 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 								+ initializer;
 					}
 
-					loopVariable = vdn.getEntity().getDefinition().getIdentifier();
+					loopVariable = vdn.getEntity().getDefinition().getIdentifier().copy();
 					
 					assert vdn.getInitializer() instanceof ExpressionNode : "OpenMP Canonical Loop Form violated (initializer must be simple expression)";
 					
 					// Record the initializer expression to build up the initCondition below
-					initBound = (ExpressionNode)vdn.getInitializer();
+					initBound = (ExpressionNode)vdn.getInitializer().copy();
 				} else {
 					assert false : "Expected SequenceNode<VariableDeclarationNode>: " + initializer;
 				}
