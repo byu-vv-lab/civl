@@ -153,7 +153,7 @@ public class CIVLConstants {
 	public final static String civlSystemFunction = "_CIVL_system";
 
 	public static Option[] getAllOptions() {
-		int numOpts = 32;
+		int numOpts = 31;
 		List<Option> outputs = new LinkedList<Option>();
 
 		outputs.add(CIVLConstants.deadlockO);
@@ -162,7 +162,7 @@ public class CIVLConstants {
 		outputs.add(CIVLConstants.enablePrintfO);
 		outputs.add(CIVLConstants.errorBoundO);
 		outputs.add(CIVLConstants.guidedO);
-		outputs.add(CIVLConstants.guiO);
+		//outputs.add(CIVLConstants.guiO);
 		outputs.add(CIVLConstants.idO);
 		outputs.add(CIVLConstants.maxdepthO);
 		outputs.add(CIVLConstants.minO);

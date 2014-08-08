@@ -21,7 +21,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -236,6 +235,11 @@ public class NewRunConfigGUI extends JFrame {
 	private JPanel tab_setInputs_ru;
 	private JPanel tab_setInputs_vf;
 
+	/**
+	 * A Linked list of all of the saved configurations that the user has
+	 * created. TODO: possibly eliminate this as it may not be terribly
+	 * necessary.
+	 */
 	private static LinkedList<RunConfigData> savedConfigs = new LinkedList<RunConfigData>();;
 
 	public NewRunConfigGUI() {
@@ -280,6 +284,8 @@ public class NewRunConfigGUI extends JFrame {
 	 * @return The <code>LinkedList</code> containing all of the inputs.
 	 */
 	// TODO: fix some minor parsing issues i.e arrays etc
+	// FIX: Possible use pre-built parsers in CIVL. The issue is it creates poor
+	// code design, ask Siegel/Manchun about this.
 	public LinkedList<CIVL_Input> parseInputs() {
 		BufferedReader bReader = null;
 		LinkedList<CIVL_Input> inputs = new LinkedList<CIVL_Input>();
@@ -333,7 +339,6 @@ public class NewRunConfigGUI extends JFrame {
 
 		for (int i = 0; i < inputs.size(); i++) {
 			CIVL_Input currInput = inputs.get(i);
-			System.out.println(currInput.getName() + " " + currInput.getType());
 			if (currInput.getType().equals("Boolean")
 					|| currInput.getType().equals("boolean"))
 				inputModel.addRow(new Object[] { currInput.getName(),
@@ -472,11 +477,6 @@ public class NewRunConfigGUI extends JFrame {
 		tab_chooseFile.add(tf_chosenFile_ru);
 		tab_chooseFile.add(bt_browse_ru);
 
-		// tab_setOptions.add(sp_optTable);
-		// TODO: do I really need need bt_revert & bt_apply???
-		// tab_setOptions_ru.add(bt_revert);
-		// tab_setOptions_ru.add(bt_apply);
-
 		runView.addTab("Choose File", null, tab_chooseFile, null);
 		runView.addTab("Options", null, tab_setOptions_ru, null);
 		runView.addTab("Inputs", null, tab_setInputs_ru, null);
@@ -508,14 +508,17 @@ public class NewRunConfigGUI extends JFrame {
 		return verifyView;
 	}
 
-	@SuppressWarnings("unused")
+	/**
+	 * Creates all of the commandViews. TODO: get rid of the help view(not
+	 * needed)
+	 */
 	public void initCommandViews() {
-		JTabbedPane helpView = initHelp();
-		JTabbedPane parseView = initParse();
-		JTabbedPane preprocView = initPreproc();
-		JTabbedPane replayView = initReplay();
-		JTabbedPane runView = initRun();
-		JTabbedPane verifyView = initVerify();
+		initHelp();
+		initParse();
+		initPreproc();
+		initReplay();
+		initRun();
+		initVerify();
 	}
 
 	/**
@@ -555,6 +558,10 @@ public class NewRunConfigGUI extends JFrame {
 		commands[5] = verify;
 	}
 
+	/**
+	 * Creates the JPanel that will display all of the cards. All cards(JPanels)
+	 * are now added to the new JPanel.
+	 */
 	public void initCards() {
 		viewCardsLayout = new CardLayout();
 		viewCards = new JPanel();
@@ -694,7 +701,13 @@ public class NewRunConfigGUI extends JFrame {
 	}
 
 	// TODO: FILL TABLE WITH "ALLOWED" OPTIONS INSTEAD OF ALL OF THEM
-	// TODO: MAKE COLUMNS SMALLER, SO IT DOESN'T LOOK STUPID
+	//to do this, set the allowed options correctly when the command is created in initCommands
+	//and this will automatically be fixed. Right now each command has a list of all options for allowedOptions.
+	//Also, not all commands even need options, fix that too.
+	// TODO: POSSIBLY MAKE COLUMNS SMALLER
+	/**
+	 * Creates the JTables and all necessary components related to them.
+	 */
 	public void initJTable() {
 		sp_optTable_ru = new JScrollPane();
 		sp_optTable_vf = new JScrollPane();
@@ -706,10 +719,10 @@ public class NewRunConfigGUI extends JFrame {
 		sp_inputTable_ru.setBounds(6, 6, 967 - 36, 425);
 		sp_inputTable_vf.setBounds(6, 6, 967 - 36, 425);
 
-		tbl_optTable_ru = new CIVLTable(new int[] { 1, 2 });
-		tbl_optTable_vf = new CIVLTable(new int[] { 1, 2 });
-		tbl_inputTable_ru = new CIVLTable(new int[] { 2 });
-		tbl_inputTable_vf = new CIVLTable(new int[] { 2 });
+		tbl_optTable_ru = new CIVLTable(new int[] { 1, 2 }, "option");
+		tbl_optTable_vf = new CIVLTable(new int[] { 1, 2 }, "option");
+		tbl_inputTable_ru = new CIVLTable(new int[] { 2 }, "input");
+		tbl_inputTable_vf = new CIVLTable(new int[] { 2 }, "input");
 
 		sp_optTable_ru.setViewportView(tbl_optTable_ru);
 		sp_optTable_vf.setViewportView(tbl_optTable_vf);
@@ -739,16 +752,11 @@ public class NewRunConfigGUI extends JFrame {
 				.getModel();
 		final DefaultTableModel optModel_vf = (DefaultTableModel) tbl_optTable_vf
 				.getModel();
-		@SuppressWarnings("unused")
-		final DefaultTableModel inputModel = (DefaultTableModel) tbl_inputTable_ru
-				.getModel();
+		tbl_inputTable_ru.getModel();
 
-		// TODO: FIX BUTTON ENTANGLEMENT, change focus to current row not last
-		// selected row
 		@SuppressWarnings("serial")
 		Action defaultize = new AbstractAction() {
 			public void actionPerformed(ActionEvent e) {
-				int modelRow = Integer.valueOf(e.getActionCommand());
 				DefaultTableModel currOptModel = null;
 				JTable currTable = null;
 
@@ -760,29 +768,16 @@ public class NewRunConfigGUI extends JFrame {
 					currOptModel = optModel_vf;
 					currTable = tbl_optTable_vf;
 				}
+
+				int modelRow = currTable.getSelectedRow();
 				Object valToDefault = currOptModel.getValueAt(modelRow, 1);
 				Option optToDefault = getOption((String) currOptModel
 						.getValueAt(modelRow, 0));
 				if (valToDefault instanceof Boolean) {
+					Boolean defValue = (Boolean) optToDefault.defaultValue();
 
-					JPanel cellRadioPanelEdit = ((JPanel) currTable
-							.getCellEditor(modelRow, 1)
-							.getTableCellEditorComponent(currTable,
-									valToDefault, true, modelRow, 1));
-
-					JRadioButton cellRadioTrue = ((JRadioButton) cellRadioPanelEdit
-							.getComponent(0));
-					JRadioButton cellRadioFalse = ((JRadioButton) cellRadioPanelEdit
-							.getComponent(1));
-
-					if ((boolean) valToDefault) {
-						cellRadioTrue.setSelected(true);
-						cellRadioFalse.setSelected(false);
-					} else if (!(boolean) valToDefault) {
-						cellRadioTrue.setSelected(false);
-						cellRadioFalse.setSelected(true);
-					}
-					repaint();
+					// MAIN DEFAULT ACTION:
+					currTable.setValueAt(defValue, modelRow, 1);
 				}
 
 				else
@@ -796,19 +791,14 @@ public class NewRunConfigGUI extends JFrame {
 		for (int i = 0; i < (getCommand("run").getAllowedOptions().length); i++) {
 			optModel_ru.addRow(new Object[] { options[i].name(),
 					options[i].defaultValue(), "Default" });
-			@SuppressWarnings("unused")
-			ButtonColumn buttonColumn_ru = new ButtonColumn(tbl_optTable_ru,
-					defaultize, 2);
+			new ButtonColumn(tbl_optTable_ru, defaultize, 2);
 		}
 
 		// options for VERIFY
 		for (int i = 0; i < (getCommand("verify").getAllowedOptions().length); i++) {
 			optModel_vf.addRow(new Object[] { options[i].name(),
 					options[i].defaultValue(), "Default" });
-
-			@SuppressWarnings("unused")
-			ButtonColumn buttonColumn_vf = new ButtonColumn(tbl_optTable_vf,
-					defaultize, 2);
+			new ButtonColumn(tbl_optTable_vf, defaultize, 2);
 		}
 
 		tab_setOptions_ru.add(sp_optTable_ru);
