@@ -85,28 +85,28 @@ public class OmpTransformerTest {
 		program = frontEnd.getProgramFactory(
 				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(ast);
 		if (debug)
-			frontEnd.printProgram(out, program);
+			frontEnd.printProgram(out, program, true);
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
 				new ArrayList<String>(0), builder, config);
 		if (debug) {
 			out.println("======== After applying OpenMP Pragma Transformer ========");
-			frontEnd.printProgram(out, program);
+			frontEnd.printProgram(out, program, true);
 		}
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 				new ArrayList<String>(0), builder, config);
 		if (debug) {
 			out.println("======== After applying OpenMP Simplifier ========");
-			frontEnd.printProgram(out, program);
+			frontEnd.printProgram(out, program, true);
 		}
 		program.applyTransformer("prune");
 		if (debug) {
 			out.println("======== After applying Pruner ========");
-			frontEnd.printProgram(out, program);
+			frontEnd.printProgram(out, program, true);
 		}
 		program.applyTransformer("sef");
 		if (debug) {
 			out.println("======== After applying Side Effect Remover ========");
-			frontEnd.printProgram(out, program);
+			frontEnd.printProgram(out, program, true);
 		}
 	}
 
